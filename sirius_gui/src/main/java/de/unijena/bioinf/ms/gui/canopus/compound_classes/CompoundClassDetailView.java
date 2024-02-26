@@ -241,15 +241,24 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
             g.drawRoundRect(0, typeBox.height, boxwidth, boxheight, 4, 4);
             g.setColor(color);
             final int gap = (boxwidth - typeBox.width) / 2;
-            g.drawRect(gap, typeBox.height, typeBox.width, Math.min(typeBox.height, classBox.height));
+
             g.setFont(classFont);
             g.setColor(Colors.FOREGROUND);
             g.drawString(cfClass.getName(), PADDING, classBox.height + typeBox.height + PADDING + GAP_TOP);
 
+            // draw header string
             g.setFont(typeFont);
+            { // draw gaps for header string
+                int headerTextWidth = g.getFontMetrics().stringWidth(cfClass.getLevel()) + 4;
+                g.setStroke(new BasicStroke(1.5f));
+
+                g.setColor(getBackground());
+                g.drawLine(boxwidth / 2 - headerTextWidth / 2, typeBox.height, boxwidth / 2 + headerTextWidth / 2, typeBox.height);
+                g.setColor(color);
+                g.drawLine(boxwidth / 2 - headerTextWidth / 2, typeBox.height, boxwidth / 2 + headerTextWidth / 2, typeBox.height);
+            }
             g.setColor(Colors.FOREGROUND);
             g.drawString(cfClass.getLevel(), gap, typeBox.height + GAP_TOP);
-
         }
 
         @Override
@@ -322,12 +331,23 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
             g.drawRoundRect(0, typeBox.height, boxwidth, boxheight, 4, 4);
             g.setColor(color);
             final int gap = (boxwidth - typeBox.width) / 2;
-            g.drawRect(gap, typeBox.height, typeBox.width, Math.min(typeBox.height, classBox.height));
+
             g.setFont(classFont);
             g.setColor(Colors.FOREGROUND);
             g.drawString(npcClass.getName(), PADDING, classBox.height + typeBox.height + PADDING + GAP_TOP);
 
+            // draw header string
             g.setFont(typeFont);
+            { // draw gaps for header string
+                int headerTextWidth = g.getFontMetrics().stringWidth(npcClass.getLevel()) + 4;
+                g.setStroke(new BasicStroke(1.5f));
+
+                g.setColor(getBackground());
+                g.drawLine(boxwidth / 2 - headerTextWidth / 2, typeBox.height, boxwidth / 2 + headerTextWidth / 2, typeBox.height);
+                g.setColor(color);
+                g.drawLine(boxwidth / 2 - headerTextWidth / 2, typeBox.height, boxwidth / 2 + headerTextWidth / 2, typeBox.height);
+            }
+
             g.setColor(Colors.FOREGROUND);
             g.drawString(npcClass.getLevel(), gap, typeBox.height + GAP_TOP);
 
