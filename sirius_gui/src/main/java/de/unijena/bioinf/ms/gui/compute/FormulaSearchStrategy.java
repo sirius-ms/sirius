@@ -161,8 +161,21 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         JSpinner denovoUpTo = makeIntParameterSpinner("FormulaSearchSettings.disableDeNovoAboveMass", 0, Integer.MAX_VALUE, 5);  // binding is overwritten
 
-        busOptions.addNamed("Perform bottom up search", bottomUpSearchEnabled);
-        busOptions.addNamed("Perform de novo below m/z", denovoUpTo);
+        JLabel bottomUpCheckboxLabel = new JLabel("Perform bottom up search");
+        JLabel denovoUpToLabel = new JLabel("Perform de novo below m/z");
+
+        busOptions.add(bottomUpCheckboxLabel, bottomUpSearchEnabled);
+        busOptions.add(denovoUpToLabel, denovoUpTo);
+
+        List<Component> customComponents = List.of(bottomUpCheckboxLabel, bottomUpSearchEnabled, denovoUpToLabel, denovoUpTo);
+
+        bottomUpSearchSelector.addItemListener(e -> {
+            if (e.getStateChange() != ItemEvent.SELECTED) {
+                return;
+            }
+            boolean customSelected = SiriusOptions.BottomUpSearchOptions.CUSTOM.equals(e.getItem());
+            customComponents.forEach(c -> c.setVisible(customSelected));
+        });
 
         parameterBindings.put("FormulaSearchSettings.enableBottomUpFromMass", () -> {
             if (strategy.equals(Strategy.DEFAULT)) {
