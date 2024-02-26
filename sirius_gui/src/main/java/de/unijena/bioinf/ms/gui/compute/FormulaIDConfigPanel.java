@@ -200,9 +200,8 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
             ilpOptions.addNamed("Use heuristic only above m/z", mzHeuristicOnly);
 
             final JPanel technicalParameters = new JPanel();
-            RelativeLayout rl = new RelativeLayout(RelativeLayout.Y_AXIS, GuiUtils.MEDIUM_GAP);
+            RelativeLayout rl = new RelativeLayout(RelativeLayout.Y_AXIS, 0);
             rl.setAlignment(RelativeLayout.LEADING);
-            rl.setBorderGap(0);
             technicalParameters.setLayout(rl);
             technicalParameters.add(Box.createRigidArea(new Dimension(0, GuiUtils.LARGE_GAP)));
             technicalParameters.add(new TextHeaderBoxPanel("Fragmentation tree computation", ilpOptions));
@@ -282,7 +281,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
                     //copy DetectedAdducts, to remove previously detected adducts and to make sure the following preprocess does not already alter this annotation (probably not copy-safe)
                     DetectedAdducts daWithoutMS1Detect = new DetectedAdducts();
                     for (String source : detectedAdducts.getSourceStrings()) {
-                        if (source != DetectedAdducts.Source.MS1_PREPROCESSOR.name()) {
+                        if (!DetectedAdducts.Source.MS1_PREPROCESSOR.name().equals(source)) {
                             daWithoutMS1Detect.put(source, detectedAdducts.get(source));
                         }
                     }
