@@ -138,10 +138,10 @@ Class | Method | HTTP request | Description
 *FeaturesApi* | [**getLipidAnnotation**](docs/FeaturesApi.md#getLipidAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation | Returns Lipid annotation (ElGordo) for the given formula result identifier.
 *FeaturesApi* | [**getMsData**](docs/FeaturesApi.md#getMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/ms-data | Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
 *FeaturesApi* | [**getSiriusFragTree**](docs/FeaturesApi.md#getSiriusFragTree) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-tree | 
+*FeaturesApi* | [**getSpectralLibraryMatches**](docs/FeaturesApi.md#getSpectralLibraryMatches) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches | List of spectral library matches for the given &#39;alignedFeatureId&#39;.
 *FeaturesApi* | [**getStructureAnnotatedMsData**](docs/FeaturesApi.md#getStructureAnnotatedMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-msmsdata | Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.
 *FeaturesApi* | [**getStructureAnnotatedSpectrum**](docs/FeaturesApi.md#getStructureAnnotatedSpectrum) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum | Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
 *FeaturesApi* | [**getStructureCandidates**](docs/FeaturesApi.md#getStructureCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/structures | List of StructureCandidates for the given &#39;alignedFeatureId&#39; with minimal information.
-*FeaturesApi* | [**getStructureCandidates1**](docs/FeaturesApi.md#getStructureCandidates1) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches | List of spectral library matches for the given &#39;alignedFeatureId&#39;.
 *FeaturesApi* | [**getStructureCandidatesByFormula**](docs/FeaturesApi.md#getStructureCandidatesByFormula) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures | List of StructureCandidates the given &#39;formulaId&#39; with minimal information.
 *InfoApi* | [**getConnectionCheck**](docs/InfoApi.md#getConnectionCheck) | **GET** /api/connection-status | 
 *InfoApi* | [**getInfo**](docs/InfoApi.md#getInfo) | **GET** /api/info | 
@@ -256,6 +256,7 @@ Class | Method | HTTP request | Description
  - [SortObject](docs/SortObject.md)
  - [SpectralAlignmentType](docs/SpectralAlignmentType.md)
  - [SpectralLibraryMatch](docs/SpectralLibraryMatch.md)
+ - [SpectralLibraryMatchOptField](docs/SpectralLibraryMatchOptField.md)
  - [SpectralLibrarySearch](docs/SpectralLibrarySearch.md)
  - [SpectrumAnnotation](docs/SpectrumAnnotation.md)
  - [StructureCandidate](docs/StructureCandidate.md)

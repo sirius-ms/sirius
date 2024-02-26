@@ -20,10 +20,12 @@
 
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
+import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.projectspace.SpectralSearchResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.jackson.Jacksonized;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +36,9 @@ import java.util.List;
 @Builder
 @Jacksonized
 public class SpectralLibraryMatch {
+
+    @Schema(enumAsRef = true, name = "SpectralLibraryMatchOptField", nullable = true)
+    public enum OptField {none, referenceSpectrum}
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     public final Double similarity;
@@ -54,10 +59,17 @@ public class SpectralLibraryMatch {
 
     private final String splash;
 
+    private final String molecularFormula;
+    private final String adduct;
+    private final String exactMass;
     private final String smiles;
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     private final String candidateInChiKey;
+
+    @Schema(nullable = true)
+    @Setter
+    private BasicSpectrum referenceSpectrum;
 
     public static SpectralLibraryMatch of(@NotNull SpectralSearchResult.SearchResult result){
         return SpectralLibraryMatch.builder()

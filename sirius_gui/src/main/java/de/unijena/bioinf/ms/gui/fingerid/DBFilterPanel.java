@@ -108,7 +108,7 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
     }
 
     @Override
-    public void resultsChanged(InstanceBean datas, FingerprintCandidateBean sre, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
+    public void resultsChanged(InstanceBean elementsParent, FingerprintCandidateBean selectedElement, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
         reset();
     }
 

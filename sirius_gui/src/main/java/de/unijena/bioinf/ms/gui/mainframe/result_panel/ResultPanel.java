@@ -23,13 +23,13 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassBean;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassList;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
-import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintTable;
+import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.*;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaListHeaderPanel;
+import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CanopusPrediction;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,25 +53,20 @@ public class ResultPanel extends JTabbedPane {
     public final FingerprintPanel fpTab;
     public final CompoundClassPanel canopusTab;
 
-    public ResultPanel(final StructureList structureList, final FormulaList siriusResultElements, final CompoundList compoundList, SiriusGui gui) {
+    public ResultPanel(final StructureList structureList, final FormulaList siriusResultElements, final SpectralMatchList spectralMatchList, final CompoundList compoundList, SiriusGui gui) {
         super();
         this.setToolTipText("Results");
 
-        if (PropertyManager.getBoolean("de.unijena.bioinf.sirius.spectralAlignment.show", false)) {
-            spectralMatchingPanel = new SpectralMatchingPanel(compoundList);
-        } else {
-            spectralMatchingPanel = null;
-        }
-
+        spectralMatchingPanel = new SpectralMatchingPanel(spectralMatchList);
         formulasTab = new FormulaOverviewPanel(siriusResultElements);
 
 //        this.lcmsTab = new LCMSViewerPanel(siriusResultElements); //todo LCMS: reactivate if LCMS Data structures are done!
 
         structureAnnoTab = new EpimetheusPanel(structureList);
-        structuresTab = new CandidateListDetailViewPanel(this, compoundList, structureList, gui);
+        structuresTab = new CandidateListDetailViewPanel(this, structureList, gui);
         FingerprintPanel fpTabTmp;
         try {
-            fpTabTmp = new FingerprintPanel(new FingerprintTable(siriusResultElements, gui));
+            fpTabTmp = new FingerprintPanel(new FingerprintList(siriusResultElements, gui));
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
             fpTabTmp = null;
@@ -97,9 +92,7 @@ public class ResultPanel extends JTabbedPane {
         addTab("Structures", null, structuresTab, structuresTab.getDescription());
         addTab("Substructure Annotations", null, structureAnnoTab, structureAnnoTab.getDescription());
 
-        if (spectralMatchingPanel != null) {
-            addTab("Library Matches", null, spectralMatchingPanel, spectralMatchingPanel.getDescription());
-        }
+        addTab("Library Matches", null, spectralMatchingPanel, spectralMatchingPanel.getDescription());
 
         setSelectedIndex(1);
     }

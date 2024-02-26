@@ -170,7 +170,7 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
     private final Lock backgroundLoaderLock = new ReentrantLock();
 
     @Override
-    public void resultsChanged(InstanceBean experiment, FormulaResultBean sre, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
+    public void resultsChanged(InstanceBean elementsParent, FormulaResultBean selectedElement, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
         try {
             backgroundLoaderLock.lock();
             final JJob<Boolean> old = backgroundLoader;
@@ -183,8 +183,8 @@ public class CompoundClassDetailView extends JPanel implements ActiveElementChan
                     }
                     Jobs.runEDTAndWait(() -> clear());
                     checkForInterruption();
-                    if (sre != null) {
-                        Optional<CompoundClasses> res = sre.getCompoundClasses();
+                    if (selectedElement != null) {
+                        Optional<CompoundClasses> res = selectedElement.getCompoundClasses();
                         checkForInterruption();
                         if (res.isPresent())
                             Jobs.runEDTAndWait(() -> setPrediction(res.get()));

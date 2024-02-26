@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import de.unijena.bioinf.ms.nightsky.sdk.model.BasicSpectrum;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -34,8 +35,12 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SpectralLibraryMatch.JSON_PROPERTY_DB_ID,
   SpectralLibraryMatch.JSON_PROPERTY_UUID,
   SpectralLibraryMatch.JSON_PROPERTY_SPLASH,
+  SpectralLibraryMatch.JSON_PROPERTY_MOLECULAR_FORMULA,
+  SpectralLibraryMatch.JSON_PROPERTY_ADDUCT,
+  SpectralLibraryMatch.JSON_PROPERTY_EXACT_MASS,
   SpectralLibraryMatch.JSON_PROPERTY_SMILES,
-  SpectralLibraryMatch.JSON_PROPERTY_CANDIDATE_IN_CHI_KEY
+  SpectralLibraryMatch.JSON_PROPERTY_CANDIDATE_IN_CHI_KEY,
+  SpectralLibraryMatch.JSON_PROPERTY_REFERENCE_SPECTRUM
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class SpectralLibraryMatch {
@@ -60,11 +65,23 @@ public class SpectralLibraryMatch {
   public static final String JSON_PROPERTY_SPLASH = "splash";
   private String splash;
 
+  public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
+  private String molecularFormula;
+
+  public static final String JSON_PROPERTY_ADDUCT = "adduct";
+  private String adduct;
+
+  public static final String JSON_PROPERTY_EXACT_MASS = "exactMass";
+  private String exactMass;
+
   public static final String JSON_PROPERTY_SMILES = "smiles";
   private String smiles;
 
   public static final String JSON_PROPERTY_CANDIDATE_IN_CHI_KEY = "candidateInChiKey";
   private String candidateInChiKey;
+
+  public static final String JSON_PROPERTY_REFERENCE_SPECTRUM = "referenceSpectrum";
+  private BasicSpectrum referenceSpectrum;
 
   public SpectralLibraryMatch() {
   }
@@ -251,6 +268,84 @@ public class SpectralLibraryMatch {
   }
 
 
+  public SpectralLibraryMatch molecularFormula(String molecularFormula) {
+    
+    this.molecularFormula = molecularFormula;
+    return this;
+  }
+
+   /**
+   * Get molecularFormula
+   * @return molecularFormula
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getMolecularFormula() {
+    return molecularFormula;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_MOLECULAR_FORMULA)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setMolecularFormula(String molecularFormula) {
+    this.molecularFormula = molecularFormula;
+  }
+
+
+  public SpectralLibraryMatch adduct(String adduct) {
+    
+    this.adduct = adduct;
+    return this;
+  }
+
+   /**
+   * Get adduct
+   * @return adduct
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_ADDUCT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getAdduct() {
+    return adduct;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_ADDUCT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setAdduct(String adduct) {
+    this.adduct = adduct;
+  }
+
+
+  public SpectralLibraryMatch exactMass(String exactMass) {
+    
+    this.exactMass = exactMass;
+    return this;
+  }
+
+   /**
+   * Get exactMass
+   * @return exactMass
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_EXACT_MASS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getExactMass() {
+    return exactMass;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_EXACT_MASS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setExactMass(String exactMass) {
+    this.exactMass = exactMass;
+  }
+
+
   public SpectralLibraryMatch smiles(String smiles) {
     
     this.smiles = smiles;
@@ -302,6 +397,32 @@ public class SpectralLibraryMatch {
     this.candidateInChiKey = candidateInChiKey;
   }
 
+
+  public SpectralLibraryMatch referenceSpectrum(BasicSpectrum referenceSpectrum) {
+    
+    this.referenceSpectrum = referenceSpectrum;
+    return this;
+  }
+
+   /**
+   * Get referenceSpectrum
+   * @return referenceSpectrum
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_REFERENCE_SPECTRUM)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public BasicSpectrum getReferenceSpectrum() {
+    return referenceSpectrum;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_REFERENCE_SPECTRUM)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setReferenceSpectrum(BasicSpectrum referenceSpectrum) {
+    this.referenceSpectrum = referenceSpectrum;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -318,13 +439,17 @@ public class SpectralLibraryMatch {
         Objects.equals(this.dbId, spectralLibraryMatch.dbId) &&
         Objects.equals(this.uuid, spectralLibraryMatch.uuid) &&
         Objects.equals(this.splash, spectralLibraryMatch.splash) &&
+        Objects.equals(this.molecularFormula, spectralLibraryMatch.molecularFormula) &&
+        Objects.equals(this.adduct, spectralLibraryMatch.adduct) &&
+        Objects.equals(this.exactMass, spectralLibraryMatch.exactMass) &&
         Objects.equals(this.smiles, spectralLibraryMatch.smiles) &&
-        Objects.equals(this.candidateInChiKey, spectralLibraryMatch.candidateInChiKey);
+        Objects.equals(this.candidateInChiKey, spectralLibraryMatch.candidateInChiKey) &&
+        Objects.equals(this.referenceSpectrum, spectralLibraryMatch.referenceSpectrum);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(similarity, sharedPeaks, querySpectrumIndex, dbName, dbId, uuid, splash, smiles, candidateInChiKey);
+    return Objects.hash(similarity, sharedPeaks, querySpectrumIndex, dbName, dbId, uuid, splash, molecularFormula, adduct, exactMass, smiles, candidateInChiKey, referenceSpectrum);
   }
 
   @Override
@@ -338,8 +463,12 @@ public class SpectralLibraryMatch {
     sb.append("    dbId: ").append(toIndentedString(dbId)).append("\n");
     sb.append("    uuid: ").append(toIndentedString(uuid)).append("\n");
     sb.append("    splash: ").append(toIndentedString(splash)).append("\n");
+    sb.append("    molecularFormula: ").append(toIndentedString(molecularFormula)).append("\n");
+    sb.append("    adduct: ").append(toIndentedString(adduct)).append("\n");
+    sb.append("    exactMass: ").append(toIndentedString(exactMass)).append("\n");
     sb.append("    smiles: ").append(toIndentedString(smiles)).append("\n");
     sb.append("    candidateInChiKey: ").append(toIndentedString(candidateInChiKey)).append("\n");
+    sb.append("    referenceSpectrum: ").append(toIndentedString(referenceSpectrum)).append("\n");
     sb.append("}");
     return sb.toString();
   }

@@ -173,12 +173,6 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         }
     }
 
-
-    //todo nighsky needed?
-    public Optional<SpectralSearchResultBean> getSpectralSearchResults() {
-        return getParentInstance().getSpectralSearchResults();
-    }
-
     //id based info
     @NotNull
     public String getAdduct() {

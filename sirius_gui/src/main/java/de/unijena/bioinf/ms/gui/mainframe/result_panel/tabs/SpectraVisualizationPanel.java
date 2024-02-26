@@ -21,7 +21,6 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
@@ -39,6 +38,7 @@ import de.unijena.bioinf.ms.gui.dialogs.FilePresentDialog;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
+import de.unijena.bioinf.ms.gui.ms_viewer.SpectraViewContainer;
 import de.unijena.bioinf.ms.gui.ms_viewer.SpectraViewerConnector;
 import de.unijena.bioinf.ms.gui.ms_viewer.WebViewSpectraViewer;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
@@ -46,8 +46,6 @@ import de.unijena.bioinf.ms.gui.webView.WebViewIO;
 import de.unijena.bioinf.ms.nightsky.sdk.model.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.depict.DepictionGenerator;
@@ -104,7 +102,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
     MsData msData;
     IsotopePatternAnnotation isotopePatternAnnotation;
     AnnotatedMsMsData annotatedMsMsData;
-    String jsonSpectra;
+    SpectraViewContainer jsonSpectra;
 
     JComboBox<String> modesBox;
     JComboBox<String> ceBox;
@@ -193,16 +191,15 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                 if (spectrum != null) {
                     if (mode.equals(MS1_DISPLAY)) {
                         //match already extracted pattern to highlight peaks, remove patter from result
-                        ViewContainer<BasicSpectrum> ob = matchSpectra(spectrum, isotopePatternAnnotation != null ? isotopePatternAnnotation.getIsotopePattern() : null);
-                        if (ob.spectra.size() > 1 && ob.peakMatches.size() > 1) {
-                            ob.spectra.remove(1);
-                            ob.peakMatches.remove(1);
+                        SpectraViewContainer<BasicSpectrum> ob = matchSpectra(spectrum, isotopePatternAnnotation != null ? isotopePatternAnnotation.getIsotopePattern() : null);
+                        if (ob.getSpectra().size() > 1 && ob.getPeakMatches().size() > 1) {
+                            ob.getSpectra().remove(1);
+                            ob.getPeakMatches().remove(1);
                         }
-                        jsonSpectra = new ObjectMapper().writeValueAsString(ob);
+                        jsonSpectra = ob;
                     } else if (mode.equals(MS1_MIRROR_DISPLAY)) {
                         if (isotopePatternAnnotation != null && isotopePatternAnnotation.getSimulatedPattern() != null) {
-                            jsonSpectra = new ObjectMapper().writeValueAsString(matchSpectra(
-                                    spectrum, isotopePatternAnnotation.getSimulatedPattern()));
+                            jsonSpectra = matchSpectra(spectrum, isotopePatternAnnotation.getSimulatedPattern());
                         } else {
                             LoggerFactory.getLogger(getClass()).warn(MS1_MIRROR_DISPLAY + "was selected but no simulated pattern was available. Cannot show mirror plot!");
                         }
@@ -213,17 +210,17 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
             } else if (mode.equals(MS2_DISPLAY)) {
                 if (ce_index == -1) { //merged ms/ms
                     if (annotatedMsMsData != null && annotatedMsMsData.getMergedMs2() != null) {
-                        jsonSpectra = new ObjectMapper().writeValueAsString(ViewContainer.of(annotatedMsMsData.getMergedMs2()));
+                        jsonSpectra = SpectraViewContainer.of(annotatedMsMsData.getMergedMs2());
                         smiles = annotatedMsMsData.getMergedMs2().getSpectrumAnnotation().getStructureAnnotationSmiles();
                     } else
-                        jsonSpectra = new ObjectMapper().writeValueAsString(ViewContainer.of(msData.getMergedMs2()));
+                        jsonSpectra = SpectraViewContainer.of(msData.getMergedMs2());
                 } else {
                     if (annotatedMsMsData != null && !annotatedMsMsData.getMs2Spectra().isEmpty()) {
                         AnnotatedSpectrum spec = annotatedMsMsData.getMs2Spectra().get(ce_index);
-                        jsonSpectra = new ObjectMapper().writeValueAsString(ViewContainer.of(spec));
+                        jsonSpectra = SpectraViewContainer.of(spec);
                         smiles = spec.getSpectrumAnnotation().getStructureAnnotationSmiles();
                     } else
-                        jsonSpectra = new ObjectMapper().writeValueAsString(ViewContainer.of(msData.getMs2Spectra().get(ce_index)));
+                        jsonSpectra = SpectraViewContainer.of(msData.getMs2Spectra().get(ce_index));
                 }
             } else {
                 LoggerFactory.getLogger(getClass()).warn("Cannot draw spectra: Mode " + mode + " not (yet) supported!");
@@ -242,19 +239,19 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
         }
     }
 
-    private ViewContainer<BasicSpectrum> matchSpectra(@NotNull BasicSpectrum spectrum, @Nullable BasicSpectrum pattern) {
+    private SpectraViewContainer<BasicSpectrum> matchSpectra(@NotNull BasicSpectrum spectrum, @Nullable BasicSpectrum pattern) {
         if (pattern == null)
-            return ViewContainer.of(spectrum);
+            return SpectraViewContainer.of(spectrum);
         return matchSpectra(spectrum, pattern,
                 PropertyManager.DEFAULTS.createInstanceWithDefaults(MS1MassDeviation.class).massDifferenceDeviation);
     }
 
-    private ViewContainer<BasicSpectrum> matchSpectra(@NotNull BasicSpectrum spectrum,
-                                                      @NotNull BasicSpectrum pattern,
-                                                      @NotNull Deviation massDiffDev
+    private SpectraViewContainer<BasicSpectrum> matchSpectra(@NotNull BasicSpectrum spectrum,
+                                                             @NotNull BasicSpectrum pattern,
+                                                             @NotNull Deviation massDiffDev
     ) {
-        PeakMatch[] peakMatchesSpectrum = new PeakMatch[spectrum.getPeaks().size()];
-        PeakMatch[] peakMatchesPattern = new PeakMatch[pattern.getPeaks().size()];
+        SpectraViewContainer.PeakMatch[] peakMatchesSpectrum = new SpectraViewContainer.PeakMatch[spectrum.getPeaks().size()];
+        SpectraViewContainer.PeakMatch[] peakMatchesPattern = new SpectraViewContainer.PeakMatch[pattern.getPeaks().size()];
 
         WrapperSpectrum<de.unijena.bioinf.ms.nightsky.sdk.model.SimplePeak> pat = WrapperSpectrum.
                 of(pattern.getPeaks(), p -> p.getMz(), p -> p.getIntensity());
@@ -263,39 +260,16 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
         for (SimplePeak p : spectrum.getPeaks()) {
             int j = Spectrums.mostIntensivePeakWithin(pat, p.getMz(), massDiffDev);
             if (j >= 0) {
-                peakMatchesSpectrum[i] = new PeakMatch(j);
-                peakMatchesPattern[j] = new PeakMatch(i);
+                peakMatchesSpectrum[i] = new SpectraViewContainer.PeakMatch(j);
+                peakMatchesPattern[j] = new SpectraViewContainer.PeakMatch(i);
             }
             i++;
         }
 
-        return new ViewContainer<>(
+        return new SpectraViewContainer<>(
                 Stream.of(spectrum, pattern).collect(Collectors.toCollection(ArrayList::new)),
                 Stream.of(Arrays.asList(peakMatchesSpectrum), Arrays.asList(peakMatchesPattern))
                         .collect(Collectors.toCollection(ArrayList::new)));
-    }
-
-    @Getter
-    @AllArgsConstructor
-    static class PeakMatch {
-        // Peak matches *between* two spectra
-        int index;
-    }
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    @AllArgsConstructor
-    @Getter
-    static class ViewContainer<S> {
-        List<S> spectra;
-        List<List<PeakMatch>> peakMatches;
-
-        public static <S> ViewContainer<S> of(S spectrum) {
-            return of(List.of(spectrum));
-        }
-
-        public static <S> ViewContainer<S> of(List<S> spectra) {
-            return new ViewContainer<>(spectra, null);
-        }
     }
 
     private String makeSVG(String smiles) {
@@ -651,7 +625,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                         }
                     } else if (fff == FileFormat.json) {
                         try (BufferedWriter bw = Files.newBufferedWriter(fSelectedFile.toPath(), Charset.defaultCharset())) {
-                            bw.write(jsonSpectra);
+                            bw.write(new ObjectMapper().writeValueAsString(jsonSpectra));
                         }
                     }
                 } catch (Exception e2) {

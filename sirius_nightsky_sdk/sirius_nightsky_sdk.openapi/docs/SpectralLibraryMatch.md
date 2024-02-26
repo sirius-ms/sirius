@@ -15,8 +15,12 @@
 |**dbId** | **String** |  |  [optional] |
 |**uuid** | **String** |  |  |
 |**splash** | **String** |  |  [optional] |
+|**molecularFormula** | **String** |  |  [optional] |
+|**adduct** | **String** |  |  [optional] |
+|**exactMass** | **String** |  |  [optional] |
 |**smiles** | **String** |  |  [optional] |
 |**candidateInChiKey** | **String** |  |  |
+|**referenceSpectrum** | [**BasicSpectrum**](BasicSpectrum.md) |  |  [optional] |
 
 
 

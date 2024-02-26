@@ -99,7 +99,7 @@ class CompoundStructureImage extends JPanel {
             LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
         }
         renderer.getRenderer2DModel().set(BasicSceneGenerator.BackgroundColor.class, backgroundColor);
-        synchronized (molecule.candidate) {
+        synchronized (molecule.getCandidate()) {
             renderer.paint(molecule.getMolecule(), new AWTDrawVisitor(gg),
                     new Rectangle2D.Double(7, 14, 360, 185), true);
         }
@@ -116,7 +116,6 @@ class CompoundStructureImage extends JPanel {
             final int h = (int) (y + bound.getHeight());
             gg.drawString(fromulaString, x, h - 2);
         }
-//
 
         //todo change to gif
         final String scoreText = decimalFormat.format(molecule.getScore());

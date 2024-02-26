@@ -32,6 +32,7 @@ import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.sirius.Ms2Preprocessor;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
+import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.interfaces.IAtom;
@@ -65,6 +66,16 @@ public class Spectrums {
             spectrum.setPrecursorMz(sourceSpectra.iterator().next().getPrecursorMz());
         return spectrum;
     }
+
+    public static BasicSpectrum createMs2ReferenceSpectrum(@NotNull Ms2ReferenceSpectrum refSpec) {
+        BasicSpectrum spec = new BasicSpectrum(refSpec.getSpectrum());
+        spec.setMsLevel(2);
+        spec.setName(refSpec.getName());
+        spec.setPrecursorMz(refSpec.getPrecursorMz());
+        spec.setCollisionEnergy(refSpec.getCollisionEnergy());
+        return spec;
+    }
+
 
 
     public static BasicSpectrum createMs1(@NotNull Spectrum<Peak> spectrum) {

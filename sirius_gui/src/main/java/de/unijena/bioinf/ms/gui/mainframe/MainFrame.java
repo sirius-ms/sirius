@@ -39,6 +39,7 @@ import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListView;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListPanel;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
+import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.projectspace.InstanceImporter;
@@ -92,16 +93,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     // right side panel
     private FormulaList formulaList;
-
-    public FormulaList getFormulaList() {
-        return formulaList;
-    }
-
     private StructureList structureList;
+    private SpectralMatchList spectralMatchList;
 
-    public StructureList getStructureList() {
-        return structureList;
-    }
 
     private ResultPanel resultsPanel;
 
@@ -168,12 +162,13 @@ public class MainFrame extends JFrame implements DropTargetListener {
         compoundList = new CompoundList(gui);
         formulaList = new FormulaList(compoundList);
         structureList = new StructureList(compoundList);
+        spectralMatchList = new SpectralMatchList(compoundList);
 
 
         //CREATE VIEWS
         jobDialog = new JobDialog(this);
         // results Panel
-        resultsPanel = new ResultPanel(structureList, formulaList, compoundList, gui);
+        resultsPanel = new ResultPanel(structureList, formulaList, spectralMatchList, compoundList, gui);
         JPanel resultPanelContainer = new JPanel(new BorderLayout());
         resultPanelContainer.setBorder(BorderFactory.createEmptyBorder());
         resultPanelContainer.add(resultsPanel, BorderLayout.CENTER);

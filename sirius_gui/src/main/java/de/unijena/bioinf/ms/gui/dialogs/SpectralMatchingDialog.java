@@ -20,19 +20,19 @@
 package de.unijena.bioinf.ms.gui.dialogs;
 
 
-import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
-import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SpectralMatchingPanel;
+import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class SpectralMatchingDialog extends JDialog {
 
-    public SpectralMatchingDialog(Frame owner, final CompoundList compoundList, final FingerprintCandidateBean fingerprintCandidateBean) {
+    public SpectralMatchingDialog(Frame owner, @NotNull SpectralMatchList matchList) {
         super(owner, "Reference spectra", true);
         this.setLayout(new BorderLayout());
-        this.add(new SpectralMatchingPanel(compoundList, fingerprintCandidateBean), BorderLayout.CENTER);
+        this.add(new SpectralMatchingPanel(matchList), BorderLayout.CENTER);
     }
 
     @Override

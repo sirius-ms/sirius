@@ -37,8 +37,8 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.SpectralMatchingDialog;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.MolecularPropertyMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEditor;
-import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
+import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
@@ -54,10 +54,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -89,10 +86,9 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     private JTextField smartFilterTextField;
     private MolecularPropertyMatcherEditor molecularPropertyMatcherEditor;
 
-    private CompoundList compoundList;
     private ResultPanel resultPanel;
 
-    public CandidateListDetailView(ResultPanel resultPanel, CompoundList compoundList, StructureList sourceList, SiriusGui gui) {
+    public CandidateListDetailView(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui) {
         super(sourceList);
 
         getSource().addActiveResultChangedListener((experiment, sre, resultElements, selections) -> {
@@ -106,11 +102,10 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
         candidateList = new CandidateInnerList(new DefaultEventListModel<>(filteredSource));
 
-        this.compoundList = compoundList;
         this.resultPanel = resultPanel;
 
         ToolTipManager.sharedInstance().registerComponent(candidateList);
-        candidateList.setCellRenderer(new CandidateCellRenderer(compoundList, sourceList.csiScoreStats, this, gui));
+        candidateList.setCellRenderer(new CandidateCellRenderer(sourceList.csiScoreStats, this, gui));
         candidateList.setFixedCellHeight(-1);
         candidateList.setPrototypeCellValue(FingerprintCandidateBean.PROTOTYPE);
         final JScrollPane scrollPane = new JScrollPane(candidateList, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -232,9 +227,11 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                 return 0;
             }).getResult();
 
+            //select correct compound in annotated spectrum view.
             Jobs.runEDTLater(() -> {
                 resultPanel.setSelectedComponent(resultPanel.structureAnnoTab);
-                resultPanel.structureAnnoTab.getStructureList().getTopLevelSelectionModel().setSelectionInterval(idx, idx);
+                resultPanel.structureAnnoTab.getCandidateTable().getTable()
+                        .changeSelection(idx, 0, false, false);
             });
         }
     }
@@ -266,12 +263,12 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                 molecularPropertyMatcherEditor.highlightChanged(filterByMolecularPropertyButton.isSelected());
             }
 
-            if (candidate.referenceLabel.rect.contains(point.x, point.y)) {
-                clickOnDBLabel(candidate.referenceLabel, candidate);
-            }
+            if (candidate.bestRefMatchLabel != null && candidate.bestRefMatchLabel.rect.contains(point))
+                clickOnDBLabel(candidate.bestRefMatchLabel, candidate);
 
-            if (candidate.moreLabel.rect.contains(point.x, point.y)) {
-                clickOnMore(candidate);
+            if (candidate.moreRefMatchesLabel != null) {
+                if (candidate.moreRefMatchesLabel.contains(point))
+                    clickOnMore();
             }
 
             for (DatabaseLabel l : candidate.labels) {
@@ -287,9 +284,9 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         }
     }
 
-    private void clickOnMore(FingerprintCandidateBean candidate) {
+    private void clickOnMore() {
         Jobs.runEDTLater(() -> {
-            new SpectralMatchingDialog((Frame) SwingUtilities.getWindowAncestor(CandidateListDetailView.this), compoundList, candidate).setVisible(true);
+            new SpectralMatchingDialog((Frame) SwingUtilities.getWindowAncestor(CandidateListDetailView.this), new SpectralMatchList(source)).setVisible(true);
         });
     }
 
@@ -377,7 +374,6 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
     @Override
     public void mouseEntered(MouseEvent e) {
-
     }
 
     @Override
@@ -411,6 +407,54 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
         public CandidateInnerList(ListModel<FingerprintCandidateBean> dataModel) {
             super(dataModel);
+            addMouseMotionListener(new MouseAdapter() {
+                @Override
+                public void mouseMoved(MouseEvent e) {
+                    final Point point = e.getPoint();
+                    final int index = locationToIndex(point);
+                    if (index < 0) {
+                        setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+                        return;
+                    }
+
+                    final Rectangle relativeRect = getCellBounds(index, index);
+                    final FingerprintCandidateBean candidate = getModel().getElementAt(index);
+
+                    final FingerprintAgreement ag = candidate.substructures;
+                    if (ag != null) {
+                        int[] rowcol = calculateAgreementIndex(ag, relativeRect, point);
+                        if (rowcol != null) {
+                            OptionalInt in = candidate.substructures.indexAt(rowcol[0], rowcol[1]);
+                            if (in.isPresent()) {
+                                setCursor(new Cursor(Cursor.HAND_CURSOR));
+                                return;
+                            }
+                        }
+                    }
+
+                    //todo speclib: add hand curser if remote libs available
+//                    if (candidate.moreRefMatchesLabel != null && candidate.moreRefMatchesLabel.contains(point)) {
+//                        setCursor(new Cursor(Cursor.HAND_CURSOR));
+//                        return;
+//                    }
+                    if (candidate.moreRefMatchesLabel != null) {
+                        if (candidate.moreRefMatchesLabel.contains(point)) {
+                            setCursor(new Cursor(Cursor.HAND_CURSOR));
+                            return;
+                        }
+                    }
+
+                    DatabaseLabel databaseLabel = Arrays.stream(candidate.labels).filter(dl -> dl.contains(point)).findFirst().orElse(null);
+                    if (databaseLabel != null)
+                        if (databaseLabel.hasLinks()) {
+                            setCursor(new Cursor(Cursor.HAND_CURSOR));
+                            return;
+                        }
+
+                    //no clickable component
+                    setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+                }
+            });
         }
 
         @Override
@@ -427,27 +471,20 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                 int[] rowcol = calculateAgreementIndex(ag, relativeRect, point);
                 if (rowcol != null) {
                     OptionalInt in = candidate.substructures.indexAt(rowcol[0], rowcol[1]);
-                    if (in.isPresent()) {
-                        //todo separate detection of clickable components. This is too slow and hacky.
-                        setCursor(new Cursor(Cursor.HAND_CURSOR));
+                    if (in.isPresent())
                         return candidate.getPredictedFingerprint().getFingerprintVersion().getMolecularProperty(in.getAsInt()).getDescription() + "  (" + prob.format(candidate.getPredictedFingerprint().getProbability(in.getAsInt())) + " %)";
-                    }
-
                 }
             }
             //check location of data sources
-             DatabaseLabel databaseLabel = Arrays.stream(candidate.labels).filter(dl -> dl.contains(point)).findFirst().orElse(null);
-            if (databaseLabel != null) {
-                if (databaseLabel.hasLinks()) setCursor(new Cursor(Cursor.HAND_CURSOR));
+            DatabaseLabel databaseLabel = Arrays.stream(candidate.labels).filter(dl -> dl.contains(point)).findFirst().orElse(null);
+            if (databaseLabel != null)
                 return databaseLabel.getToolTipOrNull();
-            }
-            if (candidate.referenceLabel.contains(point) || candidate.moreLabel.contains(point)) {
-                setCursor(new Cursor(Cursor.HAND_CURSOR));
-                return null;
+
+            if (candidate.moreRefMatchesLabel != null) {
+                if (candidate.moreRefMatchesLabel.contains(point))
+                    return candidate.moreRefMatchesLabel.getToolTipOrNull();
             }
 
-            //no tooltip or clickable component
-            setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
             return null;
         }
     }

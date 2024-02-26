@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.ms.middleware.service.dbs;
 
-public interface StructureDatabaseService {
+import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 
+public interface ChemDbService {
+    WebWithCustomDatabase db();
 }

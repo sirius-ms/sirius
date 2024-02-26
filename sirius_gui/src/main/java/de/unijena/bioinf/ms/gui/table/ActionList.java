@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
@@ -53,8 +54,6 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
 
     protected ObservableElementList<E> elementList;
     protected DefaultEventSelectionModel<E> elementListSelectionModel;
-    protected DefaultEventSelectionModel<E> topLevelSelectionModel;
-
     private final ArrayList<E> elementData = new ArrayList<>();
     private final BasicEventList<E> basicElementList = new BasicEventList<>(elementData);
 
@@ -71,7 +70,6 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
         selectionType = strategy;
         elementList = new ObservableElementList<>(basicElementList, GlazedLists.beanConnector(cls));
         elementListSelectionModel = new DefaultEventSelectionModel<>(elementList);
-        topLevelSelectionModel = elementListSelectionModel;
         elementListSelectionModel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
 
@@ -98,18 +96,24 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
         });
     }
 
-    protected boolean refillElementsEDT(final Collection<E> toFillIn) throws InvocationTargetException, InterruptedException {
+    protected boolean refillElementsEDT(D parentDataObject, final Collection<E> toFillIn) throws InvocationTargetException, InterruptedException {
         AtomicBoolean ret = new AtomicBoolean();
-        Jobs.runEDTAndWait(() -> {
-            ret.set(refillElements(toFillIn));
-            if (!toFillIn.isEmpty())
-                try { // dirty hack to ensure this does not crash
-                    topLevelSelectionModel.setSelectionInterval(0, 0);
-                } catch (Exception e) {
-                    topLevelSelectionModel.clearSelection();
-                    //ignore
-                }
-        });
+        Jobs.runEDTAndWait(() -> writeData(oldData -> {
+            try {
+                setData(parentDataObject);
+                elementListSelectionModel.setValueIsAdjusting(true);
+                elementListSelectionModel.clearSelection();
+                ret.set(refillElements(toFillIn));
+                if (!elementList.isEmpty())
+                    try { // should not happen
+                        elementListSelectionModel.setSelectionInterval(0, 0);
+                    } catch (Exception e) {
+                        LoggerFactory.getLogger(getClass()).warn("Error when resetting selection for elementList");
+                    }
+            } finally {
+                elementListSelectionModel.setValueIsAdjusting(false);
+            }
+        }));
         return ret.get();
     }
 
@@ -119,14 +123,6 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
             return true;
         }
         return false;
-    }
-
-    public void setTopLevelSelectionModel(DefaultEventSelectionModel<E> topLevelSelectionModel) {
-        this.topLevelSelectionModel = topLevelSelectionModel;
-    }
-
-    public DefaultEventSelectionModel<E> getTopLevelSelectionModel() {
-        return topLevelSelectionModel;
     }
 
     @NotNull

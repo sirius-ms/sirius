@@ -33,7 +33,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
 public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends ActionList<E, D>> extends ActionListView<T> {
 
@@ -78,10 +78,6 @@ public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends Act
 
     protected void showCenterCard(@NotNull ActionList.ViewState name) {
         showCenterCard(name.name());
-        if (source.elementList.isEmpty())
-            filteredSelectionModel.clearSelection();
-        else
-            filteredSelectionModel.addSelectionInterval(0,0);
     }
 
     protected void showCenterCard(@NotNull String name) {

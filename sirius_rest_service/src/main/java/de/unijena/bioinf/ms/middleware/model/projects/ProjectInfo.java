@@ -53,11 +53,7 @@ import java.util.Objects;
 @Builder
 public final class ProjectInfo {
     @Schema(enumAsRef = true, name = "ProjectInfoOptField", nullable = true)
-    public enum OptField {
-        none,
-        compatibilityInfo,
-        sizeInformation
-    }
+    public enum OptField {none, compatibilityInfo, sizeInformation}
 
     /**
      * a user selected unique name of the project for easy access.

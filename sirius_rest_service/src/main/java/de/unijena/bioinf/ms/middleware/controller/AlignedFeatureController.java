@@ -19,6 +19,8 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
+import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.middleware.model.SearchQueryType;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
@@ -26,8 +28,12 @@ import de.unijena.bioinf.ms.middleware.model.features.FeatureImport;
 import de.unijena.bioinf.ms.middleware.model.features.AnnotatedMsMsData;
 import de.unijena.bioinf.ms.middleware.model.features.MsData;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
+import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
+import de.unijena.bioinf.ms.middleware.service.dbs.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
+import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.slf4j.LoggerFactory;
 import org.springdoc.api.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -50,10 +56,12 @@ public class AlignedFeatureController {
 
 
     private final ProjectsProvider<?> projectsProvider;
+    private final ChemDbService chemDbService;
 
     @Autowired
-    public AlignedFeatureController(ProjectsProvider<?> projectsProvider) {
+    public AlignedFeatureController(ProjectsProvider<?> projectsProvider, ChemDbService chemDbService) {
         this.projectsProvider = projectsProvider;
+        this.chemDbService = chemDbService;
     }
 
 
@@ -78,15 +86,14 @@ public class AlignedFeatureController {
 
 
     /**
-     *
      * @param projectId project-space to import into.
-     * @param features the feature data to be imported
+     * @param features  the feature data to be imported
      * @param optFields set of optional fields to be included. Use 'none' to override defaults.
      * @return the Features that have been imported with specified optional fields
      */
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<AlignedFeature> addAlignedFeatures(@PathVariable String projectId, @RequestBody List<FeatureImport> features,
-                                       @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
+                                                   @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId).addAlignedFeatures(features, removeNone(optFields));
     }
@@ -152,14 +159,25 @@ public class AlignedFeatureController {
      * @return Spectral library matches of this feature (aligned over runs).
      */
     @GetMapping(value = "/{alignedFeatureId}/spectral-library-matches", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<SpectralLibraryMatch> getStructureCandidates(
+    public Page<SpectralLibraryMatch> getSpectralLibraryMatches(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @ParameterObject Pageable pageable,
             @RequestParam(required = false) String searchQuery,
-            @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax
+            @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax,
+            @RequestParam(defaultValue = "") EnumSet<SpectralLibraryMatch.OptField> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId)
+        Page<SpectralLibraryMatch> matches = projectsProvider.getProjectOrThrow(projectId)
                 .findLibraryMatchesByFeatureId(alignedFeatureId, pageable);
+        if (matches != null && optFields.contains(SpectralLibraryMatch.OptField.referenceSpectrum))
+            matches.getContent().forEach(match -> {
+                try {
+                    Ms2ReferenceSpectrum spec = chemDbService.db().getReferenceSpectrum(CustomDataSources.getSourceFromName(match.getDbName()), match.getUuid(), true);
+                    match.setReferenceSpectrum(Spectrums.createMs2ReferenceSpectrum(spec));
+                } catch (ChemicalDatabaseException e) {
+                    LoggerFactory.getLogger(getClass()).error("Could not load Spectrum: " + match.getUuid(), e);
+                }
+            });
+        return matches;
     }
 
     /**
@@ -342,7 +360,7 @@ public class AlignedFeatureController {
     public AnnotatedSpectrum getFormulaAnnotatedSpectrum(@PathVariable String projectId,
                                                          @PathVariable String alignedFeatureId,
                                                          @PathVariable String formulaId,
-                                                         @RequestParam(defaultValue = "-1") int spectrumIndex ) {
+                                                         @RequestParam(defaultValue = "-1") int spectrumIndex) {
         AnnotatedSpectrum res = projectsProvider.getProjectOrThrow(projectId)
                 .findAnnotatedSpectrumByFormulaId(spectrumIndex, formulaId, alignedFeatureId);
         if (res == null)

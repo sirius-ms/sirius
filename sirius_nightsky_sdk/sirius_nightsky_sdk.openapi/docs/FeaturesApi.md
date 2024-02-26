@@ -20,10 +20,10 @@ All URIs are relative to *http://localhost:8080*
 | [**getLipidAnnotation**](FeaturesApi.md#getLipidAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation | Returns Lipid annotation (ElGordo) for the given formula result identifier. |
 | [**getMsData**](FeaturesApi.md#getMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/ms-data | Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; . |
 | [**getSiriusFragTree**](FeaturesApi.md#getSiriusFragTree) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-tree |  |
+| [**getSpectralLibraryMatches**](FeaturesApi.md#getSpectralLibraryMatches) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches | List of spectral library matches for the given &#39;alignedFeatureId&#39;. |
 | [**getStructureAnnotatedMsData**](FeaturesApi.md#getStructureAnnotatedMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-msmsdata | Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey. |
 | [**getStructureAnnotatedSpectrum**](FeaturesApi.md#getStructureAnnotatedSpectrum) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum | Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available. |
 | [**getStructureCandidates**](FeaturesApi.md#getStructureCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/structures | List of StructureCandidates for the given &#39;alignedFeatureId&#39; with minimal information. |
-| [**getStructureCandidates1**](FeaturesApi.md#getStructureCandidates1) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches | List of spectral library matches for the given &#39;alignedFeatureId&#39;. |
 | [**getStructureCandidatesByFormula**](FeaturesApi.md#getStructureCandidatesByFormula) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures | List of StructureCandidates the given &#39;formulaId&#39; with minimal information. |
 
 
@@ -1161,6 +1161,86 @@ No authorization required
 | **200** | OK |  -  |
 
 
+## getSpectralLibraryMatches
+
+> PageSpectralLibraryMatch getSpectralLibraryMatches(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax, optFields)
+
+List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+
+List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.FeaturesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8080");
+
+        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the structure candidates belong to.
+        Integer page = 0; // Integer | Zero-based page index (0..N)
+        Integer size = 20; // Integer | The size of the page to be returned
+        List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+        String searchQuery = "searchQuery_example"; // String | optional search query in specified format
+        SearchQueryType querySyntax = SearchQueryType.fromValue("LUCENE"); // SearchQueryType | query syntax used fpr searchQuery
+        List<SpectralLibraryMatchOptField> optFields = Arrays.asList(); // List<SpectralLibraryMatchOptField> | 
+        try {
+            PageSpectralLibraryMatch result = apiInstance.getSpectralLibraryMatches(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax, optFields);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling FeaturesApi#getSpectralLibraryMatches");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **alignedFeatureId** | **String**| feature (aligned over runs) the structure candidates belong to. | |
+| **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
+| **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
+| **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
+| **searchQuery** | **String**| optional search query in specified format | [optional] |
+| **querySyntax** | [**SearchQueryType**](.md)| query syntax used fpr searchQuery | [optional] [enum: LUCENE] |
+| **optFields** | [**List&lt;SpectralLibraryMatchOptField&gt;**](SpectralLibraryMatchOptField.md)|  | [optional] |
+
+### Return type
+
+[**PageSpectralLibraryMatch**](PageSpectralLibraryMatch.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Spectral library matches of this feature (aligned over runs). |  -  |
+
+
 ## getStructureAnnotatedMsData
 
 > AnnotatedMsMsData getStructureAnnotatedMsData(projectId, alignedFeatureId, formulaId, inchiKey)
@@ -1385,84 +1465,6 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | StructureCandidate of this feature (aligned over runs) candidate with specified optional fields. |  -  |
-
-
-## getStructureCandidates1
-
-> PageSpectralLibraryMatch getStructureCandidates1(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax)
-
-List of spectral library matches for the given &#39;alignedFeatureId&#39;.
-
-List of spectral library matches for the given &#39;alignedFeatureId&#39;.
-
-### Example
-
-```java
-// Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.FeaturesApi;
-
-public class Example {
-    public static void main(String[] args) {
-        ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
-
-        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
-        String projectId = "projectId_example"; // String | project-space to read from.
-        String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the structure candidates belong to.
-        Integer page = 0; // Integer | Zero-based page index (0..N)
-        Integer size = 20; // Integer | The size of the page to be returned
-        List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-        String searchQuery = "searchQuery_example"; // String | optional search query in specified format
-        SearchQueryType querySyntax = SearchQueryType.fromValue("LUCENE"); // SearchQueryType | query syntax used fpr searchQuery
-        try {
-            PageSpectralLibraryMatch result = apiInstance.getStructureCandidates1(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax);
-            System.out.println(result);
-        } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#getStructureCandidates1");
-            System.err.println("Status code: " + e.getCode());
-            System.err.println("Reason: " + e.getResponseBody());
-            System.err.println("Response headers: " + e.getResponseHeaders());
-            e.printStackTrace();
-        }
-    }
-}
-```
-
-### Parameters
-
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| project-space to read from. | |
-| **alignedFeatureId** | **String**| feature (aligned over runs) the structure candidates belong to. | |
-| **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
-| **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
-| **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
-| **searchQuery** | **String**| optional search query in specified format | [optional] |
-| **querySyntax** | [**SearchQueryType**](.md)| query syntax used fpr searchQuery | [optional] [enum: LUCENE] |
-
-### Return type
-
-[**PageSpectralLibraryMatch**](PageSpectralLibraryMatch.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: application/json
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Spectral library matches of this feature (aligned over runs). |  -  |
 
 
 ## getStructureCandidatesByFormula

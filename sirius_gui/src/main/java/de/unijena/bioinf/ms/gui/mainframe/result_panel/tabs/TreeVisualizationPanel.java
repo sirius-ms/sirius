@@ -20,10 +20,8 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 import com.google.common.util.concurrent.AtomicDouble;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
-import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
@@ -186,8 +184,8 @@ public class TreeVisualizationPanel extends JPanel
     private final Lock backgroundLoaderLock = new ReentrantLock();
 
     @Override
-    public void resultsChanged(InstanceBean experiment,
-                               FormulaResultBean sre,
+    public void resultsChanged(InstanceBean elementsParent,
+                               FormulaResultBean selectedElement,
                                List<FormulaResultBean> resultElements,
                                ListSelectionModel selections) {
 
@@ -202,14 +200,14 @@ public class TreeVisualizationPanel extends JPanel
                         if (old != null && !old.isFinished()) {
                             old.cancel(false);
                             old.getResult(); //await cancellation so that nothing strange can happen.
-                        }else if (sre != null && Objects.equals(sre.getFTreeJson().orElse(null), ftreeJson)) {
+                        }else if (selectedElement != null && Objects.equals(selectedElement.getFTreeJson().orElse(null), ftreeJson)) {
                             return false;
                         }
                         browser.clear();
                         checkForInterruption();
-                        if (sre != null) {
+                        if (selectedElement != null) {
                             // At som stage we can think about directly load the json representation vom the project space
-                            TreeVisualizationPanel.this.ftreeJson = sre.getFTreeJson().orElse(null);
+                            TreeVisualizationPanel.this.ftreeJson = selectedElement.getFTreeJson().orElse(null);
                             checkForInterruption();
                             if (ftreeJson != null) {
                                 checkForInterruption();
