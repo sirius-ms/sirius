@@ -258,11 +258,9 @@ public class FormulaSearchStrategy extends ConfigPanel {
         List<Element> possibleDetectableElements = new ArrayList<>(ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor().getSetOfPredictableElements());
         final FormulaSettings formulaSettings = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
 
-        JPanel panel = applyDefaultLayout(new JPanel());
-        JPanel flowPanel = new JPanel();
         final TwoColumnPanel filterFields = new TwoColumnPanel();
 
-        JLabel constraintsLabel = new JLabel("Formula constraints");
+        JLabel constraintsLabel = new JLabel("Allowed elements");
         JTextField enforcedTextBox = makeParameterTextField("FormulaSettings.enforced", formulaSettings.getEnforcedAlphabet().toString(), 20);
 
         JLabel autodetectLabel = new JLabel("Autodetect");
@@ -277,17 +275,20 @@ public class FormulaSearchStrategy extends ConfigPanel {
         }
         addDatabaseStrategyElementFilterSettings(filterFields, filterComponents);
 
+        int constraintsGridY = filterFields.both.gridy;
         filterFields.add(constraintsLabel, enforcedTextBox);
         if (isBatchDialog) {
             filterFields.add(autodetectLabel, detectableTextBox);
         }
 
-
-        JButton buttonEdit = new JButton("Customize Filter");
-        buttonEdit.setAlignmentX(CENTER_ALIGNMENT);
+        JButton buttonEdit = new JButton("…");  // Ellipsis symbol instead of ... because 1-char buttons don't get side insets
         buttonPanel.add(buttonEdit);
-        filterFields.add((Component) null, buttonPanel);
 
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = 2;
+        c.gridy = constraintsGridY;
+        c.gridheight = isBatchDialog ? 2 : 1;
+        filterFields.add(buttonPanel, c);
 
         buttonEdit.addActionListener(e -> {
             FormulaConstraints currentConstraints = FormulaConstraints.fromString(enforcedTextBox.getText());
@@ -309,16 +310,16 @@ public class FormulaSearchStrategy extends ConfigPanel {
         });
 
         if (!isBatchDialog) {
-            JButton buttonAutodetect = new JButton("Auto detect");
-            buttonAutodetect.setAlignmentX(CENTER_ALIGNMENT);
+            JButton buttonAutodetect = new JButton("Auto");
             buttonAutodetect.setToolTipText("Auto detectable element are: " + join(possibleDetectableElements));
             buttonAutodetect.addActionListener(e -> detectElements(enforcedTextBox));
             buttonPanel.add(buttonAutodetect);
         }
 
-        flowPanel.add(filterFields);
-        panel.add(new TextHeaderBoxPanel("Element Filter", flowPanel));
-        return panel;
+        JPanel elementFilterPanel = applyDefaultLayout(new JPanel());
+        elementFilterPanel.add(new TextHeaderBoxPanel("Element Filter", filterFields));
+
+        return elementFilterPanel;
     }
 
     private void addDefaultStrategyElementFilterSettings(TwoColumnPanel filterFields) {
