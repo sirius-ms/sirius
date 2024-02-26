@@ -74,6 +74,8 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
     private final DoubleListStats stats;
 
+    private final JLabel nameLabel;
+
     protected final CandidateListDetailView candidateJList; //todo remove me to make conversion complete
     private final SiriusGui gui;
 
@@ -83,8 +85,11 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         this.gui = gui;
         setLayout(new BorderLayout());
 
+        nameLabel = new JLabel("");
+        nameLabel.setFont(nameFont);
         image = new CompoundStructureImage();
         descriptionPanel = new DescriptionPanel();
+        add(nameLabel, BorderLayout.NORTH);
         add(image, BorderLayout.WEST);
         add(descriptionPanel, BorderLayout.CENTER);
 
@@ -92,7 +97,12 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
     @Override
     public Component getListCellRendererComponent(JList<? extends FingerprintCandidateBean> list, FingerprintCandidateBean value, int index, boolean isSelected, boolean cellHasFocus) {
-
+        if ((value.getName() != null) && (!"null".equalsIgnoreCase(value.getName()))) {
+           nameLabel.setText(value.getName());
+        }else {
+            nameLabel.setText("");
+        }
+        
         image.molecule = value;
         if (value != null && value.getScore() >= stats.getMax()) {
             image.backgroundColor = Colors.LIST_LIGHT_GREEN;
@@ -230,7 +240,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             setFont(font);
             setOpaque(false);
 
-            final TextLayout tlayout = new TextLayout(label.name(), font, new FontRenderContext(null, true, false));
+            final TextLayout tlayout = new TextLayout(label.name(), font, new FontRenderContext(null, false, false));
             final Rectangle2D r = tlayout.getBounds();
             final int X = (int) r.getWidth() + 2 * DB_LABEL_PADDING + 6;
             final int Y = (int) r.getHeight() + 2 * DB_LABEL_PADDING + (tight ? 6 : 10);
@@ -303,9 +313,9 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
             //NORTH
             {
-                inchi = new JLabel("", SwingConstants.LEFT);
-                inchi.setFont(nameFont);
-                add(inchi, BorderLayout.NORTH);
+//                inchi = new JLabel("", SwingConstants.LEFT);
+//                inchi.setFont(nameFont);
+//                add(inchi, BorderLayout.NORTH);
             }
             //CENTER
             {
@@ -345,7 +355,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
         public void setCompound(FingerprintCandidateBean value) {
             setFont(propertyFont);
-            inchi.setText(value.getInChiKey());
+//            inchi.setText(value.getInChiKey());
             databasePanel.setCompound(value);
             referenceMatchPanel.setCompound(value);
             ag.agreement = null;
@@ -361,7 +371,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
     }
 
     public class ReferenceMatchPanel extends JPanel {
-        private JPanel innerBox = null;
+        private Box innerBox = null;
 
         public ReferenceMatchPanel() {
             super(new BorderLayout());
@@ -372,21 +382,27 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             if (innerBox != null)
                 remove(innerBox);
             if (value != null && value.bestRefMatchLabel != null) {
-                innerBox = new JPanel(new BorderLayout());
+                innerBox = Box.createVerticalBox();
+                innerBox.setAlignmentY(Component.TOP_ALIGNMENT);
+                innerBox.setAlignmentX(Component.CENTER_ALIGNMENT);
                 innerBox.setOpaque(false);
 
-                JLabel refLabel = new JLabel("Reference Spectra", SwingConstants.LEFT);
+                JLabel refLabel = new JLabel("Reference Spectra");
                 refLabel.setHorizontalTextPosition(SwingConstants.LEFT);
                 refLabel.setFont(headlineFont);
+                innerBox.add(refLabel);
+                innerBox.add(Box.createVerticalStrut(2));
+                LabelPanel lp = new LabelPanel(Colors.DB_CUSTOM, value.bestRefMatchLabel, false);
+                lp.setAlignmentX(Component.CENTER_ALIGNMENT);
+                innerBox.add(lp);
 
-                innerBox.add(refLabel, BorderLayout.NORTH);
-                innerBox.add(new LabelPanel(Colors.DB_CUSTOM, value.bestRefMatchLabel, false), BorderLayout.CENTER);
 
                 // check if we have more matches
                 if (value.moreRefMatchesLabel != null)
-                    innerBox.add(new LabelPanel(value.moreRefMatchesLabel), BorderLayout.SOUTH);
+                    innerBox.add(new LabelPanel(value.moreRefMatchesLabel));
+                innerBox.add(Box.createVerticalGlue());
 
-                add(innerBox, BorderLayout.CENTER);
+                add(innerBox, BorderLayout.NORTH);
             }
         }
     }

@@ -103,10 +103,7 @@ class CompoundStructureImage extends JPanel {
             renderer.paint(molecule.getMolecule(), new AWTDrawVisitor(gg),
                     new Rectangle2D.Double(7, 14, 360, 185), true);
         }
-        if ((molecule.getName() != null) && (!"null".equalsIgnoreCase(molecule.getName()))) {
-            gg.setFont(nameFont);
-            gg.drawString(molecule.getName(), 3, 16);
-        }
+
         gg.setFont(rankFont);
         final String fromulaString = molecule.getMolecularFormula();
         final Rectangle2D bound = gg.getFontMetrics().getStringBounds(fromulaString, gg);
