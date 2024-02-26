@@ -4,19 +4,24 @@ import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
 import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ElementSelectionDialog;
+import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.sirius.Ms1Preprocessor;
+import de.unijena.bioinf.sirius.ProcessedInput;
 
 import javax.swing.*;
 import java.awt.*;
@@ -255,7 +260,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
     }
 
     private JPanel createElementFilterPanel() {
-        List<Element> possibleDetectableElements = new ArrayList<>(ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor().getSetOfPredictableElements());
+        Set<Element> autoDetectableElements = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor().getSetOfPredictableElements();
         final FormulaSettings formulaSettings = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
 
         final TwoColumnPanel filterFields = new TwoColumnPanel();
@@ -292,15 +297,15 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         buttonEdit.addActionListener(e -> {
             FormulaConstraints currentConstraints = FormulaConstraints.fromString(enforcedTextBox.getText());
-            Collection<Element> currentAuto = null;
+            Set<Element> currentAuto = null;
             if (isBatchDialog) {
                 try {
                     currentAuto = ChemicalAlphabet.fromString(detectableTextBox.getText()).toSet();
                 } catch (UnknownElementException ex) {
-                    currentAuto = possibleDetectableElements;
+                    currentAuto = autoDetectableElements;
                 }
             }
-            ElementSelectionDialog dialog = new ElementSelectionDialog(owner, "Filter Elements", isBatchDialog ? possibleDetectableElements : null, currentAuto, currentConstraints);
+            ElementSelectionDialog dialog = new ElementSelectionDialog(owner, "Filter Elements", isBatchDialog ? autoDetectableElements : null, currentAuto, currentConstraints);
             if (dialog.isSuccess()) {
                 enforcedTextBox.setText(dialog.getConstraints().toString());
                 if (isBatchDialog) {
@@ -311,8 +316,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         if (!isBatchDialog) {
             JButton buttonAutodetect = new JButton("Auto");
-            buttonAutodetect.setToolTipText("Auto detectable element are: " + join(possibleDetectableElements));
-            buttonAutodetect.addActionListener(e -> detectElements(enforcedTextBox));
+            buttonAutodetect.setToolTipText("Auto detectable element are: " + join(autoDetectableElements));
+            buttonAutodetect.addActionListener(e -> detectElements(autoDetectableElements, enforcedTextBox));
             buttonPanel.add(buttonAutodetect);
         }
 
@@ -360,36 +365,35 @@ public class FormulaSearchStrategy extends ConfigPanel {
         useElementFilter.addActionListener(e -> filterComponents.forEach(c -> c.setVisible(useElementFilter.isSelected())));
     }
 
-    private String join(List<?> objects) {
+    private String join(Collection<?> objects) {
         return objects.stream().map(Object::toString).collect(Collectors.joining(","));
     }
 
-    protected void detectElements(JTextField formulaConstraintsTextBox) {
-//        String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
-//        InstanceBean ec = ecs.get(0);
-//        if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
-//            Jobs.runInBackgroundAndLoad(owner, "Detecting Elements...", () -> {
-//                final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
-//                ProcessedInput pi = pp.preprocess(new MutableMs2Experiment(ec.getExperiment(), false));
-//
-//                pi.getAnnotation(FormulaConstraints.class).
-//                        ifPresentOrElse(c -> {
-//                                    for (Element element : c.getChemicalAlphabet()) {
-//                                        if (c.getUpperbound(element) <= 0) {
-//                                            c.setLowerbound(element, 0);
-//                                            c.setUpperbound(element, 0);
-//                                        }
-//                                    }
-//                                    elementPanel.setSelectedElements(c);
-//                                },
-//                                () -> new ExceptionDialog(owner, notWorkingMessage)
-//                        );
-//            }).getResult();
-//        } else {
-//            new ExceptionDialog(owner, notWorkingMessage);
-//        }
-    }
+    protected void detectElements(Set<Element> autoDetectable, JTextField formulaConstraintsTextBox) {
+        String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
+        FormulaConstraints currentConstraints = FormulaConstraints.fromString(formulaConstraintsTextBox.getText());
+        InstanceBean ec = ecs.get(0);
+        if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
+            Jobs.runInBackgroundAndLoad(owner, "Detecting Elements...", () -> {
+                final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
+                ProcessedInput pi = pp.preprocess(new MutableMs2Experiment(ec.getExperiment(), false));
 
+                pi.getAnnotation(FormulaConstraints.class).
+                        ifPresentOrElse(c -> {
+                                    for (Element element : c.getChemicalAlphabet()) {
+                                        if (autoDetectable.contains(element)) {
+                                            currentConstraints.setBound(element, c.getLowerbound(element), c.getUpperbound(element));
+                                        }
+                                    }
+                                    formulaConstraintsTextBox.setText(currentConstraints.toString());
+                                },
+                                () -> new ExceptionDialog(owner, notWorkingMessage)
+                        );
+            }).getResult();
+        } else {
+            new ExceptionDialog(owner, notWorkingMessage);
+        }
+    }
 
     public List<CustomDataSources.Source> getFormulaSearchDBs() {
         return searchDBList.checkBoxList.getCheckedItems();
