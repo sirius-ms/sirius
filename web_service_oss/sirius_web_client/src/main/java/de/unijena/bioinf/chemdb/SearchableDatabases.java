@@ -33,17 +33,16 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static de.unijena.bioinf.chemdb.custom.CustomDataSources.PROP_KEY;
 import static de.unijena.bioinf.chemdb.custom.CustomDataSources.getCustomDatabaseDirectory;
 
 public class SearchableDatabases {
-    SearchableDatabases() {
-
-    }
+    private SearchableDatabases() {}
 
     public static CustomDatabase getCustomDatabaseByNameOrThrow(@NotNull String name, FingerprintVersion version) {
         return getCustomDatabaseByName(name, version).
@@ -86,32 +85,9 @@ public class SearchableDatabases {
         }
     }
 
-
     @NotNull
-    public static SearchableDatabase getDatabaseByNameOrThrow(@NotNull String name, FingerprintVersion version) {
-        return getDatabaseByName(name, version)
-                .orElseThrow(() -> new IllegalArgumentException("Database with name: " + name + " does not exist!"));
-    }
-
-    @NotNull
-    public static Optional<? extends SearchableDatabase> getDatabaseByName(@NotNull String name, FingerprintVersion version) {
-        final DataSource source = DataSources.getSourceFromNameOrNull(name);
-        if (source != null)
-            return Optional.of(new SearchableWebDB(source.realName, source.flag()));
-        return getCustomDatabaseByName(name, version);
-    }
-
-    @NotNull
-    public static Optional<? extends SearchableDatabase> getDatabase(@NotNull String nameOrPath, FingerprintVersion version) {
-        Optional<? extends SearchableDatabase> it = getDatabaseByName(nameOrPath, version);
-        if (it.isEmpty())
-            it = getCustomDatabaseByPath(Path.of(nameOrPath), version);
-        return it;
-    }
-
-    @NotNull
-    public static CustomDatabase getCustomDatabaseBySource(@NotNull CustomDataSources.Source db, FingerprintVersion version) {
-        return getCustomDatabaseByPathOrThrow(Path.of(db.id()), version);
+    public static CustomDatabase getCustomDatabaseBySource(@NotNull CustomDataSources.CustomSource db, FingerprintVersion version) {
+        return getCustomDatabaseByPathOrThrow(Path.of(db.location()), version);
     }
 
     @NotNull
@@ -122,17 +98,6 @@ public class SearchableDatabases {
     @NotNull
     public static List<CustomDatabase> getCustomDatabases(final boolean up2date, FingerprintVersion version) {
         return loadCustomDatabases(up2date, version);
-    }
-
-    @NotNull
-    public static List<SearchableDatabase> getAvailableDatabases(FingerprintVersion version) {
-        final List<SearchableDatabase> db = Stream.of(DataSource.values())
-                .map(DataSource::realName)
-                .map(name -> getDatabaseByNameOrThrow(name, version)).collect(Collectors.toList());
-
-        Collections.swap(db, 2, DataSource.BIO.ordinal()); //just to put bio on index 3
-        db.addAll(getCustomDatabases(version));
-        return db;
     }
 
     @NotNull

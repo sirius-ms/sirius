@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
@@ -141,7 +142,25 @@ public class CompoundCandidate {
     }
 
     public @NotNull Multimap<String, String> getLinkedDatabases() {
-        return DataSources.getLinkedDataSources(this);
+        Set<String> names = new HashSet<>();
+        for (DataSource s : DataSource.valuesNoALL()) {
+            if ((bitset & s.flag) == s.flag) {
+                names.add(s.name());
+            }
+        }
+
+        Multimap<String, String> databases = ArrayListMultimap.create(names.size(), 1);
+        if (links != null) {
+            for (DBLink link : links) {
+                databases.put(link.name, link.id);
+            }
+        }
+
+        for (String aname : names)
+            if (!databases.containsKey(aname))
+                databases.put(aname, null);
+
+        return databases;
     }
 
     public String getSmiles() {

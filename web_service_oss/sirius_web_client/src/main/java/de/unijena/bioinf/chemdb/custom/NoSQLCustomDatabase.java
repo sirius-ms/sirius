@@ -25,7 +25,6 @@ import de.unijena.bioinf.chemdb.ChemicalNoSQLDatabase;
 import de.unijena.bioinf.chemdb.WriteableChemicalDatabase;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
-import de.unijena.bioinf.storage.blob.Compressible;
 
 import java.io.IOException;
 import java.util.List;
@@ -41,17 +40,15 @@ public class NoSQLCustomDatabase<Doctype, DB extends ChemicalNoSQLDatabase<Docty
 
     @Override
     public String name() {
-        return database.name();
+        String n = super.name();
+        if (n != null)
+            return n;
+        return database.getName();
     }
 
     @Override
     public void deleteDatabase() {
         throw new UnsupportedOperationException("Please use CustomDatabaseFactory.delete()!");
-    }
-
-    @Override
-    public Compressible.Compression compression() {
-        return Compressible.Compression.NONE;
     }
 
     @Override

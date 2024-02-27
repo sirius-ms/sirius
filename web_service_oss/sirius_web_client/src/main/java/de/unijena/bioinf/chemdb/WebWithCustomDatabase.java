@@ -267,7 +267,7 @@ public class WebWithCustomDatabase {
         CustomDatabase cdb = customDatabases.get(db.name());
         if (cdb == null) {
             try {
-                cdb = SearchableDatabases.getCustomDatabaseBySource(db, api.getCDKChemDBFingerprintVersion());
+                cdb = SearchableDatabases.getCustomDatabaseBySource((CustomDataSources.CustomSource) db, api.getCDKChemDBFingerprintVersion());
                 customDatabases.put(db.name(), cdb);
             } catch (IOException e) {
                 throw new RuntimeException(e);

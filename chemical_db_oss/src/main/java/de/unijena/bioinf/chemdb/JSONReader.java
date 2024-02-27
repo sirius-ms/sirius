@@ -38,9 +38,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class JSONReader extends CompoundReader {
+    private static final Map<String, String> REALNAME_TO_NAME = Arrays.stream(DataSource.values()).collect(Collectors.toMap(DataSource::realName, Enum::name));
+
     public static List<FingerprintCandidate> fromJSONList(FingerprintVersion version, InputStream in) throws IOException {
         final List<FingerprintCandidate> compounds = new ArrayList<>();
         final MaskedFingerprintVersion mv = (version instanceof MaskedFingerprintVersion) ? (MaskedFingerprintVersion) version : MaskedFingerprintVersion.buildMaskFor(version).enableAll().toMask();
@@ -213,7 +218,8 @@ public class JSONReader extends CompoundReader {
                             jsonToken = p.nextToken();
                             if (jsonToken == JsonToken.END_OBJECT) break;
                             else {
-                                String linkName = p.currentName();
+                                String tmp = p.currentName();
+                                String linkName = REALNAME_TO_NAME.getOrDefault(tmp, tmp); //TODO: nightsky DIRTY HACK TO TRANFORM OLD DB FLAGS FROM CHEMDB UNTIL IT IS RE-EXPORTED
                                 if (p.nextToken() != JsonToken.START_ARRAY)
                                     throw new IOException("malformed json. expected array"); // array start
                                 do {
