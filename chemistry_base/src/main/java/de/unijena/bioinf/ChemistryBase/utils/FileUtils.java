@@ -48,6 +48,11 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 public class FileUtils {
 
+    public static String sanitizeFilename(String inputName) {
+        return inputName.replaceAll("[^a-zA-Z0-9-_.]", "_");
+    }
+
+
     public static long getFolderSizeOrThrow(Path startPath) {
         try {
             return getFolderSize(startPath);

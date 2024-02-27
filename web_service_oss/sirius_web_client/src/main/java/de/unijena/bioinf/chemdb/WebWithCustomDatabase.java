@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
+import de.unijena.bioinf.chemdb.custom.CustomDatabases;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.blob.BlobStorage;
@@ -55,9 +56,7 @@ import java.util.stream.StreamSupport;
 public class WebWithCustomDatabase {
     protected static Logger logger = LoggerFactory.getLogger(WebWithCustomDatabase.class);
 
-
     protected final Path directory;
-    protected final HashMap<String, CustomDatabase> customDatabases;
     protected BlobStorage restCache;
 
     protected final WebAPI<?> api;
@@ -66,7 +65,6 @@ public class WebWithCustomDatabase {
         this.api = api;
         this.directory = dir;
         this.restCache = dbCache;
-        this.customDatabases = new HashMap<>();
     }
 
     public void checkCache() throws IOException {
@@ -98,8 +96,9 @@ public class WebWithCustomDatabase {
     }
 
     private static OptionalLong extractFilterBits(Collection<CustomDataSources.Source> dbs) {
-        return dbs.stream().filter(CustomDataSources.Source::noCustomSource). //todo db-convert why os this filtered?
-                mapToLong(CustomDataSources.Source::searchFlag).reduce((a, b) -> a | b);
+        return dbs.stream().filter(CustomDataSources.Source::noCustomSource)
+                .mapToLong(s -> ((CustomDataSources.EnumSource) s).source().searchFlag) //todo nightsky: why is searchFlag used here I think it is only of interest for dbs that cannot be searched
+                .reduce((a, b) -> a | b);
     }
 
 
@@ -245,6 +244,7 @@ public class WebWithCustomDatabase {
                 .map(CustomDatabase::toChemDB)
                 .flatMap(Optional::stream).toList();
     }
+
     private List<AbstractChemicalDatabase> extractReqCustomStructureDBs(Collection<CustomDataSources.Source> dbs) {
         return dbs.stream()
                 .filter(CustomDataSources.Source::isCustomSource)
@@ -261,19 +261,14 @@ public class WebWithCustomDatabase {
                 .flatMap(Optional::stream).toList();
     }
 
-    private synchronized CustomDatabase asCustomDB(CustomDataSources.Source db) {
+    private CustomDatabase asCustomDB(CustomDataSources.Source db) {
         if (db.noCustomSource())
             throw new IllegalArgumentException("Requested DB is not a custom DB!");
-        CustomDatabase cdb = customDatabases.get(db.name());
-        if (cdb == null) {
-            try {
-                cdb = SearchableDatabases.getCustomDatabaseBySource((CustomDataSources.CustomSource) db, api.getCDKChemDBFingerprintVersion());
-                customDatabases.put(db.name(), cdb);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+        try {
+            return CustomDatabases.getCustomDatabaseBySource((CustomDataSources.CustomSource) db, api.getCDKChemDBFingerprintVersion());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        return cdb;
     }
 
 
