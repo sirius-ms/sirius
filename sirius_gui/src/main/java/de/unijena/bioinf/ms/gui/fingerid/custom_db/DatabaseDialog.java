@@ -20,9 +20,8 @@
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
 import de.unijena.bioinf.chemdb.SearchableDatabase;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
-import de.unijena.bioinf.chemdb.custom.CustomDatabaseFactory;
+import de.unijena.bioinf.chemdb.custom.CustomDatabases;
 import de.unijena.bioinf.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
@@ -194,7 +193,7 @@ public class DatabaseDialog extends JDialog {
                     JOptionPane.showMessageDialog(this, "A different database with name " + file.getName() + " already exists.", "" , JOptionPane.ERROR_MESSAGE);
                 } else {
                     try {
-                        CustomDatabase newDb = SearchableDatabases.loadCustomDatabaseFromLocation(file.getAbsolutePath(), true, ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion()); //todo nightsky: change to db api
+                        CustomDatabase newDb = CustomDatabases.open(file.getAbsolutePath(), true, ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion()); //todo nightsky: change to db api
                         CustomDBOptions.writeDBProperties(); //todo nightsky: replace with api
                         whenCustomDbIsAdded(newDb.storageLocation());
                     } catch (IOException ex) {
@@ -237,7 +236,7 @@ public class DatabaseDialog extends JDialog {
     }
 
     private void loadDatabaseList() {
-        customDatabases = Jobs.runInBackgroundAndLoad(getOwner(), "Loading DBs...", () -> SearchableDatabases.getCustomDatabases(ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion())).getResult(); //todo nightsky: replace with api version
+        customDatabases = Jobs.runInBackgroundAndLoad(getOwner(), "Loading DBs...", () -> CustomDatabases.getCustomDatabases(ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion())).getResult(); //todo nightsky: replace with api version
         customDatabases.sort(Comparator.comparing(SearchableDatabase::name));
         dbList.setListData(customDatabases.toArray(new CustomDatabase[0]));
     }
@@ -267,7 +266,7 @@ public class DatabaseDialog extends JDialog {
                 content.setText("No Database selected.");
                 content.setToolTipText(null);
             } else if (c.getStatistics().getCompounds() > 0) {
-                content.setText("<html><b>" + c.name() + "</b>"
+                content.setText("<html><b>" + c.displayName() + "</b>"
                         + "<br><b>"
                         + c.getStatistics().getCompounds() + "</b> compounds with <b>" + c.getStatistics().getFormulas()
                         + "</b> different molecular formulas"
@@ -288,7 +287,7 @@ public class DatabaseDialog extends JDialog {
 
         @Override
         public boolean accept(File f) {
-            return f.isDirectory() || f.getName().endsWith(CustomDatabaseFactory.NOSQL_SUFFIX);
+            return f.isDirectory() || f.getName().endsWith(CustomDatabases.NOSQL_SUFFIX);
         }
 
         @Override

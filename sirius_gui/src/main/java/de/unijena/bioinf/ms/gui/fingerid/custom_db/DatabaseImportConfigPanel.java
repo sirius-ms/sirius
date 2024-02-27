@@ -1,7 +1,7 @@
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
-import de.unijena.bioinf.chemdb.custom.CustomDatabaseFactory;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
@@ -22,13 +22,16 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.dnd.DropTarget;
 import java.awt.dnd.DropTargetDropEvent;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static de.unijena.bioinf.chemdb.custom.CustomDatabases.NOSQL_SUFFIX;
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isLoggedIn;
 
@@ -50,6 +53,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
     private final JLabel loginErrorLabel = new JLabel();
 
     private final SiriusGui gui;
+
     public DatabaseImportConfigPanel(@NotNull SiriusGui gui, @Nullable CustomDatabase db, Set<String> existingNames) {
         super(CustomDBOptions.class);
         this.gui = gui;
@@ -77,17 +81,19 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         final TwoColumnPanel smalls = new TwoColumnPanel();
 
         dbDisplayNameField = new PlaceholderTextField("");
-        smalls.addNamed("DB display", dbDisplayNameField);
+        smalls.addNamed("Name", dbDisplayNameField, GuiUtils.formatToolTip("Displayable name of the custom database. " +
+                "This is the preferred name to be shown in the GUI. Maximum Length: 15 characters. " +
+                "If not given the filename will be used."));
         parameterBindings.put("displayName", dbDisplayNameField::getText);
         dbNameField = new PlaceholderTextField("");
-        smalls.addNamed("DB name", dbNameField);
+        smalls.addNamed("Filename", dbNameField, GuiUtils.formatToolTip("Filename and unique identifier of the new custom database, should end in " + NOSQL_SUFFIX));
         parameterBindings.put("name", dbNameField::getText);
 
         String dbDirectory = db != null ? Path.of(db.storageLocation()).getParent().toString()
                 : PropertyManager.getProperty(SiriusProperties.DEFAULT_SAVE_DIR_PATH, null, "");
 
         dbLocationField = new FileChooserPanel(dbDirectory, JFileChooser.DIRECTORIES_ONLY);
-        smalls.addNamed("DB location", dbLocationField);
+        smalls.addNamed("Location", dbLocationField, "The directory where the custom database file will be stored.");
         parameterBindings.put("location", this::getDbFilePath);
         validDbDirectory = !dbDirectory.isEmpty();
 
@@ -100,29 +106,32 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
             validDbName = true;
             validDbDisplayName = true;
         } else {
-//            dbDisplayNameField.setPlaceholder("[OPTIONAL]");
-            dbNameField.setPlaceholder("my_database" + CustomDatabaseFactory.NOSQL_SUFFIX);
+            dbDisplayNameField.setPlaceholder("My Database");
+            dbNameField.setPlaceholder("my_database" + NOSQL_SUFFIX);
         }
 
-        dbDisplayNameField.setToolTipText("Displayable name of the custom database. " +
-                "This is the preferred name to be shown in the GUI. Maximum Length: 15 characters. " +
-                "If not given name will be used.");
-        dbNameField.setToolTipText("Filename for the new custom database, should end in " + CustomDatabaseFactory.NOSQL_SUFFIX);
+        dbDisplayNameField.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusLost(FocusEvent e) {
+                String name = dbDisplayNameField.getText();
+
+                if (dbNameField.getText() == null || dbNameField.getText().isBlank()) {
+                    if (!name.isBlank()) {
+                        name = FileUtils.sanitizeFilename(name).toLowerCase();
+                        if (!name.endsWith(NOSQL_SUFFIX))
+                            name = name + NOSQL_SUFFIX;
+                        dbNameField.setText(name);
+                    }
+                }
+            }
+        });
 
         dbNameField.addFocusListener(new FocusAdapter() {
             @Override
             public void focusLost(FocusEvent e) {
                 String name = dbNameField.getText();
-                if (!name.isBlank()) {
-                    if (!name.endsWith(CustomDatabaseFactory.NOSQL_SUFFIX)) {
-                        dbNameField.setText(name + CustomDatabaseFactory.NOSQL_SUFFIX);
-                    }
-                    if (dbDisplayNameField.getText() == null || dbDisplayNameField.getText().isBlank()) {
-                        String displayName = name.endsWith(CustomDatabaseFactory.NOSQL_SUFFIX)
-                                ? name.substring(0, name.length() - CustomDatabaseFactory.NOSQL_SUFFIX.length())
-                                : name;
-                        dbDisplayNameField.setText(displayName.substring(0, Math.min(15, displayName.length())));
-                    }
+                if (!name.isBlank() && !name.endsWith(NOSQL_SUFFIX)) {
+                    dbNameField.setText(name + NOSQL_SUFFIX);
                 }
             }
         });
@@ -155,7 +164,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
                 if (name == null || name.isBlank()) {
                     error = "DB name missing";
                 } else if (existingNames.contains(name)
-                        || (!name.endsWith(CustomDatabaseFactory.NOSQL_SUFFIX) && existingNames.contains(name + CustomDatabaseFactory.NOSQL_SUFFIX))) {
+                        || (!name.endsWith(NOSQL_SUFFIX) && existingNames.contains(name + NOSQL_SUFFIX))) {
                     error = "This name is already in use";
                 }
                 if (validDbName != (error == null)) {
@@ -219,7 +228,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
 
         Border border = BorderFactory.createCompoundBorder(
                 BorderFactory.createEmptyBorder(10, 0, 0, 0),
-                BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Drop or add compound files")
+                BorderFactory.createTitledBorder(BorderFactory.createEtchedBorder(), "Drop or add compound and/or spectra files")
         );
         box.setBorder(border);
 
