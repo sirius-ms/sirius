@@ -271,7 +271,7 @@ public class MzMLParser implements LCMSParser {
                     if (scanConsumer != null) {
                         Scan scan = Scan.builder()
                                 .runId(run.getRunId())
-                                .scanNumber(sid)
+                                .sourceScanId(sid)
                                 .scanTime(rt)
                                 .peaks(peaks)
                                 .ccs(ccs)
@@ -281,7 +281,7 @@ public class MzMLParser implements LCMSParser {
                         ms1Ids.put(spectrum.getId(), scan.getScanId());
                     }
 
-                    final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(), polarity.charge, true);
+                    final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(), sid, polarity.charge, true);
                     retentionTimes.add(rt);
                     idmap.put(spectrum.getIndex().intValue(), scanids.size());
                     scanids.add(spectrum.getIndex().intValue());
@@ -337,6 +337,7 @@ public class MzMLParser implements LCMSParser {
                     }
 
                     final Ms2SpectrumHeader header = new Ms2SpectrumHeader(
+                            sid,
                             polarity.charge, centroided,
                             Double.isFinite(collisionEnergy) ? new CollisionEnergy(collisionEnergy) : CollisionEnergy.none(),
                             prec.getIsolationWindow(),
@@ -441,7 +442,7 @@ public class MzMLParser implements LCMSParser {
                 },
 //                ms -> scans.addAndGet(1),
 //                msms -> ms2scans.addAndGet(1),
-                Run.builder().runType(Run.Type.SAMPLE).chromatography(ChromatographyType.LC)
+                Run.builder().runType(Run.Type.SAMPLE).chromatography(Chromatography.LC)
         );
         System.out.println(sample.getRtSpan());
         System.out.println(scans.size());
