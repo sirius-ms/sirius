@@ -22,11 +22,12 @@ package de.unijena.bioinf.lcms.trace;
 
 import de.unijena.bioinf.lcms.merge.MergedTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
+import it.unimi.dsi.fastutil.ints.IntObjectPair;
 
 import java.util.Iterator;
 
 public interface TraceExtractionStrategy {
 
-    Iterator<AbstractTrace> extractTrace(ProcessedSample mergedSample, ProcessedSample[] samplesInTrace, MergedTrace alignedFeature);
+    Iterator<IntObjectPair<AbstractTrace>> extractTrace(ProcessedSample mergedSample, ProcessedSample[] samplesInTrace, MergedTrace alignedFeature);
 
 }

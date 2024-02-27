@@ -20,11 +20,22 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.feature;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ms.persistence.model.annotation.CompoundAnnotation;
+import de.unijena.bioinf.ms.persistence.model.core.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.run.Run;
+import it.unimi.dsi.fastutil.longs.LongList;
 import jakarta.persistence.Id;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+
+import java.util.List;
+import java.util.Optional;
+
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 
 /**
  * Features aligned over several {@link Run}s (same m/z and RT)
@@ -35,9 +46,9 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-//@JsonAutoDetect(fieldVisibility = ANY, getterVisibility = NONE, setterVisibility = NONE, isGetterVisibility = NONE)
-@ToString
-public class AlignedFeatures extends AbstractFeature {
+@ToString(callSuper = true)
+@JsonAutoDetect(fieldVisibility = ANY, getterVisibility = NONE, setterVisibility = NONE, isGetterVisibility = NONE)
+public class AlignedFeatures extends AbstractAlignedFeatures {
 
     @Id
     private long alignedFeatureId;
@@ -45,24 +56,32 @@ public class AlignedFeatures extends AbstractFeature {
     /**
      * ID of the compound this aligned feature belongs to
      */
-    protected long compoundId;
+    private long compoundId;
 
+    /**
+     * Group of edges between pairs of feature alignments that correlate among each other. Connected components
+     * from the whole graph of correlated pairs (whole dataset)
+     */
+    @ToString.Exclude
+    private LongList correlationPairIds;
 
-//    /**
-//     * FeatureId of the feature that provides the isotope pattern
-//     * TODO should we denormalize instead?
-//     */
-//    private long isotopePatternFeatureId;
-//
-//    protected double mergedIonMass;
-    protected RetentionTime mergedRT;
-//    @ToString.Exclude
-//    protected LongList correlationPairIds;
-//
-//    protected CompoundAnnotation topAnnotation;
-//    protected CompoundAnnotation manualAnnotation;
-//
-//    //foreign objects
+    /**
+     * Extracted isotope pattern of this feature
+     */
+    private IsotopePattern isotopePattern;
+
+    @ToString.Exclude
+    private LongList isotopicFeaturesIds;
+
+    @JsonIgnore
+    @ToString.Exclude
+    private List<AlignedIsotopicFeatures> isotopicFeatures;
+
+    public Optional<List<AlignedIsotopicFeatures>> getIsotopicFeatures() {
+        return Optional.ofNullable(isotopicFeatures);
+    }
+
+    //    //foreign objects
 //    //todo do we want do deduplicate msms
 //    public Optional<List<MSMSScan>> getMsms() {
 //        if (getFeatures().map(fs -> fs.stream().anyMatch(f -> f.getMsms().isEmpty())).orElse(true))
@@ -71,15 +90,7 @@ public class AlignedFeatures extends AbstractFeature {
 //        return getFeatures().map(fs -> fs.stream().flatMap(f -> f.getMsms().stream().flatMap(List::stream)))
 //                .map(Stream::toList);
 //    }
-//
-//    @JsonIgnore
-//    @ToString.Exclude
-//    protected List<Feature> features;
-//
-//    public Optional<List<Feature>> getFeatures() {
-//        return Optional.ofNullable(features);
-//    }
-//
+
 //
 //    //todo should we denormalize and store a boolean if blank feature is aligned so that we do not have to fetch the features to check?
 //

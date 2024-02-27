@@ -29,7 +29,7 @@ import lombok.Getter;
 public class IsotopePattern extends SimpleSpectrum {
 
     public enum Type {
-        AVERAGE, REPRESENTATIVE
+        AVERAGE, REPRESENTATIVE, MERGED_APEX
     }
 
     public IsotopePattern(SimpleSpectrum spec, Type type) {

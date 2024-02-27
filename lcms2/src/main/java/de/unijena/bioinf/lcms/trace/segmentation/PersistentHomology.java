@@ -33,6 +33,8 @@ import de.unijena.bioinf.lcms.trace.filter.Filter;
 import de.unijena.bioinf.lcms.trace.filter.NoFilter;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -60,7 +62,7 @@ import java.util.stream.IntStream;
  */
 public class PersistentHomology implements TraceSegmentationStrategy {
 
-    private Filter filter;
+    private final Filter filter;
 
     public PersistentHomology() {
         this(new NoFilter());
@@ -70,45 +72,21 @@ public class PersistentHomology implements TraceSegmentationStrategy {
         this.filter = filter;
     }
 
+    @Getter
     private static class Segment {
-        private int idx;
+
+        @Setter
         private int left, right;
+
         private final int born;
 
+        @Setter
         private int died = Integer.MIN_VALUE;
 
         public Segment(int idx) {
-            this.idx = idx;
             this.born = this.left = this.right = idx;
         }
 
-        public int getLeft() {
-            return left;
-        }
-
-        public void setLeft(int left) {
-            this.left = left;
-        }
-
-        public int getRight() {
-            return right;
-        }
-
-        public void setRight(int right) {
-            this.right = right;
-        }
-
-        public int getBorn() {
-            return born;
-        }
-
-        public int getDied() {
-            return died;
-        }
-
-        public void setDied(int died) {
-            this.died = died;
-        }
     }
 
     /**
@@ -186,7 +164,7 @@ public class PersistentHomology implements TraceSegmentationStrategy {
         }
     }
 
-    private static List<Segment> computePersistentHomology(Trace trace,Filter filter, double intensityThreshold, double trim) {
+    private static List<Segment> computePersistentHomology(Trace trace, Filter filter, double intensityThreshold, double trim) {
         final TraceIntensityArray seq = new TraceIntensityArray(trace, filter);
         List<Segment> peaks = new ArrayList<>();
         int[] idx2Peak = new int[seq.size()];
@@ -286,8 +264,8 @@ public class PersistentHomology implements TraceSegmentationStrategy {
     public List<TraceSegment> detectSegments(SampleStats stats, Trace trace) {
         final int offset=trace.startId();
         return computePersistentHomology(trace, filter, stats.noiseLevel(trace.apex()), 3d).stream().map(seg->
-                // TODO: @Martin warum ist trace.idx nicht identisch mit dem Apex?
-                TraceSegment.createSegmentFor(trace, seg.left+offset, seg.right+offset)).toList();
+                TraceSegment.createSegmentFor(trace, seg.left+offset, seg.right+offset)
+        ).toList();
     }
 
     @Override
