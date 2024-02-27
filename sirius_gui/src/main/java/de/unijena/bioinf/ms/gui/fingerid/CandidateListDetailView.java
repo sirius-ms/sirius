@@ -28,8 +28,8 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.DataSources;
 import de.unijena.bioinf.chemdb.InChISMILESUtils;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.elgordo.LipidClass;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -188,19 +188,20 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             }
         } else if (e.getSource() == OpenInBrowser2) {
             for (DBLink link : c.getCandidate().getDbLinks()) {
-                DataSources.getSourceFromName(link.getName()).ifPresent(s -> {
-                    if (link.getId() == null || s.URI == null)
-                        return;
-                    try {
-                        if (s.URI.contains("%s")) {
-                            Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, URLEncoder.encode(link.getId(), StandardCharsets.UTF_8))));
-                        } else {
-                            Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, Integer.parseInt(link.getId()))));
-                        }
-                    } catch (IOException | URISyntaxException e1) {
-                        LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
-                    }
-                });
+                CustomDataSources.getSourceFromNameOpt(link.getName())
+                        .ifPresent(s -> {
+                            if (link.getId() == null || s.URI() == null)
+                                return;
+                            try {
+                                if (s.URI().contains("%s")) {
+                                    Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI(), URLEncoder.encode(link.getId(), StandardCharsets.UTF_8))));
+                                } else {
+                                    Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI(), Integer.parseInt(link.getId()))));
+                                }
+                            } catch (IOException | URISyntaxException e1) {
+                                LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
+                            }
+                        });
             }
         } else if (c != null && e.getSource() == this.highlight) {
             Jobs.runInBackground(() -> {
@@ -291,13 +292,13 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     }
 
     private void clickOnDBLabel(DatabaseLabel label, FingerprintCandidateBean candidate) {
-        DataSources.getSourceFromName(label.sourceName).ifPresent(s -> {
-            if (label.values == null || label.values.length == 0 || s.URI == null)
+        CustomDataSources.getSourceFromNameOpt(label.sourceName).ifPresent(s -> {
+            if (label.values == null || label.values.length == 0 || s.URI() == null)
                 return;
             try {
                 for (String id : label.values) {
                     if (id == null) continue;
-                    if (s == DataSource.LIPID) {
+                    if (s.noCustomSource() && ((CustomDataSources.EnumSource)s).source() == DataSource.LIPID) {
                         Jobs.runInBackground(() -> {
                             try {
                                 //todo nightsky: remove if lipid maps is added to our pubchem copy
@@ -339,10 +340,10 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
                                 LoggerFactory.getLogger(getClass()).error("Could not fetch lipid maps URL.", ex);
                             }
                         });
-                    } else if (s.URI.contains("%s")) {
-                        Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, URLEncoder.encode(id, StandardCharsets.UTF_8))));
+                    } else if (s.URI().contains("%s")) {
+                        Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI(), URLEncoder.encode(id, StandardCharsets.UTF_8))));
                     } else {
-                        Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI, Integer.parseInt(id))));
+                        Desktop.getDesktop().browse(new URI(String.format(Locale.US, s.URI(), Integer.parseInt(id))));
                     }
                 }
             } catch (IOException | URISyntaxException e1) {

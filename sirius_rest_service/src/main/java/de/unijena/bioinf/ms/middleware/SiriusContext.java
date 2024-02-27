@@ -21,8 +21,8 @@ package de.unijena.bioinf.ms.middleware;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.ms.middleware.service.dbs.ChemDbService;
-import de.unijena.bioinf.ms.middleware.service.dbs.ChemDbServiceImpl;
+import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
+import de.unijena.bioinf.ms.middleware.service.databases.ChemDbServiceImpl;
 import de.unijena.bioinf.ms.middleware.service.gui.SiriusProjectSpaceGuiService;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;

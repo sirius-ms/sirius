@@ -329,6 +329,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
     }
 
     public List<String> getFormulaSearchDBStrings() {
-        return getFormulaSearchDBs().stream().map(CustomDataSources.Source::id).filter(Objects::nonNull).collect(Collectors.toList());
+        return getFormulaSearchDBs().stream().map(CustomDataSources.Source::name).filter(Objects::nonNull).collect(Collectors.toList());
     }
 }

@@ -125,7 +125,7 @@ public class JobSubmission extends AbstractSubmission {
         AdductSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class);
         //common default search dbs for spectra and structure. Formula only if db search is used.
         List<String> searchDbs = Stream.concat(Stream.of(
-                CustomDataSources.getSourceFromName(DataSource.BIO.realName)),
+                CustomDataSources.getSourceFromName(DataSource.BIO.name())),
                 CustomDataSources.sourcesStream().filter(CustomDataSources.Source::isCustomSource)).distinct().map(CustomDataSources.Source::name).toList();
 
 

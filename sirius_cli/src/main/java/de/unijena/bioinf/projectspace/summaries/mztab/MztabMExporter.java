@@ -167,7 +167,8 @@ public class MztabMExporter implements Summarizer {
 
 
                 List<String> ids = bestHit.getCandidate().getLinks().stream()
-                        .filter(dbLink -> dbLink.name.equals(DataSource.PUBCHEM.realName)).map(dbLink -> dbLink.id).collect(Collectors.toList());
+                        .filter(dbLink -> dbLink.name.equals(DataSource.PUBCHEM.name())).map(dbLink -> dbLink.id)
+                        .toList();
 
                 smlItem.setDatabaseIdentifier(
                         ids.stream().map(dbLink -> "CID:" + dbLink)

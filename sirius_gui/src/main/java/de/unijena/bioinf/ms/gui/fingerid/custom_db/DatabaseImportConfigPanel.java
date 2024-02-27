@@ -35,11 +35,13 @@ import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isLoggedIn;
 
 public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOptions> {
 
+    private PlaceholderTextField dbDisplayNameField;
     private PlaceholderTextField dbNameField;
     private FileChooserPanel dbLocationField;
     private DefaultListModel<File> fileListModel;
     public JButton importButton;
 
+    private boolean validDbDisplayName;
     private boolean validDbName;
     private boolean validDbDirectory;
 
@@ -74,8 +76,12 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
     private JPanel createParametersPanel(@Nullable CustomDatabase db, Set<String> existingNames) {
         final TwoColumnPanel smalls = new TwoColumnPanel();
 
+        dbDisplayNameField = new PlaceholderTextField("");
+        smalls.addNamed("DB display", dbDisplayNameField);
+        parameterBindings.put("displayName", dbDisplayNameField::getText);
         dbNameField = new PlaceholderTextField("");
         smalls.addNamed("DB name", dbNameField);
+        parameterBindings.put("name", dbNameField::getText);
 
         String dbDirectory = db != null ? Path.of(db.storageLocation()).getParent().toString()
                 : PropertyManager.getProperty(SiriusProperties.DEFAULT_SAVE_DIR_PATH, null, "");
@@ -86,30 +92,65 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         validDbDirectory = !dbDirectory.isEmpty();
 
         if (db != null) {
+            dbDisplayNameField.setText(db.displayName());
+            dbDisplayNameField.setEnabled(false);
             dbNameField.setText(db.name());
             dbNameField.setEnabled(false);
             dbLocationField.setEnabled(false);
             validDbName = true;
+            validDbDisplayName = true;
         } else {
-            dbNameField.setPlaceholder("my_database" +  CustomDatabaseFactory.NOSQL_SUFFIX);
+//            dbDisplayNameField.setPlaceholder("[OPTIONAL]");
+            dbNameField.setPlaceholder("my_database" + CustomDatabaseFactory.NOSQL_SUFFIX);
         }
 
+        dbDisplayNameField.setToolTipText("Displayable name of the custom database. " +
+                "This is the preferred name to be shown in the GUI. Maximum Length: 15 characters. " +
+                "If not given name will be used.");
         dbNameField.setToolTipText("Filename for the new custom database, should end in " + CustomDatabaseFactory.NOSQL_SUFFIX);
 
         dbNameField.addFocusListener(new FocusAdapter() {
             @Override
             public void focusLost(FocusEvent e) {
                 String name = dbNameField.getText();
-                if (!name.isEmpty() && !name.endsWith(CustomDatabaseFactory.NOSQL_SUFFIX)) {
-                    dbNameField.setText(name + CustomDatabaseFactory.NOSQL_SUFFIX);
+                if (!name.isBlank()) {
+                    if (!name.endsWith(CustomDatabaseFactory.NOSQL_SUFFIX)) {
+                        dbNameField.setText(name + CustomDatabaseFactory.NOSQL_SUFFIX);
+                    }
+                    if (dbDisplayNameField.getText() == null || dbDisplayNameField.getText().isBlank()) {
+                        String displayName = name.endsWith(CustomDatabaseFactory.NOSQL_SUFFIX)
+                                ? name.substring(0, name.length() - CustomDatabaseFactory.NOSQL_SUFFIX.length())
+                                : name;
+                        dbDisplayNameField.setText(displayName.substring(0, Math.min(15, displayName.length())));
+                    }
                 }
+            }
+        });
+
+        dbDisplayNameField.setInputVerifier(new ErrorReportingDocumentListener(dbDisplayNameField) {
+            @Override
+            public String getErrorMessage(JComponent input) {
+                String name = ((JTextField) input).getText();
+                String error = null;
+                if (name != null) {
+                    if (name.length() > 15) {
+                        error = "DB Display name must have not more than 15 characters.";
+                    } else if (!name.isEmpty() && name.isBlank()) {
+                        error = "DB Display name must not contain only white spaces.";
+                    }
+                }
+                if (validDbDisplayName != (error == null)) {
+                    validDbDisplayName = error == null;
+                    refreshImportButton();
+                }
+                return error;
             }
         });
 
         dbNameField.setInputVerifier(new ErrorReportingDocumentListener(dbNameField) {
             @Override
             public String getErrorMessage(JComponent input) {
-                String name = ((JTextField)input).getText();
+                String name = ((JTextField) input).getText();
                 String error = null;
                 if (name == null || name.isBlank()) {
                     error = "DB name missing";
@@ -132,7 +173,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
                 String error = null;
                 if (text == null || text.isBlank()) {
                     error = "DB location not set";
-                } else if (!new File(text).isDirectory()){
+                } else if (!new File(text).isDirectory()) {
                     error = "DB location is not a valid directory";
                 }
                 if (validDbDirectory != (error == null)) {
@@ -212,7 +253,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
             @Override
             public void actionPerformed(ActionEvent e) {
                 int[] selectedIndices = fileList.getSelectedIndices();
-                for (int i = selectedIndices.length-1; i >=0; i--) {
+                for (int i = selectedIndices.length - 1; i >= 0; i--) {
                     fileListModel.removeElementAt(selectedIndices[i]);
                 }
                 refreshImportButton();
@@ -222,7 +263,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         removeFiles.addActionListener(removeSelectedFiles);
 
         String removeFilesActionName = "removeSelectedFiles";
-        fileList.getInputMap().put(KeyStroke.getKeyStroke("DELETE"),removeFilesActionName);
+        fileList.getInputMap().put(KeyStroke.getKeyStroke("DELETE"), removeFilesActionName);
         fileList.getActionMap().put(removeFilesActionName, removeSelectedFiles);
 
         return box;

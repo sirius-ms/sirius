@@ -36,9 +36,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DBFilterPanel extends JPanel implements ActiveElementChangedListener<FingerprintCandidateBean, InstanceBean>, CustomDataSources.DataSourceChangeListener {
-    public final static Set<String> BLACK_LIST = Set.of(/*DataSource.ADDITIONAL.realName,*/ DataSource.ALL.realName, DataSource.ALL_BUT_INSILICO.realName,
-            DataSource.PUBCHEMANNOTATIONBIO.realName, DataSource.PUBCHEMANNOTATIONDRUG.realName, DataSource.PUBCHEMANNOTATIONFOOD.realName, DataSource.PUBCHEMANNOTATIONSAFETYANDTOXIC.realName,
-            DataSource.SUPERNATURAL.realName
+    public final static Set<String> NON_FILTERABLE = Set.of(
+            DataSource.ALL.name(), DataSource.ALL_BUT_INSILICO.name(),
+            DataSource.PUBCHEMANNOTATIONBIO.name(), DataSource.PUBCHEMANNOTATIONDRUG.name(),
+            DataSource.PUBCHEMANNOTATIONFOOD.name(), DataSource.PUBCHEMANNOTATIONSAFETYANDTOXIC.name(),
+            DataSource.SUPERNATURAL.name()
     );
 
     private final Queue<FilterChangeListener> listeners = new ConcurrentLinkedQueue<>();
@@ -53,8 +55,11 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
         setBorder(BorderFactory.createEmptyBorder(0, 0, GuiUtils.SMALL_GAP, 0));
         this.checkboxes = new ArrayList<>(CustomDataSources.size());
         for (CustomDataSources.Source source : CustomDataSources.sources()) {
-            if (!BLACK_LIST.contains(source.name()))
-                checkboxes.add(new JCheckBox(source.name()));
+            if (!NON_FILTERABLE.contains(source.name())){
+                JCheckBox b = new JCheckBox(source.displayName());
+                b.setName(source.name());
+                checkboxes.add(b);
+            }
         }
         addBoxes();
         CustomDataSources.addListener(this);
@@ -75,14 +80,14 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
         this.bitSet = 0L;
         for (final JCheckBox box : checkboxes) {
             if (box.isSelected())
-                this.bitSet |= CustomDataSources.getSourceFromName(box.getText()).flag();
+                this.bitSet |= CustomDataSources.getSourceFromName(box.getName()).flag();
             add(box);
             box.addChangeListener(e -> {
                 if (!isRefreshing.get()) {
                     if (box.isSelected())
-                        bitSet |= CustomDataSources.getSourceFromName(box.getText()).flag();
+                        bitSet |= CustomDataSources.getSourceFromName(box.getName()).flag();
                     else
-                        bitSet &= ~CustomDataSources.getSourceFromName(box.getText()).flag();
+                        bitSet &= ~CustomDataSources.getSourceFromName(box.getName()).flag();
                     fireFilterChangeEvent();
                 }
             });
@@ -129,7 +134,10 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
             }
 
             for (String name : changed) {
-                checkboxes.add(new JCheckBox(name));
+                CustomDataSources.Source s = CustomDataSources.getSourceFromName(name);
+                JCheckBox b = new JCheckBox(s.displayName());
+                b.setName(s.name());
+                checkboxes.add(b);
                 c = true;
             }
 

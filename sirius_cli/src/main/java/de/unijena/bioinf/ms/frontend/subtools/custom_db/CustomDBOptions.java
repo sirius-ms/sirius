@@ -38,6 +38,7 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.storage.blob.Compressible;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -79,9 +80,24 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 description = {"Location of the custom database to import into.",
                         "An absolute local path to a new database file file to be created (file name must end with .db)",
                         "If no input data is given (--input), the database will just be added to SIRIUS",
-                        "The added db will also be available in the GUI."
-                }, order = 201)
+                        "The added db will also be available in the GUI."}, order = 201)
         String location = null;
+
+        @Option(names = "--name", order = 202,
+                description = {"Name/Identifier of the custom database.",
+                        "If not given filename from location will be used."})
+        String name = null;
+
+        @Option(names = "--displayName", order = 203,
+                description = {"Displayable name of the custom database.",
+                        "This is the preferred name to be shown in the GUI. Maximum Length: 15 characters.",
+                        "If not given name will be used."})
+        public void setDisplayName(String displayName) {
+            if (displayName.length() > 15)
+                throw new CommandLine.PicocliException("Maximum allowed length for display names is 15 characters.");
+            this.displayName = displayName;
+        }
+        String displayName = null;
 
         @Option(names = {"--buffer-size", "--buffer"}, defaultValue = "1000",
                 description = {"Maximum number of downloaded/computed compounds to keep in memory before writing them to disk (into the db directory). Can be set higher when importing large files on a fast computer."},
@@ -159,13 +175,20 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
                 checkForInterruption();
 
-                checkConflictingName(mode.importParas.location);
+                checkConflictingName(mode.importParas.location, mode.importParas.name);
 
-                CustomDatabaseSettings settings = new CustomDatabaseSettings(List.of(version.getUsedFingerprints()), VersionsInfo.CUSTOM_DATABASE_SCHEMA, null);
+                CustomDatabaseSettings settings = CustomDatabaseSettings.builder()
+                        .usedFingerprints(List.of(version.getUsedFingerprints()))
+                        .schemaVersion(VersionsInfo.CUSTOM_DATABASE_SCHEMA)
+                        .name(mode.importParas.name)
+                        .displayName(mode.importParas.displayName)
+                        .matchRtOfReferenceSpectra(false)
+                        .statistics(new CustomDatabaseSettings.Statistics())
+                        .build();
 
                 final CustomDatabase db = CustomDatabaseFactory.createOrOpen(mode.importParas.location, Compressible.Compression.NONE, settings, version);
                 writeDBProperties();
-                ;
+
                 logInfo("Database added to SIRIUS. Use 'structure --db=\"" + db.storageLocation() + "\"' to search in this database.");
 
                 if (mode.importParas.input == null || mode.importParas.input.isEmpty())
@@ -250,6 +273,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         CustomDatabaseSettings s = db.getSettings();
         System.out.println("##########  BEGIN DB INFO  ##########");
         System.out.println("Name: " + db.name());
+        System.out.println("Display Name: " + db.displayName());
         System.out.println("Location: " + db.storageLocation());
         System.out.println("Number of Formulas: " + s.getStatistics().getFormulas());
         System.out.println("Number of Structures: " + s.getStatistics().getCompounds());
@@ -266,18 +290,19 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
     public static void writeDBProperties() {
         SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(CustomDataSources.PROP_KEY, CustomDataSources.sourcesStream()
                 .filter(CustomDataSources.Source::isCustomSource)
+                .map(c -> (CustomDataSources.CustomSource) c)
                 .sorted(Comparator.comparing(CustomDataSources.Source::name))
-                .map(CustomDataSources.Source::id)
+                .map(CustomDataSources.CustomSource::location)
                 .collect(Collectors.joining(",")));
     }
 
-    private static void checkConflictingName(String location) {
-        String dbName = Path.of(location).getFileName().toString();
-        CustomDataSources.sourcesStream()
-                .filter(db -> db.name().equals(dbName) && !db.id().equals(location))
+    private static void checkConflictingName(@NotNull String location, @Nullable String name) {
+        final String dbName = name != null ? name : Path.of(location).getFileName().toString();
+        CustomDataSources.sourcesStream().filter(CustomDataSources.Source::isCustomSource)
+                .filter(db -> db.name().equals(dbName) && !location.equals(db.isCustomSource() ? ((CustomDataSources.CustomSource) db).location() : null))
                 .findAny()
                 .ifPresent(db -> {
-                    throw new RuntimeException("Database with name " + dbName + " already exists in " + db.id());
+                    throw new RuntimeException("Database with name " + dbName + " already exists in " /*+ db.id()*/);
                 });
     }
 

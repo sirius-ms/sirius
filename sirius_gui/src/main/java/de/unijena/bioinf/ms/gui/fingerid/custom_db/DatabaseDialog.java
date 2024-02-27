@@ -158,7 +158,7 @@ public class DatabaseDialog extends JDialog {
                         return LoadingBackroundTask.runInBackground(gui.getMainFrame(),
                                 "Deleting database '" + name + "'...", null,
                                 new SseProgressJJob(gui.getSiriusClient(), pid, job));
-                    }).awaitResult();
+                    }).awaitResult(); //todo nightsky: use api instead
                 } catch (ExecutionException ex) {
                     LoggerFactory.getLogger(getClass()).error("Error during Custom DB removal.", ex);
 
@@ -195,6 +195,7 @@ public class DatabaseDialog extends JDialog {
                 } else {
                     try {
                         CustomDatabase newDb = SearchableDatabases.loadCustomDatabaseFromLocation(file.getAbsolutePath(), true, ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion()); //todo nightsky: change to db api
+                        CustomDBOptions.writeDBProperties(); //todo nightsky: replace with api
                         whenCustomDbIsAdded(newDb.storageLocation());
                     } catch (IOException ex) {
                         JOptionPane.showMessageDialog(this, ex.getMessage(), "" , JOptionPane.ERROR_MESSAGE);
