@@ -26,8 +26,7 @@ import ca.odell.glazedlists.GlazedLists;
 import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
-import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.DataSources;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -131,14 +130,14 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
 
         LinkedSiriusTableCellRenderer linkRenderer = new LinkedSiriusTableCellRenderer(defaultRenderer,
                 dbLink -> {
-                    Optional<DataSource> ds = DataSources.getSourceFromName(dbLink.getName());
-                    if (ds.isEmpty() || ds.get().URI == null || dbLink.getId() == null)
+                    Optional<CustomDataSources.Source> ds = CustomDataSources.getSourceFromNameOpt(dbLink.getName());
+                    if (ds.isEmpty() || ds.get().URI() == null || dbLink.getId() == null)
                         return null;
                     try {
-                        if (ds.get().URI.contains("%s")) {
-                            return new URI(String.format(Locale.US, ds.get().URI, URLEncoder.encode(dbLink.getId(), StandardCharsets.UTF_8)));
+                        if (ds.get().URI().contains("%s")) {
+                            return new URI(String.format(Locale.US, ds.get().URI(), URLEncoder.encode(dbLink.getId(), StandardCharsets.UTF_8)));
                         } else {
-                            return new URI(String.format(Locale.US, ds.get().URI, Integer.parseInt(dbLink.getId())));
+                            return new URI(String.format(Locale.US, ds.get().URI(), Integer.parseInt(dbLink.getId())));
                         }
                     } catch (URISyntaxException e) {
                         LoggerFactory.getLogger(getClass()).error("Error.", e);

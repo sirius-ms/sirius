@@ -290,8 +290,8 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             CustomDataSources.Source s = CustomDataSources.getSourceFromName(label.sourceName);
             if (s == null) return Colors.DB_UNKNOWN;
             if (s.isCustomSource()) return Colors.DB_CUSTOM;
-            if (s.name().equals(DataSource.TRAIN.realName)) return Colors.DB_TRAINING;
-            if (s.name().startsWith(DataSource.LIPID.realName)) return Colors.DB_ELGORDO;
+            if (s.name().equals(DataSource.TRAIN.name())) return Colors.DB_TRAINING;
+            if (s.name().startsWith(DataSource.LIPID.name())) return Colors.DB_ELGORDO;
             return label.values.length == 0 || s.URI() == null ? Colors.DB_UNLINKED : Colors.DB_LINKED;
         }
 
@@ -299,7 +299,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
     public class DescriptionPanel extends JPanel {
 
-        protected JLabel inchi, agreements;
+        protected JLabel agreements;
         protected FingerprintView ag;
         protected JPanel agpanel;
         protected DatabasePanel databasePanel;
@@ -311,12 +311,6 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             setOpaque(false);
             setBorder(new EmptyBorder(5, 2, 2, 2));
 
-            //NORTH
-            {
-//                inchi = new JLabel("", SwingConstants.LEFT);
-//                inchi.setFont(nameFont);
-//                add(inchi, BorderLayout.NORTH);
-            }
             //CENTER
             {
                 agpanel = new JPanel(new BorderLayout());
@@ -355,7 +349,6 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
         public void setCompound(FingerprintCandidateBean value) {
             setFont(propertyFont);
-//            inchi.setText(value.getInChiKey());
             databasePanel.setCompound(value);
             referenceMatchPanel.setCompound(value);
             ag.agreement = null;
@@ -395,7 +388,6 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
                 LabelPanel lp = new LabelPanel(Colors.DB_CUSTOM, value.bestRefMatchLabel, false);
                 lp.setAlignmentX(Component.CENTER_ALIGNMENT);
                 innerBox.add(lp);
-
 
                 // check if we have more matches
                 if (value.moreRefMatchesLabel != null)

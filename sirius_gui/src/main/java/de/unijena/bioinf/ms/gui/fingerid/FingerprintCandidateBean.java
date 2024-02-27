@@ -128,10 +128,10 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
                 final List<String> cleaned = entry.getValue().stream().map(DBLink::getId)
                         .filter(Objects::nonNull).distinct().toList();
 
-                if (entry.getKey().equals(DataSource.LIPID.realName))
+                if (entry.getKey().equals(DataSource.LIPID.name()))
                     labels.add(new DatabaseLabel(entry.getKey(), "Lipid - " + entry.getValue().iterator().next(), cleaned.toArray(String[]::new)));
                 else
-                    labels.add(new DatabaseLabel(entry.getKey(), cleaned.toArray(String[]::new)));
+                    labels.add(new DatabaseLabel(entry.getKey(), CustomDataSources.getSourceFromName(entry.getKey()).displayName(), cleaned.toArray(String[]::new)));
             }
             Collections.sort(labels);
             this.labels = labels.toArray(DatabaseLabel[]::new);
@@ -140,7 +140,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         bestRefMatchLabel = getBestReferenceMatch().map(match ->
                 new DatabaseLabel(
                         match.getDbName(),
-                        Math.round(100 * match.getSimilarity()) + "% " + match.getDbName(),
+                        Math.round(100 * match.getSimilarity()) + "% " + CustomDataSources.getSourceFromName(match.getDbName()).displayName(),
                         new String[]{match.getDbId()}
                 )).orElse(null);
 
@@ -396,7 +396,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
                     .smiles(new Smiles("OC[C@H]1OC(O)[C@H](O)[C@@H](O)[C@@H]1O").smiles)
                     .structureName("Glucose");
 
-            candidate.dbLinks(List.of(new DBLink().name("PubChem").id("5793")))
+            candidate.dbLinks(List.of(new DBLink().name(DataSource.PUBCHEM.name()).id("5793")))
                     .fingerprint(new BinaryFingerprint()
                             .bitsSet(List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 34, 35, 38, 80, 120))
                             .length(130));

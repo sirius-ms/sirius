@@ -19,7 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
-import de.unijena.bioinf.chemdb.DataSources;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 
 import java.awt.*;
 
@@ -39,7 +39,7 @@ public class DatabaseLabel implements Comparable<DatabaseLabel> {
     }
 
     public DatabaseLabel(String sourceName, String displayName, String[] values) {
-        this(sourceName, displayName, values, new Rectangle(0,0,0,0));
+        this(sourceName, displayName, values, new Rectangle(0, 0, 0, 0));
     }
 
     public DatabaseLabel(String sourceName, String displayName, String[] values, Rectangle rect) {
@@ -49,7 +49,7 @@ public class DatabaseLabel implements Comparable<DatabaseLabel> {
         this.rect = rect;
     }
 
-    public String name(){
+    public String name() {
         if (displayName != null)
             return displayName;
         return sourceName;
@@ -65,17 +65,20 @@ public class DatabaseLabel implements Comparable<DatabaseLabel> {
     }
 
     public String getToolTipOrNull() {
-        return DataSources.getSourceFromName(name()).map(ds -> ds.publication).map(pub -> {
-            String citation = pub.getCitationText();
-            String doi = pub.getDoi();
-            if (citation == null) return null;
-            if (doi == null) return citation;
-            return citation+"\ndoi: "+doi;
-        }).orElse(null);
+        return CustomDataSources.getSourceFromNameOpt(name())
+                .filter(CustomDataSources.Source::noCustomSource)
+                .map(s -> ((CustomDataSources.EnumSource) s).source())
+                .map(ds -> ds.publication).map(pub -> {
+                    String citation = pub.getCitationText();
+                    String doi = pub.getDoi();
+                    if (citation == null) return null;
+                    if (doi == null) return citation;
+                    return citation + "\ndoi: " + doi;
+                }).orElse(null);
     }
 
     public boolean hasLinks() {
-        return DataSources.getSourceFromName(name()).map(s ->
-            !(values == null || values.length == 0 || s.URI == null)).orElse(false);
+        return CustomDataSources.getSourceFromNameOpt(name()).map(s ->
+                !(values == null || values.length == 0 || s.URI() == null)).orElse(false);
     }
 }

@@ -29,7 +29,7 @@ import de.unijena.bioinf.ms.middleware.model.features.AnnotatedMsMsData;
 import de.unijena.bioinf.ms.middleware.model.features.MsData;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
-import de.unijena.bioinf.ms.middleware.service.dbs.ChemDbService;
+import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import io.swagger.v3.oas.annotations.tags.Tag;
