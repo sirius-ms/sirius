@@ -39,9 +39,9 @@ public abstract class AbstractTrace {
     long runId;
 
     /**
-     * RTs of all scans in ascending order
+     * intensities of all peaks ordered by RT
      */
-    DoubleList rts;
+    DoubleList intensities;
 
     // TODO also save noise level?
 

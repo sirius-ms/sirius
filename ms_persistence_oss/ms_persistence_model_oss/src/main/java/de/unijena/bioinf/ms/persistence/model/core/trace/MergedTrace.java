@@ -43,13 +43,17 @@ public class MergedTrace extends AbstractTrace {
      * mz of all peaks ordered by RT
      */
     DoubleList mzs;
+
     /**
-     * intensities of all peaks ordered by RT
+     * RTs of all scans in ascending order
      */
-    DoubleList intensities;
+    DoubleList rts;
+
     /**
      * estimated local noise level
      */
     DoubleList noise;
+
+    // TODO the merged trace should probably hold all the source trace objects!
 
 }

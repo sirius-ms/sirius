@@ -22,10 +22,14 @@ package de.unijena.bioinf.ms.persistence.model.core.trace;
 
 import it.unimi.dsi.fastutil.longs.LongList;
 import jakarta.persistence.Id;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Getter
 @Setter
@@ -42,7 +46,8 @@ public class SourceTrace extends AbstractTrace {
      * Ids of the scans this trace is build from
      * should be sorted by RT
      */
-    LongList scanIds;
+    @Builder.Default
+    List<String> sourceScanIds = new ArrayList<>();
 
 
 }

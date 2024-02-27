@@ -23,12 +23,9 @@ package de.unijena.bioinf.ms.persistence.model.core.trace;
 import lombok.*;
 
 @Getter
-@Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@Builder
 @ToString
-public class TraceSegment {
+public class TraceRef {
 
     /**
      * ID of the trace
@@ -49,5 +46,23 @@ public class TraceSegment {
      * End index of the segment
      */
     private int end;
+
+    public TraceRef(long traceId, int start, int apex, int end) {
+        this.traceId = traceId;
+        if (start < 0)
+            throw new IllegalArgumentException(String.format("start must be >= 0 (was %d)", start));
+        if (apex < 0)
+            throw new IllegalArgumentException(String.format("apex must be >= 0 (was %d)", apex));
+        if (end < 0)
+            throw new IllegalArgumentException(String.format("end must be >= 0 (was %d)", end));
+        if (apex < start)
+            throw new IllegalArgumentException(String.format("start (was %d) must be <= apex (was %d)", start, apex));
+        if (apex > end)
+            throw new IllegalArgumentException(String.format("apex (was %d) must be <= end (was %d)", apex, end));
+
+        this.start = start;
+        this.apex = apex;
+        this.end = end;
+    }
 
 }

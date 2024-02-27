@@ -35,22 +35,22 @@ public class AbstractScan {
     /**
      * Database ID of the Run this Scan belongs to
      */
-    protected Long runId;
+    protected long runId;
 
     /**
-     * scan number from the mzml run.
+     * mzML spectrum ID or mzXML scan num
      */
-    protected String scanNumber;
+    protected String sourceScanId;
 
     /**
      * Time this scan took place (in minutes)
      */
-    protected Double scanTime;
+    protected double scanTime;
 
     /**
      * Collisional Cross-Section (CCS) in Å^2
      */
-    protected Double ccs;
+    protected double ccs;
 
     /**
      * The actual spectrum that has been measured (masses and intensities)

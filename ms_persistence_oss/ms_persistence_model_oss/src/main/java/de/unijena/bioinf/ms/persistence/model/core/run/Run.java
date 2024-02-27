@@ -56,7 +56,7 @@ public class Run {
      */
     protected Type runType;
 
-    private ChromatographyType chromatography;
+    private Chromatography chromatography;
     private Ionization ionization;
     private Fragmentation fragmentation;
     private List<MassAnalyzer> massAnalyzers;

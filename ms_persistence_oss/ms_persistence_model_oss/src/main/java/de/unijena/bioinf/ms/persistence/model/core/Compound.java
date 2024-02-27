@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.persistence.model.core;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ms.persistence.model.annotation.CompoundAnnotation;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
 import it.unimi.dsi.fastutil.longs.LongList;
@@ -71,4 +72,8 @@ public class Compound {
         return Optional.ofNullable(correlatedIonPairs);
     }
     //todo add annotations/identifications
+
+    protected CompoundAnnotation topAnnotation;
+    protected CompoundAnnotation manualAnnotation;
+
 }

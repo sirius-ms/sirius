@@ -20,9 +20,10 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.feature;
 
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ms.persistence.model.core.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MergedMSMSScan;
-import de.unijena.bioinf.ms.persistence.model.core.trace.TraceSegment;
+import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -34,34 +35,42 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@ToString(onlyExplicitlyIncluded = true)
+@ToString
 public abstract class AbstractFeature {
 
     /**
      * ID of the run this feature belongs to
      */
-    @ToString.Include
     protected long runId;
 
     /**
-     *
+     * m/z of the apex
      */
     protected double apexMass;
 
     /**
-     * Trace segments that define this feature. One segment per isotope
+     * intensity of the apex
      */
-    @Builder.Default
-    protected List<TraceSegment> traceSegments = new ArrayList<>();
+    protected double apexIntensity;
 
     /**
-     * Extracted isotope pattern of this feature
+     * average m/z
      */
-    protected IsotopePattern isotopePattern;
+    protected double averageMass;
 
     /**
-     * Merged MS/MS spectra of this feature
+     * retention time (start, apex, end)
      */
-    protected MergedMSMSScan mergedMSMSScan;
+    protected RetentionTime retentionTime;
+
+//    /**
+//     * Merged MS/MS spectra of this feature
+//     */
+//    protected MergedMSMSScan mergedMSMSScan;
+
+    /**
+     * Trace segment that defines this feature
+     */
+    private TraceRef traceRef;
 
 }
