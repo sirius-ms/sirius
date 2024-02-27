@@ -24,7 +24,7 @@ import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import de.unijena.bioinf.lcms.LCMSStorageFactory;
 import de.unijena.bioinf.lcms.trace.LCMSStorage;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
-import de.unijena.bioinf.ms.persistence.model.core.run.ChromatographyType;
+import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.run.Run;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
@@ -87,7 +87,7 @@ public class MzXMLParser implements LCMSParser {
                 },
 //                ms -> scans.addAndGet(1),
 //                msms -> ms2scans.addAndGet(1),
-                Run.builder().runType(Run.Type.SAMPLE).chromatography(ChromatographyType.LC)
+                Run.builder().runType(Run.Type.SAMPLE).chromatography(Chromatography.LC)
         );
         System.out.println(sample.getRtSpan());
         System.out.println(scans.size());

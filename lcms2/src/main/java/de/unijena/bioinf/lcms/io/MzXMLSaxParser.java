@@ -361,14 +361,14 @@ class MzXMLSaxParser extends DefaultHandler {
                             if (msLevel == 1) {
                                 Scan scan = Scan.builder()
                                         .runId(run.getRunId())
-                                        .scanNumber(Integer.toString(scanNumber))
+                                        .sourceScanId(Integer.toString(scanNumber))
                                         .scanTime(retentionTime)
                                         .peaks(peaks)
                                         .build();
                                 scanConsumer.consume(scan);
                                 ms1Ids.put(scanNumber, scan.getScanId());
 
-                                final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(), polarity.charge, centroided);
+                                final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(), Integer.toString(scanNumber), polarity.charge, centroided);
                                 retentionTimes.add(retentionTime);
                                 idmap.put(scanNumber, scanids.size());
                                 scanids.add(scanNumber);
@@ -388,6 +388,7 @@ class MzXMLSaxParser extends DefaultHandler {
                                 msmsScanConsumer.consume(scan);
 
                                 final Ms2SpectrumHeader header = new Ms2SpectrumHeader(
+                                        Integer.toString(scanNumber),
                                         polarity.charge, centroided,
                                         collisionEnergy,
                                         new IsolationWindow(0d, isolationWindowWidth),
