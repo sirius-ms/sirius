@@ -26,12 +26,15 @@ import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
+import it.unimi.dsi.fastutil.ints.IntObjectPair;
 
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 public class TraceExtractor implements TraceExtractionStrategy {
     @Override
-    public Iterator<AbstractTrace> extractTrace(ProcessedSample mergedSample, ProcessedSample[] samplesInTrace, MergedTrace alignedFeature)  {
+    public Iterator<IntObjectPair<AbstractTrace>> extractTrace(ProcessedSample mergedSample, ProcessedSample[] samplesInTrace, MergedTrace alignedFeature)  {
         // segments for merged trace
         Trace mergedTrace = alignedFeature.toTrace(mergedSample);
         SampleStats stats = mergedSample.getStorage().getStatistics();
@@ -45,18 +48,25 @@ public class TraceExtractor implements TraceExtractionStrategy {
             }
 
             @Override
-            public AbstractTrace next() {
+            public IntObjectPair<AbstractTrace> next() {
                 if (traceIndex > -1) {
                     final ProcessedSample S = samplesInTrace[traceIndex];
                     final ContiguousTrace t = mergedSample.getStorage().getMergeStorage().getTrace(alignedFeature.getTraceIds().getInt(traceIndex));
-                    DoubleList rts = new DoubleArrayList();
+                    DoubleList ints = new DoubleArrayList();
+                    List<String> sourceIds = new ArrayList<>();
                     for (int s = mergedTrace.startId(); s <= mergedTrace.endId(); ++s) {
-                        rts.add(S.getScanPointInterpolator().interpolateIntensity(t, s));
+                        ints.add(S.getScanPointInterpolator().interpolateIntensity(t, s));
+                        // FIXME how to get the correct MS1 spectrum header?
+//                        sourceIds.add(S.getStorage().getSpectrumStorage().ms1SpectrumHeader(S.getMapping().getScanIdAt(s)).getSourceId());
                     }
+                    int traceUid = alignedFeature.getTraceIds().getInt(traceIndex);
+
                     traceIndex++;
-                    // TODO scan numbers
                     // TODO run id
-                    return SourceTrace.builder().rts(rts).build();
+                    return IntObjectPair.of(
+                            traceUid,
+                            SourceTrace.builder().intensities(ints).sourceScanIds(sourceIds).build()
+                    );
                 } else if (traceIndex == -1) {
                     DoubleList rts = new DoubleArrayList();
                     DoubleList mzs = new DoubleArrayList();
@@ -70,8 +80,11 @@ public class TraceExtractor implements TraceExtractionStrategy {
                     }
 
                     traceIndex++;
-                    // TODO run id
-                    return de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace.builder().rts(rts).mzs(mzs).intensities(ints).noise(noise).build();
+
+                    return IntObjectPair.of(
+                            alignedFeature.getUid(),
+                            de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace.builder().rts(rts).mzs(mzs).intensities(ints).noise(noise).build()
+                    );
                 }
                 return null;
             }
