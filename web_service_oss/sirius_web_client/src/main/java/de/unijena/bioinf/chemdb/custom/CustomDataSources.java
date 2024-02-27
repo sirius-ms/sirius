@@ -121,34 +121,46 @@ public class CustomDataSources {
 
 
     static boolean removeCustomSource(String name) {
-        Source s = getSourceFromName(name);
-        if (s == null) return true;
-        if (s.isCustomSource()) {
-            s = SOURCE_MAP.remove(name);
-            bits.andNot(BitSet.valueOf(new long[]{s.flag()}));
-            notifyListeners(Collections.singleton(s.name()));
-            return true;
+        synchronized (SOURCE_MAP) {
+            Source s = getSourceFromName(name);
+            if (s == null) return true;
+            if (s.isCustomSource()) {
+                s = SOURCE_MAP.remove(name);
+                bits.andNot(BitSet.valueOf(new long[]{s.flag()}));
+                notifyListeners(s, true);
+                return true;
+            }
+            return false;
         }
-        return false;
     }
 
     static Source addCustomSourceIfAbsent(String name, String displayName, String bucketLocation) {
-        Source s = getSourceFromName(name);
-        if (s == null) {
-            int bitIndex = bits.nextClearBit(lastEnumBit);
-            bits.set(bitIndex);
-            long flag = 1L << bitIndex;
-            Source r = new CustomSource(flag, name, displayName, bucketLocation);
-            SOURCE_MAP.put(r.name(), r);
+        synchronized (SOURCE_MAP) {
+            Source s = getSourceFromName(name);
+            if (s == null) {
+                int bitIndex = bits.nextClearBit(lastEnumBit);
+                bits.set(bitIndex);
+                long flag = 1L << bitIndex;
+                Source r = new CustomSource(flag, name, displayName, bucketLocation);
+                SOURCE_MAP.put(r.name(), r);
 
-            notifyListeners(Collections.singleton(r.name()));
-            return r;
+                notifyListeners(r, false);
+                return r;
+            }
         }
         return null;
     }
 
     public static int size() {
         return SOURCE_MAP.size();
+    }
+
+    public static Stream<CustomSource> customSourcesStream() {
+        return SOURCE_MAP.values().stream().filter(Source::isCustomSource).map(s -> (CustomSource)s);
+    }
+
+    public static Stream<EnumSource> noCustomSourcesStream() {
+        return SOURCE_MAP.values().stream().filter(Source::noCustomSource).map(s -> (EnumSource)s);
     }
 
     public static Stream<Source> sourcesStream() {
@@ -248,9 +260,9 @@ public class CustomDataSources {
     }
 
     // listener stuff
-    public static void notifyListeners(Collection<String> changed) {
+    public static void notifyListeners(Source changed, boolean removed) {
         for (DataSourceChangeListener listener : listeners) {
-            listener.fireDataSourceChanged(changed);
+            listener.fireDataSourceChanged(changed, removed);
         }
     }
 
@@ -264,7 +276,7 @@ public class CustomDataSources {
 
 
     public interface DataSourceChangeListener extends EventListener {
-        void fireDataSourceChanged(Collection<String> changed);
+        void fireDataSourceChanged(Source change, boolean removed);
     }
 
 
