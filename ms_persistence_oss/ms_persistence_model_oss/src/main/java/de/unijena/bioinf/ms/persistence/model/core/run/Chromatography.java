@@ -25,7 +25,7 @@ import lombok.Getter;
 import javax.validation.constraints.NotNull;
 
 @Getter
-public enum ChromatographyType {
+public enum Chromatography {
     LC("Liquid Chromatography"),
     GC("Gas Chromatography");
 
@@ -34,7 +34,7 @@ public enum ChromatographyType {
     private final String fullName;
 
 
-    ChromatographyType(@NotNull String fullName) {
+    Chromatography(@NotNull String fullName) {
         this.fullName = fullName;
     }
 
