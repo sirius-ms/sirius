@@ -567,7 +567,7 @@ public class ChemicalDatabase implements FilterableChemicalDatabase, PooledDB<Co
                             statement.setString(1, candidate.getInchiKey2D());
                             try (final ResultSet set = statement.executeQuery()) {
                                 while (set.next()) {
-                                    links.add(new DBLink(source.realName, set.getString(1)));
+                                    links.add(new DBLink(source.name(), set.getString(1)));
                                 }
                             }
                         }

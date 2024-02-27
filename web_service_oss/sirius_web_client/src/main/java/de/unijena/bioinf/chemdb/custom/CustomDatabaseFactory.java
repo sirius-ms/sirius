@@ -73,7 +73,7 @@ public class CustomDatabaseFactory {
             db = new BlobCustomDatabase<>(CompressibleBlobStorage.of(bs), version);
         }
         db.writeSettings(config);
-        CustomDataSources.addCustomSourceIfAbsent(db.name(), db.storageLocation());
+        CustomDataSources.addCustomSourceIfAbsent(db.name(), db.displayName(), db.storageLocation());
         return db;
     }
 
@@ -85,7 +85,7 @@ public class CustomDatabaseFactory {
             db = new BlobCustomDatabase<>(CompressibleBlobStorage.of(BlobStorages.openDefault(PROPERTY_PREFIX, location)), version);
         }
         db.readSettings();
-        CustomDataSources.addCustomSourceIfAbsent(db.name(), db.storageLocation());
+        CustomDataSources.addCustomSourceIfAbsent(db.name(), db.displayName(), db.storageLocation());
         return db;
     }
 

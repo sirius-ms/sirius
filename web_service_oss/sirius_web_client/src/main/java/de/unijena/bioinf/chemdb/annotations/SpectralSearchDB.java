@@ -37,7 +37,7 @@ public class SpectralSearchDB extends SearchableDBAnnotation {
     @DefaultInstanceProvider
     public static SpectralSearchDB fromString(@DefaultProperty @Nullable String value) {
         if (value == null || value.isEmpty() || value.equalsIgnoreCase(NO_DB))
-            value = DataSource.ALL.realName;
+            value = DataSource.ALL.name();
         return new SpectralSearchDB(makeDB(value));
     }
 
