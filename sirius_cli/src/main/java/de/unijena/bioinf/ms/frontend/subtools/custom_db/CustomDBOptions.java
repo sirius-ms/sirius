@@ -23,7 +23,6 @@ import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.MsExperimentParser;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.*;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
@@ -36,7 +35,6 @@ import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
-import de.unijena.bioinf.storage.blob.Compressible;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -97,6 +95,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 throw new CommandLine.PicocliException("Maximum allowed length for display names is 15 characters.");
             this.displayName = displayName;
         }
+
         String displayName = null;
 
         @Option(names = {"--buffer-size", "--buffer"}, defaultValue = "1000",
@@ -165,7 +164,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
         protected Boolean compute() throws Exception {
             final CdkFingerprintVersion version = ApplicationCore.WEB_API.getCDKChemDBFingerprintVersion();
             //loads all current available dbs
-            final @NotNull List<CustomDatabase> dbs = SearchableDatabases.getCustomDatabases(version);
+            final @NotNull List<CustomDatabase> dbs = CustomDatabases.getCustomDatabases(version);
 
             if (mode.importParas != null) {
                 if (mode.importParas.location == null || mode.importParas.location.isBlank()) {
@@ -186,7 +185,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                         .statistics(new CustomDatabaseSettings.Statistics())
                         .build();
 
-                final CustomDatabase db = CustomDatabaseFactory.createOrOpen(mode.importParas.location, Compressible.Compression.NONE, settings, version);
+                final CustomDatabase db = CustomDatabases.createOrOpen(mode.importParas.location, settings, version);
                 writeDBProperties();
 
                 logInfo("Database added to SIRIUS. Use 'structure --db=\"" + db.storageLocation() + "\"' to search in this database.");
@@ -228,9 +227,9 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 if (mode.removeParas.location == null || mode.removeParas.location.isBlank())
                     throw new IllegalArgumentException("Database location to remove not specified!");
 
-                SearchableDatabases.getCustomDatabase(mode.removeParas.location, version)
+                CustomDatabases.getCustomDatabase(mode.removeParas.location, version)
                         .ifPresentOrElse(db -> {
-                                    CustomDatabaseFactory.remove(db, mode.removeParas.delete);
+                                    CustomDatabases.remove(db, mode.removeParas.delete);
                                     writeDBProperties();
                                 }, () -> logWarn("\n==> No custom database with location '" + mode.removeParas.location + "' found.\n")
                         );
@@ -249,7 +248,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                     });
                     return true;
                 } else {
-                    SearchableDatabases.getCustomDatabase(mode.showParas.db, version)
+                    CustomDatabases.getCustomDatabase(mode.showParas.db, version)
                             .ifPresentOrElse(
                                     CustomDBOptions.this::printDBInfo,
                                     () -> logWarn("\n==> No custom database with location '" + mode.showParas.db + "' found.\n"));

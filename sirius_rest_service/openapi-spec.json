@@ -37,6 +37,10 @@
       }
     },
     {
+      "name": "Searchable Databases",
+      "description": "Manage structure and spectral databases that can be used by various computational methods."
+    },
+    {
       "name": "Features",
       "description": "This feature based API allows access features (aligned over runs) and there Annotations of a specified project-space. This is the entry point to access all raw annotation results an there summaries."
     },
@@ -285,6 +289,149 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/databases/{databaseId}": {
+      "get": {
+        "tags": [
+          "Searchable Databases"
+        ],
+        "operationId": "getDatabase",
+        "parameters": [
+          {
+            "name": "databaseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "includeStats",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchableDatabase"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Searchable Databases"
+        ],
+        "operationId": "updateDatabase",
+        "parameters": [
+          {
+            "name": "databaseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchableDatabaseParameters"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchableDatabase"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Searchable Databases"
+        ],
+        "operationId": "createDatabase",
+        "parameters": [
+          {
+            "name": "databaseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchableDatabaseParameters"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchableDatabase"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Searchable Databases"
+        ],
+        "operationId": "removeDatabase",
+        "parameters": [
+          {
+            "name": "databaseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "delete",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -1334,6 +1481,44 @@
         "responses": {
           "202": {
             "description": "Accepted"
+          }
+        }
+      }
+    },
+    "/api/databases/{databaseId}/add": {
+      "post": {
+        "tags": [
+          "Searchable Databases"
+        ],
+        "operationId": "addDatabase",
+        "parameters": [
+          {
+            "name": "databaseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "pathToProject",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchableDatabase"
+                }
+              }
+            }
           }
         }
       }
@@ -3272,6 +3457,71 @@
         }
       }
     },
+    "/api/databases": {
+      "get": {
+        "tags": [
+          "Searchable Databases"
+        ],
+        "operationId": "getDatabases",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "includeStats",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageSearchableDatabase"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/connection-status": {
       "get": {
         "tags": [
@@ -3579,6 +3829,80 @@
           "numOfBytes": {
             "type": "integer",
             "description": "Size in Bytes this project consumes on disk If NULL, Information has not been requested (See OptField \u0027sizeInformation\u0027).",
+            "format": "int64",
+            "nullable": true
+          }
+        },
+        "description": ""
+      },
+      "SearchableDatabaseParameters": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "maxLength": 15,
+            "type": "string",
+            "description": "display name of the database\n Should be short",
+            "nullable": true
+          },
+          "location": {
+            "type": "string",
+            "description": "Storage location of user database\n Might be NULL for non-user databases or if default location is used.",
+            "nullable": true
+          }
+        },
+        "description": ""
+      },
+      "SearchableDatabase": {
+        "required": [
+          "databaseId",
+          "userDb"
+        ],
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "maxLength": 15,
+            "type": "string",
+            "description": "display name of the database\n Should be short",
+            "nullable": true
+          },
+          "location": {
+            "type": "string",
+            "description": "Storage location of user database\n Might be NULL for non-user databases or if default location is used.",
+            "nullable": true
+          },
+          "matchRtOfReferenceSpectra": {
+            "type": "boolean",
+            "description": "Indicates whether this database shall be used to use retention time information for library matching.\n Typically used for in-house spectral libraries that have been measured on",
+            "nullable": true
+          },
+          "databaseId": {
+            "type": "string",
+            "description": "A unique identifier or name of the database.\n Should only contain file path and url save characters\n For user databases this is usually the file name."
+          },
+          "userDb": {
+            "type": "boolean",
+            "description": "Indicates whether the database is a user database that is modifiable or if it is a\n database that is included in SIRIUS which cannot be modified."
+          },
+          "importDate": {
+            "type": "string",
+            "description": "Date on which the data was imported / database was created.",
+            "nullable": true
+          },
+          "numberOfStructures": {
+            "type": "integer",
+            "description": "Number of unique compounds available in this database.",
+            "format": "int64",
+            "nullable": true
+          },
+          "numberOfFormulas": {
+            "type": "integer",
+            "description": "Number of different molecular formulas available in this database.",
+            "format": "int64",
+            "nullable": true
+          },
+          "numberOfReferenceSpectra": {
+            "type": "integer",
+            "description": "Number of reference spectra available in this database",
             "format": "int64",
             "nullable": true
           }
@@ -6132,6 +6456,16 @@
           "first": {
             "type": "boolean"
           },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuiInfo"
+            }
+          },
           "number": {
             "type": "integer",
             "format": "int32"
@@ -6143,6 +6477,31 @@
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
           },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageSearchableDatabase": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "first": {
+            "type": "boolean"
+          },
           "size": {
             "type": "integer",
             "format": "int32"
@@ -6150,8 +6509,19 @@
           "content": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/GuiInfo"
+              "$ref": "#/components/schemas/SearchableDatabase"
             }
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"

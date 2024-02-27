@@ -1,0 +1,163 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
+package de.unijena.bioinf.ms.middleware.service.databases;
+
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
+import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
+import de.unijena.bioinf.chemdb.custom.*;
+import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
+import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabase;
+import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabases;
+import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabaseParameters;
+import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import de.unijena.bioinf.webapi.WebAPI;
+import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions.writeDBProperties;
+
+@Slf4j
+public class ChemDbServiceImpl implements ChemDbService {
+    private final WebAPI<?> webAPI;
+
+    public ChemDbServiceImpl(WebAPI<?> webAPI) {
+        this.webAPI = webAPI;
+        log.info("Scanning for custom databases...");
+        try {
+            //request fingerprint version to init db and check compatibility
+            final CdkFingerprintVersion version = version();
+            //loads all current available dbs
+            @NotNull List<CustomDatabase> dbs = CustomDatabases.getCustomDatabases(version);
+            log.info("...found: " + dbs.stream().map(CustomDatabase::name).collect(Collectors.joining(", ")));
+        } catch (Exception e) {
+            log.error("Error when loading Custom databases", e);
+        }
+    }
+
+    private CdkFingerprintVersion version() {
+        try {
+            return webAPI.getCDKChemDBFingerprintVersion();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public WebWithCustomDatabase db() {
+        return webAPI.getChemDB();
+    }
+
+    @Override
+    public SearchableDatabase findById(@NotNull String databaseId, boolean includeStats) {
+        return CustomDataSources.getSourceFromNameOpt(databaseId).map(s -> s.isCustomSource() && includeStats
+                    ? CustomDatabases.getCustomDatabaseByName(s.name(), version())
+                        .map(SearchableDatabases::of)
+                        .orElse(SearchableDatabases.of(s))
+                    : SearchableDatabases.of(s))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Database with id '" + databaseId + "' does not exist."));
+    }
+
+    @Override
+    public Page<SearchableDatabase> findAll(Pageable pageable, boolean includeStats) {
+        return new PageImpl<>(CustomDataSources.sourcesStream().skip(pageable.getOffset()).limit(pageable.getPageSize())
+                .map(s -> {
+                    if (s.isCustomSource() && includeStats)
+                        return CustomDatabases.getCustomDatabaseByName(s.name(), version())
+                                .map(SearchableDatabases::of).orElse(SearchableDatabases.of(s));
+                    return SearchableDatabases.of(s);
+                }).toList(), pageable, CustomDataSources.size());
+    }
+
+    @Override
+    public List<SearchableDatabase> findAll(boolean includeStats) {
+        return CustomDataSources.sourcesStream().map(s -> {
+            if (s.isCustomSource() && includeStats)
+                return CustomDatabases.getCustomDatabaseByName(s.name(), version())
+                        .map(SearchableDatabases::of).orElse(SearchableDatabases.of(s));
+            return SearchableDatabases.of(s);
+        }).toList();
+    }
+
+    @Override
+    public SearchableDatabase create(@NotNull String databaseId, @Nullable SearchableDatabaseParameters dbParameters) {
+        Path location = Optional.ofNullable(dbParameters)
+                .map(SearchableDatabaseParameters::getLocation)
+                .map(Path::of).orElse(CustomDataSources.getCustomDatabaseDirectory());
+        try {
+            if (Files.isDirectory(location))
+                location = location.resolve(databaseId + CustomDatabases.NOSQL_SUFFIX);
+
+            CustomDatabaseSettings.CustomDatabaseSettingsBuilder configBuilder = CustomDatabaseSettings.builder()
+                    .name(databaseId)
+                    .usedFingerprints(List.of(version().getUsedFingerprints()))
+                    .schemaVersion(VersionsInfo.CUSTOM_DATABASE_SCHEMA)
+                    .statistics(new CustomDatabaseSettings.Statistics());
+
+            if (dbParameters != null)
+                configBuilder.displayName(dbParameters.getDisplayName())
+                        .matchRtOfReferenceSpectra(dbParameters.getMatchRtOfReferenceSpectra());
+
+            CustomDatabase newDb = CustomDatabases.create(location.toAbsolutePath().toString(), configBuilder.build(), version());
+            CustomDBOptions.writeDBProperties();
+            return SearchableDatabases.of(newDb);
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when creating user database at: " + location, e);
+        }
+    }
+
+    @Override
+    public SearchableDatabase add(@NotNull String databaseId, @NotNull String location) {
+        try {
+            CustomDatabase newDb = CustomDatabases.open(location, true, version());
+            CustomDBOptions.writeDBProperties();
+            return SearchableDatabases.of(newDb);
+        } catch (IOException e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when opening user database from: " + location, e);
+        }
+    }
+
+    @Override
+    public void remove(String databaseId, boolean delete) {
+        CustomDatabases.getCustomDatabase(databaseId, version()).ifPresent(db -> {
+            CustomDatabases.remove(db, delete);
+            writeDBProperties();
+        });
+    }
+
+    @Override
+    public SearchableDatabase update(String databaseId, SearchableDatabaseParameters dbUpdate) {
+        //TODO nightsky: implement modification of Displayname and RT matching.
+        throw new UnsupportedOperationException("Updating Custom databases is not yest supported");
+    }
+}

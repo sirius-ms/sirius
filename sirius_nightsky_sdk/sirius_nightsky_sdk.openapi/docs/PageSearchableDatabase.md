@@ -1,6 +1,6 @@
 
 
-# PageGuiInfo
+# PageSearchableDatabase
 
 
 ## Properties
@@ -13,7 +13,7 @@
 |**sort** | [**SortObject**](SortObject.md) |  |  [optional] |
 |**first** | **Boolean** |  |  [optional] |
 |**size** | **Integer** |  |  [optional] |
-|**content** | [**List&lt;GuiInfo&gt;**](GuiInfo.md) |  |  [optional] |
+|**content** | [**List&lt;SearchableDatabase&gt;**](SearchableDatabase.md) |  |  [optional] |
 |**number** | **Integer** |  |  [optional] |
 |**numberOfElements** | **Integer** |  |  [optional] |
 |**pageable** | [**PageableObject**](PageableObject.md) |  |  [optional] |

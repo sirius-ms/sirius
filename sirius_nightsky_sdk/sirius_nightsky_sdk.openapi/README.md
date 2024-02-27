@@ -178,6 +178,12 @@ Class | Method | HTTP request | Description
 *ProjectsApi* | [**getProjectSpace**](docs/ProjectsApi.md#getProjectSpace) | **GET** /api/projects/{projectId} | Get project space info by its projectId.
 *ProjectsApi* | [**getProjectSpaces**](docs/ProjectsApi.md#getProjectSpaces) | **GET** /api/projects | List opened project spaces.
 *ProjectsApi* | [**openProjectSpace**](docs/ProjectsApi.md#openProjectSpace) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId.
+*SearchableDatabasesApi* | [**addDatabase**](docs/SearchableDatabasesApi.md#addDatabase) | **POST** /api/databases/{databaseId}/add | 
+*SearchableDatabasesApi* | [**createDatabase**](docs/SearchableDatabasesApi.md#createDatabase) | **POST** /api/databases/{databaseId} | 
+*SearchableDatabasesApi* | [**getDatabase**](docs/SearchableDatabasesApi.md#getDatabase) | **GET** /api/databases/{databaseId} | 
+*SearchableDatabasesApi* | [**getDatabases**](docs/SearchableDatabasesApi.md#getDatabases) | **GET** /api/databases | 
+*SearchableDatabasesApi* | [**removeDatabase**](docs/SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} | 
+*SearchableDatabasesApi* | [**updateDatabase**](docs/SearchableDatabasesApi.md#updateDatabase) | **PUT** /api/databases/{databaseId} | 
 
 
 ## Documentation for Models
@@ -241,6 +247,7 @@ Class | Method | HTTP request | Description
  - [PageGuiInfo](docs/PageGuiInfo.md)
  - [PageJob](docs/PageJob.md)
  - [PageProjectInfo](docs/PageProjectInfo.md)
+ - [PageSearchableDatabase](docs/PageSearchableDatabase.md)
  - [PageSpectralLibraryMatch](docs/PageSpectralLibraryMatch.md)
  - [PageStructureCandidateFormula](docs/PageStructureCandidateFormula.md)
  - [PageStructureCandidateScored](docs/PageStructureCandidateScored.md)
@@ -251,6 +258,8 @@ Class | Method | HTTP request | Description
  - [ProjectInfo](docs/ProjectInfo.md)
  - [ProjectInfoOptField](docs/ProjectInfoOptField.md)
  - [SearchQueryType](docs/SearchQueryType.md)
+ - [SearchableDatabase](docs/SearchableDatabase.md)
+ - [SearchableDatabaseParameters](docs/SearchableDatabaseParameters.md)
  - [SimplePeak](docs/SimplePeak.md)
  - [Sirius](docs/Sirius.md)
  - [SortObject](docs/SortObject.md)

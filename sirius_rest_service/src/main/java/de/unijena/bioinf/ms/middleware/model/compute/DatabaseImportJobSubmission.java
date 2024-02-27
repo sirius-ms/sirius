@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schiller University.
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -18,10 +18,11 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.service.dbs;
+package de.unijena.bioinf.ms.middleware.model.compute;
 
-import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
+import java.util.List;
 
-public interface ChemDbService {
-    WebWithCustomDatabase db();
+public class DatabaseImportJobSubmission {
+    String databaseId;
+    List<String> inputPaths;
 }

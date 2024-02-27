@@ -65,6 +65,7 @@ docs/PageFormulaCandidate.md
 docs/PageGuiInfo.md
 docs/PageJob.md
 docs/PageProjectInfo.md
+docs/PageSearchableDatabase.md
 docs/PageSpectralLibraryMatch.md
 docs/PageStructureCandidateFormula.md
 docs/PageStructureCandidateScored.md
@@ -76,6 +77,9 @@ docs/ProjectInfo.md
 docs/ProjectInfoOptField.md
 docs/ProjectsApi.md
 docs/SearchQueryType.md
+docs/SearchableDatabase.md
+docs/SearchableDatabaseParameters.md
+docs/SearchableDatabasesApi.md
 docs/SimplePeak.md
 docs/Sirius.md
 docs/SortObject.md
@@ -107,6 +111,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/InfoApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/JobsApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/LoginAndAccountApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/ProjectsApi.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/SearchableDatabasesApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/client/ApiClient.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/client/JavaTimeFormatter.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/client/RFC3339DateFormat.java
@@ -176,6 +181,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageFormulaCandidate.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageGuiInfo.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageJob.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageProjectInfo.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageSearchableDatabase.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageSpectralLibraryMatch.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageStructureCandidateFormula.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageStructureCandidateScored.java
@@ -186,6 +192,8 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ProjectChangeEvent.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ProjectInfo.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ProjectInfoOptField.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SearchQueryType.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SearchableDatabase.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SearchableDatabaseParameters.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SimplePeak.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Sirius.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SortObject.java
@@ -209,3 +217,4 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/WorkerList.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Zodiac.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ZodiacEdgeFilterThresholds.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ZodiacEpochs.java
+src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/SearchableDatabasesApiTest.java

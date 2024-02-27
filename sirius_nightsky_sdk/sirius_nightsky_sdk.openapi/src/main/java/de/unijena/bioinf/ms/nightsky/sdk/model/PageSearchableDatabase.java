@@ -20,8 +20,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import de.unijena.bioinf.ms.nightsky.sdk.model.GuiInfo;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageableObject;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SortObject;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,23 +30,23 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * PageGuiInfo
+ * PageSearchableDatabase
  */
 @JsonPropertyOrder({
-  PageGuiInfo.JSON_PROPERTY_TOTAL_PAGES,
-  PageGuiInfo.JSON_PROPERTY_TOTAL_ELEMENTS,
-  PageGuiInfo.JSON_PROPERTY_LAST,
-  PageGuiInfo.JSON_PROPERTY_SORT,
-  PageGuiInfo.JSON_PROPERTY_FIRST,
-  PageGuiInfo.JSON_PROPERTY_SIZE,
-  PageGuiInfo.JSON_PROPERTY_CONTENT,
-  PageGuiInfo.JSON_PROPERTY_NUMBER,
-  PageGuiInfo.JSON_PROPERTY_NUMBER_OF_ELEMENTS,
-  PageGuiInfo.JSON_PROPERTY_PAGEABLE,
-  PageGuiInfo.JSON_PROPERTY_EMPTY
+  PageSearchableDatabase.JSON_PROPERTY_TOTAL_PAGES,
+  PageSearchableDatabase.JSON_PROPERTY_TOTAL_ELEMENTS,
+  PageSearchableDatabase.JSON_PROPERTY_LAST,
+  PageSearchableDatabase.JSON_PROPERTY_SORT,
+  PageSearchableDatabase.JSON_PROPERTY_FIRST,
+  PageSearchableDatabase.JSON_PROPERTY_SIZE,
+  PageSearchableDatabase.JSON_PROPERTY_CONTENT,
+  PageSearchableDatabase.JSON_PROPERTY_NUMBER,
+  PageSearchableDatabase.JSON_PROPERTY_NUMBER_OF_ELEMENTS,
+  PageSearchableDatabase.JSON_PROPERTY_PAGEABLE,
+  PageSearchableDatabase.JSON_PROPERTY_EMPTY
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
-public class PageGuiInfo {
+public class PageSearchableDatabase {
   public static final String JSON_PROPERTY_TOTAL_PAGES = "totalPages";
   private Integer totalPages;
 
@@ -66,7 +66,7 @@ public class PageGuiInfo {
   private Integer size;
 
   public static final String JSON_PROPERTY_CONTENT = "content";
-  private List<GuiInfo> content;
+  private List<SearchableDatabase> content;
 
   public static final String JSON_PROPERTY_NUMBER = "number";
   private Integer number;
@@ -80,10 +80,10 @@ public class PageGuiInfo {
   public static final String JSON_PROPERTY_EMPTY = "empty";
   private Boolean empty;
 
-  public PageGuiInfo() {
+  public PageSearchableDatabase() {
   }
 
-  public PageGuiInfo totalPages(Integer totalPages) {
+  public PageSearchableDatabase totalPages(Integer totalPages) {
     
     this.totalPages = totalPages;
     return this;
@@ -109,7 +109,7 @@ public class PageGuiInfo {
   }
 
 
-  public PageGuiInfo totalElements(Long totalElements) {
+  public PageSearchableDatabase totalElements(Long totalElements) {
     
     this.totalElements = totalElements;
     return this;
@@ -135,7 +135,7 @@ public class PageGuiInfo {
   }
 
 
-  public PageGuiInfo last(Boolean last) {
+  public PageSearchableDatabase last(Boolean last) {
     
     this.last = last;
     return this;
@@ -161,7 +161,7 @@ public class PageGuiInfo {
   }
 
 
-  public PageGuiInfo sort(SortObject sort) {
+  public PageSearchableDatabase sort(SortObject sort) {
     
     this.sort = sort;
     return this;
@@ -187,7 +187,7 @@ public class PageGuiInfo {
   }
 
 
-  public PageGuiInfo first(Boolean first) {
+  public PageSearchableDatabase first(Boolean first) {
     
     this.first = first;
     return this;
@@ -213,7 +213,7 @@ public class PageGuiInfo {
   }
 
 
-  public PageGuiInfo size(Integer size) {
+  public PageSearchableDatabase size(Integer size) {
     
     this.size = size;
     return this;
@@ -239,13 +239,13 @@ public class PageGuiInfo {
   }
 
 
-  public PageGuiInfo content(List<GuiInfo> content) {
+  public PageSearchableDatabase content(List<SearchableDatabase> content) {
     
     this.content = content;
     return this;
   }
 
-  public PageGuiInfo addContentItem(GuiInfo contentItem) {
+  public PageSearchableDatabase addContentItem(SearchableDatabase contentItem) {
     if (this.content == null) {
       this.content = new ArrayList<>();
     }
@@ -261,19 +261,19 @@ public class PageGuiInfo {
   @JsonProperty(JSON_PROPERTY_CONTENT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public List<GuiInfo> getContent() {
+  public List<SearchableDatabase> getContent() {
     return content;
   }
 
 
   @JsonProperty(JSON_PROPERTY_CONTENT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setContent(List<GuiInfo> content) {
+  public void setContent(List<SearchableDatabase> content) {
     this.content = content;
   }
 
 
-  public PageGuiInfo number(Integer number) {
+  public PageSearchableDatabase number(Integer number) {
     
     this.number = number;
     return this;
@@ -299,7 +299,7 @@ public class PageGuiInfo {
   }
 
 
-  public PageGuiInfo numberOfElements(Integer numberOfElements) {
+  public PageSearchableDatabase numberOfElements(Integer numberOfElements) {
     
     this.numberOfElements = numberOfElements;
     return this;
@@ -325,7 +325,7 @@ public class PageGuiInfo {
   }
 
 
-  public PageGuiInfo pageable(PageableObject pageable) {
+  public PageSearchableDatabase pageable(PageableObject pageable) {
     
     this.pageable = pageable;
     return this;
@@ -351,7 +351,7 @@ public class PageGuiInfo {
   }
 
 
-  public PageGuiInfo empty(Boolean empty) {
+  public PageSearchableDatabase empty(Boolean empty) {
     
     this.empty = empty;
     return this;
@@ -384,18 +384,18 @@ public class PageGuiInfo {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    PageGuiInfo pageGuiInfo = (PageGuiInfo) o;
-    return Objects.equals(this.totalPages, pageGuiInfo.totalPages) &&
-        Objects.equals(this.totalElements, pageGuiInfo.totalElements) &&
-        Objects.equals(this.last, pageGuiInfo.last) &&
-        Objects.equals(this.sort, pageGuiInfo.sort) &&
-        Objects.equals(this.first, pageGuiInfo.first) &&
-        Objects.equals(this.size, pageGuiInfo.size) &&
-        Objects.equals(this.content, pageGuiInfo.content) &&
-        Objects.equals(this.number, pageGuiInfo.number) &&
-        Objects.equals(this.numberOfElements, pageGuiInfo.numberOfElements) &&
-        Objects.equals(this.pageable, pageGuiInfo.pageable) &&
-        Objects.equals(this.empty, pageGuiInfo.empty);
+    PageSearchableDatabase pageSearchableDatabase = (PageSearchableDatabase) o;
+    return Objects.equals(this.totalPages, pageSearchableDatabase.totalPages) &&
+        Objects.equals(this.totalElements, pageSearchableDatabase.totalElements) &&
+        Objects.equals(this.last, pageSearchableDatabase.last) &&
+        Objects.equals(this.sort, pageSearchableDatabase.sort) &&
+        Objects.equals(this.first, pageSearchableDatabase.first) &&
+        Objects.equals(this.size, pageSearchableDatabase.size) &&
+        Objects.equals(this.content, pageSearchableDatabase.content) &&
+        Objects.equals(this.number, pageSearchableDatabase.number) &&
+        Objects.equals(this.numberOfElements, pageSearchableDatabase.numberOfElements) &&
+        Objects.equals(this.pageable, pageSearchableDatabase.pageable) &&
+        Objects.equals(this.empty, pageSearchableDatabase.empty);
   }
 
   @Override
@@ -406,7 +406,7 @@ public class PageGuiInfo {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class PageGuiInfo {\n");
+    sb.append("class PageSearchableDatabase {\n");
     sb.append("    totalPages: ").append(toIndentedString(totalPages)).append("\n");
     sb.append("    totalElements: ").append(toIndentedString(totalElements)).append("\n");
     sb.append("    last: ").append(toIndentedString(last)).append("\n");
