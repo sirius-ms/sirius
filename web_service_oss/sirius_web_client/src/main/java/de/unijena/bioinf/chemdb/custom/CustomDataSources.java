@@ -276,8 +276,6 @@ public class CustomDataSources {
 
         String displayName();
 
-        long searchFlag();
-
         String URI();
 
         boolean isCustomSource();
@@ -317,11 +315,6 @@ public class CustomDataSources {
         }
 
         @Override
-        public long searchFlag() {
-            return source.searchFlag;
-        }
-
-        @Override
         public String URI() {
             return source.URI;
         }
@@ -343,10 +336,10 @@ public class CustomDataSources {
     }
 
     public static class CustomSource implements Source {
-        public final long flag;
-        public final String name;
-        public final String displayName;
-        public final String location;
+        private final long flag;
+        private final String name;
+        private final String displayName;
+        private final String location;
 
         public CustomSource(long flag, String name, String bucketPath) {
             this(flag, name, name, bucketPath);
@@ -376,11 +369,6 @@ public class CustomDataSources {
         @Override
         public String displayName() {
             return displayName;
-        }
-
-        @Override
-        public long searchFlag() {
-            return flag();
         }
 
         //this is for web links

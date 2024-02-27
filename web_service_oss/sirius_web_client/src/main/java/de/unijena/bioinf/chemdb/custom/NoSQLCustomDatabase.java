@@ -48,7 +48,7 @@ public class NoSQLCustomDatabase<Doctype, DB extends ChemicalNoSQLDatabase<Docty
 
     @Override
     public void deleteDatabase() {
-        throw new UnsupportedOperationException("Please use CustomDatabaseFactory.delete()!");
+        throw new UnsupportedOperationException("Please use CustomDatabases.delete()!");
     }
 
     @Override
