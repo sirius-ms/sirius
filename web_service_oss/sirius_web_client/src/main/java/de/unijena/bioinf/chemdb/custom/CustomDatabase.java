@@ -21,11 +21,13 @@
 package de.unijena.bioinf.chemdb.custom;
 
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
-import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.babelms.annotations.CompoundMetaData;
-import de.unijena.bioinf.chemdb.*;
+import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
+import de.unijena.bioinf.chemdb.SearchableDatabase;
+import de.unijena.bioinf.chemdb.SpectralUtils;
+import de.unijena.bioinf.chemdb.WriteableChemicalDatabase;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
@@ -33,9 +35,7 @@ import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.io.ParsingIterator;
-import de.unijena.bioinf.storage.blob.Compressible;
 import de.unijena.bioinf.webapi.WebAPI;
-import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.exception.CDKException;
@@ -45,12 +45,9 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public abstract class CustomDatabase implements SearchableDatabase {
     protected static Logger logger = LoggerFactory.getLogger(CustomDatabase.class);
-
 
     public abstract void deleteDatabase();
 
@@ -60,12 +57,20 @@ public abstract class CustomDatabase implements SearchableDatabase {
         return settings.getSchemaVersion();
     }
 
+    @Override
+    public String name() {
+        return Optional.ofNullable(settings).map(CustomDatabaseSettings::getName).orElse(null);
+    }
+
+    @Override
+    public String displayName() {
+        return Optional.ofNullable(settings).map(CustomDatabaseSettings::getDisplayName).orElse(name());
+    }
+
     public boolean needsUpgrade() {
         //todo nightsky: check fingerprint compatibility?
         return settings.getSchemaVersion() != VersionsInfo.CUSTOM_DATABASE_SCHEMA;
     }
-
-    public abstract Compressible.Compression compression();
 
     public abstract String storageLocation();
 

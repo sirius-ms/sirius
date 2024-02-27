@@ -35,6 +35,8 @@ import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -167,15 +169,20 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
         }
     }
 
-    @Override
-    public String getChemDbDate() throws ChemicalDatabaseException {
+    public Optional<String> getTag(@NotNull String key) {
         try {
-            return storage.findStr(Filter.build().eq("key", TAG_DATE), Tag.class, 0, 1)
-                    .map(Tag::getValue).findFirst()
-                    .orElseThrow(() -> new MissingResourceException("Could not find Database Date tag", "Tag", TAG_DATE));
+            return storage.findStr(Filter.build().eq("key", key), Tag.class, 0, 1)
+                    .map(Tag::getValue).findFirst();
         } catch (IOException e) {
-            throw new ChemicalDatabaseException(e);
+            LoggerFactory.getLogger(getClass()).error("Error when loading Tag: " + key + ".", e);
+            return Optional.empty();
         }
+    }
+
+    @Override
+    public String getChemDbDate() {
+            return getTag(TAG_DATE)
+                    .orElseThrow(() -> new MissingResourceException("Could not find Database Date tag", "Tag", TAG_DATE));
     }
 
     @Override

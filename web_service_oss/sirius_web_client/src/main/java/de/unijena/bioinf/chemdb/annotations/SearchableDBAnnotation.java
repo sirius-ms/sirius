@@ -53,9 +53,9 @@ public abstract class SearchableDBAnnotation implements Ms2ExperimentAnnotation 
     }
 
     public static List<CustomDataSources.Source> makeDB(@NotNull String names) {
-        if (names.equalsIgnoreCase(DataSource.ALL.realName) || names.equalsIgnoreCase(DataSource.ALL.name()))
+        if (names.equalsIgnoreCase(DataSource.ALL.name()) || names.equalsIgnoreCase(DataSource.ALL.realName()))
             return CustomDataSources.getAllSelectableDbs();
-        if (names.equalsIgnoreCase(DataSource.ALL_BUT_INSILICO.realName) || names.equalsIgnoreCase(DataSource.ALL_BUT_INSILICO.name()))
+        if (names.equalsIgnoreCase(DataSource.ALL_BUT_INSILICO.name()) || names.equalsIgnoreCase(DataSource.ALL_BUT_INSILICO.realName()))
             return CustomDataSources.getNonInSilicoSelectableDbs();
 
         return Arrays.stream(names.trim().split("\\s*,\\s*"))

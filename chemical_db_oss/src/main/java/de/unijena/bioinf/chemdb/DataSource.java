@@ -22,6 +22,8 @@ package de.unijena.bioinf.chemdb;
 
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.regex.Pattern;
+
 // BIO FLAG IS: 4294434748
 //ATTENTION Do not use `:{}[];` in the String here because that might break parsing
 //Names: names should be descriptive and short because they have to be rendered in the GUI
@@ -107,9 +109,11 @@ public enum DataSource {
         this.publication = publication;
     }
 
+    private static Pattern NUMPAT = Pattern.compile("%[0-9 ,+\\-]*d");
+
     public String getLink(String id) {
         if (this.URI == null) return null;
-        if (DataSources.NUMPAT.matcher(URI).find()) {
+        if (NUMPAT.matcher(URI).find()) {
             return String.format(Locale.US, URI, Integer.parseInt(id));
         } else {
             return String.format(Locale.US, URI, id);
@@ -148,16 +152,18 @@ public enum DataSource {
         return Arrays.stream(DataSource.values()).filter(it -> it != ALL && !it.mines).toArray(DataSource[]::new);
     }
 
+    public static long bioOrAll(boolean searchInBio) {
+        return searchInBio ? DataSource.BIO.flag() : DataSource.ALL_BUT_INSILICO.flag();
+    }
     // 4294434748
     private static long makeBIOFLAG() {
         long bioflag = 0L;
         for (int i = 2; i < 32; ++i) {
-            if (i==6 || i==13 || i==19) continue; //PubMed and Zinc_bio should not be included into bio database
+            if (i == 6 || i == 13 || i == 19) continue; //PubMed and Zinc_bio should not be included into bio database
             bioflag |= (1L << i);
         }
         return bioflag;
     }
-
 
     /**
      * to reference a publication for a specific data source

@@ -47,10 +47,7 @@ public class CustomDataSources {
     private static final BitSet bits;
     private static final Map<String, Source> SOURCE_MAP;
 
-    public final static Set<String> NON_SEARCHABLE_LIST = Set.of(DataSource.TRAIN.realName, DataSource.LIPID.realName(), DataSource.ALL.realName, DataSource.ALL_BUT_INSILICO.realName,
-            DataSource.PUBCHEMANNOTATIONBIO.realName, DataSource.PUBCHEMANNOTATIONDRUG.realName, DataSource.PUBCHEMANNOTATIONFOOD.realName, DataSource.PUBCHEMANNOTATIONSAFETYANDTOXIC.realName,
-            DataSource.SUPERNATURAL.realName
-    );
+    private final static Set<Source> NON_SEARCHABLE_LIST;
 
     public static final String WEB_CACHE_DIR = "web-cache"; //cache directory for all remote (web) dbs
     public static final String CUSTOM_DB_DIR = "custom";
@@ -78,10 +75,10 @@ public class CustomDataSources {
     public static Path getDatabaseDirectory() {
         final String val = PropertyManager.getProperty("de.unijena.bioinf.sirius.fingerID.cache");
         Path p;
-        if (val == null || val.isBlank()){
-            p =  Path.of(System.getProperty("java.io.tmpdir")).resolve("csi_cache_dir");
+        if (val == null || val.isBlank()) {
+            p = Path.of(System.getProperty("java.io.tmpdir")).resolve("csi_cache_dir");
             LoggerFactory.getLogger(CustomDataSources.class).warn("No structure db cache found. Using fallback: " + p);
-        }else {
+        } else {
             p = Paths.get(val);
         }
         return p;
@@ -89,15 +86,39 @@ public class CustomDataSources {
 
 
     static {
-        SOURCE_MAP = new LinkedHashMap<>(DataSource.values().length * +5);
+        SOURCE_MAP = new LinkedHashMap<>(DataSource.values().length + 10);
         long b = 0L;
         for (DataSource s : DataSource.values()) {
-            SOURCE_MAP.put(s.realName, new EnumSource(s));
+            EnumSource en = new EnumSource(s);
+            SOURCE_MAP.put(s.name(), en);
             b |= s.flag;
         }
         bits = BitSet.valueOf(new long[]{b});
         lastEnumBit = bits.cardinality();
+
+        NON_SEARCHABLE_LIST = new HashSet<>(getSourcesFromNames(
+                DataSource.TRAIN.name(), DataSource.LIPID.name(), DataSource.ALL.name(), DataSource.ALL_BUT_INSILICO.name(),
+                DataSource.PUBCHEMANNOTATIONBIO.name(), DataSource.PUBCHEMANNOTATIONDRUG.name(),
+                DataSource.PUBCHEMANNOTATIONFOOD.name(), DataSource.PUBCHEMANNOTATIONSAFETYANDTOXIC.name(),
+                DataSource.SUPERNATURAL.name()));
     }
+
+    public static boolean isNonSearchable(@NotNull String name) {
+        return getSourceFromNameOpt(name).map(NON_SEARCHABLE_LIST::contains).orElse(true);
+    }
+
+    public static boolean isSearchable(@NotNull String name) {
+        return !isNonSearchable(name);
+    }
+
+    public static boolean isNonSearchable(@NotNull Source source) {
+        return NON_SEARCHABLE_LIST.contains(source);
+    }
+
+    public static boolean isSearchable(Source source) {
+        return !isNonSearchable(source);
+    }
+
 
     static boolean removeCustomSource(String name) {
         Source s = getSourceFromName(name);
@@ -111,14 +132,15 @@ public class CustomDataSources {
         return false;
     }
 
-    static Source addCustomSourceIfAbsent(String name, String bucketLocation) {
+    static Source addCustomSourceIfAbsent(String name, String displayName, String bucketLocation) {
         Source s = getSourceFromName(name);
         if (s == null) {
             int bitIndex = bits.nextClearBit(lastEnumBit);
             bits.set(bitIndex);
             long flag = 1L << bitIndex;
-            Source r = new CustomSource(flag, name, bucketLocation);
-            SOURCE_MAP.put(name, r);
+            Source r = new CustomSource(flag, name, displayName, bucketLocation);
+            SOURCE_MAP.put(r.name(), r);
+
             notifyListeners(Collections.singleton(r.name()));
             return r;
         }
@@ -151,11 +173,11 @@ public class CustomDataSources {
         return set;
     }
 
-    public static boolean containsDB(String name){
+    public static boolean containsDB(String name) {
         return SOURCE_MAP.containsKey(name);
     }
 
-    public static long removeCustomSourceFromFlag(long flagToChange){
+    public static long removeCustomSourceFromFlag(long flagToChange) {
         return flagToChange & getNonCustomSourceFlags();
     }
 
@@ -179,7 +201,6 @@ public class CustomDataSources {
     public static List<CustomSource> getCustomSources() {
         return sourcesStream().filter(Source::isCustomSource).map(s -> (CustomSource) s).collect(Collectors.toList());
     }
-
 
     @Nullable
     public static Source getSourceFromName(String name) {
@@ -213,15 +234,16 @@ public class CustomDataSources {
     }
 
     public static List<Source> getAllSelectableDbs() {
-        return sourcesStream().filter(db -> !NON_SEARCHABLE_LIST.contains(db.name()))
+        return sourcesStream().filter(CustomDataSources::isSearchable)
                 .collect(Collectors.toList());
     }
 
     public static List<Source> getNonInSilicoSelectableDbs() {
         return Arrays.stream(DataSource.valuesNoALLNoMINES())
-                .map(DataSource::realName)
-                .filter(s -> !NON_SEARCHABLE_LIST.contains(s))
-                .map(SOURCE_MAP::get)
+                .map(DataSource::name)
+                .filter(CustomDataSources::isSearchable)
+                .map(CustomDataSources::getSourceFromName)
+                .filter(Objects::nonNull)
                 .toList();
     }
 
@@ -246,26 +268,23 @@ public class CustomDataSources {
     }
 
 
-
-
-
-
     // classes
     public interface Source {
         long flag();
 
-        String id();
-
         String name();
+
+        String displayName();
 
         long searchFlag();
 
         String URI();
 
         boolean isCustomSource();
-        default boolean noCustomSource(){
+
+        default boolean noCustomSource() {
             return !isCustomSource();
-        };
+        }
 
         String getLink(String id);
 
@@ -288,13 +307,13 @@ public class CustomDataSources {
         }
 
         @Override
-        public String id() {
+        public String name() {
             return source.name();
         }
 
         @Override
-        public String name() {
-            return source.realName;
+        public String displayName() {
+            return source.realName();
         }
 
         @Override
@@ -319,25 +338,25 @@ public class CustomDataSources {
 
         @Override
         public String toString() {
-            return name();
+            return displayName();
         }
     }
 
     public static class CustomSource implements Source {
         public final long flag;
-        public final long searchFlag;
         public final String name;
+        public final String displayName;
         public final String location;
 
-        CustomSource(long flag, long searchFlag, String name, String bucketPath) {
-            this.flag = flag;
-            this.searchFlag = searchFlag;
-            this.name = name;
-            this.location = bucketPath;
+        public CustomSource(long flag, String name, String bucketPath) {
+            this(flag, name, name, bucketPath);
         }
 
-        public CustomSource(long flag, String name, String bucketPath) {
-            this(flag, flag, name, bucketPath);
+        public CustomSource(long flag, String name, String displayName, String bucketPath) {
+            this.flag = flag;
+            this.name = name;
+            this.displayName = displayName;
+            this.location = bucketPath;
         }
 
         @Override
@@ -345,8 +364,7 @@ public class CustomDataSources {
             return flag;
         }
 
-        @Override
-        public String id() {
+        public String location() {
             return location;
         }
 
@@ -356,8 +374,13 @@ public class CustomDataSources {
         }
 
         @Override
+        public String displayName() {
+            return displayName;
+        }
+
+        @Override
         public long searchFlag() {
-            return searchFlag;
+            return flag();
         }
 
         //this is for web links
@@ -378,7 +401,7 @@ public class CustomDataSources {
 
         @Override
         public String toString() {
-            return name();
+            return displayName();
         }
 
         @Override

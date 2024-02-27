@@ -28,7 +28,6 @@ import de.unijena.bioinf.chemdb.WriteableChemicalDatabase;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
 import de.unijena.bioinf.storage.blob.BlobStorage;
-import de.unijena.bioinf.storage.blob.Compressible;
 import de.unijena.bioinf.storage.blob.CompressibleBlobStorage;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +46,7 @@ public class BlobCustomDatabase<Storage extends BlobStorage> extends CustomDatab
     }
 
     @Override
-    public synchronized void deleteDatabase()  {
+    public synchronized void deleteDatabase() {
         try {
             storage.deleteBucket();
         } catch (IOException e) {
@@ -88,12 +87,10 @@ public class BlobCustomDatabase<Storage extends BlobStorage> extends CustomDatab
 
     @Override
     public String name() {
+        String n = super.name();
+        if (n != null)
+            return n;
         return storage.getName();
-    }
-
-    @Override
-    public Compressible.Compression compression() {
-        return storage.getCompression();
     }
 
     @Override

@@ -37,7 +37,7 @@ public class StructureSearchDB extends SearchableDBAnnotation {
     @DefaultInstanceProvider
     public static StructureSearchDB fromString(@DefaultProperty @Nullable String value) {
         if (value == null || value.isEmpty() || value.equalsIgnoreCase(NO_DB))
-            value = DataSource.ALL.realName;
+            value = DataSource.ALL.name();
         return new StructureSearchDB(makeDB(value));
     }
 }
