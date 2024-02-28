@@ -13,83 +13,77 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.util.Objects;
-import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonTypeName;
-import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.annotation.JsonTypeName;
+
+import java.util.Objects;
 
 /**
  * 
  */
 @JsonPropertyOrder({
-  UseHeuristic.JSON_PROPERTY_MZ_TO_USE_HEURISTIC,
-  UseHeuristic.JSON_PROPERTY_MZ_TO_USE_HEURISTIC_ONLY
+  UseHeuristic.JSON_PROPERTY_USE_HEURISTIC_ABOVE_MZ,
+  UseHeuristic.JSON_PROPERTY_USE_ONLY_HEURISTIC_ABOVE_MZ
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class UseHeuristic {
-  public static final String JSON_PROPERTY_MZ_TO_USE_HEURISTIC = "mzToUseHeuristic";
-  private Integer mzToUseHeuristic;
+  public static final String JSON_PROPERTY_USE_HEURISTIC_ABOVE_MZ = "useHeuristicAboveMz";
+  private Integer useHeuristicAboveMz;
 
-  public static final String JSON_PROPERTY_MZ_TO_USE_HEURISTIC_ONLY = "mzToUseHeuristicOnly";
-  private Integer mzToUseHeuristicOnly;
+  public static final String JSON_PROPERTY_USE_ONLY_HEURISTIC_ABOVE_MZ = "useOnlyHeuristicAboveMz";
+  private Integer useOnlyHeuristicAboveMz;
 
   public UseHeuristic() {
   }
 
-  public UseHeuristic mzToUseHeuristic(Integer mzToUseHeuristic) {
-    
-    this.mzToUseHeuristic = mzToUseHeuristic;
+  public UseHeuristic useHeuristicAboveMz(Integer useHeuristicAboveMz) {
+    this.useHeuristicAboveMz = useHeuristicAboveMz;
     return this;
   }
 
    /**
-   * Get mzToUseHeuristic
-   * @return mzToUseHeuristic
+   * Get useHeuristicAboveMz
+   * @return useHeuristicAboveMz
   **/
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MZ_TO_USE_HEURISTIC)
+  @JsonProperty(JSON_PROPERTY_USE_HEURISTIC_ABOVE_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Integer getMzToUseHeuristic() {
-    return mzToUseHeuristic;
+  public Integer getUseHeuristicAboveMz() {
+    return useHeuristicAboveMz;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MZ_TO_USE_HEURISTIC)
+  @JsonProperty(JSON_PROPERTY_USE_HEURISTIC_ABOVE_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMzToUseHeuristic(Integer mzToUseHeuristic) {
-    this.mzToUseHeuristic = mzToUseHeuristic;
+  public void setUseHeuristicAboveMz(Integer useHeuristicAboveMz) {
+    this.useHeuristicAboveMz = useHeuristicAboveMz;
   }
 
 
-  public UseHeuristic mzToUseHeuristicOnly(Integer mzToUseHeuristicOnly) {
-    
-    this.mzToUseHeuristicOnly = mzToUseHeuristicOnly;
+  public UseHeuristic useOnlyHeuristicAboveMz(Integer useOnlyHeuristicAboveMz) {
+    this.useOnlyHeuristicAboveMz = useOnlyHeuristicAboveMz;
     return this;
   }
 
    /**
-   * Get mzToUseHeuristicOnly
-   * @return mzToUseHeuristicOnly
+   * Get useOnlyHeuristicAboveMz
+   * @return useOnlyHeuristicAboveMz
   **/
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MZ_TO_USE_HEURISTIC_ONLY)
+  @JsonProperty(JSON_PROPERTY_USE_ONLY_HEURISTIC_ABOVE_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Integer getMzToUseHeuristicOnly() {
-    return mzToUseHeuristicOnly;
+  public Integer getUseOnlyHeuristicAboveMz() {
+    return useOnlyHeuristicAboveMz;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MZ_TO_USE_HEURISTIC_ONLY)
+  @JsonProperty(JSON_PROPERTY_USE_ONLY_HEURISTIC_ABOVE_MZ)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMzToUseHeuristicOnly(Integer mzToUseHeuristicOnly) {
-    this.mzToUseHeuristicOnly = mzToUseHeuristicOnly;
+  public void setUseOnlyHeuristicAboveMz(Integer useOnlyHeuristicAboveMz) {
+    this.useOnlyHeuristicAboveMz = useOnlyHeuristicAboveMz;
   }
 
   @Override
@@ -101,21 +95,21 @@ public class UseHeuristic {
       return false;
     }
     UseHeuristic useHeuristic = (UseHeuristic) o;
-    return Objects.equals(this.mzToUseHeuristic, useHeuristic.mzToUseHeuristic) &&
-        Objects.equals(this.mzToUseHeuristicOnly, useHeuristic.mzToUseHeuristicOnly);
+    return Objects.equals(this.useHeuristicAboveMz, useHeuristic.useHeuristicAboveMz) &&
+        Objects.equals(this.useOnlyHeuristicAboveMz, useHeuristic.useOnlyHeuristicAboveMz);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(mzToUseHeuristic, mzToUseHeuristicOnly);
+    return Objects.hash(useHeuristicAboveMz, useOnlyHeuristicAboveMz);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class UseHeuristic {\n");
-    sb.append("    mzToUseHeuristic: ").append(toIndentedString(mzToUseHeuristic)).append("\n");
-    sb.append("    mzToUseHeuristicOnly: ").append(toIndentedString(mzToUseHeuristicOnly)).append("\n");
+    sb.append("    useHeuristicAboveMz: ").append(toIndentedString(useHeuristicAboveMz)).append("\n");
+    sb.append("    useOnlyHeuristicAboveMz: ").append(toIndentedString(useOnlyHeuristicAboveMz)).append("\n");
     sb.append("}");
     return sb.toString();
   }

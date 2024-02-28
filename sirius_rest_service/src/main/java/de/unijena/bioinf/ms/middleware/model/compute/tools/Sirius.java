@@ -129,8 +129,8 @@ public class Sirius extends Tool<SiriusOptions> {
     Timeout ilpTimeout;
     /**
      * Mass thresholds for heuristic fragmentation tree computation which dramatically speeds up computations.
-     * mzToUseHeuristic: For compounds above this threshold fragmentation trees will be computed heuristically for ranking. Tree that will be kept (numberOfCandidates) will be recomputed exactly
-     * mzToUseHeuristicOnly:For compounds above this threshold fragmentation trees will be computed heuristically.
+     * useHeuristicAboveMz: For compounds above this threshold fragmentation trees will be computed heuristically for ranking. Tree that will be kept (numberOfCandidates) will be recomputed exactly
+     * useOnlyHeuristicAboveMz:For compounds above this threshold fragmentation trees will be computed heuristically.
      */
     UseHeuristic useHeuristic;
 
@@ -150,8 +150,8 @@ public class Sirius extends Tool<SiriusOptions> {
     @Override
     public Map<String, String> asConfigMap() {
         return new NullCheckMapBuilder()
-                .putNonNullObj("UseHeuristic.mzToUseHeuristic", useHeuristic, UseHeuristic::getMzToUseHeuristic)
-                .putNonNullObj("UseHeuristic.mzToUseHeuristicOnly", useHeuristic, UseHeuristic::getMzToUseHeuristicOnly)
+                .putNonNullObj("UseHeuristic.useHeuristicAboveMz", useHeuristic, UseHeuristic::getUseHeuristicAboveMz)
+                .putNonNullObj("UseHeuristic.useOnlyHeuristicAboveMz", useHeuristic, UseHeuristic::getUseOnlyHeuristicAboveMz)
 
                 .putNonNullObj("Timeout.secondsPerInstance", ilpTimeout, Timeout::getNumberOfSecondsPerInstance)
                 .putNonNullObj("Timeout.secondsPerTree", ilpTimeout, Timeout::getNumberOfSecondsPerDecomposition)
