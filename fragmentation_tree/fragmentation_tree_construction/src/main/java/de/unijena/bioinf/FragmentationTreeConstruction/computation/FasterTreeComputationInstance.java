@@ -25,7 +25,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates;
-import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidatesPerIon;
+import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidatesPerIonization;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Decomposition;
@@ -87,7 +87,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         this.pinput = input;
         this.inputCopyForRecalibration = input.clone();
         this.numberOfResultsToKeep = input.getAnnotationOrDefault(NumberOfCandidates.class).value;
-        this.numberOfResultsToKeepPerIonization = input.getAnnotationOrDefault(NumberOfCandidatesPerIon.class).value;
+        this.numberOfResultsToKeepPerIonization = input.getAnnotationOrDefault(NumberOfCandidatesPerIonization.class).value;
         this.ticks = new AtomicInteger(0);
         Timeout timeout = pinput.getAnnotation(Timeout.class).orElse(Timeout.NO_TIMEOUT);
         secsPerTree = timeout.getNumberOfSecondsPerDecomposition();

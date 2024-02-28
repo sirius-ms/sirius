@@ -1,7 +1,7 @@
 package de.unijena.bioinf.ms.properties;
 
 import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates;
-import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidatesPerIon;
+import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidatesPerIonization;
 import de.unijena.bioinf.jjobs.JJob;
 import junit.framework.TestCase;
 import org.junit.Before;
@@ -99,7 +99,7 @@ public class ParameterConfigTest {
                 //12
                 {EnumClass.class, (Consumer<EnumClass>) c -> assertEquals(c.value, JJob.JobState.DONE), new String[]{"EnumClass"}, new String[]{"dOnE"}},
                 //13
-                {NumberOfCandidatesPerIon.class, (Consumer<NumberOfCandidatesPerIon>) c -> TestCase.assertEquals(c.value, -1), new String[]{"NumberOfCandidatesPerIon"}, new String[]{"-1"}},
+                {NumberOfCandidatesPerIonization.class, (Consumer<NumberOfCandidatesPerIonization>) c -> TestCase.assertEquals(c.value, -1), new String[]{"NumberOfCandidatesPerIonization"}, new String[]{"-1"}},
                 //14
                 {NumberOfCandidates.class, (Consumer<NumberOfCandidates>) c -> TestCase.assertEquals(c.value, 666), new String[]{"NumberOfCandidates"}, new String[]{"666"}}
         });
