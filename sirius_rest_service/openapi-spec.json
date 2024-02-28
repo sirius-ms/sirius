@@ -4516,11 +4516,11 @@
       "UseHeuristic": {
         "type": "object",
         "properties": {
-          "mzToUseHeuristic": {
+          "useHeuristicAboveMz": {
             "type": "integer",
             "format": "int32"
           },
-          "mzToUseHeuristicOnly": {
+          "useOnlyHeuristicAboveMz": {
             "type": "integer",
             "format": "int32"
           }

@@ -152,14 +152,14 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
 
 
     //heuristic thresholds
-    @Option(names = {"--heuristic"}, descriptionKey ="UseHeuristic.mzToUseHeuristic" , description = "Enable heuristic preprocessing for compounds >= the specified m/z.")
+    @Option(names = {"--heuristic"}, descriptionKey ="UseHeuristic.useHeuristicAboveMz" , description = "Enable heuristic preprocessing for compounds >= the specified m/z.")
     public void setMzToUseHeuristic(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("UseHeuristic.mzToUseHeuristic", value);
+        defaultConfigOptions.changeOption("UseHeuristic.useHeuristicAboveMz", value);
     }
 
-    @Option(names = {"--heuristic-only"}, descriptionKey ="UseHeuristic.mzToUseHeuristicOnly" , description = "Use only heuristic tree computation compounds >= the specified m/z.")
+    @Option(names = {"--heuristic-only"}, descriptionKey ="UseHeuristic.useOnlyHeuristicAboveMz" , description = "Use only heuristic tree computation compounds >= the specified m/z.")
     public void setMzToUseHeuristicOnly(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("UseHeuristic.mzToUseHeuristicOnly", value);
+        defaultConfigOptions.changeOption("UseHeuristic.useOnlyHeuristicAboveMz", value);
     }
 
 
