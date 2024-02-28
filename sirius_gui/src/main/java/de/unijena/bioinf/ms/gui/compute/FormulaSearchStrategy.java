@@ -173,14 +173,14 @@ public class FormulaSearchStrategy extends ConfigPanel {
             if (e.getStateChange() != ItemEvent.SELECTED) {
                 return;
             }
-            boolean customSelected = SiriusOptions.BottomUpSearchOptions.CUSTOM.equals(e.getItem());
+            boolean customSelected = e.getItem() == SiriusOptions.BottomUpSearchOptions.CUSTOM;
             customComponents.forEach(c -> c.setVisible(customSelected));
         });
 
         parameterBindings.put("FormulaSearchSettings.enableBottomUpFromMass", () -> {
-            if (strategy.equals(Strategy.DEFAULT)) {
-                boolean onlyBottomUp = SiriusOptions.BottomUpSearchOptions.BOTTOM_UP_ONLY.equals(bottomUpSearchSelector.getSelectedItem());
-                boolean custom = SiriusOptions.BottomUpSearchOptions.CUSTOM.equals(bottomUpSearchSelector.getSelectedItem());
+            if (strategy == Strategy.DEFAULT) {
+                boolean onlyBottomUp = bottomUpSearchSelector.getSelectedItem() == SiriusOptions.BottomUpSearchOptions.BOTTOM_UP_ONLY;
+                boolean custom = bottomUpSearchSelector.getSelectedItem() == SiriusOptions.BottomUpSearchOptions.CUSTOM;
                 if (onlyBottomUp || (custom && bottomUpSearchEnabled.isSelected())) {
                     return "0";
                 }
@@ -189,7 +189,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         });
 
         parameterBindings.put("FormulaSearchSettings.disableDeNovoAboveMass", () -> switch (strategy) {
-            case DEFAULT -> SiriusOptions.BottomUpSearchOptions.CUSTOM.equals(bottomUpSearchSelector.getSelectedItem()) ?
+            case DEFAULT -> bottomUpSearchSelector.getSelectedItem() == SiriusOptions.BottomUpSearchOptions.CUSTOM ?
                     denovoUpTo.getValue().toString()
                     : "0";
             case DE_NOVO -> String.valueOf(Double.POSITIVE_INFINITY);
