@@ -94,9 +94,9 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
         defaultConfigOptions.changeOption("NumberOfCandidates", value);
     }
 
-    @Option(names = "--candidates-per-ion", descriptionKey = "NumberOfCandidatesPerIon", description = "Minimum number of candidates in the output for each ionization. Set to force output of results for each possible ionization, even if not part of highest ranked results.")
-    public void setNumberOfCandidatesPerIon(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("NumberOfCandidatesPerIon", value);
+    @Option(names = "--candidates-per-ionization", descriptionKey = "NumberOfCandidatesPerIonization", description = "Minimum number of candidates in the output for each ionization. Set to force output of results for each possible ionization, even if not part of highest ranked results.")
+    public void setNumberOfCandidatesPerIonization(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("NumberOfCandidatesPerIonization", value);
     }
 
     // Elements
