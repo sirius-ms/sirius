@@ -166,8 +166,8 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         // as long as we do not find good quality results
 
         final UseHeuristic uh = pinput.getAnnotation(UseHeuristic.class).orElse(UseHeuristic.newInstance(300, 650));
-        final boolean useHeuristic = pinput.getParentPeak().getMass() >= uh.mzToUseHeuristic;
-        final boolean useHeuristicOny = pinput.getParentPeak().getMass() >= uh.mzToUseHeuristicOnly;
+        final boolean useHeuristic = pinput.getParentPeak().getMass() >= uh.useHeuristicAboveMz;
+        final boolean useHeuristicOny = pinput.getParentPeak().getMass() >= uh.useOnlyHeuristicAboveMz;
 
         checkForInterruption();
 
