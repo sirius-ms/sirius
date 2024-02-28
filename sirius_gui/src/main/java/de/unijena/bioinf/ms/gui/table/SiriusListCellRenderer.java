@@ -20,29 +20,39 @@
 package de.unijena.bioinf.ms.gui.table;
 
 import de.unijena.bioinf.ms.gui.configs.Colors;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
+import java.util.function.Function;
 
-public class SiriusTableCellRenderer extends DefaultTableCellRenderer {
+public class SiriusListCellRenderer extends DefaultListCellRenderer {
     protected Color foreColor = Colors.LIST_ACTIVATED_FOREGROUND;
     protected Color backColor = Colors.LIST_EVEN_BACKGROUND;
+    @Nullable
+    protected final Function<Object, String> toStringMapper;
 
+    public SiriusListCellRenderer() {
+        this(null);
+    }
+    public SiriusListCellRenderer(@Nullable Function<Object, String> toStringMapper) {
+        this.toStringMapper = toStringMapper;
+    }
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        super.getListCellRendererComponent(list, toStringMapper != null ? toStringMapper.apply(value) : value, index, isSelected, cellHasFocus);
+
         if (isSelected) {
             backColor = Colors.LIST_SELECTED_BACKGROUND;
             foreColor = Colors.LIST_SELECTED_FOREGROUND;
         } else {
-            if (row % 2 == 0) backColor = Colors.LIST_EVEN_BACKGROUND;
+            if (index % 2 == 0) backColor = Colors.LIST_EVEN_BACKGROUND;
             else backColor = Colors.LIST_UNEVEN_BACKGROUND;
             foreColor = Colors.LIST_ACTIVATED_FOREGROUND;
         }
 
         setBackground(backColor);
         setForeground(foreColor);
-
-        return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        return this;
     }
 }

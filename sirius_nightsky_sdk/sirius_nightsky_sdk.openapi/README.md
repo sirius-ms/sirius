@@ -156,6 +156,7 @@ Class | Method | HTTP request | Description
 *JobsApi* | [**hasJobs**](docs/JobsApi.md#hasJobs) | **GET** /api/projects/{projectId}/has-jobs | 
 *JobsApi* | [**postJobConfig**](docs/JobsApi.md#postJobConfig) | **POST** /api/job-configs/{name} | Add new job configuration with given name.
 *JobsApi* | [**startCommand**](docs/JobsApi.md#startCommand) | **POST** /api/{projectId}/jobs/run-command | Start computation for given command and input.
+*JobsApi* | [**startDatabaseImport**](docs/JobsApi.md#startDatabaseImport) | **POST** /api/{projectId}/jobs/import-db | Start import of structure and spectra files into the specified database.
 *JobsApi* | [**startImportFromPathJob**](docs/JobsApi.md#startImportFromPathJob) | **POST** /api/{projectId}/jobs/import-from-local-path | Import ms/ms data in given format from local filesystem into the specified project
 *JobsApi* | [**startImportFromStringJob**](docs/JobsApi.md#startImportFromStringJob) | **POST** /api/{projectId}/jobs/import-from-string | Import ms/ms data from the given format into the specified project-space  Possible formats (ms, mgf, cef, msp, mzML, mzXML)
 *JobsApi* | [**startJob**](docs/JobsApi.md#startJob) | **POST** /api/projects/{projectId}/jobs | Start computation for given compounds and with given parameters.
@@ -178,10 +179,12 @@ Class | Method | HTTP request | Description
 *ProjectsApi* | [**getProjectSpace**](docs/ProjectsApi.md#getProjectSpace) | **GET** /api/projects/{projectId} | Get project space info by its projectId.
 *ProjectsApi* | [**getProjectSpaces**](docs/ProjectsApi.md#getProjectSpaces) | **GET** /api/projects | List opened project spaces.
 *ProjectsApi* | [**openProjectSpace**](docs/ProjectsApi.md#openProjectSpace) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId.
-*SearchableDatabasesApi* | [**addDatabase**](docs/SearchableDatabasesApi.md#addDatabase) | **POST** /api/databases/{databaseId}/add | 
+*SearchableDatabasesApi* | [**addDatabases**](docs/SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases | 
 *SearchableDatabasesApi* | [**createDatabase**](docs/SearchableDatabasesApi.md#createDatabase) | **POST** /api/databases/{databaseId} | 
+*SearchableDatabasesApi* | [**getCustomDatabases**](docs/SearchableDatabasesApi.md#getCustomDatabases) | **GET** /api/databases/custom | 
 *SearchableDatabasesApi* | [**getDatabase**](docs/SearchableDatabasesApi.md#getDatabase) | **GET** /api/databases/{databaseId} | 
 *SearchableDatabasesApi* | [**getDatabases**](docs/SearchableDatabasesApi.md#getDatabases) | **GET** /api/databases | 
+*SearchableDatabasesApi* | [**getIncludedDatabases**](docs/SearchableDatabasesApi.md#getIncludedDatabases) | **GET** /api/databases/included | 
 *SearchableDatabasesApi* | [**removeDatabase**](docs/SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} | 
 *SearchableDatabasesApi* | [**updateDatabase**](docs/SearchableDatabasesApi.md#updateDatabase) | **PUT** /api/databases/{databaseId} | 
 
@@ -214,6 +217,7 @@ Class | Method | HTTP request | Description
  - [ConsensusCriterionCSI](docs/ConsensusCriterionCSI.md)
  - [ConsensusCriterionDeNovo](docs/ConsensusCriterionDeNovo.md)
  - [DBLink](docs/DBLink.md)
+ - [DatabaseImportSubmission](docs/DatabaseImportSubmission.md)
  - [Deviation](docs/Deviation.md)
  - [FeatureAnnotations](docs/FeatureAnnotations.md)
  - [FeatureImport](docs/FeatureImport.md)
@@ -247,7 +251,6 @@ Class | Method | HTTP request | Description
  - [PageGuiInfo](docs/PageGuiInfo.md)
  - [PageJob](docs/PageJob.md)
  - [PageProjectInfo](docs/PageProjectInfo.md)
- - [PageSearchableDatabase](docs/PageSearchableDatabase.md)
  - [PageSpectralLibraryMatch](docs/PageSpectralLibraryMatch.md)
  - [PageStructureCandidateFormula](docs/PageStructureCandidateFormula.md)
  - [PageStructureCandidateScored](docs/PageStructureCandidateScored.md)

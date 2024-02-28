@@ -31,8 +31,11 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SearchableDatabase.JSON_PROPERTY_LOCATION,
   SearchableDatabase.JSON_PROPERTY_MATCH_RT_OF_REFERENCE_SPECTRA,
   SearchableDatabase.JSON_PROPERTY_DATABASE_ID,
-  SearchableDatabase.JSON_PROPERTY_USER_DB,
-  SearchableDatabase.JSON_PROPERTY_IMPORT_DATE,
+  SearchableDatabase.JSON_PROPERTY_CUSTOM_DB,
+  SearchableDatabase.JSON_PROPERTY_SEARCHABLE,
+  SearchableDatabase.JSON_PROPERTY_DB_DATE,
+  SearchableDatabase.JSON_PROPERTY_DB_VERSION,
+  SearchableDatabase.JSON_PROPERTY_UPDATE_NEEDED,
   SearchableDatabase.JSON_PROPERTY_NUMBER_OF_STRUCTURES,
   SearchableDatabase.JSON_PROPERTY_NUMBER_OF_FORMULAS,
   SearchableDatabase.JSON_PROPERTY_NUMBER_OF_REFERENCE_SPECTRA
@@ -51,11 +54,20 @@ public class SearchableDatabase {
   public static final String JSON_PROPERTY_DATABASE_ID = "databaseId";
   private String databaseId;
 
-  public static final String JSON_PROPERTY_USER_DB = "userDb";
-  private Boolean userDb;
+  public static final String JSON_PROPERTY_CUSTOM_DB = "customDb";
+  private Boolean customDb;
 
-  public static final String JSON_PROPERTY_IMPORT_DATE = "importDate";
-  private String importDate;
+  public static final String JSON_PROPERTY_SEARCHABLE = "searchable";
+  private Boolean searchable;
+
+  public static final String JSON_PROPERTY_DB_DATE = "dbDate";
+  private String dbDate;
+
+  public static final String JSON_PROPERTY_DB_VERSION = "dbVersion";
+  private Integer dbVersion;
+
+  public static final String JSON_PROPERTY_UPDATE_NEEDED = "updateNeeded";
+  private Boolean updateNeeded;
 
   public static final String JSON_PROPERTY_NUMBER_OF_STRUCTURES = "numberOfStructures";
   private Long numberOfStructures;
@@ -173,55 +185,133 @@ public class SearchableDatabase {
   }
 
 
-  public SearchableDatabase userDb(Boolean userDb) {
+  public SearchableDatabase customDb(Boolean customDb) {
     
-    this.userDb = userDb;
+    this.customDb = customDb;
     return this;
   }
 
    /**
-   * Indicates whether the database is a user database that is modifiable or if it is a  database that is included in SIRIUS which cannot be modified.
-   * @return userDb
+   * Indicates whether the database is a user managed custom database or if it is a  database that is included in SIRIUS which cannot be modified.
+   * @return customDb
   **/
   @javax.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_USER_DB)
+  @JsonProperty(JSON_PROPERTY_CUSTOM_DB)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
-  public Boolean isUserDb() {
-    return userDb;
+  public Boolean isCustomDb() {
+    return customDb;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_USER_DB)
+  @JsonProperty(JSON_PROPERTY_CUSTOM_DB)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setUserDb(Boolean userDb) {
-    this.userDb = userDb;
+  public void setCustomDb(Boolean customDb) {
+    this.customDb = customDb;
   }
 
 
-  public SearchableDatabase importDate(String importDate) {
+  public SearchableDatabase searchable(Boolean searchable) {
     
-    this.importDate = importDate;
+    this.searchable = searchable;
+    return this;
+  }
+
+   /**
+   * True when this database can be used as a search parameter.  False if the database is just an additional filter that can be applied after search.
+   * @return searchable
+  **/
+  @javax.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_SEARCHABLE)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public Boolean isSearchable() {
+    return searchable;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SEARCHABLE)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setSearchable(Boolean searchable) {
+    this.searchable = searchable;
+  }
+
+
+  public SearchableDatabase dbDate(String dbDate) {
+    
+    this.dbDate = dbDate;
     return this;
   }
 
    /**
    * Date on which the data was imported / database was created.
-   * @return importDate
+   * @return dbDate
   **/
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_IMPORT_DATE)
+  @JsonProperty(JSON_PROPERTY_DB_DATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public String getImportDate() {
-    return importDate;
+  public String getDbDate() {
+    return dbDate;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_IMPORT_DATE)
+  @JsonProperty(JSON_PROPERTY_DB_DATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setImportDate(String importDate) {
-    this.importDate = importDate;
+  public void setDbDate(String dbDate) {
+    this.dbDate = dbDate;
+  }
+
+
+  public SearchableDatabase dbVersion(Integer dbVersion) {
+    
+    this.dbVersion = dbVersion;
+    return this;
+  }
+
+   /**
+   * database schema version
+   * @return dbVersion
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_DB_VERSION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Integer getDbVersion() {
+    return dbVersion;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_DB_VERSION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setDbVersion(Integer dbVersion) {
+    this.dbVersion = dbVersion;
+  }
+
+
+  public SearchableDatabase updateNeeded(Boolean updateNeeded) {
+    
+    this.updateNeeded = updateNeeded;
+    return this;
+  }
+
+   /**
+   * If true the database version is outdated and the database needs to be updated or re-imported before it can be used.
+   * @return updateNeeded
+  **/
+  @javax.annotation.Nonnull
+  @JsonProperty(JSON_PROPERTY_UPDATE_NEEDED)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+
+  public Boolean isUpdateNeeded() {
+    return updateNeeded;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_UPDATE_NEEDED)
+  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  public void setUpdateNeeded(Boolean updateNeeded) {
+    this.updateNeeded = updateNeeded;
   }
 
 
@@ -315,8 +405,11 @@ public class SearchableDatabase {
         Objects.equals(this.location, searchableDatabase.location) &&
         Objects.equals(this.matchRtOfReferenceSpectra, searchableDatabase.matchRtOfReferenceSpectra) &&
         Objects.equals(this.databaseId, searchableDatabase.databaseId) &&
-        Objects.equals(this.userDb, searchableDatabase.userDb) &&
-        Objects.equals(this.importDate, searchableDatabase.importDate) &&
+        Objects.equals(this.customDb, searchableDatabase.customDb) &&
+        Objects.equals(this.searchable, searchableDatabase.searchable) &&
+        Objects.equals(this.dbDate, searchableDatabase.dbDate) &&
+        Objects.equals(this.dbVersion, searchableDatabase.dbVersion) &&
+        Objects.equals(this.updateNeeded, searchableDatabase.updateNeeded) &&
         Objects.equals(this.numberOfStructures, searchableDatabase.numberOfStructures) &&
         Objects.equals(this.numberOfFormulas, searchableDatabase.numberOfFormulas) &&
         Objects.equals(this.numberOfReferenceSpectra, searchableDatabase.numberOfReferenceSpectra);
@@ -324,7 +417,7 @@ public class SearchableDatabase {
 
   @Override
   public int hashCode() {
-    return Objects.hash(displayName, location, matchRtOfReferenceSpectra, databaseId, userDb, importDate, numberOfStructures, numberOfFormulas, numberOfReferenceSpectra);
+    return Objects.hash(displayName, location, matchRtOfReferenceSpectra, databaseId, customDb, searchable, dbDate, dbVersion, updateNeeded, numberOfStructures, numberOfFormulas, numberOfReferenceSpectra);
   }
 
   @Override
@@ -335,8 +428,11 @@ public class SearchableDatabase {
     sb.append("    location: ").append(toIndentedString(location)).append("\n");
     sb.append("    matchRtOfReferenceSpectra: ").append(toIndentedString(matchRtOfReferenceSpectra)).append("\n");
     sb.append("    databaseId: ").append(toIndentedString(databaseId)).append("\n");
-    sb.append("    userDb: ").append(toIndentedString(userDb)).append("\n");
-    sb.append("    importDate: ").append(toIndentedString(importDate)).append("\n");
+    sb.append("    customDb: ").append(toIndentedString(customDb)).append("\n");
+    sb.append("    searchable: ").append(toIndentedString(searchable)).append("\n");
+    sb.append("    dbDate: ").append(toIndentedString(dbDate)).append("\n");
+    sb.append("    dbVersion: ").append(toIndentedString(dbVersion)).append("\n");
+    sb.append("    updateNeeded: ").append(toIndentedString(updateNeeded)).append("\n");
     sb.append("    numberOfStructures: ").append(toIndentedString(numberOfStructures)).append("\n");
     sb.append("    numberOfFormulas: ").append(toIndentedString(numberOfFormulas)).append("\n");
     sb.append("    numberOfReferenceSpectra: ").append(toIndentedString(numberOfReferenceSpectra)).append("\n");

@@ -26,6 +26,7 @@ import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.WrapLayout;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -118,28 +119,22 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
     }
 
     @Override
-    public void fireDataSourceChanged(Collection<String> changes) {
+    public void fireDataSourceChanged(CustomDataSources.Source change, boolean removed) {
         Jobs.runEDTLater(() -> {
-            HashSet<String> changed = new HashSet<>(changes);
             isRefreshing.set(true);
             boolean c = false;
-            Iterator<JCheckBox> it = checkboxes.iterator();
 
-            while (it.hasNext()) {
-                JCheckBox checkbox = it.next();
-                if (changed.remove(checkbox.getText())) {
-                    it.remove();
+            if (removed)
+                c = checkboxes.removeIf(b -> b.getName().equals(change.name()));
+            else
+                if (checkboxes.stream().noneMatch(b -> b.getName().equals(change.name()))){
+                    JCheckBox b = new JCheckBox(change.displayName());
+                    b.setName(change.name());
+                    checkboxes.add(b);
                     c = true;
+                } else {
+                    LoggerFactory.getLogger(getClass()).warn("Got change request to add DataSource '" + change.name() + "', but it already exists? Ignoring!");
                 }
-            }
-
-            for (String name : changed) {
-                CustomDataSources.Source s = CustomDataSources.getSourceFromName(name);
-                JCheckBox b = new JCheckBox(s.displayName());
-                b.setName(s.name());
-                checkboxes.add(b);
-                c = true;
-            }
 
             if (c) {
                 removeAll();
@@ -148,8 +143,6 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
                 repaint();
                 fireFilterChangeEvent();
             }
-
-
             isRefreshing.set(false);
         });
     }

@@ -4,18 +4,20 @@ All URIs are relative to *http://localhost:8080*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**addDatabase**](SearchableDatabasesApi.md#addDatabase) | **POST** /api/databases/{databaseId}/add |  |
+| [**addDatabases**](SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases |  |
 | [**createDatabase**](SearchableDatabasesApi.md#createDatabase) | **POST** /api/databases/{databaseId} |  |
+| [**getCustomDatabases**](SearchableDatabasesApi.md#getCustomDatabases) | **GET** /api/databases/custom |  |
 | [**getDatabase**](SearchableDatabasesApi.md#getDatabase) | **GET** /api/databases/{databaseId} |  |
 | [**getDatabases**](SearchableDatabasesApi.md#getDatabases) | **GET** /api/databases |  |
+| [**getIncludedDatabases**](SearchableDatabasesApi.md#getIncludedDatabases) | **GET** /api/databases/included |  |
 | [**removeDatabase**](SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} |  |
 | [**updateDatabase**](SearchableDatabasesApi.md#updateDatabase) | **PUT** /api/databases/{databaseId} |  |
 
 
 
-## addDatabase
+## addDatabases
 
-> SearchableDatabase addDatabase(databaseId, pathToProject)
+> List&lt;SearchableDatabase&gt; addDatabases(requestBody)
 
 
 
@@ -35,13 +37,12 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8080");
 
         SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
-        String databaseId = "databaseId_example"; // String | 
-        String pathToProject = "pathToProject_example"; // String | 
+        List<String> requestBody = Arrays.asList(); // List<String> | 
         try {
-            SearchableDatabase result = apiInstance.addDatabase(databaseId, pathToProject);
+            List<SearchableDatabase> result = apiInstance.addDatabases(requestBody);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling SearchableDatabasesApi#addDatabase");
+            System.err.println("Exception when calling SearchableDatabasesApi#addDatabases");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -56,12 +57,11 @@ public class Example {
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **databaseId** | **String**|  | |
-| **pathToProject** | **String**|  | |
+| **requestBody** | [**List&lt;String&gt;**](String.md)|  | |
 
 ### Return type
 
-[**SearchableDatabase**](SearchableDatabase.md)
+[**List&lt;SearchableDatabase&gt;**](SearchableDatabase.md)
 
 ### Authorization
 
@@ -69,7 +69,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: Not defined
+- **Content-Type**: application/json
 - **Accept**: */*
 
 
@@ -136,6 +136,70 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: application/json
+- **Accept**: */*
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+
+
+## getCustomDatabases
+
+> List&lt;SearchableDatabase&gt; getCustomDatabases(includeStats)
+
+
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.SearchableDatabasesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8080");
+
+        SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
+        Boolean includeStats = false; // Boolean | 
+        try {
+            List<SearchableDatabase> result = apiInstance.getCustomDatabases(includeStats);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling SearchableDatabasesApi#getCustomDatabases");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **includeStats** | **Boolean**|  | [optional] [default to false] |
+
+### Return type
+
+[**List&lt;SearchableDatabase&gt;**](SearchableDatabase.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
 - **Accept**: */*
 
 
@@ -213,7 +277,7 @@ No authorization required
 
 ## getDatabases
 
-> PageSearchableDatabase getDatabases(page, size, sort, includeStats)
+> List&lt;SearchableDatabase&gt; getDatabases(includeStats)
 
 
 
@@ -233,12 +297,9 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8080");
 
         SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
-        Integer page = 0; // Integer | Zero-based page index (0..N)
-        Integer size = 20; // Integer | The size of the page to be returned
-        List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         Boolean includeStats = false; // Boolean | 
         try {
-            PageSearchableDatabase result = apiInstance.getDatabases(page, size, sort, includeStats);
+            List<SearchableDatabase> result = apiInstance.getDatabases(includeStats);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling SearchableDatabasesApi#getDatabases");
@@ -256,14 +317,75 @@ public class Example {
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
-| **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
-| **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
 | **includeStats** | **Boolean**|  | [optional] [default to false] |
 
 ### Return type
 
-[**PageSearchableDatabase**](PageSearchableDatabase.md)
+[**List&lt;SearchableDatabase&gt;**](SearchableDatabase.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: */*
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+
+
+## getIncludedDatabases
+
+> List&lt;SearchableDatabase&gt; getIncludedDatabases(includeStats)
+
+
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.SearchableDatabasesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8080");
+
+        SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
+        Boolean includeStats = false; // Boolean | 
+        try {
+            List<SearchableDatabase> result = apiInstance.getIncludedDatabases(includeStats);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling SearchableDatabasesApi#getIncludedDatabases");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **includeStats** | **Boolean**|  | [optional] [default to false] |
+
+### Return type
+
+[**List&lt;SearchableDatabase&gt;**](SearchableDatabase.md)
 
 ### Authorization
 

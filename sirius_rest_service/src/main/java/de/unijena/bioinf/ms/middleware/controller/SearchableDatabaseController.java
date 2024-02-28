@@ -20,15 +20,23 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
+import de.unijena.bioinf.ms.middleware.model.compute.DatabaseImportSubmission;
+import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabase;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabaseParameters;
+import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
-import org.springdoc.api.annotations.ParameterObject;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
+import java.util.EnumSet;
+import java.util.List;
+
+import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
+import static java.util.function.Predicate.not;
 
 @RestController
 @RequestMapping(value = "/api/databases")
@@ -37,15 +45,28 @@ import org.springframework.web.bind.annotation.*;
 public class SearchableDatabaseController {
 
     private final ChemDbService chemDbService;
+    private final ComputeService computeService;
 
-    public SearchableDatabaseController(ChemDbService chemDbService) {
+    public SearchableDatabaseController(ChemDbService chemDbService, ComputeService computeService) {
         this.chemDbService = chemDbService;
+        this.computeService = computeService;
     }
 
     @GetMapping("")
-    public Page<SearchableDatabase> getDatabases(@ParameterObject Pageable pageable, @RequestParam(defaultValue = "false") boolean includeStats) {
-        return chemDbService.findAll(pageable, includeStats);
+    public List<SearchableDatabase> getDatabases(@RequestParam(defaultValue = "false") boolean includeStats) {
+        return chemDbService.findAll(includeStats);
     }
+
+    @GetMapping("/custom")
+    public List<SearchableDatabase> getCustomDatabases(@RequestParam(defaultValue = "false") boolean includeStats) {
+        return getDatabases(includeStats).stream().filter(SearchableDatabase::isCustomDb).toList();
+    }
+
+    @GetMapping("/included")
+    public List<SearchableDatabase> getIncludedDatabases(@RequestParam(defaultValue = "false") boolean includeStats) {
+        return getDatabases(includeStats).stream().filter(not(SearchableDatabase::isCustomDb)).toList();
+    }
+
 
     @GetMapping("/{databaseId}")
     public SearchableDatabase getDatabase(@PathVariable String databaseId, @RequestParam(defaultValue = "true") boolean includeStats) {
@@ -61,9 +82,9 @@ public class SearchableDatabaseController {
         return chemDbService.update(databaseId, dbUpdate);
     }
 
-    @PostMapping("/{databaseId}/add")
-    public SearchableDatabase addDatabase(@PathVariable String databaseId, @RequestParam String pathToProject) {
-        return chemDbService.add(databaseId, pathToProject);
+    @PostMapping("")
+    public List<SearchableDatabase> addDatabases(@RequestBody List<String> pathToProjects) {
+        return chemDbService.add(pathToProjects);
     }
 
     @DeleteMapping("/{databaseId}")
