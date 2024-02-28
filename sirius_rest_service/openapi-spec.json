@@ -4372,9 +4372,9 @@
             "description": "Number of formula candidates to keep as result list (Formula Candidates).",
             "format": "int32"
           },
-          "numberOfCandidatesPerIon": {
+          "numberOfCandidatesPerIonization": {
             "type": "integer",
-            "description": "Use this parameter if you want to force SIRIUS to report at least\n NumberOfCandidatesPerIon results per ionization.\n if \u003c\u003d 0, this parameter will have no effect and just the top\n NumberOfCandidates results will be reported.",
+            "description": "Use this parameter if you want to force SIRIUS to report at least\n NumberOfCandidatesPerIonization results per ionization.\n if \u003c\u003d 0, this parameter will have no effect and just the top\n NumberOfCandidates results will be reported.",
             "format": "int32"
           },
           "massAccuracyMS2ppm": {

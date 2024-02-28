@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates;
-import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidatesPerIon;
+import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidatesPerIonization;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeMs2Settings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout;
@@ -69,11 +69,11 @@ public class Sirius extends Tool<SiriusOptions> {
     Integer numberOfCandidates;
     /**
      * Use this parameter if you want to force SIRIUS to report at least
-     * NumberOfCandidatesPerIon results per ionization.
+     * NumberOfCandidatesPerIonization results per ionization.
      * if <= 0, this parameter will have no effect and just the top
      * NumberOfCandidates results will be reported.
      */
-    Integer numberOfCandidatesPerIon;
+    Integer numberOfCandidatesPerIonization;
     /**
      * Maximum allowed mass deviation. Only molecular formulas within this mass window are considered.
      */
@@ -167,7 +167,7 @@ public class Sirius extends Tool<SiriusOptions> {
                 .putNonNull("FormulaSearchDB", formulaSearchDBs, f -> String.join(",", f))
 
                 .putNonNull("NumberOfCandidates", numberOfCandidates)
-                .putNonNull("NumberOfCandidatesPerIon", numberOfCandidatesPerIon)
+                .putNonNull("NumberOfCandidatesPerIonization", numberOfCandidatesPerIonization)
                 .putNonNull("AlgorithmProfile", profile)
 
                 .putNonNull("InjectHighSpectraMatchFormulas.minScoreToInject", minRefMatchScoreToInject)
@@ -182,7 +182,7 @@ public class Sirius extends Tool<SiriusOptions> {
         return Sirius.builder()
                 .profile(Instrument.QTOF)
                 .numberOfCandidates(PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfCandidates.class).value)
-                .numberOfCandidatesPerIon(PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfCandidatesPerIon.class).value)
+                .numberOfCandidatesPerIonization(PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfCandidatesPerIonization.class).value)
                 .massAccuracyMS2ppm(PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm())
                 .isotopeMs2Settings(PropertyManager.DEFAULTS.createInstanceWithDefaults(IsotopeMs2Settings.class).value)
                 .formulaSearchDBs(List.of())

@@ -160,7 +160,7 @@ FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
             candidatesSpinner = makeIntParameterSpinner("NumberOfCandidates", 1, 10000, 1);
             if (displayAdvancedParameters) smallParameters.addNamed("Candidates stored", candidatesSpinner);
 
-            candidatesPerIonSpinner = makeIntParameterSpinner("NumberOfCandidatesPerIon", 0, 10000, 1);
+            candidatesPerIonSpinner = makeIntParameterSpinner("NumberOfCandidatesPerIonization", 0, 10000, 1);
             if (displayAdvancedParameters) smallParameters.addNamed("Min candidates per ionization stored", candidatesPerIonSpinner);
 
             smallParameters.addNamed("Fix formula for detected lipid", makeParameterCheckBox("EnforceElGordoFormula")); //El Gordo detects lipids and by default fixes the formula
