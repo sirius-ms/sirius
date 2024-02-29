@@ -61,7 +61,6 @@ docs/MsNovelist.md
 docs/PageAlignedFeature.md
 docs/PageCompound.md
 docs/PageFormulaCandidate.md
-docs/PageGuiInfo.md
 docs/PageJob.md
 docs/PageSpectralLibraryMatch.md
 docs/PageStructureCandidateFormula.md
@@ -173,7 +172,6 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/MsNovelist.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageAlignedFeature.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageCompound.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageFormulaCandidate.java
-src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageGuiInfo.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageJob.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageSpectralLibraryMatch.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageStructureCandidateFormula.java

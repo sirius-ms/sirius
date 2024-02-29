@@ -11,7 +11,8 @@ All URIs are relative to *http://localhost:8080*
 | [**getJob**](JobsApi.md#getJob) | **GET** /api/projects/{projectId}/jobs/{jobId} | Get job information and its current state and progress (if available). |
 | [**getJobConfig**](JobsApi.md#getJobConfig) | **GET** /api/job-configs/{name} | Request job configuration with given name. |
 | [**getJobConfigs**](JobsApi.md#getJobConfigs) | **GET** /api/job-configs | Request all available job configurations |
-| [**getJobs**](JobsApi.md#getJobs) | **GET** /api/projects/{projectId}/jobs | Get job information and its current state and progress (if available). |
+| [**getJobs**](JobsApi.md#getJobs) | **GET** /api/projects/{projectId}/jobs | Get List of all available jobs with information such as current state and progress (if available). |
+| [**getJobsPaged**](JobsApi.md#getJobsPaged) | **GET** /api/projects/{projectId}/jobs/page | Get Page of jobs with information such as current state and progress (if available). |
 | [**hasJobs**](JobsApi.md#hasJobs) | **GET** /api/projects/{projectId}/has-jobs |  |
 | [**postJobConfig**](JobsApi.md#postJobConfig) | **POST** /api/job-configs/{name} | Add new job configuration with given name. |
 | [**startCommand**](JobsApi.md#startCommand) | **POST** /api/{projectId}/jobs/run-command | Start computation for given command and input. |
@@ -500,11 +501,79 @@ No authorization required
 
 ## getJobs
 
-> PageJob getJobs(projectId, page, size, sort, optFields)
+> List&lt;Job&gt; getJobs(projectId, optFields)
 
-Get job information and its current state and progress (if available).
+Get List of all available jobs with information such as current state and progress (if available).
 
-Get job information and its current state and progress (if available).
+Get List of all available jobs with information such as current state and progress (if available).
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.JobsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8080");
+
+        JobsApi apiInstance = new JobsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to run jobs on
+        List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
+        try {
+            List<Job> result = apiInstance.getJobs(projectId, optFields);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling JobsApi#getJobs");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to run jobs on | |
+| **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
+
+### Return type
+
+[**List&lt;Job&gt;**](Job.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+
+
+## getJobsPaged
+
+> PageJob getJobsPaged(projectId, page, size, sort, optFields)
+
+Get Page of jobs with information such as current state and progress (if available).
+
+Get Page of jobs with information such as current state and progress (if available).
 
 ### Example
 
@@ -528,10 +597,10 @@ public class Example {
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PageJob result = apiInstance.getJobs(projectId, page, size, sort, optFields);
+            PageJob result = apiInstance.getJobsPaged(projectId, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling JobsApi#getJobs");
+            System.err.println("Exception when calling JobsApi#getJobsPaged");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());

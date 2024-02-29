@@ -601,8 +601,88 @@ public class JobsApi {
         return getJobConfigsRequestCreation(includeConfigMap);
     }
     /**
-     * Get job information and its current state and progress (if available).
-     * Get job information and its current state and progress (if available).
+     * Get List of all available jobs with information such as current state and progress (if available).
+     * Get List of all available jobs with information such as current state and progress (if available).
+     * <p><b>200</b> - OK
+     * @param projectId project-space to run jobs on
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return List&lt;Job&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getJobsRequestCreation(String projectId, List<JobOptField> optFields) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getJobs", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/jobs", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Get List of all available jobs with information such as current state and progress (if available).
+     * Get List of all available jobs with information such as current state and progress (if available).
+     * <p><b>200</b> - OK
+     * @param projectId project-space to run jobs on
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return List&lt;Job&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<Job> getJobs(String projectId, List<JobOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return getJobsRequestCreation(projectId, optFields).bodyToFlux(localVarReturnType).collectList().block();
+    }
+
+    /**
+     * Get List of all available jobs with information such as current state and progress (if available).
+     * Get List of all available jobs with information such as current state and progress (if available).
+     * <p><b>200</b> - OK
+     * @param projectId project-space to run jobs on
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return ResponseEntity&lt;List&lt;Job&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<Job>> getJobsWithHttpInfo(String projectId, List<JobOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return getJobsRequestCreation(projectId, optFields).toEntityList(localVarReturnType).block();
+    }
+
+    /**
+     * Get List of all available jobs with information such as current state and progress (if available).
+     * Get List of all available jobs with information such as current state and progress (if available).
+     * <p><b>200</b> - OK
+     * @param projectId project-space to run jobs on
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getJobsWithResponseSpec(String projectId, List<JobOptField> optFields) throws WebClientResponseException {
+        return getJobsRequestCreation(projectId, optFields);
+    }
+    /**
+     * Get Page of jobs with information such as current state and progress (if available).
+     * Get Page of jobs with information such as current state and progress (if available).
      * <p><b>200</b> - OK
      * @param projectId project-space to run jobs on
      * @param page Zero-based page index (0..N)
@@ -612,11 +692,11 @@ public class JobsApi {
      * @return PageJob
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getJobsRequestCreation(String projectId, Integer page, Integer size, List<String> sort, List<JobOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getJobsPagedRequestCreation(String projectId, Integer page, Integer size, List<String> sort, List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getJobs", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getJobsPaged", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -643,12 +723,12 @@ public class JobsApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<PageJob> localVarReturnType = new ParameterizedTypeReference<PageJob>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/jobs", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/jobs/page", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * Get job information and its current state and progress (if available).
-     * Get job information and its current state and progress (if available).
+     * Get Page of jobs with information such as current state and progress (if available).
+     * Get Page of jobs with information such as current state and progress (if available).
      * <p><b>200</b> - OK
      * @param projectId project-space to run jobs on
      * @param page Zero-based page index (0..N)
@@ -658,14 +738,14 @@ public class JobsApi {
      * @return PageJob
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageJob getJobs(String projectId, Integer page, Integer size, List<String> sort, List<JobOptField> optFields) throws WebClientResponseException {
+    public PageJob getJobsPaged(String projectId, Integer page, Integer size, List<String> sort, List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PageJob> localVarReturnType = new ParameterizedTypeReference<PageJob>() {};
-        return getJobsRequestCreation(projectId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
+        return getJobsPagedRequestCreation(projectId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * Get job information and its current state and progress (if available).
-     * Get job information and its current state and progress (if available).
+     * Get Page of jobs with information such as current state and progress (if available).
+     * Get Page of jobs with information such as current state and progress (if available).
      * <p><b>200</b> - OK
      * @param projectId project-space to run jobs on
      * @param page Zero-based page index (0..N)
@@ -675,14 +755,14 @@ public class JobsApi {
      * @return ResponseEntity&lt;PageJob&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageJob> getJobsWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PageJob> getJobsPagedWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PageJob> localVarReturnType = new ParameterizedTypeReference<PageJob>() {};
-        return getJobsRequestCreation(projectId, page, size, sort, optFields).toEntity(localVarReturnType).block();
+        return getJobsPagedRequestCreation(projectId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
-     * Get job information and its current state and progress (if available).
-     * Get job information and its current state and progress (if available).
+     * Get Page of jobs with information such as current state and progress (if available).
+     * Get Page of jobs with information such as current state and progress (if available).
      * <p><b>200</b> - OK
      * @param projectId project-space to run jobs on
      * @param page Zero-based page index (0..N)
@@ -692,8 +772,8 @@ public class JobsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getJobsWithResponseSpec(String projectId, Integer page, Integer size, List<String> sort, List<JobOptField> optFields) throws WebClientResponseException {
-        return getJobsRequestCreation(projectId, page, size, sort, optFields);
+    public ResponseSpec getJobsPagedWithResponseSpec(String projectId, Integer page, Integer size, List<String> sort, List<JobOptField> optFields) throws WebClientResponseException {
+        return getJobsPagedRequestCreation(projectId, page, size, sort, optFields);
     }
     /**
      * 

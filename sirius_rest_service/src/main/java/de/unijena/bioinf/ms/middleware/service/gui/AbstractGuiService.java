@@ -31,9 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -56,13 +53,9 @@ public abstract class AbstractGuiService<P extends Project> implements GuiServic
     }
 
     @Override
-    public Page<GuiInfo> findGui(Pageable pageable) {
+    public List<GuiInfo> findGui() {
         synchronized (siriusGuiInstances) {
-        List<GuiInfo> guis = siriusGuiInstances.entrySet().stream().sorted(Map.Entry.comparingByKey())
-                .skip(pageable.getOffset()).limit(pageable.getPageSize())
-                .map(e -> GuiInfo.builder().projectId(e.getKey()).build())
-                .toList();
-            return new PageImpl<>(guis, pageable, siriusGuiInstances.size());
+        return siriusGuiInstances.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(e -> GuiInfo.builder().projectId(e.getKey()).build()).toList();
         }
     }
 

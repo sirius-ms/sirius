@@ -80,7 +80,7 @@ No authorization required
 
 ## getGuis
 
-> PageGuiInfo getGuis(page, size, sort)
+> List&lt;GuiInfo&gt; getGuis()
 
 Get list of currently running gui windows, managed by this SIRIUS instance.
 
@@ -102,11 +102,8 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8080");
 
         GuiApi apiInstance = new GuiApi(defaultClient);
-        Integer page = 0; // Integer | Zero-based page index (0..N)
-        Integer size = 20; // Integer | The size of the page to be returned
-        List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
         try {
-            PageGuiInfo result = apiInstance.getGuis(page, size, sort);
+            List<GuiInfo> result = apiInstance.getGuis();
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling GuiApi#getGuis");
@@ -121,16 +118,11 @@ public class Example {
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
-| **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
-| **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
+This endpoint does not need any parameter.
 
 ### Return type
 
-[**PageGuiInfo**](PageGuiInfo.md)
+[**List&lt;GuiInfo&gt;**](GuiInfo.md)
 
 ### Authorization
 

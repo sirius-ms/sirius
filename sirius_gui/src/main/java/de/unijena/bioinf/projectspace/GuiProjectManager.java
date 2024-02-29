@@ -72,9 +72,9 @@ public class GuiProjectManager implements Closeable {
         this.projectId = projectId;
         this.siriusClient = siriusClient;
 
-        List<InstanceBean> tmp = siriusClient.features().getAlignedFeatures(projectId, 0, Integer.MAX_VALUE,
-               null, List.of(AlignedFeatureOptField.TOPANNOTATIONS)
-        ).getContent().stream().map(f -> new InstanceBean(f, this)).toList();
+        List<InstanceBean> tmp = siriusClient.features()
+                .getAlignedFeatures(projectId, List.of(AlignedFeatureOptField.TOPANNOTATIONS))
+                .stream().map(f -> new InstanceBean(f, this)).toList();
 
 
         this.innerList = new ArrayList<>(tmp.size());

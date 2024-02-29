@@ -7,7 +7,8 @@ All URIs are relative to *http://localhost:8080*
 | [**addCompounds**](CompoundsApi.md#addCompounds) | **POST** /api/projects/{projectId}/compounds |  |
 | [**deleteCompound**](CompoundsApi.md#deleteCompound) | **DELETE** /api/projects/{projectId}/compounds/{compoundId} | Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space. |
 | [**getCompound**](CompoundsApi.md#getCompound) | **GET** /api/projects/{projectId}/compounds/{compoundId} | Get compound (group of ion identities) with the given identifier from the specified project-space. |
-| [**getCompounds**](CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | Get all available compounds (group of ion identities) in the given project-space. |
+| [**getCompounds**](CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | List of all available compounds (group of ion identities) in the given project-space. |
+| [**getCompoundsPaged**](CompoundsApi.md#getCompoundsPaged) | **GET** /api/projects/{projectId}/compounds/page | Page of available compounds (group of ion identities) in the given project-space. |
 
 
 
@@ -222,11 +223,81 @@ No authorization required
 
 ## getCompounds
 
-> PageCompound getCompounds(projectId, page, size, sort, optFields, optFieldsFeatures)
+> List&lt;Compound&gt; getCompounds(projectId, optFields, optFieldsFeatures)
 
-Get all available compounds (group of ion identities) in the given project-space.
+List of all available compounds (group of ion identities) in the given project-space.
 
-Get all available compounds (group of ion identities) in the given project-space.
+List of all available compounds (group of ion identities) in the given project-space.
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.CompoundsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8080");
+
+        CompoundsApi apiInstance = new CompoundsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        List<CompoundOptField> optFields = Arrays.asList(); // List<CompoundOptField> | set of optional fields to be included. Use 'none' only to override defaults.
+        List<AlignedFeatureOptField> optFieldsFeatures = Arrays.asList(); // List<AlignedFeatureOptField> | 
+        try {
+            List<Compound> result = apiInstance.getCompounds(projectId, optFields, optFieldsFeatures);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling CompoundsApi#getCompounds");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **optFields** | [**List&lt;CompoundOptField&gt;**](CompoundOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
+| **optFieldsFeatures** | [**List&lt;AlignedFeatureOptField&gt;**](AlignedFeatureOptField.md)|  | [optional] |
+
+### Return type
+
+[**List&lt;Compound&gt;**](Compound.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Compounds with additional optional fields (if specified). |  -  |
+
+
+## getCompoundsPaged
+
+> PageCompound getCompoundsPaged(projectId, page, size, sort, optFields, optFieldsFeatures)
+
+Page of available compounds (group of ion identities) in the given project-space.
+
+Page of available compounds (group of ion identities) in the given project-space.
 
 ### Example
 
@@ -251,10 +322,10 @@ public class Example {
         List<CompoundOptField> optFields = Arrays.asList(); // List<CompoundOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         List<AlignedFeatureOptField> optFieldsFeatures = Arrays.asList(); // List<AlignedFeatureOptField> | 
         try {
-            PageCompound result = apiInstance.getCompounds(projectId, page, size, sort, optFields, optFieldsFeatures);
+            PageCompound result = apiInstance.getCompoundsPaged(projectId, page, size, sort, optFields, optFieldsFeatures);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling CompoundsApi#getCompounds");
+            System.err.println("Exception when calling CompoundsApi#getCompoundsPaged");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());

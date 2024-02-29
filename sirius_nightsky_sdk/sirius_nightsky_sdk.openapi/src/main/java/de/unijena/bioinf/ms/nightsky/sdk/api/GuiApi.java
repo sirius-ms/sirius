@@ -2,7 +2,7 @@ package de.unijena.bioinf.ms.nightsky.sdk.api;
 
 import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
 
-import de.unijena.bioinf.ms.nightsky.sdk.model.PageGuiInfo;
+import de.unijena.bioinf.ms.nightsky.sdk.model.GuiInfo;
 
 import java.util.HashMap;
 import java.util.List;
@@ -130,13 +130,10 @@ public class GuiApi {
      * Get list of currently running gui windows, managed by this SIRIUS instance.
      * Get list of currently running gui windows, managed by this SIRIUS instance.  Note this will not show any Clients that are connected from a separate process!
      * <p><b>200</b> - List of GUI windows that are currently managed by this SIRIUS instance.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @return PageGuiInfo
+     * @return List&lt;GuiInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getGuisRequestCreation(Integer page, Integer size, List<String> sort) throws WebClientResponseException {
+    private ResponseSpec getGuisRequestCreation() throws WebClientResponseException {
         Object postBody = null;
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -145,10 +142,6 @@ public class GuiApi {
         final HttpHeaders headerParams = new HttpHeaders();
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
-
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
 
         final String[] localVarAccepts = { 
             "application/json"
@@ -159,7 +152,7 @@ public class GuiApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<PageGuiInfo> localVarReturnType = new ParameterizedTypeReference<PageGuiInfo>() {};
+        ParameterizedTypeReference<GuiInfo> localVarReturnType = new ParameterizedTypeReference<GuiInfo>() {};
         return apiClient.invokeAPI("/api/guis", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -167,44 +160,35 @@ public class GuiApi {
      * Get list of currently running gui windows, managed by this SIRIUS instance.
      * Get list of currently running gui windows, managed by this SIRIUS instance.  Note this will not show any Clients that are connected from a separate process!
      * <p><b>200</b> - List of GUI windows that are currently managed by this SIRIUS instance.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @return PageGuiInfo
+     * @return List&lt;GuiInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageGuiInfo getGuis(Integer page, Integer size, List<String> sort) throws WebClientResponseException {
-        ParameterizedTypeReference<PageGuiInfo> localVarReturnType = new ParameterizedTypeReference<PageGuiInfo>() {};
-        return getGuisRequestCreation(page, size, sort).bodyToMono(localVarReturnType).block();
+    public List<GuiInfo> getGuis() throws WebClientResponseException {
+        ParameterizedTypeReference<GuiInfo> localVarReturnType = new ParameterizedTypeReference<GuiInfo>() {};
+        return getGuisRequestCreation().bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
      * Get list of currently running gui windows, managed by this SIRIUS instance.
      * Get list of currently running gui windows, managed by this SIRIUS instance.  Note this will not show any Clients that are connected from a separate process!
      * <p><b>200</b> - List of GUI windows that are currently managed by this SIRIUS instance.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @return ResponseEntity&lt;PageGuiInfo&gt;
+     * @return ResponseEntity&lt;List&lt;GuiInfo&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageGuiInfo> getGuisWithHttpInfo(Integer page, Integer size, List<String> sort) throws WebClientResponseException {
-        ParameterizedTypeReference<PageGuiInfo> localVarReturnType = new ParameterizedTypeReference<PageGuiInfo>() {};
-        return getGuisRequestCreation(page, size, sort).toEntity(localVarReturnType).block();
+    public ResponseEntity<List<GuiInfo>> getGuisWithHttpInfo() throws WebClientResponseException {
+        ParameterizedTypeReference<GuiInfo> localVarReturnType = new ParameterizedTypeReference<GuiInfo>() {};
+        return getGuisRequestCreation().toEntityList(localVarReturnType).block();
     }
 
     /**
      * Get list of currently running gui windows, managed by this SIRIUS instance.
      * Get list of currently running gui windows, managed by this SIRIUS instance.  Note this will not show any Clients that are connected from a separate process!
      * <p><b>200</b> - List of GUI windows that are currently managed by this SIRIUS instance.
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getGuisWithResponseSpec(Integer page, Integer size, List<String> sort) throws WebClientResponseException {
-        return getGuisRequestCreation(page, size, sort);
+    public ResponseSpec getGuisWithResponseSpec() throws WebClientResponseException {
+        return getGuisRequestCreation();
     }
     /**
      * Open GUI instance on specified project-space and bring the GUI window to foreground.

@@ -318,8 +318,93 @@ public class CompoundsApi {
         return getCompoundRequestCreation(projectId, compoundId, optFields, optFieldsFeatures);
     }
     /**
-     * Get all available compounds (group of ion identities) in the given project-space.
-     * Get all available compounds (group of ion identities) in the given project-space.
+     * List of all available compounds (group of ion identities) in the given project-space.
+     * List of all available compounds (group of ion identities) in the given project-space.
+     * <p><b>200</b> - Compounds with additional optional fields (if specified).
+     * @param projectId project-space to read from.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @param optFieldsFeatures The optFieldsFeatures parameter
+     * @return List&lt;Compound&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getCompoundsRequestCreation(String projectId, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getCompounds", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFieldsFeatures", optFieldsFeatures));
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * List of all available compounds (group of ion identities) in the given project-space.
+     * List of all available compounds (group of ion identities) in the given project-space.
+     * <p><b>200</b> - Compounds with additional optional fields (if specified).
+     * @param projectId project-space to read from.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @param optFieldsFeatures The optFieldsFeatures parameter
+     * @return List&lt;Compound&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<Compound> getCompounds(String projectId, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
+        return getCompoundsRequestCreation(projectId, optFields, optFieldsFeatures).bodyToFlux(localVarReturnType).collectList().block();
+    }
+
+    /**
+     * List of all available compounds (group of ion identities) in the given project-space.
+     * List of all available compounds (group of ion identities) in the given project-space.
+     * <p><b>200</b> - Compounds with additional optional fields (if specified).
+     * @param projectId project-space to read from.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @param optFieldsFeatures The optFieldsFeatures parameter
+     * @return ResponseEntity&lt;List&lt;Compound&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<Compound>> getCompoundsWithHttpInfo(String projectId, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
+        return getCompoundsRequestCreation(projectId, optFields, optFieldsFeatures).toEntityList(localVarReturnType).block();
+    }
+
+    /**
+     * List of all available compounds (group of ion identities) in the given project-space.
+     * List of all available compounds (group of ion identities) in the given project-space.
+     * <p><b>200</b> - Compounds with additional optional fields (if specified).
+     * @param projectId project-space to read from.
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @param optFieldsFeatures The optFieldsFeatures parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getCompoundsWithResponseSpec(String projectId, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        return getCompoundsRequestCreation(projectId, optFields, optFieldsFeatures);
+    }
+    /**
+     * Page of available compounds (group of ion identities) in the given project-space.
+     * Page of available compounds (group of ion identities) in the given project-space.
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
      * @param projectId project-space to read from.
      * @param page Zero-based page index (0..N)
@@ -330,11 +415,11 @@ public class CompoundsApi {
      * @return PageCompound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCompoundsRequestCreation(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    private ResponseSpec getCompoundsPagedRequestCreation(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getCompounds", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getCompoundsPaged", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -362,12 +447,12 @@ public class CompoundsApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<PageCompound> localVarReturnType = new ParameterizedTypeReference<PageCompound>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/compounds", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/page", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * Get all available compounds (group of ion identities) in the given project-space.
-     * Get all available compounds (group of ion identities) in the given project-space.
+     * Page of available compounds (group of ion identities) in the given project-space.
+     * Page of available compounds (group of ion identities) in the given project-space.
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
      * @param projectId project-space to read from.
      * @param page Zero-based page index (0..N)
@@ -378,14 +463,14 @@ public class CompoundsApi {
      * @return PageCompound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageCompound getCompounds(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public PageCompound getCompoundsPaged(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<PageCompound> localVarReturnType = new ParameterizedTypeReference<PageCompound>() {};
-        return getCompoundsRequestCreation(projectId, page, size, sort, optFields, optFieldsFeatures).bodyToMono(localVarReturnType).block();
+        return getCompoundsPagedRequestCreation(projectId, page, size, sort, optFields, optFieldsFeatures).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * Get all available compounds (group of ion identities) in the given project-space.
-     * Get all available compounds (group of ion identities) in the given project-space.
+     * Page of available compounds (group of ion identities) in the given project-space.
+     * Page of available compounds (group of ion identities) in the given project-space.
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
      * @param projectId project-space to read from.
      * @param page Zero-based page index (0..N)
@@ -396,14 +481,14 @@ public class CompoundsApi {
      * @return ResponseEntity&lt;PageCompound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageCompound> getCompoundsWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public ResponseEntity<PageCompound> getCompoundsPagedWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<PageCompound> localVarReturnType = new ParameterizedTypeReference<PageCompound>() {};
-        return getCompoundsRequestCreation(projectId, page, size, sort, optFields, optFieldsFeatures).toEntity(localVarReturnType).block();
+        return getCompoundsPagedRequestCreation(projectId, page, size, sort, optFields, optFieldsFeatures).toEntity(localVarReturnType).block();
     }
 
     /**
-     * Get all available compounds (group of ion identities) in the given project-space.
-     * Get all available compounds (group of ion identities) in the given project-space.
+     * Page of available compounds (group of ion identities) in the given project-space.
+     * Page of available compounds (group of ion identities) in the given project-space.
      * <p><b>200</b> - Compounds with additional optional fields (if specified).
      * @param projectId project-space to read from.
      * @param page Zero-based page index (0..N)
@@ -414,7 +499,7 @@ public class CompoundsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCompoundsWithResponseSpec(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
-        return getCompoundsRequestCreation(projectId, page, size, sort, optFields, optFieldsFeatures);
+    public ResponseSpec getCompoundsPagedWithResponseSpec(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        return getCompoundsPagedRequestCreation(projectId, page, size, sort, optFields, optFieldsFeatures);
     }
 }
