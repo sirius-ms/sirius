@@ -20,43 +20,37 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.run;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
+import it.unimi.dsi.fastutil.longs.LongList;
 import jakarta.persistence.Id;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
+import java.util.Optional;
 
 @Getter
 @Setter
 @SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
-@ToString
-public class Run extends AbstractRun{
-    //todo are there other types like validation or calibration???
-    public enum Type {
-        SAMPLE,
-        BLANK
+@ToString(callSuper = true)
+public class MergedRun extends AbstractRun {
+
+    @ToString.Exclude
+    private SampleStats sampleStats;
+
+    @ToString.Exclude
+    private LongList runIds;
+
+    @JsonIgnore
+    @ToString.Exclude
+    private List<Run> runs;
+
+    public Optional<List<Run>> getRuns() {
+        return Optional.ofNullable(runs);
     }
-
-    /**
-     * indicated that this run is a Blank run
-     */
-    private Type runType;
-
-    private Chromatography chromatography;
-    private Ionization ionization;
-    private Fragmentation fragmentation;
-    private List<MassAnalyzer> massAnalyzers;
-
-
-    /**
-     * A reference to a certain LC/MS run in a mzml file.
-     */
-    @NotNull
-    private MsDataSourceReference sourceReference;
-
 
 }

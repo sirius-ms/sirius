@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.function.Supplier;
 
 public interface LCMSParser {
 
@@ -53,7 +54,7 @@ public interface LCMSParser {
             LCMSParser.IOThrowingConsumer<Run> runUpdateConsumer,
             LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
             LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
-            Run.RunBuilder runBuilder
+            Run run
     ) throws IOException;
 
 }

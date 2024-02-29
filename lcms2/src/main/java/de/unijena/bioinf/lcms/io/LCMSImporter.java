@@ -47,11 +47,11 @@ public class LCMSImporter {
         } else {
             throw new IOException("Illegal file extension. Only .mzml and .mzxml are supported");
         }
-        Run.RunBuilder runBuilder = Run.builder().runType(runType).chromatography(chromatography);
+        Run run = Run.builder().runType(runType).chromatography(chromatography).build();
         if (!saveRawScans) {
-            return parser.parse(source, storageFactory, importStrategy::importRun, importStrategy::updateRun, null, null, runBuilder);
+            return parser.parse(source, storageFactory, importStrategy::importRun, importStrategy::updateRun, null, null, run);
         } else {
-            return parser.parse(source, storageFactory, importStrategy::importRun, importStrategy::updateRun, importStrategy::importScan, importStrategy::importMSMSScan, runBuilder);
+            return parser.parse(source, storageFactory, importStrategy::importRun, importStrategy::updateRun, importStrategy::importScan, importStrategy::importMSMSScan, run);
         }
     }
 

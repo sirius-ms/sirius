@@ -23,7 +23,9 @@ package de.unijena.bioinf.lcms.projectspace;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
+import de.unijena.bioinf.ms.persistence.model.core.run.MergedRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.Run;
+import de.unijena.bioinf.ms.persistence.model.core.run.SampleStats;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
@@ -54,6 +56,11 @@ public class ProjectSpaceImporter implements ImportStrategy {
     @Override
     public void updateRun(Run run) throws IOException {
         store.upsert(run);
+    }
+
+    @Override
+    public void importMergedRun(MergedRun mergedRun) throws IOException {
+        store.insert(mergedRun);
     }
 
     @Override
