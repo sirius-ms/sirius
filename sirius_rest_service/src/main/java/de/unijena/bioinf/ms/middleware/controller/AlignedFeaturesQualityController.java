@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
-import de.unijena.bioinf.ms.middleware.model.SearchQueryType;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeatureQuality;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -54,15 +53,11 @@ public class AlignedFeaturesQualityController {
      *
      * @param projectId project-space to read from.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @return AlignedFeatureQuality quality information of the respective feature.
      */
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<AlignedFeatureQuality> getAlignedFeaturesQuality(
             @PathVariable String projectId, @ParameterObject Pageable pageable,
-            @RequestParam(required = false) String searchQuery,
-            @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax,
             @RequestParam(defaultValue = "qualityFlags, lcmsFeatureQuality") EnumSet<AlignedFeatureQuality.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesQuality(pageable, removeNone(optFields));
