@@ -20,13 +20,9 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.feature;
 
-import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
 import jakarta.persistence.Id;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Setter
@@ -40,7 +36,7 @@ public class Feature extends AbstractFeature {
      * ID of this feature
      */
     @Id
-    private long childFeatureId;
+    private long featureId;
 
     /**
      * ID of the aligned feature this feature belongs to

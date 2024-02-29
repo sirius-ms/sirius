@@ -106,11 +106,8 @@ public class LCMSProcessing {
      * parses an MZML file and stores the processed sample. Note: we should add possibility to parse from input
      * stream later
      */
-    public ProcessedSample processSample(
-            File file,
-            MsProjectDocumentDatabase<? extends Database<?>> store
-    ) throws IOException {
-        return processSample(file, store, false, Run.Type.SAMPLE, Chromatography.LC);
+    public ProcessedSample processSample(File file) throws IOException {
+        return processSample(file, false, Run.Type.SAMPLE, Chromatography.LC);
     }
 
     /**
@@ -119,15 +116,13 @@ public class LCMSProcessing {
      */
     public ProcessedSample processSample(
             File file,
-            MsProjectDocumentDatabase<? extends Database<?>> store,
             boolean saveRawScans,
             Run.Type runType,
             Chromatography chromatography
     ) throws IOException {
         // parse file and extract spectra
-        // TODO import via ImportStrategy
         ProcessedSample sample = LCMSImporter.importToProject(
-                file, storageFactory, store, saveRawScans, runType, chromatography);
+                file, storageFactory, importStrategy, saveRawScans, runType, chromatography);
         sample.setUid(this.samples.size());
         this.samples.add(sample);
         sample.active();
