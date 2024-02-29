@@ -40,11 +40,10 @@ public class ComputeAllAction extends AbstractAction {
     public ComputeAllAction() {
         super();
         computationCanceled();
-        setEnabled(false);
 
         //filtered Workspace Listener
         MF.getCompoundList().getCompoundList().addListEventListener(listChanges ->
-                setEnabled(listChanges.getSourceList().size() > 0));
+                setEnabled(!listChanges.getSourceList().isEmpty()));
 
         //Listen if there are active gui jobs
         Jobs.MANAGER().getJobs().addListEventListener(listChanges -> {
