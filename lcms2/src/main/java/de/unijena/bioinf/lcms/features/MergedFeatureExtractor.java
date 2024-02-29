@@ -28,6 +28,8 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
     // TODO stats
     // TODO intensity normalization
     // FIXME mz in aligned features
+    // TODO remove OldFeature
+    // TODO adapt AligentCefCompoundPArser
 
     @Override
     public Iterator<AlignedFeatures> extractFeatures(ProcessedSample mergedSample, MergedTrace mergedTrace, Ms2MergeStrategy ms2MergeStrategy, IsotopePatternExtractionStrategy isotopePatternExtractionStrategy, Int2LongMap trace2trace, Int2ObjectMap<ProcessedSample> idx2sample) {
