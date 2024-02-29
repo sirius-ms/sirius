@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class DBFilterPanel extends JPanel implements ActiveElementChangedListener<FingerprintCandidateBean, InstanceBean>, CustomDataSources.DataSourceChangeListener {
     public final static Set<String> NON_FILTERABLE = Set.of(
-            DataSource.ALL.name(), DataSource.ALL_BUT_INSILICO.name(),
+            DataSource.ALL.name(),
             DataSource.PUBCHEMANNOTATIONBIO.name(), DataSource.PUBCHEMANNOTATIONDRUG.name(),
             DataSource.PUBCHEMANNOTATIONFOOD.name(), DataSource.PUBCHEMANNOTATIONSAFETYANDTOXIC.name(),
             DataSource.SUPERNATURAL.name()
