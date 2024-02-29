@@ -39,13 +39,18 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Sirius.JSON_PROPERTY_NUMBER_OF_CANDIDATES_PER_IONIZATION,
   Sirius.JSON_PROPERTY_MASS_ACCURACY_M_S2PPM,
   Sirius.JSON_PROPERTY_ISOTOPE_MS2_SETTINGS,
+  Sirius.JSON_PROPERTY_FILTER_BY_ISOTOPE_PATTERN,
+  Sirius.JSON_PROPERTY_ENFORCE_EL_GORDO_FORMULA,
+  Sirius.JSON_PROPERTY_PERFORM_BOTTOM_UP_SEARCH,
+  Sirius.JSON_PROPERTY_PERFORM_DENOVO_BELOW_MZ,
   Sirius.JSON_PROPERTY_FORMULA_SEARCH_D_BS,
+  Sirius.JSON_PROPERTY_APPLY_FORMULA_CONSTRAINTS_TO_D_B_AND_BOTTOM_UP_SEARCH,
   Sirius.JSON_PROPERTY_ENFORCED_FORMULA_CONSTRAINTS,
   Sirius.JSON_PROPERTY_FALLBACK_FORMULA_CONSTRAINTS,
   Sirius.JSON_PROPERTY_DETECTABLE_ELEMENTS,
   Sirius.JSON_PROPERTY_ILP_TIMEOUT,
   Sirius.JSON_PROPERTY_USE_HEURISTIC,
-  Sirius.JSON_PROPERTY_MIN_REF_MATCH_SCORE_TO_INJECT
+  Sirius.JSON_PROPERTY_MIN_SCORE_TO_INJECT_SPEC_LIB_MATCH
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class Sirius {
@@ -104,8 +109,23 @@ public class Sirius {
   public static final String JSON_PROPERTY_ISOTOPE_MS2_SETTINGS = "isotopeMs2Settings";
   private IsotopeMs2SettingsEnum isotopeMs2Settings;
 
+  public static final String JSON_PROPERTY_FILTER_BY_ISOTOPE_PATTERN = "filterByIsotopePattern";
+  private Boolean filterByIsotopePattern;
+
+  public static final String JSON_PROPERTY_ENFORCE_EL_GORDO_FORMULA = "enforceElGordoFormula";
+  private Boolean enforceElGordoFormula;
+
+  public static final String JSON_PROPERTY_PERFORM_BOTTOM_UP_SEARCH = "performBottomUpSearch";
+  private Boolean performBottomUpSearch;
+
+  public static final String JSON_PROPERTY_PERFORM_DENOVO_BELOW_MZ = "performDenovoBelowMz";
+  private Double performDenovoBelowMz;
+
   public static final String JSON_PROPERTY_FORMULA_SEARCH_D_BS = "formulaSearchDBs";
   private List<String> formulaSearchDBs;
+
+  public static final String JSON_PROPERTY_APPLY_FORMULA_CONSTRAINTS_TO_D_B_AND_BOTTOM_UP_SEARCH = "applyFormulaConstraintsToDBAndBottomUpSearch";
+  private Boolean applyFormulaConstraintsToDBAndBottomUpSearch;
 
   public static final String JSON_PROPERTY_ENFORCED_FORMULA_CONSTRAINTS = "enforcedFormulaConstraints";
   private String enforcedFormulaConstraints;
@@ -122,8 +142,8 @@ public class Sirius {
   public static final String JSON_PROPERTY_USE_HEURISTIC = "useHeuristic";
   private UseHeuristic useHeuristic;
 
-  public static final String JSON_PROPERTY_MIN_REF_MATCH_SCORE_TO_INJECT = "minRefMatchScoreToInject";
-  private Double minRefMatchScoreToInject;
+  public static final String JSON_PROPERTY_MIN_SCORE_TO_INJECT_SPEC_LIB_MATCH = "minScoreToInjectSpecLibMatch";
+  private Double minScoreToInjectSpecLibMatch;
 
   public Sirius() {
   }
@@ -284,6 +304,110 @@ public class Sirius {
   }
 
 
+  public Sirius filterByIsotopePattern(Boolean filterByIsotopePattern) {
+    
+    this.filterByIsotopePattern = filterByIsotopePattern;
+    return this;
+  }
+
+   /**
+   * When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.
+   * @return filterByIsotopePattern
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_FILTER_BY_ISOTOPE_PATTERN)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isFilterByIsotopePattern() {
+    return filterByIsotopePattern;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_FILTER_BY_ISOTOPE_PATTERN)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setFilterByIsotopePattern(Boolean filterByIsotopePattern) {
+    this.filterByIsotopePattern = filterByIsotopePattern;
+  }
+
+
+  public Sirius enforceElGordoFormula(Boolean enforceElGordoFormula) {
+    
+    this.enforceElGordoFormula = enforceElGordoFormula;
+    return this;
+  }
+
+   /**
+   * El Gordo may predict that an MS/MS spectrum is a lipid spectrum. If enabled, the corresponding molecular formula will be enforeced as molecular formula candidate.
+   * @return enforceElGordoFormula
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_ENFORCE_EL_GORDO_FORMULA)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isEnforceElGordoFormula() {
+    return enforceElGordoFormula;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_ENFORCE_EL_GORDO_FORMULA)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setEnforceElGordoFormula(Boolean enforceElGordoFormula) {
+    this.enforceElGordoFormula = enforceElGordoFormula;
+  }
+
+
+  public Sirius performBottomUpSearch(Boolean performBottomUpSearch) {
+    
+    this.performBottomUpSearch = performBottomUpSearch;
+    return this;
+  }
+
+   /**
+   * If true, molecular formula generation via bottom up search is enabled.
+   * @return performBottomUpSearch
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_PERFORM_BOTTOM_UP_SEARCH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isPerformBottomUpSearch() {
+    return performBottomUpSearch;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_PERFORM_BOTTOM_UP_SEARCH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setPerformBottomUpSearch(Boolean performBottomUpSearch) {
+    this.performBottomUpSearch = performBottomUpSearch;
+  }
+
+
+  public Sirius performDenovoBelowMz(Double performDenovoBelowMz) {
+    
+    this.performDenovoBelowMz = performDenovoBelowMz;
+    return this;
+  }
+
+   /**
+   * Specifies the m/z below which de novo molecular formula generation is enabled. Set to 0 to disable de novo molecular formula generation.
+   * @return performDenovoBelowMz
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_PERFORM_DENOVO_BELOW_MZ)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getPerformDenovoBelowMz() {
+    return performDenovoBelowMz;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_PERFORM_DENOVO_BELOW_MZ)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setPerformDenovoBelowMz(Double performDenovoBelowMz) {
+    this.performDenovoBelowMz = performDenovoBelowMz;
+  }
+
+
   public Sirius formulaSearchDBs(List<String> formulaSearchDBs) {
     
     this.formulaSearchDBs = formulaSearchDBs;
@@ -315,6 +439,32 @@ public class Sirius {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFormulaSearchDBs(List<String> formulaSearchDBs) {
     this.formulaSearchDBs = formulaSearchDBs;
+  }
+
+
+  public Sirius applyFormulaConstraintsToDBAndBottomUpSearch(Boolean applyFormulaConstraintsToDBAndBottomUpSearch) {
+    
+    this.applyFormulaConstraintsToDBAndBottomUpSearch = applyFormulaConstraintsToDBAndBottomUpSearch;
+    return this;
+  }
+
+   /**
+   * By default, the formula (element) constraints are only applied to de novo molecular formula generation.  If true, the constraints are as well applied to database search and bottom up search.
+   * @return applyFormulaConstraintsToDBAndBottomUpSearch
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_APPLY_FORMULA_CONSTRAINTS_TO_D_B_AND_BOTTOM_UP_SEARCH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isApplyFormulaConstraintsToDBAndBottomUpSearch() {
+    return applyFormulaConstraintsToDBAndBottomUpSearch;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_APPLY_FORMULA_CONSTRAINTS_TO_D_B_AND_BOTTOM_UP_SEARCH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setApplyFormulaConstraintsToDBAndBottomUpSearch(Boolean applyFormulaConstraintsToDBAndBottomUpSearch) {
+    this.applyFormulaConstraintsToDBAndBottomUpSearch = applyFormulaConstraintsToDBAndBottomUpSearch;
   }
 
 
@@ -456,29 +606,29 @@ public class Sirius {
   }
 
 
-  public Sirius minRefMatchScoreToInject(Double minRefMatchScoreToInject) {
+  public Sirius minScoreToInjectSpecLibMatch(Double minScoreToInjectSpecLibMatch) {
     
-    this.minRefMatchScoreToInject = minRefMatchScoreToInject;
+    this.minScoreToInjectSpecLibMatch = minScoreToInjectSpecLibMatch;
     return this;
   }
 
    /**
    * Similarity Threshold to inject formula candidates no matter which score/rank they have or which filter settings are applied.  If threshold &gt;&#x3D; 0 formulas candidates with reference spectrum similarity above the threshold will be injected.  If NULL injection is disables.
-   * @return minRefMatchScoreToInject
+   * @return minScoreToInjectSpecLibMatch
   **/
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_MIN_REF_MATCH_SCORE_TO_INJECT)
+  @JsonProperty(JSON_PROPERTY_MIN_SCORE_TO_INJECT_SPEC_LIB_MATCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Double getMinRefMatchScoreToInject() {
-    return minRefMatchScoreToInject;
+  public Double getMinScoreToInjectSpecLibMatch() {
+    return minScoreToInjectSpecLibMatch;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_MIN_REF_MATCH_SCORE_TO_INJECT)
+  @JsonProperty(JSON_PROPERTY_MIN_SCORE_TO_INJECT_SPEC_LIB_MATCH)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setMinRefMatchScoreToInject(Double minRefMatchScoreToInject) {
-    this.minRefMatchScoreToInject = minRefMatchScoreToInject;
+  public void setMinScoreToInjectSpecLibMatch(Double minScoreToInjectSpecLibMatch) {
+    this.minScoreToInjectSpecLibMatch = minScoreToInjectSpecLibMatch;
   }
 
   @Override
@@ -496,18 +646,23 @@ public class Sirius {
         Objects.equals(this.numberOfCandidatesPerIonization, sirius.numberOfCandidatesPerIonization) &&
         Objects.equals(this.massAccuracyMS2ppm, sirius.massAccuracyMS2ppm) &&
         Objects.equals(this.isotopeMs2Settings, sirius.isotopeMs2Settings) &&
+        Objects.equals(this.filterByIsotopePattern, sirius.filterByIsotopePattern) &&
+        Objects.equals(this.enforceElGordoFormula, sirius.enforceElGordoFormula) &&
+        Objects.equals(this.performBottomUpSearch, sirius.performBottomUpSearch) &&
+        Objects.equals(this.performDenovoBelowMz, sirius.performDenovoBelowMz) &&
         Objects.equals(this.formulaSearchDBs, sirius.formulaSearchDBs) &&
+        Objects.equals(this.applyFormulaConstraintsToDBAndBottomUpSearch, sirius.applyFormulaConstraintsToDBAndBottomUpSearch) &&
         Objects.equals(this.enforcedFormulaConstraints, sirius.enforcedFormulaConstraints) &&
         Objects.equals(this.fallbackFormulaConstraints, sirius.fallbackFormulaConstraints) &&
         Objects.equals(this.detectableElements, sirius.detectableElements) &&
         Objects.equals(this.ilpTimeout, sirius.ilpTimeout) &&
         Objects.equals(this.useHeuristic, sirius.useHeuristic) &&
-        Objects.equals(this.minRefMatchScoreToInject, sirius.minRefMatchScoreToInject);
+        Objects.equals(this.minScoreToInjectSpecLibMatch, sirius.minScoreToInjectSpecLibMatch);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(enabled, profile, numberOfCandidates, numberOfCandidatesPerIonization, massAccuracyMS2ppm, isotopeMs2Settings, formulaSearchDBs, enforcedFormulaConstraints, fallbackFormulaConstraints, detectableElements, ilpTimeout, useHeuristic, minRefMatchScoreToInject);
+    return Objects.hash(enabled, profile, numberOfCandidates, numberOfCandidatesPerIonization, massAccuracyMS2ppm, isotopeMs2Settings, filterByIsotopePattern, enforceElGordoFormula, performBottomUpSearch, performDenovoBelowMz, formulaSearchDBs, applyFormulaConstraintsToDBAndBottomUpSearch, enforcedFormulaConstraints, fallbackFormulaConstraints, detectableElements, ilpTimeout, useHeuristic, minScoreToInjectSpecLibMatch);
   }
 
   @Override
@@ -520,13 +675,18 @@ public class Sirius {
     sb.append("    numberOfCandidatesPerIonization: ").append(toIndentedString(numberOfCandidatesPerIonization)).append("\n");
     sb.append("    massAccuracyMS2ppm: ").append(toIndentedString(massAccuracyMS2ppm)).append("\n");
     sb.append("    isotopeMs2Settings: ").append(toIndentedString(isotopeMs2Settings)).append("\n");
+    sb.append("    filterByIsotopePattern: ").append(toIndentedString(filterByIsotopePattern)).append("\n");
+    sb.append("    enforceElGordoFormula: ").append(toIndentedString(enforceElGordoFormula)).append("\n");
+    sb.append("    performBottomUpSearch: ").append(toIndentedString(performBottomUpSearch)).append("\n");
+    sb.append("    performDenovoBelowMz: ").append(toIndentedString(performDenovoBelowMz)).append("\n");
     sb.append("    formulaSearchDBs: ").append(toIndentedString(formulaSearchDBs)).append("\n");
+    sb.append("    applyFormulaConstraintsToDBAndBottomUpSearch: ").append(toIndentedString(applyFormulaConstraintsToDBAndBottomUpSearch)).append("\n");
     sb.append("    enforcedFormulaConstraints: ").append(toIndentedString(enforcedFormulaConstraints)).append("\n");
     sb.append("    fallbackFormulaConstraints: ").append(toIndentedString(fallbackFormulaConstraints)).append("\n");
     sb.append("    detectableElements: ").append(toIndentedString(detectableElements)).append("\n");
     sb.append("    ilpTimeout: ").append(toIndentedString(ilpTimeout)).append("\n");
     sb.append("    useHeuristic: ").append(toIndentedString(useHeuristic)).append("\n");
-    sb.append("    minRefMatchScoreToInject: ").append(toIndentedString(minRefMatchScoreToInject)).append("\n");
+    sb.append("    minScoreToInjectSpecLibMatch: ").append(toIndentedString(minScoreToInjectSpecLibMatch)).append("\n");
     sb.append("}");
     return sb.toString();
   }

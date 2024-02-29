@@ -21,6 +21,10 @@
       "description": "Start, monitor and cancel background jobs."
     },
     {
+      "name": "GUI",
+      "description": "Open and close SIRIUS Graphical User Interface (GUI) on specified projects."
+    },
+    {
       "name": "Compounds",
       "description": "This compound based API allows to retrieve all AlignedFeatures that belong to the same compound (also known as a group of ion identities). It also provides for each AlignedFeature the corresponding annotation results (which are usually computed on a per-feature basis)"
     },
@@ -43,10 +47,6 @@
     {
       "name": "Features",
       "description": "This feature based API allows access features (aligned over runs) and there Annotations of a specified project-space. This is the entry point to access all raw annotation results an there summaries."
-    },
-    {
-      "name": "[Experimental] GUI",
-      "description": "Open, control and close SIRIUS Graphical User Interface (GUI) on the specified project-space."
     },
     {
       "name": "Projects",
@@ -971,7 +971,7 @@
     "/api/projects/{projectId}/gui": {
       "post": {
         "tags": [
-          "[Experimental] GUI"
+          "GUI"
         ],
         "summary": "Open GUI instance on specified project-space and bring the GUI window to foreground.",
         "description": "Open GUI instance on specified project-space and bring the GUI window to foreground.",
@@ -985,27 +985,8 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "readOnly",
-            "in": "query",
-            "description": "open in read-only mode.",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true
-            }
           }
         ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GuiParameters"
-              }
-            }
-          }
-        },
         "responses": {
           "201": {
             "description": "Created"
@@ -1014,7 +995,7 @@
       },
       "delete": {
         "tags": [
-          "[Experimental] GUI"
+          "GUI"
         ],
         "summary": "Close GUI instance of given project-space if available.",
         "description": "Close GUI instance of given project-space if available.",
@@ -1048,41 +1029,6 @@
                 }
               }
             }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "[Experimental] GUI"
-        ],
-        "summary": "Apply given changes to the running GUI instance.",
-        "description": "Apply given changes to the running GUI instance.",
-        "operationId": "applyToGui",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "of project-space the GUI instance is connected to.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "parameters that should be applied.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GuiParameters"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
           }
         }
       }
@@ -3457,7 +3403,7 @@
     "/api/guis": {
       "get": {
         "tags": [
-          "[Experimental] GUI"
+          "GUI"
         ],
         "summary": "Get list of currently running gui windows, managed by this SIRIUS instance.",
         "description": "Get list of currently running gui windows, managed by this SIRIUS instance.\n Note this will not show any Clients that are connected from a separate process!",
@@ -4525,12 +4471,33 @@
               "SCORE"
             ]
           },
+          "filterByIsotopePattern": {
+            "type": "boolean",
+            "description": "When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score."
+          },
+          "enforceElGordoFormula": {
+            "type": "boolean",
+            "description": "El Gordo may predict that an MS/MS spectrum is a lipid spectrum. If enabled, the corresponding molecular formula will be enforeced as molecular formula candidate."
+          },
+          "performBottomUpSearch": {
+            "type": "boolean",
+            "description": "If true, molecular formula generation via bottom up search is enabled."
+          },
+          "performDenovoBelowMz": {
+            "type": "number",
+            "description": "Specifies the m/z below which de novo molecular formula generation is enabled. Set to 0 to disable de novo molecular formula generation.",
+            "format": "double"
+          },
           "formulaSearchDBs": {
             "type": "array",
             "description": "List Structure database to extract molecular formulas from to reduce formula search space.\n SIRIUS is quite good at de novo formula annotation, so only enable if you have a good reason.",
             "items": {
               "type": "string"
             }
+          },
+          "applyFormulaConstraintsToDBAndBottomUpSearch": {
+            "type": "boolean",
+            "description": "By default, the formula (element) constraints are only applied to de novo molecular formula generation.\n If true, the constraints are as well applied to database search and bottom up search."
           },
           "enforcedFormulaConstraints": {
             "type": "string",
@@ -4553,7 +4520,7 @@
           "useHeuristic": {
             "$ref": "#/components/schemas/UseHeuristic"
           },
-          "minRefMatchScoreToInject": {
+          "minScoreToInjectSpecLibMatch": {
             "type": "number",
             "description": "Similarity Threshold to inject formula candidates no matter which score/rank they have or which filter settings are applied.\n If threshold \u003e\u003d 0 formulas candidates with reference spectrum similarity above the threshold will be injected.\n If NULL injection is disables.",
             "format": "double"
@@ -4726,48 +4693,6 @@
           }
         },
         "description": ""
-      },
-      "GuiParameters": {
-        "type": "object",
-        "properties": {
-          "selectedTab": {
-            "$ref": "#/components/schemas/GuiResultTab"
-          },
-          "cid": {
-            "type": "string",
-            "description": "ID of Selected compound.",
-            "nullable": true
-          },
-          "fid": {
-            "type": "string",
-            "description": "ID of Selected Formula candidate of the selected compound.",
-            "nullable": true
-          },
-          "structureCandidateInChIKey": {
-            "type": "string",
-            "description": "InChIKey of selected structure candidate of selected formula candidate.",
-            "nullable": true
-          },
-          "bringToFront": {
-            "type": "boolean",
-            "description": "If true bring SIRIUS GUI window to foreground.",
-            "nullable": true
-          }
-        },
-        "description": "Parameters to \"remote control\" the SIRIUS GUI."
-      },
-      "GuiResultTab": {
-        "type": "string",
-        "description": "Available result tabs in the SIRIUS GUI. Name correspond to the names in the GUI.",
-        "nullable": true,
-        "enum": [
-          "FORMULAS",
-          "PREDICTED_FINGERPRINT",
-          "COMPOUND_CLASSES",
-          "STRUCTURES",
-          "STRUCTURE_ANNOTATION",
-          "DE_NOVO_STRUCTURES"
-        ]
       },
       "BasicSpectrum": {
         "required": [

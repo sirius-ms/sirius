@@ -118,10 +118,6 @@ Class | Method | HTTP request | Description
 *CompoundsApi* | [**deleteCompound**](docs/CompoundsApi.md#deleteCompound) | **DELETE** /api/projects/{projectId}/compounds/{compoundId} | Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
 *CompoundsApi* | [**getCompound**](docs/CompoundsApi.md#getCompound) | **GET** /api/projects/{projectId}/compounds/{compoundId} | Get compound (group of ion identities) with the given identifier from the specified project-space.
 *CompoundsApi* | [**getCompounds**](docs/CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | Get all available compounds (group of ion identities) in the given project-space.
-*ExperimentalGuiApi* | [**applyToGui**](docs/ExperimentalGuiApi.md#applyToGui) | **PATCH** /api/projects/{projectId}/gui | Apply given changes to the running GUI instance.
-*ExperimentalGuiApi* | [**closeGui**](docs/ExperimentalGuiApi.md#closeGui) | **DELETE** /api/projects/{projectId}/gui | Close GUI instance of given project-space if available.
-*ExperimentalGuiApi* | [**getGuis**](docs/ExperimentalGuiApi.md#getGuis) | **GET** /api/guis | Get list of currently running gui windows, managed by this SIRIUS instance.
-*ExperimentalGuiApi* | [**openGui**](docs/ExperimentalGuiApi.md#openGui) | **POST** /api/projects/{projectId}/gui | Open GUI instance on specified project-space and bring the GUI window to foreground.
 *FeaturesApi* | [**addAlignedFeatures**](docs/FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | 
 *FeaturesApi* | [**deleteAlignedFeature**](docs/FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**getAlignedFeature**](docs/FeaturesApi.md#getAlignedFeature) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Get feature (aligned over runs) with the given identifier from the specified project-space.
@@ -143,6 +139,9 @@ Class | Method | HTTP request | Description
 *FeaturesApi* | [**getStructureAnnotatedSpectrum**](docs/FeaturesApi.md#getStructureAnnotatedSpectrum) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum | Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
 *FeaturesApi* | [**getStructureCandidates**](docs/FeaturesApi.md#getStructureCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/structures | List of StructureCandidates for the given &#39;alignedFeatureId&#39; with minimal information.
 *FeaturesApi* | [**getStructureCandidatesByFormula**](docs/FeaturesApi.md#getStructureCandidatesByFormula) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures | List of StructureCandidates the given &#39;formulaId&#39; with minimal information.
+*GuiApi* | [**closeGui**](docs/GuiApi.md#closeGui) | **DELETE** /api/projects/{projectId}/gui | Close GUI instance of given project-space if available.
+*GuiApi* | [**getGuis**](docs/GuiApi.md#getGuis) | **GET** /api/guis | Get list of currently running gui windows, managed by this SIRIUS instance.
+*GuiApi* | [**openGui**](docs/GuiApi.md#openGui) | **POST** /api/projects/{projectId}/gui | Open GUI instance on specified project-space and bring the GUI window to foreground.
 *InfoApi* | [**getConnectionCheck**](docs/InfoApi.md#getConnectionCheck) | **GET** /api/connection-status | 
 *InfoApi* | [**getInfo**](docs/InfoApi.md#getInfo) | **GET** /api/info | 
 *JobsApi* | [**deleteJob**](docs/JobsApi.md#deleteJob) | **DELETE** /api/projects/{projectId}/jobs/{jobId} | Delete job.
@@ -227,8 +226,6 @@ Class | Method | HTTP request | Description
  - [FragmentNode](docs/FragmentNode.md)
  - [FragmentationTree](docs/FragmentationTree.md)
  - [GuiInfo](docs/GuiInfo.md)
- - [GuiParameters](docs/GuiParameters.md)
- - [GuiResultTab](docs/GuiResultTab.md)
  - [ImportFormat](docs/ImportFormat.md)
  - [ImportLocalFilesSubmission](docs/ImportLocalFilesSubmission.md)
  - [ImportStringSubmission](docs/ImportStringSubmission.md)
