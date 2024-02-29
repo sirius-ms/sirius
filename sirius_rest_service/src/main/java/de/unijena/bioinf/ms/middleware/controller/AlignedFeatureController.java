@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.AnnotatedMsMsData;
@@ -53,16 +54,31 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
         "a specified project-space. This is the entry point to access all raw annotation results an there summaries.")
 public class AlignedFeatureController {
 
-
     private final ProjectsProvider<?> projectsProvider;
     private final ChemDbService chemDbService;
+    private final GlobalConfig globalConfig;
 
     @Autowired
-    public AlignedFeatureController(ProjectsProvider<?> projectsProvider, ChemDbService chemDbService) {
+    public AlignedFeatureController(ProjectsProvider<?> projectsProvider, ChemDbService chemDbService, GlobalConfig globalConfig) {
         this.projectsProvider = projectsProvider;
         this.chemDbService = chemDbService;
+        this.globalConfig = globalConfig;
     }
 
+    /**
+     * Get all available features (aligned over runs) in the given project-space.
+     *
+     * @param projectId   project-space to read from.
+     * @param optFields   set of optional fields to be included. Use 'none' only to override defaults.
+     * @return AlignedFeatures with additional annotations and MS/MS data (if specified).
+     */
+    @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<AlignedFeature> getAlignedFeaturesPaged(
+            @PathVariable String projectId, @ParameterObject Pageable pageable,
+            @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(pageable, removeNone(optFields));
+    }
 
     /**
      * Get all available features (aligned over runs) in the given project-space.
@@ -72,11 +88,11 @@ public class AlignedFeatureController {
      * @return AlignedFeatures with additional annotations and MS/MS data (if specified).
      */
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<AlignedFeature> getAlignedFeatures(
-            @PathVariable String projectId, @ParameterObject Pageable pageable,
+    public List<AlignedFeature> getAlignedFeatures(
+            @PathVariable String projectId,
             @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(pageable, removeNone(optFields));
+        return getAlignedFeaturesPaged(projectId, globalConfig.unpaged(), optFields).stream().toList();
     }
 
 
@@ -122,7 +138,7 @@ public class AlignedFeatureController {
     }
 
     /**
-     * List of StructureCandidates for the given 'alignedFeatureId' with minimal information.
+     * Page of StructureCandidates for the given 'alignedFeatureId' with minimal information.
      * StructureCandidates can be enriched with molecular fingerprint, structure database links.
      *
      * @param projectId        project-space to read from.
@@ -130,8 +146,8 @@ public class AlignedFeatureController {
      * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
      * @return StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
      */
-    @GetMapping(value = "/{alignedFeatureId}/structures", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<StructureCandidateFormula> getStructureCandidates(
+    @GetMapping(value = "/{alignedFeatureId}/structures/page", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<StructureCandidateFormula> getStructureCandidatesPaged(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @ParameterObject Pageable pageable,
             @RequestParam(defaultValue = "") EnumSet<StructureCandidateScored.OptField> optFields
@@ -141,14 +157,31 @@ public class AlignedFeatureController {
     }
 
     /**
-     * List of spectral library matches for the given 'alignedFeatureId'.
+     * List of StructureCandidates for the given 'alignedFeatureId' with minimal information.
+     * StructureCandidates can be enriched with molecular fingerprint, structure database links.
+     *
+     * @param projectId        project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
+     * @return StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.
+     */
+    @GetMapping(value = "/{alignedFeatureId}/structures", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<StructureCandidateFormula> getStructureCandidates(
+            @PathVariable String projectId, @PathVariable String alignedFeatureId,
+            @RequestParam(defaultValue = "") EnumSet<StructureCandidateScored.OptField> optFields
+    ) {
+        return getStructureCandidatesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), optFields).stream().toList();
+    }
+
+    /**
+     * Page of spectral library matches for the given 'alignedFeatureId'.
      *
      * @param projectId        project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @return Spectral library matches of this feature (aligned over runs).
      */
-    @GetMapping(value = "/{alignedFeatureId}/spectral-library-matches", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<SpectralLibraryMatch> getSpectralLibraryMatches(
+    @GetMapping(value = "/{alignedFeatureId}/spectral-library-matches/page", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<SpectralLibraryMatch> getSpectralLibraryMatchesPaged(
             @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @ParameterObject Pageable pageable,
             @RequestParam(defaultValue = "") EnumSet<SpectralLibraryMatch.OptField> optFields
@@ -168,6 +201,21 @@ public class AlignedFeatureController {
     }
 
     /**
+     * List of spectral library matches for the given 'alignedFeatureId'.
+     *
+     * @param projectId        project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @return Spectral library matches of this feature (aligned over runs).
+     */
+    @GetMapping(value = "/{alignedFeatureId}/spectral-library-matches", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<SpectralLibraryMatch> getSpectralLibraryMatches(
+            @PathVariable String projectId, @PathVariable String alignedFeatureId,
+            @RequestParam(defaultValue = "") EnumSet<SpectralLibraryMatch.OptField> optFields
+    ) {
+        return getSpectralLibraryMatchesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), optFields).stream().toList();
+    }
+
+    /**
      * Mass Spec data (input data) for the given 'alignedFeatureId' .
      *
      * @param projectId        project-space to read from.
@@ -184,7 +232,25 @@ public class AlignedFeatureController {
     }
 
     /**
-     * List of all FormulaResultContainers available for this feature with minimal information.
+     * Page of FormulaResultContainers available for this feature with minimal information.
+     * Can be enriched with an optional results overview.
+     *
+     * @param projectId        project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
+     * @return All FormulaCandidate of this feature with.
+     */
+    @GetMapping(value = "/{alignedFeatureId}/formulas/page", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<FormulaCandidate> getFormulaCandidatesPaged(
+            @PathVariable String projectId, @PathVariable String alignedFeatureId, @ParameterObject Pageable pageable,
+            @RequestParam(defaultValue = "") EnumSet<FormulaCandidate.OptField> optFields
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId)
+                .findFormulaCandidatesByFeatureId(alignedFeatureId, pageable, removeNone(optFields));
+    }
+
+    /**
+     * List of FormulaResultContainers available for this feature with minimal information.
      * Can be enriched with an optional results overview.
      *
      * @param projectId        project-space to read from.
@@ -193,12 +259,11 @@ public class AlignedFeatureController {
      * @return All FormulaCandidate of this feature with.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<FormulaCandidate> getFormulaCandidates(
-            @PathVariable String projectId, @PathVariable String alignedFeatureId, @ParameterObject Pageable pageable,
+    public List<FormulaCandidate> getFormulaCandidates(
+            @PathVariable String projectId, @PathVariable String alignedFeatureId,
             @RequestParam(defaultValue = "") EnumSet<FormulaCandidate.OptField> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId)
-                .findFormulaCandidatesByFeatureId(alignedFeatureId, pageable, removeNone(optFields));
+        return getFormulaCandidatesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), optFields).stream().toList();
     }
 
     /**
@@ -222,6 +287,26 @@ public class AlignedFeatureController {
     }
 
     /**
+     * Page of StructureCandidates the given 'formulaId' with minimal information.
+     * StructureCandidates can be enriched with molecular fingerprint, structure database links.
+     *
+     * @param projectId        project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId        identifier of the requested formula result
+     * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
+     * @return StructureCandidate of this formula candidate with specified optional fields.
+     */
+    @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/structures/page", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<StructureCandidateScored> getStructureCandidatesByFormulaPaged(
+            @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
+            @ParameterObject Pageable pageable,
+            @RequestParam(defaultValue = "") EnumSet<StructureCandidateScored.OptField> optFields
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId)
+                .findStructureCandidatesByFeatureIdAndFormulaId(formulaId, alignedFeatureId, pageable, removeNone(optFields));
+    }
+
+    /**
      * List of StructureCandidates the given 'formulaId' with minimal information.
      * StructureCandidates can be enriched with molecular fingerprint, structure database links.
      *
@@ -229,18 +314,15 @@ public class AlignedFeatureController {
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId        identifier of the requested formula result
      * @param optFields        set of optional fields to be included. Use 'none' only to override defaults.
-     * @param searchQuery      optional search query in specified format
-     * @param querySyntax      query syntax used fpr searchQuery
      * @return StructureCandidate of this formula candidate with specified optional fields.
      */
     @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/structures", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<StructureCandidateScored> getStructureCandidatesByFormula(
+    public List<StructureCandidateScored> getStructureCandidatesByFormula(
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
-            @ParameterObject Pageable pageable,
             @RequestParam(defaultValue = "") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId)
-                .findStructureCandidatesByFeatureIdAndFormulaId(formulaId, alignedFeatureId, pageable, removeNone(optFields));
+        return getStructureCandidatesByFormulaPaged(projectId, formulaId, alignedFeatureId, globalConfig.unpaged(), optFields)
+                .stream().toList();
     }
 
     /**

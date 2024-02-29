@@ -710,8 +710,8 @@
         "tags": [
           "Jobs"
         ],
-        "summary": "Get job information and its current state and progress (if available).",
-        "description": "Get job information and its current state and progress (if available).",
+        "summary": "Get List of all available jobs with information such as current state and progress (if available).",
+        "description": "Get List of all available jobs with information such as current state and progress (if available).",
         "operationId": "getJobs",
         "parameters": [
           {
@@ -721,40 +721,6 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Zero-based page index (0..N)",
-            "required": false,
-            "schema": {
-              "minimum": 0,
-              "type": "integer",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "description": "The size of the page to be returned",
-            "required": false,
-            "schema": {
-              "minimum": 1,
-              "type": "integer",
-              "default": 20
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
             }
           },
           {
@@ -777,7 +743,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageJob"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Job"
+                  }
                 }
               }
             }
@@ -1038,8 +1007,8 @@
         "tags": [
           "Compounds"
         ],
-        "summary": "Get all available compounds (group of ion identities) in the given project-space.",
-        "description": "Get all available compounds (group of ion identities) in the given project-space.",
+        "summary": "List of all available compounds (group of ion identities) in the given project-space.",
+        "description": "List of all available compounds (group of ion identities) in the given project-space.",
         "operationId": "getCompounds",
         "parameters": [
           {
@@ -1049,40 +1018,6 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Zero-based page index (0..N)",
-            "required": false,
-            "schema": {
-              "minimum": 0,
-              "type": "integer",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "description": "The size of the page to be returned",
-            "required": false,
-            "schema": {
-              "minimum": 1,
-              "type": "integer",
-              "default": 20
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
             }
           },
           {
@@ -1117,7 +1052,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageCompound"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Compound"
+                  }
                 }
               }
             }
@@ -1216,40 +1154,6 @@
             }
           },
           {
-            "name": "page",
-            "in": "query",
-            "description": "Zero-based page index (0..N)",
-            "required": false,
-            "schema": {
-              "minimum": 0,
-              "type": "integer",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "description": "The size of the page to be returned",
-            "required": false,
-            "schema": {
-              "minimum": 1,
-              "type": "integer",
-              "default": 20
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
             "name": "optFields",
             "in": "query",
             "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
@@ -1269,7 +1173,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageAlignedFeature"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlignedFeature"
+                  }
                 }
               }
             }
@@ -1806,6 +1713,86 @@
         }
       }
     },
+    "/api/projects/{projectId}/jobs/page": {
+      "get": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Get Page of jobs with information such as current state and progress (if available).",
+        "description": "Get Page of jobs with information such as current state and progress (if available).",
+        "operationId": "getJobsPaged",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to run jobs on",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/JobOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageJob"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/has-jobs": {
       "get": {
         "tags": [
@@ -1985,6 +1972,98 @@
         }
       }
     },
+    "/api/projects/{projectId}/compounds/page": {
+      "get": {
+        "tags": [
+          "Compounds"
+        ],
+        "summary": "Page of available compounds (group of ion identities) in the given project-space.",
+        "description": "Page of available compounds (group of ion identities) in the given project-space.",
+        "operationId": "getCompoundsPaged",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/CompoundOptField"
+              },
+              "default": []
+            }
+          },
+          {
+            "name": "optFieldsFeatures",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/AlignedFeatureOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Compounds with additional optional fields (if specified).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageCompound"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/cf-data": {
       "get": {
         "tags": [
@@ -2141,6 +2220,64 @@
             }
           },
           {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/StructureCandidateOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StructureCandidateFormula"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/structures/page": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Page of StructureCandidates for the given \u0027alignedFeatureId\u0027 with minimal information.",
+        "description": "Page of StructureCandidates for the given \u0027alignedFeatureId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint, structure database links.",
+        "operationId": "getStructureCandidatesPaged",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the structure candidates belong to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "page",
             "in": "query",
             "description": "Zero-based page index (0..N)",
@@ -2210,6 +2347,63 @@
         "summary": "List of spectral library matches for the given \u0027alignedFeatureId\u0027.",
         "description": "List of spectral library matches for the given \u0027alignedFeatureId\u0027.",
         "operationId": "getSpectralLibraryMatches",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the structure candidates belong to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/SpectralLibraryMatchOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Spectral library matches of this feature (aligned over runs).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SpectralLibraryMatch"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/page": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Page of spectral library matches for the given \u0027alignedFeatureId\u0027.",
+        "description": "Page of spectral library matches for the given \u0027alignedFeatureId\u0027.",
+        "operationId": "getSpectralLibraryMatchesPaged",
         "parameters": [
           {
             "name": "projectId",
@@ -2337,8 +2531,8 @@
         "tags": [
           "Features"
         ],
-        "summary": "List of all FormulaResultContainers available for this feature with minimal information.",
-        "description": "List of all FormulaResultContainers available for this feature with minimal information.\n Can be enriched with an optional results overview.",
+        "summary": "List of FormulaResultContainers available for this feature with minimal information.",
+        "description": "List of FormulaResultContainers available for this feature with minimal information.\n Can be enriched with an optional results overview.",
         "operationId": "getFormulaCandidates",
         "parameters": [
           {
@@ -2357,40 +2551,6 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Zero-based page index (0..N)",
-            "required": false,
-            "schema": {
-              "minimum": 0,
-              "type": "integer",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "description": "The size of the page to be returned",
-            "required": false,
-            "schema": {
-              "minimum": 1,
-              "type": "integer",
-              "default": 20
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
             }
           },
           {
@@ -2413,7 +2573,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageFormulaCandidate"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FormulaCandidate"
+                  }
                 }
               }
             }
@@ -2573,40 +2736,6 @@
             }
           },
           {
-            "name": "page",
-            "in": "query",
-            "description": "Zero-based page index (0..N)",
-            "required": false,
-            "schema": {
-              "minimum": 0,
-              "type": "integer",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "description": "The size of the page to be returned",
-            "required": false,
-            "schema": {
-              "minimum": 1,
-              "type": "integer",
-              "default": 20
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
             "name": "optFields",
             "in": "query",
             "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
@@ -2626,7 +2755,10 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageStructureCandidateScored"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StructureCandidateScored"
+                  }
                 }
               }
             }
@@ -2758,6 +2890,104 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AnnotatedMsMsData"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/page": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Page of StructureCandidates the given \u0027formulaId\u0027 with minimal information.",
+        "description": "Page of StructureCandidates the given \u0027formulaId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint, structure database links.",
+        "operationId": "getStructureCandidatesByFormulaPaged",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the formula result belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "formulaId",
+            "in": "path",
+            "description": "identifier of the requested formula result",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/StructureCandidateOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "StructureCandidate of this formula candidate with specified optional fields.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageStructureCandidateScored"
                 }
               }
             }
@@ -3184,6 +3414,175 @@
         }
       }
     },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/page": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Page of FormulaResultContainers available for this feature with minimal information.",
+        "description": "Page of FormulaResultContainers available for this feature with minimal information.\n Can be enriched with an optional results overview.",
+        "operationId": "getFormulaCandidatesPaged",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the formula result belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/FormulaCandidateOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "All FormulaCandidate of this feature with.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageFormulaCandidate"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/page": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Get all available features (aligned over runs) in the given project-space.",
+        "description": "Get all available features (aligned over runs) in the given project-space.",
+        "operationId": "getAlignedFeaturesPaged",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/AlignedFeatureOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlignedFeatures with additional annotations and MS/MS data (if specified).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageAlignedFeature"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/job-configs": {
       "get": {
         "tags": [
@@ -3249,49 +3648,16 @@
         "summary": "Get list of currently running gui windows, managed by this SIRIUS instance.",
         "description": "Get list of currently running gui windows, managed by this SIRIUS instance.\n Note this will not show any Clients that are connected from a separate process!",
         "operationId": "getGuis",
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Zero-based page index (0..N)",
-            "required": false,
-            "schema": {
-              "minimum": 0,
-              "type": "integer",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "description": "The size of the page to be returned",
-            "required": false,
-            "schema": {
-              "minimum": 1,
-              "type": "integer",
-              "default": 20
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "List of GUI windows that are currently managed by this SIRIUS instance.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageGuiInfo"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GuiInfo"
+                  }
                 }
               }
             }
@@ -5729,24 +6095,14 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
-            "type": "boolean"
-          },
           "first": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Job"
-            }
+          "last": {
+            "type": "boolean"
           },
           "number": {
             "type": "integer",
@@ -5759,6 +6115,16 @@
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
           },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Job"
+            }
+          },
           "empty": {
             "type": "boolean"
           }
@@ -5769,10 +6135,6 @@
         "properties": {
           "sort": {
             "$ref": "#/components/schemas/SortObject"
-          },
-          "offset": {
-            "type": "integer",
-            "format": "int64"
           },
           "pageNumber": {
             "type": "integer",
@@ -5787,19 +6149,23 @@
           },
           "unpaged": {
             "type": "boolean"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
       "SortObject": {
         "type": "object",
         "properties": {
-          "empty": {
-            "type": "boolean"
-          },
           "sorted": {
             "type": "boolean"
           },
           "unsorted": {
+            "type": "boolean"
+          },
+          "empty": {
             "type": "boolean"
           }
         },
@@ -5816,14 +6182,25 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
-            "type": "boolean"
-          },
           "first": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "size": {
             "type": "integer",
@@ -5834,63 +6211,6 @@
             "items": {
               "$ref": "#/components/schemas/Compound"
             }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "empty": {
-            "type": "boolean"
-          }
-        }
-      },
-      "PageAlignedFeature": {
-        "type": "object",
-        "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AlignedFeature"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -5907,52 +6227,6 @@
           "dbLinks",
           "libraryMatches"
         ]
-      },
-      "PageStructureCandidateFormula": {
-        "type": "object",
-        "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StructureCandidateFormula"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "empty": {
-            "type": "boolean"
-          }
-        }
       },
       "StructureCandidateFormula": {
         "type": "object",
@@ -6025,6 +6299,52 @@
         },
         "description": ""
       },
+      "PageStructureCandidateFormula": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StructureCandidateFormula"
+            }
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
       "SpectralLibraryMatchOptField": {
         "type": "string",
         "description": "",
@@ -6045,24 +6365,14 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
-            "type": "boolean"
-          },
           "first": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SpectralLibraryMatch"
-            }
+          "last": {
+            "type": "boolean"
           },
           "number": {
             "type": "integer",
@@ -6074,6 +6384,16 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpectralLibraryMatch"
+            }
           },
           "empty": {
             "type": "boolean"
@@ -6096,98 +6416,6 @@
           "canopusPredictions"
         ]
       },
-      "PageFormulaCandidate": {
-        "type": "object",
-        "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FormulaCandidate"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "empty": {
-            "type": "boolean"
-          }
-        }
-      },
-      "PageStructureCandidateScored": {
-        "type": "object",
-        "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StructureCandidateScored"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "empty": {
-            "type": "boolean"
-          }
-        }
-      },
       "AnnotatedMsMsData": {
         "required": [
           "mergedMs2",
@@ -6206,6 +6434,144 @@
           }
         },
         "description": ""
+      },
+      "PageStructureCandidateScored": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StructureCandidateScored"
+            }
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageFormulaCandidate": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormulaCandidate"
+            }
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageAlignedFeature": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlignedFeature"
+            }
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
       },
       "Info": {
         "required": [
@@ -6281,52 +6647,6 @@
           }
         },
         "description": ""
-      },
-      "PageGuiInfo": {
-        "type": "object",
-        "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/GuiInfo"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "empty": {
-            "type": "boolean"
-          }
-        }
       },
       "ConnectionCheck": {
         "required": [

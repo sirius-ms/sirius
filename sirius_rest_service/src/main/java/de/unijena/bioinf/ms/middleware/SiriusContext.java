@@ -34,6 +34,7 @@ import de.unijena.bioinf.ms.middleware.service.info.ConnectionChecker;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceProviderImpl;
 import de.unijena.bioinf.webapi.WebAPI;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
@@ -45,11 +46,8 @@ import org.springframework.context.annotation.DependsOn;
 @Configuration
 public class SiriusContext{
     @Value("${de.unijena.bioinf.siriusNightsky.version}")
+    @Getter
     private String apiVersion;
-
-    public String getApiVersion() {
-        return apiVersion;
-    }
 
     @Bean
     public EventService<?> eventService(@Value("${de.unijena.bioinf.siriusNightsky.sse.timeout:#{120000}}") long emitterTimeout){

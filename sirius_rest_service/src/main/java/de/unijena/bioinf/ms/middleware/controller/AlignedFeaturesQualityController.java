@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
+import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeatureQuality;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,6 +32,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.EnumSet;
+import java.util.List;
 
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
 
@@ -41,28 +43,43 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 public class AlignedFeaturesQualityController {
 
     private final ProjectsProvider<?> projectsProvider;
+    private final GlobalConfig globalConfig;
 
     @Autowired
-    public AlignedFeaturesQualityController(ProjectsProvider<?> projectsProvider) {
+    public AlignedFeaturesQualityController(ProjectsProvider<?> projectsProvider, GlobalConfig globalConfig) {
         this.projectsProvider = projectsProvider;
+        this.globalConfig = globalConfig;
     }
 
-
     /**
-     * Get data quality information for features (aligned over runs) in the given project-space.
+     * Page of data quality information for features (aligned over runs) in the given project-space.
      *
      * @param projectId project-space to read from.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      * @return AlignedFeatureQuality quality information of the respective feature.
      */
-    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<AlignedFeatureQuality> getAlignedFeaturesQuality(
+    @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<AlignedFeatureQuality> getAlignedFeaturesQualityPaged(
             @PathVariable String projectId, @ParameterObject Pageable pageable,
             @RequestParam(defaultValue = "qualityFlags, lcmsFeatureQuality") EnumSet<AlignedFeatureQuality.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesQuality(pageable, removeNone(optFields));
     }
 
+    /**
+     * List of data quality information for features (aligned over runs) in the given project-space.
+     *
+     * @param projectId project-space to read from.
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
+     * @return AlignedFeatureQuality quality information of the respective feature.
+     */
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<AlignedFeatureQuality> getAlignedFeaturesQuality(
+            @PathVariable String projectId,
+            @RequestParam(defaultValue = "qualityFlags, lcmsFeatureQuality") EnumSet<AlignedFeatureQuality.OptField> optFields
+    ) {
+        return getAlignedFeaturesQualityPaged(projectId, globalConfig.unpaged(), optFields).stream().toList();
+    }
 
     /**
      * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.

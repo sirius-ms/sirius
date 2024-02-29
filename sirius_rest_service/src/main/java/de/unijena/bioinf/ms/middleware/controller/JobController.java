@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.frontend.core.Workspace;
+import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
 import de.unijena.bioinf.ms.middleware.model.compute.*;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabase;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
@@ -61,27 +62,42 @@ public class JobController {
     private final ComputeService computeService;
     private final ProjectsProvider projectsProvider;
     private final ChemDbService chemDbService;
-    public JobController(ComputeService<?> computeService, ProjectsProvider<?> projectsProvider, ChemDbService chemDbService) {
+    private final GlobalConfig globalConfig;
+    public JobController(ComputeService<?> computeService, ProjectsProvider<?> projectsProvider, ChemDbService chemDbService, GlobalConfig globalConfig) {
         this.computeService = computeService;
         this.projectsProvider = projectsProvider;
         this.chemDbService = chemDbService;
+        this.globalConfig = globalConfig;
     }
 
 
     /**
-     * Get job information and its current state and progress (if available).
+     * Get Page of jobs with information such as current state and progress (if available).
      *
      * @param projectId                project-space to run jobs on
      * @param optFields                set of optional fields to be included. Use 'none' only to override defaults.
      */
-
-    @GetMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/projects/{projectId}/jobs/page", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public Page<Job> getJobs(@PathVariable String projectId,
+    public Page<Job> getJobsPaged(@PathVariable String projectId,
                              @ParameterObject Pageable pageable,
                              @RequestParam(defaultValue = "") EnumSet<Job.OptField> optFields
     ) {
         return computeService.getJobs(projectsProvider.getProjectOrThrow(projectId), pageable, removeNone(optFields));
+    }
+
+    /**
+     * Get List of all available jobs with information such as current state and progress (if available).
+     *
+     * @param projectId                project-space to run jobs on
+     * @param optFields                set of optional fields to be included. Use 'none' only to override defaults.
+     */
+    @GetMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public List<Job> getJobs(@PathVariable String projectId,
+                             @RequestParam(defaultValue = "") EnumSet<Job.OptField> optFields
+    ) {
+        return getJobsPaged(projectId, globalConfig.unpaged(), optFields).stream().toList();
     }
 
     @GetMapping(value = "/projects/{projectId}/has-jobs", produces = MediaType.APPLICATION_JSON_VALUE)
