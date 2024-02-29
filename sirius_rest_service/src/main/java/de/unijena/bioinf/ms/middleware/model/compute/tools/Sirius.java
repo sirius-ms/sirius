@@ -55,7 +55,7 @@ import java.util.stream.Collectors;
 public class Sirius extends Tool<SiriusOptions> {
     //todo NewWorkflow: adapt to new search modes
     @Schema(enumAsRef = true, nullable = true)
-    enum Instrument {QTOF, ORBI, FTICR}
+    enum Instrument {QTOF, ORBITRAP} //todo NewWorkflow: we don't have a FTICR profile anymore. in the GUI this is just the orbitrap with lower ppm. but 'ppm' is set separately here. I assume there is currently no better way to do this.
 
     /**
      * Instrument specific profile for internal algorithms
