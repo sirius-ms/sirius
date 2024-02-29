@@ -32,12 +32,6 @@ public class ActFingerblastConfigPanel extends ActivatableConfigPanel<Fingerblas
     }
 
     @Override
-    protected void setComponentsEnabled(final boolean enabled) {
-        super.setComponentsEnabled(enabled);
-        content.getSearchDBList().setEnabled(enabled);
-    }
-
-    @Override
     protected void setButtonEnabled(boolean enabled) {
         setButtonEnabled(enabled, enabled ? "Enable CSI:FingerID search" : "Can't connect to CSI:FingerID server!");
     }

@@ -30,11 +30,4 @@ public class ActFormulaIDConfigPanel extends ActivatableConfigPanel<FormulaIDCon
     public ActFormulaIDConfigPanel(SiriusGui gui, Dialog owner, java.util.List<InstanceBean> ecs, boolean ms2, boolean displayAdvancedParameters) {
         super(gui, "SIRIUS", Icons.SIRIUS_32, () -> new FormulaIDConfigPanel(owner, ecs, ms2, displayAdvancedParameters));
     }
-
-    @Override
-    protected void setComponentsEnabled(boolean enabled) {
-        content.adductList.setEnabled(enabled);
-        super.setComponentsEnabled(enabled);
-        content.formulaSearchStrategy.setEnabled(enabled);
-    }
 }
