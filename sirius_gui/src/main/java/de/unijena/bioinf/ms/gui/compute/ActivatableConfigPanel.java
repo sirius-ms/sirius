@@ -46,6 +46,7 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
 
     public ActivatableConfigPanel(String toolname, String toolDescription, Icon buttonIcon, boolean needsCSIConnection, Supplier<C> contentSuppl) {
         super();
+        left.anchor = GridBagConstraints.NORTH;
         this.toolName = toolname;
         this.content = contentSuppl.get();
 

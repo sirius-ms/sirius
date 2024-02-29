@@ -83,7 +83,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
     private final List<InstanceBean> compoundsToProcess;
 
     protected final JButton toggleAdvancedMode;
-    protected boolean isAdvancedView = false; //todo NewWorkflow: do we need to sync/remember selections between basic and advanced mode?
+    protected boolean isAdvancedView = false;
 
     public BatchComputeDialog(MainFrame owner, List<InstanceBean> compoundsToProcess) {
         super(owner, "Compute", true);
@@ -133,7 +133,6 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                                     GuiUtils.formatToolTip("Your ZODIAC analysis contains `" + compoundsToProcess.size() + "` compounds and may therefore consume more system memory than available.", "", "Do you wish to continue anyways?"),
                                     DO_NOT_SHOW_AGAIN_KEY_Z_MEM).isAbort()) {
                                 zodiacConfigs.activationButton.setSelected(false);
-                                return;
                             }
                         }
                     }
@@ -145,8 +144,8 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
             if (ms2) {
                 addConfigPanel("Predict properties: CSI:FingerID - Fingerprint Prediction & CANOPUS - Compound Class Prediction", fingerprintAndCanopusConfigPanel);
-                addConfigPanel("MSNovelist - De Novo Structure Generation", msNovelistConfigs,
-                        addConfigPanel("CSI:FingerID - Structure Database Search", csiSearchConfigs)); //todo NewWorkflow: is this advanced mode only?
+                JPanel searchRow =  addConfigPanel("CSI:FingerID - Structure Database Search", csiSearchConfigs);
+                addConfigPanelToRow("MSNovelist - De Novo Structure Generation", msNovelistConfigs, searchRow);
             }
 
             //Make edit panel for single compound mode if needed
@@ -167,18 +166,18 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
             if (compoundsToProcess.size() == 1) recomputeBox.setSelected(true);
 
             JPanel csouthPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
-            toggleAdvancedMode = new JButton("Switch to Advanced View"); //todo NewWorkflow: is this a good position and wording? Upper right corner seems wasted space
+            final String SHOW_ADVANCED = "Show advanced settings";
+            final String HIDE_ADVANCED = "Hide advanced settings";
+            toggleAdvancedMode = new JButton(SHOW_ADVANCED);
             isAdvancedView = false;
             toggleAdvancedMode.addActionListener(e -> {
                 isAdvancedView = !isAdvancedView;
                 if (isAdvancedView) {
-                    toggleAdvancedMode.setText("Switch to Basic View");
+                    toggleAdvancedMode.setText(HIDE_ADVANCED);
                 } else {
-                    toggleAdvancedMode.setText("Switch to Advanced View");
+                    toggleAdvancedMode.setText(SHOW_ADVANCED);
                 }
 
-                //todo NewWorkflow: in general for all the panels: What's better? adding and recreating views vs making them visible?
-                //todo NewWorkflow: when switching, parameters/strategies are reset. Shall these be remembered?
                 formulaIDConfigPanel.content.setDisplayAdvancedParameters(isAdvancedView);
                 zodiacConfigs.content.setDisplayAdvancedParameters(isAdvancedView);
             });
@@ -231,21 +230,34 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
         setVisible(true);
     }
 
-    private JPanel addConfigPanel(String header, JPanel configPanel, JPanel appendHorizontally) {
-        JPanel stack = new JPanel();
-        stack.setLayout(new BorderLayout());
+    private JPanel addConfigPanelToRow(String header, JPanel configPanel, JPanel row) {
+        JPanel topAlignedStack = new JPanel() {
+            @Override
+            public int getBaseline(int width, int height) {
+                return 0;
+            }
+
+            @Override
+            public BaselineResizeBehavior getBaselineResizeBehavior() {
+                return BaselineResizeBehavior.CONSTANT_ASCENT;
+            }
+        };
+
+        topAlignedStack.setLayout(new BorderLayout());
         JXTitledSeparator title = new JXTitledSeparator(header);
         title.setBorder(BorderFactory.createEmptyBorder(GuiUtils.MEDIUM_GAP, 0, GuiUtils.MEDIUM_GAP, GuiUtils.SMALL_GAP));
-        stack.add(title, BorderLayout.NORTH);
-        stack.add(configPanel, BorderLayout.CENTER);
-        appendHorizontally.add(stack);
-        return appendHorizontally;
+        topAlignedStack.add(title, BorderLayout.NORTH);
+        topAlignedStack.add(configPanel, BorderLayout.CENTER);
+        row.add(topAlignedStack);
+        return row;
     }
 
     private JPanel addConfigPanel(String header, JPanel configPanel) {
-        JPanel flowContainer = new JPanel(new FlowLayout(FlowLayout.LEFT, GuiUtils.LARGE_GAP, GuiUtils.SMALL_GAP));
+        FlowLayout flowLayout = new FlowLayout(FlowLayout.LEFT, GuiUtils.LARGE_GAP, GuiUtils.SMALL_GAP);
+        flowLayout.setAlignOnBaseline(true);
+        JPanel flowContainer = new JPanel(flowLayout);
         flowContainer.setBorder(BorderFactory.createEmptyBorder());
-        addConfigPanel(header, configPanel, flowContainer);
+        addConfigPanelToRow(header, configPanel, flowContainer);
         mainPanel.add(flowContainer);
         return flowContainer;
     }
