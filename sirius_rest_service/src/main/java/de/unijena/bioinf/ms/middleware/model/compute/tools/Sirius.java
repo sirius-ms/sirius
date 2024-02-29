@@ -33,7 +33,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.UseHeuristic;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.spectraldb.InjectHighSpectraMatchFormulas;
+import de.unijena.bioinf.spectraldb.InjectSpectralLibraryMatchFormulas;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -139,7 +139,7 @@ public class Sirius extends Tool<SiriusOptions> {
      * If threshold >= 0 formulas candidates with reference spectrum similarity above the threshold will be injected.
      * If NULL injection is disables.
      */
-    Double minRefMatchScoreToInject;
+    Double minScoreToInjectSpecLibMatch;
 
 
     private Sirius() {
@@ -170,8 +170,8 @@ public class Sirius extends Tool<SiriusOptions> {
                 .putNonNull("NumberOfCandidatesPerIonization", numberOfCandidatesPerIonization)
                 .putNonNull("AlgorithmProfile", profile)
 
-                .putNonNull("InjectHighSpectraMatchFormulas.minScoreToInject", minRefMatchScoreToInject)
-                .putNonNullObj("InjectHighSpectraMatchFormulas.injectFormulas", minRefMatchScoreToInject, Objects::nonNull)
+                .putNonNull("InjectSpectralLibraryMatchFormulas.minScoreToInject", minScoreToInjectSpecLibMatch)
+                .putNonNullObj("InjectSpectralLibraryMatchFormulas.injectFormulas", minScoreToInjectSpecLibMatch, Objects::nonNull)
                 .toUnmodifiableMap();
     }
 
@@ -189,8 +189,8 @@ public class Sirius extends Tool<SiriusOptions> {
                 .enforcedFormulaConstraints(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class).getEnforcedAlphabet().toString())
                 .fallbackFormulaConstraints(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class).getFallbackAlphabet().toString())
                 .detectableElements(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class).getAutoDetectionElements().stream().map(Element::getSymbol).collect(Collectors.toList()))
-                .minRefMatchScoreToInject(PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectHighSpectraMatchFormulas.class).isInjectFormulas()
-                        ? PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectHighSpectraMatchFormulas.class).getMinScoreToInject() : null)
+                .minScoreToInjectSpecLibMatch(PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectSpectralLibraryMatchFormulas.class).isInjectFormulas()
+                        ? PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectSpectralLibraryMatchFormulas.class).getMinScoreToInject() : null)
                 .ilpTimeout(PropertyManager.DEFAULTS.createInstanceWithDefaults(Timeout.class))
                 .useHeuristic(PropertyManager.DEFAULTS.createInstanceWithDefaults(UseHeuristic.class));
     }
