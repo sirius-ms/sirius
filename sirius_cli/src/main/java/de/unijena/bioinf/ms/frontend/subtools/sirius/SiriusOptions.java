@@ -94,9 +94,9 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
         defaultConfigOptions.changeOption("NumberOfCandidates", value);
     }
 
-    @Option(names = "--candidates-per-ion", descriptionKey = "NumberOfCandidatesPerIon", description = "Minimum number of candidates in the output for each ionization. Set to force output of results for each possible ionization, even if not part of highest ranked results.")
-    public void setNumberOfCandidatesPerIon(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("NumberOfCandidatesPerIon", value);
+    @Option(names = "--candidates-per-ionization", descriptionKey = "NumberOfCandidatesPerIonization", description = "Minimum number of candidates in the output for each ionization. Set to force output of results for each possible ionization, even if not part of highest ranked results.")
+    public void setNumberOfCandidatesPerIonization(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("NumberOfCandidatesPerIonization", value);
     }
 
     // Elements
@@ -152,14 +152,14 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
 
 
     //heuristic thresholds
-    @Option(names = {"--heuristic"}, descriptionKey ="UseHeuristic.mzToUseHeuristic" , description = "Enable heuristic preprocessing for compounds >= the specified m/z.")
+    @Option(names = {"--heuristic"}, descriptionKey ="UseHeuristic.useHeuristicAboveMz" , description = "Enable heuristic preprocessing for compounds >= the specified m/z.")
     public void setMzToUseHeuristic(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("UseHeuristic.mzToUseHeuristic", value);
+        defaultConfigOptions.changeOption("UseHeuristic.useHeuristicAboveMz", value);
     }
 
-    @Option(names = {"--heuristic-only"}, descriptionKey ="UseHeuristic.mzToUseHeuristicOnly" , description = "Use only heuristic tree computation compounds >= the specified m/z.")
+    @Option(names = {"--heuristic-only"}, descriptionKey ="UseHeuristic.useOnlyHeuristicAboveMz" , description = "Use only heuristic tree computation compounds >= the specified m/z.")
     public void setMzToUseHeuristicOnly(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("UseHeuristic.mzToUseHeuristicOnly", value);
+        defaultConfigOptions.changeOption("UseHeuristic.useOnlyHeuristicAboveMz", value);
     }
 
 
@@ -217,12 +217,12 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     public void setBottomUpSearchOptions(BottomUpSearchOptions selection) throws Exception {
         switch (selection) {
             case BOTTOM_UP_ONLY -> {
-                defaultConfigOptions.changeOption("FormulaSearchSettings.enableBottomUpFromMass", "0");
-                defaultConfigOptions.changeOption("FormulaSearchSettings.disableDeNovoAboveMass", "0");
+                defaultConfigOptions.changeOption("FormulaSearchSettings.performBottomUpAboveMz", "0");
+                defaultConfigOptions.changeOption("FormulaSearchSettings.performDeNovoBelowMz", "0");
             }
             case DISABLED -> {
-                defaultConfigOptions.changeOption("FormulaSearchSettings.enableBottomUpFromMass", String.valueOf(Double.POSITIVE_INFINITY));
-                defaultConfigOptions.changeOption("FormulaSearchSettings.disableDeNovoAboveMass", String.valueOf(Double.POSITIVE_INFINITY));
+                defaultConfigOptions.changeOption("FormulaSearchSettings.performBottomUpAboveMz", String.valueOf(Double.POSITIVE_INFINITY));
+                defaultConfigOptions.changeOption("FormulaSearchSettings.performDeNovoBelowMz", String.valueOf(Double.POSITIVE_INFINITY));
             }
         }
     }

@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Sirius.JSON_PROPERTY_ENABLED,
   Sirius.JSON_PROPERTY_PROFILE,
   Sirius.JSON_PROPERTY_NUMBER_OF_CANDIDATES,
-  Sirius.JSON_PROPERTY_NUMBER_OF_CANDIDATES_PER_ION,
+  Sirius.JSON_PROPERTY_NUMBER_OF_CANDIDATES_PER_IONIZATION,
   Sirius.JSON_PROPERTY_MASS_ACCURACY_M_S2PPM,
   Sirius.JSON_PROPERTY_ISOTOPE_MS2_SETTINGS,
   Sirius.JSON_PROPERTY_FORMULA_SEARCH_D_BS,
@@ -58,8 +58,8 @@ public class Sirius {
   public static final String JSON_PROPERTY_NUMBER_OF_CANDIDATES = "numberOfCandidates";
   private Integer numberOfCandidates;
 
-  public static final String JSON_PROPERTY_NUMBER_OF_CANDIDATES_PER_ION = "numberOfCandidatesPerIon";
-  private Integer numberOfCandidatesPerIon;
+  public static final String JSON_PROPERTY_NUMBER_OF_CANDIDATES_PER_IONIZATION = "numberOfCandidatesPerIonization";
+  private Integer numberOfCandidatesPerIonization;
 
   public static final String JSON_PROPERTY_MASS_ACCURACY_M_S2PPM = "massAccuracyMS2ppm";
   private Double massAccuracyMS2ppm;
@@ -206,29 +206,29 @@ public class Sirius {
   }
 
 
-  public Sirius numberOfCandidatesPerIon(Integer numberOfCandidatesPerIon) {
+  public Sirius numberOfCandidatesPerIonization(Integer numberOfCandidatesPerIonization) {
     
-    this.numberOfCandidatesPerIon = numberOfCandidatesPerIon;
+    this.numberOfCandidatesPerIonization = numberOfCandidatesPerIonization;
     return this;
   }
 
    /**
-   * Use this parameter if you want to force SIRIUS to report at least  NumberOfCandidatesPerIon results per ionization.  if &lt;&#x3D; 0, this parameter will have no effect and just the top  NumberOfCandidates results will be reported.
-   * @return numberOfCandidatesPerIon
+   * Use this parameter if you want to force SIRIUS to report at least  NumberOfCandidatesPerIonization results per ionization.  if &lt;&#x3D; 0, this parameter will have no effect and just the top  NumberOfCandidates results will be reported.
+   * @return numberOfCandidatesPerIonization
   **/
   @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_CANDIDATES_PER_ION)
+  @JsonProperty(JSON_PROPERTY_NUMBER_OF_CANDIDATES_PER_IONIZATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Integer getNumberOfCandidatesPerIon() {
-    return numberOfCandidatesPerIon;
+  public Integer getNumberOfCandidatesPerIonization() {
+    return numberOfCandidatesPerIonization;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_CANDIDATES_PER_ION)
+  @JsonProperty(JSON_PROPERTY_NUMBER_OF_CANDIDATES_PER_IONIZATION)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNumberOfCandidatesPerIon(Integer numberOfCandidatesPerIon) {
-    this.numberOfCandidatesPerIon = numberOfCandidatesPerIon;
+  public void setNumberOfCandidatesPerIonization(Integer numberOfCandidatesPerIonization) {
+    this.numberOfCandidatesPerIonization = numberOfCandidatesPerIonization;
   }
 
 
@@ -493,7 +493,7 @@ public class Sirius {
     return Objects.equals(this.enabled, sirius.enabled) &&
         Objects.equals(this.profile, sirius.profile) &&
         Objects.equals(this.numberOfCandidates, sirius.numberOfCandidates) &&
-        Objects.equals(this.numberOfCandidatesPerIon, sirius.numberOfCandidatesPerIon) &&
+        Objects.equals(this.numberOfCandidatesPerIonization, sirius.numberOfCandidatesPerIonization) &&
         Objects.equals(this.massAccuracyMS2ppm, sirius.massAccuracyMS2ppm) &&
         Objects.equals(this.isotopeMs2Settings, sirius.isotopeMs2Settings) &&
         Objects.equals(this.formulaSearchDBs, sirius.formulaSearchDBs) &&
@@ -507,7 +507,7 @@ public class Sirius {
 
   @Override
   public int hashCode() {
-    return Objects.hash(enabled, profile, numberOfCandidates, numberOfCandidatesPerIon, massAccuracyMS2ppm, isotopeMs2Settings, formulaSearchDBs, enforcedFormulaConstraints, fallbackFormulaConstraints, detectableElements, ilpTimeout, useHeuristic, minRefMatchScoreToInject);
+    return Objects.hash(enabled, profile, numberOfCandidates, numberOfCandidatesPerIonization, massAccuracyMS2ppm, isotopeMs2Settings, formulaSearchDBs, enforcedFormulaConstraints, fallbackFormulaConstraints, detectableElements, ilpTimeout, useHeuristic, minRefMatchScoreToInject);
   }
 
   @Override
@@ -517,7 +517,7 @@ public class Sirius {
     sb.append("    enabled: ").append(toIndentedString(enabled)).append("\n");
     sb.append("    profile: ").append(toIndentedString(profile)).append("\n");
     sb.append("    numberOfCandidates: ").append(toIndentedString(numberOfCandidates)).append("\n");
-    sb.append("    numberOfCandidatesPerIon: ").append(toIndentedString(numberOfCandidatesPerIon)).append("\n");
+    sb.append("    numberOfCandidatesPerIonization: ").append(toIndentedString(numberOfCandidatesPerIonization)).append("\n");
     sb.append("    massAccuracyMS2ppm: ").append(toIndentedString(massAccuracyMS2ppm)).append("\n");
     sb.append("    isotopeMs2Settings: ").append(toIndentedString(isotopeMs2Settings)).append("\n");
     sb.append("    formulaSearchDBs: ").append(toIndentedString(formulaSearchDBs)).append("\n");

@@ -160,7 +160,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         JCheckBox bottomUpSearchEnabled = new JCheckBox();
         bottomUpSearchEnabled.setSelected(true);
 
-        JSpinner denovoUpTo = makeIntParameterSpinner("FormulaSearchSettings.disableDeNovoAboveMass", 0, Integer.MAX_VALUE, 5);  // binding is overwritten
+        JSpinner denovoUpTo = makeIntParameterSpinner("FormulaSearchSettings.performDeNovoBelowMz", 0, Integer.MAX_VALUE, 5);  // binding is overwritten
 
         JLabel bottomUpCheckboxLabel = new JLabel("Perform bottom up search");
         JLabel denovoUpToLabel = new JLabel("Perform de novo below m/z");
@@ -178,7 +178,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
             customComponents.forEach(c -> c.setVisible(customSelected));
         });
 
-        parameterBindings.put("FormulaSearchSettings.enableBottomUpFromMass", () -> {
+        parameterBindings.put("FormulaSearchSettings.performBottomUpAboveMz", () -> {
             if (strategy == Strategy.DEFAULT) {
                 boolean onlyBottomUp = bottomUpSearchSelector.getSelectedItem() == SiriusOptions.BottomUpSearchOptions.BOTTOM_UP_ONLY;
                 boolean custom = bottomUpSearchSelector.getSelectedItem() == SiriusOptions.BottomUpSearchOptions.CUSTOM;
@@ -189,7 +189,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
             return String.valueOf(Double.POSITIVE_INFINITY);
         });
 
-        parameterBindings.put("FormulaSearchSettings.disableDeNovoAboveMass", () -> switch (strategy) {
+        parameterBindings.put("FormulaSearchSettings.performDeNovoBelowMz", () -> switch (strategy) {
             case DEFAULT -> bottomUpSearchSelector.getSelectedItem() == SiriusOptions.BottomUpSearchOptions.CUSTOM ?
                     denovoUpTo.getValue().toString()
                     : "0";
@@ -303,7 +303,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         List<ElementAlphabetStrategy> settingsElements = List.copyOf(EnumSet.allOf(ElementAlphabetStrategy.class));
         settingsElements.forEach(elementAlphabetStrategySelector::addItem);
         elementAlphabetStrategySelector.setSelectedItem(ElementAlphabetStrategy.DE_NOVO_ONLY);
-        parameterBindings.put("FormulaSearchSettings.applyFormulaContraintsToBottomUp", () -> Boolean.toString(elementAlphabetStrategySelector.getSelectedItem() == ElementAlphabetStrategy.BOTH));
+        parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToBottomUp", () -> Boolean.toString(elementAlphabetStrategySelector.getSelectedItem() == ElementAlphabetStrategy.BOTH));
 
         JLabel label = new JLabel("Apply element filter to");
         filterFields.add(label, elementAlphabetStrategySelector);
@@ -325,7 +325,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
             }
         };
 
-        parameterBindings.put("FormulaSearchSettings.applyFormulaContraintsToCandidateLists", () -> Boolean.toString(useElementFilter.isSelected()));
+        parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates", () -> Boolean.toString(useElementFilter.isSelected()));
 
         JLabel label = new JLabel("Enable element filter");
         filterFields.add(label, useElementFilter);

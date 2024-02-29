@@ -8,8 +8,8 @@
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**mzToUseHeuristic** | **Integer** |  |  [optional] |
-|**mzToUseHeuristicOnly** | **Integer** |  |  [optional] |
+|**useHeuristicAboveMz** | **Integer** |  |  [optional] |
+|**useOnlyHeuristicAboveMz** | **Integer** |  |  [optional] |
 
 
 
