@@ -25,7 +25,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.frontend.core.Workspace;
 import de.unijena.bioinf.ms.middleware.model.compute.*;
+import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabase;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
+import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -58,9 +60,11 @@ public class JobController {
     public final static String DEFAULT_PARAMETERS = "DEFAULT";
     private final ComputeService computeService;
     private final ProjectsProvider projectsProvider;
-    public JobController(ComputeService<?> computeService, ProjectsProvider<?> projectsProvider) {
+    private final ChemDbService chemDbService;
+    public JobController(ComputeService<?> computeService, ProjectsProvider<?> projectsProvider, ChemDbService chemDbService) {
         this.computeService = computeService;
         this.projectsProvider = projectsProvider;
+        this.chemDbService = chemDbService;
     }
 
 
@@ -194,6 +198,22 @@ public class JobController {
         return computeService.createAndSubmitCommandJob(p, commandSubmission, removeNone(optFields));
     }
 
+    /**
+     * Start import of structure and spectra files into the specified database.
+     *
+     * @param projectId     project-space to perform the command for.
+     * @param dbImport      the command and the input to be executed
+     * @param optFields     set of optional fields to be included. Use 'none' only to override defaults.
+     * @return Job of the import command to be executed.
+     */
+    @PostMapping(value = "/{projectId}/jobs/import-db", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    public Job startDatabaseImport(@PathVariable String projectId, @Valid @RequestBody DatabaseImportSubmission dbImport,
+                            @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
+    ) {
+        Project p = projectsProvider.getProjectOrThrow(projectId);
+        SearchableDatabase db = chemDbService.findById(dbImport.getDatabaseId(), false);
+        return computeService.createAndSubmitCommandJob(p, dbImport.asCommandSubmission(db.getLocation()), removeNone(optFields));
+    }
 
     /**
      * * Delete ALL jobs. Specify how to behave for running jobs.

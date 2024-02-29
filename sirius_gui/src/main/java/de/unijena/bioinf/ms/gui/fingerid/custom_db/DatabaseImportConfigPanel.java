@@ -1,7 +1,6 @@
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
@@ -13,6 +12,7 @@ import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +28,6 @@ import java.awt.event.FocusEvent;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.chemdb.custom.CustomDatabases.NOSQL_SUFFIX;
@@ -54,12 +53,12 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
 
     private final SiriusGui gui;
 
-    public DatabaseImportConfigPanel(@NotNull SiriusGui gui, @Nullable CustomDatabase db, Set<String> existingNames) {
+    public DatabaseImportConfigPanel(@NotNull SiriusGui gui, @Nullable SearchableDatabase db) {
         super(CustomDBOptions.class);
         this.gui = gui;
         setLayout(new BorderLayout());
 
-        add(createParametersPanel(db, existingNames), BorderLayout.NORTH);
+        add(createParametersPanel(db), BorderLayout.NORTH);
         add(createCompoundsBox(), BorderLayout.CENTER);
         add(createImportButton(), BorderLayout.SOUTH);
 
@@ -77,7 +76,14 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         refreshImportButton();
     }
 
-    private JPanel createParametersPanel(@Nullable CustomDatabase db, Set<String> existingNames) {
+
+    private boolean checkName(String name){
+        final String n = !name.endsWith(NOSQL_SUFFIX) ? (name + NOSQL_SUFFIX) : name;
+        return gui.applySiriusClient((c,pid) -> c.databases().getDatabaseWithResponseSpec(n,false)
+                .bodyToMono(SearchableDatabase.class).onErrorComplete().blockOptional().isPresent());
+    }
+
+    private JPanel createParametersPanel(@Nullable SearchableDatabase db) {
         final TwoColumnPanel smalls = new TwoColumnPanel();
 
         dbDisplayNameField = new PlaceholderTextField("");
@@ -89,7 +95,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         smalls.addNamed("Filename", dbNameField, GuiUtils.formatToolTip("Filename and unique identifier of the new custom database, should end in " + NOSQL_SUFFIX));
         parameterBindings.put("name", dbNameField::getText);
 
-        String dbDirectory = db != null ? Path.of(db.storageLocation()).getParent().toString()
+        String dbDirectory = db != null ? Path.of(db.getLocation()).getParent().toString()
                 : PropertyManager.getProperty(SiriusProperties.DEFAULT_SAVE_DIR_PATH, null, "");
 
         dbLocationField = new FileChooserPanel(dbDirectory, JFileChooser.DIRECTORIES_ONLY);
@@ -98,9 +104,9 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         validDbDirectory = !dbDirectory.isEmpty();
 
         if (db != null) {
-            dbDisplayNameField.setText(db.displayName());
+            dbDisplayNameField.setText(db.getDisplayName());
             dbDisplayNameField.setEnabled(false);
-            dbNameField.setText(db.name());
+            dbNameField.setText(db.getDatabaseId());
             dbNameField.setEnabled(false);
             dbLocationField.setEnabled(false);
             validDbName = true;
@@ -130,7 +136,16 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
             @Override
             public void focusLost(FocusEvent e) {
                 String name = dbNameField.getText();
-                if (!name.isBlank() && !name.endsWith(NOSQL_SUFFIX)) {
+
+                if (name.isBlank()) {
+                    String displayName = dbDisplayNameField.getText();
+                    if (!displayName.isBlank()) {
+                        name = FileUtils.sanitizeFilename(displayName).toLowerCase();
+                        if (!name.endsWith(NOSQL_SUFFIX))
+                            name = name + NOSQL_SUFFIX;
+                        dbNameField.setText(name);
+                    }
+                } else if (!name.endsWith(NOSQL_SUFFIX)) {
                     dbNameField.setText(name + NOSQL_SUFFIX);
                 }
             }
@@ -163,8 +178,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
                 String error = null;
                 if (name == null || name.isBlank()) {
                     error = "DB name missing";
-                } else if (existingNames.contains(name)
-                        || (!name.endsWith(NOSQL_SUFFIX) && existingNames.contains(name + NOSQL_SUFFIX))) {
+                } else if (checkName(name)) {
                     error = "This name is already in use";
                 }
                 if (validDbName != (error == null)) {
@@ -285,7 +299,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         loginErrorLabel.setText("<html><p style=\"background-color:#ffafaf; color:black\"><b>LOGIN ERROR:</b> Please login with a verified user account to import compounds!</p></html>");
         loginErrorLabel.setVisible(false);
 
-        importButton = new JButton("Create/Open database and import compounds");
+        importButton = new JButton("Import structures and spectra");
         importButton.setEnabled(false);
 
         panel.add(loginErrorLabel, BorderLayout.CENTER);

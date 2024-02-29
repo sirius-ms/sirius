@@ -22,11 +22,14 @@ package de.unijena.bioinf.ms.middleware.service.databases;
 
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
-import de.unijena.bioinf.chemdb.custom.*;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.chemdb.custom.CustomDatabase;
+import de.unijena.bioinf.chemdb.custom.CustomDatabaseSettings;
+import de.unijena.bioinf.chemdb.custom.CustomDatabases;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabase;
-import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabases;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabaseParameters;
+import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabases;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.webapi.WebAPI;
 import lombok.extern.slf4j.Slf4j;
@@ -38,10 +41,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -137,14 +142,51 @@ public class ChemDbServiceImpl implements ChemDbService {
     }
 
     @Override
-    public SearchableDatabase add(@NotNull String databaseId, @NotNull String location) {
-        try {
-            CustomDatabase newDb = CustomDatabases.open(location, true, version());
-            CustomDBOptions.writeDBProperties();
-            return SearchableDatabases.of(newDb);
-        } catch (IOException e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when opening user database from: " + location, e);
+    public List<SearchableDatabase> add(List<String> projectLocation) {
+        List<File> psFiles = projectLocation.stream().distinct().map(File::new).distinct().toList();
+        {
+            String existsError = psFiles.stream().filter(f -> !f.isFile() || !f.exists()).map(File::getAbsolutePath)
+                    .collect(Collectors.joining("', '"));
+            if (!existsError.isBlank())
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Following locations do not exist or are no valid files: '" + existsError +
+                                "'. Locations to open must exist and be valid database files.");
         }
+
+        {
+            String locationError = CustomDataSources.customSourcesStream()
+                    .map(CustomDataSources.CustomSource::location)
+                    .filter(f -> psFiles.stream().map(File::getAbsolutePath).anyMatch(f2 -> f2.equals(f)))
+                    .collect(Collectors.joining("', '"));
+            if (!locationError.isBlank())
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "The databases at '" + locationError + "' are already available in SIRIUS.");
+        }
+
+        {
+            // in principle, it is still possible to insert to db files with the same dbId/name at the same time,
+            // and they would override each other. This means only the first one gets imported.
+            // However, we can treat this as expected behaviour
+            String idError = psFiles.stream().map(File::getName)
+                    .filter(n -> CustomDataSources.getSourceFromNameOpt(n).isPresent())
+                    .collect(Collectors.joining("', '"));
+            if (!idError.isBlank())
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Databases with the names '" + idError + "' already exist.");
+        }
+
+        List<SearchableDatabase> dbs = projectLocation.stream().map(location -> {
+            try {
+                CustomDatabase newDb = CustomDatabases.open(location, true, version());
+                return SearchableDatabases.of(newDb);
+            } catch (IOException e) {
+                log.error("Error when opening user database from: " + location, e);
+                return null;
+            }
+        }).filter(Objects::nonNull).toList();
+
+        writeDBProperties();
+        return dbs;
     }
 
     @Override
@@ -156,7 +198,7 @@ public class ChemDbServiceImpl implements ChemDbService {
     }
 
     @Override
-    public SearchableDatabase update(String databaseId, SearchableDatabaseParameters dbUpdate) {
+    public SearchableDatabase update(@NotNull String databaseId, @NotNull SearchableDatabaseParameters dbUpdate) {
         //TODO nightsky: implement modification of Displayname and RT matching.
         throw new UnsupportedOperationException("Updating Custom databases is not yest supported");
     }

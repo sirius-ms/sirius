@@ -28,8 +28,9 @@ public class SearchableDatabases {
     public static SearchableDatabase of(CustomDataSources.Source source) {
         SearchableDatabase.SearchableDatabaseBuilder<?, ?> b = SearchableDatabase.builder()
                 .databaseId(source.name())
-                .userDb(source.isCustomSource())
-                .displayName(source.displayName());
+                .customDb(source.isCustomSource())
+                .displayName(source.displayName())
+                .searchable(CustomDataSources.isSearchable(source));
 
         if (source.isCustomSource())
             b.location(((CustomDataSources.CustomSource) source).location());
@@ -39,10 +40,14 @@ public class SearchableDatabases {
     public static SearchableDatabase of(CustomDatabase customDb) {
         SearchableDatabase.SearchableDatabaseBuilder<?, ?> b = SearchableDatabase.builder()
                 .databaseId(customDb.name())
-                .userDb(true)
+                .customDb(true)
                 .displayName(customDb.displayName())
                 .location(customDb.storageLocation())
-                .matchRtOfReferenceSpectra(customDb.getSettings().isMatchRtOfReferenceSpectra());
+                .matchRtOfReferenceSpectra(customDb.getSettings().isMatchRtOfReferenceSpectra())
+                .dbVersion(customDb.getDatabaseVersion())
+                .updateNeeded(customDb.needsUpgrade())
+                .searchable(CustomDataSources.isSearchable(customDb.name()));
+
         CustomDatabaseSettings.Statistics stats = customDb.getStatistics();
         if (stats != null)
             b.numberOfFormulas(stats.getFormulas())

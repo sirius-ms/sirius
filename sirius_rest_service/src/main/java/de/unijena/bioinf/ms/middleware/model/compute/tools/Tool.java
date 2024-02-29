@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.model.compute.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Builder;
 import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,7 @@ public abstract class Tool<C> {
     /**
      * tags whether the tool is enabled
      */
+    @Builder.Default
     private boolean enabled = true;
 
     /**
