@@ -63,6 +63,11 @@ public abstract class AbstractFeature {
      */
     protected RetentionTime retentionTime;
 
+    /**
+     * signal-to-noise ratio at the apex
+     */
+    protected double snr;
+
 //    /**
 //     * Merged MS/MS spectra of this feature
 //     */
