@@ -333,6 +333,9 @@ public class GuiUtils {
 
     public static <T extends DescriptiveOptions> JComboBox<T> makeParameterComboBoxFromDescriptiveValues(T[] options) {
         JComboBox<T> box = new JComboBox<>(options);
+        if (options.length > 0) {
+            box.setToolTipText(options[0].getDescription());
+        }
         box.addItemListener(e -> {
             if (e.getStateChange() != ItemEvent.SELECTED) {
                 return;
