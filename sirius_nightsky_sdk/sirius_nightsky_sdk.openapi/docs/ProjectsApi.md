@@ -493,7 +493,7 @@ No authorization required
 
 ## getProjectSpaces
 
-> PageProjectInfo getProjectSpaces(page, size, sort, searchQuery, querySyntax)
+> List&lt;ProjectInfo&gt; getProjectSpaces()
 
 List opened project spaces.
 
@@ -515,13 +515,8 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8080");
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
-        Integer page = 0; // Integer | Zero-based page index (0..N)
-        Integer size = 20; // Integer | The size of the page to be returned
-        List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-        String searchQuery = "searchQuery_example"; // String | optional search query in specified format
-        SearchQueryType querySyntax = SearchQueryType.fromValue("LUCENE"); // SearchQueryType | query syntax used fpr searchQuery
         try {
-            PageProjectInfo result = apiInstance.getProjectSpaces(page, size, sort, searchQuery, querySyntax);
+            List<ProjectInfo> result = apiInstance.getProjectSpaces();
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#getProjectSpaces");
@@ -536,18 +531,11 @@ public class Example {
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
-| **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
-| **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
-| **searchQuery** | **String**| optional search query in specified format | [optional] |
-| **querySyntax** | [**SearchQueryType**](.md)| query syntax used fpr searchQuery | [optional] [enum: LUCENE] |
+This endpoint does not need any parameter.
 
 ### Return type
 
-[**PageProjectInfo**](PageProjectInfo.md)
+[**List&lt;ProjectInfo&gt;**](ProjectInfo.md)
 
 ### Authorization
 

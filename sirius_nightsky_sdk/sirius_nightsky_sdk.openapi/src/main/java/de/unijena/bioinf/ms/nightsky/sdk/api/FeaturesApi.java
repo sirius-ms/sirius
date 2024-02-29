@@ -20,7 +20,6 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.PageFormulaCandidate;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageSpectralLibraryMatch;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageStructureCandidateFormula;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageStructureCandidateScored;
-import de.unijena.bioinf.ms.nightsky.sdk.model.SearchQueryType;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatchOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateOptField;
 
@@ -331,13 +330,11 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return PageAlignedFeature
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getAlignedFeaturesRequestCreation(String projectId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getAlignedFeaturesRequestCreation(String projectId, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -356,8 +353,6 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "searchQuery", searchQuery));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "querySyntax", querySyntax));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
@@ -381,15 +376,13 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return PageAlignedFeature
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageAlignedFeature getAlignedFeatures(String projectId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public PageAlignedFeature getAlignedFeatures(String projectId, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PageAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeature>() {};
-        return getAlignedFeaturesRequestCreation(projectId, page, size, sort, searchQuery, querySyntax, optFields).bodyToMono(localVarReturnType).block();
+        return getAlignedFeaturesRequestCreation(projectId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -400,15 +393,13 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseEntity&lt;PageAlignedFeature&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageAlignedFeature> getAlignedFeaturesWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PageAlignedFeature> getAlignedFeaturesWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PageAlignedFeature> localVarReturnType = new ParameterizedTypeReference<PageAlignedFeature>() {};
-        return getAlignedFeaturesRequestCreation(projectId, page, size, sort, searchQuery, querySyntax, optFields).toEntity(localVarReturnType).block();
+        return getAlignedFeaturesRequestCreation(projectId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -419,14 +410,12 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getAlignedFeaturesWithResponseSpec(String projectId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
-        return getAlignedFeaturesRequestCreation(projectId, page, size, sort, searchQuery, querySyntax, optFields);
+    public ResponseSpec getAlignedFeaturesWithResponseSpec(String projectId, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        return getAlignedFeaturesRequestCreation(projectId, page, size, sort, optFields);
     }
     /**
      * Best matching compound classes,  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
@@ -1001,13 +990,11 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return PageFormulaCandidate
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getFormulaCandidatesRequestCreation(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getFormulaCandidatesRequestCreation(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1031,8 +1018,6 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "searchQuery", searchQuery));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "querySyntax", querySyntax));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
@@ -1057,15 +1042,13 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return PageFormulaCandidate
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageFormulaCandidate getFormulaCandidates(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    public PageFormulaCandidate getFormulaCandidates(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PageFormulaCandidate> localVarReturnType = new ParameterizedTypeReference<PageFormulaCandidate>() {};
-        return getFormulaCandidatesRequestCreation(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax, optFields).bodyToMono(localVarReturnType).block();
+        return getFormulaCandidatesRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -1077,15 +1060,13 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseEntity&lt;PageFormulaCandidate&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageFormulaCandidate> getFormulaCandidatesWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PageFormulaCandidate> getFormulaCandidatesWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PageFormulaCandidate> localVarReturnType = new ParameterizedTypeReference<PageFormulaCandidate>() {};
-        return getFormulaCandidatesRequestCreation(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax, optFields).toEntity(localVarReturnType).block();
+        return getFormulaCandidatesRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -1097,14 +1078,12 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getFormulaCandidatesWithResponseSpec(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
-        return getFormulaCandidatesRequestCreation(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax, optFields);
+    public ResponseSpec getFormulaCandidatesWithResponseSpec(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<FormulaCandidateOptField> optFields) throws WebClientResponseException {
+        return getFormulaCandidatesRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields);
     }
     /**
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier  This tree is used to rank formula candidates (treeScore).
@@ -1568,13 +1547,11 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields The optFields parameter
      * @return PageSpectralLibraryMatch
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getSpectralLibraryMatchesRequestCreation(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getSpectralLibraryMatchesRequestCreation(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1598,8 +1575,6 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "searchQuery", searchQuery));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "querySyntax", querySyntax));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
@@ -1624,15 +1599,13 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields The optFields parameter
      * @return PageSpectralLibraryMatch
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageSpectralLibraryMatch getSpectralLibraryMatches(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    public PageSpectralLibraryMatch getSpectralLibraryMatches(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PageSpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<PageSpectralLibraryMatch>() {};
-        return getSpectralLibraryMatchesRequestCreation(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax, optFields).bodyToMono(localVarReturnType).block();
+        return getSpectralLibraryMatchesRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -1644,15 +1617,13 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields The optFields parameter
      * @return ResponseEntity&lt;PageSpectralLibraryMatch&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageSpectralLibraryMatch> getSpectralLibraryMatchesWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PageSpectralLibraryMatch> getSpectralLibraryMatchesWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PageSpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<PageSpectralLibraryMatch>() {};
-        return getSpectralLibraryMatchesRequestCreation(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax, optFields).toEntity(localVarReturnType).block();
+        return getSpectralLibraryMatchesRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -1664,14 +1635,12 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields The optFields parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getSpectralLibraryMatchesWithResponseSpec(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
-        return getSpectralLibraryMatchesRequestCreation(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax, optFields);
+    public ResponseSpec getSpectralLibraryMatchesWithResponseSpec(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+        return getSpectralLibraryMatchesRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields);
     }
     /**
      * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.
@@ -1890,13 +1859,11 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return PageStructureCandidateFormula
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getStructureCandidatesRequestCreation(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getStructureCandidatesRequestCreation(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1920,8 +1887,6 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "searchQuery", searchQuery));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "querySyntax", querySyntax));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
@@ -1946,15 +1911,13 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return PageStructureCandidateFormula
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageStructureCandidateFormula getStructureCandidates(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public PageStructureCandidateFormula getStructureCandidates(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PageStructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<PageStructureCandidateFormula>() {};
-        return getStructureCandidatesRequestCreation(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax, optFields).bodyToMono(localVarReturnType).block();
+        return getStructureCandidatesRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -1966,15 +1929,13 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseEntity&lt;PageStructureCandidateFormula&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageStructureCandidateFormula> getStructureCandidatesWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PageStructureCandidateFormula> getStructureCandidatesWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PageStructureCandidateFormula> localVarReturnType = new ParameterizedTypeReference<PageStructureCandidateFormula>() {};
-        return getStructureCandidatesRequestCreation(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax, optFields).toEntity(localVarReturnType).block();
+        return getStructureCandidatesRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -1986,14 +1947,12 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getStructureCandidatesWithResponseSpec(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
-        return getStructureCandidatesRequestCreation(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax, optFields);
+    public ResponseSpec getStructureCandidatesWithResponseSpec(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+        return getStructureCandidatesRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields);
     }
     /**
      * List of StructureCandidates the given &#39;formulaId&#39; with minimal information.
@@ -2005,13 +1964,11 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return PageStructureCandidateScored
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getStructureCandidatesByFormulaRequestCreation(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getStructureCandidatesByFormulaRequestCreation(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -2040,8 +1997,6 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "searchQuery", searchQuery));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "querySyntax", querySyntax));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
@@ -2067,15 +2022,13 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return PageStructureCandidateScored
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageStructureCandidateScored getStructureCandidatesByFormula(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public PageStructureCandidateScored getStructureCandidatesByFormula(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PageStructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<PageStructureCandidateScored>() {};
-        return getStructureCandidatesByFormulaRequestCreation(projectId, alignedFeatureId, formulaId, page, size, sort, searchQuery, querySyntax, optFields).bodyToMono(localVarReturnType).block();
+        return getStructureCandidatesByFormulaRequestCreation(projectId, alignedFeatureId, formulaId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -2088,15 +2041,13 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseEntity&lt;PageStructureCandidateScored&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageStructureCandidateScored> getStructureCandidatesByFormulaWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PageStructureCandidateScored> getStructureCandidatesByFormulaWithHttpInfo(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PageStructureCandidateScored> localVarReturnType = new ParameterizedTypeReference<PageStructureCandidateScored>() {};
-        return getStructureCandidatesByFormulaRequestCreation(projectId, alignedFeatureId, formulaId, page, size, sort, searchQuery, querySyntax, optFields).toEntity(localVarReturnType).block();
+        return getStructureCandidatesByFormulaRequestCreation(projectId, alignedFeatureId, formulaId, page, size, sort, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -2109,13 +2060,11 @@ public class FeaturesApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getStructureCandidatesByFormulaWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
-        return getStructureCandidatesByFormulaRequestCreation(projectId, alignedFeatureId, formulaId, page, size, sort, searchQuery, querySyntax, optFields);
+    public ResponseSpec getStructureCandidatesByFormulaWithResponseSpec(String projectId, String alignedFeatureId, String formulaId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
+        return getStructureCandidatesByFormulaRequestCreation(projectId, alignedFeatureId, formulaId, page, size, sort, optFields);
     }
 }

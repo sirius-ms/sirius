@@ -2,10 +2,8 @@ package de.unijena.bioinf.ms.nightsky.sdk.api;
 
 import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
 
-import de.unijena.bioinf.ms.nightsky.sdk.model.PageProjectInfo;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectInfo;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectInfoOptField;
-import de.unijena.bioinf.ms.nightsky.sdk.model.SearchQueryType;
 
 import java.util.HashMap;
 import java.util.List;
@@ -642,15 +640,10 @@ public class ProjectsApi {
      * List opened project spaces.
      * List opened project spaces.
      * <p><b>200</b> - OK
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
-     * @return PageProjectInfo
+     * @return List&lt;ProjectInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getProjectSpacesRequestCreation(Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax) throws WebClientResponseException {
+    private ResponseSpec getProjectSpacesRequestCreation() throws WebClientResponseException {
         Object postBody = null;
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -659,12 +652,6 @@ public class ProjectsApi {
         final HttpHeaders headerParams = new HttpHeaders();
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
-
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "searchQuery", searchQuery));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "querySyntax", querySyntax));
 
         final String[] localVarAccepts = { 
             "application/json"
@@ -675,7 +662,7 @@ public class ProjectsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<PageProjectInfo> localVarReturnType = new ParameterizedTypeReference<PageProjectInfo>() {};
+        ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
         return apiClient.invokeAPI("/api/projects", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -683,50 +670,35 @@ public class ProjectsApi {
      * List opened project spaces.
      * List opened project spaces.
      * <p><b>200</b> - OK
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
-     * @return PageProjectInfo
+     * @return List&lt;ProjectInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageProjectInfo getProjectSpaces(Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax) throws WebClientResponseException {
-        ParameterizedTypeReference<PageProjectInfo> localVarReturnType = new ParameterizedTypeReference<PageProjectInfo>() {};
-        return getProjectSpacesRequestCreation(page, size, sort, searchQuery, querySyntax).bodyToMono(localVarReturnType).block();
+    public List<ProjectInfo> getProjectSpaces() throws WebClientResponseException {
+        ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
+        return getProjectSpacesRequestCreation().bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
      * List opened project spaces.
      * List opened project spaces.
      * <p><b>200</b> - OK
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
-     * @return ResponseEntity&lt;PageProjectInfo&gt;
+     * @return ResponseEntity&lt;List&lt;ProjectInfo&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageProjectInfo> getProjectSpacesWithHttpInfo(Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax) throws WebClientResponseException {
-        ParameterizedTypeReference<PageProjectInfo> localVarReturnType = new ParameterizedTypeReference<PageProjectInfo>() {};
-        return getProjectSpacesRequestCreation(page, size, sort, searchQuery, querySyntax).toEntity(localVarReturnType).block();
+    public ResponseEntity<List<ProjectInfo>> getProjectSpacesWithHttpInfo() throws WebClientResponseException {
+        ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
+        return getProjectSpacesRequestCreation().toEntityList(localVarReturnType).block();
     }
 
     /**
      * List opened project spaces.
      * List opened project spaces.
      * <p><b>200</b> - OK
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getProjectSpacesWithResponseSpec(Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax) throws WebClientResponseException {
-        return getProjectSpacesRequestCreation(page, size, sort, searchQuery, querySyntax);
+    public ResponseSpec getProjectSpacesWithResponseSpec() throws WebClientResponseException {
+        return getProjectSpacesRequestCreation();
     }
     /**
      * Open an existing project-space and make it accessible via the given projectId.

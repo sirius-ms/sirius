@@ -1086,24 +1086,6 @@
             }
           },
           {
-            "name": "searchQuery",
-            "in": "query",
-            "description": "optional search query in specified format",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "querySyntax",
-            "in": "query",
-            "description": "query syntax used fpr searchQuery",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/SearchQueryType"
-            }
-          },
-          {
             "name": "optFields",
             "in": "query",
             "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
@@ -1265,24 +1247,6 @@
               "items": {
                 "type": "string"
               }
-            }
-          },
-          {
-            "name": "searchQuery",
-            "in": "query",
-            "description": "optional search query in specified format",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "querySyntax",
-            "in": "query",
-            "description": "query syntax used fpr searchQuery",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/SearchQueryType"
             }
           },
           {
@@ -1675,67 +1639,16 @@
         "summary": "List opened project spaces.",
         "description": "List opened project spaces.",
         "operationId": "getProjectSpaces",
-        "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Zero-based page index (0..N)",
-            "required": false,
-            "schema": {
-              "minimum": 0,
-              "type": "integer",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "description": "The size of the page to be returned",
-            "required": false,
-            "schema": {
-              "minimum": 1,
-              "type": "integer",
-              "default": 20
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "name": "searchQuery",
-            "in": "query",
-            "description": "optional search query in specified format",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "querySyntax",
-            "in": "query",
-            "description": "query syntax used fpr searchQuery",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/SearchQueryType"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageProjectInfo"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProjectInfo"
+                  }
                 }
               }
             }
@@ -2262,24 +2175,6 @@
             }
           },
           {
-            "name": "searchQuery",
-            "in": "query",
-            "description": "optional search query in specified format",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "querySyntax",
-            "in": "query",
-            "description": "query syntax used fpr searchQuery",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/SearchQueryType"
-            }
-          },
-          {
             "name": "optFields",
             "in": "query",
             "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
@@ -2366,24 +2261,6 @@
               "items": {
                 "type": "string"
               }
-            }
-          },
-          {
-            "name": "searchQuery",
-            "in": "query",
-            "description": "optional search query in specified format",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "querySyntax",
-            "in": "query",
-            "description": "query syntax used fpr searchQuery",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/SearchQueryType"
             }
           },
           {
@@ -2514,24 +2391,6 @@
               "items": {
                 "type": "string"
               }
-            }
-          },
-          {
-            "name": "searchQuery",
-            "in": "query",
-            "description": "optional search query in specified format",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "querySyntax",
-            "in": "query",
-            "description": "query syntax used fpr searchQuery",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/SearchQueryType"
             }
           },
           {
@@ -2745,24 +2604,6 @@
               "items": {
                 "type": "string"
               }
-            }
-          },
-          {
-            "name": "searchQuery",
-            "in": "query",
-            "description": "optional search query in specified format",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "querySyntax",
-            "in": "query",
-            "description": "query syntax used fpr searchQuery",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/SearchQueryType"
             }
           },
           {
@@ -5877,15 +5718,7 @@
         },
         "description": "Simple object to hold account credentials, e.g. to perform login operations.\n If refreshToken is given, it is usually preferred over password based authentication.\n But in the end this is up to the respective web service."
       },
-      "SearchQueryType": {
-        "type": "string",
-        "description": "",
-        "nullable": true,
-        "enum": [
-          "LUCENE"
-        ]
-      },
-      "PageProjectInfo": {
+      "PageJob": {
         "type": "object",
         "properties": {
           "totalPages": {
@@ -5912,7 +5745,7 @@
           "content": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/ProjectInfo"
+              "$ref": "#/components/schemas/Job"
             }
           },
           "number": {
@@ -5971,52 +5804,6 @@
           }
         },
         "description": ""
-      },
-      "PageJob": {
-        "type": "object",
-        "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Job"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "empty": {
-            "type": "boolean"
-          }
-        }
       },
       "PageCompound": {
         "type": "object",
@@ -6506,14 +6293,24 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuiInfo"
+            }
           },
           "number": {
             "type": "integer",
@@ -6525,16 +6322,6 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/GuiInfo"
-            }
           },
           "empty": {
             "type": "boolean"

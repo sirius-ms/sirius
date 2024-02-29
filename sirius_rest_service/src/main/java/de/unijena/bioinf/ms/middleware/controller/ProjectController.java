@@ -21,7 +21,6 @@
 package de.unijena.bioinf.ms.middleware.controller;
 
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
-import de.unijena.bioinf.ms.middleware.model.SearchQueryType;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
@@ -30,11 +29,7 @@ import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
-import org.springdoc.api.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -62,18 +57,10 @@ public class ProjectController {
 
     /**
      * List opened project spaces.
-     *
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      */
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<ProjectInfo> getProjectSpaces(@ParameterObject Pageable pageable,
-                                              @RequestParam(required = false) String searchQuery,
-                                              @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax) {
-        final List<ProjectInfo> all = projectsProvider.listAllProjectSpaces();
-        return new PageImpl<>(
-                all.stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).toList(), pageable, all.size()
-        );
+    public List<ProjectInfo> getProjectSpaces() {
+       return projectsProvider.listAllProjectSpaces();
     }
 
     /**
