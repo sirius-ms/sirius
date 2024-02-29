@@ -133,7 +133,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         JSpinner bottomUpSearchOnly;
         JCheckBox bottomUpSearchEnabled = new JCheckBox();
-        bottomUpSearchOnly = makeIntParameterSpinner("FormulaSearchSettings.disableDeNovoAboveMass", 0, Integer.MAX_VALUE, 5);
+        bottomUpSearchOnly = makeIntParameterSpinner("FormulaSearchSettings.performDeNovoBelowMz", 0, Integer.MAX_VALUE, 5);
         bottomUpSearchEnabled.setEnabled(false);
         bottomUpSearchOnly.setEnabled(false);
 
@@ -192,16 +192,16 @@ public class FormulaSearchStrategy extends ConfigPanel {
             final ElementAlphabetStrategy filterStrategy = (ElementAlphabetStrategy) e.getItem();
             boolean applyToBottomUp = (filterStrategy == ElementAlphabetStrategy.BOTH);
 
-            parameterBindings.put("FormulaSearchSettings.applyFormulaContraintsToBottomUp", () -> Boolean.toString(applyToBottomUp));
+            parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToBottomUp", () -> Boolean.toString(applyToBottomUp));
         });
         elementAlpahAlphabetStrategySelector.setSelectedItem(ElementAlphabetStrategy.DE_NOVO_ONLY);
     }
 
     private void setBottomUpSearchMass(JCheckBox bottomUpSearchEnabled) {
         if (bottomUpSearchEnabled.isSelected()) {
-            parameterBindings.put("FormulaSearchSettings.enableBottomUpFromMass", () -> "0");
+            parameterBindings.put("FormulaSearchSettings.performBottomUpAboveMz", () -> "0");
         } else {
-            parameterBindings.put("FormulaSearchSettings.enableBottomUpFromMass", () -> String.valueOf(Double.POSITIVE_INFINITY));
+            parameterBindings.put("FormulaSearchSettings.performBottomUpAboveMz", () -> String.valueOf(Double.POSITIVE_INFINITY));
         }
     }
 
@@ -219,7 +219,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         final TwoColumnPanel elementOptions = new TwoColumnPanel();
         JCheckBox useElementFilter = new JCheckBox(); //todo NewWorkflow: implement this feature. This makes the organics filter obsolete. Maybe dont use the checkbox but always select the organics. Make new Element panel popup
         useElementFilter.setSelected(false);
-        parameterBindings.put("FormulaSearchSettings.applyFormulaContraintsToCandidateLists", () -> Boolean.toString(useElementFilter.isSelected()));
+        parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates", () -> Boolean.toString(useElementFilter.isSelected()));
 
         elementOptions.addNamed("Use element filter", useElementFilter);
         main.add(elementOptions);
@@ -231,7 +231,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         useElementFilter.addActionListener(e -> {
             elementPanel.setVisible(useElementFilter.isSelected());
             elementPanel.setEnabled(useElementFilter.isSelected()); //todo ElementFilter: this is not the proper way. Buttons still disabled.
-            parameterBindings.put("FormulaSearchSettings.applyFormulaContraintsToCandidateLists", () -> Boolean.toString(useElementFilter.isSelected()));
+            parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates", () -> Boolean.toString(useElementFilter.isSelected()));
         });
 
         disableBottomUpSearch();
@@ -239,15 +239,15 @@ public class FormulaSearchStrategy extends ConfigPanel {
     }
 
     private void disableBottomUpSearch() {
-        parameterBindings.put("FormulaSearchSettings.enableBottomUpFromMass", () -> String.valueOf(Double.POSITIVE_INFINITY));
+        parameterBindings.put("FormulaSearchSettings.performBottomUpAboveMz", () -> String.valueOf(Double.POSITIVE_INFINITY));
     }
 
     private void enableDeNovo() {
-        parameterBindings.put("FormulaSearchSettings.disableDeNovoAboveMass", () -> String.valueOf(Double.POSITIVE_INFINITY));
+        parameterBindings.put("FormulaSearchSettings.performDeNovoBelowMz", () -> String.valueOf(Double.POSITIVE_INFINITY));
     }
 
     private void disableDeNovo() {
-        parameterBindings.put("FormulaSearchSettings.disableDeNovoAboveMass", () -> "0");
+        parameterBindings.put("FormulaSearchSettings.performDeNovoBelowMz", () -> "0");
     }
 
     private JCheckboxListPanel<CustomDataSources.Source> createDatabasePanel() {

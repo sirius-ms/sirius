@@ -217,12 +217,12 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     public void setBottomUpSearchOptions(BottomUpSearchOptions selection) throws Exception {
         switch (selection) {
             case BOTTOM_UP_ONLY -> {
-                defaultConfigOptions.changeOption("FormulaSearchSettings.enableBottomUpFromMass", "0");
-                defaultConfigOptions.changeOption("FormulaSearchSettings.disableDeNovoAboveMass", "0");
+                defaultConfigOptions.changeOption("FormulaSearchSettings.performBottomUpAboveMz", "0");
+                defaultConfigOptions.changeOption("FormulaSearchSettings.performDeNovoBelowMz", "0");
             }
             case DISABLED -> {
-                defaultConfigOptions.changeOption("FormulaSearchSettings.enableBottomUpFromMass", String.valueOf(Double.POSITIVE_INFINITY));
-                defaultConfigOptions.changeOption("FormulaSearchSettings.disableDeNovoAboveMass", String.valueOf(Double.POSITIVE_INFINITY));
+                defaultConfigOptions.changeOption("FormulaSearchSettings.performBottomUpAboveMz", String.valueOf(Double.POSITIVE_INFINITY));
+                defaultConfigOptions.changeOption("FormulaSearchSettings.performDeNovoBelowMz", String.valueOf(Double.POSITIVE_INFINITY));
             }
         }
     }
