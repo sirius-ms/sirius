@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
@@ -29,10 +28,12 @@ import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -48,11 +49,16 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
 
         //select search strategy
         JComboBox<StructureSearchStrategy.Strategy> strategyBox =  GuiUtils.makeParameterComboBoxFromDescriptiveValues(StructureSearchStrategy.Strategy.values());
-        structureSearchStrategy = new StructureSearchStrategy((StructureSearchStrategy.Strategy) strategyBox.getSelectedItem(), parameterBindings, syncSource);
+        structureSearchStrategy = new StructureSearchStrategy(syncSource);
+        parameterBindings.put("StructureSearchDB", () -> {
+            List<CustomDataSources.Source> checkedDBs = structureSearchStrategy.getStructureSearchDBs();
+            return checkedDBs.isEmpty() ? null : checkedDBs.stream().map(CustomDataSources.Source::id).filter(Objects::nonNull).collect(Collectors.joining(","));
+        });
+
 
         //confidence score approximate mode settings
         JComboBox<ExpansiveSearchConfidenceMode.Mode> confidenceModeBox =  GuiUtils.makeParameterComboBoxFromDescriptiveValues(ExpansiveSearchConfidenceMode.Mode.getActiveModes());
-        confidenceModeBox.setVisible(isStrategy(StructureSearchStrategy.Strategy.PUBCHEM_AS_FALLBACK, strategyBox));
+        strategyBox.setSelectedItem(StructureSearchStrategy.Strategy.PUBCHEM_AS_FALLBACK);
 
         //layout the panel
         final TwoColumnPanel additionalOptions = new TwoColumnPanel();
@@ -63,58 +69,32 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
         add(new TextHeaderBoxPanel("General", additionalOptions));
         add(structureSearchStrategy);
 
-
-        //add listeners
-        confidenceModeBox.addItemListener(e -> {
-            if (e.getStateChange() != ItemEvent.SELECTED) {
-                return;
+        parameterBindings.put("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", () -> {
+            if (strategyBox.getSelectedItem() == StructureSearchStrategy.Strategy.NO_FALLBACK) {
+                return "OFF";
             }
-            switch ((ExpansiveSearchConfidenceMode.Mode) confidenceModeBox.getSelectedItem()) {
-                case EXACT -> {
-                    parameterBindings.put("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", () -> "EXACT");
-                }
-                case APPROXIMATE -> {
-                    parameterBindings.put("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", () -> "APPROXIMATE"); //todo NewWorkflow: check, if this makes sense.
-
-                }
-                default -> {
-                    LoggerFactory.getLogger(FingerblastConfigPanel.class).error("Unknown ExpansiveSearchConfidenceMode setting. Using approximate mode.");
-                    parameterBindings.put("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", () -> "APPROXIMATE");
-                }
+            if (confidenceModeBox.getSelectedItem() == ExpansiveSearchConfidenceMode.Mode.EXACT) {
+                return "EXACT";
             }
+            return "APPROXIMATE";
         });
 
-        //set confidence more based on strategy
         strategyBox.addItemListener(e -> {
             if (e.getStateChange() != ItemEvent.SELECTED) {
                 return;
             }
-            //todo NewWorkflow: implement to use this parameter 'StructureSearchStrategy'
-            final DescriptiveOptions source = (DescriptiveOptions) e.getItem();
-            int panelIndex = GuiUtils.getComponentIndex(this, structureSearchStrategy);
-            this.remove(panelIndex);
-            structureSearchStrategy = new StructureSearchStrategy((StructureSearchStrategy.Strategy) strategyBox.getSelectedItem(), parameterBindings, syncSource);
-            this.add(structureSearchStrategy, panelIndex);
 
-            if (isStrategy(StructureSearchStrategy.Strategy.NO_FALLBACK, strategyBox)) {
-
-                parameterBindings.put("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", () -> "OFF");
+            if (e.getItem() == StructureSearchStrategy.Strategy.NO_FALLBACK) {
                 confLabel.setVisible(false);
                 confidenceModeBox.setVisible(false);
             } else {
                 confLabel.setVisible(true);
                 confidenceModeBox.setVisible(true);
             }
-
-            revalidate();
         });
     }
 
     public JCheckboxListPanel<CustomDataSources.Source> getSearchDBList() {
         return structureSearchStrategy.getSearchDBList();
-    }
-
-    private boolean isStrategy(StructureSearchStrategy.Strategy strategy, JComboBox<StructureSearchStrategy.Strategy> strategyBox) {
-        return (StructureSearchStrategy.Strategy) strategyBox.getSelectedItem() == strategy;
     }
 }
