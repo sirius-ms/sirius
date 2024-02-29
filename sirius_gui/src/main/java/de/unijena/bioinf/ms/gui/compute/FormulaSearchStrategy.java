@@ -223,7 +223,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         // configure database to search list
         searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Use DB formulas only");
         GuiUtils.assignParameterToolTip(searchDBList.checkBoxList, "FormulaSearchDB");
-        parameterBindings.put("FormulaSearchDB", () -> String.join(",", getFormulaSearchDBStrings()));
+        parameterBindings.put("FormulaSearchDB", () -> strategy == Strategy.DATABASE ? String.join(",", getFormulaSearchDBStrings()) : ",");
         PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSearchDB.class).searchDBs
                 .forEach(s -> searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(s.name())));
         return searchDBList;
