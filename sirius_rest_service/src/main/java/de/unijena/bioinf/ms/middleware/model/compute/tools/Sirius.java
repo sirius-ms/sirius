@@ -224,6 +224,8 @@ public class Sirius extends Tool<SiriusOptions> {
     public static Sirius buildDefault() {
         return builderWithDefaults().build();
     }
+    // This represents the DEFAULT formula strategy from the GUI. more might be added later (default, database denovo),
+    // but probably on the workflow level instead of just formula generation -> see JobsSubmission
     public static Sirius.SiriusBuilder<?,?> builderWithDefaults() {
         return Sirius.builder()
                 .profile(Instrument.QTOF)
@@ -235,7 +237,7 @@ public class Sirius extends Tool<SiriusOptions> {
                 .performBottomUpSearch(true)
                 .performDenovoBelowMz(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSearchSettings.class).performDeNovoBelowMz)
                 .formulaSearchDBs(List.of())
-                .applyFormulaConstraintsToDBAndBottomUpSearch(false) //todo not 100% sure about that since in principle API allows to do all 3 at once, database + bottom up + denovo
+                .applyFormulaConstraintsToDBAndBottomUpSearch(false)
                 .enforcedFormulaConstraints(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class).getEnforcedAlphabet().toString())
                 .fallbackFormulaConstraints(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class).getFallbackAlphabet().toString())
                 .detectableElements(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class).getAutoDetectionElements().stream().map(Element::getSymbol).collect(Collectors.toList()))
