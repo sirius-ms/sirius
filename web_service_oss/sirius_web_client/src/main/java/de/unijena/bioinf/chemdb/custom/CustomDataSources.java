@@ -97,7 +97,7 @@ public class CustomDataSources {
         lastEnumBit = bits.cardinality();
 
         NON_SEARCHABLE_LIST = new HashSet<>(getSourcesFromNames(
-                DataSource.TRAIN.name(), DataSource.LIPID.name(), DataSource.ALL.name(), DataSource.ALL_BUT_INSILICO.name(),
+                DataSource.TRAIN.name(), DataSource.LIPID.name(), DataSource.ALL.name(),
                 DataSource.PUBCHEMANNOTATIONBIO.name(), DataSource.PUBCHEMANNOTATIONDRUG.name(),
                 DataSource.PUBCHEMANNOTATIONFOOD.name(), DataSource.PUBCHEMANNOTATIONSAFETYANDTOXIC.name(),
                 DataSource.SUPERNATURAL.name()));
