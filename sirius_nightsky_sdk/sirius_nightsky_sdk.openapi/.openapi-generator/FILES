@@ -27,6 +27,7 @@ docs/ConsensusAnnotationsDeNovo.md
 docs/ConsensusCriterionCSI.md
 docs/ConsensusCriterionDeNovo.md
 docs/DBLink.md
+docs/DatabaseImportSubmission.md
 docs/Deviation.md
 docs/ExperimentalGuiApi.md
 docs/FeatureAnnotations.md
@@ -65,7 +66,6 @@ docs/PageFormulaCandidate.md
 docs/PageGuiInfo.md
 docs/PageJob.md
 docs/PageProjectInfo.md
-docs/PageSearchableDatabase.md
 docs/PageSpectralLibraryMatch.md
 docs/PageStructureCandidateFormula.md
 docs/PageStructureCandidateScored.md
@@ -148,6 +148,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ConsensusAnnotationsDeNovo
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ConsensusCriterionCSI.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ConsensusCriterionDeNovo.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/DBLink.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/DatabaseImportSubmission.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Deviation.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FeatureAnnotations.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FeatureImport.java
@@ -181,7 +182,6 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageFormulaCandidate.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageGuiInfo.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageJob.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageProjectInfo.java
-src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageSearchableDatabase.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageSpectralLibraryMatch.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageStructureCandidateFormula.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageStructureCandidateScored.java
@@ -217,4 +217,3 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/WorkerList.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Zodiac.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ZodiacEdgeFilterThresholds.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ZodiacEpochs.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/SearchableDatabasesApiTest.java

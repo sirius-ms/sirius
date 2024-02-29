@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.middleware.model.databases;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
@@ -43,17 +42,35 @@ public class SearchableDatabase extends SearchableDatabaseParameters {
     protected String databaseId;
 
     /**
-     * Indicates whether the database is a user database that is modifiable or if it is a
+     * Indicates whether the database is a user managed custom database or if it is a
      * database that is included in SIRIUS which cannot be modified.
      */
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-    protected Boolean userDb;
+    protected boolean customDb;
+
+    /**
+     * True when this database can be used as a search parameter.
+     * False if the database is just an additional filter that can be applied after search.
+     */
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    protected boolean searchable;
 
     /**
      * Date on which the data was imported / database was created.
      */
     @Schema(nullable = true)
-    protected String importDate;
+    protected String dbDate;
+
+    /**
+     * database schema version
+     */
+    @Schema(nullable = true)
+    protected Integer dbVersion;
+    /**
+     * If true the database version is outdated and the database needs to be updated or re-imported before it can be used.
+     */
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    protected boolean updateNeeded;
 
     /**
      * Number of unique compounds available in this database.

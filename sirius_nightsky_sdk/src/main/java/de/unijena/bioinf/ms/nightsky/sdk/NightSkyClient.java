@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ms.nightsky.sdk.api.*;
 import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
 import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
@@ -35,14 +36,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Flow;
 
 import static de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient.*;
@@ -65,6 +69,8 @@ public class NightSkyClient implements AutoCloseable {
     protected final LoginAndAccountApi account;
 
     protected final ProjectsApi projects;
+
+    protected final SearchableDatabasesApi databases;
 
     protected InfoApi infos;
     private EnumSet<DataEventType> sseEventsToListenOn = null;
@@ -90,6 +96,7 @@ public class NightSkyClient implements AutoCloseable {
         gui = new ExperimentalGuiApi(apiClient);
         account = new LoginAndAccountApi(apiClient);
         projects = new ProjectsApi(apiClient);
+        databases = new SearchableDatabasesApi(apiClient);
         infos = new InfoApi(apiClient);
     }
 
@@ -243,6 +250,9 @@ public class NightSkyClient implements AutoCloseable {
     public ProjectsApi projects() {
         return projects;
     }
+    public SearchableDatabasesApi databases() {
+        return databases;
+    }
 
     public InfoApi infos() {
         return infos;
@@ -263,5 +273,26 @@ public class NightSkyClient implements AutoCloseable {
     @FunctionalInterface
     public interface InterruptionCheck {
         void check() throws InterruptedException;
+    }
+
+    public Optional<NightSkyErrorResponse> unwrapErrorResponse(Throwable ex) {
+        WebClientResponseException webEx = null;
+
+        while (ex != null){
+            if (ex instanceof WebClientResponseException){
+                webEx = (WebClientResponseException) ex;
+                break;
+            }
+            ex = ex.getCause();
+        }
+
+        if (webEx != null) {
+            try {
+                return Optional.of(new ObjectMapper().readValue(webEx.getResponseBodyAsByteArray(), NightSkyErrorResponse.class));
+            } catch (IOException e) {
+                LOG.error("Error when parsing Error response!", e);
+            }
+        }
+        return Optional.empty();
     }
 }

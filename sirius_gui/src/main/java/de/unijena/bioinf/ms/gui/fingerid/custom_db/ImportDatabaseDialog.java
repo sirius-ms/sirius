@@ -20,18 +20,13 @@
 
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
-import de.unijena.bioinf.chemdb.SearchableDatabase;
-import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 import de.unijena.bioinf.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.nightsky.sdk.jjobs.SseProgressJJob;
-import de.unijena.bioinf.ms.nightsky.sdk.model.CommandSubmission;
-import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
-import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
-import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
+import de.unijena.bioinf.ms.nightsky.sdk.model.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -40,7 +35,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isLoggedIn;
@@ -53,13 +47,13 @@ class ImportDatabaseDialog extends JDialog {
         this(databaseDialog, null);
     }
 
-    public ImportDatabaseDialog(@NotNull DatabaseDialog databaseDialog, @Nullable CustomDatabase db) {
-        super(databaseDialog, db != null ? "Import into " + db.name() : "Create custom database", true);
+    public ImportDatabaseDialog(@NotNull DatabaseDialog databaseDialog, @Nullable SearchableDatabase db) {
+        super(databaseDialog, db != null ? "Import into " + db.getDatabaseId() : "Create custom database", true);
         this.databaseDialog = databaseDialog;
 
         setPreferredSize(new Dimension(640, 480));
 
-        configPanel = new DatabaseImportConfigPanel(databaseDialog.getGui(), db, databaseDialog.customDatabases.stream().map(SearchableDatabase::name).collect(Collectors.toSet()));
+        configPanel = new DatabaseImportConfigPanel(databaseDialog.getGui(), db);
         add(configPanel);
 
         configPanel.importButton.addActionListener(e -> {
@@ -93,6 +87,7 @@ class ImportDatabaseDialog extends JDialog {
                         "Importing into '" + configPanel.getDbFilePath() + "'...", null,
                         new SseProgressJJob(databaseDialog.gui.getSiriusClient(), pid, j));
             }).awaitResult();
+
             databaseDialog.whenCustomDbIsAdded(configPanel.getDbFilePath());
         } catch (ExecutionException ex) {
             LoggerFactory.getLogger(getClass()).error("Error during Custom DB import.", ex);

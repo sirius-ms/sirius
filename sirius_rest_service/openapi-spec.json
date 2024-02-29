@@ -646,6 +646,65 @@
         }
       }
     },
+    "/api/{projectId}/jobs/import-db": {
+      "post": {
+        "tags": [
+          "Jobs"
+        ],
+        "summary": "Start import of structure and spectra files into the specified database.",
+        "description": "Start import of structure and spectra files into the specified database.",
+        "operationId": "startDatabaseImport",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to perform the command for.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/JobOptField"
+              },
+              "default": [
+                "progress"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "the command and the input to be executed",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatabaseImportSubmission"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Job of the import command to be executed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/jobs": {
       "get": {
         "tags": [
@@ -1485,27 +1544,20 @@
         }
       }
     },
-    "/api/databases/{databaseId}/add": {
-      "post": {
+    "/api/databases": {
+      "get": {
         "tags": [
           "Searchable Databases"
         ],
-        "operationId": "addDatabase",
+        "operationId": "getDatabases",
         "parameters": [
           {
-            "name": "databaseId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "pathToProject",
+            "name": "includeStats",
             "in": "query",
-            "required": true,
+            "required": false,
             "schema": {
-              "type": "string"
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -1515,7 +1567,44 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/SearchableDatabase"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SearchableDatabase"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Searchable Databases"
+        ],
+        "operationId": "addDatabases",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SearchableDatabase"
+                  }
                 }
               }
             }
@@ -3457,47 +3546,13 @@
         }
       }
     },
-    "/api/databases": {
+    "/api/databases/included": {
       "get": {
         "tags": [
           "Searchable Databases"
         ],
-        "operationId": "getDatabases",
+        "operationId": "getIncludedDatabases",
         "parameters": [
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Zero-based page index (0..N)",
-            "required": false,
-            "schema": {
-              "minimum": 0,
-              "type": "integer",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "description": "The size of the page to be returned",
-            "required": false,
-            "schema": {
-              "minimum": 1,
-              "type": "integer",
-              "default": 20
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
           {
             "name": "includeStats",
             "in": "query",
@@ -3514,7 +3569,44 @@
             "content": {
               "*/*": {
                 "schema": {
-                  "$ref": "#/components/schemas/PageSearchableDatabase"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SearchableDatabase"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/databases/custom": {
+      "get": {
+        "tags": [
+          "Searchable Databases"
+        ],
+        "operationId": "getCustomDatabases",
+        "parameters": [
+          {
+            "name": "includeStats",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SearchableDatabase"
+                  }
                 }
               }
             }
@@ -3854,8 +3946,10 @@
       },
       "SearchableDatabase": {
         "required": [
+          "customDb",
           "databaseId",
-          "userDb"
+          "searchable",
+          "updateNeeded"
         ],
         "type": "object",
         "properties": {
@@ -3879,14 +3973,28 @@
             "type": "string",
             "description": "A unique identifier or name of the database.\n Should only contain file path and url save characters\n For user databases this is usually the file name."
           },
-          "userDb": {
+          "customDb": {
             "type": "boolean",
-            "description": "Indicates whether the database is a user database that is modifiable or if it is a\n database that is included in SIRIUS which cannot be modified."
+            "description": "Indicates whether the database is a user managed custom database or if it is a\n database that is included in SIRIUS which cannot be modified."
           },
-          "importDate": {
+          "searchable": {
+            "type": "boolean",
+            "description": "True when this database can be used as a search parameter.\n False if the database is just an additional filter that can be applied after search."
+          },
+          "dbDate": {
             "type": "string",
             "description": "Date on which the data was imported / database was created.",
             "nullable": true
+          },
+          "dbVersion": {
+            "type": "integer",
+            "description": "database schema version",
+            "format": "int32",
+            "nullable": true
+          },
+          "updateNeeded": {
+            "type": "boolean",
+            "description": "If true the database version is outdated and the database needs to be updated or re-imported before it can be used."
           },
           "numberOfStructures": {
             "type": "integer",
@@ -4214,6 +4322,32 @@
             "items": {
               "type": "string"
             }
+          }
+        },
+        "description": ""
+      },
+      "DatabaseImportSubmission": {
+        "required": [
+          "databaseId",
+          "filesToImport"
+        ],
+        "type": "object",
+        "properties": {
+          "databaseId": {
+            "type": "string"
+          },
+          "filesToImport": {
+            "minLength": 1,
+            "type": "array",
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          "writeBuffer": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         },
         "description": ""
@@ -6447,14 +6581,25 @@
             "type": "integer",
             "format": "int64"
           },
+          "first": {
+            "type": "boolean"
+          },
           "last": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "first": {
-            "type": "boolean"
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "size": {
             "type": "integer",
@@ -6465,63 +6610,6 @@
             "items": {
               "$ref": "#/components/schemas/GuiInfo"
             }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "empty": {
-            "type": "boolean"
-          }
-        }
-      },
-      "PageSearchableDatabase": {
-        "type": "object",
-        "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SearchableDatabase"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"

@@ -27,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -41,9 +43,14 @@ public interface ChemDbService {
 
     SearchableDatabase create(@NotNull String databaseId, @Nullable SearchableDatabaseParameters dbParameters);
 
-    SearchableDatabase add(@NotNull String databaseId, @NotNull String location);
 
     void remove(String id, boolean delete);
 
-    SearchableDatabase update(String databaseId, SearchableDatabaseParameters dbUpdate);
+    SearchableDatabase update(@NotNull String databaseId, @NotNull SearchableDatabaseParameters dbUpdate);
+
+    default SearchableDatabase add(@NotNull String location){
+        return add(List.of(location)).stream().findFirst().orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Could not find database at location: " + location));
+    }
+    List<SearchableDatabase> add(List<String> pathToProjects);
 }

@@ -2,7 +2,6 @@ package de.unijena.bioinf.ms.nightsky.sdk.api;
 
 import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
 
-import de.unijena.bioinf.ms.nightsky.sdk.model.PageSearchableDatabase;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabaseParameters;
 
@@ -52,85 +51,75 @@ public class SearchableDatabasesApi {
      * 
      * 
      * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
-     * @param pathToProject The pathToProject parameter
-     * @return SearchableDatabase
+     * @param requestBody The requestBody parameter
+     * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec addDatabaseRequestCreation(String databaseId, String pathToProject) throws WebClientResponseException {
-        Object postBody = null;
-        // verify the required parameter 'databaseId' is set
-        if (databaseId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'databaseId' when calling addDatabase", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'pathToProject' is set
-        if (pathToProject == null) {
-            throw new WebClientResponseException("Missing the required parameter 'pathToProject' when calling addDatabase", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+    private ResponseSpec addDatabasesRequestCreation(List<String> requestBody) throws WebClientResponseException {
+        Object postBody = requestBody;
+        // verify the required parameter 'requestBody' is set
+        if (requestBody == null) {
+            throw new WebClientResponseException("Missing the required parameter 'requestBody' when calling addDatabases", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
-
-        pathParams.put("databaseId", databaseId);
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
         final HttpHeaders headerParams = new HttpHeaders();
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "pathToProject", pathToProject));
-
         final String[] localVarAccepts = { 
             "*/*"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { };
+        final String[] localVarContentTypes = { 
+            "application/json"
+        };
         final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
 
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
-        return apiClient.invokeAPI("/api/databases/{databaseId}/add", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/databases", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
      * 
      * 
      * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
-     * @param pathToProject The pathToProject parameter
-     * @return SearchableDatabase
+     * @param requestBody The requestBody parameter
+     * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public SearchableDatabase addDatabase(String databaseId, String pathToProject) throws WebClientResponseException {
+    public List<SearchableDatabase> addDatabases(List<String> requestBody) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
-        return addDatabaseRequestCreation(databaseId, pathToProject).bodyToMono(localVarReturnType).block();
+        return addDatabasesRequestCreation(requestBody).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
      * 
      * 
      * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
-     * @param pathToProject The pathToProject parameter
-     * @return ResponseEntity&lt;SearchableDatabase&gt;
+     * @param requestBody The requestBody parameter
+     * @return ResponseEntity&lt;List&lt;SearchableDatabase&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<SearchableDatabase> addDatabaseWithHttpInfo(String databaseId, String pathToProject) throws WebClientResponseException {
+    public ResponseEntity<List<SearchableDatabase>> addDatabasesWithHttpInfo(List<String> requestBody) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
-        return addDatabaseRequestCreation(databaseId, pathToProject).toEntity(localVarReturnType).block();
+        return addDatabasesRequestCreation(requestBody).toEntityList(localVarReturnType).block();
     }
 
     /**
      * 
      * 
      * <p><b>200</b> - OK
-     * @param databaseId The databaseId parameter
-     * @param pathToProject The pathToProject parameter
+     * @param requestBody The requestBody parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec addDatabaseWithResponseSpec(String databaseId, String pathToProject) throws WebClientResponseException {
-        return addDatabaseRequestCreation(databaseId, pathToProject);
+    public ResponseSpec addDatabasesWithResponseSpec(List<String> requestBody) throws WebClientResponseException {
+        return addDatabasesRequestCreation(requestBody);
     }
     /**
      * 
@@ -216,6 +205,76 @@ public class SearchableDatabasesApi {
      * 
      * 
      * <p><b>200</b> - OK
+     * @param includeStats The includeStats parameter
+     * @return List&lt;SearchableDatabase&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getCustomDatabasesRequestCreation(Boolean includeStats) throws WebClientResponseException {
+        Object postBody = null;
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeStats", includeStats));
+
+        final String[] localVarAccepts = { 
+            "*/*"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
+        return apiClient.invokeAPI("/api/databases/custom", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param includeStats The includeStats parameter
+     * @return List&lt;SearchableDatabase&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<SearchableDatabase> getCustomDatabases(Boolean includeStats) throws WebClientResponseException {
+        ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
+        return getCustomDatabasesRequestCreation(includeStats).bodyToFlux(localVarReturnType).collectList().block();
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param includeStats The includeStats parameter
+     * @return ResponseEntity&lt;List&lt;SearchableDatabase&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<SearchableDatabase>> getCustomDatabasesWithHttpInfo(Boolean includeStats) throws WebClientResponseException {
+        ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
+        return getCustomDatabasesRequestCreation(includeStats).toEntityList(localVarReturnType).block();
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param includeStats The includeStats parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getCustomDatabasesWithResponseSpec(Boolean includeStats) throws WebClientResponseException {
+        return getCustomDatabasesRequestCreation(includeStats);
+    }
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
      * @param databaseId The databaseId parameter
      * @param includeStats The includeStats parameter
      * @return SearchableDatabase
@@ -296,14 +355,11 @@ public class SearchableDatabasesApi {
      * 
      * 
      * <p><b>200</b> - OK
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param includeStats The includeStats parameter
-     * @return PageSearchableDatabase
+     * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getDatabasesRequestCreation(Integer page, Integer size, List<String> sort, Boolean includeStats) throws WebClientResponseException {
+    private ResponseSpec getDatabasesRequestCreation(Boolean includeStats) throws WebClientResponseException {
         Object postBody = null;
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -313,9 +369,6 @@ public class SearchableDatabasesApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeStats", includeStats));
 
         final String[] localVarAccepts = { 
@@ -327,7 +380,7 @@ public class SearchableDatabasesApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<PageSearchableDatabase> localVarReturnType = new ParameterizedTypeReference<PageSearchableDatabase>() {};
+        ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
         return apiClient.invokeAPI("/api/databases", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -335,47 +388,108 @@ public class SearchableDatabasesApi {
      * 
      * 
      * <p><b>200</b> - OK
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param includeStats The includeStats parameter
-     * @return PageSearchableDatabase
+     * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageSearchableDatabase getDatabases(Integer page, Integer size, List<String> sort, Boolean includeStats) throws WebClientResponseException {
-        ParameterizedTypeReference<PageSearchableDatabase> localVarReturnType = new ParameterizedTypeReference<PageSearchableDatabase>() {};
-        return getDatabasesRequestCreation(page, size, sort, includeStats).bodyToMono(localVarReturnType).block();
+    public List<SearchableDatabase> getDatabases(Boolean includeStats) throws WebClientResponseException {
+        ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
+        return getDatabasesRequestCreation(includeStats).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
      * 
      * 
      * <p><b>200</b> - OK
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param includeStats The includeStats parameter
-     * @return ResponseEntity&lt;PageSearchableDatabase&gt;
+     * @return ResponseEntity&lt;List&lt;SearchableDatabase&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageSearchableDatabase> getDatabasesWithHttpInfo(Integer page, Integer size, List<String> sort, Boolean includeStats) throws WebClientResponseException {
-        ParameterizedTypeReference<PageSearchableDatabase> localVarReturnType = new ParameterizedTypeReference<PageSearchableDatabase>() {};
-        return getDatabasesRequestCreation(page, size, sort, includeStats).toEntity(localVarReturnType).block();
+    public ResponseEntity<List<SearchableDatabase>> getDatabasesWithHttpInfo(Boolean includeStats) throws WebClientResponseException {
+        ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
+        return getDatabasesRequestCreation(includeStats).toEntityList(localVarReturnType).block();
     }
 
     /**
      * 
      * 
      * <p><b>200</b> - OK
-     * @param page Zero-based page index (0..N)
-     * @param size The size of the page to be returned
-     * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
      * @param includeStats The includeStats parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getDatabasesWithResponseSpec(Integer page, Integer size, List<String> sort, Boolean includeStats) throws WebClientResponseException {
-        return getDatabasesRequestCreation(page, size, sort, includeStats);
+    public ResponseSpec getDatabasesWithResponseSpec(Boolean includeStats) throws WebClientResponseException {
+        return getDatabasesRequestCreation(includeStats);
+    }
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param includeStats The includeStats parameter
+     * @return List&lt;SearchableDatabase&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getIncludedDatabasesRequestCreation(Boolean includeStats) throws WebClientResponseException {
+        Object postBody = null;
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeStats", includeStats));
+
+        final String[] localVarAccepts = { 
+            "*/*"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
+        return apiClient.invokeAPI("/api/databases/included", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param includeStats The includeStats parameter
+     * @return List&lt;SearchableDatabase&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public List<SearchableDatabase> getIncludedDatabases(Boolean includeStats) throws WebClientResponseException {
+        ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
+        return getIncludedDatabasesRequestCreation(includeStats).bodyToFlux(localVarReturnType).collectList().block();
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param includeStats The includeStats parameter
+     * @return ResponseEntity&lt;List&lt;SearchableDatabase&gt;&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<List<SearchableDatabase>> getIncludedDatabasesWithHttpInfo(Boolean includeStats) throws WebClientResponseException {
+        ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
+        return getIncludedDatabasesRequestCreation(includeStats).toEntityList(localVarReturnType).block();
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param includeStats The includeStats parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getIncludedDatabasesWithResponseSpec(Boolean includeStats) throws WebClientResponseException {
+        return getIncludedDatabasesRequestCreation(includeStats);
     }
     /**
      * 
