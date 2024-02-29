@@ -56,6 +56,7 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
 
     protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, String toolDescription, Icon buttonIcon, boolean checkServerConnection, Supplier<C> contentSuppl) {
         super();
+        left.anchor = GridBagConstraints.NORTH;
         this.toolName = toolname;
         this.content = contentSuppl.get();
         this.gui = gui;

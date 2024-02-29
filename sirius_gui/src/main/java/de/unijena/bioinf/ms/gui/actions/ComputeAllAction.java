@@ -46,7 +46,7 @@ public class ComputeAllAction extends AbstractGuiAction {
 
         //filtered Workspace Listener
         this.mainFrame.getCompoundList().getCompoundList().addListEventListener(listChanges ->
-                setEnabled(listChanges.getSourceList().size() > 0));
+                setEnabled(!listChanges.getSourceList().isEmpty()));
 
         setEnabled(!mainFrame.getCompoundList().getCompoundList().isEmpty());
 

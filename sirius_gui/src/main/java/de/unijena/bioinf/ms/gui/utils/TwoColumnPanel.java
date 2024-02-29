@@ -57,8 +57,6 @@ public class TwoColumnPanel extends JPanel {
         both.gridx = 0;
         both.gridwidth = 2;
         both.fill = GridBagConstraints.HORIZONTAL;
-        right.weightx = 1;
-        right.weighty = 0;
         both.insets = new Insets(0, 0, 5, 0);
         setRow(0);
     }
