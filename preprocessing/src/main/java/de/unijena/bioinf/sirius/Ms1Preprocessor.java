@@ -202,7 +202,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
                 whiteset = candidateFormulas.getWhitesetOfInputFileCandidates().setRequiresDeNovo(false).setRequiresBottomUp(false).setIgnoreMassDeviationToResolveIonType(true);
             } else {
                 Whiteset candidateWhiteset = candidateFormulas.toWhiteSet();
-                if (formulaSettings.applyFormulaContraintsToCandidateLists) candidateWhiteset = candidateWhiteset.filter(formulaConstraints, possibleAdducts.getAdducts(), Ms1Preprocessor.class);
+                if (formulaSettings.applyFormulaConstraintsToDatabaseCandidates) candidateWhiteset = candidateWhiteset.filter(formulaConstraints, possibleAdducts.getAdducts(), Ms1Preprocessor.class);
                 if (whiteset.isEmpty()) {
                     whiteset = candidateWhiteset;
                 } else {
