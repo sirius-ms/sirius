@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates;
 import de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidatesPerIonization;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.UseHeuristic;
+import de.unijena.bioinf.elgordo.EnforceElGordoFormula;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.spectraldb.InjectSpectralLibraryMatchFormulas;
@@ -238,6 +239,7 @@ public class Sirius extends Tool<SiriusOptions> {
                 .enforcedFormulaConstraints(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class).getEnforcedAlphabet().toString())
                 .fallbackFormulaConstraints(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class).getFallbackAlphabet().toString())
                 .detectableElements(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class).getAutoDetectionElements().stream().map(Element::getSymbol).collect(Collectors.toList()))
+                .enforceElGordoFormula(PropertyManager.DEFAULTS.createInstanceWithDefaults(EnforceElGordoFormula.class).value)
                 .minScoreToInjectSpecLibMatch(PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectSpectralLibraryMatchFormulas.class).isInjectFormulas()
                         ? PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectSpectralLibraryMatchFormulas.class).getMinScoreToInject() : null)
                 .ilpTimeout(PropertyManager.DEFAULTS.createInstanceWithDefaults(Timeout.class))
