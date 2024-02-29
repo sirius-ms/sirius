@@ -34,4 +34,12 @@ public class ActFingerblastConfigPanel extends ActivatableConfigPanel<Fingerblas
     protected void setButtonEnabled(boolean enabled) {
         setButtonEnabled(enabled, enabled ? "Enable CSI:FingerID search" : "Can't connect to CSI:FingerID server!");
     }
+
+    @Override
+    protected void setComponentsEnabled(boolean enabled) {
+        super.setComponentsEnabled(enabled);
+        if (enabled) {
+            content.refreshPubChem();
+        }
+    }
 }

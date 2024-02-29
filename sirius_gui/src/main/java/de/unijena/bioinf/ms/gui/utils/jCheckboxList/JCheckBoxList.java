@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.utils.jCheckboxList;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -67,7 +68,7 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
                 Rectangle bounds = getCellBounds(index, index);
                 if (index != -1) {
                     JCheckBox checkbox = getModel().getElementAt(index);
-                    if (checkbox != null) {
+                    if (checkbox != null && checkbox.isEnabled()) {
                         //check if the click is on checkbox (including the label)
                         boolean inCheckbox = getComponentOrientation().isLeftToRight() ? e.getX() < bounds.x + checkbox.getPreferredSize().getWidth() : e.getX() > bounds.x + checkbox.getPreferredSize().getWidth();
                         //change the state of the checkbox on double click or if the click is on checkbox (including the label)
@@ -133,13 +134,38 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
     }
 
     private void setItemChecked(E item, boolean checked) {
+        CheckBoxListItem<E> checkboxListItem = getCheckboxListItem(item);
+        if (checkboxListItem != null) {
+            checkboxListItem.setSelected(checked);
+        }
+    }
+
+    @Nullable
+    private CheckBoxListItem<E> getCheckboxListItem(E item) {
         Enumeration<CheckBoxListItem<E>> dlm = ((DefaultListModel<CheckBoxListItem<E>>) getModel()).elements();
 
         while (dlm.hasMoreElements()) {
             CheckBoxListItem<E> checkboxListItem = dlm.nextElement();
             if (equals.apply(checkboxListItem.getValue(), item)) {
-                checkboxListItem.setSelected(checked);
+                return checkboxListItem;
             }
+        }
+        return null;
+    }
+
+    public void setItemEnabled(E item, boolean enabled) {
+        CheckBoxListItem<E> checkboxListItem = getCheckboxListItem(item);
+        if (checkboxListItem != null) {
+            checkboxListItem.setEnabled(enabled);
+        }
+        revalidate();
+        repaint();
+    }
+
+    public void setItemToolTip(E item, String tooltip) {
+        CheckBoxListItem<E> checkboxListItem = getCheckboxListItem(item);
+        if (checkboxListItem != null) {
+            checkboxListItem.setToolTipText(tooltip);
         }
     }
 
