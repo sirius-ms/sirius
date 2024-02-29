@@ -26,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.spectraldb.InjectHighSpectraMatchFormulas;
+import de.unijena.bioinf.spectraldb.InjectSpectralLibraryMatchFormulas;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
@@ -66,7 +66,7 @@ public class FingerprintPrediction extends Tool<FingerprintOptions> {
     public Map<String, String> asConfigMap() {
         return new NullCheckMapBuilder()
                 .putNonNull("FormulaResultThreshold", useScoreThreshold)
-                .putNonNull("InjectHighSpectraMatchFormulas.alwaysPredict", alwaysPredictHighRefMatches)
+                .putNonNull("InjectSpectralLibraryMatchFormulas.alwaysPredict", alwaysPredictHighRefMatches)
                 .toUnmodifiableMap();
     }
 
@@ -77,6 +77,6 @@ public class FingerprintPrediction extends Tool<FingerprintOptions> {
         return FingerprintPrediction.builder()
                 .enabled(true)
                 .alwaysPredictHighRefMatches(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaResultThreshold.class).useThreshold())
-                .useScoreThreshold(PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectHighSpectraMatchFormulas.class).isAlwaysPredict());
+                .useScoreThreshold(PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectSpectralLibraryMatchFormulas.class).isAlwaysPredict());
     }
 }
