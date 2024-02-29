@@ -43,9 +43,8 @@ public interface LCMSParser {
      * Parse an LC/GC-MS file. The consumers need to handle to actual object storing and are required
      * to assign the object IDs.
      *
-     * @param file              Input file.
-     * @param runBuilder        Builder for {@link Run}, should be initialized with default values
-     *                          for {@code Run.runType} and {@code Run.chromatography}.
+     * @param file Input file.
+     * @param run  Initial {@link Run} isntance with default values for {@code Run.runType} and {@code Run.chromatography}.
      */
     ProcessedSample parse(
             File file,
