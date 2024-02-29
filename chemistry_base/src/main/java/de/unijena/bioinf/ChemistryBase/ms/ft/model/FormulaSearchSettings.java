@@ -14,13 +14,13 @@ public class FormulaSearchSettings implements Ms2ExperimentAnnotation {
     /**
      * min mass from which to perform bottom-up search (Infinity to disable)
      */
-    public final double enableBottomUpFromMass;
+    public final double performBottomUpAboveMz;
 
 
     /**
      * max mass until which to use de novo decompotion (0 to disable)
      */
-    public final double disableDeNovoAboveMass;
+    public final double performDeNovoBelowMz;
 
     /**
      * if true, formula candidates from inputfiles are always prioritized and any other candidates from database or de novo generation ignored.
@@ -37,12 +37,12 @@ public class FormulaSearchSettings implements Ms2ExperimentAnnotation {
     /**
      * apply {@link de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints} (chemical alphabet / element filter, and filters such as {@link de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter}) to formulas from bottum-up search
      */
-    public final boolean applyFormulaContraintsToBottomUp; //todo ElementFilter: should we name it formulaConstraints (the class we apply internally) or elementFilter (the way we communicate it to the outside)
+    public final boolean applyFormulaConstraintsToBottomUp;
 
     /**
      * apply {@link de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints} (chemical alphabet / element filter, and filters such as {@link de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter}) to candiate lists provided by the user or database search through {@link CandidateFormulas}
      */
-    public final boolean applyFormulaContraintsToCandidateLists; //todo ElementFilter: see above
+    public final boolean applyFormulaConstraintsToDatabaseCandidates;
 
     protected final static FormulaSearchSettings
             BOTTOM_UP_ONLY = new FormulaSearchSettings(0,0, false, false, true, false),
@@ -58,29 +58,29 @@ public class FormulaSearchSettings implements Ms2ExperimentAnnotation {
     }
 
     @DefaultInstanceProvider
-    public static FormulaSearchSettings newInstance(@DefaultProperty(propertyKey = "enableBottomUpFromMass") double enableBottomUpFromMass, @DefaultProperty(propertyKey = "disableDeNovoAboveMass") double disableDeNovoAboveMass, @DefaultProperty(propertyKey = "applyFormulaContraintsToBottomUp") boolean applyFormulaContraintsToBottomUp, @DefaultProperty(propertyKey = "applyFormulaContraintsToCandidateLists") boolean applyFormulaContraintsToCandidateLists) {
-        return new FormulaSearchSettings(enableBottomUpFromMass, disableDeNovoAboveMass, applyFormulaContraintsToBottomUp, applyFormulaContraintsToCandidateLists);
+    public static FormulaSearchSettings newInstance(@DefaultProperty(propertyKey = "performBottomUpAboveMz") double performBottomUpAboveMz, @DefaultProperty(propertyKey = "performDeNovoBelowMz") double performDeNovoBelowMz, @DefaultProperty(propertyKey = "applyFormulaConstraintsToBottomUp") boolean applyFormulaConstraintsToBottomUp, @DefaultProperty(propertyKey = "applyFormulaConstraintsToDatabaseCandidates") boolean applyFormulaConstraintsToDatabaseCandidates) {
+        return new FormulaSearchSettings(performBottomUpAboveMz, performDeNovoBelowMz, applyFormulaConstraintsToBottomUp, applyFormulaConstraintsToDatabaseCandidates);
     }
 
-    public FormulaSearchSettings(double enableBottomUpFromMass, double disableDeNovoAboveMass, boolean  applyFormulaContraintsToBottomUp, boolean applyFormulaContraintsToCandidateLists) {
-        this(enableBottomUpFromMass, disableDeNovoAboveMass, applyFormulaContraintsToBottomUp, applyFormulaContraintsToCandidateLists, true, false);
+    public FormulaSearchSettings(double performBottomUpAboveMz, double performDeNovoBelowMz, boolean  applyFormulaConstraintsToBottomUp, boolean applyFormulaConstraintsToDatabaseCandidates) {
+        this(performBottomUpAboveMz, performDeNovoBelowMz, applyFormulaConstraintsToBottomUp, applyFormulaConstraintsToDatabaseCandidates, true, false);
     }
 
-    private FormulaSearchSettings(double enableBottomUpFromMass, double disableDeNovoAboveMass, boolean applyFormulaContraintsToBottomUp, boolean applyFormulaContraintsToCandidateLists, boolean prioritizeAndForceCandidatesFromInputFiles, boolean ignoreMassDeviationForCandidateList) {
-        this.enableBottomUpFromMass = enableBottomUpFromMass;
-        this.disableDeNovoAboveMass = disableDeNovoAboveMass;
+    private FormulaSearchSettings(double performBottomUpAboveMz, double performDeNovoBelowMz, boolean applyFormulaConstraintsToBottomUp, boolean applyFormulaConstraintsToDatabaseCandidates, boolean prioritizeAndForceCandidatesFromInputFiles, boolean ignoreMassDeviationForCandidateList) {
+        this.performBottomUpAboveMz = performBottomUpAboveMz;
+        this.performDeNovoBelowMz = performDeNovoBelowMz;
         this.prioritizeAndForceCandidatesFromInputFiles = prioritizeAndForceCandidatesFromInputFiles;
-        this.applyFormulaContraintsToBottomUp = applyFormulaContraintsToBottomUp;
-        this.applyFormulaContraintsToCandidateLists = applyFormulaContraintsToCandidateLists;
+        this.applyFormulaConstraintsToBottomUp = applyFormulaConstraintsToBottomUp;
+        this.applyFormulaConstraintsToDatabaseCandidates = applyFormulaConstraintsToDatabaseCandidates;
         this.ignoreMassDeviationForCandidateList = ignoreMassDeviationForCandidateList;
     }
 
     public boolean useBottomUpFor(double ionMass) {
-        return ionMass > enableBottomUpFromMass;
+        return ionMass > performBottomUpAboveMz;
     }
 
     public boolean useDeNovoFor(double mass) {
-        return mass <= disableDeNovoAboveMass;
+        return mass <= performDeNovoBelowMz;
     }
 
     public boolean useDeNovoOrBottomUpFor(double mass) {
