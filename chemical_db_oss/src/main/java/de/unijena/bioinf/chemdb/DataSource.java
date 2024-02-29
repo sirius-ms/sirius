@@ -24,14 +24,13 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-// BIO FLAG IS: 4294434748
+// BIO FLAG IS: 4294401852
 //ATTENTION Do not use `:{}[];` in the String here because that might break parsing
 //Names: names should be descriptive and short because they have to be rendered in the GUI
 //Flags/BitSets: Every bit that is set in our postgres db should also represented as DataSource here
 public enum DataSource {
 
     ALL("All included DBs", 0, null, null, null, null),
-    ALL_BUT_INSILICO("All but combinatorial DBs", 2|makeBIOFLAG(), null, null, null, null),
     //the BIO flag is a collection of many bio-like databases. Furthermore, there was a flag 128 in the PSQL structure database which was called bio. This is now obsolete and replaced by a combined flags.
     BIO("Bio Database", makeBIOFLAG(), null, null, null, null), //todo make distinction to normal databases more clear
     PUBCHEM("PubChem", 2, "compound_id","pubchem", "https://pubchem.ncbi.nlm.nih.gov/compound/%s", new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
@@ -46,7 +45,6 @@ public enum DataSource {
     MACONDA("Maconda", 1024, "maconda_id","maconda", "http://www.maconda.bham.ac.uk/contaminant.php?id=%d", new Publication("Weber RJM et al., MaConDa: a publicly accessible mass spectrometry contaminants database. Bioinformatics. 2012", "10.1093/bioinformatics/bts527")),
     METACYC("Biocyc", 2048, "unique_id","biocyc", "http://biocyc.org/compound?orgid=META&id=%s", new Publication("Caspi R et al., The MetaCyc database of metabolic pathways and enzymes - a 2019 update, Nucleic Acids Res, 2020", "10.1093/nar/gkz862")),
     GNPS("GNPS", 4096, "id","gnps", "https://gnps.ucsd.edu/ProteoSAFe/gnpslibraryspectrum.jsp?SpectrumID=%s", null), //todo this should be part only of a spectral library search tool.
-    ZINCBIO("ZINC bio", 8192, null,null, "http://zinc.docking.org/substances/%s",new Publication("Sterling Tand Irwin JJ, ZINC 15 - Ligand Discovery for Everyone. J Chem Inf Model. 2015", "10.1021/acs.jcim.5b00559")),
     TRAIN("Training Set", 16384, null, null, null, null), //not part of the PSQL database anymore but assigned for each predictor individually //todo but we still need that flag, right?
     YMDB("YMDB", 65536, "ymdb_id","ymdb", "http://www.ymdb.ca/compounds/%s", new Publication("Ramirez-Gaona M et al., YMDB 2.0: a significantly expanded version of the yeast metabolome database. Nucleic Acids Res. 2017", "10.1093/nar/gkw1058")),
     PLANTCYC("Plantcyc", 131072, "compound_id","plantcyc",  "http://pmn.plantcyc.org/compound?orgid=PLANT&id=%s", new Publication("Hawkins C et al., Plant Metabolic Network 15: A resource of genome-wide metabolism databases for 126 plants and algae. J Integr Plant Biol. 2021", "10.1111/jipb.13163")),
@@ -71,10 +69,11 @@ public enum DataSource {
 /*"https://www.lipidmaps.org/rest/compound/abbrev/%s/all/txt"*/ //todo which is the correect query?
 
 
+    //todo the following flags are burned until we update our PSQL and blob database:  8192, 8589934592L, 17179869184L, 34359738368L. 128, 32768 and 524288 are free
     //everything with flags greater equal to 2**33 may be databases of artificial structures and have to be added separately to bio
-    KEGGMINE("KEGG MINE", 8589934592L, null,null, null, 8589934592L | 256L, true, new Publication("Jeffryes JG et al., MINEs: Open access databases of computationally predicted enzyme promiscuity products for untargeted metabolomics. J Cheminf. 2015", "10.1186/s13321-015-0087-1")),
-    ECOCYCMINE("EcoCyc MINE", 17179869184L, null,null, null, 17179869184L | 2048L, true, new Publication("Jeffryes JG et al., MINEs: Open access databases of computationally predicted enzyme promiscuity products for untargeted metabolomics. J Cheminf. 2015", "10.1186/s13321-015-0087-1")),
-    YMDBMINE("YMDB MINE", 34359738368L, null,null, null, 34359738368L | 65536L, true, new Publication("Jeffryes JG et al., MINEs: Open access databases of computationally predicted enzyme promiscuity products for untargeted metabolomics. J Cheminf. 2015", "10.1186/s13321-015-0087-1")),
+//    KEGGMINE("KEGG MINE", 8589934592L, null,null, null, 8589934592L | 256L, true, new Publication("Jeffryes JG et al., MINEs: Open access databases of computationally predicted enzyme promiscuity products for untargeted metabolomics. J Cheminf. 2015", "10.1186/s13321-015-0087-1")),
+//    ECOCYCMINE("EcoCyc MINE", 17179869184L, null,null, null, 17179869184L | 2048L, true, new Publication("Jeffryes JG et al., MINEs: Open access databases of computationally predicted enzyme promiscuity products for untargeted metabolomics. J Cheminf. 2015", "10.1186/s13321-015-0087-1")),
+//    YMDBMINE("YMDB MINE", 34359738368L, null,null, null, 34359738368L | 65536L, true, new Publication("Jeffryes JG et al., MINEs: Open access databases of computationally predicted enzyme promiscuity products for untargeted metabolomics. J Cheminf. 2015", "10.1186/s13321-015-0087-1")),
 
     MASSBANK("MassBank", 68719476736L, null, null, "https://massbank.eu/MassBank/RecordDisplay?id=%s", null),
     //////////////////////////////////////////
@@ -152,18 +151,19 @@ public enum DataSource {
         return Arrays.stream(DataSource.values()).filter(it -> it != ALL && !it.mines).toArray(DataSource[]::new);
     }
 
-    public static long bioOrAll(boolean searchInBio) {
-        return searchInBio ? DataSource.BIO.flag() : DataSource.ALL_BUT_INSILICO.flag();
-    }
-    // 4294434748
+    //todo what about LIPID? Is this a search DB?
+    private final static DataSource[] BioDatabases = new DataSource[] {MESH, HMDB, KNAPSACK,CHEBI,KEGG,HSDB,MACONDA,METACYC,GNPS,TRAIN,YMDB,PLANTCYC,NORMAN,SUPERNATURAL,COCONUT,BloodExposome,TeroMol,PUBCHEMANNOTATIONBIO,PUBCHEMANNOTATIONDRUG,PUBCHEMANNOTATIONSAFETYANDTOXIC,PUBCHEMANNOTATIONFOOD,LOTUS,FooDB,MiMeDB,LIPIDMAPS,LIPID};
+
+    // 4294401852
     private static long makeBIOFLAG() {
         long bioflag = 0L;
         for (int i = 2; i < 32; ++i) {
-            if (i == 6 || i == 13 || i == 19) continue; //PubMed and Zinc_bio should not be included into bio database
+            if (i==6 || i==7 || i==13 || i==15 || i==19) continue; //PubMed and unused flags not included in bio database flag
             bioflag |= (1L << i);
         }
         return bioflag;
     }
+
 
     /**
      * to reference a publication for a specific data source
