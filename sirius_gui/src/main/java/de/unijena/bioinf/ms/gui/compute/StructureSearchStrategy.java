@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
@@ -14,22 +13,6 @@ import javax.swing.*;
 import java.util.List;
 
 public class StructureSearchStrategy extends JPanel {
-
-    public enum Strategy implements DescriptiveOptions {
-        PUBCHEM_AS_FALLBACK("Search in the specified set of databases and use the PubChem database as fallback if no good hit is available"), //todo Workflow: this should forbid PubChem in the list of DBs
-        NO_FALLBACK("Search in the specified set of databases");
-
-        private final String description;
-
-        Strategy(String description) {
-            this.description = description;
-        }
-
-        @Override
-        public String getDescription() {
-            return description;
-        }
-    }
 
     protected JCheckboxListPanel<CustomDataSources.Source> searchDBList;
 
