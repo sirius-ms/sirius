@@ -13,11 +13,15 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
+import java.util.Objects;
+import java.util.Arrays;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonTypeName;
+import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
-import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
  * 
@@ -38,6 +42,7 @@ public class UseHeuristic {
   }
 
   public UseHeuristic useHeuristicAboveMz(Integer useHeuristicAboveMz) {
+    
     this.useHeuristicAboveMz = useHeuristicAboveMz;
     return this;
   }
@@ -63,6 +68,7 @@ public class UseHeuristic {
 
 
   public UseHeuristic useOnlyHeuristicAboveMz(Integer useOnlyHeuristicAboveMz) {
+    
     this.useOnlyHeuristicAboveMz = useOnlyHeuristicAboveMz;
     return this;
   }

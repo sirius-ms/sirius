@@ -235,7 +235,7 @@ No authorization required
 
 ## getAlignedFeatures
 
-> PageAlignedFeature getAlignedFeatures(projectId, page, size, sort, searchQuery, querySyntax, optFields)
+> PageAlignedFeature getAlignedFeatures(projectId, page, size, sort, optFields)
 
 Get all available features (aligned over runs) in the given project-space.
 
@@ -261,11 +261,9 @@ public class Example {
         Integer page = 0; // Integer | Zero-based page index (0..N)
         Integer size = 20; // Integer | The size of the page to be returned
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-        String searchQuery = "searchQuery_example"; // String | optional search query in specified format
-        SearchQueryType querySyntax = SearchQueryType.fromValue("LUCENE"); // SearchQueryType | query syntax used fpr searchQuery
         List<AlignedFeatureOptField> optFields = Arrays.asList(); // List<AlignedFeatureOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PageAlignedFeature result = apiInstance.getAlignedFeatures(projectId, page, size, sort, searchQuery, querySyntax, optFields);
+            PageAlignedFeature result = apiInstance.getAlignedFeatures(projectId, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getAlignedFeatures");
@@ -287,8 +285,6 @@ public class Example {
 | **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
 | **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
 | **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
-| **searchQuery** | **String**| optional search query in specified format | [optional] |
-| **querySyntax** | [**SearchQueryType**](.md)| query syntax used fpr searchQuery | [optional] [enum: LUCENE] |
 | **optFields** | [**List&lt;AlignedFeatureOptField&gt;**](AlignedFeatureOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 
 ### Return type
@@ -737,7 +733,7 @@ No authorization required
 
 ## getFormulaCandidates
 
-> PageFormulaCandidate getFormulaCandidates(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax, optFields)
+> PageFormulaCandidate getFormulaCandidates(projectId, alignedFeatureId, page, size, sort, optFields)
 
 List of all FormulaResultContainers available for this feature with minimal information.
 
@@ -764,11 +760,9 @@ public class Example {
         Integer page = 0; // Integer | Zero-based page index (0..N)
         Integer size = 20; // Integer | The size of the page to be returned
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-        String searchQuery = "searchQuery_example"; // String | optional search query in specified format
-        SearchQueryType querySyntax = SearchQueryType.fromValue("LUCENE"); // SearchQueryType | query syntax used fpr searchQuery
         List<FormulaCandidateOptField> optFields = Arrays.asList(); // List<FormulaCandidateOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PageFormulaCandidate result = apiInstance.getFormulaCandidates(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax, optFields);
+            PageFormulaCandidate result = apiInstance.getFormulaCandidates(projectId, alignedFeatureId, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getFormulaCandidates");
@@ -791,8 +785,6 @@ public class Example {
 | **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
 | **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
 | **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
-| **searchQuery** | **String**| optional search query in specified format | [optional] |
-| **querySyntax** | [**SearchQueryType**](.md)| query syntax used fpr searchQuery | [optional] [enum: LUCENE] |
 | **optFields** | [**List&lt;FormulaCandidateOptField&gt;**](FormulaCandidateOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 
 ### Return type
@@ -1163,7 +1155,7 @@ No authorization required
 
 ## getSpectralLibraryMatches
 
-> PageSpectralLibraryMatch getSpectralLibraryMatches(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax, optFields)
+> PageSpectralLibraryMatch getSpectralLibraryMatches(projectId, alignedFeatureId, page, size, sort, optFields)
 
 List of spectral library matches for the given &#39;alignedFeatureId&#39;.
 
@@ -1190,11 +1182,9 @@ public class Example {
         Integer page = 0; // Integer | Zero-based page index (0..N)
         Integer size = 20; // Integer | The size of the page to be returned
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-        String searchQuery = "searchQuery_example"; // String | optional search query in specified format
-        SearchQueryType querySyntax = SearchQueryType.fromValue("LUCENE"); // SearchQueryType | query syntax used fpr searchQuery
         List<SpectralLibraryMatchOptField> optFields = Arrays.asList(); // List<SpectralLibraryMatchOptField> | 
         try {
-            PageSpectralLibraryMatch result = apiInstance.getSpectralLibraryMatches(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax, optFields);
+            PageSpectralLibraryMatch result = apiInstance.getSpectralLibraryMatches(projectId, alignedFeatureId, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getSpectralLibraryMatches");
@@ -1217,8 +1207,6 @@ public class Example {
 | **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
 | **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
 | **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
-| **searchQuery** | **String**| optional search query in specified format | [optional] |
-| **querySyntax** | [**SearchQueryType**](.md)| query syntax used fpr searchQuery | [optional] [enum: LUCENE] |
 | **optFields** | [**List&lt;SpectralLibraryMatchOptField&gt;**](SpectralLibraryMatchOptField.md)|  | [optional] |
 
 ### Return type
@@ -1389,7 +1377,7 @@ No authorization required
 
 ## getStructureCandidates
 
-> PageStructureCandidateFormula getStructureCandidates(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax, optFields)
+> PageStructureCandidateFormula getStructureCandidates(projectId, alignedFeatureId, page, size, sort, optFields)
 
 List of StructureCandidates for the given &#39;alignedFeatureId&#39; with minimal information.
 
@@ -1416,11 +1404,9 @@ public class Example {
         Integer page = 0; // Integer | Zero-based page index (0..N)
         Integer size = 20; // Integer | The size of the page to be returned
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-        String searchQuery = "searchQuery_example"; // String | optional search query in specified format
-        SearchQueryType querySyntax = SearchQueryType.fromValue("LUCENE"); // SearchQueryType | query syntax used fpr searchQuery
         List<StructureCandidateOptField> optFields = Arrays.asList(); // List<StructureCandidateOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PageStructureCandidateFormula result = apiInstance.getStructureCandidates(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax, optFields);
+            PageStructureCandidateFormula result = apiInstance.getStructureCandidates(projectId, alignedFeatureId, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getStructureCandidates");
@@ -1443,8 +1429,6 @@ public class Example {
 | **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
 | **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
 | **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
-| **searchQuery** | **String**| optional search query in specified format | [optional] |
-| **querySyntax** | [**SearchQueryType**](.md)| query syntax used fpr searchQuery | [optional] [enum: LUCENE] |
 | **optFields** | [**List&lt;StructureCandidateOptField&gt;**](StructureCandidateOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 
 ### Return type
@@ -1469,7 +1453,7 @@ No authorization required
 
 ## getStructureCandidatesByFormula
 
-> PageStructureCandidateScored getStructureCandidatesByFormula(projectId, alignedFeatureId, formulaId, page, size, sort, searchQuery, querySyntax, optFields)
+> PageStructureCandidateScored getStructureCandidatesByFormula(projectId, alignedFeatureId, formulaId, page, size, sort, optFields)
 
 List of StructureCandidates the given &#39;formulaId&#39; with minimal information.
 
@@ -1497,11 +1481,9 @@ public class Example {
         Integer page = 0; // Integer | Zero-based page index (0..N)
         Integer size = 20; // Integer | The size of the page to be returned
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-        String searchQuery = "searchQuery_example"; // String | optional search query in specified format
-        SearchQueryType querySyntax = SearchQueryType.fromValue("LUCENE"); // SearchQueryType | query syntax used fpr searchQuery
         List<StructureCandidateOptField> optFields = Arrays.asList(); // List<StructureCandidateOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            PageStructureCandidateScored result = apiInstance.getStructureCandidatesByFormula(projectId, alignedFeatureId, formulaId, page, size, sort, searchQuery, querySyntax, optFields);
+            PageStructureCandidateScored result = apiInstance.getStructureCandidatesByFormula(projectId, alignedFeatureId, formulaId, page, size, sort, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getStructureCandidatesByFormula");
@@ -1525,8 +1507,6 @@ public class Example {
 | **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
 | **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
 | **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
-| **searchQuery** | **String**| optional search query in specified format | [optional] |
-| **querySyntax** | [**SearchQueryType**](.md)| query syntax used fpr searchQuery | [optional] [enum: LUCENE] |
 | **optFields** | [**List&lt;StructureCandidateOptField&gt;**](StructureCandidateOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 
 ### Return type

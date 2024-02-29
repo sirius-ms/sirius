@@ -57,6 +57,7 @@ public class Sirius extends Tool<SiriusOptions> {
     @Schema(enumAsRef = true, nullable = true)
     enum Instrument {QTOF, ORBITRAP} //todo NewWorkflow: we don't have a FTICR profile anymore. in the GUI this is just the orbitrap with lower ppm. but 'ppm' is set separately here. I assume there is currently no better way to do this.
 
+    //region General measurement parameters
     /**
      * Instrument specific profile for internal algorithms
      * Just select what comes closest to the instrument that was used for measuring the data.
@@ -94,10 +95,10 @@ public class Sirius extends Tool<SiriusOptions> {
      * When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.
      */
     Boolean filterByIsotopePattern;
+    //endregion
 
-    ////////////////////////////////////////////////////////////////////////////
-    //// molecular formula generation and search ///////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////
+
+    //region Molecular formula generation and search
     /**
      * El Gordo may predict that an MS/MS spectrum is a lipid spectrum. If enabled, the corresponding molecular formula will be enforeced as molecular formula candidate.
      */
@@ -126,10 +127,10 @@ public class Sirius extends Tool<SiriusOptions> {
      * If true, the constraints are as well applied to database search and bottom up search.
      */
     Boolean applyFormulaConstraintsToDBAndBottomUpSearch;
+    //endregion
 
-    /////////////////////////////////////////////////////////////////////
-    //// formula constraints ///////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////
+
+    //region Formula Constraints
     /**
      * These configurations hold the information how to autodetect elements based on the given formula constraints.
      * Note: If the compound is already assigned to a specific molecular formula, this annotation is ignored.
@@ -153,10 +154,10 @@ public class Sirius extends Tool<SiriusOptions> {
      * Detectable: Detectable elements are added to the chemical alphabet, if there are indications for them (e.g. in isotope pattern)
      */
     List<String> detectableElements;
+    //endregion
 
-    ////////////////////////////////////////////////////////////////////////////
-    ///// fragmentation tree computation ///////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////
+
+    //region Fragmentation tree computation
     /**
      * Timout settings for the ILP solver used for fragmentation tree computation
      * secondsPerInstance: Set the maximum number of seconds for computing a single compound. Set to 0 to disable the time constraint.
@@ -169,17 +170,17 @@ public class Sirius extends Tool<SiriusOptions> {
      * useOnlyHeuristicAboveMz:For compounds above this threshold fragmentation trees will be computed heuristically.
      */
     UseHeuristic useHeuristic;
+    //endregion
 
-    ////////////////////////////////////////////////////////////////////////////
-    ///// spectral library serach //////////////////////////////////////////////
-    ////////////////////////////////////////////////////////////////////////////
+
+    //region Spectral library search
     /**
      * Similarity Threshold to inject formula candidates no matter which score/rank they have or which filter settings are applied.
      * If threshold >= 0 formulas candidates with reference spectrum similarity above the threshold will be injected.
      * If NULL injection is disables.
      */
     Double minScoreToInjectSpecLibMatch;
-
+    //endregion
 
     private Sirius() {
         super(SiriusOptions.class);
@@ -204,8 +205,8 @@ public class Sirius extends Tool<SiriusOptions> {
 
                 .putNonNull("MS2MassDeviation.allowedMassDeviation", massAccuracyMS2ppm, it -> it + " ppm")
 
-                .putNonNull("FormulaSearchSettings.performBottomUpAboveMz", (performBottomUpSearch==null || performBottomUpSearch==false) ? String.valueOf(Double.POSITIVE_INFINITY) : "0")
-                .putNonNull("FormulaSearchSettings.performDeNovoBelowMz", (performDenovoBelowMz==null) ? "0" : String.valueOf(performDenovoBelowMz))
+                .putNonNull("FormulaSearchSettings.performBottomUpAboveMz", (performBottomUpSearch == null || !performBottomUpSearch) ? String.valueOf(Double.POSITIVE_INFINITY) : "0")
+                .putNonNull("FormulaSearchSettings.performDeNovoBelowMz", (performDenovoBelowMz == null) ? "0" : String.valueOf(performDenovoBelowMz))
                 .putNonNull("FormulaSearchDB", formulaSearchDBs, f -> String.join(",", f))
 
                 .putNonNull("FormulaSearchSettings.applyFormulaConstraintsToBottomUp", applyFormulaConstraintsToDBAndBottomUpSearch)
@@ -224,6 +225,8 @@ public class Sirius extends Tool<SiriusOptions> {
     public static Sirius buildDefault() {
         return builderWithDefaults().build();
     }
+    // This represents the DEFAULT formula strategy from the GUI. more might be added later (default, database denovo),
+    // but probably on the workflow level instead of just formula generation -> see JobsSubmission
     public static Sirius.SiriusBuilder<?,?> builderWithDefaults() {
         return Sirius.builder()
                 .profile(Instrument.QTOF)
@@ -235,7 +238,7 @@ public class Sirius extends Tool<SiriusOptions> {
                 .performBottomUpSearch(true)
                 .performDenovoBelowMz(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSearchSettings.class).performDeNovoBelowMz)
                 .formulaSearchDBs(List.of())
-                .applyFormulaConstraintsToDBAndBottomUpSearch(false) //todo not 100% sure about that since in principle API allows to do all 3 at once, database + bottom up + denovo
+                .applyFormulaConstraintsToDBAndBottomUpSearch(false)
                 .enforcedFormulaConstraints(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class).getEnforcedAlphabet().toString())
                 .fallbackFormulaConstraints(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class).getFallbackAlphabet().toString())
                 .detectableElements(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class).getAutoDetectionElements().stream().map(Element::getSymbol).collect(Collectors.toList()))

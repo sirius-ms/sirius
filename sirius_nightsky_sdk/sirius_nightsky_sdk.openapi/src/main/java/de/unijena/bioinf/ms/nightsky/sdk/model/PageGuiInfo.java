@@ -35,14 +35,14 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonPropertyOrder({
   PageGuiInfo.JSON_PROPERTY_TOTAL_PAGES,
   PageGuiInfo.JSON_PROPERTY_TOTAL_ELEMENTS,
-  PageGuiInfo.JSON_PROPERTY_FIRST,
   PageGuiInfo.JSON_PROPERTY_LAST,
+  PageGuiInfo.JSON_PROPERTY_FIRST,
   PageGuiInfo.JSON_PROPERTY_SORT,
+  PageGuiInfo.JSON_PROPERTY_SIZE,
+  PageGuiInfo.JSON_PROPERTY_CONTENT,
   PageGuiInfo.JSON_PROPERTY_NUMBER,
   PageGuiInfo.JSON_PROPERTY_NUMBER_OF_ELEMENTS,
   PageGuiInfo.JSON_PROPERTY_PAGEABLE,
-  PageGuiInfo.JSON_PROPERTY_SIZE,
-  PageGuiInfo.JSON_PROPERTY_CONTENT,
   PageGuiInfo.JSON_PROPERTY_EMPTY
 })
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
@@ -53,14 +53,20 @@ public class PageGuiInfo {
   public static final String JSON_PROPERTY_TOTAL_ELEMENTS = "totalElements";
   private Long totalElements;
 
-  public static final String JSON_PROPERTY_FIRST = "first";
-  private Boolean first;
-
   public static final String JSON_PROPERTY_LAST = "last";
   private Boolean last;
 
+  public static final String JSON_PROPERTY_FIRST = "first";
+  private Boolean first;
+
   public static final String JSON_PROPERTY_SORT = "sort";
   private SortObject sort;
+
+  public static final String JSON_PROPERTY_SIZE = "size";
+  private Integer size;
+
+  public static final String JSON_PROPERTY_CONTENT = "content";
+  private List<GuiInfo> content;
 
   public static final String JSON_PROPERTY_NUMBER = "number";
   private Integer number;
@@ -70,12 +76,6 @@ public class PageGuiInfo {
 
   public static final String JSON_PROPERTY_PAGEABLE = "pageable";
   private PageableObject pageable;
-
-  public static final String JSON_PROPERTY_SIZE = "size";
-  private Integer size;
-
-  public static final String JSON_PROPERTY_CONTENT = "content";
-  private List<GuiInfo> content;
 
   public static final String JSON_PROPERTY_EMPTY = "empty";
   private Boolean empty;
@@ -135,32 +135,6 @@ public class PageGuiInfo {
   }
 
 
-  public PageGuiInfo first(Boolean first) {
-    
-    this.first = first;
-    return this;
-  }
-
-   /**
-   * Get first
-   * @return first
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FIRST)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Boolean isFirst() {
-    return first;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_FIRST)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFirst(Boolean first) {
-    this.first = first;
-  }
-
-
   public PageGuiInfo last(Boolean last) {
     
     this.last = last;
@@ -187,6 +161,32 @@ public class PageGuiInfo {
   }
 
 
+  public PageGuiInfo first(Boolean first) {
+    
+    this.first = first;
+    return this;
+  }
+
+   /**
+   * Get first
+   * @return first
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_FIRST)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isFirst() {
+    return first;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_FIRST)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setFirst(Boolean first) {
+    this.first = first;
+  }
+
+
   public PageGuiInfo sort(SortObject sort) {
     
     this.sort = sort;
@@ -210,6 +210,66 @@ public class PageGuiInfo {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSort(SortObject sort) {
     this.sort = sort;
+  }
+
+
+  public PageGuiInfo size(Integer size) {
+    
+    this.size = size;
+    return this;
+  }
+
+   /**
+   * Get size
+   * @return size
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_SIZE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Integer getSize() {
+    return size;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SIZE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setSize(Integer size) {
+    this.size = size;
+  }
+
+
+  public PageGuiInfo content(List<GuiInfo> content) {
+    
+    this.content = content;
+    return this;
+  }
+
+  public PageGuiInfo addContentItem(GuiInfo contentItem) {
+    if (this.content == null) {
+      this.content = new ArrayList<>();
+    }
+    this.content.add(contentItem);
+    return this;
+  }
+
+   /**
+   * Get content
+   * @return content
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_CONTENT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public List<GuiInfo> getContent() {
+    return content;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_CONTENT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setContent(List<GuiInfo> content) {
+    this.content = content;
   }
 
 
@@ -291,66 +351,6 @@ public class PageGuiInfo {
   }
 
 
-  public PageGuiInfo size(Integer size) {
-    
-    this.size = size;
-    return this;
-  }
-
-   /**
-   * Get size
-   * @return size
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SIZE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Integer getSize() {
-    return size;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_SIZE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSize(Integer size) {
-    this.size = size;
-  }
-
-
-  public PageGuiInfo content(List<GuiInfo> content) {
-    
-    this.content = content;
-    return this;
-  }
-
-  public PageGuiInfo addContentItem(GuiInfo contentItem) {
-    if (this.content == null) {
-      this.content = new ArrayList<>();
-    }
-    this.content.add(contentItem);
-    return this;
-  }
-
-   /**
-   * Get content
-   * @return content
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CONTENT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public List<GuiInfo> getContent() {
-    return content;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_CONTENT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setContent(List<GuiInfo> content) {
-    this.content = content;
-  }
-
-
   public PageGuiInfo empty(Boolean empty) {
     
     this.empty = empty;
@@ -387,20 +387,20 @@ public class PageGuiInfo {
     PageGuiInfo pageGuiInfo = (PageGuiInfo) o;
     return Objects.equals(this.totalPages, pageGuiInfo.totalPages) &&
         Objects.equals(this.totalElements, pageGuiInfo.totalElements) &&
-        Objects.equals(this.first, pageGuiInfo.first) &&
         Objects.equals(this.last, pageGuiInfo.last) &&
+        Objects.equals(this.first, pageGuiInfo.first) &&
         Objects.equals(this.sort, pageGuiInfo.sort) &&
+        Objects.equals(this.size, pageGuiInfo.size) &&
+        Objects.equals(this.content, pageGuiInfo.content) &&
         Objects.equals(this.number, pageGuiInfo.number) &&
         Objects.equals(this.numberOfElements, pageGuiInfo.numberOfElements) &&
         Objects.equals(this.pageable, pageGuiInfo.pageable) &&
-        Objects.equals(this.size, pageGuiInfo.size) &&
-        Objects.equals(this.content, pageGuiInfo.content) &&
         Objects.equals(this.empty, pageGuiInfo.empty);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(totalPages, totalElements, first, last, sort, number, numberOfElements, pageable, size, content, empty);
+    return Objects.hash(totalPages, totalElements, last, first, sort, size, content, number, numberOfElements, pageable, empty);
   }
 
   @Override
@@ -409,14 +409,14 @@ public class PageGuiInfo {
     sb.append("class PageGuiInfo {\n");
     sb.append("    totalPages: ").append(toIndentedString(totalPages)).append("\n");
     sb.append("    totalElements: ").append(toIndentedString(totalElements)).append("\n");
-    sb.append("    first: ").append(toIndentedString(first)).append("\n");
     sb.append("    last: ").append(toIndentedString(last)).append("\n");
+    sb.append("    first: ").append(toIndentedString(first)).append("\n");
     sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
+    sb.append("    size: ").append(toIndentedString(size)).append("\n");
+    sb.append("    content: ").append(toIndentedString(content)).append("\n");
     sb.append("    number: ").append(toIndentedString(number)).append("\n");
     sb.append("    numberOfElements: ").append(toIndentedString(numberOfElements)).append("\n");
     sb.append("    pageable: ").append(toIndentedString(pageable)).append("\n");
-    sb.append("    size: ").append(toIndentedString(size)).append("\n");
-    sb.append("    content: ").append(toIndentedString(content)).append("\n");
     sb.append("    empty: ").append(toIndentedString(empty)).append("\n");
     sb.append("}");
     return sb.toString();

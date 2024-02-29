@@ -28,7 +28,6 @@ import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectDirectoryFilter;
-import de.unijena.bioinf.ms.nightsky.sdk.model.PageProjectInfo;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectInfo;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectInfoOptField;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -43,7 +42,6 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -96,10 +94,7 @@ public class ProjectOpenAction extends AbstractGuiAction {
     public void openProject(@NotNull Path projectPath, @Nullable Boolean closeCurrent) {
         try {
             String pid = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Opening Project...", () -> {
-                        PageProjectInfo projects = gui.getSiriusClient().projects()
-                                .getProjectSpaces(0, Integer.MAX_VALUE, null, null, null);
-
-                        ProjectInfo project = Optional.ofNullable(projects).map(PageProjectInfo::getContent).stream().flatMap(List::stream)
+                        ProjectInfo project =gui.getSiriusClient().projects().getProjectSpaces().stream()
                                 .filter(p -> projectPath.equals(Path.of(p.getLocation()))).findFirst().orElse(null);
 
                         if (project == null)
@@ -129,7 +124,7 @@ public class ProjectOpenAction extends AbstractGuiAction {
                         gui.getMainFrame(), "Open Project", openNewWindowQuestion(), dontAskKey()).isAbort());
 
         Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Loading Project Window...", () -> {
-            gui.getSiriusClient().gui().openGui(projectId, false, null);
+            gui.getSiriusClient().gui().openGui(projectId);
             if (close)
                 gui.close();
         });

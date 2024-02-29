@@ -7,7 +7,6 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.Compound;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundImport;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageCompound;
-import de.unijena.bioinf.ms.nightsky.sdk.model.SearchQueryType;
 
 import java.util.HashMap;
 import java.util.List;
@@ -326,14 +325,12 @@ public class CompoundsApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return PageCompound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCompoundsRequestCreation(String projectId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    private ResponseSpec getCompoundsRequestCreation(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -352,8 +349,6 @@ public class CompoundsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "searchQuery", searchQuery));
-        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "querySyntax", querySyntax));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFieldsFeatures", optFieldsFeatures));
 
@@ -378,16 +373,14 @@ public class CompoundsApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return PageCompound
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageCompound getCompounds(String projectId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public PageCompound getCompounds(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<PageCompound> localVarReturnType = new ParameterizedTypeReference<PageCompound>() {};
-        return getCompoundsRequestCreation(projectId, page, size, sort, searchQuery, querySyntax, optFields, optFieldsFeatures).bodyToMono(localVarReturnType).block();
+        return getCompoundsRequestCreation(projectId, page, size, sort, optFields, optFieldsFeatures).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -398,16 +391,14 @@ public class CompoundsApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return ResponseEntity&lt;PageCompound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageCompound> getCompoundsWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public ResponseEntity<PageCompound> getCompoundsWithHttpInfo(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<PageCompound> localVarReturnType = new ParameterizedTypeReference<PageCompound>() {};
-        return getCompoundsRequestCreation(projectId, page, size, sort, searchQuery, querySyntax, optFields, optFieldsFeatures).toEntity(localVarReturnType).block();
+        return getCompoundsRequestCreation(projectId, page, size, sort, optFields, optFieldsFeatures).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -418,14 +409,12 @@ public class CompoundsApi {
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param optFieldsFeatures The optFieldsFeatures parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCompoundsWithResponseSpec(String projectId, Integer page, Integer size, List<String> sort, String searchQuery, SearchQueryType querySyntax, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
-        return getCompoundsRequestCreation(projectId, page, size, sort, searchQuery, querySyntax, optFields, optFieldsFeatures);
+    public ResponseSpec getCompoundsWithResponseSpec(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        return getCompoundsRequestCreation(projectId, page, size, sort, optFields, optFieldsFeatures);
     }
 }

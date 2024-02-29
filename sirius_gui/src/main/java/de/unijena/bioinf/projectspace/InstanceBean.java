@@ -250,7 +250,7 @@ public class InstanceBean implements SiriusPCS {
 
     public List<FormulaResultBean> getFormulaCandidates() {
         return withIds((pid, fid) -> getClient().features()
-                .getFormulaCandidates(pid, fid, 0, Integer.MAX_VALUE, null, null, SearchQueryType.LUCENE, ensureDefaultOptFields(null)))
+                .getFormulaCandidates(pid, fid, 0, Integer.MAX_VALUE, null, ensureDefaultOptFields(null)))
                 .getContent().stream()
                 .map(formulaCandidate -> new FormulaResultBean(formulaCandidate, this))
                 .toList();
@@ -284,7 +284,7 @@ public class InstanceBean implements SiriusPCS {
 
     public PageStructureCandidateFormula getStructureCandidatesPage(int pageNum, int pageSize) {
         return withIds((pid, fid) -> getClient().features()
-                .getStructureCandidates(pid, fid, pageNum, pageSize, null, null, SearchQueryType.LUCENE,
+                .getStructureCandidates(pid, fid, pageNum, pageSize, null,
                         List.of(StructureCandidateOptField.DBLINKS, StructureCandidateOptField.FINGERPRINT)));
     }
 
@@ -316,7 +316,7 @@ public class InstanceBean implements SiriusPCS {
 
     protected PageSpectralLibraryMatch getSpectralSearchResultsPage(int pageNum, int pageSize) {
         return withIds((pid, fid) -> getClient().features()
-                .getSpectralLibraryMatchesWithResponseSpec(pid, fid, pageNum, pageSize, null, null, SearchQueryType.LUCENE,
+                .getSpectralLibraryMatchesWithResponseSpec(pid, fid, pageNum, pageSize, null,
                         List.of(SpectralLibraryMatchOptField.REFERENCESPECTRUM)).bodyToMono(PageSpectralLibraryMatch.class).onErrorComplete().block());
     }
 
