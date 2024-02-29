@@ -89,6 +89,7 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
             TraceSegment[] traceSegments, ProcessedSample mergedSample, ProcessedSample[] samplesInTrace, MergedTrace mergedTrace, Ms2MergeStrategy ms2MergeStrategy, Int2LongMap trace2trace, Supplier<F> featureSupplier, IntFunction<F[]> featureArraySupplier
     ) {
         Trace mTrace = mergedTrace.toTrace(mergedSample);
+        final SampleStats stats = mergedSample.getStorage().getStatistics();
 
         // segments for each individual trace
         TraceSegment[][] individualSegments = new TraceSegment[mergedTrace.getSampleIds().size()][];
@@ -117,14 +118,14 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
             if (traceSegments[i] == null)
                 continue;
 
-            F alignedFeatures = buildFeature(mergedTrace.getUid(), mTrace, traceSegments[i], trace2trace, featureSupplier.get());
+            F alignedFeatures = buildFeature(mergedTrace.getUid(), mTrace, traceSegments[i], stats, trace2trace, featureSupplier.get());
             List<Feature> childFeatures = new ArrayList<>();
             for (int k=0; k < individualSegments.length; ++k) {
                 if (individualSegments[k][i] == null)
                     continue;
 
                 int childTraceId = mergedTrace.getTraceIds().getInt(k);
-                Feature feature = buildFeature(childTraceId, mergedSample.getStorage().getMergeStorage().getTrace(childTraceId), individualSegments[k][i], trace2trace, Feature.builder().build());
+                Feature feature = buildFeature(childTraceId, mergedSample.getStorage().getMergeStorage().getTrace(childTraceId), individualSegments[k][i], stats, trace2trace, Feature.builder().build());
                 childFeatures.add(feature);
             }
             if (childFeatures.isEmpty())
@@ -141,6 +142,7 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
             int traceUid,
             Trace mTrace,
             TraceSegment segment,
+            SampleStats stats,
             Int2LongMap trace2trace,
             F feature
     ) {
@@ -156,6 +158,9 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
         feature.setApexMass(mTrace.mz(segment.apex));
         feature.setApexIntensity(mTrace.intensity(segment.apex));
         feature.setAverageMass(mTrace.averagedMz());
+        feature.setSnr(
+                (stats.noiseLevel(segment.apex) > 0) ? mTrace.intensity(segment.apex) / stats.noiseLevel(segment.apex) : 0
+        );
 
         if (!trace2trace.containsKey(traceUid)) {
             throw new RuntimeException(String.format("Unknown trace with uid %d", traceUid));
