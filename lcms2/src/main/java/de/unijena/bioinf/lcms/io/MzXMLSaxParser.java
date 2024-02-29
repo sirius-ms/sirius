@@ -150,7 +150,9 @@ class MzXMLSaxParser extends DefaultHandler {
 
         final ScanPointMapping mapping = new ScanPointMapping(retentionTimes.toDoubleArray(), scanids.toIntArray(), idmap);
         storage.setMapping(mapping);
-        return new ProcessedSample(mapping, storage, samplePolarity, -1);
+        ProcessedSample sample = new ProcessedSample(mapping, storage, samplePolarity, -1);
+        sample.setRun(run);
+        return sample;
     }
 
 

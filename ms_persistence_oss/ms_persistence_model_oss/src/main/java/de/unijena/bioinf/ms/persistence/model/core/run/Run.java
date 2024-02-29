@@ -23,17 +23,18 @@ package de.unijena.bioinf.ms.persistence.model.core.run;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import jakarta.persistence.Id;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-public class Run {
+public class Run extends AbstractRun{
     //todo are there other types like validation or calibration???
     public enum Type {
         SAMPLE,
@@ -41,20 +42,9 @@ public class Run {
     }
 
     /**
-     * Run ID: unique identifier of this run within the project
-     */
-    @Id
-    private long runId;
-
-    /**
-     * Informative, human-readable name of this run. Defaults to file name.
-     */
-    private String name;
-
-    /**
      * indicated that this run is a Blank run
      */
-    protected Type runType;
+    private Type runType;
 
     private Chromatography chromatography;
     private Ionization ionization;

@@ -8,6 +8,8 @@ import de.unijena.bioinf.lcms.align.RecalibrationFunction;
 import de.unijena.bioinf.lcms.merge.ScanPointInterpolator;
 import de.unijena.bioinf.lcms.statistics.NormalizationStrategy;
 import de.unijena.bioinf.lcms.statistics.TraceStats;
+import de.unijena.bioinf.ms.persistence.model.core.run.AbstractRun;
+import de.unijena.bioinf.ms.persistence.model.core.run.Run;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -15,6 +17,9 @@ public class ProcessedSample {
 
     @Getter @Setter
     private int uid;
+
+    @Getter @Setter
+    private AbstractRun run;
 
     @Getter
     private LCMSStorage storage;

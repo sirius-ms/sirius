@@ -11,9 +11,11 @@ import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
+import de.unijena.bioinf.ms.persistence.model.core.run.MergedRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.Run;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
+import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.storage.db.nosql.Database;
@@ -147,16 +149,34 @@ public class TestMain {
 //            processing.exportFeaturesToFiles(merged, bac);
                 processing.extractFeaturesAndExportToProjectSpace(merged, bac);
 
-                System.out.println(String.format(
-                        "Run:                     %d\n" +
-                        "Scan:                    %d\n" +
-                        "MSMSScan:                %d\n" +
-                        "Feature:                 %d\n" +
-                        "AlignedIsotopicFeatures: %d\n" +
-                        "AlignedFeatures:         %d\n",
+                // FIXME Exception in thread "main" java.lang.IllegalArgumentException: Conflicting from-String creators: already had implicitly discovered creator [method de.unijena.bioinf.ChemistryBase.ms.Deviation#valueOf(java.lang.String)], encountered another: [method de.unijena.bioinf.ChemistryBase.ms.Deviation#fromString(java.lang.String)]
+//                assert store.countAll(MergedRun.class) == 1;
+//                for (MergedRun run : store.findAll(MergedRun.class)) {
+//                    System.out.println(run.getName());
+//                }
+
+                System.out.printf(
+                        """
+                                Run:                     %d
+                                Scan:                    %d
+                                MSMSScan:                %d
+                                SourceTrace:             %d
+                                MergedTrace:             %d
+                                Feature:                 %d
+                                AlignedIsotopicFeatures: %d
+                                AlignedFeatures:         %d
+                                
+                                Feature                 SNR: %f
+                                AlignedIsotopicFeatures SNR: %f
+                                AlignedFeatures         SNR: %f
+                                """,
                         store.countAll(Run.class), store.countAll(Scan.class), store.countAll(MSMSScan.class),
-                        store.countAll(Feature.class), store.countAll(AlignedIsotopicFeatures.class), store.countAll(AlignedFeatures.class)
-                ));
+                        store.countAll(SourceTrace.class), store.countAll(de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace.class),
+                        store.countAll(Feature.class), store.countAll(AlignedIsotopicFeatures.class), store.countAll(AlignedFeatures.class),
+                        store.findAllStr(Feature.class).mapToDouble(Feature::getSnr).average().orElse(Double.NaN),
+                        store.findAllStr(AlignedIsotopicFeatures.class).mapToDouble(AlignedIsotopicFeatures::getSnr).average().orElse(Double.NaN),
+                        store.findAllStr(AlignedFeatures.class).mapToDouble(AlignedFeatures::getSnr).average().orElse(Double.NaN)
+                );
 
             } catch (IOException e) {
                 throw new RuntimeException(e);

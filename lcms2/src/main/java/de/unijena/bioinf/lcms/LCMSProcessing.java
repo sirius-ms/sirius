@@ -27,14 +27,18 @@ import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.traceextractor.*;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
+import de.unijena.bioinf.ms.persistence.model.core.run.MergedRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.Run;
 import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.storage.MsProjectDocumentDatabase;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.text.similarity.LongestCommonSubsequence;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -160,7 +164,25 @@ public class LCMSProcessing {
 
     public void extractFeaturesAndExportToProjectSpace(ProcessedSample merged, AlignmentBackbone backbone) throws IOException {
         final Int2ObjectMap<ProcessedSample> idx2sample = new Int2ObjectOpenHashMap<>();
-        for (ProcessedSample s : backbone.getSamples()) idx2sample.put(s.getUid(),s);
+        LongList runIds = new LongArrayList();
+        for (ProcessedSample s : backbone.getSamples()) {
+            idx2sample.put(s.getUid(), s);
+            runIds.add(s.getRun().getRunId());
+        }
+
+        LongestCommonSubsequence lcs = new LongestCommonSubsequence();
+        String name = Arrays.stream(backbone.getSamples()).map(s -> s.getRun().getName()).reduce((a, b) -> lcs.longestCommonSubsequence(a, b).toString()).orElse("");
+        if (name.isBlank())
+            name = "merged run";
+
+        MergedRun mergedRun = MergedRun.builder()
+                .name(name)
+                .runIds(runIds)
+                .sampleStats(merged.getStorage().getStatistics())
+                .build();
+        merged.setRun(mergedRun);
+
+        importStrategy.importMergedRun(mergedRun);
 
         Int2LongMap trace2trace = new Int2LongOpenHashMap();
         for (MergedTrace trace : merged.getStorage().getMergeStorage()) {

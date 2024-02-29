@@ -4,13 +4,12 @@ import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.lcms.merge.MergedTrace;
 import de.unijena.bioinf.lcms.msms.MergedSpectrum;
 import de.unijena.bioinf.lcms.msms.Ms2MergeStrategy;
-import de.unijena.bioinf.lcms.statistics.SampleStats;
+import de.unijena.bioinf.ms.persistence.model.core.run.SampleStats;
 import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.Trace;
 import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
-import de.unijena.bioinf.ms.persistence.model.core.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
@@ -18,14 +17,12 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
 
-    // TODO stats
     // TODO intensity normalization
     // FIXME mz in aligned features
     // TODO remove OldFeature
@@ -118,14 +115,16 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
             if (traceSegments[i] == null)
                 continue;
 
-            F alignedFeatures = buildFeature(mergedTrace.getUid(), mTrace, traceSegments[i], stats, trace2trace, featureSupplier.get());
+            F alignedFeatures = featureSupplier.get();
+            alignedFeatures.setRunId(mergedSample.getRun().getRunId());
+            alignedFeatures = buildFeature(mergedTrace.getUid(), mTrace, traceSegments[i], stats, trace2trace, alignedFeatures);
             List<Feature> childFeatures = new ArrayList<>();
             for (int k=0; k < individualSegments.length; ++k) {
                 if (individualSegments[k][i] == null)
                     continue;
 
                 int childTraceId = mergedTrace.getTraceIds().getInt(k);
-                Feature feature = buildFeature(childTraceId, mergedSample.getStorage().getMergeStorage().getTrace(childTraceId), individualSegments[k][i], stats, trace2trace, Feature.builder().build());
+                Feature feature = buildFeature(childTraceId, mergedSample.getStorage().getMergeStorage().getTrace(childTraceId), individualSegments[k][i], stats, trace2trace, Feature.builder().runId(samplesInTrace[k].getRun().getRunId()).build());
                 childFeatures.add(feature);
             }
             if (childFeatures.isEmpty())
