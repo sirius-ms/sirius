@@ -126,7 +126,7 @@ public class ProjectSaveAction extends ProjectOpenAction {
 
             Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Loading new Project Window...", () -> {
                 if (close){
-                    gui.getSiriusClient().gui().openGui(projectId, false, null);
+                    gui.getSiriusClient().gui().openGui(projectId);
                     gui.close();
                 } else {
                     gui.getSiriusClient().projects().closeProjectSpace(projectId);

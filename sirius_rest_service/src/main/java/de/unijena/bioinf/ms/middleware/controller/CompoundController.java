@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
-import de.unijena.bioinf.ms.middleware.model.SearchQueryType;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
@@ -58,15 +57,11 @@ public class CompoundController {
      *
      * @param projectId project-space to read from.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @return Compounds with additional optional fields (if specified).
      */
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<Compound> getCompounds(@PathVariable String projectId, @ParameterObject Pageable pageable,
-                                       @RequestParam(required = false) String searchQuery,
-                                       @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax,
                                        @RequestParam(defaultValue = "") EnumSet<Compound.OptField> optFields,
                                        @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
         return projectsProvider.getProjectOrThrow(projectId).findCompounds(pageable, removeNone(optFields), removeNone(optFieldsFeatures));
