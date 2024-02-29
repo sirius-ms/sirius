@@ -21,7 +21,7 @@
 package de.unijena.bioinf.lcms.trace;
 
 import de.unijena.bioinf.lcms.merge.MergedTrace;
-import de.unijena.bioinf.lcms.statistics.SampleStats;
+import de.unijena.bioinf.ms.persistence.model.core.run.SampleStats;
 import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
@@ -62,10 +62,9 @@ public class TraceExtractor implements TraceExtractionStrategy {
                     int traceUid = alignedFeature.getTraceIds().getInt(traceIndex);
 
                     traceIndex++;
-                    // TODO run id
                     return IntObjectPair.of(
                             traceUid,
-                            SourceTrace.builder().intensities(ints).sourceScanIds(sourceIds).build()
+                            SourceTrace.builder().intensities(ints).runId(S.getRun().getRunId()).sourceScanIds(sourceIds).build()
                     );
                 } else if (traceIndex == -1) {
                     DoubleList rts = new DoubleArrayList();
@@ -83,7 +82,7 @@ public class TraceExtractor implements TraceExtractionStrategy {
 
                     return IntObjectPair.of(
                             alignedFeature.getUid(),
-                            de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace.builder().rts(rts).mzs(mzs).intensities(ints).noise(noise).build()
+                            de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace.builder().runId(mergedSample.getRun().getRunId()).rts(rts).mzs(mzs).intensities(ints).noise(noise).build()
                     );
                 }
                 return null;

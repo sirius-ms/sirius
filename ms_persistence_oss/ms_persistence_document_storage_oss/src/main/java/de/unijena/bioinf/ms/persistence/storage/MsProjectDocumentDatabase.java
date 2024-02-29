@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.persistence.storage;
 import de.unijena.bioinf.ms.persistence.model.Tag;
 import de.unijena.bioinf.ms.persistence.model.core.*;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
+import de.unijena.bioinf.ms.persistence.model.core.run.MergedRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.Run;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
@@ -46,12 +47,15 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
 
     static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
         MetadataUtils.addFasUtilCollectionSupport(sourceMetadata);
+        // TODO check all classes for optionals and indexes
         return sourceMetadata
                 .addRepository(Tag.class, new Index("name", IndexType.UNIQUE))
 
                 .addRepository(Run.class,
                         new Index("name", IndexType.UNIQUE),
                         new Index("runType", IndexType.NON_UNIQUE))
+
+                .addRepository(MergedRun.class)
 
                 .addRepository(Scan.class,
                         new Index("runId", IndexType.NON_UNIQUE),
