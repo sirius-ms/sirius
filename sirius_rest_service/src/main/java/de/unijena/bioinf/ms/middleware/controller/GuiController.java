@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springdoc.api.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -35,18 +36,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
-@RestController
-//@RequestMapping(value = "/api/projects/{projectId}/gui")
-@Tag(name = "[Experimental] GUI",
-        description = "Open, control and close SIRIUS Graphical User Interface (GUI) on the specified project-space.")
-public class GuiController {
+public abstract class GuiController {
 
-    private final ProjectsProvider projectsProvider;
+    protected final ProjectsProvider projectsProvider;
 
-    private final GuiService guiService;
+    protected final GuiService guiService;
 
     @Autowired
-    public GuiController(ProjectsProvider<?> projectsProvider, GuiService guiService) {
+    protected GuiController(ProjectsProvider<?> projectsProvider, GuiService guiService) {
         this.projectsProvider = projectsProvider;
         this.guiService = guiService;
     }
@@ -60,29 +57,6 @@ public class GuiController {
     @ResponseStatus(HttpStatus.OK)
     public Page<GuiInfo> getGuis(@ParameterObject Pageable pageable) {
         return guiService.findGui(pageable);
-    }
-
-    /**
-     * Open GUI instance on specified project-space and bring the GUI window to foreground.
-     *
-     * @param readOnly  open in read-only mode.
-     * @param projectId of project-space the GUI instance will connect to.
-     */
-    @PostMapping(value = "/api/projects/{projectId}/gui", produces = MediaType.APPLICATION_JSON_VALUE)
-    @ResponseStatus(HttpStatus.CREATED)
-    public void openGui(@PathVariable String projectId, @RequestBody(required = false) GuiParameters guiParameters, @RequestParam(required = false, defaultValue = "true") boolean readOnly) {
-        guiService.createGuiInstance(projectId, guiParameters);
-    }
-
-    /**
-     * Apply given changes to the running GUI instance.
-     *
-     * @param projectId     of project-space the GUI instance is connected to.
-     * @param guiParameters parameters that should be applied.
-     */
-    @PatchMapping(value = "/api/projects/{projectId}/gui", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void applyToGui(@PathVariable String projectId, @RequestBody GuiParameters guiParameters) {
-        guiService.applyToGuiInstance(projectId, guiParameters);
     }
 
     /**
