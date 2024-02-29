@@ -79,7 +79,7 @@ public class BottomUpSearch extends SiriusPlugin {
             Whiteset ws = input.getAnnotationOrThrow(Whiteset.class);
 
             FormulaSearchSettings formulaSearchSettings = input.getAnnotation(FormulaSearchSettings.class, FormulaSearchSettings::bottomUpOnly);
-            if (formulaSearchSettings.applyFormulaContraintsToBottomUp) {
+            if (formulaSearchSettings.applyFormulaConstraintsToBottomUp) {
                 final FormulaConstraints formulaConstraints = input.getAnnotationOrThrow(FormulaConstraints.class);
                 PossibleAdducts possibleAdducts = input.getAnnotationOrThrow(PossibleAdducts.class);
                 formulas = Whiteset.filterMeasuredFormulas(formulas, formulaConstraints, possibleAdducts.getAdducts());
