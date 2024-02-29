@@ -30,18 +30,18 @@ import de.unijena.bioinf.ms.properties.DefaultProperty;
  * numberOfResultsToKeep results will be reported.
  * */
 @DefaultProperty
-public class NumberOfCandidatesPerIon implements Ms2ExperimentAnnotation {
-    public static final NumberOfCandidatesPerIon ZERO = new NumberOfCandidatesPerIon(0);
-    public static final NumberOfCandidatesPerIon MIN_VALUE = new NumberOfCandidatesPerIon(Integer.MIN_VALUE);
-    public static final NumberOfCandidatesPerIon MAX_VALUE = new NumberOfCandidatesPerIon(Integer.MAX_VALUE);
-    public static final NumberOfCandidatesPerIon ONE = new NumberOfCandidatesPerIon(1);
+public class NumberOfCandidatesPerIonization implements Ms2ExperimentAnnotation {
+    public static final NumberOfCandidatesPerIonization ZERO = new NumberOfCandidatesPerIonization(0);
+    public static final NumberOfCandidatesPerIonization MIN_VALUE = new NumberOfCandidatesPerIonization(Integer.MIN_VALUE);
+    public static final NumberOfCandidatesPerIonization MAX_VALUE = new NumberOfCandidatesPerIonization(Integer.MAX_VALUE);
+    public static final NumberOfCandidatesPerIonization ONE = new NumberOfCandidatesPerIonization(1);
 
     public final int value;
 
-    private NumberOfCandidatesPerIon() {
+    private NumberOfCandidatesPerIonization() {
        this(0);
     }
-    public NumberOfCandidatesPerIon(int value) {
+    public NumberOfCandidatesPerIonization(int value) {
         this.value = value;
     }
 }
