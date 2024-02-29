@@ -18,29 +18,16 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.model.core.feature;
+package de.unijena.bioinf.lcms.features;
 
-import jakarta.persistence.Id;
-import lombok.*;
-import lombok.experimental.SuperBuilder;
+import de.unijena.bioinf.ms.persistence.model.core.IsotopePattern;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@SuperBuilder
-@ToString(callSuper = true)
-public class Feature extends AbstractFeature {
+import java.util.List;
 
-    /**
-     * ID of this feature
-     */
-    @Id
-    private long featureId;
+public interface IsotopePatternExtractionStrategy {
 
-    /**
-     * ID of the aligned feature this feature belongs to
-     */
-    private long alignedFeatureId;
+    IsotopePattern extractIsotopePattern(AlignedFeatures monoisotopicFeature, List<AlignedIsotopicFeatures> isotopicFeatures);
 
 }

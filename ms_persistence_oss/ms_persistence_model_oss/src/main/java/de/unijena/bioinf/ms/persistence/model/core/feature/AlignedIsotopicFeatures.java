@@ -20,9 +20,13 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.feature;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import jakarta.persistence.Id;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
+import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 
 @Getter
 @Setter
@@ -30,17 +34,12 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @SuperBuilder
 @ToString(callSuper = true)
-public class Feature extends AbstractFeature {
+@JsonAutoDetect(fieldVisibility = ANY, getterVisibility = NONE, setterVisibility = NONE, isGetterVisibility = NONE)
+public class AlignedIsotopicFeatures extends AbstractAlignedFeatures {
 
-    /**
-     * ID of this feature
-     */
     @Id
-    private long featureId;
+    private long alignedIsotopeFeatureId;
 
-    /**
-     * ID of the aligned feature this feature belongs to
-     */
     private long alignedFeatureId;
 
 }

@@ -21,10 +21,18 @@
 package de.unijena.bioinf.lcms.projectspace;
 
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
+import de.unijena.bioinf.ms.persistence.model.core.run.Run;
+import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
+import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
 import de.unijena.bioinf.storage.db.nosql.Database;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 public class ProjectSpaceImporter implements ImportStrategy {
 
@@ -39,13 +47,49 @@ public class ProjectSpaceImporter implements ImportStrategy {
     }
 
     @Override
+    public void importRun(Run run) throws IOException {
+        store.insert(run);
+    }
+
+    @Override
+    public void updateRun(Run run) throws IOException {
+        store.upsert(run);
+    }
+
+    @Override
+    public void importScan(Scan scan) throws IOException {
+        store.insert(scan);
+    }
+
+    @Override
+    public void importMSMSScan(MSMSScan scan) throws IOException {
+        store.insert(scan);
+    }
+
+    @Override
     public void importTrace(AbstractTrace trace) throws IOException {
         store.insert(trace);
     }
 
     @Override
-    public void importAlignedFeature(AlignedFeatures alignedFeatures) {
+    public void importAlignedFeature(AlignedFeatures alignedFeatures) throws IOException {
+        store.insert(alignedFeatures);
 
+        List<Feature> childFeatures = alignedFeatures.getFeatures().orElse(Collections.emptyList()).stream().peek(f -> f.setAlignedFeatureId(alignedFeatures.getAlignedFeatureId())).toList();
+        store.insertAll(childFeatures);
+        alignedFeatures.setFeatureIds(LongArrayList.toListWithExpectedSize(childFeatures.stream().mapToLong(Feature::getFeatureId), childFeatures.size()));
+
+        List<AlignedIsotopicFeatures> isotopicFeatures = alignedFeatures.getIsotopicFeatures().orElse(Collections.emptyList()).stream().peek(f -> f.setAlignedFeatureId(alignedFeatures.getAlignedFeatureId())).toList();
+        store.insertAll(isotopicFeatures);
+
+        for (AlignedIsotopicFeatures isotopicFeature : isotopicFeatures) {
+            List<Feature> isotopicChildFeatures = isotopicFeature.getFeatures().orElse(Collections.emptyList()).stream().peek(f -> f.setAlignedFeatureId(isotopicFeature.getAlignedIsotopeFeatureId())).toList();
+            isotopicFeature.setFeatureIds(LongArrayList.toListWithExpectedSize(isotopicChildFeatures.stream().mapToLong(Feature::getFeatureId), isotopicChildFeatures.size()));
+        }
+        store.upsertAll(isotopicFeatures);
+
+        alignedFeatures.setIsotopicFeaturesIds(LongArrayList.toListWithExpectedSize(isotopicFeatures.stream().mapToLong(AlignedIsotopicFeatures::getAlignedIsotopeFeatureId), isotopicFeatures.size()));
+        store.upsert(alignedFeatures);
     }
 
 }

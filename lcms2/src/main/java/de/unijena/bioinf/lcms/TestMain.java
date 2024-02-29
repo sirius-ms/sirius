@@ -8,6 +8,12 @@ import de.unijena.bioinf.lcms.align.MoI;
 import de.unijena.bioinf.lcms.merge.MergedTrace;
 import de.unijena.bioinf.lcms.projectspace.ProjectSpaceImporter;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
+import de.unijena.bioinf.ms.persistence.model.core.run.Run;
+import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
+import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.storage.db.nosql.Database;
@@ -15,10 +21,13 @@ import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import picocli.CommandLine;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.LogManager;
 
 /**
@@ -101,20 +110,15 @@ public class TestMain {
                         jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<de.unijena.bioinf.lcms.trace.ProcessedSample>() {
                             @Override
                             protected de.unijena.bioinf.lcms.trace.ProcessedSample compute() throws Exception {
-                                // TODO get new project space
-                                Path storeLocation = File.createTempFile("nitrite", "db").toPath();
-                                try (NitriteDatabase db = new NitriteDatabase(storeLocation, SiriusProjectDocumentDatabase.buildMetadata())) {
-                                    SiriusProjectDatabaseImpl<? extends Database<?>> store = new SiriusProjectDatabaseImpl<>(db);
-                                    ProcessedSample sample = processing.processSample(f, store);
-                                    int hasIsotopes = 0, hasNoIsotopes = 0;
-                                    for (MoI m : sample.getStorage().getAlignmentStorage()) {
-                                        if (m.hasIsotopes()) ++hasIsotopes;
-                                        else ++hasNoIsotopes;
-                                    }
-                                    sample.inactive();
-                                    System.out.println(sample.getUid() + " with " + hasIsotopes + " / " + (hasIsotopes + hasNoIsotopes) + " isotope features");
-                                    return sample;
+                                ProcessedSample sample = processing.processSample(f);
+                                int hasIsotopes = 0, hasNoIsotopes = 0;
+                                for (MoI m : sample.getStorage().getAlignmentStorage()) {
+                                    if (m.hasIsotopes()) ++hasIsotopes;
+                                    else ++hasNoIsotopes;
                                 }
+                                sample.inactive();
+                                System.out.println(sample.getUid() + " with " + hasIsotopes + " / " + (hasIsotopes + hasNoIsotopes) + " isotope features");
+                                return sample;
                             }
                         }));
                     }
@@ -142,6 +146,18 @@ public class TestMain {
                 System.out.println("Good Traces = " + avgAl.doubleStream().filter(x -> x >= 5).sum());
 //            processing.exportFeaturesToFiles(merged, bac);
                 processing.extractFeaturesAndExportToProjectSpace(merged, bac);
+
+                System.out.println(String.format(
+                        "Run:                     %d\n" +
+                        "Scan:                    %d\n" +
+                        "MSMSScan:                %d\n" +
+                        "Feature:                 %d\n" +
+                        "AlignedIsotopicFeatures: %d\n" +
+                        "AlignedFeatures:         %d\n",
+                        store.countAll(Run.class), store.countAll(Scan.class), store.countAll(MSMSScan.class),
+                        store.countAll(Feature.class), store.countAll(AlignedIsotopicFeatures.class), store.countAll(AlignedFeatures.class)
+                ));
+
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

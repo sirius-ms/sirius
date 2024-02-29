@@ -22,10 +22,7 @@ package de.unijena.bioinf.ms.persistence.storage;
 
 import de.unijena.bioinf.ms.persistence.model.Tag;
 import de.unijena.bioinf.ms.persistence.model.core.*;
-import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
-import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
-import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
-import de.unijena.bioinf.ms.persistence.model.core.feature.OldFeature;
+import de.unijena.bioinf.ms.persistence.model.core.feature.*;
 import de.unijena.bioinf.ms.persistence.model.core.run.Run;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
@@ -85,6 +82,8 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
 //                        new Index("mergedRT.end", IndexType.NON_UNIQUE))  //todo really needed?
                 .setOptionalFields(AlignedFeatures.class, "traceRefs")
 //                .setOptionalFields(AlignedFeatures.class, "topAnnotation", "manualAnnotation")
+
+                .addRepository(AlignedIsotopicFeatures.class)
 
                 .addRepository(CorrelatedIonPair.class,
                         new Index("alignedFeatureId1", IndexType.NON_UNIQUE),

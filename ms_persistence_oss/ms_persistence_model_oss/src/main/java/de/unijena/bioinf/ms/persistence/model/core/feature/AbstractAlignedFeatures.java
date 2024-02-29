@@ -20,27 +20,31 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.feature;
 
-import jakarta.persistence.Id;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import it.unimi.dsi.fastutil.longs.LongList;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+
+import java.util.List;
+import java.util.Optional;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@ToString(callSuper = true)
-public class Feature extends AbstractFeature {
+@ToString
+public abstract class AbstractAlignedFeatures extends AbstractFeature {
 
-    /**
-     * ID of this feature
-     */
-    @Id
-    private long featureId;
+    @ToString.Exclude
+    protected LongList featureIds;
 
-    /**
-     * ID of the aligned feature this feature belongs to
-     */
-    private long alignedFeatureId;
+    @JsonIgnore
+    @ToString.Exclude
+    protected List<Feature> features;
+
+    public Optional<List<Feature>> getFeatures() {
+        return Optional.ofNullable(features);
+    }
 
 }

@@ -21,11 +21,10 @@
 package de.unijena.bioinf.lcms.io;
 
 import de.unijena.bioinf.lcms.LCMSStorageFactory;
+import de.unijena.bioinf.lcms.projectspace.ImportStrategy;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
 import de.unijena.bioinf.ms.persistence.model.core.run.Run;
-import de.unijena.bioinf.ms.persistence.storage.MsProjectDocumentDatabase;
-import de.unijena.bioinf.storage.db.nosql.Database;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,7 +34,7 @@ public class LCMSImporter {
     public static ProcessedSample importToProject(
             File source,
             LCMSStorageFactory storageFactory,
-            MsProjectDocumentDatabase<? extends Database<?>> store,
+            ImportStrategy importStrategy,
             boolean saveRawScans,
             Run.Type runType,
             Chromatography chromatography
@@ -48,12 +47,11 @@ public class LCMSImporter {
         } else {
             throw new IOException("Illegal file extension. Only .mzml and .mzxml are supported");
         }
-        Database<?> db = store.getStorage();
         Run.RunBuilder runBuilder = Run.builder().runType(runType).chromatography(chromatography);
         if (!saveRawScans) {
-            return parser.parse(source, storageFactory, db::insert, db::upsert, null, null, runBuilder);
+            return parser.parse(source, storageFactory, importStrategy::importRun, importStrategy::updateRun, null, null, runBuilder);
         } else {
-            return parser.parse(source, storageFactory, db::insert, db::upsert, db::insert, db::insert, runBuilder);
+            return parser.parse(source, storageFactory, importStrategy::importRun, importStrategy::updateRun, importStrategy::importScan, importStrategy::importMSMSScan, runBuilder);
         }
     }
 
