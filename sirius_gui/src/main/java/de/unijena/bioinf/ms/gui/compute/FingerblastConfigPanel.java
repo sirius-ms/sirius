@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
+import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
@@ -41,19 +42,24 @@ import java.util.stream.Collectors;
 
 //here we can show fingerid options. If it becomes to much, we can change this to a setting like tabbed pane
 public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOptions> {
-    protected StructureSearchStrategy structureSearchStrategy;
+    private final StructureSearchStrategy structureSearchStrategy;
+    private final JCheckBox pubChemFallback;
 
     public FingerblastConfigPanel(@Nullable final JCheckBoxList<CustomDataSources.Source> syncSource) {
         super(FingerblastOptions.class);
 
         structureSearchStrategy = new StructureSearchStrategy(syncSource);
+        pubChemFallback = new JCheckBox();
+
         parameterBindings.put("StructureSearchDB", () -> {
             List<CustomDataSources.Source> checkedDBs = structureSearchStrategy.getStructureSearchDBs();
-            return checkedDBs.isEmpty() ? null : checkedDBs.stream().map(CustomDataSources.Source::id).filter(Objects::nonNull).collect(Collectors.joining(","));
+            return checkedDBs.isEmpty() ? null : checkedDBs.stream()
+                    .map(CustomDataSources.Source::id)
+                    .filter(Objects::nonNull)
+                    .filter(db -> !(db.equals(DataSource.PUBCHEM.name()) && pubChemFallback.isSelected()))
+                    .collect(Collectors.joining(","));
         });
 
-
-        JCheckBox pubChemFallback = new JCheckBox();
         pubChemFallback.setSelected(true);
         pubChemFallback.setToolTipText("Search in the specified set of databases and use the PubChem database as fallback if no good hit is available");
 
@@ -84,7 +90,22 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
             return "APPROXIMATE";
         });
 
-        pubChemFallback.addActionListener(e -> List.of(confLabel, confidenceModeBox).forEach(c -> c.setVisible(pubChemFallback.isSelected())));
+        pubChemFallback.addActionListener(e -> {
+            List.of(confLabel, confidenceModeBox).forEach(c -> c.setVisible(pubChemFallback.isSelected()));
+            refreshPubChem();
+        });
+    }
+
+    public void refreshPubChem() {
+        JCheckBoxList<CustomDataSources.Source> dbList = structureSearchStrategy.getSearchDBList().checkBoxList;
+        CustomDataSources.Source pubChemDB = CustomDataSources.getSourceFromName(DataSource.PUBCHEM.realName());
+        if (pubChemFallback.isSelected()) {
+            dbList.setItemEnabled(pubChemDB, false);
+            dbList.setItemToolTip(pubChemDB, "PubChem will be used as fallback");
+        } else {
+            dbList.setItemEnabled(pubChemDB, true);
+            dbList.setItemToolTip(pubChemDB, null);
+        }
     }
 
     public JCheckboxListPanel<CustomDataSources.Source> getSearchDBList() {
