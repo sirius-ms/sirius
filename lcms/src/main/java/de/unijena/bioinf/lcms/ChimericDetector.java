@@ -66,7 +66,7 @@ public class ChimericDetector {
             throw new IllegalArgumentException("MS1 feature does not contain MS1 scan: " + precursor.getMass() + " @ " + precursor.getIntensity() + " at " + ms1Scan.getIndex() + " (" + ms1Scan.getRetentionTime() + " rt)");
         }
         SimpleSpectrum scan = sample.storage.getScan(ms1Scan);
-        final double from = precursor.getMass() - isolationWindow.getLeftOffset();
+        final double from = precursor.getMass() + isolationWindow.getLeftOffset();
         final double to = precursor.getMass() + isolationWindow.getRightOffset();
         int bgindex=Spectrums.indexOfFirstPeakWithin(scan, from,to);
 
