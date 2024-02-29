@@ -32,6 +32,11 @@ public class IsotopePattern extends SimpleSpectrum {
         AVERAGE, REPRESENTATIVE, MERGED_APEX
     }
 
+    public IsotopePattern() {
+        super();
+        this.type = Type.MERGED_APEX;
+    }
+
     public IsotopePattern(SimpleSpectrum spec, Type type) {
         super(spec);
         this.type = type;
