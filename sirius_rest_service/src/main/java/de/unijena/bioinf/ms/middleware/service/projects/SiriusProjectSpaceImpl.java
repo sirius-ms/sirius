@@ -273,7 +273,7 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @Override
-    public Page<StructureCandidateScored> findStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
+    public Page<StructureCandidateScored> findStructureCandidatesByFeatureIdAndFormulaId(String alignedFeatureId, String formulaId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
         List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidateScored.OptField.fingerprint)
                 ? List.of(FormulaScoring.class, FBCandidatesTopK.class, FBCandidateFingerprints.class)
                 : List.of(FormulaScoring.class, FBCandidatesTopK.class));
