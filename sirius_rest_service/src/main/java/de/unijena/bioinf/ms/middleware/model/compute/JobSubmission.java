@@ -206,13 +206,14 @@ public class JobSubmission extends AbstractSubmission {
     public Map<String, String> asCombinedConfigMap() {
         Map<String, String> combined = asConfigMap();
         getEnabledTools().stream().map(Tool::asConfigMap).forEach(combined::putAll);
-        return configMap;
+        return combined;
     }
 
 
     @JsonIgnore
     private Map<String, String> asConfigMap() {
-        return new NullCheckMapBuilder(getConfigMap())
+
+        return new NullCheckMapBuilder(Optional.ofNullable(getConfigMap()).orElse(new HashMap<>()))
                 .putNonNull("AdductSettings.enforced", getEnforcedAdducts(), (v) -> v.isEmpty()
                         ? "," : String.join(",", v))
 
