@@ -122,6 +122,8 @@ public class ChemDbServiceImpl implements ChemDbService {
         try {
             if (Files.isDirectory(location))
                 location = location.resolve(databaseId + CustomDatabases.NOSQL_SUFFIX);
+            else if (!location.getFileName().toString().endsWith(CustomDatabases.NOSQL_SUFFIX))
+                location = location.getParent().resolve(location.getFileName() + CustomDatabases.NOSQL_SUFFIX); //add correct file extension to db.
 
             CustomDatabaseSettings.CustomDatabaseSettingsBuilder configBuilder = CustomDatabaseSettings.builder()
                     .name(databaseId)
