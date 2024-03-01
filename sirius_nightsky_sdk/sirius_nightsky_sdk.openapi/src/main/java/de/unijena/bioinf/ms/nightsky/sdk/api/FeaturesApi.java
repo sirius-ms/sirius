@@ -69,8 +69,8 @@ public class FeaturesApi {
     }
 
     /**
-     * 
-     * 
+     * Import (aligned) features into the project.
+     * Import (aligned) features into the project. Features must not exist in the project.  Otherwise, they will exist twice.
      * <p><b>200</b> - the Features that have been imported with specified optional fields
      * @param projectId project-space to import into.
      * @param featureImport the feature data to be imported
@@ -116,8 +116,8 @@ public class FeaturesApi {
     }
 
     /**
-     * 
-     * 
+     * Import (aligned) features into the project.
+     * Import (aligned) features into the project. Features must not exist in the project.  Otherwise, they will exist twice.
      * <p><b>200</b> - the Features that have been imported with specified optional fields
      * @param projectId project-space to import into.
      * @param featureImport the feature data to be imported
@@ -131,8 +131,8 @@ public class FeaturesApi {
     }
 
     /**
-     * 
-     * 
+     * Import (aligned) features into the project.
+     * Import (aligned) features into the project. Features must not exist in the project.  Otherwise, they will exist twice.
      * <p><b>200</b> - the Features that have been imported with specified optional fields
      * @param projectId project-space to import into.
      * @param featureImport the feature data to be imported
@@ -146,8 +146,8 @@ public class FeaturesApi {
     }
 
     /**
-     * 
-     * 
+     * Import (aligned) features into the project.
+     * Import (aligned) features into the project. Features must not exist in the project.  Otherwise, they will exist twice.
      * <p><b>200</b> - the Features that have been imported with specified optional fields
      * @param projectId project-space to import into.
      * @param featureImport the feature data to be imported

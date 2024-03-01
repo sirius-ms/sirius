@@ -87,7 +87,8 @@ public class CompoundController {
     }
 
     /**
-     *
+     * Import Compounds and its contained features. Compounds and Features must not exist in the project.
+     * Otherwise, they will exist twice.
      * @param projectId project-space to import into.
      * @param compounds the compound data to be imported
      * @param optFields set of optional fields to be included. Use 'none' to override defaults.

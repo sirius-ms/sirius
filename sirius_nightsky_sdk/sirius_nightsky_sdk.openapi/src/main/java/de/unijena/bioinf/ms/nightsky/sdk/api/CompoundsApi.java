@@ -51,8 +51,8 @@ public class CompoundsApi {
     }
 
     /**
-     * 
-     * 
+     * Import Compounds and its contained features.
+     * Import Compounds and its contained features. Compounds and Features must not exist in the project.  Otherwise, they will exist twice.
      * <p><b>200</b> - the Compounds that have been imported with specified optional fields
      * @param projectId project-space to import into.
      * @param compoundImport the compound data to be imported
@@ -100,8 +100,8 @@ public class CompoundsApi {
     }
 
     /**
-     * 
-     * 
+     * Import Compounds and its contained features.
+     * Import Compounds and its contained features. Compounds and Features must not exist in the project.  Otherwise, they will exist twice.
      * <p><b>200</b> - the Compounds that have been imported with specified optional fields
      * @param projectId project-space to import into.
      * @param compoundImport the compound data to be imported
@@ -116,8 +116,8 @@ public class CompoundsApi {
     }
 
     /**
-     * 
-     * 
+     * Import Compounds and its contained features.
+     * Import Compounds and its contained features. Compounds and Features must not exist in the project.  Otherwise, they will exist twice.
      * <p><b>200</b> - the Compounds that have been imported with specified optional fields
      * @param projectId project-space to import into.
      * @param compoundImport the compound data to be imported
@@ -132,8 +132,8 @@ public class CompoundsApi {
     }
 
     /**
-     * 
-     * 
+     * Import Compounds and its contained features.
+     * Import Compounds and its contained features. Compounds and Features must not exist in the project.  Otherwise, they will exist twice.
      * <p><b>200</b> - the Compounds that have been imported with specified optional fields
      * @param projectId project-space to import into.
      * @param compoundImport the compound data to be imported
