@@ -43,6 +43,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import javax.validation.Valid;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -105,7 +106,7 @@ public class AlignedFeatureController {
      * @return the Features that have been imported with specified optional fields
      */
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<AlignedFeature> addAlignedFeatures(@PathVariable String projectId, @RequestBody List<FeatureImport> features,
+    public List<AlignedFeature> addAlignedFeatures(@PathVariable String projectId, @Valid @RequestBody List<FeatureImport> features,
                                                    @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId).addAlignedFeatures(features, removeNone(optFields));
