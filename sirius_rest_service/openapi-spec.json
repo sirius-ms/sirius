@@ -21,10 +21,6 @@
       "description": "Start, monitor and cancel background jobs."
     },
     {
-      "name": "GUI",
-      "description": "Open and close SIRIUS Graphical User Interface (GUI) on specified projects."
-    },
-    {
       "name": "Compounds",
       "description": "This compound based API allows to retrieve all AlignedFeatures that belong to the same compound (also known as a group of ion identities). It also provides for each AlignedFeature the corresponding annotation results (which are usually computed on a per-feature basis)"
     },
@@ -43,6 +39,10 @@
     {
       "name": "Searchable Databases",
       "description": "Manage structure and spectral databases that can be used by various computational methods."
+    },
+    {
+      "name": "Gui",
+      "description": "Basic GUI Control: Open and close SIRIUS Graphical User Interface (GUI) on specified projects."
     },
     {
       "name": "Features",
@@ -940,7 +940,7 @@
     "/api/projects/{projectId}/gui": {
       "post": {
         "tags": [
-          "GUI"
+          "Gui"
         ],
         "summary": "Open GUI instance on specified project-space and bring the GUI window to foreground.",
         "description": "Open GUI instance on specified project-space and bring the GUI window to foreground.",
@@ -964,7 +964,7 @@
       },
       "delete": {
         "tags": [
-          "GUI"
+          "Gui"
         ],
         "summary": "Close GUI instance of given project-space if available.",
         "description": "Close GUI instance of given project-space if available.",
@@ -3643,7 +3643,7 @@
     "/api/guis": {
       "get": {
         "tags": [
-          "GUI"
+          "Gui"
         ],
         "summary": "Get list of currently running gui windows, managed by this SIRIUS instance.",
         "description": "Get list of currently running gui windows, managed by this SIRIUS instance.\n Note this will not show any Clients that are connected from a separate process!",
@@ -4093,6 +4093,12 @@
             "type": "string",
             "description": "Storage location of user database\n Might be NULL for non-user databases or if default location is used.",
             "nullable": true
+          },
+          "matchRtOfReferenceSpectra": {
+            "type": "boolean",
+            "description": "Indicates whether this database shall be used to use retention time information for library matching.\n Typically used for in-house spectral libraries that have been measured on",
+            "nullable": true,
+            "default": false
           }
         },
         "description": ""
@@ -4120,7 +4126,8 @@
           "matchRtOfReferenceSpectra": {
             "type": "boolean",
             "description": "Indicates whether this database shall be used to use retention time information for library matching.\n Typically used for in-house spectral libraries that have been measured on",
-            "nullable": true
+            "nullable": true,
+            "default": false
           },
           "databaseId": {
             "type": "string",
@@ -4524,11 +4531,13 @@
           },
           "useScoreThreshold": {
             "type": "boolean",
-            "description": "If true, an adaptive soft threshold will be applied to only compute Fingerprints for promising formula candidates\n Enabling is highly recommended."
+            "description": "If true, an adaptive soft threshold will be applied to only compute Fingerprints for promising formula candidates\n Enabling is highly recommended.",
+            "nullable": true
           },
           "alwaysPredictHighRefMatches": {
             "type": "boolean",
-            "description": "If true Fingerprint/Classes/Structures will be predicted for formulas candidates with\n reference spectrum similarity \u003e Sirius.minReferenceMatchScoreToInject will be predicted no matter which\n score threshold rules apply.\n If NULL default value will be used."
+            "description": "If true Fingerprint/Classes/Structures will be predicted for formulas candidates with\n reference spectrum similarity \u003e Sirius.minReferenceMatchScoreToInject will be predicted no matter which\n score threshold rules apply.\n If NULL default value will be used.",
+            "nullable": true
           }
         },
         "description": "User/developer friendly parameter subset for the CSI:FingerID Fingerprint tool\n Needs results from Formula/SIRIUS Tool"
@@ -4539,8 +4548,7 @@
         "nullable": true,
         "enum": [
           "QTOF",
-          "ORBI",
-          "FTICR"
+          "ORBITRAP"
         ]
       },
       "JobSubmission": {
@@ -4623,6 +4631,7 @@
       "Mode": {
         "type": "string",
         "description": "",
+        "nullable": true,
         "enum": [
           "OFF",
           "EXACT",
@@ -4639,7 +4648,8 @@
           "numberOfCandidateToPredict": {
             "type": "integer",
             "description": "Number of structure candidates to be predicted by MsNovelist.\n Max Value 128. Values \u003e 128 will be set to 128.\n Actual number of returned candidate might be lower du to duplicates being created by MsNovelist.",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           }
         },
         "description": ""
@@ -4657,21 +4667,25 @@
           "numberOfCandidates": {
             "type": "integer",
             "description": "Number of formula candidates to keep as result list (Formula Candidates).",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "numberOfCandidatesPerIonization": {
             "type": "integer",
             "description": "Use this parameter if you want to force SIRIUS to report at least\n NumberOfCandidatesPerIonization results per ionization.\n if \u003c\u003d 0, this parameter will have no effect and just the top\n NumberOfCandidates results will be reported.",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "massAccuracyMS2ppm": {
             "type": "number",
             "description": "Maximum allowed mass deviation. Only molecular formulas within this mass window are considered.",
-            "format": "double"
+            "format": "double",
+            "nullable": true
           },
           "isotopeMs2Settings": {
             "type": "string",
             "description": "Specify how isotope patterns in MS/MS should be handled.\n \u003cp\u003e\n FILTER: When filtering is enabled, molecular formulas are excluded if their\n theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.\n \u003cp\u003e\n SCORE: Use them for SCORING. To use this the instrument should produce clear MS/MS isotope patterns\n \u003cp\u003e\n IGNORE: Ignore that there might be isotope patterns in MS/MS",
+            "nullable": true,
             "enum": [
               "IGNORE",
               "FILTER",
@@ -4680,45 +4694,56 @@
           },
           "filterByIsotopePattern": {
             "type": "boolean",
-            "description": "When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score."
+            "description": "When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.",
+            "nullable": true
           },
           "enforceElGordoFormula": {
             "type": "boolean",
-            "description": "El Gordo may predict that an MS/MS spectrum is a lipid spectrum. If enabled, the corresponding molecular formula will be enforeced as molecular formula candidate."
+            "description": "El Gordo may predict that an MS/MS spectrum is a lipid spectrum. If enabled, the corresponding molecular formula will be enforeced as molecular formula candidate.",
+            "nullable": true
           },
           "performBottomUpSearch": {
             "type": "boolean",
-            "description": "If true, molecular formula generation via bottom up search is enabled."
+            "description": "If true, molecular formula generation via bottom up search is enabled.",
+            "nullable": true
           },
           "performDenovoBelowMz": {
             "type": "number",
             "description": "Specifies the m/z below which de novo molecular formula generation is enabled. Set to 0 to disable de novo molecular formula generation.",
-            "format": "double"
+            "format": "double",
+            "nullable": true
           },
           "formulaSearchDBs": {
             "type": "array",
             "description": "List Structure database to extract molecular formulas from to reduce formula search space.\n SIRIUS is quite good at de novo formula annotation, so only enable if you have a good reason.",
+            "nullable": true,
             "items": {
-              "type": "string"
+              "type": "string",
+              "nullable": true
             }
           },
           "applyFormulaConstraintsToDBAndBottomUpSearch": {
             "type": "boolean",
-            "description": "By default, the formula (element) constraints are only applied to de novo molecular formula generation.\n If true, the constraints are as well applied to database search and bottom up search."
+            "description": "By default, the formula (element) constraints are only applied to de novo molecular formula generation.\n If true, the constraints are as well applied to database search and bottom up search.",
+            "nullable": true
           },
           "enforcedFormulaConstraints": {
             "type": "string",
-            "description": "These configurations hold the information how to autodetect elements based on the given formula constraints.\n Note: If the compound is already assigned to a specific molecular formula, this annotation is ignored.\n \u003cp\u003e\n Enforced: Enforced elements are always considered"
+            "description": "These configurations hold the information how to autodetect elements based on the given formula constraints.\n Note: If the compound is already assigned to a specific molecular formula, this annotation is ignored.\n \u003cp\u003e\n Enforced: Enforced elements are always considered",
+            "nullable": true
           },
           "fallbackFormulaConstraints": {
             "type": "string",
-            "description": "These configurations hold the information how to autodetect elements based on the given formula constraints.\n Note: If the compound is already assigned to a specific molecular formula, this annotation is ignored.\n \u003cp\u003e\n Fallback: Fallback elements are used, if the auto-detection fails (e.g. no isotope pattern available)"
+            "description": "These configurations hold the information how to autodetect elements based on the given formula constraints.\n Note: If the compound is already assigned to a specific molecular formula, this annotation is ignored.\n \u003cp\u003e\n Fallback: Fallback elements are used, if the auto-detection fails (e.g. no isotope pattern available)",
+            "nullable": true
           },
           "detectableElements": {
             "type": "array",
             "description": "These configurations hold the information how to autodetect elements based on the given formula constraints.\n Note: If the compound is already assigned to a specific molecular formula, this annotation is ignored.\n \u003cp\u003e\n Detectable: Detectable elements are added to the chemical alphabet, if there are indications for them (e.g. in isotope pattern)",
+            "nullable": true,
             "items": {
-              "type": "string"
+              "type": "string",
+              "nullable": true
             }
           },
           "ilpTimeout": {
@@ -4730,7 +4755,8 @@
           "minScoreToInjectSpecLibMatch": {
             "type": "number",
             "description": "Similarity Threshold to inject formula candidates no matter which score/rank they have or which filter settings are applied.\n If threshold \u003e\u003d 0 formulas candidates with reference spectrum similarity above the threshold will be injected.\n If NULL injection is disables.",
-            "format": "double"
+            "format": "double",
+            "nullable": true
           }
         },
         "description": "User/developer friendly parameter subset for the Formula/SIRIUS tool\n Can use results from Spectral library search tool."
@@ -4746,9 +4772,6 @@
         ]
       },
       "SpectralLibrarySearch": {
-        "required": [
-          "spectraSearchDBs"
-        ],
         "type": "object",
         "properties": {
           "enabled": {
@@ -4758,8 +4781,10 @@
           "spectraSearchDBs": {
             "type": "array",
             "description": "Structure Databases with Reference spectra to search in.\n \u003cp\u003e\n Defaults to BIO + Custom Databases. Possible values are available to Database API.",
+            "nullable": true,
             "items": {
-              "type": "string"
+              "type": "string",
+              "nullable": true
             }
           },
           "peakDeviationPpm": {
@@ -4781,9 +4806,6 @@
         "description": "User/developer friendly parameter subset for the Spectral library search tool."
       },
       "StructureDbSearch": {
-        "required": [
-          "structureSearchDBs"
-        ],
         "type": "object",
         "properties": {
           "enabled": {
@@ -4793,19 +4815,22 @@
           "structureSearchDBs": {
             "type": "array",
             "description": "Structure databases to search in, If expansive search is enabled this DB selection will be expanded to PubChem\n if not high confidence hit was found in the selected databases.\n\n Defaults to BIO + Custom Databases. Possible values are available to Database API.",
+            "nullable": true,
             "items": {
-              "type": "string"
+              "type": "string",
+              "nullable": true
             }
           },
           "tagStructuresWithLipidClass": {
             "type": "boolean",
-            "description": "Candidates matching the lipid class estimated by El Gordo will be tagged.\n The lipid class will only be available if El Gordo predicts that the MS/MS is a lipid spectrum.\n If this parameter is set to \u0027false\u0027 El Gordo will still be executed and e.g. improve the fragmentation\n tree, but the matching structure candidates will not be tagged if they match lipid class."
+            "description": "Candidates matching the lipid class estimated by El Gordo will be tagged.\n The lipid class will only be available if El Gordo predicts that the MS/MS is a lipid spectrum.\n If this parameter is set to \u0027false\u0027 El Gordo will still be executed and e.g. improve the fragmentation\n tree, but the matching structure candidates will not be tagged if they match lipid class.",
+            "nullable": true
           },
           "expansiveSearchConfidenceMode": {
             "$ref": "#/components/schemas/Mode"
           }
         },
-        "description": "User/developer friendly parameter subset for the CSI:FingerID structure db search tool.\n Needs results from FingerprintPrediction and Canopus Tool"
+        "description": "User/developer friendly parameter subset for the CSI:FingerID structure db search tool.\n Needs results from FingerprintPrediction and Canopus Tool.\n Non-Null parameters in this Object well override their equivalent value in the config map."
       },
       "Timeout": {
         "type": "object",
@@ -4819,7 +4844,8 @@
             "format": "int32"
           }
         },
-        "description": ""
+        "description": "",
+        "nullable": true
       },
       "UseHeuristic": {
         "type": "object",
@@ -4833,7 +4859,8 @@
             "format": "int32"
           }
         },
-        "description": ""
+        "description": "",
+        "nullable": true
       },
       "Zodiac": {
         "type": "object",
@@ -4845,16 +4872,19 @@
           "consideredCandidatesAt300Mz": {
             "type": "integer",
             "description": "Maximum number of candidate molecular formulas (fragmentation trees computed by SIRIUS) per compound which are considered by ZODIAC for compounds below 300 m/z.",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "consideredCandidatesAt800Mz": {
             "type": "integer",
             "description": "Maximum number of candidate molecular formulas (fragmentation trees computed by SIRIUS) per compound which are considered by ZODIAC for compounds above 800 m/z.",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           },
           "runInTwoSteps": {
             "type": "boolean",
-            "description": "As default ZODIAC runs a 2-step approach. First running \u0027good quality compounds\u0027 only, and afterwards including the remaining."
+            "description": "As default ZODIAC runs a 2-step approach. First running \u0027good quality compounds\u0027 only, and afterwards including the remaining.",
+            "nullable": true
           },
           "edgeFilterThresholds": {
             "$ref": "#/components/schemas/ZodiacEdgeFilterThresholds"
@@ -4881,7 +4911,8 @@
             "format": "int32"
           }
         },
-        "description": ""
+        "description": "",
+        "nullable": true
       },
       "ZodiacEpochs": {
         "type": "object",
@@ -4899,7 +4930,8 @@
             "format": "int32"
           }
         },
-        "description": ""
+        "description": "",
+        "nullable": true
       },
       "BasicSpectrum": {
         "required": [
@@ -6098,11 +6130,11 @@
           "first": {
             "type": "boolean"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "last": {
             "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "number": {
             "type": "integer",
@@ -6185,11 +6217,11 @@
           "first": {
             "type": "boolean"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "last": {
             "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "number": {
             "type": "integer",
@@ -6313,11 +6345,11 @@
           "first": {
             "type": "boolean"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "last": {
             "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "number": {
             "type": "integer",
@@ -6368,11 +6400,11 @@
           "first": {
             "type": "boolean"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "last": {
             "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "number": {
             "type": "integer",
@@ -6449,11 +6481,11 @@
           "first": {
             "type": "boolean"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "last": {
             "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "number": {
             "type": "integer",
@@ -6495,11 +6527,11 @@
           "first": {
             "type": "boolean"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "last": {
             "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "number": {
             "type": "integer",
@@ -6541,11 +6573,11 @@
           "first": {
             "type": "boolean"
           },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "last": {
             "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "number": {
             "type": "integer",

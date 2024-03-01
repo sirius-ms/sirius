@@ -33,7 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 @RestController
-@Tag(name = "GUI", description = "Open and close SIRIUS Graphical User Interface (GUI) on specified projects.")
+@Tag(name = "Gui", description = "Basic GUI Control: Open and close SIRIUS Graphical User Interface (GUI) on specified projects.")
 @ConditionalOnProperty(name = "sirius.middleware.controller.gui.advanced", matchIfMissing = true, havingValue = "false")
 public class GuiControllerBasic extends GuiController {
 

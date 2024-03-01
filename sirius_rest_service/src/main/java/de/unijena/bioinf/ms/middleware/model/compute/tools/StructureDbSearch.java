@@ -37,7 +37,8 @@ import java.util.Map;
 
 /**
  * User/developer friendly parameter subset for the CSI:FingerID structure db search tool.
- * Needs results from FingerprintPrediction and Canopus Tool
+ * Needs results from FingerprintPrediction and Canopus Tool.
+ * Non-Null parameters in this Object well override their equivalent value in the config map.
  */
 @Getter
 @Setter
@@ -50,7 +51,7 @@ public class StructureDbSearch extends Tool<FingerblastOptions> {
      *
      * Defaults to BIO + Custom Databases. Possible values are available to Database API.
      */
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(nullable = true)
     List<String> structureSearchDBs;
 
     /**
@@ -59,6 +60,7 @@ public class StructureDbSearch extends Tool<FingerblastOptions> {
      * If this parameter is set to 'false' El Gordo will still be executed and e.g. improve the fragmentation
      * tree, but the matching structure candidates will not be tagged if they match lipid class.
      */
+    @Schema(nullable = true)
     Boolean tagStructuresWithLipidClass;
 
     /**
@@ -71,7 +73,7 @@ public class StructureDbSearch extends Tool<FingerblastOptions> {
      * EXACT - Use confidence score in exact mode: Only molecular structures identical to the true structure should count as correct identification.
      * APPROXIMATE - Use confidence score in approximate mode: Molecular structures hits that are close to the true structure should count as correct identification.
      */
-    @Schema(enumAsRef = true)
+    @Schema(enumAsRef = true, nullable = true)
     ExpansiveSearchConfidenceMode.Mode expansiveSearchConfidenceMode;
 
 

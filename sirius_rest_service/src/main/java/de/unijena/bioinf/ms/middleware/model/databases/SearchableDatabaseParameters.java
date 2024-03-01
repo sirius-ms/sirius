@@ -31,7 +31,6 @@ import lombok.extern.jackson.Jacksonized;
 @SuperBuilder
 @Jacksonized
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(ignoreUnknown = true, value = {"userDb", "matchRtOfReferenceSpectra", "importDate", "numberOfStructures", "numberOfFormulas", "numberOfReferenceSpectra"})
 public class SearchableDatabaseParameters {
     /**
      * display name of the database
@@ -51,6 +50,6 @@ public class SearchableDatabaseParameters {
      * Indicates whether this database shall be used to use retention time information for library matching.
      * Typically used for in-house spectral libraries that have been measured on
      */
-    @Schema(nullable = true)
+    @Schema(nullable = true, defaultValue = "false")
     protected Boolean matchRtOfReferenceSpectra;
 }

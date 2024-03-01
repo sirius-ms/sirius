@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.unijena.bioinf.ms.frontend.subtools.msnovelist.MsNovelistOptions;
 import de.unijena.bioinf.ms.frontend.subtools.msnovelist.NumberOfMsNovelistCandidates;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
@@ -46,6 +47,7 @@ public class MsNovelist extends Tool<MsNovelistOptions> {
      * Max Value 128. Values > 128 will be set to 128.
      * Actual number of returned candidate might be lower du to duplicates being created by MsNovelist.
      */
+    @Schema(nullable = true)
     Integer numberOfCandidateToPredict;
 
 

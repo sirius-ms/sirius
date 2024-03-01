@@ -62,10 +62,12 @@ public class Sirius extends Tool<SiriusOptions> {
      * Instrument specific profile for internal algorithms
      * Just select what comes closest to the instrument that was used for measuring the data.
      */
+    @Schema(nullable = true)
     Instrument profile;
     /**
      * Number of formula candidates to keep as result list (Formula Candidates).
      */
+    @Schema(nullable = true)
     Integer numberOfCandidates;
     /**
      * Use this parameter if you want to force SIRIUS to report at least
@@ -73,10 +75,12 @@ public class Sirius extends Tool<SiriusOptions> {
      * if <= 0, this parameter will have no effect and just the top
      * NumberOfCandidates results will be reported.
      */
+    @Schema(nullable = true)
     Integer numberOfCandidatesPerIonization;
     /**
      * Maximum allowed mass deviation. Only molecular formulas within this mass window are considered.
      */
+    @Schema(nullable = true)
     Double massAccuracyMS2ppm;
 
     /**
@@ -89,11 +93,13 @@ public class Sirius extends Tool<SiriusOptions> {
      * <p>
      * IGNORE: Ignore that there might be isotope patterns in MS/MS
      */
+    @Schema(nullable = true)
     IsotopeMs2Settings.Strategy isotopeMs2Settings;
 
     /**
      * When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.
      */
+    @Schema(nullable = true)
     Boolean filterByIsotopePattern;
     //endregion
 
@@ -102,23 +108,27 @@ public class Sirius extends Tool<SiriusOptions> {
     /**
      * El Gordo may predict that an MS/MS spectrum is a lipid spectrum. If enabled, the corresponding molecular formula will be enforeced as molecular formula candidate.
      */
+    @Schema(nullable = true)
     Boolean enforceElGordoFormula;
 
     /**
      * If true, molecular formula generation via bottom up search is enabled.
      */
+    @Schema(nullable = true)
     Boolean performBottomUpSearch;
 
     /**
      * Specifies the m/z below which de novo molecular formula generation is enabled. Set to 0 to disable de novo molecular formula generation.
      */
-    Double  performDenovoBelowMz;
+    @Schema(nullable = true)
+    Double performDenovoBelowMz;
 
 
     /**
      * List Structure database to extract molecular formulas from to reduce formula search space.
      * SIRIUS is quite good at de novo formula annotation, so only enable if you have a good reason.
      */
+    @Schema(nullable = true)
     List<String> formulaSearchDBs;
 
 
@@ -126,6 +136,7 @@ public class Sirius extends Tool<SiriusOptions> {
      * By default, the formula (element) constraints are only applied to de novo molecular formula generation.
      * If true, the constraints are as well applied to database search and bottom up search.
      */
+    @Schema(nullable = true)
     Boolean applyFormulaConstraintsToDBAndBottomUpSearch;
     //endregion
 
@@ -137,6 +148,7 @@ public class Sirius extends Tool<SiriusOptions> {
      * <p>
      * Enforced: Enforced elements are always considered
      */
+    @Schema(nullable = true)
     String enforcedFormulaConstraints;
 
     /**
@@ -145,6 +157,7 @@ public class Sirius extends Tool<SiriusOptions> {
      * <p>
      * Fallback: Fallback elements are used, if the auto-detection fails (e.g. no isotope pattern available)
      */
+    @Schema(nullable = true)
     String fallbackFormulaConstraints;
 
     /**
@@ -153,6 +166,7 @@ public class Sirius extends Tool<SiriusOptions> {
      * <p>
      * Detectable: Detectable elements are added to the chemical alphabet, if there are indications for them (e.g. in isotope pattern)
      */
+    @Schema(nullable = true)
     List<String> detectableElements;
     //endregion
 
@@ -163,12 +177,14 @@ public class Sirius extends Tool<SiriusOptions> {
      * secondsPerInstance: Set the maximum number of seconds for computing a single compound. Set to 0 to disable the time constraint.
      * secondsPerTree: Set the maximum number of seconds for a single molecular formula check. Set to 0 to disable the time constraint
      */
+    @Schema(nullable = true)
     Timeout ilpTimeout;
     /**
      * Mass thresholds for heuristic fragmentation tree computation which dramatically speeds up computations.
      * useHeuristicAboveMz: For compounds above this threshold fragmentation trees will be computed heuristically for ranking. Tree that will be kept (numberOfCandidates) will be recomputed exactly
      * useOnlyHeuristicAboveMz:For compounds above this threshold fragmentation trees will be computed heuristically.
      */
+    @Schema(nullable = true)
     UseHeuristic useHeuristic;
     //endregion
 
@@ -179,6 +195,7 @@ public class Sirius extends Tool<SiriusOptions> {
      * If threshold >= 0 formulas candidates with reference spectrum similarity above the threshold will be injected.
      * If NULL injection is disables.
      */
+    @Schema(nullable = true)
     Double minScoreToInjectSpecLibMatch;
     //endregion
 

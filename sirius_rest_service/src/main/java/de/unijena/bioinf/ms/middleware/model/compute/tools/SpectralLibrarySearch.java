@@ -48,7 +48,7 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
      * <p>
      * Defaults to BIO + Custom Databases. Possible values are available to Database API.
      */
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(nullable = true)
     List<String> spectraSearchDBs;
 
     /**

@@ -129,9 +129,11 @@ public class ChemDbServiceImpl implements ChemDbService {
                     .schemaVersion(VersionsInfo.CUSTOM_DATABASE_SCHEMA)
                     .statistics(new CustomDatabaseSettings.Statistics());
 
-            if (dbParameters != null)
+            if (dbParameters != null){
                 configBuilder.displayName(dbParameters.getDisplayName())
-                        .matchRtOfReferenceSpectra(dbParameters.getMatchRtOfReferenceSpectra());
+                        .matchRtOfReferenceSpectra(Optional.ofNullable(dbParameters.getMatchRtOfReferenceSpectra())
+                                .orElse(false));
+            }
 
             CustomDatabase newDb = CustomDatabases.create(location.toAbsolutePath().toString(), configBuilder.build(), version());
             CustomDBOptions.writeDBProperties();
