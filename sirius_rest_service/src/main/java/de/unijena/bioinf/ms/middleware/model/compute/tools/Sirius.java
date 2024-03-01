@@ -55,8 +55,14 @@ import java.util.stream.Collectors;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Sirius extends Tool<SiriusOptions> {
 
+    //Currently these profiles do not much, the orbitrap has lower ppm. but 'ppm' is set separately here.
+    //However, the profile also stores fragtree scoring and therefore needs to be selected.
+    //Further, we might need more different profiles in the future for different ionization and collision technologies.
+    /**
+     * Select the profile that is the closest to your instrumental setup. If nothing fits, use QTOF.
+     */
     @Schema(enumAsRef = true, nullable = true)
-    enum Instrument {QTOF, ORBITRAP} //todo NewWorkflow: we don't have a FTICR profile anymore. in the GUI this is just the orbitrap with lower ppm. but 'ppm' is set separately here. I assume there is currently no better way to do this.
+    enum Instrument {QTOF, ORBITRAP}
 
     //region General measurement parameters
     /**
