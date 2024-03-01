@@ -33,6 +33,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -96,7 +97,7 @@ public class CompoundController {
      * @return the Compounds that have been imported with specified optional fields
      */
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<Compound> addCompounds(@PathVariable String projectId, @RequestBody List<CompoundImport> compounds,
+    public List<Compound> addCompounds(@PathVariable String projectId, @Valid @RequestBody List<CompoundImport> compounds,
                                        @RequestParam(defaultValue = "") EnumSet<Compound.OptField> optFields,
                                        @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFieldsFeatures
     ) {
