@@ -67,7 +67,7 @@ public class Compound {
      * this compound should result in the same neutral mass
      */
     @Schema(nullable = true)
-    protected double neutralMass;
+    protected Double neutralMass;
 
     /**
      * List of aligned features (adducts) that belong to the same (this) compound
