@@ -497,7 +497,8 @@ public class SiriusProjectSpaceImpl implements Project {
         Compound co = c.build();
         co.setName(cids.stream().map(CompoundContainerId::getGroupName)
                 .filter(Optional::isPresent).flatMap(Optional::stream).findFirst()
-                .orElse("rt" + Optional.ofNullable(rt).map(r -> NUMBER_FORMAT.format(r.getMiddleTime() / 60)).orElse("N/A") + "-m" + NUMBER_FORMAT.format(co.getNeutralMass())));
+                .orElse("rt" + Optional.ofNullable(rt).map(r -> NUMBER_FORMAT.format(r.getMiddleTime() / 60)).orElse("N/A")
+                        + "-m" + Optional.ofNullable(co.getNeutralMass()).map(NUMBER_FORMAT::format).orElse("N/A")));
 
         return co;
     }
