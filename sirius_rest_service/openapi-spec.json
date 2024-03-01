@@ -1066,6 +1066,8 @@
         "tags": [
           "Compounds"
         ],
+        "summary": "Import Compounds and its contained features.",
+        "description": "Import Compounds and its contained features. Compounds and Features must not exist in the project.\n Otherwise, they will exist twice.",
         "operationId": "addCompounds",
         "parameters": [
           {
@@ -1187,6 +1189,8 @@
         "tags": [
           "Features"
         ],
+        "summary": "Import (aligned) features into the project.",
+        "description": "Import (aligned) features into the project. Features must not exist in the project.\n Otherwise, they will exist twice.",
         "operationId": "addAlignedFeatures",
         "parameters": [
           {

@@ -97,6 +97,8 @@ public class AlignedFeatureController {
 
 
     /**
+     * Import (aligned) features into the project. Features must not exist in the project.
+     * Otherwise, they will exist twice.
      * @param projectId project-space to import into.
      * @param features  the feature data to be imported
      * @param optFields set of optional fields to be included. Use 'none' to override defaults.
