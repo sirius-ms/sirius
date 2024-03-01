@@ -24,16 +24,15 @@ import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.ms.frontend.BackgroundRuns;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.compute.JobProgress;
-import de.unijena.bioinf.ms.middleware.model.compute.JobSubmission;
-import de.unijena.bioinf.ms.middleware.model.compute.tools.Tool;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import picocli.CommandLine;
 
-import java.util.*;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -98,51 +97,5 @@ public abstract class AbstractComputeService<P extends Project> implements Compu
             }
         }
         return p;
-    }
-
-    protected List<String> makeCommand(JobSubmission jobSubmission) {
-        ArrayList<String> commands = new ArrayList<>(makeConfigToolCommand(jobSubmission));
-        commands.add("--RecomputeResults=" + jobSubmission.isRecompute());
-        commands.addAll(jobSubmission.getEnabledTools().stream()
-                .map(Tool::getCommand)
-                .map(CommandLine.Command::name)
-                .toList());
-        return commands;
-    }
-
-    protected List<String> makeConfigToolCommand(JobSubmission jobSubmission) {
-        List<String> configTool = new ArrayList<>();
-        configTool.add("config");
-        makeCombinedConfigMap(jobSubmission).forEach((k, v) -> {
-            if (v == null){
-                configTool.add("--" + k);
-            } else {
-                configTool.add("--" + k + "=" + v);
-            }
-        });
-        //ensure that there are not whitespaces
-        return configTool.stream().map(s -> s.replaceAll("\\s+", "")).collect(Collectors.toList());
-    }
-
-    protected Map<String, String> makeCombinedConfigMap(JobSubmission jobSubmission) {
-        Map<String, String> combined = new HashMap<>();
-        if (jobSubmission.getConfigMap() != null)
-            combined.putAll(jobSubmission.getConfigMap());
-
-        if (jobSubmission.getEnforcedAdducts() != null)
-            combined.put("AdductSettings.enforced", jobSubmission.getEnforcedAdducts().isEmpty() ? "," :
-                    String.join(",", jobSubmission.getEnforcedAdducts()));
-
-        if (jobSubmission.getDetectableAdducts() != null)
-            combined.put("AdductSettings.detectable", jobSubmission.getDetectableAdducts().isEmpty() ? "," :
-                    String.join(",", jobSubmission.getDetectableAdducts()));
-
-        if (jobSubmission.getFallbackAdducts() != null)
-            combined.put("AdductSettings.fallback", jobSubmission.getFallbackAdducts().isEmpty() ? "," :
-                    String.join(",", jobSubmission.getFallbackAdducts()));
-
-        jobSubmission.getEnabledTools().stream().map(Tool::asConfigMap).forEach(combined::putAll);
-
-        return combined;
     }
 }
