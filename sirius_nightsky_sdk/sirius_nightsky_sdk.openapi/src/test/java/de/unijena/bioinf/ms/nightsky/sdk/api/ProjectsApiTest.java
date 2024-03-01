@@ -13,10 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.api;
 
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.model.PageProjectInfo;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectInfo;
-import de.unijena.bioinf.ms.nightsky.sdk.model.SearchQueryType;
+import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectInfoOptField;
 import org.junit.Test;
 import org.junit.Ignore;
 
@@ -24,8 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
+import java.util.stream.Collectors;
 
 /**
  * API tests for ProjectsApi
@@ -40,16 +37,28 @@ public class ProjectsApiTest {
      * Close project-space and remove it from application.
      *
      * Close project-space and remove it from application. Project will NOT be deleted from disk.   ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void closeProjectSpaceTest() throws ApiException {
+    public void closeProjectSpaceTest()  {
         String projectId = null;
-        
         api.closeProjectSpace(projectId);
-        
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Move an existing (opened) project-space to another location.
+     *
+     * Move an existing (opened) project-space to another location.
+     */
+    @Test
+    public void copyProjectSpaceTest()  {
+        String projectId = null;
+        String pathToCopiedProject = null;
+        String copyProjectId = null;
+        List<ProjectInfoOptField> optFields = null;
+        ProjectInfo response = api.copyProjectSpace(projectId, pathToCopiedProject, copyProjectId, optFields);
+
         // TODO: test validations
     }
     
@@ -57,36 +66,71 @@ public class ProjectsApiTest {
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      *
      * Create and open a new project-space at given location and make it accessible via the given projectId.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void createProjectSpaceTest() throws ApiException {
+    public void createProjectSpaceTest()  {
         String projectId = null;
         String pathToProject = null;
         String pathToSourceProject = null;
         Boolean awaitImport = null;
-        ProjectInfo response = 
-        api.createProjectSpace(projectId, pathToProject, pathToSourceProject, awaitImport);
-        
+        ProjectInfo response = api.createProjectSpace(projectId, pathToProject, pathToSourceProject, awaitImport);
+
         // TODO: test validations
     }
     
     /**
-     * Get project space info by its projectId.
+     * Get CANOPUS prediction vector definition for ClassyFire classes
      *
-     * Get project space info by its projectId.
-     *
-     * @throws ApiException
-     *          if the Api call fails
+     * 
      */
     @Test
-    public void getProjectSpaceTest() throws ApiException {
+    public void getCanopusClassyFireDataTest()  {
         String projectId = null;
-        ProjectInfo response = 
-        api.getProjectSpace(projectId);
-        
+        Integer charge = null;
+        String response = api.getCanopusClassyFireData(projectId, charge);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Get CANOPUS prediction vector definition for NPC classes
+     *
+     * 
+     */
+    @Test
+    public void getCanopusNpcDataTest()  {
+        String projectId = null;
+        Integer charge = null;
+        String response = api.getCanopusNpcData(projectId, charge);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Get CSI:FingerID fingerprint (prediction vector) definition
+     *
+     * 
+     */
+    @Test
+    public void getFingerIdDataTest()  {
+        String projectId = null;
+        Integer charge = null;
+        String response = api.getFingerIdData(projectId, charge);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Get project space info by its projectId.
+     *
+     * Get project space info by its projectId.
+     */
+    @Test
+    public void getProjectSpaceTest()  {
+        String projectId = null;
+        List<ProjectInfoOptField> optFields = null;
+        ProjectInfo response = api.getProjectSpace(projectId, optFields);
+
         // TODO: test validations
     }
     
@@ -94,20 +138,11 @@ public class ProjectsApiTest {
      * List opened project spaces.
      *
      * List opened project spaces.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void getProjectSpacesTest() throws ApiException {
-        Integer page = null;
-        Integer size = null;
-        List<String> sort = null;
-        String searchQuery = null;
-        SearchQueryType querySyntax = null;
-        PageProjectInfo response = 
-        api.getProjectSpaces(page, size, sort, searchQuery, querySyntax);
-        
+    public void getProjectSpacesTest()  {
+        List<ProjectInfo> response = api.getProjectSpaces();
+
         // TODO: test validations
     }
     
@@ -115,17 +150,14 @@ public class ProjectsApiTest {
      * Open an existing project-space and make it accessible via the given projectId.
      *
      * Open an existing project-space and make it accessible via the given projectId.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void openProjectSpaceTest() throws ApiException {
+    public void openProjectSpaceTest()  {
         String projectId = null;
         String pathToProject = null;
-        ProjectInfo response = 
-        api.openProjectSpace(projectId, pathToProject);
-        
+        List<ProjectInfoOptField> optFields = null;
+        ProjectInfo response = api.openProjectSpace(projectId, pathToProject, optFields);
+
         // TODO: test validations
     }
     

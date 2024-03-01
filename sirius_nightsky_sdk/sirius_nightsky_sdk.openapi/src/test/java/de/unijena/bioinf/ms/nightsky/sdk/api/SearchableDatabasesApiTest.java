@@ -13,7 +13,6 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.api;
 
-import de.unijena.bioinf.ms.nightsky.sdk.model.PageSearchableDatabase;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabaseParameters;
 import org.junit.Test;
@@ -40,10 +39,9 @@ public class SearchableDatabasesApiTest {
      * 
      */
     @Test
-    public void addDatabaseTest()  {
-        String databaseId = null;
-        String pathToProject = null;
-        SearchableDatabase response = api.addDatabase(databaseId, pathToProject);
+    public void addDatabasesTest()  {
+        List<String> requestBody = null;
+        List<SearchableDatabase> response = api.addDatabases(requestBody);
 
         // TODO: test validations
     }
@@ -58,6 +56,19 @@ public class SearchableDatabasesApiTest {
         String databaseId = null;
         SearchableDatabaseParameters searchableDatabaseParameters = null;
         SearchableDatabase response = api.createDatabase(databaseId, searchableDatabaseParameters);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * 
+     *
+     * 
+     */
+    @Test
+    public void getCustomDatabasesTest()  {
+        Boolean includeStats = null;
+        List<SearchableDatabase> response = api.getCustomDatabases(includeStats);
 
         // TODO: test validations
     }
@@ -83,11 +94,21 @@ public class SearchableDatabasesApiTest {
      */
     @Test
     public void getDatabasesTest()  {
-        Integer page = null;
-        Integer size = null;
-        List<String> sort = null;
         Boolean includeStats = null;
-        PageSearchableDatabase response = api.getDatabases(page, size, sort, includeStats);
+        List<SearchableDatabase> response = api.getDatabases(includeStats);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * 
+     *
+     * 
+     */
+    @Test
+    public void getIncludedDatabasesTest()  {
+        Boolean includeStats = null;
+        List<SearchableDatabase> response = api.getIncludedDatabases(includeStats);
 
         // TODO: test validations
     }

@@ -13,7 +13,6 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.api;
 
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
 import de.unijena.bioinf.ms.nightsky.sdk.model.AccountCredentials;
 import de.unijena.bioinf.ms.nightsky.sdk.model.AccountInfo;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Subscription;
@@ -24,8 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
+import java.util.stream.Collectors;
 
 /**
  * API tests for LoginAndAccountApi
@@ -40,16 +38,12 @@ public class LoginAndAccountApiTest {
      * Get information about the account currently logged in.
      *
      * Get information about the account currently logged in. Fails if not logged in.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void getAccountInfoTest() throws ApiException {
+    public void getAccountInfoTest()  {
         Boolean includeSubs = null;
-        AccountInfo response = 
-        api.getAccountInfo(includeSubs);
-        
+        AccountInfo response = api.getAccountInfo(includeSubs);
+
         // TODO: test validations
     }
     
@@ -57,15 +51,11 @@ public class LoginAndAccountApiTest {
      * Get SignUp URL (For signUp via web browser)
      *
      * Get SignUp URL (For signUp via web browser)
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void getSignUpURLTest() throws ApiException {
-        String response = 
-        api.getSignUpURL();
-        
+    public void getSignUpURLTest()  {
+        String response = api.getSignUpURL();
+
         // TODO: test validations
     }
     
@@ -73,15 +63,11 @@ public class LoginAndAccountApiTest {
      * Get available subscriptions of the account currently logged in.
      *
      * Get available subscriptions of the account currently logged in. Fails if not logged in.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void getSubscriptionsTest() throws ApiException {
-        List<Subscription> response = 
-        api.getSubscriptions();
-        
+    public void getSubscriptionsTest()  {
+        List<Subscription> response = api.getSubscriptions();
+
         // TODO: test validations
     }
     
@@ -89,15 +75,11 @@ public class LoginAndAccountApiTest {
      * Check if a user is logged in.
      *
      * Check if a user is logged in.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void isLoggedInTest() throws ApiException {
-        Boolean response = 
-        api.isLoggedIn();
-        
+    public void isLoggedInTest()  {
+        Boolean response = api.isLoggedIn();
+
         // TODO: test validations
     }
     
@@ -105,19 +87,15 @@ public class LoginAndAccountApiTest {
      * Login into SIRIUS web services and activate default subscription if available.
      *
      * Login into SIRIUS web services and activate default subscription if available.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void loginTest() throws ApiException {
+    public void loginTest()  {
         Boolean acceptTerms = null;
         AccountCredentials accountCredentials = null;
         Boolean failWhenLoggedIn = null;
         Boolean includeSubs = null;
-        AccountInfo response = 
-        api.login(acceptTerms, accountCredentials, failWhenLoggedIn, includeSubs);
-        
+        AccountInfo response = api.login(acceptTerms, accountCredentials, failWhenLoggedIn, includeSubs);
+
         // TODO: test validations
     }
     
@@ -125,15 +103,11 @@ public class LoginAndAccountApiTest {
      * Logout from SIRIUS web services.
      *
      * Logout from SIRIUS web services.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void logoutTest() throws ApiException {
-        
+    public void logoutTest()  {
         api.logout();
-        
+
         // TODO: test validations
     }
     
@@ -141,15 +115,11 @@ public class LoginAndAccountApiTest {
      * Open User portal in browser.
      *
      * Open User portal in browser. If user is logged in SIRIUS tries to transfer the login state to the browser.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void openPortalTest() throws ApiException {
-        
+    public void openPortalTest()  {
         api.openPortal();
-        
+
         // TODO: test validations
     }
     
@@ -157,16 +127,12 @@ public class LoginAndAccountApiTest {
      * Select a subscription as active subscription to be used for computations.
      *
      * Select a subscription as active subscription to be used for computations.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void selectSubscriptionTest() throws ApiException {
+    public void selectSubscriptionTest()  {
         String sid = null;
-        AccountInfo response = 
-        api.selectSubscription(sid);
-        
+        AccountInfo response = api.selectSubscription(sid);
+
         // TODO: test validations
     }
     
@@ -174,15 +140,11 @@ public class LoginAndAccountApiTest {
      * Open SignUp window in system browser and return signUp link.
      *
      * Open SignUp window in system browser and return signUp link.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void signUpTest() throws ApiException {
-        String response = 
-        api.signUp();
-        
+    public void signUpTest()  {
+        String response = api.signUp();
+
         // TODO: test validations
     }
     

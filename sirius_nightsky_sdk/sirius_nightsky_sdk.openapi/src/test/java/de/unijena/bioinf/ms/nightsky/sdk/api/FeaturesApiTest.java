@@ -13,17 +13,29 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.api;
 
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
 import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeature;
 import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeatureOptField;
+import de.unijena.bioinf.ms.nightsky.sdk.model.AnnotatedMsMsData;
+import de.unijena.bioinf.ms.nightsky.sdk.model.AnnotatedSpectrum;
+import de.unijena.bioinf.ms.nightsky.sdk.model.CanopusPrediction;
+import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundClasses;
+import de.unijena.bioinf.ms.nightsky.sdk.model.FeatureImport;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidate;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidateOptField;
+import de.unijena.bioinf.ms.nightsky.sdk.model.FragmentationTree;
+import de.unijena.bioinf.ms.nightsky.sdk.model.IsotopePatternAnnotation;
+import de.unijena.bioinf.ms.nightsky.sdk.model.LipidAnnotation;
+import de.unijena.bioinf.ms.nightsky.sdk.model.MsData;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageAlignedFeature;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageFormulaCandidate;
+import de.unijena.bioinf.ms.nightsky.sdk.model.PageSpectralLibraryMatch;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageStructureCandidateFormula;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageStructureCandidateScored;
-import de.unijena.bioinf.ms.nightsky.sdk.model.SearchQueryType;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatch;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatchOptField;
+import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateFormula;
 import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateOptField;
+import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateScored;
 import org.junit.Test;
 import org.junit.Ignore;
 
@@ -31,8 +43,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
+import java.util.stream.Collectors;
 
 /**
  * API tests for FeaturesApi
@@ -44,20 +55,31 @@ public class FeaturesApiTest {
 
     
     /**
-     * Delete feature (aligned over runs) with the given identifier from the specified project-space.
+     * 
      *
-     * Delete feature (aligned over runs) with the given identifier from the specified project-space.
-     *
-     * @throws ApiException
-     *          if the Api call fails
+     * 
      */
     @Test
-    public void deleteAlignedFeatureTest() throws ApiException {
+    public void addAlignedFeaturesTest()  {
+        String projectId = null;
+        List<FeatureImport> featureImport = null;
+        List<AlignedFeatureOptField> optFields = null;
+        List<AlignedFeature> response = api.addAlignedFeatures(projectId, featureImport, optFields);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Delete feature (aligned over runs) with the given identifier from the specified project-space.
+     *
+     * Delete feature (aligned over runs) with the given identifier from the specified project-space.
+     */
+    @Test
+    public void deleteAlignedFeatureTest()  {
         String projectId = null;
         String alignedFeatureId = null;
-        
         api.deleteAlignedFeature(projectId, alignedFeatureId);
-        
+
         // TODO: test validations
     }
     
@@ -65,18 +87,14 @@ public class FeaturesApiTest {
      * Get feature (aligned over runs) with the given identifier from the specified project-space.
      *
      * Get feature (aligned over runs) with the given identifier from the specified project-space.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void getAlignedFeatureTest() throws ApiException {
+    public void getAlignedFeatureTest()  {
         String projectId = null;
         String alignedFeatureId = null;
         List<AlignedFeatureOptField> optFields = null;
-        AlignedFeature response = 
-        api.getAlignedFeature(projectId, alignedFeatureId, optFields);
-        
+        AlignedFeature response = api.getAlignedFeature(projectId, alignedFeatureId, optFields);
+
         // TODO: test validations
     }
     
@@ -84,22 +102,106 @@ public class FeaturesApiTest {
      * Get all available features (aligned over runs) in the given project-space.
      *
      * Get all available features (aligned over runs) in the given project-space.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void getAlignedFeaturesTest() throws ApiException {
+    public void getAlignedFeaturesTest()  {
+        String projectId = null;
+        List<AlignedFeatureOptField> optFields = null;
+        List<AlignedFeature> response = api.getAlignedFeatures(projectId, optFields);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Get all available features (aligned over runs) in the given project-space.
+     *
+     * Get all available features (aligned over runs) in the given project-space.
+     */
+    @Test
+    public void getAlignedFeaturesPagedTest()  {
         String projectId = null;
         Integer page = null;
         Integer size = null;
         List<String> sort = null;
-        String searchQuery = null;
-        SearchQueryType querySyntax = null;
         List<AlignedFeatureOptField> optFields = null;
-        PageAlignedFeature response = 
-        api.getAlignedFeatures(projectId, page, size, sort, searchQuery, querySyntax, optFields);
-        
+        PageAlignedFeature response = api.getAlignedFeaturesPaged(projectId, page, size, sort, optFields);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Best matching compound classes,  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
+     *
+     * Best matching compound classes,  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
+     */
+    @Test
+    public void getBestMatchingCompoundClassesTest()  {
+        String projectId = null;
+        String alignedFeatureId = null;
+        String formulaId = null;
+        CompoundClasses response = api.getBestMatchingCompoundClasses(projectId, alignedFeatureId, formulaId);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,
+     *
+     * All predicted compound classes (CANOPUS) from ClassyFire and NPC and their probabilities,
+     */
+    @Test
+    public void getCanopusPredictionTest()  {
+        String projectId = null;
+        String alignedFeatureId = null;
+        String formulaId = null;
+        CanopusPrediction response = api.getCanopusPrediction(projectId, alignedFeatureId, formulaId);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier  This fingerprint is used to perform structure database search and predict compound classes.
+     *
+     * Returns predicted fingerprint (CSI:FingerID) for the given formula result identifier  This fingerprint is used to perform structure database search and predict compound classes.
+     */
+    @Test
+    public void getFingerprintPredictionTest()  {
+        String projectId = null;
+        String alignedFeatureId = null;
+        String formulaId = null;
+        List<Double> response = api.getFingerprintPrediction(projectId, alignedFeatureId, formulaId);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
+     *
+     * Returns MS/MS Spectrum (Merged MS/MS and measured MS/MS) which is annotated with fragments and losses  for the given formula result identifier  These annotations are only available if a fragmentation tree and the structure candidate are available.
+     */
+    @Test
+    public void getFormulaAnnotatedMsMsDataTest()  {
+        String projectId = null;
+        String alignedFeatureId = null;
+        String formulaId = null;
+        AnnotatedMsMsData response = api.getFormulaAnnotatedMsMsData(projectId, alignedFeatureId, formulaId);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     *
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     */
+    @Test
+    public void getFormulaAnnotatedSpectrumTest()  {
+        String projectId = null;
+        String alignedFeatureId = null;
+        String formulaId = null;
+        Integer spectrumIndex = null;
+        AnnotatedSpectrum response = api.getFormulaAnnotatedSpectrum(projectId, alignedFeatureId, formulaId, spectrumIndex);
+
         // TODO: test validations
     }
     
@@ -107,43 +209,188 @@ public class FeaturesApiTest {
      * FormulaResultContainers for the given &#39;formulaId&#39; with minimal information.
      *
      * FormulaResultContainers for the given &#39;formulaId&#39; with minimal information.  Can be enriched with an optional results overview and formula candidate information.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void getFormulaCandidateTest() throws ApiException {
+    public void getFormulaCandidateTest()  {
         String projectId = null;
         String alignedFeatureId = null;
         String formulaId = null;
         List<FormulaCandidateOptField> optFields = null;
-        FormulaCandidate response = 
-        api.getFormulaCandidate(projectId, alignedFeatureId, formulaId, optFields);
-        
+        FormulaCandidate response = api.getFormulaCandidate(projectId, alignedFeatureId, formulaId, optFields);
+
         // TODO: test validations
     }
     
     /**
-     * List of all FormulaResultContainers available for this feature with minimal information.
+     * List of FormulaResultContainers available for this feature with minimal information.
      *
-     * List of all FormulaResultContainers available for this feature with minimal information.  Can be enriched with an optional results overview.
-     *
-     * @throws ApiException
-     *          if the Api call fails
+     * List of FormulaResultContainers available for this feature with minimal information.  Can be enriched with an optional results overview.
      */
     @Test
-    public void getFormulaCandidatesTest() throws ApiException {
+    public void getFormulaCandidatesTest()  {
+        String projectId = null;
+        String alignedFeatureId = null;
+        List<FormulaCandidateOptField> optFields = null;
+        List<FormulaCandidate> response = api.getFormulaCandidates(projectId, alignedFeatureId, optFields);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Page of FormulaResultContainers available for this feature with minimal information.
+     *
+     * Page of FormulaResultContainers available for this feature with minimal information.  Can be enriched with an optional results overview.
+     */
+    @Test
+    public void getFormulaCandidatesPagedTest()  {
         String projectId = null;
         String alignedFeatureId = null;
         Integer page = null;
         Integer size = null;
         List<String> sort = null;
-        String searchQuery = null;
-        SearchQueryType querySyntax = null;
         List<FormulaCandidateOptField> optFields = null;
-        PageFormulaCandidate response = 
-        api.getFormulaCandidates(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax, optFields);
-        
+        PageFormulaCandidate response = api.getFormulaCandidatesPaged(projectId, alignedFeatureId, page, size, sort, optFields);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Returns fragmentation tree (SIRIUS) for the given formula result identifier  This tree is used to rank formula candidates (treeScore).
+     *
+     * Returns fragmentation tree (SIRIUS) for the given formula result identifier  This tree is used to rank formula candidates (treeScore).
+     */
+    @Test
+    public void getFragTreeTest()  {
+        String projectId = null;
+        String alignedFeatureId = null;
+        String formulaId = null;
+        FragmentationTree response = api.getFragTree(projectId, alignedFeatureId, formulaId);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
+     *
+     * Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. This simulated isotope pattern is used to rank formula candidates (treeScore).
+     */
+    @Test
+    public void getIsotopePatternAnnotationTest()  {
+        String projectId = null;
+        String alignedFeatureId = null;
+        String formulaId = null;
+        IsotopePatternAnnotation response = api.getIsotopePatternAnnotation(projectId, alignedFeatureId, formulaId);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Returns Lipid annotation (ElGordo) for the given formula result identifier.
+     *
+     * Returns Lipid annotation (ElGordo) for the given formula result identifier.  ElGordo lipid annotation runs as part of the SIRIUS formula identification step.
+     */
+    @Test
+    public void getLipidAnnotationTest()  {
+        String projectId = null;
+        String alignedFeatureId = null;
+        String formulaId = null;
+        LipidAnnotation response = api.getLipidAnnotation(projectId, alignedFeatureId, formulaId);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
+     *
+     * Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
+     */
+    @Test
+    public void getMsDataTest()  {
+        String projectId = null;
+        String alignedFeatureId = null;
+        MsData response = api.getMsData(projectId, alignedFeatureId);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * 
+     *
+     * 
+     */
+    @Test
+    public void getSiriusFragTreeTest()  {
+        String projectId = null;
+        String alignedFeatureId = null;
+        String formulaId = null;
+        String response = api.getSiriusFragTree(projectId, alignedFeatureId, formulaId);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     *
+     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     */
+    @Test
+    public void getSpectralLibraryMatchesTest()  {
+        String projectId = null;
+        String alignedFeatureId = null;
+        List<SpectralLibraryMatchOptField> optFields = null;
+        List<SpectralLibraryMatch> response = api.getSpectralLibraryMatches(projectId, alignedFeatureId, optFields);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     *
+     * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     */
+    @Test
+    public void getSpectralLibraryMatchesPagedTest()  {
+        String projectId = null;
+        String alignedFeatureId = null;
+        Integer page = null;
+        Integer size = null;
+        List<String> sort = null;
+        List<SpectralLibraryMatchOptField> optFields = null;
+        PageSpectralLibraryMatch response = api.getSpectralLibraryMatchesPaged(projectId, alignedFeatureId, page, size, sort, optFields);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.
+     *
+     * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.  These annotations are only available if a fragmentation tree and the structure candidate are available.
+     */
+    @Test
+    public void getStructureAnnotatedMsDataTest()  {
+        String projectId = null;
+        String alignedFeatureId = null;
+        String formulaId = null;
+        String inchiKey = null;
+        AnnotatedMsMsData response = api.getStructureAnnotatedMsData(projectId, alignedFeatureId, formulaId, inchiKey);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     *
+     * Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
+     */
+    @Test
+    public void getStructureAnnotatedSpectrumTest()  {
+        String projectId = null;
+        String alignedFeatureId = null;
+        String formulaId = null;
+        String inchiKey = null;
+        Integer spectrumIndex = null;
+        AnnotatedSpectrum response = api.getStructureAnnotatedSpectrum(projectId, alignedFeatureId, formulaId, inchiKey, spectrumIndex);
+
         // TODO: test validations
     }
     
@@ -151,23 +398,14 @@ public class FeaturesApiTest {
      * List of StructureCandidates for the given &#39;alignedFeatureId&#39; with minimal information.
      *
      * List of StructureCandidates for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void getStructureCandidatesTest() throws ApiException {
+    public void getStructureCandidatesTest()  {
         String projectId = null;
         String alignedFeatureId = null;
-        Integer page = null;
-        Integer size = null;
-        List<String> sort = null;
-        String searchQuery = null;
-        SearchQueryType querySyntax = null;
         List<StructureCandidateOptField> optFields = null;
-        PageStructureCandidateFormula response = 
-        api.getStructureCandidates(projectId, alignedFeatureId, page, size, sort, searchQuery, querySyntax, optFields);
-        
+        List<StructureCandidateFormula> response = api.getStructureCandidates(projectId, alignedFeatureId, optFields);
+
         // TODO: test validations
     }
     
@@ -175,24 +413,52 @@ public class FeaturesApiTest {
      * List of StructureCandidates the given &#39;formulaId&#39; with minimal information.
      *
      * List of StructureCandidates the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void getStructureCandidatesByFormulaTest() throws ApiException {
+    public void getStructureCandidatesByFormulaTest()  {
+        String projectId = null;
+        String alignedFeatureId = null;
+        String formulaId = null;
+        List<StructureCandidateOptField> optFields = null;
+        List<StructureCandidateScored> response = api.getStructureCandidatesByFormula(projectId, alignedFeatureId, formulaId, optFields);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Page of StructureCandidates the given &#39;formulaId&#39; with minimal information.
+     *
+     * Page of StructureCandidates the given &#39;formulaId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
+     */
+    @Test
+    public void getStructureCandidatesByFormulaPagedTest()  {
         String projectId = null;
         String alignedFeatureId = null;
         String formulaId = null;
         Integer page = null;
         Integer size = null;
         List<String> sort = null;
-        String searchQuery = null;
-        SearchQueryType querySyntax = null;
         List<StructureCandidateOptField> optFields = null;
-        PageStructureCandidateScored response = 
-        api.getStructureCandidatesByFormula(projectId, alignedFeatureId, formulaId, page, size, sort, searchQuery, querySyntax, optFields);
-        
+        PageStructureCandidateScored response = api.getStructureCandidatesByFormulaPaged(projectId, alignedFeatureId, formulaId, page, size, sort, optFields);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Page of StructureCandidates for the given &#39;alignedFeatureId&#39; with minimal information.
+     *
+     * Page of StructureCandidates for the given &#39;alignedFeatureId&#39; with minimal information.  StructureCandidates can be enriched with molecular fingerprint, structure database links.
+     */
+    @Test
+    public void getStructureCandidatesPagedTest()  {
+        String projectId = null;
+        String alignedFeatureId = null;
+        Integer page = null;
+        Integer size = null;
+        List<String> sort = null;
+        List<StructureCandidateOptField> optFields = null;
+        PageStructureCandidateFormula response = api.getStructureCandidatesPaged(projectId, alignedFeatureId, page, size, sort, optFields);
+
         // TODO: test validations
     }
     

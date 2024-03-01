@@ -13,7 +13,8 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.api;
 
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.model.CommandSubmission;
+import de.unijena.bioinf.ms.nightsky.sdk.model.DatabaseImportSubmission;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ImportLocalFilesSubmission;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ImportStringSubmission;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
@@ -27,8 +28,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
+import java.util.stream.Collectors;
 
 /**
  * API tests for JobsApi
@@ -43,19 +43,15 @@ public class JobsApiTest {
      * Delete job.
      *
      * Delete job. Specify how to behave for running jobs.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void deleteJobTest() throws ApiException {
+    public void deleteJobTest()  {
         String projectId = null;
         String jobId = null;
         Boolean cancelIfRunning = null;
         Boolean awaitDeletion = null;
-        
         api.deleteJob(projectId, jobId, cancelIfRunning, awaitDeletion);
-        
+
         // TODO: test validations
     }
     
@@ -63,16 +59,27 @@ public class JobsApiTest {
      * Delete job configuration with given name.
      *
      * Delete job configuration with given name.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void deleteJobConfigTest() throws ApiException {
+    public void deleteJobConfigTest()  {
         String name = null;
-        
         api.deleteJobConfig(name);
-        
+
+        // TODO: test validations
+    }
+    
+    /**
+     * * Delete ALL jobs.
+     *
+     * * Delete ALL jobs. Specify how to behave for running jobs.
+     */
+    @Test
+    public void deleteJobsTest()  {
+        String projectId = null;
+        Boolean cancelIfRunning = null;
+        Boolean awaitDeletion = null;
+        api.deleteJobs(projectId, cancelIfRunning, awaitDeletion);
+
         // TODO: test validations
     }
     
@@ -80,16 +87,12 @@ public class JobsApiTest {
      * Request default job configuration
      *
      * Request default job configuration
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void getDefaultJobConfigTest() throws ApiException {
+    public void getDefaultJobConfigTest()  {
         Boolean includeConfigMap = null;
-        JobSubmission response = 
-        api.getDefaultJobConfig(includeConfigMap);
-        
+        JobSubmission response = api.getDefaultJobConfig(includeConfigMap);
+
         // TODO: test validations
     }
     
@@ -97,18 +100,14 @@ public class JobsApiTest {
      * Get job information and its current state and progress (if available).
      *
      * Get job information and its current state and progress (if available).
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void getJobTest() throws ApiException {
+    public void getJobTest()  {
         String projectId = null;
         String jobId = null;
         List<JobOptField> optFields = null;
-        Job response = 
-        api.getJob(projectId, jobId, optFields);
-        
+        Job response = api.getJob(projectId, jobId, optFields);
+
         // TODO: test validations
     }
     
@@ -116,17 +115,13 @@ public class JobsApiTest {
      * Request job configuration with given name.
      *
      * Request job configuration with given name.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void getJobConfigTest() throws ApiException {
+    public void getJobConfigTest()  {
         String name = null;
         Boolean includeConfigMap = null;
-        JobSubmission response = 
-        api.getJobConfig(name, includeConfigMap);
-        
+        JobSubmission response = api.getJobConfig(name, includeConfigMap);
+
         // TODO: test validations
     }
     
@@ -134,37 +129,57 @@ public class JobsApiTest {
      * Request all available job configurations
      *
      * Request all available job configurations
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void getJobConfigsTest() throws ApiException {
+    public void getJobConfigsTest()  {
         Boolean includeConfigMap = null;
-        List<JobSubmission> response = 
-        api.getJobConfigs(includeConfigMap);
-        
+        List<JobSubmission> response = api.getJobConfigs(includeConfigMap);
+
         // TODO: test validations
     }
     
     /**
-     * Get job information and its current state and progress (if available).
+     * Get List of all available jobs with information such as current state and progress (if available).
      *
-     * Get job information and its current state and progress (if available).
-     *
-     * @throws ApiException
-     *          if the Api call fails
+     * Get List of all available jobs with information such as current state and progress (if available).
      */
     @Test
-    public void getJobsTest() throws ApiException {
+    public void getJobsTest()  {
+        String projectId = null;
+        List<JobOptField> optFields = null;
+        List<Job> response = api.getJobs(projectId, optFields);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Get Page of jobs with information such as current state and progress (if available).
+     *
+     * Get Page of jobs with information such as current state and progress (if available).
+     */
+    @Test
+    public void getJobsPagedTest()  {
         String projectId = null;
         Integer page = null;
         Integer size = null;
         List<String> sort = null;
         List<JobOptField> optFields = null;
-        PageJob response = 
-        api.getJobs(projectId, page, size, sort, optFields);
-        
+        PageJob response = api.getJobsPaged(projectId, page, size, sort, optFields);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * 
+     *
+     * 
+     */
+    @Test
+    public void hasJobsTest()  {
+        String projectId = null;
+        Boolean includeFinished = null;
+        Boolean response = api.hasJobs(projectId, includeFinished);
+
         // TODO: test validations
     }
     
@@ -172,18 +187,44 @@ public class JobsApiTest {
      * Add new job configuration with given name.
      *
      * Add new job configuration with given name.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void postJobConfigTest() throws ApiException {
+    public void postJobConfigTest()  {
         String name = null;
         JobSubmission jobSubmission = null;
         Boolean overrideExisting = null;
-        String response = 
-        api.postJobConfig(name, jobSubmission, overrideExisting);
-        
+        String response = api.postJobConfig(name, jobSubmission, overrideExisting);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Start computation for given command and input.
+     *
+     * Start computation for given command and input.
+     */
+    @Test
+    public void startCommandTest()  {
+        String projectId = null;
+        CommandSubmission commandSubmission = null;
+        List<JobOptField> optFields = null;
+        Job response = api.startCommand(projectId, commandSubmission, optFields);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Start import of structure and spectra files into the specified database.
+     *
+     * Start import of structure and spectra files into the specified database.
+     */
+    @Test
+    public void startDatabaseImportTest()  {
+        String projectId = null;
+        DatabaseImportSubmission databaseImportSubmission = null;
+        List<JobOptField> optFields = null;
+        Job response = api.startDatabaseImport(projectId, databaseImportSubmission, optFields);
+
         // TODO: test validations
     }
     
@@ -191,18 +232,14 @@ public class JobsApiTest {
      * Import ms/ms data in given format from local filesystem into the specified project
      *
      * Import ms/ms data in given format from local filesystem into the specified project.  The import will run in a background job  Possible formats (ms, mgf, cef, msp, mzML, mzXML, project-space)  &lt;p&gt;
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void startImportFromPathJobTest() throws ApiException {
+    public void startImportFromPathJobTest()  {
         String projectId = null;
         ImportLocalFilesSubmission importLocalFilesSubmission = null;
         List<JobOptField> optFields = null;
-        Job response = 
-        api.startImportFromPathJob(projectId, importLocalFilesSubmission, optFields);
-        
+        Job response = api.startImportFromPathJob(projectId, importLocalFilesSubmission, optFields);
+
         // TODO: test validations
     }
     
@@ -210,18 +247,14 @@ public class JobsApiTest {
      * Import ms/ms data from the given format into the specified project-space  Possible formats (ms, mgf, cef, msp, mzML, mzXML)
      *
      * Import ms/ms data from the given format into the specified project-space  Possible formats (ms, mgf, cef, msp, mzML, mzXML)
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void startImportFromStringJobTest() throws ApiException {
+    public void startImportFromStringJobTest()  {
         String projectId = null;
         ImportStringSubmission importStringSubmission = null;
         List<JobOptField> optFields = null;
-        Job response = 
-        api.startImportFromStringJob(projectId, importStringSubmission, optFields);
-        
+        Job response = api.startImportFromStringJob(projectId, importStringSubmission, optFields);
+
         // TODO: test validations
     }
     
@@ -229,18 +262,14 @@ public class JobsApiTest {
      * Start computation for given compounds and with given parameters.
      *
      * Start computation for given compounds and with given parameters.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void startJobTest() throws ApiException {
+    public void startJobTest()  {
         String projectId = null;
         JobSubmission jobSubmission = null;
         List<JobOptField> optFields = null;
-        Job response = 
-        api.startJob(projectId, jobSubmission, optFields);
-        
+        Job response = api.startJob(projectId, jobSubmission, optFields);
+
         // TODO: test validations
     }
     
@@ -248,20 +277,16 @@ public class JobsApiTest {
      * Start computation for given compounds and with parameters from a stored job-config.
      *
      * Start computation for given compounds and with parameters from a stored job-config.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void startJobFromConfigTest() throws ApiException {
+    public void startJobFromConfigTest()  {
         String projectId = null;
         String jobConfigName = null;
         List<String> requestBody = null;
         Boolean recompute = null;
         List<JobOptField> optFields = null;
-        Job response = 
-        api.startJobFromConfig(projectId, jobConfigName, requestBody, recompute, optFields);
-        
+        Job response = api.startJobFromConfig(projectId, jobConfigName, requestBody, recompute, optFields);
+
         // TODO: test validations
     }
     

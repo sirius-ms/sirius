@@ -13,7 +13,7 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.api;
 
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Info;
 import org.junit.Test;
 import org.junit.Ignore;
@@ -22,8 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
+import java.util.stream.Collectors;
 
 /**
  * API tests for InfoApi
@@ -38,15 +37,23 @@ public class InfoApiTest {
      * 
      *
      * 
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void getInfoTest() throws ApiException {
-        Info response = 
-        api.getInfo();
-        
+    public void getConnectionCheckTest()  {
+        ConnectionCheck response = api.getConnectionCheck();
+
+        // TODO: test validations
+    }
+    
+    /**
+     * 
+     *
+     * 
+     */
+    @Test
+    public void getInfoTest()  {
+        Info response = api.getInfo();
+
         // TODO: test validations
     }
     

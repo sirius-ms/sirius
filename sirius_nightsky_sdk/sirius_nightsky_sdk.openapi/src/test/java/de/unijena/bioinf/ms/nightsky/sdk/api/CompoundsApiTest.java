@@ -13,12 +13,11 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.api;
 
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
 import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeatureOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Compound;
+import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundImport;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageCompound;
-import de.unijena.bioinf.ms.nightsky.sdk.model.SearchQueryType;
 import org.junit.Test;
 import org.junit.Ignore;
 
@@ -26,8 +25,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
+import java.util.stream.Collectors;
 
 /**
  * API tests for CompoundsApi
@@ -39,20 +37,32 @@ public class CompoundsApiTest {
 
     
     /**
-     * Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
+     * 
      *
-     * Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
-     *
-     * @throws ApiException
-     *          if the Api call fails
+     * 
      */
     @Test
-    public void deleteCompoundTest() throws ApiException {
+    public void addCompoundsTest()  {
+        String projectId = null;
+        List<CompoundImport> compoundImport = null;
+        List<CompoundOptField> optFields = null;
+        List<AlignedFeatureOptField> optFieldsFeatures = null;
+        List<Compound> response = api.addCompounds(projectId, compoundImport, optFields, optFieldsFeatures);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
+     *
+     * Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
+     */
+    @Test
+    public void deleteCompoundTest()  {
         String projectId = null;
         String compoundId = null;
-        
         api.deleteCompound(projectId, compoundId);
-        
+
         // TODO: test validations
     }
     
@@ -60,43 +70,48 @@ public class CompoundsApiTest {
      * Get compound (group of ion identities) with the given identifier from the specified project-space.
      *
      * Get compound (group of ion identities) with the given identifier from the specified project-space.
-     *
-     * @throws ApiException
-     *          if the Api call fails
      */
     @Test
-    public void getCompoundTest() throws ApiException {
+    public void getCompoundTest()  {
         String projectId = null;
         String compoundId = null;
         List<CompoundOptField> optFields = null;
         List<AlignedFeatureOptField> optFieldsFeatures = null;
-        Compound response = 
-        api.getCompound(projectId, compoundId, optFields, optFieldsFeatures);
-        
+        Compound response = api.getCompound(projectId, compoundId, optFields, optFieldsFeatures);
+
         // TODO: test validations
     }
     
     /**
-     * Get all available compounds (group of ion identities) in the given project-space.
+     * List of all available compounds (group of ion identities) in the given project-space.
      *
-     * Get all available compounds (group of ion identities) in the given project-space.
-     *
-     * @throws ApiException
-     *          if the Api call fails
+     * List of all available compounds (group of ion identities) in the given project-space.
      */
     @Test
-    public void getCompoundsTest() throws ApiException {
+    public void getCompoundsTest()  {
+        String projectId = null;
+        List<CompoundOptField> optFields = null;
+        List<AlignedFeatureOptField> optFieldsFeatures = null;
+        List<Compound> response = api.getCompounds(projectId, optFields, optFieldsFeatures);
+
+        // TODO: test validations
+    }
+    
+    /**
+     * Page of available compounds (group of ion identities) in the given project-space.
+     *
+     * Page of available compounds (group of ion identities) in the given project-space.
+     */
+    @Test
+    public void getCompoundsPagedTest()  {
         String projectId = null;
         Integer page = null;
         Integer size = null;
         List<String> sort = null;
-        String searchQuery = null;
-        SearchQueryType querySyntax = null;
         List<CompoundOptField> optFields = null;
         List<AlignedFeatureOptField> optFieldsFeatures = null;
-        PageCompound response = 
-        api.getCompounds(projectId, page, size, sort, searchQuery, querySyntax, optFields, optFieldsFeatures);
-        
+        PageCompound response = api.getCompoundsPaged(projectId, page, size, sort, optFields, optFieldsFeatures);
+
         // TODO: test validations
     }
     

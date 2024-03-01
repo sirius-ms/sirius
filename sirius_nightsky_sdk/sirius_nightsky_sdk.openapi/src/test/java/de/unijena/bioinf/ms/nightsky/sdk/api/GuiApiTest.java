@@ -13,7 +13,7 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.api;
 
-import de.unijena.bioinf.ms.nightsky.sdk.model.PageGuiInfo;
+import de.unijena.bioinf.ms.nightsky.sdk.model.GuiInfo;
 import org.junit.Test;
 import org.junit.Ignore;
 
@@ -53,10 +53,7 @@ public class GuiApiTest {
      */
     @Test
     public void getGuisTest()  {
-        Integer page = null;
-        Integer size = null;
-        List<String> sort = null;
-        PageGuiInfo response = api.getGuis(page, size, sort);
+        List<GuiInfo> response = api.getGuis();
 
         // TODO: test validations
     }
