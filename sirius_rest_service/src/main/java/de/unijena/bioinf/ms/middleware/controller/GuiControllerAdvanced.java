@@ -30,7 +30,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@Tag(name = "Advanced GUI control", description = "Open, control and close SIRIUS Graphical User Interface (GUI) on specified projects.")
+@Tag(name = "Gui Advanced", description = "Advanced GUI Control: Open, control and close SIRIUS Graphical User Interface (GUI) on specified projects.")
 @ConditionalOnProperty(name = "sirius.middleware.controller.gui.advanced", matchIfMissing = false, havingValue = "true")
 public class GuiControllerAdvanced extends GuiController{
     protected GuiControllerAdvanced(ProjectsProvider<?> projectsProvider, GuiService guiService) {

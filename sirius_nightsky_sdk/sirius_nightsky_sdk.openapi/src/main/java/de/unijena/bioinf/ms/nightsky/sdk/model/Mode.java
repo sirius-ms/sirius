@@ -55,7 +55,7 @@ public enum Mode {
         return b;
       }
     }
-    throw new IllegalArgumentException("Unexpected value '" + value + "'");
+    return null;
   }
 }
 

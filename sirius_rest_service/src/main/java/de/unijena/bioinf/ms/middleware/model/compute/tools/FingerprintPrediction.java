@@ -27,6 +27,7 @@ import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.spectraldb.InjectSpectralLibraryMatchFormulas;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
@@ -47,6 +48,7 @@ public class FingerprintPrediction extends Tool<FingerprintOptions> {
      * If true, an adaptive soft threshold will be applied to only compute Fingerprints for promising formula candidates
      * Enabling is highly recommended.
      */
+    @Schema(nullable = true)
     Boolean useScoreThreshold;
 
     /**
@@ -55,6 +57,7 @@ public class FingerprintPrediction extends Tool<FingerprintOptions> {
      * score threshold rules apply.
      * If NULL default value will be used.
      */
+    @Schema(nullable = true)
     Boolean alwaysPredictHighRefMatches;
 
     private FingerprintPrediction() {

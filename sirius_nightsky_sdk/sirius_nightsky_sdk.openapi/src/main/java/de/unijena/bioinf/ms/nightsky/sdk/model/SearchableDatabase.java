@@ -49,7 +49,7 @@ public class SearchableDatabase {
   private String location;
 
   public static final String JSON_PROPERTY_MATCH_RT_OF_REFERENCE_SPECTRA = "matchRtOfReferenceSpectra";
-  private Boolean matchRtOfReferenceSpectra;
+  private Boolean matchRtOfReferenceSpectra = false;
 
   public static final String JSON_PROPERTY_DATABASE_ID = "databaseId";
   private String databaseId;

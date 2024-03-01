@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.unijena.bioinf.GibbsSampling.properties.*;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
@@ -44,20 +45,26 @@ public class Zodiac extends Tool<ZodiacOptions> {
     /**
      * Maximum number of candidate molecular formulas (fragmentation trees computed by SIRIUS) per compound which are considered by ZODIAC for compounds below 300 m/z.
      */
+    @Schema(nullable = true)
     Integer consideredCandidatesAt300Mz;
+
     /**
      * Maximum number of candidate molecular formulas (fragmentation trees computed by SIRIUS) per compound which are considered by ZODIAC for compounds above 800 m/z.
      */
+    @Schema(nullable = true)
     Integer consideredCandidatesAt800Mz;
+
     /**
      * As default ZODIAC runs a 2-step approach. First running 'good quality compounds' only, and afterwards including the remaining.
      */
+    @Schema(nullable = true)
     Boolean runInTwoSteps;
 
     /**
      * thresholdFilter = Defines the proportion of edges of the complete network which will be ignored.
      * minLocalConnections = Minimum number of compounds to which at least one candidate per compound must be connected to.
      */
+    @Schema(nullable = true)
     ZodiacEdgeFilterThresholds edgeFilterThresholds;
 
     /**
@@ -65,6 +72,7 @@ public class Zodiac extends Tool<ZodiacOptions> {
      * burnInPeriod: "Number of epochs considered as 'burn-in period'.
      * numberOfMarkovChains: Number of separate Gibbs sampling runs.
      */
+    @Schema(nullable = true)
     ZodiacEpochs gibbsSamplerParameters;
 
     private Zodiac() {

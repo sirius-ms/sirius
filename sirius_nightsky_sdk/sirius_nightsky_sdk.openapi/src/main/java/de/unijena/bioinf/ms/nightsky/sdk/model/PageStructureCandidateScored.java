@@ -36,8 +36,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   PageStructureCandidateScored.JSON_PROPERTY_TOTAL_PAGES,
   PageStructureCandidateScored.JSON_PROPERTY_TOTAL_ELEMENTS,
   PageStructureCandidateScored.JSON_PROPERTY_FIRST,
-  PageStructureCandidateScored.JSON_PROPERTY_SORT,
   PageStructureCandidateScored.JSON_PROPERTY_LAST,
+  PageStructureCandidateScored.JSON_PROPERTY_SORT,
   PageStructureCandidateScored.JSON_PROPERTY_NUMBER,
   PageStructureCandidateScored.JSON_PROPERTY_NUMBER_OF_ELEMENTS,
   PageStructureCandidateScored.JSON_PROPERTY_PAGEABLE,
@@ -56,11 +56,11 @@ public class PageStructureCandidateScored {
   public static final String JSON_PROPERTY_FIRST = "first";
   private Boolean first;
 
-  public static final String JSON_PROPERTY_SORT = "sort";
-  private SortObject sort;
-
   public static final String JSON_PROPERTY_LAST = "last";
   private Boolean last;
+
+  public static final String JSON_PROPERTY_SORT = "sort";
+  private SortObject sort;
 
   public static final String JSON_PROPERTY_NUMBER = "number";
   private Integer number;
@@ -161,32 +161,6 @@ public class PageStructureCandidateScored {
   }
 
 
-  public PageStructureCandidateScored sort(SortObject sort) {
-    
-    this.sort = sort;
-    return this;
-  }
-
-   /**
-   * Get sort
-   * @return sort
-  **/
-  @javax.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SORT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public SortObject getSort() {
-    return sort;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_SORT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSort(SortObject sort) {
-    this.sort = sort;
-  }
-
-
   public PageStructureCandidateScored last(Boolean last) {
     
     this.last = last;
@@ -210,6 +184,32 @@ public class PageStructureCandidateScored {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setLast(Boolean last) {
     this.last = last;
+  }
+
+
+  public PageStructureCandidateScored sort(SortObject sort) {
+    
+    this.sort = sort;
+    return this;
+  }
+
+   /**
+   * Get sort
+   * @return sort
+  **/
+  @javax.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_SORT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public SortObject getSort() {
+    return sort;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SORT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setSort(SortObject sort) {
+    this.sort = sort;
   }
 
 
@@ -388,8 +388,8 @@ public class PageStructureCandidateScored {
     return Objects.equals(this.totalPages, pageStructureCandidateScored.totalPages) &&
         Objects.equals(this.totalElements, pageStructureCandidateScored.totalElements) &&
         Objects.equals(this.first, pageStructureCandidateScored.first) &&
-        Objects.equals(this.sort, pageStructureCandidateScored.sort) &&
         Objects.equals(this.last, pageStructureCandidateScored.last) &&
+        Objects.equals(this.sort, pageStructureCandidateScored.sort) &&
         Objects.equals(this.number, pageStructureCandidateScored.number) &&
         Objects.equals(this.numberOfElements, pageStructureCandidateScored.numberOfElements) &&
         Objects.equals(this.pageable, pageStructureCandidateScored.pageable) &&
@@ -400,7 +400,7 @@ public class PageStructureCandidateScored {
 
   @Override
   public int hashCode() {
-    return Objects.hash(totalPages, totalElements, first, sort, last, number, numberOfElements, pageable, size, content, empty);
+    return Objects.hash(totalPages, totalElements, first, last, sort, number, numberOfElements, pageable, size, content, empty);
   }
 
   @Override
@@ -410,8 +410,8 @@ public class PageStructureCandidateScored {
     sb.append("    totalPages: ").append(toIndentedString(totalPages)).append("\n");
     sb.append("    totalElements: ").append(toIndentedString(totalElements)).append("\n");
     sb.append("    first: ").append(toIndentedString(first)).append("\n");
-    sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
     sb.append("    last: ").append(toIndentedString(last)).append("\n");
+    sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
     sb.append("    number: ").append(toIndentedString(number)).append("\n");
     sb.append("    numberOfElements: ").append(toIndentedString(numberOfElements)).append("\n");
     sb.append("    pageable: ").append(toIndentedString(pageable)).append("\n");

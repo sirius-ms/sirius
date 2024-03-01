@@ -43,7 +43,7 @@ public class SpectralLibrarySearch {
   private Boolean enabled;
 
   public static final String JSON_PROPERTY_SPECTRA_SEARCH_D_BS = "spectraSearchDBs";
-  private List<String> spectraSearchDBs = new ArrayList<>();
+  private List<String> spectraSearchDBs;
 
   public static final String JSON_PROPERTY_PEAK_DEVIATION_PPM = "peakDeviationPpm";
   private Double peakDeviationPpm;
@@ -101,9 +101,9 @@ public class SpectralLibrarySearch {
    * Structure Databases with Reference spectra to search in.  &lt;p&gt;  Defaults to BIO + Custom Databases. Possible values are available to Database API.
    * @return spectraSearchDBs
   **/
-  @javax.annotation.Nonnull
+  @javax.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_SPECTRA_SEARCH_D_BS)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getSpectraSearchDBs() {
     return spectraSearchDBs;
@@ -111,7 +111,7 @@ public class SpectralLibrarySearch {
 
 
   @JsonProperty(JSON_PROPERTY_SPECTRA_SEARCH_D_BS)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSpectraSearchDBs(List<String> spectraSearchDBs) {
     this.spectraSearchDBs = spectraSearchDBs;
   }

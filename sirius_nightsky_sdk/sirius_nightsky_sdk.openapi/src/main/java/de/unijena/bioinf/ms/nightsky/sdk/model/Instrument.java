@@ -28,9 +28,7 @@ public enum Instrument {
   
   QTOF("QTOF"),
   
-  ORBI("ORBI"),
-  
-  FTICR("FTICR");
+  ORBITRAP("ORBITRAP");
 
   private String value;
 

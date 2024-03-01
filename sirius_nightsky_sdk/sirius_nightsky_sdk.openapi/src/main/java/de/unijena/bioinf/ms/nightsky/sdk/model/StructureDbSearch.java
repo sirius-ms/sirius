@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * User/developer friendly parameter subset for the CSI:FingerID structure db search tool.  Needs results from FingerprintPrediction and Canopus Tool
+ * User/developer friendly parameter subset for the CSI:FingerID structure db search tool.  Needs results from FingerprintPrediction and Canopus Tool.  Non-Null parameters in this Object well override their equivalent value in the config map.
  */
 @JsonPropertyOrder({
   StructureDbSearch.JSON_PROPERTY_ENABLED,
@@ -42,7 +42,7 @@ public class StructureDbSearch {
   private Boolean enabled;
 
   public static final String JSON_PROPERTY_STRUCTURE_SEARCH_D_BS = "structureSearchDBs";
-  private List<String> structureSearchDBs = new ArrayList<>();
+  private List<String> structureSearchDBs;
 
   public static final String JSON_PROPERTY_TAG_STRUCTURES_WITH_LIPID_CLASS = "tagStructuresWithLipidClass";
   private Boolean tagStructuresWithLipidClass;
@@ -97,9 +97,9 @@ public class StructureDbSearch {
    * Structure databases to search in, If expansive search is enabled this DB selection will be expanded to PubChem  if not high confidence hit was found in the selected databases.   Defaults to BIO + Custom Databases. Possible values are available to Database API.
    * @return structureSearchDBs
   **/
-  @javax.annotation.Nonnull
+  @javax.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_STRUCTURE_SEARCH_D_BS)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<String> getStructureSearchDBs() {
     return structureSearchDBs;
@@ -107,7 +107,7 @@ public class StructureDbSearch {
 
 
   @JsonProperty(JSON_PROPERTY_STRUCTURE_SEARCH_D_BS)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setStructureSearchDBs(List<String> structureSearchDBs) {
     this.structureSearchDBs = structureSearchDBs;
   }

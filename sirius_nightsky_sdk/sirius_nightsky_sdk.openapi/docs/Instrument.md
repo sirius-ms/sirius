@@ -7,9 +7,7 @@
 
 * `QTOF` (value: `"QTOF"`)
 
-* `ORBI` (value: `"ORBI"`)
-
-* `FTICR` (value: `"FTICR"`)
+* `ORBITRAP` (value: `"ORBITRAP"`)
 
 
 
