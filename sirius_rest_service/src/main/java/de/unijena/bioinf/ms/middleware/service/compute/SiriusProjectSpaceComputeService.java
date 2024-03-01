@@ -219,7 +219,7 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
 
         BackgroundRuns<?, ?>.BackgroundRunJob j = getJob(psm, jobId);
         if (j.isFinished()) {
-            backgroundRuns(psm).removeRun(j.getRunId());
+            backgroundRuns(psm).removeFinishedRun(j.getRunId());
         } else {
             if (cancelIfRunning)
                 j.cancel();
@@ -232,18 +232,18 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
                 } catch (InterruptedException e) {
                     //ignore
                 }
-                backgroundRuns(psm).removeRun(j.getRunId());
+                backgroundRuns(psm).removeFinishedRun(j.getRunId());
             } else {
                 j.addPropertyChangeListener(JobStateEvent.JOB_STATE_EVENT, evt -> {
                     if (evt instanceof JobStateEvent) {
                         final BackgroundRuns<?, ?>.BackgroundRunJob jj = (BackgroundRuns<?, ?>.BackgroundRunJob) evt.getSource();
                         if (jj.isFinished())
-                            backgroundRuns(psm).removeRun(jj.getRunId());
+                            backgroundRuns(psm).removeFinishedRun(jj.getRunId());
                     }
                 });
                 //may already have been finished during listener registration
                 if (j.isFinished())
-                    backgroundRuns(psm).removeRun(j.getRunId());
+                    backgroundRuns(psm).removeFinishedRun(j.getRunId());
             }
         }
         return extractJobId(j, optFields);

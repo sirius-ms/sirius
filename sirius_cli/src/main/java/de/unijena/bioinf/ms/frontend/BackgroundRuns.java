@@ -125,8 +125,8 @@ public final class BackgroundRuns<P extends ProjectSpaceManager<I>, I extends In
         });
     }
 
-    public BackgroundRunJob removeRun(int jobId) {
-        final BackgroundRunJob job = runningRuns.get(jobId);
+    public BackgroundRunJob removeFinishedRun(int jobId) {
+        final BackgroundRunJob job = finishedRuns.get(jobId);
         if (job == null)
             return null;
 
@@ -134,7 +134,7 @@ public final class BackgroundRuns<P extends ProjectSpaceManager<I>, I extends In
             throw new IllegalArgumentException("Job with ID '" + jobId + "' is still Running! Only finished jobs can be removed.");
 
         withPropertyChangesEvent(job, (j) -> {
-            runningRuns.remove(j.getRunId());
+            finishedRuns.remove(j.getRunId());
             return ChangeEventType.DELETION;
         });
         return job;
