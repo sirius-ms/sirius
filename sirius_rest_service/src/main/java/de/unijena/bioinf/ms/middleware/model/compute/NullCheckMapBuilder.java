@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.ms.middleware.model.compute;
 
-import de.unijena.bioinf.ms.middleware.model.compute.tools.Tool;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,27 +39,27 @@ public class NullCheckMapBuilder {
         this.map = map;
     }
 
-    public NullCheckMapBuilder putNonNull(String key, String value) {
-        return putNonNull(key, value, v -> v);
+    public NullCheckMapBuilder putIfNonNull(String key, String value) {
+        return putIfNonNull(key, value, v -> v);
     }
 
-    public <T> NullCheckMapBuilder putNonNull(String key, T value) {
-        return putNonNull(key, value, String::valueOf);
+    public <T> NullCheckMapBuilder putIfNonNull(String key, T value) {
+        return putIfNonNull(key, value, String::valueOf);
     }
 
-    public <T extends Enum<T>> NullCheckMapBuilder putNonNull(String key, T value) {
-        return putNonNull(key, value, Enum::name);
+    public <T extends Enum<T>> NullCheckMapBuilder putIfNonNull(String key, T value) {
+        return putIfNonNull(key, value, Enum::name);
     }
 
-    public <T> NullCheckMapBuilder putNonNullObj(@NotNull String key,
-                                                    @Nullable T value,
-                                                    @NotNull Function<T, ?> valueConverter
+    public <T> NullCheckMapBuilder putIfNonNullObj(@NotNull String key,
+                                                   @Nullable T value,
+                                                   @NotNull Function<T, ?> valueConverter
     ) {
-        return putNonNull(key, value, i -> String.valueOf(valueConverter.apply(i)));
+        return putIfNonNull(key, value, i -> String.valueOf(valueConverter.apply(i)));
     }
 
 
-    public <T> NullCheckMapBuilder putNonNull(
+    public <T> NullCheckMapBuilder putIfNonNull(
             @NotNull String key,
             @Nullable T value,
             @NotNull Function<T, String> valueConverter

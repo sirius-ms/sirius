@@ -84,17 +84,17 @@ public class Zodiac extends Tool<ZodiacOptions> {
     @Override
     public Map<String, String> asConfigMap() {
         return new NullCheckMapBuilder()
-                .putNonNull("ZodiacNumberOfConsideredCandidatesAt300Mz", consideredCandidatesAt300Mz)
-                .putNonNull("ZodiacNumberOfConsideredCandidatesAt800Mz", consideredCandidatesAt800Mz)
-                .putNonNull("ZodiacRunInTwoSteps", runInTwoSteps)
+                .putIfNonNull("ZodiacNumberOfConsideredCandidatesAt300Mz", consideredCandidatesAt300Mz)
+                .putIfNonNull("ZodiacNumberOfConsideredCandidatesAt800Mz", consideredCandidatesAt800Mz)
+                .putIfNonNull("ZodiacRunInTwoSteps", runInTwoSteps)
 
-                .putNonNullObj("ZodiacEpochs.iterations", gibbsSamplerParameters, it -> it.iterations)
-                .putNonNullObj("ZodiacEpochs.burnInPeriod", gibbsSamplerParameters, it -> it.burnInPeriod)
-                .putNonNull("ZodiacEpochs.numberOfMarkovChains", gibbsSamplerParameters.numberOfMarkovChains)
+                .putIfNonNullObj("ZodiacEpochs.iterations", gibbsSamplerParameters, it -> it.iterations)
+                .putIfNonNullObj("ZodiacEpochs.burnInPeriod", gibbsSamplerParameters, it -> it.burnInPeriod)
+                .putIfNonNull("ZodiacEpochs.numberOfMarkovChains", gibbsSamplerParameters.numberOfMarkovChains)
 
-                .putNonNullObj("ZodiacEdgeFilterThresholds.thresholdFilter", edgeFilterThresholds, it -> it.thresholdFilter)
-                .putNonNullObj("ZodiacEdgeFilterThresholds.minLocalConnections", edgeFilterThresholds, it -> it.minLocalConnections)
-                .putNonNullObj("ZodiacEdgeFilterThresholds.minLocalCandidates", edgeFilterThresholds, it -> it.minLocalCandidates)
+                .putIfNonNullObj("ZodiacEdgeFilterThresholds.thresholdFilter", edgeFilterThresholds, it -> it.thresholdFilter)
+                .putIfNonNullObj("ZodiacEdgeFilterThresholds.minLocalConnections", edgeFilterThresholds, it -> it.minLocalConnections)
+                .putIfNonNullObj("ZodiacEdgeFilterThresholds.minLocalCandidates", edgeFilterThresholds, it -> it.minLocalCandidates)
                 .toUnmodifiableMap();
     }
 

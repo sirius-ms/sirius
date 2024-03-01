@@ -208,35 +208,36 @@ public class Sirius extends Tool<SiriusOptions> {
     @Override
     public Map<String, String> asConfigMap() {
         return new NullCheckMapBuilder()
-                .putNonNullObj("UseHeuristic.useHeuristicAboveMz", useHeuristic, UseHeuristic::getUseHeuristicAboveMz)
-                .putNonNullObj("UseHeuristic.useOnlyHeuristicAboveMz", useHeuristic, UseHeuristic::getUseOnlyHeuristicAboveMz)
+                .putIfNonNullObj("UseHeuristic.useHeuristicAboveMz", useHeuristic, UseHeuristic::getUseHeuristicAboveMz)
+                .putIfNonNullObj("UseHeuristic.useOnlyHeuristicAboveMz", useHeuristic, UseHeuristic::getUseOnlyHeuristicAboveMz)
 
-                .putNonNullObj("Timeout.secondsPerInstance", ilpTimeout, Timeout::getNumberOfSecondsPerInstance)
-                .putNonNullObj("Timeout.secondsPerTree", ilpTimeout, Timeout::getNumberOfSecondsPerDecomposition)
+                .putIfNonNullObj("Timeout.secondsPerInstance", ilpTimeout, Timeout::getNumberOfSecondsPerInstance)
+                .putIfNonNullObj("Timeout.secondsPerTree", ilpTimeout, Timeout::getNumberOfSecondsPerDecomposition)
 
-                .putNonNull("FormulaSettings.enforced", enforcedFormulaConstraints)
-                .putNonNull("FormulaSettings.detectable", detectableElements, d -> String.join(",", d))
-                .putNonNull("FormulaSettings.fallback", fallbackFormulaConstraints)
+                .putIfNonNull("FormulaSettings.enforced", enforcedFormulaConstraints)
+                .putIfNonNull("FormulaSettings.detectable", detectableElements, d -> String.join(",", d))
+                .putIfNonNull("FormulaSettings.fallback", fallbackFormulaConstraints)
 
-                .putNonNull("IsotopeMs2Settings", isotopeMs2Settings)
-                .putNonNull("IsotopeSettings.filter", filterByIsotopePattern)
+                .putIfNonNull("IsotopeMs2Settings", isotopeMs2Settings)
+                .putIfNonNull("IsotopeSettings.filter", filterByIsotopePattern)
 
-                .putNonNull("MS2MassDeviation.allowedMassDeviation", massAccuracyMS2ppm, it -> it + " ppm")
+                .putIfNonNull("MS2MassDeviation.allowedMassDeviation", massAccuracyMS2ppm, it -> it + " ppm")
 
-                .putNonNull("FormulaSearchSettings.performBottomUpAboveMz", (performBottomUpSearch == null || !performBottomUpSearch) ? String.valueOf(Double.POSITIVE_INFINITY) : "0")
-                .putNonNull("FormulaSearchSettings.performDeNovoBelowMz", (performDenovoBelowMz == null) ? "0" : String.valueOf(performDenovoBelowMz))
-                .putNonNull("FormulaSearchDB", formulaSearchDBs, f -> String.join(",", f))
+                .putIfNonNullObj("FormulaSearchSettings.performBottomUpAboveMz", performBottomUpSearch, it -> it ? 0d : Double.POSITIVE_INFINITY)
+                .putIfNonNull("FormulaSearchSettings.performDeNovoBelowMz", performDenovoBelowMz)
 
-                .putNonNull("FormulaSearchSettings.applyFormulaConstraintsToBottomUp", applyFormulaConstraintsToDBAndBottomUpSearch)
-                .putNonNull("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates", applyFormulaConstraintsToDBAndBottomUpSearch)
+                .putIfNonNull("FormulaSearchDB", formulaSearchDBs, f -> String.join(",", f))
 
-                .putNonNull("NumberOfCandidates", numberOfCandidates)
-                .putNonNull("NumberOfCandidatesPerIonization", numberOfCandidatesPerIonization)
-                .putNonNull("AlgorithmProfile", profile)
+                .putIfNonNull("FormulaSearchSettings.applyFormulaConstraintsToBottomUp", applyFormulaConstraintsToDBAndBottomUpSearch)
+                .putIfNonNull("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates", applyFormulaConstraintsToDBAndBottomUpSearch)
 
-                .putNonNull("EnforceElGordoFormula", enforceElGordoFormula)
-                .putNonNull("InjectSpectralLibraryMatchFormulas.minScoreToInject", minScoreToInjectSpecLibMatch)
-                .putNonNullObj("InjectSpectralLibraryMatchFormulas.injectFormulas", minScoreToInjectSpecLibMatch, Objects::nonNull)
+                .putIfNonNull("NumberOfCandidates", numberOfCandidates)
+                .putIfNonNull("NumberOfCandidatesPerIonization", numberOfCandidatesPerIonization)
+                .putIfNonNull("AlgorithmProfile", profile)
+
+                .putIfNonNull("EnforceElGordoFormula", enforceElGordoFormula)
+                .putIfNonNull("InjectSpectralLibraryMatchFormulas.minScoreToInject", minScoreToInjectSpecLibMatch)
+                .putIfNonNullObj("InjectSpectralLibraryMatchFormulas.injectFormulas", minScoreToInjectSpecLibMatch, Objects::nonNull)
                 .toUnmodifiableMap();
     }
 

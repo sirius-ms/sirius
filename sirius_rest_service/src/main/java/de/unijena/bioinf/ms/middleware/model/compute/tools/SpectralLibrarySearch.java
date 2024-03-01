@@ -80,10 +80,10 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
     @Override
     public Map<String, String> asConfigMap() {
         return new NullCheckMapBuilder()
-                .putNonNullObj("SpectralSearchDB", spectraSearchDBs, db -> String.join(",", db).toLowerCase(Locale.ROOT))
-                .putNonNull("SpectralMatchingMassDeviation.allowedPeakDeviation", peakDeviationPpm, it -> it + " ppm")
-                .putNonNull("SpectralMatchingMassDeviation.allowedPrecursorDeviation", precursorDeviationPpm, it -> it + " ppm")
-                .putNonNull("SpectralAlignmentScorer", scoring)
+                .putIfNonNullObj("SpectralSearchDB", spectraSearchDBs, db -> String.join(",", db).toLowerCase(Locale.ROOT))
+                .putIfNonNull("SpectralMatchingMassDeviation.allowedPeakDeviation", peakDeviationPpm, it -> it + " ppm")
+                .putIfNonNull("SpectralMatchingMassDeviation.allowedPrecursorDeviation", precursorDeviationPpm, it -> it + " ppm")
+                .putIfNonNull("SpectralAlignmentScorer", scoring)
                 .toUnmodifiableMap();
     }
 

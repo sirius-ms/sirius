@@ -56,7 +56,7 @@ public class MsNovelist extends Tool<MsNovelistOptions> {
     @Override
     public Map<String, String> asConfigMap() {
         return new NullCheckMapBuilder()
-                .putNonNull("NumberOfMsNovelistCandidates", numberOfCandidateToPredict)
+                .putIfNonNull("NumberOfMsNovelistCandidates", numberOfCandidateToPredict)
                 .toUnmodifiableMap();
     }
 
