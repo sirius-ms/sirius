@@ -214,15 +214,15 @@ public class JobSubmission extends AbstractSubmission {
     private Map<String, String> asConfigMap() {
 
         return new NullCheckMapBuilder(Optional.ofNullable(getConfigMap()).orElse(new HashMap<>()))
-                .putNonNull("AdductSettings.enforced", getEnforcedAdducts(), (v) -> v.isEmpty()
+                .putIfNonNull("AdductSettings.enforced", getEnforcedAdducts(), (v) -> v.isEmpty()
                         ? "," : String.join(",", v))
 
-                .putNonNull("AdductSettings.detectable", getDetectableAdducts(), (v) -> v.isEmpty()
+                .putIfNonNull("AdductSettings.detectable", getDetectableAdducts(), (v) -> v.isEmpty()
                         ? "," : String.join(",", v))
 
-                .putNonNull("AdductSettings.fallback", getFallbackAdducts(), (v) -> v.isEmpty()
+                .putIfNonNull("AdductSettings.fallback", getFallbackAdducts(), (v) -> v.isEmpty()
                         ? "," : String.join(",", v))
-                .putNonNull("RecomputeResults", getRecompute())
+                .putIfNonNull("RecomputeResults", getRecompute())
                 .toMap();
     }
 

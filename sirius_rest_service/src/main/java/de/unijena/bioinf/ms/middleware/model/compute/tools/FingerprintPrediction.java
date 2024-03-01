@@ -69,8 +69,8 @@ public class FingerprintPrediction extends Tool<FingerprintOptions> {
     @Override
     public Map<String, String> asConfigMap() {
         return new NullCheckMapBuilder()
-                .putNonNull("FormulaResultThreshold", useScoreThreshold)
-                .putNonNull("InjectSpectralLibraryMatchFormulas.alwaysPredict", alwaysPredictHighRefMatches)
+                .putIfNonNull("FormulaResultThreshold", useScoreThreshold)
+                .putIfNonNull("InjectSpectralLibraryMatchFormulas.alwaysPredict", alwaysPredictHighRefMatches)
                 .toUnmodifiableMap();
     }
 
