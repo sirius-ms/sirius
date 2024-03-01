@@ -65,6 +65,8 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
     private String groupId;
     @Nullable
     private RetentionTime groupRt;
+    @Nullable
+    private String groupName;
 
     // fields for fast compound filtering
     @Nullable
@@ -84,13 +86,13 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
     private boolean useApproximate = false;
 
     protected CompoundContainerId(@NotNull String directoryName, @NotNull String compoundName, int compoundIndex) {
-        this(directoryName, compoundName, compoundIndex, null, null, null, null, null, null, null);
+        this(directoryName, compoundName, compoundIndex, null, null, null, null, null, null, null, null);
     }
 
     protected CompoundContainerId(@NotNull String directoryName, @NotNull String compoundName, int compoundIndex,
                                   @Nullable Double ionMass, @Nullable PrecursorIonType ionType,
                                   @Nullable RetentionTime rt, @Nullable Double confidenceScore,
-                                  @Nullable String featureId, @Nullable String groupId,  @Nullable RetentionTime groupRt) {
+                                  @Nullable String featureId, @Nullable String groupId, @Nullable RetentionTime groupRt, @Nullable String groupName) {
         this.directoryName = directoryName;
         this.compoundName = compoundName;
         this.compoundIndex = compoundIndex;
@@ -100,6 +102,8 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         this.confidenceScore = confidenceScore;
         this.featureId = featureId;
         this.groupId = groupId;
+        this.groupRt = groupRt;
+        this.groupName = groupName;
     }
 
     public boolean hasFlag(Flag flag) {
@@ -206,6 +210,15 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         return Optional.ofNullable(groupRt);
     }
 
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
+    }
+
+    @NotNull
+    public Optional<String> getGroupName() {
+        return Optional.ofNullable(groupName);
+    }
+
     public void setGroupRt(@Nullable RetentionTime rt) {
         this.groupRt = rt;
     }
@@ -246,6 +259,7 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         getFeatureId().ifPresent(fid -> kv.put("featureId", featureId));
         getGroupId().ifPresent(fid -> kv.put("groupId", groupId));
         getGroupRt().ifPresent(rt -> kv.put("groupRt", RetentionTime.asStringValue(rt)));
+        getGroupName().ifPresent(groupName -> kv.put("groupName", groupName));
 
 
         if (!rankingScores.isEmpty())
@@ -268,5 +282,6 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         setFeatureId(cid.featureId);
         setGroupId(cid.groupId);
         setGroupRt(cid.groupRt);
+        setGroupName(cid.groupName);
     }
 }
