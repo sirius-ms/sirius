@@ -126,7 +126,7 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
         List<CompoundContainerId> compounds = extractCompoundIds(jobSubmission, br.getProjectSpaceManager());
 
         try {
-            List<String> commandList = makeCommand(jobSubmission);
+            List<String> commandList = jobSubmission.asCommand();
             BackgroundRuns<?, ?>.BackgroundRunJob run = backgroundRuns(psmI).runCommand(commandList, compounds);
             registerServerEventListener(run, psmI.getProjectId());
             return extractJobId(run, optFields);

@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.unijena.bioinf.GibbsSampling.properties.*;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
+import de.unijena.bioinf.ms.middleware.model.compute.NullCheckMapBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;

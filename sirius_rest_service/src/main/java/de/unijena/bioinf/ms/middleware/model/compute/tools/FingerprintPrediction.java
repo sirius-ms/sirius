@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
+import de.unijena.bioinf.ms.middleware.model.compute.NullCheckMapBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.spectraldb.InjectSpectralLibraryMatchFormulas;
 import io.swagger.v3.oas.annotations.media.Schema;
