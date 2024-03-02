@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
-import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
@@ -36,10 +35,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping(value = "/api/projects")
@@ -60,7 +57,7 @@ public class ProjectController {
      */
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<ProjectInfo> getProjectSpaces() {
-       return projectsProvider.listAllProjectSpaces();
+        return projectsProvider.listAllProjectSpaces();
     }
 
     /**
@@ -76,67 +73,33 @@ public class ProjectController {
     /**
      * Open an existing project-space and make it accessible via the given projectId.
      *
-     * @param projectId unique name/identifier that shall be used to access the opened project-space. Must consist only of [a-zA-Z0-9_-].
+     * @param projectId     unique name/identifier that shall be used to access the opened project-space. Must consist only of [a-zA-Z0-9_-].
+     * @param pathToProject local file path to open the project from. If NULL, project will be loaded by it projectId from default project location.  DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
      */
     @PutMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ProjectInfo openProjectSpace(@PathVariable String projectId,
-                                        @RequestParam String pathToProject,
-                                        @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields) throws IOException {
-        try {
-            return projectsProvider.openProjectSpace(projectId, pathToProject, optFields);
-        } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        }
+                                        @Deprecated @RequestParam(required = false) String pathToProject,
+                                        @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields
+    ) throws IOException {
+        return projectsProvider.openProjectSpace(projectId, pathToProject, optFields);
     }
 
     /**
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      *
-     * @param projectId unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-].
+     * @param projectId     unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-].
+     * @param pathToProject local file path where the project will be created. If NULL, project will be stored by its projectId in default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
      */
     @PostMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ProjectInfo createProjectSpace(@PathVariable String projectId,
-                                          @RequestParam String pathToProject,
-                                          @RequestParam(required = false) String pathToSourceProject,
-                                          @RequestParam(required = false, defaultValue = "true") boolean awaitImport
+                                          @Deprecated @RequestParam(required = false) String pathToProject
     ) throws IOException {
-        InputFilesOptions inputFiles = null;
-        if (pathToSourceProject != null) {
-            inputFiles = new InputFilesOptions();
-            inputFiles.msInput = new InputFilesOptions.MsInput();
-            inputFiles.msInput.setAllowMS1Only(true);
-            inputFiles.msInput.setInputPath(List.of(Path.of(pathToSourceProject)));
-
-            if (!inputFiles.msInput.isSingleProject())
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported input! 'pathToSourceProject' needs to point to a valid SIRIUS project-space");
-
-        }
-
-        ProjectInfo pid = null;
-        try {
-            pid = projectsProvider.createProjectSpace(projectId, Path.of(pathToProject));
-        } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        }
-        de.unijena.bioinf.ms.middleware.service.projects.Project project = projectsProvider.getProjectOrThrow(projectId);
-        if (inputFiles != null) {
-            Job id = computeContext.createAndSubmitJob(project, List.of("project-space", "--keep-open"),
-                    null, inputFiles, EnumSet.allOf(Job.OptField.class));
-            if (awaitImport) { //todo maybe separate endpoint for non waiting.
-                try {
-                    computeContext.getJJob(project, id.getId()).awaitResult();
-                    computeContext.deleteJob(project, id.getId(), false, true, EnumSet.noneOf(Job.OptField.class));
-                } catch (ExecutionException e) {
-                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error when waiting for import jobs '" + id.getId() + "'.", e);
-                }
-            }
-        }
-        return pid;
+        return projectsProvider.createProjectSpace(projectId, pathToProject);
     }
 
     /**
      * Close project-space and remove it from application. Project will NOT be deleted from disk.
-     *
+     * <p>
      * ATTENTION: This will cancel and remove all jobs running on this Project before closing it.
      * If there are many jobs, this might take some time.
      *
@@ -155,12 +118,15 @@ public class ProjectController {
     /**
      * Move an existing (opened) project-space to another location.
      *
-     * @param projectId unique name/identifier of the project-space that shall be copied.
+     * @param projectId           unique name/identifier of the project-space that shall be copied.
      * @param pathToCopiedProject target location where the source project will be copied to.
-     * @param copyProjectId optional id/mame of the newly created project (copy). If given the project will be opened.
+     * @param copyProjectId       optional id/mame of the newly created project (copy). If given the project will be opened.
      * @return ProjectInfo of the newly created project if opened (copyProjectId != null) or the project info of
      * the source project otherwise
+     * <p>
+     * DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
      */
+    @Deprecated
     @PutMapping(value = "/{projectId}/copy", produces = MediaType.APPLICATION_JSON_VALUE)
     public ProjectInfo copyProjectSpace(@PathVariable String projectId, @RequestParam String pathToCopiedProject, @RequestParam(required = false) String copyProjectId, @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields) throws IOException {
         return projectsProvider.copyProjectSpace(projectId, copyProjectId, pathToCopiedProject, optFields);

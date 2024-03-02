@@ -28,7 +28,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
@@ -51,20 +50,24 @@ public interface ProjectsProvider<P extends de.unijena.bioinf.ms.middleware.serv
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no project space with name '" + projectId + "'"));
     }
 
-    ProjectInfo openProjectSpace(@NotNull String projectId, @NotNull String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException;
+    ProjectInfo openProjectSpace(@NotNull String projectId, @Nullable String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException;
 
-    ProjectInfo createProjectSpace(Path location) throws IOException;
+    default ProjectInfo createProjectSpace(String projectIdSuggestion) throws IOException {
+        return createProjectSpace(projectIdSuggestion, null);
+    }
 
-    ProjectInfo createProjectSpace(@NotNull String nameSuggestion, @NotNull Path location) throws IOException;
+    ProjectInfo createProjectSpace(@NotNull String projectIdSuggestion, @Nullable String location) throws IOException;
 
-    boolean containsProject(@NotNull String name);
+    boolean containsProject(@NotNull String projectId);
 
-    void closeProjectSpace(String name) throws IOException;
+    void closeProjectSpace(String projectId) throws IOException;
 
+    @Deprecated
     default ProjectInfo copyProjectSpace(@NotNull String projectId, @NotNull String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
         return copyProjectSpace(projectId, null, pathToProject, optFields);
     }
 
+    @Deprecated
     ProjectInfo copyProjectSpace(@NotNull String projectId, @Nullable String copyId, @NotNull String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException;
 
     void closeAll();

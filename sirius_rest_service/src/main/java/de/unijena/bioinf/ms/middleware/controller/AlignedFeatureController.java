@@ -384,8 +384,18 @@ public class AlignedFeatureController {
     }
 
 
-    @Deprecated(forRemoval = true)
-    @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/sirius-tree", produces = MediaType.APPLICATION_JSON_VALUE)
+    /**
+     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS' internal format.
+     *
+     * @param projectId        project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId        identifier of the requested formula result
+     * @return Fragmentation Tree in internal format.
+     *
+     * NOTE: This endpoint is likely to be removed in future versions of the API.
+     */
+    @Deprecated
+    @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree", produces = MediaType.APPLICATION_JSON_VALUE)
     public String getSiriusFragTree(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         String json = projectsProvider.getProjectOrThrow(projectId).findSiriusFtreeJsonById(formulaId, alignedFeatureId);
         if (json == null)
@@ -402,7 +412,7 @@ public class AlignedFeatureController {
      * @param formulaId        identifier of the requested formula result
      * @return Fragmentation Tree
      */
-    @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/tree", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{alignedFeatureId}/formulas/{formulaId}/fragtree", produces = MediaType.APPLICATION_JSON_VALUE)
     public FragmentationTree getFragTree(@PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId) {
         FragmentationTree res = projectsProvider.getProjectOrThrow(projectId)
                 .findFormulaCandidateByFeatureIdAndId(formulaId, alignedFeatureId, FormulaCandidate.OptField.fragmentationTree)
