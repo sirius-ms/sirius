@@ -49,7 +49,7 @@ dependencies {
 
     implementation group: 'commons-codec', name: 'commons-codec', version:  '1.15'
     implementation group: 'com.github.jiangxincode', name: 'cpdetector', version:  '1.0.10'
-    api 'org.glassfish.jaxb:jaxb-runtime:2.3.3'
+    implementation "org.glassfish.jaxb:jaxb-runtime:$jaxb_version"
 
     //just for testmain
     implementation "info.picocli:picocli:$picocli_version"
