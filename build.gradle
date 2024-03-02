@@ -59,6 +59,8 @@ ext {
 
     swagger_version = "2.2.18"
 
+    jaxb_version = "2.3.9"
+
     siriusTargetPlatform = SiriusPlatform.fromDescriptor((
             project.findProperty('build.sirius.platform') ?:
                     "${DefaultNativePlatform.getCurrentOperatingSystem().getName()}-${DefaultNativePlatform.getCurrentArchitecture().getName()}"
