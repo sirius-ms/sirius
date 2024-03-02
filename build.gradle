@@ -36,7 +36,7 @@ ext {
     //version for external libraries
     slf4j_version = '1.7.36'
     jjobs_version = '0.9.36-SNAPSHOT'
-
+    jaxb_version = "2.3.9"
     cdk_version = "2.8"
 
     picocli_version = '4.6.3'//'3.9.5'
@@ -149,6 +149,7 @@ allprojects {
 
         //NOTE: cannot be provided as transitive dependency
         implementation "jakarta.persistence:jakarta.persistence-api:$jakarta_version"
+        implementation "org.glassfish.jaxb:jaxb-runtime:$jaxb_version"
 
         // Aggregator dependency that also brings JUnit 5 parameterized tests etc.
         testImplementation("org.junit.jupiter:junit-jupiter:$junit_version")
