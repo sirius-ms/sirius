@@ -32,6 +32,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 /**
  * An implementation of JCheckboxList, a JList with checkboxes
@@ -94,14 +95,12 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
      */
     public ArrayList<E> getCheckedItems() {
         ArrayList<E> list = new ArrayList<>();
-        Enumeration<CheckBoxListItem<E>> dlm = ((DefaultListModel<CheckBoxListItem<E>>) getModel()).elements();
 
-        while (dlm.hasMoreElements()) {
-            CheckBoxListItem<E> checkboxListItem = dlm.nextElement();
-            if (checkboxListItem.isSelected()) {
-                list.add(checkboxListItem.getValue());
+        forEachListItem(cb -> {
+            if (cb.isSelected()) {
+                list.add(cb.getValue());
             }
-        }
+        });
 
         return list;
     }
@@ -110,12 +109,7 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
      * Check all Items
      */
     private void setAllItemsChecked(boolean checked) {
-        Enumeration<CheckBoxListItem<E>> dlm = ((DefaultListModel<CheckBoxListItem<E>>) getModel()).elements();
-
-        while (dlm.hasMoreElements()) {
-            CheckBoxListItem<E> checkboxListItem = dlm.nextElement();
-            checkboxListItem.setSelected(checked);
-        }
+        forEachListItem(cb -> cb.setSelected(checked));
     }
 
     public void refresh() {
@@ -205,12 +199,7 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
     @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
-        final Enumeration<CheckBoxListItem<E>> dlm = ((DefaultListModel<CheckBoxListItem<E>>) getModel()).elements();
-
-        while (dlm.hasMoreElements()) {
-            dlm.nextElement().setEnabled(enabled);
-        }
-
+        forEachListItem(cb -> cb.setEnabled(enabled));
         setMouseListenerEnabled(enabled);
     }
 
@@ -225,13 +214,24 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
     }
 
     /**
-     * Adds the given listener to the checkboxes of all current items of the list.
+     * Adds the given listener to the checkboxes of all items.
      */
     public void addCheckBoxListener(ItemListener listener) {
+        forEachListItem(cb -> cb.addItemListener(listener));
+    }
+
+    /**
+     * Removes the given listener from the checkboxes of all items.
+     */
+    public void removeCheckBoxListener(ItemListener listener) {
+        forEachListItem(cb -> cb.removeItemListener(listener));
+    }
+
+    private void forEachListItem(Consumer<CheckBoxListItem<E>> action) {
         Enumeration<CheckBoxListItem<E>> dlm = ((DefaultListModel<CheckBoxListItem<E>>) getModel()).elements();
 
         while (dlm.hasMoreElements()) {
-            dlm.nextElement().addItemListener(listener);
+            action.accept(dlm.nextElement());
         }
     }
 }

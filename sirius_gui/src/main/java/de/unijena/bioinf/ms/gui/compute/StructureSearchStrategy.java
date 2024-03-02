@@ -1,20 +1,24 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.ms.gui.dialogs.InfoDialog;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.List;
 
 public class StructureSearchStrategy extends JPanel {
 
     protected JCheckboxListPanel<CustomDataSources.Source> searchDBList;
-
+    public static final String DO_NOT_SHOW_DIVERGING_DATABASES_NOTE = "de.unijena.bioinf.sirius.computeDialog.divergingDatabases.dontAskAgain";
 
     public StructureSearchStrategy(@Nullable final JCheckBoxList<CustomDataSources.Source> syncSource) {
         createPanel(syncSource);
@@ -40,6 +44,20 @@ public class StructureSearchStrategy extends JPanel {
                     searchDBList.checkBoxList.uncheck(item);
                 }
             });
+            addDivergingDatabasesNote();
+        }
+    }
+
+    private void addDivergingDatabasesNote() {
+        if (!PropertyManager.getBoolean(DO_NOT_SHOW_DIVERGING_DATABASES_NOTE, false)) {
+            ItemListener dbSelectionChangeListener = new ItemListener() {
+                @Override
+                public void itemStateChanged(ItemEvent e) {
+                    new InfoDialog(MainFrame.MF, "Note that you are searching in different databases for formula and structure.", DO_NOT_SHOW_DIVERGING_DATABASES_NOTE);
+                    searchDBList.checkBoxList.removeCheckBoxListener(this);
+                }
+            };
+            searchDBList.checkBoxList.addCheckBoxListener(dbSelectionChangeListener);
         }
     }
 
