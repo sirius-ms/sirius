@@ -3,7 +3,6 @@
 # SearchableDatabase
 
 
-
 ## Properties
 
 | Name | Type | Description | Notes |

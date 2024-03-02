@@ -3,7 +3,6 @@
 # ZodiacEdgeFilterThresholds
 
 
-
 ## Properties
 
 | Name | Type | Description | Notes |

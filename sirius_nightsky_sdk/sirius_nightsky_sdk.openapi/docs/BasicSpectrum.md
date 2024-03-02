@@ -3,7 +3,6 @@
 # BasicSpectrum
 
 
-
 ## Properties
 
 | Name | Type | Description | Notes |

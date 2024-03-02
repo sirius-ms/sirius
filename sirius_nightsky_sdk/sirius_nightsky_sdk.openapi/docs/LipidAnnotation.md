@@ -3,7 +3,6 @@
 # LipidAnnotation
 
 
-
 ## Properties
 
 | Name | Type | Description | Notes |

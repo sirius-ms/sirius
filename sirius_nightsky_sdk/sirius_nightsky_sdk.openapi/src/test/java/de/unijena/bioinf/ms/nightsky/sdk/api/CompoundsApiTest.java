@@ -37,9 +37,9 @@ public class CompoundsApiTest {
 
     
     /**
-     * 
+     * Import Compounds and its contained features.
      *
-     * 
+     * Import Compounds and its contained features. Compounds and Features must not exist in the project.  Otherwise, they will exist twice.
      */
     @Test
     public void addCompoundsTest()  {

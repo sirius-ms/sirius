@@ -3,7 +3,6 @@
 # WorkerList
 
 
-
 ## Properties
 
 | Name | Type | Description | Notes |

@@ -10,8 +10,8 @@
 |**totalPages** | **Integer** |  |  [optional] |
 |**totalElements** | **Long** |  |  [optional] |
 |**first** | **Boolean** |  |  [optional] |
-|**last** | **Boolean** |  |  [optional] |
 |**sort** | [**SortObject**](SortObject.md) |  |  [optional] |
+|**last** | **Boolean** |  |  [optional] |
 |**number** | **Integer** |  |  [optional] |
 |**numberOfElements** | **Integer** |  |  [optional] |
 |**pageable** | [**PageableObject**](PageableObject.md) |  |  [optional] |

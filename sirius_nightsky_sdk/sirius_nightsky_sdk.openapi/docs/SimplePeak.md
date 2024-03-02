@@ -3,7 +3,6 @@
 # SimplePeak
 
 
-
 ## Properties
 
 | Name | Type | Description | Notes |

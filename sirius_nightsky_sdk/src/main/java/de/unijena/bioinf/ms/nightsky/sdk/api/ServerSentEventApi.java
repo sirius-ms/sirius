@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import jakarta.annotation.Generated;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.util.LinkedMultiValueMap;
@@ -60,7 +61,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class ServerSentEventApi {
     private ApiClient apiClient;
 
@@ -68,7 +69,6 @@ public class ServerSentEventApi {
         this(new ApiClient());
     }
 
-    @Autowired
     public ServerSentEventApi(ApiClient apiClient) {
         this.apiClient = apiClient;
     }

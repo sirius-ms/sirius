@@ -3,7 +3,6 @@
 # SearchableDatabaseParameters
 
 
-
 ## Properties
 
 | Name | Type | Description | Notes |

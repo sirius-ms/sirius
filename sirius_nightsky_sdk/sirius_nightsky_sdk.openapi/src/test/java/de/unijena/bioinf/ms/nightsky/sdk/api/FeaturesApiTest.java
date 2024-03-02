@@ -55,9 +55,9 @@ public class FeaturesApiTest {
 
     
     /**
-     * 
+     * Import (aligned) features into the project.
      *
-     * 
+     * Import (aligned) features into the project. Features must not exist in the project.  Otherwise, they will exist twice.
      */
     @Test
     public void addAlignedFeaturesTest()  {

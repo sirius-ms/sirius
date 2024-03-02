@@ -158,7 +158,7 @@ public class SiriusProjectSpaceImpl implements Project {
         try {
             compound = findCompoundById(compoundId, EnumSet.noneOf(Compound.OptField.class), EnumSet.noneOf(AlignedFeature.OptField.class));
         } catch (ResponseStatusException e) {
-            if (e.getStatus().equals(HttpStatus.NOT_FOUND))
+            if (e.getStatusCode().equals(HttpStatus.NOT_FOUND))
                 throw new ResponseStatusException(HttpStatus.NO_CONTENT, "AlignedFeature with id '" + compoundId + "' does not exist. Already removed?");
             throw e;
         }

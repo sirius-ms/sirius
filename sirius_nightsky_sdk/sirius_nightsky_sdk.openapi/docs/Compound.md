@@ -3,7 +3,6 @@
 # Compound
 
 
-
 ## Properties
 
 | Name | Type | Description | Notes |

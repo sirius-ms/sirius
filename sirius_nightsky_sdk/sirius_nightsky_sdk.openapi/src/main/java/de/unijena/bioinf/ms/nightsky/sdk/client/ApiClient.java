@@ -59,7 +59,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TimeZone;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 
 import java.time.OffsetDateTime;
 
@@ -68,7 +68,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.client.auth.HttpBasicAuth;
 import de.unijena.bioinf.ms.nightsky.sdk.client.auth.HttpBearerAuth;
 import de.unijena.bioinf.ms.nightsky.sdk.client.auth.ApiKeyAuth;
 
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class ApiClient extends JavaTimeFormatter {
     public enum CollectionFormat {
         CSV(","), TSV("\t"), SSV(" "), PIPES("|"), MULTI(null);

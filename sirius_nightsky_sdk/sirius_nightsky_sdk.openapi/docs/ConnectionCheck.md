@@ -3,7 +3,6 @@
 # ConnectionCheck
 
 
-
 ## Properties
 
 | Name | Type | Description | Notes |

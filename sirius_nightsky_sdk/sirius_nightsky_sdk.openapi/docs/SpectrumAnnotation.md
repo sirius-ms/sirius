@@ -3,7 +3,6 @@
 # SpectrumAnnotation
 
 
-
 ## Properties
 
 | Name | Type | Description | Notes |

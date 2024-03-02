@@ -9,5 +9,6 @@
 	"groupId:": "de.unijena.bioinf.ms",
 	"library": "webclient",
 	"webclientBlockingOperations": true,
+	"useJakartaEe": true,
 	"serializationLibrary": "jackson"
 }

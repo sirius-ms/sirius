@@ -41,6 +41,7 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.fingerid.*;
 import de.unijena.bioinf.rest.ProxyManager;
+import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -63,6 +64,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 @SpringBootApplication
+@OpenAPIDefinition
 @Slf4j
 public class SiriusMiddlewareApplication extends SiriusCLIApplication implements CommandLineRunner, DisposableBean {
     private static CLIRootOptions<?, ?> rootOptions;

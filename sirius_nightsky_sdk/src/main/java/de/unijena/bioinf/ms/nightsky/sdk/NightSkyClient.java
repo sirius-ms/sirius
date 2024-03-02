@@ -23,7 +23,6 @@ package de.unijena.bioinf.ms.nightsky.sdk;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ms.nightsky.sdk.api.*;
 import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobProgress;
@@ -101,14 +100,14 @@ public class NightSkyClient implements AutoCloseable {
     }
 
     public Job awaitAndDeleteJob(String pid, String jobId, int waitTimeInSec, Integer timeoutInSec,
-                                 boolean includeCommand, boolean includeAffectedIds, InterruptionCheck interruptionCheck) throws ApiException, InterruptedException {
+                                 boolean includeCommand, boolean includeAffectedIds, InterruptionCheck interruptionCheck) throws InterruptedException {
         Job job = awaitJob(pid, jobId, waitTimeInSec, timeoutInSec, includeCommand, includeAffectedIds, interruptionCheck);
         jobs.deleteJob(pid, job.getId(), false, false);
         return job;
     }
 
     public Job awaitJob(String pid, String jobId, int waitTimeInSec, Integer timeoutInSec,
-                        boolean includeCommand, boolean includeAffectedIds, InterruptionCheck interruptionCheck) throws ApiException, InterruptedException {
+                        boolean includeCommand, boolean includeAffectedIds, InterruptionCheck interruptionCheck) throws InterruptedException {
         //todo use sse if available
 
         long start = System.currentTimeMillis();

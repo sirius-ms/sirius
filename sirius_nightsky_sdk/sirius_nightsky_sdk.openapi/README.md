@@ -2,7 +2,7 @@
 
 SIRIUS Nightsky API
 
-- API version: 2.0
+- API version: 2.1
 
 REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
 
@@ -40,7 +40,7 @@ Add this dependency to your project's POM:
 <dependency>
   <groupId>org.openapitools</groupId>
   <artifactId>sirius_nightsky_sdk</artifactId>
-  <version>2.0</version>
+  <version>2.1</version>
   <scope>compile</scope>
 </dependency>
 ```
@@ -56,7 +56,7 @@ Add this dependency to your project's build file:
   }
 
   dependencies {
-     implementation "org.openapitools:sirius_nightsky_sdk:2.0"
+     implementation "org.openapitools:sirius_nightsky_sdk:2.1"
   }
 ```
 
@@ -70,7 +70,7 @@ mvn clean package
 
 Then manually install the following JARs:
 
-- `target/sirius_nightsky_sdk-2.0.jar`
+- `target/sirius_nightsky_sdk-2.1.jar`
 - `target/lib/*.jar`
 
 ## Getting Started

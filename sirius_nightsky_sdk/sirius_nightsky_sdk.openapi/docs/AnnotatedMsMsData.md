@@ -3,7 +3,6 @@
 # AnnotatedMsMsData
 
 
-
 ## Properties
 
 | Name | Type | Description | Notes |
