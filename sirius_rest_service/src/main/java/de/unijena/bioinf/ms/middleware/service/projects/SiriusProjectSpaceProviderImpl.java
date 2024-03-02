@@ -49,8 +49,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent.Type.*;
-import static de.unijena.bioinf.projectspace.ProjectSpaceIO.isExistingProjectspaceDirectory;
-import static de.unijena.bioinf.projectspace.ProjectSpaceIO.isZipProjectSpace;
+import static de.unijena.bioinf.projectspace.ProjectSpaceIO.*;
 
 public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusProjectSpaceImpl> {
 
@@ -131,17 +130,18 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
     }
 
     @Override
-    public ProjectInfo openProjectSpace(@NotNull String projectId, @NotNull String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
-        validateId(projectId);
+    public ProjectInfo openProjectSpace(@NotNull String projectId, @Nullable String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
+        projectId = ensureUniqueProjectId(validateId(projectId));
         final Lock lock = projectSpaceLock.writeLock();
         lock.lock();
         try {
             if (projectSpaces.containsKey(projectId)) {
-                throw new ResponseStatusException(HttpStatus.SEE_OTHER, "project space with name '" + projectId + "' already exists.");
+                throw new ResponseStatusException(HttpStatus.SEE_OTHER, "A project with id '" + projectId + "' is already opened.");
             }
-            Path p = Path.of(pathToProject);
+
+            Path p = pathToProject != null && !pathToProject.isBlank() ? Path.of(pathToProject) : defaultProjectDir().resolve(projectId);
             if (!isExistingProjectspaceDirectory(p) && !isZipProjectSpace(p)) {
-                throw new IllegalArgumentException("'" + projectId + "' is no valid SIRIUS project space.");
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "'" + projectId + "' is no valid SIRIUS project space.");
             }
 
             SiriusProjectSpace rawProject = projectIO.openExistingProjectSpace(p);
@@ -159,8 +159,7 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
     }
 
     public ProjectInfo addProjectSpace(@NotNull String nameSuggestion, @NotNull ProjectSpaceManager<?> projectSpaceToAdd) {
-        validateId(nameSuggestion);
-        return ensureUniqueName(nameSuggestion, (name) -> {
+        return ensureUniqueName(validateId(nameSuggestion), (name) -> {
             registerEventListeners(name, projectSpaceToAdd.projectSpace());
             projectSpaces.put(name, projectSpaceToAdd);
             eventService.sendEvent(ServerEvents.newProjectEvent(name, PROJECT_OPENED));
@@ -168,29 +167,24 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
         });
     }
 
-    public ProjectInfo createProjectSpace(Path location) throws IOException {
-        return createProjectSpace(location.getFileName().toString(), location);
-    }
+    public ProjectInfo createProjectSpace(@NotNull String projectIdSuggestion, @Nullable String path){
+        return ensureUniqueName(validateId(projectIdSuggestion), (name) -> {
+            try {
+                Path location = path != null && !path.isBlank() ? Path.of(path) : defaultProjectDir().resolve(name);
 
-    public ProjectInfo createProjectSpace(@NotNull String projectIdSuggestion, @NotNull Path location) throws IOException {
-        if (Files.exists(location) && !(Files.isDirectory(location) && FileUtils.listAndClose(location, s -> s.findAny().isEmpty())))
-            throw new IllegalArgumentException("Location '" + location.toAbsolutePath() +
-                    "' already exists and is not an empty directory. Cannot create new project space here.");
+                if (Files.exists(location) && !(Files.isDirectory(location) && FileUtils.listAndClose(location, s -> s.findAny().isEmpty())))
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Location '" + location.toAbsolutePath() +
+                            "' already exists and is not an empty directory. Cannot create new project space here.");
 
-        projectSpaceLock.writeLock().lock();
-        try {
-            String name = ensureUniqueProjectId(projectIdSuggestion);
-            if (projectSpaces.containsKey(name))
-                throw new IllegalArgumentException("project space with name '" + name + "' already exists.");
-
-            SiriusProjectSpace rawProject = projectIO.createNewProjectSpace(location);
-            registerEventListeners(name, rawProject);
-            projectSpaces.put(name, projectSpaceManagerFactory.create(rawProject));
-            eventService.sendEvent(ServerEvents.newProjectEvent(name, PROJECT_OPENED));
-            return ProjectInfo.of(name, location);
-        } finally {
-            projectSpaceLock.writeLock().unlock();
-        }
+                SiriusProjectSpace rawProject = projectIO.createNewProjectSpace(location);
+                registerEventListeners(name, rawProject);
+                projectSpaces.put(name, projectSpaceManagerFactory.create(rawProject));
+                eventService.sendEvent(ServerEvents.newProjectEvent(name, PROJECT_OPENED));
+                return ProjectInfo.of(name, location);
+            } catch (IOException e) {
+                throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when accessing file system to create project.", e);
+            }
+        });
     }
 
     @Override
