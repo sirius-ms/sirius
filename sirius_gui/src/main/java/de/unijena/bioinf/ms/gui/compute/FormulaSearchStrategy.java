@@ -8,6 +8,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
 import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
+import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
@@ -209,7 +210,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         JPanel card = new JPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.PAGE_AXIS));
 
-        searchDBList = createDatabasePanel();
+        initDatabasePanel();
         searchDBList.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
 
         card.add(searchDBList);
@@ -218,15 +219,16 @@ public class FormulaSearchStrategy extends ConfigPanel {
         return card;
     }
 
-    private JCheckboxListPanel<CustomDataSources.Source> createDatabasePanel() {
-        if (this.searchDBList != null) return this.searchDBList;
-        // configure database to search list
+    private void initDatabasePanel() {
         searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Use DB formulas only");
         GuiUtils.assignParameterToolTip(searchDBList.checkBoxList, "FormulaSearchDB");
+
+        PropertyManager.DEFAULTS.createInstanceWithDefaults(StructureSearchDB.class).searchDBs
+                .forEach(s -> searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(s.name())));
+
         parameterBindings.put("FormulaSearchDB", () -> strategy == Strategy.DATABASE ? String.join(",", getFormulaSearchDBStrings()) : ",");
         PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSearchDB.class).searchDBs
                 .forEach(s -> searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(s.name())));
-        return searchDBList;
     }
 
     private JPanel createElementFilterPanel() {

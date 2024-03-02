@@ -1,15 +1,14 @@
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ItemEvent;
 import java.util.List;
 
 public class StructureSearchStrategy extends JPanel {
@@ -22,29 +21,26 @@ public class StructureSearchStrategy extends JPanel {
     }
 
     private void createPanel(@Nullable JCheckBoxList<CustomDataSources.Source> syncSource) {
-//        this.removeAll();
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
         createStrategyPanel(syncSource);
     }
 
     private void createStrategyPanel(@Nullable JCheckBoxList<CustomDataSources.Source> syncSource) {
-        // configure database to search list
         searchDBList = createDatabasePanel();
-
         add(searchDBList);
 
-        PropertyManager.DEFAULTS.createInstanceWithDefaults(StructureSearchDB.class).searchDBs
-                .forEach(s -> searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(s.name())));
-
-        if (syncSource != null)
-            syncSource.addListSelectionListener(e -> {
-                searchDBList.checkBoxList.uncheckAll();
-                if (syncSource.getCheckedItems().isEmpty())
-                    searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(DataSource.BIO.realName()));
-                else
-                    searchDBList.checkBoxList.checkAll(syncSource.getCheckedItems());
+        if (syncSource != null) {
+            syncSource.getCheckedItems().forEach(searchDBList.checkBoxList::check);
+            syncSource.addCheckBoxListener(e -> {
+                @SuppressWarnings("unchecked")
+                CustomDataSources.Source item = (CustomDataSources.Source) ((CheckBoxListItem<Object>) e.getItem()).getValue();
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    searchDBList.checkBoxList.check(item);
+                } else {
+                    searchDBList.checkBoxList.uncheck(item);
+                }
             });
-
+        }
     }
 
 

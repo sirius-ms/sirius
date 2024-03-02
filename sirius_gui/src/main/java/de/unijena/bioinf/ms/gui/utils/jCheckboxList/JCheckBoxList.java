@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -220,6 +221,17 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
                 addMouseListener(mouseAdapter);
         } else {
             removeMouseListener(mouseAdapter);
+        }
+    }
+
+    /**
+     * Adds the given listener to the checkboxes of all current items of the list.
+     */
+    public void addCheckBoxListener(ItemListener listener) {
+        Enumeration<CheckBoxListItem<E>> dlm = ((DefaultListModel<CheckBoxListItem<E>>) getModel()).elements();
+
+        while (dlm.hasMoreElements()) {
+            dlm.nextElement().addItemListener(listener);
         }
     }
 }
