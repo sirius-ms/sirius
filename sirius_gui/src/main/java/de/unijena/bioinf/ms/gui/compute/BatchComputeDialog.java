@@ -531,7 +531,7 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
                         "(all molecular formulas) will be used instead.";
 
         public WarnFormulaSourceDialog(Frame owner) {
-            super(owner, "<html>" + FORMULA_SOURCE_WARNING_MESSAGE, DONT_ASK_KEY + "</html>");
+            super(owner, FORMULA_SOURCE_WARNING_MESSAGE, DONT_ASK_KEY);
         }
     }
 }
