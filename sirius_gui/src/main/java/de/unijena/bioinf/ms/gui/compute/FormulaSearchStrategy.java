@@ -242,7 +242,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         JLabel autodetectLabel = new JLabel("Autodetect");
         final JTextField detectableTextBox = isBatchDialog ? makeParameterTextField("FormulaSettings.detectable", 20) : null;
-        JPanel buttonPanel = new JPanel();
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 
         addDefaultStrategyElementFilterSettings(filterFields);
 
@@ -259,6 +259,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         }
 
         JButton buttonEdit = new JButton("…");  // Ellipsis symbol instead of ... because 1-char buttons don't get side insets
+        buttonEdit.setToolTipText("Customize allowed elements and their quantities");
         buttonPanel.add(buttonEdit);
 
         GridBagConstraints c = new GridBagConstraints();
