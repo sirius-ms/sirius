@@ -29,7 +29,7 @@ import io.swagger.v3.core.converter.ResolvedSchema;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
-import org.springdoc.core.customizers.OpenApiCustomiser;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -42,7 +42,7 @@ public class SwaggerConfig {
     }
 
     @Bean
-    public OpenAPI api(OpenApiCustomiser openApiCustomiser) {
+    public OpenAPI api(OpenApiCustomizer openApiCustomiser) {
         OpenAPI oapi = new OpenAPI()
                 .components(new Components())
                 .info(apiInfo());
@@ -67,7 +67,7 @@ public class SwaggerConfig {
     }
 
     @Bean
-    public OpenApiCustomiser openApiCustomiser() {
+    public OpenApiCustomizer openApiCustomiser() {
         ResolvedSchema projectChangeEvent = ModelConverters.getInstance()
                 .resolveAsResolvedSchema(new AnnotatedType(ProjectChangeEvent.class));
         ResolvedSchema backgroundComputationsStateEvent = ModelConverters.getInstance()

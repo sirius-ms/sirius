@@ -34,7 +34,7 @@ import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.slf4j.LoggerFactory;
-import org.springdoc.api.annotations.ParameterObject;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

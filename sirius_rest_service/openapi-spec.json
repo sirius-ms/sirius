@@ -3,7 +3,7 @@
   "info": {
     "title": "SIRIUS Nightsky API",
     "description": "REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT",
-    "version": "2.0"
+    "version": "2.1"
   },
   "servers": [
     {
@@ -4034,7 +4034,6 @@
       },
       "ProjectInfoOptField": {
         "type": "string",
-        "description": "",
         "nullable": true,
         "enum": [
           "none",
@@ -4081,8 +4080,7 @@
             "format": "int64",
             "nullable": true
           }
-        },
-        "description": ""
+        }
       },
       "SearchableDatabaseParameters": {
         "type": "object",
@@ -4104,8 +4102,7 @@
             "nullable": true,
             "default": false
           }
-        },
-        "description": ""
+        }
       },
       "SearchableDatabase": {
         "required": [
@@ -4178,8 +4175,7 @@
             "format": "int64",
             "nullable": true
           }
-        },
-        "description": ""
+        }
       },
       "AccountInfo": {
         "type": "object",
@@ -4208,8 +4204,7 @@
             "type": "string",
             "nullable": true
           }
-        },
-        "description": ""
+        }
       },
       "Subscription": {
         "type": "object",
@@ -4283,8 +4278,7 @@
             "type": "string",
             "nullable": true
           }
-        },
-        "description": ""
+        }
       },
       "CommandSubmission": {
         "required": [
@@ -4322,12 +4316,10 @@
               "type": "string"
             }
           }
-        },
-        "description": ""
+        }
       },
       "JobOptField": {
         "type": "string",
-        "description": "",
         "nullable": true,
         "enum": [
           "none",
@@ -4487,8 +4479,7 @@
               "type": "string"
             }
           }
-        },
-        "description": ""
+        }
       },
       "DatabaseImportSubmission": {
         "required": [
@@ -4513,8 +4504,7 @@
             "format": "int32",
             "nullable": true
           }
-        },
-        "description": ""
+        }
       },
       "Canopus": {
         "type": "object",
@@ -4550,7 +4540,7 @@
       },
       "Instrument": {
         "type": "string",
-        "description": "",
+        "description": "Select the profile that is the closest to your instrumental setup. If nothing fits, use QTOF.",
         "nullable": true,
         "enum": [
           "QTOF",
@@ -4643,7 +4633,6 @@
       },
       "Mode": {
         "type": "string",
-        "description": "",
         "nullable": true,
         "enum": [
           "OFF",
@@ -4665,7 +4654,6 @@
             "nullable": true
           }
         },
-        "description": "",
         "nullable": true
       },
       "Sirius": {
@@ -4778,7 +4766,6 @@
       },
       "SpectralAlignmentType": {
         "type": "string",
-        "description": "",
         "nullable": true,
         "enum": [
           "INTENSITY",
@@ -4861,7 +4848,6 @@
             "format": "int32"
           }
         },
-        "description": "",
         "nullable": true
       },
       "UseHeuristic": {
@@ -4876,7 +4862,6 @@
             "format": "int32"
           }
         },
-        "description": "",
         "nullable": true
       },
       "Zodiac": {
@@ -4929,7 +4914,6 @@
             "format": "int32"
           }
         },
-        "description": "",
         "nullable": true
       },
       "ZodiacEpochs": {
@@ -4948,7 +4932,6 @@
             "format": "int32"
           }
         },
-        "description": "",
         "nullable": true
       },
       "BasicSpectrum": {
@@ -4998,8 +4981,7 @@
             "format": "double",
             "nullable": true
           }
-        },
-        "description": ""
+        }
       },
       "CompoundImport": {
         "required": [
@@ -5019,8 +5001,7 @@
               "$ref": "#/components/schemas/FeatureImport"
             }
           }
-        },
-        "description": ""
+        }
       },
       "FeatureImport": {
         "required": [
@@ -5072,8 +5053,7 @@
               "$ref": "#/components/schemas/BasicSpectrum"
             }
           }
-        },
-        "description": ""
+        }
       },
       "SimplePeak": {
         "type": "object",
@@ -5086,12 +5066,10 @@
             "type": "number",
             "format": "double"
           }
-        },
-        "description": ""
+        }
       },
       "CompoundOptField": {
         "type": "string",
-        "description": "",
         "nullable": true,
         "enum": [
           "none",
@@ -5102,7 +5080,6 @@
       },
       "AlignedFeatureOptField": {
         "type": "string",
-        "description": "",
         "nullable": true,
         "enum": [
           "none",
@@ -5171,8 +5148,7 @@
           "peakAnnotation": {
             "$ref": "#/components/schemas/PeakAnnotation"
           }
-        },
-        "description": ""
+        }
       },
       "AnnotatedSpectrum": {
         "required": [
@@ -5225,7 +5201,6 @@
             "$ref": "#/components/schemas/SpectrumAnnotation"
           }
         },
-        "description": "",
         "nullable": true
       },
       "BinaryFingerprint": {
@@ -5245,7 +5220,6 @@
             "format": "int32"
           }
         },
-        "description": "",
         "nullable": true
       },
       "CanopusPrediction": {
@@ -5317,8 +5291,7 @@
           "customAnnotations": {
             "$ref": "#/components/schemas/ConsensusAnnotationsCSI"
           }
-        },
-        "description": ""
+        }
       },
       "CompoundClass": {
         "type": "object",
@@ -5440,7 +5413,6 @@
             "nullable": true
           }
         },
-        "description": "",
         "nullable": true
       },
       "ConsensusAnnotationsDeNovo": {
@@ -5467,12 +5439,10 @@
             "$ref": "#/components/schemas/ConsensusCriterionDeNovo"
           }
         },
-        "description": "",
         "nullable": true
       },
       "ConsensusCriterionCSI": {
         "type": "string",
-        "description": "",
         "nullable": true,
         "enum": [
           "MAJORITY_STRUCTURE",
@@ -5485,7 +5455,6 @@
       },
       "ConsensusCriterionDeNovo": {
         "type": "string",
-        "description": "",
         "nullable": true,
         "enum": [
           "MAJORITY_FORMULA",
@@ -5503,7 +5472,6 @@
             "type": "string"
           }
         },
-        "description": "",
         "nullable": true
       },
       "Deviation": {
@@ -5518,7 +5486,6 @@
             "format": "double"
           }
         },
-        "description": "",
         "nullable": true
       },
       "FeatureAnnotations": {
@@ -5670,8 +5637,7 @@
             "format": "double",
             "nullable": true
           }
-        },
-        "description": ""
+        }
       },
       "FragmentationTree": {
         "type": "object",
@@ -5706,7 +5672,6 @@
             "$ref": "#/components/schemas/BasicSpectrum"
           }
         },
-        "description": "",
         "nullable": true
       },
       "LipidAnnotation": {
@@ -5738,7 +5703,6 @@
             "nullable": true
           }
         },
-        "description": "",
         "nullable": true
       },
       "LossEdge": {
@@ -5759,8 +5723,7 @@
             "type": "number",
             "format": "double"
           }
-        },
-        "description": ""
+        }
       },
       "MsData": {
         "required": [
@@ -5914,7 +5877,6 @@
             "nullable": true
           }
         },
-        "description": "",
         "nullable": true
       },
       "SpectralLibraryMatch": {
@@ -5969,7 +5931,6 @@
             "$ref": "#/components/schemas/BasicSpectrum"
           }
         },
-        "description": "",
         "nullable": true
       },
       "SpectrumAnnotation": {
@@ -6015,7 +5976,6 @@
             "nullable": true
           }
         },
-        "description": "",
         "nullable": true
       },
       "StructureCandidate": {
@@ -6053,7 +6013,6 @@
             }
           }
         },
-        "description": "",
         "nullable": true
       },
       "StructureCandidateScored": {
@@ -6113,7 +6072,6 @@
             "$ref": "#/components/schemas/BinaryFingerprint"
           }
         },
-        "description": "",
         "nullable": true
       },
       "AccountCredentials": {
@@ -6148,11 +6106,11 @@
           "first": {
             "type": "boolean"
           },
-          "last": {
-            "type": "boolean"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
           },
           "number": {
             "type": "integer",
@@ -6218,8 +6176,7 @@
           "empty": {
             "type": "boolean"
           }
-        },
-        "description": ""
+        }
       },
       "PageCompound": {
         "type": "object",
@@ -6235,11 +6192,11 @@
           "first": {
             "type": "boolean"
           },
-          "last": {
-            "type": "boolean"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
           },
           "number": {
             "type": "integer",
@@ -6269,7 +6226,6 @@
       },
       "StructureCandidateOptField": {
         "type": "string",
-        "description": "",
         "nullable": true,
         "enum": [
           "none",
@@ -6346,8 +6302,7 @@
             "type": "string",
             "description": "Id of the corresponding Formula candidate"
           }
-        },
-        "description": ""
+        }
       },
       "PageStructureCandidateFormula": {
         "type": "object",
@@ -6363,11 +6318,11 @@
           "first": {
             "type": "boolean"
           },
-          "last": {
-            "type": "boolean"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
           },
           "number": {
             "type": "integer",
@@ -6397,7 +6352,6 @@
       },
       "SpectralLibraryMatchOptField": {
         "type": "string",
-        "description": "",
         "nullable": true,
         "enum": [
           "none",
@@ -6418,11 +6372,11 @@
           "first": {
             "type": "boolean"
           },
-          "last": {
-            "type": "boolean"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
           },
           "number": {
             "type": "integer",
@@ -6452,7 +6406,6 @@
       },
       "FormulaCandidateOptField": {
         "type": "string",
-        "description": "",
         "nullable": true,
         "enum": [
           "none",
@@ -6482,8 +6435,7 @@
               "$ref": "#/components/schemas/AnnotatedSpectrum"
             }
           }
-        },
-        "description": ""
+        }
       },
       "PageStructureCandidateScored": {
         "type": "object",
@@ -6499,11 +6451,11 @@
           "first": {
             "type": "boolean"
           },
-          "last": {
-            "type": "boolean"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
           },
           "number": {
             "type": "integer",
@@ -6545,11 +6497,11 @@
           "first": {
             "type": "boolean"
           },
-          "last": {
-            "type": "boolean"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
           },
           "number": {
             "type": "integer",
@@ -6591,11 +6543,11 @@
           "first": {
             "type": "boolean"
           },
-          "last": {
-            "type": "boolean"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
           },
           "number": {
             "type": "integer",
@@ -6685,8 +6637,7 @@
             },
             "description": "Set of ILP Solvers that are Supported and their version information"
           }
-        },
-        "description": ""
+        }
       },
       "GuiInfo": {
         "type": "object",
@@ -6695,8 +6646,7 @@
             "type": "string",
             "description": "The project this instance is running on"
           }
-        },
-        "description": ""
+        }
       },
       "ConnectionCheck": {
         "required": [
@@ -6746,8 +6696,7 @@
           "supportsAllPredictorTypes": {
             "type": "boolean"
           }
-        },
-        "description": ""
+        }
       },
       "ConnectionError": {
         "required": [
@@ -6802,8 +6751,7 @@
           "warning": {
             "type": "boolean"
           }
-        },
-        "description": ""
+        }
       },
       "LicenseInfo": {
         "type": "object",
@@ -6831,8 +6779,7 @@
               "$ref": "#/components/schemas/Term"
             }
           }
-        },
-        "description": ""
+        }
       },
       "SubscriptionConsumables": {
         "type": "object",
@@ -6842,7 +6789,6 @@
             "format": "int32"
           }
         },
-        "description": "",
         "nullable": true
       },
       "Term": {
@@ -6856,7 +6802,6 @@
             "format": "uri"
           }
         },
-        "description": "",
         "nullable": true
       },
       "WorkerInfo": {
@@ -6918,8 +6863,7 @@
             "type": "integer",
             "format": "int64"
           }
-        },
-        "description": ""
+        }
       },
       "WorkerList": {
         "required": [
@@ -6939,7 +6883,6 @@
             }
           }
         },
-        "description": "",
         "nullable": true
       }
     }

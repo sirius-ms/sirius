@@ -36,6 +36,7 @@ ext['slf4j.version'] = slf4j_version
 ext['okhttp.version'] = '4.8.1'
 
 dependencies {
+//    implementation("org.springframework.boot:spring-boot-properties-migrator")
     api project(':sirius_cli')
     implementation project(':sirius_gui')
     //implementation 'me.friwi:jcefmaven:116.0.19.1'
@@ -67,12 +68,13 @@ dependencies {
 
     ////////////////////// API DOC ///////////////////
     // Generate interactive documentation from a Swagger-compliant API
-    implementation 'org.springdoc:springdoc-openapi-ui:1.7.0'
-    implementation 'org.springdoc:springdoc-openapi-javadoc:1.7.0'
-    implementation "org.springdoc:springdoc-openapi-data-rest:1.7.0"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-api:${springdoc_version}"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdoc_version}"
+
+
     //process javadoc for swagger/openapi
-    annotationProcessor 'com.github.therapi:therapi-runtime-javadoc-scribe:0.13.0'
-//    implementation 'org.springdoc:springdoc-openapi-security:1.5.13'
+    annotationProcessor 'com.github.therapi:therapi-runtime-javadoc-scribe:0.15.0'
+    implementation 'com.github.therapi:therapi-runtime-javadoc:0.15.0'
     ////////////////////////////////////////////////////
 
     //getter setter constructor logger, save boilerplate
