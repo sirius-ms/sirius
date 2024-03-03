@@ -41,7 +41,8 @@ public interface ComputeService<P extends Project> extends DisposableBean {
 
     Job createAndSubmitImportJob(@NotNull P psm, ImportLocalFilesSubmission jobSubmission, @NotNull EnumSet<Job.OptField> optFields);
 
-    Job createAndSubmitImportJob(@NotNull P psm, ImportStringSubmission jobSubmission, @NotNull EnumSet<Job.OptField> optFields);
+    Job createAndSubmitPeakListImportJob(@NotNull P psm, AbstractImportSubmission importSubmission,
+                                         @NotNull EnumSet<Job.OptField> optFields);
 
     Job createAndSubmitCommandJob(@NotNull P psm, CommandSubmission commandSubmission, @NotNull EnumSet<Job.OptField> optFields);
 

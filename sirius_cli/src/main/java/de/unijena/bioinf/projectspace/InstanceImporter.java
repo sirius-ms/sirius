@@ -26,6 +26,8 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import de.unijena.bioinf.ms.frontend.subtools.InputResource;
+import de.unijena.bioinf.ms.frontend.subtools.PathInputResource;
 import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
@@ -54,9 +56,7 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -82,6 +82,10 @@ public class InstanceImporter {
         this(importTarget, expFilter, cidFilter, false, false);
     }
 
+    public ImportInstancesJJob makeImportJJob(@Nullable Collection<InputResource<?>> msInput, boolean ignoreFormulas, boolean allowMs1Only) {
+        return new ImportInstancesJJob(msInput, ignoreFormulas, allowMs1Only);
+    }
+
     public ImportInstancesJJob makeImportJJob(@NotNull InputFilesOptions files) {
         return new ImportInstancesJJob(files);
     }
@@ -95,6 +99,7 @@ public class InstanceImporter {
         j.removeJobProgressListener(listener);
         return cids;
     }
+
     public List<CompoundContainerId> doImport(InputFilesOptions projectInput) throws ExecutionException {
         if (projectInput == null)
             return null;
@@ -102,43 +107,64 @@ public class InstanceImporter {
     }
 
     public class ImportInstancesJJob extends BasicJJob<List<CompoundContainerId>> {
-        private InputFilesOptions inputFiles;
+        private @Nullable Collection<InputResource<?>> msInput = null;
+
+        boolean ignoreFormulas, allowMs1Only;
+        @Nullable
+        private List<InputFilesOptions.CsvInput> csvInput = null;
+        @Nullable
+        private Map<Path, Integer> projectInput = null;
         private JobProgressMerger prog;
 
 
-        public ImportInstancesJJob(InputFilesOptions inputFiles) {
+        public ImportInstancesJJob(@Nullable InputFilesOptions input) {
             super(JobType.TINY_BACKGROUND);
-            this.inputFiles = inputFiles;
+            if (input != null) {
+                this.msInput = input.msInput.msParserfiles.keySet().stream().sorted().map(PathInputResource::new).collect(Collectors.toList());
+                this.csvInput = input.csvInputs;
+                this.projectInput = input.msInput.projects;
+                this.ignoreFormulas = input.msInput.isIgnoreFormula();
+                this.allowMs1Only = input.msInput.isAllowMS1Only();
+            }
+        }
+
+
+        public ImportInstancesJJob(@Nullable Collection<InputResource<?>> msInput, boolean ignoreFormulas, boolean allowMs1Only) {
+            super(JobType.TINY_BACKGROUND);
+            this.msInput = msInput;
+            this.ignoreFormulas = ignoreFormulas;
+            this.allowMs1Only = allowMs1Only;
         }
 
         @Override
         protected List<CompoundContainerId> compute() throws Exception {
             prog = new JobProgressMerger(pcs);
-            return importMultipleSources(inputFiles);
+            return importMultipleSources();
         }
 
 
-        public List<CompoundContainerId> importMultipleSources(@Nullable final InputFilesOptions input) {
+        private List<CompoundContainerId> importMultipleSources() {
             List<CompoundContainerId> list = new ArrayList<>();
-            if (input != null) {
-                if (input.msInput != null) {
-                    input.msInput.msParserfiles.forEach((p, n) -> prog.addPreload(p, 0, n));
-                    input.msInput.projects.forEach((p, n) -> prog.addPreload(p, 0, n));
 
-                    list.addAll(importMsParserInput(input.msInput.msParserfiles.keySet().stream().sorted().collect(Collectors.toList())));
-                    list.addAll(importProjectsInput(input.msInput.projects.keySet().stream().sorted().collect(Collectors.toList())));
-                }
+            if (msInput != null) {
+                msInput.forEach(f -> prog.addPreload(f, 0, f.getSize()));
+                list.addAll(importMsParserInput(msInput.stream().sorted().toList()));
+            }
 
-                if (input.csvInputs != null) {
-                    input.csvInputs.forEach(i -> prog.addPreload(i, 0, i.ms2.size()));
-                    list.addAll(importCSVInput(input.csvInputs));
-                }
+            if (projectInput != null) {
+                projectInput.forEach((p, n) -> prog.addPreload(p, 0, n));
+                list.addAll(importProjectsInput(projectInput.keySet().stream().sorted().collect(Collectors.toList())));
+            }
+
+            if (csvInput != null) {
+                csvInput.forEach(i -> prog.addPreload(i, 0, i.ms2.size()));
+                list.addAll(importCSVInput(csvInput));
             }
             return list;
 
         }
 
-        public List<CompoundContainerId> importCSVInput(List<InputFilesOptions.CsvInput> csvInputs) {
+        private List<CompoundContainerId> importCSVInput(List<InputFilesOptions.CsvInput> csvInputs) {
             if (csvInputs == null || csvInputs.isEmpty())
                 return List.of();
 
@@ -152,31 +178,31 @@ public class InstanceImporter {
             return ll;
         }
 
-        public List<CompoundContainerId> importMsParserInput(List<Path> files) {
+        private List<CompoundContainerId> importMsParserInput(@Nullable Collection<InputResource<?>> files) {
             if (files == null || files.isEmpty())
                 return List.of();
 
-            final InstanceImportIteratorMS2Exp it = new MS2ExpInputIterator(files, expFilter, inputFiles.msInput.isIgnoreFormula(), inputFiles.msInput.isAllowMS1Only(), prog)
-                    .asInstanceIterator(importTarget, (c) -> cidFilter.test(c.getId()));
-            final List<CompoundContainerId> ll = new ArrayList<>();
+            try (final MS2ExpInputIterator iit = new MS2ExpInputIterator(files, expFilter, ignoreFormulas, allowMs1Only, prog)) {
+                InstanceImportIteratorMS2Exp it = iit.asInstanceIterator(importTarget, (c) -> cidFilter.test(c.getId()));
+                final List<CompoundContainerId> ll = new ArrayList<>();
 
-            if (prog.isDone())
-                prog.indeterminateProgress(); // just to show something in case only one small file
-            while (it.hasNext()) {
-                CompoundContainerId id = it.next().getID();
                 if (prog.isDone())
-                    prog.indeterminateProgress(id.getCompoundName());
-                else
-                    prog.progressMessage(id.getCompoundName());
-                ll.add(id);
+                    prog.indeterminateProgress(); // just to show something in case only one small file
+                while (it.hasNext()) {
+                    CompoundContainerId id = it.next().getID();
+                    if (prog.isDone())
+                        prog.indeterminateProgress(id.getCompoundName());
+                    else
+                        prog.progressMessage(id.getCompoundName());
+                    ll.add(id);
+                }
+
+                return ll;
             }
-
-
-            return ll;
         }
 
 
-        public List<CompoundContainerId> importProjectsInput(List<Path> files) {
+        private List<CompoundContainerId> importProjectsInput(List<Path> files) {
             if (files == null || files.isEmpty())
                 return List.of();
 
@@ -191,7 +217,7 @@ public class InstanceImporter {
             return ll;
         }
 
-        public List<CompoundContainerId> importProject(@NotNull Path file) throws IOException {
+        private List<CompoundContainerId> importProject(@NotNull Path file) throws IOException {
             if (file.toAbsolutePath().equals(importTarget.projectSpace().getLocation().toAbsolutePath())) {
                 LOG.warn("target location '" + importTarget.projectSpace().getLocation() + "' was also part of the INPUT and will be ignored!");
                 return List.of();

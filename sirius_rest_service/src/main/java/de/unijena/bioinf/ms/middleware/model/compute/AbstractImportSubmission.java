@@ -20,11 +20,15 @@
 
 package de.unijena.bioinf.ms.middleware.model.compute;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.unijena.bioinf.ms.frontend.subtools.InputResource;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -37,4 +41,7 @@ public abstract class AbstractImportSubmission {
     protected boolean ignoreFormulas;
     @Schema(nullable = true)
     protected boolean alignLCMSRuns;
+
+    @JsonIgnore
+    public abstract List<InputResource<?>> asInputResource();
 }
