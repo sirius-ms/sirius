@@ -40,6 +40,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.validation.Valid;
@@ -48,6 +49,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -181,6 +183,7 @@ public class JobController {
         return computeService.createAndSubmitImportJob(p, jobSubmission, removeNone(optFields));
     }
 
+
     /**
      * Import ms/ms data from the given format into the specified project-space
      * Possible formats (ms, mgf, cef, msp, mzML, mzXML)
@@ -195,7 +198,26 @@ public class JobController {
                                         @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) {
         Project p = projectsProvider.getProjectOrThrow(projectId);
-        return computeService.createAndSubmitImportJob(p, jobSubmission, removeNone(optFields));
+        return computeService.createAndSubmitPeakListImportJob(p, jobSubmission, removeNone(optFields));
+    }
+
+    /**
+     * Import ms/ms data from the given format into the specified project-space
+     * Possible formats (ms, mgf, cef, msp, mzML, mzXML)
+     *
+     * @param projectId         project-space to import into.
+     * @param jobSubmission     configuration of the job that will be submitted
+     * @param optFields         set of optional fields to be included. Use 'none' only to override defaults.
+     * @return the import job.
+     */
+    @PostMapping(value = "/{projectId}/jobs/import-from-file", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Job startImportFromFileJob(@PathVariable String projectId, @RequestBody MultipartFile[] files,
+                                        @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
+    ) {
+        Project p = projectsProvider.getProjectOrThrow(projectId);
+        ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
+        sub.setInputFiles(Arrays.stream(files).toList());
+        return computeService.createAndSubmitPeakListImportJob(p, sub, removeNone(optFields));
     }
 
     /**

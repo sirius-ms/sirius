@@ -22,11 +22,15 @@ package de.unijena.bioinf.ms.middleware.model.compute;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.unijena.bioinf.ms.frontend.subtools.InputResource;
+import de.unijena.bioinf.ms.frontend.subtools.PathInputResource;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.validation.constraints.NotEmpty;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -35,4 +39,9 @@ import java.util.List;
 public class ImportLocalFilesSubmission extends AbstractImportSubmission {
     @NotEmpty
     protected List<String> inputPaths;
+
+    @Override
+    public List<InputResource<?>> asInputResource() {
+        return inputPaths.stream().map(Path::of).map(PathInputResource::new).collect(Collectors.toList());
+    }
 }

@@ -20,28 +20,28 @@
 
 package de.unijena.bioinf.ms.middleware.model.compute;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ms.frontend.subtools.InputResource;
-import io.swagger.v3.oas.annotations.media.Schema;
+import de.unijena.bioinf.ms.middleware.model.MultipartInputResource;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.constraints.NotEmpty;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public abstract class AbstractImportSubmission {
-    @Schema(nullable = true)
-    protected boolean allowMs1OnlyData;
-    @Schema(nullable = true)
-    protected boolean ignoreFormulas;
-    @Schema(nullable = true)
-    protected boolean alignLCMSRuns;
+public class ImportMultipartFilesSubmission extends AbstractImportSubmission {
+    @NotEmpty
+    protected List<MultipartFile> inputFiles;
 
-    @JsonIgnore
-    public abstract List<InputResource<?>> asInputResource();
+    @Override
+    public List<InputResource<?>> asInputResource() {
+        return inputFiles.stream().map(MultipartInputResource::new).collect(Collectors.toList());
+    }
 }

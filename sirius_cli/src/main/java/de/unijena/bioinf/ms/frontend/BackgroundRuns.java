@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.frontend;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.subtools.ComputeRootOption;
+import de.unijena.bioinf.ms.frontend.subtools.InputResource;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.projectspace.ImportFromMemoryWorkflow;
@@ -39,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,7 +47,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
@@ -238,10 +237,12 @@ public final class BackgroundRuns<P extends ProjectSpaceManager<I>, I extends In
         return SiriusJobs.getGlobalJobManager().submitJob(makeBackgroundRun(command, instances, toImport));
     }
 
-    public BackgroundRunJob runImport(
-            Supplier<BufferedReader> data, @Nullable String source, @NotNull String ext
+    public BackgroundRunJob runImport(Collection<InputResource<?>> inputResources){
+        return runImport(inputResources, false, true);
+    }
+    public BackgroundRunJob runImport(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData
     ) {
-        Workflow computation = new ImportFromMemoryWorkflow(psm, data, source, ext);
+        Workflow computation = new ImportFromMemoryWorkflow(psm, inputResources, ignoreFormulas, allowMs1OnlyData);
         return SiriusJobs.getGlobalJobManager().submitJob(
                 new BackgroundRunJob(computation, (Iterable<I>) null, RUN_COUNTER.incrementAndGet(), null));
     }

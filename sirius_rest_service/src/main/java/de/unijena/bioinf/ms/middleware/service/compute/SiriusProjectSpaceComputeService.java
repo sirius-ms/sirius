@@ -40,8 +40,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.BufferedReader;
-import java.io.StringReader;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -183,12 +181,10 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
     }
 
     @Override
-    public Job createAndSubmitImportJob(@NotNull SiriusProjectSpaceImpl psmI, ImportStringSubmission jobSubmission,
-                                        @NotNull EnumSet<Job.OptField> optFields) {
-        final @Nullable String sourceName = jobSubmission.getSourceName();
-        final String ext = jobSubmission.getFormat().getExtension();
-
-        BackgroundRuns<?, ?>.BackgroundRunJob run = backgroundRuns(psmI).runImport(() -> new BufferedReader(new StringReader(jobSubmission.getData())), sourceName, ext);
+    public Job createAndSubmitPeakListImportJob(@NotNull SiriusProjectSpaceImpl psmI, AbstractImportSubmission importSubmission,
+                                                @NotNull EnumSet<Job.OptField> optFields) {
+        BackgroundRuns<?, ?>.BackgroundRunJob run = backgroundRuns(psmI)
+                .runImport(importSubmission.asInputResource(), importSubmission.isIgnoreFormulas(), importSubmission.isAllowMs1OnlyData());
         registerServerEventListener(run, psmI.getProjectId());
         return extractJobId(run, optFields);
     }
