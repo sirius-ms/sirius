@@ -76,7 +76,6 @@ public class GenericParser<T> implements Parser<T> {
         return new CloseableIterator<>() {
             @Override
             public void close() {
-                //todo reader should only be closed outside and not inside this class here.
                 tryclose();
             }
 
