@@ -29,7 +29,9 @@ import de.unijena.bioinf.ChemistryBase.chem.FeatureGroup;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
@@ -40,12 +42,8 @@ import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.fingerid.FingerprintResult;
-import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
-import de.unijena.bioinf.fingerid.blast.FBCandidates;
-import de.unijena.bioinf.fingerid.blast.MsNovelistFBCandidates;
-import de.unijena.bioinf.fingerid.blast.TopCSIScore;
+import de.unijena.bioinf.fingerid.blast.*;
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
-import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.subtools.projectspace.ImportFromMemoryWorkflow;
 import de.unijena.bioinf.ms.middleware.controller.AlignedFeatureController;
@@ -310,7 +308,7 @@ public class SiriusProjectSpaceImpl implements Project {
 
         Instance instance = loadInstance(alignedFeatureId);
         FormulaResultId fidObj = parseFID(instance, formulaId);
-        return loadStructureCandidates(instance, fidObj, pageable, para, optFields)
+        return loadStructureCandidates(instance, fidObj, pageable, FBCandidatesTopK.class, FBCandidateFingerprints.class, para, optFields)
                 .map(l -> l.stream().map(c -> (StructureCandidateScored) c).toList())
                 .map(it -> (Page<StructureCandidateScored>) new PageImpl<>(it, pageable, Long.MAX_VALUE))
                 .orElse(Page.empty(pageable)); //todo nightsky: number of candidates for page -> do only for new project space.
@@ -327,13 +325,47 @@ public class SiriusProjectSpaceImpl implements Project {
                 .filter(fr -> fr.getCandidate().getAnnotation(FormulaScoring.class)
                         .flatMap(s -> s.getAnnotation(TopCSIScore.class)).isPresent())
                 .map(fr -> fr.getCandidate().getId())
-                .map(fid -> loadStructureCandidates(instance, fid, pageable, para, optFields))
+                .map(fid -> loadStructureCandidates(instance, fid, pageable, FBCandidatesTopK.class, FBCandidateFingerprints.class, para, optFields))
                 .filter(Optional::isPresent).flatMap(Optional::stream).flatMap(List::stream)
                 .sorted(Comparator.comparing(StructureCandidateScored::getCsiScore).reversed())
                 .skip(pageable.getOffset())
                 .limit(pageable.getPageSize()).toList();
 
-        return new PageImpl<>(candidates, pageable, Long.MAX_VALUE);  //todo number of candidates for page.
+        return new PageImpl<>(candidates, pageable, Long.MAX_VALUE);  //todo nightsky: number of candidates for page -> do only for new project space.
+    }
+
+    @Override
+    public Page<StructureCandidateScored> findDeNovoStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
+        List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidateScored.OptField.fingerprint)
+                ? List.of(FormulaScoring.class, MsNovelistFBCandidates.class, MsNovelistFBCandidateFingerprints.class)
+                : List.of(FormulaScoring.class, MsNovelistFBCandidates.class));
+
+        Instance instance = loadInstance(alignedFeatureId);
+        FormulaResultId fidObj = parseFID(instance, formulaId);
+        return loadStructureCandidates(instance, fidObj, pageable, MsNovelistFBCandidates.class, MsNovelistFBCandidateFingerprints.class, para, optFields)
+                .map(l -> l.stream().map(c -> (StructureCandidateScored) c).toList())
+                .map(it -> (Page<StructureCandidateScored>) new PageImpl<>(it, pageable, Long.MAX_VALUE))
+                .orElse(Page.empty(pageable)); //todo nightsky: number of candidates for page -> do only for new project space.
+    }
+
+    @Override
+    public Page<StructureCandidateFormula> findDeNovoStructureCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
+        List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidateScored.OptField.fingerprint)
+                ? List.of(FormulaScoring.class, MsNovelistFBCandidates.class, MsNovelistFBCandidateFingerprints.class)
+                : List.of(FormulaScoring.class, MsNovelistFBCandidates.class));
+
+        Instance instance = loadInstance(alignedFeatureId);
+        List<StructureCandidateFormula> candidates = instance.loadFormulaResults(FormulaScoring.class).stream()
+                .filter(fr -> fr.getCandidate().getAnnotation(FormulaScoring.class)
+                        .flatMap(s -> s.getAnnotation(TopMsNovelistScore.class)).isPresent())
+                .map(fr -> fr.getCandidate().getId())
+                .map(fid -> loadStructureCandidates(instance, fid, pageable, FBCandidates.class, MsNovelistFBCandidateFingerprints.class, para, optFields))
+                .filter(Optional::isPresent).flatMap(Optional::stream).flatMap(List::stream)
+                .sorted(Comparator.comparing(StructureCandidateScored::getCsiScore).reversed())
+                .skip(pageable.getOffset())
+                .limit(pageable.getPageSize()).toList();
+
+        return new PageImpl<>(candidates, pageable, Long.MAX_VALUE);  //todo nightsky: number of candidates for page -> do only for new project space.
     }
 
     @Override
@@ -438,7 +470,7 @@ public class SiriusProjectSpaceImpl implements Project {
             if (optFields.contains(AlignedFeature.OptField.topAnnotations))
                 alignedFeature.setTopAnnotations(extractTopAnnotations(instance));
             if (optFields.contains(AlignedFeature.OptField.topAnnotationsDeNovo))
-                alignedFeature.setTopAnnotationsDeNovo(extractTopAnnotationsDeNovo(instance));
+                alignedFeature.setTopAnnotationsDeNovo(extractTopDeNovoAnnotations(instance));
             if (optFields.contains(AlignedFeature.OptField.msData))
                 alignedFeature.setMsData(asCompoundMsData(instance));
         }
@@ -629,9 +661,11 @@ public class SiriusProjectSpaceImpl implements Project {
         });
     }
 
-    private static Optional<List<StructureCandidateFormula>> loadStructureCandidates(
+    private static <C extends CompoundCandidate> Optional<List<StructureCandidateFormula>> loadStructureCandidates(
             Instance instance, FormulaResultId fidObj,
             Pageable pageable,
+            Class<? extends AbstractFBCandidates<C>> candidateType,
+            Class<? extends AbstractFBCandidateFingerprints> candidateFpType,
             List<Class<? extends DataAnnotation>> para,
             EnumSet<StructureCandidateScored.OptField> optFields
     ) {
@@ -641,14 +675,14 @@ public class SiriusProjectSpaceImpl implements Project {
         SpectralSearchResult spectralSearchResult = optFields.contains(StructureCandidateScored.OptField.libraryMatches) ?
                 loadSpectalLibraryMachtes(instance).orElse(null) : null;
 
-        return fr.getAnnotation(FBCandidatesTopK.class).map(FBCandidatesTopK::getResults).map(l -> {
+        return fr.getAnnotation(candidateType).map(AbstractFBCandidates::getResults).map(l -> {
             List<StructureCandidateFormula> candidates = new ArrayList<>();
 
-            Iterator<Scored<CompoundCandidate>> it =
+            Iterator<Scored<C>> it =
                     l.stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).iterator();
 
             if (optFields.contains(StructureCandidateScored.OptField.fingerprint)) {
-                Iterator<Fingerprint> fps = fr.getAnnotationOrThrow(FBCandidateFingerprints.class).getFingerprints()
+                Iterator<Fingerprint> fps = fr.getAnnotationOrThrow(candidateFpType).getFingerprints()
                         .stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).iterator();
 
                 if (it.hasNext())//tophit
@@ -803,7 +837,7 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     @NotNull
-    public static FeatureAnnotations extractTopAnnotationsDeNovo(Instance inst) {
+    public static FeatureAnnotations extractTopDeNovoAnnotations(Instance inst) {
         return inst.loadTopFormulaResult(List.of(SiriusScore.class)).map(FormulaResult::getId)
                 .flatMap(frid -> inst.loadFormulaResult(frid, FormulaScoring.class, FTree.class, CanopusResult.class)
                         .map(topHit -> {
