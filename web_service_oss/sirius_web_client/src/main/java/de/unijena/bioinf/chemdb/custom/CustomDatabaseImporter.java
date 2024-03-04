@@ -113,7 +113,7 @@ public class CustomDatabaseImporter {
         importFromString(str, null, null);
     }
 
-    public void importFromString(String str, String id, String name) throws IOException{
+    public void importFromString(String str, String id, String name) throws IOException {
         if (str == null || str.isBlank()) {
             LoggerFactory.getLogger(getClass()).warn("No structure information given in Line ' " + str + "\t" + id + "\t" + name + "'. Skipping!");
             return;
@@ -161,6 +161,24 @@ public class CustomDatabaseImporter {
         addMolecule(molecule);
     }
 
+    public void importFromStream(InputStream stream) throws IOException {
+        // checkConnectionToUrl for SMILES and InChI formats
+        final BufferedReader br = new BufferedReader(new InputStreamReader(stream));
+        String line;
+        while ((line = br.readLine()) != null) {
+            checkCancellation();
+            //skip empty lines
+            if (!line.isBlank()) {
+                String[] parts = line.split("\t");
+                final String structure = parts[0].trim();
+
+                final String id = parts.length > 1 ? parts[1] : null;
+                final String name = parts.length > 2 ? parts[2] : null;
+                importFromString(structure, id, name);
+            }
+        }
+    }
+
     public void importFrom(File file) throws IOException {
         ReaderFactory factory = new ReaderFactory();
         ISimpleChemObjectReader reader;
@@ -186,21 +204,8 @@ public class CustomDatabaseImporter {
                 }
             }
         } else {
-            // checkConnectionToUrl for SMILES and InChI formats
-            try (final BufferedReader br = new BufferedReader(new FileReader(file))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    checkCancellation();
-                    //skip empty lines
-                    if (!line.isBlank()) {
-                        String[] parts = line.split("\t");
-                        final String structure = parts[0].trim();
-
-                        final String id = parts.length > 1 ? parts[1] : null;
-                        final String name = parts.length > 2 ? parts[2] : null;
-                        importFromString(structure, id, name);
-                    }
-                }
+            try (FileInputStream s = new FileInputStream(file)) {
+                importFromStream(s);
             }
         }
     }
@@ -375,7 +380,7 @@ public class CustomDatabaseImporter {
             synchronized (database) {
                 if (database instanceof BlobCustomDatabase<?>) {
                     mergeAndWriteCompoundsBlob(key, value, (BlobCustomDatabase<?>) database);
-                } else if (database instanceof NoSQLCustomDatabase<?, ?>){
+                } else if (database instanceof NoSQLCustomDatabase<?, ?>) {
                     mergeAndWriteCompoundsNoSQL(key, value, (NoSQLCustomDatabase<?, ?>) database);
                 } else {
                     throw new IllegalArgumentException();
@@ -396,7 +401,7 @@ public class CustomDatabaseImporter {
 
         WebWithCustomDatabase.mergeCompounds(
                 Stream.concat(alreadyExisting.stream()
-                        .map(FingerprintCandidateWrapper::getFingerprintCandidate), value.stream())
+                                .map(FingerprintCandidateWrapper::getFingerprintCandidate), value.stream())
                         .toList()
         ).forEach(fc -> {
             if (alreadyExistingMap.containsKey(fc.getInchiKey2D())) {
