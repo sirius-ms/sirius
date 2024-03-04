@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
-import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.middleware.model.MultipartInputResource;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabase;
@@ -38,7 +37,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
 import static java.util.function.Predicate.not;
 
 @RestController
@@ -55,43 +53,44 @@ public class SearchableDatabaseController {
         this.computeService = computeService;
     }
 
-    @GetMapping("")
+    @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public List<SearchableDatabase> getDatabases(@RequestParam(defaultValue = "false") boolean includeStats) {
         return chemDbService.findAll(includeStats);
     }
 
-    @GetMapping("/custom")
+    @GetMapping(value = "/custom", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public List<SearchableDatabase> getCustomDatabases(@RequestParam(defaultValue = "false") boolean includeStats) {
         return getDatabases(includeStats).stream().filter(SearchableDatabase::isCustomDb).toList();
     }
 
-    @GetMapping("/included")
+    @GetMapping(value = "/included", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public List<SearchableDatabase> getIncludedDatabases(@RequestParam(defaultValue = "false") boolean includeStats) {
         return getDatabases(includeStats).stream().filter(not(SearchableDatabase::isCustomDb)).toList();
     }
 
 
-    @GetMapping("/{databaseId}")
+    @GetMapping(value = "/{databaseId}", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public SearchableDatabase getDatabase(@PathVariable String databaseId, @RequestParam(defaultValue = "true") boolean includeStats) {
         return chemDbService.findById(databaseId, includeStats);
     }
 
-    @PostMapping("/{databaseId}")
+    @PostMapping(value = "/{databaseId}", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public SearchableDatabase createDatabase(@PathVariable String databaseId, @RequestBody(required = false) SearchableDatabaseParameters dbToCreate) {
         return chemDbService.create(databaseId, dbToCreate);
     }
 
-    @PutMapping("/{databaseId}")
+    @PutMapping(value = "/{databaseId}", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public SearchableDatabase updateDatabase(@PathVariable String databaseId, @RequestBody(required = false) SearchableDatabaseParameters dbUpdate) {
         return chemDbService.update(databaseId, dbUpdate);
     }
 
-    @PostMapping("")
-    public List<SearchableDatabase> addDatabases(@RequestBody List<String> pathToProjects) {
-        return chemDbService.add(pathToProjects);
+    @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @Deprecated
+    public List<SearchableDatabase> addDatabases(@RequestBody List<String> pathToDatabases) {
+        return chemDbService.add(pathToDatabases);
     }
 
-    @DeleteMapping("/{databaseId}")
+    @DeleteMapping(value = "/{databaseId}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public void removeDatabase(@PathVariable String databaseId, @RequestParam(defaultValue = "false") boolean delete) {
         chemDbService.remove(databaseId, delete);
     }

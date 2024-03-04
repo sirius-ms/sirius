@@ -57,7 +57,9 @@ public class SearchableDatabasesApi {
      * @param requestBody The requestBody parameter
      * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     * @deprecated
      */
+    @Deprecated
     private ResponseSpec addDatabasesRequestCreation(List<String> requestBody) throws WebClientResponseException {
         Object postBody = requestBody;
         // verify the required parameter 'requestBody' is set
@@ -73,7 +75,7 @@ public class SearchableDatabasesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "*/*"
+            "application/json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -150,7 +152,7 @@ public class SearchableDatabasesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "*/*"
+            "application/json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
@@ -225,7 +227,7 @@ public class SearchableDatabasesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeStats", includeStats));
 
         final String[] localVarAccepts = { 
-            "*/*"
+            "application/json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -302,7 +304,7 @@ public class SearchableDatabasesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeStats", includeStats));
 
         final String[] localVarAccepts = { 
-            "*/*"
+            "application/json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -375,7 +377,7 @@ public class SearchableDatabasesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeStats", includeStats));
 
         final String[] localVarAccepts = { 
-            "*/*"
+            "application/json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -445,7 +447,7 @@ public class SearchableDatabasesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeStats", includeStats));
 
         final String[] localVarAccepts = { 
-            "*/*"
+            "application/json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { };
@@ -778,7 +780,7 @@ public class SearchableDatabasesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         final String[] localVarAccepts = { 
-            "*/*"
+            "application/json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 

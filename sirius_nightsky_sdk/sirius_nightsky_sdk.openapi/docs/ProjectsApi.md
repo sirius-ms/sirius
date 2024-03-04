@@ -627,7 +627,7 @@ No authorization required
 
 ## importMsRunDataAsJob
 
-> Job importMsRunDataAsJob(projectId, alignRuns, allowMs1Only, optFields, imputFiles)
+> Job importMsRunDataAsJob(projectId, alignRuns, allowMs1Only, optFields, inputFiles)
 
 Import and Align full MS-Runs from various formats into the specified project as background job.
 
@@ -653,9 +653,9 @@ public class Example {
         Boolean alignRuns = true; // Boolean | 
         Boolean allowMs1Only = true; // Boolean | 
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
-        List<File> imputFiles = Arrays.asList(); // List<File> | 
+        List<File> inputFiles = Arrays.asList(); // List<File> | 
         try {
-            Job result = apiInstance.importMsRunDataAsJob(projectId, alignRuns, allowMs1Only, optFields, imputFiles);
+            Job result = apiInstance.importMsRunDataAsJob(projectId, alignRuns, allowMs1Only, optFields, inputFiles);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importMsRunDataAsJob");
@@ -677,7 +677,7 @@ public class Example {
 | **alignRuns** | **Boolean**|  | [optional] [default to true] |
 | **allowMs1Only** | **Boolean**|  | [optional] [default to true] |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
-| **imputFiles** | **List&lt;File&gt;**|  | [optional] |
+| **inputFiles** | **List&lt;File&gt;**|  | [optional] |
 
 ### Return type
 
