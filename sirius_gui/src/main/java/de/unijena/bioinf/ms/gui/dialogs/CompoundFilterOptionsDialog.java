@@ -193,7 +193,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         ionizations.add(PrecursorIonType.unknownNegative());
         ionizations.addAll(PeriodicTable.getInstance().getPositiveAdducts());
         ionizations.addAll(PeriodicTable.getInstance().getNegativeAdducts());
-        ionizations.sort(Comparator.comparing(PrecursorIonType::toString));
+        ionizations.sort(PrecursorIonTypeSelector.ionTypeComparator);
 
         adductOptions.checkBoxList.replaceElements(ionizations);
         adductOptions.checkBoxList.uncheckAll();

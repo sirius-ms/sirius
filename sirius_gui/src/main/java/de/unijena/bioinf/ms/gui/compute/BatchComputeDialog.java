@@ -47,9 +47,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -511,11 +509,11 @@ public class BatchComputeDialog extends JDialog /*implements ActionListener*/ {
 
         editPanel.ionTypeCB.addActionListener(e ->
                 formulaIDConfigPanel.content.refreshPossibleAdducts(
-                        Collections.singleton(editPanel.getSelectedAdduct().toString()),
+                        Set.of(editPanel.getSelectedAdduct()),
                         formulaIDConfigPanel.isToolSelected())
         );
 
-        formulaIDConfigPanel.addEnableChangeListener((c, e) -> c.refreshPossibleAdducts(Collections.singleton(editPanel.getSelectedAdduct().toString()), e));
+        formulaIDConfigPanel.addEnableChangeListener((c, e) -> c.refreshPossibleAdducts(Set.of(editPanel.getSelectedAdduct()), e));
 
         editPanel.setData(ec);
         /////// todo ugly hack end

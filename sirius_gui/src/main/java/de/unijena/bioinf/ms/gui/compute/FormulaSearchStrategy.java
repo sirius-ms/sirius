@@ -112,7 +112,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         JPanel strategyCardContainer = new JPanel();
         strategyCardContainer.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
-        strategyCardContainer.setLayout(new BoxLayout(strategyCardContainer, BoxLayout.PAGE_AXIS));
+        strategyCardContainer.setLayout(new BoxLayout(strategyCardContainer, BoxLayout.LINE_AXIS));
 
         strategy = (Strategy) strategyBox.getSelectedItem();
 
@@ -201,8 +201,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
         parameterPanel.add(new TextHeaderBoxPanel("Bottom Up Search", busOptions));
 
         card.add(parameterPanel);
-        card.add(Box.createRigidArea(new Dimension(0, GuiUtils.SMALL_GAP)));  // gap with element filter
-
         return card;
     }
 
@@ -214,8 +212,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
         searchDBList.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
 
         card.add(searchDBList);
-        card.add(Box.createRigidArea(new Dimension(0, GuiUtils.SMALL_GAP)));  // gap with element filter
-
         return card;
     }
 
