@@ -91,7 +91,7 @@ public class TestMain {
         Path storeLocation = Files.createTempFile("nitrite", "db");
         try (NitriteDatabase db = new NitriteDatabase(storeLocation, SiriusProjectDocumentDatabase.buildMetadata())) {
             Database<?> store = new SiriusProjectDatabaseImpl<>(db).getStorage();
-            processing.setImportStrategy(new ProjectSpaceImporter(store));
+            processing.setImportStrategy(new ProjectSpaceImporter(new SiriusProjectDatabaseImpl<>(store)));
             {
                 if (ops.cores >= 1) {
                     SiriusJobs.setGlobalJobManager(ops.cores);

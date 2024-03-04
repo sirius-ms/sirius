@@ -48,14 +48,11 @@ public class Compound {
     protected double neutralMass;
     protected String name;
 
-    /**
-     * Group of edges between pairs of feature alignments that correlate among each other. Connected components
-     * from the whole graph of correlated pairs (whole dataset)
-     */
-    @ToString.Exclude
-    LongList correlatedIonPairIds; //todo denormalize instead?
-
     //foreign fields
+    @ToString.Exclude
+    LongList adductFeatureIds;
+
+
     @JsonIgnore
     @ToString.Exclude
     List<AlignedFeatures> adductFeatures;
@@ -63,6 +60,13 @@ public class Compound {
     public Optional<List<AlignedFeatures>> getAdductFeatures() {
         return Optional.ofNullable(adductFeatures);
     }
+
+    /**
+     * Group of edges between pairs of feature alignments that correlate among each other. Connected components
+     * from the whole graph of correlated pairs (whole dataset)
+     */
+    @ToString.Exclude
+    LongList correlatedIonPairIds;
 
     @JsonIgnore
     @ToString.Exclude
