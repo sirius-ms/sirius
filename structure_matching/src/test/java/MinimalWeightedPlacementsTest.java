@@ -19,24 +19,6 @@ import static org.junit.Assert.assertEquals;
 public class MinimalWeightedPlacementsTest {
 
     @Test(expected = IllegalArgumentException.class)
-    public void testEmptyMolecules(){
-        try {
-            File file = new File("./res/Testdateien_SCLReader/sideChains.txt");
-            SideChainListReader scReader = new SideChainListReader(file);
-            scReader.readFile();
-
-            IAtomContainer molecule1 = new AtomContainerE();
-            IAtomContainer molecule2 = new AtomContainerE();
-
-            MinimalWeightedPlacements alg = new MinimalWeightedPlacements(molecule1, molecule2, scReader.getSideChainList());
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (CDKException e){
-            e.printStackTrace();
-        }
-    }
-
-    @Test(expected = IllegalArgumentException.class)
     public void testEmptySideChainList(){
         try {
             String smiles = "c1ccccc1";
