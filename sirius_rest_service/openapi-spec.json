@@ -2460,153 +2460,6 @@
         }
       }
     },
-    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/structures": {
-      "get": {
-        "tags": [
-          "Features"
-        ],
-        "summary": "List of StructureCandidates for the given \u0027alignedFeatureId\u0027 with minimal information.",
-        "description": "List of StructureCandidates for the given \u0027alignedFeatureId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint, structure database links.",
-        "operationId": "getStructureCandidates",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to read from.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "alignedFeatureId",
-            "in": "path",
-            "description": "feature (aligned over runs) the structure candidates belong to.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "optFields",
-            "in": "query",
-            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/StructureCandidateOptField"
-              },
-              "default": []
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/StructureCandidateFormula"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/structures/page": {
-      "get": {
-        "tags": [
-          "Features"
-        ],
-        "summary": "Page of StructureCandidates for the given \u0027alignedFeatureId\u0027 with minimal information.",
-        "description": "Page of StructureCandidates for the given \u0027alignedFeatureId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint, structure database links.",
-        "operationId": "getStructureCandidatesPaged",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to read from.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "alignedFeatureId",
-            "in": "path",
-            "description": "feature (aligned over runs) the structure candidates belong to.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Zero-based page index (0..N)",
-            "required": false,
-            "schema": {
-              "minimum": 0,
-              "type": "integer",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "description": "The size of the page to be returned",
-            "required": false,
-            "schema": {
-              "minimum": 1,
-              "type": "integer",
-              "default": 20
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "name": "optFields",
-            "in": "query",
-            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/StructureCandidateOptField"
-              },
-              "default": []
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PageStructureCandidateFormula"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches": {
       "get": {
         "tags": [
@@ -2916,73 +2769,6 @@
         }
       }
     },
-    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures": {
-      "get": {
-        "tags": [
-          "Features"
-        ],
-        "summary": "List of StructureCandidates the given \u0027formulaId\u0027 with minimal information.",
-        "description": "List of StructureCandidates the given \u0027formulaId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint, structure database links.",
-        "operationId": "getStructureCandidatesByFormula",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to read from.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "alignedFeatureId",
-            "in": "path",
-            "description": "feature (aligned over runs) the formula result belongs to.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "formulaId",
-            "in": "path",
-            "description": "identifier of the requested formula result",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "optFields",
-            "in": "query",
-            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/StructureCandidateOptField"
-              },
-              "default": []
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "StructureCandidate of this formula candidate with specified optional fields.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/StructureCandidateScored"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum": {
       "get": {
         "tags": [
@@ -3107,104 +2893,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AnnotatedMsMsData"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/page": {
-      "get": {
-        "tags": [
-          "Features"
-        ],
-        "summary": "Page of StructureCandidates the given \u0027formulaId\u0027 with minimal information.",
-        "description": "Page of StructureCandidates the given \u0027formulaId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint, structure database links.",
-        "operationId": "getStructureCandidatesByFormulaPaged",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to read from.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "alignedFeatureId",
-            "in": "path",
-            "description": "feature (aligned over runs) the formula result belongs to.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "formulaId",
-            "in": "path",
-            "description": "identifier of the requested formula result",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "description": "Zero-based page index (0..N)",
-            "required": false,
-            "schema": {
-              "minimum": 0,
-              "type": "integer",
-              "default": 0
-            }
-          },
-          {
-            "name": "size",
-            "in": "query",
-            "description": "The size of the page to be returned",
-            "required": false,
-            "schema": {
-              "minimum": 1,
-              "type": "integer",
-              "default": 20
-            }
-          },
-          {
-            "name": "sort",
-            "in": "query",
-            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "name": "optFields",
-            "in": "query",
-            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/StructureCandidateOptField"
-              },
-              "default": []
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "StructureCandidate of this formula candidate with specified optional fields.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PageStructureCandidateScored"
                 }
               }
             }
@@ -3465,6 +3153,336 @@
                     "type": "number",
                     "format": "double"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/denovo-structures": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given \u0027formulaId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint.",
+        "description": "List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given \u0027formulaId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint.",
+        "operationId": "getDeNovoStructureCandidatesByFormula",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the formula result belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "formulaId",
+            "in": "path",
+            "description": "identifier of the requested formula result",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/StructureCandidateOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "StructureCandidate of this formula candidate with specified optional fields.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StructureCandidateScored"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/denovo-structures/page": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given \u0027formulaId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint.",
+        "description": "Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given \u0027formulaId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint.",
+        "operationId": "getDeNovoStructureCandidatesByFormulaPaged",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the formula result belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "formulaId",
+            "in": "path",
+            "description": "identifier of the requested formula result",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/StructureCandidateOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "StructureCandidate of this formula candidate with specified optional fields.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageStructureCandidateScored"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "List of CSI:FingerID structure database search candidates for the given \u0027formulaId\u0027 with minimal information.",
+        "description": "List of CSI:FingerID structure database search candidates for the given \u0027formulaId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint, structure database links.",
+        "operationId": "getStructureCandidatesByFormula",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the formula result belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "formulaId",
+            "in": "path",
+            "description": "identifier of the requested formula result",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/StructureCandidateOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "StructureCandidate of this formula candidate with specified optional fields.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StructureCandidateScored"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures/page": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Page of CSI:FingerID structure database search candidates for the given \u0027formulaId\u0027 with minimal information.",
+        "description": "Page of CSI:FingerID structure database search candidates for the given \u0027formulaId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint, structure database links.",
+        "operationId": "getStructureCandidatesByFormulaPaged",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the formula result belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "formulaId",
+            "in": "path",
+            "description": "identifier of the requested formula result",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/StructureCandidateOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "StructureCandidate of this formula candidate with specified optional fields.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageStructureCandidateScored"
                 }
               }
             }
@@ -3769,6 +3787,300 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PageFormulaCandidate"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given \u0027alignedFeatureId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint.",
+        "description": "List of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given \u0027alignedFeatureId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint.",
+        "operationId": "getDeNovoStructureCandidates",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the structure candidates belong to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/StructureCandidateOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StructureCandidateFormula"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/denovo-structures/page": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given \u0027alignedFeatureId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint.",
+        "description": "Page of de novo structure candidates (e.g. generated by MsNovelist) ranked by CSI:FingerID score for the given \u0027alignedFeatureId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint.",
+        "operationId": "getDeNovoStructureCandidatesPaged",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the structure candidates belong to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/StructureCandidateOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageStructureCandidateFormula"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/db-structures": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "List of structure database search candidates ranked by CSI:FingerID score for the given \u0027alignedFeatureId\u0027 with minimal information.",
+        "description": "List of structure database search candidates ranked by CSI:FingerID score for the given \u0027alignedFeatureId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint, structure database links.",
+        "operationId": "getStructureCandidates",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the structure candidates belong to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/StructureCandidateOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/StructureCandidateFormula"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/db-structures/page": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Page of structure database search candidates ranked by CSI:FingerID score for the given \u0027alignedFeatureId\u0027 with minimal information.",
+        "description": "Page of structure database search candidates ranked by CSI:FingerID score for the given \u0027alignedFeatureId\u0027 with minimal information.\n StructureCandidates can be enriched with molecular fingerprint, structure database links.",
+        "operationId": "getStructureCandidatesPaged",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the structure candidates belong to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/StructureCandidateOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "StructureCandidate of this feature (aligned over runs) candidate with specified optional fields.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageStructureCandidateFormula"
                 }
               }
             }
