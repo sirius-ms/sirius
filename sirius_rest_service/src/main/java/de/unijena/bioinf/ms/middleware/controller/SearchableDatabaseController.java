@@ -20,16 +20,25 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
+import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
+import de.unijena.bioinf.ms.middleware.model.MultipartInputResource;
+import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabase;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabaseParameters;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
 import static java.util.function.Predicate.not;
 
 @RestController
@@ -66,6 +75,7 @@ public class SearchableDatabaseController {
     public SearchableDatabase getDatabase(@PathVariable String databaseId, @RequestParam(defaultValue = "true") boolean includeStats) {
         return chemDbService.findById(databaseId, includeStats);
     }
+
     @PostMapping("/{databaseId}")
     public SearchableDatabase createDatabase(@PathVariable String databaseId, @RequestBody(required = false) SearchableDatabaseParameters dbToCreate) {
         return chemDbService.create(databaseId, dbToCreate);
@@ -82,7 +92,46 @@ public class SearchableDatabaseController {
     }
 
     @DeleteMapping("/{databaseId}")
-    public void removeDatabase(@PathVariable String databaseId, @RequestParam(defaultValue = "false") boolean delete){
+    public void removeDatabase(@PathVariable String databaseId, @RequestParam(defaultValue = "false") boolean delete) {
         chemDbService.remove(databaseId, delete);
+    }
+
+    /**
+     * Start import of structure and spectra files into the specified database.
+     *
+     * @param databaseId database to import into
+     * @param inputFiles files to be imported
+     * @return Job of the import command to be executed.
+     */
+    @PostMapping(value = "/{databaseId}/import/from-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    public SearchableDatabase importIntoDatabase(@PathVariable String databaseId,
+                                                 @RequestBody MultipartFile[] inputFiles,
+                                                 @RequestParam(defaultValue = "1000") int bufferSize
+    ) {
+        return chemDbService.importById(
+                databaseId,
+                Arrays.stream(inputFiles).map(MultipartInputResource::new).collect(Collectors.toList()),
+                bufferSize
+        );
+    }
+
+    /**
+     * Start import of structure and spectra files into the specified database.
+     *
+     * @param databaseId database to import into
+     * @param inputFiles files to be imported
+     * @param optFields  set of optional fields to be included. Use 'none' only to override defaults.
+     * @return Job of the import command to be executed.
+     */
+    @PostMapping(value = "/{databaseId}/import/from-files-async", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    public Job importIntoDatabaseAsync(@PathVariable String databaseId,
+                                       @RequestBody MultipartFile[] inputFiles,
+                                       @RequestParam(defaultValue = "1000") int bufferSize,
+                                       @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
+    ) {
+//        DatabaseImportSubmission dbImport = new DatabaseImportSubmission(databaseId, inputFiles, );
+//        SearchableDatabase db = chemDbService.findById(dbImport.getDatabaseId(), false);
+//        return computeService.createAndSubmitCommandJob(dbImport.asCommandSubmission(db.getLocation()), removeNone(optFields));
+        throw new UnsupportedOperationException("Async DB import not yet implemented");
     }
 }

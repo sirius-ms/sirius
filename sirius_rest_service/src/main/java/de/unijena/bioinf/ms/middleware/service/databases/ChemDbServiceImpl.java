@@ -21,11 +21,11 @@
 package de.unijena.bioinf.ms.middleware.service.databases;
 
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.babelms.MsExperimentParser;
+import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
-import de.unijena.bioinf.chemdb.custom.CustomDataSources;
-import de.unijena.bioinf.chemdb.custom.CustomDatabase;
-import de.unijena.bioinf.chemdb.custom.CustomDatabaseSettings;
-import de.unijena.bioinf.chemdb.custom.CustomDatabases;
+import de.unijena.bioinf.chemdb.custom.*;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabase;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabaseParameters;
@@ -46,6 +46,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -81,6 +82,21 @@ public class ChemDbServiceImpl implements ChemDbService {
     @Override
     public WebWithCustomDatabase db() {
         return webAPI.getChemDB();
+    }
+
+    @Override
+    public SearchableDatabase importById(@NotNull String databaseId, List<InputResource<?>> inputResources, int bufferSize) {
+        CustomDatabase db = CustomDatabases.getCustomDatabaseByName(databaseId, version())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Database with id '" + databaseId + "' does not exist."));
+
+        Map<Boolean, List<InputResource<?>>> split = inputResources.stream()
+                .collect(Collectors.partitioningBy(p -> MsExperimentParser.isSupportedFileName(p.getFilename())));
+
+        SiriusJobs.runInBackground(db.importToDatabaseJob(split.get(true), split.get(false),null, webAPI, bufferSize))
+                .takeResult();
+
+        return SearchableDatabases.of(db);
+
     }
 
     @Override

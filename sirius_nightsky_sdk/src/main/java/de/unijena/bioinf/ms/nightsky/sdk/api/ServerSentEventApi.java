@@ -49,7 +49,6 @@ import java.util.Locale;
 import java.util.Map;
 
 import jakarta.annotation.Generated;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;

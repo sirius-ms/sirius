@@ -26,8 +26,8 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
-import de.unijena.bioinf.ms.frontend.subtools.InputResource;
-import de.unijena.bioinf.ms.frontend.subtools.PathInputResource;
+import de.unijena.bioinf.babelms.inputresource.InputResource;
+import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
@@ -148,7 +148,7 @@ public class InstanceImporter {
 
             if (msInput != null) {
                 msInput.forEach(f -> prog.addPreload(f, 0, f.getSize()));
-                list.addAll(importMsParserInput(msInput.stream().sorted().toList()));
+                list.addAll(importMsParserInput(msInput.stream().toList()));
             }
 
             if (projectInput != null) {

@@ -1303,7 +1303,7 @@ public class FeaturesApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<FragmentationTree> localVarReturnType = new ParameterizedTypeReference<FragmentationTree>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/tree", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/fragtree", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
@@ -1617,12 +1617,12 @@ public class FeaturesApi {
         return getMsDataRequestCreation(projectId, alignedFeatureId);
     }
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param projectId The projectId parameter
-     * @param alignedFeatureId The alignedFeatureId parameter
-     * @param formulaId The formulaId parameter
+     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
+     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
+     * <p><b>200</b> - Fragmentation Tree in internal format.   NOTE: This endpoint is likely to be removed in future versions of the API.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId identifier of the requested formula result
      * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      * @deprecated
@@ -1664,16 +1664,16 @@ public class FeaturesApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-tree", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param projectId The projectId parameter
-     * @param alignedFeatureId The alignedFeatureId parameter
-     * @param formulaId The formulaId parameter
+     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
+     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
+     * <p><b>200</b> - Fragmentation Tree in internal format.   NOTE: This endpoint is likely to be removed in future versions of the API.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId identifier of the requested formula result
      * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -1683,12 +1683,12 @@ public class FeaturesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param projectId The projectId parameter
-     * @param alignedFeatureId The alignedFeatureId parameter
-     * @param formulaId The formulaId parameter
+     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
+     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
+     * <p><b>200</b> - Fragmentation Tree in internal format.   NOTE: This endpoint is likely to be removed in future versions of the API.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId identifier of the requested formula result
      * @return ResponseEntity&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -1698,12 +1698,12 @@ public class FeaturesApi {
     }
 
     /**
-     * 
-     * 
-     * <p><b>200</b> - OK
-     * @param projectId The projectId parameter
-     * @param alignedFeatureId The alignedFeatureId parameter
-     * @param formulaId The formulaId parameter
+     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
+     * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
+     * <p><b>200</b> - Fragmentation Tree in internal format.   NOTE: This endpoint is likely to be removed in future versions of the API.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
+     * @param formulaId identifier of the requested formula result
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */

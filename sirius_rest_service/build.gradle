@@ -85,6 +85,7 @@ dependencies {
 //    implementation 'io.micrometer:micrometer-registry-prometheus'
     //must match minio version
     implementation 'com.squareup.okhttp3:okhttp:4.10.0'
+    api "jakarta.servlet:jakarta.servlet-api"
 }
 //todo use logback instead of java util logging! => needs support in jjobs
 configurations.each {Configuration conf ->

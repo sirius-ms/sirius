@@ -27,7 +27,6 @@ docs/ConsensusAnnotationsDeNovo.md
 docs/ConsensusCriterionCSI.md
 docs/ConsensusCriterionDeNovo.md
 docs/DBLink.md
-docs/DatabaseImportSubmission.md
 docs/Deviation.md
 docs/FeatureAnnotations.md
 docs/FeatureImport.md
@@ -39,9 +38,7 @@ docs/FragmentNode.md
 docs/FragmentationTree.md
 docs/GuiApi.md
 docs/GuiInfo.md
-docs/ImportFormat.md
-docs/ImportLocalFilesSubmission.md
-docs/ImportStringSubmission.md
+docs/ImportPreprocessedDataRequest.md
 docs/Info.md
 docs/InfoApi.md
 docs/Instrument.md
@@ -143,7 +140,6 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ConsensusAnnotationsDeNovo
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ConsensusCriterionCSI.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ConsensusCriterionDeNovo.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/DBLink.java
-src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/DatabaseImportSubmission.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Deviation.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FeatureAnnotations.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FeatureImport.java
@@ -153,9 +149,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FormulaCandidateOptField.j
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FragmentNode.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FragmentationTree.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/GuiInfo.java
-src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ImportFormat.java
-src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ImportLocalFilesSubmission.java
-src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ImportStringSubmission.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ImportPreprocessedDataRequest.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Info.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Instrument.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/IsotopePatternAnnotation.java

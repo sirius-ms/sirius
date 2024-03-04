@@ -2,6 +2,9 @@ package de.unijena.bioinf.ms.nightsky.sdk.api;
 
 import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
 
+import de.unijena.bioinf.ms.nightsky.sdk.model.ImportPreprocessedDataRequest;
+import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
+import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabaseParameters;
 
@@ -490,6 +493,191 @@ public class SearchableDatabasesApi {
      */
     public ResponseSpec getIncludedDatabasesWithResponseSpec(Boolean includeStats) throws WebClientResponseException {
         return getIncludedDatabasesRequestCreation(includeStats);
+    }
+    /**
+     * Start import of structure and spectra files into the specified database.
+     * Start import of structure and spectra files into the specified database.
+     * <p><b>200</b> - Job of the import command to be executed.
+     * @param databaseId database to import into
+     * @param importPreprocessedDataRequest files to be imported
+     * @param bufferSize The bufferSize parameter
+     * @return SearchableDatabase
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec importIntoDatabaseRequestCreation(String databaseId, ImportPreprocessedDataRequest importPreprocessedDataRequest, Integer bufferSize) throws WebClientResponseException {
+        Object postBody = importPreprocessedDataRequest;
+        // verify the required parameter 'databaseId' is set
+        if (databaseId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'databaseId' when calling importIntoDatabase", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'importPreprocessedDataRequest' is set
+        if (importPreprocessedDataRequest == null) {
+            throw new WebClientResponseException("Missing the required parameter 'importPreprocessedDataRequest' when calling importIntoDatabase", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("databaseId", databaseId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "bufferSize", bufferSize));
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { 
+            "application/json"
+        };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
+        return apiClient.invokeAPI("/api/databases/{databaseId}/import/from-files", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Start import of structure and spectra files into the specified database.
+     * Start import of structure and spectra files into the specified database.
+     * <p><b>200</b> - Job of the import command to be executed.
+     * @param databaseId database to import into
+     * @param importPreprocessedDataRequest files to be imported
+     * @param bufferSize The bufferSize parameter
+     * @return SearchableDatabase
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public SearchableDatabase importIntoDatabase(String databaseId, ImportPreprocessedDataRequest importPreprocessedDataRequest, Integer bufferSize) throws WebClientResponseException {
+        ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
+        return importIntoDatabaseRequestCreation(databaseId, importPreprocessedDataRequest, bufferSize).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Start import of structure and spectra files into the specified database.
+     * Start import of structure and spectra files into the specified database.
+     * <p><b>200</b> - Job of the import command to be executed.
+     * @param databaseId database to import into
+     * @param importPreprocessedDataRequest files to be imported
+     * @param bufferSize The bufferSize parameter
+     * @return ResponseEntity&lt;SearchableDatabase&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<SearchableDatabase> importIntoDatabaseWithHttpInfo(String databaseId, ImportPreprocessedDataRequest importPreprocessedDataRequest, Integer bufferSize) throws WebClientResponseException {
+        ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
+        return importIntoDatabaseRequestCreation(databaseId, importPreprocessedDataRequest, bufferSize).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Start import of structure and spectra files into the specified database.
+     * Start import of structure and spectra files into the specified database.
+     * <p><b>200</b> - Job of the import command to be executed.
+     * @param databaseId database to import into
+     * @param importPreprocessedDataRequest files to be imported
+     * @param bufferSize The bufferSize parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec importIntoDatabaseWithResponseSpec(String databaseId, ImportPreprocessedDataRequest importPreprocessedDataRequest, Integer bufferSize) throws WebClientResponseException {
+        return importIntoDatabaseRequestCreation(databaseId, importPreprocessedDataRequest, bufferSize);
+    }
+    /**
+     * Start import of structure and spectra files into the specified database.
+     * Start import of structure and spectra files into the specified database.
+     * <p><b>200</b> - Job of the import command to be executed.
+     * @param databaseId database to import into
+     * @param importPreprocessedDataRequest files to be imported
+     * @param bufferSize The bufferSize parameter
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return Job
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec importIntoDatabaseAsyncRequestCreation(String databaseId, ImportPreprocessedDataRequest importPreprocessedDataRequest, Integer bufferSize, List<JobOptField> optFields) throws WebClientResponseException {
+        Object postBody = importPreprocessedDataRequest;
+        // verify the required parameter 'databaseId' is set
+        if (databaseId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'databaseId' when calling importIntoDatabaseAsync", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'importPreprocessedDataRequest' is set
+        if (importPreprocessedDataRequest == null) {
+            throw new WebClientResponseException("Missing the required parameter 'importPreprocessedDataRequest' when calling importIntoDatabaseAsync", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("databaseId", databaseId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "bufferSize", bufferSize));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { 
+            "application/json"
+        };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return apiClient.invokeAPI("/api/databases/{databaseId}/import/from-files-async", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Start import of structure and spectra files into the specified database.
+     * Start import of structure and spectra files into the specified database.
+     * <p><b>200</b> - Job of the import command to be executed.
+     * @param databaseId database to import into
+     * @param importPreprocessedDataRequest files to be imported
+     * @param bufferSize The bufferSize parameter
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return Job
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public Job importIntoDatabaseAsync(String databaseId, ImportPreprocessedDataRequest importPreprocessedDataRequest, Integer bufferSize, List<JobOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return importIntoDatabaseAsyncRequestCreation(databaseId, importPreprocessedDataRequest, bufferSize, optFields).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Start import of structure and spectra files into the specified database.
+     * Start import of structure and spectra files into the specified database.
+     * <p><b>200</b> - Job of the import command to be executed.
+     * @param databaseId database to import into
+     * @param importPreprocessedDataRequest files to be imported
+     * @param bufferSize The bufferSize parameter
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return ResponseEntity&lt;Job&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Job> importIntoDatabaseAsyncWithHttpInfo(String databaseId, ImportPreprocessedDataRequest importPreprocessedDataRequest, Integer bufferSize, List<JobOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return importIntoDatabaseAsyncRequestCreation(databaseId, importPreprocessedDataRequest, bufferSize, optFields).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Start import of structure and spectra files into the specified database.
+     * Start import of structure and spectra files into the specified database.
+     * <p><b>200</b> - Job of the import command to be executed.
+     * @param databaseId database to import into
+     * @param importPreprocessedDataRequest files to be imported
+     * @param bufferSize The bufferSize parameter
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec importIntoDatabaseAsyncWithResponseSpec(String databaseId, ImportPreprocessedDataRequest importPreprocessedDataRequest, Integer bufferSize, List<JobOptField> optFields) throws WebClientResponseException {
+        return importIntoDatabaseAsyncRequestCreation(databaseId, importPreprocessedDataRequest, bufferSize, optFields);
     }
     /**
      * 

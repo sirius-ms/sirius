@@ -20,11 +20,15 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
+import de.unijena.bioinf.ms.frontend.subtools.projectspace.ImportFromMemoryWorkflow;
+import de.unijena.bioinf.ms.middleware.model.MultipartInputResource;
+import de.unijena.bioinf.ms.middleware.model.compute.ImportMultipartFilesSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
+import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -32,23 +36,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/api/projects")
 @Tag(name = "Projects", description = "Manage SIRIUS projects.")
 @Slf4j
 public class ProjectController {
-    private final ComputeService computeContext;
+    private final ComputeService computeService;
     private final ProjectsProvider projectsProvider;
 
     @Autowired
-    public ProjectController(ComputeService<?> context, ProjectsProvider<?> projectsProvider) {
-        this.computeContext = context;
+    public ProjectController(ComputeService<?> computeService, ProjectsProvider<?> projectsProvider) {
+        this.computeService = computeService;
         this.projectsProvider = projectsProvider;
     }
 
@@ -110,9 +117,92 @@ public class ProjectController {
         Project ps = (Project) projectsProvider.getProject(projectId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT,
                         "Project space with identifier '" + projectId + "' not found!"));
-        computeContext.deleteJobs(ps, true, true, true, EnumSet.noneOf(Job.OptField.class));
+        computeService.deleteJobs(ps, true, true, true, EnumSet.noneOf(Job.OptField.class));
         //todo check if we can make wait for deletion aync
         projectsProvider.closeProjectSpace(projectId);
+    }
+
+    /**
+     * Import and Align full MS-Runs from various formats into the specified project as background job.
+     * Possible formats (mzML, mzXML)
+     *
+     * @param projectId project-space to import into.
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
+     * @return the import job.
+     */
+    @PostMapping(value = "/{projectId}/jobs/import/ms-data-files-async", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Job importMsRunDataAsync(@PathVariable String projectId,
+                                    @RequestBody MultipartFile[] imputFiles,
+                                    @RequestParam(defaultValue = "true") boolean alignRuns,
+                                    @RequestParam(defaultValue = "true") boolean allowMs1Only,
+                                    @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
+    ) {
+        //TODO nightsky: implement
+        throw new UnsupportedOperationException("LCMS import not implemented");
+    }
+
+    /**
+     * Import and Align full MS-Runs from various formats into the specified project
+     * Possible formats (mzML, mzXML)
+     *
+     * @param projectId  project-space to import into.
+     * @param inputFiles files to import into project
+     */
+    @PostMapping(value = "/{projectId}/import/ms-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public void importMsRunData(@PathVariable String projectId,
+                                @RequestBody MultipartFile[] inputFiles,
+                                @RequestParam(defaultValue = "true") boolean alignRuns,
+                                @RequestParam(defaultValue = "true") boolean allowMs1Only
+    ) {
+       //TODO nightsky: implement
+       throw new UnsupportedOperationException("LCMS import not implemented");
+    }
+
+
+    /**
+     * Import ms/ms data from the given format into the specified project-space as background job.
+     * Possible formats (ms, mgf, cef, msp)
+     *
+     * @param projectId project-space to import into.
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
+     * @return the import job.
+     */
+    @PostMapping(value = "/{projectId}/import/preprocessed-data-files-async", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Job importPreprocessedDataAsync(@PathVariable String projectId,
+                                           @RequestBody MultipartFile[] imputFiles,
+                                           @RequestParam(defaultValue = "false") boolean ignoreFormulas,
+                                           @RequestParam(defaultValue = "true") boolean allowMs1Only,
+                                           @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
+    ) {
+
+        Project p = projectsProvider.getProjectOrThrow(projectId);
+        ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
+        sub.setInputFiles(Arrays.stream(imputFiles).collect(Collectors.toList()));
+        sub.setIgnoreFormulas(ignoreFormulas);
+        sub.setAllowMs1OnlyData(allowMs1Only);
+        return computeService.createAndSubmitPeakListImportJob(p, sub, optFields);
+    }
+
+    /**
+     * Import already preprocessed ms/ms data from various formats into the specified project
+     * Possible formats (ms, mgf, cef, msp)
+     *
+     * @param projectId  project-space to import into.
+     * @param inputFiles files to import into project
+     */
+    @PostMapping(value = "/{projectId}/import/preprocessed-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public void importPreprocessedData(@PathVariable String projectId,
+                                       @RequestBody MultipartFile[] inputFiles,
+                                       @RequestParam(defaultValue = "false") boolean ignoreFormulas,
+                                       @RequestParam(defaultValue = "true") boolean allowMs1Only
+    ) {
+        //todo wrap by some service to be independent from project implementation
+        Project p = projectsProvider.getProjectOrThrow(projectId);
+
+        new ImportFromMemoryWorkflow(((SiriusProjectSpaceImpl) p).getProjectSpaceManager(),
+                Arrays.stream(inputFiles).map(MultipartInputResource::new).collect(Collectors.toList()),
+                ignoreFormulas, allowMs1Only)
+                .run();
     }
 
     /**

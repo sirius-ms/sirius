@@ -3,9 +3,6 @@ package de.unijena.bioinf.ms.nightsky.sdk.api;
 import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
 
 import de.unijena.bioinf.ms.nightsky.sdk.model.CommandSubmission;
-import de.unijena.bioinf.ms.nightsky.sdk.model.DatabaseImportSubmission;
-import de.unijena.bioinf.ms.nightsky.sdk.model.ImportLocalFilesSubmission;
-import de.unijena.bioinf.ms.nightsky.sdk.model.ImportStringSubmission;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobSubmission;
@@ -948,13 +945,15 @@ public class JobsApi {
     /**
      * Start computation for given command and input.
      * Start computation for given command and input.
-     * <p><b>200</b> - Job of the command to be executed.
+     * <p><b>200</b> - Job of the command to be executed.   DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * @param projectId project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     * @deprecated
      */
+    @Deprecated
     private ResponseSpec startCommandRequestCreation(String projectId, CommandSubmission commandSubmission, List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = commandSubmission;
         // verify the required parameter 'projectId' is set
@@ -995,7 +994,7 @@ public class JobsApi {
     /**
      * Start computation for given command and input.
      * Start computation for given command and input.
-     * <p><b>200</b> - Job of the command to be executed.
+     * <p><b>200</b> - Job of the command to be executed.   DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * @param projectId project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -1010,7 +1009,7 @@ public class JobsApi {
     /**
      * Start computation for given command and input.
      * Start computation for given command and input.
-     * <p><b>200</b> - Job of the command to be executed.
+     * <p><b>200</b> - Job of the command to be executed.   DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * @param projectId project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -1025,7 +1024,7 @@ public class JobsApi {
     /**
      * Start computation for given command and input.
      * Start computation for given command and input.
-     * <p><b>200</b> - Job of the command to be executed.
+     * <p><b>200</b> - Job of the command to be executed.   DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
      * @param projectId project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
@@ -1034,276 +1033,6 @@ public class JobsApi {
      */
     public ResponseSpec startCommandWithResponseSpec(String projectId, CommandSubmission commandSubmission, List<JobOptField> optFields) throws WebClientResponseException {
         return startCommandRequestCreation(projectId, commandSubmission, optFields);
-    }
-    /**
-     * Start import of structure and spectra files into the specified database.
-     * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Job of the import command to be executed.
-     * @param projectId project-space to perform the command for.
-     * @param databaseImportSubmission the command and the input to be executed
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return Job
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    private ResponseSpec startDatabaseImportRequestCreation(String projectId, DatabaseImportSubmission databaseImportSubmission, List<JobOptField> optFields) throws WebClientResponseException {
-        Object postBody = databaseImportSubmission;
-        // verify the required parameter 'projectId' is set
-        if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling startDatabaseImport", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'databaseImportSubmission' is set
-        if (databaseImportSubmission == null) {
-            throw new WebClientResponseException("Missing the required parameter 'databaseImportSubmission' when calling startDatabaseImport", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // create path and map variables
-        final Map<String, Object> pathParams = new HashMap<String, Object>();
-
-        pathParams.put("projectId", projectId);
-
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
-        final HttpHeaders headerParams = new HttpHeaders();
-        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
-        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
-
-        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
-        final String[] localVarAccepts = { 
-            "application/json"
-        };
-        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { 
-            "application/json"
-        };
-        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
-
-        String[] localVarAuthNames = new String[] {  };
-
-        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return apiClient.invokeAPI("/api/{projectId}/jobs/import-db", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
-    }
-
-    /**
-     * Start import of structure and spectra files into the specified database.
-     * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Job of the import command to be executed.
-     * @param projectId project-space to perform the command for.
-     * @param databaseImportSubmission the command and the input to be executed
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return Job
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public Job startDatabaseImport(String projectId, DatabaseImportSubmission databaseImportSubmission, List<JobOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return startDatabaseImportRequestCreation(projectId, databaseImportSubmission, optFields).bodyToMono(localVarReturnType).block();
-    }
-
-    /**
-     * Start import of structure and spectra files into the specified database.
-     * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Job of the import command to be executed.
-     * @param projectId project-space to perform the command for.
-     * @param databaseImportSubmission the command and the input to be executed
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return ResponseEntity&lt;Job&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseEntity<Job> startDatabaseImportWithHttpInfo(String projectId, DatabaseImportSubmission databaseImportSubmission, List<JobOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return startDatabaseImportRequestCreation(projectId, databaseImportSubmission, optFields).toEntity(localVarReturnType).block();
-    }
-
-    /**
-     * Start import of structure and spectra files into the specified database.
-     * Start import of structure and spectra files into the specified database.
-     * <p><b>200</b> - Job of the import command to be executed.
-     * @param projectId project-space to perform the command for.
-     * @param databaseImportSubmission the command and the input to be executed
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return ResponseSpec
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseSpec startDatabaseImportWithResponseSpec(String projectId, DatabaseImportSubmission databaseImportSubmission, List<JobOptField> optFields) throws WebClientResponseException {
-        return startDatabaseImportRequestCreation(projectId, databaseImportSubmission, optFields);
-    }
-    /**
-     * Import ms/ms data in given format from local filesystem into the specified project
-     * Import ms/ms data in given format from local filesystem into the specified project.  The import will run in a background job  Possible formats (ms, mgf, cef, msp, mzML, mzXML, project-space)  &lt;p&gt;
-     * <p><b>200</b> - JobId of background job that imports given run/compounds/features.
-     * @param projectId project-space to import into.
-     * @param importLocalFilesSubmission configuration of the job that will be submitted
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return Job
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    private ResponseSpec startImportFromPathJobRequestCreation(String projectId, ImportLocalFilesSubmission importLocalFilesSubmission, List<JobOptField> optFields) throws WebClientResponseException {
-        Object postBody = importLocalFilesSubmission;
-        // verify the required parameter 'projectId' is set
-        if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling startImportFromPathJob", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'importLocalFilesSubmission' is set
-        if (importLocalFilesSubmission == null) {
-            throw new WebClientResponseException("Missing the required parameter 'importLocalFilesSubmission' when calling startImportFromPathJob", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // create path and map variables
-        final Map<String, Object> pathParams = new HashMap<String, Object>();
-
-        pathParams.put("projectId", projectId);
-
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
-        final HttpHeaders headerParams = new HttpHeaders();
-        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
-        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
-
-        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
-        final String[] localVarAccepts = { 
-            "application/json"
-        };
-        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { 
-            "application/json"
-        };
-        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
-
-        String[] localVarAuthNames = new String[] {  };
-
-        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return apiClient.invokeAPI("/api/{projectId}/jobs/import-from-local-path", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
-    }
-
-    /**
-     * Import ms/ms data in given format from local filesystem into the specified project
-     * Import ms/ms data in given format from local filesystem into the specified project.  The import will run in a background job  Possible formats (ms, mgf, cef, msp, mzML, mzXML, project-space)  &lt;p&gt;
-     * <p><b>200</b> - JobId of background job that imports given run/compounds/features.
-     * @param projectId project-space to import into.
-     * @param importLocalFilesSubmission configuration of the job that will be submitted
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return Job
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public Job startImportFromPathJob(String projectId, ImportLocalFilesSubmission importLocalFilesSubmission, List<JobOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return startImportFromPathJobRequestCreation(projectId, importLocalFilesSubmission, optFields).bodyToMono(localVarReturnType).block();
-    }
-
-    /**
-     * Import ms/ms data in given format from local filesystem into the specified project
-     * Import ms/ms data in given format from local filesystem into the specified project.  The import will run in a background job  Possible formats (ms, mgf, cef, msp, mzML, mzXML, project-space)  &lt;p&gt;
-     * <p><b>200</b> - JobId of background job that imports given run/compounds/features.
-     * @param projectId project-space to import into.
-     * @param importLocalFilesSubmission configuration of the job that will be submitted
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return ResponseEntity&lt;Job&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseEntity<Job> startImportFromPathJobWithHttpInfo(String projectId, ImportLocalFilesSubmission importLocalFilesSubmission, List<JobOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return startImportFromPathJobRequestCreation(projectId, importLocalFilesSubmission, optFields).toEntity(localVarReturnType).block();
-    }
-
-    /**
-     * Import ms/ms data in given format from local filesystem into the specified project
-     * Import ms/ms data in given format from local filesystem into the specified project.  The import will run in a background job  Possible formats (ms, mgf, cef, msp, mzML, mzXML, project-space)  &lt;p&gt;
-     * <p><b>200</b> - JobId of background job that imports given run/compounds/features.
-     * @param projectId project-space to import into.
-     * @param importLocalFilesSubmission configuration of the job that will be submitted
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return ResponseSpec
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseSpec startImportFromPathJobWithResponseSpec(String projectId, ImportLocalFilesSubmission importLocalFilesSubmission, List<JobOptField> optFields) throws WebClientResponseException {
-        return startImportFromPathJobRequestCreation(projectId, importLocalFilesSubmission, optFields);
-    }
-    /**
-     * Import ms/ms data from the given format into the specified project-space  Possible formats (ms, mgf, cef, msp, mzML, mzXML)
-     * Import ms/ms data from the given format into the specified project-space  Possible formats (ms, mgf, cef, msp, mzML, mzXML)
-     * <p><b>200</b> - the import job.
-     * @param projectId project-space to import into.
-     * @param importStringSubmission configuration of the job that will be submitted
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return Job
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    private ResponseSpec startImportFromStringJobRequestCreation(String projectId, ImportStringSubmission importStringSubmission, List<JobOptField> optFields) throws WebClientResponseException {
-        Object postBody = importStringSubmission;
-        // verify the required parameter 'projectId' is set
-        if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling startImportFromStringJob", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'importStringSubmission' is set
-        if (importStringSubmission == null) {
-            throw new WebClientResponseException("Missing the required parameter 'importStringSubmission' when calling startImportFromStringJob", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // create path and map variables
-        final Map<String, Object> pathParams = new HashMap<String, Object>();
-
-        pathParams.put("projectId", projectId);
-
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
-        final HttpHeaders headerParams = new HttpHeaders();
-        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
-        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
-
-        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
-        final String[] localVarAccepts = { 
-            "application/json"
-        };
-        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { 
-            "application/json"
-        };
-        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
-
-        String[] localVarAuthNames = new String[] {  };
-
-        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return apiClient.invokeAPI("/api/{projectId}/jobs/import-from-string", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
-    }
-
-    /**
-     * Import ms/ms data from the given format into the specified project-space  Possible formats (ms, mgf, cef, msp, mzML, mzXML)
-     * Import ms/ms data from the given format into the specified project-space  Possible formats (ms, mgf, cef, msp, mzML, mzXML)
-     * <p><b>200</b> - the import job.
-     * @param projectId project-space to import into.
-     * @param importStringSubmission configuration of the job that will be submitted
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return Job
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public Job startImportFromStringJob(String projectId, ImportStringSubmission importStringSubmission, List<JobOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return startImportFromStringJobRequestCreation(projectId, importStringSubmission, optFields).bodyToMono(localVarReturnType).block();
-    }
-
-    /**
-     * Import ms/ms data from the given format into the specified project-space  Possible formats (ms, mgf, cef, msp, mzML, mzXML)
-     * Import ms/ms data from the given format into the specified project-space  Possible formats (ms, mgf, cef, msp, mzML, mzXML)
-     * <p><b>200</b> - the import job.
-     * @param projectId project-space to import into.
-     * @param importStringSubmission configuration of the job that will be submitted
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return ResponseEntity&lt;Job&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseEntity<Job> startImportFromStringJobWithHttpInfo(String projectId, ImportStringSubmission importStringSubmission, List<JobOptField> optFields) throws WebClientResponseException {
-        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return startImportFromStringJobRequestCreation(projectId, importStringSubmission, optFields).toEntity(localVarReturnType).block();
-    }
-
-    /**
-     * Import ms/ms data from the given format into the specified project-space  Possible formats (ms, mgf, cef, msp, mzML, mzXML)
-     * Import ms/ms data from the given format into the specified project-space  Possible formats (ms, mgf, cef, msp, mzML, mzXML)
-     * <p><b>200</b> - the import job.
-     * @param projectId project-space to import into.
-     * @param importStringSubmission configuration of the job that will be submitted
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @return ResponseSpec
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseSpec startImportFromStringJobWithResponseSpec(String projectId, ImportStringSubmission importStringSubmission, List<JobOptField> optFields) throws WebClientResponseException {
-        return startImportFromStringJobRequestCreation(projectId, importStringSubmission, optFields);
     }
     /**
      * Start computation for given compounds and with given parameters.

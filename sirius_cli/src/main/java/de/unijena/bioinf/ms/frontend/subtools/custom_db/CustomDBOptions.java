@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.MsExperimentParser;
+import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.chemdb.custom.*;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
@@ -213,8 +214,8 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 checkForInterruption();
 
                 dbjob = db.importToDatabaseJob(
-                        spectrumFiles.stream().map(Path::toFile).toList(),
-                        structureFiles.stream().map(Path::toFile).toList(),
+                        spectrumFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
+                        structureFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
                         inChI -> updateProgress(0, Math.max(lines.intValue(), count.incrementAndGet() + 1), count.get(), "Importing '" + inChI.key2D() + "'"),
                         ApplicationCore.WEB_API, mode.importParas.writeBuffer
                 );

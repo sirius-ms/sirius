@@ -10,6 +10,8 @@ All URIs are relative to *http://localhost:8080*
 | [**getDatabase**](SearchableDatabasesApi.md#getDatabase) | **GET** /api/databases/{databaseId} |  |
 | [**getDatabases**](SearchableDatabasesApi.md#getDatabases) | **GET** /api/databases |  |
 | [**getIncludedDatabases**](SearchableDatabasesApi.md#getIncludedDatabases) | **GET** /api/databases/included |  |
+| [**importIntoDatabase**](SearchableDatabasesApi.md#importIntoDatabase) | **POST** /api/databases/{databaseId}/import/from-files | Start import of structure and spectra files into the specified database. |
+| [**importIntoDatabaseAsync**](SearchableDatabasesApi.md#importIntoDatabaseAsync) | **POST** /api/databases/{databaseId}/import/from-files-async | Start import of structure and spectra files into the specified database. |
 | [**removeDatabase**](SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} |  |
 | [**updateDatabase**](SearchableDatabasesApi.md#updateDatabase) | **PUT** /api/databases/{databaseId} |  |
 
@@ -401,6 +403,148 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | OK |  -  |
+
+
+## importIntoDatabase
+
+> SearchableDatabase importIntoDatabase(databaseId, importPreprocessedDataRequest, bufferSize)
+
+Start import of structure and spectra files into the specified database.
+
+Start import of structure and spectra files into the specified database.
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.SearchableDatabasesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8080");
+
+        SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
+        String databaseId = "databaseId_example"; // String | database to import into
+        ImportPreprocessedDataRequest importPreprocessedDataRequest = new ImportPreprocessedDataRequest(); // ImportPreprocessedDataRequest | files to be imported
+        Integer bufferSize = 1000; // Integer | 
+        try {
+            SearchableDatabase result = apiInstance.importIntoDatabase(databaseId, importPreprocessedDataRequest, bufferSize);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling SearchableDatabasesApi#importIntoDatabase");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **databaseId** | **String**| database to import into | |
+| **importPreprocessedDataRequest** | [**ImportPreprocessedDataRequest**](ImportPreprocessedDataRequest.md)| files to be imported | |
+| **bufferSize** | **Integer**|  | [optional] [default to 1000] |
+
+### Return type
+
+[**SearchableDatabase**](SearchableDatabase.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Job of the import command to be executed. |  -  |
+
+
+## importIntoDatabaseAsync
+
+> Job importIntoDatabaseAsync(databaseId, importPreprocessedDataRequest, bufferSize, optFields)
+
+Start import of structure and spectra files into the specified database.
+
+Start import of structure and spectra files into the specified database.
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.SearchableDatabasesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8080");
+
+        SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
+        String databaseId = "databaseId_example"; // String | database to import into
+        ImportPreprocessedDataRequest importPreprocessedDataRequest = new ImportPreprocessedDataRequest(); // ImportPreprocessedDataRequest | files to be imported
+        Integer bufferSize = 1000; // Integer | 
+        List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
+        try {
+            Job result = apiInstance.importIntoDatabaseAsync(databaseId, importPreprocessedDataRequest, bufferSize, optFields);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling SearchableDatabasesApi#importIntoDatabaseAsync");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **databaseId** | **String**| database to import into | |
+| **importPreprocessedDataRequest** | [**ImportPreprocessedDataRequest**](ImportPreprocessedDataRequest.md)| files to be imported | |
+| **bufferSize** | **Integer**|  | [optional] [default to 1000] |
+| **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
+
+### Return type
+
+[**Job**](Job.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Job of the import command to be executed. |  -  |
 
 
 ## removeDatabase

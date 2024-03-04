@@ -4,7 +4,7 @@ All URIs are relative to *http://localhost:8080*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**closeProjectSpace**](ProjectsApi.md#closeProjectSpace) | **DELETE** /api/projects/{projectId} | Close project-space and remove it from application. |
+| [**closeProjectSpace**](ProjectsApi.md#closeProjectSpace) | **DELETE** /api/projects/{projectId} | Close project-space and remove it from application |
 | [**copyProjectSpace**](ProjectsApi.md#copyProjectSpace) | **PUT** /api/projects/{projectId}/copy | Move an existing (opened) project-space to another location. |
 | [**createProjectSpace**](ProjectsApi.md#createProjectSpace) | **POST** /api/projects/{projectId} | Create and open a new project-space at given location and make it accessible via the given projectId. |
 | [**getCanopusClassyFireData**](ProjectsApi.md#getCanopusClassyFireData) | **GET** /api/projects/{projectId}/cf-data | Get CANOPUS prediction vector definition for ClassyFire classes |
@@ -12,6 +12,10 @@ All URIs are relative to *http://localhost:8080*
 | [**getFingerIdData**](ProjectsApi.md#getFingerIdData) | **GET** /api/projects/{projectId}/fingerid-data | Get CSI:FingerID fingerprint (prediction vector) definition |
 | [**getProjectSpace**](ProjectsApi.md#getProjectSpace) | **GET** /api/projects/{projectId} | Get project space info by its projectId. |
 | [**getProjectSpaces**](ProjectsApi.md#getProjectSpaces) | **GET** /api/projects | List opened project spaces. |
+| [**importMsRunData**](ProjectsApi.md#importMsRunData) | **POST** /api/projects/{projectId}/import/ms-data-files | Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML) |
+| [**importMsRunDataAsync**](ProjectsApi.md#importMsRunDataAsync) | **POST** /api/projects/{projectId}/jobs/import/ms-data-files-async | Import and Align full MS-Runs from various formats into the specified project as background job. |
+| [**importPreprocessedData**](ProjectsApi.md#importPreprocessedData) | **POST** /api/projects/{projectId}/import/preprocessed-data-files | Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp) |
+| [**importPreprocessedDataAsync**](ProjectsApi.md#importPreprocessedDataAsync) | **POST** /api/projects/{projectId}/import/preprocessed-data-files-async | Import ms/ms data from the given format into the specified project-space as background job. |
 | [**openProjectSpace**](ProjectsApi.md#openProjectSpace) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId. |
 
 
@@ -20,9 +24,9 @@ All URIs are relative to *http://localhost:8080*
 
 > closeProjectSpace(projectId)
 
-Close project-space and remove it from application.
+Close project-space and remove it from application
 
-Close project-space and remove it from application. Project will NOT be deleted from disk.   ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
+Close project-space and remove it from application. Project will NOT be deleted from disk.  &lt;p&gt;  ATTENTION: This will cancel and remove all jobs running on this Project before closing it.  If there are many jobs, this might take some time.
 
 ### Example
 
@@ -150,12 +154,12 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | ProjectInfo of the newly created project if opened (copyProjectId !&#x3D; null) or the project info of  the source project otherwise |  -  |
+| **200** | ProjectInfo of the newly created project if opened (copyProjectId !&#x3D; null) or the project info of  the source project otherwise  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases. |  -  |
 
 
 ## createProjectSpace
 
-> ProjectInfo createProjectSpace(projectId, pathToProject, pathToSourceProject, awaitImport)
+> ProjectInfo createProjectSpace(projectId, pathToProject)
 
 Create and open a new project-space at given location and make it accessible via the given projectId.
 
@@ -178,11 +182,9 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-].
-        String pathToProject = "pathToProject_example"; // String | 
-        String pathToSourceProject = "pathToSourceProject_example"; // String | 
-        Boolean awaitImport = true; // Boolean | 
+        String pathToProject = "pathToProject_example"; // String | local file path where the project will be created. If NULL, project will be stored by its projectId in default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
         try {
-            ProjectInfo result = apiInstance.createProjectSpace(projectId, pathToProject, pathToSourceProject, awaitImport);
+            ProjectInfo result = apiInstance.createProjectSpace(projectId, pathToProject);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#createProjectSpace");
@@ -201,9 +203,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-]. | |
-| **pathToProject** | **String**|  | |
-| **pathToSourceProject** | **String**|  | [optional] |
-| **awaitImport** | **Boolean**|  | [optional] [default to true] |
+| **pathToProject** | **String**| local file path where the project will be created. If NULL, project will be stored by its projectId in default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases. | [optional] |
 
 ### Return type
 
@@ -553,6 +553,296 @@ No authorization required
 | **200** | OK |  -  |
 
 
+## importMsRunData
+
+> importMsRunData(projectId, alignRuns, allowMs1Only, inputFiles)
+
+Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
+
+Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.ProjectsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8080");
+
+        ProjectsApi apiInstance = new ProjectsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to import into.
+        Boolean alignRuns = true; // Boolean | 
+        Boolean allowMs1Only = true; // Boolean | 
+        List<File> inputFiles = Arrays.asList(); // List<File> | 
+        try {
+            apiInstance.importMsRunData(projectId, alignRuns, allowMs1Only, inputFiles);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling ProjectsApi#importMsRunData");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to import into. | |
+| **alignRuns** | **Boolean**|  | [optional] [default to true] |
+| **allowMs1Only** | **Boolean**|  | [optional] [default to true] |
+| **inputFiles** | **List&lt;File&gt;**|  | [optional] |
+
+### Return type
+
+null (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: multipart/form-data
+- **Accept**: Not defined
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+
+
+## importMsRunDataAsync
+
+> Job importMsRunDataAsync(projectId, alignRuns, allowMs1Only, optFields, imputFiles)
+
+Import and Align full MS-Runs from various formats into the specified project as background job.
+
+Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.ProjectsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8080");
+
+        ProjectsApi apiInstance = new ProjectsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to import into.
+        Boolean alignRuns = true; // Boolean | 
+        Boolean allowMs1Only = true; // Boolean | 
+        List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
+        List<File> imputFiles = Arrays.asList(); // List<File> | 
+        try {
+            Job result = apiInstance.importMsRunDataAsync(projectId, alignRuns, allowMs1Only, optFields, imputFiles);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling ProjectsApi#importMsRunDataAsync");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to import into. | |
+| **alignRuns** | **Boolean**|  | [optional] [default to true] |
+| **allowMs1Only** | **Boolean**|  | [optional] [default to true] |
+| **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
+| **imputFiles** | **List&lt;File&gt;**|  | [optional] |
+
+### Return type
+
+[**Job**](Job.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: multipart/form-data
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | the import job. |  -  |
+
+
+## importPreprocessedData
+
+> importPreprocessedData(projectId, ignoreFormulas, allowMs1Only, inputFiles)
+
+Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
+
+Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.ProjectsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8080");
+
+        ProjectsApi apiInstance = new ProjectsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to import into.
+        Boolean ignoreFormulas = false; // Boolean | 
+        Boolean allowMs1Only = true; // Boolean | 
+        List<File> inputFiles = Arrays.asList(); // List<File> | 
+        try {
+            apiInstance.importPreprocessedData(projectId, ignoreFormulas, allowMs1Only, inputFiles);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling ProjectsApi#importPreprocessedData");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to import into. | |
+| **ignoreFormulas** | **Boolean**|  | [optional] [default to false] |
+| **allowMs1Only** | **Boolean**|  | [optional] [default to true] |
+| **inputFiles** | **List&lt;File&gt;**|  | [optional] |
+
+### Return type
+
+null (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: multipart/form-data
+- **Accept**: Not defined
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+
+
+## importPreprocessedDataAsync
+
+> Job importPreprocessedDataAsync(projectId, ignoreFormulas, allowMs1Only, optFields, imputFiles)
+
+Import ms/ms data from the given format into the specified project-space as background job.
+
+Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.ProjectsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8080");
+
+        ProjectsApi apiInstance = new ProjectsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to import into.
+        Boolean ignoreFormulas = false; // Boolean | 
+        Boolean allowMs1Only = true; // Boolean | 
+        List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
+        List<File> imputFiles = Arrays.asList(); // List<File> | 
+        try {
+            Job result = apiInstance.importPreprocessedDataAsync(projectId, ignoreFormulas, allowMs1Only, optFields, imputFiles);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling ProjectsApi#importPreprocessedDataAsync");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to import into. | |
+| **ignoreFormulas** | **Boolean**|  | [optional] [default to false] |
+| **allowMs1Only** | **Boolean**|  | [optional] [default to true] |
+| **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
+| **imputFiles** | **List&lt;File&gt;**|  | [optional] |
+
+### Return type
+
+[**Job**](Job.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: multipart/form-data
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | the import job. |  -  |
+
+
 ## openProjectSpace
 
 > ProjectInfo openProjectSpace(projectId, pathToProject, optFields)
@@ -578,7 +868,7 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | unique name/identifier that shall be used to access the opened project-space. Must consist only of [a-zA-Z0-9_-].
-        String pathToProject = "pathToProject_example"; // String | 
+        String pathToProject = "pathToProject_example"; // String | local file path to open the project from. If NULL, project will be loaded by it projectId from default project location.  DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
         List<ProjectInfoOptField> optFields = Arrays.asList(); // List<ProjectInfoOptField> | 
         try {
             ProjectInfo result = apiInstance.openProjectSpace(projectId, pathToProject, optFields);
@@ -600,7 +890,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| unique name/identifier that shall be used to access the opened project-space. Must consist only of [a-zA-Z0-9_-]. | |
-| **pathToProject** | **String**|  | |
+| **pathToProject** | **String**| local file path to open the project from. If NULL, project will be loaded by it projectId from default project location.  DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases. | [optional] |
 | **optFields** | [**List&lt;ProjectInfoOptField&gt;**](ProjectInfoOptField.md)|  | [optional] |
 
 ### Return type
