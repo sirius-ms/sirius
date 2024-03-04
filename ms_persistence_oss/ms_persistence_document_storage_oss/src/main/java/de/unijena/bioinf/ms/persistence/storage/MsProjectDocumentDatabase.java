@@ -34,11 +34,12 @@ import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.storage.db.nosql.*;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
@@ -50,28 +51,27 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
 
     static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
         MetadataUtils.addFasUtilCollectionSupport(sourceMetadata);
-        // TODO check all classes for optionals and indexes
         return sourceMetadata
                 .addRepository(Tag.class, new Index("name", IndexType.UNIQUE))
 
                 .addRepository(Run.class,
-                        new Index("name", IndexType.UNIQUE),
+                        new Index("name", IndexType.NON_UNIQUE),
                         new Index("runType", IndexType.NON_UNIQUE))
 
-                .addRepository(MergedRun.class)
+                .addRepository(MergedRun.class,
+                        new Index("name", IndexType.NON_UNIQUE),
+                        new Index("runType", IndexType.NON_UNIQUE))
 
                 .addRepository(Scan.class,
                         new Index("runId", IndexType.NON_UNIQUE),
                         new Index("scanTime", IndexType.NON_UNIQUE))
-//                .setOptionalFields(Scan.class, "peaks") //todo needed as optional?
+                .setOptionalFields(Scan.class, "peaks")
 
                 .addRepository(MSMSScan.class,
                         new Index("runId", IndexType.NON_UNIQUE),
                         new Index("scanTime", IndexType.NON_UNIQUE),
-//                        new Index("collisionEnergy.minEnergySource", IndexType.NON_UNIQUE), //todo needed?
-//                        new Index("collisionEnergy.maxEnergySource", IndexType.NON_UNIQUE), //todo needed?
                         new Index("precursorScanId", IndexType.NON_UNIQUE))
-//                .setOptionalFields(MSMSScan.class, "peaks")  //todo needed as optional?
+                .setOptionalFields(MSMSScan.class, "peaks")
 
                 .addRepository(MergedTrace.class)
 
@@ -79,18 +79,24 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
 
                 .addRepository(Feature.class,
                         new Index("alignedFeatureId", IndexType.NON_UNIQUE),
-                        new Index("blank", IndexType.NON_UNIQUE))
-                .setOptionalFields(Feature.class, "traceRefs")
+                        new Index("averageMass", IndexType.NON_UNIQUE),
+                        new Index("apexMass", IndexType.NON_UNIQUE),
+                        new Index("retentionTime.start", IndexType.NON_UNIQUE),
+                        new Index("retentionTime.end", IndexType.NON_UNIQUE))
 
                 .addRepository(AlignedFeatures.class,
                         new Index("compoundId", IndexType.NON_UNIQUE),
-                        new Index("mergedIonMass", IndexType.NON_UNIQUE)) //todo really needed?
-//                        new Index("mergedRT.start", IndexType.NON_UNIQUE), //todo really needed?
-//                        new Index("mergedRT.end", IndexType.NON_UNIQUE))  //todo really needed?
-                .setOptionalFields(AlignedFeatures.class, "traceRefs")
-//                .setOptionalFields(AlignedFeatures.class, "topAnnotation", "manualAnnotation")
+                        new Index("averageMass", IndexType.NON_UNIQUE),
+                        new Index("apexMass", IndexType.NON_UNIQUE),
+                        new Index("retentionTime.start", IndexType.NON_UNIQUE),
+                        new Index("retentionTime.end", IndexType.NON_UNIQUE))
 
-                .addRepository(AlignedIsotopicFeatures.class)
+                .addRepository(AlignedIsotopicFeatures.class,
+                        new Index("alignedFeatureId", IndexType.NON_UNIQUE),
+                        new Index("averageMass", IndexType.NON_UNIQUE),
+                        new Index("apexMass", IndexType.NON_UNIQUE),
+                        new Index("retentionTime.start", IndexType.NON_UNIQUE),
+                        new Index("retentionTime.end", IndexType.NON_UNIQUE))
 
                 .addRepository(CorrelatedIonPair.class,
                         new Index("alignedFeatureId1", IndexType.NON_UNIQUE),
@@ -98,12 +104,13 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                         new Index("type", IndexType.NON_UNIQUE))
 
                 .addRepository(Compound.class,
-                        new Index("neutralMass", IndexType.NON_UNIQUE)); //todo really needed?
-//                        new Index("mergedRT.start", IndexType.NON_UNIQUE), //todo really needed?
-//                        new Index("mergedRT.end", IndexType.NON_UNIQUE))  //todo really needed?
+                        new Index("name", IndexType.NON_UNIQUE),
+                        new Index("neutralMass", IndexType.NON_UNIQUE),
+                        new Index("rt.start", IndexType.NON_UNIQUE),
+                        new Index("rt.end", IndexType.NON_UNIQUE));
     }
 
-    // TODO check all fetches and imports!
+    // TODO re-do all fetches!
 
     default Stream<Compound> getAllCompounds() throws IOException {
         return getStorage().findAllStr(Compound.class);
@@ -165,49 +172,82 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
     }
 
     default void importCompounds(List<Compound> compounds) throws IOException {
-        for (Compound c : compounds) {
-            if (c.getCorrelatedIonPairs().isPresent()){
-                getStorage().insertAll(c.getCorrelatedIonPairs().get());
-                c.getCorrelatedIonPairs()
-                        .map(l -> l.stream().map(CorrelatedIonPair::getIonPairId))
-                        .map(s -> s.collect(Collectors.toCollection(LongArrayList::new)))
-                        .ifPresent(c::setCorrelatedIonPairIds);
-            }
-        }
-
         getStorage().insertAll(compounds);
 
-        List<AlignedFeatures> features = compounds.stream()
-                .peek(c -> c.getAdductFeatures().ifPresent(fs -> fs.forEach(f -> f.setCompoundId(c.getCompoundId()))))
-                .flatMap(f -> f.getAdductFeatures().stream().flatMap(List::stream)).toList();
-        importAlignedFeatures(features);
+        for (Compound c : compounds) {
+            c.setAdductFeatureIds(importOptionals(c.getAdductFeatures(), c.getCompoundId(), this::importAlignedFeatures));
+            c.setCorrelatedIonPairIds(importOptionals(c.getCorrelatedIonPairs(), c.getCompoundId(), this::importCorrelatedIonPairs));
+        }
+
+        getStorage().upsertAll(compounds);
     }
 
-    default void importAlignedFeatures(List<AlignedFeatures> featureAlignments) throws IOException {
-        // FIXME
-//        getStorage().insertAll(featureAlignments);
-//        List<Feature> features = featureAlignments.stream()
-//                .peek(fa -> fa.getFeatures().ifPresent(fs -> fs.forEach(f -> f.setAlignedFeatureId(fa.getAlignedFeatureId()))))
-//                .flatMap(f -> f.getFeatures().stream().flatMap(List::stream)).toList();
-//        importFeatures(features);
+    default LongList importCorrelatedIonPairs(List<CorrelatedIonPair> ionPairs, long parentId) throws IOException {
+        List<CorrelatedIonPair> pairs = ionPairs.stream().filter(pair -> pair.getAlignedFeatures1().isPresent() && pair.getAlignedFeatures2().isPresent()).peek(pair -> {
+            pair.setCompoundId(parentId);
+            pair.setAlignedFeatureId1(pair.getAlignedFeatures1().get().getAlignedFeatureId());
+            pair.setAlignedFeatureId2(pair.getAlignedFeatures2().get().getAlignedFeatureId());
+        }).toList();
+        getStorage().insertAll(pairs);
+        return LongArrayList.toListWithExpectedSize(pairs.stream().mapToLong(CorrelatedIonPair::getIonPairId), pairs.size());
     }
 
-//    default void importFeatures(List<Feature> features) throws IOException {
-//        for (Feature f : features) {
-//            if (f.getApexScan().isPresent()){
-//                getStorage().insert(f.getApexScan().get());
-//                f.getApexScan().map(Scan::getScanId).ifPresent(f::setApexScanId);
-//            }
-//        }
-//
-//        getStorage().insertAll(features);
-//
-//        List<MSMSScan> msmsToAdd = features.stream()
-//                .peek(f -> f.getMsms().ifPresent(msms -> msms.forEach(scan -> scan.setFeatureId(f.getFeatureId()))))
-//                .flatMap(f -> f.getMsms().stream().flatMap(List::stream)).toList();
-//
-//        getStorage().insertAll(msmsToAdd);
-//    }
+    default LongList importAlignedFeatures(List<AlignedFeatures> featureAlignments, long parentId) throws IOException {
+        for (AlignedFeatures f : featureAlignments) {
+            f.setCompoundId(parentId);
+        }
+        return importAlignedFeatures(featureAlignments);
+    }
+
+    default LongList importAlignedFeatures(List<AlignedFeatures> featureAlignments) throws IOException {
+        getStorage().insertAll(featureAlignments);
+
+        for (AlignedFeatures f : featureAlignments) {
+            f.setIsotopicFeaturesIds(importOptionals(f.getIsotopicFeatures(), f.getAlignedFeatureId(), this::importAlignedIsotopicFeatures));
+            f.setFeatureIds(importOptionals(f.getFeatures(), f.getAlignedFeatureId(), this::importFeatures));
+        }
+
+        getStorage().upsertAll(featureAlignments);
+        return LongArrayList.toListWithExpectedSize(featureAlignments.stream().mapToLong(AlignedFeatures::getAlignedFeatureId), featureAlignments.size());
+    }
+
+    default LongList importAlignedIsotopicFeatures(List<AlignedIsotopicFeatures> isotopicFeatureAlignments, long parentId) throws IOException {
+        for (AlignedIsotopicFeatures f : isotopicFeatureAlignments) {
+            f.setAlignedFeatureId(parentId);
+        }
+        getStorage().insertAll(isotopicFeatureAlignments);
+
+        for (AlignedIsotopicFeatures f : isotopicFeatureAlignments) {
+            f.setFeatureIds(importOptionals(f.getFeatures(), f.getAlignedIsotopeFeatureId(), this::importFeatures));
+        }
+
+        getStorage().upsertAll(isotopicFeatureAlignments);
+        return LongArrayList.toListWithExpectedSize(isotopicFeatureAlignments.stream().mapToLong(AlignedIsotopicFeatures::getAlignedIsotopeFeatureId), isotopicFeatureAlignments.size());
+    }
+
+    default LongList importFeatures(List<Feature> features, long parentId) throws IOException {
+        for (Feature f : features) {
+            f.setAlignedFeatureId(parentId);
+        }
+
+        getStorage().insertAll(features);
+        return LongArrayList.toListWithExpectedSize(features.stream().mapToLong(Feature::getFeatureId), features.size());
+    }
+
+    private <T> LongList importOptionals(Optional<List<T>> optionals, long parentId, IOThrowingBiFunction<List<T>, Long, LongList> importer) throws IOException {
+        if (optionals.isPresent()) {
+            return importer.apply(optionals.get(), parentId);
+        } else {
+            return LongList.of();
+        }
+    }
+
+    @FunctionalInterface
+    interface IOThrowingBiFunction<T, U, R> {
+
+        R apply(T object1, U object2) throws IOException;
+
+    }
 
     Storage getStorage();
 }
