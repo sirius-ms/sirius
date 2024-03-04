@@ -23,11 +23,6 @@ import java.util.stream.Collectors;
 
 public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
 
-    // TODO intensity normalization
-    // FIXME mz in aligned features
-    // TODO remove OldFeature
-    // TODO adapt AligentCefCompoundPArser
-
     @Override
     public Iterator<AlignedFeatures> extractFeatures(ProcessedSample mergedSample, MergedTrace mergedTrace, Ms2MergeStrategy ms2MergeStrategy, IsotopePatternExtractionStrategy isotopePatternExtractionStrategy, Int2LongMap trace2trace, Int2ObjectMap<ProcessedSample> idx2sample) {
         ProcessedSample[] samplesInTrace = new ProcessedSample[mergedTrace.getSampleIds().size()];
