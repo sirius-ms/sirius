@@ -69,11 +69,10 @@ public enum DataSource {
 /*"https://www.lipidmaps.org/rest/compound/abbrev/%s/all/txt"*/ //todo which is the correect query?
 
 
-    //todo the following flags are burned until we update our PSQL and blob database:  8192, 8589934592L, 17179869184L, 34359738368L. 128, 32768 and 524288 are free
-    //everything with flags greater equal to 2**33 may be databases of artificial structures and have to be added separately to bio
-//    KEGGMINE("KEGG MINE", 8589934592L, null,null, null, 8589934592L | 256L, true, new Publication("Jeffryes JG et al., MINEs: Open access databases of computationally predicted enzyme promiscuity products for untargeted metabolomics. J Cheminf. 2015", "10.1186/s13321-015-0087-1")),
-//    ECOCYCMINE("EcoCyc MINE", 17179869184L, null,null, null, 17179869184L | 2048L, true, new Publication("Jeffryes JG et al., MINEs: Open access databases of computationally predicted enzyme promiscuity products for untargeted metabolomics. J Cheminf. 2015", "10.1186/s13321-015-0087-1")),
-//    YMDBMINE("YMDB MINE", 34359738368L, null,null, null, 34359738368L | 65536L, true, new Publication("Jeffryes JG et al., MINEs: Open access databases of computationally predicted enzyme promiscuity products for untargeted metabolomics. J Cheminf. 2015", "10.1186/s13321-015-0087-1")),
+    //todo the following flags are burned until we update our PSQL and blob database:  8192, 8589934592L, 17179869184L, 34359738368L.
+    // 128, 32768 and 524288 are free again
+
+    //everything with flags greater equal to 2**33 have to be added separately to bio dataSource flag
 
     MASSBANK("MassBank", 68719476736L, null, null, "https://massbank.eu/MassBank/RecordDisplay?id=%s", null),
     //////////////////////////////////////////
@@ -151,14 +150,13 @@ public enum DataSource {
         return Arrays.stream(DataSource.values()).filter(it -> it != ALL && !it.mines).toArray(DataSource[]::new);
     }
 
-    //todo what about LIPID? Is this a search DB?
     private final static DataSource[] BioDatabases = new DataSource[] {MESH, HMDB, KNAPSACK,CHEBI,KEGG,HSDB,MACONDA,METACYC,GNPS,TRAIN,YMDB,PLANTCYC,NORMAN,SUPERNATURAL,COCONUT,BloodExposome,TeroMol,PUBCHEMANNOTATIONBIO,PUBCHEMANNOTATIONDRUG,PUBCHEMANNOTATIONSAFETYANDTOXIC,PUBCHEMANNOTATIONFOOD,LOTUS,FooDB,MiMeDB,LIPIDMAPS,LIPID};
 
     // 4294401852
     private static long makeBIOFLAG() {
         long bioflag = 0L;
         for (int i = 2; i < 32; ++i) {
-            if (i==6 || i==7 || i==13 || i==15 || i==19) continue; //PubMed and unused flags not included in bio database flag
+            if (i==6 || i==7 || i==13 || i==15 || i==19) continue; //excluded PubMed and other flags not included in bio database flag
             bioflag |= (1L << i);
         }
         return bioflag;
