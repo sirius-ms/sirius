@@ -235,7 +235,6 @@ Class | Method | HTTP request | Description
  - [FragmentNode](docs/FragmentNode.md)
  - [FragmentationTree](docs/FragmentationTree.md)
  - [GuiInfo](docs/GuiInfo.md)
- - [ImportPreprocessedDataRequest](docs/ImportPreprocessedDataRequest.md)
  - [Info](docs/Info.md)
  - [Instrument](docs/Instrument.md)
  - [IsotopePatternAnnotation](docs/IsotopePatternAnnotation.md)

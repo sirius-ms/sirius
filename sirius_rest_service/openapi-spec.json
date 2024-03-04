@@ -1574,7 +1574,7 @@
         "requestBody": {
           "description": "files to be imported",
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "type": "object",
                 "properties": {
@@ -1652,7 +1652,7 @@
         "requestBody": {
           "description": "files to be imported",
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "type": "object",
                 "properties": {

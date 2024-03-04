@@ -2,7 +2,7 @@ package de.unijena.bioinf.ms.nightsky.sdk.api;
 
 import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
 
-import de.unijena.bioinf.ms.nightsky.sdk.model.ImportPreprocessedDataRequest;
+import java.io.File;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
@@ -499,20 +499,16 @@ public class SearchableDatabasesApi {
      * Start import of structure and spectra files into the specified database.
      * <p><b>200</b> - Job of the import command to be executed.
      * @param databaseId database to import into
-     * @param importPreprocessedDataRequest files to be imported
      * @param bufferSize The bufferSize parameter
+     * @param inputFiles The inputFiles parameter
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec importIntoDatabaseRequestCreation(String databaseId, ImportPreprocessedDataRequest importPreprocessedDataRequest, Integer bufferSize) throws WebClientResponseException {
-        Object postBody = importPreprocessedDataRequest;
+    private ResponseSpec importIntoDatabaseRequestCreation(String databaseId, Integer bufferSize, List<File> inputFiles) throws WebClientResponseException {
+        Object postBody = null;
         // verify the required parameter 'databaseId' is set
         if (databaseId == null) {
             throw new WebClientResponseException("Missing the required parameter 'databaseId' when calling importIntoDatabase", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'importPreprocessedDataRequest' is set
-        if (importPreprocessedDataRequest == null) {
-            throw new WebClientResponseException("Missing the required parameter 'importPreprocessedDataRequest' when calling importIntoDatabase", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -526,12 +522,15 @@ public class SearchableDatabasesApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "bufferSize", bufferSize));
 
+        if (inputFiles != null)
+            formParams.addAll("inputFiles", inputFiles.stream().map(FileSystemResource::new).collect(Collectors.toList()));
+
         final String[] localVarAccepts = { 
             "application/json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
-            "application/json"
+            "multipart/form-data"
         };
         final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
 
@@ -546,14 +545,14 @@ public class SearchableDatabasesApi {
      * Start import of structure and spectra files into the specified database.
      * <p><b>200</b> - Job of the import command to be executed.
      * @param databaseId database to import into
-     * @param importPreprocessedDataRequest files to be imported
      * @param bufferSize The bufferSize parameter
+     * @param inputFiles The inputFiles parameter
      * @return SearchableDatabase
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public SearchableDatabase importIntoDatabase(String databaseId, ImportPreprocessedDataRequest importPreprocessedDataRequest, Integer bufferSize) throws WebClientResponseException {
+    public SearchableDatabase importIntoDatabase(String databaseId, Integer bufferSize, List<File> inputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
-        return importIntoDatabaseRequestCreation(databaseId, importPreprocessedDataRequest, bufferSize).bodyToMono(localVarReturnType).block();
+        return importIntoDatabaseRequestCreation(databaseId, bufferSize, inputFiles).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -561,14 +560,14 @@ public class SearchableDatabasesApi {
      * Start import of structure and spectra files into the specified database.
      * <p><b>200</b> - Job of the import command to be executed.
      * @param databaseId database to import into
-     * @param importPreprocessedDataRequest files to be imported
      * @param bufferSize The bufferSize parameter
+     * @param inputFiles The inputFiles parameter
      * @return ResponseEntity&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<SearchableDatabase> importIntoDatabaseWithHttpInfo(String databaseId, ImportPreprocessedDataRequest importPreprocessedDataRequest, Integer bufferSize) throws WebClientResponseException {
+    public ResponseEntity<SearchableDatabase> importIntoDatabaseWithHttpInfo(String databaseId, Integer bufferSize, List<File> inputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
-        return importIntoDatabaseRequestCreation(databaseId, importPreprocessedDataRequest, bufferSize).toEntity(localVarReturnType).block();
+        return importIntoDatabaseRequestCreation(databaseId, bufferSize, inputFiles).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -576,34 +575,30 @@ public class SearchableDatabasesApi {
      * Start import of structure and spectra files into the specified database.
      * <p><b>200</b> - Job of the import command to be executed.
      * @param databaseId database to import into
-     * @param importPreprocessedDataRequest files to be imported
      * @param bufferSize The bufferSize parameter
+     * @param inputFiles The inputFiles parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importIntoDatabaseWithResponseSpec(String databaseId, ImportPreprocessedDataRequest importPreprocessedDataRequest, Integer bufferSize) throws WebClientResponseException {
-        return importIntoDatabaseRequestCreation(databaseId, importPreprocessedDataRequest, bufferSize);
+    public ResponseSpec importIntoDatabaseWithResponseSpec(String databaseId, Integer bufferSize, List<File> inputFiles) throws WebClientResponseException {
+        return importIntoDatabaseRequestCreation(databaseId, bufferSize, inputFiles);
     }
     /**
      * Start import of structure and spectra files into the specified database.
      * Start import of structure and spectra files into the specified database.
      * <p><b>200</b> - Job of the import command to be executed.
      * @param databaseId database to import into
-     * @param importPreprocessedDataRequest files to be imported
      * @param bufferSize The bufferSize parameter
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @param inputFiles The inputFiles parameter
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec importIntoDatabaseAsyncRequestCreation(String databaseId, ImportPreprocessedDataRequest importPreprocessedDataRequest, Integer bufferSize, List<JobOptField> optFields) throws WebClientResponseException {
-        Object postBody = importPreprocessedDataRequest;
+    private ResponseSpec importIntoDatabaseAsyncRequestCreation(String databaseId, Integer bufferSize, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
+        Object postBody = null;
         // verify the required parameter 'databaseId' is set
         if (databaseId == null) {
             throw new WebClientResponseException("Missing the required parameter 'databaseId' when calling importIntoDatabaseAsync", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'importPreprocessedDataRequest' is set
-        if (importPreprocessedDataRequest == null) {
-            throw new WebClientResponseException("Missing the required parameter 'importPreprocessedDataRequest' when calling importIntoDatabaseAsync", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -618,12 +613,15 @@ public class SearchableDatabasesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "bufferSize", bufferSize));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
+        if (inputFiles != null)
+            formParams.addAll("inputFiles", inputFiles.stream().map(FileSystemResource::new).collect(Collectors.toList()));
+
         final String[] localVarAccepts = { 
             "application/json"
         };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
-            "application/json"
+            "multipart/form-data"
         };
         final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
 
@@ -638,15 +636,15 @@ public class SearchableDatabasesApi {
      * Start import of structure and spectra files into the specified database.
      * <p><b>200</b> - Job of the import command to be executed.
      * @param databaseId database to import into
-     * @param importPreprocessedDataRequest files to be imported
      * @param bufferSize The bufferSize parameter
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @param inputFiles The inputFiles parameter
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job importIntoDatabaseAsync(String databaseId, ImportPreprocessedDataRequest importPreprocessedDataRequest, Integer bufferSize, List<JobOptField> optFields) throws WebClientResponseException {
+    public Job importIntoDatabaseAsync(String databaseId, Integer bufferSize, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return importIntoDatabaseAsyncRequestCreation(databaseId, importPreprocessedDataRequest, bufferSize, optFields).bodyToMono(localVarReturnType).block();
+        return importIntoDatabaseAsyncRequestCreation(databaseId, bufferSize, optFields, inputFiles).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -654,15 +652,15 @@ public class SearchableDatabasesApi {
      * Start import of structure and spectra files into the specified database.
      * <p><b>200</b> - Job of the import command to be executed.
      * @param databaseId database to import into
-     * @param importPreprocessedDataRequest files to be imported
      * @param bufferSize The bufferSize parameter
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @param inputFiles The inputFiles parameter
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> importIntoDatabaseAsyncWithHttpInfo(String databaseId, ImportPreprocessedDataRequest importPreprocessedDataRequest, Integer bufferSize, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<Job> importIntoDatabaseAsyncWithHttpInfo(String databaseId, Integer bufferSize, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return importIntoDatabaseAsyncRequestCreation(databaseId, importPreprocessedDataRequest, bufferSize, optFields).toEntity(localVarReturnType).block();
+        return importIntoDatabaseAsyncRequestCreation(databaseId, bufferSize, optFields, inputFiles).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -670,14 +668,14 @@ public class SearchableDatabasesApi {
      * Start import of structure and spectra files into the specified database.
      * <p><b>200</b> - Job of the import command to be executed.
      * @param databaseId database to import into
-     * @param importPreprocessedDataRequest files to be imported
      * @param bufferSize The bufferSize parameter
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @param inputFiles The inputFiles parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importIntoDatabaseAsyncWithResponseSpec(String databaseId, ImportPreprocessedDataRequest importPreprocessedDataRequest, Integer bufferSize, List<JobOptField> optFields) throws WebClientResponseException {
-        return importIntoDatabaseAsyncRequestCreation(databaseId, importPreprocessedDataRequest, bufferSize, optFields);
+    public ResponseSpec importIntoDatabaseAsyncWithResponseSpec(String databaseId, Integer bufferSize, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
+        return importIntoDatabaseAsyncRequestCreation(databaseId, bufferSize, optFields, inputFiles);
     }
     /**
      * 

@@ -407,7 +407,7 @@ No authorization required
 
 ## importIntoDatabase
 
-> SearchableDatabase importIntoDatabase(databaseId, importPreprocessedDataRequest, bufferSize)
+> SearchableDatabase importIntoDatabase(databaseId, bufferSize, inputFiles)
 
 Start import of structure and spectra files into the specified database.
 
@@ -430,10 +430,10 @@ public class Example {
 
         SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
         String databaseId = "databaseId_example"; // String | database to import into
-        ImportPreprocessedDataRequest importPreprocessedDataRequest = new ImportPreprocessedDataRequest(); // ImportPreprocessedDataRequest | files to be imported
         Integer bufferSize = 1000; // Integer | 
+        List<File> inputFiles = Arrays.asList(); // List<File> | 
         try {
-            SearchableDatabase result = apiInstance.importIntoDatabase(databaseId, importPreprocessedDataRequest, bufferSize);
+            SearchableDatabase result = apiInstance.importIntoDatabase(databaseId, bufferSize, inputFiles);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling SearchableDatabasesApi#importIntoDatabase");
@@ -452,8 +452,8 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **databaseId** | **String**| database to import into | |
-| **importPreprocessedDataRequest** | [**ImportPreprocessedDataRequest**](ImportPreprocessedDataRequest.md)| files to be imported | |
 | **bufferSize** | **Integer**|  | [optional] [default to 1000] |
+| **inputFiles** | **List&lt;File&gt;**|  | [optional] |
 
 ### Return type
 
@@ -465,7 +465,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: multipart/form-data
 - **Accept**: application/json
 
 
@@ -477,7 +477,7 @@ No authorization required
 
 ## importIntoDatabaseAsync
 
-> Job importIntoDatabaseAsync(databaseId, importPreprocessedDataRequest, bufferSize, optFields)
+> Job importIntoDatabaseAsync(databaseId, bufferSize, optFields, inputFiles)
 
 Start import of structure and spectra files into the specified database.
 
@@ -500,11 +500,11 @@ public class Example {
 
         SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
         String databaseId = "databaseId_example"; // String | database to import into
-        ImportPreprocessedDataRequest importPreprocessedDataRequest = new ImportPreprocessedDataRequest(); // ImportPreprocessedDataRequest | files to be imported
         Integer bufferSize = 1000; // Integer | 
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
+        List<File> inputFiles = Arrays.asList(); // List<File> | 
         try {
-            Job result = apiInstance.importIntoDatabaseAsync(databaseId, importPreprocessedDataRequest, bufferSize, optFields);
+            Job result = apiInstance.importIntoDatabaseAsync(databaseId, bufferSize, optFields, inputFiles);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling SearchableDatabasesApi#importIntoDatabaseAsync");
@@ -523,9 +523,9 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **databaseId** | **String**| database to import into | |
-| **importPreprocessedDataRequest** | [**ImportPreprocessedDataRequest**](ImportPreprocessedDataRequest.md)| files to be imported | |
 | **bufferSize** | **Integer**|  | [optional] [default to 1000] |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
+| **inputFiles** | **List&lt;File&gt;**|  | [optional] |
 
 ### Return type
 
@@ -537,7 +537,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: multipart/form-data
 - **Accept**: application/json
 
 

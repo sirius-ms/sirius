@@ -38,7 +38,6 @@ docs/FragmentNode.md
 docs/FragmentationTree.md
 docs/GuiApi.md
 docs/GuiInfo.md
-docs/ImportPreprocessedDataRequest.md
 docs/Info.md
 docs/InfoApi.md
 docs/Instrument.md
@@ -149,7 +148,6 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FormulaCandidateOptField.j
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FragmentNode.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FragmentationTree.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/GuiInfo.java
-src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ImportPreprocessedDataRequest.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Info.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Instrument.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/IsotopePatternAnnotation.java
