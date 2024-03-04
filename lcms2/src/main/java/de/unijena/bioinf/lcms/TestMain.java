@@ -147,6 +147,10 @@ public class TestMain {
                 System.out.println("AVERAGE = " + avgAl.doubleStream().sum() / avgAl.size());
                 System.out.println("Good Traces = " + avgAl.doubleStream().filter(x -> x >= 5).sum());
 //            processing.exportFeaturesToFiles(merged, bac);
+
+                // TODO check intensity normalization in aligned features
+                // FIXME mz in aligned features is weird
+                // TODO how to handle MS/MS?
                 processing.extractFeaturesAndExportToProjectSpace(merged, bac);
 
                 assert store.countAll(MergedRun.class) == 1;
