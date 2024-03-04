@@ -21,9 +21,9 @@
 package de.unijena.bioinf.ms.frontend;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.subtools.ComputeRootOption;
-import de.unijena.bioinf.ms.frontend.subtools.InputResource;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.projectspace.ImportFromMemoryWorkflow;

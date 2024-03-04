@@ -22,13 +22,15 @@ package de.unijena.bioinf.ms.middleware.model.compute;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.unijena.bioinf.ms.frontend.subtools.InputResource;
-import de.unijena.bioinf.ms.middleware.model.MultipartInputResource;
+import de.unijena.bioinf.babelms.inputresource.ByteInputResource;
+import de.unijena.bioinf.babelms.inputresource.InputResource;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
+
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,6 +44,12 @@ public class ImportMultipartFilesSubmission extends AbstractImportSubmission {
 
     @Override
     public List<InputResource<?>> asInputResource() {
-        return inputFiles.stream().map(MultipartInputResource::new).collect(Collectors.toList());
+        return inputFiles.stream().map(f -> {
+            try {
+                return new ByteInputResource(f.getBytes(),f.getOriginalFilename());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }).collect(Collectors.toList());
     }
 }

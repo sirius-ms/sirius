@@ -118,7 +118,9 @@
           {
             "name": "pathToProject",
             "in": "query",
-            "required": true,
+            "description": "local file path to open the project from. If NULL, project will be loaded by it projectId from default project location.  DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.",
+            "required": false,
+            "deprecated": true,
             "schema": {
               "type": "string"
             }
@@ -169,26 +171,11 @@
           {
             "name": "pathToProject",
             "in": "query",
-            "required": true,
+            "description": "local file path where the project will be created. If NULL, project will be stored by its projectId in default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.",
+            "required": false,
+            "deprecated": true,
             "schema": {
               "type": "string"
-            }
-          },
-          {
-            "name": "pathToSourceProject",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "awaitImport",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true
             }
           }
         ],
@@ -209,8 +196,8 @@
         "tags": [
           "Projects"
         ],
-        "summary": "Close project-space and remove it from application.",
-        "description": "Close project-space and remove it from application. Project will NOT be deleted from disk.\n\n ATTENTION: This will cancel and remove all jobs running on this Project before closing it.\n If there are many jobs, this might take some time.",
+        "summary": "Close project-space and remove it from application",
+        "description": "Close project-space and remove it from application. Project will NOT be deleted from disk.\n \u003cp\u003e\n ATTENTION: This will cancel and remove all jobs running on this Project before closing it.\n If there are many jobs, this might take some time.",
         "operationId": "closeProjectSpace",
         "parameters": [
           {
@@ -281,7 +268,7 @@
         ],
         "responses": {
           "200": {
-            "description": "ProjectInfo of the newly created project if opened (copyProjectId !\u003d null) or the project info of\n the source project otherwise",
+            "description": "ProjectInfo of the newly created project if opened (copyProjectId !\u003d null) or the project info of\n the source project otherwise\n \u003cp\u003e\n DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.",
             "content": {
               "application/json": {
                 "schema": {
@@ -290,7 +277,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/api/databases/{databaseId}": {
@@ -515,7 +503,7 @@
         },
         "responses": {
           "200": {
-            "description": "Job of the command to be executed.",
+            "description": "Job of the command to be executed.\n\n DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.",
             "content": {
               "application/json": {
                 "schema": {
@@ -524,185 +512,8 @@
               }
             }
           }
-        }
-      }
-    },
-    "/api/{projectId}/jobs/import-from-string": {
-      "post": {
-        "tags": [
-          "Jobs"
-        ],
-        "summary": "Import ms/ms data from the given format into the specified project-space\n Possible formats (ms, mgf, cef, msp, mzML, mzXML)",
-        "description": "Import ms/ms data from the given format into the specified project-space\n Possible formats (ms, mgf, cef, msp, mzML, mzXML)",
-        "operationId": "startImportFromStringJob",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to import into.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "optFields",
-            "in": "query",
-            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/JobOptField"
-              },
-              "default": [
-                "progress"
-              ]
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "configuration of the job that will be submitted",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ImportStringSubmission"
-              }
-            }
-          },
-          "required": true
         },
-        "responses": {
-          "200": {
-            "description": "the import job.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Job"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/{projectId}/jobs/import-from-local-path": {
-      "post": {
-        "tags": [
-          "Jobs"
-        ],
-        "summary": "Import ms/ms data in given format from local filesystem into the specified project",
-        "description": "Import ms/ms data in given format from local filesystem into the specified project.\n The import will run in a background job\n Possible formats (ms, mgf, cef, msp, mzML, mzXML, project-space)\n \u003cp\u003e",
-        "operationId": "startImportFromPathJob",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to import into.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "optFields",
-            "in": "query",
-            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/JobOptField"
-              },
-              "default": [
-                "command",
-                "progress"
-              ]
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "configuration of the job that will be submitted",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ImportLocalFilesSubmission"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "JobId of background job that imports given run/compounds/features.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Job"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/{projectId}/jobs/import-db": {
-      "post": {
-        "tags": [
-          "Jobs"
-        ],
-        "summary": "Start import of structure and spectra files into the specified database.",
-        "description": "Start import of structure and spectra files into the specified database.",
-        "operationId": "startDatabaseImport",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to perform the command for.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "optFields",
-            "in": "query",
-            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/JobOptField"
-              },
-              "default": [
-                "progress"
-              ]
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "the command and the input to be executed",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DatabaseImportSubmission"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Job of the import command to be executed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Job"
-                }
-              }
-            }
-          }
-        }
+        "deprecated": true
       }
     },
     "/api/projects/{projectId}/jobs": {
@@ -856,6 +667,91 @@
         }
       }
     },
+    "/api/projects/{projectId}/jobs/import/ms-data-files-async": {
+      "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Import and Align full MS-Runs from various formats into the specified project as background job.",
+        "description": "Import and Align full MS-Runs from various formats into the specified project as background job.\n Possible formats (mzML, mzXML)",
+        "operationId": "importMsRunDataAsync",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to import into.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignRuns",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "allowMs1Only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/JobOptField"
+              },
+              "default": [
+                "progress"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "imputFiles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "the import job.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/jobs/from-config": {
       "post": {
         "tags": [
@@ -933,6 +829,219 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/import/preprocessed-data-files": {
+      "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats (ms, mgf, cef, msp)",
+        "description": "Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats (ms, mgf, cef, msp)",
+        "operationId": "importPreprocessedData",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to import into.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ignoreFormulas",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "allowMs1Only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "files to import into project",
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "inputFiles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/import/preprocessed-data-files-async": {
+      "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Import ms/ms data from the given format into the specified project-space as background job.",
+        "description": "Import ms/ms data from the given format into the specified project-space as background job.\n Possible formats (ms, mgf, cef, msp)",
+        "operationId": "importPreprocessedDataAsync",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to import into.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ignoreFormulas",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "allowMs1Only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/JobOptField"
+              },
+              "default": [
+                "progress"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "imputFiles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "the import job.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/import/ms-data-files": {
+      "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Import and Align full MS-Runs from various formats into the specified project\n Possible formats (mzML, mzXML)",
+        "description": "Import and Align full MS-Runs from various formats into the specified project\n Possible formats (mzML, mzXML)",
+        "operationId": "importMsRunData",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to import into.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignRuns",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "allowMs1Only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "files to import into project",
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "inputFiles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -1426,6 +1535,147 @@
                   "items": {
                     "$ref": "#/components/schemas/SearchableDatabase"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/databases/{databaseId}/import/from-files": {
+      "post": {
+        "tags": [
+          "Searchable Databases"
+        ],
+        "summary": "Start import of structure and spectra files into the specified database.",
+        "description": "Start import of structure and spectra files into the specified database.",
+        "operationId": "importIntoDatabase",
+        "parameters": [
+          {
+            "name": "databaseId",
+            "in": "path",
+            "description": "database to import into",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bufferSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1000
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "files to be imported",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "inputFiles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Job of the import command to be executed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchableDatabase"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/databases/{databaseId}/import/from-files-async": {
+      "post": {
+        "tags": [
+          "Searchable Databases"
+        ],
+        "summary": "Start import of structure and spectra files into the specified database.",
+        "description": "Start import of structure and spectra files into the specified database.",
+        "operationId": "importIntoDatabaseAsync",
+        "parameters": [
+          {
+            "name": "databaseId",
+            "in": "path",
+            "description": "database to import into",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bufferSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1000
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/JobOptField"
+              },
+              "default": [
+                "progress"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "files to be imported",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "inputFiles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Job of the import command to be executed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
                 }
               }
             }
@@ -2652,57 +2902,6 @@
         }
       }
     },
-    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/tree": {
-      "get": {
-        "tags": [
-          "Features"
-        ],
-        "summary": "Returns fragmentation tree (SIRIUS) for the given formula result identifier\n This tree is used to rank formula candidates (treeScore).",
-        "description": "Returns fragmentation tree (SIRIUS) for the given formula result identifier\n This tree is used to rank formula candidates (treeScore).",
-        "operationId": "getFragTree",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to read from.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "alignedFeatureId",
-            "in": "path",
-            "description": "feature (aligned over runs) the formula result belongs to.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "formulaId",
-            "in": "path",
-            "description": "identifier of the requested formula result",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Fragmentation Tree",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/FragmentationTree"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures": {
       "get": {
         "tags": [
@@ -2999,16 +3198,19 @@
         }
       }
     },
-    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-tree": {
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree": {
       "get": {
         "tags": [
           "Features"
         ],
+        "summary": "Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS\u0027 internal format.",
+        "description": "Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS\u0027 internal format.",
         "operationId": "getSiriusFragTree",
         "parameters": [
           {
             "name": "projectId",
             "in": "path",
+            "description": "project-space to read from.",
             "required": true,
             "schema": {
               "type": "string"
@@ -3017,6 +3219,7 @@
           {
             "name": "alignedFeatureId",
             "in": "path",
+            "description": "feature (aligned over runs) the formula result belongs to.",
             "required": true,
             "schema": {
               "type": "string"
@@ -3025,6 +3228,7 @@
           {
             "name": "formulaId",
             "in": "path",
+            "description": "identifier of the requested formula result",
             "required": true,
             "schema": {
               "type": "string"
@@ -3033,7 +3237,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "Fragmentation Tree in internal format.\n\n NOTE: This endpoint is likely to be removed in future versions of the API.",
             "content": {
               "application/json": {
                 "schema": {
@@ -3141,6 +3345,57 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/IsotopePatternAnnotation"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/fragtree": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Returns fragmentation tree (SIRIUS) for the given formula result identifier\n This tree is used to rank formula candidates (treeScore).",
+        "description": "Returns fragmentation tree (SIRIUS) for the given formula result identifier\n This tree is used to rank formula candidates (treeScore).",
+        "operationId": "getFragTree",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the formula result belongs to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "formulaId",
+            "in": "path",
+            "description": "identifier of the requested formula result",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Fragmentation Tree",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FragmentationTree"
                 }
               }
             }
@@ -4405,106 +4660,6 @@
           }
         },
         "description": "Progress information of a computation job that has already been submitted to SIRIUS.\n if  currentProgress \u003d\u003d maxProgress job is finished and should change to state done soon.\n if a job is DONE all results can be accessed via the Project-Spaces api."
-      },
-      "ImportFormat": {
-        "type": "string",
-        "description": "Selection of formats that are supported by the data importers.",
-        "nullable": true,
-        "enum": [
-          "MS",
-          "MGF",
-          "MZML",
-          "MZXML",
-          "CEF",
-          "MSP",
-          "MAT",
-          "MASSBANK"
-        ]
-      },
-      "ImportStringSubmission": {
-        "required": [
-          "data",
-          "format"
-        ],
-        "type": "object",
-        "properties": {
-          "allowMs1OnlyData": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "ignoreFormulas": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "alignLCMSRuns": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "sourceName": {
-            "type": "string",
-            "description": "Name that specifies the data source. Can e.g. be a file path  or just a name.",
-            "nullable": true
-          },
-          "format": {
-            "$ref": "#/components/schemas/ImportFormat"
-          },
-          "data": {
-            "type": "string",
-            "description": "Data content in specified format"
-          }
-        },
-        "description": "Parameter Object to submit a job that imports ms/ms data from the given format into the specified project\n Supported formats (ms, mgf, cef, msp, mzML, mzXML)"
-      },
-      "ImportLocalFilesSubmission": {
-        "required": [
-          "inputPaths"
-        ],
-        "type": "object",
-        "properties": {
-          "allowMs1OnlyData": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "ignoreFormulas": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "alignLCMSRuns": {
-            "type": "boolean",
-            "nullable": true
-          },
-          "inputPaths": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "DatabaseImportSubmission": {
-        "required": [
-          "databaseId",
-          "filesToImport"
-        ],
-        "type": "object",
-        "properties": {
-          "databaseId": {
-            "type": "string"
-          },
-          "filesToImport": {
-            "minLength": 1,
-            "type": "array",
-            "items": {
-              "minLength": 1,
-              "type": "string"
-            }
-          },
-          "writeBuffer": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          }
-        }
       },
       "Canopus": {
         "type": "object",
@@ -6103,14 +6258,24 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "last": {
+          "first": {
             "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Job"
+            }
           },
           "number": {
             "type": "integer",
@@ -6123,16 +6288,6 @@
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Job"
-            }
-          },
           "empty": {
             "type": "boolean"
           }
@@ -6143,6 +6298,10 @@
         "properties": {
           "sort": {
             "$ref": "#/components/schemas/SortObject"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64"
           },
           "pageNumber": {
             "type": "integer",
@@ -6157,23 +6316,19 @@
           },
           "unpaged": {
             "type": "boolean"
-          },
-          "offset": {
-            "type": "integer",
-            "format": "int64"
           }
         }
       },
       "SortObject": {
         "type": "object",
         "properties": {
+          "empty": {
+            "type": "boolean"
+          },
           "sorted": {
             "type": "boolean"
           },
           "unsorted": {
-            "type": "boolean"
-          },
-          "empty": {
             "type": "boolean"
           }
         }
@@ -6189,14 +6344,24 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "last": {
+          "first": {
             "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Compound"
+            }
           },
           "number": {
             "type": "integer",
@@ -6208,16 +6373,6 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Compound"
-            }
           },
           "empty": {
             "type": "boolean"
@@ -6315,14 +6470,24 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "last": {
+          "first": {
             "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StructureCandidateFormula"
+            }
           },
           "number": {
             "type": "integer",
@@ -6334,16 +6499,6 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StructureCandidateFormula"
-            }
           },
           "empty": {
             "type": "boolean"
@@ -6369,14 +6524,24 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "last": {
+          "first": {
             "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpectralLibraryMatch"
+            }
           },
           "number": {
             "type": "integer",
@@ -6388,16 +6553,6 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SpectralLibraryMatch"
-            }
           },
           "empty": {
             "type": "boolean"
@@ -6448,14 +6603,24 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "last": {
+          "first": {
             "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StructureCandidateScored"
+            }
           },
           "number": {
             "type": "integer",
@@ -6467,16 +6632,6 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StructureCandidateScored"
-            }
           },
           "empty": {
             "type": "boolean"
@@ -6494,14 +6649,24 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "last": {
+          "first": {
             "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormulaCandidate"
+            }
           },
           "number": {
             "type": "integer",
@@ -6513,16 +6678,6 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FormulaCandidate"
-            }
           },
           "empty": {
             "type": "boolean"
@@ -6540,14 +6695,24 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "last": {
+          "first": {
             "type": "boolean"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlignedFeature"
+            }
           },
           "number": {
             "type": "integer",
@@ -6559,16 +6724,6 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AlignedFeature"
-            }
           },
           "empty": {
             "type": "boolean"

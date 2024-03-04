@@ -30,7 +30,6 @@ import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.MsBatchDataFormatFilter;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
 import de.unijena.bioinf.ms.nightsky.sdk.jjobs.SseProgressJJob;
-import de.unijena.bioinf.ms.nightsky.sdk.model.ImportLocalFilesSubmission;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -105,15 +104,14 @@ public class ImportAction extends AbstractGuiAction {
         if (align)
             align = new QuestionDialog(popupOwner, "<html><body> You inserted multiple LC-MS/MS Runs. <br> Do you want to Align them during import?</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
 
-        ImportLocalFilesSubmission sub = new ImportLocalFilesSubmission() //todo nightsky: add this parameters to import dialog with defaults set...
-                .inputPaths(input.msInput.msParserfiles.keySet().stream().map(Path::toAbsolutePath).map(Path::toString).toList())
-                .allowMs1OnlyData(PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", true))
-                .ignoreFormulas(PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.ignoreFormulas", false))
-                .alignLCMSRuns(align);
-
-        try {
+        try { //todo execute lc-ms data  job if needed
             LoadingBackroundTask<Job> task = gui.applySiriusClient((c, pid) -> {
-                Job job = c.jobs().startImportFromPathJob(pid, sub, List.of(JobOptField.PROGRESS));
+                Job job = c.projects().importPreprocessedDataAsync(pid,
+                        PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", true),
+                        PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.ignoreFormulas", false),
+                        List.of(JobOptField.PROGRESS),
+                        input.msInput.msParserfiles.keySet().stream().map(Path::toFile).toList()
+                );
                 return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Auto-Importing supported Files...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
             });
 

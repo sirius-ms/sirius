@@ -25,13 +25,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.frontend.core.Workspace;
 import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
-import de.unijena.bioinf.ms.middleware.model.compute.*;
-import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabase;
+import de.unijena.bioinf.ms.middleware.model.compute.CommandSubmission;
+import de.unijena.bioinf.ms.middleware.model.compute.Job;
+import de.unijena.bioinf.ms.middleware.model.compute.JobSubmission;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springdoc.core.annotations.ParameterObject;
@@ -40,16 +42,13 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -65,6 +64,7 @@ public class JobController {
     private final ProjectsProvider projectsProvider;
     private final ChemDbService chemDbService;
     private final GlobalConfig globalConfig;
+
     public JobController(ComputeService<?> computeService, ProjectsProvider<?> projectsProvider, ChemDbService chemDbService, GlobalConfig globalConfig) {
         this.computeService = computeService;
         this.projectsProvider = projectsProvider;
@@ -76,14 +76,14 @@ public class JobController {
     /**
      * Get Page of jobs with information such as current state and progress (if available).
      *
-     * @param projectId                project-space to run jobs on
-     * @param optFields                set of optional fields to be included. Use 'none' only to override defaults.
+     * @param projectId project-space to run jobs on
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      */
     @GetMapping(value = "/projects/{projectId}/jobs/page", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public Page<Job> getJobsPaged(@PathVariable String projectId,
-                             @ParameterObject Pageable pageable,
-                             @RequestParam(defaultValue = "") EnumSet<Job.OptField> optFields
+                                  @ParameterObject Pageable pageable,
+                                  @RequestParam(defaultValue = "") EnumSet<Job.OptField> optFields
     ) {
         return computeService.getJobs(projectsProvider.getProjectOrThrow(projectId), pageable, removeNone(optFields));
     }
@@ -91,8 +91,8 @@ public class JobController {
     /**
      * Get List of all available jobs with information such as current state and progress (if available).
      *
-     * @param projectId                project-space to run jobs on
-     * @param optFields                set of optional fields to be included. Use 'none' only to override defaults.
+     * @param projectId project-space to run jobs on
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      */
     @GetMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
@@ -105,7 +105,7 @@ public class JobController {
     @GetMapping(value = "/projects/{projectId}/has-jobs", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public boolean hasJobs(@PathVariable String projectId,
-                             @RequestParam(defaultValue = "false") boolean includeFinished
+                           @RequestParam(defaultValue = "false") boolean includeFinished
     ) {
         return computeService.hasJobs(projectsProvider.getProjectOrThrow(projectId), includeFinished);
     }
@@ -113,9 +113,9 @@ public class JobController {
     /**
      * Get job information and its current state and progress (if available).
      *
-     * @param projectId                project-space to run jobs on
-     * @param jobId                    of the job to be returned
-     * @param optFields                set of optional fields to be included. Use 'none' only to override defaults.
+     * @param projectId project-space to run jobs on
+     * @param jobId     of the job to be returned
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      */
     @GetMapping(value = "/projects/{projectId}/jobs/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
@@ -128,9 +128,9 @@ public class JobController {
     /**
      * Start computation for given compounds and with given parameters.
      *
-     * @param projectId                project-space to run jobs on
-     * @param jobSubmission            configuration of the job that will be submitted of the job to be returned
-     * @param optFields                set of optional fields to be included. Use 'none' only to override defaults.
+     * @param projectId     project-space to run jobs on
+     * @param jobSubmission configuration of the job that will be submitted of the job to be returned
+     * @param optFields     set of optional fields to be included. Use 'none' only to override defaults.
      */
     @PostMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.ACCEPTED)
@@ -144,11 +144,11 @@ public class JobController {
     /**
      * Start computation for given compounds and with parameters from a stored job-config.
      *
-     * @param projectId                project-space to run jobs on
-     * @param jobConfigName            name if the config to be used
-     * @param compoundIds              compound ids to be computed
-     * @param recompute                enable or disable recompute. If null the stored value will be used.
-     * @param optFields                set of optional fields to be included. Use 'none' only to override defaults.
+     * @param projectId     project-space to run jobs on
+     * @param jobConfigName name if the config to be used
+     * @param compoundIds   compound ids to be computed
+     * @param recompute     enable or disable recompute. If null the stored value will be used.
+     * @param optFields     set of optional fields to be included. Use 'none' only to override defaults.
      */
     @PostMapping(value = "/projects/{projectId}/jobs/from-config", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.ACCEPTED)
@@ -165,92 +165,22 @@ public class JobController {
     }
 
     /**
-     * Import ms/ms data in given format from local filesystem into the specified project.
-     * The import will run in a background job
-     * Possible formats (ms, mgf, cef, msp, mzML, mzXML, project-space)
-     * <p>
-     *
-     * @param projectId         project-space to import into.
-     * @param jobSubmission     configuration of the job that will be submitted
-     * @param optFields         set of optional fields to be included. Use 'none' only to override defaults.
-     * @return JobId of background job that imports given run/compounds/features.
-     */
-    @PostMapping(value = "/{projectId}/jobs/import-from-local-path", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public Job startImportFromPathJob(@PathVariable String projectId, @Valid @RequestBody ImportLocalFilesSubmission jobSubmission,
-                                      @RequestParam(defaultValue = "command, progress") EnumSet<Job.OptField> optFields
-    ) {
-        Project p = projectsProvider.getProjectOrThrow(projectId);
-        return computeService.createAndSubmitImportJob(p, jobSubmission, removeNone(optFields));
-    }
-
-
-    /**
-     * Import ms/ms data from the given format into the specified project-space
-     * Possible formats (ms, mgf, cef, msp, mzML, mzXML)
-     *
-     * @param projectId         project-space to import into.
-     * @param jobSubmission     configuration of the job that will be submitted
-     * @param optFields         set of optional fields to be included. Use 'none' only to override defaults.
-     * @return the import job.
-     */
-    @PostMapping(value = "/{projectId}/jobs/import-from-string", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public Job startImportFromStringJob(@PathVariable String projectId, @Valid @RequestBody ImportStringSubmission jobSubmission,
-                                        @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
-    ) {
-        Project p = projectsProvider.getProjectOrThrow(projectId);
-        return computeService.createAndSubmitPeakListImportJob(p, jobSubmission, removeNone(optFields));
-    }
-
-    /**
-     * Import ms/ms data from the given format into the specified project-space
-     * Possible formats (ms, mgf, cef, msp, mzML, mzXML)
-     *
-     * @param projectId         project-space to import into.
-     * @param jobSubmission     configuration of the job that will be submitted
-     * @param optFields         set of optional fields to be included. Use 'none' only to override defaults.
-     * @return the import job.
-     */
-    @PostMapping(value = "/{projectId}/jobs/import-from-file", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Job startImportFromFileJob(@PathVariable String projectId, @RequestBody MultipartFile[] files,
-                                        @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
-    ) {
-        Project p = projectsProvider.getProjectOrThrow(projectId);
-        ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
-        sub.setInputFiles(Arrays.stream(files).toList());
-        return computeService.createAndSubmitPeakListImportJob(p, sub, removeNone(optFields));
-    }
-
-    /**
      * Start computation for given command and input.
      *
      * @param projectId         project-space to perform the command for.
      * @param commandSubmission the command and the input to be executed
      * @param optFields         set of optional fields to be included. Use 'none' only to override defaults.
      * @return Job of the command to be executed.
+     *
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
      */
+    @Deprecated
     @PostMapping(value = "/{projectId}/jobs/run-command", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public Job startCommand(@PathVariable String projectId, @Valid @RequestBody CommandSubmission commandSubmission,
-                                        @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
-    ) {
-        Project p = projectsProvider.getProjectOrThrow(projectId);
-        return computeService.createAndSubmitCommandJob(p, commandSubmission, removeNone(optFields));
-    }
-
-    /**
-     * Start import of structure and spectra files into the specified database.
-     *
-     * @param projectId     project-space to perform the command for.
-     * @param dbImport      the command and the input to be executed
-     * @param optFields     set of optional fields to be included. Use 'none' only to override defaults.
-     * @return Job of the import command to be executed.
-     */
-    @PostMapping(value = "/{projectId}/jobs/import-db", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public Job startDatabaseImport(@PathVariable String projectId, @Valid @RequestBody DatabaseImportSubmission dbImport,
                             @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) {
         Project p = projectsProvider.getProjectOrThrow(projectId);
-        SearchableDatabase db = chemDbService.findById(dbImport.getDatabaseId(), false);
-        return computeService.createAndSubmitCommandJob(p, dbImport.asCommandSubmission(db.getLocation()), removeNone(optFields));
+        return computeService.createAndSubmitCommandJob(p, commandSubmission, removeNone(optFields));
     }
 
     /**

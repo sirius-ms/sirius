@@ -108,7 +108,7 @@ public class ProjectCreateAction extends ProjectOpenAction {
         try {
             String pid = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Creating Project...", () ->
                     gui.getSiriusClient().projects()
-                            .createProjectSpace(projectPath.getFileName().toString(), projectPath.toAbsolutePath().toString(), null,true)
+                            .createProjectSpace(projectPath.getFileName().toString(), projectPath.toAbsolutePath().toString())
                             .getProjectId()
 
             ).awaitResult();

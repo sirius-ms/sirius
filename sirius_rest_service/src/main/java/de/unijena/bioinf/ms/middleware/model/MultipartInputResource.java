@@ -20,12 +20,14 @@
 
 package de.unijena.bioinf.ms.middleware.model;
 
-import de.unijena.bioinf.ms.frontend.subtools.InputResource;
+import de.unijena.bioinf.babelms.inputresource.InputResource;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 
 public class MultipartInputResource implements InputResource<MultipartFile> {
     private final MultipartFile file;
@@ -55,12 +57,16 @@ public class MultipartInputResource implements InputResource<MultipartFile> {
     }
 
     @Override
+    @Nullable
     public URI toUri() {
-        try {
-            return getResource().getResource().getURI();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (getFilename() != null && !getFilename().isBlank()) {
+            try {
+                return new URI(getFilename());
+            } catch (URISyntaxException e) {
+                return null;
+            }
         }
+        return null;
     }
 
     @Override
