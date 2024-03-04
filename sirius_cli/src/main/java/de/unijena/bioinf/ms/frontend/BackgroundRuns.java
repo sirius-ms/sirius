@@ -336,7 +336,8 @@ public final class BackgroundRuns<P extends ProjectSpaceManager<I>, I extends In
 
         @Override
         public void cancel(boolean mayInterruptIfRunning) {
-            computation.cancel();
+            if (computation != null)
+                computation.cancel();
             super.cancel(mayInterruptIfRunning);
         }
 
