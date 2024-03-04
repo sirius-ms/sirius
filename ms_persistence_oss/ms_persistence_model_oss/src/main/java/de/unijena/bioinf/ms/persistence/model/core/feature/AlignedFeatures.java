@@ -31,6 +31,7 @@ import jakarta.persistence.Id;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 
@@ -81,41 +82,19 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
         return Optional.ofNullable(isotopicFeatures);
     }
 
-    //    //foreign objects
-//    //todo do we want do deduplicate msms
-//    public Optional<List<MSMSScan>> getMsms() {
-//        if (getFeatures().map(fs -> fs.stream().anyMatch(f -> f.getMsms().isEmpty())).orElse(true))
-//            return Optional.empty();
-//
-//        return getFeatures().map(fs -> fs.stream().flatMap(f -> f.getMsms().stream().flatMap(List::stream)))
-//                .map(Stream::toList);
-//    }
-
-    public static AlignedFeatures singleton(Feature feature) {
-//        AlignedFeaturesBuilder b = AlignedFeatures.builder()
-//                .features(List.of(feature))
-//                .mergedIonMass(feature.ionMass)
-//                .isotopePatternFeatureId(0);
-//        {
-//            //todo check rt creation -> use traces if available?
-//            double min = Double.MAX_VALUE;
-//            double max = Double.MIN_VALUE;
-//            List<Double> times = Stream.concat(
-//                    feature.getApexScan().stream(),
-//                    feature.getMsms().stream().flatMap(Collection::stream)
-//            ).map(AbstractScan::getScanTime).filter(Objects::nonNull).toList();
-//
-//            if (!times.isEmpty()) {
-//                for (Double time : times) {
-//                    min = Math.min(min, time);
-//                    max = Math.max(max, time);
-//                }
-//
-//                b.mergedRT(Double.compare(min, max) == 0 ? new RetentionTime(min) : new RetentionTime(min, max));
-//            }
-//        }
-//
-//        return b.build();
-        return null;
+    public static AlignedFeatures singleton(Feature feature, @Nullable IsotopePattern isotopePattern) {
+        AlignedFeatures al = AlignedFeatures.builder()
+                .features(List.of(feature))
+                .averageMass(feature.averageMass)
+                .apexMass(feature.apexMass)
+                .apexIntensity(feature.apexIntensity)
+                .snr(feature.snr)
+                .retentionTime(feature.retentionTime)
+                .build();
+        if (isotopePattern != null) {
+            al.setIsotopePattern(isotopePattern);
+        }
+        return al;
     }
+
 }

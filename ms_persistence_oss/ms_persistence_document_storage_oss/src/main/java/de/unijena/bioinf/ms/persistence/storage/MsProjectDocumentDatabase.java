@@ -21,8 +21,11 @@
 package de.unijena.bioinf.ms.persistence.storage;
 
 import de.unijena.bioinf.ms.persistence.model.Tag;
-import de.unijena.bioinf.ms.persistence.model.core.*;
-import de.unijena.bioinf.ms.persistence.model.core.feature.*;
+import de.unijena.bioinf.ms.persistence.model.core.Compound;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
+import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.Run;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
@@ -100,6 +103,8 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
 //                        new Index("mergedRT.end", IndexType.NON_UNIQUE))  //todo really needed?
     }
 
+    // TODO check all fetches and imports!
+
     default Stream<Compound> getAllCompounds() throws IOException {
         return getStorage().findAllStr(Compound.class);
     }
@@ -128,7 +133,7 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
 
     default void fetchFeatures(@NotNull final AlignedFeatures alignedFeatures) {
         try {
-            getStorage().fetchAllChildren(alignedFeatures, "alignedFeatureId", "features", OldFeature.class);
+            getStorage().fetchAllChildren(alignedFeatures, "alignedFeatureId", "features", Feature.class);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -143,7 +148,7 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
 //                .forEach(this::fetchMsmsScans));
     }
 
-    default void fetchMsmsScans(@NotNull final OldFeature feature) {
+    default void fetchMsmsScans(@NotNull final Feature feature) {
         try {
             getStorage().fetchAllChildren(feature, "featureId", "msms", MSMSScan.class);
         } catch (IOException e) {
@@ -151,7 +156,7 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
         }
     }
 
-    default void fetchApexScans(@NotNull final OldFeature feature) {
+    default void fetchApexScans(@NotNull final Feature feature) {
         try {
             getStorage().fetchAllChildren(feature, "apexScanId", "scanId", "apexScan", Scan.class);
         } catch (IOException e) {
@@ -187,22 +192,22 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
 //        importFeatures(features);
     }
 
-    default void importFeatures(List<OldFeature> features) throws IOException {
-        for (OldFeature f : features) {
-            if (f.getApexScan().isPresent()){
-                getStorage().insert(f.getApexScan().get());
-                f.getApexScan().map(Scan::getScanId).ifPresent(f::setApexScanId);
-            }
-        }
-
-        getStorage().insertAll(features);
-
-        List<MSMSScan> msmsToAdd = features.stream()
-                .peek(f -> f.getMsms().ifPresent(msms -> msms.forEach(scan -> scan.setFeatureId(f.getFeatureId()))))
-                .flatMap(f -> f.getMsms().stream().flatMap(List::stream)).toList();
-
-        getStorage().insertAll(msmsToAdd);
-    }
+//    default void importFeatures(List<Feature> features) throws IOException {
+//        for (Feature f : features) {
+//            if (f.getApexScan().isPresent()){
+//                getStorage().insert(f.getApexScan().get());
+//                f.getApexScan().map(Scan::getScanId).ifPresent(f::setApexScanId);
+//            }
+//        }
+//
+//        getStorage().insertAll(features);
+//
+//        List<MSMSScan> msmsToAdd = features.stream()
+//                .peek(f -> f.getMsms().ifPresent(msms -> msms.forEach(scan -> scan.setFeatureId(f.getFeatureId()))))
+//                .flatMap(f -> f.getMsms().stream().flatMap(List::stream)).toList();
+//
+//        getStorage().insertAll(msmsToAdd);
+//    }
 
     Storage getStorage();
 }
