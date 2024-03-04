@@ -149,22 +149,21 @@ public class TestMain {
 //            processing.exportFeaturesToFiles(merged, bac);
                 processing.extractFeaturesAndExportToProjectSpace(merged, bac);
 
-                // FIXME Exception in thread "main" java.lang.IllegalArgumentException: Conflicting from-String creators: already had implicitly discovered creator [method de.unijena.bioinf.ChemistryBase.ms.Deviation#valueOf(java.lang.String)], encountered another: [method de.unijena.bioinf.ChemistryBase.ms.Deviation#fromString(java.lang.String)]
-//                assert store.countAll(MergedRun.class) == 1;
-//                for (MergedRun run : store.findAll(MergedRun.class)) {
-//                    System.out.println(run.getName());
-//                }
+                assert store.countAll(MergedRun.class) == 1;
+                for (MergedRun run : store.findAll(MergedRun.class)) {
+                    System.out.printf("\nMerged Run: %s\n\n", run.getName());
+                }
 
                 System.out.printf(
                         """
-                                Run:                     %d
-                                Scan:                    %d
-                                MSMSScan:                %d
-                                SourceTrace:             %d
-                                MergedTrace:             %d
-                                Feature:                 %d
-                                AlignedIsotopicFeatures: %d
-                                AlignedFeatures:         %d
+                                # Run:                     %d
+                                # Scan:                    %d
+                                # MSMSScan:                %d
+                                # SourceTrace:             %d
+                                # MergedTrace:             %d
+                                # Feature:                 %d
+                                # AlignedIsotopicFeatures: %d
+                                # AlignedFeatures:         %d
                                 
                                 Feature                 SNR: %f
                                 AlignedIsotopicFeatures SNR: %f

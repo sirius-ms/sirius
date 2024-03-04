@@ -1,6 +1,10 @@
 package de.unijena.bioinf.ms.persistence.model.core.run;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import lombok.*;
 
 @Getter
@@ -22,9 +26,13 @@ public class SampleStats {
     private float ms2NoiseLevel;
 
     @With
+    @JsonSerialize(using = ToStringSerializer.class)
+    @JsonDeserialize(using = SimpleSerializers.DeviationDeserializer.class)
     private Deviation ms1MassDeviationWithinTraces;
 
     @With
+    @JsonSerialize(using = ToStringSerializer.class)
+    @JsonDeserialize(using = SimpleSerializers.DeviationDeserializer.class)
     private Deviation minimumMs1MassDeviationBetweenTraces;
 
     public float noiseLevel(int idx) {
