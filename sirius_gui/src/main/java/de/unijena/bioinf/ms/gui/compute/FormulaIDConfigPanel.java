@@ -28,10 +28,7 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.gui.utils.RelativeLayout;
-import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
-import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
@@ -46,7 +43,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -89,7 +85,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         }
     }
 
-    protected JCheckboxListPanel<String> adductList;
+    protected JCheckboxListPanel<PrecursorIonType> adductList;
     protected JToggleButton enforceAdducts;
     protected JComboBox<Instrument> profileSelector;
     protected JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner, treeTimeout, comoundTimeout, mzHeuristic, mzHeuristicOnly;
@@ -165,7 +161,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         //configure adduct panel
         adductList = new JCheckboxListPanel<>(new JCheckBoxList<>(), isBatchDialog() ? "Fallback Adducts" : "Possible Adducts",
                 GuiUtils.formatToolTip("Set expected adduct for data with unknown adduct."));
-        adductList.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>("[M + Na]+ ", false));
+        adductList.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>(PrecursorIonType.fromString("[M + Na]+"), false));
         center.add(adductList);
         parameterBindings.put("AdductSettings.fallback", () -> getSelectedAdducts().toString());
 
@@ -211,7 +207,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         }
 
         // add ionization's of selected compounds to default
-        refreshPossibleAdducts(ecs.stream().map(it -> it.getIonType().toString()).collect(Collectors.toSet()), true);
+        refreshPossibleAdducts(ecs.stream().map(InstanceBean::getIonType).collect(Collectors.toSet()), true);
     }
 
     protected boolean isBatchDialog() {
@@ -226,38 +222,36 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         addAdvancedComponent(control);
     }
 
-    public void refreshPossibleAdducts(Set<String> precursorIonTypes, boolean enabled) {
-        Set<String> adducts = new HashSet<>();
-        Set<String> adductsEnabled = new HashSet<>();
+    public void refreshPossibleAdducts(Set<PrecursorIonType> precursorIonTypes, boolean enabled) {
+        Set<PrecursorIonType> adducts = new HashSet<>();
+        Set<PrecursorIonType> adductsEnabled = new HashSet<>();
 
         if (!precursorIonTypes.isEmpty()) {
             AdductSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class);
-            if (precursorIonTypes.contains(PrecursorIonType.unknownPositive().toString())) {
-                adducts.addAll(PeriodicTable.getInstance().getPositiveAdductsAsString());
+            if (precursorIonTypes.contains(PrecursorIonType.unknownPositive())) {
+                adducts.addAll(PeriodicTable.getInstance().getPositiveAdducts());
                 adductsEnabled.addAll(
                         Stream.concat(settings.getFallback().stream().filter(PrecursorIonType::isPositive),
                                 settings.getEnforced().stream().filter(PrecursorIonType::isPositive))
-                        .map(PrecursorIonType::toString)
                         .collect(Collectors.toSet()));
             }
 
-            if (precursorIonTypes.contains(PrecursorIonType.unknownNegative().toString())) {
-                adducts.addAll(PeriodicTable.getInstance().getNegativeAdductsAsString());
+            if (precursorIonTypes.contains(PrecursorIonType.unknownNegative())) {
+                adducts.addAll(PeriodicTable.getInstance().getNegativeAdducts());
                 adductsEnabled.addAll(
                         Stream.concat(settings.getFallback().stream().filter(PrecursorIonType::isNegative),
                                         settings.getEnforced().stream().filter(PrecursorIonType::isNegative))
-                        .map(PrecursorIonType::toString)
                         .collect(Collectors.toSet()));
             }
             adducts.addAll(adductsEnabled);
         }
 
         if (adducts.isEmpty()) {
-            adductList.checkBoxList.replaceElements(precursorIonTypes.stream().sorted().collect(Collectors.toList()));
+            adductList.checkBoxList.replaceElements(precursorIonTypes.stream().sorted(PrecursorIonTypeSelector.ionTypeComparator).collect(Collectors.toList()));
             adductList.checkBoxList.checkAll();
             adductList.setEnabled(false);
         } else {
-            adductList.checkBoxList.replaceElements(adducts.stream().sorted().toList());
+            adductList.checkBoxList.replaceElements(adducts.stream().sorted(PrecursorIonTypeSelector.ionTypeComparator).toList());
             adductList.checkBoxList.uncheckAll();
             if (!isBatchDialog() && !ecs.get(0).getMs2Spectra().isEmpty()) {
                 detectPossibleAdducts(ecs.get(0));
@@ -292,7 +286,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
                 pi.getAnnotation(PossibleAdducts.class).
                         ifPresentOrElse(pa -> {
                                     adductList.checkBoxList.uncheckAll();
-                                    pa.getAdducts().stream().map(PrecursorIonType::toString).forEach(adductList.checkBoxList::check);
+                                    pa.getAdducts().forEach(adductList.checkBoxList::check);
                                 },
                                 () -> new ExceptionDialog(owner, "Failed to detect Adducts from MS1")
                         );
@@ -319,8 +313,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
     }
 
     public PossibleAdducts getSelectedAdducts() {
-        return adductList.checkBoxList.getCheckedItems().stream().map(PrecursorIonType::parsePrecursorIonType)
-                .flatMap(Optional::stream).collect(Collectors.collectingAndThen(Collectors.toSet(), PossibleAdducts::new));
+        return new PossibleAdducts(adductList.checkBoxList.getCheckedItems());
     }
 
     public JCheckboxListPanel<CustomDataSources.Source> getSearchDBList() {
