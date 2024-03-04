@@ -48,7 +48,7 @@ public class SimpleSerializers {
 
         @Override
         public T deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
-            while (p.currentToken() != JsonToken.VALUE_STRING)
+            while (p.currentToken() != null && p.currentToken() != JsonToken.VALUE_STRING)
                 p.nextToken();
             return getObject(p.getText());
         }
