@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URI;
+import java.net.URLDecoder;
 import java.nio.file.Path;
 
 public abstract class SourceLocation implements Ms2ExperimentAnnotation {
@@ -40,10 +41,10 @@ public abstract class SourceLocation implements Ms2ExperimentAnnotation {
             return null;
 
         if (value.getScheme() != null && value.getScheme().equalsIgnoreCase("file")) {
-            return Path.of(value).toString();
+            return Path.of(value.getPath()).getFileName().toString();
         }
 
-        return value.toString();
+        return value.getPath();
     }
 
 
