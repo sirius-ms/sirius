@@ -24,6 +24,8 @@ import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.babelms.annotations.CompoundMetaData;
+import de.unijena.bioinf.babelms.inputresource.InputResource;
+import de.unijena.bioinf.babelms.inputresource.InputResourceParsingIterator;
 import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.chemdb.SpectralUtils;
@@ -34,7 +36,7 @@ import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
-import de.unijena.bioinf.spectraldb.io.ParsingIterator;
+import de.unijena.bioinf.spectraldb.io.SpectralDbMsExperimentParser;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,8 +44,8 @@ import org.openscience.cdk.exception.CDKException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 public abstract class CustomDatabase implements SearchableDatabase {
@@ -162,8 +164,8 @@ public abstract class CustomDatabase implements SearchableDatabase {
     }
 
     public void importToDatabase(
-            List<File> spectrumFiles,
-            List<File> structureFiles,
+            List<InputResource<?>> spectrumFiles,
+            List<InputResource<?>> structureFiles,
             @Nullable CustomDatabaseImporter.Listener listener,
             CustomDatabaseImporter importer,
             int bufferSize
@@ -179,7 +181,7 @@ public abstract class CustomDatabase implements SearchableDatabase {
 
             WriteableSpectralLibrary writeableSpectralLibrary = this.toWriteableSpectralLibraryOrThrow();
 
-            Iterator<Ms2Experiment> iterator = new ParsingIterator(spectrumFiles.iterator());
+            Iterator<Ms2Experiment> iterator = new InputResourceParsingIterator(spectrumFiles,  new SpectralDbMsExperimentParser());
             // Map of <SMILES, <STRUCTURE_ID, NAME>>
             Map<String, CompoundMetaData> spectrumSmiles = new HashMap<>();
             { // import all spectra files and fill structure map
@@ -221,16 +223,21 @@ public abstract class CustomDatabase implements SearchableDatabase {
         writeSettings();
     }
 
-    private void importStructuresToDatabase(List<File> structureFiles, CustomDatabaseImporter importer) throws IOException {
-        for (File f : structureFiles) {
-            importer.importFrom(f);
+    private void importStructuresToDatabase(List<InputResource<?>> structureFiles, CustomDatabaseImporter importer) throws IOException {
+        try {
+            for (InputResource<?> f : structureFiles) {
+                try (InputStream s = f.getInputStream()){
+                    importer.importFromStream(s);
+                }
+            }
+        } finally {
+            importer.flushBuffer();
         }
-        importer.flushBuffer();
     }
 
     public JJob<Boolean> importToDatabaseJob(
-            List<File> spectrumFiles,
-            List<File> structureFiles,
+            List<InputResource<?>> spectrumFiles,
+            List<InputResource<?>> structureFiles,
             @Nullable CustomDatabaseImporter.Listener listener,
             @NotNull WebAPI<?> api,
             int bufferSize
