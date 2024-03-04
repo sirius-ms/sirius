@@ -43,6 +43,4 @@ public abstract class AbstractTrace {
      */
     DoubleList intensities;
 
-    // TODO also save noise level?
-
 }
