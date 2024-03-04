@@ -667,14 +667,14 @@
         }
       }
     },
-    "/api/projects/{projectId}/jobs/import/ms-data-files-async": {
+    "/api/projects/{projectId}/jobs/import/ms-data-files-job": {
       "post": {
         "tags": [
           "Projects"
         ],
         "summary": "Import and Align full MS-Runs from various formats into the specified project as background job.",
         "description": "Import and Align full MS-Runs from various formats into the specified project as background job.\n Possible formats (mzML, mzXML)",
-        "operationId": "importMsRunDataAsync",
+        "operationId": "importMsRunDataAsJob",
         "parameters": [
           {
             "name": "projectId",
@@ -892,19 +892,26 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            }
           }
         }
       }
     },
-    "/api/projects/{projectId}/import/preprocessed-data-files-async": {
+    "/api/projects/{projectId}/import/preprocessed-data-files-job": {
       "post": {
         "tags": [
           "Projects"
         ],
         "summary": "Import ms/ms data from the given format into the specified project-space as background job.",
         "description": "Import ms/ms data from the given format into the specified project-space as background job.\n Possible formats (ms, mgf, cef, msp)",
-        "operationId": "importPreprocessedDataAsync",
+        "operationId": "importPreprocessedDataAsJob",
         "parameters": [
           {
             "name": "projectId",
@@ -1041,7 +1048,14 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            }
           }
         }
       }
@@ -1605,14 +1619,14 @@
         }
       }
     },
-    "/api/databases/{databaseId}/import/from-files-async": {
+    "/api/databases/{databaseId}/import/from-files-job": {
       "post": {
         "tags": [
           "Searchable Databases"
         ],
         "summary": "Start import of structure and spectra files into the specified database.",
         "description": "Start import of structure and spectra files into the specified database.",
-        "operationId": "importIntoDatabaseAsync",
+        "operationId": "importIntoDatabaseAsJob",
         "parameters": [
           {
             "name": "databaseId",
@@ -5088,6 +5102,29 @@
           }
         },
         "nullable": true
+      },
+      "ImportResult": {
+        "required": [
+          "affectedAlignedFeatureIds",
+          "affectedCompoundIds"
+        ],
+        "type": "object",
+        "properties": {
+          "affectedCompoundIds": {
+            "type": "array",
+            "description": "List of compoundIds that have been imported.",
+            "items": {
+              "type": "string"
+            }
+          },
+          "affectedAlignedFeatureIds": {
+            "type": "array",
+            "description": "List of alignedFeatureIds that have been imported..",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
       },
       "BasicSpectrum": {
         "required": [

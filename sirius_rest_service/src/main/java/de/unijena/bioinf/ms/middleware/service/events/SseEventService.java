@@ -78,7 +78,7 @@ public class SseEventService implements EventService<SseEmitter> {
     public void sendEvent(ServerEvent<?> event) { //todo maybe we need some wait here to not spam events to fast...
         if (eventRunner == null)
             eventRunner = (EventRunner) SiriusJobs.runInBackground(new EventRunner());
-        System.out.println("Add Event to Queue: " + event);
+//        System.out.println("Add Event to Queue: " + event); //todo remove debug
         events.add(event);
     }
 
@@ -101,9 +101,9 @@ public class SseEventService implements EventService<SseEmitter> {
 
                         if (eventData == ServerEvents.EMPTY_EVENT())
                             return true;
-                        System.out.println("Retrieved event from Queue: " + eventData);
+//                        System.out.println("Retrieved event from Queue: " + eventData); //todo remove debug
                         for (SseEmitter emitter : emitters.getOrDefault(eventData.getEventType(), List.of())) {
-                            System.out.println("Send event to Client: " + emitter.toString());
+//                            System.out.println("Send event to Client: " + emitter.toString()); //todo remove debug
                             try {
                                 StringBuilder name = new StringBuilder()
                                         .append(eventData.getProjectId()).append(".")
@@ -120,8 +120,8 @@ public class SseEventService implements EventService<SseEmitter> {
                                 emitter.completeWithError(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()));
                             }
                         }
-                        System.out.println();
-                        System.out.println();
+//                        System.out.println(); //todo remove debug
+//                        System.out.println(); //todo remove debug
                     } catch (InterruptedException e) {
                         if (eventData == ServerEvents.EMPTY_EVENT())
                             return true;

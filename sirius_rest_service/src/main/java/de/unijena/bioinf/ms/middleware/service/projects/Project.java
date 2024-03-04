@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
+import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
 import de.unijena.bioinf.ms.middleware.model.annotations.SpectralLibraryMatch;
 import de.unijena.bioinf.ms.middleware.model.annotations.StructureCandidateFormula;
@@ -30,12 +31,14 @@ import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.FeatureImport;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeatureQuality;
 import de.unijena.bioinf.ms.middleware.model.features.AnnotatedMsMsData;
+import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -52,6 +55,9 @@ public interface Project {
     List<Compound> addCompounds(@NotNull List<CompoundImport> compounds,
                                 @NotNull EnumSet<Compound.OptField> optFields,
                                 @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures);
+
+    ImportResult importPreprocessedData(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData);
+    ImportResult importMsRunData(Collection<InputResource<?>> inputResources, boolean alignRuns, boolean allowMs1OnlyData);
 
     default Page<Compound> findCompounds(Pageable pageable, Compound.OptField... optFields) {
         return findCompounds(pageable, toEnumSet(Compound.OptField.class, optFields),

@@ -20,15 +20,14 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
-import de.unijena.bioinf.ms.frontend.subtools.projectspace.ImportFromMemoryWorkflow;
 import de.unijena.bioinf.ms.middleware.model.MultipartInputResource;
 import de.unijena.bioinf.ms.middleware.model.compute.ImportMultipartFilesSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
+import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
-import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -130,8 +129,8 @@ public class ProjectController {
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      * @return the import job.
      */
-    @PostMapping(value = "/{projectId}/jobs/import/ms-data-files-async", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Job importMsRunDataAsync(@PathVariable String projectId,
+    @PostMapping(value = "/{projectId}/jobs/import/ms-data-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Job importMsRunDataAsJob(@PathVariable String projectId,
                                     @RequestBody MultipartFile[] imputFiles,
                                     @RequestParam(defaultValue = "true") boolean alignRuns,
                                     @RequestParam(defaultValue = "true") boolean allowMs1Only,
@@ -149,13 +148,15 @@ public class ProjectController {
      * @param inputFiles files to import into project
      */
     @PostMapping(value = "/{projectId}/import/ms-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public void importMsRunData(@PathVariable String projectId,
+    public ImportResult importMsRunData(@PathVariable String projectId,
                                 @RequestBody MultipartFile[] inputFiles,
                                 @RequestParam(defaultValue = "true") boolean alignRuns,
                                 @RequestParam(defaultValue = "true") boolean allowMs1Only
     ) {
-       //TODO nightsky: implement
-       throw new UnsupportedOperationException("LCMS import not implemented");
+        return projectsProvider.getProjectOrThrow(projectId).importMsRunData(
+                Arrays.stream(inputFiles).map(MultipartInputResource::new).collect(Collectors.toList()),
+                alignRuns, allowMs1Only
+        );
     }
 
 
@@ -167,8 +168,8 @@ public class ProjectController {
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      * @return the import job.
      */
-    @PostMapping(value = "/{projectId}/import/preprocessed-data-files-async", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Job importPreprocessedDataAsync(@PathVariable String projectId,
+    @PostMapping(value = "/{projectId}/import/preprocessed-data-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Job importPreprocessedDataAsJob(@PathVariable String projectId,
                                            @RequestBody MultipartFile[] imputFiles,
                                            @RequestParam(defaultValue = "false") boolean ignoreFormulas,
                                            @RequestParam(defaultValue = "true") boolean allowMs1Only,
@@ -191,18 +192,15 @@ public class ProjectController {
      * @param inputFiles files to import into project
      */
     @PostMapping(value = "/{projectId}/import/preprocessed-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public void importPreprocessedData(@PathVariable String projectId,
-                                       @RequestBody MultipartFile[] inputFiles,
-                                       @RequestParam(defaultValue = "false") boolean ignoreFormulas,
-                                       @RequestParam(defaultValue = "true") boolean allowMs1Only
+    public ImportResult importPreprocessedData(@PathVariable String projectId,
+                                               @RequestBody MultipartFile[] inputFiles,
+                                               @RequestParam(defaultValue = "false") boolean ignoreFormulas,
+                                               @RequestParam(defaultValue = "true") boolean allowMs1Only
     ) {
-        //todo wrap by some service to be independent from project implementation
-        Project p = projectsProvider.getProjectOrThrow(projectId);
-
-        new ImportFromMemoryWorkflow(((SiriusProjectSpaceImpl) p).getProjectSpaceManager(),
+        return projectsProvider.getProjectOrThrow(projectId).importPreprocessedData(
                 Arrays.stream(inputFiles).map(MultipartInputResource::new).collect(Collectors.toList()),
-                ignoreFormulas, allowMs1Only)
-                .run();
+                ignoreFormulas, allowMs1Only
+        );
     }
 
     /**

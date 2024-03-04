@@ -34,6 +34,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
+import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
@@ -44,12 +45,15 @@ import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.MsNovelistFBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
+import de.unijena.bioinf.lcms.LCMSProccessingInstance;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.ms.frontend.subtools.projectspace.ImportFromMemoryWorkflow;
 import de.unijena.bioinf.ms.middleware.controller.AlignedFeatureController;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.features.*;
+import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
@@ -100,7 +104,6 @@ public class SiriusProjectSpaceImpl implements Project {
         this.projectId = projectId;
     }
 
-
     @NotNull
     @Override
     public String getProjectId() {
@@ -111,6 +114,33 @@ public class SiriusProjectSpaceImpl implements Project {
         return projectSpaceManager;
     }
 
+
+    @Override
+    public ImportResult importPreprocessedData(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData) {
+        ImportFromMemoryWorkflow importTask = new ImportFromMemoryWorkflow(
+                getProjectSpaceManager(), inputResources, ignoreFormulas, allowMs1OnlyData);
+
+        importTask.run();
+
+        return ImportResult.builder()
+                .affectedAlignedFeatureIds(importTask.getImportedInstanceIds().stream()
+                        .map(CompoundContainerId::getDirectoryName).collect(Collectors.toList()))
+                .affectedCompoundIds(importTask.getImportedInstanceIds().stream()
+                        .map(CompoundContainerId::getGroupId).filter(Optional::isPresent).flatMap(Optional::stream)
+                        .distinct().collect(Collectors.toList()))
+                .build();
+    }
+
+    @Override
+    public ImportResult importMsRunData(Collection<InputResource<?>> inputResources, boolean alignRuns, boolean allowMs1OnlyData) {
+        if (alignRuns){
+            throw new UnsupportedOperationException("LCMS import not implemented");
+            //todo fleisch implement
+
+        }else {
+            return importPreprocessedData(inputResources, false, allowMs1OnlyData);
+        }
+    }
 
     @Override
     public Page<Compound> findCompounds(Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields,

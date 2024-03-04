@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.nightsky.sdk.api;
 import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
 
 import java.io.File;
+import de.unijena.bioinf.ms.nightsky.sdk.model.ImportResult;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectInfo;
@@ -699,6 +700,7 @@ public class ProjectsApi {
      * @param alignRuns The alignRuns parameter
      * @param allowMs1Only The allowMs1Only parameter
      * @param inputFiles The inputFiles parameter
+     * @return ImportResult
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec importMsRunDataRequestCreation(String projectId, Boolean alignRuns, Boolean allowMs1Only, List<File> inputFiles) throws WebClientResponseException {
@@ -723,7 +725,9 @@ public class ProjectsApi {
         if (inputFiles != null)
             formParams.addAll("inputFiles", inputFiles.stream().map(FileSystemResource::new).collect(Collectors.toList()));
 
-        final String[] localVarAccepts = { };
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
             "multipart/form-data"
@@ -732,7 +736,7 @@ public class ProjectsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/import/ms-data-files", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -744,11 +748,12 @@ public class ProjectsApi {
      * @param alignRuns The alignRuns parameter
      * @param allowMs1Only The allowMs1Only parameter
      * @param inputFiles The inputFiles parameter
+     * @return ImportResult
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void importMsRunData(String projectId, Boolean alignRuns, Boolean allowMs1Only, List<File> inputFiles) throws WebClientResponseException {
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        importMsRunDataRequestCreation(projectId, alignRuns, allowMs1Only, inputFiles).bodyToMono(localVarReturnType).block();
+    public ImportResult importMsRunData(String projectId, Boolean alignRuns, Boolean allowMs1Only, List<File> inputFiles) throws WebClientResponseException {
+        ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
+        return importMsRunDataRequestCreation(projectId, alignRuns, allowMs1Only, inputFiles).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -759,10 +764,11 @@ public class ProjectsApi {
      * @param alignRuns The alignRuns parameter
      * @param allowMs1Only The allowMs1Only parameter
      * @param inputFiles The inputFiles parameter
+     * @return ResponseEntity&lt;ImportResult&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> importMsRunDataWithHttpInfo(String projectId, Boolean alignRuns, Boolean allowMs1Only, List<File> inputFiles) throws WebClientResponseException {
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+    public ResponseEntity<ImportResult> importMsRunDataWithHttpInfo(String projectId, Boolean alignRuns, Boolean allowMs1Only, List<File> inputFiles) throws WebClientResponseException {
+        ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
         return importMsRunDataRequestCreation(projectId, alignRuns, allowMs1Only, inputFiles).toEntity(localVarReturnType).block();
     }
 
@@ -792,11 +798,11 @@ public class ProjectsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec importMsRunDataAsyncRequestCreation(String projectId, Boolean alignRuns, Boolean allowMs1Only, List<JobOptField> optFields, List<File> imputFiles) throws WebClientResponseException {
+    private ResponseSpec importMsRunDataAsJobRequestCreation(String projectId, Boolean alignRuns, Boolean allowMs1Only, List<JobOptField> optFields, List<File> imputFiles) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling importMsRunDataAsync", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling importMsRunDataAsJob", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -827,7 +833,7 @@ public class ProjectsApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/jobs/import/ms-data-files-async", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/jobs/import/ms-data-files-job", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
@@ -842,9 +848,9 @@ public class ProjectsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job importMsRunDataAsync(String projectId, Boolean alignRuns, Boolean allowMs1Only, List<JobOptField> optFields, List<File> imputFiles) throws WebClientResponseException {
+    public Job importMsRunDataAsJob(String projectId, Boolean alignRuns, Boolean allowMs1Only, List<JobOptField> optFields, List<File> imputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return importMsRunDataAsyncRequestCreation(projectId, alignRuns, allowMs1Only, optFields, imputFiles).bodyToMono(localVarReturnType).block();
+        return importMsRunDataAsJobRequestCreation(projectId, alignRuns, allowMs1Only, optFields, imputFiles).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -859,9 +865,9 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> importMsRunDataAsyncWithHttpInfo(String projectId, Boolean alignRuns, Boolean allowMs1Only, List<JobOptField> optFields, List<File> imputFiles) throws WebClientResponseException {
+    public ResponseEntity<Job> importMsRunDataAsJobWithHttpInfo(String projectId, Boolean alignRuns, Boolean allowMs1Only, List<JobOptField> optFields, List<File> imputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return importMsRunDataAsyncRequestCreation(projectId, alignRuns, allowMs1Only, optFields, imputFiles).toEntity(localVarReturnType).block();
+        return importMsRunDataAsJobRequestCreation(projectId, alignRuns, allowMs1Only, optFields, imputFiles).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -876,8 +882,8 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importMsRunDataAsyncWithResponseSpec(String projectId, Boolean alignRuns, Boolean allowMs1Only, List<JobOptField> optFields, List<File> imputFiles) throws WebClientResponseException {
-        return importMsRunDataAsyncRequestCreation(projectId, alignRuns, allowMs1Only, optFields, imputFiles);
+    public ResponseSpec importMsRunDataAsJobWithResponseSpec(String projectId, Boolean alignRuns, Boolean allowMs1Only, List<JobOptField> optFields, List<File> imputFiles) throws WebClientResponseException {
+        return importMsRunDataAsJobRequestCreation(projectId, alignRuns, allowMs1Only, optFields, imputFiles);
     }
     /**
      * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
@@ -887,6 +893,7 @@ public class ProjectsApi {
      * @param ignoreFormulas The ignoreFormulas parameter
      * @param allowMs1Only The allowMs1Only parameter
      * @param inputFiles The inputFiles parameter
+     * @return ImportResult
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec importPreprocessedDataRequestCreation(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<File> inputFiles) throws WebClientResponseException {
@@ -911,7 +918,9 @@ public class ProjectsApi {
         if (inputFiles != null)
             formParams.addAll("inputFiles", inputFiles.stream().map(FileSystemResource::new).collect(Collectors.toList()));
 
-        final String[] localVarAccepts = { };
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
         final String[] localVarContentTypes = { 
             "multipart/form-data"
@@ -920,7 +929,7 @@ public class ProjectsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
         return apiClient.invokeAPI("/api/projects/{projectId}/import/preprocessed-data-files", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
@@ -932,11 +941,12 @@ public class ProjectsApi {
      * @param ignoreFormulas The ignoreFormulas parameter
      * @param allowMs1Only The allowMs1Only parameter
      * @param inputFiles The inputFiles parameter
+     * @return ImportResult
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void importPreprocessedData(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<File> inputFiles) throws WebClientResponseException {
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        importPreprocessedDataRequestCreation(projectId, ignoreFormulas, allowMs1Only, inputFiles).bodyToMono(localVarReturnType).block();
+    public ImportResult importPreprocessedData(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<File> inputFiles) throws WebClientResponseException {
+        ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
+        return importPreprocessedDataRequestCreation(projectId, ignoreFormulas, allowMs1Only, inputFiles).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -947,10 +957,11 @@ public class ProjectsApi {
      * @param ignoreFormulas The ignoreFormulas parameter
      * @param allowMs1Only The allowMs1Only parameter
      * @param inputFiles The inputFiles parameter
+     * @return ResponseEntity&lt;ImportResult&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> importPreprocessedDataWithHttpInfo(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<File> inputFiles) throws WebClientResponseException {
-        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+    public ResponseEntity<ImportResult> importPreprocessedDataWithHttpInfo(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<File> inputFiles) throws WebClientResponseException {
+        ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
         return importPreprocessedDataRequestCreation(projectId, ignoreFormulas, allowMs1Only, inputFiles).toEntity(localVarReturnType).block();
     }
 
@@ -980,11 +991,11 @@ public class ProjectsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec importPreprocessedDataAsyncRequestCreation(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields, List<File> imputFiles) throws WebClientResponseException {
+    private ResponseSpec importPreprocessedDataAsJobRequestCreation(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields, List<File> imputFiles) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling importPreprocessedDataAsync", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling importPreprocessedDataAsJob", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -1015,7 +1026,7 @@ public class ProjectsApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/import/preprocessed-data-files-async", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/import/preprocessed-data-files-job", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
@@ -1030,9 +1041,9 @@ public class ProjectsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job importPreprocessedDataAsync(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields, List<File> imputFiles) throws WebClientResponseException {
+    public Job importPreprocessedDataAsJob(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields, List<File> imputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return importPreprocessedDataAsyncRequestCreation(projectId, ignoreFormulas, allowMs1Only, optFields, imputFiles).bodyToMono(localVarReturnType).block();
+        return importPreprocessedDataAsJobRequestCreation(projectId, ignoreFormulas, allowMs1Only, optFields, imputFiles).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -1047,9 +1058,9 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> importPreprocessedDataAsyncWithHttpInfo(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields, List<File> imputFiles) throws WebClientResponseException {
+    public ResponseEntity<Job> importPreprocessedDataAsJobWithHttpInfo(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields, List<File> imputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return importPreprocessedDataAsyncRequestCreation(projectId, ignoreFormulas, allowMs1Only, optFields, imputFiles).toEntity(localVarReturnType).block();
+        return importPreprocessedDataAsJobRequestCreation(projectId, ignoreFormulas, allowMs1Only, optFields, imputFiles).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -1064,8 +1075,8 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importPreprocessedDataAsyncWithResponseSpec(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields, List<File> imputFiles) throws WebClientResponseException {
-        return importPreprocessedDataAsyncRequestCreation(projectId, ignoreFormulas, allowMs1Only, optFields, imputFiles);
+    public ResponseSpec importPreprocessedDataAsJobWithResponseSpec(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields, List<File> imputFiles) throws WebClientResponseException {
+        return importPreprocessedDataAsJobRequestCreation(projectId, ignoreFormulas, allowMs1Only, optFields, imputFiles);
     }
     /**
      * Open an existing project-space and make it accessible via the given projectId.

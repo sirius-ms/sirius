@@ -11,7 +11,7 @@ All URIs are relative to *http://localhost:8080*
 | [**getDatabases**](SearchableDatabasesApi.md#getDatabases) | **GET** /api/databases |  |
 | [**getIncludedDatabases**](SearchableDatabasesApi.md#getIncludedDatabases) | **GET** /api/databases/included |  |
 | [**importIntoDatabase**](SearchableDatabasesApi.md#importIntoDatabase) | **POST** /api/databases/{databaseId}/import/from-files | Start import of structure and spectra files into the specified database. |
-| [**importIntoDatabaseAsync**](SearchableDatabasesApi.md#importIntoDatabaseAsync) | **POST** /api/databases/{databaseId}/import/from-files-async | Start import of structure and spectra files into the specified database. |
+| [**importIntoDatabaseAsJob**](SearchableDatabasesApi.md#importIntoDatabaseAsJob) | **POST** /api/databases/{databaseId}/import/from-files-job | Start import of structure and spectra files into the specified database. |
 | [**removeDatabase**](SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} |  |
 | [**updateDatabase**](SearchableDatabasesApi.md#updateDatabase) | **PUT** /api/databases/{databaseId} |  |
 
@@ -475,9 +475,9 @@ No authorization required
 | **200** | Job of the import command to be executed. |  -  |
 
 
-## importIntoDatabaseAsync
+## importIntoDatabaseAsJob
 
-> Job importIntoDatabaseAsync(databaseId, bufferSize, optFields, inputFiles)
+> Job importIntoDatabaseAsJob(databaseId, bufferSize, optFields, inputFiles)
 
 Start import of structure and spectra files into the specified database.
 
@@ -504,10 +504,10 @@ public class Example {
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         List<File> inputFiles = Arrays.asList(); // List<File> | 
         try {
-            Job result = apiInstance.importIntoDatabaseAsync(databaseId, bufferSize, optFields, inputFiles);
+            Job result = apiInstance.importIntoDatabaseAsJob(databaseId, bufferSize, optFields, inputFiles);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling SearchableDatabasesApi#importIntoDatabaseAsync");
+            System.err.println("Exception when calling SearchableDatabasesApi#importIntoDatabaseAsJob");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());

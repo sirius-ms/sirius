@@ -123,8 +123,8 @@ public class SearchableDatabaseController {
      * @param optFields  set of optional fields to be included. Use 'none' only to override defaults.
      * @return Job of the import command to be executed.
      */
-    @PostMapping(value = "/{databaseId}/import/from-files-async", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public Job importIntoDatabaseAsync(@PathVariable String databaseId,
+    @PostMapping(value = "/{databaseId}/import/from-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Job importIntoDatabaseAsJob(@PathVariable String databaseId,
                                        @RequestBody MultipartFile[] inputFiles,
                                        @RequestParam(defaultValue = "1000") int bufferSize,
                                        @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields

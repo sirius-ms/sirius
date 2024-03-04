@@ -182,9 +182,9 @@ Class | Method | HTTP request | Description
 *ProjectsApi* | [**getProjectSpace**](docs/ProjectsApi.md#getProjectSpace) | **GET** /api/projects/{projectId} | Get project space info by its projectId.
 *ProjectsApi* | [**getProjectSpaces**](docs/ProjectsApi.md#getProjectSpaces) | **GET** /api/projects | List opened project spaces.
 *ProjectsApi* | [**importMsRunData**](docs/ProjectsApi.md#importMsRunData) | **POST** /api/projects/{projectId}/import/ms-data-files | Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
-*ProjectsApi* | [**importMsRunDataAsync**](docs/ProjectsApi.md#importMsRunDataAsync) | **POST** /api/projects/{projectId}/jobs/import/ms-data-files-async | Import and Align full MS-Runs from various formats into the specified project as background job.
+*ProjectsApi* | [**importMsRunDataAsJob**](docs/ProjectsApi.md#importMsRunDataAsJob) | **POST** /api/projects/{projectId}/jobs/import/ms-data-files-job | Import and Align full MS-Runs from various formats into the specified project as background job.
 *ProjectsApi* | [**importPreprocessedData**](docs/ProjectsApi.md#importPreprocessedData) | **POST** /api/projects/{projectId}/import/preprocessed-data-files | Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
-*ProjectsApi* | [**importPreprocessedDataAsync**](docs/ProjectsApi.md#importPreprocessedDataAsync) | **POST** /api/projects/{projectId}/import/preprocessed-data-files-async | Import ms/ms data from the given format into the specified project-space as background job.
+*ProjectsApi* | [**importPreprocessedDataAsJob**](docs/ProjectsApi.md#importPreprocessedDataAsJob) | **POST** /api/projects/{projectId}/import/preprocessed-data-files-job | Import ms/ms data from the given format into the specified project-space as background job.
 *ProjectsApi* | [**openProjectSpace**](docs/ProjectsApi.md#openProjectSpace) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId.
 *SearchableDatabasesApi* | [**addDatabases**](docs/SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases | 
 *SearchableDatabasesApi* | [**createDatabase**](docs/SearchableDatabasesApi.md#createDatabase) | **POST** /api/databases/{databaseId} | 
@@ -193,7 +193,7 @@ Class | Method | HTTP request | Description
 *SearchableDatabasesApi* | [**getDatabases**](docs/SearchableDatabasesApi.md#getDatabases) | **GET** /api/databases | 
 *SearchableDatabasesApi* | [**getIncludedDatabases**](docs/SearchableDatabasesApi.md#getIncludedDatabases) | **GET** /api/databases/included | 
 *SearchableDatabasesApi* | [**importIntoDatabase**](docs/SearchableDatabasesApi.md#importIntoDatabase) | **POST** /api/databases/{databaseId}/import/from-files | Start import of structure and spectra files into the specified database.
-*SearchableDatabasesApi* | [**importIntoDatabaseAsync**](docs/SearchableDatabasesApi.md#importIntoDatabaseAsync) | **POST** /api/databases/{databaseId}/import/from-files-async | Start import of structure and spectra files into the specified database.
+*SearchableDatabasesApi* | [**importIntoDatabaseAsJob**](docs/SearchableDatabasesApi.md#importIntoDatabaseAsJob) | **POST** /api/databases/{databaseId}/import/from-files-job | Start import of structure and spectra files into the specified database.
 *SearchableDatabasesApi* | [**removeDatabase**](docs/SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} | 
 *SearchableDatabasesApi* | [**updateDatabase**](docs/SearchableDatabasesApi.md#updateDatabase) | **PUT** /api/databases/{databaseId} | 
 
@@ -235,6 +235,7 @@ Class | Method | HTTP request | Description
  - [FragmentNode](docs/FragmentNode.md)
  - [FragmentationTree](docs/FragmentationTree.md)
  - [GuiInfo](docs/GuiInfo.md)
+ - [ImportResult](docs/ImportResult.md)
  - [Info](docs/Info.md)
  - [Instrument](docs/Instrument.md)
  - [IsotopePatternAnnotation](docs/IsotopePatternAnnotation.md)

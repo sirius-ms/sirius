@@ -594,11 +594,11 @@ public class SearchableDatabasesApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec importIntoDatabaseAsyncRequestCreation(String databaseId, Integer bufferSize, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
+    private ResponseSpec importIntoDatabaseAsJobRequestCreation(String databaseId, Integer bufferSize, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'databaseId' is set
         if (databaseId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'databaseId' when calling importIntoDatabaseAsync", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'databaseId' when calling importIntoDatabaseAsJob", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -628,7 +628,7 @@ public class SearchableDatabasesApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return apiClient.invokeAPI("/api/databases/{databaseId}/import/from-files-async", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/databases/{databaseId}/import/from-files-job", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
@@ -642,9 +642,9 @@ public class SearchableDatabasesApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job importIntoDatabaseAsync(String databaseId, Integer bufferSize, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
+    public Job importIntoDatabaseAsJob(String databaseId, Integer bufferSize, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return importIntoDatabaseAsyncRequestCreation(databaseId, bufferSize, optFields, inputFiles).bodyToMono(localVarReturnType).block();
+        return importIntoDatabaseAsJobRequestCreation(databaseId, bufferSize, optFields, inputFiles).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -658,9 +658,9 @@ public class SearchableDatabasesApi {
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> importIntoDatabaseAsyncWithHttpInfo(String databaseId, Integer bufferSize, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
+    public ResponseEntity<Job> importIntoDatabaseAsJobWithHttpInfo(String databaseId, Integer bufferSize, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return importIntoDatabaseAsyncRequestCreation(databaseId, bufferSize, optFields, inputFiles).toEntity(localVarReturnType).block();
+        return importIntoDatabaseAsJobRequestCreation(databaseId, bufferSize, optFields, inputFiles).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -674,8 +674,8 @@ public class SearchableDatabasesApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importIntoDatabaseAsyncWithResponseSpec(String databaseId, Integer bufferSize, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
-        return importIntoDatabaseAsyncRequestCreation(databaseId, bufferSize, optFields, inputFiles);
+    public ResponseSpec importIntoDatabaseAsJobWithResponseSpec(String databaseId, Integer bufferSize, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
+        return importIntoDatabaseAsJobRequestCreation(databaseId, bufferSize, optFields, inputFiles);
     }
     /**
      * 

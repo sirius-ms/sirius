@@ -13,9 +13,9 @@ All URIs are relative to *http://localhost:8080*
 | [**getProjectSpace**](ProjectsApi.md#getProjectSpace) | **GET** /api/projects/{projectId} | Get project space info by its projectId. |
 | [**getProjectSpaces**](ProjectsApi.md#getProjectSpaces) | **GET** /api/projects | List opened project spaces. |
 | [**importMsRunData**](ProjectsApi.md#importMsRunData) | **POST** /api/projects/{projectId}/import/ms-data-files | Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML) |
-| [**importMsRunDataAsync**](ProjectsApi.md#importMsRunDataAsync) | **POST** /api/projects/{projectId}/jobs/import/ms-data-files-async | Import and Align full MS-Runs from various formats into the specified project as background job. |
+| [**importMsRunDataAsJob**](ProjectsApi.md#importMsRunDataAsJob) | **POST** /api/projects/{projectId}/jobs/import/ms-data-files-job | Import and Align full MS-Runs from various formats into the specified project as background job. |
 | [**importPreprocessedData**](ProjectsApi.md#importPreprocessedData) | **POST** /api/projects/{projectId}/import/preprocessed-data-files | Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp) |
-| [**importPreprocessedDataAsync**](ProjectsApi.md#importPreprocessedDataAsync) | **POST** /api/projects/{projectId}/import/preprocessed-data-files-async | Import ms/ms data from the given format into the specified project-space as background job. |
+| [**importPreprocessedDataAsJob**](ProjectsApi.md#importPreprocessedDataAsJob) | **POST** /api/projects/{projectId}/import/preprocessed-data-files-job | Import ms/ms data from the given format into the specified project-space as background job. |
 | [**openProjectSpace**](ProjectsApi.md#openProjectSpace) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId. |
 
 
@@ -555,7 +555,7 @@ No authorization required
 
 ## importMsRunData
 
-> importMsRunData(projectId, alignRuns, allowMs1Only, inputFiles)
+> ImportResult importMsRunData(projectId, alignRuns, allowMs1Only, inputFiles)
 
 Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
 
@@ -582,7 +582,8 @@ public class Example {
         Boolean allowMs1Only = true; // Boolean | 
         List<File> inputFiles = Arrays.asList(); // List<File> | 
         try {
-            apiInstance.importMsRunData(projectId, alignRuns, allowMs1Only, inputFiles);
+            ImportResult result = apiInstance.importMsRunData(projectId, alignRuns, allowMs1Only, inputFiles);
+            System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importMsRunData");
             System.err.println("Status code: " + e.getCode());
@@ -606,7 +607,7 @@ public class Example {
 
 ### Return type
 
-null (empty response body)
+[**ImportResult**](ImportResult.md)
 
 ### Authorization
 
@@ -615,7 +616,7 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: multipart/form-data
-- **Accept**: Not defined
+- **Accept**: application/json
 
 
 ### HTTP response details
@@ -624,9 +625,9 @@ No authorization required
 | **200** | OK |  -  |
 
 
-## importMsRunDataAsync
+## importMsRunDataAsJob
 
-> Job importMsRunDataAsync(projectId, alignRuns, allowMs1Only, optFields, imputFiles)
+> Job importMsRunDataAsJob(projectId, alignRuns, allowMs1Only, optFields, imputFiles)
 
 Import and Align full MS-Runs from various formats into the specified project as background job.
 
@@ -654,10 +655,10 @@ public class Example {
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         List<File> imputFiles = Arrays.asList(); // List<File> | 
         try {
-            Job result = apiInstance.importMsRunDataAsync(projectId, alignRuns, allowMs1Only, optFields, imputFiles);
+            Job result = apiInstance.importMsRunDataAsJob(projectId, alignRuns, allowMs1Only, optFields, imputFiles);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling ProjectsApi#importMsRunDataAsync");
+            System.err.println("Exception when calling ProjectsApi#importMsRunDataAsJob");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -700,7 +701,7 @@ No authorization required
 
 ## importPreprocessedData
 
-> importPreprocessedData(projectId, ignoreFormulas, allowMs1Only, inputFiles)
+> ImportResult importPreprocessedData(projectId, ignoreFormulas, allowMs1Only, inputFiles)
 
 Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
 
@@ -727,7 +728,8 @@ public class Example {
         Boolean allowMs1Only = true; // Boolean | 
         List<File> inputFiles = Arrays.asList(); // List<File> | 
         try {
-            apiInstance.importPreprocessedData(projectId, ignoreFormulas, allowMs1Only, inputFiles);
+            ImportResult result = apiInstance.importPreprocessedData(projectId, ignoreFormulas, allowMs1Only, inputFiles);
+            System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importPreprocessedData");
             System.err.println("Status code: " + e.getCode());
@@ -751,7 +753,7 @@ public class Example {
 
 ### Return type
 
-null (empty response body)
+[**ImportResult**](ImportResult.md)
 
 ### Authorization
 
@@ -760,7 +762,7 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: multipart/form-data
-- **Accept**: Not defined
+- **Accept**: application/json
 
 
 ### HTTP response details
@@ -769,9 +771,9 @@ No authorization required
 | **200** | OK |  -  |
 
 
-## importPreprocessedDataAsync
+## importPreprocessedDataAsJob
 
-> Job importPreprocessedDataAsync(projectId, ignoreFormulas, allowMs1Only, optFields, imputFiles)
+> Job importPreprocessedDataAsJob(projectId, ignoreFormulas, allowMs1Only, optFields, imputFiles)
 
 Import ms/ms data from the given format into the specified project-space as background job.
 
@@ -799,10 +801,10 @@ public class Example {
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         List<File> imputFiles = Arrays.asList(); // List<File> | 
         try {
-            Job result = apiInstance.importPreprocessedDataAsync(projectId, ignoreFormulas, allowMs1Only, optFields, imputFiles);
+            Job result = apiInstance.importPreprocessedDataAsJob(projectId, ignoreFormulas, allowMs1Only, optFields, imputFiles);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling ProjectsApi#importPreprocessedDataAsync");
+            System.err.println("Exception when calling ProjectsApi#importPreprocessedDataAsJob");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
