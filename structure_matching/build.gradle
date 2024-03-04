@@ -5,9 +5,10 @@ plugins {
 
 dependencies{
 
-    implementation group: "org.openscience.cdk", name: "cdk-bundle", version: "2.1.1"
+    api "org.openscience.cdk:cdk-bundle:$cdk_version"
     implementation group: "de.unijena.bioinf.ms", name: "chemistry_base", version: "$siriusVersion"
 
+    testImplementation "org.openscience.cdk:cdk-bundle:$cdk_version"
     testImplementation group: "de.unijena.bioinf.ms", name: "chemistry_base", version: "$siriusVersion"
     testImplementation group: "de.unijena.bioinf.ms", name: "io", version: "$siriusVersion"
     testImplementation group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
