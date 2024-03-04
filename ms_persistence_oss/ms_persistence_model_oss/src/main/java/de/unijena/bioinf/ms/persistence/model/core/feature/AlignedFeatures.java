@@ -91,22 +91,6 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
 //                .map(Stream::toList);
 //    }
 
-//
-//    //todo should we denormalize and store a boolean if blank feature is aligned so that we do not have to fetch the features to check?
-//
-//    public boolean containsBlank() {
-//        return getFeatures().orElseThrow(() -> new IllegalArgumentException("No features found. Please fetch features before checking for blank run."))
-//                .stream().anyMatch(Feature::isBlank);
-//    }
-//
-//    public SimpleSpectrum getIsotopePattern() {
-//        return getFeatures().orElseThrow(() -> new IllegalStateException("No features found. Please fetch features before requesting isotope pattern."))
-//                .stream()
-//                .filter(f -> f.getFeatureId() == isotopePatternFeatureId)
-//                .findFirst()
-//                .map(Feature::getIsotopePattern).orElse(null);
-//    }
-//
     public static AlignedFeatures singleton(Feature feature) {
 //        AlignedFeaturesBuilder b = AlignedFeatures.builder()
 //                .features(List.of(feature))
