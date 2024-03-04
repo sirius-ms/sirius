@@ -61,6 +61,8 @@ dependencies {
     //spring data for pagination and sorting
     implementation 'org.springframework.data:spring-data-commons'
 
+    implementation "org.springframework.boot:spring-boot-starter-validation"
+
     // expose operational information about the running application via /actuator
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation 'it.unimi.dsi:fastutil:8.5.8' //replaces old spring version
@@ -85,7 +87,7 @@ dependencies {
 //    implementation 'io.micrometer:micrometer-registry-prometheus'
     //must match minio version
     implementation 'com.squareup.okhttp3:okhttp:4.10.0'
-    api "jakarta.servlet:jakarta.servlet-api"
+    implementation "jakarta.servlet:jakarta.servlet-api"
 }
 //todo use logback instead of java util logging! => needs support in jjobs
 configurations.each {Configuration conf ->
