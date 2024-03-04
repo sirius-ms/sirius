@@ -361,7 +361,7 @@ public final class BackgroundRuns<P extends ProjectSpaceManager<I>, I extends In
                     logInfo("Imported compounds collected...");
                 } else if (computation instanceof ImportFromMemoryWorkflow) {
                     logInfo("Collecting imported compounds...");
-                    instanceIds = ((ImportFromMemoryWorkflow) computation).getImportedCompounds();
+                    instanceIds = ((ImportFromMemoryWorkflow) computation).getImportedInstanceIds();
                     logInfo("Imported compounds collected...");
                 }
                 logInfo("Freeing up memory...");

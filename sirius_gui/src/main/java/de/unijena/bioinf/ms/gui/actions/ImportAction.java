@@ -106,7 +106,7 @@ public class ImportAction extends AbstractGuiAction {
 
         try { //todo execute lc-ms data  job if needed
             LoadingBackroundTask<Job> task = gui.applySiriusClient((c, pid) -> {
-                Job job = c.projects().importPreprocessedDataAsync(pid,
+                Job job = c.projects().importPreprocessedDataAsJob(pid,
                         PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", true),
                         PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.ignoreFormulas", false),
                         List.of(JobOptField.PROGRESS),

@@ -41,7 +41,7 @@ public class ImportFromMemoryWorkflow implements Workflow, ProgressSupport {
     private final boolean allowMs1OnlyData;
     private List<CompoundContainerId> importedCompounds = null;
 
-    public List<CompoundContainerId> getImportedCompounds() {
+    public List<CompoundContainerId> getImportedInstanceIds() {
         return importedCompounds;
     }
 
