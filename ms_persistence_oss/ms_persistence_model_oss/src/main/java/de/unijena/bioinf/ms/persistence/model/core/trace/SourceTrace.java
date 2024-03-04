@@ -41,7 +41,6 @@ public class SourceTrace extends AbstractTrace {
     @ToString.Include
     private long sourceTraceId;
 
-    // TODO mzml scan numbers? (we might not have saved the scans!)
     /**
      * Ids of the scans this trace is build from
      * should be sorted by RT
