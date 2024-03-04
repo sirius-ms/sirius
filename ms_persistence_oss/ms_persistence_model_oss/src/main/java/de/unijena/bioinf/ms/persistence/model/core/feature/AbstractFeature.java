@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.feature;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ms.persistence.model.core.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MergedMSMSScan;
@@ -59,6 +60,11 @@ public abstract class AbstractFeature {
     protected double averageMass;
 
     /**
+     * ion type
+     */
+    protected PrecursorIonType ionType;
+
+    /**
      * retention time (start, apex, end)
      */
     protected RetentionTime retentionTime;
@@ -67,11 +73,6 @@ public abstract class AbstractFeature {
      * signal-to-noise ratio at the apex
      */
     protected double snr;
-
-//    /**
-//     * Merged MS/MS spectra of this feature
-//     */
-//    protected MergedMSMSScan mergedMSMSScan;
 
     /**
      * Trace segment that defines this feature
