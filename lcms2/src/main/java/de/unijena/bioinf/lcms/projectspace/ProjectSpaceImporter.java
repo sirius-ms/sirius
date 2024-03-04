@@ -21,82 +21,61 @@
 package de.unijena.bioinf.lcms.projectspace;
 
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
-import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
-import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.Run;
-import de.unijena.bioinf.ms.persistence.model.core.run.SampleStats;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
-import de.unijena.bioinf.storage.db.nosql.Database;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
+import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 
 public class ProjectSpaceImporter implements ImportStrategy {
 
-    private Database<?> store;
+    private SiriusProjectDocumentDatabase<?> store;
 
     public ProjectSpaceImporter() {
         // TODO how to get currently open project space?
     }
 
-    public ProjectSpaceImporter(Database<?> store) {
+    public ProjectSpaceImporter(SiriusProjectDocumentDatabase<?> store) {
         this.store = store;
     }
 
     @Override
     public void importRun(Run run) throws IOException {
-        store.insert(run);
+        store.getStorage().insert(run);
     }
 
     @Override
     public void updateRun(Run run) throws IOException {
-        store.upsert(run);
+        store.getStorage().upsert(run);
     }
 
     @Override
     public void importMergedRun(MergedRun mergedRun) throws IOException {
-        store.insert(mergedRun);
+        store.getStorage().insert(mergedRun);
     }
 
     @Override
     public void importScan(Scan scan) throws IOException {
-        store.insert(scan);
+        store.getStorage().insert(scan);
     }
 
     @Override
     public void importMSMSScan(MSMSScan scan) throws IOException {
-        store.insert(scan);
+        store.getStorage().insert(scan);
     }
 
     @Override
     public void importTrace(AbstractTrace trace) throws IOException {
-        store.insert(trace);
+        store.getStorage().insert(trace);
     }
 
     @Override
     public void importAlignedFeature(AlignedFeatures alignedFeatures) throws IOException {
-        store.insert(alignedFeatures);
-
-        List<Feature> childFeatures = alignedFeatures.getFeatures().orElse(Collections.emptyList()).stream().peek(f -> f.setAlignedFeatureId(alignedFeatures.getAlignedFeatureId())).toList();
-        store.insertAll(childFeatures);
-        alignedFeatures.setFeatureIds(LongArrayList.toListWithExpectedSize(childFeatures.stream().mapToLong(Feature::getFeatureId), childFeatures.size()));
-
-        List<AlignedIsotopicFeatures> isotopicFeatures = alignedFeatures.getIsotopicFeatures().orElse(Collections.emptyList()).stream().peek(f -> f.setAlignedFeatureId(alignedFeatures.getAlignedFeatureId())).toList();
-        store.insertAll(isotopicFeatures);
-
-        for (AlignedIsotopicFeatures isotopicFeature : isotopicFeatures) {
-            List<Feature> isotopicChildFeatures = isotopicFeature.getFeatures().orElse(Collections.emptyList()).stream().peek(f -> f.setAlignedFeatureId(isotopicFeature.getAlignedIsotopeFeatureId())).toList();
-            isotopicFeature.setFeatureIds(LongArrayList.toListWithExpectedSize(isotopicChildFeatures.stream().mapToLong(Feature::getFeatureId), isotopicChildFeatures.size()));
-        }
-        store.upsertAll(isotopicFeatures);
-
-        alignedFeatures.setIsotopicFeaturesIds(LongArrayList.toListWithExpectedSize(isotopicFeatures.stream().mapToLong(AlignedIsotopicFeatures::getAlignedIsotopeFeatureId), isotopicFeatures.size()));
-        store.upsert(alignedFeatures);
+        store.importAlignedFeatures(List.of(alignedFeatures));
     }
 
 }

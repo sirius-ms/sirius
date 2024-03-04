@@ -20,10 +20,12 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.feature;
 
-import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Id;
 import lombok.*;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Optional;
 
 /**
  * Edge between two {@link AlignedFeatures}s
@@ -40,8 +42,26 @@ public class CorrelatedIonPair {
     @Id
     private long ionPairId;
 
+    private long compoundId;
+
     private long alignedFeatureId1;
     private long alignedFeatureId2;
+
+    @JsonIgnore
+    @ToString.Exclude
+    private AlignedFeatures alignedFeatures1;
+
+    @JsonIgnore
+    @ToString.Exclude
+    private AlignedFeatures alignedFeatures2;
+
+    public Optional<AlignedFeatures> getAlignedFeatures1() {
+        return Optional.ofNullable(alignedFeatures1);
+    }
+
+    public Optional<AlignedFeatures> getAlignedFeatures2() {
+        return Optional.ofNullable(alignedFeatures2);
+    }
 
     @NotNull
     private Type type;
