@@ -53,23 +53,23 @@ public class SearchableDatabaseController {
         this.computeService = computeService;
     }
 
-    @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<SearchableDatabase> getDatabases(@RequestParam(defaultValue = "false") boolean includeStats) {
         return chemDbService.findAll(includeStats);
     }
 
-    @GetMapping(value = "/custom", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/custom", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<SearchableDatabase> getCustomDatabases(@RequestParam(defaultValue = "false") boolean includeStats) {
         return getDatabases(includeStats).stream().filter(SearchableDatabase::isCustomDb).toList();
     }
 
-    @GetMapping(value = "/included", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/included", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<SearchableDatabase> getIncludedDatabases(@RequestParam(defaultValue = "false") boolean includeStats) {
         return getDatabases(includeStats).stream().filter(not(SearchableDatabase::isCustomDb)).toList();
     }
 
 
-    @GetMapping(value = "/{databaseId}", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{databaseId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public SearchableDatabase getDatabase(@PathVariable String databaseId, @RequestParam(defaultValue = "true") boolean includeStats) {
         return chemDbService.findById(databaseId, includeStats);
     }
@@ -90,7 +90,7 @@ public class SearchableDatabaseController {
         return chemDbService.add(pathToDatabases);
     }
 
-    @DeleteMapping(value = "/{databaseId}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @DeleteMapping(value = "/{databaseId}")
     public void removeDatabase(@PathVariable String databaseId, @RequestParam(defaultValue = "false") boolean delete) {
         chemDbService.remove(databaseId, delete);
     }
