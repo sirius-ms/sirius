@@ -162,8 +162,8 @@ public class ChemDbServiceImpl implements ChemDbService {
     }
 
     @Override
-    public List<SearchableDatabase> add(List<String> projectLocation) {
-        List<File> psFiles = projectLocation.stream().distinct().map(File::new).distinct().toList();
+    public List<SearchableDatabase> add(List<String> pathToDatabases) {
+        List<File> psFiles = pathToDatabases.stream().distinct().map(File::new).distinct().toList();
         {
             String existsError = psFiles.stream().filter(f -> !f.isFile() || !f.exists()).map(File::getAbsolutePath)
                     .collect(Collectors.joining("', '"));
@@ -195,7 +195,7 @@ public class ChemDbServiceImpl implements ChemDbService {
                         "Databases with the names '" + idError + "' already exist.");
         }
 
-        List<SearchableDatabase> dbs = projectLocation.stream().map(location -> {
+        List<SearchableDatabase> dbs = pathToDatabases.stream().map(location -> {
             try {
                 CustomDatabase newDb = CustomDatabases.open(location, true, version());
                 return SearchableDatabases.of(newDb);

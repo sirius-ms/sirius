@@ -45,6 +45,7 @@ import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.*;
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.projectspace.ImportFromMemoryWorkflow;
 import de.unijena.bioinf.ms.middleware.controller.AlignedFeatureController;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
@@ -134,7 +135,6 @@ public class SiriusProjectSpaceImpl implements Project {
         if (alignRuns){
             throw new UnsupportedOperationException("LCMS import not implemented");
             //todo fleisch implement
-
         }else {
             return importPreprocessedData(inputResources, false, allowMs1OnlyData);
         }

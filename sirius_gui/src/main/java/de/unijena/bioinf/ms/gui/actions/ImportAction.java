@@ -96,91 +96,41 @@ public class ImportAction extends AbstractGuiAction {
 
     //ATTENTION Synchronizing around background tasks that block gui thread is dangerous
     public synchronized void importOneExperimentPerLocation(@NotNull final InputFilesOptions input, Window popupOwner) {
-        boolean align = Jobs.runInBackgroundAndLoad(popupOwner, "Checking for alignable input...", () ->
+        boolean lcms = Jobs.runInBackgroundAndLoad(popupOwner, "Analyzing input...", () ->
                         (input.msInput.msParserfiles.size() > 1 && input.msInput.projects.size() == 0 && input.msInput.msParserfiles.keySet().stream().map(p -> p.getFileName().toString().toLowerCase()).allMatch(n -> n.endsWith(".mzml") || n.endsWith(".mzxml"))))
                 .getResult();
 
         // todo this is hacky we need some real view for that at some stage.
-        if (align)
-            align = new QuestionDialog(popupOwner, "<html><body> You inserted multiple LC-MS/MS Runs. <br> Do you want to Align them during import?</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
 
-        try { //todo execute lc-ms data  job if needed
-            LoadingBackroundTask<Job> task = gui.applySiriusClient((c, pid) -> {
-                Job job = c.projects().importPreprocessedDataAsJob(pid,
-                        PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", true),
-                        PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.ignoreFormulas", false),
-                        List.of(JobOptField.PROGRESS),
-                        input.msInput.msParserfiles.keySet().stream().map(Path::toFile).toList()
-                );
-                return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Auto-Importing supported Files...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
-            });
+
+        try {
+            LoadingBackroundTask<Job> task;
+            if (lcms) {
+                boolean align = new QuestionDialog(popupOwner, "<html><body> You inserted multiple LC-MS/MS Runs. <br> Do you want to Align them during import?</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
+                task = gui.applySiriusClient((c, pid) -> {
+                    Job job = c.projects().importMsRunDataAsJob(pid,
+                            align,
+                            PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", true),
+                            List.of(JobOptField.PROGRESS),
+                            input.msInput.msParserfiles.keySet().stream().map(Path::toFile).toList()
+                    );
+                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Aligning LC-MS runs...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
+                });
+            } else {
+                task = gui.applySiriusClient((c, pid) -> {
+                    Job job = c.projects().importPreprocessedDataAsJob(pid,
+                            PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.ignoreFormulas", false),
+                            PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", true),
+                            List.of(JobOptField.PROGRESS),
+                            input.msInput.msParserfiles.keySet().stream().map(Path::toFile).toList()
+                    );
+                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Auto-Importing supported Files...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
+                });
+            }
 
             task.awaitResult();
         } catch (ExecutionException e) {
-            new StacktraceDialog(gui.getMainFrame(), "Error when imorting data!", e);
+            new StacktraceDialog(gui.getMainFrame(), "Error when importing data!", e);
         }
-        //todo nightsky implement project space import with compatibility checks
-//            if (align) {
-//                //todo would be nice to update all at once!
-//                final LcmsAlignSubToolJob j = new LcmsAlignSubToolJob(input, this, null, new LcmsAlignOptions());
-//                Jobs.runInBackgroundAndLoad(popupOwner, j);
-//                INSTANCE_LIST.addAll(j.getImportedCompounds().stream()
-//                        .map(this::getInstanceFromCompound)
-//                        .toList());
-//            } else {
-
-//                Jobs.runInBackgroundAndLoad(popupOwner, "Checking for projects data...", new TinyBackgroundJJob<List<Path>>() {
-//                    @Override
-//                    protected List<Path> compute() throws Exception {
-//                        if (input.msInput.projects.size() == 0)
-//                            return List.of();
-//                        final List<Path> out = new ArrayList<>(input.msInput.projects.size());
-//
-//                        for (Path p : input.msInput.projects.keySet()) {
-//                            gui.getSiriusClient().projects().openProjectSpace(null, p.normalize().toString()).
-//
-//                            if (InstanceImporter.checkDataCompatibility(p, GuiProjectSpaceManager.this, this::checkForInterruption) != null)
-//                                out.add(p);
-//                        }
-//                        return out;
-//                    }
-//                }).getResult();
-
-                /*final List<Path> outdated = Jobs.runInBackgroundAndLoad(popupOwner, "Checking for incompatible data...", new TinyBackgroundJJob<List<Path>>() {
-                    @Override
-                    protected List<Path> compute() throws Exception {
-                        if (input.msInput.projects.size() == 0)
-                            return List.of();
-                        final List<Path> out = new ArrayList<>(input.msInput.projects.size());
-                        for (Path p : input.msInput.projects.keySet()) {
-                            if (InstanceImporter.checkDataCompatibility(p, GuiProjectSpaceManager.this, this::checkForInterruption) != null)
-                                out.add(p);
-                        }
-                        return out;
-                    }
-                }).getResult();
-
-                boolean updateIfNeeded = !outdated.isEmpty() && new QuestionDialog(popupOwner, GuiUtils.formatToolTip(
-                        "The following input projects are incompatible with the target", "'" + this.projectSpace().getLocation() + "'", "",
-                        outdated.stream().map(Path::getFileName).map(Path::toString).collect(Collectors.joining(",")), "",
-                        "Do you wish to import and update the fingerprint data?", "WARNING: All fingerprint related results will be excluded during import (CSI:FingerID, CANOPUS)")).isSuccess();
-
-                InstanceImporter importer = new InstanceImporter(this,
-                        x -> {
-                            if (x.getPrecursorIonType() != null) {
-                                return true;
-                            } else {
-                                LOG.warn("Skipping `" + x.getName() + "` because of Missing IonType! This is likely to be A empty Measurement.");
-                                return false;
-                            }
-                        },
-                        x -> true, false, updateIfNeeded
-                );*/
-
-//                List<InstanceBean> imported = Optional.ofNullable(Jobs.runInBackgroundAndLoad(popupOwner, "Auto-Importing supported Files...", importer.makeImportJJob(input))
-//                        .getResult()).map(c -> c.stream().map(this::getInstanceFromCompound).collect(Collectors.toList())).orElse(List.of());
-//
-//            }
-
     }
 }

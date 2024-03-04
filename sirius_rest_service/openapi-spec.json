@@ -310,7 +310,7 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SearchableDatabase"
                 }
@@ -347,7 +347,7 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SearchableDatabase"
                 }
@@ -384,7 +384,7 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SearchableDatabase"
                 }
@@ -725,7 +725,7 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "imputFiles": {
+                  "inputFiles": {
                     "type": "array",
                     "items": {
                       "type": "string",
@@ -1509,7 +1509,7 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
@@ -1543,7 +1543,7 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
@@ -1553,7 +1553,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/api/databases/{databaseId}/import/from-files": {
@@ -4305,7 +4306,7 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {
@@ -4339,7 +4340,7 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "type": "array",
                   "items": {

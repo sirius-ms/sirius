@@ -55,5 +55,5 @@ public interface ChemDbService {
         return add(List.of(location)).stream().findFirst().orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Could not find database at location: " + location));
     }
-    List<SearchableDatabase> add(List<String> pathToProjects);
+    List<SearchableDatabase> add(List<String> pathToDatabases);
 }
