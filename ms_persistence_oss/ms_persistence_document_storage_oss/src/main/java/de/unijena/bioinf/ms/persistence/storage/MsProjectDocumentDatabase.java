@@ -22,17 +22,17 @@ package de.unijena.bioinf.ms.persistence.storage;
 
 import de.unijena.bioinf.ms.persistence.model.Tag;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
-import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
-import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
-import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
-import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
+import de.unijena.bioinf.ms.persistence.model.core.feature.*;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.Run;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
-import de.unijena.bioinf.storage.db.nosql.*;
+import de.unijena.bioinf.storage.db.nosql.Database;
+import de.unijena.bioinf.storage.db.nosql.Index;
+import de.unijena.bioinf.storage.db.nosql.IndexType;
+import de.unijena.bioinf.storage.db.nosql.Metadata;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import org.jetbrains.annotations.NotNull;
@@ -110,8 +110,6 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                         new Index("rt.end", IndexType.NON_UNIQUE));
     }
 
-    // TODO re-do all fetches!
-
     default Stream<Compound> getAllCompounds() throws IOException {
         return getStorage().findAllStr(Compound.class);
     }
@@ -126,9 +124,7 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
 
     default void fetchCorrelatedIonPairs(@NotNull final Compound compound) {
         try {
-            getStorage().fetchChildren(
-                    compound, "correlatedIonPairs", Filter.build()
-                            .inLong("ionPairId", compound.getCorrelatedIonPairIds().toLongArray()), CorrelatedIonPair.class);
+            getStorage().fetchAllChildren(compound, "compoundId", "correlatedIonPairs", CorrelatedIonPair.class);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -138,34 +134,9 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
         return getStorage().findAllStr(AlignedFeatures.class);
     }
 
-    default void fetchFeatures(@NotNull final AlignedFeatures alignedFeatures) {
+    default <A extends AbstractAlignedFeatures> void fetchFeatures(@NotNull final A alignedFeatures) {
         try {
             getStorage().fetchAllChildren(alignedFeatures, "alignedFeatureId", "features", Feature.class);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    default void fetchMsmsScans(@NotNull final AlignedFeatures alignedFeatures) {
-        // FIXME
-//        if (alignedFeatures.getFeatures().isEmpty())
-//            fetchFeatures(alignedFeatures);
-//
-//        alignedFeatures.getFeatures().ifPresent(fs -> fs.stream().filter(f -> f.getMsms().isEmpty())
-//                .forEach(this::fetchMsmsScans));
-    }
-
-    default void fetchMsmsScans(@NotNull final Feature feature) {
-        try {
-            getStorage().fetchAllChildren(feature, "featureId", "msms", MSMSScan.class);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    default void fetchApexScans(@NotNull final Feature feature) {
-        try {
-            getStorage().fetchAllChildren(feature, "apexScanId", "scanId", "apexScan", Scan.class);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
