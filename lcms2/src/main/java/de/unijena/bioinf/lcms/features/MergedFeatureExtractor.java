@@ -3,6 +3,7 @@ package de.unijena.bioinf.lcms.features;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.lcms.merge.MergedTrace;
 import de.unijena.bioinf.lcms.msms.Ms2MergeStrategy;
@@ -13,6 +14,8 @@ import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
 import de.unijena.bioinf.ms.persistence.model.core.run.SampleStats;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
@@ -74,7 +77,8 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
                     isotopicFeaturesList.add(isotopicFeatures[i][j]);
                 }
                 monoisotopic[i].setIsotopicFeatures(isotopicFeaturesList);
-                monoisotopic[i].setIsotopePattern(isotopePatternExtractionStrategy.extractIsotopePattern(monoisotopic[i], isotopicFeaturesList));
+                final IsotopePattern isotopePattern = isotopePatternExtractionStrategy.extractIsotopePattern(monoisotopic[i], isotopicFeaturesList);
+                monoisotopic[i].getMSData().ifPresent(data -> data.setIsotopePattern(isotopePattern));
             }
         }
         return Arrays.stream(monoisotopic).filter(Objects::nonNull).iterator();
@@ -95,33 +99,35 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
         }
 
         final Int2ObjectOpenHashMap<ProcessedSample> uid2sample = new Int2ObjectOpenHashMap<>();
-        MergedMSnSpectrum[] mergedSpectra = new MergedMSnSpectrum[traceSegments.length];
+        MSData[] msData = new MSData[traceSegments.length];
         for (ProcessedSample sample : samplesInTrace) {
             uid2sample.put(sample.getUid(), sample);
         }
         {
-            ms2MergeStrategy.assignMs2(mergedSample, mergedTrace, traceSegments, uid2sample, (mergedTrace1, segment, index, mergedSpectrum, headers) -> {
-                CollisionEnergy[] ce = new CollisionEnergy[headers.length];
-                IsolationWindow[] iw = new IsolationWindow[headers.length];
-                double[] pmz = new double[headers.length];
-                for (int i = 0; i < headers.length; i++) {
-                    if (headers[i].getEnergy().isPresent()) {
-                        ce[i] = headers[i].getEnergy().get();
+            ms2MergeStrategy.assignMs2(mergedSample, mergedTrace, traceSegments, uid2sample, (mergedTrace1, segment, index, mergedSpectrum, spectra) -> {
+                CollisionEnergy[] ce = new CollisionEnergy[spectra.size()];
+                IsolationWindow[] iw = new IsolationWindow[spectra.size()];
+                double[] pmz = new double[spectra.size()];
+                for (int i = 0; i < spectra.size(); i++) {
+                    if (spectra.get(i).getHeader().getEnergy().isPresent()) {
+                        ce[i] = spectra.get(i).getHeader().getEnergy().get();
                     }
-                    if (headers[i].getIsolationWindow().isPresent()) {
-                        iw[i] = headers[i].getIsolationWindow().get();
+                    if (spectra.get(i).getHeader().getIsolationWindow().isPresent()) {
+                        iw[i] = spectra.get(i).getHeader().getIsolationWindow().get();
                     }
-                    pmz[i] = headers[i].getPrecursorMz();
+                    pmz[i] = spectra.get(i).getHeader().getPrecursorMz();
                 }
 
-                mergedSpectra[index] = MergedMSnSpectrum.builder()
-                        .collisionEnergies(ce)
-                        .isolationWindows(iw)
-                        .percursorMzs(pmz)
-                        .peaks(new SimpleSpectrum(mergedSpectrum))
+                msData[index] = MSData.builder()
+                        .mergedMSnSpectrum(MergedMSnSpectrum.builder()
+                                .collisionEnergies(ce)
+                                .isolationWindows(iw)
+                                .percursorMzs(pmz)
+                                .peaks(new SimpleSpectrum(mergedSpectrum))
+                                .build())
+                        // TODO MS level
+                        .msnSpectra(spectra.stream().map(s -> new MutableMs2Spectrum(s.getFilteredSpectrum(), s.getHeader().getPrecursorMz(), s.getHeader().getEnergy().get(), 2)).toList())
                         .build();
-
-
             });
         }
 
@@ -135,8 +141,9 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
             alignedFeatures.setRunId(mergedSample.getRun().getRunId());
             alignedFeatures = buildFeature(mergedTrace.getUid(), mTrace, traceSegments[i], stats, trace2trace, alignedFeatures);
 
-            if (mergedSpectra[i] != null) {
-                alignedFeatures.setMergedMSnSpectrum(mergedSpectra[i]);
+            // TODO handle MS/MS spectra
+            if (msData[i] != null) {
+                alignedFeatures.setMsData(msData[i]);
             }
 
             List<Feature> childFeatures = new ArrayList<>();
@@ -210,7 +217,7 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
             uid2sample.put(sample.getUid(), sample);
         }
         {
-            ms2MergeStrategy.assignMs2(mergedSample, alignedFeature, traceSegments, uid2sample, (mergedTrace1, segment, index, mergedSpectrum, headers) -> {
+            ms2MergeStrategy.assignMs2(mergedSample, alignedFeature, traceSegments, uid2sample, (mergedTrace1, segment, index, mergedSpectrum, spectra) -> {
                 // TODO: do something with MS/MS
             });
         }

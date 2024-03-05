@@ -180,7 +180,6 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
 
             IsotopePattern isotopePattern = featureFromCompound(compound, f);
 
-            // TODO should we also create AlignedIsotopicFeatures?
             AlignedFeatures al = AlignedFeatures.singleton(f, isotopePattern);
             siriusFeatures.add(al);
         });

@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.persistence.storage;
 
+import de.unijena.bioinf.ChemistryBase.ms.SourceLocation;
 import de.unijena.bioinf.ms.persistence.model.Tag;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
@@ -27,6 +28,7 @@ import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.storage.db.nosql.Database;
@@ -74,6 +76,8 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                 .addRepository(MergedTrace.class)
 
                 .addRepository(SourceTrace.class)
+
+                .addRepository(MSData.class)
 
                 .addRepository(Feature.class,
                         new Index("alignedFeatureId", IndexType.NON_UNIQUE),
@@ -170,6 +174,9 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
         for (AlignedFeatures f : featureAlignments) {
             importOptionals(f.getFeatures(), f.getAlignedFeatureId(), this::importFeatures);
             importOptionals(f.getIsotopicFeatures(), f.getAlignedFeatureId(), this::importAlignedIsotopicFeatures);
+            if (f.getMSData().isPresent()) {
+                importMSData(f.getMSData().get(), f.getAlignedFeatureId());
+            }
         }
     }
 
@@ -180,7 +187,15 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
         getStorage().insertAll(isotopicFeatureAlignments);
         for (AlignedIsotopicFeatures f : isotopicFeatureAlignments) {
             importOptionals(f.getFeatures(), f.getAlignedIsotopeFeatureId(), this::importFeatures);
+            if (f.getMSData().isPresent()) {
+                importMSData(f.getMSData().get(), f.getAlignedIsotopeFeatureId());
+            }
         }
+    }
+
+    default void importMSData(MSData msData, long parentId) throws IOException {
+        msData.setAlignedFeatureId(parentId);
+        getStorage().insert(msData);
     }
 
     default void importFeatures(List<Feature> features, long parentId) throws IOException {

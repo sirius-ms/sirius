@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import jakarta.persistence.Id;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -56,11 +57,6 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
      */
     private long compoundId;
 
-    /**
-     * Extracted isotope pattern of this feature
-     */
-    private IsotopePattern isotopePattern;
-
     @JsonIgnore
     @ToString.Exclude
     private List<AlignedIsotopicFeatures> isotopicFeatures;
@@ -79,7 +75,8 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
                 .retentionTime(feature.retentionTime)
                 .build();
         if (isotopePattern != null) {
-            al.setIsotopePattern(isotopePattern);
+            // TODO add also MS/MS spectra (and merged spectrum?)
+            al.setMsData(MSData.builder().isotopePattern(isotopePattern).build());
         }
         return al;
     }

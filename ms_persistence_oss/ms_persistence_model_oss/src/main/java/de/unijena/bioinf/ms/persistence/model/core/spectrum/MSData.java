@@ -18,36 +18,39 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.model.core.feature;
+package de.unijena.bioinf.ms.persistence.model.core.spectrum;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import jakarta.persistence.Id;
 import lombok.*;
-import lombok.experimental.SuperBuilder;
 
 import java.util.List;
-import java.util.Optional;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@SuperBuilder
-@ToString
-public abstract class AbstractAlignedFeatures extends AbstractFeature {
+@Builder
+public class MSData {
 
-    @JsonIgnore
-    @ToString.Exclude
-    protected List<Feature> features;
+    @Id
+    private long msDataId;
 
-    public Optional<List<Feature>> getFeatures() {
-        return Optional.ofNullable(features);
-    }
+    private long alignedFeatureId;
 
-    protected MSData msData;
+    /**
+     * Merged MSn spectrum
+     */
+    private MergedMSnSpectrum mergedMSnSpectrum;
 
-    public Optional<MSData> getMSData() {
-        return Optional.ofNullable(msData);
-    }
+    /**
+     * MSn spectra
+     */
+    private List<MutableMs2Spectrum> msnSpectra;
+
+    /**
+     * Extracted isotope pattern
+     */
+    private IsotopePattern isotopePattern;
 
 }

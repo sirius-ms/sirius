@@ -11,8 +11,10 @@ import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
+import lombok.Getter;
 import org.slf4j.LoggerFactory;
 
+@Getter
 public class MsMsQuerySpectrum {
 
     SimpleSpectrum originalSpectrum;
