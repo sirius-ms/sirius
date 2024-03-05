@@ -97,11 +97,7 @@ public class AtomE implements IAtom {
      * @param depth a non-negative integer value that {@link #depth} will be set to
      */
     public void setDepth(int depth){
-        if(depth < 0 ){
-            throw new RuntimeException("The given parameter is not valid.");
-        }else{
-            this.depth = depth;
-        }
+        this.depth = depth;
     }
 
     public IAtom getOrgAtom(){

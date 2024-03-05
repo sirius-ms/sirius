@@ -13,6 +13,8 @@ import matching.utils.HungarianAlgorithm;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 import static org.junit.Assert.assertEquals;
 
@@ -64,8 +66,8 @@ public class MinimalWeightedPlacementsTest {
             AtomContainerE molecule1 = this.getAtomContainerE(smiParser, smilesMol1);
             AtomContainerE molecule2 = this.getAtomContainerE(smiParser, smilesMol2);
 
-            File file = new File("./res/Testdateien_SCLReader/sideChains.txt");
-            SideChainListReader scReader = new SideChainListReader(file);
+            InputStream is = getClass().getClassLoader().getResourceAsStream("sideChains.txt");
+            SideChainListReader scReader = new SideChainListReader(new InputStreamReader(is));
             scReader.readFile();
 
             MinimalWeightedPlacements alg = new MinimalWeightedPlacements(molecule1, molecule2, scReader.getSideChainList());
@@ -88,8 +90,8 @@ public class MinimalWeightedPlacementsTest {
             AtomContainerE molecule1 = this.getAtomContainerE(smiParser, smilesMol1);
             AtomContainerE molecule2 = this.getAtomContainerE(smiParser, smilesMol2);
 
-            File file = new File("./res/Testdateien_SCLReader/sideChains.txt");
-            SideChainListReader scReader = new SideChainListReader(file);
+            InputStream is = getClass().getClassLoader().getResourceAsStream("sideChains.txt");
+            SideChainListReader scReader = new SideChainListReader(new InputStreamReader(is));
             scReader.readFile();
 
             MinimalWeightedPlacements alg = new MinimalWeightedPlacements(molecule1, molecule2, scReader.getSideChainList());
@@ -112,8 +114,8 @@ public class MinimalWeightedPlacementsTest {
             AtomContainerE fructofuranose = this.getAtomContainerE(smiParser, smilesFructofuranose);
             AtomContainerE glucopyranose = this.getAtomContainerE(smiParser, smilesGlucopyranose);
 
-            File file = new File("./res/Testdateien_SCLReader/sideChains.txt");
-            SideChainListReader scReader = new SideChainListReader(file);
+            InputStream is = getClass().getClassLoader().getResourceAsStream("sideChains.txt");
+            SideChainListReader scReader = new SideChainListReader(new InputStreamReader(is));
             scReader.readFile();
 
             MinimalWeightedPlacements alg = new MinimalWeightedPlacements(fructofuranose, glucopyranose, scReader.getSideChainList());
@@ -135,8 +137,8 @@ public class MinimalWeightedPlacementsTest {
             AtomContainerE leucine = this.getAtomContainerE(smiParser, smilesLeucine);
             AtomContainerE isoleucine = this.getAtomContainerE(smiParser, smilesIsoleucine);
 
-            File file = new File("./res/Testdateien_SCLReader/sideChains.txt");
-            SideChainListReader scReader = new SideChainListReader(file);
+            InputStream is = getClass().getClassLoader().getResourceAsStream("sideChains.txt");
+            SideChainListReader scReader = new SideChainListReader(new InputStreamReader(is));
             scReader.readFile();
 
             MinimalWeightedPlacements alg = new MinimalWeightedPlacements(leucine, isoleucine, scReader.getSideChainList());
@@ -160,8 +162,8 @@ public class MinimalWeightedPlacementsTest {
             AtomContainerE molecule2 = this.getAtomContainerE(smiParser, smilesMol2);
             AtomContainerE molecule3 = this.getAtomContainerE(smiParser, smilesMol3);
 
-            File file = new File("./res/Testdateien_SCLReader/sideChains.txt");
-            SideChainListReader scReader = new SideChainListReader(file);
+            InputStream is = getClass().getClassLoader().getResourceAsStream("sideChains.txt");
+            SideChainListReader scReader = new SideChainListReader(new InputStreamReader(is));
             scReader.readFile();
 
             MinimalWeightedPlacements alg1 = new MinimalWeightedPlacements(molecule1, molecule2, scReader.getSideChainList());
@@ -183,8 +185,8 @@ public class MinimalWeightedPlacementsTest {
             AtomContainerE molecule1 = this.getAtomContainerE(smiParser, smilesMol);
             AtomContainerE molecule2 = this.getAtomContainerE(smiParser, smilesMol);
 
-            File file = new File("./res/Testdateien_SCLReader/sideChains.txt");
-            SideChainListReader scReader = new SideChainListReader(file);
+            InputStream is = getClass().getClassLoader().getResourceAsStream("sideChains.txt");
+            SideChainListReader scReader = new SideChainListReader(new InputStreamReader(is));
             scReader.readFile();
 
             MinimalWeightedPlacements alg = new MinimalWeightedPlacements(molecule1, molecule2, scReader.getSideChainList());
@@ -204,8 +206,8 @@ public class MinimalWeightedPlacementsTest {
             SmilesParser smiParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
             AtomContainerE molecule = this.getAtomContainerE(smiParser, smilesMol);
 
-            File file = new File("./res/Testdateien_SCLReader/sideChains.txt");
-            SideChainListReader scReader = new SideChainListReader(file);
+            InputStream is = getClass().getClassLoader().getResourceAsStream("sideChains.txt");
+            SideChainListReader scReader = new SideChainListReader(new InputStreamReader(is));
             scReader.readFile();
 
             MinimalWeightedPlacements alg = new MinimalWeightedPlacements(molecule, molecule, scReader.getSideChainList());
