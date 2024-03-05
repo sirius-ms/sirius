@@ -23,9 +23,8 @@ package de.unijena.bioinf.ChemistryBase.ms;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.net.URI;
-import java.net.URLDecoder;
-import java.nio.file.Path;
 
 public abstract class SourceLocation implements Ms2ExperimentAnnotation {
     @Nullable
@@ -41,7 +40,7 @@ public abstract class SourceLocation implements Ms2ExperimentAnnotation {
             return null;
 
         if (value.getScheme() != null && value.getScheme().equalsIgnoreCase("file")) {
-            return Path.of(value.getPath()).getFileName().toString();
+            return new File(value).getAbsolutePath();
         }
 
         return value.getPath();
