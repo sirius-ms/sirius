@@ -22,9 +22,7 @@ package de.unijena.bioinf.ms.persistence.model.core.feature;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
-import de.unijena.bioinf.ms.persistence.model.annotation.CompoundAnnotation;
-import de.unijena.bioinf.ms.persistence.model.core.IsotopePattern;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.run.Run;
 import it.unimi.dsi.fastutil.longs.LongList;
 import jakarta.persistence.Id;

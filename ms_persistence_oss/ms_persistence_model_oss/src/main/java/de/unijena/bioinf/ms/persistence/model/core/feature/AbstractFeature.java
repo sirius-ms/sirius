@@ -22,14 +22,9 @@ package de.unijena.bioinf.ms.persistence.model.core.feature;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
-import de.unijena.bioinf.ms.persistence.model.core.IsotopePattern;
-import de.unijena.bioinf.ms.persistence.model.core.scan.MergedMSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.util.ArrayList;
-import java.util.List;
 
 @Getter
 @Setter
