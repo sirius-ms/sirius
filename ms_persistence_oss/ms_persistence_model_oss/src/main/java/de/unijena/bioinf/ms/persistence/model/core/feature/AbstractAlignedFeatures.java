@@ -21,7 +21,7 @@
 package de.unijena.bioinf.ms.persistence.model.core.feature;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -40,11 +40,14 @@ public abstract class AbstractAlignedFeatures extends AbstractFeature {
     @ToString.Exclude
     protected List<Feature> features;
 
-    @ToString.Exclude
-    protected MergedMSnSpectrum mergedMSnSpectrum;
-
     public Optional<List<Feature>> getFeatures() {
         return Optional.ofNullable(features);
+    }
+
+    protected MSData msData;
+
+    public Optional<MSData> getMSData() {
+        return Optional.ofNullable(msData);
     }
 
 }
