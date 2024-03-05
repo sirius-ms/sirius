@@ -27,7 +27,7 @@ public class MergeGreedyStrategy implements Ms2MergeStrategy{
             score(mergedSample, trace, otherSamples, queriesPerSegment[k]);
             queriesPerSegment[k].sort(Comparator.comparingDouble((MsMsQuerySpectrum x)->x.score).reversed());
             MergedSpectrum mergedSpectrum = merge(queriesPerSegment[k]);
-            assigner.assignMs2ToFeature(trace, featureSegments[k], k, mergedSpectrum, queriesPerSegment[k].stream().map(q -> q.header).toArray(Ms2SpectrumHeader[]::new));
+            assigner.assignMs2ToFeature(trace, featureSegments[k], k, mergedSpectrum, queriesPerSegment[k]);
         }
     }
 
