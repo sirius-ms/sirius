@@ -135,8 +135,16 @@ public class MinimalWeightedPlacements implements Matcher {
      * {@link Double#MAX_VALUE} if the given assumption is not true.
      */
     public double compare() {
-        AtomContainerE molecule1 = new AtomContainerE(this.molecule1);
-        AtomContainerE molecule2 = new AtomContainerE(this.molecule2);
+        AtomContainerE molecule1, molecule2;
+        try{
+            molecule1 = new AtomContainerE(this.molecule1.clone());
+            molecule2 = new AtomContainerE(this.molecule2.clone());
+        }catch (CloneNotSupportedException e){
+            System.out.println("An error occurred while cloning both molecules.");
+            this.distance = -1;
+            return this.distance;
+        }
+
 
         if (!this.sameMolecularFormula()) {
             this.distance = Double.MAX_VALUE;
