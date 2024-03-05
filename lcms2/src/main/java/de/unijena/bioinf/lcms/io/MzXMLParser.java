@@ -20,11 +20,12 @@
 
 package de.unijena.bioinf.lcms.io;
 
+import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import de.unijena.bioinf.lcms.LCMSStorageFactory;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
-import de.unijena.bioinf.ms.persistence.model.core.MSMSScan;
-import de.unijena.bioinf.ms.persistence.model.core.Run;
-import de.unijena.bioinf.ms.persistence.model.core.Scan;
+import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
+import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -38,19 +39,22 @@ public class MzXMLParser implements LCMSParser {
     public ProcessedSample parse(
             File file,
             LCMSStorageFactory storageFactory,
-            IOThrowingConsumer<Run> runConsumer,
+            IOThrowingConsumer<LCMSRun> runConsumer,
+            IOThrowingConsumer<LCMSRun> runUpdateConsumer,
             IOThrowingConsumer<Scan> scanConsumer,
             IOThrowingConsumer<MSMSScan> msmsScanConsumer,
-            Run.RunBuilder runBuilder
+            LCMSRun run
     ) throws IOException {
         try {
+            run.setSourceReference(new MsDataSourceReference(file.toURI(), file.getName(), null, null));
+            runConsumer.consume(run);
             MzXMLSaxParser saxParser = new MzXMLSaxParser(
-                    file,
+                    file.getName(),
                     storageFactory.createNewStorage(),
-                    runConsumer, scanConsumer, msmsScanConsumer,
-                    runBuilder
+                    run, scanConsumer, msmsScanConsumer
             );
             SAXParserFactory.newInstance().newSAXParser().parse(file, saxParser);
+            runUpdateConsumer.consume(run);
             return saxParser.getProcessedSample();
         } catch (SAXException | ParserConfigurationException e) {
             throw new IOException(e);
@@ -67,6 +71,7 @@ public class MzXMLParser implements LCMSParser {
 //                f,
 //                LCMSStorage.temporaryStorage(),
 //                System.out::println,
+//                System.out::println,
 //                ms -> {
 //                    ms.setScanId(new Random().nextLong());
 //                    scans.add(ms);
@@ -77,12 +82,11 @@ public class MzXMLParser implements LCMSParser {
 //                },
 ////                ms -> scans.addAndGet(1),
 ////                msms -> ms2scans.addAndGet(1),
-//                Run.builder().runType(Run.Type.SAMPLE).chromatography(ChromatographyType.LC)
+//                Run.builder().runType(Run.Type.SAMPLE).chromatography(Chromatography.LC).build()
 //        );
 //        System.out.println(sample.getRtSpan());
 //        System.out.println(scans.size());
 //        System.out.println(ms2scans.size());
-//        System.out.println(sample.getTraceStorage().numberOfScans());
 //
 ////        System.out.println(scans);
 ////        System.out.println(ms2scans);

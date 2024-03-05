@@ -25,10 +25,11 @@ import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.Parser;
-import de.unijena.bioinf.ms.persistence.model.core.AlignedFeatures;
-import de.unijena.bioinf.ms.persistence.model.core.Feature;
-import de.unijena.bioinf.ms.persistence.model.core.MSMSScan;
-import de.unijena.bioinf.ms.persistence.model.core.Scan;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
+import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
+import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +49,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,7 +84,7 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
                         secondChoice.close();
                 } else {
                     //todo how to handle charset.
-                    currentStream = new ReaderInputStream(secondChoice);
+                    currentStream = new ReaderInputStream(secondChoice, Charset.defaultCharset());
                 }
 
                 // create xml event reader for input stream
@@ -167,14 +169,18 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
                 return true;
             }
         }).forEach(p -> {
-            Feature feature = Feature.builder()
-                    .ionMass(p.getX().doubleValue())
+            Feature f = Feature.builder()
+                    .averageMass(p.getX().doubleValue())
+                    .apexMass(p.getX().doubleValue())
+                    .apexIntensity(p.getY().doubleValue())
+                    .snr(p.getY().doubleValue() > 0 ? p.getX().doubleValue() / p.getY().doubleValue() : 0)
                     .ionType(PrecursorIonType.fromString("[" + p.getS() + "]" + mfe.getMSDetails().p))
                     .build();
-            featureFromCompound(compound, feature);
-            AlignedFeatures al = AlignedFeatures.singleton(feature);
-            if (al.getMergedRT() == null)
-                parseRT(mfe).ifPresent(al::setMergedRT);
+            parseRT(mfe).ifPresent(f::setRetentionTime);
+
+            IsotopePattern isotopePattern = featureFromCompound(compound, f);
+
+            AlignedFeatures al = AlignedFeatures.singleton(f, isotopePattern);
             siriusFeatures.add(al);
         });
 
@@ -183,40 +189,62 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
     }
 
     private List<AlignedFeatures> fromMS1OnlyCompound(Compound compound) {
-        Feature f = new Feature();
         Spectrum ms = compound.getSpectrum().stream()
                 .filter(s -> s.getMSDetails().getScanType().equals("Scan"))
                 .filter(s -> s.mzOfInterest != null)
                 .findFirst().orElseThrow(() -> new IllegalArgumentException("No spectrum (neither MS1 nor MS/MS) with precursor information (MzOfInterest) found for compound at rt " + compound.location.rt));
 
-        f.setIonType(ms.getMSDetails().p.equals("-") ? PrecursorIonType.unknownNegative() : PrecursorIonType.unknownPositive());
-        f.setIonMass(ms.mzOfInterest.getMz().doubleValue());
+        double apexMass = 0, apexInt = 0;
+        for (P p : ms.msPeaks.p) {
+            if (p.getY().doubleValue() > apexInt) {
+                apexMass = p.getX().doubleValue();
+                apexInt = p.getY().doubleValue();
+            }
+        }
+
+        Feature f = Feature.builder()
+                .averageMass(ms.mzOfInterest.getMz().doubleValue())
+                .apexMass(apexMass)
+                .apexIntensity(apexInt)
+                .snr(apexInt > 0 ? apexMass / apexInt : 0)
+                .ionType(ms.getMSDetails().p.equals("-") ? PrecursorIonType.unknownNegative() : PrecursorIonType.unknownPositive())
+                .build();
+        parseRT(ms).ifPresent(f::setRetentionTime);
 
         featureFromCompound(compound, f);
 
-        AlignedFeatures al = AlignedFeatures.singleton(f);
-        if (al.getMergedRT() == null)
-            parseRT(ms).ifPresent(al::setMergedRT);
+        AlignedFeatures al = AlignedFeatures.singleton(f, null);
         return List.of(al);
     }
 
     private List<AlignedFeatures> fromRawCompound(Compound compound) {
-        Feature f = new Feature();
-
         Spectrum s = compound.getSpectrum().stream().filter(spec -> spec.getMSDetails().getScanType().equals("ProductIon")).findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("No MS/MS spectrum found for compound at rt " + compound.location.rt));
-        f.setIonType(s.getMSDetails().p.equals("-") ? PrecursorIonType.unknownNegative() : PrecursorIonType.unknownPositive());
-        f.setIonMass(s.mzOfInterest.getMz().doubleValue());
+
+        double apexMass = 0, apexInt = 0;
+        for (P p : s.msPeaks.p) {
+            if (p.getY().doubleValue() > apexInt) {
+                apexMass = p.getX().doubleValue();
+                apexInt = p.getY().doubleValue();
+            }
+        }
+
+        Feature f = Feature.builder()
+                .averageMass(s.mzOfInterest.getMz().doubleValue())
+                .apexMass(apexMass)
+                .apexIntensity(apexInt)
+                .snr(apexInt > 0 ? apexMass / apexInt : 0)
+                .ionType(s.getMSDetails().p.equals("-") ? PrecursorIonType.unknownNegative() : PrecursorIonType.unknownPositive())
+                .build();
+        parseRT(s).ifPresent(f::setRetentionTime);
 
         featureFromCompound(compound, f);
 
-        AlignedFeatures al = AlignedFeatures.singleton(f);
-        if (al.getMergedRT() == null)
-            parseRT(s).ifPresent(al::setMergedRT);
+        AlignedFeatures al = AlignedFeatures.singleton(f, null);
         return List.of(al);
     }
 
-    private Feature featureFromCompound(Compound compound, Feature feature) {
+    private IsotopePattern featureFromCompound(Compound compound, Feature feature) {
         //todo how do we get the real dev? maybe load profile/ from outside
         MS2MassDeviation dev = PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class);
 //        exp.setName("rt=" + compound.location.rt + "-p=" + NUMBER_FORMAT.format(exp.getIonMass()));
@@ -231,7 +259,7 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
                 isotopePattern = makeMs1Spectrum(spec); // todo do we have to remove the adduct peaks?
             } else if (spec.getMSDetails().getScanType().equals("Scan")) {
                 ms1Spectra.add(makeMs1Scan(spec));
-            } else if (spec.getMSDetails().getScanType().equals("ProductIon") && dev.standardMassDeviation.inErrorWindow(spec.mzOfInterest.mz.doubleValue(), feature.getIonMass())) {
+            } else if (spec.getMSDetails().getScanType().equals("ProductIon") && dev.standardMassDeviation.inErrorWindow(spec.mzOfInterest.mz.doubleValue(), feature.getAverageMass())) {
                 ms2Spectra.add(makeMs2Scan(spec));
             } else {
                 Optional<Spectrum> s = Optional.of(spec);
@@ -249,11 +277,10 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
             }
         }
 
-        feature.setIsotopePattern(isotopePattern);
-        feature.setMsms(ms2Spectra);
-        feature.setApexScan(ms1Spectra.iterator().next());
+        // TODO handle MS2 spectra
+//        feature.setMsms(ms2Spectra);
 
-        return feature;
+        return (isotopePattern != null) ? new IsotopePattern(isotopePattern, IsotopePattern.Type.REPRESENTATIVE) : null;
     }
 
     private MSMSScan makeMs2Scan(Spectrum spec) {

@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schiller University.
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -18,44 +18,32 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.model.core;
+package de.unijena.bioinf.ms.persistence.model.core.run;
 
-import it.unimi.dsi.fastutil.doubles.DoubleList;
-import it.unimi.dsi.fastutil.longs.LongList;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.util.List;
+import java.util.Optional;
+
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @SuperBuilder
-@ToString(onlyExplicitlyIncluded = true)
-public class Trace {
-    /**
-     * ID of the Run this trace belongs to
-     */
-    @ToString.Include
-    long runId;
+@AllArgsConstructor
+@NoArgsConstructor
+@ToString(callSuper = true)
+public class MergedLCMSRun extends AbstractLCMSRun {
 
-    /**
-     * Ids of the scans this trace is build from
-     * should be sorted by RT
-     */
-    @ToString.Include
-    LongList scanIds;
+    @ToString.Exclude
+    private SampleStats sampleStats;
 
-    /**
-     * RTs of all scans in ascending order
-     */
-    DoubleList rts;
-    /**
-     * mz of all peaks ordered by RT
-     */
-    DoubleList mzs;
-    /**
-     * intensities of all peaks ordered by RT
-     */
-    DoubleList intensities;
+    @JsonIgnore
+    @ToString.Exclude
+    private List<LCMSRun> runs;
+
+    public Optional<List<LCMSRun>> getRuns() {
+        return Optional.ofNullable(runs);
+    }
 
 }

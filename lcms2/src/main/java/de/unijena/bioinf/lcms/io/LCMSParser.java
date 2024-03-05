@@ -22,9 +22,9 @@ package de.unijena.bioinf.lcms.io;
 
 import de.unijena.bioinf.lcms.LCMSStorageFactory;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
-import de.unijena.bioinf.ms.persistence.model.core.MSMSScan;
-import de.unijena.bioinf.ms.persistence.model.core.Run;
-import de.unijena.bioinf.ms.persistence.model.core.Scan;
+import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
+import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 
 import java.io.File;
 import java.io.IOException;
@@ -42,17 +42,17 @@ public interface LCMSParser {
      * Parse an LC/GC-MS file. The consumers need to handle to actual object storing and are required
      * to assign the object IDs.
      *
-     * @param file              Input file.
-     * @param runBuilder        Builder for {@link Run}, should be initialized with default values
-     *                          for {@code Run.runType} and {@code Run.chromatography}.
+     * @param file Input file.
+     * @param run  Initial {@link LCMSRun} isntance with default values for {@code Run.runType} and {@code Run.chromatography}.
      */
     ProcessedSample parse(
             File file,
             LCMSStorageFactory storageFactory,
-            LCMSParser.IOThrowingConsumer<Run> runConsumer,
+            LCMSParser.IOThrowingConsumer<LCMSRun> runConsumer,
+            LCMSParser.IOThrowingConsumer<LCMSRun> runUpdateConsumer,
             LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
             LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
-            Run.RunBuilder runBuilder
+            LCMSRun run
     ) throws IOException;
 
 }

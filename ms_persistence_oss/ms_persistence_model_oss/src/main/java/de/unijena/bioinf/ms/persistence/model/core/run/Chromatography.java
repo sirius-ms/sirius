@@ -18,55 +18,24 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.model.core;
+package de.unijena.bioinf.ms.persistence.model.core.run;
 
-import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
-import jakarta.persistence.Id;
-import lombok.*;
+import lombok.Getter;
 
 import javax.validation.constraints.NotNull;
-import java.util.List;
 
 @Getter
-@Setter
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
-@ToString
-public class Run {
-    //todo are there other types like validation or calibration???
-    public enum Type {
-        SAMPLE,
-        BLANK
-    }
-
-    /**
-     * Run ID: unique identifier of this run within the project
-     */
-    @Id
-    private long runId;
-
-    /**
-     * Informative, human-readable name of this run. Defaults to file name.
-     */
-    private String name;
-
-    /**
-     * indicated that this run is a Blank run
-     */
-    protected Type runType;
-
-    private ChromatographyType chromatography;
-    private IonizationType ionization;
-    private FragmentationType fragmentation;
-    private List<MassAnalyzer> massAnalyzers;
+public enum Chromatography {
+    LC("Liquid Chromatography"),
+    GC("Gas Chromatography");
 
 
-    /**
-     * A reference to a certain LC/MS run in a mzml file.
-     */
     @NotNull
-    private MsDataSourceReference sourceReference;
+    private final String fullName;
 
+
+    Chromatography(@NotNull String fullName) {
+        this.fullName = fullName;
+    }
 
 }
