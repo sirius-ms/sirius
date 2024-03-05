@@ -22,9 +22,12 @@ package de.unijena.bioinf.ms.persistence.model.core.feature;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ms.persistence.model.core.DataSource;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+
+import java.util.Optional;
 
 @Getter
 @Setter
@@ -73,5 +76,18 @@ public abstract class AbstractFeature {
      * Trace segment that defines this feature
      */
     private TraceRef traceRef;
+
+    public Optional<TraceRef> getTraceRef() {
+        return Optional.ofNullable(traceRef);
+    }
+
+    /**
+     * Data source (e.g. file, url, stream etc.)
+     */
+    private DataSource dataSource;
+
+    public Optional<DataSource> getDataSource() {
+        return Optional.ofNullable(dataSource);
+    }
 
 }
