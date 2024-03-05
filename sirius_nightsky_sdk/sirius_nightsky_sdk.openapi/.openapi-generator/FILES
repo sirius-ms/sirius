@@ -105,7 +105,6 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/LoginAndAccountApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/ProjectsApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/SearchableDatabasesApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/client/ApiClient.java
-src/main/java/de/unijena/bioinf/ms/nightsky/sdk/client/JavaTimeFormatter.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/client/RFC3339DateFormat.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/client/ServerConfiguration.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/client/ServerVariable.java

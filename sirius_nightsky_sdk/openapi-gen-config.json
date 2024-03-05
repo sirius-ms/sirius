@@ -10,5 +10,6 @@
 	"library": "webclient",
 	"webclientBlockingOperations": true,
 	"useJakartaEe": true,
-	"serializationLibrary": "jackson"
+	"serializationLibrary": "jackson",
+	"dateLibrary": "legacy"
 }

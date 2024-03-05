@@ -60,7 +60,6 @@ dependencies {
 
     //spring data for pagination and sorting
     implementation 'org.springframework.data:spring-data-commons'
-
     implementation "org.springframework.boot:spring-boot-starter-validation"
 
     // expose operational information about the running application via /actuator
@@ -117,7 +116,7 @@ jar {
 }
 
 bootJar {
-    classifier = 'boot'
+    archiveClassifier = 'boot'
     layered {
         enabled = true
     }

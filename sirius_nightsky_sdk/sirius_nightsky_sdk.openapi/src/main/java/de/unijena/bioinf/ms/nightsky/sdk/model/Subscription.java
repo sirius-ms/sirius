@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import java.time.OffsetDateTime;
+import java.util.Date;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -56,10 +56,10 @@ public class Subscription {
   private String subscriberName;
 
   public static final String JSON_PROPERTY_EXPIRATION_DATE = "expirationDate";
-  private OffsetDateTime expirationDate;
+  private Date expirationDate;
 
   public static final String JSON_PROPERTY_START_DATE = "startDate";
-  private OffsetDateTime startDate;
+  private Date startDate;
 
   public static final String JSON_PROPERTY_COUNT_QUERIES = "countQueries";
   private Boolean countQueries;
@@ -172,7 +172,7 @@ public class Subscription {
   }
 
 
-  public Subscription expirationDate(OffsetDateTime expirationDate) {
+  public Subscription expirationDate(Date expirationDate) {
     
     this.expirationDate = expirationDate;
     return this;
@@ -186,19 +186,19 @@ public class Subscription {
   @JsonProperty(JSON_PROPERTY_EXPIRATION_DATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public OffsetDateTime getExpirationDate() {
+  public Date getExpirationDate() {
     return expirationDate;
   }
 
 
   @JsonProperty(JSON_PROPERTY_EXPIRATION_DATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setExpirationDate(OffsetDateTime expirationDate) {
+  public void setExpirationDate(Date expirationDate) {
     this.expirationDate = expirationDate;
   }
 
 
-  public Subscription startDate(OffsetDateTime startDate) {
+  public Subscription startDate(Date startDate) {
     
     this.startDate = startDate;
     return this;
@@ -212,14 +212,14 @@ public class Subscription {
   @JsonProperty(JSON_PROPERTY_START_DATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public OffsetDateTime getStartDate() {
+  public Date getStartDate() {
     return startDate;
   }
 
 
   @JsonProperty(JSON_PROPERTY_START_DATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setStartDate(OffsetDateTime startDate) {
+  public void setStartDate(Date startDate) {
     this.startDate = startDate;
   }
 
