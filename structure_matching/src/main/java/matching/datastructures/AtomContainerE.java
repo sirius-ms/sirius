@@ -8,6 +8,7 @@ import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.Bond;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -56,7 +57,7 @@ public class AtomContainerE implements IAtomContainer {
      * @param container the AtomContainerE to copy the atoms and ElectronContainers from
      */
     public AtomContainerE(AtomContainerE container){
-        this(container.getContainer());
+        this.container = new AtomContainer(container.getContainer());
     }
 
     private void convertImplicitToExplicitHydrogens(){
@@ -68,6 +69,7 @@ public class AtomContainerE implements IAtomContainer {
 
             for(int j = 0; j < hCount; j++){
                 Atom hydrogen = new Atom("H");
+                hydrogen.setImplicitHydrogenCount(0);
                 this.addAtom(hydrogen);
                 this.addBond(new Bond(this.getAtom(i), hydrogen));
             }
@@ -270,7 +272,7 @@ public class AtomContainerE implements IAtomContainer {
 
     @Override
     public List<IAtom> getConnectedAtomsList(IAtom atom) {
-        return this.container.getConnectedAtomsList(atom).stream().map(this::unbox).toList();
+        return new ArrayList(this.container.getConnectedAtomsList(atom).stream().map(this::unbox).toList());
     }
 
     @Override
