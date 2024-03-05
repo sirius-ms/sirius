@@ -25,7 +25,6 @@ import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ms.persistence.model.annotation.CompoundAnnotation;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
-import it.unimi.dsi.fastutil.longs.LongList;
 import jakarta.persistence.Id;
 import lombok.*;
 
@@ -49,10 +48,6 @@ public class Compound {
     protected String name;
 
     //foreign fields
-    @ToString.Exclude
-    LongList adductFeatureIds;
-
-
     @JsonIgnore
     @ToString.Exclude
     List<AlignedFeatures> adductFeatures;
@@ -65,9 +60,6 @@ public class Compound {
      * Group of edges between pairs of feature alignments that correlate among each other. Connected components
      * from the whole graph of correlated pairs (whole dataset)
      */
-    @ToString.Exclude
-    LongList correlatedIonPairIds;
-
     @JsonIgnore
     @ToString.Exclude
     List<CorrelatedIonPair> correlatedIonPairs;
