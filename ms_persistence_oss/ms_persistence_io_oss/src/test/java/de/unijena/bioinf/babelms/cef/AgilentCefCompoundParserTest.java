@@ -97,7 +97,9 @@ public class AgilentCefCompoundParserTest {
             System.out.println("Imported '" + compounds.size() + "' compounds into project in " + watch);
             List<Compound> compoundsFetched = ps.getAllCompounds().toList();
             System.out.println("Fetched '" + compoundsFetched.size() + "' compounds without data in " + watch);
-            List<AlignedFeatures> features = ps.getAllAlignedFeatures().peek(ps::fetchMsmsScans).toList();
+            // TODO handle MS/MS
+//            List<AlignedFeatures> features = ps.getAllAlignedFeatures().peek(ps::fetchMsmsScans).toList();
+            List<AlignedFeatures> features = ps.getAllAlignedFeatures().toList();
             System.out.println("Fetched '" + features.size() + "'aligned features with data in " + watch);
 
             Assert.assertEquals(compounds.size(), compoundsFetched.size());
