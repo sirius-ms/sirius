@@ -18,37 +18,27 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.model.core.feature;
+package de.unijena.bioinf.ms.persistence.model.core.spectrum;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
-import it.unimi.dsi.fastutil.longs.LongList;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
+import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import jakarta.persistence.Id;
 import lombok.*;
-import lombok.experimental.SuperBuilder;
-
-import java.util.List;
-import java.util.Optional;
 
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@SuperBuilder
-@ToString
-public abstract class AbstractAlignedFeatures extends AbstractFeature {
+public class MergedMSnSpectrum {
 
-    @ToString.Exclude
-    protected LongList featureIds;
+    private CollisionEnergy[] collisionEnergies;
 
-    @JsonIgnore
-    @ToString.Exclude
-    protected List<Feature> features;
+    private IsolationWindow[] isolationWindows;
 
-    @ToString.Exclude
-    protected MergedMSnSpectrum mergedMSnSpectrum;
+    private double[] percursorMzs;
 
-    public Optional<List<Feature>> getFeatures() {
-        return Optional.ofNullable(features);
-    }
+    private SimpleSpectrum peaks;
 
 }

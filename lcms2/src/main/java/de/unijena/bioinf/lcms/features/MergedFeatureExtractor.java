@@ -1,16 +1,19 @@
 package de.unijena.bioinf.lcms.features;
 
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
+import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.lcms.merge.MergedTrace;
-import de.unijena.bioinf.lcms.msms.MergedSpectrum;
 import de.unijena.bioinf.lcms.msms.Ms2MergeStrategy;
-import de.unijena.bioinf.ms.persistence.model.core.run.SampleStats;
 import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.Trace;
 import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
+import de.unijena.bioinf.ms.persistence.model.core.run.SampleStats;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -92,13 +95,33 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
         }
 
         final Int2ObjectOpenHashMap<ProcessedSample> uid2sample = new Int2ObjectOpenHashMap<>();
-        MergedSpectrum[] mergedSpectra = new MergedSpectrum[traceSegments.length];
+        MergedMSnSpectrum[] mergedSpectra = new MergedMSnSpectrum[traceSegments.length];
         for (ProcessedSample sample : samplesInTrace) {
             uid2sample.put(sample.getUid(), sample);
         }
         {
-            ms2MergeStrategy.assignMs2(mergedSample, mergedTrace, traceSegments, uid2sample, (mergedTrace1, segment, index, mergedSpectrum) -> {
-                mergedSpectra[index] = mergedSpectrum;
+            ms2MergeStrategy.assignMs2(mergedSample, mergedTrace, traceSegments, uid2sample, (mergedTrace1, segment, index, mergedSpectrum, headers) -> {
+                CollisionEnergy[] ce = new CollisionEnergy[headers.length];
+                IsolationWindow[] iw = new IsolationWindow[headers.length];
+                double[] pmz = new double[headers.length];
+                for (int i = 0; i < headers.length; i++) {
+                    if (headers[i].getEnergy().isPresent()) {
+                        ce[i] = headers[i].getEnergy().get();
+                    }
+                    if (headers[i].getIsolationWindow().isPresent()) {
+                        iw[i] = headers[i].getIsolationWindow().get();
+                    }
+                    pmz[i] = headers[i].getPrecursorMz();
+                }
+
+                mergedSpectra[index] = MergedMSnSpectrum.builder()
+                        .collisionEnergies(ce)
+                        .isolationWindows(iw)
+                        .percursorMzs(pmz)
+                        .peaks(new SimpleSpectrum(mergedSpectrum))
+                        .build();
+
+
             });
         }
 
@@ -113,7 +136,7 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
             alignedFeatures = buildFeature(mergedTrace.getUid(), mTrace, traceSegments[i], stats, trace2trace, alignedFeatures);
 
             if (mergedSpectra[i] != null) {
-                // TODO assign to alignedFeatures
+                alignedFeatures.setMergedMSnSpectrum(mergedSpectra[i]);
             }
 
             List<Feature> childFeatures = new ArrayList<>();
@@ -187,7 +210,7 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
             uid2sample.put(sample.getUid(), sample);
         }
         {
-            ms2MergeStrategy.assignMs2(mergedSample, alignedFeature, traceSegments, uid2sample, (mergedTrace1, segment, index, mergedSpectrum) -> {
+            ms2MergeStrategy.assignMs2(mergedSample, alignedFeature, traceSegments, uid2sample, (mergedTrace1, segment, index, mergedSpectrum, headers) -> {
                 // TODO: do something with MS/MS
             });
         }
