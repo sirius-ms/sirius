@@ -1,6 +1,7 @@
 package evaluate;
 
 import matching.algorithm.EDIC;
+import matching.algorithm.ElectronPairWiseEDIC;
 
 import java.io.File;
 
@@ -11,7 +12,7 @@ public class Evaluation {
         File outputFile = new File(args[1]);
 
         try {
-            FileMoleculesMatcher<EDIC> fileMatcher = new FileMoleculesMatcher<>(inputFile,1,2," - ",false,EDIC::new);
+            FileMoleculesMatcher<ElectronPairWiseEDIC> fileMatcher = new FileMoleculesMatcher<>(inputFile,1,2," - ",false,ElectronPairWiseEDIC::new);
             fileMatcher.processData(outputFile);
         } catch(Exception e){
             e.printStackTrace();

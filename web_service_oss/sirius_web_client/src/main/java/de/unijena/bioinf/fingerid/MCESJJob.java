@@ -5,6 +5,8 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.jjobs.BasicDependentMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import matching.algorithm.EDIC;
+import matching.algorithm.ElectronPairWiseEDIC;
+import matching.algorithm.MCESDist2;
 import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
@@ -42,8 +44,8 @@ public class MCESJJob extends BasicDependentMasterJJob<Integer> {
         for(int i=1;i< filteredScoredCandidates.size();i++){
             IAtomContainer mol2 = smiParser.parseSmiles(filteredScoredCandidates.get(i).getCandidate().getSmiles());
 
-            EDIC edic = new EDIC(mol1, mol2);
-            if (edic.getScore() != 1) {
+            MCESDist2 dist = new MCESDist2(mol1, mol2, MCESDist2.MatchingType.ELECTRON_PAIR_MOD);
+            if (Double.isInfinite(dist.compare())) {
                 indexLastIncluded=i-1;
                 break;
             }
