@@ -12,12 +12,8 @@ import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class MergeGreedyStrategy implements Ms2MergeStrategy{
 
@@ -27,7 +23,7 @@ public class MergeGreedyStrategy implements Ms2MergeStrategy{
         final ArrayList<MsMsQuerySpectrum>[] queriesPerSegment = new ArrayList[featureSegments.length];
         assignMs2ToSegments(mergedSample, trace, featureSegments, otherSamples, queriesPerSegment);
         for (int k=0; k < queriesPerSegment.length; ++k) {
-            if (queriesPerSegment[k].isEmpty()) continue;
+            if (queriesPerSegment[k] == null || queriesPerSegment[k].isEmpty()) continue;
             score(mergedSample, trace, otherSamples, queriesPerSegment[k]);
             queriesPerSegment[k].sort(Comparator.comparingDouble((MsMsQuerySpectrum x)->x.score).reversed());
             MergedSpectrum mergedSpectrum = merge(queriesPerSegment[k]);
@@ -71,7 +67,11 @@ public class MergeGreedyStrategy implements Ms2MergeStrategy{
 
 
     private static void assignMs2ToSegments(ProcessedSample mergedSample, MergedTrace trace, TraceSegment[] featureSegments, Int2ObjectOpenHashMap<ProcessedSample> otherSamples, ArrayList<MsMsQuerySpectrum>[] queriesPerSegment) {
-        for (int k = 0; k < featureSegments.length; ++k) {
+        TraceSegment[] filteredFS = Arrays.stream(featureSegments).filter(Objects::nonNull).toArray(TraceSegment[]::new);
+        if (filteredFS.length == 0) {
+            return;
+        }
+        for (int k = 0; k < filteredFS.length; ++k) {
             queriesPerSegment[k] = new ArrayList<>();
         }
         for (Int2ObjectMap.Entry<int[]> entry : trace.getMs2SpectraIds().int2ObjectEntrySet()) {
@@ -89,20 +89,20 @@ public class MergeGreedyStrategy implements Ms2MergeStrategy{
             // we assign each header to its closest segment
             for (int k=0; k < querySpectrum.length; ++k) {
                 // FIXME java.lang.NullPointerException: Cannot read field "rightEdge" because "x" is null
-                int i = BinarySearch.searchForDouble(Arrays.asList(featureSegments), x -> mergedSample.getMapping().getRetentionTimeAt(x.rightEdge),
+                int i = BinarySearch.searchForDouble(Arrays.asList(filteredFS), x -> mergedSample.getMapping().getRetentionTimeAt(x.rightEdge),
                         sample.getRtRecalibration().value(headers[k].getRetentionTime()));
                 if (i<0) {
                     i = -(i+1);
                 }
-                if (i >= featureSegments.length) {
-                    i = featureSegments.length-1;
+                if (i >= filteredFS.length) {
+                    i = filteredFS.length-1;
                 }
-                if (i < featureSegments[i].leftEdge && i > 0) {
-                    if (Math.abs(featureSegments[i-1].rightEdge-i) < Math.abs(featureSegments[i].leftEdge-i)) {
+                if (i < filteredFS[i].leftEdge && i > 0) {
+                    if (Math.abs(filteredFS[i-1].rightEdge-i) < Math.abs(filteredFS[i].leftEdge-i)) {
                         i=i-1;
                     }
-                } else if (i > featureSegments[i].rightEdge && i+1 < featureSegments.length) {
-                    if (Math.abs(featureSegments[i+1].leftEdge-i) < Math.abs(featureSegments[i].rightEdge-i)) {
+                } else if (i > filteredFS[i].rightEdge && i+1 < filteredFS.length) {
+                    if (Math.abs(filteredFS[i+1].leftEdge-i) < Math.abs(filteredFS[i].rightEdge-i)) {
                         i=i+1;
                     }
                 } else {

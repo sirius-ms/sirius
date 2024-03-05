@@ -23,7 +23,6 @@ package de.unijena.bioinf.ms.persistence.model.core.spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import jakarta.persistence.Id;
 import lombok.*;
 
 @Getter
