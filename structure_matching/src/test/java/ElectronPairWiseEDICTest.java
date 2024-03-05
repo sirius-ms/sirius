@@ -1,4 +1,4 @@
-import matching.algorithm.EDIC;
+import matching.algorithm.ElectronPairWiseEDIC;
 import org.junit.Test;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.isomorphism.UniversalIsomorphismTester;
@@ -8,7 +8,7 @@ import org.openscience.cdk.smiles.SmilesParser;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class EDICTest {
+public class ElectronPairWiseEDICTest {
 
     private final static SmilesParser smiParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
 
@@ -20,7 +20,7 @@ public class EDICTest {
             IAtomContainer mol1 = smiParser.parseSmiles(smiMol1);
             IAtomContainer mol2 = smiParser.parseSmiles(smiMol2);
 
-            EDIC matcher = new EDIC(mol1,mol2);
+            ElectronPairWiseEDIC matcher = new ElectronPairWiseEDIC(mol1,mol2);
             assertEquals(1.0, matcher.getScore(),0.0);
         }catch(Exception e){
             e.printStackTrace();
@@ -35,7 +35,7 @@ public class EDICTest {
             IAtomContainer mol1 = smiParser.parseSmiles(smiMol1);
             IAtomContainer mol2 = smiParser.parseSmiles(smiMol2);
 
-            EDIC matcher = new EDIC(mol1,mol2);
+            ElectronPairWiseEDIC matcher = new ElectronPairWiseEDIC(mol1,mol2);
             assertEquals(1.0,matcher.getScore(),0);
         }catch(Exception e){
             e.printStackTrace();
@@ -49,7 +49,7 @@ public class EDICTest {
             String smiMol2 = "CN(C)CCC1=CNC2=C1C=C(C=C2)OC";
             IAtomContainer mol1 = smiParser.parseSmiles(smiMol1);
             IAtomContainer mol2 = smiParser.parseSmiles(smiMol2);
-            EDIC matcher = new EDIC(mol1,mol2);
+            ElectronPairWiseEDIC matcher = new ElectronPairWiseEDIC(mol1,mol2);
 
             assertEquals(1.0,matcher.getScore(),0.0);
         }catch(Exception e){
@@ -64,7 +64,7 @@ public class EDICTest {
             String smiMol2 = "C(C(=O)O)(N)C(C)CC"; // isoleucine
             IAtomContainer mol1 = smiParser.parseSmiles(smiMol1);
             IAtomContainer mol2 = smiParser.parseSmiles(smiMol2);
-            EDIC matcher = new EDIC(mol1,mol2);
+            ElectronPairWiseEDIC matcher = new ElectronPairWiseEDIC(mol1,mol2);
 
             assertEquals(1.0,matcher.getScore(),0.0);
         }catch(Exception e){
@@ -80,7 +80,7 @@ public class EDICTest {
             IAtomContainer mol1 = smiParser.parseSmiles(smiMol1);
             IAtomContainer mol2 = smiParser.parseSmiles(smiMol2);
 
-            EDIC matcher = new EDIC(mol1,mol2);
+            ElectronPairWiseEDIC matcher = new ElectronPairWiseEDIC(mol1,mol2);
             assertEquals(0.0,matcher.getScore(),0);
         }catch(Exception e){
             e.printStackTrace();
@@ -95,7 +95,7 @@ public class EDICTest {
             IAtomContainer mol1 = smiParser.parseSmiles(smiMol1);
             IAtomContainer mol2 = smiParser.parseSmiles(smiMol2);
 
-            EDIC matcher = new EDIC(mol1,mol2);
+            ElectronPairWiseEDIC matcher = new ElectronPairWiseEDIC(mol1,mol2);
             assertEquals(0.0, matcher.getScore(),0.0);
         }catch(Exception e){
             e.printStackTrace();
@@ -110,7 +110,7 @@ public class EDICTest {
             IAtomContainer mol1 = smiParser.parseSmiles(smiMol1);
             IAtomContainer mol2 = smiParser.parseSmiles(smiMol2);
 
-            EDIC matcher = new EDIC(mol1,mol2);
+            ElectronPairWiseEDIC matcher = new ElectronPairWiseEDIC(mol1,mol2);
             assertEquals(0.0,matcher.getScore(),0.0);
         }catch(Exception e){
             e.printStackTrace();
@@ -122,7 +122,7 @@ public class EDICTest {
         try{
             String smiMol = "C(C(=O)O)(N)CC1=CC=C(O)C=C1";
             IAtomContainer mol = smiParser.parseSmiles(smiMol);
-            EDIC matcher = new EDIC(mol,mol);
+            ElectronPairWiseEDIC matcher = new ElectronPairWiseEDIC(mol,mol);
             assertEquals(1.0,matcher.getScore(),0.0);
         }catch(Exception e){
             e.printStackTrace();
@@ -140,7 +140,7 @@ public class EDICTest {
             IAtomContainer expectedMol = smiParser.parseSmiles(expectedMolSmiles);
             IAtomContainer otherMol = smiParser.parseSmiles(otherSmiles);
 
-            EDIC matcher = new EDIC(mol, otherMol);
+            ElectronPairWiseEDIC matcher = new ElectronPairWiseEDIC(mol, otherMol);
             matcher.compare();
 
             IAtomContainer actualMol = matcher.getFirstMolecule();

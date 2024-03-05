@@ -2,15 +2,19 @@ import matching.datastructures.AtomContainerE;
 import matching.datastructures.AtomE;
 import matching.datastructures.Pair;
 import matching.datastructures.SideChain;
-import matching.utils.MoleculeManipulator;
 import org.junit.Test;
+import org.openscience.cdk.AtomContainer;
 import org.openscience.cdk.exception.CDKException;
+import org.openscience.cdk.exception.InvalidSmilesException;
+import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.isomorphism.UniversalIsomorphismTester;
+import org.openscience.cdk.silent.Atom;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
+import org.openscience.cdk.smiles.SmiFlavor;
+import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
-
+import matching.utils.MoleculeManipulator;
 import java.util.ArrayList;
-
 import static org.junit.Assert.assertEquals;
 
 public class MoleculeManipulatorTest{
