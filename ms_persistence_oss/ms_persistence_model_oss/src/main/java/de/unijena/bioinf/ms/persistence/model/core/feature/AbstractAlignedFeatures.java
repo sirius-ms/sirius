@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.persistence.model.core.feature;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
-import it.unimi.dsi.fastutil.longs.LongList;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -36,9 +35,6 @@ import java.util.Optional;
 @SuperBuilder
 @ToString
 public abstract class AbstractAlignedFeatures extends AbstractFeature {
-
-    @ToString.Exclude
-    protected LongList featureIds;
 
     @JsonIgnore
     @ToString.Exclude

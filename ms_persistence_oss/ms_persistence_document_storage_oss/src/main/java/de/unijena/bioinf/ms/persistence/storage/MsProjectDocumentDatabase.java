@@ -33,8 +33,6 @@ import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Index;
 import de.unijena.bioinf.storage.db.nosql.IndexType;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongList;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -146,77 +144,63 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
         getStorage().insertAll(compounds);
 
         for (Compound c : compounds) {
-            c.setAdductFeatureIds(importOptionals(c.getAdductFeatures(), c.getCompoundId(), this::importAlignedFeatures));
-            c.setCorrelatedIonPairIds(importOptionals(c.getCorrelatedIonPairs(), c.getCompoundId(), this::importCorrelatedIonPairs));
+            importOptionals(c.getAdductFeatures(), c.getCompoundId(), this::importAlignedFeatures);
+            importOptionals(c.getCorrelatedIonPairs(), c.getCompoundId(), this::importCorrelatedIonPairs);
         }
-
-        getStorage().upsertAll(compounds);
     }
 
-    default LongList importCorrelatedIonPairs(List<CorrelatedIonPair> ionPairs, long parentId) throws IOException {
+    default void importCorrelatedIonPairs(List<CorrelatedIonPair> ionPairs, long parentId) throws IOException {
         List<CorrelatedIonPair> pairs = ionPairs.stream().filter(pair -> pair.getAlignedFeatures1().isPresent() && pair.getAlignedFeatures2().isPresent()).peek(pair -> {
             pair.setCompoundId(parentId);
             pair.setAlignedFeatureId1(pair.getAlignedFeatures1().get().getAlignedFeatureId());
             pair.setAlignedFeatureId2(pair.getAlignedFeatures2().get().getAlignedFeatureId());
         }).toList();
         getStorage().insertAll(pairs);
-        return LongArrayList.toListWithExpectedSize(pairs.stream().mapToLong(CorrelatedIonPair::getIonPairId), pairs.size());
     }
 
-    default LongList importAlignedFeatures(List<AlignedFeatures> featureAlignments, long parentId) throws IOException {
+    default void importAlignedFeatures(List<AlignedFeatures> featureAlignments, long parentId) throws IOException {
         for (AlignedFeatures f : featureAlignments) {
             f.setCompoundId(parentId);
         }
-        return importAlignedFeatures(featureAlignments);
+        importAlignedFeatures(featureAlignments);
     }
 
-    default LongList importAlignedFeatures(List<AlignedFeatures> featureAlignments) throws IOException {
+    default void importAlignedFeatures(List<AlignedFeatures> featureAlignments) throws IOException {
         getStorage().insertAll(featureAlignments);
-
         for (AlignedFeatures f : featureAlignments) {
-            f.setIsotopicFeaturesIds(importOptionals(f.getIsotopicFeatures(), f.getAlignedFeatureId(), this::importAlignedIsotopicFeatures));
-            f.setFeatureIds(importOptionals(f.getFeatures(), f.getAlignedFeatureId(), this::importFeatures));
+            importOptionals(f.getFeatures(), f.getAlignedFeatureId(), this::importFeatures);
+            importOptionals(f.getIsotopicFeatures(), f.getAlignedFeatureId(), this::importAlignedIsotopicFeatures);
         }
-
-        getStorage().upsertAll(featureAlignments);
-        return LongArrayList.toListWithExpectedSize(featureAlignments.stream().mapToLong(AlignedFeatures::getAlignedFeatureId), featureAlignments.size());
     }
 
-    default LongList importAlignedIsotopicFeatures(List<AlignedIsotopicFeatures> isotopicFeatureAlignments, long parentId) throws IOException {
+    default void importAlignedIsotopicFeatures(List<AlignedIsotopicFeatures> isotopicFeatureAlignments, long parentId) throws IOException {
         for (AlignedIsotopicFeatures f : isotopicFeatureAlignments) {
             f.setAlignedFeatureId(parentId);
         }
         getStorage().insertAll(isotopicFeatureAlignments);
-
         for (AlignedIsotopicFeatures f : isotopicFeatureAlignments) {
-            f.setFeatureIds(importOptionals(f.getFeatures(), f.getAlignedIsotopeFeatureId(), this::importFeatures));
+            importOptionals(f.getFeatures(), f.getAlignedIsotopeFeatureId(), this::importFeatures);
         }
-
-        getStorage().upsertAll(isotopicFeatureAlignments);
-        return LongArrayList.toListWithExpectedSize(isotopicFeatureAlignments.stream().mapToLong(AlignedIsotopicFeatures::getAlignedIsotopeFeatureId), isotopicFeatureAlignments.size());
     }
 
-    default LongList importFeatures(List<Feature> features, long parentId) throws IOException {
+    default void importFeatures(List<Feature> features, long parentId) throws IOException {
         for (Feature f : features) {
             f.setAlignedFeatureId(parentId);
         }
 
         getStorage().insertAll(features);
-        return LongArrayList.toListWithExpectedSize(features.stream().mapToLong(Feature::getFeatureId), features.size());
     }
 
-    private <T> LongList importOptionals(Optional<List<T>> optionals, long parentId, IOThrowingBiFunction<List<T>, Long, LongList> importer) throws IOException {
+    private <T> void importOptionals(Optional<List<T>> optionals, long parentId, IOThrowingBiConsumer<List<T>, Long> importer) throws IOException {
         if (optionals.isPresent()) {
-            return importer.apply(optionals.get(), parentId);
-        } else {
-            return LongList.of();
+            importer.apply(optionals.get(), parentId);
         }
     }
 
     @FunctionalInterface
-    interface IOThrowingBiFunction<T, U, R> {
+    interface IOThrowingBiConsumer<T, U> {
 
-        R apply(T object1, U object2) throws IOException;
+        void apply(T object1, U object2) throws IOException;
 
     }
 
