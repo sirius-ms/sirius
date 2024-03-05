@@ -17,8 +17,8 @@ public class Ms2SpectrumHeader extends Ms1SpectrumHeader implements Serializable
     @Getter protected final double precursorMz;
     @Getter protected final double targetedMz;
 
-    public Ms2SpectrumHeader(int polarity, boolean centroided, CollisionEnergy energy, IsolationWindow window, int parentId, double precursorMz, double targetedMz, double retentionTime) {
-        this(-1,polarity,centroided,energy,window,parentId,precursorMz,targetedMz,retentionTime);
+    public Ms2SpectrumHeader(String sourceId, int polarity, boolean centroided, CollisionEnergy energy, IsolationWindow window, int parentId, double precursorMz, double targetedMz, double retentionTime) {
+        this(-1, sourceId, polarity,centroided,energy,window,parentId,precursorMz,targetedMz,retentionTime);
     }
 
     @Nullable
@@ -30,8 +30,8 @@ public class Ms2SpectrumHeader extends Ms1SpectrumHeader implements Serializable
         return Optional.ofNullable(isolationWindow);
     }
 
-    public Ms2SpectrumHeader(int uid, int polarity, boolean centroided,  CollisionEnergy energy, IsolationWindow window, int parentId, double precursorMz, double targetedMz, double retentionTime) {
-        super(uid, polarity, centroided);
+    public Ms2SpectrumHeader(int uid, String sourceId, int polarity, boolean centroided,  CollisionEnergy energy, IsolationWindow window, int parentId, double precursorMz, double targetedMz, double retentionTime) {
+        super(uid, sourceId, polarity, centroided);
         this.energy = energy;
         this.parentId = parentId;
         this.isolationWindow = window==null || window.isUndefined() ? null : window;
@@ -49,7 +49,7 @@ public class Ms2SpectrumHeader extends Ms1SpectrumHeader implements Serializable
     }
 
     public Ms2SpectrumHeader withUid(int uid) {
-        return new Ms2SpectrumHeader(uid, polarity, centroided, energy, isolationWindow, parentId, precursorMz, targetedMz, retentionTime);
+        return new Ms2SpectrumHeader(uid, sourceId, polarity, centroided, energy, isolationWindow, parentId, precursorMz, targetedMz, retentionTime);
     }
 
     @Override

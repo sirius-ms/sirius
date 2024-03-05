@@ -46,13 +46,13 @@ import java.util.Map;
 public class MinimalWeightedPlacements implements Matcher {
 
     /**
-     * The molecule represented as {@link AtomContainerE} which will be compared to {@link #molecule2}.
+     * The molecule represented as {@link IAtomContainer} which will be compared to {@link #molecule2}.
      */
-    private AtomContainerE molecule1;
+    private IAtomContainer molecule1;
     /**
-     * The molecule represented as {@link AtomContainerE} which will be compared to {@link #molecule1}.
+     * The molecule represented as {@link IAtomContainer} which will be compared to {@link #molecule1}.
      */
-    private AtomContainerE molecule2;
+    private IAtomContainer molecule2;
     /**
      * The list which contains the side chains whose occurrences in both molecules will be
      * removed and replaced by an '*'-atom.
@@ -87,8 +87,8 @@ public class MinimalWeightedPlacements implements Matcher {
                 final CDKHydrogenAdder hydrogenAdder = CDKHydrogenAdder.getInstance(DefaultChemObjectBuilder.getInstance());
                 CycleFinder cycles = Cycles.or(Cycles.all(), Cycles.all(6));
                 Aromaticity aromaticity = new Aromaticity(ElectronDonation.daylight(), cycles);
-                this.molecule1 = new AtomContainerE(this.setUpMolecule(molecule1,hydrogenAdder,aromaticity));
-                this.molecule2 = new AtomContainerE(this.setUpMolecule(molecule2,hydrogenAdder,aromaticity));
+                this.molecule1 = this.setUpMolecule(molecule1 instanceof AtomContainerE ? ((AtomContainerE) molecule1).getContainer() : molecule1, hydrogenAdder,aromaticity);
+                this.molecule2 = this.setUpMolecule(molecule2 instanceof AtomContainerE ? ((AtomContainerE) molecule2).getContainer() : molecule2, hydrogenAdder,aromaticity);
 
                 this.sideChainList = sideChainList;
                 this.distance = -1;
@@ -137,13 +137,14 @@ public class MinimalWeightedPlacements implements Matcher {
     public double compare() {
         AtomContainerE molecule1, molecule2;
         try{
-            molecule1 = (AtomContainerE) this.molecule1.clone();
-            molecule2 = (AtomContainerE) this.molecule2.clone();
+            molecule1 = new AtomContainerE(this.molecule1.clone());
+            molecule2 = new AtomContainerE(this.molecule2.clone());
         }catch (CloneNotSupportedException e){
             System.out.println("An error occurred while cloning both molecules.");
             this.distance = -1;
             return this.distance;
         }
+
 
         if (!this.sameMolecularFormula()) {
             this.distance = Double.MAX_VALUE;
@@ -258,7 +259,7 @@ public class MinimalWeightedPlacements implements Matcher {
 
     /**
      * Returns the calculated distance between {@link #molecule1} and {@link #molecule2}.<br>
-     * If the distance has´nt been calculated yet, {@link #compare()} will be called.
+     * If the distance hasn't been calculated yet, {@link #compare()} will be called.
      *
      * @return the distance between {@link #molecule1} and {@link #molecule2}. This distance is equal to
      * {@link Double#MAX_VALUE} if the given assumption is not true.
@@ -300,7 +301,7 @@ public class MinimalWeightedPlacements implements Matcher {
      *
      * @return the {@link AtomContainerE} {@link #molecule1}
      */
-    public AtomContainerE getFirstMolecule(){
+    public IAtomContainer getFirstMolecule(){
         return this.molecule1;
     }
 
@@ -309,7 +310,7 @@ public class MinimalWeightedPlacements implements Matcher {
      *
      * @return the {@link AtomContainerE} {@link #molecule2}
      */
-    public AtomContainerE getSecondMolecule(){
+    public IAtomContainer getSecondMolecule(){
         return this.molecule2;
     }
 }

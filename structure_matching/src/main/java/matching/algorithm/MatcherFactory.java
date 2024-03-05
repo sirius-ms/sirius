@@ -1,5 +1,6 @@
 package matching.algorithm;
 
+import matching.algorithm.Matcher;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 

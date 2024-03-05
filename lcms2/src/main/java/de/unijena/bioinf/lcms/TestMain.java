@@ -6,7 +6,16 @@ import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.lcms.align.AlignmentBackbone;
 import de.unijena.bioinf.lcms.align.MoI;
 import de.unijena.bioinf.lcms.merge.MergedTrace;
+import de.unijena.bioinf.lcms.projectspace.ProjectSpaceImporter;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
+import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
+import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
+import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.storage.db.nosql.Database;
@@ -14,9 +23,13 @@ import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import picocli.CommandLine;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.LogManager;
 
 /**
@@ -54,7 +67,7 @@ import java.util.logging.LogManager;
  */
 public class TestMain {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         try (InputStream is = TestMain.class.getClassLoader().
                 getResourceAsStream("logging.properties")) {
             LogManager.getLogManager().readConfiguration(is);
@@ -74,31 +87,32 @@ public class TestMain {
 
         final de.unijena.bioinf.lcms.trace.ProcessedSample[] samples;
         LCMSProcessing processing = new LCMSProcessing();
-        {
-            if (ops.cores>=1) {
-                SiriusJobs.setGlobalJobManager(ops.cores);
-            }
-            JobManager globalJobManager = SiriusJobs.getGlobalJobManager();
-            System.out.println(globalJobManager.getCPUThreads());
+
+        Path storeLocation = Files.createTempFile("nitrite", ".db");
+        try (NitriteDatabase db = new NitriteDatabase(storeLocation, SiriusProjectDocumentDatabase.buildMetadata())) {
+            Database<?> store = new SiriusProjectDatabaseImpl<>(db).getStorage();
+            processing.setImportStrategy(new ProjectSpaceImporter(new SiriusProjectDatabaseImpl<>(store)));
+            {
+                if (ops.cores >= 1) {
+                    SiriusJobs.setGlobalJobManager(ops.cores);
+                }
+                JobManager globalJobManager = SiriusJobs.getGlobalJobManager();
+                System.out.println(globalJobManager.getCPUThreads());
 //            File[] files = new File("/home/kaidu/analysis/lcms/diverse_collection/small").listFiles();
 //            File[] files = new File("/home/kaidu/analysis/lcms/diverse_collection/MSV000080627/").listFiles();
-            //File[] files = new File("/home/kaidu/data/raw/polluted_citrus/").listFiles();
-            List<File> files = ops.getInputFiles();
-            System.setProperty("lcms.logdir", ops.getLogDir().toAbsolutePath().toString());
+                //File[] files = new File("/home/kaidu/data/raw/polluted_citrus/").listFiles();
+                List<File> files = ops.getInputFiles();
+                System.setProperty("lcms.logdir", ops.getLogDir().toAbsolutePath().toString());
 
-            List<BasicJJob<de.unijena.bioinf.lcms.trace.ProcessedSample>> jobs = new ArrayList<>();
-            int atmost = Integer.MAX_VALUE;
-            for (File f : files) {
-                if (--atmost < 0) break;
-                if (f.getName().toLowerCase().endsWith(".mzml")) {
-                    jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<de.unijena.bioinf.lcms.trace.ProcessedSample>() {
-                        @Override
-                        protected de.unijena.bioinf.lcms.trace.ProcessedSample compute() throws Exception {
-                            // TODO get new project space
-                            Path storeLocation = File.createTempFile("nitrite", "db").toPath();
-                            try (NitriteDatabase db = new NitriteDatabase(storeLocation, SiriusProjectDocumentDatabase.buildMetadata())) {
-                                SiriusProjectDatabaseImpl<? extends Database<?>> store = new SiriusProjectDatabaseImpl<>(db);
-                                ProcessedSample sample = processing.processSample(f, store);
+                List<BasicJJob<de.unijena.bioinf.lcms.trace.ProcessedSample>> jobs = new ArrayList<>();
+                int atmost = Integer.MAX_VALUE;
+                for (File f : files) {
+                    if (--atmost < 0) break;
+                    if (f.getName().toLowerCase().endsWith(".mzml")) {
+                        jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<de.unijena.bioinf.lcms.trace.ProcessedSample>() {
+                            @Override
+                            protected de.unijena.bioinf.lcms.trace.ProcessedSample compute() throws Exception {
+                                ProcessedSample sample = processing.processSample(f);
                                 int hasIsotopes = 0, hasNoIsotopes = 0;
                                 for (MoI m : sample.getStorage().getAlignmentStorage()) {
                                     if (m.hasIsotopes()) ++hasIsotopes;
@@ -108,35 +122,67 @@ public class TestMain {
                                 System.out.println(sample.getUid() + " with " + hasIsotopes + " / " + (hasIsotopes + hasNoIsotopes) + " isotope features");
                                 return sample;
                             }
-                        }
-                    }));
+                        }));
+                    }
+                }
+                //samples = jobs.stream().map(JJob::takeResult).toArray(de.unijena.bioinf.lcms.trace.ProcessedSample[]::new);
+                int count = 0;
+                for (BasicJJob<ProcessedSample> job : jobs) {
+                    System.out.println(job.takeResult().getUid() + " (" + ++count + " / " + jobs.size() + ")");
                 }
             }
-            //samples = jobs.stream().map(JJob::takeResult).toArray(de.unijena.bioinf.lcms.trace.ProcessedSample[]::new);
-            int count = 0;
-            for (BasicJJob<ProcessedSample> job : jobs) {
-                System.out.println(job.takeResult().getUid() + " (" + ++count + " / " + jobs.size() + ")");
-            }
-        }
-        try {
-            AlignmentBackbone bac = processing.align();
-            ProcessedSample merged = processing.merge(bac);
-            {
-                int hasIsotopes=0, hasNoIsotopes=0;
-                for (MergedTrace t : merged.getStorage().getMergeStorage()) {
-                    if (t.getIsotopeUids().size()>0) {
-                        ++hasIsotopes;
-                    } else ++hasNoIsotopes;
+            try {
+                AlignmentBackbone bac = processing.align();
+                ProcessedSample merged = processing.merge(bac);
+                {
+                    int hasIsotopes = 0, hasNoIsotopes = 0;
+                    for (MergedTrace t : merged.getStorage().getMergeStorage()) {
+                        if (t.getIsotopeUids().size() > 0) {
+                            ++hasIsotopes;
+                        } else ++hasNoIsotopes;
+                    }
+                    System.out.println("merged sample with " + hasIsotopes + " / " + (hasIsotopes + hasNoIsotopes) + " isotope features");
                 }
-                System.out.println("merged sample with " + hasIsotopes + " / " + (hasIsotopes+hasNoIsotopes) + " isotope features");
-            }
-            DoubleArrayList avgAl = new DoubleArrayList();
-            System.out.println("AVERAGE = " + avgAl.doubleStream().sum()/avgAl.size());
-            System.out.println("Good Traces = " + avgAl.doubleStream().filter(x->x>=5).sum());
-            processing.exportFeaturesToFiles(merged, bac);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+                DoubleArrayList avgAl = new DoubleArrayList();
+                System.out.println("AVERAGE = " + avgAl.doubleStream().sum() / avgAl.size());
+                System.out.println("Good Traces = " + avgAl.doubleStream().filter(x -> x >= 5).sum());
+//            processing.exportFeaturesToFiles(merged, bac);
 
+                // TODO check intensity normalization in aligned features
+                // FIXME mz in aligned features is weird
+                processing.extractFeaturesAndExportToProjectSpace(merged, bac);
+
+                assert store.countAll(MergedLCMSRun.class) == 1;
+                for (MergedLCMSRun run : store.findAll(MergedLCMSRun.class)) {
+                    System.out.printf("\nMerged Run: %s\n\n", run.getName());
+                }
+
+                System.out.printf(
+                        """
+                                # Run:                     %d
+                                # Scan:                    %d
+                                # MSMSScan:                %d
+                                # SourceTrace:             %d
+                                # MergedTrace:             %d
+                                # Feature:                 %d
+                                # AlignedIsotopicFeatures: %d
+                                # AlignedFeatures:         %d
+                                
+                                Feature                 SNR: %f
+                                AlignedIsotopicFeatures SNR: %f
+                                AlignedFeatures         SNR: %f
+                                """,
+                        store.countAll(LCMSRun.class), store.countAll(Scan.class), store.countAll(MSMSScan.class),
+                        store.countAll(SourceTrace.class), store.countAll(de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace.class),
+                        store.countAll(Feature.class), store.countAll(AlignedIsotopicFeatures.class), store.countAll(AlignedFeatures.class),
+                        store.findAllStr(Feature.class).mapToDouble(Feature::getSnr).average().orElse(Double.NaN),
+                        store.findAllStr(AlignedIsotopicFeatures.class).mapToDouble(AlignedIsotopicFeatures::getSnr).average().orElse(Double.NaN),
+                        store.findAllStr(AlignedFeatures.class).mapToDouble(AlignedFeatures::getSnr).average().orElse(Double.NaN)
+                );
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }
