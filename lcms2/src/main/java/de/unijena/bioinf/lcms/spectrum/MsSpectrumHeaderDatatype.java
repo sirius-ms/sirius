@@ -2,11 +2,9 @@ package de.unijena.bioinf.lcms.spectrum;
 
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
-import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.lcms.datatypes.CustomDataType;
 import org.h2.mvstore.DataUtils;
 import org.h2.mvstore.WriteBuffer;
-import org.h2.mvstore.type.DataType;
 
 import java.nio.ByteBuffer;
 
@@ -30,6 +28,8 @@ public class MsSpectrumHeaderDatatype extends CustomDataType  {
         if (header.centroided) flags |= 8;
         if (header instanceof Ms2SpectrumHeader) flags |= 16;
         buff.putInt(header.uid);
+        buff.putInt(header.sourceId.length());
+        buff.putStringData(header.sourceId, header.sourceId.length());
         buff.put(flags);
         if (header instanceof Ms2SpectrumHeader header2) {
             String ce = header2.energy==null ? "" : header2.energy.toString();
@@ -46,6 +46,8 @@ public class MsSpectrumHeaderDatatype extends CustomDataType  {
     @Override
     public Object read(ByteBuffer buff) {
         int uid = buff.getInt();
+        int ilen = buff.getInt();
+        String sourceId = DataUtils.readString(buff, ilen);
         byte flags = buff.get();
         byte polarity = 0;
         if ((flags & 2) != 0) polarity=1;
@@ -65,10 +67,10 @@ public class MsSpectrumHeaderDatatype extends CustomDataType  {
             double mz = buff.getDouble();
             double rt = buff.getDouble();
             return new Ms2SpectrumHeader(
-                    uid, polarity, centroided, ce, window, pid, mz,mz, rt
+                    uid, sourceId, polarity, centroided, ce, window, pid, mz,mz, rt
             );
         } else { // MS1 Header
-            return new Ms1SpectrumHeader(uid, polarity, centroided);
+            return new Ms1SpectrumHeader(uid, sourceId, polarity, centroided);
         }
     }
 

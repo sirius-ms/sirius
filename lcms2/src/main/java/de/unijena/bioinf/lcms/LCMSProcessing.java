@@ -1,6 +1,8 @@
 package de.unijena.bioinf.lcms;
 
 import de.unijena.bioinf.lcms.align.*;
+import de.unijena.bioinf.lcms.features.IsotopePatternExtractionStrategy;
+import de.unijena.bioinf.lcms.features.MergedApexIsotopePatternExtractor;
 import de.unijena.bioinf.lcms.features.MergedFeatureExtractionStrategy;
 import de.unijena.bioinf.lcms.features.MergedFeatureExtractor;
 import de.unijena.bioinf.lcms.io.LCMSImporter;
@@ -14,23 +16,25 @@ import de.unijena.bioinf.lcms.msms.MostIntensivePeakInIsolationWindowAssignmentS
 import de.unijena.bioinf.lcms.msms.Ms2MergeStrategy;
 import de.unijena.bioinf.lcms.msms.Ms2TraceStrategy;
 import de.unijena.bioinf.lcms.projectspace.ImportStrategy;
+import de.unijena.bioinf.lcms.projectspace.ProjectSpaceImporter;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.statistics.*;
-import de.unijena.bioinf.lcms.trace.ContiguousTrace;
-import de.unijena.bioinf.lcms.trace.LCMSStorage;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
-import de.unijena.bioinf.lcms.trace.Rect;
+import de.unijena.bioinf.lcms.trace.*;
 import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.traceextractor.*;
-import de.unijena.bioinf.ms.persistence.model.core.AlignedFeatures;
-import de.unijena.bioinf.ms.persistence.model.core.ChromatographyType;
-import de.unijena.bioinf.ms.persistence.model.core.Run;
-import de.unijena.bioinf.ms.persistence.storage.MsProjectDocumentDatabase;
-import de.unijena.bioinf.storage.db.nosql.Database;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
+import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
+import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
+import it.unimi.dsi.fastutil.ints.*;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.text.similarity.LongestCommonSubsequence;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
@@ -86,11 +90,15 @@ public class LCMSProcessing {
     @Getter @Setter private AlignmentScorer alignmentScorerFull = new AlignmentScorer(4);
     @Getter @Setter private MergeTracesWithoutGapFilling mergeStrategy = new MergeTracesWithoutGapFilling();
 
-    @Getter @Setter private ImportStrategy importStrategy;
+    @Getter @Setter private ImportStrategy importStrategy = new ProjectSpaceImporter();
+
+    @Getter @Setter private TraceExtractionStrategy traceExtractionStrategy = new TraceExtractor();
 
     @Getter @Setter private MergedFeatureExtractionStrategy mergedFeatureExtractionStrategy = new MergedFeatureExtractor();
 
     @Getter @Setter private Ms2MergeStrategy ms2MergeStrategy = new MergeGreedyStrategy();
+
+    @Getter @Setter private IsotopePatternExtractionStrategy isotopePatternExtractionStrategy = new MergedApexIsotopePatternExtractor();
 
     protected List<ProcessedSample> samples = new ArrayList<>();
 
@@ -98,11 +106,8 @@ public class LCMSProcessing {
      * parses an MZML file and stores the processed sample. Note: we should add possibility to parse from input
      * stream later
      */
-    public ProcessedSample processSample(
-            File file,
-            MsProjectDocumentDatabase<? extends Database<?>> store
-    ) throws IOException {
-        return processSample(file, store, false, Run.Type.SAMPLE, ChromatographyType.LC);
+    public ProcessedSample processSample(File file) throws IOException {
+        return processSample(file, false, LCMSRun.Type.SAMPLE, Chromatography.LC);
     }
 
     /**
@@ -111,14 +116,13 @@ public class LCMSProcessing {
      */
     public ProcessedSample processSample(
             File file,
-            MsProjectDocumentDatabase<? extends Database<?>> store,
             boolean saveRawScans,
-            Run.Type runType,
-            ChromatographyType chromatographyType
+            LCMSRun.Type runType,
+            Chromatography chromatography
     ) throws IOException {
         // parse file and extract spectra
         ProcessedSample sample = LCMSImporter.importToProject(
-                file, storageFactory, store, saveRawScans, runType, chromatographyType);
+                file, storageFactory, importStrategy, saveRawScans, runType, chromatography);
         sample.setUid(this.samples.size());
         this.samples.add(sample);
         sample.active();
@@ -154,19 +158,54 @@ public class LCMSProcessing {
         return merged;
     }
 
-    public void extractFeaturesAndExportToProjectSpace(ProcessedSample merged, AlignmentBackbone backbone, Object storage) {
-        final HashMap<Integer, ProcessedSample> idx2sample = new HashMap<>();
-        for (ProcessedSample s : backbone.getSamples()) idx2sample.put(s.getUid(),s);
+    public void extractFeaturesAndExportToProjectSpace(ProcessedSample merged, AlignmentBackbone backbone) throws IOException {
+        final Int2ObjectMap<ProcessedSample> idx2sample = new Int2ObjectOpenHashMap<>();
+        for (ProcessedSample s : backbone.getSamples()) {
+            idx2sample.put(s.getUid(), s);
+        }
+
+        LongestCommonSubsequence lcs = new LongestCommonSubsequence();
+        String name = Arrays.stream(backbone.getSamples()).map(s -> s.getRun().getName()).reduce((a, b) -> lcs.longestCommonSubsequence(a, b).toString()).orElse("");
+        if (name.isBlank())
+            name = "merged run";
+
+        MergedLCMSRun mergedRun = MergedLCMSRun.builder()
+                .name(name)
+                .sampleStats(merged.getStorage().getStatistics())
+                .build();
+        merged.setRun(mergedRun);
+
+        importStrategy.importMergedRun(mergedRun);
+
+        Int2LongMap trace2trace = new Int2LongOpenHashMap();
         for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
             trace.finishMerging();
             ProcessedSample[] samplesInTrace = new ProcessedSample[trace.getSampleIds().size()];
-            trace.getTraceIds().forEach(x->samplesInTrace[x]=idx2sample.get(x));
-            Iterator<AlignedFeatures> fiter = mergedFeatureExtractionStrategy.extractFeatures(merged, samplesInTrace, trace, ms2MergeStrategy);
+            for (int i = 0; i < trace.getSampleIds().size(); ++i) {
+                samplesInTrace[i] = idx2sample.get(trace.getSampleIds().getInt(i));
+            }
+
+            Iterator<IntObjectPair<AbstractTrace>> titer = traceExtractionStrategy.extractTrace(merged, samplesInTrace, trace);
+            while (titer.hasNext()) {
+                IntObjectPair<AbstractTrace> pair = titer.next();
+                AbstractTrace atrace = pair.right();
+                importStrategy.importTrace(atrace);
+                if (atrace instanceof de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace) {
+                    trace2trace.put(pair.leftInt(), ((de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace) atrace).getMergedTraceId());
+                } else if (atrace instanceof SourceTrace) {
+                    trace2trace.put(pair.leftInt(), ((SourceTrace) atrace).getSourceTraceId());
+                }
+            }
+        }
+
+        for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
+            Iterator<AlignedFeatures> fiter = mergedFeatureExtractionStrategy.extractFeatures(merged, trace, ms2MergeStrategy, isotopePatternExtractionStrategy, trace2trace, idx2sample);
             while (fiter.hasNext()) {
-                importStrategy.importAlignedFeature(storage, fiter.next());
+                importStrategy.importAlignedFeature(fiter.next());
             }
         }
     }
+
     public void exportFeaturesToFiles(ProcessedSample merged, AlignmentBackbone backbone) {
         int J=0;
         final HashMap<Integer, ProcessedSample> idx2sample = new HashMap<>();
@@ -180,7 +219,7 @@ public class LCMSProcessing {
                 for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
                     //if (trace.getSampleIds().size()<6 || trace.toTrace(merged).apexIntensity() < 0.01) continue;
                     ProcessedSample[] samplesInTrace = new ProcessedSample[trace.getSampleIds().size()];
-                    for (int i = 0; i < trace.getTraceIds().size(); ++i) {
+                    for (int i = 0; i < trace.getSampleIds().size(); ++i) {
                         samplesInTrace[i] = idx2sample.get(trace.getSampleIds().getInt(i));
                     }
                     String line = ((MergedFeatureExtractor) mergedFeatureExtractionStrategy).extractFeaturesToString(merged, samplesInTrace, trace, ms2MergeStrategy);

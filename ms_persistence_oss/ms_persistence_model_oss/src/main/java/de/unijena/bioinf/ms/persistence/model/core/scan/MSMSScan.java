@@ -18,7 +18,7 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.model.core;
+package de.unijena.bioinf.ms.persistence.model.core.scan;
 
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
@@ -35,7 +35,7 @@ import lombok.*;
 @ToString(callSuper = true)
 public class MSMSScan extends AbstractScan {
     @Builder
-    public MSMSScan(long scanId, Long runId, String scanNumber, Double scanTime, Double ccs, SimpleSpectrum peaks, Long precursorScanId, byte msLevel, IsolationWindow isolationWindow, CollisionEnergy collisionEnergy, Double mzOfInterest) {
+    public MSMSScan(long scanId, long runId, String scanNumber, double scanTime, double ccs, SimpleSpectrum peaks, long precursorScanId, byte msLevel, IsolationWindow isolationWindow, CollisionEnergy collisionEnergy, double mzOfInterest) {
         super(runId, scanNumber, scanTime, ccs, peaks);
         this.scanId = scanId;
         this.precursorScanId = precursorScanId;
