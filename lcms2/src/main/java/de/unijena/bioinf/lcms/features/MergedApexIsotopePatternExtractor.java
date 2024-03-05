@@ -20,7 +20,7 @@
 
 package de.unijena.bioinf.lcms.features;
 
-import de.unijena.bioinf.ms.persistence.model.core.IsotopePattern;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
 
