@@ -1,13 +1,20 @@
 package matching.datastructures;
 
+import lombok.Getter;
 import org.openscience.cdk.Atom;
-import org.openscience.cdk.interfaces.IElement;
+import org.openscience.cdk.interfaces.*;
+
+import javax.vecmath.Point2d;
+import javax.vecmath.Point3d;
+import java.util.Map;
 
 /**
  * An AtomE object is an object of {@link Atom} which has three additional attributes.<br>
  * It can be marked in two several ways and a non-negative integer value can be assigned to this atom.
  */
-public class AtomE extends Atom {
+public class AtomE implements IAtom {
+
+    private IAtom atom;
 
     /**
      * A boolean value to assign this object a particular state.<br>
@@ -25,18 +32,8 @@ public class AtomE extends Atom {
      * This value can be used to determine the distance from the start atom to this atom in BFS.
      * Or it can be used to determine when this atom was considered in a recursive procedure.
      */
+    @Getter
     private int depth;
-
-    /**
-     * Constructs an completely unset atom.<br>
-     * {@link #color} and {@link #marked} are set to {@code false} and {@link #depth} is set to {@code -1}.
-     */
-    public AtomE(){
-        super();
-        this.color = false;
-        this.marked = false;
-        this.depth = -1;
-    }
 
     /**
      * Constructs an isotope by copying the symbol, atomic number, flags, identifier, exact mass, natural abundance,
@@ -48,82 +45,10 @@ public class AtomE extends Atom {
      * The additional attributes {@link #color} and {@link #marked} are set to {@code false} and {@link #depth}
      * is set to {@code -1}.
      *
-     * @param element IAtomType to copy information from
+     * @param atom IAtomType to copy information from
      */
-    public AtomE(IElement element){
-        super(element);
-        this.color = false;
-        this.marked = false;
-        this.depth = -1;
-    }
-
-    /**
-     * Create a new atom with of the specified element.<br>
-     * The additional attributes {@link #color} and {@link #marked} are set to {@code false} and {@link #depth}
-     * is set to {@code -1}.
-     *
-     * @param elem atomic number
-     */
-    public AtomE(int elem){
-        super(elem);
-        this.color = false;
-        this.marked = false;
-        this.depth = -1;
-    }
-
-    /**
-     * Create a new atom with the specified element and hydrogen count.<br>
-     * The additional attributes {@link #color} and {@link #marked} are set to {@code false} and {@link #depth}
-     * is set to {@code -1}.
-     *
-     * @param elem atomic number
-     * @param hcnt hydrogen count
-     */
-    public AtomE(int elem, int hcnt){
-        super(elem, hcnt);
-        this.color = false;
-        this.marked = false;
-        this.depth = -1;
-    }
-
-    /**
-     * Create a new atom with the specified element, hydrogen count, and formal charge.<br>
-     * The additional attributes {@link #color} and {@link #marked} are set to {@code false} and {@link #depth}
-     * is set to {@code -1}.
-     *
-     * @param elem atomic number
-     * @param hcnt hydrogen count
-     * @param fchg formal charge
-     */
-    public AtomE(int elem, int hcnt, int fchg){
-        super(elem, hcnt, fchg);
-        this.color = false;
-        this.marked = false;
-        this.depth = -1;
-    }
-
-    /**
-     * Constructs an Atom from a string containing an element symbol and optionally the atomic mass,
-     * hydrogen count, and formal charge.<br>
-     * The symbol grammar allows easy construction from common symbols, for example:
-     * <ul>
-     *      {@code new Atom("NH+");   // nitrogen cation with one hydrogen}<br>
-     *      {@code new Atom("OH");    // hydroxy}<br>
-     *      {@code new Atom("O-");    // oxygen anion}<br>
-     *      {@code new Atom("13CH3"); // methyl isotope 13}<br>
-     *          <br>
-     *      {@code atom := {mass}? {symbol} {hcnt}? {fchg}?}<br>
-     *      {@code mass := \d+}<br>
-     *      {@code hcnt := 'H' \d+}<br>
-     *      {@code fchg := '+' \d+? | '-' \d+?}<br>
-     * </ul>
-     * The additional attributes {@link #color} and {@link #marked} are set to {@code false} and {@link #depth}
-     * is set to {@code -1}.
-     *
-     * @param symbol string with the mandatory element symbol
-     */
-    public AtomE(String symbol){
-        super(symbol);
+    public AtomE(IAtom atom){
+        this.atom = atom;
         this.color = false;
         this.marked = false;
         this.depth = -1;
@@ -172,20 +97,374 @@ public class AtomE extends Atom {
      * @param depth a non-negative integer value that {@link #depth} will be set to
      */
     public void setDepth(int depth){
-        if(depth < 0 ){
-            throw new RuntimeException("The given parameter is not valid.");
-        }else{
-            this.depth = depth;
-        }
+        this.depth = depth;
     }
 
-    /**
-     * Returns the value of {@link #depth}.
-     *
-     * @return value of {@link #depth}
-     */
-    public int getDepth(){
-        return this.depth;
+    public IAtom getOrgAtom(){
+        return this.atom;
     }
 
+    @Override
+    public void setCharge(Double charge) {
+        this.atom.setCharge(charge);
+    }
+
+    @Override
+    public Double getCharge() {
+        return this.atom.getCharge();
+    }
+
+    @Override
+    public void setImplicitHydrogenCount(Integer hydrogenCount) {
+        this.atom.setImplicitHydrogenCount(hydrogenCount);
+    }
+
+    @Override
+    public Integer getImplicitHydrogenCount() {
+        return this.atom.getImplicitHydrogenCount();
+    }
+
+    @Override
+    public void setPoint2d(Point2d point2d) {
+        this.atom.setPoint2d(point2d);
+    }
+
+    @Override
+    public void setPoint3d(Point3d point3d) {
+        this.atom.setPoint3d(point3d);
+    }
+
+    @Override
+    public void setFractionalPoint3d(Point3d point3d) {
+        this.atom.setFractionalPoint3d(point3d);
+    }
+
+    @Override
+    public void setStereoParity(Integer stereoParity) {
+        this.atom.setStereoParity(stereoParity);
+    }
+
+    @Override
+    public Point2d getPoint2d() {
+        return this.atom.getPoint2d();
+    }
+
+    @Override
+    public Point3d getPoint3d() {
+        return this.atom.getPoint3d();
+    }
+
+    @Override
+    public Point3d getFractionalPoint3d() {
+        return this.atom.getFractionalPoint3d();
+    }
+
+    @Override
+    public Integer getStereoParity() {
+        return this.atom.getStereoParity();
+    }
+
+    @Override
+    public IAtomContainer getContainer() {
+        return this.atom.getContainer();
+    }
+
+    @Override
+    public int getIndex() {
+        return this.atom.getIndex();
+    }
+
+    @Override
+    public Iterable<IBond> bonds() {
+        return this.atom.bonds();
+    }
+
+    @Override
+    public int getBondCount() {
+        return this.atom.getBondCount();
+    }
+
+    @Override
+    public IBond getBond(IAtom atom) {
+        return this.atom.getBond(atom);
+    }
+
+    @Override
+    public boolean isAromatic() {
+        return this.atom.isAromatic();
+    }
+
+    @Override
+    public void setIsAromatic(boolean arom) {
+        this.atom.setIsAromatic(arom);
+    }
+
+    @Override
+    public boolean isInRing() {
+        return this.atom.isInRing();
+    }
+
+    @Override
+    public void setIsInRing(boolean ring) {
+        this.atom.setIsInRing(ring);
+    }
+
+    @Override
+    public int getMapIdx() {
+        return this.atom.getMapIdx();
+    }
+
+    @Override
+    public void setMapIdx(int mapidx) {
+        this.atom.setMapIdx(mapidx);
+    }
+
+    @Override
+    public void addListener(IChemObjectListener col) {
+        this.atom.addListener(col);
+    }
+
+    @Override
+    public int getListenerCount() {
+        return this.atom.getListenerCount();
+    }
+
+    @Override
+    public void removeListener(IChemObjectListener col) {
+        this.atom.removeListener(col);
+    }
+
+    @Override
+    public void setNotification(boolean bool) {
+        this.atom.setNotification(bool);
+    }
+
+    @Override
+    public boolean getNotification() {
+        return this.atom.getNotification();
+    }
+
+    @Override
+    public void notifyChanged() {
+        this.atom.notifyChanged();
+    }
+
+    @Override
+    public void notifyChanged(IChemObjectChangeEvent evt) {
+        this.atom.notifyChanged(evt);
+    }
+
+    @Override
+    public void setProperty(Object description, Object property) {
+        this.atom.setProperty(description, property);
+    }
+
+    @Override
+    public void removeProperty(Object description) {
+        this.atom.removeProperty(description);
+    }
+
+    @Override
+    public <T> T getProperty(Object description) {
+        return this.atom.getProperty(description);
+    }
+
+    @Override
+    public <T> T getProperty(Object description, Class<T> c) {
+        return this.atom.getProperty(description, c);
+    }
+
+    @Override
+    public Map<Object, Object> getProperties() {
+        return this.atom.getProperties();
+    }
+
+    @Override
+    public String getID() {
+        return this.atom.getID();
+    }
+
+    @Override
+    public void setID(String identifier) {
+        this.atom.setID(identifier);
+    }
+
+    @Override
+    public void setFlag(int mask, boolean value) {
+        this.atom.setFlag(mask, value);
+    }
+
+    @Override
+    public boolean getFlag(int mask) {
+        return this.atom.getFlag(mask);
+    }
+
+    @Override
+    public void setProperties(Map<Object, Object> properties) {
+        this.atom.setProperties(properties);
+    }
+
+    @Override
+    public void addProperties(Map<Object, Object> properties) {
+        this.atom.addProperties(properties);
+    }
+
+    @Override
+    public void setFlags(boolean[] newFlags) {
+        this.atom.setFlags(newFlags);
+    }
+
+    @Override
+    public boolean[] getFlags() {
+        return this.atom.getFlags();
+    }
+
+    @Override
+    public Number getFlagValue() {
+        return this.atom.getFlagValue();
+    }
+
+    @Override
+    public IAtom clone() throws CloneNotSupportedException{
+        AtomE atomCopy = new AtomE(this.atom.clone());
+        atomCopy.setColor(this.color);
+        atomCopy.setMarked(this.marked);
+        atomCopy.setDepth(this.depth);
+        return atomCopy;
+    }
+
+    @Override
+    public void setAtomTypeName(String identifier) {
+        this.atom.setAtomTypeName(identifier);
+    }
+
+    @Override
+    public void setMaxBondOrder(IBond.Order maxBondOrder) {
+        this.atom.setMaxBondOrder(maxBondOrder);
+    }
+
+    @Override
+    public void setBondOrderSum(Double bondOrderSum) {
+        this.atom.setBondOrderSum(bondOrderSum);
+    }
+
+    @Override
+    public String getAtomTypeName() {
+        return this.atom.getAtomTypeName();
+    }
+
+    @Override
+    public IBond.Order getMaxBondOrder() {
+        return this.atom.getMaxBondOrder();
+    }
+
+    @Override
+    public Double getBondOrderSum() {
+        return this.atom.getBondOrderSum();
+    }
+
+    @Override
+    public void setFormalCharge(Integer charge) {
+        this.atom.setFormalCharge(charge);
+    }
+
+    @Override
+    public Integer getFormalCharge() {
+        return this.atom.getFormalCharge();
+    }
+
+    @Override
+    public void setFormalNeighbourCount(Integer count) {
+        this.atom.setFormalNeighbourCount(count);
+    }
+
+    @Override
+    public Integer getFormalNeighbourCount() {
+        return this.atom.getFormalNeighbourCount();
+    }
+
+    @Override
+    public void setHybridization(Hybridization hybridization) {
+        this.atom.setHybridization(hybridization);
+    }
+
+    @Override
+    public Hybridization getHybridization() {
+        return this.atom.getHybridization();
+    }
+
+    @Override
+    public void setCovalentRadius(Double radius) {
+        this.atom.setCovalentRadius(radius);
+    }
+
+    @Override
+    public Double getCovalentRadius() {
+        return this.atom.getCovalentRadius();
+    }
+
+    @Override
+    public void setValency(Integer valency) {
+        this.atom.setValency(valency);
+    }
+
+    @Override
+    public Integer getValency() {
+        return this.atom.getValency();
+    }
+
+    @Override
+    public void setNaturalAbundance(Double naturalAbundance) {
+        this.atom.setNaturalAbundance(naturalAbundance);
+    }
+
+    @Override
+    public void setExactMass(Double exactMass) {
+        this.atom.setExactMass(exactMass);
+    }
+
+    @Override
+    public Double getNaturalAbundance() {
+        return this.atom.getNaturalAbundance();
+    }
+
+    @Override
+    public Double getExactMass() {
+        return this.atom.getExactMass();
+    }
+
+    @Override
+    public Integer getMassNumber() {
+        return this.atom.getMassNumber();
+    }
+
+    @Override
+    public void setMassNumber(Integer massNumber) {
+        this.atom.setMassNumber(massNumber);
+    }
+
+    @Override
+    public Integer getAtomicNumber() {
+        return this.atom.getAtomicNumber();
+    }
+
+    @Override
+    public void setAtomicNumber(Integer atomicNumber) {
+        this.atom.setMassNumber(atomicNumber);
+    }
+
+    @Override
+    public String getSymbol() {
+        return this.atom.getSymbol();
+    }
+
+    @Override
+    public void setSymbol(String symbol) {
+        this.atom.setSymbol(symbol);
+    }
+
+    @Override
+    public IChemObjectBuilder getBuilder() {
+        return this.atom.getBuilder();
+    }
 }

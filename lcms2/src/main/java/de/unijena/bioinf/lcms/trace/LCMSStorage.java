@@ -9,7 +9,8 @@ import de.unijena.bioinf.lcms.align.MvBasedAlignmentStorage;
 import de.unijena.bioinf.lcms.merge.MergeMvStorage;
 import de.unijena.bioinf.lcms.merge.MergeStorage;
 import de.unijena.bioinf.lcms.spectrum.SpectrumStorage;
-import de.unijena.bioinf.lcms.statistics.SampleStats;
+import de.unijena.bioinf.ms.persistence.model.core.run.SampleStats;
+import de.unijena.bioinf.lcms.statistics.SampleStatsDataType;
 import org.h2.mvstore.*;
 
 import java.io.File;
@@ -75,7 +76,7 @@ class MVTraceStorage extends LCMSStorage {
         MVStore.Builder builder = new MVStore.Builder();
         this.cacheSizeInMegabytes = getDefaultCacheSize();
         this.storage = builder.fileName(file).cacheSize(cacheSizeInMegabytes).open();
-        this.statisticsObj = storage.openMap("statistics", new MVMap.Builder<Integer,SampleStats>().valueType(new SampleStats.DataType()));
+        this.statisticsObj = storage.openMap("statistics", new MVMap.Builder<Integer,SampleStats>().valueType(new SampleStatsDataType()));
         this.alignmentStorage = new MvBasedAlignmentStorage(storage);
     }
 

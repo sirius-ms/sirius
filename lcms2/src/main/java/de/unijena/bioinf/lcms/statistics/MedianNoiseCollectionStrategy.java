@@ -1,18 +1,15 @@
 package de.unijena.bioinf.lcms.statistics;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.BoundedDoubleQueue;
 import de.unijena.bioinf.ChemistryBase.algorithm.Quickselect;
-import de.unijena.bioinf.ChemistryBase.algorithm.Sorting;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.spectrum.Ms1SpectrumHeader;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
+import de.unijena.bioinf.ms.persistence.model.core.run.SampleStats;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import org.slf4j.LoggerFactory;
 
-import java.nio.FloatBuffer;
-import java.util.ArrayDeque;
 import java.util.Arrays;
 
 /**
