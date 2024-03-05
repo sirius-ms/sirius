@@ -22,7 +22,7 @@ package de.unijena.bioinf.ms.persistence.model.core.feature;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.unijena.bioinf.ms.persistence.model.core.run.Run;
+import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import jakarta.persistence.Id;
 import lombok.*;
@@ -36,7 +36,7 @@ import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 
 /**
- * Features aligned over several {@link Run}s (same m/z and RT)
+ * Features aligned over several {@link LCMSRun}s (same m/z and RT)
  * Annotations/identifications are calculated and annotated at this level
  */
 @Getter

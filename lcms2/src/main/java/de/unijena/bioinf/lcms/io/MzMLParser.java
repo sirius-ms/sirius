@@ -34,7 +34,7 @@ import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.ms.persistence.model.core.run.Fragmentation;
 import de.unijena.bioinf.ms.persistence.model.core.run.Ionization;
 import de.unijena.bioinf.ms.persistence.model.core.run.MassAnalyzer;
-import de.unijena.bioinf.ms.persistence.model.core.run.Run;
+import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
@@ -59,11 +59,11 @@ public class MzMLParser implements LCMSParser {
     public ProcessedSample parse(
             File file,
             LCMSStorageFactory storageFactory,
-            LCMSParser.IOThrowingConsumer<Run> runConsumer,
-            LCMSParser.IOThrowingConsumer<Run> runUpdateConsumer,
+            LCMSParser.IOThrowingConsumer<LCMSRun> runConsumer,
+            LCMSParser.IOThrowingConsumer<LCMSRun> runUpdateConsumer,
             @Nullable LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
             @Nullable LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
-            Run run
+            LCMSRun run
     ) throws IOException {
         return parse(file, storageFactory, new MzMLUnmarshaller(file), runConsumer, runUpdateConsumer, scanConsumer, msmsScanConsumer, run);
     }
@@ -72,11 +72,11 @@ public class MzMLParser implements LCMSParser {
             File file,
             LCMSStorageFactory storageFactory,
             MzMLUnmarshaller um,
-            LCMSParser.IOThrowingConsumer<Run> runConsumer,
-            LCMSParser.IOThrowingConsumer<Run> runUpdateConsumer,
+            LCMSParser.IOThrowingConsumer<LCMSRun> runConsumer,
+            LCMSParser.IOThrowingConsumer<LCMSRun> runUpdateConsumer,
             @Nullable LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
             @Nullable LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
-            Run run
+            LCMSRun run
     ) throws IOException {
         try {
             final LCMSStorage storage = storageFactory.createNewStorage();

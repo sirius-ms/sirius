@@ -27,8 +27,8 @@ import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.traceextractor.*;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
-import de.unijena.bioinf.ms.persistence.model.core.run.MergedRun;
-import de.unijena.bioinf.ms.persistence.model.core.run.Run;
+import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import it.unimi.dsi.fastutil.ints.*;
@@ -107,7 +107,7 @@ public class LCMSProcessing {
      * stream later
      */
     public ProcessedSample processSample(File file) throws IOException {
-        return processSample(file, false, Run.Type.SAMPLE, Chromatography.LC);
+        return processSample(file, false, LCMSRun.Type.SAMPLE, Chromatography.LC);
     }
 
     /**
@@ -117,7 +117,7 @@ public class LCMSProcessing {
     public ProcessedSample processSample(
             File file,
             boolean saveRawScans,
-            Run.Type runType,
+            LCMSRun.Type runType,
             Chromatography chromatography
     ) throws IOException {
         // parse file and extract spectra
@@ -169,7 +169,7 @@ public class LCMSProcessing {
         if (name.isBlank())
             name = "merged run";
 
-        MergedRun mergedRun = MergedRun.builder()
+        MergedLCMSRun mergedRun = MergedLCMSRun.builder()
                 .name(name)
                 .sampleStats(merged.getStorage().getStatistics())
                 .build();
