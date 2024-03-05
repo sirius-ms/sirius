@@ -23,12 +23,11 @@ package de.unijena.bioinf.lcms.io;
 import de.unijena.bioinf.lcms.LCMSStorageFactory;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
-import de.unijena.bioinf.ms.persistence.model.core.run.Run;
+import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.function.Supplier;
 
 public interface LCMSParser {
 
@@ -44,16 +43,16 @@ public interface LCMSParser {
      * to assign the object IDs.
      *
      * @param file Input file.
-     * @param run  Initial {@link Run} isntance with default values for {@code Run.runType} and {@code Run.chromatography}.
+     * @param run  Initial {@link LCMSRun} isntance with default values for {@code Run.runType} and {@code Run.chromatography}.
      */
     ProcessedSample parse(
             File file,
             LCMSStorageFactory storageFactory,
-            LCMSParser.IOThrowingConsumer<Run> runConsumer,
-            LCMSParser.IOThrowingConsumer<Run> runUpdateConsumer,
+            LCMSParser.IOThrowingConsumer<LCMSRun> runConsumer,
+            LCMSParser.IOThrowingConsumer<LCMSRun> runUpdateConsumer,
             LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
             LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
-            Run run
+            LCMSRun run
     ) throws IOException;
 
 }

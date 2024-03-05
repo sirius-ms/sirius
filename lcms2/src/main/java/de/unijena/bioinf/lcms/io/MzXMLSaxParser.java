@@ -31,7 +31,7 @@ import de.unijena.bioinf.lcms.trace.LCMSStorage;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.ms.persistence.model.core.run.Ionization;
 import de.unijena.bioinf.ms.persistence.model.core.run.MassAnalyzer;
-import de.unijena.bioinf.ms.persistence.model.core.run.Run;
+import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
@@ -65,7 +65,7 @@ class MzXMLSaxParser extends DefaultHandler {
     private Handler handler;
     private final StringBuilder buffer;
 
-    private final Run run;
+    private final LCMSRun run;
 
     private final String sourcePath;
 
@@ -94,7 +94,7 @@ class MzXMLSaxParser extends DefaultHandler {
     public MzXMLSaxParser(
             String sourcePath,
             LCMSStorage storage,
-            Run run,
+            LCMSRun run,
             @Nullable LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
             @Nullable LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer
     ) throws IOException {
