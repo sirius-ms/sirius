@@ -88,7 +88,7 @@ public class TestMain {
         final de.unijena.bioinf.lcms.trace.ProcessedSample[] samples;
         LCMSProcessing processing = new LCMSProcessing();
 
-        Path storeLocation = Files.createTempFile("nitrite", "db");
+        Path storeLocation = Files.createTempFile("nitrite", ".db");
         try (NitriteDatabase db = new NitriteDatabase(storeLocation, SiriusProjectDocumentDatabase.buildMetadata())) {
             Database<?> store = new SiriusProjectDatabaseImpl<>(db).getStorage();
             processing.setImportStrategy(new ProjectSpaceImporter(new SiriusProjectDatabaseImpl<>(store)));
@@ -150,7 +150,6 @@ public class TestMain {
 
                 // TODO check intensity normalization in aligned features
                 // FIXME mz in aligned features is weird
-                // TODO how to handle MS/MS?
                 processing.extractFeaturesAndExportToProjectSpace(merged, bac);
 
                 assert store.countAll(MergedRun.class) == 1;

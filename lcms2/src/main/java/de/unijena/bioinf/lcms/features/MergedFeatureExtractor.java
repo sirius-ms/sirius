@@ -92,15 +92,13 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
         }
 
         final Int2ObjectOpenHashMap<ProcessedSample> uid2sample = new Int2ObjectOpenHashMap<>();
+        MergedSpectrum[] mergedSpectra = new MergedSpectrum[traceSegments.length];
         for (ProcessedSample sample : samplesInTrace) {
             uid2sample.put(sample.getUid(), sample);
         }
         {
-            ms2MergeStrategy.assignMs2(mergedSample, mergedTrace, traceSegments, uid2sample, new Ms2MergeStrategy.AssignMs2ToFeature() {
-                @Override
-                public void assignMs2ToFeature(MergedTrace mergedTrace, TraceSegment segment, MergedSpectrum mergedSpectrum) {
-                    // TODO: Do something with MS/MS
-                }
+            ms2MergeStrategy.assignMs2(mergedSample, mergedTrace, traceSegments, uid2sample, (mergedTrace1, segment, index, mergedSpectrum) -> {
+                mergedSpectra[index] = mergedSpectrum;
             });
         }
 
@@ -113,9 +111,15 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
             F alignedFeatures = featureSupplier.get();
             alignedFeatures.setRunId(mergedSample.getRun().getRunId());
             alignedFeatures = buildFeature(mergedTrace.getUid(), mTrace, traceSegments[i], stats, trace2trace, alignedFeatures);
+
+            if (mergedSpectra[i] != null) {
+                // TODO assign to alignedFeatures
+            }
+
             List<Feature> childFeatures = new ArrayList<>();
             for (int k=0; k < individualSegments.length; ++k) {
-                if (individualSegments[k][i] == null)
+                // FIXME invalid segments
+                if (individualSegments[k][i] == null || individualSegments[k][i].leftEdge >= individualSegments[k][i].rightEdge)
                     continue;
 
                 int childTraceId = mergedTrace.getTraceIds().getInt(k);
@@ -183,11 +187,8 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
             uid2sample.put(sample.getUid(), sample);
         }
         {
-            ms2MergeStrategy.assignMs2(mergedSample, alignedFeature, traceSegments, uid2sample, new Ms2MergeStrategy.AssignMs2ToFeature() {
-                @Override
-                public void assignMs2ToFeature(MergedTrace mergedTrace, TraceSegment segment, MergedSpectrum mergedSpectrum) {
-                    // TODO: do something with MS/MS
-                }
+            ms2MergeStrategy.assignMs2(mergedSample, alignedFeature, traceSegments, uid2sample, (mergedTrace1, segment, index, mergedSpectrum) -> {
+                // TODO: do something with MS/MS
             });
         }
         {

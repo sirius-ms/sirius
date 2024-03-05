@@ -31,7 +31,7 @@ public class MergeGreedyStrategy implements Ms2MergeStrategy{
             score(mergedSample, trace, otherSamples, queriesPerSegment[k]);
             queriesPerSegment[k].sort(Comparator.comparingDouble((MsMsQuerySpectrum x)->x.score).reversed());
             MergedSpectrum mergedSpectrum = merge(queriesPerSegment[k]);
-            assigner.assignMs2ToFeature(trace, featureSegments[k], mergedSpectrum);
+            assigner.assignMs2ToFeature(trace, featureSegments[k], k, mergedSpectrum);
         }
     }
 
@@ -88,6 +88,7 @@ public class MergeGreedyStrategy implements Ms2MergeStrategy{
             }
             // we assign each header to its closest segment
             for (int k=0; k < querySpectrum.length; ++k) {
+                // FIXME java.lang.NullPointerException: Cannot read field "rightEdge" because "x" is null
                 int i = BinarySearch.searchForDouble(Arrays.asList(featureSegments), x -> mergedSample.getMapping().getRetentionTimeAt(x.rightEdge),
                         sample.getRtRecalibration().value(headers[k].getRetentionTime()));
                 if (i<0) {
