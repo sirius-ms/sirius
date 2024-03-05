@@ -18,7 +18,7 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.model.core;
+package de.unijena.bioinf.ms.persistence.model.core.scan;
 
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import jakarta.persistence.Id;
@@ -33,8 +33,8 @@ import lombok.*;
 @ToString(callSuper = true)
 public class Scan extends AbstractScan{
     @Builder
-    public Scan(long scanId, Long runId, String scanNumber, Double scanTime, Double ccs, SimpleSpectrum peaks) {
-        super(runId, scanNumber, scanTime, ccs, peaks);
+    public Scan(long scanId, long runId, String sourceScanId, double scanTime, double ccs, SimpleSpectrum peaks) {
+        super(runId, sourceScanId, scanTime, ccs, peaks);
         this.scanId = scanId;
     }
 
@@ -43,4 +43,5 @@ public class Scan extends AbstractScan{
      */
     @Id
     protected long scanId;
+
 }

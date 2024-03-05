@@ -22,7 +22,6 @@ package de.unijena.bioinf.lcms.io;
 
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
-import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.ScanPointMapping;
@@ -30,7 +29,11 @@ import de.unijena.bioinf.lcms.spectrum.Ms1SpectrumHeader;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.trace.LCMSStorage;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
-import de.unijena.bioinf.ms.persistence.model.core.*;
+import de.unijena.bioinf.ms.persistence.model.core.run.Ionization;
+import de.unijena.bioinf.ms.persistence.model.core.run.MassAnalyzer;
+import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
+import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import it.unimi.dsi.fastutil.bytes.ByteList;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
@@ -40,9 +43,9 @@ import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import javax.annotation.Nullable;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -62,9 +65,7 @@ class MzXMLSaxParser extends DefaultHandler {
     private Handler handler;
     private final StringBuilder buffer;
 
-    private Run.RunBuilder runBuilder;
-
-    private Run run;
+    private final LCMSRun run;
 
     private final String sourcePath;
 
@@ -78,7 +79,6 @@ class MzXMLSaxParser extends DefaultHandler {
 
     private boolean centroided = false;
 
-    private final LCMSParser.IOThrowingConsumer<Run> runConsumer;
     private final LCMSParser.IOThrowingConsumer<Scan> scanConsumer;
     private final LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer;
 
@@ -92,17 +92,15 @@ class MzXMLSaxParser extends DefaultHandler {
     private int samplePolarity = 0;
 
     public MzXMLSaxParser(
-            File file,
+            String sourcePath,
             LCMSStorage storage,
-            LCMSParser.IOThrowingConsumer<Run> runConsumer,
-            LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
-            LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
-            Run.RunBuilder runBuilder
+            LCMSRun run,
+            @Nullable LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
+            @Nullable LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer
     ) throws IOException {
+        this.sourcePath = sourcePath;
         this.storage = storage;
-        this.runBuilder = runBuilder.sourceReference(new MsDataSourceReference(file.toURI(), file.getName(), null, null));
-        this.sourcePath = file.getName();
-        this.runConsumer = runConsumer;
+        this.run = run;
         this.scanConsumer = scanConsumer;
         this.msmsScanConsumer = msmsScanConsumer;
 
@@ -146,9 +144,15 @@ class MzXMLSaxParser extends DefaultHandler {
     }
 
     public ProcessedSample getProcessedSample() {
+        if (scanids.isEmpty()) {
+            throw new RuntimeException("No spectra imported from " + sourcePath);
+        }
+
         final ScanPointMapping mapping = new ScanPointMapping(retentionTimes.toDoubleArray(), scanids.toIntArray(), idmap);
         storage.setMapping(mapping);
-        return new ProcessedSample(mapping, storage, samplePolarity, -1);
+        ProcessedSample sample = new ProcessedSample(mapping, storage, samplePolarity, -1);
+        sample.setRun(run);
+        return sample;
     }
 
 
@@ -223,7 +227,7 @@ class MzXMLSaxParser extends DefaultHandler {
                         String[] components = parentName.split("\\.");
                         parentName = Arrays.stream(components).limit(components.length - 1).collect(Collectors.joining());
                     }
-                    runBuilder = runBuilder.name(parentName);
+                    run.setName(parentName);
                     break;
             }
         }
@@ -241,7 +245,7 @@ class MzXMLSaxParser extends DefaultHandler {
         public void enterElement(String elementName, Attributes attrs) {
             switch (elementName) {
                 case "msIonisation":
-                    IonizationType.byValue(attrs.getValue("value")).ifPresent(runBuilder::ionization);
+                    Ionization.byValue(attrs.getValue("value")).ifPresent(run::setIonization);
                     break;
                 case "msMassAnalyzer":
                     MassAnalyzer.byValue(attrs.getValue("value")).ifPresent(massAnalyzers::add);
@@ -252,7 +256,7 @@ class MzXMLSaxParser extends DefaultHandler {
         @Override
         public void leaveElement(String elementName, String content) {
             if (elementName.equals("msInstrument")) {
-                runBuilder.massAnalyzers(!massAnalyzers.isEmpty() ? massAnalyzers : null);
+                run.setMassAnalyzers(!massAnalyzers.isEmpty() ? massAnalyzers : null);
                 pop();
             }
         }
@@ -356,22 +360,17 @@ class MzXMLSaxParser extends DefaultHandler {
                         if (peaks.isEmpty()) {
                             log.info("No valid spectrum data found in Spectrum with number: " + scanNumber + " Skipping!");
                         } else {
-                            if (run == null) {
-                                run = runBuilder.build();
-                                runConsumer.consume(run);
-                            }
-
                             if (msLevel == 1) {
                                 Scan scan = Scan.builder()
                                         .runId(run.getRunId())
-                                        .scanNumber(Integer.toString(scanNumber))
+                                        .sourceScanId(Integer.toString(scanNumber))
                                         .scanTime(retentionTime)
                                         .peaks(peaks)
                                         .build();
                                 scanConsumer.consume(scan);
                                 ms1Ids.put(scanNumber, scan.getScanId());
 
-                                final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(), polarity.charge, centroided);
+                                final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(), Integer.toString(scanNumber), polarity.charge, centroided);
                                 retentionTimes.add(retentionTime);
                                 idmap.put(scanNumber, scanids.size());
                                 scanids.add(scanNumber);
@@ -391,6 +390,7 @@ class MzXMLSaxParser extends DefaultHandler {
                                 msmsScanConsumer.consume(scan);
 
                                 final Ms2SpectrumHeader header = new Ms2SpectrumHeader(
+                                        Integer.toString(scanNumber),
                                         polarity.charge, centroided,
                                         collisionEnergy,
                                         new IsolationWindow(0d, isolationWindowWidth),

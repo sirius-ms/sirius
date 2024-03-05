@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schiller University.
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -18,43 +18,44 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.model.core;
+package de.unijena.bioinf.ms.persistence.model.core.run;
 
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-/**
- * A measured Mass Spectrum (usually MS1) with metadata.
- */
+import javax.validation.constraints.NotNull;
+import java.util.List;
+
 @Getter
 @Setter
+@SuperBuilder
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
-public class AbstractScan {
-    /**
-     * Database ID of the Run this Scan belongs to
-     */
-    protected Long runId;
+public class LCMSRun extends AbstractLCMSRun {
+    //todo are there other types like validation or calibration???
+    public enum Type {
+        SAMPLE,
+        BLANK
+    }
 
     /**
-     * scan number from the mzml run.
+     * indicated that this run is a Blank run
      */
-    protected String scanNumber;
+    private Type runType;
+
+    private Chromatography chromatography;
+    private Ionization ionization;
+    private Fragmentation fragmentation;
+    private List<MassAnalyzer> massAnalyzers;
+
 
     /**
-     * Time this scan took place (in minutes)
+     * A reference to a certain LC/MS run in a mzml file.
      */
-    protected Double scanTime;
+    @NotNull
+    private MsDataSourceReference sourceReference;
 
-    /**
-     * Collisional Cross-Section (CCS) in Å^2
-     */
-    protected Double ccs;
 
-    /**
-     * The actual spectrum that has been measured (masses and intensities)
-     */
-    @ToString.Exclude
-    protected SimpleSpectrum peaks;
 }

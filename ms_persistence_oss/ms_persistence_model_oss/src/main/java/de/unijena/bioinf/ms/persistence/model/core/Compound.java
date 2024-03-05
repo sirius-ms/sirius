@@ -22,7 +22,9 @@ package de.unijena.bioinf.ms.persistence.model.core;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
-import it.unimi.dsi.fastutil.longs.LongList;
+import de.unijena.bioinf.ms.persistence.model.annotation.CompoundAnnotation;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
 import jakarta.persistence.Id;
 import lombok.*;
 
@@ -45,13 +47,6 @@ public class Compound {
     protected double neutralMass;
     protected String name;
 
-    /**
-     * Group of edges between pairs of feature alignments that correlate among each other. Connected components
-     * from the whole graph of correlated pairs (whole dataset)
-     */
-    @ToString.Exclude
-    LongList correlatedIonPairIds; //todo denormalize instead?
-
     //foreign fields
     @JsonIgnore
     @ToString.Exclude
@@ -61,6 +56,10 @@ public class Compound {
         return Optional.ofNullable(adductFeatures);
     }
 
+    /**
+     * Group of edges between pairs of feature alignments that correlate among each other. Connected components
+     * from the whole graph of correlated pairs (whole dataset)
+     */
     @JsonIgnore
     @ToString.Exclude
     List<CorrelatedIonPair> correlatedIonPairs;
@@ -69,4 +68,8 @@ public class Compound {
         return Optional.ofNullable(correlatedIonPairs);
     }
     //todo add annotations/identifications
+
+    protected CompoundAnnotation topAnnotation;
+    protected CompoundAnnotation manualAnnotation;
+
 }
