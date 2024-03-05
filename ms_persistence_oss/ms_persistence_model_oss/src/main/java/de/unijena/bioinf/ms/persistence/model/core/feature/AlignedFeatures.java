@@ -22,9 +22,8 @@ package de.unijena.bioinf.ms.persistence.model.core.feature;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.run.Run;
-import it.unimi.dsi.fastutil.longs.LongList;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import jakarta.persistence.Id;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -58,19 +57,9 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
     private long compoundId;
 
     /**
-     * Group of edges between pairs of feature alignments that correlate among each other. Connected components
-     * from the whole graph of correlated pairs (whole dataset)
-     */
-    @ToString.Exclude
-    private LongList correlationPairIds;
-
-    /**
      * Extracted isotope pattern of this feature
      */
     private IsotopePattern isotopePattern;
-
-    @ToString.Exclude
-    private LongList isotopicFeaturesIds;
 
     @JsonIgnore
     @ToString.Exclude

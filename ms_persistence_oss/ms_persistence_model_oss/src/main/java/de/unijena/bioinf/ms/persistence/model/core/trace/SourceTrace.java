@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.trace;
 
-import it.unimi.dsi.fastutil.longs.LongList;
 import jakarta.persistence.Id;
 import lombok.Builder;
 import lombok.Getter;

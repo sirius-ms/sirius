@@ -21,13 +21,9 @@
 package de.unijena.bioinf.ms.persistence.model.core.run;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
-import it.unimi.dsi.fastutil.longs.LongList;
-import jakarta.persistence.Id;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import javax.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,9 +37,6 @@ public class MergedRun extends AbstractRun {
 
     @ToString.Exclude
     private SampleStats sampleStats;
-
-    @ToString.Exclude
-    private LongList runIds;
 
     @JsonIgnore
     @ToString.Exclude

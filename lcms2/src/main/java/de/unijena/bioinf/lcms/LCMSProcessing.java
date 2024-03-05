@@ -19,8 +19,8 @@ import de.unijena.bioinf.lcms.projectspace.ImportStrategy;
 import de.unijena.bioinf.lcms.projectspace.ProjectSpaceImporter;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.statistics.*;
-import de.unijena.bioinf.lcms.trace.*;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
+import de.unijena.bioinf.lcms.trace.*;
 import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
@@ -31,11 +31,7 @@ import de.unijena.bioinf.ms.persistence.model.core.run.MergedRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.Run;
 import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
-import de.unijena.bioinf.ms.persistence.storage.MsProjectDocumentDatabase;
-import de.unijena.bioinf.storage.db.nosql.Database;
 import it.unimi.dsi.fastutil.ints.*;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.longs.LongList;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.text.similarity.LongestCommonSubsequence;
@@ -164,10 +160,8 @@ public class LCMSProcessing {
 
     public void extractFeaturesAndExportToProjectSpace(ProcessedSample merged, AlignmentBackbone backbone) throws IOException {
         final Int2ObjectMap<ProcessedSample> idx2sample = new Int2ObjectOpenHashMap<>();
-        LongList runIds = new LongArrayList();
         for (ProcessedSample s : backbone.getSamples()) {
             idx2sample.put(s.getUid(), s);
-            runIds.add(s.getRun().getRunId());
         }
 
         LongestCommonSubsequence lcs = new LongestCommonSubsequence();
@@ -177,7 +171,6 @@ public class LCMSProcessing {
 
         MergedRun mergedRun = MergedRun.builder()
                 .name(name)
-                .runIds(runIds)
                 .sampleStats(merged.getStorage().getStatistics())
                 .build();
         merged.setRun(mergedRun);
