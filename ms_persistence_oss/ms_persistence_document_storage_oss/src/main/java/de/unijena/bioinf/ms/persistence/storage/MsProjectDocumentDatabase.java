@@ -23,8 +23,8 @@ package de.unijena.bioinf.ms.persistence.storage;
 import de.unijena.bioinf.ms.persistence.model.Tag;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
-import de.unijena.bioinf.ms.persistence.model.core.run.MergedRun;
-import de.unijena.bioinf.ms.persistence.model.core.run.Run;
+import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
@@ -52,11 +52,11 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
         return sourceMetadata
                 .addRepository(Tag.class, new Index("name", IndexType.UNIQUE))
 
-                .addRepository(Run.class,
+                .addRepository(LCMSRun.class,
                         new Index("name", IndexType.NON_UNIQUE),
                         new Index("runType", IndexType.NON_UNIQUE))
 
-                .addRepository(MergedRun.class,
+                .addRepository(MergedLCMSRun.class,
                         new Index("name", IndexType.NON_UNIQUE),
                         new Index("runType", IndexType.NON_UNIQUE))
 

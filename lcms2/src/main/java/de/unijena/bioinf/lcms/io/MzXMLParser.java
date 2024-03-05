@@ -23,7 +23,7 @@ package de.unijena.bioinf.lcms.io;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import de.unijena.bioinf.lcms.LCMSStorageFactory;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
-import de.unijena.bioinf.ms.persistence.model.core.run.Run;
+import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import org.xml.sax.SAXException;
@@ -39,11 +39,11 @@ public class MzXMLParser implements LCMSParser {
     public ProcessedSample parse(
             File file,
             LCMSStorageFactory storageFactory,
-            IOThrowingConsumer<Run> runConsumer,
-            IOThrowingConsumer<Run> runUpdateConsumer,
+            IOThrowingConsumer<LCMSRun> runConsumer,
+            IOThrowingConsumer<LCMSRun> runUpdateConsumer,
             IOThrowingConsumer<Scan> scanConsumer,
             IOThrowingConsumer<MSMSScan> msmsScanConsumer,
-            Run run
+            LCMSRun run
     ) throws IOException {
         try {
             run.setSourceReference(new MsDataSourceReference(file.toURI(), file.getName(), null, null));

@@ -1,15 +1,12 @@
 package de.unijena.bioinf.lcms.trace;
 
 import com.google.common.collect.Range;
-import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
-import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import de.unijena.bioinf.lcms.ScanPointMapping;
 import de.unijena.bioinf.lcms.align.RecalibrationFunction;
 import de.unijena.bioinf.lcms.merge.ScanPointInterpolator;
 import de.unijena.bioinf.lcms.statistics.NormalizationStrategy;
 import de.unijena.bioinf.lcms.statistics.TraceStats;
-import de.unijena.bioinf.ms.persistence.model.core.run.AbstractRun;
-import de.unijena.bioinf.ms.persistence.model.core.run.Run;
+import de.unijena.bioinf.ms.persistence.model.core.run.AbstractLCMSRun;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,7 +16,7 @@ public class ProcessedSample {
     private int uid;
 
     @Getter @Setter
-    private AbstractRun run;
+    private AbstractLCMSRun run;
 
     @Getter
     private LCMSStorage storage;

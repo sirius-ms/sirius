@@ -11,8 +11,8 @@ import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
-import de.unijena.bioinf.ms.persistence.model.core.run.MergedRun;
-import de.unijena.bioinf.ms.persistence.model.core.run.Run;
+import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
@@ -152,8 +152,8 @@ public class TestMain {
                 // FIXME mz in aligned features is weird
                 processing.extractFeaturesAndExportToProjectSpace(merged, bac);
 
-                assert store.countAll(MergedRun.class) == 1;
-                for (MergedRun run : store.findAll(MergedRun.class)) {
+                assert store.countAll(MergedLCMSRun.class) == 1;
+                for (MergedLCMSRun run : store.findAll(MergedLCMSRun.class)) {
                     System.out.printf("\nMerged Run: %s\n\n", run.getName());
                 }
 
@@ -172,7 +172,7 @@ public class TestMain {
                                 AlignedIsotopicFeatures SNR: %f
                                 AlignedFeatures         SNR: %f
                                 """,
-                        store.countAll(Run.class), store.countAll(Scan.class), store.countAll(MSMSScan.class),
+                        store.countAll(LCMSRun.class), store.countAll(Scan.class), store.countAll(MSMSScan.class),
                         store.countAll(SourceTrace.class), store.countAll(de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace.class),
                         store.countAll(Feature.class), store.countAll(AlignedIsotopicFeatures.class), store.countAll(AlignedFeatures.class),
                         store.findAllStr(Feature.class).mapToDouble(Feature::getSnr).average().orElse(Double.NaN),
