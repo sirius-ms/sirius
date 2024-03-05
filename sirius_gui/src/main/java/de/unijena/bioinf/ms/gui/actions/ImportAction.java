@@ -97,7 +97,7 @@ public class ImportAction extends AbstractGuiAction {
     //ATTENTION Synchronizing around background tasks that block gui thread is dangerous
     public synchronized void importOneExperimentPerLocation(@NotNull final InputFilesOptions input, Window popupOwner) {
         boolean lcms = Jobs.runInBackgroundAndLoad(popupOwner, "Analyzing input...", () ->
-                        (input.msInput.msParserfiles.size() > 1 && input.msInput.projects.size() == 0 && input.msInput.msParserfiles.keySet().stream().map(p -> p.getFileName().toString().toLowerCase()).allMatch(n -> n.endsWith(".mzml") || n.endsWith(".mzxml"))))
+                        (!input.msInput.msParserfiles.isEmpty() && input.msInput.projects.isEmpty() && input.msInput.msParserfiles.keySet().stream().map(p -> p.getFileName().toString().toLowerCase()).allMatch(n -> n.endsWith(".mzml") || n.endsWith(".mzxml"))))
                 .getResult();
 
         // todo this is hacky we need some real view for that at some stage.
@@ -106,7 +106,7 @@ public class ImportAction extends AbstractGuiAction {
         try {
             LoadingBackroundTask<Job> task;
             if (lcms) {
-                boolean align = new QuestionDialog(popupOwner, "<html><body> You inserted multiple LC-MS/MS Runs. <br> Do you want to Align them during import?</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
+                boolean align = input.msInput.msParserfiles.size() > 1 && new QuestionDialog(popupOwner, "<html><body> You inserted multiple LC-MS/MS Runs. <br> Do you want to Align them during import?</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
                 task = gui.applySiriusClient((c, pid) -> {
                     Job job = c.projects().importMsRunDataAsJob(pid,
                             align,
