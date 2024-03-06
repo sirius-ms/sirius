@@ -22,6 +22,9 @@ package de.unijena.bioinf.ms.middleware;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
+import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.JobSubmitter;
+import de.unijena.bioinf.jjobs.ProgressJJob;
 import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.ms.annotations.PrintCitations;
 import de.unijena.bioinf.ms.frontend.BackgroundRuns;
@@ -30,10 +33,13 @@ import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.Workspace;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
+import de.unijena.bioinf.ms.frontend.subtools.ToolChainJob;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastSubToolJob;
 import de.unijena.bioinf.ms.frontend.subtools.middleware.MiddlewareAppOptions;
+import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceProviderImpl;
@@ -115,7 +121,20 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
             ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
 
             // todo convert to a native spring based approach
-            try {
+            try {//todo nightsky: WORKAROUND until GUI JOb panel works with SSE based progress updates
+                BackgroundRuns.setBufferFactory((bufferSize, instances, tasks, dependJob, progressSupport) ->
+                        new SimpleInstanceBuffer(bufferSize, instances, tasks, dependJob, progressSupport, new JobSubmitter() {
+                            @Override
+                            public <Job extends JJob<Result>, Result> Job submitJob(Job j) {
+                                if (j instanceof ToolChainJob<?> tj) {
+                                    Jobs.submit((ProgressJJob<?>) j, j::identifier, tj::getProjectName, tj::getToolName);
+                                    return j;
+                                } else {
+                                    return Jobs.MANAGER().submitJob(j);
+                                }
+                            }
+                        }));
+
                 PropertyManager.setProperty("de.unijena.bioinf.sirius.BackgroundRuns.autoremove", "false");
                 final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
 
@@ -162,7 +181,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                     measureTime("Workflow DONE!");
                     System.err.println("SIRIUS Service started successfully!");
 
-                    if (middlewareOpts.isStartGui()) ((GuiService<?>)appContext.getBean("guiService"))
+                    if (middlewareOpts.isStartGui()) ((GuiService<?>) appContext.getBean("guiService"))
                             .createGuiInstance(startPs.getProjectId());
                 } else {
                     System.exit(0);// Zero because this is the help message case

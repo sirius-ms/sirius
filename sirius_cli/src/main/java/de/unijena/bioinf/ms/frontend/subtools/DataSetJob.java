@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -108,6 +109,11 @@ public abstract class DataSetJob extends ToolChainJobImpl<Iterable<Instance>> im
                     + " Skipping Invalid Input Instances: " + System.lineSeparator() + "\t"
                     + failedInstances.stream().map(Instance::toString).collect(Collectors.joining(System.lineSeparator() + "\t"))
             );
+    }
+
+    @Override
+    public String getProjectName() {
+        return (inputInstances != null ? inputInstances.stream().map(Instance::getProjectSpaceManager).map(ProjectSpaceManager::getName).findAny().orElse("N/A") : "<Awaiting Instance>");
     }
 
     @Override

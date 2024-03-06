@@ -166,7 +166,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
         //CREATE VIEWS
-        jobDialog = new JobDialog(this);
+        jobDialog = JobDialog.INSTANCE();
         // results Panel
         resultsPanel = new ResultPanel(structureList, formulaList, spectralMatchList, compoundList, gui);
         JPanel resultPanelContainer = new JPanel(new BorderLayout());

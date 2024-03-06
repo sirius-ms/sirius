@@ -50,20 +50,8 @@ public class Jobs { //todo convert to nonstatic class
 
     private Jobs() {/*prevent instantiation*/}
 
-    public static <T, JJ extends ProgressJJob<T>> TextAreaJJobContainer<T> submit(final JJ j, String jobName) {
-        return submit(new TextAreaJJobContainer<>(j, jobName));
-    }
-
-    public static <T, JJ extends ProgressJJob<T>> TextAreaJJobContainer<T> submit(final JJ j, String jobName, String jobCategory) {
-        return submit(new TextAreaJJobContainer<>(j, jobName, jobCategory));
-    }
-
-    public static <T, JJ extends ProgressJJob<T>> TextAreaJJobContainer<T> submit(final JJ j, Supplier<String> jobName) {
-        return submit(new TextAreaJJobContainer<>(j, jobName));
-    }
-
-    public static <T, JJ extends ProgressJJob<T>> TextAreaJJobContainer<T> submit(final JJ j, Supplier<String> jobName, Supplier<String> jobCategory) {
-        return submit(new TextAreaJJobContainer<>(j, jobName, jobCategory));
+    public static <T, JJ extends ProgressJJob<T>> TextAreaJJobContainer<T> submit(final JJ j, Supplier<String> jobName, Supplier<String> projectName, Supplier<String> jobCategory) {
+        return submit(new TextAreaJJobContainer<>(j, jobName, projectName, jobCategory));
     }
 
     public static <JJ extends SwingJJobContainer<?>> JJ submit(final JJ j) {
