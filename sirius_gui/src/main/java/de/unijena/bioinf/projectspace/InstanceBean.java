@@ -107,27 +107,7 @@ public class InstanceBean implements SiriusPCS {
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getNewValue() != null && evt.getNewValue() instanceof ProjectChangeEvent pce) {
                     if (getFeatureId().equals(pce.getFeaturedId())) {
-                        synchronized (InstanceBean.this) { //todo nighsky: check if this makes sense or if this needs to change on selection only
-                            InstanceBean.this.spectralMatchingResult = null;
-                            InstanceBean.this.sourceFeature = null;
-                        }
-                        switch (pce.getEventType()) {
-                            case FEATURE_UPDATED -> {
-                                synchronized (InstanceBean.this) {
-                                    InstanceBean.this.msData = null;
-                                }
-                                if (pcsEnabled.get())
-                                    pcs.firePropertyChange("instance.updated", null, pce);
-                            }
-                            case RESULT_CREATED -> {
-                                if (pcsEnabled.get())
-                                    pcs.firePropertyChange("instance.createFormulaResult", null, pce);
-                            }
-                            case RESULT_DELETED -> {
-                                if (pcsEnabled.get())
-                                    pcs.firePropertyChange("instance.deleteFormulaResult", null, pce);
-                            }
-                        }
+                        clearCache(pce);
                     } else {
                         LoggerFactory.getLogger(getClass()).warn("Event delegated with wrong feature id! Id is {} instead of {}!", pce.getFeaturedId(), getFeatureId());
                     }
@@ -135,6 +115,35 @@ public class InstanceBean implements SiriusPCS {
             }
         };
         registerProjectSpaceListener();
+    }
+
+    void clearCache(){
+        clearCache(null);
+    }
+    void clearCache(@Nullable ProjectChangeEvent pce){
+        synchronized (InstanceBean.this) { //todo nighsky: check if this makes sense or if this needs to change on selection only
+            InstanceBean.this.spectralMatchingResult = null;
+            InstanceBean.this.sourceFeature = null;
+        }
+        if (pce != null && pce.getEventType() != null) {
+            switch (pce.getEventType()) {
+                case FEATURE_UPDATED -> {
+                    synchronized (InstanceBean.this) {
+                        InstanceBean.this.msData = null;
+                    }
+                    if (pcsEnabled.get())
+                        pcs.firePropertyChange("instance.updated", null, pce);
+                }
+                case RESULT_CREATED -> {
+                    if (pcsEnabled.get())
+                        pcs.firePropertyChange("instance.createFormulaResult", null, pce);
+                }
+                case RESULT_DELETED -> {
+                    if (pcsEnabled.get())
+                        pcs.firePropertyChange("instance.deleteFormulaResult", null, pce);
+                }
+            }
+        }
     }
 
     public void registerProjectSpaceListener() {

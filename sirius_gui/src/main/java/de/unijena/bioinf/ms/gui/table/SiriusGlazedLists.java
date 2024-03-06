@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.gui.table;
 
 import ca.odell.glazedlists.EventList;
+import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.event.ListEventAssembler;
 import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +44,7 @@ public class SiriusGlazedLists {
             eventAssembler.beginEvent();
             for (int i = 0; i < list.size(); i++) {
                 if (elementsToUpdate == null || elementsToUpdate.contains(list.get(i)))
-                    eventAssembler.elementUpdated(i, null, list.get(i));
+                    eventAssembler.elementUpdated(i, ListEvent.unknownValue(), list.get(i));
             }
             eventAssembler.commitEvent();
         } finally {

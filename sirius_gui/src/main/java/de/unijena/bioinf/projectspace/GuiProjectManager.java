@@ -39,10 +39,9 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.Closeable;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
+import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.nightsky.sdk.model.ProjectChangeEvent.EventTypeEnum.FEATURE_CREATED;
 import static de.unijena.bioinf.ms.nightsky.sdk.model.ProjectChangeEvent.EventTypeEnum.FEATURE_DELETED;
@@ -98,8 +97,19 @@ public class GuiProjectManager implements Closeable {
         siriusClient.addEventListener(projectListener, projectId, DataEventType.PROJECT);
 
         computeListener = evt -> {
-            System.out.println("============> BackgroundRuns event: " + evt);
-            Jobs.runEDTLater(() -> SiriusGlazedLists.allUpdate(INSTANCE_LIST));
+            DataObjectEvents.toDataObjectEventData(evt.getNewValue(), BackgroundComputationsStateEvent.class).ifPresent(computeEvent -> {
+                Set<String> ids = computeEvent.getAffectedJobs().stream()
+                        .map(Job::getAffectedAlignedFeatureIds)
+                        .filter(Objects::nonNull)
+                        .flatMap(List::stream)
+                        .collect(Collectors.toSet());
+
+                Set<InstanceBean> change = INSTANCE_LIST.stream()
+                        .filter(i -> ids.contains(i.getFeatureId()))
+                        .peek(InstanceBean::clearCache)
+                        .collect(Collectors.toSet());
+                Jobs.runEDTLater(() -> SiriusGlazedLists.multiUpdate(INSTANCE_LIST, change));
+            });
         };
         siriusClient.addEventListener(computeListener, projectId, DataEventType.BACKGROUND_COMPUTATIONS_STATE);
     }

@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.gui.spectral_matching;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -60,13 +59,10 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
 
             @Override
             public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
-                Utils.withTime("Change data after Instance SELECTION changed", (watch) -> {
-                    if (!selection.isSelectionEmpty())
-                        changeData(selection.getSelected().get(0), null);
-                    else
-                        changeData(null, null);
-                });
-
+                if (!selection.isSelectionEmpty())
+                    changeData(selection.getSelected().get(0), null);
+                else
+                    changeData(null, null);
             }
         });
 
