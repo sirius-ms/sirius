@@ -103,7 +103,7 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
                 setData(parentDataObject);
                 elementListSelectionModel.setValueIsAdjusting(true);
                 elementListSelectionModel.clearSelection();
-                ret.set(refillElements(toFillIn));
+                ret.set(SiriusGlazedLists.refill(basicElementList, elementData, toFillIn));
                 if (!elementList.isEmpty())
                     try { // should not happen
                         elementListSelectionModel.setSelectionInterval(0, 0);
@@ -112,6 +112,8 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
                     }
             } finally {
                 elementListSelectionModel.setValueIsAdjusting(false);
+                if (ret.get())
+                    readDataByConsumer(data -> notifyListeners(data, getSelectedElement(), elementList, elementListSelectionModel));
             }
         }));
         return ret.get();
@@ -157,38 +159,38 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
         }
     }
 
-    public void readDataByConsumer(Consumer<D> readData){
+    public void readDataByConsumer(Consumer<D> readData) {
         dataLock.readLock().lock();
-        try{
+        try {
             readData.accept(data);
-        }finally {
+        } finally {
             dataLock.readLock().unlock();
         }
     }
 
-    public <R> R readDataByFunction(Function<D,R> readData){
+    public <R> R readDataByFunction(Function<D, R> readData) {
         dataLock.readLock().lock();
-        try{
+        try {
             return readData.apply(data);
-        }finally {
+        } finally {
             dataLock.readLock().unlock();
         }
     }
 
-    public void writeData(Consumer<D> writeData){
+    public void writeData(Consumer<D> writeData) {
         dataLock.writeLock().lock();
-        try{
+        try {
             writeData.accept(data);
-        }finally {
+        } finally {
             dataLock.writeLock().unlock();
         }
     }
 
     protected void setData(D data) {
         dataLock.writeLock().lock();
-        try{
+        try {
             this.data = data;
-        }finally {
+        } finally {
             dataLock.writeLock().unlock();
         }
     }

@@ -57,7 +57,7 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
 
     private BackgroundRuns<?, ?> backgroundRuns(SiriusProjectSpaceImpl psm) {
         return backgroundRuns.computeIfAbsent(psm.getProjectId(), p -> {
-            BackgroundRuns br = new BackgroundRuns(psm.getProjectSpaceManager());
+            BackgroundRuns br = new BackgroundRuns<>(psm.getProjectSpaceManager());
             br.addUnfinishedRunsListener(evt -> {
                 if (evt instanceof BackgroundRuns<?, ?>.ChangeEvent) {
                     BackgroundRuns.ChangeEvent e = (BackgroundRuns<?, ?>.ChangeEvent) evt;
@@ -66,7 +66,7 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
                                     .numberOfJobs(e.getNumOfRunsNew())
                                     .numberOfRunningJobs(e.getNumOfUnfinishedNew())
                                     .numberOfFinishedJobs(e.getNumOfRunsNew() - e.getNumOfUnfinishedNew())
-                                    .affectedJobs(e.getEffectedJobs().stream().map(j -> extractJobId((BackgroundRuns<?, ?>.BackgroundRunJob) j, EnumSet.of(Job.OptField.progress))).toList())
+                                    .affectedJobs(e.getEffectedJobs().stream().map(j -> extractJobId((BackgroundRuns<?, ?>.BackgroundRunJob) j, EnumSet.of(Job.OptField.progress, Job.OptField.affectedIds))).toList())
                                     .build()
                             , psm.getProjectId()));
                 }

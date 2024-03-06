@@ -24,6 +24,7 @@ import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.SortedList;
 import de.unijena.bioinf.ms.gui.table.*;
 import lombok.Getter;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 
@@ -38,17 +39,22 @@ public class CandidateListTableView extends CandidateListView {
         super(list);
 
         getSource().addActiveResultChangedListener((instanceBean, sre, resultElements, selections) -> {
-            filteredSelectionModel.setValueIsAdjusting(true);
-            filteredSelectionModel.clearSelection();
-            if (instanceBean == null) //todo nighsky: how to check if fingerprint was computed
-                showCenterCard(ActionList.ViewState.NOT_COMPUTED);
-            else if (resultElements.isEmpty())
-                showCenterCard(ActionList.ViewState.EMPTY);
-            else
-                showCenterCard(ActionList.ViewState.DATA);
-            if (!getSource().getElementListSelectionModel().isSelectionEmpty())
-                filteredSelectionModel.setSelectionInterval(getSource().getElementListSelectionModel().getMinSelectionIndex(), getSource().getElementListSelectionModel().getMaxSelectionIndex());
-            filteredSelectionModel.setValueIsAdjusting(false);
+            try {
+                filteredSelectionModel.setValueIsAdjusting(true);
+                filteredSelectionModel.clearSelection();
+                if (instanceBean == null) //todo nighsky: how to check if fingerprint was computed
+                    showCenterCard(ActionList.ViewState.NOT_COMPUTED);
+                else if (resultElements.isEmpty())
+                    showCenterCard(ActionList.ViewState.EMPTY);
+                else
+                    showCenterCard(ActionList.ViewState.DATA);
+                if (!getSource().getElementListSelectionModel().isSelectionEmpty())
+                    filteredSelectionModel.setSelectionInterval(getSource().getElementListSelectionModel().getMinSelectionIndex(), getSource().getElementListSelectionModel().getMaxSelectionIndex());
+            } catch (Exception e) {
+                LoggerFactory.getLogger(getClass()).warn("Error when resetting selection for elementList");
+            } finally {
+                filteredSelectionModel.setValueIsAdjusting(false);
+            }
         });
 
         final CandidateTableFormat tf = new CandidateTableFormat(getSource().getBestFunc());

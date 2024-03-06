@@ -66,17 +66,22 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
 
         getSource().addActiveResultChangedListener((experiment, sre, resultElements, selections) -> {
             filteredSelectionModel.setValueIsAdjusting(true);
-            filteredSelectionModel.clearSelection();
-            if (experiment == null || experiment.getSpectralSearchResults() == null)
-                showCenterCard(ActionList.ViewState.NOT_COMPUTED);
-            else if (resultElements.isEmpty())
-                showCenterCard(ActionList.ViewState.EMPTY);
-            else {
-                showCenterCard(ActionList.ViewState.DATA);
+            try {
+                filteredSelectionModel.clearSelection();
+                if (experiment == null || experiment.getSpectralSearchResults() == null)
+                    showCenterCard(ActionList.ViewState.NOT_COMPUTED);
+                else if (resultElements.isEmpty())
+                    showCenterCard(ActionList.ViewState.EMPTY);
+                else {
+                    showCenterCard(ActionList.ViewState.DATA);
+                }
+                if (!getSource().getElementListSelectionModel().isSelectionEmpty())
+                    filteredSelectionModel.setSelectionInterval(getSource().getElementListSelectionModel().getMinSelectionIndex(), getSource().getElementListSelectionModel().getMaxSelectionIndex());
+            } catch (Exception e) {
+                LoggerFactory.getLogger(getClass()).warn("Error when resetting selection for elementList");
+            } finally {
+                filteredSelectionModel.setValueIsAdjusting(false);
             }
-            if (!getSource().getElementListSelectionModel().isSelectionEmpty())
-                filteredSelectionModel.setSelectionInterval(getSource().getElementListSelectionModel().getMinSelectionIndex(), getSource().getElementListSelectionModel().getMaxSelectionIndex());
-            filteredSelectionModel.setValueIsAdjusting(false);
         });
 
         final SpectralMatchTableFormat tf = new SpectralMatchTableFormat(source.getBestFunc());
