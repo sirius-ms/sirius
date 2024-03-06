@@ -229,10 +229,14 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 
             if (jsonSpectra != null) {
                 String svg = null;
+                String diff = null;
+                int showMzTopK = 5;
                 if (mode.equals(MS2_DISPLAY) && smiles != null) {
                     svg = makeSVG(smiles);
                 }
-                browser.loadData(jsonSpectra, svg);
+                if (mode.equals(MS1_MIRROR_DISPLAY))
+                    diff = "difference";
+                browser.loadData(jsonSpectra, svg, diff, showMzTopK);
             }
         } catch (JsonProcessingException e) {
             LoggerFactory.getLogger(getClass()).error("Error when creating data Json!", e);

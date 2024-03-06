@@ -61,29 +61,34 @@ public class WebViewSpectraViewer extends WebViewPanel {
             });
     }
 
-    public void loadDataOrThrow(SpectraViewContainer data, String svg)  {
+    public void loadDataOrThrow(SpectraViewContainer data, String svg, String mirrorViewMode, int showMzTopK)  {
         try {
-            loadData(data,svg);
+            loadData(data, svg, mirrorViewMode, showMzTopK);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }
-    public void loadData(SpectraViewContainer data, String svg) throws JsonProcessingException {
-        loadData(new ObjectMapper().writeValueAsString(data), svg);
+    public void loadData(SpectraViewContainer data, String svg, String mirrorViewMode, int showMzTopK) throws JsonProcessingException { //
+        loadData(new ObjectMapper().writeValueAsString(data), svg, mirrorViewMode, showMzTopK);
     }
 
-    public void loadData(String json_spectra, String svg) { // TEST CODE
+    public void loadData(String json_spectra, String svg, String mirrorViewMode, int showMzTopK) { // TEST CODE
         cancelTasks();
 
         queueTaskInJFXThread(() -> {
                 // set data
-                JSObject obj = (JSObject) webView.getEngine().executeScript("document.webview = { \"spectrum\": " + json_spectra + ", \"svg\": null};");
+                JSObject obj = (JSObject) webView.getEngine().executeScript("document.webview = { "
+                        + "\"spectrum\": " + json_spectra
+                        + ", \"svg\": null"
+                        + ", \"mirrorStyle\": " + escapeNull(mirrorViewMode)
+                        + ", \"showMz\": " + showMzTopK
+                        + "};");
                 if (svg!=null) {
                     obj.setMember("svg", svg);
                 }
                 // load Data
                 webView.getEngine().executeScript(
-                    "main.loadJSONDataAndStructure(document.webview.spectrum, document.webview.svg)");
+                    "main.loadJSONDataAndStructure(document.webview.spectrum, document.webview.svg, document.webview.mirrorStyle, document.webview.showMz)");
             });
     }
 
