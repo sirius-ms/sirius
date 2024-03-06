@@ -65,7 +65,7 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
     public void showMatch(BasicSpectrum query, BasicSpectrum reference) {
         Jobs.runEDTLater(() -> {
             try {
-                this.browser.loadData(SpectraViewContainer.of(List.of(query, reference)), null);
+                this.browser.loadData(SpectraViewContainer.of(List.of(query, reference)), null, "normal", 5);
             } catch (Exception e) {
                 LoggerFactory.getLogger(getClass()).error("Error.", e);
             }

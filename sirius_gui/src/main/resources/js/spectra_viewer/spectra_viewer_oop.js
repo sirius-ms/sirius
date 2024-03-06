@@ -1167,11 +1167,15 @@ class Main {
         //this.data = undefined;
     }
 
-    loadJSONDataAndStructure(data_spectra, data_svg) {
+    loadJSONDataAndStructure(data_spectra, data_svg, mirrorStyle, showMz) {
         d3.select("#debug").text("debug div visible?");
-        if (data_svg !== null) {
+        // this.showMz = showMz;
+        if (showMz !== null)
+            this.showMz = showMz;
+        if (mirrorStyle !== null)
+            this.mirrorStyle = mirrorStyle;
+        if (data_svg !== null)
             this.svg_str = data_svg;
-        }
         if ((typeof data_spectra) == "string") {
             this.data = JSON.parse(data_spectra);
         } else {
