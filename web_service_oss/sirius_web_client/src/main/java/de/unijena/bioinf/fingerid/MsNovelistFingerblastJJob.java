@@ -112,6 +112,9 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
         if (candidates.isEmpty())
             return null;
 
+
+        //filter 2d duplicates
+
         // needed for fingerprinting and FingerprintCandidate generation
         final FixedFingerprinter fixedFingerprinter = new FixedFingerprinter(webAPI.getCDKChemDBFingerprintVersion());
         final FingerIdData fingerIdData = idResult.getPrecursorIonType().getCharge() > 0
@@ -154,11 +157,18 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
 
 
         // collect job results to turn MSNovelist candidate list into scoring-compatible FingerprintCandidates
-        Map<FingerprintCandidate, MsNovelistCandidate> combinedCandidates = candidateJobs.stream()
-                .map(JJob::takeResult).flatMap(List::stream).collect(Collectors.toMap(Pair::key, Pair::value));
+        // if two 3d structures with same 2d inchi we keep the one that has higher rnn scorem because the csi score should be identical
+        Map<String, FingerprintCandidate> combinedCandidates = new HashMap<>();
+        Map<String, MsNovelistCandidate> inchiKeyToCandidate = new HashMap<>();
+        candidateJobs.stream().map(JJob::takeResult).flatMap(List::stream).forEach(p -> {
+            MsNovelistCandidate mn2 = inchiKeyToCandidate.putIfAbsent(p.key().getInchiKey2D(), p.value());
+            combinedCandidates.putIfAbsent(p.key().getInchiKey2D(), p.key());
 
-        Map<String, MsNovelistCandidate> inchiKeyToCandidate = combinedCandidates.entrySet().stream()
-                .collect(Collectors.toMap(p -> p.getKey().getInchiKey2D(), Map.Entry::getValue));
+            if (mn2 != null && mn2.getRnnScore() < p.value().getRnnScore()) {
+                inchiKeyToCandidate.put(p.key().getInchiKey2D(), p.value());
+                combinedCandidates.put(p.key().getInchiKey2D(), p.key());
+            }
+        });
 
         checkForInterruption();
 
@@ -190,7 +200,7 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
         // has to be initialized
         ProbabilityFingerprint fp = idResult.getPredictedFingerprint();
         List<JJob<List<Scored<FingerprintCandidate>>>> scoreJobs = Fingerblast.makeScoringJobs(
-                predictor.getPreparedFingerblastScorer(ParameterStore.of(fp, bayesnetScoring)), combinedCandidates.keySet(), fp);
+                predictor.getPreparedFingerblastScorer(ParameterStore.of(fp, bayesnetScoring)), combinedCandidates.values(), fp);
 
         checkForInterruption();
         scoreJobs.forEach(this::submitSubJob);
