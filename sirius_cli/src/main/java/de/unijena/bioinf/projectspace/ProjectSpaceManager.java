@@ -384,5 +384,9 @@ public class ProjectSpaceManager<I extends Instance> implements IterableWithSize
     public static ProjectSpaceConfiguration newDefaultConfig() {
         return DEFAULT_CONFIG.get();
     }
+
+    public String getName() {
+        return projectSpace().getLocation().getFileName().toString();
+    }
     //end region
 }

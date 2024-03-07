@@ -3,8 +3,12 @@ buildscript {
         maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.7.17")
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}")
     }
+}
+
+plugins {
+    id "org.springdoc.openapi-gradle-plugin" version "1.8.0"
 }
 
 apply plugin: 'org.springframework.boot'
@@ -32,7 +36,9 @@ ext['slf4j.version'] = slf4j_version
 ext['okhttp.version'] = '4.8.1'
 
 dependencies {
-    api project(':sirius_gui')
+//    implementation("org.springframework.boot:spring-boot-properties-migrator")
+    api project(':sirius_cli')
+    implementation project(':sirius_gui')
     //implementation 'me.friwi:jcefmaven:116.0.19.1'
 
     //////////// configure logging ///////////////////
@@ -54,6 +60,7 @@ dependencies {
 
     //spring data for pagination and sorting
     implementation 'org.springframework.data:spring-data-commons'
+    implementation "org.springframework.boot:spring-boot-starter-validation"
 
     // expose operational information about the running application via /actuator
     implementation("org.springframework.boot:spring-boot-starter-actuator")
@@ -62,12 +69,13 @@ dependencies {
 
     ////////////////////// API DOC ///////////////////
     // Generate interactive documentation from a Swagger-compliant API
-    implementation 'org.springdoc:springdoc-openapi-ui:1.7.0'
-    implementation 'org.springdoc:springdoc-openapi-javadoc:1.7.0'
-    implementation "org.springdoc:springdoc-openapi-data-rest:1.7.0"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-api:${springdoc_version}"
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdoc_version}"
+
+
     //process javadoc for swagger/openapi
-    annotationProcessor 'com.github.therapi:therapi-runtime-javadoc-scribe:0.13.0'
-//    implementation 'org.springdoc:springdoc-openapi-security:1.5.13'
+    annotationProcessor 'com.github.therapi:therapi-runtime-javadoc-scribe:0.15.0'
+    implementation 'com.github.therapi:therapi-runtime-javadoc:0.15.0'
     ////////////////////////////////////////////////////
 
     //getter setter constructor logger, save boilerplate
@@ -78,9 +86,7 @@ dependencies {
 //    implementation 'io.micrometer:micrometer-registry-prometheus'
     //must match minio version
     implementation 'com.squareup.okhttp3:okhttp:4.10.0'
-
-
-    testImplementation group: 'junit', name: 'junit', version: '4.12'
+    implementation "jakarta.servlet:jakarta.servlet-api"
 }
 //todo use logback instead of java util logging! => needs support in jjobs
 configurations.each {Configuration conf ->
@@ -110,11 +116,22 @@ jar {
 }
 
 bootJar {
-    classifier = 'boot'
+    archiveClassifier = 'boot'
     layered {
         enabled = true
     }
     launchScript()
+}
+
+openApi {
+    apiDocsUrl.set("http://localhost:8888/v3/api-docs")
+    outputDir.set(file("$projectDir"))
+    outputFileName.set("openapi-spec.json")
+    waitTimeInSeconds.set(20)
+
+    customBootRun {
+        args = ["rest", "-s", "-p", "8888"]
+    }
 }
 
 artifactory {

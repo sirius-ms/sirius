@@ -25,20 +25,20 @@ import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.ActionJLabel;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.webView.WebviewHTMLTextJPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.info.Term;
-import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.rest.ProxyManager;
+import de.unijena.bioinf.webapi.Tokens;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -59,19 +59,9 @@ public class UserLoginDialog extends JDialog {
     Action signInAction;
     Action cancelAction;
 
-    public UserLoginDialog(Frame owner, AuthService service) {
-        super(owner, true);
+    public UserLoginDialog(SiriusGui gui, AuthService service) {
+        super(gui.getMainFrame(), true);
         this.service = service;
-        build();
-    }
-
-    public UserLoginDialog(Dialog owner, AuthService service) {
-        super(owner, true);
-        this.service = service;
-        build();
-    }
-
-    private void build() {
         setTitle("Login");
         setLayout(new BorderLayout());
 
@@ -118,16 +108,16 @@ public class UserLoginDialog extends JDialog {
                         } catch (InvocationTargetException | InterruptedException ignored) {
                         }
                     } finally {
-                        MainFrame.MF.CONNECTION_MONITOR().checkConnection();
+                        gui.getConnectionMonitor().checkConnection();
                     }
                 });
             }
         };
         final JButton login = new JButton(signInAction);
-
         Box buttons = Box.createHorizontalBox();
         buttons.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        buttons.add(new JButton(SiriusActions.SIGN_UP.getInstance()));
+
+        buttons.add(new JButton(SiriusActions.SIGN_UP.getInstance(gui, true)));
         buttons.add(Box.createHorizontalGlue());
         buttons.add(cancel);
         buttons.add(login);
@@ -139,7 +129,7 @@ public class UserLoginDialog extends JDialog {
         center.addNamed("Email", username);
         center.addNamed("Password", password);
         JPanel flow = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
-        flow.add(new ActionJLabel("Forgot your Password?", SiriusActions.RESET_PWD.getInstance()));
+        flow.add(new ActionJLabel("Forgot your Password?", SiriusActions.RESET_PWD.getInstance(gui, true)));
         center.add(null,  flow, 0, true);
 
         if (PropertyManager.getBoolean("de.unijena.bioinf.webservice.login.terms", false))

@@ -19,10 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 
 public class ParameterBinding extends HashMap<String, Supplier<String>> {
@@ -39,16 +36,29 @@ public class ParameterBinding extends HashMap<String, Supplier<String>> {
         super();
     }
 
-    public List<String> asParameterList() {
-        final List<String> out = new ArrayList<>(size() * 2);
+    public Map<String, String> asConfigMap(){
+        final Map<String, String> out = new LinkedHashMap<>(size() * 2);
         forEach((k, v) -> {
             final String value = v.get();
             if (value != null) { // hack to destinguish between config und non config parameters
                 if ("~true".equalsIgnoreCase(value)){
-                    out.add("--" + k);
+                    out.put(k, null);
                 }else if (!"~false".equalsIgnoreCase(value)){
-                    out.add("--" + k + "=" + value);
+                    out.put(k, value);
                 }//skip if it is boolean and false
+            }
+        });
+
+        return out;
+    }
+
+    public List<String> asParameterList() {
+        final List<String> out = new ArrayList<>();
+        asConfigMap().forEach((k, v) -> {
+            if (v == null){
+                out.add("--" + k);
+            } else {
+                out.add("--" + k + "=" + v);
             }
         });
 

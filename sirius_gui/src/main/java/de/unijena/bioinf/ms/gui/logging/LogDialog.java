@@ -20,8 +20,6 @@
 package de.unijena.bioinf.ms.gui.logging;
 
 
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
-
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
@@ -59,9 +57,9 @@ public class LogDialog extends JDialog {
     @Override
     public void setVisible(boolean b) {
         if (b){
-            setLocationRelativeTo(MainFrame.MF);
+            setLocationRelativeTo(getOwner());
             Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-            setPreferredSize(new Dimension(Math.min(screenSize.width, MainFrame.MF.getWidth()), Math.min(400, screenSize.height)));
+            setPreferredSize(new Dimension(Math.min(screenSize.width, getOwner().getWidth()), Math.min(400, screenSize.height)));
             pack();
         }
         super.setVisible(b);

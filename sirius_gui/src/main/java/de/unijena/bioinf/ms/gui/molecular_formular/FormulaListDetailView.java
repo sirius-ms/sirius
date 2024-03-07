@@ -28,12 +28,11 @@ import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.table.*;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import lombok.Getter;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,6 +41,7 @@ import java.util.Map;
  * @author Markus Fleischauer
  */
 public class FormulaListDetailView extends ActionListDetailView<FormulaResultBean, InstanceBean, FormulaList> {
+    @Getter
     private final ActionTable<FormulaResultBean> table;
     private final ConnectedSelection<FormulaResultBean> selectionConnection; //this object synchronizes selection models and is not obsolete
 
@@ -58,6 +58,11 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
 
         table.setSelectionModel(filteredSelectionModel);
         filteredSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        //this is to scroll to selected row after sync with unfiltered selection
+        filteredSelectionModel.addListSelectionListener(evt -> {
+            if (!filteredSelectionModel.isSelectionEmpty())
+                table.scrollRectToVisible(new Rectangle(table.getCellRect(filteredSelectionModel.getMinSelectionIndex(), 0, true)));
+        });
 
         //sync selections models
         selectionConnection = new ConnectedSelection<>(source.getElementListSelectionModel(), filteredSelectionModel, source.getElementList(), sortedSource);
@@ -65,56 +70,15 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
         table.setDefaultRenderer(Object.class, new SiriusResultTableCellRenderer(tableFormat.highlightColumnIndex()));
         //todo re-enable threshold marker
 //        table.getColumnModel().getColumn(3).setCellRenderer(new FingerIDScoreBarRenderer(tableFormat.highlightColumnIndex(), source.zodiacScoreStats, true));
-        table.getColumnModel().getColumn(4).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.zodiacScoreStats, true));
+        table.getColumnModel().getColumn(3).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.zodiacScoreStats, true));
 //        table.getColumnModel().getColumn(4).setCellRenderer(new FingerIDScoreBarRenderer(tableFormat.highlightColumnIndex(), source.siriusScoreStats, true));
-        table.getColumnModel().getColumn(5).setCellRenderer(new ScoreListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.siriusScoreStats, true));
-        table.getColumnModel().getColumn(6).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.isotopeScoreStats, false));
-        table.getColumnModel().getColumn(7).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.treeScoreStats, false));
-        table.getColumnModel().getColumn(8).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.explainedPeaks, false, true, new DecimalFormat("#0")));
-        table.getColumnModel().getColumn(9).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumnIndex(), 0, 1, true));
+        table.getColumnModel().getColumn(4).setCellRenderer(new ScoreListStatBarTableCellRenderer(tableFormat.highlightColumnIndex(), source.siriusScoreStats, true));
+        table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.isotopeScoreStats, false));
+        table.getColumnModel().getColumn(6).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.treeScoreStats, false));
+        table.getColumnModel().getColumn(7).setCellRenderer(new ListStatBarTableCellRenderer<>(tableFormat.highlightColumnIndex(), source.explainedPeaks, false, true, new DecimalFormat("#0")));
+        table.getColumnModel().getColumn(8).setCellRenderer(new BarTableCellRenderer(tableFormat.highlightColumnIndex(), 0, 1, true));
 
-        table.addMouseListener(new MouseListener() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                //todo insert compute CSI option by opening batch compute
-                /*if (e.getClickCount() == 2) {
-                    // Double-click detected
-                    int index = table.rowAtPoint(e.getPoint());
-                    table.setRowSelectionInterval(index, index);
-                    SiriusActions.COMPUTE_CSI_LOCAL.getInstance().actionPerformed(new ActionEvent(table, 112, SiriusActions.COMPUTE_CSI_LOCAL.name()));
-                }*/
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-
-            }
-        });
-
-        //decorate this guy
-        KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
-//        table.getInputMap().put(enterKey, SiriusActions.COMPUTE_CSI_LOCAL.name());
-//        table.getActionMap().put(SiriusActions.COMPUTE_CSI_LOCAL.name(), SiriusActions.COMPUTE_CSI_LOCAL.getInstance());
-
-        this.add(
-                new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED),
-                BorderLayout.CENTER
-        );
+        this.add(new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED), BorderLayout.CENTER);
     }
 
     @Override
@@ -133,16 +97,16 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
         return super.configureFiltering(sortedSource);
     }
 
-    private class ConnectedSelection<T> {
+    private static class ConnectedSelection<T> {
         final DefaultEventSelectionModel<T> model1;
         final DefaultEventSelectionModel<T> model2;
 
         final EventList<T> model1List;
         final EventList<T> model2List;
 
-        final Map<DefaultEventSelectionModel, ListSelectionListener> modelTListener = new HashMap<>();
+        final Map<DefaultEventSelectionModel<?>, ListSelectionListener> modelTListener = new HashMap<>();
 
-        public ConnectedSelection(DefaultEventSelectionModel<T> model1, DefaultEventSelectionModel<T> model2, EventList<T> model1List, EventList<T> model2List) {
+        private ConnectedSelection(DefaultEventSelectionModel<T> model1, DefaultEventSelectionModel<T> model2, EventList<T> model1List, EventList<T> model2List) {
             this.model1 = model1;
             this.model2 = model2;
 
@@ -151,12 +115,12 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
             addListeners();
         }
 
-        public void addListeners() {
+        private void addListeners() {
             modelTListener.put(model1, createAndAddListener(model1, model2, model2List));
             modelTListener.put(model2, createAndAddListener(model2, model1, model1List));
         }
 
-        public void removeListeners() {
+        private void removeListeners() {
             model1.removeListSelectionListener(modelTListener.get(model1));
             model2.removeListSelectionListener(modelTListener.get(model2));
             modelTListener.clear();
@@ -167,7 +131,6 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
                 if (notifier.isSelectionEmpty()) {
                     if (!listener.isSelectionEmpty())
                         listener.clearSelection();
-                    return;
                 } else {
                     EventList<T> s1 = notifier.getSelected();
                     T s = s1.get(0);
@@ -178,10 +141,10 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
                         }
                     }
 
-                    listener.removeListSelectionListener(modelTListener.get(listener));
+                    listener.removeListSelectionListener(modelTListener.get(notifier));
                     int i = listenerList.indexOf(s);
                     listener.setSelectionInterval(i, i);
-                    listener.addListSelectionListener(modelTListener.get(listener));
+                    listener.addListSelectionListener(modelTListener.get(notifier));
                 }
             };
             notifier.addListSelectionListener(l);

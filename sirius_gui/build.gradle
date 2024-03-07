@@ -3,8 +3,15 @@ apply plugin: 'java-library'
 mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
 
 dependencies {
+    compileOnly 'org.projectlombok:lombok:1.18.26'
+    annotationProcessor 'org.projectlombok:lombok:1.18.26'
 //project
-    api project(':sirius_cli')
+    implementation(project(':sirius_cli')){
+//        exclude group: "de.unijena.bioinf.ms", module: "sirius_web_client"
+//        exclude group: "de.unijena.bioinf.ms", module: "web_core_oss"
+    }
+    implementation project(':sirius_nightsky_sdk')
+    implementation project(':sirius_nightsky_sdk:sirius_nightsky_sdk.jjobs')
 
 //internal
     api "de.unijena.bioinf:jjobs-swing:$jjobs_version"

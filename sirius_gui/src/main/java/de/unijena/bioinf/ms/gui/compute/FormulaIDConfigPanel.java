@@ -35,6 +35,7 @@ import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
+import de.unijena.bioinf.ms.nightsky.sdk.model.MsData;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Ms1Preprocessor;
@@ -139,6 +140,8 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
             ppmSpinner = makeParameterSpinner("MS2MassDeviation.allowedMassDeviation",
                     PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm(),
                     0.25, 50, 0.25, m -> m.getNumber().doubleValue() + "ppm");
+            parameterBindings.put("SpectralMatchingMassDeviation.allowedPeakDeviation", () -> ((SpinnerNumberModel)ppmSpinner.getModel()).getNumber().doubleValue() + "ppm");
+            parameterBindings.put("SpectralMatchingMassDeviation.allowedPrecursorDeviation", () -> ((SpinnerNumberModel)ppmSpinner.getModel()).getNumber().doubleValue() + "ppm");
 
             if (hasMs2) {
                 smallParameters.addNamed("MS2 mass accuracy (ppm)", ppmSpinner);
@@ -148,7 +151,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
             candidatesSpinner = makeIntParameterSpinner("NumberOfCandidates", 1, 10000, 1);
             addAdvancedParameter(smallParameters, "Candidates stored", candidatesSpinner);
 
-            candidatesPerIonSpinner = makeIntParameterSpinner("NumberOfCandidatesPerIon", 0, 10000, 1);
+            candidatesPerIonSpinner = makeIntParameterSpinner("NumberOfCandidatesPerIonization", 0, 10000, 1);
             addAdvancedParameter(smallParameters, "Min candidates per ionization stored", candidatesPerIonSpinner);
 
             smallParameters.addNamed("Fix formula for detected lipid", makeParameterCheckBox("EnforceElGordoFormula")); //El Gordo detects lipids and by default fixes the formula
@@ -182,21 +185,21 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
 
         formulaSearchStrategy = new FormulaSearchStrategy(owner, ecs, hasMs2, isBatchDialog(), parameterBindings);
         add(formulaSearchStrategy);
+        treeTimeout = makeIntParameterSpinner("Timeout.secondsPerTree", 0, Integer.MAX_VALUE, 1);
+        comoundTimeout = makeIntParameterSpinner("Timeout.secondsPerInstance", 0, Integer.MAX_VALUE, 1);
+        mzHeuristic = makeIntParameterSpinner("UseHeuristic.useHeuristicAboveMz", 0, 3000, 5);
+        mzHeuristicOnly = makeIntParameterSpinner("UseHeuristic.useOnlyHeuristicAboveMz", 0, 3000, 5);
 
         // ilp timeouts
         if (hasMs2) {
             final TwoColumnPanel ilpOptions = new TwoColumnPanel();
 
-            treeTimeout = makeIntParameterSpinner("Timeout.secondsPerTree", 0, Integer.MAX_VALUE, 1);
             ilpOptions.addNamed("Tree timeout", treeTimeout);
 
-            comoundTimeout = makeIntParameterSpinner("Timeout.secondsPerInstance", 0, Integer.MAX_VALUE, 1);
             ilpOptions.addNamed("Compound timeout", comoundTimeout);
 
-            mzHeuristic = makeIntParameterSpinner("UseHeuristic.mzToUseHeuristic", 0, 3000, 5);
             ilpOptions.addNamed("Use heuristic above m/z", mzHeuristic);
 
-            mzHeuristicOnly = makeIntParameterSpinner("UseHeuristic.mzToUseHeuristicOnly", 0, 3000, 5);
             ilpOptions.addNamed("Use heuristic only above m/z", mzHeuristicOnly);
 
             final JPanel technicalParameters = new JPanel();
@@ -259,7 +262,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         } else {
             adductList.checkBoxList.replaceElements(adducts.stream().sorted().toList());
             adductList.checkBoxList.uncheckAll();
-            if (!isBatchDialog() && !ecs.get(0).getMs2Spectra().isEmpty()) {
+            if (!isBatchDialog() && !ecs.get(0).getMsData().getMs2Spectra().isEmpty()) {
                 detectPossibleAdducts(ecs.get(0));
             } else {
                 adductsEnabled.forEach(adductList.checkBoxList::check);
@@ -271,11 +274,13 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
 
     protected void detectPossibleAdducts(InstanceBean ec) {
         //todo is this the same detection as happening in batch mode?
+        //todo Nightsky: do we want this in the frontend?
         String notWorkingMessage = "Adduct detection requires MS1 spectrum.";
-        if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
+        MsData msData = ec.getMsData();
+        if (msData != null && (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null)) {
             Jobs.runInBackgroundAndLoad(owner, "Detecting adducts...", () -> {
                 final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
-                MutableMs2Experiment experiment = new MutableMs2Experiment(ec.getExperiment(), true);
+                MutableMs2Experiment experiment = new MutableMs2Experiment(ec.asMs2Experiment(), true);
                 DetectedAdducts detectedAdducts = experiment.getAnnotationOrNull(DetectedAdducts.class);
                 if (detectedAdducts != null) {
                     //copy DetectedAdducts, to remove previously detected adducts and to make sure the following preprocess does not already alter this annotation (probably not copy-safe)

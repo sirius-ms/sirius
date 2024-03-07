@@ -71,7 +71,7 @@ dependencies {
     testImplementation project(':sirius_dist').sourceSets.test.output //needed for the TestLocal tests
 }
 
-mainClassName = 'org.springframework.boot.loader.JarLauncher'
+mainClassName = 'org.springframework.boot.loader.launch.JarLauncher'
 //mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
 def mainJar = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName()
 

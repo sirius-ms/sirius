@@ -19,12 +19,20 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import org.jetbrains.annotations.NotNull;
 
 public class ActFingerprintAndCanopusConfigPanel extends ActivatableConfigPanel<FingerprintAndCanopusConfigPanel> {
-    public ActFingerprintAndCanopusConfigPanel() {
-        super("Predict", GuiUtils.formatToolTip(FingerprintAndCanopusConfigPanel.description), Icons.FINGER_32, true, FingerprintAndCanopusConfigPanel::new);
+    public ActFingerprintAndCanopusConfigPanel(@NotNull SiriusGui gui) {
+        super(gui, "Predict", GuiUtils.formatToolTip(FingerprintAndCanopusConfigPanel.description),
+                Icons.FINGER_32, true, FingerprintAndCanopusConfigPanel::new);
+    }
+
+    @Override
+    protected void setComponentsEnabled(final boolean enabled) {
+        super.setComponentsEnabled(enabled);
     }
 
     @Override

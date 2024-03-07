@@ -22,17 +22,26 @@ package de.unijena.bioinf.ms.middleware.model.compute;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.unijena.bioinf.babelms.inputresource.InputResource;
+import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotEmpty;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ImportLocalFilesSubmission extends ImportSubmission {
+public class ImportLocalFilesSubmission extends AbstractImportSubmission {
     @NotEmpty
     protected List<String> inputPaths;
+
+    @Override
+    public List<InputResource<?>> asInputResource() {
+        return inputPaths.stream().map(Path::of).map(PathInputResource::new).collect(Collectors.toList());
+    }
 }

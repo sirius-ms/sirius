@@ -24,6 +24,7 @@ import com.github.scribejava.core.model.OAuth2AccessTokenErrorResponse;
 import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
@@ -36,67 +37,20 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
-
 
 public class SubscriptionDialog extends JDialog {
     private static final String TITLE = "Select Subscription";
 
-    public SubscriptionDialog(Frame owner, List<Subscription> subs) {
-        super(owner);
-        init(subs);
-    }
-
-    public SubscriptionDialog(Frame owner, boolean modal, List<Subscription> subs) {
-        super(owner, TITLE, modal);
-        init(subs);
-    }
-
-    public SubscriptionDialog(Dialog owner, List<Subscription> subs) {
-        super(owner, TITLE);
-        init(subs);
-    }
-
-    public SubscriptionDialog(Dialog owner, boolean modal, List<Subscription> subs) {
-        super(owner, TITLE, modal);
-        init(subs);
-    }
-
-    public SubscriptionDialog(Window owner, List<Subscription> subs) {
-        super(owner, TITLE);
-        init(subs);
-    }
-
-    public SubscriptionDialog(Window owner, ModalityType modalityType, List<Subscription> subs) {
-        super(owner, TITLE, modalityType);
-        init(subs);
-    }
-
     private JComboBox<Subscription> comboBox;
-
 
     Action applyAction;
     Action cancelAction;
 
-
     private boolean performedChange = false;
 
-
-    private void configureActions() {
-        InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        String enterAction = "select-sub";
-        String escAction = "cancel";
-        inputMap.put(KeyStroke.getKeyStroke("ENTER"), enterAction);
-        inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), escAction);
-        getRootPane().getActionMap().put(enterAction, applyAction);
-        getRootPane().getActionMap().put(escAction, cancelAction);
-    }
-
-    public boolean hasPerformedChange() {
-        return performedChange;
-    }
-
-    private void init(List<Subscription> subs) {
+    public SubscriptionDialog(SiriusGui gui, boolean modal, List<Subscription> subs) {
+        super(gui.getMainFrame(), TITLE, modal);
+        this.
         setLayout(new BorderLayout());
         comboBox = new JComboBox<>(subs.toArray(Subscription[]::new));
         comboBox.setRenderer(new SubscriptionHTMLRenderer(350));
@@ -133,7 +87,7 @@ public class SubscriptionDialog extends JDialog {
                         new ExceptionDialog(SubscriptionDialog.this, (ex instanceof OAuth2AccessTokenErrorResponse)?((OAuth2AccessTokenErrorResponse) ex).getErrorDescription() : ex.getMessage(), "Login failed!");
                         performedChange = false;
                     } finally {
-                        MF.CONNECTION_MONITOR().checkConnectionInBackground();
+                       gui.getConnectionMonitor().checkConnectionInBackground();
                     }
                 });
             }
@@ -155,5 +109,19 @@ public class SubscriptionDialog extends JDialog {
         pack();
         setLocationRelativeTo(getParent());
         setVisible(true);
+    }
+
+    private void configureActions() {
+        InputMap inputMap = getRootPane().getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        String enterAction = "select-sub";
+        String escAction = "cancel";
+        inputMap.put(KeyStroke.getKeyStroke("ENTER"), enterAction);
+        inputMap.put(KeyStroke.getKeyStroke("ESCAPE"), escAction);
+        getRootPane().getActionMap().put(enterAction, applyAction);
+        getRootPane().getActionMap().put(escAction, cancelAction);
+    }
+
+    public boolean hasPerformedChange() {
+        return performedChange;
     }
 }

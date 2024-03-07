@@ -40,33 +40,69 @@
 package de.unijena.bioinf.ms.middleware.model.projects;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Objects;
 
 @Getter
+@Builder
 public final class ProjectInfo {
-    //todo do we need meta information like size and description
+    @Schema(enumAsRef = true, name = "ProjectInfoOptField", nullable = true)
+    public enum OptField {none, compatibilityInfo, sizeInformation}
+
     /**
      * a user selected unique name of the project for easy access.
      */
     public final @NotNull String projectId;
-    public final @NotNull String path;
+    /**
+     * storage location of the project.
+     */
+    public final @NotNull String location;
 
-    /*public ProjectSpaceId(@NotNull  String name, @NotNull Path path) {
-            this()
-    }*/
-    public ProjectInfo(@NotNull String projectId, @NotNull String path) {
-        this.projectId = projectId;
-        this.path = path;
-    }
+    /**
+     * Description of this project.
+     */
+    @Schema(nullable = true)
+    public final @Nullable String description;
+
+
+    //compatibilityCheck
+    /**
+     * Indicates whether computed results (e.g. fingerprints, compounds classes) are compatible with the backend.
+     * If true project is up-to-date and there are no restrictions regarding usage.
+     * If false project is incompatible and therefore "read only" until the incompatible results have been removed. See updateProject endpoint for further information
+     * If NULL the information has not been requested.
+     */
+    @Schema(nullable = true)
+    public final @Nullable Boolean compatible;
+
+    //sizeInformation
+    /**
+     * Number of features (aligned over runs) in this project. If NULL, information has not been requested (See OptField 'sizeInformation').
+     */
+    @Schema(nullable = true)
+    public final @Nullable Integer numOfFeatures;
+    /**
+     * Number of compounds (group of ion identities) in this project. If NULL, Information has not been requested (See OptField 'sizeInformation') or might be unavailable for this project type.
+     */
+    @Schema(nullable = true)
+    public final @Nullable Integer numOfCompounds;
+    /**
+     * Size in Bytes this project consumes on disk If NULL, Information has not been requested (See OptField 'sizeInformation').
+     */
+    @Schema(nullable = true)
+    public final @Nullable Long numOfBytes;
+
 
 
     @JsonIgnore
     public Path getAsPath() {
-        return Path.of(getPath());
+        return Path.of(getLocation());
     }
 
     @Override
@@ -75,15 +111,15 @@ public final class ProjectInfo {
         if (o == null || getClass() != o.getClass()) return false;
         ProjectInfo that = (ProjectInfo) o;
         return projectId.equals(that.projectId) &&
-                path.equals(that.path);
+                location.equals(that.location);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(projectId, path);
+        return Objects.hash(projectId, location);
     }
 
     public static ProjectInfo of(String projectId, Path location) {
-        return new ProjectInfo(projectId, location.toAbsolutePath().toString());
+        return ProjectInfo.builder().projectId(projectId).location(location.toAbsolutePath().toString()).build();
     }
 }

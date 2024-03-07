@@ -35,18 +35,18 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 
-public class FingerprintTableView extends ActionListDetailView<FingerIdPropertyBean, FormulaResultBean, FingerprintTable> {
+public class FingerprintTableView extends ActionListDetailView<FingerIdPropertyBean, FormulaResultBean, FingerprintList> {
 
     protected SortedList<FingerIdPropertyBean> sortedSource;
     protected ActionTable<FingerIdPropertyBean> actionTable;
     protected FingerprintTableFormat format;
     protected int maxAtomSize;
 
-    protected FilterRangeSlider<FingerprintTable, FingerIdPropertyBean, FormulaResultBean> probabilitySlider, atomSizeSlider;
+    protected FilterRangeSlider<FingerprintList, FingerIdPropertyBean, FormulaResultBean> probabilitySlider, atomSizeSlider;
 
     private DoubleListStats __atomsizestats__;
 
-    public FingerprintTableView(FingerprintTable table) {
+    public FingerprintTableView(FingerprintList table) {
         super(table,true);
         this.format = new FingerprintTableFormat(table);
         this.maxAtomSize = 5;

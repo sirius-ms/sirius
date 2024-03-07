@@ -20,20 +20,19 @@
 package de.unijena.bioinf.ms.gui.dialogs;
 
 
-import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
-import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SpectralMatchingPanel;
+import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
 public class SpectralMatchingDialog extends JDialog {
 
-    public SpectralMatchingDialog(final CompoundList compoundList, final FingerprintCandidateBean fingerprintCandidateBean) {
-        super(MainFrame.MF, "Reference spectra", true);
+    public SpectralMatchingDialog(Frame owner, @NotNull SpectralMatchList matchList) {
+        super(owner, "Reference spectra", true);
         this.setLayout(new BorderLayout());
-        this.add(new SpectralMatchingPanel(compoundList, fingerprintCandidateBean), BorderLayout.CENTER);
+        this.add(new SpectralMatchingPanel(matchList), BorderLayout.CENTER);
     }
 
     @Override
@@ -42,8 +41,8 @@ public class SpectralMatchingDialog extends JDialog {
 
             Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
             setPreferredSize(new Dimension(
-                    Math.min(screenSize.width, (int) Math.floor(0.8 * MainFrame.MF.getWidth())),
-                    Math.min(screenSize.height, (int) Math.floor(0.8 * MainFrame.MF.getHeight())))
+                    Math.min(screenSize.width, (int) Math.floor(0.8 * getOwner().getWidth())),
+                    Math.min(screenSize.height, (int) Math.floor(0.8 * getOwner().getHeight())))
             );
             setDefaultCloseOperation(DISPOSE_ON_CLOSE);
             pack();

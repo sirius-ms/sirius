@@ -1,0 +1,4 @@
+dependencies{
+    implementation project(":sirius_nightsky_sdk")
+    implementation "de.unijena.bioinf:jjobs-core:$jjobs_version"
+}

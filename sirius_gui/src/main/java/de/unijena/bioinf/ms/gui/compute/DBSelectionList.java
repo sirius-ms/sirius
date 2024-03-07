@@ -20,8 +20,6 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.DataSources;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
@@ -30,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -45,10 +42,11 @@ public class DBSelectionList extends JCheckBoxList<CustomDataSources.Source> {
     }
 
     public DBSelectionList(@Nullable String descriptionKey, boolean includeCustom) {
-        this(descriptionKey, CustomDataSources.sourcesStream().
-                filter(db -> !SearchableDatabases.NON_SLECTABLE_LIST.contains(db.name())).
-                filter(db -> includeCustom || !db.isCustomSource()).sorted(Comparator.comparing(CustomDataSources.Source::name)).
-                collect(Collectors.toList()));
+        this(descriptionKey, CustomDataSources.sourcesStream()
+                .filter(CustomDataSources::isSearchable)
+                .filter(db -> includeCustom || !db.isCustomSource())
+                .sorted(Comparator.comparing(CustomDataSources.Source::toString))
+                .collect(Collectors.toList()));
     }
 
     protected DBSelectionList(@Nullable String descKey, @NotNull DataSource... values) {
@@ -56,7 +54,7 @@ public class DBSelectionList extends JCheckBoxList<CustomDataSources.Source> {
     }
 
     protected DBSelectionList(@Nullable String descKey, @NotNull String... dbName) {
-        this(descKey, CustomDataSources.getSourcesFromNames());
+        this(descKey, CustomDataSources.getSourcesFromNames(dbName));
     }
 
     public DBSelectionList(@NotNull List<CustomDataSources.Source> values) {
@@ -67,14 +65,5 @@ public class DBSelectionList extends JCheckBoxList<CustomDataSources.Source> {
         super(values, (a,b) -> a.name().equals(b.name()));
         if (descKey != null)
             GuiUtils.assignParameterToolTip(this, descKey);
-    }
-
-    public List<String> getSelectedFormulaSearchDBStrings() {
-        return getCheckedItems().stream().map(db -> {
-            if (db.isCustomSource())
-                return db.name();
-            else
-                return DataSources.getSourceFromName(db.name()).map(DataSource::name).orElse(null);
-        }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 }

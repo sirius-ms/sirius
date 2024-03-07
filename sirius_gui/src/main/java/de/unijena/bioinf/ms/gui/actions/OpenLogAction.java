@@ -19,9 +19,9 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.logging.LogDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -29,15 +29,15 @@ import java.awt.event.ComponentListener;
 import java.awt.event.WindowListener;
 import java.awt.event.WindowStateListener;
 
-public class OpenLogAction extends AbstractAction {
+public class OpenLogAction extends AbstractGuiAction {
 
     private final LogDialog source;
 
-    public OpenLogAction() {
-        super("Log"); //todo add log icon
+    public OpenLogAction(SiriusGui gui) {
+        super("Log", gui); //todo add log icon
         putValue(Action.LARGE_ICON_KEY, Icons.CLIP_BOARD_32);
         putValue(Action.SHORT_DESCRIPTION, "Show SIRIUS logs in Popup Dialog.");
-        source = MainFrame.MF.getLogConsole();
+        source = this.mainFrame.getLogConsole();
     }
 
     @Override

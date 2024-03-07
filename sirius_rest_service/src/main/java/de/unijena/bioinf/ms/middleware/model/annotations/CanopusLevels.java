@@ -38,6 +38,9 @@ public class CanopusLevels {
     public static String getClassyFireLevelName(int level){
         if (level > classyFireLevelNames.length)
             return "Level-" + level;
+        if (level < 1)
+            return null; // if just chemical entity was classified
+
         return classyFireLevelNames[level-1];
     }
 }

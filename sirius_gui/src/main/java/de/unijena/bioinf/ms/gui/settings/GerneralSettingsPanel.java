@@ -19,7 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.settings;
 
-import de.unijena.bioinf.chemdb.SearchableDatabases;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
@@ -36,8 +36,6 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Properties;
 import java.util.Vector;
-
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -102,13 +100,14 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         db.setToolTipText(GuiUtils.formatToolTip("Specify the directory where CSI:FingerID should store the compound candidates."));
         add(new JLabel("Database cache:"), db);
         JButton clearDBCache = new JButton("Clear cache");
+        final JFrame mf = (JFrame) SwingUtilities.getWindowAncestor(this);
         clearDBCache.addActionListener(evt -> {
-            Jobs.runInBackgroundAndLoad(MF, "Clearing database cache...", () -> {
+            Jobs.runInBackgroundAndLoad(mf, "Clearing database cache...", () -> {
                 try {
-                    SearchableDatabases.getWebDatabaseCacheStorage().clear();
+                    CustomDataSources.getWebDatabaseCacheStorage().clear();
                 } catch (IOException e) {
                     LoggerFactory.getLogger(getClass()).error("Error when clearing DB cache", e);
-                    new StacktraceDialog(MF, "Error when clearing DB cache", e);
+                    new StacktraceDialog(mf, "Error when clearing DB cache", e);
                 }
             });
         });

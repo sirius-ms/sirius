@@ -47,7 +47,7 @@ public class CompoundMatchHighlighter {
         final TIntDoubleHashMap map = new TIntDoubleHashMap();
         final TIntDoubleHashMap unsureMap = new TIntDoubleHashMap();
         try {
-            for (FPIter mp : compound.candidate.getFingerprint().presentFingerprints()) {
+            for (FPIter mp : compound.getCandidateFingerprint().presentFingerprints()) {
                 final double probability = fp.getProbability(mp.getIndex());
                 final double weight;
                 if (probability >= 0.5) {

@@ -63,7 +63,7 @@ public class CanopusPrediction {
             List<CompoundClass> cc = new ArrayList<>();
             for (FPIter fpIter : npcClassification) {
                 NPCFingerprintVersion.NPCProperty prop = ((NPCFingerprintVersion.NPCProperty) fpIter.getMolecularProperty());
-                cc.add(CompoundClass.of(prop, fpIter.getProbability()));
+                cc.add(CompoundClass.of(prop, fpIter.getProbability(), fpIter.getIndex()));
             }
             sum.setNpcClasses(cc.toArray(CompoundClass[]::new));
         }
@@ -72,7 +72,7 @@ public class CanopusPrediction {
             List<CompoundClass> cc = new ArrayList<>();
             for (FPIter fpIter : cfClassification) {
                 ClassyfireProperty prop = (ClassyfireProperty) fpIter.getMolecularProperty();
-                cc.add(CompoundClass.of(prop, fpIter.getProbability()));
+                cc.add(CompoundClass.of(prop, fpIter.getProbability(), fpIter.getIndex()));
             }
             sum.setClassyFireClasses(cc.toArray(CompoundClass[]::new));
         }

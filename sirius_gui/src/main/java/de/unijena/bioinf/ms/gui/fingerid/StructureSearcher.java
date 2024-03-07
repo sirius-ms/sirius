@@ -62,7 +62,7 @@ public class StructureSearcher implements Runnable {
             if (highlight < 0 || activeCandidate < 0) {
                 this.queue.clear();
             } else {
-                queue = new ArrayBlockingQueue<FingerprintCandidateBean>(structureList.getElementList().size() + 10);
+                queue = new ArrayBlockingQueue<>(structureList.getElementList().size() + 10);
 
                 int i = activeCandidate + 1, j = activeCandidate, n = structureList.getElementList().size();
                 while ((j >= 0 && j < n) || (i >= 0 && i < n)) {
@@ -90,7 +90,7 @@ public class StructureSearcher implements Runnable {
                     }
                 }
 
-                if (c.candidate == null) continue;
+                if (c.getCandidate() == null) continue;
                 c.compoundLock.lock();
                 try {
                     if (highlight >= 0) c.highlightFingerprint(highlight);

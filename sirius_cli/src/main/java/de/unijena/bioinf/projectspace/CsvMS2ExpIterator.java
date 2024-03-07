@@ -34,7 +34,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class CsvMS2ExpIterator implements InstIterProvider {
-    private static final Logger LOG = LoggerFactory.getLogger(MS2ExpInputIterator.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CsvMS2ExpIterator.class);
 
     private final Iterator<InputFilesOptions.CsvInput> basIter;
     private final CsvParser parer = new CsvParser();
