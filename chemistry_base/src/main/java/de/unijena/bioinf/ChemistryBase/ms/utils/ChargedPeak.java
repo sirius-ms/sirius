@@ -47,10 +47,10 @@ public class ChargedPeak extends SimplePeak {
 	}
 	
 	public double getNeutralMass() {
-		return ionization.subtractFromMass(mass);
+		return ionization.subtractFromMass(mz);
 	}
 	
 	public double getMassToChargeRatio() {
-		return mass;
+		return mz;
 	}
 }

@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.Writer;
 import java.util.Arrays;
 
@@ -41,6 +42,15 @@ public class CanopusNpcData extends StandardFingerprintData<NPCFingerprintVersio
     public NPCFingerprintVersion getClassyFireFingerprintVersion() {
         return getBaseFingerprintVersion();
     }
+
+    public static CanopusNpcData readAndClose(Reader reader) {
+        try (BufferedReader r = new BufferedReader(reader)) {
+            return read(r);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
 
     public static CanopusNpcData read(BufferedReader reader) throws IOException {
         return readMask(reader, NPCFingerprintVersion.get(), CanopusNpcData::new);

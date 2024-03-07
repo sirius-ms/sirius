@@ -54,8 +54,4 @@ public final class FormulaCandidate {
     public PrecursorIonType getPrecursorIonType() {
         return precursorIonType;
     }
-
-    public Set<String> getDataSources() {
-        return DataSources.getDataSourcesFromBitFlags(bitset);
-    }
 }

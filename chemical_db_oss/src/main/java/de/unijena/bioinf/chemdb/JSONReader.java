@@ -38,9 +38,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class JSONReader extends CompoundReader {
+    private static final Map<String, String> REALNAME_TO_NAME = Arrays.stream(DataSource.values()).collect(Collectors.toMap(DataSource::realName, Enum::name));
+
     public static List<FingerprintCandidate> fromJSONList(FingerprintVersion version, InputStream in) throws IOException {
         final List<FingerprintCandidate> compounds = new ArrayList<>();
         final MaskedFingerprintVersion mv = (version instanceof MaskedFingerprintVersion) ? (MaskedFingerprintVersion) version : MaskedFingerprintVersion.buildMaskFor(version).enableAll().toMask();
@@ -170,7 +175,6 @@ public class JSONReader extends CompoundReader {
             TIntArrayList pubmedIds = null;
             JsonToken jsonToken = p.nextToken();
             ArrayList<DBLink> links = new ArrayList<>();
-            ArrayList<String> referenceSpectraSplash = new ArrayList<>();
 
             while (true) {
                 if (jsonToken.isStructEnd()) break;
@@ -214,7 +218,8 @@ public class JSONReader extends CompoundReader {
                             jsonToken = p.nextToken();
                             if (jsonToken == JsonToken.END_OBJECT) break;
                             else {
-                                String linkName = p.currentName();
+                                String tmp = p.currentName();
+                                String linkName = REALNAME_TO_NAME.getOrDefault(tmp, tmp); //TODO: nightsky DIRTY HACK TO TRANFORM OLD DB FLAGS FROM CHEMDB UNTIL IT IS RE-EXPORTED
                                 if (p.nextToken() != JsonToken.START_ARRAY)
                                     throw new IOException("malformed json. expected array"); // array start
                                 do {
@@ -246,15 +251,6 @@ public class JSONReader extends CompoundReader {
                         } while (true);
 
                         break;
-                    case "referenceSpectraSplash":
-                        if (p.nextToken() != JsonToken.START_ARRAY)
-                            throw new IOException("malformed json. expected array"); // array start
-                        do {
-                            jsonToken = p.nextToken();
-                            if (jsonToken == JsonToken.END_ARRAY) break;
-                            else referenceSpectraSplash.add(p.getText());
-                        } while (true);
-                        break;
                     default:
                         p.nextToken();
                         break;
@@ -264,8 +260,7 @@ public class JSONReader extends CompoundReader {
 
             final CompoundCandidate c = new CompoundCandidate(
                     new InChI(inchikey, inchi), name, smiles, player, qlayer, xlogp, null, bitset, links.toArray(DBLink[]::new),
-                    pubmedIds == null ? null : new PubmedLinks(pubmedIds.toArray()),
-                    referenceSpectraSplash
+                    pubmedIds == null ? null : new PubmedLinks(pubmedIds.toArray())
             );
 
             return Pair.of(c, (indizes == null || version == null) ? null : new ArrayFingerprint(version, indizes.toArray()));

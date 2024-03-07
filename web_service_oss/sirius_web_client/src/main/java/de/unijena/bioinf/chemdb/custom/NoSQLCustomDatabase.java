@@ -20,16 +20,11 @@
 
 package de.unijena.bioinf.chemdb.custom;
 
-import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.chemdb.ChemicalNoSQLDatabase;
 import de.unijena.bioinf.chemdb.WriteableChemicalDatabase;
-import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
-import de.unijena.bioinf.storage.blob.Compressible;
-import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
-import org.dizitart.no2.Document;
 
 import java.io.IOException;
 import java.util.List;
@@ -45,17 +40,15 @@ public class NoSQLCustomDatabase<Doctype, DB extends ChemicalNoSQLDatabase<Docty
 
     @Override
     public String name() {
-        return database.name();
+        String n = super.name();
+        if (n != null)
+            return n;
+        return database.getName();
     }
 
     @Override
     public void deleteDatabase() {
-        throw new UnsupportedOperationException("Please use CustomDatabaseFactory.delete()!");
-    }
-
-    @Override
-    public Compressible.Compression compression() {
-        return Compressible.Compression.NONE;
+        throw new UnsupportedOperationException("Please use CustomDatabases.delete()!");
     }
 
     @Override
@@ -89,7 +82,7 @@ public class NoSQLCustomDatabase<Doctype, DB extends ChemicalNoSQLDatabase<Docty
     }
 
     @Override
-    public AbstractChemicalDatabase toChemDBOrThrow(CdkFingerprintVersion version) throws IOException {
+    public AbstractChemicalDatabase toChemDBOrThrow() throws IOException {
         return database;
     }
 

@@ -46,6 +46,7 @@ public class MsExperimentSerializer implements ComponentSerializer<CompoundConta
                 exp.setAnnotation(FeatureGroup.class, FeatureGroup.builder()
                         .groupId(id.getGroupId().orElse(null))
                         .groupRt(id.getGroupRt().orElse(null))
+                        .groupName(id.getGroupName().orElse(null))
                         .build());
             }
         }
@@ -65,6 +66,7 @@ public class MsExperimentSerializer implements ComponentSerializer<CompoundConta
         experiment.getAnnotation(FeatureGroup.class).ifPresent(fg -> {
             id.setGroupRt(fg.getGroupRt());
             id.setGroupId(fg.getGroupId());
+            id.setGroupName(fg.getGroupName());
         });
 
         writer.keyValues(SiriusLocations.COMPOUND_INFO, id.asKeyValuePairs());

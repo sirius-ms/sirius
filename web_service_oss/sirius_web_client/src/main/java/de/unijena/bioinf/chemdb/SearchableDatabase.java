@@ -25,6 +25,9 @@ import de.unijena.bioinf.chemdb.custom.CustomDatabase;
 public interface SearchableDatabase {
 
     String name();
+    default String displayName(){
+        return name();
+    }
 
     boolean isRestDb();
 

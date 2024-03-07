@@ -23,14 +23,15 @@ ext {
     file("${projectDir}/fingerid_base_oss/src/main/resources/csi_fingerid.build.properties").withReader("UTF8", {
         props.load(it)
     })
+
     siriusVersion = props.getProperty('de.unijena.bioinf.sirius.version')
     fingeridVersion = props.getProperty('de.unijena.bioinf.fingerid.version')
     //version for external libraries
     picocli_version = '4.6.3'
     jakarta_version = '3.1.0'
-    jjobs_version = '0.9.35'
+    jjobs_version = '0.9.36-SNAPSHOT' //todo nightsky ->  stable jjobs release
     slf4j_version = '1.7.36'
-    jackson_version = '2.14.3'
+    jackson_version = '2.16.1'
     math3_version = '3.6.1'
     cbc_version = props.getProperty('de.unijena.bioinf.sirius.build.cbc_version')
     glpk_version = props.getProperty('de.unijena.bioinf.sirius.build.glpk_version')
@@ -57,6 +58,8 @@ ext {
     guava_version = '31.1-jre'
 
     swagger_version = "2.2.18"
+
+    jaxb_version = "2.3.9"
 
     siriusTargetPlatform = SiriusPlatform.fromDescriptor((
             project.findProperty('build.sirius.platform') ?:
@@ -113,6 +116,8 @@ allprojects {
         api 'org.apache.commons:commons-compress:1.21'
         api 'org.apache.commons:commons-lang3:3.12.0'
         api 'commons-io:commons-io:2.11.0' //maybe provide via io package?
+
+        api 'io.swagger.core.v3:swagger-annotations:2.2.20'
 
         api "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
         api "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"

@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
@@ -57,18 +59,26 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
     @NoArgsConstructor
     @AllArgsConstructor
     public static final class SearchResult {
-
-        private String dbName;
-
-        private String dbId;
-
-        int querySpectrumIndex;
-
         @Builder.Default
         private int rank = -1;
 
         private SpectralSimilarity similarity;
 
-        private String referenceUUID;
+        private int querySpectrumIndex;
+
+        private String dbName;
+
+        private String dbId;
+
+        private String uuid;
+
+        private String splash;
+
+        private MolecularFormula molecularFormula;
+        private PrecursorIonType adduct;
+        private double exactMass;
+        private String smiles;
+
+        private String candidateInChiKey;
     }
 }

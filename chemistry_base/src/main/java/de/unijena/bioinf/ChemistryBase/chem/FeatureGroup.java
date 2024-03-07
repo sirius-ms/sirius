@@ -28,6 +28,7 @@ import lombok.Getter;
 @Builder
 @Deprecated
 public class FeatureGroup implements Ms2ExperimentAnnotation {
+    private final String groupName;
     private final String groupId;
     private final RetentionTime groupRt;
 }

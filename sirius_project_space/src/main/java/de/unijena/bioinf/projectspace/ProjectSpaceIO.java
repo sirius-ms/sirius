@@ -181,7 +181,7 @@ public class ProjectSpaceIO {
 
     public static Path createTmpProjectSpaceLocation() throws IOException {
         String tmpDir = System.getProperty("java.io.tmpdir");
-        return Path.of(tmpDir).resolve(".sirius-tmp-project-" + TsidCreator.getTsid());
+        return Path.of(tmpDir).resolve("sirius-tmp-project-" + TsidCreator.getTsid());
     }
 
     /**
@@ -285,5 +285,12 @@ public class ProjectSpaceIO {
 
     public static ProjectIOProvider<?, ?, ?> getDefaultZipProvider(@NotNull Path location) {
         return ZipProvider.newInstance(location, PropertyManager.getProperty("de.unijena.bioinf.sirius.project.zipProvider"));
+    }
+
+    public static Path defaultProjectDir(){
+        String loc = PropertyManager.getProperty("sirius.projects.location");
+        if (loc != null)
+            return Path.of(loc);
+        return Path.of(System.getProperty("user.home")).resolve("sirius-projects");
     }
 }
