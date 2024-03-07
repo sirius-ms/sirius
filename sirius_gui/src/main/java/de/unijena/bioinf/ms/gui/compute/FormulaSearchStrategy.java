@@ -216,7 +216,17 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         JLabel autodetectLabel = new JLabel("Autodetect");
         final JTextField detectableTextBox = isBatchDialog ? makeParameterTextField("FormulaSettings.detectable", 20) : null;
+
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        JButton buttonEdit = new JButton("…");  // Ellipsis symbol instead of ... because 1-char buttons don't get side insets
+        buttonEdit.setToolTipText("Customize allowed elements and their quantities");
+        buttonPanel.add(buttonEdit);
+        if (!isBatchDialog) {
+            JButton buttonAutodetect = new JButton("Auto");
+            buttonAutodetect.setToolTipText("Auto detectable element are: " + join(autoDetectableElements));
+            buttonAutodetect.addActionListener(e -> detectElements(autoDetectableElements, enforcedTextBox));
+            buttonPanel.add(buttonAutodetect);
+        }
 
         addDefaultStrategyElementFilterSettings(filterFields);
 
@@ -224,8 +234,10 @@ public class FormulaSearchStrategy extends ConfigPanel {
         if (isBatchDialog) {
             filterComponents.addAll(List.of(autodetectLabel, detectableTextBox));
         }
-        addElementFilterEnabledCheckboxForStrategy(filterFields, filterComponents, Strategy.BOTTOM_UP);
-        addElementFilterEnabledCheckboxForStrategy(filterFields, filterComponents, Strategy.DATABASE);
+        int columnWidth = enforcedTextBox.getPreferredSize().width;
+        int sidePanelWidth = buttonPanel.getPreferredSize().width;
+        addElementFilterEnabledCheckboxForStrategy(filterFields, filterComponents, Strategy.BOTTOM_UP, columnWidth, sidePanelWidth);
+        addElementFilterEnabledCheckboxForStrategy(filterFields, filterComponents, Strategy.DATABASE, columnWidth, sidePanelWidth);
 
         int constraintsGridY = filterFields.both.gridy;
         filterFields.add(constraintsLabel, enforcedTextBox);
@@ -233,9 +245,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
             filterFields.add(autodetectLabel, detectableTextBox);
         }
 
-        JButton buttonEdit = new JButton("…");  // Ellipsis symbol instead of ... because 1-char buttons don't get side insets
-        buttonEdit.setToolTipText("Customize allowed elements and their quantities");
-        buttonPanel.add(buttonEdit);
 
         GridBagConstraints c = new GridBagConstraints();
         c.gridx = 2;
@@ -262,13 +271,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
             }
         });
 
-        if (!isBatchDialog) {
-            JButton buttonAutodetect = new JButton("Auto");
-            buttonAutodetect.setToolTipText("Auto detectable element are: " + join(autoDetectableElements));
-            buttonAutodetect.addActionListener(e -> detectElements(autoDetectableElements, enforcedTextBox));
-            buttonPanel.add(buttonAutodetect);
-        }
-
         JPanel elementFilterPanel = applyDefaultLayout(new JPanel());
         elementFilterPanel.add(new TextHeaderBoxPanel("Element Filter", filterFields));
 
@@ -289,7 +291,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         strategyComponents.get(Strategy.DEFAULT).add(elementAlphabetStrategySelector);
     }
 
-    private void addElementFilterEnabledCheckboxForStrategy(TwoColumnPanel filterFields, List<Component> filterComponents, Strategy s) {
+    private void addElementFilterEnabledCheckboxForStrategy(TwoColumnPanel filterFields, List<Component> filterComponents, Strategy s, int columnWidth, int sidePanelWidth) {
         JCheckBox useElementFilter = new JCheckBox() { //todo NewWorkflow: implement this feature. This makes the organics filter obsolete. Maybe dont use the checkbox but always select the organics. Make new Element panel popup
             @Override
             public void setVisible(boolean flag) {
@@ -305,11 +307,28 @@ public class FormulaSearchStrategy extends ConfigPanel {
         parameterBindings.put("FormulaSearchSettings.applyFormulaContraintsToCandidateLists", () -> Boolean.toString(useElementFilter.isSelected()));
 
         JLabel label = new JLabel("Enable element filter");
-        filterFields.add(label, useElementFilter);
+
+        JPanel checkBoxPanel = new JPanel();
+        checkBoxPanel.setLayout(new FlowLayout(FlowLayout.LEADING));
+        checkBoxPanel.add(useElementFilter);
+
+        checkBoxPanel.setPreferredSize(new Dimension(columnWidth, checkBoxPanel.getPreferredSize().height));  // Prevent resizing on checking/unchecking
+
+        int constraintsGridY = filterFields.both.gridy;
+        filterFields.add(label, checkBoxPanel);
         useElementFilter.addActionListener(e -> filterComponents.forEach(c -> c.setVisible(useElementFilter.isSelected())));
 
+        JPanel invisiblePanel = new JPanel();  // Prevent resizing on checking/unchecking
+        invisiblePanel.setPreferredSize(new Dimension(sidePanelWidth, 0));
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = 2;
+        c.gridy = constraintsGridY;
+        filterFields.add(invisiblePanel, c);
+
         strategyComponents.get(s).add(label);
+        strategyComponents.get(s).add(checkBoxPanel);
         strategyComponents.get(s).add(useElementFilter);
+        strategyComponents.get(s).add(invisiblePanel);
     }
 
     private String join(Collection<?> objects) {
