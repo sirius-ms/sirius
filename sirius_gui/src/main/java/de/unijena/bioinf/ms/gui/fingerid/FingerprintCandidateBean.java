@@ -55,6 +55,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
@@ -220,7 +221,10 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     }
 
     public long getMergedDBFlags() {
-        return CustomDataSources.getDBFlagsFromNames(candidate.getDbLinks().stream().map(DBLink::getName).collect(toList()));
+        return Optional.ofNullable(candidate.getDbLinks())
+                .map(s -> s.stream().map(DBLink::getName).collect(toList()))
+                .map(CustomDataSources::getDBFlagsFromNames)
+                .orElse(0L);
     }
 
     public String getMolecularFormula() {

@@ -269,7 +269,37 @@ public class InstanceBean implements SiriusPCS {
     }
 
     public List<FingerprintCandidateBean> getStructureCandidates(int topK) {
-        PageStructureCandidateFormula page = getStructureCandidatesPage(topK);
+        return toFingerprintCandidateBeans(getStructureCandidatesPage(topK));
+    }
+
+    public PageStructureCandidateFormula getStructureCandidatesPage(int topK) {
+        return getStructureCandidatesPage(0, topK);
+    }
+
+    public PageStructureCandidateFormula getStructureCandidatesPage(int pageNum, int pageSize) {
+        return withIds((pid, fid) -> getClient().features()
+                .getStructureCandidatesPaged(pid, fid, pageNum, pageSize, null,
+                        List.of(StructureCandidateOptField.DBLINKS, StructureCandidateOptField.FINGERPRINT)));
+    }
+
+
+    public List<FingerprintCandidateBean> getDeNovoStructureCandidates(int topK) {
+        return toFingerprintCandidateBeans(getDeNovoStructureCandidatesPage(topK));
+    }
+
+
+    public PageStructureCandidateFormula getDeNovoStructureCandidatesPage(int topK) {
+        return getDeNovoStructureCandidatesPage(0, topK);
+    }
+
+    public PageStructureCandidateFormula getDeNovoStructureCandidatesPage(int pageNum, int pageSize) {
+        return withIds((pid, fid) -> getClient().features()
+                .getDeNovoStructureCandidatesPaged(pid, fid, pageNum, pageSize, null,
+                        List.of(StructureCandidateOptField.FINGERPRINT)));
+    }
+
+    @Nullable
+    private List<FingerprintCandidateBean> toFingerprintCandidateBeans(PageStructureCandidateFormula page) {
         if (page.getContent() == null)
             return null; //this does usually not happen?!
         if (page.getContent().isEmpty())
@@ -285,20 +315,8 @@ public class InstanceBean implements SiriusPCS {
                         fpVersion,
                         (List<Double>) withIds((pid, fid) -> getClient().features().getFingerprintPrediction(pid, fid, fcid))
                 )));
-
         return page.getContent().stream().map(c -> new FingerprintCandidateBean(c, fps.get(c.getFormulaId()), getSpectralSearchResults())).toList();
     }
-
-    public PageStructureCandidateFormula getStructureCandidatesPage(int topK) {
-        return getStructureCandidatesPage(0, topK);
-    }
-
-    public PageStructureCandidateFormula getStructureCandidatesPage(int pageNum, int pageSize) {
-        return withIds((pid, fid) -> getClient().features()
-                .getStructureCandidatesPaged(pid, fid, pageNum, pageSize, null,
-                        List.of(StructureCandidateOptField.DBLINKS, StructureCandidateOptField.FINGERPRINT)));
-    }
-
 
     public synchronized MsData getMsData() {
         if (msData == null) {

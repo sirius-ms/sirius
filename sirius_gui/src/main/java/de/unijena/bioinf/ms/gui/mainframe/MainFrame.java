@@ -94,6 +94,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
     // right side panel
     private FormulaList formulaList;
     private StructureList structureList;
+    private StructureList deNovoStructureList;
     private SpectralMatchList spectralMatchList;
 
 
@@ -161,14 +162,15 @@ public class MainFrame extends JFrame implements DropTargetListener {
         // create models for views
         compoundList = new CompoundList(gui);
         formulaList = new FormulaList(compoundList);
-        structureList = new StructureList(compoundList);
+        structureList = new StructureList(compoundList, InstanceBean::getStructureCandidates);
+        deNovoStructureList = new StructureList(compoundList, InstanceBean::getDeNovoStructureCandidates);
         spectralMatchList = new SpectralMatchList(compoundList);
 
 
         //CREATE VIEWS
         jobDialog = JobDialog.INSTANCE();
         // results Panel
-        resultsPanel = new ResultPanel(structureList, formulaList, spectralMatchList, compoundList, gui);
+        resultsPanel = new ResultPanel(deNovoStructureList, structureList, formulaList, spectralMatchList, gui);
         JPanel resultPanelContainer = new JPanel(new BorderLayout());
         resultPanelContainer.setBorder(BorderFactory.createEmptyBorder());
         resultPanelContainer.add(resultsPanel, BorderLayout.CENTER);
