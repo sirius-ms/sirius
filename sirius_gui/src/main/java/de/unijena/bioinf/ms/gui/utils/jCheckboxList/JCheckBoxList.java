@@ -27,10 +27,7 @@ import java.awt.*;
 import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Enumeration;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
@@ -233,5 +230,11 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
         while (dlm.hasMoreElements()) {
             action.accept(dlm.nextElement());
         }
+    }
+
+    public boolean isSelectionEqual(JCheckBoxList<E> other){
+        Set<E> checked1 = new HashSet<>(this.getCheckedItems());
+        Set<E> checked2 = new HashSet<>(other.getCheckedItems());
+        return checked1.equals(checked2);
     }
 }

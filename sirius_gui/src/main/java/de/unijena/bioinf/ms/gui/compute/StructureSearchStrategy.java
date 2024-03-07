@@ -21,23 +21,25 @@ public class StructureSearchStrategy extends JPanel {
     protected SiriusGui gui;
     public static final String DO_NOT_SHOW_DIVERGING_DATABASES_NOTE = "de.unijena.bioinf.sirius.computeDialog.divergingDatabases.dontAskAgain";
 
-    public StructureSearchStrategy(SiriusGui gui, @Nullable final JCheckBoxList<SearchableDatabase> syncSource) {
+    public StructureSearchStrategy(SiriusGui gui, @Nullable final FormulaSearchStrategy syncStrategy) {
         this.gui = gui;
-        createPanel(syncSource);
+        createPanel(syncStrategy);
     }
 
-    private void createPanel(@Nullable JCheckBoxList<SearchableDatabase> syncSource) {
+    private void createPanel(@Nullable final FormulaSearchStrategy syncStrategy) {
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-        createStrategyPanel(syncSource);
+        createStrategyPanel(syncStrategy);
     }
 
-    private void createStrategyPanel(@Nullable JCheckBoxList<SearchableDatabase> syncSource) {
+    private void createStrategyPanel(@Nullable final FormulaSearchStrategy syncStrategy) {
         searchDBList = createDatabasePanel();
         add(searchDBList);
 
-        if (syncSource != null) {
-            syncSource.getCheckedItems().forEach(searchDBList.checkBoxList::check);
-            syncSource.addCheckBoxListener(e -> {
+        if (syncStrategy != null) {
+            JCheckBoxList<SearchableDatabase> syncCheckBoxList = syncStrategy.getSearchDBList().checkBoxList;
+
+            syncCheckBoxList.getCheckedItems().forEach(searchDBList.checkBoxList::check);
+            syncCheckBoxList.addCheckBoxListener(e -> {
                 @SuppressWarnings("unchecked")
                 SearchableDatabase item = (SearchableDatabase) ((CheckBoxListItem<Object>) e.getItem()).getValue();
                 if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -46,17 +48,19 @@ public class StructureSearchStrategy extends JPanel {
                     searchDBList.checkBoxList.uncheck(item);
                 }
             });
-            addDivergingDatabasesNote();
+            addDivergingDatabasesNote(syncStrategy);
         }
     }
 
-    private void addDivergingDatabasesNote() {
+    private void addDivergingDatabasesNote(FormulaSearchStrategy syncStrategy) {
         if (!PropertyManager.getBoolean(DO_NOT_SHOW_DIVERGING_DATABASES_NOTE, false)) {
             ItemListener dbSelectionChangeListener = new ItemListener() {
                 @Override
                 public void itemStateChanged(ItemEvent e) {
-                    new InfoDialog(gui.getMainFrame(), "Note that you are searching in different databases for formula and structure.", DO_NOT_SHOW_DIVERGING_DATABASES_NOTE);
-                    searchDBList.checkBoxList.removeCheckBoxListener(this);
+                    if (syncStrategy.getSelectedStrategy() == FormulaSearchStrategy.Strategy.DATABASE && !syncStrategy.getSearchDBList().checkBoxList.isSelectionEqual(searchDBList.checkBoxList)) {
+                        new InfoDialog(gui.getMainFrame(), "Note that you are searching in different databases for formula and structure.", DO_NOT_SHOW_DIVERGING_DATABASES_NOTE);
+                        searchDBList.checkBoxList.removeCheckBoxListener(this);
+                    }
                 }
             };
             searchDBList.checkBoxList.addCheckBoxListener(dbSelectionChangeListener);

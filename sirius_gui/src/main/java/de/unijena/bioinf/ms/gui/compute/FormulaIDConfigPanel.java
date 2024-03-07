@@ -304,6 +304,10 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         }
     }
 
+    public FormulaSearchStrategy getFormulaSearchStrategy() {
+        return formulaSearchStrategy;
+    }
+
     public Instrument getInstrument() {
         return (Instrument) profileSelector.getSelectedItem();
     }
