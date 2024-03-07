@@ -20,20 +20,19 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
-import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -45,17 +44,19 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
     private final StructureSearchStrategy structureSearchStrategy;
     private final JCheckBox pubChemFallback;
 
-    public FingerblastConfigPanel(@Nullable final JCheckBoxList<CustomDataSources.Source> syncSource) {
-        super(FingerblastOptions.class);
+    protected final SiriusGui gui;
 
-        structureSearchStrategy = new StructureSearchStrategy(syncSource);
+    public FingerblastConfigPanel(SiriusGui gui, @Nullable final JCheckBoxList<SearchableDatabase> syncSource) {
+        super(FingerblastOptions.class);
+        this.gui = gui;
+
+        structureSearchStrategy = new StructureSearchStrategy(gui, syncSource);
         pubChemFallback = new JCheckBox();
 
         parameterBindings.put("StructureSearchDB", () -> {
-            List<CustomDataSources.Source> checkedDBs = structureSearchStrategy.getStructureSearchDBs();
+            List<SearchableDatabase> checkedDBs = structureSearchStrategy.getStructureSearchDBs();
             return checkedDBs.isEmpty() ? null : checkedDBs.stream()
-                    .map(CustomDataSources.Source::id)
-                    .filter(Objects::nonNull)
+                    .map(SearchableDatabase::getDatabaseId)
                     .filter(db -> !(db.equals(DataSource.PUBCHEM.name()) && pubChemFallback.isSelected()))
                     .collect(Collectors.joining(","));
         });
@@ -98,8 +99,8 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
     }
 
     public void refreshPubChem() {
-        JCheckBoxList<CustomDataSources.Source> dbList = structureSearchStrategy.getSearchDBList().checkBoxList;
-        CustomDataSources.Source pubChemDB = CustomDataSources.getSourceFromName(DataSource.PUBCHEM.realName());
+        JCheckBoxList<SearchableDatabase> dbList = structureSearchStrategy.getSearchDBList().checkBoxList;
+        SearchableDatabase pubChemDB = gui.getSiriusClient().databases().getDatabase(DataSource.PUBCHEM.name(), false);
         if (pubChemFallback.isSelected()) {
             dbList.setItemEnabled(pubChemDB, false);
             dbList.setItemToolTip(pubChemDB, "PubChem will be used as fallback");
@@ -107,9 +108,5 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
             dbList.setItemEnabled(pubChemDB, true);
             dbList.setItemToolTip(pubChemDB, null);
         }
-    }
-
-    public JCheckboxListPanel<CustomDataSources.Source> getSearchDBList() {
-        return structureSearchStrategy.getSearchDBList();
     }
 }

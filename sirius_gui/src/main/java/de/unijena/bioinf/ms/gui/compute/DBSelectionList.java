@@ -19,51 +19,43 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
+import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Objects;
 
-public class DBSelectionList extends JCheckBoxList<CustomDataSources.Source> {
+public class DBSelectionList extends JCheckBoxList<SearchableDatabase> {
 
 
-    public DBSelectionList() {
-        this(true);
-    }
-    public DBSelectionList( boolean includeCustom) {
-        this(null,includeCustom);
-    }
-
-    public DBSelectionList(@Nullable String descriptionKey, boolean includeCustom) {
-        this(descriptionKey, CustomDataSources.sourcesStream()
-                .filter(CustomDataSources::isSearchable)
-                .filter(db -> includeCustom || !db.isCustomSource())
-                .sorted(Comparator.comparing(CustomDataSources.Source::toString))
-                .collect(Collectors.toList()));
-    }
-
-    protected DBSelectionList(@Nullable String descKey, @NotNull DataSource... values) {
-        this(descKey, Stream.of(values).map(DataSource::name).toArray(String[]::new));
-    }
-
-    protected DBSelectionList(@Nullable String descKey, @NotNull String... dbName) {
-        this(descKey, CustomDataSources.getSourcesFromNames(dbName));
-    }
-
-    public DBSelectionList(@NotNull List<CustomDataSources.Source> values) {
+    public DBSelectionList(@NotNull List<SearchableDatabase> values) {
         this(null, values);
     }
 
-    public DBSelectionList(@Nullable String descKey, @NotNull List<CustomDataSources.Source> values) {
-        super(values, (a,b) -> a.name().equals(b.name()));
+    public DBSelectionList(@Nullable String descKey, @NotNull List<SearchableDatabase> values) {
+        super(values, (a,b) -> Objects.equals(a.getDatabaseId(), b.getDatabaseId()));
         if (descKey != null)
             GuiUtils.assignParameterToolTip(this, descKey);
     }
+
+    public static DBSelectionList fromSearchableDatabases(NightSkyClient client){
+        return fromSearchableDatabases(true, client);
+    }
+    public static DBSelectionList fromSearchableDatabases(boolean includeCustom, NightSkyClient client){
+        return fromSearchableDatabases(null, includeCustom, client);
+    }
+    public static DBSelectionList fromSearchableDatabases(@Nullable String descriptionKey, boolean includeCustom, NightSkyClient client){
+        List<SearchableDatabase> dbLsit = (includeCustom ? client.databases().getDatabases(false) : client.databases().getIncludedDatabases(false))
+                .stream()
+                .filter(SearchableDatabase::isSearchable)
+                .sorted(Comparator.comparing(SearchableDatabase::getDatabaseId))
+                .toList();
+        return new DBSelectionList(descriptionKey, dbLsit);
+    }
+
 }

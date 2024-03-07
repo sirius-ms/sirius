@@ -23,9 +23,9 @@ import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
-import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.utils.*;
@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
 import de.unijena.bioinf.ms.nightsky.sdk.model.MsData;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Ms1Preprocessor;
@@ -102,14 +103,16 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
 
 
     protected final Dialog owner;
+    protected final SiriusGui gui;
 
     protected boolean hasMs2;
 
 
-    public FormulaIDConfigPanel(Dialog owner, List<InstanceBean> ecs, boolean ms2, boolean displayAdvancedParameters) {
+    public FormulaIDConfigPanel(SiriusGui gui, Dialog owner, List<InstanceBean> ecs, boolean ms2, boolean displayAdvancedParameters) {
         super(SiriusOptions.class, displayAdvancedParameters);
         this.ecs = ecs;
         this.owner = owner;
+        this.gui = gui;
         this.hasMs2 = ms2;
 
         createPanel();
@@ -179,7 +182,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
             parameterBindings.put("AdductSettings.detectable", () -> "");
         }
 
-        formulaSearchStrategy = new FormulaSearchStrategy(owner, ecs, hasMs2, isBatchDialog(), parameterBindings);
+        formulaSearchStrategy = new FormulaSearchStrategy(gui, owner, ecs, hasMs2, isBatchDialog(), parameterBindings);
         add(formulaSearchStrategy);
         treeTimeout = makeIntParameterSpinner("Timeout.secondsPerTree", 0, Integer.MAX_VALUE, 1);
         comoundTimeout = makeIntParameterSpinner("Timeout.secondsPerInstance", 0, Integer.MAX_VALUE, 1);
@@ -321,11 +324,11 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         return new PossibleAdducts(adductList.checkBoxList.getCheckedItems());
     }
 
-    public JCheckboxListPanel<CustomDataSources.Source> getSearchDBList() {
+    public JCheckboxListPanel<SearchableDatabase> getSearchDBList() {
         return formulaSearchStrategy.getSearchDBList();
     }
 
-    public List<CustomDataSources.Source> getFormulaSearchDBs() {
+    public List<SearchableDatabase> getFormulaSearchDBs() {
         return formulaSearchStrategy.getFormulaSearchDBs();
     }
 }

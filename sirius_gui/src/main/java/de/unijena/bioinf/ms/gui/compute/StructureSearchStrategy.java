@@ -1,12 +1,12 @@
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.dialogs.InfoDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,19 +17,21 @@ import java.util.List;
 
 public class StructureSearchStrategy extends JPanel {
 
-    protected JCheckboxListPanel<CustomDataSources.Source> searchDBList;
+    protected JCheckboxListPanel<SearchableDatabase> searchDBList;
+    protected SiriusGui gui;
     public static final String DO_NOT_SHOW_DIVERGING_DATABASES_NOTE = "de.unijena.bioinf.sirius.computeDialog.divergingDatabases.dontAskAgain";
 
-    public StructureSearchStrategy(@Nullable final JCheckBoxList<CustomDataSources.Source> syncSource) {
+    public StructureSearchStrategy(SiriusGui gui, @Nullable final JCheckBoxList<SearchableDatabase> syncSource) {
+        this.gui = gui;
         createPanel(syncSource);
     }
 
-    private void createPanel(@Nullable JCheckBoxList<CustomDataSources.Source> syncSource) {
+    private void createPanel(@Nullable JCheckBoxList<SearchableDatabase> syncSource) {
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
         createStrategyPanel(syncSource);
     }
 
-    private void createStrategyPanel(@Nullable JCheckBoxList<CustomDataSources.Source> syncSource) {
+    private void createStrategyPanel(@Nullable JCheckBoxList<SearchableDatabase> syncSource) {
         searchDBList = createDatabasePanel();
         add(searchDBList);
 
@@ -37,7 +39,7 @@ public class StructureSearchStrategy extends JPanel {
             syncSource.getCheckedItems().forEach(searchDBList.checkBoxList::check);
             syncSource.addCheckBoxListener(e -> {
                 @SuppressWarnings("unchecked")
-                CustomDataSources.Source item = (CustomDataSources.Source) ((CheckBoxListItem<Object>) e.getItem()).getValue();
+                SearchableDatabase item = (SearchableDatabase) ((CheckBoxListItem<Object>) e.getItem()).getValue();
                 if (e.getStateChange() == ItemEvent.SELECTED) {
                     searchDBList.checkBoxList.check(item);
                 } else {
@@ -53,7 +55,7 @@ public class StructureSearchStrategy extends JPanel {
             ItemListener dbSelectionChangeListener = new ItemListener() {
                 @Override
                 public void itemStateChanged(ItemEvent e) {
-                    new InfoDialog(MainFrame.MF, "Note that you are searching in different databases for formula and structure.", DO_NOT_SHOW_DIVERGING_DATABASES_NOTE);
+                    new InfoDialog(gui.getMainFrame(), "Note that you are searching in different databases for formula and structure.", DO_NOT_SHOW_DIVERGING_DATABASES_NOTE);
                     searchDBList.checkBoxList.removeCheckBoxListener(this);
                 }
             };
@@ -62,22 +64,18 @@ public class StructureSearchStrategy extends JPanel {
     }
 
 
-    private JCheckboxListPanel<CustomDataSources.Source> createDatabasePanel() {
-        DBSelectionList innerList = new DBSelectionList();
-        JCheckboxListPanel<CustomDataSources.Source> dbList = new JCheckboxListPanel<>(innerList, "Search DBs");
+    private JCheckboxListPanel<SearchableDatabase> createDatabasePanel() {
+        DBSelectionList innerList = DBSelectionList.fromSearchableDatabases(gui.getSiriusClient());
+        JCheckboxListPanel<SearchableDatabase> dbList = new JCheckboxListPanel<>(innerList, "Search DBs");
         GuiUtils.assignParameterToolTip(dbList, "StructureSearchDB");
         return dbList;
     }
 
-    public JCheckboxListPanel<CustomDataSources.Source> getSearchDBList() {
+    public JCheckboxListPanel<SearchableDatabase> getSearchDBList() {
         return searchDBList;
     }
 
-    public List<CustomDataSources.Source> getStructureSearchDBs() {
+    public List<SearchableDatabase> getStructureSearchDBs() {
         return searchDBList.checkBoxList.getCheckedItems();
-    }
-
-    public List<String> getStructureSearchDBStrings() {
-        return getStructureSearchDBs().stream().map(CustomDataSources.Source::name).filter(Objects::nonNull).collect(Collectors.toList());
     }
 }
