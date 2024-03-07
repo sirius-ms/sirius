@@ -32,10 +32,10 @@ import java.util.stream.Collectors;
 
 public class FormulaSearchStrategy extends ConfigPanel {
     public enum Strategy implements DescriptiveOptions {
-        DEFAULT("Bottom up + de novo (recommended)", "Perform both a bottom up search and a de novo up to a threshold"),
-        BOTTOM_UP("Bottom up", "Bottom up search"),
-        DE_NOVO("De novo", "De novo search"),
-        DATABASE("Database search", "Database search");
+        DEFAULT("Bottom up + de novo (recommended)", "Perform both a bottom up search and de novo molecular formula generation."),
+        BOTTOM_UP("Bottom up", "Generate molecular formula candidates using bottom up search: if a fragement + precursor loss have candidates in the formula database, these are combined to a precursor formula candidate."),
+        DE_NOVO("De novo", "Generate molecular formula candidates de novo."),
+        DATABASE("Database search", "Retrieve molecular formula candidates from a database.");
 
         private final String description;
         private final String displayName;
