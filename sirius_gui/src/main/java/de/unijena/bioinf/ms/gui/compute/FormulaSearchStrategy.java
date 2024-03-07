@@ -9,8 +9,8 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
 import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
 import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
-import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ElementSelectionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
@@ -19,6 +19,7 @@ import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
 import de.unijena.bioinf.ms.nightsky.sdk.model.MsData;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Ms1Preprocessor;
@@ -76,20 +77,22 @@ public class FormulaSearchStrategy extends ConfigPanel {
     protected Strategy strategy;
 
     protected final Dialog owner;
+    protected final SiriusGui gui;
     protected final List<InstanceBean> ecs;
     protected final boolean isMs2;
     protected final boolean isBatchDialog;
 
-    protected  JCheckboxListPanel<CustomDataSources.Source> searchDBList;
+    protected  JCheckboxListPanel<SearchableDatabase> searchDBList;
 
     /**
      * Map of strategy-specific UI components for showing/hiding when changing the strategy
      */
     private final Map<Strategy, List<Component>> strategyComponents;
 
-    public FormulaSearchStrategy(Dialog owner, List<InstanceBean> ecs, boolean isMs2, boolean isBatchDialog, ParameterBinding parameterBindings) {
+    public FormulaSearchStrategy(SiriusGui gui, Dialog owner, List<InstanceBean> ecs, boolean isMs2, boolean isBatchDialog, ParameterBinding parameterBindings) {
         super(parameterBindings);
         this.owner = owner;
+        this.gui = gui;
         this.ecs = ecs;
         this.isMs2 = isMs2;
         this.isBatchDialog = isBatchDialog;
@@ -103,7 +106,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         createPanel();
     }
 
-    public JCheckboxListPanel<CustomDataSources.Source> getSearchDBList() {
+    public JCheckboxListPanel<SearchableDatabase> getSearchDBList() {
         return searchDBList;
     }
 
@@ -195,15 +198,15 @@ public class FormulaSearchStrategy extends ConfigPanel {
     }
 
     private void initDatabasePanel() {
-        searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Use DB formulas only");
+        searchDBList = new JCheckboxListPanel<>(DBSelectionList.fromSearchableDatabases(gui.getSiriusClient()), "Use DB formulas only");
         GuiUtils.assignParameterToolTip(searchDBList.checkBoxList, "FormulaSearchDB");
 
         PropertyManager.DEFAULTS.createInstanceWithDefaults(StructureSearchDB.class).searchDBs
-                .forEach(s -> searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(s.name())));
+                .forEach(s -> searchDBList.checkBoxList.check(gui.getSiriusClient().databases().getDatabase(s.name(), false)));
 
         parameterBindings.put("FormulaSearchDB", () -> strategy == Strategy.DATABASE ? String.join(",", getFormulaSearchDBStrings()) : ",");
         PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSearchDB.class).searchDBs
-                .forEach(s -> searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(s.name())));
+                .forEach(s -> searchDBList.checkBoxList.check(gui.getSiriusClient().databases().getDatabase(s.name(), false)));
     }
 
     private JPanel createElementFilterPanel() {
@@ -364,11 +367,11 @@ public class FormulaSearchStrategy extends ConfigPanel {
         }
     }
 
-    public List<CustomDataSources.Source> getFormulaSearchDBs() {
+    public List<SearchableDatabase> getFormulaSearchDBs() {
         return searchDBList.checkBoxList.getCheckedItems();
     }
 
     public List<String> getFormulaSearchDBStrings() {
-        return getFormulaSearchDBs().stream().map(CustomDataSources.Source::name).filter(Objects::nonNull).collect(Collectors.toList());
+        return getFormulaSearchDBs().stream().map(SearchableDatabase::getDatabaseId).collect(Collectors.toList());
     }
 }

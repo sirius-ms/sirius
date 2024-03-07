@@ -22,10 +22,8 @@ import ca.odell.glazedlists.matchers.Matcher;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
-import de.unijena.bioinf.ChemistryBase.ms.MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.ms.utils.WrapperSpectrum;
-import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.nightsky.sdk.model.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
@@ -145,7 +143,7 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
         List<String> filterDbs;
         if (filterModel.isDbFilterEnabled()) {
             k = filterModel.getDbFilter().getNumOfCandidates();
-            filterDbs = filterModel.getDbFilter().getDbs().stream().map(CustomDataSources.Source::name).toList();
+            filterDbs = filterModel.getDbFilter().getDbs().stream().map(SearchableDatabase::getDatabaseId).toList();
         } else {
             k = 1;
             filterDbs = null;
