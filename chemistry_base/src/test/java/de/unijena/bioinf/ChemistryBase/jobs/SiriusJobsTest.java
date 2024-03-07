@@ -27,11 +27,11 @@ public class SiriusJobsTest {
         int num = 10;
 
         for (int i = 0; i < num; i++) {
-            manager.submitSwingJob(new SwingJJobContainer(new RandomSwingJob(JJob.JobType.CPU), "job-" + i));
+            manager.submitSwingJob(new SwingJJobContainer(new RandomSwingJob(JJob.JobType.CPU), "job-" + i, "project-" + i%3));
         }
 
         for (int i = 0; i < num; i++) {
-            SwingJJobContainer j = new SwingJJobContainer(new RandomSwingJob(JJob.JobType.CPU), "job-" + i + "PRIO");
+            SwingJJobContainer j = new SwingJJobContainer(new RandomSwingJob(JJob.JobType.CPU), "job-" + i + "PRIO", "project-" + i%3);
             j.getSourceJob().setPriority(JJob.JobPriority.HIGH);
             manager.submitSwingJob(j);
 
@@ -40,14 +40,14 @@ public class SiriusJobsTest {
         TimeUnit.SECONDS.sleep(1);
 
         for (int i = 0; i < num; i++) {
-            manager.submitSwingJob(new SwingJJobContainer(new RandomSwingJob(JJob.JobType.IO), "job-" + i));
+            manager.submitSwingJob(new SwingJJobContainer(new RandomSwingJob(JJob.JobType.IO), "job-" + i, "project-" + i%3));
         }
 
         TimeUnit.SECONDS.sleep(1);
 
         for (int i = 0; i < num; i++) {
-            manager.submitSwingJob(new SwingJJobContainer(new RandomSwingJob(JJob.JobType.REMOTE), "job-" + i));
-            manager.submitSwingJob(new SwingJJobContainer(new RandomSwingJob(JJob.JobType.WEBSERVICE), "job-" + i + "b"));
+            manager.submitSwingJob(new SwingJJobContainer(new RandomSwingJob(JJob.JobType.REMOTE), "job-" + i, "project-" + i%3));
+            manager.submitSwingJob(new SwingJJobContainer(new RandomSwingJob(JJob.JobType.WEBSERVICE), "job-" + i + "b", "project-" + i%3));
         }
     }
 }
