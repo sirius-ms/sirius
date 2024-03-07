@@ -81,6 +81,10 @@ public class MutableMs2Spectrum implements Ms2Spectrum<Peak>, MutableSpectrum<Pe
         this.peaks = peaks;
     }
 
+    public <T extends Peak, S extends Spectrum<T>> MutableMs2Spectrum(S spec, double parentmass, CollisionEnergy energy, int mslevel, int scanNumber) {
+        this(spec, parentmass, energy, mslevel);
+        this.header.scanNumber = scanNumber;
+    }
     public <T extends Peak, S extends Spectrum<T>> MutableMs2Spectrum(S spec, double parentmass, CollisionEnergy energy, int mslevel) {
         this.peaks = new SimpleMutableSpectrum(spec);
         this.header = new Header();

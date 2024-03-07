@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -25,6 +25,9 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
+import de.unijena.bioinf.chemdb.custom.CustomDatabases;
+import de.unijena.bioinf.spectraldb.SpectralLibrary;
+import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
@@ -40,11 +43,12 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * This class is intended to combine the {@link RESTDatabase} with {@link CustomDatabase}.
  * Combinations of  {@link RESTDatabase} and {@link CustomDatabase} can be searched at once
- * and are given as Collection of {@link SearchableDatabase}.
+ * and are given as Collection of {@link CustomDataSources.Source}.
  * <p>
  * This class can be wrapped by {@link FingerblastSearchEngine} to provide compatibility with
  * the {@link SearchStructureByFormula} API.
@@ -52,9 +56,7 @@ import java.util.stream.Stream;
 public class WebWithCustomDatabase {
     protected static Logger logger = LoggerFactory.getLogger(WebWithCustomDatabase.class);
 
-
     protected final Path directory;
-    protected HashMap<String, ChemicalBlobDatabase<?>> customDatabases;
     protected BlobStorage restCache;
 
     protected final WebAPI<?> api;
@@ -63,7 +65,6 @@ public class WebWithCustomDatabase {
         this.api = api;
         this.directory = dir;
         this.restCache = dbCache;
-        this.customDatabases = new HashMap<>();
     }
 
     public void checkCache() throws IOException {
@@ -75,11 +76,11 @@ public class WebWithCustomDatabase {
         return !DBVersion.newLocalVersion(directory).isChemDbValid(api.getChemDbDate());
     }
 
-    public FingerblastSearchEngine makeSearchEngine(SearchableDatabase db) {
+    public FingerblastSearchEngine makeSearchEngine(CustomDataSources.Source db) {
         return makeSearchEngine(List.of(db));
     }
 
-    public FingerblastSearchEngine makeSearchEngine(Collection<SearchableDatabase> dbs) {
+    public FingerblastSearchEngine makeSearchEngine(Collection<CustomDataSources.Source> dbs) {
         return new FingerblastSearchEngine(this, dbs);
     }
 
@@ -94,25 +95,26 @@ public class WebWithCustomDatabase {
         }
     }
 
-    private static OptionalLong extractFilterBits(Collection<SearchableDatabase> dbs) {
-        return dbs.stream().filter(SearchableDatabase::isRestDb).
-                mapToLong(SearchableDatabase::getFilterFlag).reduce((a, b) -> a | b);
+    private static OptionalLong extractFilterBits(Collection<CustomDataSources.Source> dbs) {
+        return dbs.stream().filter(CustomDataSources.Source::noCustomSource)
+                .mapToLong(s -> ((CustomDataSources.EnumSource) s).source().searchFlag) //todo nightsky: why is searchFlag used here I think it is only of interest for dbs that cannot be searched
+                .reduce((a, b) -> a | b);
     }
 
 
-    public Set<FormulaCandidate> loadMolecularFormulas(final double ionMass, Deviation deviation, PrecursorIonType[] ionTypes, Collection<SearchableDatabase> dbs) throws IOException {
+    public Set<FormulaCandidate> loadMolecularFormulas(final double ionMass, Deviation deviation, PrecursorIonType[] ionTypes, Collection<CustomDataSources.Source> dbs) throws IOException {
         final List<FormulaCandidate> results = new ArrayList<>();
         for (PrecursorIonType ionType : ionTypes)
             loadMolecularFormulas(ionMass, deviation, ionType, dbs, results);
 
-        return mergeFormulas(results, getAdditionalCustomDBs(dbs));
+        return mergeFormulas(results, extractNonReqCustomStructureDBs(dbs));
     }
 
-    public Set<FormulaCandidate> loadMolecularFormulas(final double ionMass, Deviation deviation, PrecursorIonType ionType, Collection<SearchableDatabase> dbs) throws IOException {
-        return mergeFormulas(loadMolecularFormulas(ionMass, deviation, ionType, dbs, new ArrayList<>()), getAdditionalCustomDBs(dbs));
+    public Set<FormulaCandidate> loadMolecularFormulas(final double ionMass, Deviation deviation, PrecursorIonType ionType, Collection<CustomDataSources.Source> dbs) throws IOException {
+        return mergeFormulas(loadMolecularFormulas(ionMass, deviation, ionType, dbs, new ArrayList<>()), extractNonReqCustomStructureDBs(dbs));
     }
 
-    protected List<FormulaCandidate> loadMolecularFormulas(final double ionMass, Deviation deviation, PrecursorIonType ionType, Collection<SearchableDatabase> dbs, final List<FormulaCandidate> candidates) throws IOException {
+    protected List<FormulaCandidate> loadMolecularFormulas(final double ionMass, Deviation deviation, PrecursorIonType ionType, Collection<CustomDataSources.Source> dbs, final List<FormulaCandidate> candidates) throws IOException {
         if (dbs == null || dbs.isEmpty())
             throw new IllegalArgumentException("No search DB given!");
 
@@ -123,13 +125,12 @@ public class WebWithCustomDatabase {
             });
         }
 
-        for (CustomDatabase cdb : dbs.stream().filter(SearchableDatabase::isCustomDb).distinct().map(it -> (CustomDatabase) it).toList()) {
-            Optional<? extends AbstractChemicalDatabase> optDB = cdb.toChemDB(api.getCDKChemDBFingerprintVersion());
+        for (CustomDatabase cdb : dbs.stream().filter(CustomDataSources.Source::isCustomSource).distinct().map(this::asCustomDB).toList()) {
+            Optional<? extends AbstractChemicalDatabase> optDB = cdb.toChemDB();
 
             if (optDB.isPresent()) {
                 final List<FormulaCandidate> mfs = optDB.get().lookupMolecularFormulas(ionMass, deviation, ionType);
                 mfs.forEach(fc -> fc.setBitset(cdb.getFilterFlag())); //annotate with bitset
-//                mfs.forEach(fc -> fc.setBitset(CustomDataSources.getSourceFromName(cdb.name()).flag())); //annotate with bitset
                 candidates.addAll(mfs);
             }
         }
@@ -137,11 +138,11 @@ public class WebWithCustomDatabase {
         return candidates;
     }
 
-    public Set<FingerprintCandidate> loadCompoundsByFormula(MolecularFormula formula, Collection<SearchableDatabase> dbs) throws IOException {
+    public Set<FingerprintCandidate> loadCompoundsByFormula(MolecularFormula formula, Collection<CustomDataSources.Source> dbs) throws IOException {
         return loadCompoundsByFormula(formula, dbs, false).getReqCandidates();
     }
 
-    public CandidateResult loadCompoundsByFormula(MolecularFormula formula, Collection<SearchableDatabase> dbs, boolean includeRestAllDb) throws IOException {
+    public CandidateResult loadCompoundsByFormula(MolecularFormula formula, Collection<CustomDataSources.Source> dbs, boolean includeRestAllDb) throws IOException {
         if (dbs == null || dbs.isEmpty())
             throw new IllegalArgumentException("No search DB given!");
 
@@ -154,19 +155,16 @@ public class WebWithCustomDatabase {
                 result = api.applyStructureDB(searchFilter, restCache, restDb -> new CandidateResult(
                         restDb.lookupStructuresAndFingerprintsByFormula(formula), searchFilter, requestFilter));
             } else {
-                logger.warn("No filter for Rest DBs found bits in DB list: '" + dbs.stream().map(SearchableDatabase::name).collect(Collectors.joining(",")) + "'. Returning empty search list from REST DB");
+                logger.warn("No filter for Rest DBs found bits in DB list: '" + dbs.stream().map(CustomDataSources.Source::name).collect(Collectors.joining(",")) + "'. Returning empty search list from REST DB");
                 result = new CandidateResult();
             }
 
             // add candidates from requested custom dbs
-            for (CustomDatabase cdb : dbs.stream().filter(SearchableDatabase::isCustomDb).distinct().map(it -> (CustomDatabase) it).collect(Collectors.toList())) {
-                Optional<? extends AbstractChemicalDatabase> optDB = cdb.toChemDB(api.getCDKChemDBFingerprintVersion());
-                if (optDB.isPresent())
-                    result.addRequestedCustom(cdb.name(), optDB.get().lookupStructuresAndFingerprintsByFormula(formula));
-            }
+            for (AbstractChemicalDatabase cdb : extractReqCustomStructureDBs(dbs))
+                result.addRequestedCustom(cdb.getName(), cdb.lookupStructuresAndFingerprintsByFormula(formula));
 
             // add tags from non-requested custom dbs for compounds that are also part of the requested dbs
-            for (AbstractChemicalDatabase custom : getAdditionalCustomDBs(dbs))
+            for (AbstractChemicalDatabase custom : extractNonReqCustomStructureDBs(dbs))
                 result.addAdditionalCustom(custom.getName(), custom.lookupStructuresAndFingerprintsByFormula(formula));
 
             return result;
@@ -175,17 +173,102 @@ public class WebWithCustomDatabase {
         }
     }
 
-    protected List<AbstractChemicalDatabase> getAdditionalCustomDBs(Collection<SearchableDatabase> dbs) throws IOException {
-        final Set<String> customToSearch = dbs.stream().filter(SearchableDatabase::isCustomDb).map(SearchableDatabase::name).collect(Collectors.toSet());
-        List<AbstractChemicalDatabase> fdbs = new ArrayList<>(CustomDataSources.size());
-        for (CustomDataSources.Source customSource : CustomDataSources.sources()) {
-            if (customSource.isCustomSource() && !customToSearch.contains(customSource.name())) {
-                @NotNull Optional<CustomDatabase> opCustom = SearchableDatabases.getCustomDatabaseByName(customSource.name());
-                if (opCustom.isPresent())
-                    opCustom.get().toChemDB(api.getCDKChemDBFingerprintVersion()).ifPresent(fdbs::add);
+    public List<Ms2ReferenceSpectrum> lookupSpectra(double precursorMz, Deviation deviation, Collection<CustomDataSources.Source> dbs) throws ChemicalDatabaseException {
+        return lookupSpectra(precursorMz, deviation, false, dbs);
+    }
+
+    public List<Ms2ReferenceSpectrum> lookupSpectra(double precursorMz, Deviation deviation, boolean withData, Collection<CustomDataSources.Source> dbs) throws ChemicalDatabaseException {
+        //todo spectlib: add remote db support
+        return extractReqCustomSpectraDBs(dbs).stream().flatMap(speclib -> {
+            try {
+                return StreamSupport.stream(speclib.lookupSpectra(precursorMz, deviation, withData).spliterator(), false);
+            } catch (ChemicalDatabaseException e) {
+                throw new RuntimeException(e);
             }
+
+        }).toList();
+
+    }
+
+    public List<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d, Collection<CustomDataSources.Source> dbs) throws ChemicalDatabaseException {
+        return lookupSpectra(inchiKey2d, false, dbs);
+    }
+
+    public List<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d, boolean withData, Collection<CustomDataSources.Source> dbs) throws ChemicalDatabaseException {
+        //todo spectlib: add remote db support
+        return extractReqCustomSpectraDBs(dbs).stream().flatMap(speclib -> {
+            try {
+                return StreamSupport.stream(speclib.lookupSpectra(inchiKey2d, withData).spliterator(), false);
+            } catch (ChemicalDatabaseException e) {
+                throw new RuntimeException(e);
+            }
+
+        }).toList();
+    }
+
+    public List<Ms2ReferenceSpectrum> lookupSpectra(MolecularFormula formula, Collection<CustomDataSources.Source> dbs) throws ChemicalDatabaseException {
+        return lookupSpectra(formula, false, dbs);
+    }
+
+    public List<Ms2ReferenceSpectrum> lookupSpectra(MolecularFormula formula, boolean withData, Collection<CustomDataSources.Source> dbs) throws ChemicalDatabaseException {
+        //todo spectlib: add remote db support
+        return extractReqCustomSpectraDBs(dbs).stream().flatMap(speclib -> {
+            try {
+                return StreamSupport.stream(speclib.lookupSpectra(formula, withData).spliterator(), false);
+            } catch (ChemicalDatabaseException e) {
+                throw new RuntimeException(e);
+            }
+
+        }).toList();
+    }
+
+
+    public Ms2ReferenceSpectrum getReferenceSpectrum(CustomDataSources.Source db, String uuid) throws ChemicalDatabaseException {
+        return getReferenceSpectrum(db, uuid, false);
+    }
+
+    public Ms2ReferenceSpectrum getReferenceSpectrum(CustomDataSources.Source db, String uuid, boolean withData) throws ChemicalDatabaseException {
+        SpectralLibrary spectralLibrary = asCustomDB(db).toSpectralLibrary().orElseThrow(() -> new IllegalArgumentException("Database with name: " + db.name() + "does not contain spectra data."));
+        Ms2ReferenceSpectrum spec = spectralLibrary.getReferenceSpectrum(uuid);
+        if (withData)
+            spectralLibrary.getSpectralData(spec);
+        return spec;
+    }
+
+    private List<AbstractChemicalDatabase> extractNonReqCustomStructureDBs(Collection<CustomDataSources.Source> dbs) {
+        Set<String> names = dbs.stream().map(CustomDataSources.Source::name).collect(Collectors.toSet());
+        return CustomDataSources.sourcesStream()
+                .filter(CustomDataSources.Source::isCustomSource)
+                .filter(db -> !names.contains(db.name()))
+                .map(this::asCustomDB)
+                .map(CustomDatabase::toChemDB)
+                .flatMap(Optional::stream).toList();
+    }
+
+    private List<AbstractChemicalDatabase> extractReqCustomStructureDBs(Collection<CustomDataSources.Source> dbs) {
+        return dbs.stream()
+                .filter(CustomDataSources.Source::isCustomSource)
+                .map(this::asCustomDB)
+                .map(CustomDatabase::toChemDB)
+                .flatMap(Optional::stream).toList();
+    }
+
+    private List<SpectralLibrary> extractReqCustomSpectraDBs(Collection<CustomDataSources.Source> dbs) {
+        return dbs.stream()
+                .filter(CustomDataSources.Source::isCustomSource)
+                .map(this::asCustomDB)
+                .map(CustomDatabase::toSpectralLibrary)
+                .flatMap(Optional::stream).toList();
+    }
+
+    private CustomDatabase asCustomDB(CustomDataSources.Source db) {
+        if (db.noCustomSource())
+            throw new IllegalArgumentException("Requested DB is not a custom DB!");
+        try {
+            return CustomDatabases.getCustomDatabaseBySource((CustomDataSources.CustomSource) db, api.getCDKChemDBFingerprintVersion());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-        return fdbs;
     }
 
 
@@ -279,6 +362,7 @@ public class WebWithCustomDatabase {
                 x.setqLayer(x.getqLayer() | c.getqLayer());
                 x.mergeDBLinks(c.links);
                 x.mergeBits(c.bitset);
+                x.mergeCompoundName(c.getName());
             } else {
                 if (onlyContained)
                     continue;

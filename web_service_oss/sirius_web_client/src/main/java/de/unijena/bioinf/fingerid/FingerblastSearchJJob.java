@@ -131,7 +131,7 @@ public class FingerblastSearchJJob extends FingerprintDependentJJob<FingerblastR
         if (this.ftree != null) {
             if (ftree.getAnnotation(LipidSpecies.class).isPresent()) {
                 final LipidSpecies l = ftree.getAnnotationOrThrow(LipidSpecies.class);
-                final List<DBLink> elGordoLink = List.of(new DBLink(DataSource.LIPID.realName(), l.toString()));
+                final List<DBLink> elGordoLink = List.of(new DBLink(DataSource.LIPID.name(), l.toString()));
 
                 List<BasicJJob<FingerprintCandidate>> lipidAnoJobs = scoredCandidates.stream().map(SScored::getCandidate).map(c -> new BasicJJob<FingerprintCandidate>() {
                     @Override

@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.regex.Pattern;
@@ -76,13 +77,12 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
                     throw new IllegalArgumentException("Neither Reader nor File is given, No Input to parse!");
 
                 currentUrl = source;
-                if (source != null) {
+                if (currentUrl != null && currentUrl.isAbsolute()) { //only absolute paths can be used
                     currentStream = currentUrl.toURL().openStream();
                     if (secondChoice != null)
                         secondChoice.close();
                 } else {
-                    //todo how to handle charset.
-                    currentStream = new ReaderInputStream(secondChoice);
+                    currentStream = new ReaderInputStream(secondChoice, Charset.defaultCharset());
                 }
 
                 // create xml event reader for input stream

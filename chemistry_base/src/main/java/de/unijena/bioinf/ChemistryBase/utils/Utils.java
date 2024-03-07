@@ -48,7 +48,7 @@ public class Utils {
         w.start();
         R r = exec.apply(w);
         w.stop();
-        System.out.println(text + w);
+        System.out.println(text + " " + w);
         return r;
     }
 
@@ -57,7 +57,7 @@ public class Utils {
         w.start();
         R r = exec.apply(w);
         w.stop();
-        System.out.println(text + w);
+        System.out.println(text + " " + w);
         return r;
     }
 

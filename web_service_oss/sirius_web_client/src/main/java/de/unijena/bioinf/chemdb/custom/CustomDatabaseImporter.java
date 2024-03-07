@@ -32,7 +32,6 @@ import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.storage.blob.file.FileBlobStorage;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
@@ -110,51 +109,74 @@ public class CustomDatabaseImporter {
         listeners.remove(listener);
     }
 
-    public void importFromString(String str) throws IOException, CDKException {
+    public void importFromString(String str) throws IOException {
         importFromString(str, null, null);
     }
 
-    public void importFromString(String str, String id, String name) throws IOException, CDKException {
+    public void importFromString(String str, String id, String name) throws IOException {
         if (str == null || str.isBlank()) {
             LoggerFactory.getLogger(getClass()).warn("No structure information given in Line ' " + str + "\t" + id + "\t" + name + "'. Skipping!");
             return;
         }
 
         final Molecule molecule;
-        if (InChIs.isInchi(str)) {
-            if (!InChIs.isConnected(str)) {
-                LoggerFactory.getLogger(getClass()).warn(
-                        String.format("Compound '%s' is Not connected! Only connected structures are supported! Skipping.", str));
-                return;
+        try {
+            if (InChIs.isInchi(str)) {
+                if (!InChIs.isConnected(str)) {
+                    LoggerFactory.getLogger(getClass()).warn(
+                            String.format("Compound '%s' is Not connected! Only connected structures are supported! Skipping.", str));
+                    return;
+                }
+
+                if (InChIs.isMultipleCharged(str)) {
+                    LoggerFactory.getLogger(getClass()).warn(
+                            String.format("Compound '%s' is multiple charged! Only neutral or single charged compounds are supported! Skipping.", str));
+                    return;
+                }
+
+
+                molecule = new Molecule(InChISMILESUtils.getAtomContainerFromInchi(str));
+            } else {
+                if (!SmilesU.isConnected(str)) {
+                    LoggerFactory.getLogger(getClass()).warn(
+                            String.format("Compound '%s' is Not connected! Only connected structures are supported! Skipping.", str));
+                    return;
+                }
+
+                if (SmilesU.isMultipleCharged(str)) {
+                    LoggerFactory.getLogger(getClass()).warn(
+                            String.format("Compound '%s' is multiple charged! Only neutral or single charged compounds are supported! Skipping.", str));
+                    return;
+                }
+
+                molecule = new Molecule(smilesParser.parseSmiles(str));
+                molecule.smiles = new Smiles(str);
             }
-
-            if (InChIs.isMultipleCharged(str)) {
-                LoggerFactory.getLogger(getClass()).warn(
-                        String.format("Compound '%s' is multiple charged! Only neutral or single charged compounds are supported! Skipping.", str));
-                return;
-            }
-
-
-            molecule = new Molecule(InChISMILESUtils.getAtomContainerFromInchi(str));
-        } else {
-            if (!SmilesU.isConnected(str)) {
-                LoggerFactory.getLogger(getClass()).warn(
-                        String.format("Compound '%s' is Not connected! Only connected structures are supported! Skipping.", str));
-                return;
-            }
-
-            if (SmilesU.isMultipleCharged(str)) {
-                LoggerFactory.getLogger(getClass()).warn(
-                        String.format("Compound '%s' is multiple charged! Only neutral or single charged compounds are supported! Skipping.", str));
-                return;
-            }
-
-            molecule = new Molecule(smilesParser.parseSmiles(str));
-            molecule.smiles = new Smiles(str);
+        } catch (CDKException e) {
+            LoggerFactory.getLogger(getClass()).warn(String.format("Error when parsing molecule: '%s'! Skipping.", str));
+            return;
         }
         molecule.id = id;
         molecule.name = name;
         addMolecule(molecule);
+    }
+
+    public void importFromStream(InputStream stream) throws IOException {
+        // checkConnectionToUrl for SMILES and InChI formats
+        final BufferedReader br = new BufferedReader(new InputStreamReader(stream));
+        String line;
+        while ((line = br.readLine()) != null) {
+            checkCancellation();
+            //skip empty lines
+            if (!line.isBlank()) {
+                String[] parts = line.split("\t");
+                final String structure = parts[0].trim();
+
+                final String id = parts.length > 1 ? parts[1] : null;
+                final String name = parts.length > 2 ? parts[2] : null;
+                importFromString(structure, id, name);
+            }
+        }
     }
 
     public void importFrom(File file) throws IOException {
@@ -182,26 +204,8 @@ public class CustomDatabaseImporter {
                 }
             }
         } else {
-            // checkConnectionToUrl for SMILES and InChI formats
-            try (final BufferedReader br = new BufferedReader(new FileReader(file))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    checkCancellation();
-                    //skip empty lines
-                    if (!line.isBlank()) {
-                        String[] parts = line.split("\t");
-                        final String structure = parts[0].trim();
-
-                        final String id = parts.length > 1 ? parts[1] : null;
-                        final String name = parts.length > 2 ? parts[2] : null;
-
-                        try {
-                            importFromString(structure, id, name);
-                        } catch (CDKException e) {
-                            CustomDatabase.logger.error(e.getMessage(), e);
-                        }
-                    }
-                }
+            try (FileInputStream s = new FileInputStream(file)) {
+                importFromStream(s);
             }
         }
     }
@@ -302,7 +306,7 @@ public class CustomDatabaseImporter {
         List<JJob<Boolean>> jobs = formulasToSearch.stream().map(formula -> new BasicJJob<Boolean>() {
             @Override
             protected Boolean compute() throws Exception {
-                api.consumeStructureDB(DataSource.ALL.flag(), new FileBlobStorage(SearchableDatabases.getWebDatabaseCacheDirectory()), db -> {
+                api.consumeStructureDB(DataSource.ALL.flag(), db -> {
                     List<FingerprintCandidate> cans = db.lookupStructuresAndFingerprintsByFormula(formula);
                     for (FingerprintCandidate can : cans) {
                         Comp toAdd = dict.get(can.getInchi().in2D);
@@ -376,7 +380,7 @@ public class CustomDatabaseImporter {
             synchronized (database) {
                 if (database instanceof BlobCustomDatabase<?>) {
                     mergeAndWriteCompoundsBlob(key, value, (BlobCustomDatabase<?>) database);
-                } else if (database instanceof NoSQLCustomDatabase<?, ?>){
+                } else if (database instanceof NoSQLCustomDatabase<?, ?>) {
                     mergeAndWriteCompoundsNoSQL(key, value, (NoSQLCustomDatabase<?, ?>) database);
                 } else {
                     throw new IllegalArgumentException();
@@ -397,7 +401,7 @@ public class CustomDatabaseImporter {
 
         WebWithCustomDatabase.mergeCompounds(
                 Stream.concat(alreadyExisting.stream()
-                        .map(FingerprintCandidateWrapper::getFingerprintCandidate), value.stream())
+                                .map(FingerprintCandidateWrapper::getFingerprintCandidate), value.stream())
                         .toList()
         ).forEach(fc -> {
             if (alreadyExistingMap.containsKey(fc.getInchiKey2D())) {
