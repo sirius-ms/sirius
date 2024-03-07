@@ -31,12 +31,12 @@ import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.SpectralSearchResult;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
-import java.util.List;
 
 @Getter
 @Setter
@@ -51,41 +51,52 @@ public class StructureCandidateFormula extends StructureCandidateScored {
      * Adduct of this candidate
      */
     protected String adduct;
+    /**
+     * Id of the corresponding Formula candidate
+     */
+    protected String formulaId;
 
-    public static StructureCandidateFormula of(Scored<CompoundCandidate> can, FormulaScoring scorings,
+    public static StructureCandidateFormula of(Scored<? extends CompoundCandidate> can, FormulaScoring scorings,
                                                EnumSet<OptField> optFields,
                                                FormulaResultId fid
     ) {
-        return of(can, null, scorings, optFields, fid.getMolecularFormula(), fid.getIonType());
+        return of(can, null, null, scorings, optFields, fid.getMolecularFormula(), fid.getIonType(), fid.fileName());
     }
 
-    public static StructureCandidateFormula of(Scored<CompoundCandidate> can, FormulaScoring scorings,
+    public static StructureCandidateFormula of(Scored<? extends CompoundCandidate> can, FormulaScoring scorings,
                                                EnumSet<OptField> optFields,
                                                MolecularFormula formula,
-                                               PrecursorIonType adduct
+                                               PrecursorIonType adduct,
+                                               String fomulaId
     ) {
-        return of(can, null, scorings, optFields, formula, adduct);
+        return of(can, null, null, scorings, optFields, formula, adduct, fomulaId);
     }
 
-    public static StructureCandidateFormula of(Scored<CompoundCandidate> can, @Nullable Fingerprint fp,
+    public static StructureCandidateFormula of(Scored<? extends CompoundCandidate> can,
+                                               @Nullable Fingerprint fp,
+                                               @Nullable SpectralSearchResult libraryMatches,
                                                @Nullable FormulaScoring confidenceScoreProvider,
                                                EnumSet<OptField> optFields,
                                                FormulaResultId fid
     ) {
-        return of(can, fp, confidenceScoreProvider, optFields, fid.getMolecularFormula(), fid.getIonType());
+        return of(can, fp, libraryMatches, confidenceScoreProvider, optFields, fid.getMolecularFormula(), fid.getIonType(), fid.fileName());
     }
 
-    public static StructureCandidateFormula of(Scored<CompoundCandidate> can, @Nullable Fingerprint fp,
+    public static StructureCandidateFormula of(Scored<? extends CompoundCandidate> can,
+                                               @Nullable Fingerprint fp,
+                                               @Nullable SpectralSearchResult libraryMatches,
                                                @Nullable FormulaScoring confidenceScoreProvider,
                                                EnumSet<OptField> optFields,
                                                MolecularFormula formula,
-                                               PrecursorIonType adduct
+                                               PrecursorIonType adduct,
+                                               String fomulaId
     ) {
 
 
         final StructureCandidateFormula sSum = new StructureCandidateFormula();
         sSum.setMolecularFormula(formula.toString());
         sSum.setAdduct(adduct.toString());
+        sSum.setFormulaId(fomulaId);
         // scores
         sSum.setCsiScore(can.getScore());
         sSum.setTanimotoSimilarity(can.getCandidate().getTanimoto());
@@ -106,10 +117,9 @@ public class StructureCandidateFormula extends StructureCandidateScored {
         if (optFields.contains(OptField.dbLinks))
             sSum.setDbLinks(can.getCandidate().getLinks());
 
-        if (optFields.contains(OptField.refSpectraLinks))
-            sSum.setRefSpectraLinks(List.of());
-        //todo add reference spectra links
-//            sSum.setDbLinks(can.getCandidate().getReferenceSpectraSplash());
+        // spectral library matches
+        if (libraryMatches != null && optFields.contains(OptField.libraryMatches))
+            sSum.setSpectralLibraryMatches(SpectralLibraryMatch.of(libraryMatches, sSum.getInchiKey()));
 
         //FP
         if (fp != null && optFields.contains(OptField.fingerprint))

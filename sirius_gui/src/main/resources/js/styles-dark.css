@@ -4,7 +4,7 @@ body {
     overflow-y: hidden;
     font-family: sans-serif;
     font-size: 12px;
-    background-color: #46494b;
+    background-color: #3C3F41FF;
     color: #bbb;
 }
 
@@ -19,7 +19,7 @@ text {
 
 #tooltip, .popup {
     color: black;
-    background-color: white;
+    background-color: #bbb;
     border: solid 1px;
     border-radius:  5px;
     padding:  5px;
@@ -28,7 +28,11 @@ text {
 /* SpectraViewer_v2 Basic: */
 #tooltip, #structureView, #spectrumView, .anno { position: absolute; }
 
-.spectrum_label, .spectrum_legend { text-anchor: middle; }
+.spectrum_label, .spectrum_legend {
+    text-anchor: middle;
+    color: #bbb;
+    fill: #bbb;
+}
 
 #container {
     vertical-align: top;

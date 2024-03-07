@@ -21,56 +21,88 @@
 package de.unijena.bioinf.ms.middleware.model.compute.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import de.unijena.bioinf.chemdb.DataSource;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
 import de.unijena.bioinf.elgordo.TagStructuresByElGordo;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
+import de.unijena.bioinf.ms.middleware.model.compute.NullCheckMapBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * User/developer friendly parameter subset for the CSI:FingerID structure db search tool.
+ * Needs results from FingerprintPrediction and Canopus Tool.
+ * Non-Null parameters in this Object well override their equivalent value in the config map.
  */
 @Getter
 @Setter
+@SuperBuilder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class StructureDbSearch extends Tool<FingerblastOptions> {
-    //todo make custom database support
     /**
-     * Structure databases to search in
+     * Structure databases to search in, If expansive search is enabled this DB selection will be expanded to PubChem
+     * if not high confidence hit was found in the selected databases.
+     *
+     * Defaults to BIO + Custom Databases. Possible values are available to Database API.
      */
-    List<DataSource> structureSearchDBs;
-    //todo add lipid class support to api
+    @Schema(nullable = true)
+    List<String> structureSearchDBs;
+
     /**
      * Candidates matching the lipid class estimated by El Gordo will be tagged.
      * The lipid class will only be available if El Gordo predicts that the MS/MS is a lipid spectrum.
      * If this parameter is set to 'false' El Gordo will still be executed and e.g. improve the fragmentation
      * tree, but the matching structure candidates will not be tagged if they match lipid class.
      */
-    Boolean tagLipids;
+    @Schema(nullable = true)
+    Boolean tagStructuresWithLipidClass;
 
-    ExpansiveSearchConfidenceMode expansiveSearchConfidenceMode;
+    /**
+     * Expansive search mode.
+     * Expansive search will expand the search space to whole PubChem in case no hit with reasonable confidence was
+     * found in one of the specified databases (structureSearchDBs).
+     *
+     * Possible Values
+     * OFF - No expansive search is performed
+     * EXACT - Use confidence score in exact mode: Only molecular structures identical to the true structure should count as correct identification.
+     * APPROXIMATE - Use confidence score in approximate mode: Molecular structures hits that are close to the true structure should count as correct identification.
+     */
+    @Schema(enumAsRef = true, nullable = true)
+    ExpansiveSearchConfidenceMode.Mode expansiveSearchConfidenceMode;
 
 
-    public StructureDbSearch() {
+    private StructureDbSearch() {
         super(FingerblastOptions.class);
-        structureSearchDBs = List.of(DataSource.BIO);
-        tagLipids = PropertyManager.DEFAULTS.createInstanceWithDefaults(TagStructuresByElGordo.class).value;
-        expansiveSearchConfidenceMode = PropertyManager.DEFAULTS.createInstanceWithDefaults(ExpansiveSearchConfidenceMode.class);
     }
+
 
     @JsonIgnore
     @Override
     public Map<String, String> asConfigMap() {
-        return Map.of(
-                "TagStructuresByElGordo", String.valueOf(tagLipids),
-                "StructureSearchDB", structureSearchDBs.stream().map(DataSource::name).collect(Collectors.joining(",")).toLowerCase(Locale.ROOT),
-                "ExpansiveSearchConfidenceMode",expansiveSearchConfidenceMode.confidenceScoreSimilarityMode.name()
-        );
+        return new NullCheckMapBuilder()
+                .putIfNonNull("TagStructuresByElGordo", tagStructuresWithLipidClass)
+                .putIfNonNullObj("StructureSearchDB", structureSearchDBs, db -> String.join(",", db).toLowerCase(Locale.ROOT))
+                .putIfNonNull("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", expansiveSearchConfidenceMode)
+                .toUnmodifiableMap();
+    }
+
+    public static StructureDbSearch buildDefault() {
+        return builderWithDefaults().build();
+    }
+    public static StructureDbSearch.StructureDbSearchBuilder<?,?> builderWithDefaults() {
+        return StructureDbSearch.builder()
+                .enabled(true)
+                .structureSearchDBs(List.of())
+                .tagStructuresWithLipidClass(PropertyManager.DEFAULTS.
+                        createInstanceWithDefaults(TagStructuresByElGordo.class).value)
+                .expansiveSearchConfidenceMode(PropertyManager.DEFAULTS.
+                        createInstanceWithDefaults(ExpansiveSearchConfidenceMode.class).confidenceScoreSimilarityMode);
     }
 }

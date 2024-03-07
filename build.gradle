@@ -29,10 +29,14 @@ wrapper {
 
 //Global Properties
 ext {
+    junit_version = '5.10.0'
+    jackson_version = "2.16.1"
+    spring_boot_version = "3.2.3"
+    springdoc_version = "2.3.0"
     //version for external libraries
     slf4j_version = '1.7.36'
-    jjobs_version = '0.9.35'
-
+    jjobs_version = '0.9.36-SNAPSHOT'
+    jaxb_version = "2.3.9"
     cdk_version = "2.8"
 
     picocli_version = '4.6.3'//'3.9.5'
@@ -145,9 +149,19 @@ allprojects {
 
         //NOTE: cannot be provided as transitive dependency
         implementation "jakarta.persistence:jakarta.persistence-api:$jakarta_version"
+        implementation "org.glassfish.jaxb:jaxb-runtime:$jaxb_version"
 
+        // Aggregator dependency that also brings JUnit 5 parameterized tests etc.
+        testImplementation("org.junit.jupiter:junit-jupiter:$junit_version")
+        testImplementation("org.junit.jupiter:junit-jupiter-params:$junit_version")
+        // The Vintage engine is needed to be able to run JUnit 4 tests
+        testImplementation("org.junit.vintage:junit-vintage-engine:$junit_version")
+        testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit_version"
+    }
 
-        testImplementation group: 'junit', name: 'junit', version: '4.12'
+    test {
+        useJUnitPlatform()
+        maxHeapSize = "16G"
     }
 
     //there are some outdated incompatible trove dependencies in some libs.

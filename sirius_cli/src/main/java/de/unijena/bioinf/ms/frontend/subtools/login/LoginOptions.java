@@ -34,14 +34,13 @@ import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
-import de.unijena.bioinf.webapi.Tokens;
-import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bioinf.rest.ConnectionError;
 import de.unijena.bioinf.rest.ProxyManager;
+import de.unijena.bioinf.webapi.Tokens;
+import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -270,25 +269,28 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
 
         private void showLicense() throws IOException {
             WebAPI<?> api = ApplicationCore.WEB_API;
-            @Nullable Subscription subs = Tokens.getActiveSubscription(api.getAuthService().getToken().orElse(null));
+            @Nullable Subscription sub = Tokens.getActiveSubscription(api.getAuthService().getToken().orElse(null));
 
             System.out.println();
             System.out.println("###################### License Info ######################");
-            if (subs != null) {
+            if (sub != null) {
                 final LicenseInfo licenseInfo = new LicenseInfo();
-                licenseInfo.setSubscription(subs);
-                System.out.println("Licensed to: " + subs.getSubscriberName() + " (" + subs.getDescription() + ")");
-                System.out.println("Expires at: " + (subs.hasExpirationTime() ? subs.getExpirationDate().toString() : "NEVER"));
-                if (subs.getCountQueries()) {
-                    if (subs.hasCompoundLimit()) {
-                        licenseInfo.setConsumables(api.getConsumables(false));
-                        System.out.println("Compounds Computed (Yearly): " + licenseInfo.consumables()
-                                .map(SubscriptionConsumables::getCountedCompounds)
-                                .map(String::valueOf).orElse("?") + " of " + subs.getCompoundLimit());
+                licenseInfo.subscription = sub;
+                System.out.println("Licensed to: " + sub.getSubscriberName() + " (" + sub.getDescription() + ")");
+                System.out.println("Expires at: " + (sub.hasExpirationTime() ? sub.getExpirationDate().toString() : "NEVER"));
+                if (sub.getCountQueries()) {
+                    if (sub.hasCompoundLimit()) {
+                        licenseInfo.consumables = api.getConsumables(false);
+                        System.out.println("Compounds Computed (Yearly): " +
+                                licenseInfo.consumables()
+                                        .map(SubscriptionConsumables::getCountedCompounds)
+                                        .map(String::valueOf).orElse("?") + " of " + sub.getCompoundLimit());
                     } else {
-                        licenseInfo.setConsumables(api.getConsumables(true));
-                        System.out.println("Compounds Computed (Monthly): " + licenseInfo.consumables().map(SubscriptionConsumables::getCountedCompounds)
-                                .map(String::valueOf).orElse("?"));
+                        licenseInfo.consumables = api.getConsumables(true);
+                        System.out.println("Compounds Computed (Monthly): " +
+                                licenseInfo.consumables()
+                                        .map(SubscriptionConsumables::getCountedCompounds)
+                                        .map(String::valueOf).orElse("?"));
                     }
                 }
             } else {
@@ -355,6 +357,29 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
             }
 
             return errors;
+        }
+    }
+
+    private static class LicenseInfo {
+        /**
+         * Email address of the user account this license information belongs to.
+         */
+        private String userEmail;
+        /**
+         * User ID (uid) of the user account this license information belongs to.
+         */
+        private String userId;
+        /**
+         * The active subscription that was used the requested the information
+         */
+        private Subscription subscription;
+        /**
+         * Status of the consumable resources of the {@link Subscription}.
+         */
+        private SubscriptionConsumables consumables;
+
+        public Optional<SubscriptionConsumables> consumables() {
+            return Optional.ofNullable(consumables);
         }
     }
 }

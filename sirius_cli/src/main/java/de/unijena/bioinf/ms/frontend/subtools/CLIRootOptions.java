@@ -20,12 +20,12 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.rest.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +56,7 @@ public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>
     public static final Logger LOG = LoggerFactory.getLogger(CLIRootOptions.class);
 
     protected final DefaultParameterConfigLoader defaultConfigOptions;
-    protected final ProjectSpaceManagerFactory<I, M> spaceManagerFactory;
+    protected ProjectSpaceManagerFactory<I, M> spaceManagerFactory;
 
     public CLIRootOptions(@NotNull DefaultParameterConfigLoader defaultConfigOptions, @NotNull ProjectSpaceManagerFactory<I, M> spaceManagerFactory) {
         this.defaultConfigOptions = defaultConfigOptions;
@@ -154,6 +154,10 @@ public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>
 
     public ProjectSpaceManagerFactory<I, M> getSpaceManagerFactory() {
         return spaceManagerFactory;
+    }
+
+    public void setSpaceManagerFactory(ProjectSpaceManagerFactory<I, M> spaceManagerFactory) {
+        this.spaceManagerFactory = spaceManagerFactory;
     }
 
     @Override

@@ -26,11 +26,14 @@ import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.GlazedListsSwing;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.dialogs.CompoundFilterOptionsDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
-import de.unijena.bioinf.ms.gui.utils.*;
+import de.unijena.bioinf.ms.gui.utils.CompoundFilterMatcherEditor;
+import de.unijena.bioinf.ms.gui.utils.CompoundFilterModel;
+import de.unijena.bioinf.ms.gui.utils.MatcherEditorWithOptionalInvert;
+import de.unijena.bioinf.ms.gui.utils.SearchTextField;
 import de.unijena.bioinf.ms.gui.utils.matchers.BackgroundJJobMatcheEditor;
-import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
+import de.unijena.bioinf.projectspace.GuiProjectManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +46,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 /**
  * This is the main List of the SIRIUS UI.
  * It shows the main Instances (former Compounds or Experiments)
- * It is usually a singleton and backed by the INSTANCE_LIST of the  {@link GuiProjectSpaceManager}
+ * It is usually a singleton and backed by the INSTANCE_LIST of the  {@link GuiProjectManager}
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
@@ -61,10 +64,10 @@ public class CompoundList {
 
     private final Queue<ExperimentListChangeListener> listeners = new ConcurrentLinkedQueue<>();
 
-    public CompoundList(@NotNull final GuiProjectSpaceManager ps) {
+    public CompoundList(@NotNull SiriusGui gui) {
         searchField = new SearchTextField("Hit enter to search...");
-        obsevableScource = new ObservableElementList<>(ps.INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
-        sortedSource = new SortedList<>(obsevableScource, Comparator.comparing(b -> b.getID().getCompoundIndex()));
+        obsevableScource = new ObservableElementList<>(gui.getProjectManager().INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
+        sortedSource = new SortedList<>(obsevableScource, Comparator.comparing(InstanceBean::getIndex));
 
         //filters
         BasicEventList<MatcherEditor<InstanceBean>> listOfFilters = new BasicEventList<>();
@@ -88,7 +91,7 @@ public class CompoundList {
         //filter dialog
         openFilterPanelButton = new JButton("...");
         openFilterPanelButton.addActionListener(e -> {
-            new CompoundFilterOptionsDialog(MainFrame.MF, searchField, compoundFilterModel, this);
+            new CompoundFilterOptionsDialog(gui, searchField, compoundFilterModel, this);
             colorByActiveFilter(openFilterPanelButton, compoundFilterModel);
         });
 
@@ -96,8 +99,8 @@ public class CompoundList {
 
         compountListSelectionModel.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                compountListSelectionModel.getDeselected().forEach(InstanceBean::unregisterProjectSpaceListeners);
-                compountListSelectionModel.getSelected().forEach(InstanceBean::registerProjectSpaceListeners);
+                compountListSelectionModel.getDeselected().forEach(InstanceBean::disableProjectSpaceListener);
+                compountListSelectionModel.getSelected().forEach(InstanceBean::enableProjectSpaceListener);
                 notifyListenerSelectionChange();
             }
         });

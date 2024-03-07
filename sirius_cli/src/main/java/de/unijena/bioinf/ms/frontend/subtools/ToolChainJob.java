@@ -52,6 +52,7 @@ public interface ToolChainJob<T> extends ProgressJJob<T> {
     default String getToolName() {
         return getClass().getSimpleName();
     }
+    String getProjectName();
 
     void setInvalidator(Consumer<Instance> invalidator);
 

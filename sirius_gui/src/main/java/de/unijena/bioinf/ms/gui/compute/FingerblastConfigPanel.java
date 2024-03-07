@@ -37,7 +37,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
 
 //here we can show fingerid options. If it becomes to much, we can change this to a setting like tabbed pane
@@ -62,6 +62,7 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
 
         pubChemFallback.setSelected(true);
         pubChemFallback.setToolTipText("Search in the specified set of databases and use the PubChem database as fallback if no good hit is available");
+
 
         //confidence score approximate mode settings
         JComboBox<ExpansiveSearchConfidenceMode.Mode> confidenceModeBox =  GuiUtils.makeParameterComboBoxFromDescriptiveValues(ExpansiveSearchConfidenceMode.Mode.getActiveModes());

@@ -21,16 +21,19 @@
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
-@Setter
+@Builder
 public class LossEdge {
-    FragmentNode sourceFragment;
-    FragmentNode targetFragment;
-    @Schema(nullable = true)
+    @Schema
+    Integer sourceFragmentIdx;
+    @Schema
+    Integer targetFragmentIdx;
+    @Schema
     String molecularFormula;
-    @Schema(nullable = true)
+    @Schema
     Double score;
 }

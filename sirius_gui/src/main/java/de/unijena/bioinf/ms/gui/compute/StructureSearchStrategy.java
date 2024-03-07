@@ -76,4 +76,8 @@ public class StructureSearchStrategy extends JPanel {
     public List<CustomDataSources.Source> getStructureSearchDBs() {
         return searchDBList.checkBoxList.getCheckedItems();
     }
+
+    public List<String> getStructureSearchDBStrings() {
+        return getStructureSearchDBs().stream().map(CustomDataSources.Source::name).filter(Objects::nonNull).collect(Collectors.toList());
+    }
 }

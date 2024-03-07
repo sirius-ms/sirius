@@ -61,7 +61,7 @@ public class StructurePreview extends JPanel implements Runnable {
     protected volatile int state = 0; // needRefresh=0, recalculated=1, done=2
     protected volatile boolean shutdown = false;
 
-    public StructurePreview(FingerprintTable table) {
+    public StructurePreview(FingerprintList table) {
         this(table.visualizations);
     }
 

@@ -71,7 +71,12 @@ public class CompoundClass {
      */
     protected Double probability;
 
-    public static CompoundClass of(NPCFingerprintVersion.NPCProperty npcClass, Double probability){
+    /**
+     * Absolute index of this property in the predicted vector/embedding
+     */
+    protected Integer index;
+
+    public static CompoundClass of(NPCFingerprintVersion.NPCProperty npcClass, Double probability, Integer index){
         return CompoundClass.builder()
                 .type(Type.NPC)
                 .level(npcClass.getLevel().name())
@@ -79,10 +84,11 @@ public class CompoundClass {
                 .description(npcClass.getDescription())
                 .id(npcClass.getNpcIndex())
                 .probability(probability)
+                .index(index)
                 .build();
     }
 
-    public static CompoundClass of(ClassyfireProperty cfClass, Double probability){
+    public static CompoundClass of(ClassyfireProperty cfClass, Double probability, Integer index){
         return CompoundClass.builder()
                 .type(Type.ClassyFire)
                 .level(CanopusLevels.getClassyFireLevelName(cfClass.getLevel()))
@@ -90,6 +96,7 @@ public class CompoundClass {
                 .description(cfClass.getDescription())
                 .id(cfClass.getChemOntId())
                 .probability(probability)
+                .index(index)
                 .build();
     }
 }

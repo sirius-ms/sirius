@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import org.slf4j.LoggerFactory;
 
@@ -27,21 +28,19 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
-
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class AcceptTermsAction extends AbstractAction {
+public class AcceptTermsAction extends AbstractGuiAction {
 
-    public AcceptTermsAction() {
-        super("Accept Terms");
+    public AcceptTermsAction(SiriusGui gui) {
+        super("Accept Terms", gui);
         putValue(Action.SHORT_DESCRIPTION, "Accept Terms of Service and Privacy Policy of the current Webservice.");
     }
 
     @Override
     public synchronized void actionPerformed(ActionEvent e) {
-        Jobs.runInBackgroundAndLoad(MF, "Accepting and Refreshing...", () -> {
+        Jobs.runInBackgroundAndLoad(mainFrame, "Accepting and Refreshing...", () -> {
             try {
                 ApplicationCore.WEB_API.acceptTermsAndRefreshToken();
                 return true;
@@ -49,7 +48,7 @@ public class AcceptTermsAction extends AbstractAction {
                 LoggerFactory.getLogger(getClass()).warn("Error when accepting terms.", ex);
                 return false;
             }finally {
-                MF.CONNECTION_MONITOR().checkConnection();
+                gui.getConnectionMonitor().checkConnection();
             }
         });
     }

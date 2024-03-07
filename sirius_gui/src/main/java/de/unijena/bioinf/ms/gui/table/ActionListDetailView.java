@@ -33,7 +33,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
 public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends ActionList<E, D>> extends ActionListView<T> {
 

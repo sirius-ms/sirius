@@ -18,21 +18,20 @@ package de.unijena.bioinf.ms.gui.actions;/*
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 
 /**
  * this allows to invert the compound list filter.
  */
-public class ResetFilterAction extends AbstractAction {
+public class ResetFilterAction extends AbstractGuiAction {
 
-    public ResetFilterAction() {
-        super("Reset filter");
+    public ResetFilterAction(SiriusGui gui) {
+        super("Reset filter", gui);
     }
     @Override
     public void actionPerformed(ActionEvent e) {
-        MainFrame.MF.getCompoundList().resetFilter();
+        mainFrame.getCompoundList().resetFilter();
     }
 }

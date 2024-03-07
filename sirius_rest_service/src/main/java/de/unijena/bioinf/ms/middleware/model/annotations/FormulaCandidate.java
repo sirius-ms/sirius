@@ -32,13 +32,12 @@ import lombok.*;
  * such as fragmentation trees and simulated isotope pattern.
  */
 @Getter
-@Setter
 @AllArgsConstructor
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class FormulaCandidate {
     @Schema(enumAsRef = true, name = "FormulaCandidateOptField", nullable = true)
-    public enum OptField {none, statistics, fragmentationTree, simulatedIsotopePattern, predictedFingerprint, compoundClasses, canopusPredictions};
+    public enum OptField {none, statistics, fragmentationTree, annotatedSpectrum, isotopePattern, lipidAnnotation, predictedFingerprint, compoundClasses, canopusPredictions}
 
     /**
      * Unique identifier of this formula candidate
@@ -83,15 +82,36 @@ public class FormulaCandidate {
     protected Deviation medianMassDeviation;
 
     /**
+     * CSI:FingerID Score of the highest scoring structure candidate (top hit) of this formula candidate.
+     * If NULL result is not available
+     */
+    @Schema(nullable = true)
+    protected Double topCSIScore;
+
+    /**
      * The fragmentation tree that belongs to this molecular formula candidate (produces the treeScore).
      */
     @Schema(nullable = true)
     protected FragmentationTree fragmentationTree;
+
     /**
-     * The simulated isotope pattern that is compared against the measured isotope pattern to produce the isotopeScore.
+     * Fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses
      */
     @Schema(nullable = true)
-    protected AnnotatedSpectrum simulatedIsotopePattern;
+    protected AnnotatedSpectrum annotatedSpectrum;
+
+    /**
+     * The measured and simulated isotope pattern that have been  compared against each other to produce the isotopeScore.
+     */
+    @Schema(nullable = true)
+    protected IsotopePatternAnnotation isotopePatternAnnotation;
+
+    /**
+     * ElGordo lipid annotation of this candidate.
+     * NULL if annotation was not requested. lipidAnnotation.lipidSpecies == NULL if candidate has not been classified as a lipid
+     */
+    @Schema(nullable = true)
+    protected LipidAnnotation lipidAnnotation;
 
     /**
      * Probabilistic molecular fingerprint predicted by CSI:FingerID
@@ -110,6 +130,4 @@ public class FormulaCandidate {
      */
     @Schema(nullable = true)
     protected CanopusPrediction canopusPrediction;
-
-    //todo add LipidClass prediction
 }

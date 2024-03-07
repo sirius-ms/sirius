@@ -24,7 +24,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
@@ -33,10 +33,10 @@ import de.unijena.bioinf.projectspace.CompoundContainer;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.SpectralAlignmentJJob;
-import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,17 +54,26 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
     }
 
     public static String getQueryName(MutableMs2Spectrum query, int queryIndex) {
-        String q = String.format(
-                "MS%d; #%d",
+        return getQueryName(
                 query.getMsLevel(),
-                (query.getScanNumber() > -1) ? query.getScanNumber() : queryIndex + 1
+                query.getScanNumber(),
+                query.getCollisionEnergy() != null ? Math.round(query.getCollisionEnergy().getMinEnergy()) + "eV" : null,
+                query.getIonization() != null ? query.getIonization().toString() : null,
+                queryIndex
         );
-        if (query.getCollisionEnergy() != null) {
-            q += String.format("; CE %deV", Math.round(query.getCollisionEnergy().getMinEnergy()));
-        }
-        if (query.getIonization() != null) {
-            q += String.format("; %s", query.getIonization().toString());
-        }
+    }
+
+    public static String getQueryName(int mslevel, int scanNumber, @Nullable String collisionEnergy,
+                                      @Nullable String ionization, int queryIndex) {
+
+        String q = String.format("MS%d; #%d", mslevel, (scanNumber > -1) ? scanNumber : queryIndex + 1);
+
+        if (collisionEnergy != null)
+            q += String.format("; CE %s", collisionEnergy);
+
+        if (ionization != null)
+            q += String.format("; %s", ionization);
+
         return q;
     }
 
@@ -108,9 +117,8 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
             for (SpectralSearchResult.SearchResult r : resultList.subList(0, Math.min(print, resultList.size()))) {
                 SpectralSimilarity similarity = r.getSimilarity();
 
-                SpectralLibrary db = SearchableDatabases.getCustomDatabaseByNameOrThrow(r.getDbName()).toSpectralLibraryOrThrow();
                 try {
-                    Ms2ReferenceSpectrum reference = db.getReferenceSpectrum(r.getReferenceUUID());
+                    Ms2ReferenceSpectrum reference = ApplicationCore.WEB_API.getChemDB().getReferenceSpectrum(CustomDataSources.getSourceFromName(r.getDbName()), r.getUuid());
                     builder.append(String.format("\n%10.3e | %5d | %9s | %9.3f | %2d | %5s | %10s | %s | %s | %s  | %s | %s | %s",
                             similarity.similarity,
                             similarity.sharedPeaks,

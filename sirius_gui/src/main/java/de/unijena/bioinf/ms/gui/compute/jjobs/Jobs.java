@@ -21,73 +21,37 @@ package de.unijena.bioinf.ms.gui.compute.jjobs;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.*;
-import de.unijena.bioinf.ms.frontend.BackgroundRuns;
-import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
-import de.unijena.bioinf.ms.gui.actions.ShowJobsDialogAction;
-import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
-import de.unijena.bioinf.projectspace.GuiProjectSpaceManager;
-import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Sirius;
 import javafx.application.Platform;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.beans.PropertyChangeListener;
-import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Supplier;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
  * Central access point for Background jobs from the GUI
  * 1. It connects/executes GUI rendered background jobs to {@link SiriusJobs} job manager
- * 2. It provides access to {@link BackgroundRuns} service to execute commandline runs.
  * 3. Allows to manage task execution in Swing and JFX GUI threads.
  */
-public class Jobs {
+public class Jobs { //todo convert to nonstatic class
     public static SwingJobManager MANAGER() {
         return (SwingJobManager) SiriusJobs.getGlobalJobManager();
     }
 
-    private static final PropertyChangeListener BACKGROUND_RUN_LISTENER = evt -> {
-        if (BackgroundRuns.ACTIVE_RUNS_PROPERTY.equals(evt.getPropertyName())) {
-            int size = (int) evt.getNewValue();
-            ((ShowJobsDialogAction) SiriusActions.SHOW_JOBS.getInstance()).setComputing(size > 0);
-            SiriusActions.SUMMARIZE_WS.getInstance().setEnabled(size == 0);
-            SiriusActions.EXPORT_FBMN.getInstance().setEnabled(size == 0);
-        }
-    };
-
     private static final HashMap<String, Sirius> siriusPerProfile = new HashMap<>();
 
-    static {
-        BackgroundRuns.addPropertyChangeListener(BACKGROUND_RUN_LISTENER);
-    }
 
     private Jobs() {/*prevent instantiation*/}
 
-    public static <T, JJ extends ProgressJJob<T>> TextAreaJJobContainer<T> submit(final JJ j, String jobName) {
-        return submit(new TextAreaJJobContainer<>(j, jobName));
-    }
-
-    public static <T, JJ extends ProgressJJob<T>> TextAreaJJobContainer<T> submit(final JJ j, String jobName, String jobCategory) {
-        return submit(new TextAreaJJobContainer<>(j, jobName, jobCategory));
-    }
-
-    public static <T, JJ extends ProgressJJob<T>> TextAreaJJobContainer<T> submit(final JJ j, Supplier<String> jobName) {
-        return submit(new TextAreaJJobContainer<>(j, jobName));
-    }
-
-    public static <T, JJ extends ProgressJJob<T>> TextAreaJJobContainer<T> submit(final JJ j, Supplier<String> jobName, Supplier<String> jobCategory) {
-        return submit(new TextAreaJJobContainer<>(j, jobName, jobCategory));
+    public static <T, JJ extends ProgressJJob<T>> TextAreaJJobContainer<T> submit(final JJ j, Supplier<String> jobName, Supplier<String> projectName, Supplier<String> jobCategory) {
+        return submit(new TextAreaJJobContainer<>(j, jobName, projectName, jobCategory));
     }
 
     public static <JJ extends SwingJJobContainer<?>> JJ submit(final JJ j) {
@@ -214,41 +178,12 @@ public class Jobs {
 
         SwingUtilities.invokeAndWait(action);
     }
-
-    public static TextAreaJJobContainer<Boolean> runCommand(@Nullable List<String> command, List<InstanceBean> compoundsToProcess, @Nullable String description) throws IOException {
-        return runCommand(command, compoundsToProcess, null, description);
-    }
-
-    public static TextAreaJJobContainer<Boolean> runCommand(@Nullable List<String> command, List<InstanceBean> compoundsToProcess, @Nullable InputFilesOptions input, @Nullable String description) throws IOException {
-        BackgroundRuns.BackgroundRunJob<GuiProjectSpaceManager, InstanceBean> job =
-                BackgroundRuns.makeBackgroundRun(command, compoundsToProcess, input, MF.ps());
-
-        return submit(job, job.getRunId() + ": " + (description == null ? "" : description),
-                "Computation");
-    }
-
-    public static LoadingBackroundTask<Boolean> runCommandAndLoad(@Nullable List<String> command,
-                                                                  List<InstanceBean> compoundsToProcess,
-                                                                  @Nullable InputFilesOptions input,
-                                                                  Window owner, String title, boolean indeterminateProgress
-    ) throws IOException {
-        BackgroundRuns.BackgroundRunJob<GuiProjectSpaceManager, InstanceBean> job =
-                BackgroundRuns.makeBackgroundRun(command, compoundsToProcess, input, MF.ps());
-        return runInBackgroundAndLoad(owner, title, indeterminateProgress, job);
-    }
-
-    public static LoadingBackroundTask<Boolean> runCommandAndLoad(@Nullable List<String> command,
-                                                                  List<InstanceBean> compoundsToProcess,
-                                                                  @Nullable InputFilesOptions input,
-                                                                  Dialog owner, String title, boolean indeterminateProgress
-    ) throws IOException {
-        BackgroundRuns.BackgroundRunJob<GuiProjectSpaceManager, InstanceBean> job =
-                BackgroundRuns.makeBackgroundRun(command, compoundsToProcess, input, MF.ps());
-        return runInBackgroundAndLoad(owner, title, indeterminateProgress, job);
-    }
-
-    public static void cancelAllRuns() {
-        BackgroundRuns.cancelAllRuns();
+    public static void runEDTAndWaitLazy(Runnable action) {
+        try {
+            runEDTAndWait(action);
+        } catch (InterruptedException | InvocationTargetException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static Sirius getSiriusByProfile(String profile) {

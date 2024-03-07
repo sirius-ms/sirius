@@ -19,13 +19,17 @@
 
 package de.unijena.bioinf.ms.gui.ms_viewer;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.webView.WebViewPanel;
+import javafx.concurrent.Worker;
+import netscape.javascript.JSObject;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.HashMap;
 import java.util.Properties;
-
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
-import javafx.concurrent.Worker;
-import de.unijena.bioinf.ms.gui.webView.WebViewPanel;
-import netscape.javascript.JSObject;
 
 public class WebViewSpectraViewer extends WebViewPanel {
 
@@ -38,57 +42,78 @@ public class WebViewSpectraViewer extends WebViewPanel {
         addJS("spectra_viewer/spectra_viewer_oop.js");
         SpectraViewerConnector svc = new SpectraViewerConnector();
         bridges = new HashMap<String, Object>() {{
-                put("connector", svc);
-            }};
+            put("connector", svc);
+        }};
         load(bridges);
         // create Main instance
         queueTaskInJFXThread(() -> {
-                // after bridges are queued to load, we have to wait (again)
-                webView.getEngine().getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
-                        if (newState == Worker.State.SUCCEEDED) {
-                            final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
-                            final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
-                            if (!theme.equals("Dark")) {
-                                webView.getEngine().executeScript("var fg_color = 'black';");
-                            } else {
-                                webView.getEngine().executeScript("var fg_color = '#bbb';");
-                            }
-                            webView.getEngine().executeScript("var main = new Main();");
-                        }
-                    });
+            // after bridges are queued to load, we have to wait (again)
+            webView.getEngine().getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
+                if (newState == Worker.State.SUCCEEDED) {
+                    final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
+                    final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
+                    if (!theme.equals("Dark")) {
+                        webView.getEngine().executeScript("var fg_color = 'black';");
+                    } else {
+                        webView.getEngine().executeScript("var fg_color = '#bbb';");
+                    }
+                    webView.getEngine().executeScript("var main = new Main();");
+                }
             });
+        });
     }
 
-    public void loadData(String json_spectra, String json_highlight, String svg) { // TEST CODE
+    public void loadDataOrThrow(@NotNull SpectraViewContainer data,  @Nullable String svg,  @Nullable String mirrorViewMode,  @Nullable Integer showMzTopK) {
+        try {
+            loadData(data, svg, mirrorViewMode, showMzTopK);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void loadData(@NotNull SpectraViewContainer data, @Nullable String svg, @Nullable String mirrorViewMode, @Nullable Integer showMzTopK) throws JsonProcessingException { //
+        loadData(new ObjectMapper().writeValueAsString(data), svg, mirrorViewMode, showMzTopK);
+    }
+
+    public void loadData(@NotNull String json_spectra, @Nullable String svg, @Nullable String mirrorViewMode, @Nullable Integer showMzTopK) { // TEST CODE
         cancelTasks();
 
         queueTaskInJFXThread(() -> {
-                // set data
-                JSObject obj = (JSObject) webView.getEngine().executeScript("document.webview = { \"spectrum\": " + json_spectra + ", \"highlight\": " + escapeNull(json_highlight) + ", svg: null};");
-                if (svg!=null) {
-                    obj.setMember("svg", svg);
-                }
-                // load Data
-                webView.getEngine().executeScript(
-                    "main.loadJSONData(document.webview.spectrum, document.webview.highlight, document.webview.svg)");
-            });
+            // set data
+            JSObject obj = (JSObject) webView.getEngine().executeScript("document.webview = { "
+                    + "\"spectrum\": " + json_spectra
+                    + ", \"svg\": null"
+                    + ", \"mirrorStyle\": null"
+                    + ", \"showMz\": null"
+                    + "};");
+            if (mirrorViewMode != null)
+                obj.setMember("mirrorStyle", mirrorViewMode);
+            if (showMzTopK != null)
+                obj.setMember("showMz", showMzTopK);
+            if (svg != null)
+                obj.setMember("svg", svg);
+
+            // load Data
+            webView.getEngine().executeScript(
+                    "main.loadJSONDataAndStructure(document.webview.spectrum, document.webview.svg, document.webview.mirrorStyle, document.webview.showMz)");
+        });
     }
 
     private String jsonString(String val) {
-        if (val==null) return "null";
-        else return "\""+val+"\"";
+        if (val == null) return "null";
+        else return "\"" + val + "\"";
     }
 
     private String escapeNull(String val) {
-        if (val==null) return "null";
+        if (val == null) return "null";
         else return val;
     }
 
-	public void clear(){
+    public void clear() {
         executeJS("main.clear()");
-	}
+    }
 
-    public SpectraViewerConnector getConnector(){
+    public SpectraViewerConnector getConnector() {
         return (SpectraViewerConnector) bridges.get("connector");
     }
 
