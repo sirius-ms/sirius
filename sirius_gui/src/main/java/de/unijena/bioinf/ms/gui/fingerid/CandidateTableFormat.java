@@ -21,27 +21,26 @@ package de.unijena.bioinf.ms.gui.fingerid;
 
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.ms.gui.table.SiriusTableFormat;
+import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
 
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/**
- * Created by fleisch on 15.05.17.
- */
+
 public class CandidateTableFormat extends SiriusTableFormat<FingerprintCandidateBean> {
     protected CandidateTableFormat(Function<FingerprintCandidateBean, Boolean> isBest) {
         super(isBest);
     }
 
     protected static String[] columns = new String[]{
-            "Rank",
+//            "Rank",
             "Name",
             "SMILES",
             "Molecular Formula",
             "Adduct",
             "CSI:FingerID Score",
             "Tanimoto Similarity",
-            "#PubMed IDs",
+//            "#PubMed IDs",
             "XLogP",
             "InChIKey",
             "Lipid Class",
@@ -64,17 +63,19 @@ public class CandidateTableFormat extends SiriusTableFormat<FingerprintCandidate
 
     public Object getColumnValue(FingerprintCandidateBean result, int column) {
         int col = 0;
-        if (column == col++) return result.rank;
-        if (column == col++) return result.candidate.getName() != null ? result.candidate.getName() : "";
-        if (column == col++) return result.candidate.getSmiles();
+//        if (column == col++) return result.rank; //todo nightsky: add rank?
+        if (column == col++) return result.getName() != null ? result.getName() : "";
+        if (column == col++) return result.getCandidate().getSmiles();
         if (column == col++) return result.getMolecularFormula();
-        if (column == col++) return result.adduct.toString();
+        if (column == col++) return result.getCandidate().getAdduct();
         if (column == col++) return result.getScore();
         if (column == col++) return result.getTanimotoScore();
-        if (column == col++) return result.getFingerprintCandidate().getPubmedIDs();
-        if (column == col++) return result.candidate.getXlogp();
-        if (column == col++) return result.candidate.getInchi().key;
-        if (column == col++) return result.candidate.getLinks().stream().filter(l -> l.name.equals(DataSource.LIPID.realName)).map(l -> l.id).collect(Collectors.joining(","));
+//        if (column == col++) return result.getPubmedIDs(); //todo nightsky: add pubmed ids
+        if (column == col++) return result.getXLogP();
+        if (column == col++) return result.getInChiKey();
+        if (column == col++) return result.getCandidate().getDbLinks().stream()
+                .filter(l -> DataSource.LIPID.name().equals(l.getName()))
+                .map(DBLink::getId).collect(Collectors.joining(","));
         if (column == col) return isBest.apply(result);
 
         throw new IllegalStateException();

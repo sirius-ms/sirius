@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.gui.actions;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ChangeAdductDialog;
@@ -33,20 +34,17 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
-
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ChangeAdductAction extends AbstractAction {
-    public ChangeAdductAction() {
-        super("Change adduct");
+public class ChangeAdductAction extends AbstractGuiAction {
+    public ChangeAdductAction(SiriusGui gui) {
+        super("Change adduct", gui);
         putValue(Action.SMALL_ICON, Icons.LIST_EDIT_16);
         putValue(Action.SHORT_DESCRIPTION, "Change adduct type of selected compounds");
+        setEnabled(SiriusActions.notComputingOrEmptySelected(this.mainFrame.getCompoundListSelectionModel()));
 
-        setEnabled(SiriusActions.notComputingOrEmptySelected(MF.getCompoundListSelectionModel()));
-
-        MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
+        this.mainFrame.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
             public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
             }
@@ -60,15 +58,15 @@ public class ChangeAdductAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        new ChangeAdductDialog(MF).getSelectedAdduct().ifPresent(adduct -> {
-            Jobs.runInBackgroundAndLoad(MF, "Changing Adducts...", new TinyBackgroundJJob<Boolean>() {
+        new ChangeAdductDialog(mainFrame).getSelectedAdduct().ifPresent(adduct -> {
+            Jobs.runInBackgroundAndLoad(mainFrame, "Changing Adducts...", new TinyBackgroundJJob<Boolean>() {
                 @Override
                 protected Boolean compute() throws Exception {
                     int progress = 0;
                     updateProgress(0, 100, progress++, "Loading Compounds...");
-                    final List<InstanceBean> toModify = new ArrayList<>(MF.getCompoundList().getCompoundListSelectionModel().getSelected());
+                    final List<InstanceBean> toModify = new ArrayList<>(mainFrame.getCompoundList().getCompoundListSelectionModel().getSelected());
                     if (!toModify.isEmpty()) {
-                        MF.getCompoundList().getCompoundListSelectionModel().clearSelection();
+                        mainFrame.getCompoundList().getCompoundListSelectionModel().clearSelection();
                         updateProgress(0, toModify.size(), progress++, "Changing " + (progress - 1) + "/" + toModify.size());
                         for (InstanceBean instance : toModify) {
                             checkForInterruption();

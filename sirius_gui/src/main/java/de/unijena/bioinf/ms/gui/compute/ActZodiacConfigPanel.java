@@ -19,10 +19,11 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 
 public class ActZodiacConfigPanel extends ActivatableConfigPanel<ZodiacConfigPanel> {
-    public ActZodiacConfigPanel(boolean displayAdvancedParameters) {
-        super("ZODIAC", Icons.NET_32, false, () -> new ZodiacConfigPanel(displayAdvancedParameters));
+    public ActZodiacConfigPanel(SiriusGui gui, boolean displayAdvancedParameters) {
+        super(gui, "ZODIAC", Icons.NET_32, () -> new ZodiacConfigPanel(displayAdvancedParameters));
     }
 }

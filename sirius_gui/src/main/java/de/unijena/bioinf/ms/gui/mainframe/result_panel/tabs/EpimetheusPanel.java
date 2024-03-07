@@ -24,15 +24,13 @@ import de.unijena.bioinf.ms.gui.fingerid.CandidateListTableView;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
-import de.unijena.bioinf.projectspace.FormulaResultBean;
-import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateFormula;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Optional;
 
-/**
- * Created by fleisch on 15.05.17.
- */
+
 public class EpimetheusPanel extends JPanel implements PanelDescription {
     @Override
     public String getDescription() {
@@ -51,37 +49,16 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
         super(new BorderLayout());
         this.structureList = structureList;
         this.candidateTable = new CandidateListTableView(structureList);
-//        final TreeVisualizationPanel overviewTVP = new TreeVisualizationPanel();
-        final SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel(SpectraVisualizationPanel.MS2_DISPLAY, false, false);
-        this.structureList.getTopLevelSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        final SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel(SpectraVisualizationPanel.MS2_DISPLAY);
 
-        // Class to synchronize selected peak/node
-//        VisualizationPanelSynchronizer synchronizer = new VisualizationPanelSynchronizer(overviewTVP, overviewSVP);
- 
-//
         candidateTable.getFilteredSelectionModel().addListSelectionListener(e -> {
             DefaultEventSelectionModel<FingerprintCandidateBean> selections = (DefaultEventSelectionModel<FingerprintCandidateBean>) e.getSource();
-            FingerprintCandidateBean sre = selections.getSelected().stream().findFirst().orElse(null);
-            FormulaResultBean form = sre != null ? sre.getFormulaResult() : null;
-            InstanceBean inst = form != null ? form.getInstance() : null;
-//            overviewTVP.resultsChanged(inst, form, null, null);
-            overviewSVP.resultsChanged(inst, form, sre != null ? sre.getFingerprintCandidate() : null);
-        });
-        overviewSVP.getAnoModeBox().ifPresent(x->{
-            x.addItemListener(y->{
-                DefaultEventSelectionModel<FingerprintCandidateBean> selections = (DefaultEventSelectionModel<FingerprintCandidateBean>) candidateTable.getFilteredSelectionModel();
-                FingerprintCandidateBean sre = selections.getSelected().stream().findFirst().orElse(null);
-                FormulaResultBean form = sre != null ? sre.getFormulaResult() : null;
-                InstanceBean inst = form != null ? form.getInstance() : null;
-//            overviewTVP.resultsChanged(inst, form, null, null);
-                overviewSVP.resultsChanged(inst, form, sre != null ? sre.getFingerprintCandidate() : null);
-            });
+            Optional<FingerprintCandidateBean> sre = selections.getSelected().stream().findFirst();
+            structureList.readDataByConsumer(d -> overviewSVP.resultsChanged(d,
+                    sre.map(FingerprintCandidateBean::getCandidate).map(StructureCandidateFormula::getFormulaId).orElse(null),
+                    sre.map(FingerprintCandidateBean::getInChiKey).orElse(null)));
         });
 
-
-//        JSplitPane south = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, overviewSVP, overviewTVP);
-//        south.setDividerLocation(.5d);
-//        south.setResizeWeight(.5d);
         JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, candidateTable, overviewSVP);
         major.setDividerLocation(250);
         add(major, BorderLayout.CENTER);

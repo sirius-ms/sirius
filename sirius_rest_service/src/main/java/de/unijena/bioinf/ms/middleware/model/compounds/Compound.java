@@ -63,11 +63,11 @@ public class Compound {
     protected Double rtEndSeconds;
 
     /**
-     * Neutral mass of this compound. Ion masse minus the mass of the assigned adduct of each feature assigned
-     * to this compound should result in the same neutral mass
+     * Neutral mass of this compound. Ion masse minus the mass of the assigned adduct of each feature of
+     * this compound should result in the same neutral mass
      */
     @Schema(nullable = true)
-    protected double neutralMass;
+    protected Double neutralMass;
 
     /**
      * List of aligned features (adducts) that belong to the same (this) compound

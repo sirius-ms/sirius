@@ -22,36 +22,65 @@ package de.unijena.bioinf.ms.middleware.model.compute.tools;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
+import de.unijena.bioinf.ms.middleware.model.compute.NullCheckMapBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.spectraldb.InjectSpectralLibraryMatchFormulas;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Map;
 
 /**
  * User/developer friendly parameter subset for the CSI:FingerID Fingerprint tool
+ * Needs results from Formula/SIRIUS Tool
  */
 
 @Getter
 @Setter
+@SuperBuilder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class FingerprintPrediction extends Tool<FingerprintOptions> {
+    /**
+     * If true, an adaptive soft threshold will be applied to only compute Fingerprints for promising formula candidates
+     * Enabling is highly recommended.
+     */
+    @Schema(nullable = true)
+    Boolean useScoreThreshold;
 
+    /**
+     * If true Fingerprint/Classes/Structures will be predicted for formulas candidates with
+     * reference spectrum similarity > Sirius.minReferenceMatchScoreToInject will be predicted no matter which
+     * score threshold rules apply.
+     * If NULL default value will be used.
+     */
+    @Schema(nullable = true)
+    Boolean alwaysPredictHighRefMatches;
 
-        /**
-         * If true, an adaptive soft threshold will be applied to only compute Fingerprints for promising formula candidates
-         * Enabling is highly recommended.
-         */
-        Boolean useScoreThreshold = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaResultThreshold.class).useThreshold();
+    private FingerprintPrediction() {
+        super(FingerprintOptions.class);
+    }
 
-        public FingerprintPrediction() {
-                super(FingerprintOptions.class);
-        }
+    @JsonIgnore
+    @Override
+    public Map<String, String> asConfigMap() {
+        return new NullCheckMapBuilder()
+                .putIfNonNull("FormulaResultThreshold", useScoreThreshold)
+                .putIfNonNull("InjectSpectralLibraryMatchFormulas.alwaysPredict", alwaysPredictHighRefMatches)
+                .toUnmodifiableMap();
+    }
 
-        @JsonIgnore
-        @Override
-        public Map<String, String> asConfigMap() {
-                return Map.of("FormulaResultThreshold", String.valueOf(useScoreThreshold));
-        }
+    public static FingerprintPrediction buildDefault(){
+        return builderWithDefaults().build();
+    }
+    public static FingerprintPrediction.FingerprintPredictionBuilder<?,?> builderWithDefaults(){
+        return FingerprintPrediction.builder()
+                .enabled(true)
+                .alwaysPredictHighRefMatches(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaResultThreshold.class).useThreshold())
+                .useScoreThreshold(PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectSpectralLibraryMatchFormulas.class).isAlwaysPredict());
+    }
 }

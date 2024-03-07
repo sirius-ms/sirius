@@ -50,14 +50,14 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
         defaultConfigOptions.changeOption("SpectralSearchDB", dbList);
     }
 
-    @CommandLine.Option(names = "--ppm-max", descriptionKey = "MS1MassDeviation.allowedMassDeviation", description = "Maximum allowed mass deviation in ppm for matching peaks.")
+    @CommandLine.Option(names = "--ppm-max-peaks", descriptionKey = "SpectralMatchingMassDeviation.allowedPeakDeviation")
     public void setPpmMax(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("MS1MassDeviation.allowedMassDeviation", value + "ppm");
+        defaultConfigOptions.changeOption("SpectralMatchingMassDeviation.allowedPeakDeviation", value + "ppm");
     }
 
-    @CommandLine.Option(names = "--ppm-max-ms2", descriptionKey = "MS2MassDeviation.allowedMassDeviation", description = "Maximum allowed mass deviation in ppm for matching the precursor. If not specified, the same value as for the peaks is used.")
+    @CommandLine.Option(names = "--ppm-max-precursor", descriptionKey = "SpectralMatchingMassDeviation.allowedPrecursorDeviation")
     public void setPpmMaxMs2(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("MS2MassDeviation.allowedMassDeviation", value + "ppm");
+        defaultConfigOptions.changeOption("SpectralMatchingMassDeviation.allowedPrecursorDeviation", value + "ppm");
     }
 
     @CommandLine.Option(names = "--print", descriptionKey = "SpectralSearchLog", description = "Number of matches to print per experiment.")
@@ -65,7 +65,7 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
         defaultConfigOptions.changeOption("SpectralSearchLog", value);
     }
 
-    @CommandLine.Option(names = "--scorer", descriptionKey = "SpectralAlignmentScorer", description = "Scoring function for alignment. Valid values: ${COMPLETION-CANDIDATES}.", defaultValue = "MODIFIED_COSINE")
+    @CommandLine.Option(names = "--scorer", descriptionKey = "SpectralAlignmentScorer", description = "Scoring function for alignment. Valid values: ${COMPLETION-CANDIDATES}.")
     public void setScorer(SpectralAlignmentType alignmentType) throws Exception {
         defaultConfigOptions.changeOption("SpectralAlignmentScorer", alignmentType.toString());
     }

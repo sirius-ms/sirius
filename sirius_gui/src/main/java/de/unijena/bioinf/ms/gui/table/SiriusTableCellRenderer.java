@@ -33,6 +33,7 @@ public class SiriusTableCellRenderer extends DefaultTableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         if (isSelected) {
             backColor = Colors.LIST_SELECTED_BACKGROUND;
+            foreColor = Colors.LIST_SELECTED_FOREGROUND;
         } else {
             if (row % 2 == 0) backColor = Colors.LIST_EVEN_BACKGROUND;
             else backColor = Colors.LIST_UNEVEN_BACKGROUND;

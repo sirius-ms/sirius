@@ -28,6 +28,7 @@ import java.awt.*;
  *
  * @author Babu Kalakrishnan
  * Modifications by greearb and jzd
+ * Modification by Markus Fleischauer
  */
 
 public class WrapLayout extends FlowLayout {

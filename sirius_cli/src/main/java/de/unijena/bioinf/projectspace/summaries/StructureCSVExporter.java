@@ -95,7 +95,7 @@ public class StructureCSVExporter {
         if (Double.isNaN(r.getCandidate().getXlogp())) writer.write("\"\"");
         else writer.write(String.valueOf(r.getCandidate().getXlogp()));
         writer.write('\t');
-        list(writer, dbMap.get(DataSource.PUBCHEM.realName).stream().filter(Objects::nonNull).collect(Collectors.toList())); //is this a hack or ok?
+        list(writer, dbMap.get(DataSource.PUBCHEM.name()).stream().filter(Objects::nonNull).collect(Collectors.toList())); //is this a hack or ok?
         writer.write('\t');
         links(writer, dbMap);
         writer.write('\t');

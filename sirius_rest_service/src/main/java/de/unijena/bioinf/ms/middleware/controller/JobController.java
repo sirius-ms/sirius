@@ -24,17 +24,19 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.frontend.core.Workspace;
-import de.unijena.bioinf.ms.middleware.model.compute.ImportLocalFilesSubmission;
-import de.unijena.bioinf.ms.middleware.model.compute.ImportStringSubmission;
+import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
+import de.unijena.bioinf.ms.middleware.model.compute.CommandSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.compute.JobSubmission;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
+import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.springdoc.api.annotations.ParameterObject;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -42,7 +44,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.validation.Valid;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -61,34 +62,60 @@ public class JobController {
     public final static String DEFAULT_PARAMETERS = "DEFAULT";
     private final ComputeService computeService;
     private final ProjectsProvider projectsProvider;
-    public JobController(ComputeService<?> computeService, ProjectsProvider<?> projectsProvider) {
+    private final ChemDbService chemDbService;
+    private final GlobalConfig globalConfig;
+
+    public JobController(ComputeService<?> computeService, ProjectsProvider<?> projectsProvider, ChemDbService chemDbService, GlobalConfig globalConfig) {
         this.computeService = computeService;
         this.projectsProvider = projectsProvider;
+        this.chemDbService = chemDbService;
+        this.globalConfig = globalConfig;
     }
 
 
     /**
-     * Get job information and its current state and progress (if available).
+     * Get Page of jobs with information such as current state and progress (if available).
      *
-     * @param projectId                project-space to run jobs on
-     * @param optFields                set of optional fields to be included. Use 'none' only to override defaults.
+     * @param projectId project-space to run jobs on
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      */
-
-    @GetMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/projects/{projectId}/jobs/page", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public Page<Job> getJobs(@PathVariable String projectId,
-                             @ParameterObject Pageable pageable,
-                             @RequestParam(defaultValue = "") EnumSet<Job.OptField> optFields
+    public Page<Job> getJobsPaged(@PathVariable String projectId,
+                                  @ParameterObject Pageable pageable,
+                                  @RequestParam(defaultValue = "") EnumSet<Job.OptField> optFields
     ) {
         return computeService.getJobs(projectsProvider.getProjectOrThrow(projectId), pageable, removeNone(optFields));
     }
 
     /**
+     * Get List of all available jobs with information such as current state and progress (if available).
+     *
+     * @param projectId project-space to run jobs on
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
+     */
+    @GetMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public List<Job> getJobs(@PathVariable String projectId,
+                             @RequestParam(defaultValue = "") EnumSet<Job.OptField> optFields
+    ) {
+        return getJobsPaged(projectId, globalConfig.unpaged(), optFields).stream().toList();
+    }
+
+    @GetMapping(value = "/projects/{projectId}/has-jobs", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public boolean hasJobs(@PathVariable String projectId,
+                           @RequestParam(defaultValue = "false") boolean includeFinished
+    ) {
+        return computeService.hasJobs(projectsProvider.getProjectOrThrow(projectId), includeFinished);
+    }
+
+    /**
      * Get job information and its current state and progress (if available).
      *
-     * @param projectId                project-space to run jobs on
-     * @param jobId                    of the job to be returned
-     * @param optFields                set of optional fields to be included. Use 'none' only to override defaults.
+     * @param projectId project-space to run jobs on
+     * @param jobId     of the job to be returned
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      */
     @GetMapping(value = "/projects/{projectId}/jobs/{jobId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
@@ -101,9 +128,9 @@ public class JobController {
     /**
      * Start computation for given compounds and with given parameters.
      *
-     * @param projectId                project-space to run jobs on
-     * @param jobSubmission            configuration of the job that will be submitted of the job to be returned
-     * @param optFields                set of optional fields to be included. Use 'none' only to override defaults.
+     * @param projectId     project-space to run jobs on
+     * @param jobSubmission configuration of the job that will be submitted of the job to be returned
+     * @param optFields     set of optional fields to be included. Use 'none' only to override defaults.
      */
     @PostMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.ACCEPTED)
@@ -117,11 +144,11 @@ public class JobController {
     /**
      * Start computation for given compounds and with parameters from a stored job-config.
      *
-     * @param projectId                project-space to run jobs on
-     * @param jobConfigName            name if the config to be used
-     * @param compoundIds              compound ids to be computed
-     * @param recompute                enable or disable recompute. If null the stored value will be used.
-     * @param optFields                set of optional fields to be included. Use 'none' only to override defaults.
+     * @param projectId     project-space to run jobs on
+     * @param jobConfigName name if the config to be used
+     * @param compoundIds   compound ids to be computed
+     * @param recompute     enable or disable recompute. If null the stored value will be used.
+     * @param optFields     set of optional fields to be included. Use 'none' only to override defaults.
      */
     @PostMapping(value = "/projects/{projectId}/jobs/from-config", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.ACCEPTED)
@@ -138,45 +165,49 @@ public class JobController {
     }
 
     /**
-     * Import ms/ms data in given format from local filesystem into the specified project.
-     * The import will run in a background job
-     * Possible formats (ms, mgf, cef, msp, mzML, mzXML, project-space)
-     * <p>
+     * Start computation for given command and input.
      *
-     * @param projectId         project-space to import into.
-     * @param jobSubmission     configuration of the job that will be submitted
+     * @param projectId         project-space to perform the command for.
+     * @param commandSubmission the command and the input to be executed
      * @param optFields         set of optional fields to be included. Use 'none' only to override defaults.
-     * @return JobId of background job that imports given run/compounds/features.
+     * @return Job of the command to be executed.
+     *
+     * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
      */
-    @PostMapping(value = "/{projectId}/jobs/import-from-local-path", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public Job startImportFromPathJob(@PathVariable String projectId, @Valid @RequestBody ImportLocalFilesSubmission jobSubmission,
-                                      @RequestParam(defaultValue = "command, progress") EnumSet<Job.OptField> optFields
+    @Deprecated
+    @PostMapping(value = "/{projectId}/jobs/run-command", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    public Job startCommand(@PathVariable String projectId, @Valid @RequestBody CommandSubmission commandSubmission,
+                            @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) {
         Project p = projectsProvider.getProjectOrThrow(projectId);
-        return computeService.createAndSubmitImportJob(p, jobSubmission, removeNone(optFields));
+        return computeService.createAndSubmitCommandJob(p, commandSubmission, removeNone(optFields));
     }
 
     /**
-     * Import ms/ms data from the given format into the specified project-space
-     * Possible formats (ms, mgf, cef, msp, mzML, mzXML)
+     * * Delete ALL jobs. Specify how to behave for running jobs.
      *
-     * @param projectId         project-space to import into.
-     * @param jobSubmission     configuration of the job that will be submitted
-     * @param optFields         set of optional fields to be included. Use 'none' only to override defaults.
-     * @return CompoundIds of the imported run/compounds/feature.
+     * @param projectId       project-space to delete jobs from
+     * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,
+     *                        deletion will fail for running jobs or request will block until job has finished.
+     * @param awaitDeletion   If true request will block until deletion succeeded or failed.
+     *                        If the job is still running the request will wait until the job has finished.
      */
-    @PostMapping(value = "/{projectId}/jobs/import-from-string", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public Job startImportFromStringJob(@PathVariable String projectId, @Valid @RequestBody ImportStringSubmission jobSubmission,
-                                        @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
+
+    @DeleteMapping(value = "/projects/{projectId}/jobs", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void deleteJobs(@PathVariable String projectId,
+                           @RequestParam(required = false, defaultValue = "true") boolean cancelIfRunning,
+                           @RequestParam(required = false, defaultValue = "true") boolean awaitDeletion
     ) {
-        Project p = projectsProvider.getProjectOrThrow(projectId);
-        return computeService.createAndSubmitImportJob(p, jobSubmission, removeNone(optFields));
+        computeService.deleteJobs(projectsProvider.getProjectOrThrow(projectId), cancelIfRunning, awaitDeletion,
+                false, EnumSet.noneOf(Job.OptField.class));
     }
+
 
     /**
      * Delete job. Specify how to behave for running jobs.
      *
-     * @param projectId       project-space to run jobs on
+     * @param projectId       project-space to delete job from
      * @param jobId           of the job to be deleted
      * @param cancelIfRunning If true job will be canceled if it is not finished. Otherwise,
      *                        deletion will fail for running jobs or request will block until job has finished.

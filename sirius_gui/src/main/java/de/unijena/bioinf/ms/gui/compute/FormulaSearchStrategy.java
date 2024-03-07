@@ -18,6 +18,7 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
+import de.unijena.bioinf.ms.nightsky.sdk.model.MsData;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Ms1Preprocessor;
@@ -163,15 +164,15 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         final TwoColumnPanel options = new TwoColumnPanel();
 
-        JSpinner denovoUpTo = makeIntParameterSpinner("FormulaSearchSettings.disableDeNovoAboveMass", 0, Integer.MAX_VALUE, 5);  // binding is overwritten
+        JSpinner denovoUpTo = makeIntParameterSpinner("FormulaSearchSettings.performDeNovoBelowMz", 0, Integer.MAX_VALUE, 5);  // binding is overwritten
         options.addNamed("Perform de novo below m/z", denovoUpTo);
 
-        parameterBindings.put("FormulaSearchSettings.enableBottomUpFromMass", () -> switch (strategy) {
+        parameterBindings.put("FormulaSearchSettings.performBottomUpAboveMz", () -> switch (strategy) {
             case DEFAULT, BOTTOM_UP -> "0";
             case DE_NOVO, DATABASE -> String.valueOf(Double.POSITIVE_INFINITY);
         });
 
-        parameterBindings.put("FormulaSearchSettings.disableDeNovoAboveMass", () -> switch (strategy) {
+        parameterBindings.put("FormulaSearchSettings.performDeNovoBelowMz", () -> switch (strategy) {
             case DEFAULT -> denovoUpTo.getValue().toString();
             case BOTTOM_UP, DATABASE -> "0";
             case DE_NOVO -> String.valueOf(Double.POSITIVE_INFINITY);
@@ -282,7 +283,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         List<ElementAlphabetStrategy> settingsElements = List.copyOf(EnumSet.allOf(ElementAlphabetStrategy.class));
         settingsElements.forEach(elementAlphabetStrategySelector::addItem);
         elementAlphabetStrategySelector.setSelectedItem(ElementAlphabetStrategy.DE_NOVO_ONLY);
-        parameterBindings.put("FormulaSearchSettings.applyFormulaContraintsToBottomUp", () -> Boolean.toString(elementAlphabetStrategySelector.getSelectedItem() == ElementAlphabetStrategy.BOTH));
+        parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToBottomUp", () -> Boolean.toString(elementAlphabetStrategySelector.getSelectedItem() == ElementAlphabetStrategy.BOTH));
 
         JLabel label = new JLabel("Apply element filter to");
         filterFields.add(label, elementAlphabetStrategySelector);
@@ -304,7 +305,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
             }
         };
 
-        parameterBindings.put("FormulaSearchSettings.applyFormulaContraintsToCandidateLists", () -> Boolean.toString(useElementFilter.isSelected()));
+        parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates", () -> Boolean.toString(useElementFilter.isSelected()));
 
         JLabel label = new JLabel("Enable element filter");
 
@@ -336,13 +337,15 @@ public class FormulaSearchStrategy extends ConfigPanel {
     }
 
     protected void detectElements(Set<Element> autoDetectable, JTextField formulaConstraintsTextBox) {
+        //todo nightsky: do we want todo that in the frontend?
         String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
         FormulaConstraints currentConstraints = FormulaConstraints.fromString(formulaConstraintsTextBox.getText());
         InstanceBean ec = ecs.get(0);
-        if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
+        MsData msData = ec.getMsData();
+        if (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null) {
             Jobs.runInBackgroundAndLoad(owner, "Detecting Elements...", () -> {
                 final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
-                ProcessedInput pi = pp.preprocess(new MutableMs2Experiment(ec.getExperiment(), false));
+                ProcessedInput pi = pp.preprocess(new MutableMs2Experiment(ec.asMs2Experiment(), false));
 
                 pi.getAnnotation(FormulaConstraints.class).
                         ifPresentOrElse(c -> {
@@ -366,6 +369,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
     }
 
     public List<String> getFormulaSearchDBStrings() {
-        return getFormulaSearchDBs().stream().map(CustomDataSources.Source::id).filter(Objects::nonNull).collect(Collectors.toList());
+        return getFormulaSearchDBs().stream().map(CustomDataSources.Source::name).filter(Objects::nonNull).collect(Collectors.toList());
     }
 }

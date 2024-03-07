@@ -20,40 +20,40 @@
 
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
-import de.unijena.bioinf.chemdb.SearchableDatabase;
-import de.unijena.bioinf.chemdb.custom.CustomDatabase;
+import de.unijena.bioinf.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
-import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.nightsky.sdk.jjobs.SseProgressJJob;
+import de.unijena.bioinf.ms.nightsky.sdk.model.*;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
+import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
+import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isLoggedIn;
 
 class ImportDatabaseDialog extends JDialog {
     private final DatabaseDialog databaseDialog;
     protected DatabaseImportConfigPanel configPanel;
 
-    public ImportDatabaseDialog(DatabaseDialog databaseDialog) {
+    public ImportDatabaseDialog(@NotNull DatabaseDialog databaseDialog) {
         this(databaseDialog, null);
     }
 
-    public ImportDatabaseDialog(DatabaseDialog databaseDialog, @Nullable CustomDatabase db) {
-        super(databaseDialog, db != null ? "Import into " + db.name() : "Create custom database", true);
+    public ImportDatabaseDialog(@NotNull DatabaseDialog databaseDialog, @Nullable SearchableDatabase db) {
+        super(databaseDialog, db != null ? "Import into " + db.getDatabaseId() : "Create custom database", true);
         this.databaseDialog = databaseDialog;
 
         setPreferredSize(new Dimension(640, 480));
 
-        configPanel = new DatabaseImportConfigPanel(db, databaseDialog.customDatabases.stream().map(SearchableDatabase::name).collect(Collectors.toSet()));
+        configPanel = new DatabaseImportConfigPanel(databaseDialog.getGui(), db);
         add(configPanel);
 
         configPanel.importButton.addActionListener(e -> {
@@ -70,22 +70,23 @@ class ImportDatabaseDialog extends JDialog {
     protected void runImportJob() {
         try {
             TinyBackgroundJJob<Boolean> job = Jobs.runInBackground(() -> {
-                ConnectionMonitor.ConnectionCheck check = MF.CONNECTION_MONITOR().checkConnection();
-                return check.isConnected() && check.isLoggedIn();
+                ConnectionCheck check = databaseDialog.getGui().getConnectionMonitor().checkConnection();
+                return isConnected(check) && isLoggedIn(check);
             });
             if (!job.getResult()) {
                 throw new ExecutionException(new Exception("Not connected or logged in!"));
             }
 
-            List<String> command = new ArrayList<>();
-            command.add(configPanel.toolCommand());
-            command.addAll(configPanel.asParameterList());
+            CommandSubmission command = new CommandSubmission();
+            command.addCommandItem(configPanel.toolCommand());
+            configPanel.asParameterList().forEach(command::addCommandItem);
 
-            Jobs.runCommandAndLoad(command, null,
-                            null, this,
-                            "Importing into '" + configPanel.getDbFilePath() + "'...",
-                            false)
-                    .awaitResult();
+            databaseDialog.gui.applySiriusClient((c, pid) -> {
+                Job j = c.jobs().startCommand(pid, command, List.of(JobOptField.PROGRESS));
+                return LoadingBackroundTask.runInBackground(databaseDialog.gui.getMainFrame(),
+                        "Importing into '" + configPanel.getDbFilePath() + "'...", null,
+                        new SseProgressJJob(databaseDialog.gui.getSiriusClient(), pid, j));
+            }).awaitResult();
 
             databaseDialog.whenCustomDbIsAdded(configPanel.getDbFilePath());
         } catch (ExecutionException ex) {
@@ -97,7 +98,7 @@ class ImportDatabaseDialog extends JDialog {
                 new StacktraceDialog(this, "Unexpected error when importing custom DB!", ex);
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB import.", e);
-            new StacktraceDialog(MF, "Fatal Error during Custom DB import.", e);
+            new StacktraceDialog(databaseDialog.getGui().getMainFrame(), "Fatal Error during Custom DB import.", e);
         }
     }
 }

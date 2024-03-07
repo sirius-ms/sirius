@@ -19,10 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.molecular_formular;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Score;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
-import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
@@ -46,19 +43,16 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
 
     private FormulaResultBean sre;
 
-//    private DecimalFormat numberFormat;
-
-    private final Function<FormulaResultBean, FormulaList.RenderScore> scoreFunc;
     private final Function<FormulaResultBean, Boolean> bestHitFunc;
+    private final Function<FormulaResultBean, RenderScore> scoreFunc;
 
 
-    public FormulaListTextCellRenderer(Function<FormulaResultBean, FormulaList.RenderScore> scoreFunc, Function<FormulaResultBean,Boolean> bestHitFuction) {
+    public FormulaListTextCellRenderer(Function<FormulaResultBean,Boolean> bestHitFuction, Function<FormulaResultBean, RenderScore> scoreFunction) {
         this.setPreferredSize(new Dimension(250, 45));
         initColorsAndFonts();
         sre = null;
-//        this.numberFormat = new DecimalFormat("#0.000000");
-        this.scoreFunc = scoreFunc;
         this.bestHitFunc = bestHitFuction;
+        this.scoreFunc = scoreFunction;
     }
 
     public void initColorsAndFonts() {
@@ -128,19 +122,16 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
 
 
         int mfLength = mfFm.stringWidth(formulaText) + 4;
-        int rankLength = rankFm.stringWidth(Integer.toString(sre.getRank()));
 
-        g2.drawLine(13 + rankLength, 17, 15 + mfLength + rankLength, 17);
+        g2.drawLine(13, 17, 15 + mfLength, 17);
 
         g2.setFont(mfFont);
-        g2.drawString(formulaText, 15 + rankLength, 13);
-        g2.drawString(charge > 0 ? "+" : "-", 15 + mfLength + rankLength - 4, 13 - 4);
-
-        g2.setFont(rankFont);
-        g2.drawString(Integer.toString(sre.getRank()), 2, 15);
+        g2.drawString(formulaText, 15, 13);
+        g2.drawString(charge > 0 ? "+" : "-", 15 + mfLength - 4, 13 - 4);
 
         {
-            FormulaList.RenderScore renderScore = scoreFunc.apply(sre);
+            RenderScore renderScore = scoreFunc.apply(sre);
+
             int scoreLength = propertyFm.stringWidth(renderScore.name);
             g2.setFont(propertyFont);
             g2.drawString(renderScore.name, 10, 35);
@@ -148,9 +139,9 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
             g2.drawString(String.format("%.3f", renderScore.score) + "%", 10 + gap + scoreLength, 35);
         }
 
-        sre.getScore(TopCSIScore.class).ifPresent(score -> {
-            String cosmicLab = score.shortName();
-            String cosmicVal = (score.isNa()) ? ConfidenceScore.NA() : BigDecimal.valueOf(score.score()).setScale(3, RoundingMode.HALF_UP).toString();
+        sre.getTopCSIScore().ifPresent(score -> {
+            String cosmicLab = "CSI";
+            String cosmicVal = (Double.isNaN(score)) ? ConfidenceScore.NA() : BigDecimal.valueOf(score).setScale(3, RoundingMode.HALF_UP).toString();
             final int labStart = (int) getSize().getWidth() - (10 + gap + propertyFm.stringWidth(cosmicLab) + g2.getFontMetrics(valueFont).stringWidth(cosmicVal));
             g2.setFont(propertyFont);
             g2.drawString(cosmicLab, labStart, 35);
@@ -160,11 +151,6 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
     }
 
     private static class DummySiriusResult extends FormulaResultBean {
-
-        @Override
-        public int getRank() {
-            return 25;
-        }
 
         @Override
         public String getFormulaAndIonText() {
@@ -177,19 +163,37 @@ public class FormulaListTextCellRenderer extends JLabel implements ListCellRende
         }
 
 
-        @Override
-        public <T extends FormulaScore> double getScoreValue(Class<T> scoreType) {
-            return 9000;
+        private  Optional<Double> getScoreValue() {
+            return Optional.of(9000d);
         }
 
         @Override
-        public <T extends FormulaScore> Optional<T> getScore(Class<T> scoreType) {
-            return Optional.of(FormulaScore.NA(scoreType));
+        public Optional<Double> getSiriusScore() {
+            return getScoreValue();
         }
 
-        public DummySiriusResult() {
-            //Dummy ignores non null!
-            super(null,null,1);
+        @Override
+        public Optional<Double> getZodiacScore() {
+            return getScoreValue();
+        }
+
+        @Override
+        public Optional<Double> getTopCSIScore() {
+            return getScoreValue();
+        }
+    }
+
+    public static class RenderScore{
+        public final double score;
+        public final String name;
+
+        public RenderScore(double score, String name) {
+            this.score = score;
+            this.name = name;
+        }
+
+        public static RenderScore of(double score, String name){
+            return new RenderScore(score, name);
         }
     }
 }

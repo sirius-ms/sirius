@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import lombok.Getter;
 import picocli.CommandLine;
 
 @CommandLine.Command(name = "asService", aliases = {"rest", "REST"}, description = "EXPERIMENTAL/UNSTABLE: Starts SIRIUS as a background (REST) service that can be requested via a REST-API", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
@@ -41,11 +42,15 @@ public class MiddlewareAppOptions<I extends Instance, P extends ProjectSpaceMana
     @CommandLine.Option(names = {"--enable-rest-shutdown", "-s"}, description = "Allows to shut down the SIRIUS REST Service via a rest api call (/actuator/shutdown)", defaultValue = "false")
     private void setShutdown(boolean enableRestShutdown) {
         if (enableRestShutdown)
-            System.getProperties().setProperty("management.endpoints.web.exposure.include", "info,health,shutdown");
+            System.getProperties().setProperty("management.endpoints.web.exposure.include", "health,shutdown");
         else
-            System.getProperties().setProperty("management.endpoints.web.exposure.include", "info,health");
+            System.getProperties().setProperty("management.endpoints.web.exposure.include", "health");
 
     }
+
+    @CommandLine.Option(names = {"--gui", "-g"}, description = "Start GUI on specified project or on temporary project otherwise.")
+    @Getter
+    private boolean startGui;
 
     @Override
     public Flow<I, P> makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {

@@ -21,14 +21,23 @@ package de.unijena.bioinf.ms.middleware;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
+import de.unijena.bioinf.ms.middleware.service.databases.ChemDbServiceImpl;
+import de.unijena.bioinf.ms.middleware.service.gui.SiriusProjectSpaceGuiService;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.compute.SiriusProjectSpaceComputeService;
+import de.unijena.bioinf.ms.middleware.service.events.EventService;
+import de.unijena.bioinf.ms.middleware.service.events.SseEventService;
+import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
+import de.unijena.bioinf.ms.middleware.service.info.ConnectionChecker;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceProviderImpl;
 import de.unijena.bioinf.webapi.WebAPI;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
@@ -37,23 +46,39 @@ import org.springframework.context.annotation.DependsOn;
 @Configuration
 public class SiriusContext{
     @Value("${de.unijena.bioinf.siriusNightsky.version}")
+    @Getter
     private String apiVersion;
 
-    public String getApiVersion() {
-        return apiVersion;
+    @Bean
+    public EventService<?> eventService(@Value("${de.unijena.bioinf.siriusNightsky.sse.timeout:#{120000}}") long emitterTimeout){
+        return new SseEventService(emitterTimeout);
     }
 
     @Bean
     @DependsOn({"webAPI", "jobManager", "projectsProvider"})
-    public ComputeService<?> computeService() {
-        return new SiriusProjectSpaceComputeService();
+    public ComputeService<?> computeService(EventService<?> eventService) {
+        return new SiriusProjectSpaceComputeService(eventService);
     }
 
     @Bean
     @DependsOn({"jobManager"})
-    public ProjectsProvider<?> projectsProvider() {
-        SiriusProjectSpaceProviderImpl projectsProvider = new SiriusProjectSpaceProviderImpl();
-        return projectsProvider;
+    public ProjectsProvider<?> projectsProvider(EventService<?> eventService) {
+        return new SiriusProjectSpaceProviderImpl(eventService);
+    }
+
+    @Bean(destroyMethod = "shutdown")
+    public GuiService<?> guiService(EventService<?> eventService, ApplicationContext applicationContext){
+        return new SiriusProjectSpaceGuiService(eventService, applicationContext);
+    }
+
+    @Bean
+    ConnectionChecker connectionMonitor(WebAPI<?> webAPI){
+        return new ConnectionChecker(webAPI);
+    }
+
+    @Bean
+    ChemDbService chemDbService(WebAPI<?> webAPI){
+        return new ChemDbServiceImpl(webAPI);
     }
 
     @Bean(destroyMethod = "shutdown")

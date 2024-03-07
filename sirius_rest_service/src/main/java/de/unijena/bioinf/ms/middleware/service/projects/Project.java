@@ -20,24 +20,44 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
+import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
+import de.unijena.bioinf.ms.middleware.model.annotations.SpectralLibraryMatch;
 import de.unijena.bioinf.ms.middleware.model.annotations.StructureCandidateFormula;
 import de.unijena.bioinf.ms.middleware.model.annotations.StructureCandidateScored;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
+import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
+import de.unijena.bioinf.ms.middleware.model.features.FeatureImport;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeatureQuality;
+import de.unijena.bioinf.ms.middleware.model.features.AnnotatedMsMsData;
+import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
+import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.util.Collection;
 import java.util.EnumSet;
+import java.util.List;
 
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.toEnumSet;
 
 public interface Project {
 
+    @NotNull
+    String getProjectId();
+
     Page<Compound> findCompounds(Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields,
                                  @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
+
+    List<Compound> addCompounds(@NotNull List<CompoundImport> compounds,
+                                @NotNull EnumSet<Compound.OptField> optFields,
+                                @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures);
+
+    ImportResult importPreprocessedData(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData);
+    ImportResult importMsRunData(Collection<InputResource<?>> inputResources, boolean alignRuns, boolean allowMs1OnlyData);
 
     default Page<Compound> findCompounds(Pageable pageable, Compound.OptField... optFields) {
         return findCompounds(pageable, toEnumSet(Compound.OptField.class, optFields),
@@ -73,6 +93,9 @@ public interface Project {
 
     Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields);
 
+    List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features,
+                                            @NotNull EnumSet<AlignedFeature.OptField> optFields);
+
     default Page<AlignedFeature> findAlignedFeatures(Pageable pageable, AlignedFeature.OptField... optFields) {
         return findAlignedFeatures(pageable, toEnumSet(AlignedFeature.OptField.class, optFields));
     }
@@ -84,6 +107,8 @@ public interface Project {
     }
 
     void deleteAlignedFeaturesById(String alignedFeatureId);
+
+    Page<SpectralLibraryMatch> findLibraryMatchesByFeatureId(String alignedFeatureId, Pageable pageable);
 
     Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<FormulaCandidate.OptField> optFields);
 
@@ -103,10 +128,22 @@ public interface Project {
         return findStructureCandidatesByFeatureIdAndFormulaId(formulaId, alignedFeatureId, pageable, toEnumSet(StructureCandidateScored.OptField.class, optFields));
     }
 
+    Page<StructureCandidateScored> findDeNovoStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields);
+
+    default Page<StructureCandidateScored> findDeNovoStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, StructureCandidateScored.OptField... optFields) {
+        return findStructureCandidatesByFeatureIdAndFormulaId(formulaId, alignedFeatureId, pageable, toEnumSet(StructureCandidateScored.OptField.class, optFields));
+    }
+
     Page<StructureCandidateFormula> findStructureCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields);
 
     default Page<StructureCandidateFormula> findStructureCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, StructureCandidateScored.OptField... optFields) {
         return findStructureCandidatesByFeatureId(alignedFeatureId, pageable, toEnumSet(StructureCandidateScored.OptField.class, optFields));
+    }
+
+    Page<StructureCandidateFormula> findDeNovoStructureCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields);
+
+    default Page<StructureCandidateFormula> findDeNovoStructureCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, StructureCandidateScored.OptField... optFields) {
+        return findDeNovoStructureCandidatesByFeatureId(alignedFeatureId, pageable, toEnumSet(StructureCandidateScored.OptField.class, optFields));
     }
 
     StructureCandidateScored findTopStructureCandidateByFeatureId(String alignedFeatureId, @NotNull EnumSet<StructureCandidateScored.OptField> optFields);
@@ -114,4 +151,40 @@ public interface Project {
     default StructureCandidateScored findTopStructureCandidateByFeatureId(String alignedFeatureId, StructureCandidateScored.OptField... optFields) {
         return findTopStructureCandidateByFeatureId(alignedFeatureId, toEnumSet(StructureCandidateScored.OptField.class, optFields));
     }
+
+    StructureCandidateScored findStructureCandidateById(@NotNull String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId, @NotNull EnumSet<StructureCandidateScored.OptField> optFields);
+
+    default StructureCandidateScored findStructureCandidateById(@NotNull String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId, StructureCandidateScored.OptField... optFields) {
+        return findStructureCandidateById(inchiKey, formulaId, alignedFeatureId, toEnumSet(StructureCandidateScored.OptField.class, optFields));
+    }
+
+    default AnnotatedSpectrum findAnnotatedSpectrumByFormulaId(int specIndex, @NotNull String formulaId, @NotNull String alignedFeatureId) {
+        return findAnnotatedSpectrumByStructureId(specIndex, null, formulaId, alignedFeatureId);
+    }
+
+    /**
+     * Return Annotated MsMs Spectrum (Fragments and Structure)
+     *
+     * @param specIndex        index of the spectrum to annotate if < 0 a Merged Ms/Ms over all spectra will be used
+     * @param inchiKey         of the structure candidate that will be used
+     * @param formulaId        of the formula candidate to retrieve the fragments from
+     * @param alignedFeatureId the feature the spectrum belongs to
+     * @return Annotated MsMs Spectrum (Fragments and Structure)
+     */
+    AnnotatedSpectrum findAnnotatedSpectrumByStructureId(int specIndex, @Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId);
+
+    default AnnotatedMsMsData findAnnotatedMsMsDataByFormulaId(@NotNull String formulaId, @NotNull String alignedFeatureId) {
+        return findAnnotatedMsMsDataByStructureId(null, formulaId, alignedFeatureId);
+    }
+
+    AnnotatedMsMsData findAnnotatedMsMsDataByStructureId(@Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId);
+
+    String getFingerIdDataCSV(int charge);
+
+    String getCanopusClassyFireDataCSV(int charge);
+
+    String getCanopusNpcDataCSV(int charge);
+
+    @Deprecated
+    String findSiriusFtreeJsonById(String formulaId, String alignedFeatureId);
 }

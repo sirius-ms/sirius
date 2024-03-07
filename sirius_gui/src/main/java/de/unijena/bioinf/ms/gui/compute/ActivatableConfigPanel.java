@@ -19,18 +19,22 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
+
+import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 
 public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoColumnPanel {
 
@@ -38,17 +42,24 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
     protected final String toolName;
     protected final C content;
 
+    protected final SiriusGui gui;
+
     protected LinkedHashSet<EnableChangeListener<C>> listeners = new LinkedHashSet<>();
 
-    public ActivatableConfigPanel(String toolname, Icon buttonIcon, boolean needsCSIConnection, Supplier<C> contentSuppl) {
-        this(toolname, null, buttonIcon, needsCSIConnection, contentSuppl);
+    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, Supplier<C> contentSuppl) {
+        this(gui, toolname, buttonIcon, false, contentSuppl);
     }
 
-    public ActivatableConfigPanel(String toolname, String toolDescription, Icon buttonIcon, boolean needsCSIConnection, Supplier<C> contentSuppl) {
+    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, boolean checkServerConnection, Supplier<C> contentSuppl) {
+        this(gui, toolname, null, buttonIcon, checkServerConnection, contentSuppl);
+    }
+
+    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, String toolDescription, Icon buttonIcon, boolean checkServerConnection, Supplier<C> contentSuppl) {
         super();
         left.anchor = GridBagConstraints.NORTH;
         this.toolName = toolname;
         this.content = contentSuppl.get();
+        this.gui = gui;
 
         activationButton = new ToolbarToggleButton(this.toolName, buttonIcon);
         activationButton.setPreferredSize(new Dimension(110, 60));
@@ -61,8 +72,9 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
         add(activationButton, content);
 
 
-        if (needsCSIConnection) {
-            MainFrame.MF.CONNECTION_MONITOR().addConnectionStateListener(evt -> setButtonEnabled(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck().isConnected()));
+        if (checkServerConnection) {
+            gui.getConnectionMonitor().addConnectionStateListener(evt ->
+                            setButtonEnabled(isConnected(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck())));
         } else {
             setButtonEnabled(true);
         }
@@ -104,12 +116,20 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
     }
 
 
-    public boolean isToolSelected() {
+    boolean isToolSelected() {
         return activationButton == null || activationButton.isSelected();
+    }
+
+    public C getContent() {
+        return content;
     }
 
     public List<String> asParameterList() {
         return content.asParameterList();
+    }
+
+    public Map<String, String> asConfigMap() {
+        return content.asConfigMap();
     }
 
     public boolean removeEnableChangeListener(EnableChangeListener<C> listener) {

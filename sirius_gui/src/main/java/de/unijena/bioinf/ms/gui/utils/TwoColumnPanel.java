@@ -23,9 +23,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
- * created as part of the sirius_frontend
- * 07.10.16.
+ * @author Markus Fleischauer
  */
 public class TwoColumnPanel extends JPanel {
     public  final GridBagConstraints both, left, right;
@@ -87,7 +85,17 @@ public class TwoColumnPanel extends JPanel {
 
 
     public void addNamed(String name, Component rightComp) {
-        add(new JLabel(name), rightComp);
+        addNamed(name, rightComp, null);
+    }
+    public void addNamed(String name, Component rightComp, String toolTip) {
+        JLabel l = new JLabel(name);
+        if (toolTip != null && ! toolTip.isBlank()) {
+            l.setToolTipText(toolTip);
+            if (rightComp instanceof JComponent)
+                ((JComponent)rightComp).setToolTipText(toolTip);
+        }
+
+        add(l, rightComp);
     }
 
     public void add(Component leftComp, Component rightComp) {

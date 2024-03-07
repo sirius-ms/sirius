@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.BatchComputeDialog;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
@@ -30,21 +31,21 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ComputeAction extends AbstractAction {
-    public ComputeAction() {
-        super("Compute");
+public class ComputeAction extends AbstractGuiAction {
+
+    public ComputeAction(SiriusGui gui) {
+        super("Compute", gui);
         putValue(Action.SMALL_ICON, Icons.RUN_16);
         putValue(Action.LARGE_ICON_KEY, Icons.RUN_32);
         putValue(Action.SHORT_DESCRIPTION, "Compute selected compound(s)");
 
-        setEnabled(SiriusActions.notComputingOrEmptySelected(MF.getCompoundListSelectionModel()));
+        setEnabled(SiriusActions.notComputingOrEmptySelected(this.mainFrame.getCompoundListSelectionModel()));
 
-        MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
+        this.mainFrame.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
             public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {}
 
@@ -57,10 +58,10 @@ public class ComputeAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (!MF.getCompoundListSelectionModel().isSelectionEmpty()) {
-            List<InstanceBean> l = List.copyOf(MF.getCompoundListSelectionModel().getSelected());
+        if (!mainFrame.getCompoundListSelectionModel().isSelectionEmpty()) {
+            List<InstanceBean> l = List.copyOf(mainFrame.getCompoundListSelectionModel().getSelected());
             if (l.stream().noneMatch(InstanceBean::isComputing))
-                new BatchComputeDialog(MF, l);
+                new BatchComputeDialog(gui, l);
         }
     }
 }

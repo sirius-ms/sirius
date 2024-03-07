@@ -20,19 +20,22 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
-import de.unijena.bioinf.ms.middleware.model.SearchQueryType;
+import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
+import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springdoc.api.annotations.ParameterObject;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 import java.util.EnumSet;
+import java.util.List;
 
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
 
@@ -45,31 +48,61 @@ public class CompoundController {
 
 
     private final ProjectsProvider<?> projectsProvider;
+    private final GlobalConfig globalConfig;
 
     @Autowired
-    public CompoundController(ProjectsProvider<?> projectsProvider) {
+    public CompoundController(ProjectsProvider<?> projectsProvider, GlobalConfig globalConfig) {
         this.projectsProvider = projectsProvider;
+        this.globalConfig = globalConfig;
     }
 
     /**
-     * Get all available compounds (group of ion identities) in the given project-space.
+     * Page of available compounds (group of ion identities) in the given project-space.
      *
      * @param projectId project-space to read from.
      * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      * @return Compounds with additional optional fields (if specified).
      */
 
-    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<Compound> getCompounds(@PathVariable String projectId, @ParameterObject Pageable pageable,
-                                       @RequestParam(required = false) String searchQuery,
-                                       @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax,
+    @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Page<Compound> getCompoundsPaged(@PathVariable String projectId, @ParameterObject Pageable pageable,
                                        @RequestParam(defaultValue = "") EnumSet<Compound.OptField> optFields,
                                        @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
         return projectsProvider.getProjectOrThrow(projectId).findCompounds(pageable, removeNone(optFields), removeNone(optFieldsFeatures));
     }
 
+    /**
+     * List of all available compounds (group of ion identities) in the given project-space.
+     *
+     * @param projectId project-space to read from.
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
+     * @return Compounds with additional optional fields (if specified).
+     */
+
+    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<Compound> getCompounds(@PathVariable String projectId,
+                                       @RequestParam(defaultValue = "") EnumSet<Compound.OptField> optFields,
+                                       @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
+        return getCompoundsPaged(projectId, globalConfig.unpaged(), optFields, optFieldsFeatures)
+                .stream().toList();
+    }
+
+    /**
+     * Import Compounds and its contained features. Compounds and Features must not exist in the project.
+     * Otherwise, they will exist twice.
+     * @param projectId project-space to import into.
+     * @param compounds the compound data to be imported
+     * @param optFields set of optional fields to be included. Use 'none' to override defaults.
+     * @param optFieldsFeatures set of optional fields of the nested features to be included. Use 'none' to override defaults.
+     * @return the Compounds that have been imported with specified optional fields
+     */
+    @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<Compound> addCompounds(@PathVariable String projectId, @Valid @RequestBody List<CompoundImport> compounds,
+                                       @RequestParam(defaultValue = "") EnumSet<Compound.OptField> optFields,
+                                       @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFieldsFeatures
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).addCompounds(compounds, removeNone(optFields), removeNone(optFieldsFeatures));
+    }
 
     /**
      * Get compound (group of ion identities) with the given identifier from the specified project-space.

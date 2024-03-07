@@ -103,6 +103,11 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
         return super.identifier() + " | " + (input != null ? input.toString() : "<Awaiting Instance>");
     }
 
+    @Override
+    public String getProjectName() {
+        return (input != null ? input.getProjectSpaceManager().getName() : "<Awaiting Instance>");
+    }
+
     /**
      * Check if the input is valid for computation. May be overwritten by implementations for additional checks.
      * @return false if input data is fine and true if data should be skipped gently. IllegalArgumentException is thrown
