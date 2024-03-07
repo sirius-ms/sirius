@@ -11,7 +11,6 @@ import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
 import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ElementSelectionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
@@ -33,19 +32,27 @@ import java.util.stream.Collectors;
 
 public class FormulaSearchStrategy extends ConfigPanel {
     public enum Strategy implements DescriptiveOptions {
-        DEFAULT("Default strategy"),
-        DE_NOVO("Denovo strategy"),
-        DATABASE("Database stragegy");
+        DEFAULT("Bottom up + de novo (recommended)", "Perform both a bottom up search and a de novo up to a threshold"),
+        BOTTOM_UP("Bottom up", "Bottom up search"),
+        DE_NOVO("De novo", "De novo search"),
+        DATABASE("Database search", "Database search");
 
         private final String description;
+        private final String displayName;
 
-        Strategy(String description) {
+        Strategy(String displayName, String description) {
+            this.displayName = displayName;
             this.description = description;
         }
 
         @Override
         public String getDescription() {
             return description;
+        }
+
+        @Override
+        public String toString() {
+            return displayName;
         }
     }
 
@@ -88,6 +95,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         strategyComponents = new HashMap<>();
         strategyComponents.put(Strategy.DEFAULT, new ArrayList<>());
+        strategyComponents.put(Strategy.BOTTOM_UP, new ArrayList<>());
         strategyComponents.put(Strategy.DE_NOVO, new ArrayList<>());
         strategyComponents.put(Strategy.DATABASE, new ArrayList<>());
 
@@ -145,63 +153,27 @@ public class FormulaSearchStrategy extends ConfigPanel {
     }
 
     private JPanel createDefaultStrategyParameters() {
-        JPanel card = new JPanel();
-        card.setLayout(new BoxLayout(card, BoxLayout.PAGE_AXIS));
         JPanel parameterPanel = applyDefaultLayout(new JPanel());
 
-        final TwoColumnPanel busOptions = new TwoColumnPanel();
-        JComboBox<SiriusOptions.BottomUpSearchOptions> bottomUpSearchSelector = new JComboBox<>();
-        List<SiriusOptions.BottomUpSearchOptions> settings = new ArrayList<>(EnumSet.allOf(SiriusOptions.BottomUpSearchOptions.class));
-        settings.remove(SiriusOptions.BottomUpSearchOptions.DISABLED);  //this is not a contradiction by default, but we have the separate Strategy.DE_NOVO for that
-        settings.forEach(bottomUpSearchSelector::addItem);
-        bottomUpSearchSelector.setSelectedItem(SiriusOptions.BottomUpSearchOptions.CUSTOM);
-        busOptions.addNamed("Bottom up search", bottomUpSearchSelector);
-
-        JCheckBox bottomUpSearchEnabled = new JCheckBox();
-        bottomUpSearchEnabled.setSelected(true);
+        final TwoColumnPanel options = new TwoColumnPanel();
 
         JSpinner denovoUpTo = makeIntParameterSpinner("FormulaSearchSettings.disableDeNovoAboveMass", 0, Integer.MAX_VALUE, 5);  // binding is overwritten
+        options.addNamed("Perform de novo below m/z", denovoUpTo);
 
-        JLabel bottomUpCheckboxLabel = new JLabel("Perform bottom up search");
-        JLabel denovoUpToLabel = new JLabel("Perform de novo below m/z");
-
-        busOptions.add(bottomUpCheckboxLabel, bottomUpSearchEnabled);
-        busOptions.add(denovoUpToLabel, denovoUpTo);
-
-        List<Component> customComponents = List.of(bottomUpCheckboxLabel, bottomUpSearchEnabled, denovoUpToLabel, denovoUpTo);
-
-        bottomUpSearchSelector.addItemListener(e -> {
-            if (e.getStateChange() != ItemEvent.SELECTED) {
-                return;
-            }
-            boolean customSelected = e.getItem() == SiriusOptions.BottomUpSearchOptions.CUSTOM;
-            customComponents.forEach(c -> c.setVisible(customSelected));
-        });
-
-        parameterBindings.put("FormulaSearchSettings.enableBottomUpFromMass", () -> {
-            if (strategy == Strategy.DEFAULT) {
-                boolean onlyBottomUp = bottomUpSearchSelector.getSelectedItem() == SiriusOptions.BottomUpSearchOptions.BOTTOM_UP_ONLY;
-                boolean custom = bottomUpSearchSelector.getSelectedItem() == SiriusOptions.BottomUpSearchOptions.CUSTOM;
-                if (onlyBottomUp || (custom && bottomUpSearchEnabled.isSelected())) {
-                    return "0";
-                }
-            }
-            return String.valueOf(Double.POSITIVE_INFINITY);
+        parameterBindings.put("FormulaSearchSettings.enableBottomUpFromMass", () -> switch (strategy) {
+            case DEFAULT, BOTTOM_UP -> "0";
+            case DE_NOVO, DATABASE -> String.valueOf(Double.POSITIVE_INFINITY);
         });
 
         parameterBindings.put("FormulaSearchSettings.disableDeNovoAboveMass", () -> switch (strategy) {
-            case DEFAULT -> bottomUpSearchSelector.getSelectedItem() == SiriusOptions.BottomUpSearchOptions.CUSTOM ?
-                    denovoUpTo.getValue().toString()
-                    : "0";
+            case DEFAULT -> denovoUpTo.getValue().toString();
+            case BOTTOM_UP, DATABASE -> "0";
             case DE_NOVO -> String.valueOf(Double.POSITIVE_INFINITY);
-            case DATABASE -> "0";
         });
 
+        parameterPanel.add(new TextHeaderBoxPanel("General", options));
 
-        parameterPanel.add(new TextHeaderBoxPanel("Bottom Up Search", busOptions));
-
-        card.add(parameterPanel);
-        return card;
+        return parameterPanel;
     }
 
     private JPanel createDatabaseStrategyParameters() {
