@@ -51,7 +51,7 @@ public class ProjectSaveAction extends ProjectOpenAction {
 
 
     public ProjectSaveAction(SiriusGui gui) {
-        super("Save", gui);
+        super("Save as", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_CLOSE_32);
         putValue(Action.SHORT_DESCRIPTION, "Save (copy) the current project to a new location.");
         setEnabled(true);

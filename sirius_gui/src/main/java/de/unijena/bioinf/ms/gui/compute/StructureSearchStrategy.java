@@ -1,108 +1,85 @@
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
-import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
-import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.dialogs.InfoDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class StructureSearchStrategy extends JPanel {
 
-    public enum Strategy implements DescriptiveOptions {
-        PUBCHEM_AS_FALLBACK("Search in the specified set of databases and use the PubChem database as fallback if no good hit is available"), //todo Workflow: this should forbid PubChem in the list of DBs
-        NO_FALLBACK("Search in the specified set of databases");
+    protected JCheckboxListPanel<SearchableDatabase> searchDBList;
+    protected SiriusGui gui;
+    public static final String DO_NOT_SHOW_DIVERGING_DATABASES_NOTE = "de.unijena.bioinf.sirius.computeDialog.divergingDatabases.dontAskAgain";
 
-        private final String description;
-
-        Strategy(String description) {
-            this.description = description;
-        }
-
-        @Override
-        public String getDescription() {
-            return description;
-        }
+    public StructureSearchStrategy(SiriusGui gui, @Nullable final FormulaSearchStrategy syncStrategy) {
+        this.gui = gui;
+        createPanel(syncStrategy);
     }
 
-    protected final Strategy strategy;
-    protected final ParameterBinding parameterBindings;
-    private boolean isEnabled;
-    protected JCheckboxListPanel<CustomDataSources.Source> searchDBList;
-
-
-    public StructureSearchStrategy(Strategy strategy, ParameterBinding parameterBindings, @Nullable final JCheckBoxList<CustomDataSources.Source> syncSource) {
-        this.strategy = strategy;
-        this.parameterBindings = parameterBindings;
-
-        createPanel(syncSource);
-
-    }
-
-    public void setEnabled(boolean enabled) {
-        isEnabled = enabled;
-        revalidate();
-    }
-
-    private void createPanel(@Nullable JCheckBoxList<CustomDataSources.Source> syncSource) {
-        this.removeAll();
+    private void createPanel(@Nullable final FormulaSearchStrategy syncStrategy) {
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
-        createStrategyPanel(strategy, this, syncSource);
-
+        createStrategyPanel(syncStrategy);
     }
 
-    private void createStrategyPanel(Strategy strategy, JPanel main, @Nullable JCheckBoxList<CustomDataSources.Source> syncSource) {
-        // configure database to search list
-        DBSelectionList innerList = new DBSelectionList();
+    private void createStrategyPanel(@Nullable final FormulaSearchStrategy syncStrategy) {
         searchDBList = createDatabasePanel();
         add(searchDBList);
 
-//        add(new TextHeaderBoxPanel("General", additionalOptions));
+        if (syncStrategy != null) {
+            JCheckBoxList<SearchableDatabase> syncCheckBoxList = syncStrategy.getSearchDBList().checkBoxList;
 
-        PropertyManager.DEFAULTS.createInstanceWithDefaults(StructureSearchDB.class).searchDBs
-                .forEach(s -> searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(s.name())));
-
-        //todo NewWorkflow: not sure, if this works properly
-        if (syncSource != null)
-            syncSource.addListSelectionListener(e -> {
-                searchDBList.checkBoxList.uncheckAll();
-                if (syncSource.getCheckedItems().isEmpty())
-                    searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(DataSource.BIO.name()));
-                else
-                    searchDBList.checkBoxList.checkAll(syncSource.getCheckedItems());
+            syncCheckBoxList.getCheckedItems().forEach(searchDBList.checkBoxList::check);
+            syncCheckBoxList.addCheckBoxListener(e -> {
+                @SuppressWarnings("unchecked")
+                SearchableDatabase item = (SearchableDatabase) ((CheckBoxListItem<Object>) e.getItem()).getValue();
+                if (e.getStateChange() == ItemEvent.SELECTED) {
+                    searchDBList.checkBoxList.check(item);
+                } else {
+                    searchDBList.checkBoxList.uncheck(item);
+                }
             });
+            addDivergingDatabasesNote(syncStrategy);
+        }
+    }
 
+    private void addDivergingDatabasesNote(FormulaSearchStrategy syncStrategy) {
+        if (!PropertyManager.getBoolean(DO_NOT_SHOW_DIVERGING_DATABASES_NOTE, false)) {
+            ItemListener dbSelectionChangeListener = new ItemListener() {
+                @Override
+                public void itemStateChanged(ItemEvent e) {
+                    if (syncStrategy.getSelectedStrategy() == FormulaSearchStrategy.Strategy.DATABASE && !syncStrategy.getSearchDBList().checkBoxList.isSelectionEqual(searchDBList.checkBoxList)) {
+                        new InfoDialog(gui.getMainFrame(), "Note that you are searching in different databases for formula and structure.", DO_NOT_SHOW_DIVERGING_DATABASES_NOTE);
+                        searchDBList.checkBoxList.removeCheckBoxListener(this);
+                    }
+                }
+            };
+            searchDBList.checkBoxList.addCheckBoxListener(dbSelectionChangeListener);
+        }
     }
 
 
-    private JCheckboxListPanel<CustomDataSources.Source> createDatabasePanel() {
-        //todo NewWorkflow: should this be identical to the panel in FormulaSearchStrategy? probably yes. But not Sync it?
-        if (this.searchDBList != null) return this.searchDBList;
-        // configure database to search list
-        DBSelectionList innerList = new DBSelectionList();
-        searchDBList = new JCheckboxListPanel<>(innerList, "Search DBs");
-        GuiUtils.assignParameterToolTip(searchDBList, "StructureSearchDB");
-        parameterBindings.put("StructureSearchDB", () -> searchDBList.checkBoxList.getCheckedItems().isEmpty() ? null : String.join(",", getStructureSearchDBStrings()));
+    private JCheckboxListPanel<SearchableDatabase> createDatabasePanel() {
+        DBSelectionList innerList = DBSelectionList.fromSearchableDatabases(gui.getSiriusClient());
+        JCheckboxListPanel<SearchableDatabase> dbList = new JCheckboxListPanel<>(innerList, "Search DBs");
+        GuiUtils.assignParameterToolTip(dbList, "StructureSearchDB");
+        return dbList;
+    }
+
+    public JCheckboxListPanel<SearchableDatabase> getSearchDBList() {
         return searchDBList;
     }
 
-    public JCheckboxListPanel<CustomDataSources.Source> getSearchDBList() {
-        return searchDBList;
-    }
-
-    public List<CustomDataSources.Source> getStructureSearchDBs() {
+    public List<SearchableDatabase> getStructureSearchDBs() {
         return searchDBList.checkBoxList.getCheckedItems();
-    }
-
-    public List<String> getStructureSearchDBStrings() {
-        return getStructureSearchDBs().stream().map(CustomDataSources.Source::name).filter(Objects::nonNull).collect(Collectors.toList());
     }
 }

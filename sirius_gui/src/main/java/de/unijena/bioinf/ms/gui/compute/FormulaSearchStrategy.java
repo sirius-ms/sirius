@@ -8,17 +8,19 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
 import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
-import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ElementSelectionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.RelativeLayout;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
 import de.unijena.bioinf.ms.nightsky.sdk.model.MsData;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Ms1Preprocessor;
@@ -33,68 +35,87 @@ import java.util.stream.Collectors;
 
 public class FormulaSearchStrategy extends ConfigPanel {
     public enum Strategy implements DescriptiveOptions {
-        DEFAULT("Default strategy"),
-        DE_NOVO("Denovo strategy"),
-        DATABASE("Database stragegy");
+        DEFAULT("De novo + bottom up (recommended)", "Perform both a bottom up search and de novo molecular formula generation."),
+        BOTTOM_UP("Bottom up", "Generate molecular formula candidates using bottom up search: if a fragement + precursor loss have candidates in the formula database, these are combined to a precursor formula candidate."),
+        DE_NOVO("De novo", "Generate molecular formula candidates de novo."),
+        DATABASE("Database search", "Retrieve molecular formula candidates from a database.");
 
         private final String description;
+        private final String displayName;
 
-        Strategy(String description) {
+        Strategy(String displayName, String description) {
+            this.displayName = displayName;
             this.description = description;
         }
 
         @Override
         public String getDescription() {
             return description;
+        }
+
+        @Override
+        public String toString() {
+            return displayName;
         }
     }
 
     public enum ElementAlphabetStrategy implements DescriptiveOptions {
-        DE_NOVO_ONLY("Use set of elements for de novo generation only."),
-        BOTH("Use set of elements for de novo generation and filter of bottom up search.");
+        DE_NOVO_ONLY("De novo", "Use set of elements for de novo generation only."),
+        BOTH("De novo + bottom up", "Use set of elements for de novo generation and filter of bottom up search.");
 
         private final String description;
 
-        ElementAlphabetStrategy(String description) {
+        private final String displayName;
+
+        ElementAlphabetStrategy(String displayName, String description) {
+            this.displayName = displayName;
             this.description = description;
         }
 
         @Override
         public String getDescription() {
             return description;
+        }
+
+        @Override
+        public String toString() {
+            return displayName;
         }
     }
 
     protected Strategy strategy;
 
     protected final Dialog owner;
+    protected final SiriusGui gui;
     protected final List<InstanceBean> ecs;
     protected final boolean isMs2;
     protected final boolean isBatchDialog;
 
-    protected  JCheckboxListPanel<CustomDataSources.Source> searchDBList;
+    protected  JCheckboxListPanel<SearchableDatabase> searchDBList;
 
     /**
      * Map of strategy-specific UI components for showing/hiding when changing the strategy
      */
     private final Map<Strategy, List<Component>> strategyComponents;
 
-    public FormulaSearchStrategy(Dialog owner, List<InstanceBean> ecs, boolean isMs2, boolean isBatchDialog, ParameterBinding parameterBindings) {
+    public FormulaSearchStrategy(SiriusGui gui, Dialog owner, List<InstanceBean> ecs, boolean isMs2, boolean isBatchDialog, ParameterBinding parameterBindings) {
         super(parameterBindings);
         this.owner = owner;
+        this.gui = gui;
         this.ecs = ecs;
         this.isMs2 = isMs2;
         this.isBatchDialog = isBatchDialog;
 
         strategyComponents = new HashMap<>();
         strategyComponents.put(Strategy.DEFAULT, new ArrayList<>());
+        strategyComponents.put(Strategy.BOTTOM_UP, new ArrayList<>());
         strategyComponents.put(Strategy.DE_NOVO, new ArrayList<>());
         strategyComponents.put(Strategy.DATABASE, new ArrayList<>());
 
         createPanel();
     }
 
-    public JCheckboxListPanel<CustomDataSources.Source> getSearchDBList() {
+    public JCheckboxListPanel<SearchableDatabase> getSearchDBList() {
         return searchDBList;
     }
 
@@ -112,7 +133,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         JPanel strategyCardContainer = new JPanel();
         strategyCardContainer.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
-        strategyCardContainer.setLayout(new BoxLayout(strategyCardContainer, BoxLayout.PAGE_AXIS));
+        strategyCardContainer.setLayout(new BoxLayout(strategyCardContainer, BoxLayout.LINE_AXIS));
 
         strategy = (Strategy) strategyBox.getSelectedItem();
 
@@ -129,105 +150,74 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         add(strategyCardContainer);
 
-        showStrategy(strategy);
+        hideAllStrategySpecific();
+        showStrategySpecific(strategy, true);
 
         strategyBox.addItemListener(e -> {
             if (e.getStateChange() != ItemEvent.SELECTED) {
                 return;
             }
+            showStrategySpecific(strategy, false);
             strategy = (Strategy) e.getItem();
-            showStrategy(strategy);
+            showStrategySpecific(strategy, true);
         });
     }
 
-    private void showStrategy(Strategy strategy) {
-        strategyComponents.forEach((s, lst) -> lst.forEach(c -> c.setVisible(s.equals(strategy))));
+    private void showStrategySpecific(Strategy s, boolean show) {
+        strategyComponents.get(s).forEach(c -> c.setVisible(show));
+    }
+
+    private void hideAllStrategySpecific() {
+        strategyComponents.forEach((s, lst) -> lst.forEach(c -> c.setVisible(false)));
     }
 
     private JPanel createDefaultStrategyParameters() {
-        JPanel card = new JPanel();
-        card.setLayout(new BoxLayout(card, BoxLayout.PAGE_AXIS));
         JPanel parameterPanel = applyDefaultLayout(new JPanel());
+        ((RelativeLayout) parameterPanel.getLayout()).setBorderGap(0);
+        parameterPanel.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
 
-        final TwoColumnPanel busOptions = new TwoColumnPanel();
-        JComboBox<SiriusOptions.BottomUpSearchOptions> bottomUpSearchSelector = new JComboBox<>();
-        List<SiriusOptions.BottomUpSearchOptions> settings = new ArrayList<>(EnumSet.allOf(SiriusOptions.BottomUpSearchOptions.class));
-        settings.remove(SiriusOptions.BottomUpSearchOptions.DISABLED);  //this is not a contradiction by default, but we have the separate Strategy.DE_NOVO for that
-        settings.forEach(bottomUpSearchSelector::addItem);
-        bottomUpSearchSelector.setSelectedItem(SiriusOptions.BottomUpSearchOptions.CUSTOM);
-        busOptions.addNamed("Bottom up search", bottomUpSearchSelector);
-
-        JCheckBox bottomUpSearchEnabled = new JCheckBox();
-        bottomUpSearchEnabled.setSelected(true);
+        final TwoColumnPanel options = new TwoColumnPanel();
 
         JSpinner denovoUpTo = makeIntParameterSpinner("FormulaSearchSettings.performDeNovoBelowMz", 0, Integer.MAX_VALUE, 5);  // binding is overwritten
+        options.addNamed("Perform de novo below m/z", denovoUpTo);
 
-        JLabel bottomUpCheckboxLabel = new JLabel("Perform bottom up search");
-        JLabel denovoUpToLabel = new JLabel("Perform de novo below m/z");
-
-        busOptions.add(bottomUpCheckboxLabel, bottomUpSearchEnabled);
-        busOptions.add(denovoUpToLabel, denovoUpTo);
-
-        List<Component> customComponents = List.of(bottomUpCheckboxLabel, bottomUpSearchEnabled, denovoUpToLabel, denovoUpTo);
-
-        bottomUpSearchSelector.addItemListener(e -> {
-            if (e.getStateChange() != ItemEvent.SELECTED) {
-                return;
-            }
-            boolean customSelected = e.getItem() == SiriusOptions.BottomUpSearchOptions.CUSTOM;
-            customComponents.forEach(c -> c.setVisible(customSelected));
-        });
-
-        parameterBindings.put("FormulaSearchSettings.performBottomUpAboveMz", () -> {
-            if (strategy == Strategy.DEFAULT) {
-                boolean onlyBottomUp = bottomUpSearchSelector.getSelectedItem() == SiriusOptions.BottomUpSearchOptions.BOTTOM_UP_ONLY;
-                boolean custom = bottomUpSearchSelector.getSelectedItem() == SiriusOptions.BottomUpSearchOptions.CUSTOM;
-                if (onlyBottomUp || (custom && bottomUpSearchEnabled.isSelected())) {
-                    return "0";
-                }
-            }
-            return String.valueOf(Double.POSITIVE_INFINITY);
+        parameterBindings.put("FormulaSearchSettings.performBottomUpAboveMz", () -> switch (strategy) {
+            case DEFAULT, BOTTOM_UP -> "0";
+            case DE_NOVO, DATABASE -> String.valueOf(Double.POSITIVE_INFINITY);
         });
 
         parameterBindings.put("FormulaSearchSettings.performDeNovoBelowMz", () -> switch (strategy) {
-            case DEFAULT -> bottomUpSearchSelector.getSelectedItem() == SiriusOptions.BottomUpSearchOptions.CUSTOM ?
-                    denovoUpTo.getValue().toString()
-                    : "0";
+            case DEFAULT -> denovoUpTo.getValue().toString();
+            case BOTTOM_UP, DATABASE -> "0";
             case DE_NOVO -> String.valueOf(Double.POSITIVE_INFINITY);
-            case DATABASE -> "0";
         });
 
+        parameterPanel.add(new TextHeaderBoxPanel("General", options));
 
-        parameterPanel.add(new TextHeaderBoxPanel("Bottom Up Search", busOptions));
-
-        card.add(parameterPanel);
-        card.add(Box.createRigidArea(new Dimension(0, GuiUtils.SMALL_GAP)));  // gap with element filter
-
-        return card;
+        return parameterPanel;
     }
 
     private JPanel createDatabaseStrategyParameters() {
         JPanel card = new JPanel();
         card.setLayout(new BoxLayout(card, BoxLayout.PAGE_AXIS));
 
-        searchDBList = createDatabasePanel();
+        initDatabasePanel();
         searchDBList.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
 
         card.add(searchDBList);
-        card.add(Box.createRigidArea(new Dimension(0, GuiUtils.SMALL_GAP)));  // gap with element filter
-
         return card;
     }
 
-    private JCheckboxListPanel<CustomDataSources.Source> createDatabasePanel() {
-        if (this.searchDBList != null) return this.searchDBList;
-        // configure database to search list
-        searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Use DB formulas only");
+    private void initDatabasePanel() {
+        searchDBList = new JCheckboxListPanel<>(DBSelectionList.fromSearchableDatabases(gui.getSiriusClient()), "Use DB formulas only");
         GuiUtils.assignParameterToolTip(searchDBList.checkBoxList, "FormulaSearchDB");
-        parameterBindings.put("FormulaSearchDB", () -> String.join(",", getFormulaSearchDBStrings()));
+
+        PropertyManager.DEFAULTS.createInstanceWithDefaults(StructureSearchDB.class).searchDBs
+                .forEach(s -> searchDBList.checkBoxList.check(gui.getSiriusClient().databases().getDatabase(s.name(), false)));
+
+        parameterBindings.put("FormulaSearchDB", () -> strategy == Strategy.DATABASE ? String.join(",", getFormulaSearchDBStrings()) : ",");
         PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSearchDB.class).searchDBs
-                .forEach(s -> searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(s.name())));
-        return searchDBList;
+                .forEach(s -> searchDBList.checkBoxList.check(gui.getSiriusClient().databases().getDatabase(s.name(), false)));
     }
 
     private JPanel createElementFilterPanel() {
@@ -241,7 +231,17 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         JLabel autodetectLabel = new JLabel("Autodetect");
         final JTextField detectableTextBox = isBatchDialog ? makeParameterTextField("FormulaSettings.detectable", 20) : null;
-        JPanel buttonPanel = new JPanel();
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        JButton buttonEdit = new JButton("…");  // Ellipsis symbol instead of ... because 1-char buttons don't get side insets
+        buttonEdit.setToolTipText("Customize allowed elements and their quantities");
+        buttonPanel.add(buttonEdit);
+        if (!isBatchDialog) {
+            JButton buttonAutodetect = new JButton("Auto");
+            buttonAutodetect.setToolTipText("Auto detectable element are: " + join(autoDetectableElements));
+            buttonAutodetect.addActionListener(e -> detectElements(autoDetectableElements, enforcedTextBox));
+            buttonPanel.add(buttonAutodetect);
+        }
 
         addDefaultStrategyElementFilterSettings(filterFields);
 
@@ -249,7 +249,10 @@ public class FormulaSearchStrategy extends ConfigPanel {
         if (isBatchDialog) {
             filterComponents.addAll(List.of(autodetectLabel, detectableTextBox));
         }
-        addDatabaseStrategyElementFilterSettings(filterFields, filterComponents);
+        int columnWidth = enforcedTextBox.getPreferredSize().width;
+        int sidePanelWidth = buttonPanel.getPreferredSize().width;
+        addElementFilterEnabledCheckboxForStrategy(filterFields, filterComponents, Strategy.BOTTOM_UP, columnWidth, sidePanelWidth);
+        addElementFilterEnabledCheckboxForStrategy(filterFields, filterComponents, Strategy.DATABASE, columnWidth, sidePanelWidth);
 
         int constraintsGridY = filterFields.both.gridy;
         filterFields.add(constraintsLabel, enforcedTextBox);
@@ -257,8 +260,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
             filterFields.add(autodetectLabel, detectableTextBox);
         }
 
-        JButton buttonEdit = new JButton("…");  // Ellipsis symbol instead of ... because 1-char buttons don't get side insets
-        buttonPanel.add(buttonEdit);
 
         GridBagConstraints c = new GridBagConstraints();
         c.gridx = 2;
@@ -285,13 +286,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
             }
         });
 
-        if (!isBatchDialog) {
-            JButton buttonAutodetect = new JButton("Auto");
-            buttonAutodetect.setToolTipText("Auto detectable element are: " + join(autoDetectableElements));
-            buttonAutodetect.addActionListener(e -> detectElements(autoDetectableElements, enforcedTextBox));
-            buttonPanel.add(buttonAutodetect);
-        }
-
         JPanel elementFilterPanel = applyDefaultLayout(new JPanel());
         elementFilterPanel.add(new TextHeaderBoxPanel("Element Filter", filterFields));
 
@@ -312,7 +306,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         strategyComponents.get(Strategy.DEFAULT).add(elementAlphabetStrategySelector);
     }
 
-    private void addDatabaseStrategyElementFilterSettings(TwoColumnPanel filterFields, List<Component> filterComponents) {
+    private void addElementFilterEnabledCheckboxForStrategy(TwoColumnPanel filterFields, List<Component> filterComponents, Strategy s, int columnWidth, int sidePanelWidth) {
         JCheckBox useElementFilter = new JCheckBox() { //todo NewWorkflow: implement this feature. This makes the organics filter obsolete. Maybe dont use the checkbox but always select the organics. Make new Element panel popup
             @Override
             public void setVisible(boolean flag) {
@@ -328,12 +322,28 @@ public class FormulaSearchStrategy extends ConfigPanel {
         parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates", () -> Boolean.toString(useElementFilter.isSelected()));
 
         JLabel label = new JLabel("Enable element filter");
-        filterFields.add(label, useElementFilter);
 
-        strategyComponents.get(Strategy.DATABASE).add(label);
-        strategyComponents.get(Strategy.DATABASE).add(useElementFilter);
+        JPanel checkBoxPanel = new JPanel();
+        checkBoxPanel.setLayout(new FlowLayout(FlowLayout.LEADING));
+        checkBoxPanel.add(useElementFilter);
 
+        checkBoxPanel.setPreferredSize(new Dimension(columnWidth, checkBoxPanel.getPreferredSize().height));  // Prevent resizing on checking/unchecking
+
+        int constraintsGridY = filterFields.both.gridy;
+        filterFields.add(label, checkBoxPanel);
         useElementFilter.addActionListener(e -> filterComponents.forEach(c -> c.setVisible(useElementFilter.isSelected())));
+
+        JPanel invisiblePanel = new JPanel();  // Prevent resizing on checking/unchecking
+        invisiblePanel.setPreferredSize(new Dimension(sidePanelWidth, 0));
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = 2;
+        c.gridy = constraintsGridY;
+        filterFields.add(invisiblePanel, c);
+
+        strategyComponents.get(s).add(label);
+        strategyComponents.get(s).add(checkBoxPanel);
+        strategyComponents.get(s).add(useElementFilter);
+        strategyComponents.get(s).add(invisiblePanel);
     }
 
     private String join(Collection<?> objects) {
@@ -368,11 +378,15 @@ public class FormulaSearchStrategy extends ConfigPanel {
         }
     }
 
-    public List<CustomDataSources.Source> getFormulaSearchDBs() {
+    public List<SearchableDatabase> getFormulaSearchDBs() {
         return searchDBList.checkBoxList.getCheckedItems();
     }
 
     public List<String> getFormulaSearchDBStrings() {
-        return getFormulaSearchDBs().stream().map(CustomDataSources.Source::name).filter(Objects::nonNull).collect(Collectors.toList());
+        return getFormulaSearchDBs().stream().map(SearchableDatabase::getDatabaseId).collect(Collectors.toList());
+    }
+
+    public Strategy getSelectedStrategy(){
+        return strategy;
     }
 }

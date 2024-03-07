@@ -22,18 +22,17 @@ package de.unijena.bioinf.ms.gui.dialogs;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.DeleteExperimentAction;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.DBSelectionList;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.NotNull;
@@ -42,8 +41,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -68,7 +69,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     final JCheckBox elementsMatchFormula;
     final JCheckBox elementsMatchPrecursorFormula;
 
-    final JCheckboxListPanel<CustomDataSources.Source> searchDBList;
+    final JCheckboxListPanel<SearchableDatabase> searchDBList;
 
     final SiriusGui gui;
 
@@ -197,7 +198,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         ionizations.add(PrecursorIonType.unknownNegative());
         ionizations.addAll(PeriodicTable.getInstance().getPositiveAdducts());
         ionizations.addAll(PeriodicTable.getInstance().getNegativeAdducts());
-        ionizations.sort(Comparator.comparing(PrecursorIonType::toString));
+        ionizations.sort(PrecursorIonTypeSelector.ionTypeComparator);
 
         adductOptions.checkBoxList.replaceElements(ionizations);
         adductOptions.checkBoxList.uncheckAll();
@@ -208,7 +209,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
         // db filter
         {
-            searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Hit in structure DB");
+            searchDBList = new JCheckboxListPanel<>(DBSelectionList.fromSearchableDatabases(gui.getSiriusClient()), "Hit in structure DB");
             smallParameters.add(searchDBList);
             searchDBList.remove(searchDBList.buttons);
             searchDBList.checkBoxList.uncheckAll();

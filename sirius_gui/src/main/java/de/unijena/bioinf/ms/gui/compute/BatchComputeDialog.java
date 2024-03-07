@@ -110,7 +110,7 @@ public class BatchComputeDialog extends JDialog {
 
             zodiacConfigs = new ActZodiacConfigPanel(gui, isAdvancedView);
             fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui);
-            csiSearchConfigs = new ActFingerblastConfigPanel(gui, formulaIDConfigPanel.content.getSearchDBList().checkBoxList);
+            csiSearchConfigs = new ActFingerblastConfigPanel(gui, formulaIDConfigPanel.content);
             msNovelistConfigs = new ActMSNovelistConfigPanel(gui);
 
             if (compoundsToProcess.size() > 1 && ms2) {
@@ -535,7 +535,7 @@ public class BatchComputeDialog extends JDialog {
                         "(all molecular formulas) will be used instead.";
 
         public WarnFormulaSourceDialog(Frame owner) {
-            super(owner, "<html>" + FORMULA_SOURCE_WARNING_MESSAGE, DONT_ASK_KEY + "</html>");
+            super(owner, FORMULA_SOURCE_WARNING_MESSAGE, DONT_ASK_KEY);
         }
     }
 }

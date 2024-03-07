@@ -20,9 +20,9 @@ package de.unijena.bioinf.ms.gui.utils;/*
 
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.lcms.quality.LCMSQualityCheck;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -377,30 +377,23 @@ public class CompoundFilterModel implements SiriusPCS {
     }
 
     public static class DbFilter {
-        final List<CustomDataSources.Source> dbs;
+        final List<SearchableDatabase> dbs;
         final int numOfCandidates;
 
-        public DbFilter(List<CustomDataSources.Source> dbs) {
+        public DbFilter(List<SearchableDatabase> dbs) {
             this(dbs, 5);
 
         }
-        public DbFilter(List<CustomDataSources.Source> dbFilter, int numOfCandidates) {
+        public DbFilter(List<SearchableDatabase> dbFilter, int numOfCandidates) {
             this.dbs = dbFilter;
             this.numOfCandidates = numOfCandidates;
-        }
-
-        public long getDbFilterBits() {
-            if (dbs == null || dbs.isEmpty())
-                return 0;
-            return dbs.stream().
-                    mapToLong(CustomDataSources.Source::flag).reduce((a, b) -> a | b).orElse(0);
         }
 
         public int getNumOfCandidates() {
             return numOfCandidates;
         }
 
-        public List<CustomDataSources.Source> getDbs() {
+        public List<SearchableDatabase> getDbs() {
             return dbs;
         }
     }
