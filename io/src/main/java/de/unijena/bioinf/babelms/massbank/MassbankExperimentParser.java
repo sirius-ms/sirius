@@ -27,7 +27,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SpectrumWithAdditionalFields;
 import de.unijena.bioinf.babelms.Parser;
-import org.slf4j.LoggerFactory;
+import de.unijena.bioinf.babelms.annotations.CompoundMetaData;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -70,6 +70,7 @@ public class MassbankExperimentParser extends MassbankSpectralParser implements 
         parsePrecursorIonType(fields).ifPresent(exp::setPrecursorIonType);
         parsePrecursorMZ(fields).ifPresent(exp::setIonMass);
         // optional
+        fields.getField(CH_NAME.k()).ifPresent(v -> exp.annotate(CompoundMetaData.builder().compoundName(v).build()));
         fields.getField(CH_IUPAC.k()).ifPresent(inchi -> fields.getField(CH_IUPAC_KEY.k()).ifPresentOrElse(key -> exp.annotate(InChIs.newInChI(key, inchi)), () -> exp.annotate(InChIs.newInChI(inchi))));
         fields.getField(CH_SMILES.k()).map(Smiles::new).ifPresent(exp::annotate);
         fields.getField(PK_SPLASH.k()).map(Splash::new).ifPresent(exp::annotate);

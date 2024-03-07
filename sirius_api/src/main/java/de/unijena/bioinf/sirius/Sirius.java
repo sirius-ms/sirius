@@ -267,8 +267,8 @@ public class Sirius {
         experiment.setAnnotation(NumberOfCandidates.class, value);
     }
 
-    public static void setNumberOfCandidatesPerIon(@NotNull Ms2Experiment experiment, NumberOfCandidatesPerIon value) {
-        experiment.setAnnotation(NumberOfCandidatesPerIon.class, value);
+    public static void setNumberOfCandidatesPerIon(@NotNull Ms2Experiment experiment, NumberOfCandidatesPerIonization value) {
+        experiment.setAnnotation(NumberOfCandidatesPerIonization.class, value);
     }
 
     /*

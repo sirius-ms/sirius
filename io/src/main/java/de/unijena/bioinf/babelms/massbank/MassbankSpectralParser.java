@@ -113,10 +113,10 @@ public class MassbankSpectralParser extends SpectralParser {
             }
 
 
-            withKeyValue(line, metaInfo::put);
+            withKeyValue(line, metaInfo::putIfAbsent);
         }
 
-        LoggerFactory.getLogger("Unexpected end of Stream. No Peaks found! No spectrum resturned");
+        LoggerFactory.getLogger("Unexpected end of Stream. No Peaks found! No spectrum returned.");
         return null;
 
     }

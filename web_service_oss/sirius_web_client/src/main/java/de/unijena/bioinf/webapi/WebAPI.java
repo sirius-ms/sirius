@@ -32,7 +32,6 @@ import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.LoginException;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
 import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
 import de.unijena.bioinf.fingerid.FingerprintResult;
@@ -72,6 +71,9 @@ import java.net.URI;
 import java.util.Date;
 import java.util.Map;
 import java.util.function.Supplier;
+
+import static de.unijena.bioinf.chemdb.custom.CustomDataSources.getWebDatabaseCacheDirectory;
+import static de.unijena.bioinf.chemdb.custom.CustomDataSources.getWebDatabaseCacheStorage;
 
 /**
  * Frontend WebAPI class, that represents the client to our backend rest api
@@ -150,19 +152,19 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
 
     //region ChemDB
     default WebWithCustomDatabase getChemDB() {
-        return SearchableDatabases.makeWebWithCustomDB(this);
+        return new WebWithCustomDatabase(this, getWebDatabaseCacheDirectory(), getWebDatabaseCacheStorage());
     }
 
     void consumeStructureDB(long filter, @Nullable BlobStorage cache, IOFunctions.IOConsumer<D> doWithClient) throws IOException;
 
     default void consumeStructureDB(long filter, IOFunctions.IOConsumer<D> doWithClient) throws IOException {
-        consumeStructureDB(filter, SearchableDatabases.getWebDatabaseCacheStorage(), doWithClient);
+        consumeStructureDB(filter, getWebDatabaseCacheStorage(), doWithClient);
     }
 
     <T> T applyStructureDB(long filter, @Nullable BlobStorage cache, IOFunctions.IOFunction<D, T> doWithClient) throws IOException;
 
     default <T> T applyStructureDB(long filter, IOFunctions.IOFunction<D, T> doWithClient) throws IOException {
-        return applyStructureDB(filter, SearchableDatabases.getWebDatabaseCacheStorage(), doWithClient);
+        return applyStructureDB(filter, getWebDatabaseCacheStorage(), doWithClient);
     }
 
     //endregion
