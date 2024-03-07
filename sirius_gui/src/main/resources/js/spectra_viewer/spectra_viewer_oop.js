@@ -1169,7 +1169,6 @@ class Main {
 
     loadJSONDataAndStructure(data_spectra, data_svg, mirrorStyle, showMz) {
         d3.select("#debug").text("debug div visible?");
-        // this.showMz = showMz;
         if (showMz !== null)
             this.showMz = showMz;
         if (mirrorStyle !== null)
