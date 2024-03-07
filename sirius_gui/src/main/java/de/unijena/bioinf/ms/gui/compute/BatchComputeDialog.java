@@ -110,7 +110,7 @@ public class BatchComputeDialog extends JDialog {
 
             zodiacConfigs = new ActZodiacConfigPanel(gui, isAdvancedView);
             fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui);
-            csiSearchConfigs = new ActFingerblastConfigPanel(gui, formulaIDConfigPanel.content.getSearchDBList().checkBoxList);
+            csiSearchConfigs = new ActFingerblastConfigPanel(gui, formulaIDConfigPanel.content);
             msNovelistConfigs = new ActMSNovelistConfigPanel(gui);
 
             if (compoundsToProcess.size() > 1 && ms2) {

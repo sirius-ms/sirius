@@ -45,12 +45,14 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
     private final JCheckBox pubChemFallback;
 
     protected final SiriusGui gui;
+    protected final FormulaIDConfigPanel syncSource;
 
-    public FingerblastConfigPanel(SiriusGui gui, @Nullable final JCheckBoxList<SearchableDatabase> syncSource) {
+    public FingerblastConfigPanel(SiriusGui gui, @Nullable final FormulaIDConfigPanel syncSource) {
         super(FingerblastOptions.class);
         this.gui = gui;
+        this.syncSource = syncSource;
 
-        structureSearchStrategy = new StructureSearchStrategy(gui, syncSource);
+        structureSearchStrategy = new StructureSearchStrategy(gui, syncSource != null ? syncSource.getFormulaSearchStrategy() : null);
         pubChemFallback = new JCheckBox();
 
         parameterBindings.put("StructureSearchDB", () -> {
@@ -66,7 +68,7 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
 
 
         //confidence score approximate mode settings
-        JComboBox<ExpansiveSearchConfidenceMode.Mode> confidenceModeBox =  GuiUtils.makeParameterComboBoxFromDescriptiveValues(ExpansiveSearchConfidenceMode.Mode.getActiveModes());
+        JComboBox<ExpansiveSearchConfidenceMode.Mode> confidenceModeBox = GuiUtils.makeParameterComboBoxFromDescriptiveValues(ExpansiveSearchConfidenceMode.Mode.getActiveModes());
 
         //layout the panel
         final TwoColumnPanel additionalOptions = new TwoColumnPanel();

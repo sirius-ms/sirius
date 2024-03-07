@@ -26,9 +26,8 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class DBSelectionList extends JCheckBoxList<SearchableDatabase> {
 
@@ -56,6 +55,14 @@ public class DBSelectionList extends JCheckBoxList<SearchableDatabase> {
                 .sorted(Comparator.comparing(SearchableDatabase::getDatabaseId))
                 .toList();
         return new DBSelectionList(descriptionKey, dbLsit);
+    }
+
+
+@Override
+public boolean isSelectionEqual(JCheckBoxList<SearchableDatabase> other){
+        Set<String> checked1 = this.getCheckedItems().stream().map(SearchableDatabase::getDatabaseId).collect(Collectors.toSet());
+        Set<String> checked2 = other.getCheckedItems().stream().map(SearchableDatabase::getDatabaseId).collect(Collectors.toSet());
+        return checked1.equals(checked2);
     }
 
 }
