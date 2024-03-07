@@ -15,6 +15,7 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.ElementSelectionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.RelativeLayout;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
@@ -172,6 +173,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
     private JPanel createDefaultStrategyParameters() {
         JPanel parameterPanel = applyDefaultLayout(new JPanel());
+        ((RelativeLayout) parameterPanel.getLayout()).setBorderGap(0);
+        parameterPanel.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
 
         final TwoColumnPanel options = new TwoColumnPanel();
 
