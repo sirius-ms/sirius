@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.fingerid;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -44,9 +45,10 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
 
     private final AtomicBoolean loadAll = new AtomicBoolean(false);
 
-
-    public StructureList(final CompoundList compoundList) {
+    private final IOFunctions.BiIOFunction<InstanceBean, Integer, List<FingerprintCandidateBean>> dataExtractor; //todo allow user specifiable or pagination
+    public StructureList(final CompoundList compoundList, IOFunctions.BiIOFunction<InstanceBean, Integer, List<FingerprintCandidateBean>> dataExtractor) {
         super(FingerprintCandidateBean.class);
+        this.dataExtractor = dataExtractor;
         elementListSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         csiScoreStats = new DoubleListStats();
         logPStats = new DoubleListStats();
@@ -120,7 +122,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
                     checkForInterruption();
 
                     if (ec != null) {
-                        final List<FingerprintCandidateBean> fpcChache = ec.getStructureCandidates(loadAllCandidates ? Integer.MAX_VALUE : 100); //todo allow user specifiable or pagination
+                        final List<FingerprintCandidateBean> fpcChache = dataExtractor.apply(ec, loadAllCandidates ? Integer.MAX_VALUE : 100);
                         //prepare stats for filters and views before setting data
                         fpcChache.forEach(fpc ->{
                             csiScoreStats.addValue(fpc.getCandidate().getCsiScore());

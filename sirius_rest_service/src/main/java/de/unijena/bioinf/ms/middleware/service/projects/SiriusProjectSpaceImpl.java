@@ -334,6 +334,7 @@ public class SiriusProjectSpaceImpl implements Project {
         return new PageImpl<>(candidates, pageable, Long.MAX_VALUE);  //todo nightsky: number of candidates for page -> do only for new project space.
     }
 
+    //todo nightsky: we want to annotate DeNovo hits with db link meta information if available -> might need nu database.
     @Override
     public Page<StructureCandidateScored> findDeNovoStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
         List<Class<? extends DataAnnotation>> para = (optFields.contains(StructureCandidateScored.OptField.fingerprint)
@@ -359,7 +360,7 @@ public class SiriusProjectSpaceImpl implements Project {
                 .filter(fr -> fr.getCandidate().getAnnotation(FormulaScoring.class)
                         .flatMap(s -> s.getAnnotation(TopMsNovelistScore.class)).isPresent())
                 .map(fr -> fr.getCandidate().getId())
-                .map(fid -> loadStructureCandidates(instance, fid, pageable, FBCandidates.class, MsNovelistFBCandidateFingerprints.class, para, optFields))
+                .map(fid -> loadStructureCandidates(instance, fid, pageable, MsNovelistFBCandidates.class, MsNovelistFBCandidateFingerprints.class, para, optFields))
                 .filter(Optional::isPresent).flatMap(Optional::stream).flatMap(List::stream)
                 .sorted(Comparator.comparing(StructureCandidateScored::getCsiScore).reversed())
                 .skip(pageable.getOffset())

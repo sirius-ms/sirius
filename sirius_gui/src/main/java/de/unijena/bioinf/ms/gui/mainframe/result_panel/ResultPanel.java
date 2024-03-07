@@ -49,11 +49,12 @@ public class ResultPanel extends JTabbedPane {
 //    public final LCMSViewerPanel lcmsTab;
 
     public final CandidateListDetailViewPanel structuresTab;
+    public final DeNovoStructureListDetailViewPanel deNovoStructuresTab;
     public final EpimetheusPanel structureAnnoTab;
     public final FingerprintPanel fpTab;
     public final CompoundClassPanel canopusTab;
 
-    public ResultPanel(final StructureList structureList, final FormulaList siriusResultElements, final SpectralMatchList spectralMatchList, final CompoundList compoundList, SiriusGui gui) {
+    public ResultPanel(final StructureList deNovoStructureList, final StructureList structureList, final FormulaList siriusResultElements, final SpectralMatchList spectralMatchList, SiriusGui gui) {
         super();
         this.setToolTipText("Results");
 
@@ -64,6 +65,7 @@ public class ResultPanel extends JTabbedPane {
 
         structureAnnoTab = new EpimetheusPanel(structureList);
         structuresTab = new CandidateListDetailViewPanel(this, structureList, gui);
+        deNovoStructuresTab = new DeNovoStructureListDetailViewPanel(this, deNovoStructureList, gui);
         FingerprintPanel fpTabTmp;
         try {
             fpTabTmp = new FingerprintPanel(new FingerprintList(siriusResultElements, gui));
@@ -90,6 +92,7 @@ public class ResultPanel extends JTabbedPane {
         addTab("Compound Classes", null, new FormulaListHeaderPanel(siriusResultElements, canopusTab), canopusTab.getDescription());
 
         addTab("Structures", null, structuresTab, structuresTab.getDescription());
+        addTab("De Novo Structures", null, deNovoStructuresTab, deNovoStructuresTab.getDescription());
         addTab("Substructure Annotations", null, structureAnnoTab, structureAnnoTab.getDescription());
 
         addTab("Library Matches", null, spectralMatchingPanel, spectralMatchingPanel.getDescription());
