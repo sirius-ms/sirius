@@ -20,39 +20,38 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
-import de.unijena.bioinf.ms.middleware.model.gui.GuiParameters;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import de.unijena.bioinf.ms.middleware.model.gui.GuiInfo;
+import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
+import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 
-@RestController
-@RequestMapping(value = "/api/projects/{projectId}/gui")
-@Tag(name = "[Experimental] GUI",
-        description = "Open, control and close SIRIUS Graphical User Interface (GUI) on the specified project-space.")
-public class GuiController {
+import java.io.IOException;
+import java.util.List;
 
-    /**
-     * Open GUI instance on specified project-space and bring the GUI window to foreground.
-     *
-     * @param readOnly  open in read-only mode.
-     * @param projectId of project-space the GUI instance will connect to.
-     */
-    @PostMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void openGui(@PathVariable String projectId, @RequestParam(required = false, defaultValue = "true") boolean readOnly) {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
+public abstract class GuiController {
+
+    protected final ProjectsProvider projectsProvider;
+
+    protected final GuiService guiService;
+
+    @Autowired
+    protected GuiController(ProjectsProvider<?> projectsProvider, GuiService guiService) {
+        this.projectsProvider = projectsProvider;
+        this.guiService = guiService;
     }
 
     /**
-     * Apply given changes to the running GUI instance.
-     *
-     * @param projectId     of project-space the GUI instance is connected to.
-     * @param guiParameters parameters that should be applied.
+     * Get list of currently running gui windows, managed by this SIRIUS instance.
+     * Note this will not show any Clients that are connected from a separate process!
+     * @return List of GUI windows that are currently managed by this SIRIUS instance.
      */
-    @PatchMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void applyToGui(@PathVariable String projectId, @RequestBody GuiParameters guiParameters) {
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "NOT YET IMPLEMENTED");
+    @GetMapping(value = "/api/guis", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public List<GuiInfo> getGuis() {
+        return guiService.findGui();
     }
 
     /**
@@ -60,13 +59,11 @@ public class GuiController {
      *
      * @param projectId if project-space the GUI instance is connected to.
      */
-    @DeleteMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void closeGui(@PathVariable String projectId) {
-        boolean isOpen = false;
-        if (isOpen) {
-            throw new ResponseStatusException(HttpStatus.OK, "Gui instance on '" + projectId + "' successfully closed.");
-        } else {
-            throw new ResponseStatusException(HttpStatus.NO_CONTENT, "No running Gui instance on '" + projectId + "'. Nothing to do.");
-        }
+    @DeleteMapping(value = "/api/projects/{projectId}/gui", produces = MediaType.APPLICATION_JSON_VALUE)
+    public boolean closeGui(@PathVariable String projectId, @RequestParam(required = false) boolean closeProject) throws IOException {
+        boolean closed = guiService.closeGuiInstance(projectId);
+        if (closeProject)
+            projectsProvider.closeProjectSpace(projectId);
+        return closed;
     }
 }

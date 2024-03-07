@@ -21,10 +21,13 @@
 package de.unijena.bioinf.ms.gui.dialogs;
 
 import de.unijena.bioinf.jjobs.LoadingBackroundTask;
-import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.logging.TextAreaJJobContainer;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.nightsky.sdk.jjobs.SseProgressJJob;
+import de.unijena.bioinf.ms.nightsky.sdk.model.CommandSubmission;
+import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
+import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,58 +36,22 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
 
-    public ExecutionDialog(@NotNull P configPanel) {
-        init(configPanel, compounds, nonCompoundInput);
-    }
 
-    public ExecutionDialog(@NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, Frame owner) {
-        super(owner);
-        init(configPanel, compounds, nonCompoundInput);
-    }
+    private final SiriusGui gui;
 
-    public ExecutionDialog(@NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, Frame owner, boolean modal) {
-        super(owner, modal);
-        init(configPanel, compounds, nonCompoundInput);
-    }
-
-    public ExecutionDialog(@NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, Frame owner, String title) {
-        super(owner, title);
-        init(configPanel, compounds, nonCompoundInput);
-    }
-
-    public ExecutionDialog(@NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, Frame owner, String title, boolean modal) {
+    public ExecutionDialog(SiriusGui gui, @NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, MainFrame owner, String title, boolean modal) {
         super(owner, title, modal);
+        this.gui = gui;
         init(configPanel, compounds, nonCompoundInput);
     }
 
-
-    public ExecutionDialog(@NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, Dialog owner) {
-        super(owner);
-        init(configPanel, compounds, nonCompoundInput);
-    }
-
-    public ExecutionDialog(@NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, Dialog owner, boolean modal) {
-        super(owner, modal);
-        init(configPanel, compounds, nonCompoundInput);
-    }
-
-    public ExecutionDialog(@NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, Dialog owner, String title) {
-        super(owner, title);
-        init(configPanel, compounds, nonCompoundInput);
-    }
-
-    public ExecutionDialog(@NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, Dialog owner, String title, boolean modal) {
-        super(owner, title, modal);
-        init(configPanel, compounds, nonCompoundInput);
+    private MainFrame mf() {
+        return (MainFrame) getOwner();
     }
 
     protected JButton execute, cancel;
@@ -112,8 +79,6 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
         execute.addActionListener(e -> execute());
 
         cancel.addActionListener(e -> cancel());
-
-//        setMinimumSize(new Dimension(350, getMinimumSize().height));
     }
 
     public void start() {
@@ -147,25 +112,25 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
     protected void execute() {
         dispose();
         try {
-            List<String> command = new ArrayList<>();
-            command.add(configPanel.toolCommand());
-            command.addAll(configPanel.asParameterList());
+            final CommandSubmission sub = new CommandSubmission();
+            sub.addCommandItem(configPanel.toolCommand());
+            configPanel.asParameterList().forEach(sub::addCommandItem);
 
-            final TextAreaJJobContainer<Boolean> j = Jobs.runCommand(command, compounds, getInputFilesOptions(), configPanel.toolCommand());
-            LoadingBackroundTask.connectToJob(this.getOwner() != null ? this.getOwner() : MF, "Running '" + configPanel.toolCommand() + "'...", indeterminateProgress, j);
+            if (compounds != null)
+                sub.alignedFeatureIds(compounds.stream().map(InstanceBean::getFeatureId).toList());
+            if (nonCompoundInput != null)
+                sub.inputPaths(nonCompoundInput.stream().map(Path::toString).toList());
 
+            gui.applySiriusClient((c, pid) -> {
+                Job j = c.jobs().startCommand(pid, sub, List.of(JobOptField.PROGRESS));
+                return LoadingBackroundTask.runInBackground(mf(),
+                        "Running '" + configPanel.toolCommand() + "'...", indeterminateProgress, null,
+                        new SseProgressJJob(gui.getSiriusClient(), pid, j)
+                );
+            }).awaitResult();
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).error("Error when running '" + configPanel.toolCommand() + "'.", e);
-            new ExceptionDialog(MF, e.getMessage());
+            new ExceptionDialog(mf(), e.getMessage());
         }
-    }
-
-    private InputFilesOptions getInputFilesOptions() {
-        if (nonCompoundInput == null)
-            return null;
-        InputFilesOptions inputFiles = new InputFilesOptions();
-        Map<Path, Integer> map = nonCompoundInput.stream().sequential().collect(Collectors.toMap(k -> k, k -> (int) k.toFile().length()));
-        inputFiles.msInput = new InputFilesOptions.MsInput(null, null, map);
-        return inputFiles;
     }
 }

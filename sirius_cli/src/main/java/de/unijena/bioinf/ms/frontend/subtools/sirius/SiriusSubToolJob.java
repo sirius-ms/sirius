@@ -25,7 +25,6 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.CandidateFormulas;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.Whiteset;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
 import de.unijena.bioinf.fingerid.FormulaWhiteListJob;
@@ -44,7 +43,6 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -75,7 +73,7 @@ public class SiriusSubToolJob extends InstanceJob {
 
             // create WhiteSet from DB if necessary
             final Optional<FormulaSearchDB> searchDB = exp.getAnnotation(FormulaSearchDB.class);
-            if (searchDB.isPresent() && searchDB.get().containsDBs())
+            if (searchDB.isPresent() && !searchDB.get().isEmpty())
                 wSet = submitSubJob(FormulaWhiteListJob.create(ApplicationCore.WEB_API.getChemDB(), searchDB.get().searchDBs, exp, detectPossibleAdducts(exp), true))
                         .awaitResult();
 

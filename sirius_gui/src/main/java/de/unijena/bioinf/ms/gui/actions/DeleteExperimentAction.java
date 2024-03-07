@@ -18,48 +18,42 @@
  */
 
 package de.unijena.bioinf.ms.gui.actions;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 29.01.17.
- */
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.CloseDialogNoSaveReturnValue;
 import de.unijena.bioinf.ms.gui.dialogs.CloseDialogReturnValue;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
-public class DeleteExperimentAction extends AbstractAction {
+public class DeleteExperimentAction extends AbstractGuiAction {
     public static final String NEVER_ASK_AGAIN_KEY = PropertyManager.PROPERTY_BASE + ".sirius.dialog.delete_experiment_action.ask_again";
-    private final List<InstanceBean> toRemove;
 
-    public DeleteExperimentAction(List<InstanceBean> toRemove) {
-        this.toRemove = toRemove;
-    }
-
-    public DeleteExperimentAction() {
-        super("Delete");
-        toRemove = null;
+    public DeleteExperimentAction(SiriusGui gui) {
+        super("Delete", gui);
         putValue(Action.SMALL_ICON, Icons.REMOVE_DOC_16);
         putValue(Action.SHORT_DESCRIPTION, "Delete the selected data");
 
-        setEnabled(SiriusActions.notComputingOrEmptySelected(MF.getCompoundListSelectionModel()));
 
-        MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
+        setEnabled(SiriusActions.notComputingOrEmptySelected(this.mainFrame.getCompoundListSelectionModel()));
+
+        this.mainFrame.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
             public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
             }
@@ -73,19 +67,44 @@ public class DeleteExperimentAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        deleteCompounds();
-    }
-
-    public void deleteCompounds() {
-        if (!PropertyManager.getBoolean(NEVER_ASK_AGAIN_KEY,false)) {
-            CloseDialogNoSaveReturnValue diag = new CloseDialogNoSaveReturnValue(MF, "When removing the selected compound(s) you will loose all computed identification results?", NEVER_ASK_AGAIN_KEY);
+        if (!PropertyManager.getBoolean(NEVER_ASK_AGAIN_KEY, false)) {
+            CloseDialogNoSaveReturnValue diag = new CloseDialogNoSaveReturnValue(mainFrame, "When removing the selected compound(s) you will loose all computed identification results?", NEVER_ASK_AGAIN_KEY);
             CloseDialogReturnValue val = diag.getReturnValue();
             if (val == CloseDialogReturnValue.abort) return;
         }
+        deleteCompounds(new ArrayList<>(mainFrame.getCompoundList().getCompoundListSelectionModel().getSelected()));
+    }
 
-        //use provided list or remove selected.
-        List<InstanceBean> toRemove = this.toRemove!=null ? new ArrayList<>(this.toRemove) : new ArrayList<>(MF.getCompoundList().getCompoundListSelectionModel().getSelected());
-        MF.getCompoundList().getCompoundListSelectionModel().clearSelection();
-        MF.ps().deleteCompounds(toRemove);
+    public void deleteCompounds(List<InstanceBean> toRemove) {
+        if (toRemove == null || toRemove.isEmpty())
+            return;
+
+        //clear selection to prevent EventList from going crazy.
+        mainFrame.getCompoundList().getCompoundListSelectionModel().clearSelection();
+
+        Jobs.runInBackgroundAndLoad(mainFrame, "Deleting Compounds...", false, new TinyBackgroundJJob<Boolean>() {
+            @Override
+            protected Boolean compute() {
+                synchronized (this) {
+                    final AtomicInteger pro = new AtomicInteger(0);
+                    updateProgress(0, toRemove.size(), pro.get(), "Deleting...");
+
+                    gui.acceptSiriusClient((client, pid) ->
+                            toRemove.forEach(feature -> {
+                                try {
+                                    if (!feature.isComputing())
+                                        client.features().deleteAlignedFeature(pid, feature.getFeatureId());
+                                    else
+                                        LoggerFactory.getLogger(getClass()).warn("Cannot delete compound '" + feature.getFeatureId() + "' because it is currently computing. Skipping!");
+                                } catch (Exception e) {
+                                    LoggerFactory.getLogger(getClass()).error("Could not delete Compound: " + feature.getFeatureId(), e);
+                                } finally {
+                                    updateProgress(0, toRemove.size(), pro.incrementAndGet(), "Deleting...");
+                                }
+                            }));
+                    return true;
+                }
+            }
+        });
     }
 }

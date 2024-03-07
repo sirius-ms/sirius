@@ -25,23 +25,29 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.net.URI;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public abstract class AbstractUserPortalAction extends AbstractAction {
 
-    public AbstractUserPortalAction() {
+    protected final Frame owner;
+
+    public AbstractUserPortalAction(Frame owner) {
+        super();
+        this.owner = owner;
     }
 
-    public AbstractUserPortalAction(String name) {
+    public AbstractUserPortalAction(String name, Frame owner) {
         super(name);
+        this.owner = owner;
     }
 
-    public AbstractUserPortalAction(String name, Icon icon) {
+    public AbstractUserPortalAction(String name, Icon icon, Frame owner) {
         super(name, icon);
+        this.owner = owner;
     }
 
     abstract URI path();
@@ -49,14 +55,14 @@ public abstract class AbstractUserPortalAction extends AbstractAction {
     @Override
     public synchronized void actionPerformed(ActionEvent e) {
         try {
-            GuiUtils.openURL(path(), "Open User Portal", true);
+            GuiUtils.openURL(owner, path(), "Open User Portal", true);
         } catch (Exception ex2) {
             LoggerFactory.getLogger(getClass()).error("Could not Open 'User Portal' in system browser, Try internal browser as fallback.", ex2);
             try {
-                GuiUtils.openURL(path(), "Open User Portal (internal)", false);
+                GuiUtils.openURL(owner, path(), "Open User Portal (internal)", false);
             } catch (IOException ex) {
                 LoggerFactory.getLogger(getClass()).error("Could neither open 'User Portal' in system browser nor in internal Browser." +   System.lineSeparator() + "Please copy the url to your browser: " + path(), ex2);
-                new ExceptionDialog(MF, "Could neither open 'User Portal' in system browser nor in internal Browser: " + ex2.getMessage() + System.lineSeparator() + "Please copy the url to your browser: " + path());
+                new ExceptionDialog(owner, "Could neither open 'User Portal' in system browser nor in internal Browser: " + ex2.getMessage() + System.lineSeparator() + "Please copy the url to your browser: " + path());
             }
         }
     }

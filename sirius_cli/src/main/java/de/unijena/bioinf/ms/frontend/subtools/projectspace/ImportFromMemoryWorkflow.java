@@ -20,50 +20,40 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.projectspace;
 
-import com.github.f4b6a3.ksuid.KsuidCreator;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource;
-import de.unijena.bioinf.babelms.CloseableIterator;
-import de.unijena.bioinf.babelms.GenericParser;
-import de.unijena.bioinf.babelms.MsExperimentParser;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.jjobs.ProgressSupport;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
-import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.InstanceImporter;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.function.Supplier;
+import java.util.concurrent.ExecutionException;
 
 public class ImportFromMemoryWorkflow implements Workflow, ProgressSupport {
     protected final JobProgressMerger progressSupport = new JobProgressMerger(this);
+    private final boolean ignoreFormulas;
+    private final boolean allowMs1OnlyData;
     private List<CompoundContainerId> importedCompounds = null;
 
-    public List<CompoundContainerId> getImportedCompounds() {
+    public List<CompoundContainerId> getImportedInstanceIds() {
         return importedCompounds;
     }
 
     private ProjectSpaceManager<?> psm;
 
-    private Supplier<BufferedReader> dataReaderProvide;
+    private Collection<InputResource<?>> inputResources;
 
-    private String sourceName;
-
-    private String ext;
-
-    public ImportFromMemoryWorkflow(ProjectSpaceManager<?> psm, Supplier<BufferedReader> dataReaderProvide, String sourceName, String ext) {
+    public ImportFromMemoryWorkflow(ProjectSpaceManager<?> psm, Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData) {
         this.psm = psm;
-        this.dataReaderProvide = dataReaderProvide;
-        this.sourceName = sourceName;
-        this.ext = ext;
+        this.inputResources = inputResources;
+        this.ignoreFormulas = ignoreFormulas;
+        this.allowMs1OnlyData = allowMs1OnlyData;
     }
 
     @Override
@@ -93,30 +83,14 @@ public class ImportFromMemoryWorkflow implements Workflow, ProgressSupport {
 
     @Override
     public void run() {
-        importedCompounds = new ArrayList<>();
-        GenericParser<Ms2Experiment> parser = new MsExperimentParser()
-                .getParserByExt(ext);
+        InstanceImporter.ImportInstancesJJob importerJJob = new InstanceImporter(psm, x -> true, x -> true, false, false)
+                .makeImportJJob(inputResources, ignoreFormulas, allowMs1OnlyData);
+        importerJJob.addJobProgressListener(progressSupport);
 
-        int progress = 0;
-        try (BufferedReader bodyStream = dataReaderProvide.get()) {
-            updateProgress(0, -1, progress, "Data reader opened");
-            try (CloseableIterator<Ms2Experiment> it = parser.parseIterator(bodyStream, null)) {
-                while (it.hasNext()) {
-                    Ms2Experiment next = it.next();
-                    if (sourceName == null)  // workaround to fake import file
-                        sourceName = "Unknown-" + KsuidCreator.getKsuid().toString();
-                    next.setAnnotation(SpectrumFileSource.class,
-                            new SpectrumFileSource(
-                                    new File((sourceName.endsWith(ext) ? sourceName : sourceName + "." + ext.toLowerCase())).toURI()));
-
-                    @NotNull Instance inst = psm.newCompoundWithUniqueId(next);
-                    importedCompounds.add(inst.getID());
-                    updateProgress(0, -1, ++progress, "Imported: " + inst.getID().toString());
-                }
-            }
-        } catch (IOException e) {
+        try {
+            importedCompounds = SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
+        } catch (ExecutionException e) {
             throw new RuntimeException(e);
         }
-        updateProgress(0, progress, progress, null);
     }
 }

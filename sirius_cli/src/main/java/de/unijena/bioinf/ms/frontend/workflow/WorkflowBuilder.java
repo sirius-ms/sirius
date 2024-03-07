@@ -42,6 +42,7 @@ import de.unijena.bioinf.ms.frontend.subtools.similarity.SimilarityMatrixOptions
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOptions;
 import de.unijena.bioinf.ms.frontend.subtools.summaries.SummaryOptions;
+import de.unijena.bioinf.ms.frontend.subtools.updatefps.UpdateFingerprintOptions;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import de.unijena.bioinf.ms.frontend.utils.AutoCompletionScript;
 import org.jetbrains.annotations.NotNull;
@@ -106,6 +107,8 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
     public final ExportPredictionsOptions exportPredictions;
     public final MgfExporterOptions mgfExporterOptions;
     public final FTreeExporterOptions ftreeExporterOptions;
+
+    public final UpdateFingerprintOptions updateFingerprintOptions;
     public final AutoCompletionScript autocompleteOptions;
 
     //preprocessing, project-space providing tool, pre-project-space tool
@@ -149,6 +152,7 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
         settingsOptions = new SettingsOptions();
         autocompleteOptions = new AutoCompletionScript();
         fingerprinterOptions = new FingerprinterOptions();
+        updateFingerprintOptions = new UpdateFingerprintOptions();
     }
 
     public void initRootSpec() {
@@ -175,7 +179,7 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
 
     protected Object[] standaloneTools() {
         return Streams.concat(
-                Stream.of(projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, ftreeExporterOptions, exportPredictions, fingerprinterOptions),
+                Stream.of(projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, ftreeExporterOptions, exportPredictions, fingerprinterOptions, updateFingerprintOptions),
                 additionalTools.stream(), Stream.of(loginOptions, settingsOptions, autocompleteOptions)
         ).toArray(Object[]::new);
 

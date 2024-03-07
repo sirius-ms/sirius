@@ -75,7 +75,7 @@ public class StructureSearchStrategy extends JPanel {
             syncSource.addListSelectionListener(e -> {
                 searchDBList.checkBoxList.uncheckAll();
                 if (syncSource.getCheckedItems().isEmpty())
-                    searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(DataSource.BIO.realName()));
+                    searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(DataSource.BIO.name()));
                 else
                     searchDBList.checkBoxList.checkAll(syncSource.getCheckedItems());
             });
@@ -103,6 +103,6 @@ public class StructureSearchStrategy extends JPanel {
     }
 
     public List<String> getStructureSearchDBStrings() {
-        return getStructureSearchDBs().stream().map(CustomDataSources.Source::id).filter(Objects::nonNull).collect(Collectors.toList());
+        return getStructureSearchDBs().stream().map(CustomDataSources.Source::name).filter(Objects::nonNull).collect(Collectors.toList());
     }
 }

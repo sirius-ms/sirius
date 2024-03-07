@@ -19,17 +19,13 @@
 
 package de.unijena.bioinf.ms.gui.dialogs;
 
-import com.google.common.collect.Multimap;
-import de.unijena.bioinf.ms.gui.actions.SiriusActions;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionCheckPanel;
-import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
-import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
-import de.unijena.bioinf.rest.ConnectionError;
+import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,37 +33,38 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 /**
- * Created by Marcus Ludwig on 17.11.16.
+ * @author Marcus Ludwig
  */
 public final class ConnectionDialog extends JDialog implements ActionListener {
     private final static String name = "Webservice Connection";
     private JButton network;
     private JButton account;
-    private ConnectionCheckPanel connectionCheck;
-
 
     private static ConnectionDialog instance;
 
-    public static synchronized ConnectionDialog of(Frame owner, @NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerList, @NotNull LicenseInfo license) {
+    private final SiriusGui gui;
+
+    public static synchronized ConnectionDialog of(SiriusGui gui, @NotNull ConnectionCheck check) {
         if (instance != null)
             instance.dispose();
-        instance = new ConnectionDialog(owner, errors, workerList, license);
+        instance = new ConnectionDialog(gui, check);
         return instance;
     }
 
-    private ConnectionDialog(Frame owner, @NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerList,  @NotNull LicenseInfo license) {
-        super(owner, name, ModalityType.APPLICATION_MODAL);
-        initDialog(errors, workerList, license);
+    private ConnectionDialog(@NotNull SiriusGui gui, @NotNull ConnectionCheck check) {
+        super(gui.getMainFrame(), name, ModalityType.APPLICATION_MODAL);
+        this.gui = gui;
+        initDialog(check);
     }
 
-    private void initDialog(@NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerList,  @NotNull LicenseInfo license) {
+    private void initDialog(@NotNull ConnectionCheck check) {
         setLayout(new BorderLayout());
 
         //header
         JPanel header = new DialogHeader(Icons.NET_64);
         add(header, BorderLayout.NORTH);
 
-        connectionCheck = new ConnectionCheckPanel(this, errors, workerList, license);
+        ConnectionCheckPanel connectionCheck = new ConnectionCheckPanel(this, gui, check);
         add(connectionCheck, BorderLayout.CENTER);
 
 
@@ -110,8 +107,13 @@ public final class ConnectionDialog extends JDialog implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         this.dispose();
         if (e.getSource().equals(network))
-            Jobs.runEDTLater(() -> new SettingsDialog(MainFrame.MF, 2));
+            Jobs.runEDTLater(() -> new SettingsDialog(gui, 2));
         if (e.getSource().equals(account))
-            Jobs.runEDTLater(() -> SiriusActions.SHOW_ACCOUNT.getInstance().actionPerformed(e));
+            Jobs.runEDTLater(() -> mf().getToolbar().getAccount().getAction().actionPerformed(e));
     }
+
+    private MainFrame mf(){
+        return (MainFrame) getOwner();
+    }
+
 }

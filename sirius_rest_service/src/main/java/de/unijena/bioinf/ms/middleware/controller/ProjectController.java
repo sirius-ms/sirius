@@ -20,58 +20,54 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
-import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
-import de.unijena.bioinf.ms.middleware.model.SearchQueryType;
+import com.github.f4b6a3.tsid.TsidCreator;
+import de.unijena.bioinf.ms.middleware.model.MultipartInputResource;
+import de.unijena.bioinf.ms.middleware.model.compute.ImportLocalFilesSubmission;
+import de.unijena.bioinf.ms.middleware.model.compute.ImportMultipartFilesSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
+import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springdoc.api.annotations.ParameterObject;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
 
 @RestController
 @RequestMapping(value = "/api/projects")
 @Tag(name = "Projects", description = "Manage SIRIUS projects.")
+@Slf4j
 public class ProjectController {
-    //todo add access to fingerprint definitions aka molecular property names
-    private final ComputeService computeContext;
+    private final ComputeService computeService;
     private final ProjectsProvider projectsProvider;
 
     @Autowired
-    public ProjectController(ComputeService<?> context, ProjectsProvider<?> projectsProvider) {
-        this.computeContext = context;
+    public ProjectController(ComputeService<?> computeService, ProjectsProvider<?> projectsProvider) {
+        this.computeService = computeService;
         this.projectsProvider = projectsProvider;
     }
 
     /**
      * List opened project spaces.
-     *
-     * @param searchQuery optional search query in specified format
-     * @param querySyntax query syntax used fpr searchQuery
      */
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public Page<ProjectInfo> getProjectSpaces(@ParameterObject Pageable pageable,
-                                              @RequestParam(required = false) String searchQuery,
-                                              @RequestParam(defaultValue = "LUCENE") SearchQueryType querySyntax) {
-        final List<ProjectInfo> all = projectsProvider.listAllProjectSpaces();
-        return new PageImpl<>(
-                all.stream().skip(pageable.getOffset()).limit(pageable.getPageSize()).toList(), pageable, all.size()
-        );
+    public List<ProjectInfo> getProjectSpaces() {
+        return projectsProvider.listAllProjectSpaces();
     }
 
     /**
@@ -80,64 +76,40 @@ public class ProjectController {
      * @param projectId unique name/identifier tof the project-space to be accessed.
      */
     @GetMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ProjectInfo getProjectSpace(@PathVariable String projectId) {
-        //todo add infos like size and number of compounds?
-        return projectsProvider.getProjectIdOrThrow(projectId);
+    public ProjectInfo getProjectSpace(@PathVariable String projectId, @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields) {
+        return projectsProvider.getProjectInfoOrThrow(projectId, optFields);
     }
 
     /**
      * Open an existing project-space and make it accessible via the given projectId.
      *
-     * @param projectId unique name/identifier that shall be used to access the opened project-space.
+     * @param projectId     unique name/identifier that shall be used to access the opened project-space. Must consist only of [a-zA-Z0-9_-].
+     * @param pathToProject local file path to open the project from. If NULL, project will be loaded by it projectId from default project location.  DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
      */
     @PutMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ProjectInfo openProjectSpace(@PathVariable String projectId, @RequestParam String pathToProject) throws IOException {
-        return projectsProvider.openProjectSpace(new ProjectInfo(projectId, pathToProject));
+    public ProjectInfo openProjectSpace(@PathVariable String projectId,
+                                        @Deprecated @RequestParam(required = false) String pathToProject,
+                                        @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields
+    ) throws IOException {
+        return projectsProvider.openProjectSpace(projectId, pathToProject, optFields);
     }
 
     /**
      * Create and open a new project-space at given location and make it accessible via the given projectId.
      *
-     * @param projectId unique name/identifier that shall be used to access the newly created project-space.
+     * @param projectId     unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-].
+     * @param pathToProject local file path where the project will be created. If NULL, project will be stored by its projectId in default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
      */
     @PostMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ProjectInfo createProjectSpace(@PathVariable String projectId,
-                                          @RequestParam String pathToProject,
-                                          @RequestParam(required = false) String pathToSourceProject,
-                                          @RequestParam(required = false, defaultValue = "true") boolean awaitImport
+                                          @Deprecated @RequestParam(required = false) String pathToProject
     ) throws IOException {
-        InputFilesOptions inputFiles = null;
-        if (pathToSourceProject != null) {
-            inputFiles = new InputFilesOptions();
-            inputFiles.msInput = new InputFilesOptions.MsInput();
-            inputFiles.msInput.setAllowMS1Only(true);
-            inputFiles.msInput.setInputPath(List.of(Path.of(pathToSourceProject)));
-
-            if (!inputFiles.msInput.isSingleProject())
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Unsupported input! 'pathToSourceProject' needs to point to a valid SIRIUS project-space");
-
-        }
-
-        ProjectInfo pid = projectsProvider.createProjectSpace(projectId, Path.of(pathToProject));
-        de.unijena.bioinf.ms.middleware.service.projects.Project project = projectsProvider.getProjectOrThrow(projectId);
-        if (inputFiles != null) {
-            Job id = computeContext.createAndSubmitJob(project, List.of("project-space", "--keep-open"),
-                    null, inputFiles, EnumSet.allOf(Job.OptField.class));
-            if (awaitImport) { //todo maybe separate endpoint for non waiting.
-                try {
-                    computeContext.getJJob(id.getId()).awaitResult();
-                    computeContext.deleteJob(id.getId(), false, true, EnumSet.noneOf(Job.OptField.class));
-                } catch (ExecutionException e) {
-                    throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error when waiting for import jobs '" + id.getId() + "'.", e);
-                }
-            }
-        }
-        return pid;
+        return projectsProvider.createProjectSpace(projectId, pathToProject);
     }
 
     /**
      * Close project-space and remove it from application. Project will NOT be deleted from disk.
-     *
+     * <p>
      * ATTENTION: This will cancel and remove all jobs running on this Project before closing it.
      * If there are many jobs, this might take some time.
      *
@@ -148,8 +120,150 @@ public class ProjectController {
         Project ps = (Project) projectsProvider.getProject(projectId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT,
                         "Project space with identifier '" + projectId + "' not found!"));
-        computeContext.deleteJobs(ps, true, true, EnumSet.noneOf(Job.OptField.class));
+        computeService.deleteJobs(ps, true, true, true, EnumSet.noneOf(Job.OptField.class));
         //todo check if we can make wait for deletion aync
         projectsProvider.closeProjectSpace(projectId);
+    }
+
+    /**
+     * Import and Align full MS-Runs from various formats into the specified project as background job.
+     * Possible formats (mzML, mzXML)
+     *
+     * @param projectId project-space to import into.
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
+     * @return the import job.
+     */
+    @PostMapping(value = "/{projectId}/jobs/import/ms-data-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Job importMsRunDataAsJob(@PathVariable String projectId,
+                                    @RequestBody MultipartFile[] inputFiles,
+                                    @RequestParam(defaultValue = "true") boolean alignRuns,
+                                    @RequestParam(defaultValue = "true") boolean allowMs1Only,
+                                    @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
+    ) {
+        Project p = projectsProvider.getProjectOrThrow(projectId);
+        try {
+            //todo nightsky: WORKAROUND for old lcms workflow ->  replace with new one.
+            String tmpDir = System.getProperty("java.io.tmpdir");
+
+            Path tmpdir = Path.of(tmpDir).resolve("sirius-lcms-import-" + projectId + "-" + TsidCreator.getTsid());
+            Files.createDirectories(tmpdir);
+            List<String> files = new ArrayList<>();
+
+            for (MultipartFile f : inputFiles){
+                Path nuFile = tmpdir.resolve(Optional.ofNullable(f.getOriginalFilename()).orElse(TsidCreator.getTsid().toString()));
+                f.transferTo(nuFile);
+                files.add(nuFile.toAbsolutePath().toString());
+            }
+
+            ImportLocalFilesSubmission sub = new ImportLocalFilesSubmission();
+            sub.setInputPaths(files);
+            sub.setAlignLCMSRuns(alignRuns);
+            sub.setAllowMs1OnlyData(allowMs1Only);
+            return computeService.createAndSubmitImportJob(p, sub, removeNone(optFields));
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when loading lcms data.", e);
+        }
+    }
+
+    /**
+     * Import and Align full MS-Runs from various formats into the specified project
+     * Possible formats (mzML, mzXML)
+     *
+     * @param projectId  project-space to import into.
+     * @param inputFiles files to import into project
+     */
+    @PostMapping(value = "/{projectId}/import/ms-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ImportResult importMsRunData(@PathVariable String projectId,
+                                @RequestBody MultipartFile[] inputFiles,
+                                @RequestParam(defaultValue = "true") boolean alignRuns,
+                                @RequestParam(defaultValue = "true") boolean allowMs1Only
+    ) {
+        //todo nightsky: NOT IMPLEMENTED
+        return projectsProvider.getProjectOrThrow(projectId).importMsRunData(
+                Arrays.stream(inputFiles).map(MultipartInputResource::new).collect(Collectors.toList()),
+                alignRuns, allowMs1Only
+        );
+    }
+
+
+    /**
+     * Import ms/ms data from the given format into the specified project-space as background job.
+     * Possible formats (ms, mgf, cef, msp)
+     *
+     * @param projectId project-space to import into.
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
+     * @return the import job.
+     */
+    @PostMapping(value = "/{projectId}/import/preprocessed-data-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public Job importPreprocessedDataAsJob(@PathVariable String projectId,
+                                           @RequestBody MultipartFile[] imputFiles,
+                                           @RequestParam(defaultValue = "false") boolean ignoreFormulas,
+                                           @RequestParam(defaultValue = "true") boolean allowMs1Only,
+                                           @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
+    ) {
+
+        Project p = projectsProvider.getProjectOrThrow(projectId);
+        ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
+        sub.setInputFiles(Arrays.stream(imputFiles).collect(Collectors.toList()));
+        sub.setIgnoreFormulas(ignoreFormulas);
+        sub.setAllowMs1OnlyData(allowMs1Only);
+        return computeService.createAndSubmitPeakListImportJob(p, sub, optFields);
+    }
+
+    /**
+     * Import already preprocessed ms/ms data from various formats into the specified project
+     * Possible formats (ms, mgf, cef, msp)
+     *
+     * @param projectId  project-space to import into.
+     * @param inputFiles files to import into project
+     */
+    @PostMapping(value = "/{projectId}/import/preprocessed-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ImportResult importPreprocessedData(@PathVariable String projectId,
+                                               @RequestBody MultipartFile[] inputFiles,
+                                               @RequestParam(defaultValue = "false") boolean ignoreFormulas,
+                                               @RequestParam(defaultValue = "true") boolean allowMs1Only
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).importPreprocessedData(
+                Arrays.stream(inputFiles).map(MultipartInputResource::new).collect(Collectors.toList()),
+                ignoreFormulas, allowMs1Only
+        );
+    }
+
+    /**
+     * Move an existing (opened) project-space to another location.
+     *
+     * @param projectId           unique name/identifier of the project-space that shall be copied.
+     * @param pathToCopiedProject target location where the source project will be copied to.
+     * @param copyProjectId       optional id/mame of the newly created project (copy). If given the project will be opened.
+     * @return ProjectInfo of the newly created project if opened (copyProjectId != null) or the project info of
+     * the source project otherwise
+     * <p>
+     * DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
+     */
+    @Deprecated
+    @PutMapping(value = "/{projectId}/copy", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ProjectInfo copyProjectSpace(@PathVariable String projectId, @RequestParam String pathToCopiedProject, @RequestParam(required = false) String copyProjectId, @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields) throws IOException {
+        return projectsProvider.copyProjectSpace(projectId, copyProjectId, pathToCopiedProject, optFields);
+    }
+
+    @Operation(summary = "Get CSI:FingerID fingerprint (prediction vector) definition")
+    @GetMapping(value = {"/{projectId}/fingerid-data"}, produces = "application/CSV")
+    @ResponseStatus(HttpStatus.OK)
+    public String getFingerIdData(@PathVariable String projectId, @RequestParam int charge) {
+        return projectsProvider.getProjectOrThrow(projectId).getFingerIdDataCSV(charge);
+    }
+
+    @Operation(summary = "Get CANOPUS prediction vector definition for ClassyFire classes")
+    @GetMapping(value = {"/{projectId}/cf-data"}, produces = "application/CSV")
+    @ResponseStatus(HttpStatus.OK)
+    public String getCanopusClassyFireData(@PathVariable String projectId, @RequestParam int charge) {
+        return projectsProvider.getProjectOrThrow(projectId).getCanopusClassyFireDataCSV(charge);
+    }
+
+    @Operation(summary = "Get CANOPUS prediction vector definition for NPC classes")
+    @GetMapping(value = {"/{projectId}/npc-data"}, produces = "application/CSV")
+    @ResponseStatus(HttpStatus.OK)
+    public String getCanopusNpcData(@PathVariable String projectId, @RequestParam int charge) {
+        return projectsProvider.getProjectOrThrow(projectId).getCanopusNpcDataCSV(charge);
     }
 }

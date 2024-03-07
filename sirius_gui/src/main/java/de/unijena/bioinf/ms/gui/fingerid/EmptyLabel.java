@@ -23,14 +23,18 @@ package de.unijena.bioinf.ms.gui.fingerid;
 import java.awt.*;
 
 public class EmptyLabel extends DatabaseLabel {
-
+    String tooltip = null;
+    public EmptyLabel(String displayName, String tooltip) {
+        super("", displayName, null, new Rectangle(0, 0, 0, 0));
+        this.tooltip = tooltip;
+    }
     public EmptyLabel() {
         super("", "", null, new Rectangle(0, 0, 0, 0));
     }
 
     @Override
     public String getToolTipOrNull() {
-        return null;
+        return tooltip;
     }
 
     @Override

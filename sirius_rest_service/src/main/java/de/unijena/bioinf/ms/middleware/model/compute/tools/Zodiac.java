@@ -21,66 +21,93 @@
 package de.unijena.bioinf.ms.middleware.model.compute.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import de.unijena.bioinf.GibbsSampling.properties.*;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
+import de.unijena.bioinf.ms.middleware.model.compute.NullCheckMapBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Map;
 
 /**
  * User/developer friendly parameter subset for the ZODIAC tool (Network base molecular formula re-ranking).
+ * Needs results from Formula/SIRIUS Tool
  */
 @Getter
 @Setter
+@SuperBuilder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class Zodiac extends Tool<ZodiacOptions> {
 
     /**
      * Maximum number of candidate molecular formulas (fragmentation trees computed by SIRIUS) per compound which are considered by ZODIAC for compounds below 300 m/z.
      */
-    Integer consideredCandidatesAt300Mz = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacNumberOfConsideredCandidatesAt300Mz.class).value;
+    @Schema(nullable = true)
+    Integer consideredCandidatesAt300Mz;
+
     /**
      * Maximum number of candidate molecular formulas (fragmentation trees computed by SIRIUS) per compound which are considered by ZODIAC for compounds above 800 m/z.
      */
-    Integer consideredCandidatesAt800Mz = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacNumberOfConsideredCandidatesAt800Mz.class).value;
+    @Schema(nullable = true)
+    Integer consideredCandidatesAt800Mz;
+
     /**
      * As default ZODIAC runs a 2-step approach. First running 'good quality compounds' only, and afterwards including the remaining.
      */
-    Boolean runInTwoSteps = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacRunInTwoSteps.class).value;
+    @Schema(nullable = true)
+    Boolean runInTwoSteps;
 
     /**
      * thresholdFilter = Defines the proportion of edges of the complete network which will be ignored.
      * minLocalConnections = Minimum number of compounds to which at least one candidate per compound must be connected to.
      */
-    ZodiacEdgeFilterThresholds edgeFilterThresholds = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacEdgeFilterThresholds.class);
+    @Schema(nullable = true)
+    ZodiacEdgeFilterThresholds edgeFilterThresholds;
 
     /**
      * iterations: "Number of epochs to run the Gibbs sampling. When multiple Markov chains are computed, all chains' iterations sum up to this value."
      * burnInPeriod: "Number of epochs considered as 'burn-in period'.
      * numberOfMarkovChains: Number of separate Gibbs sampling runs.
      */
-    ZodiacEpochs gibbsSamplerParameters = PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacEpochs.class);
+    @Schema(nullable = true)
+    ZodiacEpochs gibbsSamplerParameters;
 
-    public Zodiac() {
+    private Zodiac() {
         super(ZodiacOptions.class);
     }
 
     @JsonIgnore
     @Override
     public Map<String, String> asConfigMap() {
-        return Map.of(
-                "ZodiacNumberOfConsideredCandidatesAt300Mz", String.valueOf(consideredCandidatesAt300Mz),
-                "ZodiacNumberOfConsideredCandidatesAt800Mz", String.valueOf(consideredCandidatesAt800Mz),
-                "ZodiacRunInTwoSteps", String.valueOf(runInTwoSteps),
+        return new NullCheckMapBuilder()
+                .putIfNonNull("ZodiacNumberOfConsideredCandidatesAt300Mz", consideredCandidatesAt300Mz)
+                .putIfNonNull("ZodiacNumberOfConsideredCandidatesAt800Mz", consideredCandidatesAt800Mz)
+                .putIfNonNull("ZodiacRunInTwoSteps", runInTwoSteps)
 
-                "ZodiacEpochs.iterations", String.valueOf(gibbsSamplerParameters.iterations),
-                "ZodiacEpochs.burnInPeriod", String.valueOf(gibbsSamplerParameters.burnInPeriod),
-                "ZodiacEpochs.numberOfMarkovChains", String.valueOf(gibbsSamplerParameters.numberOfMarkovChains),
+                .putIfNonNullObj("ZodiacEpochs.iterations", gibbsSamplerParameters, it -> it.iterations)
+                .putIfNonNullObj("ZodiacEpochs.burnInPeriod", gibbsSamplerParameters, it -> it.burnInPeriod)
+                .putIfNonNull("ZodiacEpochs.numberOfMarkovChains", gibbsSamplerParameters.numberOfMarkovChains)
 
-                "ZodiacEdgeFilterThresholds.thresholdFilter", String.valueOf(edgeFilterThresholds.thresholdFilter),
-                "ZodiacEdgeFilterThresholds.minLocalConnections", String.valueOf(edgeFilterThresholds.minLocalConnections),
-                "ZodiacEdgeFilterThresholds.minLocalCandidates", String.valueOf(edgeFilterThresholds.minLocalCandidates)
-        );
+                .putIfNonNullObj("ZodiacEdgeFilterThresholds.thresholdFilter", edgeFilterThresholds, it -> it.thresholdFilter)
+                .putIfNonNullObj("ZodiacEdgeFilterThresholds.minLocalConnections", edgeFilterThresholds, it -> it.minLocalConnections)
+                .putIfNonNullObj("ZodiacEdgeFilterThresholds.minLocalCandidates", edgeFilterThresholds, it -> it.minLocalCandidates)
+                .toUnmodifiableMap();
+    }
+
+    public static Zodiac buildDefault(){
+        return builderWithDefaults().build();
+    }
+    public static Zodiac.ZodiacBuilder<?,?> builderWithDefaults(){
+        return Zodiac.builder()
+                .enabled(false)
+                .consideredCandidatesAt300Mz(PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacNumberOfConsideredCandidatesAt300Mz.class).value)
+                .consideredCandidatesAt800Mz(PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacNumberOfConsideredCandidatesAt800Mz.class).value)
+                .runInTwoSteps(PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacRunInTwoSteps.class).value)
+                .edgeFilterThresholds(PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacEdgeFilterThresholds.class))
+                .gibbsSamplerParameters(PropertyManager.DEFAULTS.createInstanceWithDefaults(ZodiacEpochs.class));
     }
 }

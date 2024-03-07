@@ -21,18 +21,23 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
-import com.google.common.collect.Multimap;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
-import de.unijena.bioinf.ChemistryBase.chem.InChIs;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.fp.*;
-import de.unijena.bioinf.chemdb.*;
+import de.unijena.bioinf.chemdb.DataSource;
+import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
-import de.unijena.bioinf.projectspace.FormulaResultBean;
+import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingResult;
+import de.unijena.bioinf.ms.nightsky.sdk.model.BinaryFingerprint;
+import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatch;
+import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateFormula;
+import it.unimi.dsi.fastutil.shorts.ShortArrayList;
+import it.unimi.dsi.fastutil.shorts.ShortList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.CircularFingerprinter;
@@ -47,10 +52,12 @@ import org.openscience.cdk.smiles.SmilesParser;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.slf4j.LoggerFactory;
 
-import java.awt.*;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * This is the wrapper for the FingerprintCandidate class to interact with the gui
@@ -62,7 +69,6 @@ import java.util.concurrent.locks.ReentrantLock;
  * WARNING: This class is wor in progress
  */
 
-//todo can we create a dummy PCS for Immuatable Beans
 public class FingerprintCandidateBean implements SiriusPCS, Comparable<FingerprintCandidateBean> {
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
 
@@ -71,137 +77,158 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         return pcs;
     }
 
-
     public static final FingerprintCandidateBean PROTOTYPE = new PrototypeCompoundCandidate();
     public static final boolean ECFP_ENABLED = true;
     private static final double THRESHOLD_FP = 0.4;
 
     //data
-    protected final PrecursorIonType adduct;
-    protected final ProbabilityFingerprint fp;
-    protected final FingerprintCandidate candidate;
-    protected final double score;
-    protected final int rank;
+    @NotNull
+    private final ProbabilityFingerprint fp;
+    @NotNull
+    private final StructureCandidateFormula candidate;
+    private final SpectralMatchingResult spectralMatchingResult;
 
 
     //view
-    protected final String molecularFormulaString;
-    private volatile IAtomContainer molecule; //todo check if we need to cache this this
+    private volatile IAtomContainer molecule;
     protected CompoundMatchHighlighter highlighter;
 
-    protected boolean prepared = false;//todo fire property change???
+    protected boolean prepared = false;
 
     protected CircularFingerprinter.FP[] relevantFps;
-    protected int[] ecfpHashs;//todo fire property change???
+    protected int[] ecfpHashs;
 
-    protected FingerprintAgreement substructures; //todo fire property change???
+
+    protected FingerprintAgreement substructures;
+    @NotNull
     protected final DatabaseLabel[] labels;
-
-    protected final EmptyLabel referenceLabel;
-
-    protected final EmptyLabel moreLabel;
+    @Nullable
+    protected final DatabaseLabel bestRefMatchLabel;
+    @Nullable
+    protected final EmptyLabel moreRefMatchesLabel;
 
     protected boolean atomCoordinatesAreComputed = false;
     protected ReentrantLock compoundLock = new ReentrantLock();
 
-    protected final FormulaResultBean parent;
 
-
-    public FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, Scored<CompoundCandidate> scoredCandidate, Fingerprint candidatefp, PrecursorIonType adduct, FormulaResultBean parent) {
-        this(rank, fp, new FingerprintCandidate(scoredCandidate.getCandidate(), candidatefp), scoredCandidate.getScore(), adduct, parent);
-    }
-
-    public FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, Scored<FingerprintCandidate> scoredCandidate, PrecursorIonType adduct, FormulaResultBean parent) {
-        this(rank, fp, scoredCandidate.getCandidate(), scoredCandidate.getScore(), adduct, parent);
-    }
-
-    private FingerprintCandidateBean(int rank, ProbabilityFingerprint fp, FingerprintCandidate candidate, double candidateScore, PrecursorIonType adduct, FormulaResultBean parent) {
-        this.rank = rank;
-        this.fp = fp;
-        this.score = candidateScore;
+    public FingerprintCandidateBean(@NotNull StructureCandidateFormula candidate, @NotNull ProbabilityFingerprint fp, SpectralMatchingResult spectralMatchingResult) {
+        this.fp = fp; //todo nightsky: ->  do we want to lazy load the fp instead?
         this.candidate = candidate;
-        this.parent = parent;
-        this.molecularFormulaString = candidate.getInchi().extractFormulaOrThrow().toString();
-        this.adduct = adduct;
+        this.spectralMatchingResult = spectralMatchingResult;
         this.relevantFps = null;
 
 
-        if (this.candidate.getLinkedDatabases().isEmpty()) {
+        if (this.candidate.getDbLinks() == null || this.candidate.getDbLinks().isEmpty()) {
             this.labels = new DatabaseLabel[0];
         } else {
             List<DatabaseLabel> labels = new ArrayList<>();
-            @NotNull Multimap<String, String> linkeDBs = this.candidate.getLinkedDatabases();
-            for (String key : linkeDBs.keySet()) {
-                final Collection<String> values = this.candidate.getLinkedDatabases().get(key);
-                final ArrayList<String> cleaned = new ArrayList<>(values.size());
-                for (String value : values) {
-                    if (value != null)
-                        cleaned.add(value);
-                }
-                if (key.equals(DataSource.LIPID.realName))
-                    labels.add(new DatabaseLabel(key, "Lipid - " + linkeDBs.get(key).iterator().next(), cleaned.toArray(String[]::new), new Rectangle(0, 0, 0, 0)));
+            @NotNull Map<String, List<DBLink>> linkeDBs = this.candidate.getDbLinks().stream()
+                    .collect(Collectors.groupingBy(DBLink::getName, toList()));
+
+            for (Map.Entry<String, List<DBLink>> entry : linkeDBs.entrySet()) {
+                final List<String> cleaned = entry.getValue().stream().map(DBLink::getId)
+                        .filter(Objects::nonNull).distinct().toList();
+
+                if (entry.getKey().equals(DataSource.LIPID.name()))
+                    labels.add(new DatabaseLabel(entry.getKey(), "Lipid - " + entry.getValue().iterator().next(), cleaned.toArray(String[]::new)));
                 else
-                    labels.add(new DatabaseLabel(key, cleaned.toArray(String[]::new), new Rectangle(0, 0, 0, 0)));
+                    labels.add(new DatabaseLabel(entry.getKey(), CustomDataSources.getSourceFromName(entry.getKey()).displayName(), cleaned.toArray(String[]::new)));
             }
             Collections.sort(labels);
             this.labels = labels.toArray(DatabaseLabel[]::new);
         }
 
-        this.referenceLabel = new EmptyLabel();
-        this.moreLabel = new EmptyLabel();
-    }
+        bestRefMatchLabel = getBestReferenceMatch().map(match ->
+                new DatabaseLabel(
+                        match.getDbName(),
+                        Math.round(100 * match.getSimilarity()) + "% " + CustomDataSources.getSourceFromName(match.getDbName()).displayName(),
+                        new String[]{match.getDbId()}
+                )).orElse(null);
 
-   /* protected CSIPredictor getCorrespondingCSIPredictor() throws IOException {
-        return (CSIPredictor) ApplicationCore.WEB_API.getStructurePredictor(adduct.getCharge() > 0 ? PredictorType.CSI_FINGERID_POSITIVE : PredictorType.CSI_FINGERID_POSITIVE);
-    }*/
-
-    public DatabaseLabel[] getLabels() {
-        return labels;
+        final int size = getReferenceMatches().size();
+        switch (size) {
+            case 0 -> moreRefMatchesLabel = null;
+            case 1 -> moreRefMatchesLabel = new EmptyLabel("...show more", "Opem table with detailed information and spectrum visualisation for all reference matches.");
+            default -> moreRefMatchesLabel = new EmptyLabel(String.format("...show %d more", size - 1), "Opem table with detailed information and spectrum visualisation for all reference matches.");
+        }
     }
 
     public void highlightInBackground() {
-        CompoundMatchHighlighter h = new CompoundMatchHighlighter(this, getPlatts());
+        CompoundMatchHighlighter h = new CompoundMatchHighlighter(this, getPredictedFingerprint());
         synchronized (this) {
             this.highlighter = h;
         }
     }
 
-    public void setTanimoto(Double tanimoto) {
-        Double old = candidate.getTanimoto();
-        candidate.setTanimoto(tanimoto);
-        pcs.firePropertyChange("fpc.tanimoto", old, candidate.getTanimoto());
+    @NotNull
+    public List<SpectralLibraryMatch> getReferenceMatches() {
+        if (spectralMatchingResult == null)
+            return List.of();
+        return spectralMatchingResult.getMatchingSpectraForFPCandidate(getInChiKey()).orElse(List.of());
+    }
+
+    @NotNull
+    public Optional<SpectralLibraryMatch> getBestReferenceMatch() {
+        if (spectralMatchingResult == null)
+            return Optional.empty();
+        return spectralMatchingResult.getBestMatchingSpectrumForFPCandidate(getInChiKey());
     }
 
     public Double getTanimotoScore() {
-        return candidate.getTanimoto();
+        return candidate.getTanimotoSimilarity();
     }
 
     public double getScore() {
-        return score;
+        return candidate.getCsiScore();
     }
 
-    public ProbabilityFingerprint getPlatts() {
+
+    public ArrayFingerprint getCandidateFingerprint() {
+        FingerprintVersion version = getPredictedFingerprint().getFingerprintVersion();
+        ShortList indices = candidate.getFingerprint().getBitsSet().stream()
+                .map(version::getAbsoluteIndexOf)
+                .map(Integer::shortValue)
+                .collect(Collectors.toCollection(ShortArrayList::new));
+        return new ArrayFingerprint(version, indices.toShortArray());
+    }
+
+    public ProbabilityFingerprint getPredictedFingerprint() {
         return fp;
     }
 
     public String getName() {
-        return candidate.getName();
+        return candidate.getStructureName();
     }
 
     public String getInChiKey() {
-        return candidate.getInchi().key;
+        return candidate.getInchiKey();
     }
 
-    public FingerprintCandidate getFingerprintCandidate() {
+    public InChI getInChI() {
+        try {
+            return InChISMILESUtils.getInchiFromSmiles(candidate.getSmiles(), true);
+        } catch (CDKException e) {
+            throw new RuntimeException("Could not generate InChI from Smiles", e);
+        }
+    }
+
+    public String getSmiles() {
+        return candidate.getSmiles();
+    }
+
+    public @NotNull StructureCandidateFormula getCandidate() {
         return candidate;
     }
 
-    public long getMergedDBFlags(){
-        return CustomDataSources.getDBFlagsFromNames(getFingerprintCandidate().getLinkedDatabases().keySet());
+    public long getMergedDBFlags() {
+        return Optional.ofNullable(candidate.getDbLinks())
+                .map(s -> s.stream().map(DBLink::getName).collect(toList()))
+                .map(CustomDataSources::getDBFlagsFromNames)
+                .orElse(0L);
     }
 
     public String getMolecularFormula() {
-        return molecularFormulaString;
+        return candidate.getMolecularFormula();
     }
 
     public IAtomContainer getMolecule() {
@@ -211,51 +238,20 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         return molecule;
     }
 
-    public FormulaResultBean getFormulaResult() {
-        return parent;
-    }
-
-    public boolean canBeNeutralCharged() {
-        return hasChargeState(CompoundCandidateChargeState.NEUTRAL_CHARGE);
-    }
-
-    public boolean canBePositivelyCharged() {
-        return hasChargeState(CompoundCandidateChargeState.POSITIVE_CHARGE);
-    }
-
-    public boolean canBeNegativelyCharged() {
-        return hasChargeState(CompoundCandidateChargeState.NEGATIVE_CHARGE);
-    }
-
-    public boolean hasChargeState(CompoundCandidateChargeState chargeState) {
-        return (hasChargeState(candidate.getpLayer(), chargeState.getValue()) || hasChargeState(candidate.getqLayer(), chargeState.getValue()));
-    }
-
-    public boolean hasChargeState(CompoundCandidateChargeLayer chargeLayer, CompoundCandidateChargeState chargeState) {
-        return (chargeLayer == CompoundCandidateChargeLayer.P_LAYER ?
-                hasChargeState(candidate.getpLayer(), chargeState.getValue()) :
-                hasChargeState(candidate.getqLayer(), chargeState.getValue())
-        );
-    }
-
-    private boolean hasChargeState(int chargeLayer, int chargeState) {
-        return ((chargeLayer & chargeState) == chargeState);
-    }
-
     @Override
     public int compareTo(FingerprintCandidateBean o) {
         return Double.compare(o.getScore(), getScore()); //ATTENTION inverse
     }
 
     public double getXLogP() {
-        return getFingerprintCandidate().getXlogp();
+        return candidate.getXlogP();
     }
 
-    public Double getXLogPOrNull() {
-        Double xLogP = getXLogP();
-        if (xLogP.isNaN())
-            return null;
-        return xLogP;
+    public OptionalDouble getXLogPOpt() {
+        double xLogP = getXLogP();
+        if (Double.isNaN(xLogP))
+            return OptionalDouble.empty();
+        return OptionalDouble.of(xLogP);
     }
 
     public boolean computeAtomCoordinates() {
@@ -272,17 +268,17 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         return true;
     }
 
-    public boolean hasFingerprintIndex(int index) {
-        return candidate.getFingerprint().isSet(index);
+    public boolean hasFingerprintIndex(int relativeIndex) {
+        return candidate.getFingerprint().getBitsSet().contains(relativeIndex); //todo nightsky this is currently not O(1)
     }
 
     public boolean highlightFingerprint(int absoluteIndex) {
         if (!prepared) parseAndPrepare();
-        final FingerprintVersion version = candidate.getFingerprint().getFingerprintVersion();
+        final FingerprintVersion version = fp.getFingerprintVersion();
         final IAtomContainer molecule = getMolecule();
         for (IAtom atom : molecule.atoms()) atom.removeProperty(StandardGenerator.HIGHLIGHT_COLOR);
         for (IBond bond : molecule.bonds()) bond.removeProperty(StandardGenerator.HIGHLIGHT_COLOR);
-        if (!hasFingerprintIndex(absoluteIndex)) {
+        if (!hasFingerprintIndex(version.getRelativeIndexOf(absoluteIndex))) {
             molecule.setProperty(HighlightGenerator.ID_MAP, Collections.emptyMap());
             return false;
         }
@@ -350,10 +346,10 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
 
     public FingerprintAgreement getSubstructures(ProbabilityFingerprint prediction, PredictionPerformance[] performances) {
         if (substructures == null) {
+            final boolean[] boolFP = new boolean[candidate.getFingerprint().getLength()];
+            candidate.getFingerprint().getBitsSet().forEach(i -> boolFP[i] = true);
             substructures = FingerprintAgreement.getSubstructures(
-                    prediction.getFingerprintVersion(), prediction.toProbabilityArray(),
-                    candidate.getFingerprint().toBooleanArray(), performances,
-                    0.25);
+                    prediction.getFingerprintVersion(), prediction.toProbabilityArray(), boolFP, performances, 0.25);
         }
         return substructures;
     }
@@ -394,34 +390,25 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     }
 
     public double getXlogp() {
-        return candidate.getXlogp();
-    }
-
-    public int index() {
-        //todo check if we really need that for the detail list reloading stuff
-        return rank - 1;
+        return candidate.getXlogP();
     }
 
     private static class PrototypeCompoundCandidate extends FingerprintCandidateBean {
-        private static FingerprintCandidate makeSourceCandidate() {
-            final FingerprintCandidate candidate = new FingerprintCandidate(
-                    InChIs.newInChI("WQZGKKKJIJFFOK-GASJEMHNSA-N", "InChI=1S/C6H12O6/c7-1-2-3(8)4(9)5(10)6(11)12-2/h2-11H,1H2/t2-,3-,4+,5-,6?/m1/s1"),
-                    new ArrayFingerprint(CdkFingerprintVersion.getDefault(), new short[]{
-                            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 34, 35, 38, 80, 120
-                    })
-            );
-            candidate.setSmiles(new Smiles("OC[C@H]1OC(O)[C@H](O)[C@@H](O)[C@@H]1O").smiles);
-            candidate.setName("Glucose");
+        private static StructureCandidateFormula makeSourceCandidate() {
+            final StructureCandidateFormula candidate = new StructureCandidateFormula()
+                    .inchiKey("WQZGKKKJIJFFOK-GASJEMHNSA-N")
+                    .smiles(new Smiles("OC[C@H]1OC(O)[C@H](O)[C@@H](O)[C@@H]1O").smiles)
+                    .structureName("Glucose");
 
-            CustomDataSources.Source c = CustomDataSources.getSourceFromName("PubChem");
-            long bit = c.flag();
-            candidate.getLinkedDatabases().put("PubChem", "5793");
-            candidate.setBitset(candidate.getBitset() | bit);
+            candidate.dbLinks(List.of(new DBLink().name(DataSource.PUBCHEM.name()).id("5793")))
+                    .fingerprint(new BinaryFingerprint()
+                            .bitsSet(List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 34, 35, 38, 80, 120))
+                            .length(130));
             return candidate;
         }
 
         private PrototypeCompoundCandidate() {
-            super(0, null, makeSourceCandidate(), -12.22, PrecursorIonType.getPrecursorIonType("[M + C2H3N + Na]+"), null);
+            super(makeSourceCandidate(), null, null);
         }
 
 
@@ -436,7 +423,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         }
 
         @Override
-        public ProbabilityFingerprint getPlatts() {
+        public ProbabilityFingerprint getPredictedFingerprint() {
             return null;
         }
     }

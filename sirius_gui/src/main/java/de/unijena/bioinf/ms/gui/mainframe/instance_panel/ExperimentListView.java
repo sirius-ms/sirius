@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
 import ca.odell.glazedlists.swing.DefaultEventListModel;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.utils.JListDropImage;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -38,16 +39,15 @@ public class ExperimentListView extends JScrollPane {
     final JListDropImage<InstanceBean> compoundListView;
     final JPopupMenu expPopMenu;
 
-    public ExperimentListView(CompoundList sourceList) {
+    public ExperimentListView(SiriusGui gui, CompoundList sourceList) {
         super(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         this.sourceList = sourceList;
-
         //todo move texfield and filter funktion here
         compoundListView = new JListDropImage<>(new DefaultEventListModel<>(sourceList.compoundList));
         compoundListView.setSelectionModel(sourceList.compountListSelectionModel);
         compoundListView.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         compoundListView.setCellRenderer(new CompoundCellRenderer());
-        this.expPopMenu = new CompoundContextMenu();
+        expPopMenu = new CompoundContextMenu(gui);
 
         compoundListView.addMouseListener(new MouseListener() {
             @Override
@@ -56,7 +56,8 @@ public class ExperimentListView extends JScrollPane {
                     // Double-click detected
                     int index = compoundListView.locationToIndex(e.getPoint());
                     compoundListView.setSelectedIndex(index);
-                    SiriusActions.COMPUTE.getInstance().actionPerformed(new ActionEvent(compoundListView, 123, SiriusActions.COMPUTE.name()));
+                    SiriusActions.COMPUTE.getInstance(gui, true)
+                            .actionPerformed(new ActionEvent(compoundListView, 123, SiriusActions.COMPUTE.name()));
                 }
             }
 
@@ -107,8 +108,8 @@ public class ExperimentListView extends JScrollPane {
         KeyStroke delKey = KeyStroke.getKeyStroke("DELETE");
         compoundListView.getInputMap().put(delKey, SiriusActions.DELETE_EXP.name());
 
-        compoundListView.getActionMap().put(SiriusActions.DELETE_EXP.name(), SiriusActions.DELETE_EXP.getInstance());
-        compoundListView.getActionMap().put(SiriusActions.COMPUTE.name(), SiriusActions.COMPUTE.getInstance());
+        SiriusActions.DELETE_EXP.getInstance(gui, true);
+        SiriusActions.COMPUTE.getInstance(gui, true);
     }
 
     public JPopupMenu getExpPopMenu() {

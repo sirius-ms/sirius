@@ -26,6 +26,6 @@ import java.util.List;
 
 public interface ActiveElementChangedListener<E extends SiriusPCS, D> {
 
-    void resultsChanged(D experiment, E sre, List<E> resultElements, ListSelectionModel selections);
+    void resultsChanged(D elementsParent, E selectedElement, List<E> resultElements, ListSelectionModel selections);
 
 }

@@ -18,11 +18,6 @@
  */
 
 package de.unijena.bioinf.ms.gui.utils;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 06.10.16.
- */
 
 import com.formdev.flatlaf.FlatDarculaLaf;
 import com.formdev.flatlaf.FlatIntelliJLaf;
@@ -49,7 +44,6 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 
 /**
@@ -278,19 +272,16 @@ public class GuiUtils {
         return p;
     }
 
-    public static void openURL(URI url) throws IOException {
-        openURL(url, true);
+    public static void openURL(@NotNull Frame owner, URI url) throws IOException {
+        openURL(owner, url, true);
     }
 
-    public static void openURL(URI url, boolean useSystemBrowser) throws IOException {
-        openURL(url, null, useSystemBrowser);
+    public static void openURL(@NotNull Frame owner, URI url, boolean useSystemBrowser) throws IOException {
+        openURL(owner, url, null, useSystemBrowser);
     }
 
-    public static void openURL(URI url, @Nullable String title, boolean useSystemBrowser) throws IOException {
-        openURL(MF, url, title, useSystemBrowser);
-    }
 
-    public static void openURL(@NotNull JFrame owner, @NotNull URI url, String title, boolean useSystemBrowser) throws IOException {
+    public static void openURL(@NotNull Frame owner, @NotNull URI url, String title, boolean useSystemBrowser) throws IOException {
         if (url == null)
             new ExceptionDialog(owner, "Cannot open empty URL!");
 

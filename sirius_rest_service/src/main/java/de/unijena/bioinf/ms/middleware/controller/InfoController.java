@@ -20,11 +20,13 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
+import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.chemdb.ChemicalDatabase;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
-import de.unijena.bioinf.ms.middleware.model.Info;
+import de.unijena.bioinf.ms.middleware.model.info.Info;
+import de.unijena.bioinf.ms.middleware.service.info.ConnectionChecker;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -41,24 +43,33 @@ import java.util.Optional;
 @Tag(name = "Info", description = "Status und Information")
 public class InfoController {
     private final SiriusContext siriusContext;
+    private final ConnectionChecker connectionChecker;
 
-    public InfoController(SiriusContext siriusContext) {
+    public InfoController(SiriusContext siriusContext, ConnectionChecker connectionChecker) {
         this.siriusContext = siriusContext;
+        this.connectionChecker = connectionChecker;
     }
 
     @RequestMapping(value = "/api/info", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public Info getInfo() {
         String dbDate = Optional.ofNullable(siriusContext.webAPI().getChemDbDate()).orElse("M/A");
-
         return Info.builder()
                 .chemDbVersion(dbDate)
                 .nightSkyApiVersion(siriusContext.getApiVersion())
                 .siriusVersion(ApplicationCore.VERSION())
                 .siriusLibVersion(FingerIDProperties.siriusVersion())
                 .fingerIdLibVersion(FingerIDProperties.fingeridFullVersion())
-                .fingerIdModelVersion("N/A")
+                .availableILPSolvers(TreeBuilderFactory.getInstance().getAvailableBuilders())
+                .fingerIdModelVersion("N/A") //todo add model version in a performant way.
                 .fingerprintId(ChemicalDatabase.FINGERPRINT_ID)
                 .build();
     }
+
+    @RequestMapping(value = "/api/connection-status", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.OK)
+    public ConnectionChecker.ConnectionCheck getConnectionCheck() {
+        return connectionChecker.checkConnection();
+    }
+
 }

@@ -38,9 +38,6 @@ import java.awt.geom.Rectangle2D;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
-/**
- * Created by fleisch on 24.05.17.
- */
 class CompoundStructureImage extends JPanel {
 
     protected static final Font nameFont, rankFont, matchFont;
@@ -52,7 +49,7 @@ class CompoundStructureImage extends JPanel {
         if (tempFont != null) {
             nameFont = tempFont.deriveFont(13f);
             matchFont = tempFont.deriveFont(18f);
-            rankFont = tempFont.deriveFont(32f);
+            rankFont = tempFont.deriveFont(18f);
         } else {
             nameFont = matchFont = rankFont = Font.getFont(Font.SANS_SERIF);
 
@@ -102,24 +99,20 @@ class CompoundStructureImage extends JPanel {
             LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
         }
         renderer.getRenderer2DModel().set(BasicSceneGenerator.BackgroundColor.class, backgroundColor);
-        synchronized (molecule.candidate) {
+        synchronized (molecule.getCandidate()) {
             renderer.paint(molecule.getMolecule(), new AWTDrawVisitor(gg),
                     new Rectangle2D.Double(7, 14, 360, 185), true);
         }
-        if ((molecule.candidate.getName() != null) && (!molecule.candidate.getName().equalsIgnoreCase("null"))) {
-            gg.setFont(nameFont);
-            gg.drawString(molecule.candidate.getName(), 3, 16);
-        }
+
         gg.setFont(rankFont);
-        final String rankString = String.valueOf(molecule.rank);
-        final Rectangle2D bound = gg.getFontMetrics().getStringBounds(rankString, gg);
+        final String fromulaString = molecule.getMolecularFormula();
+        final Rectangle2D bound = gg.getFontMetrics().getStringBounds(fromulaString, gg);
         {
             final int x = 3;
             final int y = getHeight() - (int) (bound.getHeight());
             final int h = (int) (y + bound.getHeight());
-            gg.drawString(rankString, x, h - 2);
+            gg.drawString(fromulaString, x, h - 2);
         }
-//
 
         //todo change to gif
         final String scoreText = decimalFormat.format(molecule.getScore());

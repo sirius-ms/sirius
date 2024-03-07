@@ -18,12 +18,8 @@
  */
 
 package de.unijena.bioinf.ms.gui.mainframe;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 27.01.17.
- */
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.OpenLogAction;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -40,44 +36,37 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
-class SiriusToolbar extends JToolBar {
-    private final ToolbarToggleButton logs;
-    private ToolbarButton imCompB, createB, openB, saveB, exportB, summB, fbmnB, imB, computeAllB, jobs, db, connect, settings, account, /*bug,*/
+public class SiriusToolbar extends JToolBar {
+    private final ToolbarToggleButton logsB;
+    private ToolbarButton createB, openB, saveB, exportB, summB, fbmnB, importB, computeAllB, jobs, db, connect, settings, account, /*bug,*/
             help, about;
 
-    SiriusToolbar() {
 
+    SiriusToolbar(SiriusGui gui) {
         setBorder(BorderFactory.createMatteBorder(0, 0, 2, 0, Colors.ICON_BLUE));
-        //create/open
-        createB = new ToolbarButton(SiriusActions.NEW_WS.getInstance());
+        //create/open/save project
+        createB = new ToolbarButton(SiriusActions.NEW_WS.getInstance(gui, true));
         add(createB);
-        openB = new ToolbarButton(SiriusActions.LOAD_WS.getInstance());
+        openB = new ToolbarButton(SiriusActions.LOAD_WS.getInstance(gui, true));
         add(openB);
-        addSeparator(new Dimension(20, 20));
-
-        //save
-        saveB = new ToolbarButton(SiriusActions.SAVE_WS.getInstance());
+        saveB = new ToolbarButton(SiriusActions.SAVE_WS.getInstance(gui, true));
         add(saveB);
-        exportB = new ToolbarButton(SiriusActions.EXPORT_WS.getInstance());
-        add(exportB);
         addSeparator(new Dimension(20, 20));
 
-        //import
-        imCompB = new ToolbarButton(SiriusActions.IMPORT_EXP.getInstance());
-        add(imCompB);
-        imB = new ToolbarButton(SiriusActions.IMPORT_EXP_BATCH.getInstance());
-        add(imB);
+        //import data
+        importB = new ToolbarButton(SiriusActions.IMPORT_EXP_BATCH.getInstance(gui, true));
+        add(importB);
 
         //summarize
         addSeparator(new Dimension(20, 20));
-        summB = new ToolbarButton(SiriusActions.SUMMARIZE_WS.getInstance());
+        summB = new ToolbarButton(SiriusActions.SUMMARIZE_WS.getInstance(gui, true));
         add(summB);
 
         //fbmn
         addSeparator(new Dimension(20, 20));
-        fbmnB = new ToolbarButton(SiriusActions.EXPORT_FBMN.getInstance());
+        fbmnB = new ToolbarButton(SiriusActions.EXPORT_FBMN.getInstance(gui, true));
         add(fbmnB);
 
         addSeparator(new Dimension(20, 20));
@@ -85,39 +74,39 @@ class SiriusToolbar extends JToolBar {
         addSeparator(new Dimension(20, 20));
 
         //compute
-        computeAllB = new ToolbarButton(SiriusActions.COMPUTE_ALL.getInstance());
+        computeAllB = new ToolbarButton(SiriusActions.COMPUTE_ALL.getInstance(gui, true));
         add(computeAllB);
         addSeparator(new Dimension(20, 20));
 
-        db = new ToolbarButton(SiriusActions.SHOW_DB.getInstance());
+        db = new ToolbarButton(SiriusActions.SHOW_DB.getInstance(gui, true));
         add(db);
-        addSeparator(new Dimension(20,20));
+        addSeparator(new Dimension(20, 20));
 
-        jobs = new ToolbarButton(SiriusActions.SHOW_JOBS.getInstance());
+        jobs = new ToolbarButton(SiriusActions.SHOW_JOBS.getInstance(gui, true));
         add(jobs);
 
         addSeparator(new Dimension(20, 20));
         add(Box.createGlue());
         addSeparator(new Dimension(20, 20));
-        logs = createLogToggleButton((OpenLogAction) SiriusActions.SHOW_LOG.getInstance());
-        add(logs);
+        logsB = createLogToggleButton((OpenLogAction) SiriusActions.SHOW_LOG.getInstance(gui, true));
+        add(logsB);
 
-        settings = new ToolbarButton(SiriusActions.SHOW_SETTINGS.getInstance());
+        settings = new ToolbarButton(SiriusActions.SHOW_SETTINGS.getInstance(gui, true));
         add(settings);
 
-        connect = new ToolbarButton(SiriusActions.CHECK_CONNECTION.getInstance());
+        connect = new ToolbarButton(SiriusActions.CHECK_CONNECTION.getInstance(gui, true));
         add(connect);
 
-        account = new ToolbarButton(SiriusActions.SHOW_ACCOUNT.getInstance());
+        account = new ToolbarButton(SiriusActions.SHOW_ACCOUNT.getInstance(gui, true));
         add(account);
 
-        help = new ToolbarButton(SiriusActions.OPEN_ONLINE_DOCUMENTATION.getInstance());
+        help = new ToolbarButton(SiriusActions.OPEN_ONLINE_DOCUMENTATION.getInstance(gui, true));
         add(help);
 
-      /*  bug = new ToolbarButton(SiriusActions.SHOW_BUGS.getInstance());
+      /*  bug = new ToolbarButton(SiriusActions.SHOW_BUGS.getInstance(mf, true));
         add(bug);*/
 
-        about = new ToolbarButton(SiriusActions.SHOW_ABOUT.getInstance());
+        about = new ToolbarButton(SiriusActions.SHOW_ABOUT.getInstance(gui, true));
         add(about);
 
         setRollover(true);
@@ -159,5 +148,68 @@ class SiriusToolbar extends JToolBar {
             }
         });
         return tb;
+    }
+
+    public ToolbarToggleButton getLogsB() {
+        return logsB;
+    }
+    public ToolbarButton getCreateB() {
+        return createB;
+    }
+
+    public ToolbarButton getOpenB() {
+        return openB;
+    }
+
+    public ToolbarButton getSaveB() {
+        return saveB;
+    }
+
+    public ToolbarButton getExportB() {
+        return exportB;
+    }
+
+    public ToolbarButton getSummB() {
+        return summB;
+    }
+
+    public ToolbarButton getFbmnB() {
+        return fbmnB;
+    }
+
+    public ToolbarButton getImportB() {
+        return importB;
+    }
+
+    public ToolbarButton getComputeAllB() {
+        return computeAllB;
+    }
+
+    public ToolbarButton getJobs() {
+        return jobs;
+    }
+
+    public ToolbarButton getDb() {
+        return db;
+    }
+
+    public ToolbarButton getConnect() {
+        return connect;
+    }
+
+    public ToolbarButton getSettings() {
+        return settings;
+    }
+
+    public ToolbarButton getAccount() {
+        return account;
+    }
+
+    public ToolbarButton getHelp() {
+        return help;
+    }
+
+    public ToolbarButton getAbout() {
+        return about;
     }
 }

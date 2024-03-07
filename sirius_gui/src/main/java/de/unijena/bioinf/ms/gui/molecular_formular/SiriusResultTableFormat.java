@@ -19,14 +19,10 @@
 
 package de.unijena.bioinf.ms.gui.molecular_formular;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.GibbsSampling.ZodiacScore;
-import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.ms.gui.table.SiriusTableFormat;
+import de.unijena.bioinf.ms.nightsky.sdk.model.Deviation;
+import de.unijena.bioinf.ms.nightsky.sdk.model.LipidAnnotation;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
-import de.unijena.bioinf.sirius.scores.IsotopeScore;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
-import de.unijena.bioinf.sirius.scores.TreeScore;
 
 import java.util.function.Function;
 
@@ -36,7 +32,7 @@ import java.util.function.Function;
  * @author Markus Fleischauer
  */
 public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean> {
-    private static final int COL_COUNT = 13;
+    private static final int COL_COUNT = 12;
 
     protected SiriusResultTableFormat(Function<FormulaResultBean,Boolean> isBest) {
         super(isBest);
@@ -54,74 +50,42 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
 
     @Override
     public String getColumnName(int column) {
-        switch (column) {
-            case 0:
-                return "Rank";
-            case 1:
-                return "Precursor Molecular Formula";
-            case 2:
-                return "Molecular Formula";
-            case 3:
-                return "Adduct";
-            case 4:
-                return "Zodiac Score";
-            case 5:
-                return "Sirius Score";
-            case 6:
-                return "Isotope Score";
-            case 7:
-                return "Tree Score";
-            case 8:
-                return "Explained Peaks";
-            case 9:
-                return "Total Explained Intensity";
-            case 10:
-                return "Median Mass Error (ppm)";
-            case 11:
-                return "Median Absolute Mass Error (ppm)";
-            case 12:
-                return "Lipid Class";
-            case 13:
-                return "Best";
-            default:
-                throw new IllegalStateException();
-        }
+        return switch (column) {
+            case 0 -> "Precursor Molecular Formula";
+            case 1 -> "Molecular Formula";
+            case 2 -> "Adduct";
+            case 3 -> "Zodiac Score";
+            case 4 -> "Sirius Score";
+            case 5 -> "Isotope Score";
+            case 6 -> "Tree Score";
+            case 7 -> "Explained Peaks";
+            case 8 -> "Total Explained Intensity";
+            case 9 -> "Median Mass Error (ppm)";
+            case 10 -> "Median Absolute Mass Error (ppm)";
+            case 11 -> "Lipid Class";
+            case 12 -> "Best";
+            default -> throw new IllegalStateException();
+        };
     }
 
     @Override
     public Object getColumnValue(FormulaResultBean result, int column) {
-        switch (column) {
-            case 0:
-                return result.getRank();
-            case 1:
-                return result.getPrecursorMolecularFormula().toString();
-            case 2:
-                return result.getMolecularFormula().toString();
-            case 3:
-                return result.getPrecursorIonType().toString();
-            case 4:
-                return result.getScoreValue(ZodiacScore.class);
-            case 5:
-                return result.getScoreValue(SiriusScore.class);
-            case 6:
-                return result.getScoreValue(IsotopeScore.class);
-            case 7:
-                return result.getScoreValue(TreeScore.class);
-            case 8:
-                return result.getNumOfExplainedPeaks();
-            case 9:
-                return result.getExplainedIntensityRatio();
-            case 10:
-                return result.getMedianMassDevPPM();
-            case 11:
-                return result.getMedianAbsoluteMassDevPPM();
-            case 12:
-                return result.getFragTree().flatMap(t -> t.getAnnotation(LipidSpecies.class)).filter(ls -> ls.getHypotheticalMolecularFormula().orElse(MolecularFormula.emptyFormula()).equals(result.getMolecularFormula())).map(LipidSpecies::toString).orElse("None"); //annotate if same MF or Lipid MF unknown //todo  But I am not sure if Lipid annotation is even present, if MF is unknown
-            case 13:
-                return isBest.apply(result);
-            default:
-                throw new IllegalStateException();
-        }
+        return switch (column) {
+            case 0 -> result.getPrecursorFormula();
+            case 1 -> result.getMolecularFormula();
+            case 2 -> result.getAdduct();
+            case 3 -> result.getZodiacScore().orElse(Double.NaN);
+            case 4 -> result.getSiriusScore().orElse(Double.NaN);
+            case 5 -> result.getIsotopeScore().orElse(Double.NaN);
+            case 6 -> result.getTreeScore().orElse(Double.NaN);
+            case 7 -> result.getNumOfExplainedPeaks().stream().mapToDouble(v -> (double) v).findFirst().orElse(Double.NaN);
+            case 8 -> result.getTotalExplainedIntensity().orElse(Double.NaN);
+            case 9 -> result.getMedianMassDeviation().map(Deviation::getPpm).orElse(Double.NaN);
+            case 10 -> result.getMedianMassDeviation().map(Deviation::getAbsolute).map(d -> d * 1000d).orElse(Double.NaN);
+            case 11 -> result.getLipidAnnotation().map(LipidAnnotation::getLipidSpecies).orElse(""); //N/A or better empty?
+            case 12 -> isBest.apply(result);
+            default -> throw new IllegalStateException();
+        };
     }
 }
 

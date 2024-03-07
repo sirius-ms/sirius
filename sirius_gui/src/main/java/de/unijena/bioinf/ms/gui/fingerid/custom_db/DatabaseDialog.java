@@ -19,20 +19,19 @@
 
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
-import de.unijena.bioinf.chemdb.DataSources;
-import de.unijena.bioinf.chemdb.SearchableDatabases;
-import de.unijena.bioinf.chemdb.custom.CustomDatabase;
-import de.unijena.bioinf.chemdb.custom.CustomDatabaseFactory;
-import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.DialogHeader;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.ms.gui.table.SiriusListCellRenderer;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
+import lombok.Getter;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
-import picocli.CommandLine;
 
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
@@ -41,25 +40,29 @@ import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.concurrent.Callable;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public class DatabaseDialog extends JDialog {
+    @Getter
+    protected final SiriusGui gui;
 
-    protected JList<CustomDatabase> dbList;
-    protected List<CustomDatabase> customDatabases;
+    protected JList<SearchableDatabase> dbList;
+    protected List<SearchableDatabase> customDatabases;
 
     protected DatabaseView dbView;
 
-    public DatabaseDialog(final Frame owner) {
+    public DatabaseDialog(SiriusGui gui) {
+        this(gui, gui.getMainFrame());
+    }
+
+    public DatabaseDialog(SiriusGui gui, @Nullable Frame owner) {
         super(owner, true);
+        this.gui = gui;
         setTitle("Custom Databases");
         setLayout(new BorderLayout());
 
@@ -67,6 +70,7 @@ public class DatabaseDialog extends JDialog {
         add(header, BorderLayout.NORTH);
 
         dbList = new JList<>();
+        dbList.setCellRenderer(new SiriusListCellRenderer(v -> ((SearchableDatabase) v).getDatabaseId()));
         dbList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         dbView = new DatabaseView();
 
@@ -78,10 +82,10 @@ public class DatabaseDialog extends JDialog {
         loadDatabaseList();
 
         dbList.addListSelectionListener(e -> {
-            CustomDatabase db = dbList.getSelectedValue();
+            SearchableDatabase db = dbList.getSelectedValue();
             dbView.updateContent(db);
             if (db != null) {
-                editDB.setEnabled(!db.needsUpgrade());
+                editDB.setEnabled(!db.isUpdateNeeded());
                 deleteDB.setEnabled(true);
             } else {
                 editDB.setEnabled(false);
@@ -118,31 +122,24 @@ public class DatabaseDialog extends JDialog {
         Action deleteSelectedDb = new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                CustomDatabase db = dbList.getSelectedValue();
+                SearchableDatabase db = dbList.getSelectedValue();
                 if (db == null) {
                     return;
                 }
-                final String name = db.name();
+                final String name = db.getDatabaseId();
 
                 Box deleteDialogBox = Box.createVerticalBox();
                 deleteDialogBox.add(new JLabel("Do you really want to remove '" + name + "'?"));
                 JCheckBox deleteFromDisk = new JCheckBox("Delete from disk");
-                deleteDialogBox.add(Box.createRigidArea(new Dimension(0,10)));
+                deleteDialogBox.add(Box.createRigidArea(new Dimension(0, 10)));
                 deleteDialogBox.add(deleteFromDisk);
 
                 if (JOptionPane.showConfirmDialog(getOwner(), deleteDialogBox, "", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-
                     try {
-                        List<String> deleteCommand = new ArrayList<>();
-                        deleteCommand.add(CustomDBOptions.class.getAnnotation(CommandLine.Command.class).name());
-                        deleteCommand.add("--remove");
-                        deleteCommand.add(name);
-                        if (deleteFromDisk.isSelected()) {
-                            deleteCommand.add("--delete");
-                        }
-                        Jobs.runCommandAndLoad(deleteCommand, null, null, owner,
-                                        "Deleting database '" + name + "'...", true)
-                                .awaitResult();
+                        Jobs.runInBackgroundAndLoad(gui.getMainFrame(),
+                                "Deleting database '" + name + "'...", () ->
+                                        gui.acceptSiriusClient((c, pid) -> c.databases().removeDatabase(name, deleteFromDisk.isSelected()))
+                        ).awaitResult();
                     } catch (ExecutionException ex) {
                         LoggerFactory.getLogger(getClass()).error("Error during Custom DB removal.", ex);
 
@@ -152,7 +149,10 @@ public class DatabaseDialog extends JDialog {
                             new StacktraceDialog(DatabaseDialog.this, "Unexpected error when removing custom DB!", ex);
                     } catch (Exception ex2) {
                         LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB removal.", ex2);
-                        new StacktraceDialog(MF, "Fatal Error during Custom DB removal.", ex2);
+                        if (getOwner() instanceof Frame)
+                            new StacktraceDialog((Frame) getOwner(), "Fatal Error during Custom DB removal.", ex2);
+                        else
+                            new StacktraceDialog((Dialog) getOwner(), "Fatal Error during Custom DB removal.", ex2);
                     }
 
                     loadDatabaseList();
@@ -166,28 +166,33 @@ public class DatabaseDialog extends JDialog {
 
         JFileChooser openDbFileChooser = new JFileChooser();
         openDbFileChooser.setFileFilter(new CustomDbFileFilter());
+        openDbFileChooser.setMultiSelectionEnabled(true);
         openDB.addActionListener(e -> {
             if (openDbFileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-                File file = openDbFileChooser.getSelectedFile();
-                if (customDatabases.stream().anyMatch(db -> db.storageLocation().equals(file.toString()))) {
-                    JOptionPane.showMessageDialog(this, "Database is already available in SIRIUS.", "" , JOptionPane.INFORMATION_MESSAGE);
-                } else if (customDatabases.stream().anyMatch(db -> db.name().equals(file.getName()))) {
-                    JOptionPane.showMessageDialog(this, "A different database with name " + file.getName() + " already exists.", "" , JOptionPane.ERROR_MESSAGE);
-                } else {
-                    try {
-                        CustomDatabase newDb = SearchableDatabases.loadCustomDatabaseFromLocation(file.getAbsolutePath(), true);
-                        CustomDBOptions.addDBToPropertiesIfNotExist(newDb);
-                        whenCustomDbIsAdded(newDb.storageLocation());
-                    } catch (IOException ex) {
-                        JOptionPane.showMessageDialog(this, ex.getMessage(), "" , JOptionPane.ERROR_MESSAGE);
-                    }
+                List<File> files = Arrays.stream(openDbFileChooser.getSelectedFiles()).toList();
+                // error handling and duplicate checking is performed on the server side
+                try {
+                    Jobs.runInBackgroundAndLoad(gui.getMainFrame(),
+                            "Adding '" + files.size() + "' database(s) ...", () -> {
+                                List<SearchableDatabase> newDbs = gui.applySiriusClient((c, pid) ->
+                                        c.databases().addDatabases(files.stream().map(File::getAbsolutePath).toList()));
+                                if (newDbs == null || newDbs.isEmpty())
+                                    throw new RuntimeException("Not Database returned from Job. Open Databases probably failed.");
+                                whenCustomDbIsAdded(newDbs.iterator().next().getDatabaseId());
+                            }).awaitResult();
+                } catch (ExecutionException ex) {
+                    getGui().getSiriusClient().unwrapErrorResponse(ex).ifPresentOrElse(
+                            err -> JOptionPane.showMessageDialog(this, err.getMessage(), "Error " + err.getStatus() + ": " + err.getError(), JOptionPane.ERROR_MESSAGE),
+                            () -> JOptionPane.showMessageDialog(this, ex.getCause().getMessage(), "Unexpected Error", JOptionPane.ERROR_MESSAGE)
+                    );
+                    loadDatabaseList();
                 }
             }
         });
 
         String editDbActionName = "editCurrentDb";
         dbList.getInputMap().put(KeyStroke.getKeyStroke("ENTER"), editDbActionName);
-        dbList.getInputMap().put(KeyStroke.getKeyStroke("SPACE"),editDbActionName);
+        dbList.getInputMap().put(KeyStroke.getKeyStroke("SPACE"), editDbActionName);
         dbList.getActionMap().put(editDbActionName, editSelectedDb);
 
         dbList.addMouseListener(new MouseAdapter() {
@@ -195,7 +200,7 @@ public class DatabaseDialog extends JDialog {
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2 && SwingUtilities.isLeftMouseButton(e)) {
                     int i = dbList.getSelectedIndex();
-                            if (i >= 0 && dbList.getCellBounds(i, i).contains(e.getPoint())) {
+                    if (i >= 0 && dbList.getCellBounds(i, i).contains(e.getPoint())) {
                         editSelectedDb.actionPerformed(null);
                     }
                 }
@@ -203,7 +208,7 @@ public class DatabaseDialog extends JDialog {
         });
 
         String deleteDbActionName = "deleteCurrentDb";
-        dbList.getInputMap().put(KeyStroke.getKeyStroke("DELETE"),deleteDbActionName);
+        dbList.getInputMap().put(KeyStroke.getKeyStroke("DELETE"), deleteDbActionName);
         dbList.getActionMap().put(deleteDbActionName, deleteSelectedDb);
 
         dbList.setSelectedIndex(0);
@@ -218,16 +223,21 @@ public class DatabaseDialog extends JDialog {
     }
 
     private void loadDatabaseList() {
-        customDatabases = Jobs.runInBackgroundAndLoad(getOwner(), "Loading DBs...", (Callable<List<CustomDatabase>>) SearchableDatabases::getCustomDatabases).getResult();
-        customDatabases.sort(Comparator.comparing(CustomDatabase::name));
-        dbList.setListData(customDatabases.toArray(new CustomDatabase[0]));
+        customDatabases = Jobs.runInBackgroundAndLoad(getOwner(), "Loading DBs...",
+                () -> gui.applySiriusClient((c, pid) -> c.databases().getCustomDatabases(true))
+        ).getResult();
+
+        customDatabases.sort(Comparator.comparing(SearchableDatabase::getDatabaseId));
+        dbList.setListData(customDatabases.toArray(SearchableDatabase[]::new));
     }
 
-    protected void whenCustomDbIsAdded(final String dbLocation) {
+    protected void whenCustomDbIsAdded(final String dbIdToSelect) {
         loadDatabaseList();
-        CustomDatabase newDb = customDatabases.stream().filter(db -> db.storageLocation().equals(dbLocation)).findFirst().orElseThrow();
-        dbList.setSelectedValue(newDb, true);
-        dbList.requestFocusInWindow();
+        // try to scroll to the newly added Database.
+        customDatabases.stream().filter(db -> db.getDatabaseId().equals(dbIdToSelect)).findFirst().ifPresent(db -> {
+            dbList.setSelectedValue(db, true);
+            dbList.requestFocusInWindow();
+        });
     }
 
     protected static class DatabaseView extends JPanel {
@@ -243,22 +253,21 @@ public class DatabaseDialog extends JDialog {
             updateContent(null);
         }
 
-        public void updateContent(CustomDatabase c) {
+        public void updateContent(SearchableDatabase c) {
             if (c == null) {
                 content.setText("No Database selected.");
                 content.setToolTipText(null);
-            } else if (c.getStatistics().getCompounds() > 0) {
-                content.setText("<html><b>" + c.name() + "</b>"
+            } else if (c.getNumberOfStructures() != null && c.getNumberOfStructures() > 0) {
+                content.setText("<html><b>" + c.getDisplayName() + "</b>"
                         + "<br><b>"
-                        + c.getStatistics().getCompounds() + "</b> compounds with <b>" + c.getStatistics().getFormulas()
+                        + c.getNumberOfStructures() + "</b> compounds with <b>" + c.getNumberOfFormulas()
                         + "</b> different molecular formulas"
-                        + (c.getStatistics().getSpectra() > 0 ? " and <b>" + c.getStatistics().getSpectra() + "</b> reference spectra." : ".")
+                        + (Optional.ofNullable(c.getNumberOfReferenceSpectra()).orElse(0L) > 0 ? " and <b>" + c.getNumberOfReferenceSpectra() + "</b> reference spectra." : ".")
                         + "<br>"
-                        + ((c.getSettings().isInheritance() ? "<br>This database will also include all compounds from '" + DataSources.getDataSourcesFromBitFlags(c.getFilterFlag()).stream().filter(n -> !SearchableDatabases.NON_SLECTABLE_LIST.contains(n)).collect(Collectors.joining("', '")) + "'." : "")
-                                + (c.needsUpgrade() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "")
-                                + "</html>"));
+                        + ((c.isUpdateNeeded() ? "<br><b>This database schema is outdated. You have to upgrade the database before you can use it.</b>" : "")
+                        + "</html>"));
 
-                content.setToolTipText(c.storageLocation());
+                content.setToolTipText(c.getLocation());
             } else {
                 content.setText("Empty custom database.");
                 content.setToolTipText(null);
@@ -270,7 +279,7 @@ public class DatabaseDialog extends JDialog {
 
         @Override
         public boolean accept(File f) {
-            return f.isDirectory() || f.getName().endsWith(CustomDatabaseFactory.NOSQL_SUFFIX);
+            return f.isDirectory() || f.getName().endsWith(".db");
         }
 
         @Override
