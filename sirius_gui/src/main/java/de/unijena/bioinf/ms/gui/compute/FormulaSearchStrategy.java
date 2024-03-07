@@ -137,19 +137,25 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         add(strategyCardContainer);
 
-        showStrategy(strategy);
+        hideAllStrategySpecific();
+        showStrategySpecific(strategy, true);
 
         strategyBox.addItemListener(e -> {
             if (e.getStateChange() != ItemEvent.SELECTED) {
                 return;
             }
+            showStrategySpecific(strategy, false);
             strategy = (Strategy) e.getItem();
-            showStrategy(strategy);
+            showStrategySpecific(strategy, true);
         });
     }
 
-    private void showStrategy(Strategy strategy) {
-        strategyComponents.forEach((s, lst) -> lst.forEach(c -> c.setVisible(s.equals(strategy))));
+    private void showStrategySpecific(Strategy s, boolean show) {
+        strategyComponents.get(s).forEach(c -> c.setVisible(show));
+    }
+
+    private void hideAllStrategySpecific() {
+        strategyComponents.forEach((s, lst) -> lst.forEach(c -> c.setVisible(false)));
     }
 
     private JPanel createDefaultStrategyParameters() {
@@ -218,7 +224,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
         if (isBatchDialog) {
             filterComponents.addAll(List.of(autodetectLabel, detectableTextBox));
         }
-        addDatabaseStrategyElementFilterSettings(filterFields, filterComponents);
+        addElementFilterEnabledCheckboxForStrategy(filterFields, filterComponents, Strategy.BOTTOM_UP);
+        addElementFilterEnabledCheckboxForStrategy(filterFields, filterComponents, Strategy.DATABASE);
 
         int constraintsGridY = filterFields.both.gridy;
         filterFields.add(constraintsLabel, enforcedTextBox);
@@ -282,7 +289,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         strategyComponents.get(Strategy.DEFAULT).add(elementAlphabetStrategySelector);
     }
 
-    private void addDatabaseStrategyElementFilterSettings(TwoColumnPanel filterFields, List<Component> filterComponents) {
+    private void addElementFilterEnabledCheckboxForStrategy(TwoColumnPanel filterFields, List<Component> filterComponents, Strategy s) {
         JCheckBox useElementFilter = new JCheckBox() { //todo NewWorkflow: implement this feature. This makes the organics filter obsolete. Maybe dont use the checkbox but always select the organics. Make new Element panel popup
             @Override
             public void setVisible(boolean flag) {
@@ -299,11 +306,10 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         JLabel label = new JLabel("Enable element filter");
         filterFields.add(label, useElementFilter);
-
-        strategyComponents.get(Strategy.DATABASE).add(label);
-        strategyComponents.get(Strategy.DATABASE).add(useElementFilter);
-
         useElementFilter.addActionListener(e -> filterComponents.forEach(c -> c.setVisible(useElementFilter.isSelected())));
+
+        strategyComponents.get(s).add(label);
+        strategyComponents.get(s).add(useElementFilter);
     }
 
     private String join(Collection<?> objects) {
