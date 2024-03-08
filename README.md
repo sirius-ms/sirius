@@ -29,12 +29,6 @@ via conda.
 - for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v5.8.6/sirius-5.8.6-osx64.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.8.6/sirius-5.8.6-osx64.zip) / [pkg (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.8.6/sirius-5.8.6-osx64.pkg)
 - for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v5.8.6/sirius-5.8.6-linux64.zip)
 
-### SIRIUS+CSI:FingerID Command-Line Interface only - Version 5.8.6 (2024-01-27)
-##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v5.8.6/sirius-5.8.6-win64-headless.msi) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.8.6/sirius-5.8.6-win64-headless.zip) / [msi (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.8.6/sirius-5.8.6-win64-headless.msi)
-- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v5.8.6/sirius-5.8.6-osx64-headless.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.8.6/sirius-5.8.6-osx64-headless.zip) / [pkg (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.8.6/sirius-5.8.6-osx64-headless.pkg)
-- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v5.8.6/sirius-5.8.6-linux64-headless.zip)
-
 
 <!--end download-->
 
