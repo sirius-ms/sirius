@@ -196,7 +196,7 @@ public class ProjectController {
      */
     @PostMapping(value = "/{projectId}/import/preprocessed-data-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Job importPreprocessedDataAsJob(@PathVariable String projectId,
-                                           @RequestBody MultipartFile[] imputFiles,
+                                           @RequestBody MultipartFile[] inputFiles,
                                            @RequestParam(defaultValue = "false") boolean ignoreFormulas,
                                            @RequestParam(defaultValue = "true") boolean allowMs1Only,
                                            @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
@@ -204,7 +204,7 @@ public class ProjectController {
 
         Project p = projectsProvider.getProjectOrThrow(projectId);
         ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
-        sub.setInputFiles(Arrays.stream(imputFiles).collect(Collectors.toList()));
+        sub.setInputFiles(Arrays.stream(inputFiles).collect(Collectors.toList()));
         sub.setIgnoreFormulas(ignoreFormulas);
         sub.setAllowMs1OnlyData(allowMs1Only);
         return computeService.createAndSubmitPeakListImportJob(p, sub, optFields);

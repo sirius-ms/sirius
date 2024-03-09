@@ -962,7 +962,7 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "imputFiles": {
+                  "inputFiles": {
                     "type": "array",
                     "items": {
                       "type": "string",
@@ -6653,6 +6653,12 @@
             "type": "integer",
             "format": "int64"
           },
+          "paged": {
+            "type": "boolean"
+          },
+          "unpaged": {
+            "type": "boolean"
+          },
           "pageNumber": {
             "type": "integer",
             "format": "int32"
@@ -6660,12 +6666,6 @@
           "pageSize": {
             "type": "integer",
             "format": "int32"
-          },
-          "paged": {
-            "type": "boolean"
-          },
-          "unpaged": {
-            "type": "boolean"
           }
         }
       },

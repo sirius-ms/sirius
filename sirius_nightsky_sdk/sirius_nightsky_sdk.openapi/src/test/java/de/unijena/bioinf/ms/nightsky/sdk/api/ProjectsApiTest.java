@@ -14,6 +14,7 @@
 package de.unijena.bioinf.ms.nightsky.sdk.api;
 
 import java.io.File;
+import de.unijena.bioinf.ms.nightsky.sdk.model.ImportResult;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectInfo;
@@ -158,7 +159,7 @@ public class ProjectsApiTest {
         Boolean alignRuns = null;
         Boolean allowMs1Only = null;
         List<File> inputFiles = null;
-        api.importMsRunData(projectId, alignRuns, allowMs1Only, inputFiles);
+        ImportResult response = api.importMsRunData(projectId, alignRuns, allowMs1Only, inputFiles);
 
         // TODO: test validations
     }
@@ -169,13 +170,13 @@ public class ProjectsApiTest {
      * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
      */
     @Test
-    public void importMsRunDataAsyncTest()  {
+    public void importMsRunDataAsJobTest()  {
         String projectId = null;
         Boolean alignRuns = null;
         Boolean allowMs1Only = null;
         List<JobOptField> optFields = null;
-        List<File> imputFiles = null;
-        Job response = api.importMsRunDataAsync(projectId, alignRuns, allowMs1Only, optFields, imputFiles);
+        List<File> inputFiles = null;
+        Job response = api.importMsRunDataAsJob(projectId, alignRuns, allowMs1Only, optFields, inputFiles);
 
         // TODO: test validations
     }
@@ -191,7 +192,7 @@ public class ProjectsApiTest {
         Boolean ignoreFormulas = null;
         Boolean allowMs1Only = null;
         List<File> inputFiles = null;
-        api.importPreprocessedData(projectId, ignoreFormulas, allowMs1Only, inputFiles);
+        ImportResult response = api.importPreprocessedData(projectId, ignoreFormulas, allowMs1Only, inputFiles);
 
         // TODO: test validations
     }
@@ -202,13 +203,13 @@ public class ProjectsApiTest {
      * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)
      */
     @Test
-    public void importPreprocessedDataAsyncTest()  {
+    public void importPreprocessedDataAsJobTest()  {
         String projectId = null;
         Boolean ignoreFormulas = null;
         Boolean allowMs1Only = null;
         List<JobOptField> optFields = null;
-        List<File> imputFiles = null;
-        Job response = api.importPreprocessedDataAsync(projectId, ignoreFormulas, allowMs1Only, optFields, imputFiles);
+        List<File> inputFiles = null;
+        Job response = api.importPreprocessedDataAsJob(projectId, ignoreFormulas, allowMs1Only, optFields, inputFiles);
 
         // TODO: test validations
     }

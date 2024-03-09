@@ -773,7 +773,7 @@ No authorization required
 
 ## importPreprocessedDataAsJob
 
-> Job importPreprocessedDataAsJob(projectId, ignoreFormulas, allowMs1Only, optFields, imputFiles)
+> Job importPreprocessedDataAsJob(projectId, ignoreFormulas, allowMs1Only, optFields, inputFiles)
 
 Import ms/ms data from the given format into the specified project-space as background job.
 
@@ -799,9 +799,9 @@ public class Example {
         Boolean ignoreFormulas = false; // Boolean | 
         Boolean allowMs1Only = true; // Boolean | 
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
-        List<File> imputFiles = Arrays.asList(); // List<File> | 
+        List<File> inputFiles = Arrays.asList(); // List<File> | 
         try {
-            Job result = apiInstance.importPreprocessedDataAsJob(projectId, ignoreFormulas, allowMs1Only, optFields, imputFiles);
+            Job result = apiInstance.importPreprocessedDataAsJob(projectId, ignoreFormulas, allowMs1Only, optFields, inputFiles);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importPreprocessedDataAsJob");
@@ -823,7 +823,7 @@ public class Example {
 | **ignoreFormulas** | **Boolean**|  | [optional] [default to false] |
 | **allowMs1Only** | **Boolean**|  | [optional] [default to true] |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
-| **imputFiles** | **List&lt;File&gt;**|  | [optional] |
+| **inputFiles** | **List&lt;File&gt;**|  | [optional] |
 
 ### Return type
 

@@ -987,11 +987,11 @@ public class ProjectsApi {
      * @param ignoreFormulas The ignoreFormulas parameter
      * @param allowMs1Only The allowMs1Only parameter
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @param imputFiles The imputFiles parameter
+     * @param inputFiles The inputFiles parameter
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec importPreprocessedDataAsJobRequestCreation(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields, List<File> imputFiles) throws WebClientResponseException {
+    private ResponseSpec importPreprocessedDataAsJobRequestCreation(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1011,8 +1011,8 @@ public class ProjectsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "allowMs1Only", allowMs1Only));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
-        if (imputFiles != null)
-            formParams.addAll("imputFiles", imputFiles.stream().map(FileSystemResource::new).collect(Collectors.toList()));
+        if (inputFiles != null)
+            formParams.addAll("inputFiles", inputFiles.stream().map(FileSystemResource::new).collect(Collectors.toList()));
 
         final String[] localVarAccepts = { 
             "application/json"
@@ -1037,13 +1037,13 @@ public class ProjectsApi {
      * @param ignoreFormulas The ignoreFormulas parameter
      * @param allowMs1Only The allowMs1Only parameter
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @param imputFiles The imputFiles parameter
+     * @param inputFiles The inputFiles parameter
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job importPreprocessedDataAsJob(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields, List<File> imputFiles) throws WebClientResponseException {
+    public Job importPreprocessedDataAsJob(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return importPreprocessedDataAsJobRequestCreation(projectId, ignoreFormulas, allowMs1Only, optFields, imputFiles).bodyToMono(localVarReturnType).block();
+        return importPreprocessedDataAsJobRequestCreation(projectId, ignoreFormulas, allowMs1Only, optFields, inputFiles).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -1054,13 +1054,13 @@ public class ProjectsApi {
      * @param ignoreFormulas The ignoreFormulas parameter
      * @param allowMs1Only The allowMs1Only parameter
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @param imputFiles The imputFiles parameter
+     * @param inputFiles The inputFiles parameter
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> importPreprocessedDataAsJobWithHttpInfo(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields, List<File> imputFiles) throws WebClientResponseException {
+    public ResponseEntity<Job> importPreprocessedDataAsJobWithHttpInfo(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return importPreprocessedDataAsJobRequestCreation(projectId, ignoreFormulas, allowMs1Only, optFields, imputFiles).toEntity(localVarReturnType).block();
+        return importPreprocessedDataAsJobRequestCreation(projectId, ignoreFormulas, allowMs1Only, optFields, inputFiles).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -1071,12 +1071,12 @@ public class ProjectsApi {
      * @param ignoreFormulas The ignoreFormulas parameter
      * @param allowMs1Only The allowMs1Only parameter
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
-     * @param imputFiles The imputFiles parameter
+     * @param inputFiles The inputFiles parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importPreprocessedDataAsJobWithResponseSpec(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields, List<File> imputFiles) throws WebClientResponseException {
-        return importPreprocessedDataAsJobRequestCreation(projectId, ignoreFormulas, allowMs1Only, optFields, imputFiles);
+    public ResponseSpec importPreprocessedDataAsJobWithResponseSpec(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
+        return importPreprocessedDataAsJobRequestCreation(projectId, ignoreFormulas, allowMs1Only, optFields, inputFiles);
     }
     /**
      * Open an existing project-space and make it accessible via the given projectId.

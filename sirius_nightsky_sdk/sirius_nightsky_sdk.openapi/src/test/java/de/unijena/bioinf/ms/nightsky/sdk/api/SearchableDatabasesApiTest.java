@@ -13,7 +13,7 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.api;
 
-import de.unijena.bioinf.ms.nightsky.sdk.model.ImportPreprocessedDataRequest;
+import java.io.File;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
@@ -124,9 +124,9 @@ public class SearchableDatabasesApiTest {
     @Test
     public void importIntoDatabaseTest()  {
         String databaseId = null;
-        ImportPreprocessedDataRequest importPreprocessedDataRequest = null;
         Integer bufferSize = null;
-        SearchableDatabase response = api.importIntoDatabase(databaseId, importPreprocessedDataRequest, bufferSize);
+        List<File> inputFiles = null;
+        SearchableDatabase response = api.importIntoDatabase(databaseId, bufferSize, inputFiles);
 
         // TODO: test validations
     }
@@ -137,12 +137,12 @@ public class SearchableDatabasesApiTest {
      * Start import of structure and spectra files into the specified database.
      */
     @Test
-    public void importIntoDatabaseAsyncTest()  {
+    public void importIntoDatabaseAsJobTest()  {
         String databaseId = null;
-        ImportPreprocessedDataRequest importPreprocessedDataRequest = null;
         Integer bufferSize = null;
         List<JobOptField> optFields = null;
-        Job response = api.importIntoDatabaseAsync(databaseId, importPreprocessedDataRequest, bufferSize, optFields);
+        List<File> inputFiles = null;
+        Job response = api.importIntoDatabaseAsJob(databaseId, bufferSize, optFields, inputFiles);
 
         // TODO: test validations
     }
