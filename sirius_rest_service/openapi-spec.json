@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8888",
+      "url": "http://localhost:8080",
       "description": "Generated server url"
     }
   ],
@@ -806,7 +806,7 @@
           }
         ],
         "requestBody": {
-          "description": "compound ids to be computed",
+          "description": "List of alignedFeatureIds to be computed",
           "content": {
             "application/json": {
               "schema": {
@@ -1418,7 +1418,7 @@
         ],
         "summary": "Add new job configuration with given name.",
         "description": "Add new job configuration with given name.",
-        "operationId": "postJobConfig",
+        "operationId": "saveJobConfig",
         "parameters": [
           {
             "name": "name",

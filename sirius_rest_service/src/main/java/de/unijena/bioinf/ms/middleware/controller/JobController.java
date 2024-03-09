@@ -146,18 +146,19 @@ public class JobController {
      *
      * @param projectId     project-space to run jobs on
      * @param jobConfigName name if the config to be used
-     * @param compoundIds   compound ids to be computed
+     * @param alignedFeatureIds  List of alignedFeatureIds to be computed
      * @param recompute     enable or disable recompute. If null the stored value will be used.
      * @param optFields     set of optional fields to be included. Use 'none' only to override defaults.
      */
     @PostMapping(value = "/projects/{projectId}/jobs/from-config", produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public Job startJobFromConfig(@PathVariable String projectId, @RequestParam String jobConfigName, @RequestBody List<String> compoundIds,
+    public Job startJobFromConfig(@PathVariable String projectId, @RequestParam String jobConfigName,
+                                  @RequestBody List<String> alignedFeatureIds,
                                   @RequestParam(required = false) @Nullable Boolean recompute,
                                   @RequestParam(defaultValue = "command, progress") EnumSet<Job.OptField> optFields
     ) {
         final JobSubmission js = getJobConfig(jobConfigName, true);
-        js.setCompoundIds(compoundIds);
+        js.setAlignedFeatureIds(alignedFeatureIds);
         if (recompute != null)
             js.setRecompute(recompute);
 
@@ -308,7 +309,7 @@ public class JobController {
      */
     @PostMapping(value = "/job-configs/{name}", produces = MediaType.TEXT_PLAIN_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public String postJobConfig(@PathVariable String name, @RequestBody JobSubmission jobConfig, @RequestParam(required = false, defaultValue = "false") boolean overrideExisting) {
+    public String saveJobConfig(@PathVariable String name, @RequestBody JobSubmission jobConfig, @RequestParam(required = false, defaultValue = "false") boolean overrideExisting) {
         name = name.replaceAll("\\W+", "_");
         if (name.equals(DEFAULT_PARAMETERS))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The job-config name '" + DEFAULT_PARAMETERS + "' is already blocked by the default job-config.");
