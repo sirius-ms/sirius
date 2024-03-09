@@ -99,7 +99,7 @@ task createGuiExe(type: Launch4jLibraryTask) {
     outfile = 'sirius-gui.exe'
     fileDescription = 'SIRIUS graphical user interface'
     headerType = "gui"
-    cmdLine = "gui"
+    cmdLine = "rest -s -g"
 }
 createGuiExe.dependsOn 'launch4j'
 
