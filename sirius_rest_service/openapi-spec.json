@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8080",
+      "url": "http://localhost:8888",
       "description": "Generated server url"
     }
   ],
@@ -4668,7 +4668,6 @@
         "type": "object",
         "properties": {
           "displayName": {
-            "maxLength": 15,
             "type": "string",
             "description": "display name of the database\n Should be short",
             "nullable": true
@@ -4696,7 +4695,6 @@
         "type": "object",
         "properties": {
           "displayName": {
-            "maxLength": 15,
             "type": "string",
             "description": "display name of the database\n Should be short",
             "nullable": true

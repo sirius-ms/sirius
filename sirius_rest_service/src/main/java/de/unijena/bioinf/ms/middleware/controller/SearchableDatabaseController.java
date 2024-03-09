@@ -32,6 +32,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.Valid;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
@@ -75,7 +76,7 @@ public class SearchableDatabaseController {
     }
 
     @PostMapping(value = "/{databaseId}", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public SearchableDatabase createDatabase(@PathVariable String databaseId, @RequestBody(required = false) SearchableDatabaseParameters dbToCreate) {
+    public SearchableDatabase createDatabase(@PathVariable String databaseId, @Valid @RequestBody(required = false) SearchableDatabaseParameters dbToCreate) {
         return chemDbService.create(databaseId, dbToCreate);
     }
 

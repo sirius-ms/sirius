@@ -20,12 +20,13 @@
 
 package de.unijena.bioinf.ms.middleware.model.databases;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
+
+import javax.validation.constraints.Size;
 
 @Getter
 @SuperBuilder
@@ -36,20 +37,21 @@ public class SearchableDatabaseParameters {
      * display name of the database
      * Should be short
      */
-    @Schema(nullable = true, maxLength = 15)
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    @Size(min = 1, max = 15, message = "If given, the display name must be between 1 and 15 characters long.")
     protected String displayName;
 
     /**
      * Storage location of user database
      * Might be NULL for non-user databases or if default location is used.
      */
-    @Schema(nullable = true)
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED) //for schema definition
     protected String location;
 
     /**
      * Indicates whether this database shall be used to use retention time information for library matching.
      * Typically used for in-house spectral libraries that have been measured on
      */
-    @Schema(nullable = true, defaultValue = "false")
+    @Schema(nullable = true, defaultValue = "false", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     protected Boolean matchRtOfReferenceSpectra;
 }
