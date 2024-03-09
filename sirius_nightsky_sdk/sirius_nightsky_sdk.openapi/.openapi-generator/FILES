@@ -200,12 +200,3 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/WorkerList.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Zodiac.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ZodiacEdgeFilterThresholds.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ZodiacEpochs.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/ActuatorApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/CompoundsApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/FeaturesApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/GuiApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/InfoApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/JobsApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/LoginAndAccountApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/ProjectsApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/SearchableDatabasesApiTest.java

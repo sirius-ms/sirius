@@ -14,7 +14,7 @@ All URIs are relative to *http://localhost:8080*
 | [**getJobs**](JobsApi.md#getJobs) | **GET** /api/projects/{projectId}/jobs | Get List of all available jobs with information such as current state and progress (if available). |
 | [**getJobsPaged**](JobsApi.md#getJobsPaged) | **GET** /api/projects/{projectId}/jobs/page | Get Page of jobs with information such as current state and progress (if available). |
 | [**hasJobs**](JobsApi.md#hasJobs) | **GET** /api/projects/{projectId}/has-jobs |  |
-| [**postJobConfig**](JobsApi.md#postJobConfig) | **POST** /api/job-configs/{name} | Add new job configuration with given name. |
+| [**saveJobConfig**](JobsApi.md#saveJobConfig) | **POST** /api/job-configs/{name} | Add new job configuration with given name. |
 | [**startCommand**](JobsApi.md#startCommand) | **POST** /api/{projectId}/jobs/run-command | Start computation for given command and input. |
 | [**startJob**](JobsApi.md#startJob) | **POST** /api/projects/{projectId}/jobs | Start computation for given compounds and with given parameters. |
 | [**startJobFromConfig**](JobsApi.md#startJobFromConfig) | **POST** /api/projects/{projectId}/jobs/from-config | Start computation for given compounds and with parameters from a stored job-config. |
@@ -704,9 +704,9 @@ No authorization required
 | **200** | OK |  -  |
 
 
-## postJobConfig
+## saveJobConfig
 
-> String postJobConfig(name, jobSubmission, overrideExisting)
+> String saveJobConfig(name, jobSubmission, overrideExisting)
 
 Add new job configuration with given name.
 
@@ -732,10 +732,10 @@ public class Example {
         JobSubmission jobSubmission = new JobSubmission(); // JobSubmission | to add
         Boolean overrideExisting = false; // Boolean | 
         try {
-            String result = apiInstance.postJobConfig(name, jobSubmission, overrideExisting);
+            String result = apiInstance.saveJobConfig(name, jobSubmission, overrideExisting);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling JobsApi#postJobConfig");
+            System.err.println("Exception when calling JobsApi#saveJobConfig");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -940,7 +940,7 @@ public class Example {
         JobsApi apiInstance = new JobsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to run jobs on
         String jobConfigName = "jobConfigName_example"; // String | name if the config to be used
-        List<String> requestBody = Arrays.asList(); // List<String> | compound ids to be computed
+        List<String> requestBody = Arrays.asList(); // List<String> | List of alignedFeatureIds to be computed
         Boolean recompute = true; // Boolean | enable or disable recompute. If null the stored value will be used.
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
@@ -964,7 +964,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to run jobs on | |
 | **jobConfigName** | **String**| name if the config to be used | |
-| **requestBody** | [**List&lt;String&gt;**](String.md)| compound ids to be computed | |
+| **requestBody** | [**List&lt;String&gt;**](String.md)| List of alignedFeatureIds to be computed | |
 | **recompute** | **Boolean**| enable or disable recompute. If null the stored value will be used. | [optional] |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 

@@ -862,15 +862,15 @@ public class JobsApi {
      * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec postJobConfigRequestCreation(String name, JobSubmission jobSubmission, Boolean overrideExisting) throws WebClientResponseException {
+    private ResponseSpec saveJobConfigRequestCreation(String name, JobSubmission jobSubmission, Boolean overrideExisting) throws WebClientResponseException {
         Object postBody = jobSubmission;
         // verify the required parameter 'name' is set
         if (name == null) {
-            throw new WebClientResponseException("Missing the required parameter 'name' when calling postJobConfig", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'name' when calling saveJobConfig", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'jobSubmission' is set
         if (jobSubmission == null) {
-            throw new WebClientResponseException("Missing the required parameter 'jobSubmission' when calling postJobConfig", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'jobSubmission' when calling saveJobConfig", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -909,9 +909,9 @@ public class JobsApi {
      * @return String
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public String postJobConfig(String name, JobSubmission jobSubmission, Boolean overrideExisting) throws WebClientResponseException {
+    public String saveJobConfig(String name, JobSubmission jobSubmission, Boolean overrideExisting) throws WebClientResponseException {
         ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
-        return postJobConfigRequestCreation(name, jobSubmission, overrideExisting).bodyToMono(localVarReturnType).block();
+        return saveJobConfigRequestCreation(name, jobSubmission, overrideExisting).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -924,9 +924,9 @@ public class JobsApi {
      * @return ResponseEntity&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<String> postJobConfigWithHttpInfo(String name, JobSubmission jobSubmission, Boolean overrideExisting) throws WebClientResponseException {
+    public ResponseEntity<String> saveJobConfigWithHttpInfo(String name, JobSubmission jobSubmission, Boolean overrideExisting) throws WebClientResponseException {
         ParameterizedTypeReference<String> localVarReturnType = new ParameterizedTypeReference<String>() {};
-        return postJobConfigRequestCreation(name, jobSubmission, overrideExisting).toEntity(localVarReturnType).block();
+        return saveJobConfigRequestCreation(name, jobSubmission, overrideExisting).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -939,8 +939,8 @@ public class JobsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec postJobConfigWithResponseSpec(String name, JobSubmission jobSubmission, Boolean overrideExisting) throws WebClientResponseException {
-        return postJobConfigRequestCreation(name, jobSubmission, overrideExisting);
+    public ResponseSpec saveJobConfigWithResponseSpec(String name, JobSubmission jobSubmission, Boolean overrideExisting) throws WebClientResponseException {
+        return saveJobConfigRequestCreation(name, jobSubmission, overrideExisting);
     }
     /**
      * Start computation for given command and input.
@@ -1130,7 +1130,7 @@ public class JobsApi {
      * <p><b>202</b> - Accepted
      * @param projectId project-space to run jobs on
      * @param jobConfigName name if the config to be used
-     * @param requestBody compound ids to be computed
+     * @param requestBody List of alignedFeatureIds to be computed
      * @param recompute enable or disable recompute. If null the stored value will be used.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return Job
@@ -1185,7 +1185,7 @@ public class JobsApi {
      * <p><b>202</b> - Accepted
      * @param projectId project-space to run jobs on
      * @param jobConfigName name if the config to be used
-     * @param requestBody compound ids to be computed
+     * @param requestBody List of alignedFeatureIds to be computed
      * @param recompute enable or disable recompute. If null the stored value will be used.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return Job
@@ -1202,7 +1202,7 @@ public class JobsApi {
      * <p><b>202</b> - Accepted
      * @param projectId project-space to run jobs on
      * @param jobConfigName name if the config to be used
-     * @param requestBody compound ids to be computed
+     * @param requestBody List of alignedFeatureIds to be computed
      * @param recompute enable or disable recompute. If null the stored value will be used.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseEntity&lt;Job&gt;
@@ -1219,7 +1219,7 @@ public class JobsApi {
      * <p><b>202</b> - Accepted
      * @param projectId project-space to run jobs on
      * @param jobConfigName name if the config to be used
-     * @param requestBody compound ids to be computed
+     * @param requestBody List of alignedFeatureIds to be computed
      * @param recompute enable or disable recompute. If null the stored value will be used.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseSpec

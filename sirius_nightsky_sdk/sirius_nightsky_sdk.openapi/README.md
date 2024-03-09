@@ -164,7 +164,7 @@ Class | Method | HTTP request | Description
 *JobsApi* | [**getJobs**](docs/JobsApi.md#getJobs) | **GET** /api/projects/{projectId}/jobs | Get List of all available jobs with information such as current state and progress (if available).
 *JobsApi* | [**getJobsPaged**](docs/JobsApi.md#getJobsPaged) | **GET** /api/projects/{projectId}/jobs/page | Get Page of jobs with information such as current state and progress (if available).
 *JobsApi* | [**hasJobs**](docs/JobsApi.md#hasJobs) | **GET** /api/projects/{projectId}/has-jobs | 
-*JobsApi* | [**postJobConfig**](docs/JobsApi.md#postJobConfig) | **POST** /api/job-configs/{name} | Add new job configuration with given name.
+*JobsApi* | [**saveJobConfig**](docs/JobsApi.md#saveJobConfig) | **POST** /api/job-configs/{name} | Add new job configuration with given name.
 *JobsApi* | [**startCommand**](docs/JobsApi.md#startCommand) | **POST** /api/{projectId}/jobs/run-command | Start computation for given command and input.
 *JobsApi* | [**startJob**](docs/JobsApi.md#startJob) | **POST** /api/projects/{projectId}/jobs | Start computation for given compounds and with given parameters.
 *JobsApi* | [**startJobFromConfig**](docs/JobsApi.md#startJobFromConfig) | **POST** /api/projects/{projectId}/jobs/from-config | Start computation for given compounds and with parameters from a stored job-config.
