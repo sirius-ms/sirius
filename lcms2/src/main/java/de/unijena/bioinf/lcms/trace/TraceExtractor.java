@@ -28,9 +28,7 @@ import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.ints.IntObjectPair;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 public class TraceExtractor implements TraceExtractionStrategy {
     @Override
@@ -53,18 +51,15 @@ public class TraceExtractor implements TraceExtractionStrategy {
                     final ProcessedSample S = samplesInTrace[traceIndex];
                     final ContiguousTrace t = mergedSample.getStorage().getMergeStorage().getTrace(alignedFeature.getTraceIds().getInt(traceIndex));
                     DoubleList ints = new DoubleArrayList();
-                    List<String> sourceIds = new ArrayList<>();
                     for (int s = mergedTrace.startId(); s <= mergedTrace.endId(); ++s) {
                         ints.add(S.getScanPointInterpolator().interpolateIntensity(t, s));
-                        // FIXME how to get the correct MS1 spectrum header?
-//                        sourceIds.add(S.getStorage().getSpectrumStorage().ms1SpectrumHeader(S.getMapping().getScanIdAt(s)).getSourceId());
                     }
                     int traceUid = alignedFeature.getTraceIds().getInt(traceIndex);
 
                     traceIndex++;
                     return IntObjectPair.of(
                             traceUid,
-                            SourceTrace.builder().intensities(ints).runId(S.getRun().getRunId()).sourceScanIds(sourceIds).build()
+                            SourceTrace.builder().intensities(ints).runId(S.getRun().getRunId()).build()
                     );
                 } else if (traceIndex == -1) {
                     DoubleList rts = new DoubleArrayList();
