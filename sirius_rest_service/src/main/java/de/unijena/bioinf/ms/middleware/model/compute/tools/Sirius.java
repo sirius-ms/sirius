@@ -198,12 +198,26 @@ public class Sirius extends Tool<SiriusOptions> {
 
     //region Spectral library search
     /**
+     * If true formula candidates that belong to spectral library matches above a certain threshold will
+     * we inject/preserved for further analyses no matter which score they have or which filter is applied
+     */
+    @Schema(nullable = true)
+    Boolean injectSpecLibMatchFormulas;
+
+    /**
      * Similarity Threshold to inject formula candidates no matter which score/rank they have or which filter settings are applied.
      * If threshold >= 0 formulas candidates with reference spectrum similarity above the threshold will be injected.
-     * If NULL injection is disables.
      */
     @Schema(nullable = true)
     Double minScoreToInjectSpecLibMatch;
+
+    /**
+     * Matching peaks threshold to inject formula candidates no matter which score they have or which filter is applied.
+     */
+    @Schema(nullable = true)
+    Integer minPeaksToInjectSpecLibMatch;
+
+
     //endregion
 
     private Sirius() {
@@ -242,8 +256,10 @@ public class Sirius extends Tool<SiriusOptions> {
                 .putIfNonNull("AlgorithmProfile", profile)
 
                 .putIfNonNull("EnforceElGordoFormula", enforceElGordoFormula)
+
+                .putIfNonNull("InjectSpectralLibraryMatchFormulas.injectFormulas", injectSpecLibMatchFormulas)
                 .putIfNonNull("InjectSpectralLibraryMatchFormulas.minScoreToInject", minScoreToInjectSpecLibMatch)
-                .putIfNonNullObj("InjectSpectralLibraryMatchFormulas.injectFormulas", minScoreToInjectSpecLibMatch, Objects::nonNull)
+                .putIfNonNull("InjectSpectralLibraryMatchFormulas.minPeakMatchesToInject", minPeaksToInjectSpecLibMatch)
                 .toUnmodifiableMap();
     }
 
@@ -268,9 +284,9 @@ public class Sirius extends Tool<SiriusOptions> {
                 .fallbackFormulaConstraints(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class).getFallbackAlphabet().toString())
                 .detectableElements(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class).getAutoDetectionElements().stream().map(Element::getSymbol).collect(Collectors.toList()))
                 .enforceElGordoFormula(PropertyManager.DEFAULTS.createInstanceWithDefaults(EnforceElGordoFormula.class).value)
-                .minScoreToInjectSpecLibMatch(PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectSpectralLibraryMatchFormulas.class).isInjectFormulas()
-                        ? PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectSpectralLibraryMatchFormulas.class).getMinScoreToInject() : null)
-                .ilpTimeout(PropertyManager.DEFAULTS.createInstanceWithDefaults(Timeout.class))
+                .injectSpecLibMatchFormulas(PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectSpectralLibraryMatchFormulas.class).isInjectFormulas())
+                .minPeaksToInjectSpecLibMatch(PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectSpectralLibraryMatchFormulas.class).getMinPeakMatchesToInject())
+                .minScoreToInjectSpecLibMatch(PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectSpectralLibraryMatchFormulas.class).getMinScoreToInject())
                 .useHeuristic(PropertyManager.DEFAULTS.createInstanceWithDefaults(UseHeuristic.class));
     }
 }
