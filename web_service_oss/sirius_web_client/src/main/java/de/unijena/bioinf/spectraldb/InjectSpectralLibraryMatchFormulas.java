@@ -25,7 +25,7 @@ import de.unijena.bioinf.ms.properties.DefaultProperty;
 import lombok.Getter;
 
 /**
- * Specify settings to inject/preserver formula candidates that belong to
+ * Specify settings to inject/preserve formula candidates that belong to
  * high scoring reference spectra.
  */
 @Getter
@@ -36,6 +36,12 @@ public class InjectSpectralLibraryMatchFormulas {
      */
     @DefaultProperty
     private final double minScoreToInject;
+
+    /**
+     * Matching peaks threshold to inject formula candidates no matter which score they have or which filter is applied.
+     */
+    @DefaultProperty
+    private final int minPeakMatchesToInject;
 
     /**
      * If true formulas candidates with reference spectrum similarity > minScoreToEnforce will be part of the result
@@ -54,11 +60,12 @@ public class InjectSpectralLibraryMatchFormulas {
 
 
     private InjectSpectralLibraryMatchFormulas() {
-        this(-1d, false, false);
+        this(-1d, -1, false, false);
     }
 
-    private InjectSpectralLibraryMatchFormulas(double minScoreToInject, boolean injectFormulas, boolean alwaysPredict) {
+    private InjectSpectralLibraryMatchFormulas(double minScoreToInject, int minPeakMatchesToInject, boolean injectFormulas, boolean alwaysPredict) {
         this.minScoreToInject = minScoreToInject;
+        this.minPeakMatchesToInject = minPeakMatchesToInject;
         this.injectFormulas = injectFormulas;
         this.alwaysPredict = alwaysPredict;
     }
