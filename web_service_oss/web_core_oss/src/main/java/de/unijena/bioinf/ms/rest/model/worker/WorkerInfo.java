@@ -47,7 +47,8 @@ public class WorkerInfo {
     private WorkerType type;
     @Schema(nullable = false, requiredMode = REQUIRED)
     private EnumSet<PredictorType> supportedPredictors;
-    @Schema(nullable = false, requiredMode = REQUIRED)
+
+    @Schema(nullable = true)
     private String version;
     @Schema(nullable = true)
     private String host;
