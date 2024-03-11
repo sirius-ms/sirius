@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -68,7 +69,9 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
 
 
         //confidence score approximate mode settings
-        JComboBox<ExpansiveSearchConfidenceMode.Mode> confidenceModeBox = GuiUtils.makeParameterComboBoxFromDescriptiveValues(ExpansiveSearchConfidenceMode.Mode.getActiveModes());
+        JComboBox<ExpansiveSearchConfidenceMode.Mode> confidenceModeBox = GuiUtils.makeParameterComboBoxFromDescriptiveValues(
+                ExpansiveSearchConfidenceMode.Mode.getActiveModes(),
+                PropertyManager.DEFAULTS.createInstanceWithDefaults(ExpansiveSearchConfidenceMode.class).confidenceScoreSimilarityMode);
 
         //layout the panel
         final TwoColumnPanel additionalOptions = new TwoColumnPanel();

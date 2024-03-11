@@ -39,7 +39,9 @@ import java.awt.event.ItemEvent;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -323,6 +325,9 @@ public class GuiUtils {
     }
 
     public static <T extends DescriptiveOptions> JComboBox<T> makeParameterComboBoxFromDescriptiveValues(T[] options) {
+        return makeParameterComboBoxFromDescriptiveValues(options, null);
+    }
+    public static <T extends DescriptiveOptions> JComboBox<T> makeParameterComboBoxFromDescriptiveValues(T[] options, @Nullable T defaultSelection) {
         JComboBox<T> box = new JComboBox<>(options);
         if (options.length > 0) {
             box.setToolTipText(options[0].getDescription());
@@ -334,6 +339,10 @@ public class GuiUtils {
             final DescriptiveOptions source = (DescriptiveOptions) e.getItem();
             box.setToolTipText(source.getDescription());
         });
+
+        if (defaultSelection != null && Arrays.asList(options).contains(defaultSelection))
+            box.setSelectedItem(defaultSelection);
+
         return box;
     }
 }
