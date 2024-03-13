@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.chemdb.custom;
 
+import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
@@ -212,6 +213,7 @@ public abstract class CustomDatabase implements SearchableDatabase {
                     // update spectrum INCHIs to match structure INCHIs
                     spectra.forEach((k, v) -> {
                         String inchiKey = importer.inchiKeyCache.get(k);
+                        assert InChIs.isInchiKey(inchiKey);
                         v.forEach(s -> s.setCandidateInChiKey(inchiKey));
                     });
 
