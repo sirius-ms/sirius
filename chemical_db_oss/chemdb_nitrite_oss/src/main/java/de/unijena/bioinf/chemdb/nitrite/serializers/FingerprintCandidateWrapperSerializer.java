@@ -39,7 +39,6 @@ public class FingerprintCandidateWrapperSerializer extends StdSerializer<Fingerp
     @Override
     public void serialize(FingerprintCandidateWrapper value, JsonGenerator gen, SerializerProvider provider) throws IOException {
         gen.writeStartObject();
-        gen.writeNumberField("id", value.getId());
         gen.writeStringField("inchiKey", value.getInchiKey());
         gen.writeStringField("formula", value.getFormula());
         gen.writeNumberField("mass", value.getMass());
