@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
 //todo check when data/spectra should be included an when not
+//TODO THIS IS WIP
 
 public class SpectralSqlJdbiJsonDatabase implements SpectralLibrary {
 
@@ -83,7 +84,7 @@ public class SpectralSqlJdbiJsonDatabase implements SpectralLibrary {
     }
 
     @Override
-    public Ms2ReferenceSpectrum getReferenceSpectrum(@NotNull final String uuid) {
+    public Ms2ReferenceSpectrum getReferenceSpectrum(final long uuid) {
         return jdbi.withExtension(Dao.class, db -> db.findByUUID(uuid));
     }
 
@@ -123,11 +124,11 @@ public class SpectralSqlJdbiJsonDatabase implements SpectralLibrary {
 
         @SqlQuery("SELECT json FROM `SPECTRA` WHERE uuid = ?")
         @Json
-        Ms2ReferenceSpectrum findByUUID(@NotNull String uuid);
+        Ms2ReferenceSpectrum findByUUID(long uuid);
 
         @SqlQuery("SELECT JSON_EXTRACT(json, '$.\"spectrum\"') as Result FROM `SPECTRA` WHERE uuid = ?")
         @Json
-        SimpleSpectrum findSpectrumByUUID(@NotNull String uuid);
+        SimpleSpectrum findSpectrumByUUID(long uuid);
 
         @SqlQuery("SELECT json FROM `SPECTRA` WHERE exactMass >= ? AND exactMass <= ?")
         @Json

@@ -70,7 +70,7 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
 
         private String dbId;
 
-        private String uuid;
+        private long uuid;
 
         private String splash;
 
