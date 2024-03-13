@@ -51,7 +51,7 @@ public interface SpectralLibrary {
     Iterable<Ms2ReferenceSpectrum> lookupSpectra(MolecularFormula formula, boolean withData) throws ChemicalDatabaseException;
 
 
-    Ms2ReferenceSpectrum getReferenceSpectrum(String uuid) throws ChemicalDatabaseException;
+    Ms2ReferenceSpectrum getReferenceSpectrum(long uuid) throws ChemicalDatabaseException;
 
     Iterable<Ms2ReferenceSpectrum> getSpectralData(Iterable<Ms2ReferenceSpectrum> references) throws ChemicalDatabaseException;
 

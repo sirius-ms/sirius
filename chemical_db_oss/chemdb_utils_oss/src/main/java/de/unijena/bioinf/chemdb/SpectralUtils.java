@@ -85,7 +85,6 @@ public class SpectralUtils {
     public static List<Ms2ReferenceSpectrum> ms2ExpToMs2Ref(MutableMs2Experiment experiment) {
         return experiment.getMs2Spectra().stream().map(s -> {
             Ms2ReferenceSpectrum.Ms2ReferenceSpectrumBuilder b = Ms2ReferenceSpectrum.builder()
-                    .uuid(UUID.randomUUID().toString())
                     .formula(experiment.getMolecularFormula())
                     .exactMass(experiment.getIonMass())
                     .name(experiment.getName())
