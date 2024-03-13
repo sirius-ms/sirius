@@ -303,7 +303,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
 
         if(!expansiveSearchConfidenceMode.confidenceScoreSimilarityMode.equals(ExpansiveSearchConfidenceMode.Mode.OFF)) {
 
-            StructureSearchDB searchDBFake=StructureSearchDB.fromString("PubChem");
+            StructureSearchDB searchDBFake=StructureSearchDB.fromString("PUBCHEM");
 
 
             ParameterStore parameterStoreAll =(topHitFPAll==null || topHitScoringAll==null || topHitTreeAll==null ||topHitFormulaAll==null) ? null: ParameterStore.of(topHitFPAll,topHitScoringAll,topHitTreeAll,topHitFormulaAll);
