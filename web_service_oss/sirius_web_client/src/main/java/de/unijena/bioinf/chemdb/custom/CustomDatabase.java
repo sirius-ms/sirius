@@ -176,57 +176,67 @@ public abstract class CustomDatabase implements SearchableDatabase {
         AbstractChemicalDatabase chemDb = this.toChemDBOrThrow();
         WriteableChemicalDatabase writeableChemDB = this.toWriteableChemDBOrThrow();
 
-        if (!spectrumFiles.isEmpty()) {
-            SpectralLibrary spectralLibrary = this.toSpectralLibraryOrThrow();
+        try {
+            importStructuresToDatabase(structureFiles, importer);
 
-            WriteableSpectralLibrary writeableSpectralLibrary = this.toWriteableSpectralLibraryOrThrow();
 
-            Iterator<Ms2Experiment> iterator = new InputResourceParsingIterator(spectrumFiles,  new SpectralDbMsExperimentParser());
-            // Map of <SMILES, <STRUCTURE_ID, NAME>>
-            Map<String, CompoundMetaData> spectrumSmiles = new HashMap<>();
-            { // import all spectra files and fill structure map
-                List<Ms2ReferenceSpectrum> spectra = new ArrayList<>();
-                while (iterator.hasNext()) {
-                    Ms2Experiment experiment = iterator.next();
-                    spectra.addAll(SpectralUtils.ms2ExpToMs2Ref((MutableMs2Experiment) experiment));
-                    String smiles = experiment.getAnnotation(Smiles.class).map(Smiles::toString)
-                            .orElseThrow(() -> new IllegalArgumentException("Spectrum file does not contain SMILES: " + experiment.getSource()));
-                    if (!spectrumSmiles.containsKey(smiles))
-                        //todo speclib: add support for custom structure ids to spectra formats -> important to import in house ref-libs without needing the structure tsv
-                        experiment.getAnnotation(CompoundMetaData.class).ifPresentOrElse(
-                                cm -> spectrumSmiles.put(smiles, cm),
-                                () -> spectrumSmiles.put(smiles, CompoundMetaData.builder().compoundName(experiment.getName()).build()));
+            if (!spectrumFiles.isEmpty()) {
+                SpectralLibrary spectralLibrary = this.toSpectralLibraryOrThrow();
+                try {
+                    WriteableSpectralLibrary writeableSpectralLibrary = this.toWriteableSpectralLibraryOrThrow();
+
+                    Iterator<Ms2Experiment> iterator = new InputResourceParsingIterator(spectrumFiles, new SpectralDbMsExperimentParser());
+                    // Map of <SMILES, <STRUCTURE_ID, NAME>>
+                    // todo this should be buffered and not just read everything into memory
+                    // todo check for inchi in db to not download twice and get duplicate exception
+                    Map<String, CompoundMetaData> spectrumSmiles = new HashMap<>();
+                    Map<String, List<Ms2ReferenceSpectrum>> spectra = new HashMap<>();
+                    { // import all spectra files and fill structure map
+                        while (iterator.hasNext()) {
+                            Ms2Experiment experiment = iterator.next();
+                            String smiles = experiment.getAnnotation(Smiles.class).map(Smiles::toString)
+                                    .orElseThrow(() -> new IllegalArgumentException("Spectrum file does not contain SMILES: " + experiment.getSource()));
+                            spectra.computeIfAbsent(smiles, s -> new ArrayList<>()).addAll(SpectralUtils.ms2ExpToMs2Ref((MutableMs2Experiment) experiment));
+                            if (!spectrumSmiles.containsKey(smiles))
+                                //todo speclib: add support for custom structure ids to spectra formats -> important to import in house ref-libs without needing the structure tsv
+                                experiment.getAnnotation(CompoundMetaData.class).ifPresentOrElse(
+                                        cm -> spectrumSmiles.put(smiles, cm),
+                                        () -> spectrumSmiles.put(smiles, CompoundMetaData.builder().compoundName(experiment.getName()).build()));
+                        }
+                    }
+
+                    // import structures from spectra with SMILES, SPLASH (as ID) and NAME
+                    for (Map.Entry<String, CompoundMetaData> entry : spectrumSmiles.entrySet())
+                        importer.importFromString(entry.getKey(), entry.getValue().getCompoundId(), entry.getValue().getCompoundName());
+
+                    // update spectrum INCHIs to match structure INCHIs
+                    spectra.forEach((k, v) -> {
+                        String inchiKey = importer.inchiKeyCache.get(k);
+                        v.forEach(s -> s.setCandidateInChiKey(inchiKey));
+                    });
+
+                    // write spectra to db
+                    SpectralUtils.importSpectra(writeableSpectralLibrary, spectra.values().stream().flatMap(List::stream).toList(), bufferSize);
+                    importer.flushBuffer();
+                } finally {
+                    // update spectra statistics
+                    getStatistics().spectra().set(spectralLibrary.countAllSpectra());
                 }
-                SpectralUtils.importSpectra(writeableSpectralLibrary, spectra, bufferSize);
-            }
 
-            // import structures from spectra with SMILES, SPLASH (as ID) and NAME
-            for (Map.Entry<String, CompoundMetaData> entry : spectrumSmiles.entrySet()) {
-                importer.importFromString(entry.getKey(), entry.getValue().getCompoundId(), entry.getValue().getCompoundName());
             }
-
-            // update spectrum INCHIs to match structure INCHIs
-            for (Map.Entry<String, String> entry : importer.inchiKeyCache.entrySet()) {
-                writeableSpectralLibrary.updateSpectraMatchingSmiles(spectrum -> spectrum.setCandidateInChiKey(entry.getValue()), entry.getKey());
-            }
-            importStructuresToDatabase(structureFiles, importer);
-            // update statistics
-            getStatistics().spectra().set(spectralLibrary.countAllSpectra());
-        } else {
-            importStructuresToDatabase(structureFiles, importer);
+        } finally {
+            // update tags & statistics
+            writeableChemDB.updateTags(null, -1);
+            getStatistics().compounds().set(chemDb.countAllFingerprints());
+            getStatistics().formulas().set(chemDb.countAllFormulas());
+            writeSettings();
         }
-
-        // update tags & statistics
-        writeableChemDB.updateTags(null, -1);
-        getStatistics().compounds().set(chemDb.countAllFingerprints());
-        getStatistics().formulas().set(chemDb.countAllFormulas());
-        writeSettings();
     }
 
     private void importStructuresToDatabase(List<InputResource<?>> structureFiles, CustomDatabaseImporter importer) throws IOException {
         try {
             for (InputResource<?> f : structureFiles) {
-                try (InputStream s = f.getInputStream()){
+                try (InputStream s = f.getInputStream()) {
                     importer.importFromStream(s);
                 }
             }
