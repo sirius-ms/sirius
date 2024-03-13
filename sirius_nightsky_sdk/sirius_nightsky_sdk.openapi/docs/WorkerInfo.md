@@ -10,7 +10,7 @@
 |**id** | **Long** |  |  |
 |**type** | [**TypeEnum**](#TypeEnum) |  |  |
 |**supportedPredictors** | [**List&lt;SupportedPredictorsEnum&gt;**](#List&lt;SupportedPredictorsEnum&gt;) |  |  |
-|**version** | **String** |  |  |
+|**version** | **String** |  |  [optional] |
 |**host** | **String** |  |  [optional] |
 |**prefix** | **String** |  |  [optional] |
 |**state** | **Integer** |  |  |
