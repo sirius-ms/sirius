@@ -27,7 +27,7 @@ import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * The AlignedFeature contains the ID of a featured (aligned over runs) together with some read-only information
+ * The AlignedFeature contains the ID of a feature (aligned over runs) together with some read-only information
  * that might be displayed in some summary view.
  */
 @Getter

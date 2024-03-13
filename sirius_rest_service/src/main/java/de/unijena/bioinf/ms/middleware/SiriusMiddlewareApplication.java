@@ -172,7 +172,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                     ConfigurableApplicationContext appContext = app.run(args);
 
                     //add default project to project service
-                    //todo make generic that it works with arbitrary provider ore remove if not needed...
+                    //todo make generic that it works with arbitrary provider or remove if not needed...
                     final SiriusProjectSpace ps = rootOptions.getProjectSpace().projectSpace();
                     ProjectInfo startPs = appContext
                             .getBean("projectsProvider", SiriusProjectSpaceProviderImpl.class)
