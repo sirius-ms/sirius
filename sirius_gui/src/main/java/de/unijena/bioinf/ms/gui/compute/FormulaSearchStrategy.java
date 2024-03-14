@@ -237,7 +237,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         buttonEdit.setToolTipText("Customize allowed elements and their quantities");
         buttonPanel.add(buttonEdit);
         if (!isBatchDialog) {
-            JButton buttonAutodetect = new JButton("Auto");
+            JButton buttonAutodetect = new JButton("Detect");
             buttonAutodetect.setToolTipText("Auto detectable element are: " + join(autoDetectableElements));
             buttonAutodetect.addActionListener(e -> detectElements(autoDetectableElements, enforcedTextBox));
             buttonPanel.add(buttonAutodetect);
