@@ -27,6 +27,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -337,4 +339,27 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         return StreamSupport.stream(joinChildren(childCollectionName, childFilter, parents, localField, foreignField, targetField, withOptionalChildFields).spliterator(), false);
     }
     //endregion
+
+    // region event support
+
+    <T, I> void onInsert(Class<T> clazz, Consumer<I> listener) throws IOException;
+
+    <T, I> void onInsert(Class<T> clazz, BiConsumer<I, T> listener, String... withOptionalFields) throws IOException;
+
+    void onInsert(String collectionName, Consumer<DocType> listener, String... withOptionalFields) throws IOException;
+
+    <T, I> void onUpdate(Class<T> clazz, Consumer<I> listener) throws IOException;
+
+    <T, I> void onUpdate(Class<T> clazz, BiConsumer<I, T> listener, String... withOptionalFields) throws IOException;
+
+    void onUpdate(String collectionName, Consumer<DocType> listener, String... withOptionalFields) throws IOException;
+
+    <T, I> void onRemove(Class<T> clazz, Consumer<I> listener) throws IOException;
+
+    <T, I> void onRemove(Class<T> clazz, BiConsumer<I, T> listener, String... withOptionalFields) throws IOException;
+
+    void onRemove(String collectionName, Consumer<DocType> listener, String... withOptionalFields) throws IOException;
+
+    // endregion
+
 }
