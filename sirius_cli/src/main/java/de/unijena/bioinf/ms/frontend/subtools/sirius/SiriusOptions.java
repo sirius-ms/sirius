@@ -139,13 +139,13 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     }
 
     //Adducts
-    @Option(names = {"-i", "--ions-considered"}, descriptionKey = "AdductSettings.detectable" , description = "Adducts which are considered during adduct detection. They are only used for further analyses if there is an indication in the MS1 scan. If none of them could be detected in MS1, all of them will be used as a fallback. Example: [M+H]+,[M-H]-,[M+Cl]-,[M+Na]+,[M]+,[M-H2O+H]+.")
+    @Option(names = {"-i", "--adducts-considered"}, descriptionKey = "AdductSettings.detectable" , description = "Adducts which are considered during adduct detection. They are only used for further analyses if there is an indication in the MS1 scan. If none of them could be detected in MS1, all of them will be used as a fallback. Example: [M+H]+,[M-H]-,[M+Cl]-,[M+Na]+,[M]+,[M-H2O+H]+.")
     public void setIonsConsidered(DefaultParameter adductList) throws Exception {
         defaultConfigOptions.changeOption("AdductSettings.detectable", adductList);
         defaultConfigOptions.changeOption("AdductSettings.fallback", adductList);
     }
 
-    @Option(names = {"-I", "--ions-enforced"}, descriptionKey = "AdductSettings.enforced", description = "Adducts that are always considered during the analysis. Example: [M+H]+,[M-H]-,[M+Cl]-,[M+Na]+,[M]+,[M-H2O+H]+.")
+    @Option(names = {"-I", "--adducts-enforced"}, descriptionKey = "AdductSettings.enforced", description = "Adducts that are always considered during the analysis. Example: [M+H]+,[M-H]-,[M+Cl]-,[M+Na]+,[M]+,[M-H2O+H]+.")
     public void setIonsEnforced(DefaultParameter adductList) throws Exception {
         defaultConfigOptions.changeOption("AdductSettings.enforced", adductList);
     }
@@ -198,12 +198,6 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
                     defaultConfigOptions.changeOption("FormulaSettings.detectable", value + ",Si");
             }
         }
-    }
-
-    @Option(names = "--trust-ion-prediction", description = "By default we use MS1 information to select additional ionizations ([M+Na]+,[M+K]+,[M+Cl]-,[M+Br]-) for considerations. With this parameter we trust the MS1 prediction and only consider these found ionizations.", hidden = true)
-    public void setTrustGuessIonFromMS1(boolean trust) {
-        throw new IllegalArgumentException("Parameter not implemented!");
-        //todo manipulate adduct lists for marcus?????
     }
 
     @Option(names = {"--mostintense-ms2"}, hidden = true,
