@@ -35,6 +35,8 @@ import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.dizitart.no2.*;
+import org.dizitart.no2.event.ChangeType;
+import org.dizitart.no2.event.ChangedItem;
 import org.dizitart.no2.filters.Filters;
 import org.dizitart.no2.mapper.JacksonMapper;
 import org.dizitart.no2.objects.ObjectFilter;
@@ -52,6 +54,8 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static org.dizitart.no2.exceptions.ErrorMessage.*;
@@ -81,6 +85,8 @@ public class NitriteDatabase implements Database<Document> {
     private final Map<Class<?>, Field> primaryKeyFields = Collections.synchronizedMap(new HashMap<>());
 
     private final Map<Class<?>, Supplier<?>> primaryKeySuppliers = Collections.synchronizedMap(new HashMap<>());
+
+    private final Map<String, NitriteCollection> collections = Collections.synchronizedMap(new HashMap<>());
 
     private final Map<String, Set<String>> optionalCollectionFields = Collections.synchronizedMap(new HashMap<>());
 
@@ -129,6 +135,7 @@ public class NitriteDatabase implements Database<Document> {
     private void initCollections(Metadata meta) {
         for (String name : meta.collectionIndices.keySet()) {
             NitriteCollection collection = this.db.getCollection(name);
+            this.collections.put(name, collection);
             initIndex(meta.collectionIndices.get(name), collection);
         }
     }
@@ -329,11 +336,37 @@ public class NitriteDatabase implements Database<Document> {
 
     private NitriteCollection getCollection(String name) throws IOException {
         //collection of repos are created on demand, so we have to check both
-        if (!db.hasCollection(name) && !db.listRepositories().contains(name)) {
-            throw new IOException(name + " is not registered.");
+        if (!collections.containsKey(name)) {
+            if (!db.hasCollection(name) && !db.listRepositories().contains(name)) {
+                throw new IOException(name + " is not registered.");
+            }
+
+            return db.getCollection(name);
         }
 
-        return db.getCollection(name);
+        return collections.get(name);
+    }
+
+    private <T> T maybeProject(Class<T> clazz, Document document, String[] withOptionalFields) {
+        if (optionalRepoFields.containsKey(clazz)) {
+            Set<String> omittedFields = new HashSet<>(optionalRepoFields.get(clazz));
+            omittedFields.removeAll(new HashSet<>(Arrays.asList(withOptionalFields)));
+            if (!omittedFields.isEmpty()) {
+                return nitriteMapper.asObject(ProjectingDocumentIterable.project(document, omittedFields), clazz);
+            }
+        }
+        return nitriteMapper.asObject(document, clazz);
+    }
+
+    private Document maybeProjectDocument(String collectionName, Document document, String[] withOptionalFields) {
+        if (optionalCollectionFields.containsKey(collectionName)) {
+            Set<String> omittedFields = new HashSet<>(optionalCollectionFields.get(collectionName));
+            omittedFields.removeAll(new HashSet<>(Arrays.asList(withOptionalFields)));
+            if (!omittedFields.isEmpty()) {
+                return ProjectingDocumentIterable.project(document, omittedFields);
+            }
+        }
+        return document;
     }
 
     private <T> Iterable<T> maybeProject(Class<T> clazz, @Nullable Filter filter, @Nullable FindOptions findOptions, String[] withOptionalFields) throws IOException {
@@ -874,6 +907,89 @@ public class NitriteDatabase implements Database<Document> {
             NitriteCollection collection = this.getCollection(collectionName);
             org.dizitart.no2.Filter f = getFilter(filter);
             return collection.remove(f).getAffectedCount();
+        });
+    }
+
+    @Override
+    public <T, I> void onInsert(Class<T> clazz, Consumer<I> listener) throws IOException {
+        registerListener(ChangeType.INSERT, clazz, listener);
+    }
+
+    @Override
+    public <T, I> void onInsert(Class<T> clazz, BiConsumer<I, T> listener, String... withOptionalFields) throws IOException {
+        registerListener(ChangeType.INSERT, clazz, listener, withOptionalFields);
+    }
+
+    @Override
+    public void onInsert(String collectionName, Consumer<Document> listener, String... withOptionalFields) throws IOException {
+        registerListener(ChangeType.INSERT, collectionName, listener, withOptionalFields);
+    }
+
+    @Override
+    public <T, I> void onUpdate(Class<T> clazz, Consumer<I> listener) throws IOException {
+        registerListener(ChangeType.UPDATE, clazz, listener);
+    }
+
+    @Override
+    public <T, I> void onUpdate(Class<T> clazz, BiConsumer<I, T> listener, String... withOptionalFields) throws IOException {
+        registerListener(ChangeType.UPDATE, clazz, listener, withOptionalFields);
+    }
+
+    @Override
+    public void onUpdate(String collectionName, Consumer<Document> listener, String... withOptionalFields) throws IOException {
+        registerListener(ChangeType.UPDATE, collectionName, listener, withOptionalFields);
+    }
+
+    @Override
+    public <T, I> void onRemove(Class<T> clazz, Consumer<I> listener) throws IOException {
+        registerListener(ChangeType.REMOVE, clazz, listener);
+    }
+
+    @Override
+    public <T, I> void onRemove(Class<T> clazz, BiConsumer<I, T> listener, String... withOptionalFields) throws IOException {
+        registerListener(ChangeType.REMOVE, clazz, listener, withOptionalFields);
+    }
+
+    @Override
+    public void onRemove(String collectionName, Consumer<Document> listener, String... withOptionalFields) throws IOException {
+        registerListener(ChangeType.REMOVE, collectionName, listener, withOptionalFields);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T, I> void registerListener(ChangeType changeType, Class<T> clazz, Consumer<I> listener) throws IOException {
+        getRepository(clazz).register(changeInfo -> {
+            if (changeInfo.getChangeType().equals(changeType)) {
+                for (ChangedItem item : changeInfo.getChangedItems()) {
+                    Document doc = item.getDocument();
+                    I id = (I) doc.get(this.primaryKeyFields.get(clazz).getName());
+                    listener.accept(id);
+                }
+            }
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T, I> void registerListener(ChangeType changeType, Class<T> clazz, BiConsumer<I, T> listener, String[] withOptionalFields) throws IOException {
+        getRepository(clazz).register(changeInfo -> {
+            if (changeInfo.getChangeType().equals(changeType)) {
+                for (ChangedItem item : changeInfo.getChangedItems()) {
+                    Document doc = item.getDocument();
+                    I id = (I) doc.get(this.primaryKeyFields.get(clazz).getName());
+                    T object = maybeProject(clazz, doc, withOptionalFields);
+                    listener.accept(id, object);
+                }
+            }
+        });
+    }
+
+    private void registerListener(ChangeType changeType, String collectionName, Consumer<Document> listener, String[] withOptionalFields) throws IOException {
+        getCollection(collectionName).register(changeInfo -> {
+            if (changeInfo.getChangeType().equals(changeType)) {
+                for (ChangedItem item : changeInfo.getChangedItems()) {
+                    Document doc = maybeProjectDocument(collectionName, item.getDocument(), withOptionalFields);
+                    listener.accept(doc);
+                }
+            }
         });
     }
 

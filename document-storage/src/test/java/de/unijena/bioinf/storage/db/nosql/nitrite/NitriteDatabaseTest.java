@@ -44,6 +44,7 @@ import org.dizitart.no2.Document;
 import org.dizitart.no2.filters.Filters;
 import org.dizitart.no2.objects.ObjectFilter;
 import org.dizitart.no2.objects.filters.ObjectFilters;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -986,6 +987,164 @@ public class NitriteDatabaseTest {
             assertTrue("has data", res6.get(0).containsKey("data"));
             assertTrue("has data", res7.get(0).containsKey("data"));
 
+        }
+
+    }
+
+    @Test
+    public void testEvents() throws IOException, InterruptedException {
+        Path file = Files.createTempFile("nitrite-test", "");
+        file.toFile().deleteOnExit();
+
+        final BlockingQueue<Long> idQueue = new ArrayBlockingQueue<>(3);
+
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(NitriteTestEntry.class, new Index("name", IndexType.UNIQUE)).addDeserializer(NitriteTestEntry.class, new TestDeserializer()))) {
+            List<NitriteTestEntry> in = List.of(
+                    NitriteTestEntry.builder().name("A").build(),
+                    NitriteTestEntry.builder().name("B").build(),
+                    NitriteTestEntry.builder().name("C").build()
+            );
+
+            Set<Long> insertIds = new HashSet<>();
+            Set<Long> updateIds = new HashSet<>();
+            Set<Long> removeIds = new HashSet<>();
+            db.onInsert(NitriteTestEntry.class, idQueue::add);
+            db.onUpdate(NitriteTestEntry.class, idQueue::add);
+            db.onRemove(NitriteTestEntry.class, idQueue::add);
+
+            db.insertAll(in);
+            for (int i = 0; i < 3; i++) {
+                insertIds.add(idQueue.poll(1L, TimeUnit.SECONDS));
+            }
+            db.upsertAll(in.stream().peek(e -> e.name += "_U").toList());
+            for (int i = 0; i < 3; i++) {
+                updateIds.add(idQueue.poll(1L, TimeUnit.SECONDS));
+            }
+            db.removeAll(in);
+            for (int i = 0; i < 3; i++) {
+                removeIds.add(idQueue.poll(1L, TimeUnit.SECONDS));
+            }
+
+            Set<Long> expectedIds = in.stream().map(e -> e.primaryKey).collect(Collectors.toSet());
+            Assert.assertEquals(expectedIds, insertIds);
+            Assert.assertEquals(expectedIds, updateIds);
+            Assert.assertEquals(expectedIds, removeIds);
+        }
+
+    }
+
+    @Test
+    public void testEventsWithObjects() throws IOException, InterruptedException {
+        Path file = Files.createTempFile("nitrite-test", "");
+        file.toFile().deleteOnExit();
+
+        final BlockingQueue<Long> idQueue = new ArrayBlockingQueue<>(3);
+        final BlockingQueue<String> nameQueue = new ArrayBlockingQueue<>(3);
+
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(NitriteTestEntry.class, new Index("name", IndexType.UNIQUE)).addDeserializer(NitriteTestEntry.class, new TestDeserializer()))) {
+            List<NitriteTestEntry> in = List.of(
+                    NitriteTestEntry.builder().name("A").build(),
+                    NitriteTestEntry.builder().name("B").build(),
+                    NitriteTestEntry.builder().name("C").build()
+            );
+
+            Set<Long> insertIds = new HashSet<>();
+            Set<Long> updateIds = new HashSet<>();
+            Set<Long> removeIds = new HashSet<>();
+            Set<String> inserted = new HashSet<>();
+            Set<String> updated = new HashSet<>();
+            Set<String> removed = new HashSet<>();
+
+            db.onInsert(NitriteTestEntry.class, (Long id, NitriteTestEntry entry) -> {
+                idQueue.add(id);
+                nameQueue.add(entry.name);
+            });
+            db.onUpdate(NitriteTestEntry.class, (Long id, NitriteTestEntry entry) -> {
+                idQueue.add(id);
+                nameQueue.add(entry.name);
+            });
+            db.onRemove(NitriteTestEntry.class, (Long id, NitriteTestEntry entry) -> {
+                idQueue.add(id);
+                nameQueue.add(entry.name);
+            });
+
+            db.insertAll(in);
+            for (int i = 0; i < 3; i++) {
+                insertIds.add(idQueue.poll(1L, TimeUnit.SECONDS));
+                inserted.add(nameQueue.poll(1L, TimeUnit.SECONDS));
+            }
+
+            Set<String> expectedNames = in.stream().map(e -> e.name + "_D").collect(Collectors.toSet());
+            in.forEach(e -> e.name += "_U");
+            db.upsertAll(in);
+            for (int i = 0; i < 3; i++) {
+                updateIds.add(idQueue.poll(1L, TimeUnit.SECONDS));
+                updated.add(nameQueue.poll(1L, TimeUnit.SECONDS));
+            }
+
+            db.removeAll(in);
+            for (int i = 0; i < 3; i++) {
+                removeIds.add(idQueue.poll(1L, TimeUnit.SECONDS));
+                removed.add(nameQueue.poll(1L, TimeUnit.SECONDS));
+            }
+
+            Set<Long> expectedIds = in.stream().map(e -> e.primaryKey).collect(Collectors.toSet());
+            Set<String> updatedNames = in.stream().map(e -> e.name + "_D").collect(Collectors.toSet());
+
+            Assert.assertEquals(expectedIds, insertIds);
+            Assert.assertEquals(expectedIds, updateIds);
+            Assert.assertEquals(expectedIds, removeIds);
+
+
+            Assert.assertEquals(expectedNames, inserted);
+            Assert.assertEquals(updatedNames, updated);
+            Assert.assertEquals(updatedNames, removed);
+        }
+
+    }
+
+    @Test
+    public void testEventsWithDocuments() throws IOException, InterruptedException {
+        Path file = Files.createTempFile("nitrite-test", "");
+        file.toFile().deleteOnExit();
+
+        final BlockingQueue<String> nameQueue = new ArrayBlockingQueue<>(3);
+
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addCollection("entries", new Index("name", IndexType.UNIQUE)))) {
+            List<Document> in = Lists.newArrayList(
+                    Document.createDocument("name", "A"),
+                    Document.createDocument("name", "B"),
+                    Document.createDocument("name", "C")
+            );
+
+            Set<String> inserted = new HashSet<>();
+            Set<String> updated = new HashSet<>();
+            Set<String> removed = new HashSet<>();
+            db.onInsert("entries", e -> nameQueue.add(e.get("name", String.class)));
+            db.onUpdate("entries", e -> nameQueue.add(e.get("name", String.class)));
+            db.onRemove("entries", e -> nameQueue.add(e.get("name", String.class)));
+
+            db.insertAll("entries", in);
+            for (int i = 0; i < 3; i++) {
+                inserted.add(nameQueue.poll(1L, TimeUnit.SECONDS));
+            }
+
+            Set<String> expectedNames = in.stream().map(e -> e.get("name", String.class)).collect(Collectors.toSet());
+            in.forEach(e -> e.put("name", e.get("name", String.class) + "_U"));
+            Set<String> updatedNames = in.stream().map(e -> e.get("name", String.class)).collect(Collectors.toSet());
+
+            db.upsertAll("entries",in);
+            for (int i = 0; i < 3; i++) {
+                updated.add(nameQueue.poll(1L, TimeUnit.SECONDS));
+            }
+            db.removeAll("entries", in);
+            for (int i = 0; i < 3; i++) {
+                removed.add(nameQueue.poll(1L, TimeUnit.SECONDS));
+            }
+
+            Assert.assertEquals(expectedNames, inserted);
+            Assert.assertEquals(updatedNames, updated);
+            Assert.assertEquals(updatedNames, removed);
         }
 
     }
