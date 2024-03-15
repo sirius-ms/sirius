@@ -20,34 +20,25 @@
 
 package de.unijena.bioinf.chemdb.custom;
 
-import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import de.unijena.bioinf.ChemistryBase.chem.Smiles;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.babelms.annotations.CompoundMetaData;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
-import de.unijena.bioinf.babelms.inputresource.InputResourceParsingIterator;
 import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
-import de.unijena.bioinf.chemdb.SpectralUtils;
 import de.unijena.bioinf.chemdb.WriteableChemicalDatabase;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
-import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
-import de.unijena.bioinf.spectraldb.io.SpectralDbMsExperimentParser;
 import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.openscience.cdk.exception.CDKException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 public abstract class CustomDatabase implements SearchableDatabase {
     protected static Logger logger = LoggerFactory.getLogger(CustomDatabase.class);
@@ -164,80 +155,31 @@ public abstract class CustomDatabase implements SearchableDatabase {
         }
     }
 
-    public void importToDatabase(
+    public static void importToDatabase(
             List<InputResource<?>> spectrumFiles,
             List<InputResource<?>> structureFiles,
             @Nullable CustomDatabaseImporter.Listener listener,
-            CustomDatabaseImporter importer,
-            int bufferSize
-    ) throws IOException, CDKException {
+            CustomDatabaseImporter importer
+    ) throws IOException {
         if (listener != null)
             importer.addListener(listener);
 
-        AbstractChemicalDatabase chemDb = this.toChemDBOrThrow();
-        WriteableChemicalDatabase writeableChemDB = this.toWriteableChemDBOrThrow();
-
         try {
-            importStructuresToDatabase(structureFiles, importer);
+            if (structureFiles != null && !structureFiles.isEmpty())
+                importer.importSpectraFromResources(structureFiles);
 
+            if (spectrumFiles != null && !spectrumFiles.isEmpty())
+                importer.importSpectraFromResources(spectrumFiles);
 
-            if (!spectrumFiles.isEmpty()) {
-                SpectralLibrary spectralLibrary = this.toSpectralLibraryOrThrow();
-                try {
-                    WriteableSpectralLibrary writeableSpectralLibrary = this.toWriteableSpectralLibraryOrThrow();
-
-                    Iterator<Ms2Experiment> iterator = new InputResourceParsingIterator(spectrumFiles, new SpectralDbMsExperimentParser());
-                    // Map of <SMILES, <STRUCTURE_ID, NAME>>
-                    // todo this should be buffered and not just read everything into memory
-                    List<Ms2ReferenceSpectrum> spectra = new ArrayList<>();
-                    { // import all spectra files and fill structure map
-                        while (iterator.hasNext()) {
-                            Ms2Experiment experiment = iterator.next();
-                            List<Ms2ReferenceSpectrum> specs = SpectralUtils.ms2ExpToMs2Ref((MutableMs2Experiment) experiment);
-                            spectra.addAll(specs);
-                            String smiles = experiment.getAnnotation(Smiles.class).map(Smiles::toString)
-                                    .orElseThrow(() -> new IllegalArgumentException("Spectrum file does not contain SMILES: " + experiment.getSource()));
-                            CompoundMetaData metaData = experiment.getAnnotation(CompoundMetaData.class).orElseGet(() ->
-                                    CompoundMetaData.builder().compoundName(experiment.getName()).build());
-                            //todo speclib: add support for custom structure ids to spectra formats -> important to import in house ref-libs without needing the structure tsv
-                            importer.importStructureFromString(smiles, metaData.getCompoundId(), metaData.getCompoundName())
-                                    .map(CustomDatabaseImporter.Molecule::getInchi)
-                                    .map(InChI::key2D)
-                                    .ifPresent(key -> specs.forEach(s -> s.setCandidateInChiKey(key)));
-                        }
-                    }
-
-                    // write spectra to db
-                    SpectralUtils.importSpectra(writeableSpectralLibrary, spectra, bufferSize);
-                    importer.flushBuffer();
-                } finally {
-                    // update spectra statistics
-                    getStatistics().spectra().set(spectralLibrary.countAllSpectra());
-                }
-
-            }
         } finally {
             // update tags & statistics
-            writeableChemDB.updateTags(null, -1);
-            getStatistics().compounds().set(chemDb.countAllFingerprints());
-            getStatistics().formulas().set(chemDb.countAllFormulas());
-            writeSettings();
+            importer.flushAllAndUpdateStatistics();
         }
     }
 
-    private void importStructuresToDatabase(List<InputResource<?>> structureFiles, CustomDatabaseImporter importer) throws IOException {
-        try {
-            for (InputResource<?> f : structureFiles) {
-                try (InputStream s = f.getInputStream()) {
-                    importer.importStructureFromStream(s);
-                }
-            }
-        } finally {
-            importer.flushBuffer();
-        }
-    }
 
-    public JJob<Boolean> importToDatabaseJob(
+
+    public  JJob<Boolean> importToDatabaseJob(
             List<InputResource<?>> spectrumFiles,
             List<InputResource<?>> structureFiles,
             @Nullable CustomDatabaseImporter.Listener listener,
@@ -250,7 +192,7 @@ public abstract class CustomDatabase implements SearchableDatabase {
             @Override
             protected Boolean compute() throws Exception {
                 importer = new CustomDatabaseImporter((NoSQLCustomDatabase<?, ?>) CustomDatabase.this, api.getCDKChemDBFingerprintVersion(), api, bufferSize);
-                importToDatabase(spectrumFiles, structureFiles, listener, importer, bufferSize);
+                importToDatabase(spectrumFiles, structureFiles, listener, importer);
                 return true;
             }
 
