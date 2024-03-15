@@ -25,12 +25,19 @@ import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.babelms.annotations.CompoundMetaData;
+import de.unijena.bioinf.babelms.inputresource.InputResource;
+import de.unijena.bioinf.babelms.inputresource.InputResourceParsingIterator;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
+import de.unijena.bioinf.spectraldb.io.SpectralDbMsExperimentParser;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.webapi.WebAPI;
 import lombok.Getter;
@@ -56,10 +63,10 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class CustomDatabaseImporter {
     private final NoSQLCustomDatabase<?, ?> database;
+    private WriteableSpectralLibrary databaseAsSpecLib;
     private final String dbname;
 
     Queue<Listener> listeners = new ConcurrentLinkedQueue<>();
@@ -76,7 +83,6 @@ public class CustomDatabaseImporter {
     private final List<Ms2ReferenceSpectrum> spectraBuffer;
     private final int specBufferSize;
 
-
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
     final protected ConcurrentLinkedQueue<FingerprintCalculator> freeFingerprinter = new ConcurrentLinkedQueue<>();
     protected SmilesGenerator smilesGen;
@@ -84,6 +90,7 @@ public class CustomDatabaseImporter {
     protected CdkFingerprintVersion fingerprintVersion;
     protected final WebAPI<?> api;
 
+    // todo make abstract and implement different versions for blob and document storage
     protected CustomDatabaseImporter(@NotNull NoSQLCustomDatabase<?, ?> database, CdkFingerprintVersion version, WebAPI<?> api, int bufferSize) {
         this.api = api;
         this.database = database;
@@ -103,6 +110,41 @@ public class CustomDatabaseImporter {
         smilesParser.kekulise(true);
     }
 
+    private void throwIfShutdown() {
+        if (shutdown.get())
+            throw new IllegalStateException("Importer has already been shutdown or cancelled!");
+    }
+
+    public synchronized void flushAll() throws IOException {
+        flushBuffer();
+        flushSpectraBuffer();
+    }
+
+    public synchronized void updateStatistics() throws IOException {
+        // update tags & statistics
+        database.toSpectralLibrary()
+                .ifPresent(sl -> {
+                    try {
+                        database.getStatistics().spectra().set(sl.countAllSpectra());
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+
+        database.database.updateTags(null, -1);
+        database.getStatistics().compounds().set(database.database.countAllFingerprints());
+        database.getStatistics().formulas().set(database.database.countAllFormulas());
+        database.writeSettings();
+    }
+
+    public synchronized void flushAllAndUpdateStatistics() throws IOException {
+        try {
+            flushAll();
+        } finally {
+            updateStatistics();
+        }
+    }
+
     public void cancel() {
         shutdown.set(true);
     }
@@ -115,16 +157,39 @@ public class CustomDatabaseImporter {
         listeners.remove(listener);
     }
 
+    public void importSpectraFromResources(List<InputResource<?>> spectrumFiles) throws IOException {
+        throwIfShutdown();
+        Iterator<Ms2Experiment> iterator = new InputResourceParsingIterator(spectrumFiles, new SpectralDbMsExperimentParser());
+        while (iterator.hasNext()) {
+            Ms2Experiment experiment = iterator.next();
+            List<Ms2ReferenceSpectrum> specs = SpectralUtils.ms2ExpToMs2Ref((MutableMs2Experiment) experiment);
+
+            String smiles = experiment.getAnnotation(Smiles.class).map(Smiles::toString)
+                    .orElseThrow(() -> new IllegalArgumentException("Spectrum file does not contain SMILES: " + experiment.getSource()));
+            CompoundMetaData metaData = experiment.getAnnotation(CompoundMetaData.class).orElseGet(() ->
+                    CompoundMetaData.builder().compoundName(experiment.getName()).build());
+
+            //todo speclib: add support for custom structure ids to spectra formats -> important to import in house ref-libs without needing the structure tsv
+            importStructureFromString(smiles, metaData.getCompoundId(), metaData.getCompoundName())
+                    .map(CustomDatabaseImporter.Molecule::getInchi)
+                    .map(InChI::key2D)
+                    .ifPresent(key -> specs.forEach(s -> s.setCandidateInChiKey(key)));
+
+            addToSpectraBuffer(specs);
+        }
+    }
+
     public void importStructureFromString(String smilesOrInChI) throws IOException {
+        throwIfShutdown();
         importStructureFromString(smilesOrInChI, null, null);
     }
 
     public Optional<Molecule> importStructureFromString(@Nullable String smilesOrInChI, @Nullable String id, @Nullable String name) throws IOException {
+        throwIfShutdown();
         if (smilesOrInChI == null || smilesOrInChI.isBlank()) {
             LoggerFactory.getLogger(getClass()).warn("No structure information given in Line ' " + smilesOrInChI + "\t" + id + "\t" + name + "'. Skipping!");
             return Optional.empty();
         }
-
 
         InChI inchi;
         Smiles smiles;
@@ -178,6 +243,7 @@ public class CustomDatabaseImporter {
     }
 
     public void importStructureFromStream(InputStream stream) throws IOException {
+        throwIfShutdown();
         // checkConnectionToUrl for SMILES and InChI formats
         final BufferedReader br = new BufferedReader(new InputStreamReader(stream));
         String line;
@@ -195,7 +261,17 @@ public class CustomDatabaseImporter {
         }
     }
 
+    public void importStructuresFromResources(List<InputResource<?>> structureFiles) throws IOException {
+        throwIfShutdown();
+        for (InputResource<?> f : structureFiles) {
+            try (InputStream s = f.getInputStream()) {
+                importStructureFromStream(s);
+            }
+        }
+    }
+
     public void importStructureFromFile(File file) throws IOException {
+        throwIfShutdown();
         ReaderFactory factory = new ReaderFactory();
         ISimpleChemObjectReader reader;
         try (InputStream stream = new FileInputStream(file)) {
@@ -230,7 +306,35 @@ public class CustomDatabaseImporter {
     }
 
 
-    protected void addMolecule(Molecule mol) throws IOException {
+    protected void addToSpectraBuffer(List<Ms2ReferenceSpectrum> spectra) throws ChemicalDatabaseException {
+        synchronized (spectraBuffer) {
+            spectraBuffer.addAll(spectra);
+            for (Listener l : listeners) l.newSpectraBufferSize(spectraBuffer.size());
+            if (spectraBuffer.size() > specBufferSize)
+                flushSpectraBuffer();
+        }
+    }
+
+    protected void flushSpectraBuffer() throws ChemicalDatabaseException {
+        if (databaseAsSpecLib == null)
+            try {
+                databaseAsSpecLib = database.toWriteableSpectralLibraryOrThrow();
+            } catch (IOException e) {
+                throw new IllegalArgumentException("Structure db cannot be converted to spectral library", e);
+            }
+
+        //todo do flush in background?
+        final ArrayList<Ms2ReferenceSpectrum> spectra;
+        synchronized (spectraBuffer) {
+            spectra = new ArrayList<>(spectraBuffer);
+            spectraBuffer.clear();
+        }
+        if (!spectra.isEmpty())
+            SpectralUtils.importSpectra(databaseAsSpecLib, spectra, spectra.size());
+
+    }
+
+    protected void addMolecule(Molecule mol) {
         synchronized (moleculeBuffer) {
             moleculeBuffer.add(mol);
             for (Listener l : listeners) l.newMoleculeBufferSize(moleculeBuffer.size());
@@ -240,7 +344,7 @@ public class CustomDatabaseImporter {
         }
     }
 
-    private void flushMoleculeBuffer() throws IOException {
+    private void flushMoleculeBuffer() {
         // start downloading
         if (!moleculeBuffer.isEmpty()) {
             final ConcurrentHashMap<String, Comp> key2DToComp = new ConcurrentHashMap<>(moleculeBuffer.size());
@@ -387,22 +491,19 @@ public class CustomDatabaseImporter {
         }
     }
 
-    public void flushBuffer() throws IOException {
+    protected void flushBuffer() throws IOException {
+        //todo flush buffer in background?
         flushMoleculeBuffer();
         final ArrayList<FingerprintCandidateWrapper> candidates;
         synchronized (buffer) {
             candidates = new ArrayList<>(buffer);
             buffer.clear();
         }
-        synchronized (database) {
-            database.database.getStorage().upsertAll(candidates);
-            for (Listener l : listeners) l.newFingerprintBufferSize(buffer.size());
-            database.writeSettings();
-        }
-
+        database.database.getStorage().upsertAll(candidates);
+        for (Listener l : listeners) l.newFingerprintBufferSize(buffer.size());
     }
 
-    protected void annotateCandidate(@NotNull Molecule molecule, @NotNull FingerprintCandidateWrapper fcw) throws CDKException {
+    protected void annotateCandidate(@NotNull Molecule molecule, @NotNull FingerprintCandidateWrapper fcw) {
         CompoundCandidate fc = fcw.getCandidate();
         if (fc.getLinks() == null)
             fc.setLinks(new ArrayList<>(0));
@@ -506,6 +607,9 @@ public class CustomDatabaseImporter {
 
         // informs about molecules that have to be parsed
         default void newMoleculeBufferSize(int size) {
+        }
+
+        default void newSpectraBufferSize(int size) {
         }
 
         // informs about imported molecule
