@@ -33,43 +33,37 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * PageJob
  */
 @JsonPropertyOrder({
-  PageJob.JSON_PROPERTY_TOTAL_PAGES,
   PageJob.JSON_PROPERTY_TOTAL_ELEMENTS,
-  PageJob.JSON_PROPERTY_LAST,
-  PageJob.JSON_PROPERTY_SORT,
+  PageJob.JSON_PROPERTY_TOTAL_PAGES,
   PageJob.JSON_PROPERTY_FIRST,
-  PageJob.JSON_PROPERTY_SIZE,
-  PageJob.JSON_PROPERTY_CONTENT,
+  PageJob.JSON_PROPERTY_LAST,
   PageJob.JSON_PROPERTY_NUMBER,
+  PageJob.JSON_PROPERTY_SORT,
   PageJob.JSON_PROPERTY_NUMBER_OF_ELEMENTS,
   PageJob.JSON_PROPERTY_PAGEABLE,
+  PageJob.JSON_PROPERTY_SIZE,
+  PageJob.JSON_PROPERTY_CONTENT,
   PageJob.JSON_PROPERTY_EMPTY
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class PageJob {
-  public static final String JSON_PROPERTY_TOTAL_PAGES = "totalPages";
-  private Integer totalPages;
-
   public static final String JSON_PROPERTY_TOTAL_ELEMENTS = "totalElements";
   private Long totalElements;
 
-  public static final String JSON_PROPERTY_LAST = "last";
-  private Boolean last;
-
-  public static final String JSON_PROPERTY_SORT = "sort";
-  private SortObject sort;
+  public static final String JSON_PROPERTY_TOTAL_PAGES = "totalPages";
+  private Integer totalPages;
 
   public static final String JSON_PROPERTY_FIRST = "first";
   private Boolean first;
 
-  public static final String JSON_PROPERTY_SIZE = "size";
-  private Integer size;
-
-  public static final String JSON_PROPERTY_CONTENT = "content";
-  private List<Job> content;
+  public static final String JSON_PROPERTY_LAST = "last";
+  private Boolean last;
 
   public static final String JSON_PROPERTY_NUMBER = "number";
   private Integer number;
+
+  public static final String JSON_PROPERTY_SORT = "sort";
+  private SortObject sort;
 
   public static final String JSON_PROPERTY_NUMBER_OF_ELEMENTS = "numberOfElements";
   private Integer numberOfElements;
@@ -77,11 +71,43 @@ public class PageJob {
   public static final String JSON_PROPERTY_PAGEABLE = "pageable";
   private PageableObject pageable;
 
+  public static final String JSON_PROPERTY_SIZE = "size";
+  private Integer size;
+
+  public static final String JSON_PROPERTY_CONTENT = "content";
+  private List<Job> content;
+
   public static final String JSON_PROPERTY_EMPTY = "empty";
   private Boolean empty;
 
   public PageJob() {
   }
+
+  public PageJob totalElements(Long totalElements) {
+    
+    this.totalElements = totalElements;
+    return this;
+  }
+
+   /**
+   * Get totalElements
+   * @return totalElements
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_TOTAL_ELEMENTS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Long getTotalElements() {
+    return totalElements;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_TOTAL_ELEMENTS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setTotalElements(Long totalElements) {
+    this.totalElements = totalElements;
+  }
+
 
   public PageJob totalPages(Integer totalPages) {
     
@@ -109,29 +135,29 @@ public class PageJob {
   }
 
 
-  public PageJob totalElements(Long totalElements) {
+  public PageJob first(Boolean first) {
     
-    this.totalElements = totalElements;
+    this.first = first;
     return this;
   }
 
    /**
-   * Get totalElements
-   * @return totalElements
+   * Get first
+   * @return first
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TOTAL_ELEMENTS)
+  @JsonProperty(JSON_PROPERTY_FIRST)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Long getTotalElements() {
-    return totalElements;
+  public Boolean isFirst() {
+    return first;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_TOTAL_ELEMENTS)
+  @JsonProperty(JSON_PROPERTY_FIRST)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTotalElements(Long totalElements) {
-    this.totalElements = totalElements;
+  public void setFirst(Boolean first) {
+    this.first = first;
   }
 
 
@@ -161,6 +187,32 @@ public class PageJob {
   }
 
 
+  public PageJob number(Integer number) {
+    
+    this.number = number;
+    return this;
+  }
+
+   /**
+   * Get number
+   * @return number
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_NUMBER)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Integer getNumber() {
+    return number;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_NUMBER)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setNumber(Integer number) {
+    this.number = number;
+  }
+
+
   public PageJob sort(SortObject sort) {
     
     this.sort = sort;
@@ -187,29 +239,55 @@ public class PageJob {
   }
 
 
-  public PageJob first(Boolean first) {
+  public PageJob numberOfElements(Integer numberOfElements) {
     
-    this.first = first;
+    this.numberOfElements = numberOfElements;
     return this;
   }
 
    /**
-   * Get first
-   * @return first
+   * Get numberOfElements
+   * @return numberOfElements
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FIRST)
+  @JsonProperty(JSON_PROPERTY_NUMBER_OF_ELEMENTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean isFirst() {
-    return first;
+  public Integer getNumberOfElements() {
+    return numberOfElements;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FIRST)
+  @JsonProperty(JSON_PROPERTY_NUMBER_OF_ELEMENTS)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFirst(Boolean first) {
-    this.first = first;
+  public void setNumberOfElements(Integer numberOfElements) {
+    this.numberOfElements = numberOfElements;
+  }
+
+
+  public PageJob pageable(PageableObject pageable) {
+    
+    this.pageable = pageable;
+    return this;
+  }
+
+   /**
+   * Get pageable
+   * @return pageable
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_PAGEABLE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public PageableObject getPageable() {
+    return pageable;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_PAGEABLE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setPageable(PageableObject pageable) {
+    this.pageable = pageable;
   }
 
 
@@ -273,84 +351,6 @@ public class PageJob {
   }
 
 
-  public PageJob number(Integer number) {
-    
-    this.number = number;
-    return this;
-  }
-
-   /**
-   * Get number
-   * @return number
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NUMBER)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Integer getNumber() {
-    return number;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_NUMBER)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNumber(Integer number) {
-    this.number = number;
-  }
-
-
-  public PageJob numberOfElements(Integer numberOfElements) {
-    
-    this.numberOfElements = numberOfElements;
-    return this;
-  }
-
-   /**
-   * Get numberOfElements
-   * @return numberOfElements
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_ELEMENTS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Integer getNumberOfElements() {
-    return numberOfElements;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_ELEMENTS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNumberOfElements(Integer numberOfElements) {
-    this.numberOfElements = numberOfElements;
-  }
-
-
-  public PageJob pageable(PageableObject pageable) {
-    
-    this.pageable = pageable;
-    return this;
-  }
-
-   /**
-   * Get pageable
-   * @return pageable
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PAGEABLE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public PageableObject getPageable() {
-    return pageable;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_PAGEABLE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setPageable(PageableObject pageable) {
-    this.pageable = pageable;
-  }
-
-
   public PageJob empty(Boolean empty) {
     
     this.empty = empty;
@@ -385,38 +385,38 @@ public class PageJob {
       return false;
     }
     PageJob pageJob = (PageJob) o;
-    return Objects.equals(this.totalPages, pageJob.totalPages) &&
-        Objects.equals(this.totalElements, pageJob.totalElements) &&
-        Objects.equals(this.last, pageJob.last) &&
-        Objects.equals(this.sort, pageJob.sort) &&
+    return Objects.equals(this.totalElements, pageJob.totalElements) &&
+        Objects.equals(this.totalPages, pageJob.totalPages) &&
         Objects.equals(this.first, pageJob.first) &&
-        Objects.equals(this.size, pageJob.size) &&
-        Objects.equals(this.content, pageJob.content) &&
+        Objects.equals(this.last, pageJob.last) &&
         Objects.equals(this.number, pageJob.number) &&
+        Objects.equals(this.sort, pageJob.sort) &&
         Objects.equals(this.numberOfElements, pageJob.numberOfElements) &&
         Objects.equals(this.pageable, pageJob.pageable) &&
+        Objects.equals(this.size, pageJob.size) &&
+        Objects.equals(this.content, pageJob.content) &&
         Objects.equals(this.empty, pageJob.empty);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(totalPages, totalElements, last, sort, first, size, content, number, numberOfElements, pageable, empty);
+    return Objects.hash(totalElements, totalPages, first, last, number, sort, numberOfElements, pageable, size, content, empty);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class PageJob {\n");
-    sb.append("    totalPages: ").append(toIndentedString(totalPages)).append("\n");
     sb.append("    totalElements: ").append(toIndentedString(totalElements)).append("\n");
-    sb.append("    last: ").append(toIndentedString(last)).append("\n");
-    sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
+    sb.append("    totalPages: ").append(toIndentedString(totalPages)).append("\n");
     sb.append("    first: ").append(toIndentedString(first)).append("\n");
-    sb.append("    size: ").append(toIndentedString(size)).append("\n");
-    sb.append("    content: ").append(toIndentedString(content)).append("\n");
+    sb.append("    last: ").append(toIndentedString(last)).append("\n");
     sb.append("    number: ").append(toIndentedString(number)).append("\n");
+    sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
     sb.append("    numberOfElements: ").append(toIndentedString(numberOfElements)).append("\n");
     sb.append("    pageable: ").append(toIndentedString(pageable)).append("\n");
+    sb.append("    size: ").append(toIndentedString(size)).append("\n");
+    sb.append("    content: ").append(toIndentedString(content)).append("\n");
     sb.append("    empty: ").append(toIndentedString(empty)).append("\n");
     sb.append("}");
     return sb.toString();
