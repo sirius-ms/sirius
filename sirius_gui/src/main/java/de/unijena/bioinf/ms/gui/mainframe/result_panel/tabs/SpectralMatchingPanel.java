@@ -20,10 +20,6 @@
 
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
-import de.unijena.bioinf.ChemistryBase.ms.Normalization;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.ChemistryBase.ms.utils.WrapperSpectrum;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.ms_viewer.SpectraViewContainer;
@@ -31,14 +27,12 @@ import de.unijena.bioinf.ms.gui.ms_viewer.WebViewSpectraViewer;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingTableView;
 import de.unijena.bioinf.ms.nightsky.sdk.model.BasicSpectrum;
-import de.unijena.bioinf.ms.nightsky.sdk.model.SimplePeak;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
-import java.util.stream.IntStream;
 
 public class SpectralMatchingPanel extends JPanel implements PanelDescription {
 
@@ -69,31 +63,13 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
     }
 
     public void showMatch(BasicSpectrum query, BasicSpectrum reference) {
-        BasicSpectrum q = normalize(query);
-        BasicSpectrum r = normalize(reference);
         Jobs.runEDTLater(() -> {
             try {
-                this.browser.loadData(SpectraViewContainer.of(List.of(q, r)), null, "normal", 5);
+                this.browser.loadData(SpectraViewContainer.of(List.of(query, reference)), null, "normal", 5);
             } catch (Exception e) {
                 LoggerFactory.getLogger(getClass()).error("Error.", e);
             }
         });
-    }
-
-    private BasicSpectrum normalize(BasicSpectrum spectrum) {
-        SimpleMutableSpectrum mut = new SimpleMutableSpectrum(WrapperSpectrum.of(spectrum.getPeaks(), SimplePeak::getMz, SimplePeak::getIntensity));
-        Spectrums.normalize(mut, Normalization.Sum);
-
-        return new BasicSpectrum()
-                .name(spectrum.getName())
-                .collisionEnergy(spectrum.getCollisionEnergy())
-                .msLevel(spectrum.getMsLevel())
-                .absIntensityFactor(spectrum.getAbsIntensityFactor())
-                .scanNumber(spectrum.getScanNumber())
-                .precursorMz(spectrum.getPrecursorMz())
-                .peaks(
-                        IntStream.range(0, mut.size()).mapToObj(i -> new SimplePeak().mz(mut.getMzAt(i)).intensity(mut.getIntensityAt(i))).toList()
-                );
     }
 
 
