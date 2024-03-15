@@ -5977,6 +5977,9 @@
         ]
       },
       "DBLink": {
+        "required": [
+          "name"
+        ],
         "type": "object",
         "properties": {
           "name": {
@@ -6421,7 +6424,8 @@
             "type": "string"
           },
           "uuid": {
-            "type": "string"
+            "type": "integer",
+            "format": "int64"
           },
           "splash": {
             "type": "string"
@@ -6609,22 +6613,33 @@
       "PageJob": {
         "type": "object",
         "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
           "totalElements": {
             "type": "integer",
             "format": "int64"
           },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "first": {
+            "type": "boolean"
+          },
           "last": {
             "type": "boolean"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "first": {
-            "type": "boolean"
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "size": {
             "type": "integer",
@@ -6635,17 +6650,6 @@
             "items": {
               "$ref": "#/components/schemas/Job"
             }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"
@@ -6658,16 +6662,6 @@
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "offset": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "paged": {
-            "type": "boolean"
-          },
-          "unpaged": {
-            "type": "boolean"
-          },
           "pageNumber": {
             "type": "integer",
             "format": "int32"
@@ -6675,19 +6669,29 @@
           "pageSize": {
             "type": "integer",
             "format": "int32"
+          },
+          "paged": {
+            "type": "boolean"
+          },
+          "unpaged": {
+            "type": "boolean"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
       "SortObject": {
         "type": "object",
         "properties": {
-          "empty": {
-            "type": "boolean"
-          },
           "sorted": {
             "type": "boolean"
           },
           "unsorted": {
+            "type": "boolean"
+          },
+          "empty": {
             "type": "boolean"
           }
         }
@@ -6695,22 +6699,33 @@
       "PageCompound": {
         "type": "object",
         "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
           "totalElements": {
             "type": "integer",
             "format": "int64"
           },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "first": {
+            "type": "boolean"
+          },
           "last": {
             "type": "boolean"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "first": {
-            "type": "boolean"
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "size": {
             "type": "integer",
@@ -6722,9 +6737,42 @@
               "$ref": "#/components/schemas/Compound"
             }
           },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SpectralLibraryMatchOptField": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "none",
+          "referenceSpectrum"
+        ]
+      },
+      "PageSpectralLibraryMatch": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
           "number": {
             "type": "integer",
             "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "numberOfElements": {
             "type": "integer",
@@ -6733,8 +6781,51 @@
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
           },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpectralLibraryMatch"
+            }
+          },
           "empty": {
             "type": "boolean"
+          }
+        }
+      },
+      "FormulaCandidateOptField": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "none",
+          "statistics",
+          "fragmentationTree",
+          "annotatedSpectrum",
+          "isotopePattern",
+          "lipidAnnotation",
+          "predictedFingerprint",
+          "compoundClasses",
+          "canopusPredictions"
+        ]
+      },
+      "AnnotatedMsMsData": {
+        "required": [
+          "mergedMs2",
+          "ms2Spectra"
+        ],
+        "type": "object",
+        "properties": {
+          "mergedMs2": {
+            "$ref": "#/components/schemas/AnnotatedSpectrum"
+          },
+          "ms2Spectra": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AnnotatedSpectrum"
+            }
           }
         }
       },
@@ -6747,6 +6838,98 @@
           "dbLinks",
           "libraryMatches"
         ]
+      },
+      "PageStructureCandidateScored": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StructureCandidateScored"
+            }
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PageFormulaCandidate": {
+        "type": "object",
+        "properties": {
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormulaCandidate"
+            }
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
       },
       "StructureCandidateFormula": {
         "type": "object",
@@ -6821,22 +7004,33 @@
       "PageStructureCandidateFormula": {
         "type": "object",
         "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
           "totalElements": {
             "type": "integer",
             "format": "int64"
           },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "first": {
+            "type": "boolean"
+          },
           "last": {
             "type": "boolean"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "first": {
-            "type": "boolean"
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "size": {
             "type": "integer",
@@ -6848,196 +7042,6 @@
               "$ref": "#/components/schemas/StructureCandidateFormula"
             }
           },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "empty": {
-            "type": "boolean"
-          }
-        }
-      },
-      "SpectralLibraryMatchOptField": {
-        "type": "string",
-        "nullable": true,
-        "enum": [
-          "none",
-          "referenceSpectrum"
-        ]
-      },
-      "PageSpectralLibraryMatch": {
-        "type": "object",
-        "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SpectralLibraryMatch"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "empty": {
-            "type": "boolean"
-          }
-        }
-      },
-      "FormulaCandidateOptField": {
-        "type": "string",
-        "nullable": true,
-        "enum": [
-          "none",
-          "statistics",
-          "fragmentationTree",
-          "annotatedSpectrum",
-          "isotopePattern",
-          "lipidAnnotation",
-          "predictedFingerprint",
-          "compoundClasses",
-          "canopusPredictions"
-        ]
-      },
-      "AnnotatedMsMsData": {
-        "required": [
-          "mergedMs2",
-          "ms2Spectra"
-        ],
-        "type": "object",
-        "properties": {
-          "mergedMs2": {
-            "$ref": "#/components/schemas/AnnotatedSpectrum"
-          },
-          "ms2Spectra": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AnnotatedSpectrum"
-            }
-          }
-        }
-      },
-      "PageStructureCandidateScored": {
-        "type": "object",
-        "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StructureCandidateScored"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
-          "empty": {
-            "type": "boolean"
-          }
-        }
-      },
-      "PageFormulaCandidate": {
-        "type": "object",
-        "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "totalElements": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FormulaCandidate"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
           "empty": {
             "type": "boolean"
           }
@@ -7046,22 +7050,33 @@
       "PageAlignedFeature": {
         "type": "object",
         "properties": {
-          "totalPages": {
-            "type": "integer",
-            "format": "int32"
-          },
           "totalElements": {
             "type": "integer",
             "format": "int64"
           },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "first": {
+            "type": "boolean"
+          },
           "last": {
             "type": "boolean"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "first": {
-            "type": "boolean"
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
           },
           "size": {
             "type": "integer",
@@ -7072,17 +7087,6 @@
             "items": {
               "$ref": "#/components/schemas/AlignedFeature"
             }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
           },
           "empty": {
             "type": "boolean"

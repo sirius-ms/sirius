@@ -132,7 +132,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
                 if (entry.getKey().equals(DataSource.LIPID.name()))
                     labels.add(new DatabaseLabel(entry.getKey(), "Lipid - " + entry.getValue().iterator().next(), cleaned.toArray(String[]::new)));
                 else
-                    labels.add(new DatabaseLabel(entry.getKey(), CustomDataSources.getSourceFromName(entry.getKey()).displayName(), cleaned.toArray(String[]::new)));
+                    labels.add(new DatabaseLabel(entry.getKey(), CustomDataSources.getSourceFromNameOpt(entry.getKey()).map(CustomDataSources.Source::displayName).orElse(null), cleaned.toArray(String[]::new)));
             }
             Collections.sort(labels);
             this.labels = labels.toArray(DatabaseLabel[]::new);
@@ -141,7 +141,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         bestRefMatchLabel = getBestReferenceMatch().map(match ->
                 new DatabaseLabel(
                         match.getDbName(),
-                        Math.round(100 * match.getSimilarity()) + "% " + CustomDataSources.getSourceFromName(match.getDbName()).displayName(),
+                        Math.round(100 * match.getSimilarity()) + "% " + CustomDataSources.getSourceFromNameOpt(match.getDbName()).map(CustomDataSources.Source::displayName).orElseGet(match::getDbName),
                         new String[]{match.getDbId()}
                 )).orElse(null);
 
