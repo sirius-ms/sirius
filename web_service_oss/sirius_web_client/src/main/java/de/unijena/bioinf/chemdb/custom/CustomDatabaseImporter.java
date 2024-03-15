@@ -20,8 +20,6 @@
 
 package de.unijena.bioinf.chemdb.custom;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
@@ -32,6 +30,7 @@ import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.webapi.WebAPI;
 import lombok.Getter;
@@ -50,7 +49,6 @@ import org.openscience.cdk.smiles.SmilesParser;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -61,37 +59,44 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CustomDatabaseImporter {
-    final CustomDatabase database;
+    private final NoSQLCustomDatabase<?, ?> database;
+    private final String dbname;
+
     Queue<Listener> listeners = new ConcurrentLinkedQueue<>();
 
-    // fingerprint buffer
-    private final List<FingerprintCandidate> buffer;
+    // fingerprint buffer: used to compute and import multiple fps at once but keep not all in memory
+    private final List<FingerprintCandidateWrapper> buffer;
     private final int bufferSize;
 
-    private final AtomicBoolean shutdown = new AtomicBoolean(false);
-
-    // molecule buffer
+    // molecule buffer:  used to bundle molecular formula requests
     private final List<Molecule> moleculeBuffer;
-    private static final int molBufferSize = 1000;
+    private final int molBufferSize;
 
+    // spectra buffer: used to import multiple spectra at once into db but do not keep all in memory
+    private final List<Ms2ReferenceSpectrum> spectraBuffer;
+    private final int specBufferSize;
+
+
+    private final AtomicBoolean shutdown = new AtomicBoolean(false);
     final protected ConcurrentLinkedQueue<FingerprintCalculator> freeFingerprinter = new ConcurrentLinkedQueue<>();
     protected SmilesGenerator smilesGen;
     protected SmilesParser smilesParser;
     protected CdkFingerprintVersion fingerprintVersion;
     protected final WebAPI<?> api;
 
-    /**
-     * Smile to inchi key
-     */
-    protected final Map<String, String> inchiKeyCache = new HashMap<>();
-
-    protected CustomDatabaseImporter(@NotNull CustomDatabase database, CdkFingerprintVersion version, WebAPI<?> api, int bufferSize) {
+    protected CustomDatabaseImporter(@NotNull NoSQLCustomDatabase<?, ?> database, CdkFingerprintVersion version, WebAPI<?> api, int bufferSize) {
         this.api = api;
         this.database = database;
+        this.dbname = database.name();
         this.fingerprintVersion = version;
+
         this.bufferSize = bufferSize;
+        this.molBufferSize = bufferSize;
+        this.specBufferSize = bufferSize;
+
         this.buffer = new ArrayList<>((int) (this.bufferSize * 1.25));
         this.moleculeBuffer = new ArrayList<>((int) (molBufferSize * 1.25));
+        this.spectraBuffer = new ArrayList<>((int) (specBufferSize * 1.25));
 
         smilesGen = SmilesGenerator.generic().aromatic();
         smilesParser = new SmilesParser(SilentChemObjectBuilder.getInstance());
@@ -110,13 +115,13 @@ public class CustomDatabaseImporter {
         listeners.remove(listener);
     }
 
-    public void importFromString(String str) throws IOException {
-        importFromString(str, null, null);
+    public void importStructureFromString(String smilesOrInChI) throws IOException {
+        importStructureFromString(smilesOrInChI, null, null);
     }
 
-    public Optional<Molecule> importFromString(@Nullable String str, @Nullable String id, @Nullable String name) throws IOException {
-        if (str == null || str.isBlank()) {
-            LoggerFactory.getLogger(getClass()).warn("No structure information given in Line ' " + str + "\t" + id + "\t" + name + "'. Skipping!");
+    public Optional<Molecule> importStructureFromString(@Nullable String smilesOrInChI, @Nullable String id, @Nullable String name) throws IOException {
+        if (smilesOrInChI == null || smilesOrInChI.isBlank()) {
+            LoggerFactory.getLogger(getClass()).warn("No structure information given in Line ' " + smilesOrInChI + "\t" + id + "\t" + name + "'. Skipping!");
             return Optional.empty();
         }
 
@@ -125,43 +130,43 @@ public class CustomDatabaseImporter {
         Smiles smiles;
         IAtomContainer container;
         try {
-            if (InChIs.isInchi(str)) {
-                if (!InChIs.isConnected(str)) {
+            if (InChIs.isInchi(smilesOrInChI)) {
+                if (!InChIs.isConnected(smilesOrInChI)) {
                     LoggerFactory.getLogger(getClass()).warn(
-                            String.format("Compound '%s' is Not connected! Only connected structures are supported! Skipping.", str));
+                            String.format("Compound '%s' is Not connected! Only connected structures are supported! Skipping.", smilesOrInChI));
                     return Optional.empty();
                 }
 
-                if (InChIs.isMultipleCharged(str)) {
+                if (InChIs.isMultipleCharged(smilesOrInChI)) {
                     LoggerFactory.getLogger(getClass()).warn(
-                            String.format("Compound '%s' is multiple charged! Only neutral or single charged compounds are supported! Skipping.", str));
+                            String.format("Compound '%s' is multiple charged! Only neutral or single charged compounds are supported! Skipping.", smilesOrInChI));
                     return Optional.empty();
                 }
 
-                container = InChISMILESUtils.getAtomContainerFromInchi(str);
-                inchi = InChIs.newInChI(str);
+                container = InChISMILESUtils.getAtomContainerFromInchi(smilesOrInChI);
+                inchi = InChIs.newInChI(smilesOrInChI);
                 smiles = new Smiles(smilesGen.create(container));
             } else {
-                if (!SmilesU.isConnected(str)) {
+                if (!SmilesU.isConnected(smilesOrInChI)) {
                     LoggerFactory.getLogger(getClass()).warn(
-                            String.format("Compound '%s' is Not connected! Only connected structures are supported! Skipping.", str));
+                            String.format("Compound '%s' is Not connected! Only connected structures are supported! Skipping.", smilesOrInChI));
                     return Optional.empty();
                 }
 
-                if (SmilesU.isMultipleCharged(str)) {
+                if (SmilesU.isMultipleCharged(smilesOrInChI)) {
                     LoggerFactory.getLogger(getClass()).warn(
-                            String.format("Compound '%s' is multiple charged! Only neutral or single charged compounds are supported! Skipping.", str));
+                            String.format("Compound '%s' is multiple charged! Only neutral or single charged compounds are supported! Skipping.", smilesOrInChI));
                     return Optional.empty();
                 }
 
-                container = smilesParser.parseSmiles(str);
-                smiles = new Smiles(str);
+                container = smilesParser.parseSmiles(smilesOrInChI);
+                smiles = new Smiles(smilesOrInChI);
                 inchi = InChISMILESUtils.getInchi(container, false);
             }
 
 
         } catch (CDKException e) {
-            LoggerFactory.getLogger(getClass()).warn(String.format("Error when parsing molecule: '%s'! Skipping.", str));
+            LoggerFactory.getLogger(getClass()).warn(String.format("Error when parsing molecule: '%s'! Skipping.", smilesOrInChI));
             return Optional.empty();
         }
 
@@ -172,7 +177,7 @@ public class CustomDatabaseImporter {
         return Optional.of(molecule);
     }
 
-    public void importFromStream(InputStream stream) throws IOException {
+    public void importStructureFromStream(InputStream stream) throws IOException {
         // checkConnectionToUrl for SMILES and InChI formats
         final BufferedReader br = new BufferedReader(new InputStreamReader(stream));
         String line;
@@ -185,12 +190,12 @@ public class CustomDatabaseImporter {
 
                 final String id = parts.length > 1 ? parts[1] : null;
                 final String name = parts.length > 2 ? parts[2] : null;
-                importFromString(structure, id, name);
+                importStructureFromString(structure, id, name);
             }
         }
     }
 
-    public void importFrom(File file) throws IOException {
+    public void importStructureFromFile(File file) throws IOException {
         ReaderFactory factory = new ReaderFactory();
         ISimpleChemObjectReader reader;
         try (InputStream stream = new FileInputStream(file)) {
@@ -219,7 +224,7 @@ public class CustomDatabaseImporter {
             }
         } else {
             try (FileInputStream s = new FileInputStream(file)) {
-                importFromStream(s);
+                importStructureFromStream(s);
             }
         }
     }
@@ -255,7 +260,6 @@ public class CustomDatabaseImporter {
                             Comp comp = new Comp(c);
                             key2DToComp.put(key2d, comp);
                         }
-                        inchiKeyCache.put(c.smiles.smiles, key2d);
                     } catch (IllegalArgumentException e) {
                         CustomDatabase.logger.error(e.getMessage(), e);
                     }
@@ -263,6 +267,7 @@ public class CustomDatabaseImporter {
             } catch (IllegalArgumentException e) {
                 CustomDatabase.logger.error(e.getMessage(), e);
             }
+
             moleculeBuffer.clear();
             CustomDatabase.logger.info("Try downloading compounds");
             try { //try to download fps for compound
@@ -271,25 +276,29 @@ public class CustomDatabaseImporter {
                 CustomDatabase.logger.error(e.getMessage(), e);
             }
 
-            // compound fps locally if not already downloaded
-            List<BasicJJob<FingerprintCandidate>> jobs = key2DToComp.values().stream()
-                    .map(c -> new BasicJJob<FingerprintCandidate>() {
+            // compound fps locally if not already downloaded or loaded from local db
+            List<BasicJJob<Void>> jobs = key2DToComp.values().stream()
+                    .map(c -> new BasicJJob<Void>() {
                         @Override
-                        protected FingerprintCandidate compute() throws Exception {
-                            FingerprintCalculator fcalc = null;
-                            try {
-                                fcalc = getFingerprintCalculator();
-                                FingerprintCandidate fc = fcalc.computeCompound(c.molecule, c.candidate);
-                                addToBuffer(fc);
-                                return fc;
-                            } finally {
-                                if (fcalc != null)
-                                    freeFingerprinter.offer(fcalc);
+                        protected Void compute() throws Exception {
+                            if (c.candidate == null) {
+                                FingerprintCalculator fcalc = null;
+                                try {
+                                    fcalc = getFingerprintCalculator();
+                                    addToBuffer(fcalc.computeCompound(c.molecule));
+                                } finally {
+                                    if (fcalc != null)
+                                        freeFingerprinter.offer(fcalc);
+                                }
+                            } else {
+                                annotateCandidate(c.molecule, c.candidate);
+                                addToBuffer(c.candidate);
                             }
+                            return null;
                         }
                     }).collect(Collectors.toList());
 
-            List<BasicJJob<FingerprintCandidate>> batches = SiriusJobs.getGlobalJobManager().submitJobsInBatches(jobs);
+            List<BasicJJob<Void>> batches = SiriusJobs.getGlobalJobManager().submitJobsInBatches(jobs);
 
             jobs.forEach(j -> {
                 try {
@@ -311,8 +320,17 @@ public class CustomDatabaseImporter {
         Set<MolecularFormula> formulasToSearch = new HashSet<>();
         checkCancellation();
         try {
-            for (Comp comp : key2DToComp.values())
-                formulasToSearch.add(InChIs.extractNeutralFormulaByAdjustingHsOrThrow(comp.inChI2D()));
+            for (Comp comp : key2DToComp.values()) {
+                comp.candidate = database.database.getStorage() //todo do we need the fp here?
+                        .findStr(Filter.build().eq("inchiKey", comp.key2D()), FingerprintCandidateWrapper.class, "fingerprint")
+                        .findFirst()
+                        .orElse(null);
+
+                if (comp.candidate == null) //group by formula to reduce unnecessary downloads
+                    formulasToSearch.add(InChIs.extractNeutralFormulaByAdjustingHsOrThrow(comp.inChI2D()));
+                else
+                    LoggerFactory.getLogger(getClass()).info(comp.inChI2D() + " already exists in db. Merging!");
+            }
         } catch (UnknownElementException e) {
             throw new IOException(e);
         }
@@ -326,8 +344,8 @@ public class CustomDatabaseImporter {
                     for (FingerprintCandidate can : cans) {
                         Comp toAdd = key2DToComp.get(can.getInchi().key2D());
                         if (toAdd != null) {
-                            toAdd.candidate = can;
-                            CustomDatabase.logger.info(toAdd.candidate.getInchi().in2D + " downloaded");
+                            toAdd.candidate = FingerprintCandidateWrapper.of(formula, can);
+                            CustomDatabase.logger.info(toAdd.candidate.getCandidate().getInchi().in2D + " downloaded");
                         }
                     }
                 });
@@ -353,16 +371,16 @@ public class CustomDatabaseImporter {
     private FingerprintCalculator getFingerprintCalculator() {
         FingerprintCalculator calc = freeFingerprinter.poll();
         if (calc == null)
-            calc = new FingerprintCalculator(database.name(), fingerprintVersion);
+            calc = new FingerprintCalculator(dbname, fingerprintVersion);
         return calc;
     }
 
-    private void addToBuffer(FingerprintCandidate fingerprintCandidate) throws IOException {
+    private void addToBuffer(FingerprintCandidateWrapper fingerprintCandidate) throws IOException {
         synchronized (buffer) {
             buffer.add(fingerprintCandidate);
             for (Listener l : listeners) {
                 l.newFingerprintBufferSize(buffer.size());
-                l.newInChI(fingerprintCandidate.getInchi());
+                l.newInChI(fingerprintCandidate.getCandidate().getInchi());
             }
             if (buffer.size() > bufferSize)
                 flushBuffer();
@@ -371,82 +389,37 @@ public class CustomDatabaseImporter {
 
     public void flushBuffer() throws IOException {
         flushMoleculeBuffer();
-        final ArrayList<FingerprintCandidate> candidates;
+        final ArrayList<FingerprintCandidateWrapper> candidates;
         synchronized (buffer) {
             candidates = new ArrayList<>(buffer);
             buffer.clear();
         }
         synchronized (database) {
-            final Multimap<MolecularFormula, FingerprintCandidate> candidatePerFormula = ArrayListMultimap.create();
-            for (FingerprintCandidate fc : candidates) {
-                candidatePerFormula.put(fc.getInchi().extractFormulaOrThrow(), fc);
-            }
-            for (Map.Entry<MolecularFormula, Collection<FingerprintCandidate>> entry : candidatePerFormula.asMap().entrySet()) {
-                mergeAndWriteCompounds(entry.getKey(), entry.getValue());
-            }
+            database.database.getStorage().upsertAll(candidates);
             for (Listener l : listeners) l.newFingerprintBufferSize(buffer.size());
             database.writeSettings();
         }
 
     }
 
-    private void mergeAndWriteCompounds(MolecularFormula key, final Collection<FingerprintCandidate> value) throws IOException {
-        try {
-            synchronized (database) {
-                if (database instanceof BlobCustomDatabase<?>) {
-                    mergeAndWriteCompoundsBlob(key, value, (BlobCustomDatabase<?>) database);
-                } else if (database instanceof NoSQLCustomDatabase<?, ?>) {
-                    mergeAndWriteCompoundsNoSQL(key, value, (NoSQLCustomDatabase<?, ?>) database);
-                } else {
-                    throw new IllegalArgumentException();
-                }
-            }
-        } catch (IOException e) {
-            throw new IOException("Error while merging into: " + key, e);
+    protected void annotateCandidate(@NotNull Molecule molecule, @NotNull FingerprintCandidateWrapper fcw) throws CDKException {
+        CompoundCandidate fc = fcw.getCandidate();
+        if (fc.getLinks() == null)
+            fc.setLinks(new ArrayList<>(0));
+
+        if (fc.getName() == null || fc.getName().isEmpty()) {
+            if (molecule.name != null)
+                fc.setName(molecule.name);
         }
-    }
 
-    private void mergeAndWriteCompoundsNoSQL(MolecularFormula key, final Collection<FingerprintCandidate> value, NoSQLCustomDatabase<?, ?> database) throws IOException {
-        final List<FingerprintCandidateWrapper> alreadyExisting = database.database.getStorage().findStr(new Filter().eq("formula", key.toString()), FingerprintCandidateWrapper.class, "fingerprint").toList();
-        Map<String, FingerprintCandidateWrapper> alreadyExistingMap = new HashMap<>();
-        alreadyExisting.forEach(fcw -> alreadyExistingMap.put(fcw.getCandidate().getInchiKey2D(), fcw));
-
-        List<FingerprintCandidateWrapper> toUpdate = new ArrayList<>();
-        List<FingerprintCandidateWrapper> toAdd = new ArrayList<>();
-
-        WebWithCustomDatabase.mergeCompounds(
-                Stream.concat(alreadyExisting.stream()
-                                .map(FingerprintCandidateWrapper::getFingerprintCandidate), value.stream())
-                        .toList()
-        ).forEach(fc -> {
-            if (alreadyExistingMap.containsKey(fc.getInchiKey2D())) {
-                FingerprintCandidateWrapper fcw = alreadyExistingMap.get(fc.getInchiKey2D());
-                fcw.setCandidate(fc);
-                toUpdate.add(fcw);
-            } else {
-                toAdd.add(FingerprintCandidateWrapper.of(key, fc));
-            }
-        });
-
-        database.database.getStorage().upsertAll(toUpdate);
-        database.database.getStorage().insertAll(toAdd);
-    }
-
-    private void mergeAndWriteCompoundsBlob(MolecularFormula key, final Collection<FingerprintCandidate> value, BlobCustomDatabase<?> database) throws IOException {
-        Path path = Path.of(key.toString() + ".json");
-
-        final List<FingerprintCandidate> alreadyExisting = new ArrayList<>();
-        try (InputStream in = database.storage.reader(path)) {
-            if (in != null)
-                alreadyExisting.addAll(JSONReader.fromJSONList(fingerprintVersion, in));
+        if (molecule.id != null) {
+            if (fc.getName() == null || fc.getName().isEmpty())
+                fc.setName(molecule.id);
+            fc.getMutableLinks().add(new DBLink(dbname, molecule.id));
+        } else {
+            fc.getMutableLinks().add(new DBLink(dbname, ""));
         }
-        final List<FingerprintCandidate> finalList = WebWithCustomDatabase.mergeCompounds(
-                Stream.concat(alreadyExisting.stream(), value.stream()).collect(Collectors.toList()));
-
-        database.storage.withWriter(path, w -> CompoundCandidate.toJSONList(finalList, w));
-//        database.getStatistics().compounds().addAndGet(finalList.size() - alreadyExisting.size());
-//        if (alreadyExisting.isEmpty() && !finalList.isEmpty())
-//            database.getStatistics().formulas().incrementAndGet();
+        fc.setBitset(fc.getBitset() | CustomDataSources.getSourceFromName(dbname).flag());
     }
 
     private void checkCancellation() {
@@ -458,11 +431,14 @@ public class CustomDatabaseImporter {
     // INNER CLASSES
     @Getter
     public static class Molecule {
-        @NotNull private final InChI inchi;
-        @NotNull private final Smiles smiles;
+        @NotNull
+        private final InChI inchi;
+        @NotNull
+        private final Smiles smiles;
         private String id = null;
         private String name = null;
-        @NotNull private IAtomContainer container;
+        @NotNull
+        private IAtomContainer container;
 
         private Molecule(@NotNull IAtomContainer container, @NotNull Smiles smiles, @NotNull InChI inchi) {
             this.container = container;
@@ -473,7 +449,7 @@ public class CustomDatabaseImporter {
 
     static class Comp {
         Molecule molecule;
-        FingerprintCandidate candidate;
+        FingerprintCandidateWrapper candidate;
 
         String inChI2D() {
             return molecule.inchi.in2D;
@@ -488,7 +464,7 @@ public class CustomDatabaseImporter {
         }
     }
 
-    private class FingerprintCalculator {
+    private static class FingerprintCalculator {
         private final String dbname;
         private final FixedFingerprinter fingerprinter;
         private final LogPEstimator logPEstimator;
@@ -499,30 +475,7 @@ public class CustomDatabaseImporter {
             this.logPEstimator = new LogPEstimator();
         }
 
-        protected FingerprintCandidate computeCompound(@NotNull Molecule molecule, @Nullable FingerprintCandidate fc) throws CDKException {
-            if (fc == null)
-                return computeCompound(molecule);
-
-            if (fc.getLinks() == null)
-                fc.setLinks(new ArrayList<>(0));
-
-            if (fc.getName() == null || fc.getName().isEmpty()) {
-                if (molecule.name != null)
-                    fc.setName(molecule.name);
-            }
-
-            if (molecule.id != null) {
-                if (fc.getName() == null || fc.getName().isEmpty())
-                    fc.setName(molecule.id);
-                fc.getMutableLinks().add(new DBLink(dbname, molecule.id));
-            } else {
-                fc.getMutableLinks().add(new DBLink(dbname, ""));
-            }
-            fc.setBitset(fc.getBitset() | CustomDataSources.getSourceFromName(dbname).flag());
-            return fc;
-        }
-
-        protected FingerprintCandidate computeCompound(Molecule molecule) throws CDKException, IllegalArgumentException {
+        protected FingerprintCandidateWrapper computeCompound(Molecule molecule) throws CDKException, IllegalArgumentException, UnknownElementException {
             CustomDatabase.logger.info("Compute fingerprint for " + molecule.getInchi().in2D);
             final ArrayFingerprint fps = fingerprinter.computeFingerprintFromSMILES(molecule.smiles.smiles);
 
@@ -541,10 +494,8 @@ public class CustomDatabaseImporter {
             }
             // compute XLOGP
             fc.setXlogp(logPEstimator.prepareMolAndComputeLogP(molecule.container));
-            return fc;
+            return FingerprintCandidateWrapper.of(fc);
         }
-
-
     }
 
     @FunctionalInterface
