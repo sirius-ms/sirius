@@ -20,7 +20,7 @@
 
 package de.unijena.bioinf.chemdb.custom;
 
-import de.unijena.bioinf.ChemistryBase.chem.InChIs;
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
@@ -189,36 +189,26 @@ public abstract class CustomDatabase implements SearchableDatabase {
                     Iterator<Ms2Experiment> iterator = new InputResourceParsingIterator(spectrumFiles, new SpectralDbMsExperimentParser());
                     // Map of <SMILES, <STRUCTURE_ID, NAME>>
                     // todo this should be buffered and not just read everything into memory
-                    // todo check for inchi in db to not download twice and get duplicate exception
-                    Map<String, CompoundMetaData> spectrumSmiles = new HashMap<>();
-                    Map<String, List<Ms2ReferenceSpectrum>> spectra = new HashMap<>();
+                    List<Ms2ReferenceSpectrum> spectra = new ArrayList<>();
                     { // import all spectra files and fill structure map
                         while (iterator.hasNext()) {
                             Ms2Experiment experiment = iterator.next();
+                            List<Ms2ReferenceSpectrum> specs = SpectralUtils.ms2ExpToMs2Ref((MutableMs2Experiment) experiment);
+                            spectra.addAll(specs);
                             String smiles = experiment.getAnnotation(Smiles.class).map(Smiles::toString)
                                     .orElseThrow(() -> new IllegalArgumentException("Spectrum file does not contain SMILES: " + experiment.getSource()));
-                            spectra.computeIfAbsent(smiles, s -> new ArrayList<>()).addAll(SpectralUtils.ms2ExpToMs2Ref((MutableMs2Experiment) experiment));
-                            if (!spectrumSmiles.containsKey(smiles))
-                                //todo speclib: add support for custom structure ids to spectra formats -> important to import in house ref-libs without needing the structure tsv
-                                experiment.getAnnotation(CompoundMetaData.class).ifPresentOrElse(
-                                        cm -> spectrumSmiles.put(smiles, cm),
-                                        () -> spectrumSmiles.put(smiles, CompoundMetaData.builder().compoundName(experiment.getName()).build()));
+                            CompoundMetaData metaData = experiment.getAnnotation(CompoundMetaData.class).orElseGet(() ->
+                                    CompoundMetaData.builder().compoundName(experiment.getName()).build());
+                            //todo speclib: add support for custom structure ids to spectra formats -> important to import in house ref-libs without needing the structure tsv
+                            importer.importStructureFromString(smiles, metaData.getCompoundId(), metaData.getCompoundName())
+                                    .map(CustomDatabaseImporter.Molecule::getInchi)
+                                    .map(InChI::key2D)
+                                    .ifPresent(key -> specs.forEach(s -> s.setCandidateInChiKey(key)));
                         }
                     }
 
-                    // import structures from spectra with SMILES, SPLASH (as ID) and NAME
-                    for (Map.Entry<String, CompoundMetaData> entry : spectrumSmiles.entrySet())
-                        importer.importFromString(entry.getKey(), entry.getValue().getCompoundId(), entry.getValue().getCompoundName());
-
-                    // update spectrum INCHIs to match structure INCHIs
-                    spectra.forEach((k, v) -> {
-                        String inchiKey = importer.inchiKeyCache.get(k);
-                        assert InChIs.isInchiKey(inchiKey);
-                        v.forEach(s -> s.setCandidateInChiKey(inchiKey));
-                    });
-
                     // write spectra to db
-                    SpectralUtils.importSpectra(writeableSpectralLibrary, spectra.values().stream().flatMap(List::stream).toList(), bufferSize);
+                    SpectralUtils.importSpectra(writeableSpectralLibrary, spectra, bufferSize);
                     importer.flushBuffer();
                 } finally {
                     // update spectra statistics
@@ -239,7 +229,7 @@ public abstract class CustomDatabase implements SearchableDatabase {
         try {
             for (InputResource<?> f : structureFiles) {
                 try (InputStream s = f.getInputStream()) {
-                    importer.importFromStream(s);
+                    importer.importStructureFromStream(s);
                 }
             }
         } finally {
@@ -259,7 +249,7 @@ public abstract class CustomDatabase implements SearchableDatabase {
 
             @Override
             protected Boolean compute() throws Exception {
-                importer = new CustomDatabaseImporter(CustomDatabase.this, api.getCDKChemDBFingerprintVersion(), api, bufferSize);
+                importer = new CustomDatabaseImporter((NoSQLCustomDatabase<?, ?>) CustomDatabase.this, api.getCDKChemDBFingerprintVersion(), api, bufferSize);
                 importToDatabase(spectrumFiles, structureFiles, listener, importer, bufferSize);
                 return true;
             }
