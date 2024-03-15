@@ -12,7 +12,7 @@
 |**querySpectrumIndex** | **Integer** |  |  |
 |**dbName** | **String** |  |  [optional] |
 |**dbId** | **String** |  |  [optional] |
-|**uuid** | **String** |  |  |
+|**uuid** | **Long** |  |  |
 |**splash** | **String** |  |  [optional] |
 |**molecularFormula** | **String** |  |  [optional] |
 |**adduct** | **String** |  |  [optional] |

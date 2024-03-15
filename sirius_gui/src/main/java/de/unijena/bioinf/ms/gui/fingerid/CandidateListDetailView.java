@@ -43,6 +43,7 @@ import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.rest.ProxyManager;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -269,7 +270,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
             if (candidate.moreRefMatchesLabel != null) {
                 if (candidate.moreRefMatchesLabel.contains(point))
-                    clickOnMore();
+                    clickOnMore(candidate);
             }
 
             for (DatabaseLabel l : candidate.labels) {
@@ -285,10 +286,11 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         }
     }
 
-    private void clickOnMore() {
-        Jobs.runEDTLater(() -> {
-            new SpectralMatchingDialog((Frame) SwingUtilities.getWindowAncestor(CandidateListDetailView.this), new SpectralMatchList(source)).setVisible(true);
-        });
+    private void clickOnMore(final FingerprintCandidateBean candidateBean) {
+        Jobs.runEDTLater(() -> new SpectralMatchingDialog(
+                (Frame) SwingUtilities.getWindowAncestor(CandidateListDetailView.this),
+                new SpectralMatchList(source.readDataByFunction(data -> data), candidateBean)
+        ).setVisible(true));
     }
 
     private void clickOnDBLabel(DatabaseLabel label, FingerprintCandidateBean candidate) {
@@ -298,7 +300,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             try {
                 for (String id : label.values) {
                     if (id == null) continue;
-                    if (s.noCustomSource() && ((CustomDataSources.EnumSource)s).source() == DataSource.LIPID) {
+                    if (s.noCustomSource() && ((CustomDataSources.EnumSource) s).source() == DataSource.LIPID) {
                         Jobs.runInBackground(() -> {
                             try {
                                 //todo nightsky: remove if lipid maps is added to our pubchem copy

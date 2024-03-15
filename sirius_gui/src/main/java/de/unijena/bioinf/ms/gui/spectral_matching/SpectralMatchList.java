@@ -87,6 +87,15 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
         structureList.readDataByConsumer(d -> changeData(d, structureList.getSelectedElement()));
     }
 
+    public SpectralMatchList(final InstanceBean ec, final FingerprintCandidateBean candidateBean) {
+        super(SpectralMatchBean.class);
+        this.similarityStats = new DoubleListStats();
+        this.sharedPeaksStats = new DoubleListStats();
+
+        //set state
+        changeData(ec, candidateBean);
+    }
+
     public void changeData(final InstanceBean ec, final FingerprintCandidateBean candidateBean) {
         //cancel running job if not finished to not waist resources for fetching data that is not longer needed.
         try {
