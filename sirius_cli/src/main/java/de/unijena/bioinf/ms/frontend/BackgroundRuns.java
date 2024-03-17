@@ -27,7 +27,6 @@ import de.unijena.bioinf.ms.frontend.subtools.ComputeRootOption;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.projectspace.ImportFromMemoryWorkflow;
-import de.unijena.bioinf.ms.frontend.subtools.projectspace.ProjectSpaceWorkflow;
 import de.unijena.bioinf.ms.frontend.workflow.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.CompoundContainer;
@@ -355,10 +354,6 @@ public final class BackgroundRuns<P extends ProjectSpaceManager<I>, I extends In
                     Iterable<? extends Instance> instances = ((ToolChainWorkflow) computation).getPreprocessingJob().result();
                     instanceIds = new ArrayList<>();
                     instances.forEach(i -> instanceIds.add(i.getID()));
-                    logInfo("Imported compounds collected...");
-                } else if (computation instanceof ProjectSpaceWorkflow) {
-                    logInfo("Collecting imported compounds...");
-                    instanceIds = ((ProjectSpaceWorkflow) computation).getImportedCompounds();
                     logInfo("Imported compounds collected...");
                 } else if (computation instanceof ImportFromMemoryWorkflow) {
                     logInfo("Collecting imported compounds...");

@@ -76,13 +76,13 @@ public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>
     public void setLogLevel(final LogLevel loglevel) {
         Optional.ofNullable(LoggerFactory.getLogger(JJob.DEFAULT_LOGGER_KEY)).map(Logger::getName)
                 .map(LogManager.getLogManager()::getLogger).map(java.util.logging.Logger::getHandlers)
-                .map(Arrays::stream).ifPresent(s -> {
-                    s.filter(h -> h instanceof ConsoleHandler).findFirst().ifPresent(h -> h.setFilter(r -> {
-                        if (r.getLoggerName().equals(JJob.DEFAULT_LOGGER_KEY))
-                            return r.getLevel().intValue() >= loglevel.level.intValue();
-                        return true;
-                    }));
-                });
+                .map(Arrays::stream)
+                .flatMap(s -> s.filter(h -> h instanceof ConsoleHandler).findFirst())
+                .ifPresent(h -> h.setFilter(r -> {
+                    if (r.getLoggerName().equals(JJob.DEFAULT_LOGGER_KEY))
+                        return r.getLevel().intValue() >= loglevel.level.intValue();
+                    return true;
+                }));
 
     }
 
@@ -170,41 +170,12 @@ public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>
 
     protected M configureProjectSpace() {
         try {
-            if (psOpts.outputProjectLocation == null) {
-                if (inputFiles != null && inputFiles.msInput.projects.size() == 1) {
-                    psOpts.outputProjectLocation = (inputFiles.msInput.projects.keySet().iterator().next());
-                    LOG.info("No output location given. Writing output to input location: " + psOpts.outputProjectLocation.toString());
-                } else {
-                    psOpts.outputProjectLocation = ProjectSpaceIO.createTmpProjectSpaceLocation();
-                    LOG.warn("No unique output location found. Writing output to Temporary folder: " + psOpts.outputProjectLocation.toString());
-                }
-            }
-
-            final SiriusProjectSpace psTmp;
-            if (Files.notExists(psOpts.outputProjectLocation)) {
-                psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(psOpts.outputProjectLocation, !psOpts.isNoCompression());
-            } else {
-                psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(psOpts.outputProjectLocation);
-            }
-
-            //check for formatter
-            if (psOpts.projectSpaceFilenameFormatter == null) {
-                try {
-                    psOpts.projectSpaceFilenameFormatter = psTmp.getProjectSpaceProperty(FilenameFormatter.PSProperty.class).map(it -> new StandardMSFilenameFormatter(it.formatExpression)).orElse(new StandardMSFilenameFormatter());
-                } catch (Exception e) {
-                    LOG.warn("Could not Parse 'FilenameFormatter' -> Using default");
-                    psOpts.projectSpaceFilenameFormatter = new StandardMSFilenameFormatter();
-                }
-
-                psTmp.setProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSProperty(psOpts.projectSpaceFilenameFormatter));
-            }
-
-            final M space = spaceManagerFactory.create(psTmp, psOpts.projectSpaceFilenameFormatter);
+            M space = spaceManagerFactory.createOrOpen(psOpts.getOutputProjectLocation());
             space.setCompoundIdFilter(cid -> {
                 if (cid.getIonMass().orElse(Double.NaN) <= maxMz)
                     return true;
                 else {
-                    LOG.info("Skipping instance " + cid.toString() + " with mass: " + cid.getIonMass().orElse(Double.NaN) + " > " + maxMz);
+                    LOG.info("Skipping instance " + cid + " with mass: " + cid.getIonMass().orElse(Double.NaN) + " > " + maxMz);
                     return false;
                 }
             });

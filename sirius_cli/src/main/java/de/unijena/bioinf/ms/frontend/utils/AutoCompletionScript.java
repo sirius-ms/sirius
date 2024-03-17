@@ -14,7 +14,7 @@ import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import de.unijena.bioinf.projectspace.SiriusProjectSpaceManagerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import picocli.AutoComplete;
@@ -121,7 +121,7 @@ public class AutoCompletionScript implements StandaloneTool<Workflow> {
         System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
         FingerIDProperties.sirius_guiVersion();
         final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(PropertyManager.DEFAULTS);
-        WorkflowBuilder<?> builder = new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader, new SimpleInstanceBuffer.Factory());
+        WorkflowBuilder<?> builder = new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new SiriusProjectSpaceManagerFactory()), configOptionLoader, new SimpleInstanceBuffer.Factory());
         builder.initRootSpec();
         if((install.toInstall() || this.uninstall)&& this.OS == null) this.OS = detectOS();
         if (install.toInstall() || this.uninstall) System.out.println("Detected OS as " + OS);

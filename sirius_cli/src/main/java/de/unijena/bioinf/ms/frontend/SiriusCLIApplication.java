@@ -32,7 +32,7 @@ import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.WorkFlowSupplier;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import de.unijena.bioinf.projectspace.SiriusProjectSpaceManagerFactory;
 import de.unijena.bioinf.rest.ProxyManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -75,7 +75,7 @@ public class SiriusCLIApplication {
             measureTime("Start Run method");
             run(args, () -> {
                 final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-                return new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader, new SimpleInstanceBuffer.Factory(), injectTools);
+                return new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new SiriusProjectSpaceManagerFactory()), configOptionLoader, new SimpleInstanceBuffer.Factory(), injectTools);
             });
         } finally {
             System.exit(0);

@@ -25,7 +25,6 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.ImportAction;
-import de.unijena.bioinf.ms.gui.actions.ProjectOpenAction;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -49,9 +48,11 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
+import java.io.File;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -234,18 +235,16 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     @Override
     public void drop(DropTargetDropEvent dtde) {
+        List<File> files = DragAndDrop.getFileListFromDrop(this, dtde);
+        //todo projectspace: add project file check to open project via drag and drop
+
+
         final InputFilesOptions inputF = new InputFilesOptions();
         inputF.msInput = Jobs.runInBackgroundAndLoad(this, "Analyzing Dropped Files...", false,
-                InstanceImporter.makeExpandFilesJJob(DragAndDrop.getFileListFromDrop(this, dtde))).getResult();
+                InstanceImporter.makeExpandFilesJJob(files)).getResult();
 
-        if (!inputF.msInput.isEmpty()) {
-            if (inputF.msInput.isSingleProject()) {
-                ((ProjectOpenAction)SiriusActions.LOAD_WS.getInstance(gui))
-                        .openProject(inputF.msInput.projects.keySet().iterator().next());
-            } else {
-                importDragAndDropFiles(inputF); //does not support importing projects
-            }
-        }
+        if (!inputF.msInput.isEmpty())
+            importDragAndDropFiles(inputF); //does not support importing projects
     }
 
     private void importDragAndDropFiles(InputFilesOptions files) {

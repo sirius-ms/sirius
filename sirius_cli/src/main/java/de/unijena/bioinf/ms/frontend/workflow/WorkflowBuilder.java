@@ -36,7 +36,6 @@ import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.frontend.subtools.login.LoginOptions;
 import de.unijena.bioinf.ms.frontend.subtools.msnovelist.MsNovelistOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
-import de.unijena.bioinf.ms.frontend.subtools.projectspace.ProjecSpaceOptions;
 import de.unijena.bioinf.ms.frontend.subtools.settings.SettingsOptions;
 import de.unijena.bioinf.ms.frontend.subtools.similarity.SimilarityMatrixOptions;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
@@ -94,7 +93,6 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
     //standalone tools
     public final CustomDBOptions customDBOptions;
 
-    public final ProjecSpaceOptions projectSpaceOptions; // this is also singleton
     public final SimilarityMatrixOptions similarityMatrixOptions;
     public final DecompOptions decompOptions;
     public final LoginOptions loginOptions;
@@ -141,7 +139,6 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
         );
 
         customDBOptions = new CustomDBOptions();
-        projectSpaceOptions = new ProjecSpaceOptions();
         similarityMatrixOptions = new SimilarityMatrixOptions();
         decompOptions = new DecompOptions();
         mgfExporterOptions = new MgfExporterOptions();
@@ -179,7 +176,7 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
 
     protected Object[] standaloneTools() {
         return Streams.concat(
-                Stream.of(projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, ftreeExporterOptions, exportPredictions, fingerprinterOptions, updateFingerprintOptions),
+                Stream.of(customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, ftreeExporterOptions, exportPredictions, fingerprinterOptions, updateFingerprintOptions),
                 additionalTools.stream(), Stream.of(loginOptions, settingsOptions, autocompleteOptions)
         ).toArray(Object[]::new);
 

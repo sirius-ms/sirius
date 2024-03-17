@@ -59,7 +59,7 @@ public class Instance {
         return getID().toString();
     }
 
-    SiriusProjectSpace projectSpace() {
+    private SiriusProjectSpace projectSpace() {
         return getProjectSpaceManager().projectSpace();
     }
 
@@ -84,16 +84,6 @@ public class Instance {
             return compoundCache;
         } catch (IOException e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    @SafeVarargs
-    public final synchronized void reloadCompoundCache(Class<? extends DataAnnotation>... components) {
-        try {
-            compoundCache = projectSpace().getCompound(getID(), components);
-        } catch (IOException e) {
-            LoggerFactory.getLogger(Instance.class).error("Could not create read Input Experiment from Project Space.");
-            throw new RuntimeException("Could not create read Input Experiment from Project Space.", e);
         }
     }
 
@@ -147,23 +137,6 @@ public class Instance {
 
         FormulaResult candidate = sScoreds.get(0).getCandidate();
         return loadFormulaResult(candidate.getId(), components);
-    }
-
-
-    @SafeVarargs
-    public final synchronized List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadTopKFormulaResults(int k, List<Class<? extends FormulaScore>> rankingScoreTypes, Class<? extends DataAnnotation>... components) {
-        return getTopK(k, loadFormulaResults(rankingScoreTypes), components);
-    }
-
-    @SafeVarargs
-    private List<? extends SScored<FormulaResult, ? extends FormulaScore>> getTopK(int k, List<? extends SScored<FormulaResult, ? extends FormulaScore>> sScoreds, Class<? extends DataAnnotation>... components) {
-        return getPage(0,k,sScoreds,components);
-    }
-
-    @SafeVarargs
-    private List<? extends SScored<FormulaResult, ? extends FormulaScore>> getPage(long offset, long limit, List<? extends SScored<FormulaResult, ? extends FormulaScore>> sScoreds, Class<? extends DataAnnotation>... components) {
-        return sScoreds.stream().skip(offset).limit(limit).peek(ss -> loadFormulaResult(ss.getCandidate().getId(), components)
-                .ifPresent(r -> ss.getCandidate().setAnnotationsFrom(r))).toList();
     }
 
     @SafeVarargs
@@ -277,10 +250,6 @@ public class Instance {
         }
     }
 
-    public synchronized void deleteFormulaResults(@NotNull FormulaResultId... ridToRemove) {
-        deleteFormulaResults(Set.of(ridToRemove));
-    }
-
     public synchronized void deleteFormulaResults(@Nullable Collection<FormulaResultId> ridToRemove) {
         if (ridToRemove == null) {
             deleteFormulaResults();
@@ -331,7 +300,7 @@ public class Instance {
     }
 
     @SafeVarargs
-    public final synchronized void clearFormulaResultsCache(Collection<FormulaResultId> results, Class<? extends DataAnnotation>... components) {
+    private synchronized void clearFormulaResultsCache(Collection<FormulaResultId> results, Class<? extends DataAnnotation>... components) {
         if (components == null || components.length == 0)
             return;
         for (FormulaResultId result : results)
@@ -339,7 +308,7 @@ public class Instance {
     }
 
     @SafeVarargs
-    public final synchronized void clearFormulaResultCache(FormulaResultId id, Class<? extends DataAnnotation>... components) {
+    private synchronized void clearFormulaResultCache(FormulaResultId id, Class<? extends DataAnnotation>... components) {
         if (formulaResultCache.containsKey(id))
             for (Class<? extends DataAnnotation> comp : components)
                 formulaResultCache.get(id).removeAnnotation(comp);
@@ -362,40 +331,4 @@ public class Instance {
             });
         }
     }
-
-    /**
-     * Add the given flag (set to true)
-     *
-     * @param flag flag to add
-     * @return true if value has changed
-     */
-    public boolean flag(@NotNull CompoundContainerId.Flag flag) {
-        return projectSpace().flag(getID(), flag);
-    }
-
-    /**
-     * Remove the given flag (set to false)
-     *
-     * @param flag flag to remove
-     * @return true if value has changed
-     */
-    public boolean unFlag(@NotNull CompoundContainerId.Flag flag) {
-        return projectSpace().unFlag(getID(), flag);
-    }
-
-    /**
-     * Flip state of the given flag
-     *
-     * @param flag flag to flip
-     * @return new Value of the given flag
-     */
-    public boolean flipFlag(@NotNull CompoundContainerId.Flag flag) {
-        return projectSpace().flipFlag(getID(), flag);
-    }
-
-    public boolean hasFlag(@NotNull CompoundContainerId.Flag flag) {
-        return getID().hasFlag(flag);
-    }
-
-
 }
