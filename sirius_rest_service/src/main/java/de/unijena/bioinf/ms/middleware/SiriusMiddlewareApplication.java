@@ -138,7 +138,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 PropertyManager.setProperty("de.unijena.bioinf.sirius.BackgroundRuns.autoremove", "false");
                 final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
 
-                final ProjectSpaceManagerFactory<?, ?> psf = new ProjectSpaceManagerFactory.Default();
+                final ProjectSpaceManagerFactory<?, ?> psf = new SiriusProjectSpaceManagerFactory();
 
                 rootOptions = new CLIRootOptions<>(configOptionLoader, psf);
                 MiddlewareAppOptions<Instance, ProjectSpaceManager<Instance>> middlewareOpts = new MiddlewareAppOptions<>();

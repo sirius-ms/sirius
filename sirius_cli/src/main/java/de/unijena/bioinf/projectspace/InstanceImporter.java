@@ -26,10 +26,9 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
+import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
-import de.unijena.bioinf.rest.NetUtils;
-import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
@@ -48,6 +47,7 @@ import de.unijena.bioinf.projectspace.canopus.CanopusNpcDataProperty;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdLocations;
 import de.unijena.bioinf.projectspace.summaries.SummaryLocations;
+import de.unijena.bioinf.rest.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -56,7 +56,10 @@ import org.slf4j.LoggerFactory;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -112,8 +115,6 @@ public class InstanceImporter {
         boolean ignoreFormulas, allowMs1Only;
         @Nullable
         private List<InputFilesOptions.CsvInput> csvInput = null;
-        @Nullable
-        private Map<Path, Integer> projectInput = null;
         private JobProgressMerger prog;
 
 
@@ -122,7 +123,6 @@ public class InstanceImporter {
             if (input != null) {
                 this.msInput = input.msInput.msParserfiles.keySet().stream().sorted().map(PathInputResource::new).collect(Collectors.toList());
                 this.csvInput = input.csvInputs;
-                this.projectInput = input.msInput.projects;
                 this.ignoreFormulas = input.msInput.isIgnoreFormula();
                 this.allowMs1Only = input.msInput.isAllowMS1Only();
             }
@@ -149,11 +149,6 @@ public class InstanceImporter {
             if (msInput != null) {
                 msInput.forEach(f -> prog.addPreload(f, 0, f.getSize()));
                 list.addAll(importMsParserInput(msInput.stream().toList()));
-            }
-
-            if (projectInput != null) {
-                projectInput.forEach((p, n) -> prog.addPreload(p, 0, n));
-                list.addAll(importProjectsInput(projectInput.keySet().stream().sorted().collect(Collectors.toList())));
             }
 
             if (csvInput != null) {
@@ -532,57 +527,34 @@ public class InstanceImporter {
 //            updateProgress(0, files.size(), p, "Expanding Input Files...");
             for (Path g : files) {
                 if (!Files.exists(g)) {
-                    LOG.warn("Path \"" + g.toString() + "\" does not exist and will be skipped");
+                    LOG.warn("Path \"" + g + "\" does not exist and will be skipped");
                     continue;
                 }
 
                 if (Files.isDirectory(g)) {
-                    // check whether it is a workspace or a gerneric directory with some other input
-                    int size = ProjectSpaceIO.isExistingProjectspaceDirectoryNum(g);
-                    if (size > 0) {
-                        inputFiles.projects.put(g, size);
-                    } else if (size < 0) {
-                        try {
-                            final List<Path> ins =
-                                    FileUtils.listAndClose(g, l -> l.filter(Files::isRegularFile).sorted().collect(Collectors.toList()));
+                    try {
+                        final List<Path> ins =
+                                FileUtils.listAndClose(g, l -> l.filter(Files::isRegularFile).sorted().collect(Collectors.toList()));
 
-                            if (ins.contains(Path.of(PSLocations.FORMAT)))
-                                throw new IOException("Unreadable project found!");
+                        if (ins.contains(Path.of(PSLocations.FORMAT)))
+                            throw new IOException("Unreadable project found!");
 
-                            if (!ins.isEmpty())
-                                expandInput(ins, inputFiles);
-                        } catch (IOException e) {
-                            LOG.warn("Could not list directory content of '" + g.toString() + "'. Skipping location! " + e.getMessage());
-                        }
-                    } else {
-                        LOG.warn("Project Location  is empty '" + g.toString() + "'. Skipping location!");
+                        if (!ins.isEmpty())
+                            expandInput(ins, inputFiles);
+                    } catch (IOException e) {
+                        LOG.warn("Could not list directory content of '" + g + "'. Skipping location! " + e.getMessage());
                     }
                 } else {
-                    //check whether files are lcms runs copressed project-spaces or standard ms/mgf files
+                    //check whether files are lcms runs or standard ms/mgf files
                     try {
                         final String name = g.getFileName().toString();
-                        if (ProjectSpaceIO.isZipProjectSpace(g)) {
-                            //compressed spaces are read only and can be handled as simple input
-                            Path ps = FileUtils.asZipFSPath(g, false, false, null);
-                            try {
-                                int size = ProjectSpaceIO.isExistingProjectspaceDirectoryNum(ps);
-                                if (size > 0) {
-                                    inputFiles.projects.put(g, size);
-                                } else if (size == 0) {
-                                    LOG.warn("Project Location  is empty '" + g.toString() + "'. Skipping location!");
-                                }
-                            } finally {
-                                if (ps != null)
-                                    ps.getFileSystem().close();
-                            }
-                        } else if (MsExperimentParser.isSupportedFileName(name)) {
+                        if (MsExperimentParser.isSupportedFileName(name)) {
                             inputFiles.msParserfiles.put(g, (int) Files.size(g));
                         } else {
                             inputFiles.unknownFiles.put(g, (int) Files.size(g));
-                            //                    LOG.warn("File with the name \"" + name + "\" is not in a supported format or has a wrong file extension. File is skipped");
                         }
                     } catch (IOException e) {
-                        LOG.warn("Could not read '" + g.toString() + "'. Skipping location! " + e.getMessage(), e);
+                        LOG.warn("Could not read '" + g + "'. Skipping location! " + e.getMessage(), e);
                     }
                 }
                 updateProgress(0, files.size(), ++p);
