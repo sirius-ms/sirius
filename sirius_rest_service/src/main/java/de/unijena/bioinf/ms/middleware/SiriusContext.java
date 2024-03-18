@@ -31,6 +31,7 @@ import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.events.SseEventService;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.info.ConnectionChecker;
+import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectProviderImpl;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceProviderImpl;
 import de.unijena.bioinf.webapi.WebAPI;
@@ -63,7 +64,7 @@ public class SiriusContext{
     @Bean
     @DependsOn({"jobManager"})
     public ProjectsProvider<?> projectsProvider(EventService<?> eventService) {
-        return new SiriusProjectSpaceProviderImpl(eventService);
+        return new NoSQLProjectProviderImpl(eventService);
     }
 
     @Bean(destroyMethod = "shutdown")
