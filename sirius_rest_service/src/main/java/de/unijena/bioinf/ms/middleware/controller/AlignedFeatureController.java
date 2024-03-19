@@ -370,7 +370,7 @@ public class AlignedFeatureController {
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
             @RequestParam(defaultValue = "") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
-        return getStructureCandidatesByFormulaPaged(projectId, formulaId, alignedFeatureId, globalConfig.unpaged(), optFields)
+        return getStructureCandidatesByFormulaPaged(projectId, alignedFeatureId,formulaId, globalConfig.unpaged(), optFields)
                 .stream().toList();
     }
 
