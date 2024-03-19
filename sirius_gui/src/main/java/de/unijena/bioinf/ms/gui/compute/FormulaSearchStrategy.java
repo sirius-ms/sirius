@@ -353,7 +353,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
     protected void detectElements(Set<Element> autoDetectable, JTextField formulaConstraintsTextBox) {
         //todo nightsky: do we want todo that in the frontend?
         String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
-        FormulaConstraints currentConstraints = FormulaConstraints.fromString(formulaConstraintsTextBox.getText());
+        FormulaConstraints[] currentConstraints = new FormulaConstraints[]{FormulaConstraints.fromString(formulaConstraintsTextBox.getText())};
         InstanceBean ec = ecs.get(0);
         MsData msData = ec.getMsData();
         if (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null) {
@@ -363,12 +363,15 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
                 pi.getAnnotation(FormulaConstraints.class).
                         ifPresentOrElse(c -> {
-                                    for (Element element : c.getChemicalAlphabet()) {
-                                        if (autoDetectable.contains(element)) {
-                                            currentConstraints.setBound(element, c.getLowerbound(element), c.getUpperbound(element));
+                                    for (Element element : autoDetectable) {
+                                        if (currentConstraints[0].hasElement(element)) {
+                                            currentConstraints[0].setBound(element, c.getLowerbound(element), c.getUpperbound(element));
+                                        } else {
+                                            currentConstraints[0] = currentConstraints[0].getExtendedConstraints(element);
+                                            currentConstraints[0].setBound(element, 0, 0);
                                         }
                                     }
-                                    formulaConstraintsTextBox.setText(currentConstraints.toString());
+                                    formulaConstraintsTextBox.setText(currentConstraints[0].toString());
                                 },
                                 () -> new ExceptionDialog(owner, notWorkingMessage)
                         );
