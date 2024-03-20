@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.gui.fingerid;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
@@ -70,6 +71,8 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
     private CompoundStructureImage image;
     private DescriptionPanel descriptionPanel;
 
+    private double structDistanceThreshold;
+
     private FingerprintCandidateBean currentCandidate;
 
     private final DoubleListStats stats;
@@ -79,10 +82,11 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
     protected final CandidateListDetailView candidateJList; //todo remove me to make conversion complete
     private final SiriusGui gui;
 
-    public CandidateCellRenderer(DoubleListStats stats, CandidateListDetailView candidateJList, SiriusGui gui) {
+    public CandidateCellRenderer(DoubleListStats stats, CandidateListDetailView candidateJList, SiriusGui gui, double structDistanceThreshold) {
         this.candidateJList = candidateJList;
         this.stats = stats;
         this.gui = gui;
+        this.structDistanceThreshold=structDistanceThreshold;
         setLayout(new BorderLayout());
 
         nameLabel = new JLabel("");
@@ -102,12 +106,17 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         }else {
             nameLabel.setText("");
         }
-        
         image.molecule = value;
-        if (value != null && value.getScore() >= stats.getMax()) {
-            image.backgroundColor = Colors.LIST_LIGHT_GREEN;
-        } else {
-            image.backgroundColor = (index % 2 == 0 ? EVEN : ODD);
+        if(value != null){
+            if(SiriusProperties.getProperty("de.unijena.bioinf.sirius.ui.confidenceMode").equals("exact") || value.getCandidate().getStructDistToTopHit()==null){
+                image.backgroundColor = value.getScore()>= stats.getMax() ? Colors.LIST_LIGHT_GREEN : (index % 2 == 0 ? EVEN : ODD);
+            }
+            else {
+                if(value.getCandidate().getStructDistToTopHit()!=null)
+                    image.backgroundColor = value.getCandidate().getStructDistToTopHit() <= this.structDistanceThreshold ? Colors.LIST_LIGHT_GREEN : (index % 2 == 0 ? EVEN : ODD);
+
+
+            }
         }
         setOpaque(true);
         setBackground(image.backgroundColor);
