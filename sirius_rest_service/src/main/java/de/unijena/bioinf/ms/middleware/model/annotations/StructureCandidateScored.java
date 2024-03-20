@@ -41,6 +41,8 @@ public class StructureCandidateScored extends StructureCandidate {
     protected Double confidenceExactMatch;
     @Schema(nullable = true)
     protected Double confidenceApproxMatch;
+    @Schema(nullable = true)
+    protected Double structDistToTopHit;
 
     //Extended Results
     /**
