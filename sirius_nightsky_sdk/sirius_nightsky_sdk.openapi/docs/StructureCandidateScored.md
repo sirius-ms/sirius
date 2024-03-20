@@ -17,6 +17,7 @@
 |**tanimotoSimilarity** | **Double** |  |  [optional] |
 |**confidenceExactMatch** | **Double** |  |  [optional] |
 |**confidenceApproxMatch** | **Double** |  |  [optional] |
+|**structDistToTopHit** | **Double** |  |  [optional] |
 |**fingerprint** | [**BinaryFingerprint**](BinaryFingerprint.md) |  |  [optional] |
 
 

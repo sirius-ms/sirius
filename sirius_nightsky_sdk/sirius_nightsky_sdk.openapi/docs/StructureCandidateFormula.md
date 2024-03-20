@@ -17,6 +17,7 @@
 |**tanimotoSimilarity** | **Double** |  |  [optional] |
 |**confidenceExactMatch** | **Double** |  |  [optional] |
 |**confidenceApproxMatch** | **Double** |  |  [optional] |
+|**structDistToTopHit** | **Double** |  |  [optional] |
 |**fingerprint** | [**BinaryFingerprint**](BinaryFingerprint.md) |  |  [optional] |
 |**molecularFormula** | **String** | molecular formula of this candidate |  [optional] |
 |**adduct** | **String** | Adduct of this candidate |  [optional] |

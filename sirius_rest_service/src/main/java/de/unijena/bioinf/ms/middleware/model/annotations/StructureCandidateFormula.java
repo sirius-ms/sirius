@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
+import de.unijena.bioinf.fingerid.ConfidenceScoreApproximate;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.FormulaScoring;
@@ -100,8 +101,12 @@ public class StructureCandidateFormula extends StructureCandidateScored {
         // scores
         sSum.setCsiScore(can.getScore());
         sSum.setTanimotoSimilarity(can.getCandidate().getTanimoto());
-        if (confidenceScoreProvider != null)
+        sSum.setStructDistToTopHit(can.getCandidate().getStructDistToTopHit());
+        if (confidenceScoreProvider != null) {
             confidenceScoreProvider.getAnnotation(ConfidenceScore.class).map(ConfidenceScore::score).ifPresent(sSum::setConfidenceExactMatch);
+            confidenceScoreProvider.getAnnotation(ConfidenceScoreApproximate.class).map(ConfidenceScoreApproximate::score).ifPresent(sSum::setConfidenceApproxMatch);
+        }
+
 
         //Structure information
         //check for "null" strings since the database might not be perfectly curated

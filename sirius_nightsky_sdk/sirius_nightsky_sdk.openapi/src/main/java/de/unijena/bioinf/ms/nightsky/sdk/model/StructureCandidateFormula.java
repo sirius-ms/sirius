@@ -43,6 +43,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StructureCandidateFormula.JSON_PROPERTY_TANIMOTO_SIMILARITY,
   StructureCandidateFormula.JSON_PROPERTY_CONFIDENCE_EXACT_MATCH,
   StructureCandidateFormula.JSON_PROPERTY_CONFIDENCE_APPROX_MATCH,
+  StructureCandidateFormula.JSON_PROPERTY_STRUCT_DIST_TO_TOP_HIT,
   StructureCandidateFormula.JSON_PROPERTY_FINGERPRINT,
   StructureCandidateFormula.JSON_PROPERTY_MOLECULAR_FORMULA,
   StructureCandidateFormula.JSON_PROPERTY_ADDUCT,
@@ -79,6 +80,9 @@ public class StructureCandidateFormula {
 
   public static final String JSON_PROPERTY_CONFIDENCE_APPROX_MATCH = "confidenceApproxMatch";
   private Double confidenceApproxMatch;
+
+  public static final String JSON_PROPERTY_STRUCT_DIST_TO_TOP_HIT = "structDistToTopHit";
+  private Double structDistToTopHit;
 
   public static final String JSON_PROPERTY_FINGERPRINT = "fingerprint";
   private BinaryFingerprint fingerprint;
@@ -371,6 +375,32 @@ public class StructureCandidateFormula {
   }
 
 
+  public StructureCandidateFormula structDistToTopHit(Double structDistToTopHit) {
+    
+    this.structDistToTopHit = structDistToTopHit;
+    return this;
+  }
+
+   /**
+   * Get structDistToTopHit
+   * @return structDistToTopHit
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_STRUCT_DIST_TO_TOP_HIT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getStructDistToTopHit() {
+    return structDistToTopHit;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_STRUCT_DIST_TO_TOP_HIT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setStructDistToTopHit(Double structDistToTopHit) {
+    this.structDistToTopHit = structDistToTopHit;
+  }
+
+
   public StructureCandidateFormula fingerprint(BinaryFingerprint fingerprint) {
     
     this.fingerprint = fingerprint;
@@ -493,6 +523,7 @@ public class StructureCandidateFormula {
         Objects.equals(this.tanimotoSimilarity, structureCandidateFormula.tanimotoSimilarity) &&
         Objects.equals(this.confidenceExactMatch, structureCandidateFormula.confidenceExactMatch) &&
         Objects.equals(this.confidenceApproxMatch, structureCandidateFormula.confidenceApproxMatch) &&
+        Objects.equals(this.structDistToTopHit, structureCandidateFormula.structDistToTopHit) &&
         Objects.equals(this.fingerprint, structureCandidateFormula.fingerprint) &&
         Objects.equals(this.molecularFormula, structureCandidateFormula.molecularFormula) &&
         Objects.equals(this.adduct, structureCandidateFormula.adduct) &&
@@ -501,7 +532,7 @@ public class StructureCandidateFormula {
 
   @Override
   public int hashCode() {
-    return Objects.hash(inchiKey, smiles, structureName, xlogP, dbLinks, spectralLibraryMatches, csiScore, tanimotoSimilarity, confidenceExactMatch, confidenceApproxMatch, fingerprint, molecularFormula, adduct, formulaId);
+    return Objects.hash(inchiKey, smiles, structureName, xlogP, dbLinks, spectralLibraryMatches, csiScore, tanimotoSimilarity, confidenceExactMatch, confidenceApproxMatch, structDistToTopHit, fingerprint, molecularFormula, adduct, formulaId);
   }
 
   @Override
@@ -518,6 +549,7 @@ public class StructureCandidateFormula {
     sb.append("    tanimotoSimilarity: ").append(toIndentedString(tanimotoSimilarity)).append("\n");
     sb.append("    confidenceExactMatch: ").append(toIndentedString(confidenceExactMatch)).append("\n");
     sb.append("    confidenceApproxMatch: ").append(toIndentedString(confidenceApproxMatch)).append("\n");
+    sb.append("    structDistToTopHit: ").append(toIndentedString(structDistToTopHit)).append("\n");
     sb.append("    fingerprint: ").append(toIndentedString(fingerprint)).append("\n");
     sb.append("    molecularFormula: ").append(toIndentedString(molecularFormula)).append("\n");
     sb.append("    adduct: ").append(toIndentedString(adduct)).append("\n");

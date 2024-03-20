@@ -43,6 +43,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StructureCandidateScored.JSON_PROPERTY_TANIMOTO_SIMILARITY,
   StructureCandidateScored.JSON_PROPERTY_CONFIDENCE_EXACT_MATCH,
   StructureCandidateScored.JSON_PROPERTY_CONFIDENCE_APPROX_MATCH,
+  StructureCandidateScored.JSON_PROPERTY_STRUCT_DIST_TO_TOP_HIT,
   StructureCandidateScored.JSON_PROPERTY_FINGERPRINT
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
@@ -76,6 +77,9 @@ public class StructureCandidateScored {
 
   public static final String JSON_PROPERTY_CONFIDENCE_APPROX_MATCH = "confidenceApproxMatch";
   private Double confidenceApproxMatch;
+
+  public static final String JSON_PROPERTY_STRUCT_DIST_TO_TOP_HIT = "structDistToTopHit";
+  private Double structDistToTopHit;
 
   public static final String JSON_PROPERTY_FINGERPRINT = "fingerprint";
   private BinaryFingerprint fingerprint;
@@ -359,6 +363,32 @@ public class StructureCandidateScored {
   }
 
 
+  public StructureCandidateScored structDistToTopHit(Double structDistToTopHit) {
+    
+    this.structDistToTopHit = structDistToTopHit;
+    return this;
+  }
+
+   /**
+   * Get structDistToTopHit
+   * @return structDistToTopHit
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_STRUCT_DIST_TO_TOP_HIT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getStructDistToTopHit() {
+    return structDistToTopHit;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_STRUCT_DIST_TO_TOP_HIT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setStructDistToTopHit(Double structDistToTopHit) {
+    this.structDistToTopHit = structDistToTopHit;
+  }
+
+
   public StructureCandidateScored fingerprint(BinaryFingerprint fingerprint) {
     
     this.fingerprint = fingerprint;
@@ -403,12 +433,13 @@ public class StructureCandidateScored {
         Objects.equals(this.tanimotoSimilarity, structureCandidateScored.tanimotoSimilarity) &&
         Objects.equals(this.confidenceExactMatch, structureCandidateScored.confidenceExactMatch) &&
         Objects.equals(this.confidenceApproxMatch, structureCandidateScored.confidenceApproxMatch) &&
+        Objects.equals(this.structDistToTopHit, structureCandidateScored.structDistToTopHit) &&
         Objects.equals(this.fingerprint, structureCandidateScored.fingerprint);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(inchiKey, smiles, structureName, xlogP, dbLinks, spectralLibraryMatches, csiScore, tanimotoSimilarity, confidenceExactMatch, confidenceApproxMatch, fingerprint);
+    return Objects.hash(inchiKey, smiles, structureName, xlogP, dbLinks, spectralLibraryMatches, csiScore, tanimotoSimilarity, confidenceExactMatch, confidenceApproxMatch, structDistToTopHit, fingerprint);
   }
 
   @Override
@@ -425,6 +456,7 @@ public class StructureCandidateScored {
     sb.append("    tanimotoSimilarity: ").append(toIndentedString(tanimotoSimilarity)).append("\n");
     sb.append("    confidenceExactMatch: ").append(toIndentedString(confidenceExactMatch)).append("\n");
     sb.append("    confidenceApproxMatch: ").append(toIndentedString(confidenceApproxMatch)).append("\n");
+    sb.append("    structDistToTopHit: ").append(toIndentedString(structDistToTopHit)).append("\n");
     sb.append("    fingerprint: ").append(toIndentedString(fingerprint)).append("\n");
     sb.append("}");
     return sb.toString();
