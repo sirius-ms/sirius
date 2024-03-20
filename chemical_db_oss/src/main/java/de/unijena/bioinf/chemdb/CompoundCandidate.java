@@ -60,16 +60,18 @@ public class CompoundCandidate {
     protected PubmedLinks pubmedIDs;
 
     protected Double taxonomicScore;
+
+    protected Double structDistToTopHit;
     protected String taxonomicSpecies;
 
     @Nullable //this is the tanimoto to a matched fingerprint.
     protected Double tanimoto = null;
 
-    public CompoundCandidate(InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, @Nullable Double tanimoto, long bitset, DBLink[] links, PubmedLinks pubmedIDs) {
-        this(inchi, name, smiles, pLayer, qLayer, xlogp, tanimoto, bitset, new ArrayList<>(List.of(links)), pubmedIDs);
+    public CompoundCandidate(InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, @Nullable Double tanimoto, @Nullable Double structDistToTopHit, long bitset, DBLink[] links, PubmedLinks pubmedIDs) {
+        this(inchi, name, smiles, pLayer, qLayer, xlogp, tanimoto,structDistToTopHit, bitset, new ArrayList<>(List.of(links)), pubmedIDs);
     }
 
-    public CompoundCandidate(InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, @Nullable Double tanimoto, long bitset, ArrayList<DBLink> links, PubmedLinks pubmedIDs) {
+    public CompoundCandidate(InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, @Nullable Double tanimoto, @Nullable Double structDistToTopHit, long bitset, ArrayList<DBLink> links, PubmedLinks pubmedIDs) {
         this.inchi = inchi;
         this.name = name;
         this.smiles = smiles;
@@ -77,9 +79,11 @@ public class CompoundCandidate {
         this.qLayer = qLayer;
         this.xlogp = xlogp;
         this.tanimoto = tanimoto;
+        this.structDistToTopHit=structDistToTopHit;
         this.bitset = bitset;
         this.links = links;
         this.pubmedIDs = pubmedIDs;
+
     }
 
     public CompoundCandidate(CompoundCandidate c) {
@@ -92,6 +96,7 @@ public class CompoundCandidate {
         this.qLayer = c.qLayer;
         this.xlogp = c.xlogp;
         this.tanimoto = c.tanimoto;
+        this.structDistToTopHit=c.structDistToTopHit;
         this.pubmedIDs = c.pubmedIDs;
         this.taxonomicScore = c.taxonomicScore;
         this.taxonomicSpecies = c.taxonomicSpecies;
@@ -214,6 +219,14 @@ public class CompoundCandidate {
     @Nullable
     public Double getTaxonomicScore() {
         return taxonomicScore;
+    }
+
+    public Double getStructDistToTopHit() {
+        return structDistToTopHit;
+    }
+
+    public void setStructDistToTopHit(Double structDistToTopHit) {
+        this.structDistToTopHit = structDistToTopHit;
     }
 
     public void setTaxonomicScore(Double taxonomicScore) {
