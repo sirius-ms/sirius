@@ -14,6 +14,11 @@ import org.openscience.cdk.smiles.SmilesParser;
 
 import java.util.ArrayList;
 
+/*
+This job annotates the input list with mces distance values to the top hit until the first hit is above the threshold.
+
+ */
+
 public class MCESJJob extends BasicDependentMasterJJob<Integer> {
 
     protected int mcesDistance;
@@ -39,13 +44,17 @@ public class MCESJJob extends BasicDependentMasterJJob<Integer> {
 
 
         IAtomContainer mol1=smiParser.parseSmiles(filteredScoredCandidates.get(0).getCandidate().getSmiles());
+        //Annotate top hit with distance 0
+        filteredScoredCandidates.get(0).getCandidate().setStructDistToTopHit(0d);
 
 
         for(int i=1;i< filteredScoredCandidates.size();i++){
             IAtomContainer mol2 = smiParser.parseSmiles(filteredScoredCandidates.get(i).getCandidate().getSmiles());
 
             MCESDist2 dist = new MCESDist2(mol1, mol2, MCESDist2.MatchingType.ELECTRON_PAIR_MOD);
-            if (Double.isInfinite(dist.compare())) {
+            double distance = dist.compare();
+            filteredScoredCandidates.get(i).getCandidate().setStructDistToTopHit(distance);
+            if (Double.isInfinite(distance)) {
                 indexLastIncluded=i-1;
                 break;
             }
