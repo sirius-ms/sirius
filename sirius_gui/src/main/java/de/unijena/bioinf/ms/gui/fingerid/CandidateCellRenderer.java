@@ -22,7 +22,7 @@ package de.unijena.bioinf.ms.gui.fingerid;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.confidence_score.ConfidenceMode;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
@@ -108,14 +108,12 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         }
         image.molecule = value;
         if(value != null){
-            if(SiriusProperties.getProperty("de.unijena.bioinf.sirius.ui.confidenceMode").equals("exact") || value.getCandidate().getStructDistToTopHit()==null){
+            if(gui.getProjectManager().getConfidenceDisplayMode() == ConfidenceMode.EXACT || value.getCandidate().getStructDistToTopHit()==null){
                 image.backgroundColor = value.getScore()>= stats.getMax() ? Colors.LIST_LIGHT_GREEN : (index % 2 == 0 ? EVEN : ODD);
             }
             else {
                 if(value.getCandidate().getStructDistToTopHit()!=null)
                     image.backgroundColor = value.getCandidate().getStructDistToTopHit() <= this.structDistanceThreshold ? Colors.LIST_LIGHT_GREEN : (index % 2 == 0 ? EVEN : ODD);
-
-
             }
         }
         setOpaque(true);

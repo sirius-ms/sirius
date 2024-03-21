@@ -20,7 +20,9 @@
 package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.confidence_score.ConfidenceMode;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
+import de.unijena.bioinf.fingerid.ConfidenceScoreApproximate;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
@@ -123,7 +125,9 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
         String ionizationProp = "Ionization";
         String focMassProp = "Precursor";
         String rtProp = "RT";
-        String confProp = ConfidenceScore.NA(ConfidenceScore.class).shortName();
+        String confProp = ec.getProjectManager().getConfidenceDisplayMode() == ConfidenceMode.APPROXIMATE ?
+                ConfidenceScore.NA(ConfidenceScoreApproximate.class).shortName() :
+                ConfidenceScore.NA(ConfidenceScore.class).shortName();
 
         g2.setFont(propertyFont);
         g2.drawString(ionizationProp, 4, 32);

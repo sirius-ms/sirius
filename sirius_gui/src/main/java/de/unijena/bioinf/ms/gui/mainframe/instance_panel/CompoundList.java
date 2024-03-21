@@ -26,8 +26,10 @@ import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.GlazedListsSwing;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
+import de.unijena.bioinf.confidence_score.ConfidenceMode;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.dialogs.CompoundFilterOptionsDialog;
+import de.unijena.bioinf.ms.gui.table.SiriusGlazedLists;
 import de.unijena.bioinf.ms.gui.utils.CompoundFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.utils.CompoundFilterModel;
 import de.unijena.bioinf.ms.gui.utils.MatcherEditorWithOptionalInvert;
@@ -64,7 +66,10 @@ public class CompoundList {
 
     private final Queue<ExperimentListChangeListener> listeners = new ConcurrentLinkedQueue<>();
 
+    final private GuiProjectManager projectManager;
+
     public CompoundList(@NotNull SiriusGui gui) {
+        this.projectManager = gui.getProjectManager();
         searchField = new SearchTextField("Hit enter to search...");
         obsevableScource = new ObservableElementList<>(gui.getProjectManager().INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
         sortedSource = new SortedList<>(obsevableScource, Comparator.comparing(InstanceBean::getIndex));
@@ -137,6 +142,15 @@ public class CompoundList {
         searchField.textField.setText("");
         searchField.textField.postActionEvent();
         colorByActiveFilter(openFilterPanelButton, compoundFilterModel);
+    }
+
+    public void switchConfidenceDisplayMode() {
+        projectManager.switchConfidenceDisplayMode();
+        SiriusGlazedLists.allUpdate(obsevableScource);
+    }
+
+    public ConfidenceMode getConfidenceDisplayMode() {
+        return projectManager.confidenceDisplayMode;
     }
 
     private void notifyListenerDataChange(ListEvent<InstanceBean> event) {

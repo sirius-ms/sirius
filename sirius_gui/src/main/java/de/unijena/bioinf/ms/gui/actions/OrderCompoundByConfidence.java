@@ -19,8 +19,9 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
+import de.unijena.bioinf.confidence_score.ConfidenceMode;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
+import de.unijena.bioinf.fingerid.ConfidenceScoreApproximate;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
@@ -30,7 +31,7 @@ import java.util.Comparator;
 public class OrderCompoundByConfidence extends AbstractGuiAction {
 
     public OrderCompoundByConfidence(SiriusGui gui) {
-        super("Order by " + FormulaScore.NA(ConfidenceScore.class).shortName(), gui);
+        super("Order by " + (gui.getProjectManager().getConfidenceDisplayMode()== ConfidenceMode.APPROXIMATE ? ConfidenceScoreApproximate.class : ConfidenceScore.class), gui);
     }
 
     @Override
