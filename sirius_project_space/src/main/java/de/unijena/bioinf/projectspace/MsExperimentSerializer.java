@@ -68,6 +68,7 @@ public class MsExperimentSerializer implements ComponentSerializer<CompoundConta
             id.setGroupId(fg.getGroupId());
             id.setGroupName(fg.getGroupName());
         });
+        //todo nightsky: serialize compound quality information
 
         writer.keyValues(SiriusLocations.COMPOUND_INFO, id.asKeyValuePairs());
     }
