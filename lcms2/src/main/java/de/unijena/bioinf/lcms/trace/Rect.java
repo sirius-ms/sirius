@@ -1,7 +1,8 @@
 package de.unijena.bioinf.lcms.trace;
 
 import de.unijena.bioinf.lcms.align.RecalibrationFunction;
-import org.h2.mvstore.rtree.SpatialKey;
+import org.dizitart.no2.mvstore.MVSpatialKey;
+import org.h2.mvstore.rtree.Spatial;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -71,8 +72,8 @@ public class Rect implements Comparable<Rect>, Serializable {
         return id + ":(m/z = " + minMz + ".." + maxMz + ", rt = " + minRt + ".." + maxRt + ", avgMz = " + avgMz + ")" ;
     }
 
-    public SpatialKey toKey() {
-        return new SpatialKey(id, minMz, maxMz, minRt, maxRt);
+    public Spatial toKey() {
+        return new MVSpatialKey(id, minMz, maxMz, minRt, maxRt);
     }
 
     public Rect recalibrateRt(RecalibrationFunction rtRecalibration) {

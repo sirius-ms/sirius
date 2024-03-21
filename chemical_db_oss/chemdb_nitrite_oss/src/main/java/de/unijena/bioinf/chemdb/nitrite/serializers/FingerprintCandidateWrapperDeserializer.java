@@ -73,12 +73,17 @@ public class FingerprintCandidateWrapperDeserializer extends StdDeserializer<Fin
                     break;
                 case "candidate":
                     p.nextToken();
-                    candidate = compoundCandidateDeserializer.deserialize(p, ctxt);
+                    if (p.currentToken() != JsonToken.VALUE_NULL) {
+                        candidate = compoundCandidateDeserializer.deserialize(p, ctxt);
+                    }
                     break;
                 case "fingerprint":
-                    p.nextToken(); p.nextToken();
-                    short[] indices = p.readValueAs(short[].class);
-                    fingerprint = new ArrayFingerprint(version, indices);
+                    p.nextToken();
+                    if (p.currentToken() != JsonToken.VALUE_NULL) {
+                        p.nextToken();
+                        short[] indices = p.readValueAs(short[].class);
+                        fingerprint = new ArrayFingerprint(version, indices);
+                    }
                     break;
             }
         }

@@ -30,7 +30,7 @@ import java.util.function.Consumer;
 
 public interface SpectralLibrary {
 
-    int countAllSpectra() throws IOException;
+    long countAllSpectra() throws IOException;
 
     default Iterable<Ms2ReferenceSpectrum> lookupSpectra(double precursorMz, Deviation deviation) throws ChemicalDatabaseException {
         return lookupSpectra(precursorMz, deviation, false);

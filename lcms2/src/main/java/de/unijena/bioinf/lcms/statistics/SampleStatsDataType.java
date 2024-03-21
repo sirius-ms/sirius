@@ -27,29 +27,32 @@ import org.h2.mvstore.WriteBuffer;
 
 import java.nio.ByteBuffer;
 
-public class SampleStatsDataType extends CustomDataType {
+public class SampleStatsDataType extends CustomDataType<SampleStats> {
 
     @Override
-    public int getMemory(Object obj) {
-        SampleStats s = (SampleStats) (obj);
-        return s.getNoiseLevelPerScan().length * 4 + 36;
+    public int getMemory(SampleStats obj) {
+        return obj.getNoiseLevelPerScan().length * 4 + 36;
     }
 
     @Override
-    public void write(WriteBuffer buff, Object obj) {
-        SampleStats s = (SampleStats) (obj);
-        buff.putFloat(s.getMs2NoiseLevel());
-        writeFloat(buff, s.getNoiseLevelPerScan());
-        buff.putDouble(s.getMs1MassDeviationWithinTraces().getPpm());
-        buff.putDouble(s.getMs1MassDeviationWithinTraces().getAbsolute());
-        buff.putDouble(s.getMinimumMs1MassDeviationBetweenTraces().getPpm());
-        buff.putDouble(s.getMinimumMs1MassDeviationBetweenTraces().getAbsolute());
+    public void write(WriteBuffer buff, SampleStats obj) {
+        buff.putFloat(obj.getMs2NoiseLevel());
+        writeFloat(buff, obj.getNoiseLevelPerScan());
+        buff.putDouble(obj.getMs1MassDeviationWithinTraces().getPpm());
+        buff.putDouble(obj.getMs1MassDeviationWithinTraces().getAbsolute());
+        buff.putDouble(obj.getMinimumMs1MassDeviationBetweenTraces().getPpm());
+        buff.putDouble(obj.getMinimumMs1MassDeviationBetweenTraces().getAbsolute());
     }
 
     @Override
-    public Object read(ByteBuffer buff) {
+    public SampleStats read(ByteBuffer buff) {
         return SampleStats.builder().ms2NoiseLevel(buff.getFloat()).noiseLevelPerScan(readFloat(buff)).
                 ms1MassDeviationWithinTraces(new Deviation(buff.getDouble(), buff.getDouble())).
                 minimumMs1MassDeviationBetweenTraces(new Deviation(buff.getDouble(), buff.getDouble())).build();
+    }
+
+    @Override
+    public SampleStats[] createStorage(int i) {
+        return new SampleStats[i];
     }
 }

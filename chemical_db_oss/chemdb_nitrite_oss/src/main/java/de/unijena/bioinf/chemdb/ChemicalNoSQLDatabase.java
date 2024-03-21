@@ -30,11 +30,12 @@ import de.unijena.bioinf.chemdb.nitrite.serializers.FingerprintCandidateWrapperD
 import de.unijena.bioinf.chemdb.nitrite.serializers.FingerprintCandidateWrapperSerializer;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDatabase;
-import de.unijena.bioinf.storage.db.nosql.*;
+import de.unijena.bioinf.storage.db.nosql.Database;
+import de.unijena.bioinf.storage.db.nosql.Filter;
+import de.unijena.bioinf.storage.db.nosql.Index;
+import de.unijena.bioinf.storage.db.nosql.Metadata;
 import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
-import lombok.SneakyThrows;
+import lombok.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -60,11 +61,11 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     protected static Metadata initMetadata(FingerprintVersion version) throws IOException {
         Metadata metadata = SpectralNoSQLDatabase.initMetadata();
         return metadata
-                .addRepository(ChemicalNoSQLDatabase.Tag.class, new Index("key",IndexType.UNIQUE))
+                .addRepository(ChemicalNoSQLDatabase.Tag.class, Index.unique("key"))
                 .addRepository(
                         FingerprintCandidateWrapper.class,
-                        new Index("formula", IndexType.NON_UNIQUE),
-                        new Index("mass", IndexType.NON_UNIQUE)
+                        Index.nonUnique("formula"),
+                        Index.nonUnique("mass")
                 ).addCollection(
                         SETTINGS_COLLECTION
                 ).setOptionalFields(
@@ -82,7 +83,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
             final double mass = ionType.precursorMassToNeutralMass(ionMass);
             final double from = mass - deviation.absoluteFor(mass);
             final double to = mass + deviation.absoluteFor(mass);
-            return this.storage.findStr(Filter.build().and().gte("mass", from).lte("mass", to), FingerprintCandidateWrapper.class)
+            return this.storage.findStr(Filter.where("mass").beetweenBothInclusive(from, to), FingerprintCandidateWrapper.class)
                     .map(c -> c.getCandidate().toFormulaCandidate(ionType)).toList();
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
@@ -92,7 +93,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     @Override
     public boolean containsFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         try {
-            return this.storage.count(new Filter().eq("formula", formula.toString()), FingerprintCandidateWrapper.class, 0, 1) > 0;
+            return this.storage.count(Filter.where("formula").eq(formula.toString()), FingerprintCandidateWrapper.class, 0, 1) > 0;
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
@@ -101,7 +102,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     @Override
     public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         try {
-            return storage.findStr(new Filter().eq("formula", formula.toString()), FingerprintCandidateWrapper.class)
+            return storage.findStr(Filter.where("formula").eq(formula.toString()), FingerprintCandidateWrapper.class)
                     .map(FingerprintCandidateWrapper::getCandidate).toList();
         } catch (RuntimeException | IOException e) {
             throw new ChemicalDatabaseException(e);
@@ -111,7 +112,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     @Override
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
         try {
-            storage.findStr(Filter.build().eq("formula", formula.toString()), FingerprintCandidateWrapper.class, "fingerprint")
+            storage.findStr(Filter.where("formula").eq(formula.toString()), FingerprintCandidateWrapper.class, "fingerprint")
                     .map(FingerprintCandidateWrapper::getFingerprintCandidate)
                     .forEach(fingerprintCandidates::add);
             return fingerprintCandidates;
@@ -122,8 +123,8 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
 
     public Stream<FingerprintCandidate> lookupFingerprintsByInchisStr(Iterable<String> inchi_keys) throws ChemicalDatabaseException {
         try {
-            Object[] keys = StreamSupport.stream(inchi_keys.spliterator(), false).toArray();
-            return storage.findStr(Filter.build().in("candidate.inchikey", keys), FingerprintCandidateWrapper.class, "fingerprint")
+            String[] keys = StreamSupport.stream(inchi_keys.spliterator(), false).toArray(String[]::new);
+            return storage.findStr(Filter.where("candidate.inchikey").in(keys), FingerprintCandidateWrapper.class, "fingerprint")
                     .map(FingerprintCandidateWrapper::getFingerprintCandidate);
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
@@ -162,7 +163,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     @Override
     public List<InChI> findInchiByNames(List<String> names) throws ChemicalDatabaseException {
         try {
-            return storage.findStr(new Filter().in("candidate.name", names.toArray()), FingerprintCandidateWrapper.class)
+            return storage.findStr(Filter.where("candidate.name").in(names.toArray(String[]::new)), FingerprintCandidateWrapper.class)
                     .map(fc -> fc.getCandidate().getInchi()).toList();
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
@@ -171,7 +172,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
 
     public Optional<String> getTag(@NotNull String key) {
         try {
-            return storage.findStr(Filter.build().eq("key", key), Tag.class, 0, 1)
+            return storage.findStr(Filter.where("key").eq(key), Tag.class, 0, 1)
                     .map(Tag::getValue).findFirst();
         } catch (IOException e) {
             LoggerFactory.getLogger(getClass()).error("Error when loading Tag: " + key + ".", e);
@@ -222,8 +223,8 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     }
 
     private void upsertTag(String key, String value) throws IOException {
-        if (this.storage.count(Filter.build().eq("key", key), ChemicalNoSQLDatabase.Tag.class) > 0) {
-            ChemicalNoSQLDatabase.Tag tag = this.storage.find(Filter.build().eq("key", key), ChemicalNoSQLDatabase.Tag.class).iterator().next();
+        if (this.storage.count(Filter.where("key").eq(key), ChemicalNoSQLDatabase.Tag.class) > 0) {
+            ChemicalNoSQLDatabase.Tag tag = this.storage.find(Filter.where("key").eq(key), ChemicalNoSQLDatabase.Tag.class).iterator().next();
             tag.setValue(value);
             this.storage.upsert(tag);
         } else {
@@ -251,10 +252,12 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
         this.storage.upsertAll(updated);
     }
 
+    @Getter
     @NoArgsConstructor
     @AllArgsConstructor
     public static class Tag {
 
+        @Setter
         @Id
         private String key;
         private String value;
@@ -267,22 +270,10 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
             return of(source.getKey(), source.getValue());
         }
 
-        public String getKey() {
-            return key;
-        }
-
-        public String getValue() {
-            return value;
-        }
-
         public String setValue(String value) {
             String old = this.value;
             this.value = value;
             return old;
-        }
-
-        public void setKey(String key) {
-            this.key = key;
         }
 
         @Override
