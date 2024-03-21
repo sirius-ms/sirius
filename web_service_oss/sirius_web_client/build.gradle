@@ -37,6 +37,9 @@ dependencies {
     api project(':spectral_alignment')
     implementation project(':structure_matching')
 
+    testImplementation "io.hypersistence:hypersistence-tsid:2.1.1"
+
+
 
     for (module in ["interfaces", "data", "io", "interfaces", "smiles", "silent"])
         api "org.openscience.cdk:cdk-$module:$cdk_version"

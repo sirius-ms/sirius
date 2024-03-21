@@ -22,6 +22,8 @@
 
 package de.unijena.bioinf.chemdb;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
@@ -31,10 +33,11 @@ import java.util.Objects;
     and a database id
  */
 public final class DBLink {
-    public final String name;
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    public final @NotNull String name;
     public final @Nullable  String id;
 
-    public DBLink(String name, @Nullable  String id) {
+    public DBLink(@NotNull String name, @Nullable  String id) {
         this.name = name;
         this.id = id;
     }
