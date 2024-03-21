@@ -60,7 +60,7 @@ public class Instance {
     }
 
     private SiriusProjectSpace projectSpace() {
-        return getProjectSpaceManager().projectSpace();
+        return getProjectSpaceManager().getProjectSpaceImpl();
     }
 
     public ProjectSpaceManager getProjectSpaceManager() {

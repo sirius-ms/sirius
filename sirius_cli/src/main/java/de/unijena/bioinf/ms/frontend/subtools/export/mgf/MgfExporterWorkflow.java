@@ -86,18 +86,15 @@ public class MgfExporterWorkflow implements Workflow {
                     if (useFeatureId.get())
                         id.getFeatureId().ifPresentOrElse(ids::add, (() -> useFeatureId.set(false)));
                 };
-
-                if (ps instanceof ProjectSpaceManager psm)
-                    psm.projectSpace().forEach(checkId);
-                else
-                    ps.forEach(i -> checkId.accept(i.getID()));
+                
+                ps.forEach(i -> checkId.accept(i.getID()));
 
                 if (ids.size() < size.get())
                     useFeatureId.set(false);
                 zeroIndex = minIndex.get() <= 0;
-                if (useFeatureId.get()){
+                if (useFeatureId.get()) {
                     LoggerFactory.getLogger(getClass()).info("Using imported/generated feature ids.");
-                }else {
+                } else {
                     LoggerFactory.getLogger(getClass()).info("Using SIRIUS internal IDs as feature ids.");
                     if (zeroIndex)
                         LoggerFactory.getLogger(getClass()).warn("Index value 0 found (old project-space format). Using index + 1 as Feature ID to make them compatible with GNPS FBMN.");
@@ -136,7 +133,7 @@ public class MgfExporterWorkflow implements Workflow {
         }
     }
 
-    private String extractFid(Instance inst, boolean zeroIndex){
+    private String extractFid(Instance inst, boolean zeroIndex) {
         return String.valueOf(zeroIndex ? inst.getID().getCompoundIndex() + 1 : inst.getID().getCompoundIndex());
     }
 

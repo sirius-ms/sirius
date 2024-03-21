@@ -265,7 +265,7 @@ public final class BackgroundRuns {
                 return true;
             } finally {
                 logInfo("Flushing Results to disk in background...");
-                psm.projectSpace().flush(); //todo improve flushing strategy
+                psm.flush();
                 logInfo("Results flushed!");
             }
         }

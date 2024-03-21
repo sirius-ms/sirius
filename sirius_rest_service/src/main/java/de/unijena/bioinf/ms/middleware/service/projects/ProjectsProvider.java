@@ -68,11 +68,11 @@ public interface ProjectsProvider<P extends de.unijena.bioinf.ms.middleware.serv
 
     @Deprecated
     default ProjectInfo copyProjectSpace(@NotNull String projectId, @NotNull String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
-        return copyProjectSpace(projectId, null, pathToProject, optFields);
+        return copyProjectSpace(projectId, pathToProject, null, optFields);
     }
 
     @Deprecated
-    ProjectInfo copyProjectSpace(@NotNull String projectId, @Nullable String copyId, @NotNull String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException;
+    ProjectInfo copyProjectSpace(@NotNull String projectId, @NotNull String pathToProject, @Nullable String copyId, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException;
 
     void closeAll();
 

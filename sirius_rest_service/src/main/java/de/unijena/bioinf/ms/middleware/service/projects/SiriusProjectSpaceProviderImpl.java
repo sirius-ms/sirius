@@ -61,7 +61,6 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
     private final HashMap<String, ProjectSpaceManager> projectSpaces = new HashMap<>();
 
     protected final ReadWriteLock projectSpaceLock = new ReentrantReadWriteLock();
-    private final ProjectSpaceIO projectIO = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig());
 
     private final EventService<?> eventService;
 
@@ -88,7 +87,7 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
     public List<ProjectInfo> listAllProjectSpaces() {
         projectSpaceLock.readLock().lock();
         try {
-            return projectSpaces.entrySet().stream().map(x -> ProjectInfo.of(x.getKey(), x.getValue().projectSpace().getLocation())).collect(Collectors.toList());
+            return projectSpaces.entrySet().stream().map(x -> ProjectInfo.of(x.getKey(), x.getValue().getLocation())).collect(Collectors.toList());
         } finally {
             projectSpaceLock.readLock().unlock();
         }
@@ -109,7 +108,7 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
 
     @Override
     public Optional<ProjectInfo> getProjectInfo(@NotNull String name, @NotNull EnumSet<ProjectInfo.OptField> optFields) {
-        return getProjectSpace(name).map(x -> createProjectInfo(name, x.projectSpace(), optFields));
+        return getProjectSpace(name).map(x -> createProjectInfo(name, x, optFields));
     }
 
     /**
@@ -134,8 +133,9 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
         }
     }
 
-    private ProjectInfo createProjectInfo(String projectId, SiriusProjectSpace rawProject,
+    private ProjectInfo createProjectInfo(String projectId, ProjectSpaceManager psm,
                                           @NotNull EnumSet<ProjectInfo.OptField> optFields) {
+        SiriusProjectSpace rawProject = psm.getProjectSpaceImpl();
         ProjectInfo.ProjectInfoBuilder b = ProjectInfo.builder()
                 .projectId(projectId).location(rawProject.getLocation().toString());
         if (optFields.contains(ProjectInfo.OptField.sizeInformation))
@@ -188,11 +188,11 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
 
     private ProjectInfo createOrOpen(String projectId, Path location, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
         ProjectSpaceManager psm = projectSpaceManagerFactory.createOrOpen(location);
-        SiriusProjectSpace rawProject = psm.projectSpace();
-        registerEventListeners(projectId, rawProject);
+
+        registerEventListeners(projectId, psm);
         projectSpaces.put(projectId, psm);
         eventService.sendEvent(ServerEvents.newProjectEvent(projectId, PROJECT_OPENED));
-        return createProjectInfo(projectId, rawProject, optFields);
+        return createProjectInfo(projectId, psm, optFields);
     }
 
     @Override
@@ -222,13 +222,17 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
             return old;
 
         SiriusProjectSpaceImpl ps = getProjectOrThrow(sourceProjectId);
-        ProjectSpaceIO.copyProject(ps.getProjectSpaceManager().projectSpace(), copyPath, false);
+        copyProject(ps.getProjectSpaceManager(), copyPath);
 
         //open new project as well
         if (copyId != null)
             return openProjectSpace(copyId, copyPathToProject, optFields);
 
         return old;
+    }
+
+    protected void copyProject(ProjectSpaceManager psm, Path copyPath) throws IOException {
+        ProjectSpaceIO.copyProject(psm.getProjectSpaceImpl(), copyPath, false);
     }
 
     @Override
@@ -239,9 +243,9 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
             projectSpaces.values().forEach(ps -> {
                 try {
                     ps.close();
-                    LoggerFactory.getLogger(SiriusMiddlewareApplication.class).info("Project: '" + ps.projectSpace().getLocation() + "' successfully closed.");
+                    LoggerFactory.getLogger(SiriusMiddlewareApplication.class).info("Project: '" + ps.getLocation() + "' successfully closed.");
                 } catch (IOException e) {
-                    LoggerFactory.getLogger(getClass()).error("Error when closing Project-Space '" + ps.projectSpace().getLocation() + "'. Data might be corrupted.");
+                    LoggerFactory.getLogger(getClass()).error("Error when closing Project-Space '" + ps.getLocation() + "'. Data might be corrupted.");
                 }
             });
             projectSpaces.clear();
@@ -251,11 +255,10 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
     }
 
     /**
-     * registers listeners that will transform project space events into server events to be sent via rest api
-     *
-     * @param project the project to listen on
+     * registers listeners that will transform project space events into server events to be sent via rest api*
      */
-    private void registerEventListeners(@NotNull String id, @NotNull SiriusProjectSpace project) {
+    private void registerEventListeners(@NotNull String id, @NotNull ProjectSpaceManager psm) {
+        SiriusProjectSpace project = psm.getProjectSpaceImpl();
         project.addProjectSpaceListener(projectSpaceEvent -> {
             switch (projectSpaceEvent) {
                 case OPENED -> eventService.sendEvent(ServerEvents.newProjectEvent(id, PROJECT_OPENED));
@@ -310,7 +313,7 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
 
 
     @Override
-    public void destroy() throws Exception {
+    public void destroy() {
         System.out.println("Destroy Project Provider Service...");
         closeAll();
         System.out.println("Destroy Project Provider Service DONE");
