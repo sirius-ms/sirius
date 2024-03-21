@@ -32,7 +32,7 @@ import java.util.Comparator;
 public class OrderCompoundByConfidence extends AbstractGuiAction {
 
     public OrderCompoundByConfidence(SiriusGui gui) {
-        super("Order by " + (gui.getProjectManager().getConfidenceDisplayMode()== ConfidenceMode.APPROXIMATE ? FormulaScore.NA(ConfidenceScoreApproximate.class) : FormulaScore.NA(ConfidenceScore.class)).shortName(), gui);
+        super("Order by confidence", gui);
 
     }
 
