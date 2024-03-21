@@ -62,7 +62,7 @@ public class SpectralSearchResultSerializer implements ComponentSerializer<Compo
                         .querySpectrumIndex(Integer.parseInt(row[1]))
                         .dbName(row[2])
                         .dbId(row[3])
-                        .uuid(row[4])
+                        .uuid(Long.parseLong(row[4]))
                         .splash(row[5])
                         .candidateInChiKey(row[6])
                         .smiles(row[7])
@@ -100,7 +100,7 @@ public class SpectralSearchResultSerializer implements ComponentSerializer<Compo
             row[1] = Integer.toString(hit.getQuerySpectrumIndex());
             row[2] = hit.getDbName();
             row[3] = hit.getDbId();
-            row[4] = hit.getUuid();
+            row[4] = String.valueOf(hit.getUuid());
             row[5] = hit.getSplash();
             row[6] = hit.getCandidateInChiKey();
             row[7] = hit.getSmiles();

@@ -36,16 +36,16 @@ public class ConfidenceResult implements ResultAnnotation {
     public final ConfidenceScore score;
     public final ConfidenceScoreApproximate scoreApproximate;
 
-    public final int mcesIndex;
+    public final int approximateIndex;
 
     public final Scored<FingerprintCandidate> topHit;
 
 
-    public ConfidenceResult(double confidence, double confidenceApproximate, Scored<FingerprintCandidate> topHit, int mcesIndex){
+    public ConfidenceResult(double confidence, double confidenceApproximate, Scored<FingerprintCandidate> topHit, int approximateIndex){
         //this is just to supress the warning
         this.score = Double.isNaN(confidence) ? FormulaScore.NA(ConfidenceScore.class) : new ConfidenceScore(confidence);
         this.scoreApproximate = Double.isNaN(confidenceApproximate) ? FormulaScore.NA(ConfidenceScoreApproximate.class) : new ConfidenceScoreApproximate(confidenceApproximate);
         this.topHit = topHit;
-        this.mcesIndex= mcesIndex;
+        this.approximateIndex= approximateIndex;
     }
 }

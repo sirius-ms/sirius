@@ -42,7 +42,7 @@ import lombok.*;
 public class Ms2ReferenceSpectrum {
 
     @Id
-    private String uuid;
+    private long uuid;
 
     /**
      * This is the InChiKey (2D) to map spectra to a standardized SIRIUS structure candidate.

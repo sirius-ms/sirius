@@ -58,7 +58,6 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
                         Index.nonUnique("exactMass"),
                         Index.nonUnique("precursorMz"),
                         Index.nonUnique("formula"),
-                        Index.nonUnique("name"),
                         Index.nonUnique("candidateInChiKey")
                 ).addSerializer(
                         AdditionalFields.class,
@@ -129,7 +128,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
     }
 
     @Override
-    public Ms2ReferenceSpectrum getReferenceSpectrum(String uuid) throws ChemicalDatabaseException {
+    public Ms2ReferenceSpectrum getReferenceSpectrum(long uuid) throws ChemicalDatabaseException {
         try {
             return fillLibrary(this.storage.find(Filter.where("uuid").eq(uuid), Ms2ReferenceSpectrum.class).iterator().next());
         } catch (IOException e) {

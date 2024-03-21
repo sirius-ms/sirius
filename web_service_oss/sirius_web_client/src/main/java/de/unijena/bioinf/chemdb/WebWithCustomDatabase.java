@@ -223,11 +223,11 @@ public class WebWithCustomDatabase {
     }
 
 
-    public Ms2ReferenceSpectrum getReferenceSpectrum(CustomDataSources.Source db, String uuid) throws ChemicalDatabaseException {
+    public Ms2ReferenceSpectrum getReferenceSpectrum(CustomDataSources.Source db, long uuid) throws ChemicalDatabaseException {
         return getReferenceSpectrum(db, uuid, false);
     }
 
-    public Ms2ReferenceSpectrum getReferenceSpectrum(CustomDataSources.Source db, String uuid, boolean withData) throws ChemicalDatabaseException {
+    public Ms2ReferenceSpectrum getReferenceSpectrum(CustomDataSources.Source db, long uuid, boolean withData) throws ChemicalDatabaseException {
         SpectralLibrary spectralLibrary = asCustomDB(db).toSpectralLibrary().orElseThrow(() -> new IllegalArgumentException("Database with name: " + db.name() + "does not contain spectra data."));
         Ms2ReferenceSpectrum spec = spectralLibrary.getReferenceSpectrum(uuid);
         if (withData)

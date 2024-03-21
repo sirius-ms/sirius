@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
+import it.unimi.dsi.fastutil.Pair;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -1037,29 +1038,32 @@ public class Spectrums {
     }
 
 
-    public static <P extends Peak, S extends MutableSpectrum<P>> void normalize(S spectrum, Normalization norm) {
-        if (spectrum.size() == 0) return;
-        switch (norm.getMode()) {
-            case MAX:
-                normalizeToMax(spectrum, norm.getBase());
-                return;
-            case SUM:
-                normalizeToSum(spectrum, norm.getBase());
-                return;
-            case FIRST:
-                normalizeByFirstPeak(spectrum, norm.getBase());
-        }
+    public static <P extends Peak, S extends MutableSpectrum<P>> double normalize(S spectrum, Normalization norm) {
+        if (spectrum.size() == 0)
+            return 1d;
+        return switch (norm.getMode()) {
+            case MAX -> normalizeToMax(spectrum, norm.getBase());
+            case SUM -> normalizeToSum(spectrum, norm.getBase());
+            case FIRST -> normalizeByFirstPeak(spectrum, norm.getBase());
+        };
     }
 
-    private static <P extends Peak, S extends MutableSpectrum<P>> void normalizeByFirstPeak(S spectrum, double base) {
-        normalizeByPeak(spectrum, 0, base);
+    private static <P extends Peak, S extends MutableSpectrum<P>> double normalizeByFirstPeak(S spectrum, double base) {
+        return normalizeByPeak(spectrum, 0, base);
     }
 
-    public static <P extends Peak, S extends MutableSpectrum<P>> void normalizeByPeak(S spectrum, int peakIdx, double base) {
-        final double firstPeak = base/spectrum.getIntensityAt(peakIdx);
-        for (int i=0; i < spectrum.size(); ++i) {
-            spectrum.setIntensityAt(i, spectrum.getIntensityAt(i)*firstPeak);
+    public static <P extends Peak, S extends MutableSpectrum<P>> double normalizeByPeak(S spectrum, int peakIdx, double base) {
+        final double firstPeak = base / spectrum.getIntensityAt(peakIdx);
+        for (int i = 0; i < spectrum.size(); ++i) {
+            spectrum.setIntensityAt(i, spectrum.getIntensityAt(i) * firstPeak);
         }
+        return firstPeak;
+    }
+
+    public static <P extends Peak, S extends Spectrum<P>> Pair<SimpleSpectrum, Double> getNormalizedSpectrumWithScale(S spectrum, Normalization norm) {
+        final SimpleMutableSpectrum s = new SimpleMutableSpectrum(spectrum);
+        double scale = normalize(s, norm);
+        return Pair.of(new SimpleSpectrum(s), scale);
     }
 
     public static <P extends Peak, S extends Spectrum<P>> SimpleSpectrum getNormalizedSpectrum(S spectrum, Normalization norm) {
@@ -1068,7 +1072,7 @@ public class Spectrums {
         return new SimpleSpectrum(s);
     }
 
-    public static <P extends Peak, S extends MutableSpectrum<P>> void normalizeToMax(S spectrum, double norm) {
+    public static <P extends Peak, S extends MutableSpectrum<P>> double normalizeToMax(S spectrum, double norm) {
         final int n = spectrum.size();
         double maxIntensity = 0d;
         for (int i = 0; i < n; ++i) {
@@ -1081,9 +1085,10 @@ public class Spectrums {
         for (int i = 0; i < n; ++i) {
             spectrum.setIntensityAt(i, spectrum.getIntensityAt(i) * scale);
         }
+        return scale;
     }
 
-    public static <P extends Peak, S extends MutableSpectrum<P>> void normalizeToSum(S spectrum, double norm) {
+    public static <P extends Peak, S extends MutableSpectrum<P>> double normalizeToSum(S spectrum, double norm) {
         final int n = spectrum.size();
         double sumIntensity = 0d;
         for (int i = 0; i < n; ++i) {
@@ -1093,6 +1098,7 @@ public class Spectrums {
         for (int i = 0; i < n; ++i) {
             spectrum.setIntensityAt(i, spectrum.getIntensityAt(i) * scale);
         }
+        return scale;
     }
 
 

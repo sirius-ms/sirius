@@ -68,15 +68,6 @@ import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 
 public class NitriteDatabase implements Database<Document> {
-
-    //todo I think this might cause even more problems. We should investigate this further.
-    // But I think this cannot be executed on runtime on modern jdks. we need to take care of this as jvm parameters
-    // Prevent illegal reflective access warnings
-/*    static {
-        if (!NitriteDatabase.class.getModule().isNamed()) {
-            ClassLoader.class.getModule().addOpens(ClassLoader.class.getPackageName(), NitriteDatabase.class.getModule());
-        }
-    }*/
     protected Path file;
 
     // NITRITE

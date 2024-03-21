@@ -65,16 +65,13 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
                 .addRepository(
                         FingerprintCandidateWrapper.class,
                         Index.nonUnique("formula"),
-                        Index.nonUnique("mass")
-                ).addCollection(
-                        SETTINGS_COLLECTION
-                ).setOptionalFields(
-                        FingerprintCandidateWrapper.class, "fingerprint"
-                ).addSerialization(
+                        Index.nonUnique("mass"))
+                .addCollection(SETTINGS_COLLECTION)
+                .setOptionalFields(FingerprintCandidateWrapper.class, "fingerprint")
+                .addSerialization(
                         FingerprintCandidateWrapper.class,
                         new FingerprintCandidateWrapperSerializer(),
-                        new FingerprintCandidateWrapperDeserializer(version)
-                );
+                        new FingerprintCandidateWrapperDeserializer(version));
     }
 
     @Override
@@ -247,7 +244,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
         for (FingerprintCandidateWrapper wrapper : chunk) {
             FingerprintCandidate fingerprintCandidate = wrapper.getFingerprintCandidate();
             updater.accept(fingerprintCandidate);
-            updated.add(FingerprintCandidateWrapper.of(wrapper.getId(), wrapper.getFormula(), wrapper.getMass(), fingerprintCandidate));
+            updated.add(FingerprintCandidateWrapper.of(wrapper.getFormula(), wrapper.getMass(), fingerprintCandidate));
         }
         this.storage.upsertAll(updated);
     }
