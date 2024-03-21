@@ -20,12 +20,8 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
-import de.unijena.bioinf.ms.frontend.subtools.PostprocessingTool;
-import de.unijena.bioinf.ms.frontend.subtools.Provide;
-import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
-import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
+import de.unijena.bioinf.ms.frontend.subtools.*;
 import de.unijena.bioinf.ms.frontend.subtools.export.tables.PredictionsOptions;
-import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
@@ -33,7 +29,7 @@ import picocli.CommandLine;
 import java.nio.file.Path;
 
 @CommandLine.Command(name = "write-summaries", aliases = {"W"}, description = "<STANDALONE, POSTPROCESSING> Write Summary files from a given project-space into the given project-space or a custom location.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
-public class SummaryOptions implements PostprocessingTool<SummarySubToolJob>, StandaloneTool<Workflow> {
+public class SummaryOptions implements PostprocessingTool<SummarySubToolJob>, StandaloneTool<SummarySubToolJob> {
 
     //specify negated  name since default is true ->  special picocli behavior
     //https://picocli.info/#_negatable_options
@@ -76,12 +72,12 @@ public class SummaryOptions implements PostprocessingTool<SummarySubToolJob>, St
     }
 
     @Override
-    public SummarySubToolJob makePostprocessingJob(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
-        return new SummarySubToolJob(rootOptions, config, this);
+    public SummarySubToolJob makePostprocessingJob() {
+        return new SummarySubToolJob(this);
     }
 
     @Override
-    public Workflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
-        return makePostprocessingJob(rootOptions, config);
+    public SummarySubToolJob makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
+        return new SummarySubToolJob(this);
     }
 }

@@ -25,9 +25,8 @@ import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ChemistryBase.utils.ZipCompressionMethod;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
-import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.PostprocessingJob;
-import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
+import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.export.tables.ExportPredictionsOptions;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -38,6 +37,8 @@ import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.projectspace.summaries.PredictionsSummarizer;
 import de.unijena.bioinf.projectspace.summaries.SummaryLocations;
 import org.apache.commons.lang3.time.StopWatch;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,13 +51,22 @@ import java.util.List;
 public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Workflow {
     private static final Logger LOG = LoggerFactory.getLogger(SummarySubToolJob.class);
     private final SummaryOptions options;
-    private final ParameterConfig config;
-    private final RootOptions<?,?,?,?> rootOptions;
 
-    public SummarySubToolJob(RootOptions<?,?,?,?> rootOptions, ParameterConfig config, SummaryOptions options) {
-        this.rootOptions = rootOptions;
-        this.config = config;
+    private @Nullable PreprocessingJob<?> preprocessingJob;
+    private Iterable<? extends Instance> instances;
+
+    public SummarySubToolJob(@Nullable PreprocessingJob<?> preprocessingJob, SummaryOptions options) {
+        this.preprocessingJob = preprocessingJob;
         this.options = options;
+    }
+
+    public SummarySubToolJob(SummaryOptions options) {
+        this(null, options);
+    }
+
+    @Override
+    public void setInput(Iterable<? extends Instance> instances, ParameterConfig config) {
+        this.instances = instances;
     }
 
     private boolean standalone = false;
@@ -71,22 +81,22 @@ public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Wor
 
     @Override
     protected Boolean compute() throws Exception {
-        ProjectSpaceManager project = rootOptions.getProjectSpace();
+       if (instances == null)
+           instances = SiriusJobs.getGlobalJobManager().submitJob(preprocessingJob).awaitResult();
+
+        ProjectSpaceManager project = instances.iterator().next().getProjectSpaceManager(); // todo Hacky: implement real multi project solution?!
+
         try {
             //use all experiments in workspace to create summaries
             LOG.info("Writing summary files...");
             StopWatch w = new StopWatch(); w.start();
             final JobProgressEventListener listener = this::updateProgress;
 
-            //todo ugly hack to prevent double import of compounds during cli, find real solution
-            Iterable<? extends Instance> compounds = rootOptions instanceof CLIRootOptions ?  project
-                    : SiriusJobs.getGlobalJobManager().submitJob(rootOptions.makeDefaultPreprocessingJob()).awaitResult();
-
 
             List<CompoundContainerId> ids = null;
-            if (compounds != null && !compounds.equals(project)) {
+            if (!instances.equals(project)) {
                 List<CompoundContainerId> idsTMP = new ArrayList<>(project.size());
-                compounds.forEach(i -> idsTMP.add(i.getID()));
+                instances.forEach(i -> idsTMP.add(i.getID()));
                 ids = idsTMP;
             }
 
@@ -111,10 +121,10 @@ public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Wor
                     BasicJJob posJob;
                     if (writeIntoProjectSpace) {
                         posJob = project.projectSpace()
-                                .makeSummarizerJob(options.location, options.compress, ids, new PredictionsSummarizer(listener, compounds, 1, SummaryLocations.PREDICTIONS, options.predictionsOptions));
+                                .makeSummarizerJob(options.location, options.compress, ids, new PredictionsSummarizer(listener, instances, 1, SummaryLocations.PREDICTIONS, options.predictionsOptions));
                     } else {
                         posJob = new ExportPredictionsOptions.ExportPredictionJJob(
-                                options.predictionsOptions, 1, compounds,
+                                options.predictionsOptions, 1, instances,
                                 () -> Files.newBufferedWriter(root.resolve(SummaryLocations.PREDICTIONS)));
                     }
                     posJob.addJobProgressListener(listener);
@@ -125,10 +135,10 @@ public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Wor
                     BasicJJob negJob;
                     if (writeIntoProjectSpace) {
                         negJob = project.projectSpace()
-                        .makeSummarizerJob(options.location, options.compress, ids, new PredictionsSummarizer(listener, compounds, -1, SummaryLocations.PREDICTIONS_NEG, options.predictionsOptions));
+                        .makeSummarizerJob(options.location, options.compress, ids, new PredictionsSummarizer(listener, instances, -1, SummaryLocations.PREDICTIONS_NEG, options.predictionsOptions));
                     } else {
                         negJob = new ExportPredictionsOptions.ExportPredictionJJob(
-                                options.predictionsOptions, -1, compounds,
+                                options.predictionsOptions, -1, instances,
                                 () -> Files.newBufferedWriter(root.resolve(SummaryLocations.PREDICTIONS_NEG)));
                     }
                     negJob.addJobProgressListener(listener);
@@ -160,5 +170,12 @@ public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Wor
     @Override
     public void cancel() {
         cancel(true);
+    }
+
+    @Override
+    protected void cleanup() {
+        instances =  null;
+        preprocessingJob = null;
+        super.cleanup();
     }
 }

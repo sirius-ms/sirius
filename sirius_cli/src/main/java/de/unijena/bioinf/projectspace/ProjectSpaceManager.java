@@ -79,7 +79,7 @@ import java.util.stream.Collectors;
  * e.g. iteration on Instance level.
  * maybe some type of caching?
  */
-public class ProjectSpaceManager<I extends Instance> implements IterableWithSize<I> {
+public class ProjectSpaceManager implements IterableWithSize<Instance> {
     @NotNull
     public static Supplier<ProjectSpaceConfiguration> DEFAULT_CONFIG = () -> {
         final ProjectSpaceConfiguration config = new ProjectSpaceConfiguration();
@@ -122,11 +122,10 @@ public class ProjectSpaceManager<I extends Instance> implements IterableWithSize
     private final SiriusProjectSpace space;
     public final Function<Ms2Experiment, String> nameFormatter;
     public final BiFunction<Integer, String, String> namingScheme;
-    private Predicate<CompoundContainerId> compoundIdFilter;
-    protected final InstanceFactory<I> instFac;
+    protected final InstanceFactory<?> instFac;
 
 
-    public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<I> factory, @Nullable Function<Ms2Experiment, String> formatter) {
+    public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<?> factory, @Nullable Function<Ms2Experiment, String> formatter) {
         this.space = space;
         this.instFac = factory;
         this.nameFormatter = space.getProjectSpaceProperty(FilenameFormatter.PSProperty.class)
@@ -146,22 +145,14 @@ public class ProjectSpaceManager<I extends Instance> implements IterableWithSize
 
 
     @NotNull
-    public I newCompoundWithUniqueId(Ms2Experiment inputExperiment) {
+    public Instance newCompoundWithUniqueId(Ms2Experiment inputExperiment) {
         final String name = nameFormatter.apply(inputExperiment);
         final CompoundContainer container = projectSpace().newCompoundWithUniqueId(name, (idx) -> namingScheme.apply(idx, name), inputExperiment).orElseThrow(() -> new RuntimeException("Could not create an project space ID for the Instance"));
         return instFac.create(container, this);
     }
 
-    public Predicate<CompoundContainerId> getCompoundIdFilter() {
-        return compoundIdFilter;
-    }
-
-    public void setCompoundIdFilter(Predicate<CompoundContainerId> compoundFilter) {
-        this.compoundIdFilter = compoundFilter;
-    }
-
     @SafeVarargs
-    private I newInstanceFromCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {
+    private Instance newInstanceFromCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {
         try {
             CompoundContainer c = projectSpace().getCompound(id, components);
             return instFac.create(c, this);
@@ -174,19 +165,19 @@ public class ProjectSpaceManager<I extends Instance> implements IterableWithSize
     private static final ReferenceMap<CompoundContainerId, Instance> instanceCache = new ReferenceMap<>(AbstractReferenceMap.ReferenceStrength.HARD, AbstractReferenceMap.ReferenceStrength.WEAK, true);
 
     @SafeVarargs
-    public final I getInstanceFromCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {
-        I instance;
+    public final Instance getInstanceFromCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {
+        Instance instance;
         synchronized (instanceCache) {
-            instance = (I) instanceCache.computeIfAbsent(id, i -> newInstanceFromCompound(id));
+            instance = instanceCache.computeIfAbsent(id, i -> newInstanceFromCompound(id));
         }
         instance.loadCompoundContainer(components);
         return instance;
     }
 
-    public final List<I> getInstancesFromCompounds(Collection<CompoundContainerId> ids, Class<? extends DataAnnotation>... components) {
-        List<I> instances = new ArrayList<>(ids.size());
+    public final List<Instance> getInstancesFromCompounds(Collection<CompoundContainerId> ids, Class<? extends DataAnnotation>... components) {
+        List<Instance> instances;
         synchronized (instanceCache) {
-            instances = ids.stream().map(id -> (I) instanceCache.computeIfAbsent(id, i -> newInstanceFromCompound(id)))
+            instances = ids.stream().map(id -> instanceCache.computeIfAbsent(id, i -> newInstanceFromCompound(id)))
                     .collect(Collectors.toList());
         }
         instances.forEach(i -> i.loadCompoundContainer(components));
@@ -223,29 +214,24 @@ public class ProjectSpaceManager<I extends Instance> implements IterableWithSize
     }
 
     @NotNull
-    public Iterator<I> filteredIterator(@Nullable Predicate<CompoundContainerId> cidFilter, @Nullable final Predicate<CompoundContainer> compoundFilter) {
+    public Iterator<Instance> filteredIterator(@Nullable Predicate<CompoundContainerId> cidFilter, @Nullable final Predicate<CompoundContainer> compoundFilter) {
         if (compoundFilter == null && cidFilter == null)
             return iterator();
-        final Predicate<CompoundContainerId> cidF = (cidFilter != null && compoundFilter != null)
-                ? (cid) -> cidFilter.test(cid) && this.compoundIdFilter.test(cid)
-                : cidFilter == null ? this.compoundIdFilter : cidFilter;
-        return makeInstanceIterator(space.filteredCompoundIterator(cidF, compoundFilter, Ms2Experiment.class));
+        return makeInstanceIterator(space.filteredCompoundIterator(cidFilter, compoundFilter, Ms2Experiment.class));
     }
 
 
     @NotNull
     @Override
-    public Iterator<I> iterator() {
+    public Iterator<Instance> iterator() {
         return instanceIterator();
     }
 
-    public Iterator<I> instanceIterator(Class<? extends DataAnnotation>... c) {
-        if (compoundIdFilter != null)
-            return filteredIterator(compoundIdFilter, null);
+    public Iterator<Instance> instanceIterator(Class<? extends DataAnnotation>... c) {
         return makeInstanceIterator(space.compoundIterator(c));
     }
 
-    private Iterator<I> makeInstanceIterator(@NotNull final Iterator<CompoundContainer> compoundIt) {
+    private Iterator<Instance> makeInstanceIterator(@NotNull final Iterator<CompoundContainer> compoundIt) {
         return new Iterator<>() {
             @Override
             public boolean hasNext() {
@@ -253,7 +239,7 @@ public class ProjectSpaceManager<I extends Instance> implements IterableWithSize
             }
 
             @Override
-            public I next() {
+            public Instance next() {
                 final CompoundContainer c = compoundIt.next();
                 if (c == null) return null;
                 return instFac.create(c, ProjectSpaceManager.this);

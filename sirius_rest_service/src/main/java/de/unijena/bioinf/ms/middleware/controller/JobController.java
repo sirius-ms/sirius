@@ -29,7 +29,6 @@ import de.unijena.bioinf.ms.middleware.model.compute.CommandSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.compute.JobSubmission;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
-import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -62,13 +61,11 @@ public class JobController {
     public final static String DEFAULT_PARAMETERS = "DEFAULT";
     private final ComputeService computeService;
     private final ProjectsProvider projectsProvider;
-    private final ChemDbService chemDbService;
     private final GlobalConfig globalConfig;
 
-    public JobController(ComputeService<?> computeService, ProjectsProvider<?> projectsProvider, ChemDbService chemDbService, GlobalConfig globalConfig) {
+    public JobController(ComputeService<?> computeService, ProjectsProvider<?> projectsProvider, GlobalConfig globalConfig) {
         this.computeService = computeService;
         this.projectsProvider = projectsProvider;
-        this.chemDbService = chemDbService;
         this.globalConfig = globalConfig;
     }
 

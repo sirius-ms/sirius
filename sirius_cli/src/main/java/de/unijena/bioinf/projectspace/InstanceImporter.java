@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintData;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
@@ -29,11 +28,8 @@ import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
-import de.unijena.bioinf.fingerid.ConfidenceScore;
-import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -53,12 +49,13 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
@@ -66,23 +63,14 @@ import java.util.stream.Collectors;
 
 public class InstanceImporter {
     protected static final Logger LOG = LoggerFactory.getLogger(InstanceImporter.class);
-    private final ProjectSpaceManager<?> importTarget;
+    private final ProjectSpaceManager importTarget;
     private final Predicate<Ms2Experiment> expFilter;
     private final Predicate<CompoundContainerId> cidFilter;
-    private final boolean move; //try to move instead of copy the data where possible
-    private final boolean updateFingerprintData; //try to move instead of copy the data where possible
 
-
-    public InstanceImporter(ProjectSpaceManager<?> importTarget, Predicate<Ms2Experiment> expFilter, Predicate<CompoundContainerId> cidFilter, boolean move, boolean updateFingerprintData) {
+    public InstanceImporter(ProjectSpaceManager importTarget, Predicate<Ms2Experiment> expFilter, Predicate<CompoundContainerId> cidFilter) {
         this.importTarget = importTarget;
         this.expFilter = expFilter;
         this.cidFilter = cidFilter;
-        this.move = move;
-        this.updateFingerprintData = updateFingerprintData;
-    }
-
-    public InstanceImporter(ProjectSpaceManager<?> importTarget, Predicate<Ms2Experiment> expFilter, Predicate<CompoundContainerId> cidFilter) {
-        this(importTarget, expFilter, cidFilter, false, false);
     }
 
     public ImportInstancesJJob makeImportJJob(@Nullable Collection<InputResource<?>> msInput, boolean ignoreFormulas, boolean allowMs1Only) {
@@ -93,23 +81,23 @@ public class InstanceImporter {
         return new ImportInstancesJJob(files);
     }
 
-    public List<CompoundContainerId> doImport(InputFilesOptions projectInput, JobProgressEventListener listener) throws ExecutionException {
+    public List<Instance> doImport(InputFilesOptions projectInput, JobProgressEventListener listener) throws ExecutionException {
         if (projectInput == null)
             return null;
         final ImportInstancesJJob j = makeImportJJob(projectInput);
         j.addJobProgressListener(listener);
-        List<CompoundContainerId> cids = SiriusJobs.getGlobalJobManager().submitJob(j).awaitResult();
+        List<Instance> cids = SiriusJobs.getGlobalJobManager().submitJob(j).awaitResult();
         j.removeJobProgressListener(listener);
         return cids;
     }
 
-    public List<CompoundContainerId> doImport(InputFilesOptions projectInput) throws ExecutionException {
+    public List<Instance> doImport(InputFilesOptions projectInput) throws ExecutionException {
         if (projectInput == null)
             return null;
         return SiriusJobs.getGlobalJobManager().submitJob(makeImportJJob(projectInput)).awaitResult();
     }
 
-    public class ImportInstancesJJob extends BasicJJob<List<CompoundContainerId>> {
+    public class ImportInstancesJJob extends BasicJJob<List<Instance>> {
         private @Nullable Collection<InputResource<?>> msInput = null;
 
         boolean ignoreFormulas, allowMs1Only;
@@ -137,14 +125,14 @@ public class InstanceImporter {
         }
 
         @Override
-        protected List<CompoundContainerId> compute() throws Exception {
+        protected List<Instance> compute() throws Exception {
             prog = new JobProgressMerger(pcs);
             return importMultipleSources();
         }
 
 
-        private List<CompoundContainerId> importMultipleSources() {
-            List<CompoundContainerId> list = new ArrayList<>();
+        private List<Instance> importMultipleSources() {
+            List<Instance> list = new ArrayList<>();
 
             if (msInput != null) {
                 msInput.forEach(f -> prog.addPreload(f, 0, f.getSize()));
@@ -159,217 +147,44 @@ public class InstanceImporter {
 
         }
 
-        private List<CompoundContainerId> importCSVInput(List<InputFilesOptions.CsvInput> csvInputs) {
+        private List<Instance> importCSVInput(List<InputFilesOptions.CsvInput> csvInputs) {
             if (csvInputs == null || csvInputs.isEmpty())
                 return List.of();
 
             final InstanceImportIteratorMS2Exp it = new CsvMS2ExpIterator(csvInputs, expFilter, prog).asInstanceIterator(importTarget, (c) -> cidFilter.test(c.getId()));
-            final List<CompoundContainerId> ll = new ArrayList<>();
+            final List<Instance> ll = new ArrayList<>();
 
             // no progress
             while (it.hasNext())
-                ll.add(it.next().getID());
+                ll.add(it.next());
 
             return ll;
         }
 
-        private List<CompoundContainerId> importMsParserInput(@Nullable Collection<InputResource<?>> files) {
+        private List<Instance> importMsParserInput(@Nullable Collection<InputResource<?>> files) {
             if (files == null || files.isEmpty())
                 return List.of();
 
             try (final MS2ExpInputIterator iit = new MS2ExpInputIterator(files, expFilter, ignoreFormulas, allowMs1Only, prog)) {
                 InstanceImportIteratorMS2Exp it = iit.asInstanceIterator(importTarget, (c) -> cidFilter.test(c.getId()));
-                final List<CompoundContainerId> ll = new ArrayList<>();
+                final List<Instance> ll = new ArrayList<>();
 
                 if (prog.isDone())
                     prog.indeterminateProgress(); // just to show something in case only one small file
                 while (it.hasNext()) {
-                    CompoundContainerId id = it.next().getID();
+                    Instance id = it.next();
                     if (prog.isDone())
-                        prog.indeterminateProgress(id.getCompoundName());
+                        prog.indeterminateProgress(id.getID().getCompoundName());
                     else
-                        prog.progressMessage(id.getCompoundName());
+                        prog.progressMessage(id.getID().getCompoundName());
                     ll.add(id);
                 }
 
                 return ll;
             }
         }
-
-
-        private List<CompoundContainerId> importProjectsInput(List<Path> files) {
-            if (files == null || files.isEmpty())
-                return List.of();
-
-            List<CompoundContainerId> ll = new ArrayList<>();
-            for (Path f : files) {
-                try {
-                    ll.addAll(importProject(f));
-                } catch (IOException e) {
-                    LOG.error("Could not Unpack archived Project `" + f.toString() + "'. Skipping this location!", e);
-                }
-            }
-            return ll;
-        }
-
-        private List<CompoundContainerId> importProject(@NotNull Path file) throws IOException {
-            if (file.toAbsolutePath().equals(importTarget.projectSpace().getLocation().toAbsolutePath())) {
-                LOG.warn("target location '" + importTarget.projectSpace().getLocation() + "' was also part of the INPUT and will be ignored!");
-                return List.of();
-            }
-
-            List<CompoundContainerId> l;
-            try (final SiriusProjectSpace ps = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(file)) {
-                l = InstanceImporter.importProject(ps, importTarget, cidFilter, move, updateFingerprintData, prog);
-            }
-            if (move)
-                FileUtils.deleteRecursively(file);
-            return l;
-        }
     }
 
-    public static List<CompoundContainerId> importProject(
-            @NotNull SiriusProjectSpace inputSpace, @NotNull ProjectSpaceManager<?> importTarget,
-            @NotNull Predicate<CompoundContainerId> cidFilter, boolean move, boolean updateFingerprintVersion) throws IOException {
-
-        return importProject(inputSpace, importTarget, cidFilter, move, updateFingerprintVersion, null);
-    }
-
-    // we do not exp level filter here since we want to prevent reading the spectrum file
-    // we do file system level copies where we can here
-    public static List<CompoundContainerId> importProject(
-            @NotNull SiriusProjectSpace inputSpace, @NotNull ProjectSpaceManager<?> importTarget,
-            @NotNull Predicate<CompoundContainerId> cidFilter, boolean move, boolean updateFingerprintVersion, @Nullable JobProgressMerger prog) throws IOException {
-
-        final int size = inputSpace.size();
-        int progress = 0;
-
-        //check is fingerprint data is compatible and clean if not.
-        @Nullable Predicate<String> resultsToSkip = checkDataCompatibility(inputSpace, importTarget, NetUtils.checkThreadInterrupt(Thread.currentThread()));
-        final List<CompoundContainerId> imported = new ArrayList<>(inputSpace.size());
-
-        if (resultsToSkip == null || updateFingerprintVersion) {
-            final ProjectWriter targetWriter = importTarget.projectSpace().ioProvider.newWriter(importTarget.projectSpace()::getProjectSpaceProperty);
-            final ProjectReader sourceReader = inputSpace.ioProvider.newReader(inputSpace::getProjectSpaceProperty);
-            //todo make use of glob
-            List<String> globalFiles = sourceReader.listFiles("*").stream()
-                    .filter(p -> !p.equals(PSLocations.FORMAT) &&
-                            !p.equals(PSLocations.COMPRESSION) &&
-                            !p.equals(PSLocations.VERSION) &&
-                            !p.equals(SummaryLocations.COMPOUND_SUMMARY_ADDUCTS) &&
-                            !p.equals(SummaryLocations.COMPOUND_SUMMARY) &&
-                            !p.equals(SummaryLocations.FORMULA_SUMMARY) &&
-                            !p.equals(SummaryLocations.CANOPUS_FORMULA_SUMMARY) &&
-                            !p.equals(SummaryLocations.MZTAB_SUMMARY) &&
-                            (resultsToSkip == null || DATA_FILES_TO_SKIP.test(p)) //skip data files if incompatible
-                    ).collect(Collectors.toList());
-
-            for (String relative : globalFiles) {
-                try {
-                    sourceReader.binaryFile(relative, r -> {
-                        targetWriter.binaryFile(relative, r::transferTo);
-                        return true;
-                    });
-                } catch (IOException e) {
-                    LOG.error("Could not Copy '" + relative + "' from old location '" + inputSpace.getLocation() + "' to new location `" + importTarget.projectSpace().getLocation() + "' Project might be corrupted!", e);
-                }
-            }
-
-
-            final Iterator<CompoundContainerId> psIter = inputSpace.filteredIterator(cidFilter);
-
-            final boolean flatCopy = inputSpace.ioProvider.getCompressionFormat().equals(importTarget.projectSpace().ioProvider.getCompressionFormat())
-                    && (inputSpace.ioProvider instanceof PathProjectSpaceIOProvider)
-                    && (importTarget.projectSpace().ioProvider instanceof PathProjectSpaceIOProvider);
-
-            while (psIter.hasNext()) {
-                final CompoundContainerId sourceId = psIter.next();
-                // create compound
-                CompoundContainerId id = importTarget.projectSpace().newUniqueCompoundId(sourceId.getCompoundName(), (idx) -> importTarget.namingScheme.apply(idx, sourceId.getCompoundName())).orElseThrow();
-                id.setAllNonFinal(sourceId);
-                importTarget.projectSpace().updateCompoundContainerID(id);
-
-                if (flatCopy) {
-                    ((PathProjectSpaceIOProvider) inputSpace.ioProvider).fsManager.readFile(sourceId.getDirectoryName(), path -> {
-                        List<Path> files = FileUtils.walkAndClose(s -> s
-                                .filter(Files::isRegularFile)
-                                .filter(p -> !p.getFileName().toString().equals(SiriusLocations.COMPOUND_INFO))
-                                .filter(p -> !p.getFileName().toString().equals(SummaryLocations.FORMULA_CANDIDATES))
-                                .filter(p -> !p.getFileName().toString().equals(SummaryLocations.STRUCTURE_CANDIDATES))
-                                .filter(it -> resultsToSkip == null || resultsToSkip.test(it.getFileName().toString()))
-                                .collect(Collectors.toList()), path);
-
-                        @NotNull FileSystemManager m = ((PathProjectSpaceIOProvider) importTarget.projectSpace().ioProvider).fsManager;
-                        for (Path sourceP : files) {
-                            try (InputStream s = Files.newInputStream(sourceP)) {
-                                m.writeFile(id.getDirectoryName(), targetRoot -> {
-                                    Path targetP = targetRoot.resolve(path.relativize(sourceP).toString());
-                                    if (targetP.getParent() != null)
-                                        Files.createDirectories(targetP.getParent());
-                                    try (OutputStream o = Files.newOutputStream(targetP)) {
-                                        s.transferTo(o);
-                                    }
-                                });
-                            }
-                        }
-                    });
-                } else {
-                    sourceReader.inDirectory(sourceId.getDirectoryName(), () -> {
-                        List<String> files = sourceReader.listFilesRecursive("*").stream()
-                                .filter(p -> !p.equals(SiriusLocations.COMPOUND_INFO))
-                                .filter(p -> !p.equals(SummaryLocations.FORMULA_CANDIDATES))
-                                .filter(p -> !p.equals(SummaryLocations.STRUCTURE_CANDIDATES))
-                                .filter(it -> resultsToSkip == null || resultsToSkip.test(it))
-                                .collect(Collectors.toList());
-                        for (String relative : files) {
-                            try {
-                                sourceReader.binaryFile(relative, r ->
-                                        targetWriter.inDirectory(id.getDirectoryName(), () -> {
-                                            targetWriter.binaryFile(relative, r::transferTo);
-                                            return null;
-                                        }));//todo reimplement move support for dirs?
-                            } catch (IOException e) {
-                                LOG.error("Could not Copy instance'" + id.getDirectoryName() + "' from old location '" + inputSpace.getLocation() + "' to new location `" + importTarget.projectSpace().getLocation() + "' Results might be missing!", e);
-                            }
-                        }
-
-                        return null;
-                    });
-                }
-
-                if (resultsToSkip != null) {
-                    LoggerFactory.getLogger(InstanceImporter.class).info("Updating Compound score of '" + id + "' after deleting Fingerprint related results...");
-                    Instance inst = importTarget.getInstanceFromCompound(id);
-                    List<FormulaResult> l = inst.loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate)
-                            .filter(r -> r.getAnnotation(FormulaScoring.class).map(s -> (s.removeAnnotation(TopCSIScore.class) != null)
-                                    || (s.removeAnnotation(ConfidenceScore.class) != null)).orElse(false))
-                            .collect(Collectors.toList());
-
-                    l.forEach(r -> inst.updateFormulaResult(r, FormulaScoring.class));
-                    LoggerFactory.getLogger(InstanceImporter.class).info("Updating Compound score of '" + id + "' DONE!");
-                }
-
-                imported.add(id);
-                if (prog != null)
-                    prog.progressChanged(new JobProgressEvent(inputSpace.getLocation(), 0, size, ++progress, id.toString()));
-                importTarget.projectSpace().fireCompoundCreated(id);
-
-                if (move)
-                    inputSpace.deleteCompound(sourceId);
-            }
-        } else {
-            LoggerFactory.getLogger(ProjectSpaceManager.class).warn(
-                    "INCOMPATIBLE INPUT: The Fingerprint version of the project location you trying to import '" + inputSpace.getLocation() +
-                            "'ist incompatible to the one at the target location '" + importTarget.projectSpace().getLocation() +
-                            "'. or with the one used by this SIRIUS version. Nothing has been imported!" +
-                            " Try again `--update-fingerprint-version` to exclude incompatible parts from the import." +
-                            " WARNING: This will exclude all Fingerprint related results like CSI:FingerID and CANOPUS from the import.");
-        }
-
-        if (prog != null)
-            prog.progressChanged(new JobProgressEvent(inputSpace.getLocation(), 0, size, size, inputSpace.getLocation().getFileName().toString() + " Done"));
-        return imported;
-    }
 
 
     private final static Predicate<String> DATA_FILES_TO_SKIP = n ->
@@ -389,7 +204,7 @@ public class InstanceImporter {
     }
 
 
-    public static Predicate<String> checkDataCompatibility(@NotNull Path toImportPath, @Nullable ProjectSpaceManager<?> importTarget, NetUtils.InterruptionCheck interrupted) throws IOException {
+    public static Predicate<String> checkDataCompatibility(@NotNull Path toImportPath, @Nullable ProjectSpaceManager importTarget, NetUtils.InterruptionCheck interrupted) throws IOException {
         try {
             final ProjectReader reader;
             if (FileUtils.isZipArchive(toImportPath))
@@ -430,7 +245,7 @@ public class InstanceImporter {
      * @param interrupted  Tell the waiting job how it can check if it was interrupted
      * @return null if compatible, predicate checking for paths to be skipped during import.
      */
-    public static Predicate<String> checkDataCompatibility(@NotNull SiriusProjectSpace toImport, @Nullable ProjectSpaceManager<?> importTarget, NetUtils.InterruptionCheck interrupted) {
+    public static Predicate<String> checkDataCompatibility(@NotNull SiriusProjectSpace toImport, @Nullable ProjectSpaceManager importTarget, NetUtils.InterruptionCheck interrupted) {
         Predicate<String> r;
         r = checkDataCompatibility(toImport.getProjectSpaceProperty(FingerIdDataProperty.class).orElse(null),
                 FingerIdData.class, ApplicationCore.WEB_API::getFingerIdData, importTarget, interrupted);
@@ -449,7 +264,7 @@ public class InstanceImporter {
 
 
     public static <F extends FingerprintVersion, D extends FingerprintData<F>, P extends PosNegFpProperty<F, D>>
-    Predicate<String> checkDataCompatibility(@Nullable P importFd, Class<D> dataClz, @NotNull IOFunctions.IOFunction<PredictorType, D> dataLoader, @Nullable ProjectSpaceManager<?> importTarget, NetUtils.InterruptionCheck interrupted) {
+    Predicate<String> checkDataCompatibility(@Nullable P importFd, Class<D> dataClz, @NotNull IOFunctions.IOFunction<PredictorType, D> dataLoader, @Nullable ProjectSpaceManager importTarget, NetUtils.InterruptionCheck interrupted) {
         try {
             //check prop
             if (importFd != null) {

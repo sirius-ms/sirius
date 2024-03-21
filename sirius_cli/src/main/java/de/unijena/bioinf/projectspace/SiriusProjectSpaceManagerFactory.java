@@ -31,22 +31,22 @@ import java.nio.file.Path;
 import java.util.function.Function;
 
 @Slf4j
-public final class SiriusProjectSpaceManagerFactory implements ProjectSpaceManagerFactory<Instance, ProjectSpaceManager<Instance>> {
-    public ProjectSpaceManager<Instance> create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<Instance> factory, @Nullable Function<Ms2Experiment, String> formatter) {
-        return new ProjectSpaceManager<>(space, factory, formatter);
+public final class SiriusProjectSpaceManagerFactory implements ProjectSpaceManagerFactory<ProjectSpaceManager> {
+    public ProjectSpaceManager create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<?> factory, @Nullable Function<Ms2Experiment, String> formatter) {
+        return new ProjectSpaceManager(space, factory, formatter);
     }
 
-    public ProjectSpaceManager<Instance> create(SiriusProjectSpace space) {
+    public ProjectSpaceManager create(SiriusProjectSpace space) {
         return create(space, null);
     }
 
 
-    public ProjectSpaceManager<Instance> create(@NotNull SiriusProjectSpace space, @Nullable Function<Ms2Experiment, String> formatter) {
+    public ProjectSpaceManager create(@NotNull SiriusProjectSpace space, @Nullable Function<Ms2Experiment, String> formatter) {
         return create(space, new InstanceFactory.Default(), formatter);
     }
 
     @Override
-    public ProjectSpaceManager<Instance> createOrOpen(@Nullable Path projectLocation) throws IOException {
+    public ProjectSpaceManager createOrOpen(@Nullable Path projectLocation) throws IOException {
 
         if (projectLocation == null) {
             projectLocation = ProjectSpaceIO.createTmpProjectSpaceLocation();

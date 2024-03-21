@@ -73,10 +73,9 @@ public class SiriusCLIApplication {
 
             configureShutDownHook(shutdownWebservice());
             measureTime("Start Run method");
-            run(args, () -> {
-                final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-                return new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new SiriusProjectSpaceManagerFactory()), configOptionLoader, new SimpleInstanceBuffer.Factory(), injectTools);
-            });
+            run(args, () -> new WorkflowBuilder(
+                    new CLIRootOptions(new DefaultParameterConfigLoader(), new SiriusProjectSpaceManagerFactory()),
+                    new SimpleInstanceBuffer.Factory(), injectTools));
         } finally {
             System.exit(0);
         }
@@ -138,7 +137,8 @@ public class SiriusCLIApplication {
             measureTime("init Run");
             RUN = new Run(supplier.make());
             measureTime("Start Parse args");
-            successfulParsed = RUN.parseArgs(args);
+            RUN.parseArgs(args);
+            successfulParsed = RUN.makeWorkflow() != null;
             measureTime("Parse args Done!");
             if (successfulParsed) {
                 measureTime("Compute");

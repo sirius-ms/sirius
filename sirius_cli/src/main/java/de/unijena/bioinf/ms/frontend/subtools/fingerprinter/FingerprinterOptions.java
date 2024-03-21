@@ -44,7 +44,7 @@ public class FingerprinterOptions implements StandaloneTool<FingerprinterWorkflo
     private int bufferSize;
 
     @Override
-    public FingerprinterWorkflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
+    public FingerprinterWorkflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
         return new FingerprinterWorkflow(rootOptions, outputPath,charge,version, bufferSize);
     }
 }

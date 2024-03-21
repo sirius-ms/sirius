@@ -32,7 +32,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 
 
 public class FBMNExportAction extends AbstractGuiAction {
@@ -75,7 +74,7 @@ public class FBMNExportAction extends AbstractGuiAction {
 
         new ExecutionDialog<>(gui,
                 new MgfExporterConfigPanel(p,n),
-                List.copyOf(mainFrame.getCompounds()), null, mainFrame,
+                List.copyOf(mainFrame.getCompounds()), mainFrame,
                 "Export Project for GNPS FBMN", true).start();
     }
 }

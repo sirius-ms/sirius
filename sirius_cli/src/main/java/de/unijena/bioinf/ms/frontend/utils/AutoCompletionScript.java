@@ -120,8 +120,7 @@ public class AutoCompletionScript implements StandaloneTool<Workflow> {
     public Integer call() throws IOException, UnknownOSException, InvalidParameterException {
         System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
         FingerIDProperties.sirius_guiVersion();
-        final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(PropertyManager.DEFAULTS);
-        WorkflowBuilder<?> builder = new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new SiriusProjectSpaceManagerFactory()), configOptionLoader, new SimpleInstanceBuffer.Factory());
+        WorkflowBuilder builder = new WorkflowBuilder(new CLIRootOptions(new DefaultParameterConfigLoader(PropertyManager.DEFAULTS), new SiriusProjectSpaceManagerFactory()), new SimpleInstanceBuffer.Factory());
         builder.initRootSpec();
         if((install.toInstall() || this.uninstall)&& this.OS == null) this.OS = detectOS();
         if (install.toInstall() || this.uninstall) System.out.println("Detected OS as " + OS);
@@ -609,7 +608,7 @@ public class AutoCompletionScript implements StandaloneTool<Workflow> {
     }
 
     @Override
-    public Workflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
+    public Workflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
         return () -> {
             try {
                 call();

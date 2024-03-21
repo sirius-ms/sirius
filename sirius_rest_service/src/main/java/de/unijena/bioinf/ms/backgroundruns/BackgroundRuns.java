@@ -18,21 +18,22 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.frontend;
+package de.unijena.bioinf.ms.backgroundruns;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
+import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.jjobs.*;
-import de.unijena.bioinf.ms.frontend.subtools.ComputeRootOption;
-import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
+import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.frontend.subtools.projectspace.ImportFromMemoryWorkflow;
-import de.unijena.bioinf.ms.frontend.workflow.*;
+import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
+import de.unijena.bioinf.ms.frontend.workflow.ToolChainWorkflow;
+import de.unijena.bioinf.ms.frontend.workflow.Workflow;
+import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.CompoundContainer;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,49 +41,43 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * Manage and execute command line (toolchain) runs in the background as if you would have started it via the CLI.
  * Can be used to run the CLI tools from a GUI or a high level API
  * It runs the tool through the command line parser and performs the CLI parameter validation.
  */
-public final class BackgroundRuns<P extends ProjectSpaceManager<I>, I extends Instance> {
+public final class BackgroundRuns {
     private static final AtomicBoolean AUTOREMOVE = new AtomicBoolean(PropertyManager.getBoolean("de.unijena.bioinf.sirius.BackgroundRuns.autoremove", true));
 
     private static final AtomicInteger RUN_COUNTER = new AtomicInteger(0);
 
     public static final String ACTIVE_RUNS_PROPERTY = "ACTIVE_RUNS";
     public static final String UNFINISHED_RUNS_PROPERTY = "UNFINISHED_RUNS";
-    private static InstanceBufferFactory<?> BUFFER_FACTORY = new SimpleInstanceBuffer.Factory();
-
-    public static InstanceBufferFactory<?> getBufferFactory() {
-        return BUFFER_FACTORY;
-    }
-
-    public static void setBufferFactory(InstanceBufferFactory<?> bufferFactory) {
-        BUFFER_FACTORY = bufferFactory;
-    }
-
 
     private final ConcurrentHashMap<Integer, BackgroundRunJob> finishedRuns = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, BackgroundRunJob> runningRuns = new ConcurrentHashMap<>();
 
-    private final P psm;
+    private final ProjectSpaceManager psm;
+    private final InstanceBufferFactory<?> bufferfactory;
+    private final ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory;
 
-    public BackgroundRuns(P psm) {
+    //
+    public BackgroundRuns(ProjectSpaceManager psm, InstanceBufferFactory<?> bufferFactory, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory) {
         this.psm = psm;
+        this.bufferfactory = bufferFactory;
+        this.projectSpaceManagerFactory = projectSpaceManagerFactory;
     }
 
-    public P getProjectSpaceManager() {
-        return psm;
-    }
 
     public Collection<BackgroundRunJob> getRunningRuns() {
         return Collections.unmodifiableCollection(runningRuns.values());
@@ -141,7 +136,7 @@ public final class BackgroundRuns<P extends ProjectSpaceManager<I>, I extends In
     private void removeAndFinishRun(@NotNull BackgroundRunJob job, boolean autoremove) {
         withPropertyChangesEvent(job, (j) -> {
             runningRuns.remove(j.getRunId());
-            if (!autoremove){
+            if (!autoremove) {
                 finishedRuns.put(j.getRunId(), j);
                 return ChangeEventType.FINISHED;
             }
@@ -186,77 +181,36 @@ public final class BackgroundRuns<P extends ProjectSpaceManager<I>, I extends In
         PCS.removePropertyChangeListener(listener);
     }
 
-    public BackgroundRunJob makeBackgroundRun(List<String> command, @Nullable List<CompoundContainerId> instanceIds) throws IOException {
-        return makeBackgroundRun(command, instanceIds, null);
-    }
-
-    public BackgroundRunJob makeBackgroundRun(List<String> command, List<CompoundContainerId> instanceIds,
-                                              @Nullable InputFilesOptions toImport) throws IOException {
-        Workflow computation = makeWorkflow(command, new ComputeRootOption<>(psm, instanceIds, toImport));
-        return new BackgroundRunJob(computation, instanceIds, RUN_COUNTER.incrementAndGet(), String.join(" ", command));
-    }
-
-    public BackgroundRunJob runCommand(List<String> command, List<CompoundContainerId> instanceIds) throws IOException {
-        return runCommand(command, instanceIds, null);
-    }
-
-    public BackgroundRunJob runCommand(List<String> command, List<CompoundContainerId> instanceIds,
-                                       @Nullable InputFilesOptions toImport) throws IOException {
-        return SiriusJobs.getGlobalJobManager().submitJob(makeBackgroundRun(command, instanceIds, toImport));
-    }
-
-    public BackgroundRunJob makeBackgroundRun(List<String> command, @Nullable Iterable<I> instances) throws IOException {
-        return makeBackgroundRun(command, instances, null);
-    }
-
-    public BackgroundRunJob makeBackgroundRun(List<String> command, @Nullable Iterable<I> instances,
-                                              @Nullable InputFilesOptions toImport) throws IOException {
-        Workflow computation = makeWorkflow(command, new ComputeRootOption<>(psm, instances, toImport));
+    public BackgroundRunJob makeBackgroundRun(List<String> command, @NotNull Iterable<Instance> instances) throws IOException {
+        Workflow computation = makeWorkflow(command, new ComputeRootOption(instances));
         return new BackgroundRunJob(computation, instances, RUN_COUNTER.incrementAndGet(), String.join(" ", command));
     }
 
-    public BackgroundRunJob runCommand(List<String> command, @Nullable Iterable<I> instances) throws IOException {
-        return runCommand(command, instances, null);
+
+    public BackgroundRunJob runCommand(List<String> command, @NotNull Iterable<Instance> instances) throws IOException {
+        return SiriusJobs.getGlobalJobManager().submitJob(makeBackgroundRun(command, instances));
     }
 
-    public BackgroundRunJob runCommand(List<String> command, @Nullable Predicate<CompoundContainerId> cidFilter) throws IOException {
-        return runCommand(command, cidFilter, null);
-    }
-
-    public BackgroundRunJob runCommand(List<String> command, @Nullable Predicate<CompoundContainerId> cidFilter, @Nullable final Predicate<CompoundContainer> compoundFilter) throws IOException {
-        return runCommand(command, cidFilter, compoundFilter, null);
-
-    }
-
-    public BackgroundRunJob runCommand(List<String> command, @Nullable Predicate<CompoundContainerId> cidFilter, @Nullable final Predicate<CompoundContainer> compoundFilter, @Nullable InputFilesOptions toImport) throws IOException {
-        return runCommand(command, () -> psm.filteredIterator(cidFilter, compoundFilter), toImport);
-    }
-
-    public BackgroundRunJob runCommand(List<String> command, @Nullable Iterable<I> instances, @Nullable InputFilesOptions toImport) throws IOException {
-        return SiriusJobs.getGlobalJobManager().submitJob(makeBackgroundRun(command, instances, toImport));
-    }
-
-    public BackgroundRunJob runImport(Collection<InputResource<?>> inputResources){
-        return runImport(inputResources, false, true);
-    }
-    public BackgroundRunJob runImport(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData
-    ) {
-        Workflow computation = new ImportFromMemoryWorkflow(psm, inputResources, ignoreFormulas, allowMs1OnlyData);
+    public BackgroundRunJob runImportMsData(Collection<PathInputResource> inputResources, boolean allowMs1OnlyData, boolean alignRuns
+    ){
+        Workflow computation = new ImportMsFomResourceWorkflow(psm, inputResources, allowMs1OnlyData, alignRuns, true);
         return SiriusJobs.getGlobalJobManager().submitJob(
-                new BackgroundRunJob(computation, (Iterable<I>) null, RUN_COUNTER.incrementAndGet(), null));
+                new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null));
+    }
+    public BackgroundRunJob runImportPeakData(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData
+    ) {
+        Workflow computation = new ImportPeaksFomResourceWorkflow(psm, inputResources, ignoreFormulas, allowMs1OnlyData, true);
+        return SiriusJobs.getGlobalJobManager().submitJob(
+                new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null));
     }
 
-    private static <P extends ProjectSpaceManager<I>, I extends Instance> Workflow makeWorkflow(
-            List<String> command, ComputeRootOption<P, I> rootOptions) throws IOException {
+    private Workflow makeWorkflow(
+            List<String> command, ComputeRootOption rootOptions) throws IOException {
         final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(PropertyManager.DEFAULTS.newIndependentInstance("BATCH_COMPUTE"));
-        final WorkflowBuilder<ComputeRootOption<P, I>> wfBuilder = new WorkflowBuilder<>(rootOptions, configOptionLoader, BUFFER_FACTORY);
+        final WorkflowBuilder wfBuilder = new WorkflowBuilder(rootOptions, configOptionLoader, bufferfactory, projectSpaceManagerFactory, false);
         final Run computation = new Run(wfBuilder);
         computation.parseArgs(command.toArray(String[]::new));
-        if (computation.isWorkflowDefined())
-            return computation.getFlow();
-        else
-            throw new IllegalArgumentException("Command did not produce a valid workflow!");
-
+        return computation.makeWorkflow();
     }
 
 
@@ -268,34 +222,18 @@ public final class BackgroundRuns<P extends ProjectSpaceManager<I>, I extends In
         private Workflow computation;
 
         @Nullable
-        private List<CompoundContainerId> instanceIds;
+        private Iterable<? extends Instance> instances;
 
         @Deprecated(forRemoval = true) //todo needed until GUI works with rest API
-        private BackgroundRunJob(@NotNull Workflow computation, @Nullable Iterable<I> instances, int runId, String command) {
+        private BackgroundRunJob(@NotNull Workflow computation, @Nullable Iterable<? extends Instance> instances, int runId, String command) {
             super(JobType.SCHEDULER);
             this.runId = runId;
             this.command = command;
             this.computation = computation;
-            if (instances == null) {
-                instanceIds = null;
-            } else {
-                instanceIds = new ArrayList<>();
-                instances.forEach(i -> instanceIds.add(i.getID()));
-            }
+            this.instances = instances;
 
         }
 
-        public BackgroundRunJob(@NotNull Workflow computation, int runId, String command) {
-            this(computation, (List<CompoundContainerId>) null, runId, command);
-        }
-
-        public BackgroundRunJob(@NotNull Workflow computation, @Nullable List<CompoundContainerId> instanceIds, int runId, String command) {
-            super(JobType.SCHEDULER);
-            this.runId = runId;
-            this.command = command;
-            this.computation = computation;
-            this.instanceIds = instanceIds;
-        }
 
         @Override
         public void registerJobManager(JobManager manager) {
@@ -308,9 +246,8 @@ public final class BackgroundRuns<P extends ProjectSpaceManager<I>, I extends In
             try {
                 checkForInterruption();
                 logInfo("Locking Instances for Computation...");
-                if (instanceIds != null && !instanceIds.isEmpty())
-                    psm.projectSpace().setFlags(CompoundContainerId.Flag.COMPUTING, true,
-                            instanceIds.toArray(CompoundContainerId[]::new));
+                if (instances != null)
+                    instances.forEach(Instance::enableComputing);
                 logInfo("All instances locked!");
 
                 checkForInterruption();
@@ -344,20 +281,17 @@ public final class BackgroundRuns<P extends ProjectSpaceManager<I>, I extends In
         @Override
         protected void cleanup() {
             try {
-                if (instanceIds != null && !instanceIds.isEmpty()) {
+                if (instances != null) {
                     logInfo("Unlocking Instances after Computation...");
-                    psm.projectSpace().setFlags(CompoundContainerId.Flag.COMPUTING, false,
-                            instanceIds.toArray(CompoundContainerId[]::new));
+                    instances.forEach(Instance::disableComputing);
                     logInfo("All Instances unlocked!");
                 } else if (computation instanceof ToolChainWorkflow) {
                     logInfo("Collecting imported compounds...");
-                    Iterable<? extends Instance> instances = ((ToolChainWorkflow) computation).getPreprocessingJob().result();
-                    instanceIds = new ArrayList<>();
-                    instances.forEach(i -> instanceIds.add(i.getID()));
+                    instances = ((ToolChainWorkflow) computation).getPreprocessingJob().result();
                     logInfo("Imported compounds collected...");
-                } else if (computation instanceof ImportFromMemoryWorkflow) {
+                } else if (computation instanceof ImportPeaksFomResourceWorkflow) {
                     logInfo("Collecting imported compounds...");
-                    instanceIds = ((ImportFromMemoryWorkflow) computation).getImportedInstanceIds();
+                    instances = ((ImportPeaksFomResourceWorkflow) computation).getImportedInstances();
                     logInfo("Imported compounds collected...");
                 }
                 logInfo("Freeing up memory...");
@@ -381,19 +315,20 @@ public final class BackgroundRuns<P extends ProjectSpaceManager<I>, I extends In
             return command;
         }
 
-        public P getProject() {
-            return psm;
+        public @Nullable Iterable<? extends Instance> getInstances() {
+            return instances;
         }
 
-        public List<CompoundContainerId> getInstanceIds() {
-            if (instanceIds == null)
-                return null;
-            return Collections.unmodifiableList(instanceIds);
+        public @NotNull Stream<? extends Instance> getInstancesStr() {
+            if (instances == null)
+                return Stream.empty();
+            return StreamSupport.stream(instances.spliterator(), false);
         }
     }
 
 
     public enum ChangeEventType {INSERTION, DELETION, FINISHED_AND_DELETED, FINISHED}
+
     public class ChangeEvent extends PropertyChangeEvent {
 
         private final ChangeEventType type;
