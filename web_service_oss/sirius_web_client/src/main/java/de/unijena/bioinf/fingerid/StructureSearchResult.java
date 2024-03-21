@@ -11,7 +11,7 @@ public class StructureSearchResult implements ResultAnnotation {
 
     private final double confidenceScore;
     private final double confidencScoreApproximate;
-    private final int mcesIndex;
+    private final int approximateIndex;
     private final ExpansiveSearchConfidenceMode.Mode expansiveSearchConfidenceMode;
 
 
@@ -19,7 +19,7 @@ public class StructureSearchResult implements ResultAnnotation {
         return StructureSearchResult.builder()
                 .confidenceScore(confidenceResult.score.score())
                 .confidencScoreApproximate(confidenceResult.scoreApproximate.score())
-                .mcesIndex(confidenceResult.mcesIndex)
+                .approximateIndex(confidenceResult.approximateIndex)
                 .expansiveSearchConfidenceMode(expansiveSearchConfidenceMode)
                 .build();
     }

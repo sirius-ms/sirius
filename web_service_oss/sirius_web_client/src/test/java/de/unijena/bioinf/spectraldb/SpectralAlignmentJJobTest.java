@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.spectraldb;
 
+import com.github.f4b6a3.tsid.Tsid;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
@@ -134,7 +135,7 @@ public class SpectralAlignmentJJobTest {
 
         String libraryId = "library id";
         String libraryName = "library name";
-        String UUID = "UUID";
+        long UUID = Tsid.fast().toLong();
 
         SimpleSpectrum referenceSpectrum = new SimpleSpectrum(new double[] {1d, 2d}, new double[] {0.5d, 1d});
         Ms2ReferenceSpectrum reference = Ms2ReferenceSpectrum.builder()
