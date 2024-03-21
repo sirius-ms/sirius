@@ -27,7 +27,7 @@ ext {
     siriusVersion = props.getProperty('de.unijena.bioinf.sirius.version')
     fingeridVersion = props.getProperty('de.unijena.bioinf.fingerid.version')
     //version for external libraries
-    picocli_version = '4.6.3'
+    picocli_version = '4.7.5'
     jakarta_version = '3.1.0'
     jjobs_version = '0.9.36-SNAPSHOT' //todo nightsky ->  stable jjobs release
     slf4j_version = '1.7.36'
@@ -103,8 +103,8 @@ allprojects {
     }
 
     dependencies {
-        compileOnly 'org.projectlombok:lombok:1.18.26'
-        annotationProcessor 'org.projectlombok:lombok:1.18.26'
+        compileOnly 'org.projectlombok:lombok:1.18.30'
+        annotationProcessor 'org.projectlombok:lombok:1.18.30'
 
         api "org.jetbrains:annotations:$jetbrains_version"
         api "it.unimi.dsi:fastutil:$fastutil_version"
