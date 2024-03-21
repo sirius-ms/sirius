@@ -230,22 +230,24 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         final Iterator<Instance> compoundContainerIterator = space.instanceIterator(LCMSPeakInformation.class, Ms2Experiment.class);
         final List<Ms2Experiment> exps = new ArrayList<>();
         final List<LCMSPeakInformation> peaks = new ArrayList<>();
-        final List<CompoundContainerId> ids = new ArrayList<>();
+        final List<String> ids = new ArrayList<>();
         while (compoundContainerIterator.hasNext()) {
             final CompoundContainer next = compoundContainerIterator.next().loadCompoundContainer(LCMSPeakInformation.class, Ms2Experiment.class);
             if (next.getAnnotation(Ms2Experiment.class).isEmpty() || next.getAnnotation(LCMSPeakInformation.class).isEmpty())
                 continue;
             exps.add(next.getAnnotation(Ms2Experiment.class).get());
             peaks.add(next.getAnnotation(LCMSPeakInformation.class).get());
-            ids.add(next.getId());
+            ids.add(next.getId().getDirectoryName()); //todo getDirectoryName correct
         }
-        LCMSPeakInformation[] replaced = Ms1Remapping.remapMS1(lcmsInstance, ms1Samples, peaks.toArray(LCMSPeakInformation[]::new), exps.toArray(Ms2Experiment[]::new), true);
+        final LCMSPeakInformation[] replaced = Ms1Remapping.remapMS1(lcmsInstance, ms1Samples, peaks.toArray(LCMSPeakInformation[]::new), exps.toArray(Ms2Experiment[]::new), true);
         for (int i = 0; i < ids.size(); ++i) {
-            final CompoundContainerId compoundContainerId = ids.get(i);
-            final Instance instance = space.getInstanceFromCompound(compoundContainerId);
-            CompoundContainer compound = instance.loadCompoundContainer();
-            compound.setAnnotation(LCMSPeakInformation.class, replaced[i]);
-            instance.updateCompound(compound, LCMSPeakInformation.class);
+            final String instanceId = ids.get(i);
+            LCMSPeakInformation replacement = replaced[i];
+            space.findInstance(instanceId).ifPresent(instance ->{
+                CompoundContainer compound = instance.loadCompoundContainer();
+                compound.setAnnotation(LCMSPeakInformation.class, replacement);
+                instance.updateCompound(compound, LCMSPeakInformation.class);
+            });
         }
         return space;
     }

@@ -20,7 +20,6 @@
 package de.unijena.bioinf.ms.frontend.subtools.similarity;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.FPIter2;
@@ -50,9 +49,11 @@ import de.unijena.bioinf.ms.frontend.subtools.config.AddConfigsJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
-import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.ProjectSpaceIO;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
-import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
@@ -86,12 +87,14 @@ public class SimilarityMatrixWorkflow implements Workflow {
     protected ProjectSpaceManager ps;
     protected final ParameterConfig config;
 
-    protected final PreprocessingJob<ProjectSpaceManager> ppj;
+    protected final PreprocessingJob<? extends ProjectSpaceManager> ppj;
+    protected final ProjectSpaceManagerFactory<?> projectFactory;
 
-    public SimilarityMatrixWorkflow(PreprocessingJob<ProjectSpaceManager> ppj, SimilarityMatrixOptions options, ParameterConfig config) {
+    public SimilarityMatrixWorkflow(PreprocessingJob<? extends ProjectSpaceManager> ppj, ProjectSpaceManagerFactory<?> projectFactory, SimilarityMatrixOptions options, ParameterConfig config) {
         this.ppj = ppj;
         this.options = options;
         this.config = config;
+        this.projectFactory = projectFactory;
     }
 
     @Override
@@ -233,13 +236,12 @@ public class SimilarityMatrixWorkflow implements Workflow {
         final List<FTree> libTrees = new ArrayList<>();
         if (ProjectSpaceIO.isExistingProjectspaceDirectory(options.useFtblast.toPath())) {
             try {
-                SiriusProjectSpace compoundContainerIds = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(options.useFtblast.toPath());
-                for (CompoundContainerId id : compoundContainerIds) {
-                    List<? extends SScored<FormulaResult, ? extends FormulaScore>> list = compoundContainerIds.getFormulaResultsOrderedBy(id, id.getRankingScoreTypes());
-                    if (list.size()>0) {
-                        compoundContainerIds.getFormulaResult(list.get(0).getCandidate().getId(),FTree.class).getAnnotation(FTree.class).ifPresent(libTrees::add);
-                    }
-                }
+                ProjectSpaceManager passatuttoProject = projectFactory.createOrOpen(options.useFtblast.toPath());
+
+                passatuttoProject.forEach(instance ->
+                        instance.loadTopFormulaResult(FTree.class)
+                                .flatMap(fr -> fr.getAnnotation(FTree.class))
+                                .ifPresent(libTrees::add));
             } catch (IOException e) {
                 throw new RuntimeException("Cannot open project space at '" + options.useFtblast + "'");
             }

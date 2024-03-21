@@ -95,11 +95,11 @@ import java.util.stream.Stream;
 public class SiriusProjectSpaceImpl implements Project {
 
     @NotNull
-    private final ProjectSpaceManager projectSpaceManager;
+    private final SiriusProjectSpaceManager projectSpaceManager;
     @NotNull
     private final String projectId;
 
-    public SiriusProjectSpaceImpl(@NotNull String projectId, @NotNull ProjectSpaceManager projectSpaceManager) {
+    public SiriusProjectSpaceImpl(@NotNull String projectId, @NotNull SiriusProjectSpaceManager projectSpaceManager) {
         this.projectSpaceManager = projectSpaceManager;
         this.projectId = projectId;
     }
@@ -110,7 +110,7 @@ public class SiriusProjectSpaceImpl implements Project {
         return projectId;
     }
 
-    public @NotNull ProjectSpaceManager getProjectSpaceManager() {
+    public @NotNull SiriusProjectSpaceManager getProjectSpaceManager() {
         return projectSpaceManager;
     }
 

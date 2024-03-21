@@ -21,7 +21,6 @@
 package de.unijena.bioinf.ms.middleware.service.projects;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastSubToolJob;
 import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
 import de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEventImpl;
@@ -29,7 +28,6 @@ import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.projectspace.*;
-import de.unijena.bioinf.projectspace.fingerid.*;
 import de.unijena.bioinf.rest.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,39 +46,24 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent.Type.*;
 import static de.unijena.bioinf.projectspace.ProjectSpaceIO.*;
 
 public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusProjectSpaceImpl> {
+    //todo extract methods to abstract implementation where possible
+    private final ProjectSpaceManagerFactory<SiriusProjectSpaceManager> projectSpaceManagerFactory;
 
-    private final ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory;
-
-    private final HashMap<String, ProjectSpaceManager> projectSpaces = new HashMap<>();
+    private final HashMap<String, SiriusProjectSpaceManager> projectSpaces = new HashMap<>();
 
     protected final ReadWriteLock projectSpaceLock = new ReentrantReadWriteLock();
 
     private final EventService<?> eventService;
 
     public SiriusProjectSpaceProviderImpl(ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory, EventService<?> eventService) {
-        this.projectSpaceManagerFactory = projectSpaceManagerFactory;
+        this.projectSpaceManagerFactory = (ProjectSpaceManagerFactory<SiriusProjectSpaceManager>) projectSpaceManagerFactory;
         this.eventService = eventService;
-        //enable gui support
-        {
-            // modify fingerid subtool so that it works with reduced GUI candidate list.
-            FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidatesTopK.class);
-            FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidateFingerprintsTopK.class);
-
-            final @NotNull Supplier<ProjectSpaceConfiguration> dc = ProjectSpaceManager.DEFAULT_CONFIG;
-            ProjectSpaceManager.DEFAULT_CONFIG = () -> {
-                final ProjectSpaceConfiguration config = dc.get();
-                config.registerComponent(FormulaResult.class, FBCandidatesTopK.class, new FBCandidatesSerializerTopK(FBCandidateNumber.GUI_DEFAULT));
-                config.registerComponent(FormulaResult.class, FBCandidateFingerprintsTopK.class, new FBCandidateFingerprintSerializerTopK(FBCandidateNumber.GUI_DEFAULT));
-                return config;
-            };
-        }
     }
 
 
@@ -97,7 +80,7 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
         return getProjectSpace(name).map(ps -> new SiriusProjectSpaceImpl(name, ps));
     }
 
-    protected Optional<ProjectSpaceManager> getProjectSpace(String name) {
+    protected Optional<SiriusProjectSpaceManager> getProjectSpace(String name) {
         projectSpaceLock.readLock().lock();
         try {
             return Optional.ofNullable(projectSpaces.get(name));
@@ -133,7 +116,7 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
         }
     }
 
-    private ProjectInfo createProjectInfo(String projectId, ProjectSpaceManager psm,
+    private ProjectInfo createProjectInfo(String projectId, SiriusProjectSpaceManager psm,
                                           @NotNull EnumSet<ProjectInfo.OptField> optFields) {
         SiriusProjectSpace rawProject = psm.getProjectSpaceImpl();
         ProjectInfo.ProjectInfoBuilder b = ProjectInfo.builder()
@@ -187,7 +170,7 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
     }
 
     private ProjectInfo createOrOpen(String projectId, Path location, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
-        ProjectSpaceManager psm = projectSpaceManagerFactory.createOrOpen(location);
+        SiriusProjectSpaceManager psm = projectSpaceManagerFactory.createOrOpen(location);
 
         registerEventListeners(projectId, psm);
         projectSpaces.put(projectId, psm);
@@ -203,7 +186,7 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
     public void closeProjectSpace(String projectId) throws IOException {
         projectSpaceLock.writeLock().lock();
         try {
-            final ProjectSpaceManager space = projectSpaces.get(projectId);
+            final SiriusProjectSpaceManager space = projectSpaces.get(projectId);
             if (space == null) {
                 throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Project space with name '" + projectId + "' not found!");
             }
@@ -231,7 +214,7 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
         return old;
     }
 
-    protected void copyProject(ProjectSpaceManager psm, Path copyPath) throws IOException {
+    protected void copyProject(SiriusProjectSpaceManager psm, Path copyPath) throws IOException {
         ProjectSpaceIO.copyProject(psm.getProjectSpaceImpl(), copyPath, false);
     }
 
@@ -257,7 +240,7 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
     /**
      * registers listeners that will transform project space events into server events to be sent via rest api*
      */
-    private void registerEventListeners(@NotNull String id, @NotNull ProjectSpaceManager psm) {
+    private void registerEventListeners(@NotNull String id, @NotNull SiriusProjectSpaceManager psm) {
         SiriusProjectSpace project = psm.getProjectSpaceImpl();
         project.addProjectSpaceListener(projectSpaceEvent -> {
             switch (projectSpaceEvent) {
