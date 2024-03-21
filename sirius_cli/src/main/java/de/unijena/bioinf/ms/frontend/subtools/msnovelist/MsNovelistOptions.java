@@ -75,9 +75,9 @@ public class MsNovelistOptions implements ToolChainOptions<MsNovelistSubToolJob,
                             inst.updateFormulaResult(it, FormulaScoring.class); //update only if there was something to remove
                     }));
             if (inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
-                inst.getID().getRankingScoreTypes().removeAll(List.of(TopMsNovelistScore.class));
+                inst.getCompoundContainerId().getRankingScoreTypes().removeAll(List.of(TopMsNovelistScore.class));
                 inst.updateCompoundID();
-            } else if (inst.getID().getConfidenceScore().isPresent()) {
+            } else if (inst.getCompoundContainerId().getConfidenceScore().isPresent()) {
                 inst.updateCompoundID();
             }
         };

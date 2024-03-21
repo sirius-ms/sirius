@@ -138,7 +138,7 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
                     } catch (IOException e) {
                         throw e;
                     } catch (Exception e) {
-                        LoggerFactory.getLogger(getClass()).warn("Invalid instance '" + inst.getID() + "'. Skipping this instance!", e);
+                        LoggerFactory.getLogger(getClass()).warn("Invalid instance '" + inst + "'. Skipping this instance!", e);
                     } finally {
                         inst.clearCompoundCache();
                         inst.clearFormulaResultsCache();
@@ -179,9 +179,9 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
             Optional<FormulaResult> fid = inst.loadTopFormulaResult(components);
             if (fid.isPresent()) {
                 final FormulaResult formulaResult = fid.get();
-                writer.write(inst.getID().getDirectoryName());
+                writer.write(inst.getId());
                 writer.write('\t');
-                writer.write(inst.getID().getCompoundName());
+                writer.write(inst.getName());
                 writer.write('\t');
                 writer.write(formulaResult.getId().getMolecularFormula().toString());
                 writer.write('\t');

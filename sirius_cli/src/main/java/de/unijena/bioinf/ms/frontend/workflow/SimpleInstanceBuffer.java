@@ -23,7 +23,6 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.Instance;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
@@ -157,12 +156,12 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
             } catch (ExecutionException e) {
                 //already logged by collector job
                 if (it.getState().equals(JJob.JobState.CANCELED))
-                    LoggerFactory.getLogger(getClass()).warn("ToolChain collector Job '" + it.identifier() + "' was canceled on Instance '" + it.instance.getID() + "'");
+                    LoggerFactory.getLogger(getClass()).warn("ToolChain collector Job '" + it.identifier() + "' was canceled on Instance '" + it.instance + "'");
 
                 if (it.getState().equals(JJob.JobState.FAILED))
-                    LoggerFactory.getLogger(getClass()).error("ToolChain collector Job '" + it.identifier() + "' FAILED on Instance '" + it.instance.getID() + "'", e);
+                    LoggerFactory.getLogger(getClass()).error("ToolChain collector Job '" + it.identifier() + "' FAILED on Instance '" + it.instance + "'", e);
 
-                LoggerFactory.getLogger(getClass()).debug("ToolChain collector Job '" + it.identifier() + "' finished with state '" + it.getState() + "' on instance '" + it.instance.getID() + "'", e);
+                LoggerFactory.getLogger(getClass()).debug("ToolChain collector Job '" + it.identifier() + "' finished with state '" + it.getState() + "' on instance '" + it.instance + "'", e);
             }
         });
 
@@ -195,7 +194,7 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
             throw new InterruptedException("Was cancelled by external Thread");
     }
 
-    private class InstanceJobCollectorJob extends BasicDependentJJob<CompoundContainerId> {
+    private class InstanceJobCollectorJob extends BasicDependentJJob<String> {
         private final Instance instance;
         private final boolean invalidate;
         Set<JJob<?>> toWaitOnCleanUp = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -253,14 +252,14 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
 
 
         @Override
-        protected CompoundContainerId compute() {
+        protected String compute() {
             //cleanup is not really needed for CLI but for everything on top that might keep instances alive.
             if (invalidate) {//todo we should change our project space model so that spectra are independent from config stuff
                 instance.clearFormulaResultsCache();
                 instance.clearCompoundCache();
             }
 
-            return instance.getID();
+            return instance.getId();
         }
 
         @Override

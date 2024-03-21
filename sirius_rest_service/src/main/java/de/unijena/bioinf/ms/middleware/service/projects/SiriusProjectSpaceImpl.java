@@ -123,10 +123,10 @@ public class SiriusProjectSpaceImpl implements Project {
 
         return ImportResult.builder()
                 .affectedAlignedFeatureIds(importTask.getImportedInstancesStr()
-                        .map(Instance::getID)
+                        .map(Instance::getCompoundContainerId)
                         .map(CompoundContainerId::getDirectoryName).collect(Collectors.toList()))
                 .affectedCompoundIds(importTask.getImportedInstancesStr()
-                        .map(Instance::getID)
+                        .map(Instance::getCompoundContainerId)
                         .map(CompoundContainerId::getGroupId).filter(Optional::isPresent).flatMap(Optional::stream)
                         .distinct().collect(Collectors.toList()))
                 .build();
@@ -139,10 +139,10 @@ public class SiriusProjectSpaceImpl implements Project {
         importTask.run();
         return ImportResult.builder()
                 .affectedAlignedFeatureIds(importTask.getImportedInstancesStr()
-                        .map(Instance::getID)
+                        .map(Instance::getCompoundContainerId)
                         .map(CompoundContainerId::getDirectoryName).collect(Collectors.toList()))
                 .affectedCompoundIds(importTask.getImportedInstancesStr()
-                        .map(Instance::getID)
+                        .map(Instance::getCompoundContainerId)
                         .map(CompoundContainerId::getGroupId).filter(Optional::isPresent).flatMap(Optional::stream)
                         .distinct().collect(Collectors.toList()))
                 .build();
@@ -171,7 +171,7 @@ public class SiriusProjectSpaceImpl implements Project {
             return FeatureImports.toExperimentsStr(c.getFeatures())
                     .peek(exp -> exp.annotate(fg))
                     .map(projectSpaceManager::newCompoundWithUniqueId)
-                    .map(Instance::getID).toList();
+                    .map(Instance::getCompoundContainerId).toList();
         }).map(cids -> asCompound(cids, optFields, optFieldsFeatures)).toList();
     }
 
@@ -235,7 +235,7 @@ public class SiriusProjectSpaceImpl implements Project {
     public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         return FeatureImports.toExperimentsStr(features)
                 .map(projectSpaceManager::newCompoundWithUniqueId)
-                .map(Instance::getID).map(cid -> asAlignedFeature(cid, optFields))
+                .map(Instance::getCompoundContainerId).map(cid -> asAlignedFeature(cid, optFields))
                 .toList();
     }
 
@@ -582,7 +582,7 @@ public class SiriusProjectSpaceImpl implements Project {
     protected static Ms2Experiment loadExperiment(Instance instance) {
         return instance.loadCompoundContainer(Ms2Experiment.class).getAnnotation(Ms2Experiment.class)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Could not find spectra data for '" + instance.getID().getFeatureId() + "'!"));
+                        "Could not find spectra data for '" + instance.getCompoundContainerId().getFeatureId() + "'!"));
     }
 
     public Instance loadInstance(String alignedFeatureId) {

@@ -50,13 +50,50 @@ public class Instance {
         return loadCompoundContainer(Ms2Experiment.class).getAnnotationOrThrow(Ms2Experiment.class);
     }
 
-    public final CompoundContainerId getID() {
-        return compoundCache.getId();
+    /**
+     * @return The ID (primary key) of this aligned feature (usaully alignedFeatureId).
+     */
+    public String getId(){
+        return getCompoundContainerId().getDirectoryName();
+    }
+
+    /**
+     * @return The ID (primary key) of this aligned feature (usaully alignedFeatureId) as long or some equivalent id.
+     */
+    @Deprecated
+    public Optional<Long> getLongId(){
+        return Optional.of(getCompoundContainerId().getCompoundIndex()).map(Integer::longValue);
+    }
+
+    /**
+     * @return Optional Compound this Instance belongs to (adduct group)
+     */
+    public Optional<String> getCompoundId(){
+        return getCompoundContainerId().getGroupId();
+    }
+
+    /**
+     * @return FeatureId provided from some external preprocessing tool
+     */
+    public Optional<String> getProvidedFeatureId(){
+        return getCompoundContainerId().getFeatureId();
+    }
+
+    /**
+     * @return Display name of this feature
+     */
+    public String getName(){
+        return getCompoundContainerId().getCompoundName();
     }
 
     @Override
     public String toString() {
-        return getID().toString();
+        return getCompoundContainerId().toString();
+    }
+
+    @Deprecated
+    public final CompoundContainerId getCompoundContainerId() {
+        return compoundCache.getId();
     }
 
     private SiriusProjectSpace projectSpace() {
@@ -78,7 +115,7 @@ public class Instance {
         try {
             Class[] missingComps = Arrays.stream(components).filter(comp -> !compoundCache.hasAnnotation(comp)).distinct().toArray(Class[]::new);
             if (missingComps.length > 0) { //load missing comps
-                final CompoundContainer tmpComp = projectSpace().getCompound(getID(), missingComps);
+                final CompoundContainer tmpComp = projectSpace().getCompound(getCompoundContainerId(), missingComps);
                 compoundCache.setAnnotationsFrom(tmpComp);
             }
             return compoundCache;
@@ -117,7 +154,7 @@ public class Instance {
      */
     @SafeVarargs
     public final synchronized List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadFormulaResults(Class<? extends DataAnnotation>... components) {
-        return loadFormulaResults(getID().getRankingScoreTypes(), components);
+        return loadFormulaResults(getCompoundContainerId().getRankingScoreTypes(), components);
     }
 
     @SafeVarargs
@@ -143,7 +180,7 @@ public class Instance {
     public final synchronized List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadFormulaResults(List<Class<? extends FormulaScore>> rankingScoreTypes, Class<? extends DataAnnotation>... components) {
         try {
             if (!formulaResultCache.keySet().containsAll(compoundCache.getResultsRO().values())) {
-                final List<? extends SScored<FormulaResult, ? extends FormulaScore>> returnList = projectSpace().getFormulaResultsOrderedBy(getID(), rankingScoreTypes, components);
+                final List<? extends SScored<FormulaResult, ? extends FormulaScore>> returnList = projectSpace().getFormulaResultsOrderedBy(getCompoundContainerId(), rankingScoreTypes, components);
                 formulaResultCache = returnList.stream().collect(Collectors.toMap(r -> r.getCandidate().getId(), SScored::getCandidate));
                 return returnList;
             } else {
@@ -236,7 +273,7 @@ public class Instance {
             try {
                 projectSpace().deleteFromAllFormulaResults(compoundCache, components);
             } catch (IOException e) {
-                LoggerFactory.getLogger(getClass()).error("Error when deleting results from '" + getID() + "'.");
+                LoggerFactory.getLogger(getClass()).error("Error when deleting results from '" + getCompoundContainerId() + "'.");
             }
         }
     }
@@ -246,7 +283,7 @@ public class Instance {
             clearFormulaResultsCache();
             projectSpace().deleteAllFormulaResults(loadCompoundContainer());
         } catch (IOException e) {
-            LoggerFactory.getLogger(getClass()).error("Error when deleting all results from '" + getID() + "'.");
+            LoggerFactory.getLogger(getClass()).error("Error when deleting all results from '" + getCompoundContainerId() + "'.");
         }
     }
 
@@ -270,7 +307,7 @@ public class Instance {
             try {
                 projectSpace().deleteFormulaResult(compoundCache, v);
             } catch (IOException e) {
-                LoggerFactory.getLogger(getClass()).error("Error when deleting result '" + v + "' from '" + getID() + "'.");
+                LoggerFactory.getLogger(getClass()).error("Error when deleting result '" + v + "' from '" + getCompoundContainerId() + "'.");
             }
         });
     }
@@ -341,10 +378,10 @@ public class Instance {
     }
 
     public synchronized void setComputing(boolean computing){
-        projectSpace().setFlags(CompoundContainerId.Flag.COMPUTING, computing, getID());
+        projectSpace().setFlags(CompoundContainerId.Flag.COMPUTING, computing, getCompoundContainerId());
     }
 
     public synchronized boolean isComputing(){
-        return projectSpace().flag(getID(), CompoundContainerId.Flag.COMPUTING);
+        return projectSpace().flag(getCompoundContainerId(), CompoundContainerId.Flag.COMPUTING);
     }
 }

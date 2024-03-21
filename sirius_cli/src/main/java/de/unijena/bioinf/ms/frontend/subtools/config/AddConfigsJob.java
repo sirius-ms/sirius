@@ -103,10 +103,10 @@ public class AddConfigsJob extends InstanceJob {
         // this value is a commandline parameter that specifies how to handle the ranking score. If auto we decide how to
         // handle, otherwise we set the user defined value
         if (it.isAuto()) {
-            if (inst.getID().getRankingScoreTypes().isEmpty()) //set a default if nothing else is already set
-                inst.getID().setRankingScoreTypes(SiriusScore.class);
+            if (inst.getCompoundContainerId().getRankingScoreTypes().isEmpty()) //set a default if nothing else is already set
+                inst.getCompoundContainerId().setRankingScoreTypes(SiriusScore.class);
         } else {
-            inst.getID().setRankingScoreTypes(it.value);
+            inst.getCompoundContainerId().setRankingScoreTypes(it.value);
         }
 
         checkForInterruption();

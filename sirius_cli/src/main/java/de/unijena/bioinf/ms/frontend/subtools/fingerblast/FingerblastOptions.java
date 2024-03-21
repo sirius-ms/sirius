@@ -100,15 +100,15 @@ public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJo
                             inst.updateFormulaResult(it, FormulaScoring.class); //update only if there was something to remove
                     }));
             if (inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
-                inst.getID().getRankingScoreTypes().removeAll(List.of(TopCSIScore.class, ConfidenceScore.class, ConfidenceScoreApproximate.class));
-                inst.getID().setConfidenceScore(null);
-                inst.getID().setConfidenceScoreApproximate(null);
-                inst.getID().setUseApproximate(false); //todo proper default
+                inst.getCompoundContainerId().getRankingScoreTypes().removeAll(List.of(TopCSIScore.class, ConfidenceScore.class, ConfidenceScoreApproximate.class));
+                inst.getCompoundContainerId().setConfidenceScore(null);
+                inst.getCompoundContainerId().setConfidenceScoreApproximate(null);
+                inst.getCompoundContainerId().setUseApproximate(false); //todo proper default
                 inst.updateCompoundID();
-            } else if (inst.getID().getConfidenceScore().isPresent()) {
-                inst.getID().setConfidenceScore(null);
-                inst.getID().setConfidenceScoreApproximate(null);
-                inst.getID().setUseApproximate(false); //todo proper default
+            } else if (inst.getCompoundContainerId().getConfidenceScore().isPresent()) {
+                inst.getCompoundContainerId().setConfidenceScore(null);
+                inst.getCompoundContainerId().setConfidenceScoreApproximate(null);
+                inst.getCompoundContainerId().setUseApproximate(false); //todo proper default
                 inst.updateCompoundID();
             }
         };

@@ -174,9 +174,9 @@ public class InstanceImporter {
                 while (it.hasNext()) {
                     Instance id = it.next();
                     if (prog.isDone())
-                        prog.indeterminateProgress(id.getID().getCompoundName());
+                        prog.indeterminateProgress(id.getName());
                     else
-                        prog.progressMessage(id.getID().getCompoundName());
+                        prog.progressMessage(id.getName());
                     ll.add(id);
                 }
 
