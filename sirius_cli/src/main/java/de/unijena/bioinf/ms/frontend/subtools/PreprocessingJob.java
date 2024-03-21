@@ -28,7 +28,7 @@ import de.unijena.bioinf.projectspace.Instance;
  * The default here is to write summaries. So changing the default here can be used to change summary writing
  * behavior
  */
-public abstract class PreprocessingJob<P extends Iterable<? extends Instance>> extends BasicJJob<P> {
+public abstract class PreprocessingJob<P extends Iterable<Instance>> extends BasicJJob<P> {
 
     public PreprocessingJob() {
         super(JobType.SCHEDULER);

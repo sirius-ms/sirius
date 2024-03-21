@@ -52,11 +52,15 @@ public interface ProjectsProvider<P extends de.unijena.bioinf.ms.middleware.serv
 
     ProjectInfo openProjectSpace(@NotNull String projectId, @Nullable String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException;
 
-    default ProjectInfo createProjectSpace(String projectIdSuggestion) throws IOException {
-        return createProjectSpace(projectIdSuggestion, null);
+    default ProjectInfo createProjectSpace(String projectIdSuggestion, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
+        return createProjectSpace(projectIdSuggestion, null, optFields);
     }
 
-    ProjectInfo createProjectSpace(@NotNull String projectIdSuggestion, @Nullable String location) throws IOException;
+    default ProjectInfo createProjectSpace(@NotNull String projectIdSuggestion, @Nullable String location,  @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException{
+        return createProjectSpace(projectIdSuggestion, location, optFields, true);
+    }
+
+    ProjectInfo createProjectSpace(@NotNull String projectIdSuggestion, @Nullable String location,  @NotNull EnumSet<ProjectInfo.OptField> optFields, boolean failIfExists) throws IOException;
 
     boolean containsProject(@NotNull String projectId);
 

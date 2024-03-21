@@ -21,11 +21,9 @@ package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
-import de.unijena.bioinf.rest.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,11 +31,9 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.concurrent.TimeoutException;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -52,15 +48,23 @@ import java.util.logging.LogManager;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 @CommandLine.Command(name = "sirius", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false, showDefaultValues = true)
-public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>> implements RootOptions<I, M, PreprocessingJob<M>, PostprocessingJob<Boolean>> {
+public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends ProjectSpaceManager>> {
     public static final Logger LOG = LoggerFactory.getLogger(CLIRootOptions.class);
 
     protected final DefaultParameterConfigLoader defaultConfigOptions;
-    protected ProjectSpaceManagerFactory<I, M> spaceManagerFactory;
+    protected ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory;
 
-    public CLIRootOptions(@NotNull DefaultParameterConfigLoader defaultConfigOptions, @NotNull ProjectSpaceManagerFactory<I, M> spaceManagerFactory) {
+    public CLIRootOptions(@NotNull DefaultParameterConfigLoader defaultConfigOptions, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory) {
         this.defaultConfigOptions = defaultConfigOptions;
         this.spaceManagerFactory = spaceManagerFactory;
+    }
+
+    public ProjectSpaceManagerFactory<? extends ProjectSpaceManager> getSpaceManagerFactory() {
+        return spaceManagerFactory;
+    }
+
+    public DefaultParameterConfigLoader getDefaultConfigOptions() {
+        return defaultConfigOptions;
     }
 
     public enum LogLevel {
@@ -134,7 +138,6 @@ public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>
     }
     //endregion
 
-
     // region Options: INPUT/OUTPUT
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     @Option(names = {"--zip-provider"}, description = "Specify the Provider for handling zip compressed resources (e.g. project-space). Valid values: ${COMPLETION-CANDIDATES}", hidden = true, order = 298)
@@ -149,54 +152,6 @@ public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>
     public OutputOptions getOutput() {
         return psOpts;
     }
-
-    private M projectSpaceToWriteOn = null;
-
-    public ProjectSpaceManagerFactory<I, M> getSpaceManagerFactory() {
-        return spaceManagerFactory;
-    }
-
-    public void setSpaceManagerFactory(ProjectSpaceManagerFactory<I, M> spaceManagerFactory) {
-        this.spaceManagerFactory = spaceManagerFactory;
-    }
-
-    @Override
-    public M getProjectSpace() {
-        if (projectSpaceToWriteOn == null)
-            projectSpaceToWriteOn = configureProjectSpace();
-
-        return projectSpaceToWriteOn;
-    }
-
-    protected M configureProjectSpace() {
-        try {
-            M space = spaceManagerFactory.createOrOpen(psOpts.getOutputProjectLocation());
-            space.setCompoundIdFilter(cid -> {
-                if (cid.getIonMass().orElse(Double.NaN) <= maxMz)
-                    return true;
-                else {
-                    LOG.info("Skipping instance " + cid + " with mass: " + cid.getIonMass().orElse(Double.NaN) + " > " + maxMz);
-                    return false;
-                }
-            });
-
-
-            if (ApplicationCore.WEB_API.getAuthService().isLoggedIn() && ApplicationCore.WEB_API.getActiveSubscription() != null) {
-                try {
-                    space.checkAndFixDataFiles(NetUtils.checkThreadInterrupt(Thread.currentThread()));
-                } catch (TimeoutException | InterruptedException e) {
-                    LoggerFactory.getLogger(getClass()).warn("Could not check Fingerprint version on Project creation. " + e.getMessage());
-                } catch (Exception e) {
-                    LoggerFactory.getLogger(getClass()).error("Could not check Fingerprint version on Project creation due to an unknown error!", e);
-                }
-            }
-
-            return space;
-        } catch (IOException e) {
-            throw new CommandLine.PicocliException("Could not initialize workspace!", e);
-        }
-    }
-
 
     @CommandLine.ArgGroup(exclusive = false, order = 300)
     private InputFilesOptions inputFiles;
@@ -217,35 +172,21 @@ public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>
     public boolean assessDataQuality;
     //endregion
 
-    @NotNull
     @Override
-    public PreprocessingJob<M> makeDefaultPreprocessingJob() {
+    public @NotNull PreprocessingJob<? extends ProjectSpaceManager> makeDefaultPreprocessingJob() {
         return new PreprocessingJob<>() {
             @Override
-            protected M compute() throws Exception {
-                M space = getProjectSpace();
+            protected ProjectSpaceManager compute() throws Exception {
+                ProjectSpaceManager space = spaceManagerFactory.createOrOpen(psOpts.getOutputProjectLocation());;
                 InputFilesOptions input = getInput();
                 if (space != null) {
                     if (input != null)
-                        SiriusJobs.getGlobalJobManager().submitJob(new InstanceImporter(space, (exp) -> exp.getIonMass() < maxMz, (c) -> c.getIonMass().map(m -> m < maxMz).orElse(true), false, getOutput().isUpdateFingerprints()).makeImportJJob(input)).awaitResult();
+                        SiriusJobs.getGlobalJobManager().submitJob(new InstanceImporter(space, (exp) -> exp.getIonMass() < maxMz, (c) -> c.getIonMass().map(m -> m < maxMz).orElse(true)).makeImportJJob(input)).awaitResult();
                     if (space.size() < 1)
                         logInfo("No Input has been imported to Project-Space. Starting application without input data.");
                     return space;
                 }
                 throw new CommandLine.PicocliException("No Project-Space for writing output!");
-            }
-        };
-    }
-
-    @NotNull
-    @Override
-    public PostprocessingJob<Boolean> makeDefaultPostprocessingJob() {
-        return new PostprocessingJob<>() {
-            @Override
-            protected Boolean compute() throws Exception {
-                LOG.info("No Postprocessing specified. Closing project-space.");
-                getProjectSpace().close();
-                return true;
             }
         };
     }

@@ -36,12 +36,12 @@ import java.util.stream.Collectors;
 
 public class Instance {
     @NotNull
-    protected final ProjectSpaceManager<?> spaceManager;
+    protected final ProjectSpaceManager spaceManager;
     private CompoundContainer compoundCache;
 
     protected Map<FormulaResultId, FormulaResult> formulaResultCache = new HashMap<>();
 
-    protected Instance(@NotNull CompoundContainer compoundContainer, @NotNull ProjectSpaceManager<?> spaceManager) {
+    protected Instance(@NotNull CompoundContainer compoundContainer, @NotNull ProjectSpaceManager spaceManager) {
         this.compoundCache = compoundContainer;
         this.spaceManager = spaceManager;
     }
@@ -63,7 +63,7 @@ public class Instance {
         return getProjectSpaceManager().projectSpace();
     }
 
-    public ProjectSpaceManager<?> getProjectSpaceManager() {
+    public ProjectSpaceManager getProjectSpaceManager() {
         return spaceManager;
     }
 
@@ -330,5 +330,21 @@ public class Instance {
                     toRefresh.setAnnotation(k, v);
             });
         }
+    }
+
+    public synchronized void enableComputing(){
+        setComputing(true);
+    }
+
+    public synchronized void disableComputing(){
+        setComputing(false);
+    }
+
+    public synchronized void setComputing(boolean computing){
+        projectSpace().setFlags(CompoundContainerId.Flag.COMPUTING, computing, getID());
+    }
+
+    public synchronized boolean isComputing(){
+        return projectSpace().flag(getID(), CompoundContainerId.Flag.COMPUTING);
     }
 }

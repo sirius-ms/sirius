@@ -83,12 +83,12 @@ public class SimilarityMatrixWorkflow implements Workflow {
     private final static List<Class<? extends FormulaScore>> rankSores =
             List.of(TopCSIScore.class, ZodiacScore.class, SiriusScore.class);
     protected final SimilarityMatrixOptions options;
-    protected ProjectSpaceManager<?> ps;
+    protected ProjectSpaceManager ps;
     protected final ParameterConfig config;
 
-    protected final PreprocessingJob<ProjectSpaceManager<?>> ppj;
+    protected final PreprocessingJob<ProjectSpaceManager> ppj;
 
-    public SimilarityMatrixWorkflow(PreprocessingJob<ProjectSpaceManager<?>> ppj, SimilarityMatrixOptions options, ParameterConfig config) {
+    public SimilarityMatrixWorkflow(PreprocessingJob<ProjectSpaceManager> ppj, SimilarityMatrixOptions options, ParameterConfig config) {
         this.ppj = ppj;
         this.options = options;
         this.config = config;
@@ -465,36 +465,4 @@ public class SimilarityMatrixWorkflow implements Workflow {
         final FingerIdData data = ps.getProjectSpaceProperty(FingerIdDataProperty.class).get().getByCharge(xs.get(0).getID().getIonType().orElseGet(() -> xs.get(0).getExperiment().getPrecursorIonType()).getCharge());
 
     }
-/*
-    public double[][] pvalueEstimation(ProbabilityFingerprint[] fingerprints, FingerIdData data) {
-        final PredictionPerformance[] performances = data.getPerformances();
-        final double[] expectedFrequencies = new double[performances.length];
-        for (int k=0; k < performances.length; ++k) {
-            expectedFrequencies[k] = performances[k].getCount()/30d;
-        }
-        for (ProbabilityFingerprint fp : fingerprints) {
-            int k=0;
-            for (FPIter x : fp) {
-                expectedFrequencies[k] += unsmooth(x.getProbability(), 0.2);
-                ++k;
-            }
-        }
-        for (int i=0; i < expectedFrequencies.length; ++i) {
-            expectedFrequencies[i] /= (performances.length/30d + fingerprints.length);
-        }
-        final double[][] missmatches = new double[fingerprints.length][fingerprints.length];
-        MatrixUtils.parallelizeSymmetricMatrixComputation(missmatches, (i, j) -> {
-           double dist = 0;
-           for (FPIter2 pair : fingerprints[i].foreachPair(fingerprints[j])) {
-               dist += pair.getLeftProbability()*(1d-pair.getRightProbability()) + pair.getRightProbability()*(1d-pair.getLeftProbability());
-           }
-           return dist;
-        }).takeResult();
-
-        final SimpleIndepDP dp = new SimpleIndepDP(expectedFrequencies);
-        for (ProbabilityFingerprint fp : fingerprints) {
-
-        }
-    }
- */
 }

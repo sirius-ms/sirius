@@ -20,7 +20,10 @@
 package de.unijena.bioinf.ms.frontend.workflow;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.jjobs.*;
+import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.jjobs.JobProgressEventListener;
+import de.unijena.bioinf.jjobs.JobProgressMerger;
+import de.unijena.bioinf.jjobs.ProgressSupport;
 import de.unijena.bioinf.ms.frontend.subtools.*;
 import de.unijena.bioinf.ms.frontend.subtools.config.AddConfigsJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -102,11 +105,12 @@ public class ToolChainWorkflow implements Workflow, ProgressSupport {
                     .map(JobProgressEvent::getMaxDelta).orElse(0L) + (long) (toolchain.size() + 1) * iteratorSourceSize * 100);
 
             // build toolchain
-            final List<InstanceJob.Factory<?>> instanceJobChain = new ArrayList<>(toolchain.size()+1);
+            final List<InstanceJob.Factory<?>> instanceJobChain = new ArrayList<>(toolchain.size() + 1);
             //job factory for job that add config annotations to an instance
             instanceJobChain.add(new InstanceJob.Factory<>(
                     (jj) -> new AddConfigsJob(parameters),
-                    (inst) -> {}
+                    (inst) -> {
+                    }
             ));
 
             // get buffer size
@@ -143,9 +147,9 @@ public class ToolChainWorkflow implements Workflow, ProgressSupport {
             checkForCancellation();
             if (postprocessingJob != null) {
                 LOG.info("Executing Postprocessing...");
+                postprocessingJob.setInput(iteratorSource, parameters);
                 submitter.submitJob(postprocessingJob).awaitResult();
             }
-
         } catch (ExecutionException | RuntimeException e) {
             if (e.getCause() instanceof CancellationException || e.getCause() instanceof InterruptedException)
                 LOG.info("Workflow was canceled by: " + e.getMessage());

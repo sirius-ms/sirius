@@ -25,6 +25,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 
-public interface ProjectSpaceManagerFactory<I extends Instance, M extends ProjectSpaceManager<I>> {
+public interface ProjectSpaceManagerFactory<M extends ProjectSpaceManager> {
     M createOrOpen(@Nullable Path projectLocation) throws IOException;
 }

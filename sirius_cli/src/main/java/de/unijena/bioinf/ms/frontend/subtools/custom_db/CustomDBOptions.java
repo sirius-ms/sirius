@@ -137,7 +137,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
     }
 
     @Override
-    public Workflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
+    public Workflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
         return new CustomDBWorkflow(rootOptions.getInput());
     }
 

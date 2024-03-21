@@ -177,6 +177,18 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/ProjectInfoOptField"
+              },
+              "default": []
+            }
           }
         ],
         "responses": {
@@ -2940,7 +2952,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Fragmentation Tree in internal format.\n\n NOTE: This endpoint is likely to be removed in future versions of the API.",
+            "description": "Fragmentation Tree in internal format.\n \u003cp\u003e\n NOTE: This endpoint is likely to be removed in future versions of the API.",
             "content": {
               "application/json": {
                 "schema": {
@@ -4885,12 +4897,6 @@
             }
           },
           "command": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "inputPaths": {
             "type": "array",
             "items": {
               "type": "string"

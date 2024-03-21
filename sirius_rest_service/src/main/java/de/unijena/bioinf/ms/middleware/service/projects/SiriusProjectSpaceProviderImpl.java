@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.service.projects;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastSubToolJob;
 import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
 import de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEventImpl;
@@ -28,6 +29,7 @@ import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.fingerid.*;
 import de.unijena.bioinf.rest.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +48,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent.Type.*;
@@ -53,17 +56,32 @@ import static de.unijena.bioinf.projectspace.ProjectSpaceIO.*;
 
 public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusProjectSpaceImpl> {
 
-    protected final SiriusProjectSpaceManagerFactory projectSpaceManagerFactory = new SiriusProjectSpaceManagerFactory();
+    private final ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory;
 
-    private final HashMap<String, ProjectSpaceManager<?>> projectSpaces = new HashMap<>();
+    private final HashMap<String, ProjectSpaceManager> projectSpaces = new HashMap<>();
 
     protected final ReadWriteLock projectSpaceLock = new ReentrantReadWriteLock();
     private final ProjectSpaceIO projectIO = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig());
 
     private final EventService<?> eventService;
 
-    public SiriusProjectSpaceProviderImpl(EventService<?> eventService) {
+    public SiriusProjectSpaceProviderImpl(ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory, EventService<?> eventService) {
+        this.projectSpaceManagerFactory = projectSpaceManagerFactory;
         this.eventService = eventService;
+        //enable gui support
+        {
+            // modify fingerid subtool so that it works with reduced GUI candidate list.
+            FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidatesTopK.class);
+            FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidateFingerprintsTopK.class);
+
+            final @NotNull Supplier<ProjectSpaceConfiguration> dc = ProjectSpaceManager.DEFAULT_CONFIG;
+            ProjectSpaceManager.DEFAULT_CONFIG = () -> {
+                final ProjectSpaceConfiguration config = dc.get();
+                config.registerComponent(FormulaResult.class, FBCandidatesTopK.class, new FBCandidatesSerializerTopK(FBCandidateNumber.GUI_DEFAULT));
+                config.registerComponent(FormulaResult.class, FBCandidateFingerprintsTopK.class, new FBCandidateFingerprintSerializerTopK(FBCandidateNumber.GUI_DEFAULT));
+                return config;
+            };
+        }
     }
 
 
@@ -80,7 +98,7 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
         return getProjectSpace(name).map(ps -> new SiriusProjectSpaceImpl(name, ps));
     }
 
-    protected Optional<ProjectSpaceManager<?>> getProjectSpace(String name) {
+    protected Optional<ProjectSpaceManager> getProjectSpace(String name) {
         projectSpaceLock.readLock().lock();
         try {
             return Optional.ofNullable(projectSpaces.get(name));
@@ -139,52 +157,42 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
                 throw new ResponseStatusException(HttpStatus.SEE_OTHER, "A project with id '" + projectId + "' is already opened.");
             }
 
-            Path p = pathToProject != null && !pathToProject.isBlank() ? Path.of(pathToProject) : defaultProjectDir().resolve(projectId);
-            if (!isExistingProjectspaceDirectory(p) && !isZipProjectSpace(p)) {
+            Path location = pathToProject != null && !pathToProject.isBlank() ? Path.of(pathToProject) : defaultProjectDir().resolve(projectId);
+            if (!isExistingProjectspaceDirectory(location) && !isZipProjectSpace(location)) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "'" + projectId + "' is no valid SIRIUS project space.");
             }
 
-            SiriusProjectSpace rawProject = projectIO.openExistingProjectSpace(p);
-            registerEventListeners(projectId, rawProject);
-            projectSpaces.put(projectId, projectSpaceManagerFactory.create(rawProject));
-            eventService.sendEvent(ServerEvents.newProjectEvent(projectId, PROJECT_OPENED));
-            return createProjectInfo(projectId, rawProject, optFields);
+            return createOrOpen(projectId, location, optFields);
         } finally {
             lock.unlock();
         }
     }
 
-    public ProjectInfo addProjectSpace(@NotNull String nameSuggestion, @NotNull SiriusProjectSpace projectSpaceToAdd) {
-        return addProjectSpace(nameSuggestion, projectSpaceManagerFactory.create(projectSpaceToAdd));
-    }
-
-    public ProjectInfo addProjectSpace(@NotNull String nameSuggestion, @NotNull ProjectSpaceManager<?> projectSpaceToAdd) {
-        return ensureUniqueName(validateId(nameSuggestion), (name) -> {
-            registerEventListeners(name, projectSpaceToAdd.projectSpace());
-            projectSpaces.put(name, projectSpaceToAdd);
-            eventService.sendEvent(ServerEvents.newProjectEvent(name, PROJECT_OPENED));
-            return ProjectInfo.of(name, projectSpaceToAdd.projectSpace().getLocation());
-        });
-    }
-
-    public ProjectInfo createProjectSpace(@NotNull String projectIdSuggestion, @Nullable String path){
-        return ensureUniqueName(validateId(projectIdSuggestion), (name) -> {
+    @Override
+    public ProjectInfo createProjectSpace(@NotNull String projectIdSuggestion, @Nullable String path, @NotNull EnumSet<ProjectInfo.OptField> optFields, boolean failIfExists) {
+        return ensureUniqueName(validateId(projectIdSuggestion), (projectId) -> {
             try {
-                Path location = path != null && !path.isBlank() ? Path.of(path) : defaultProjectDir().resolve(name);
+                Path location = path != null && !path.isBlank() ? Path.of(path) : defaultProjectDir().resolve(projectId);
 
-                if (Files.exists(location) && !(Files.isDirectory(location) && FileUtils.listAndClose(location, s -> s.findAny().isEmpty())))
-                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Location '" + location.toAbsolutePath() +
-                            "' already exists and is not an empty directory. Cannot create new project space here.");
+                if (!failIfExists)
+                    if (Files.exists(location) && !(Files.isDirectory(location) && FileUtils.listAndClose(location, s -> s.findAny().isEmpty())))
+                        throw new ResponseStatusException(HttpStatus.CONFLICT, "Location '" + location.toAbsolutePath() +
+                                "' already exists and is not an empty directory. Cannot create new project space here.");
 
-                SiriusProjectSpace rawProject = projectIO.createNewProjectSpace(location);
-                registerEventListeners(name, rawProject);
-                projectSpaces.put(name, projectSpaceManagerFactory.create(rawProject));
-                eventService.sendEvent(ServerEvents.newProjectEvent(name, PROJECT_OPENED));
-                return ProjectInfo.of(name, location);
+                return createOrOpen(projectId, location, optFields);
             } catch (IOException e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when accessing file system to create project.", e);
             }
         });
+    }
+
+    private ProjectInfo createOrOpen(String projectId, Path location, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
+        ProjectSpaceManager psm = projectSpaceManagerFactory.createOrOpen(location);
+        SiriusProjectSpace rawProject = psm.projectSpace();
+        registerEventListeners(projectId, rawProject);
+        projectSpaces.put(projectId, psm);
+        eventService.sendEvent(ServerEvents.newProjectEvent(projectId, PROJECT_OPENED));
+        return createProjectInfo(projectId, rawProject, optFields);
     }
 
     @Override
@@ -195,7 +203,7 @@ public class SiriusProjectSpaceProviderImpl implements ProjectsProvider<SiriusPr
     public void closeProjectSpace(String projectId) throws IOException {
         projectSpaceLock.writeLock().lock();
         try {
-            final ProjectSpaceManager<?> space = projectSpaces.get(projectId);
+            final ProjectSpaceManager space = projectSpaces.get(projectId);
             if (space == null) {
                 throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Project space with name '" + projectId + "' not found!");
             }

@@ -159,7 +159,7 @@ No authorization required
 
 ## createProjectSpace
 
-> ProjectInfo createProjectSpace(projectId, pathToProject)
+> ProjectInfo createProjectSpace(projectId, pathToProject, optFields)
 
 Create and open a new project-space at given location and make it accessible via the given projectId.
 
@@ -183,8 +183,9 @@ public class Example {
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-].
         String pathToProject = "pathToProject_example"; // String | local file path where the project will be created. If NULL, project will be stored by its projectId in default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
+        List<ProjectInfoOptField> optFields = Arrays.asList(); // List<ProjectInfoOptField> | 
         try {
-            ProjectInfo result = apiInstance.createProjectSpace(projectId, pathToProject);
+            ProjectInfo result = apiInstance.createProjectSpace(projectId, pathToProject, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#createProjectSpace");
@@ -204,6 +205,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-]. | |
 | **pathToProject** | **String**| local file path where the project will be created. If NULL, project will be stored by its projectId in default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases. | [optional] |
+| **optFields** | [**List&lt;ProjectInfoOptField&gt;**](ProjectInfoOptField.md)|  | [optional] |
 
 ### Return type
 

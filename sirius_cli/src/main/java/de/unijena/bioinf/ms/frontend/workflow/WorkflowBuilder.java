@@ -44,6 +44,10 @@ import de.unijena.bioinf.ms.frontend.subtools.summaries.SummaryOptions;
 import de.unijena.bioinf.ms.frontend.subtools.updatefps.UpdateFingerprintOptions;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import de.unijena.bioinf.ms.frontend.utils.AutoCompletionScript;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -52,6 +56,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 /**
  * This class is used to create a toolchain workflow to be executed
@@ -75,7 +80,7 @@ import java.util.stream.Stream;
  * On the other hand I do not think it is performance critical.
  */
 
-public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
+public class WorkflowBuilder{
 
     private final InstanceBufferFactory<?> bufferFactory;
     //root
@@ -85,7 +90,7 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
         return rootSpec;
     }
 
-    public final R rootOptions;
+    public final RootOptions<?> rootOptions;
 
     //global configs (subtool)
     DefaultParameterConfigLoader configOptionLoader;
@@ -117,13 +122,30 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
 
     protected final @NotNull List<StandaloneTool<?>> additionalTools;
 
-    public WorkflowBuilder(@NotNull R rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, InstanceBufferFactory<?> bufferFactory) throws IOException {
-        this(rootOptions, configOptionLoader, bufferFactory, List.of());
+    protected final @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory;
+
+    boolean closeProject = true;
+
+    public WorkflowBuilder(@NotNull CLIRootOptions rootOptions, @NotNull InstanceBufferFactory<?> bufferFactory) throws IOException {
+        this(rootOptions, rootOptions.getDefaultConfigOptions(), bufferFactory, rootOptions.getSpaceManagerFactory());
     }
 
-    public WorkflowBuilder(@NotNull R rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, InstanceBufferFactory<?> bufferFactory, @NotNull List<StandaloneTool<?>> additionalTools) throws IOException {
+    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, @NotNull InstanceBufferFactory<?> bufferFactory, @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory, boolean closeProject) throws IOException {
+        this(rootOptions, configOptionLoader,bufferFactory,spaceManagerFactory);
+        this.closeProject = closeProject;
+    }
+    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, @NotNull InstanceBufferFactory<?> bufferFactory, @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory) throws IOException {
+        this(rootOptions, configOptionLoader, bufferFactory, spaceManagerFactory, List.of());
+    }
+
+    public WorkflowBuilder(@NotNull CLIRootOptions rootOptions, @NotNull InstanceBufferFactory<?> bufferFactory, @NotNull List<StandaloneTool<?>> additionalTools) {
+        this(rootOptions, rootOptions.getDefaultConfigOptions(), bufferFactory, rootOptions.getSpaceManagerFactory(), additionalTools);
+    }
+
+    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, @NotNull InstanceBufferFactory<?> bufferFactory, @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory, @NotNull List<StandaloneTool<?>> additionalTools) {
         this.bufferFactory = bufferFactory;
         this.rootOptions = rootOptions;
+        this.spaceManagerFactory = spaceManagerFactory;
         this.configOptionLoader = configOptionLoader;
         this.additionalTools = additionalTools;
 
@@ -260,7 +282,7 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
                 if (parseResult.commandSpec().commandLine().getCommand() instanceof StandaloneTool)
                     return ((StandaloneTool<?>) parseResult.commandSpec().commandLine().getCommand()).makeWorkflow(rootOptions, configOptionLoader.config);
                 if (parseResult.commandSpec().commandLine().getCommand() instanceof PreprocessingTool)
-                    preproJob = ((PreprocessingTool<?>) parseResult.commandSpec().commandLine().getCommand()).makePreprocessingJob(rootOptions, configOptionLoader.config);
+                    preproJob = ((PreprocessingTool<?>) parseResult.commandSpec().commandLine().getCommand()).makePreprocessingJob(rootOptions.getInput(), rootOptions.getOutput(), spaceManagerFactory, configOptionLoader.config);
                 else
                     execute(parseResult.commandSpec().commandLine(), toolchain, toolchainOptions);
             } else {
@@ -273,7 +295,8 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
             while (parseResult.hasSubcommand()) {
                 parseResult = parseResult.subcommand();
                 if (parseResult.commandSpec().commandLine().getCommand() instanceof PostprocessingTool) {
-                    postproJob = ((PostprocessingTool<?>) parseResult.commandSpec().commandLine().getCommand()).makePostprocessingJob(rootOptions, configOptionLoader.config);
+                    postproJob = ((PostprocessingTool<?>) parseResult.commandSpec().commandLine().getCommand())
+                            .makePostprocessingJob();
                     break;
                 } else {
                     execute(parseResult.commandSpec().commandLine(), toolchain, toolchainOptions);
@@ -282,8 +305,8 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
 
             if (preproJob == null)
                 preproJob = rootOptions.makeDefaultPreprocessingJob();
-            if (postproJob == null)
-                postproJob = rootOptions.makeDefaultPostprocessingJob();
+            if (closeProject && postproJob == null)
+                postproJob = new ClosingProjectPostprocessor();
 
             //find dependent jobs
             assignEarliestInputProvider(toolchain, toolchainOptions);
@@ -298,7 +321,7 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
             for (int i = 0; i < toolchain.size(); i++) {
                 ToolChainJob.Factory<?> factory = toolchain.get(i);
                 ToolChainOptions<?, ?> options = toolchainOptions.get(i);
-                for (int j = i-1; j >= 0; j--) {
+                for (int j = i - 1; j >= 0; j--) {
                     ToolChainOptions<?, ?> probableInputProvider = toolchainOptions.get(j);
                     ToolChainJob.Factory<?> probableInputProviderFactory = toolchain.get(j);
 
@@ -347,5 +370,33 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
                     .flatMap(Collection::stream).collect(Collectors.toSet());
         }
         reachable.stream().map(toolChainTools::get).forEach(sub -> task.addInvalidator(sub.getInvalidator()));
+    }
+
+    private static class ClosingProjectPostprocessor extends PostprocessingJob<Void> {
+
+        private Stream<? extends Instance> instanceStream;
+
+        @Override
+        public void setInput(Iterable<? extends Instance> instances, ParameterConfig config) {
+            this.instanceStream = StreamSupport.stream(instances.spliterator(), false);
+        }
+
+        @Override
+        protected Void compute() {
+            instanceStream.map(Instance::getProjectSpaceManager).distinct().forEach(ps -> {
+                try {
+                    ps.close();
+                } catch (IOException e) {
+                    LoggerFactory.getLogger(getClass()).warn("Error when closing Project after workflow!", e);
+                }
+            });
+            return null;
+        }
+
+        @Override
+        protected void cleanup() {
+            instanceStream = null;
+            super.cleanup();
+        }
     }
 }

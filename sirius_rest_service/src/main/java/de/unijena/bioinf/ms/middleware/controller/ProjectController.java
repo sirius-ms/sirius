@@ -20,9 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
-import com.github.f4b6a3.tsid.TsidCreator;
 import de.unijena.bioinf.ms.middleware.model.MultipartInputResource;
-import de.unijena.bioinf.ms.middleware.model.compute.ImportLocalFilesSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.ImportMultipartFilesSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
@@ -41,9 +39,9 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
@@ -77,7 +75,7 @@ public class ProjectController {
      */
     @GetMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ProjectInfo getProjectSpace(@PathVariable String projectId, @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields) {
-        return projectsProvider.getProjectInfoOrThrow(projectId, optFields);
+        return projectsProvider.getProjectInfoOrThrow(projectId, removeNone(optFields));
     }
 
     /**
@@ -91,7 +89,7 @@ public class ProjectController {
                                         @Deprecated @RequestParam(required = false) String pathToProject,
                                         @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields
     ) throws IOException {
-        return projectsProvider.openProjectSpace(projectId, pathToProject, optFields);
+        return projectsProvider.openProjectSpace(projectId, pathToProject, removeNone(optFields));
     }
 
     /**
@@ -102,9 +100,10 @@ public class ProjectController {
      */
     @PostMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ProjectInfo createProjectSpace(@PathVariable String projectId,
-                                          @Deprecated @RequestParam(required = false) String pathToProject
+                                          @Deprecated @RequestParam(required = false) String pathToProject,
+                                          @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields
     ) throws IOException {
-        return projectsProvider.createProjectSpace(projectId, pathToProject);
+        return projectsProvider.createProjectSpace(projectId, pathToProject, removeNone(optFields));
     }
 
     /**
@@ -142,24 +141,11 @@ public class ProjectController {
     ) {
         Project p = projectsProvider.getProjectOrThrow(projectId);
         try {
-            //todo nightsky: WORKAROUND for old lcms workflow ->  replace with new one.
-            String tmpDir = System.getProperty("java.io.tmpdir");
-
-            Path tmpdir = Path.of(tmpDir).resolve("sirius-lcms-import-" + projectId + "-" + TsidCreator.getTsid());
-            Files.createDirectories(tmpdir);
-            List<String> files = new ArrayList<>();
-
-            for (MultipartFile f : inputFiles){
-                Path nuFile = tmpdir.resolve(Optional.ofNullable(f.getOriginalFilename()).orElse(TsidCreator.getTsid().toString()));
-                f.transferTo(nuFile);
-                files.add(nuFile.toAbsolutePath().toString());
-            }
-
-            ImportLocalFilesSubmission sub = new ImportLocalFilesSubmission();
-            sub.setInputPaths(files);
+            ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
+            sub.setInputFiles(List.of(inputFiles));
             sub.setAlignLCMSRuns(alignRuns);
             sub.setAllowMs1OnlyData(allowMs1Only);
-            return computeService.createAndSubmitImportJob(p, sub, removeNone(optFields));
+            return computeService.createAndSubmitMsDataImportJob(p, sub, removeNone(optFields));
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when loading lcms data.", e);
         }
@@ -178,11 +164,11 @@ public class ProjectController {
                                 @RequestParam(defaultValue = "true") boolean alignRuns,
                                 @RequestParam(defaultValue = "true") boolean allowMs1Only
     ) {
-        //todo nightsky: NOT IMPLEMENTED
-        return projectsProvider.getProjectOrThrow(projectId).importMsRunData(
-                Arrays.stream(inputFiles).map(MultipartInputResource::new).collect(Collectors.toList()),
-                alignRuns, allowMs1Only
-        );
+        ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
+        sub.setInputFiles(List.of(inputFiles));
+        sub.setAlignLCMSRuns(alignRuns);
+        sub.setAllowMs1OnlyData(allowMs1Only);
+        return projectsProvider.getProjectOrThrow(projectId).importMsRunData(sub.asPathInputResource(), alignRuns, allowMs1Only);
     }
 
 
@@ -204,10 +190,10 @@ public class ProjectController {
 
         Project p = projectsProvider.getProjectOrThrow(projectId);
         ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
-        sub.setInputFiles(Arrays.stream(inputFiles).collect(Collectors.toList()));
+        sub.setInputFiles(List.of(inputFiles));
         sub.setIgnoreFormulas(ignoreFormulas);
         sub.setAllowMs1OnlyData(allowMs1Only);
-        return computeService.createAndSubmitPeakListImportJob(p, sub, optFields);
+        return computeService.createAndSubmitPeakListImportJob(p, sub, removeNone(optFields));
     }
 
     /**
@@ -243,7 +229,7 @@ public class ProjectController {
     @Deprecated
     @PutMapping(value = "/{projectId}/copy", produces = MediaType.APPLICATION_JSON_VALUE)
     public ProjectInfo copyProjectSpace(@PathVariable String projectId, @RequestParam String pathToCopiedProject, @RequestParam(required = false) String copyProjectId, @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields) throws IOException {
-        return projectsProvider.copyProjectSpace(projectId, copyProjectId, pathToCopiedProject, optFields);
+        return projectsProvider.copyProjectSpace(projectId, copyProjectId, pathToCopiedProject, removeNone(optFields));
     }
 
     @Operation(summary = "Get CSI:FingerID fingerprint (prediction vector) definition")

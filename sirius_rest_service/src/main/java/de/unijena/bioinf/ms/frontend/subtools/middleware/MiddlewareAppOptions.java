@@ -19,20 +19,32 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.middleware;
 
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.ms.frontend.subtools.OutputOptions;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
+import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
+import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
+import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import lombok.Getter;
+import lombok.Setter;
 import picocli.CommandLine;
 
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.EnumSet;
+import java.util.Optional;
+
 @CommandLine.Command(name = "asService", aliases = {"rest", "REST"}, description = "EXPERIMENTAL/UNSTABLE: Starts SIRIUS as a background (REST) service that can be requested via a REST-API", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
-public class MiddlewareAppOptions<I extends Instance, P extends ProjectSpaceManager<I>> implements StandaloneTool<MiddlewareAppOptions.Flow<I, P>> {
+public class MiddlewareAppOptions<I extends Instance> implements StandaloneTool<MiddlewareAppOptions<I>.Flow> {
+    @Setter
+    private ProjectsProvider<?> projectsProvider;
+    @Setter
+    private GuiService<?> guiService;
 
     @CommandLine.Option(names = {"--port", "-p"}, description = "Specify the port on which the SIRIUS REST Service should run (Default: 8080).", defaultValue = "8080")
     private void setPort(int port) {
@@ -53,8 +65,8 @@ public class MiddlewareAppOptions<I extends Instance, P extends ProjectSpaceMana
     private boolean startGui;
 
     @Override
-    public Flow<I, P> makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
-        return new Flow<>((RootOptions<I, P, PreprocessingJob<P>, ?>) rootOptions, config);
+    public Flow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
+        return new Flow(rootOptions.getOutput());
     }
 
     @Override
@@ -62,21 +74,32 @@ public class MiddlewareAppOptions<I extends Instance, P extends ProjectSpaceMana
         return super.hashCode();
     }
 
-    public static class Flow<I extends Instance, P extends ProjectSpaceManager<I>> implements Workflow {
+    public class Flow implements Workflow {
+        private final OutputOptions output;
 
-        private final PreprocessingJob<P> preproJob;
-        private final ParameterConfig config;
-
-
-        private Flow(RootOptions<I, P, PreprocessingJob<P>, ?> opts, ParameterConfig config) {
-            this.preproJob = opts.makeDefaultPreprocessingJob();
-            this.config = config;
+        private Flow(OutputOptions output) {
+            this.output = output;
         }
 
         @Override
         public void run() {
             //do the project importing from the commandline
-            SiriusJobs.getGlobalJobManager().submitJob(preproJob).takeResult();
+            Optional<Path> location = Optional.ofNullable(output).map(OutputOptions::getOutputProjectLocation);
+            if (location.isPresent() || MiddlewareAppOptions.this.isStartGui()) {
+                Path p = location.orElse(FileUtils.createTmpProjectSpaceLocation(null)); //todo should be part of project provider to be implementation independent
+                try {
+                    //open default project if given
+                    ProjectInfo startPs = projectsProvider.createProjectSpace(
+                                    p.getFileName().toString(),
+                                    p.toAbsolutePath().toString(),
+                                    EnumSet.noneOf(ProjectInfo.OptField.class), false);
+
+                    if (isStartGui())
+                        guiService.createGuiInstance(startPs.getProjectId());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
     }
 }

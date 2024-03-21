@@ -32,7 +32,6 @@ import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.mgf.MgfWriter;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
-import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
@@ -56,13 +55,13 @@ import java.util.function.Consumer;
 public class MgfExporterWorkflow implements Workflow {
     private final Path outputPath;
     private final MgfWriter mgfWriter;
-    private final PreprocessingJob<? extends Iterable<Instance>> ppj;
+    private final PreprocessingJob<?> ppj;
     private final Optional<Path> quantPath;
 
     private final AtomicBoolean useFeatureId;
 
 
-    public MgfExporterWorkflow(PreprocessingJob<? extends Iterable<Instance>> ppj, MgfExporterOptions options, ParameterConfig config) {
+    public MgfExporterWorkflow(PreprocessingJob<?> ppj, MgfExporterOptions options) {
         outputPath = options.output;
         Deviation mergeMs2Deviation = new Deviation(options.ppmDev);
         mgfWriter = new MgfWriter(options.writeMs1, options.mergeMs2, mergeMs2Deviation, true);
@@ -75,7 +74,7 @@ public class MgfExporterWorkflow implements Workflow {
     @Override
     public void run() {
         try {
-            final Iterable<Instance> ps = SiriusJobs.getGlobalJobManager().submitJob(ppj).awaitResult();
+            final Iterable<? extends Instance> ps = SiriusJobs.getGlobalJobManager().submitJob(ppj).awaitResult();
             boolean zeroIndex;
             {
                 final AtomicInteger minIndex = new AtomicInteger(Integer.MAX_VALUE);
@@ -88,8 +87,8 @@ public class MgfExporterWorkflow implements Workflow {
                         id.getFeatureId().ifPresentOrElse(ids::add, (() -> useFeatureId.set(false)));
                 };
 
-                if (ps instanceof ProjectSpaceManager)
-                    ((ProjectSpaceManager<Instance>) ps).projectSpace().forEach(checkId);
+                if (ps instanceof ProjectSpaceManager psm)
+                    psm.projectSpace().forEach(checkId);
                 else
                     ps.forEach(i -> checkId.accept(i.getID()));
 
@@ -141,7 +140,7 @@ public class MgfExporterWorkflow implements Workflow {
         return String.valueOf(zeroIndex ? inst.getID().getCompoundIndex() + 1 : inst.getID().getCompoundIndex());
     }
 
-    private void writeQuantifiactionTable(Iterable<Instance> ps, Path path, boolean zeroIndex) throws IOException {
+    private void writeQuantifiactionTable(Iterable<? extends Instance> ps, Path path, boolean zeroIndex) throws IOException {
         final HashMap<String, QuantInfo> compounds = new HashMap<>();
         final Set<String> sampleNames = new HashSet<>();
 

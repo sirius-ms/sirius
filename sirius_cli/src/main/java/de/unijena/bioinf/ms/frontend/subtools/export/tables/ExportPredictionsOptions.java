@@ -21,7 +21,6 @@ package de.unijena.bioinf.ms.frontend.subtools.export.tables;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
@@ -71,8 +70,8 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
     protected PredictionsOptions predictionsOptions;
 
     @Override
-    public ExportPredictionWorkflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
-        return new ExportPredictionWorkflow((PreprocessingJob<? extends Iterable<Instance>>) rootOptions.makeDefaultPreprocessingJob(), this, config);
+    public ExportPredictionWorkflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
+        return new ExportPredictionWorkflow(rootOptions.makeDefaultPreprocessingJob(), this, config);
     }
 
     public static class ExportPredictionJJob extends BasicJJob<Boolean> {
@@ -295,10 +294,10 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
 
     public static class ExportPredictionWorkflow implements Workflow {
 
-        private final PreprocessingJob<? extends Iterable<Instance>> job;
+        private final PreprocessingJob<?> job;
         private final ExportPredictionsOptions options;
 
-        public ExportPredictionWorkflow(PreprocessingJob<? extends Iterable<Instance>> job, ExportPredictionsOptions options, ParameterConfig config) {
+        public ExportPredictionWorkflow(PreprocessingJob<?> job, ExportPredictionsOptions options, ParameterConfig config) {
             this.options = options;
             this.job = job;
         }
@@ -306,7 +305,7 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
         @Override
         public void run() {
             try {
-                final Iterable<Instance> ps = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
+                final Iterable<? extends Instance> ps = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
                 try {
                     SiriusJobs.getGlobalJobManager().submitJob(new ExportPredictionJJob(options.predictionsOptions, options.polarity, ps, () -> Files.newBufferedWriter(options.output))).awaitResult();
                 } catch (ExecutionException e) {
