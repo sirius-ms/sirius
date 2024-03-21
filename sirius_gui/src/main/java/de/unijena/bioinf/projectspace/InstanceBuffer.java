@@ -50,7 +50,7 @@ public class InstanceBuffer {
         lock.lock();
         try {
             if (buffer.remove(toRemove)) {
-                if (!toRemove.getID().hasFlag(CompoundContainerId.Flag.COMPUTING)) {
+                if (!toRemove.isComputing()) {
                     toRemove.clearFormulaResultsCache();
                     toRemove.clearCompoundCache();
                 }

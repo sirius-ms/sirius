@@ -81,7 +81,7 @@ public class ZodiacSubToolJob extends DataSetJob {
             return inst.loadCompoundContainer().hasResults() && inst.loadFormulaResults(FormulaScoring.class).stream().anyMatch(res -> res.getCandidate().getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class));
         } catch (Exception e) {
             //only debug output, since the same instance will fail again below in computeAndAnnotateResult
-            logDebug("Error while reading molecular formula scores for "+inst.getID().getDirectoryName()+". Error: "+e.getMessage());
+            logDebug("Error while reading molecular formula scores for "+inst.getId()+". Error: "+e.getMessage());
             return false;
         }
     }
@@ -95,7 +95,7 @@ public class ZodiacSubToolJob extends DataSetJob {
                             try {
                                 return in.loadFormulaResults(List.of(SiriusScore.class), FormulaScoring.class, FTree.class).stream().map(SScored::getCandidate).collect(Collectors.toList());
                             } catch (Exception e) {
-                                logWarn("Error while reading molecular formula scores for "+in.getID().getDirectoryName()+". Exclude it from ZODIAC computation. Error: "+e.getMessage());
+                                logWarn("Error while reading molecular formula scores for "+in.getId()+". Exclude it from ZODIAC computation. Error: "+e.getMessage());
                                 return Collections.emptyList(); //empty lists are filtered below.
                             }}
                 ));
@@ -245,7 +245,7 @@ public class ZodiacSubToolJob extends DataSetJob {
         //add score and set new Ranking score
         instances.forEach(inst -> {
             try {
-//                System.out.println(inst.getID().getDirectoryName());
+//                System.out.println(inst.getId());
                 final Map<FTree, ZodiacScore> sTress = scoreResults.get(inst.getExperiment());
                 final List<FormulaResult> formulaResults = input.get(inst.getExperiment());
                 if (formulaResults == null || sTress == null) {
@@ -264,11 +264,11 @@ public class ZodiacSubToolJob extends DataSetJob {
 
                 // set zodiac as ranking score
                 if (inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
-                    inst.getID().setRankingScoreTypes(ZodiacScore.class, SiriusScore.class);
+                    inst.getCompoundContainerId().setRankingScoreTypes(ZodiacScore.class, SiriusScore.class);
                     inst.updateCompoundID();
                 }
             } catch (Throwable e) {
-                logError("Error when retrieving Zodiac Results for instance: " + inst.getID().getDirectoryName(), e);
+                logError("Error when retrieving Zodiac Results for instance: " + inst.getId(), e);
             }
         });
 

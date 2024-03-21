@@ -62,7 +62,7 @@ public class UpdateFingerprintsWorkflow extends BasicMasterJJob<Boolean> impleme
         updateProgress(0, max, progress.getAndIncrement(), "Starting Update...");
         // remove fingerprint related results
         projectSpace.forEach(i -> invalidators.forEach(inv -> {
-            updateProgress(0, max, progress.getAndIncrement(), "Deleting results for '" + i.getID().getCompoundName() + "'...");
+            updateProgress(0, max, progress.getAndIncrement(), "Deleting results for '" + i.getName() + "'...");
             inv.accept(i);
         }));
         //remove Fingerprint data

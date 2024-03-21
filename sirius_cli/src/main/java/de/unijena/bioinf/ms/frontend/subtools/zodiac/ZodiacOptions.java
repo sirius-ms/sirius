@@ -174,7 +174,7 @@ public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSet
                             inst.updateFormulaResult(it, FormulaScoring.class); //update only if there was something to remove
                     }));
             if (inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
-                inst.getID().getRankingScoreTypes().remove(ZodiacScore.class);
+                inst.getCompoundContainerId().getRankingScoreTypes().remove(ZodiacScore.class);
                 inst.updateCompoundID();
             }
         };

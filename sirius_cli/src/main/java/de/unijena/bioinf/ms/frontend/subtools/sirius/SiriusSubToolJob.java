@@ -108,13 +108,13 @@ public class SiriusSubToolJob extends InstanceJob {
 
         // set sirius to ranking score
         if (exp.getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto())
-            inst.getID().setRankingScoreTypes(new ArrayList<>(List.of(SiriusScore.class)));
+            inst.getCompoundContainerId().setRankingScoreTypes(new ArrayList<>(List.of(SiriusScore.class)));
 
         updateProgress(currentProgress().getProgress() + 3);
         checkForInterruption();
 
         //make possible adducts persistent without rewriting whole experiment
-        inst.getID().setDetectedAdducts(exp.getAnnotationOrNull(DetectedAdducts.class));
+        inst.getCompoundContainerId().setDetectedAdducts(exp.getAnnotationOrNull(DetectedAdducts.class));
         inst.updateCompoundID();
         updateProgress(currentProgress().getProgress() + 2);
 

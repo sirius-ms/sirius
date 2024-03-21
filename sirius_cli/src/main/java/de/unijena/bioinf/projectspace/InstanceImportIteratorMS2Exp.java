@@ -94,7 +94,7 @@ class InstanceImportIteratorMS2Exp implements Iterator<Instance> {
             }
 
             if (input == null || !filter.test(inst.loadCompoundContainer(Ms2Experiment.class))) {
-                LoggerFactory.getLogger(getClass()).info("Skipping instance " + inst.getID().getDirectoryName() + " because it does not match the Filter criterion.");
+                LoggerFactory.getLogger(getClass()).info("Skipping instance " + inst.getId() + " because it does not match the Filter criterion.");
                 return hasNext();
             } else {
                 next = inst;

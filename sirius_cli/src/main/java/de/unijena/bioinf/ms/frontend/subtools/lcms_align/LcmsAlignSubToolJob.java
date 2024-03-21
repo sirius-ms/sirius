@@ -321,7 +321,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
             compoundContainer.setAnnotation(LCMSPeakInformation.class, lcmsPeakInformation);
             compound.updateCompound(compoundContainer, LCMSPeakInformation.class);
 
-            feature2compoundId.put(feature, compound.getID());
+            feature2compoundId.put(feature, compound.getCompoundContainerId());
             updateProgress(0, consensusFeatures.length, ++progress, "Write project space.");
         }
         if (i.getInternalStatistics().isPresent() && statistics != null) {

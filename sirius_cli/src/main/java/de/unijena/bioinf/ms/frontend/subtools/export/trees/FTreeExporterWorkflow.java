@@ -77,20 +77,20 @@ public class FTreeExporterWorkflow implements Workflow {
 
                     for (NamedFTree nTree : trees) {
                         if (options.exportJson){
-                            try (final BufferedWriter writer = Files.newBufferedWriter(outputPath.resolve(inst.getID().getDirectoryName() + "_" + nTree.name + ".json"))) {
+                            try (final BufferedWriter writer = Files.newBufferedWriter(outputPath.resolve(inst.getId() + "_" + nTree.name + ".json"))) {
                                 jsonWriter.writeTree(writer, nTree.tree);
                             }
                         }
 
                         if (options.exportDot) {
-                            try (final BufferedWriter writer = Files.newBufferedWriter(outputPath.resolve(inst.getID().getDirectoryName() + "_" + nTree.name + ".dot"))) {
+                            try (final BufferedWriter writer = Files.newBufferedWriter(outputPath.resolve(inst.getId() + "_" + nTree.name + ".dot"))) {
                                 dotWriter.writeTree(writer, nTree.tree);
                             }
                         }
                     }
 
                 } catch (Exception e) {
-                    LoggerFactory.getLogger(getClass()).warn("Invalid instance '" + inst.getID() + "'. Skipping this instance!", e);
+                    LoggerFactory.getLogger(getClass()).warn("Invalid instance '" + inst + "'. Skipping this instance!", e);
                 } finally {
                     inst.clearCompoundCache();
                     inst.clearFormulaResultsCache();

@@ -26,7 +26,6 @@ import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.compute.JobProgress;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.Instance;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -63,14 +62,14 @@ public abstract class AbstractComputeService<P extends Project> implements Compu
     }
 
     protected List<String> extractEffectedAlignedFeatures(BackgroundRuns.BackgroundRunJob runJob) {
-        return runJob.getInstancesStr().map(Instance::getID).map(CompoundContainerId::getDirectoryName)
-                .collect(Collectors.toList());
+        return runJob.getInstancesStr().map(Instance::getId).collect(Collectors.toList());
     }
 
     protected List<String> extractCompoundIds(BackgroundRuns.BackgroundRunJob runJob) {
         return runJob.getInstancesStr()
-                .map(Instance::getID)
-                .map(CompoundContainerId::getGroupId).filter(Optional::isPresent).flatMap(Optional::stream)
+                .map(Instance::getCompoundId)
+                .filter(Optional::isPresent)
+                .flatMap(Optional::stream)
                 .distinct().collect(Collectors.toList());
     }
 

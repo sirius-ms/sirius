@@ -30,10 +30,7 @@ import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.export.tables.ExportPredictionsOptions;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
-import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.summaries.PredictionsSummarizer;
 import de.unijena.bioinf.projectspace.summaries.SummaryLocations;
 import org.apache.commons.lang3.time.StopWatch;
@@ -83,82 +80,83 @@ public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Wor
     protected Boolean compute() throws Exception {
        if (instances == null)
            instances = SiriusJobs.getGlobalJobManager().submitJob(preprocessingJob).awaitResult();
-
-        ProjectSpaceManager project = instances.iterator().next().getProjectSpaceManager(); // todo Hacky: implement real multi project solution?!
-
-        try {
-            //use all experiments in workspace to create summaries
-            LOG.info("Writing summary files...");
-            StopWatch w = new StopWatch(); w.start();
-            final JobProgressEventListener listener = this::updateProgress;
-
-
-            List<CompoundContainerId> ids = null;
-            if (!instances.equals(project)) {
-                List<CompoundContainerId> idsTMP = new ArrayList<>(project.size());
-                instances.forEach(i -> idsTMP.add(i.getID()));
-                ids = idsTMP;
-            }
-
-            SiriusProjectSpace.SummarizerJob job = project.getProjectSpaceImpl()
-                    .makeSummarizerJob(options.location, options.compress, ids, ProjectSpaceManager
-                            .defaultSummarizer(
-                                    options.isTopHitSummary(),
-                                    options.isTopHitWithAdductsSummary(),
-                                    options.isFullSummary()
-                            ));
-            job.addJobProgressListener(listener);
-            SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
-            job.removePropertyChangeListener(listener);
-
-            if (options.isAnyPredictionOptionSet()) { // this includes options.predictionsOptions null check
-                boolean writeIntoProjectSpace = (options.location == null);
-                Path root = options.compress
-                        ? FileUtils.asZipFSPath(options.location, false, true, ZipCompressionMethod.DEFLATED)
-                        : options.location;
-                try {
-                    LOG.info("Writing positive ion mode predictions table...");
-                    BasicJJob posJob;
-                    if (writeIntoProjectSpace) {
-                        posJob = project.getProjectSpaceImpl()
-                                .makeSummarizerJob(options.location, options.compress, ids, new PredictionsSummarizer(listener, instances, 1, SummaryLocations.PREDICTIONS, options.predictionsOptions));
-                    } else {
-                        posJob = new ExportPredictionsOptions.ExportPredictionJJob(
-                                options.predictionsOptions, 1, instances,
-                                () -> Files.newBufferedWriter(root.resolve(SummaryLocations.PREDICTIONS)));
-                    }
-                    posJob.addJobProgressListener(listener);
-                    SiriusJobs.getGlobalJobManager().submitJob(posJob).awaitResult();
-                    posJob.removePropertyChangeListener(listener);
-
-                    LOG.info("Writing negative ion mode predictions table...");
-                    BasicJJob negJob;
-                    if (writeIntoProjectSpace) {
-                        negJob = project.getProjectSpaceImpl()
-                        .makeSummarizerJob(options.location, options.compress, ids, new PredictionsSummarizer(listener, instances, -1, SummaryLocations.PREDICTIONS_NEG, options.predictionsOptions));
-                    } else {
-                        negJob = new ExportPredictionsOptions.ExportPredictionJJob(
-                                options.predictionsOptions, -1, instances,
-                                () -> Files.newBufferedWriter(root.resolve(SummaryLocations.PREDICTIONS_NEG)));
-                    }
-                    negJob.addJobProgressListener(listener);
-                    SiriusJobs.getGlobalJobManager().submitJob(negJob).awaitResult();
-                    negJob.removePropertyChangeListener(listener);
-                }finally {
-                    //close and write zip file
-                    if (!writeIntoProjectSpace && !root.getFileSystem().equals(FileSystems.getDefault()))
-                        root.getFileSystem().close();
-                }
-            }
-
-            w.stop();
-            LOG.info("Project-Space summaries successfully written in: " + w);
-
-            return true;
-        } finally {
-            if (!standalone)
-                project.close(); // close project if this is a postprocessor
-        }
+            throw new IllegalArgumentException("FIX Summary writer"); //todo nightsky: fix summary writer
+//        ProjectSpaceManager project = instances.iterator().next().getProjectSpaceManager(); // todo Hacky: implement real multi project solution?!
+//
+//        try {
+//            //use all experiments in workspace to create summaries
+//            LOG.info("Writing summary files...");
+//            StopWatch w = new StopWatch(); w.start();
+//            final JobProgressEventListener listener = this::updateProgress;
+//
+//
+//            List<CompoundContainerId> ids = null;
+//            if (!instances.equals(project)) {
+//                List<CompoundContainerId> idsTMP = new ArrayList<>(project.size());
+//                instances.forEach(i -> idsTMP.add(i.getID()));
+//                ids = idsTMP;
+//            }
+//
+//            SiriusProjectSpace.SummarizerJob job = project.getProjectSpaceImpl()
+//                    .makeSummarizerJob(options.location, options.compress, ids, SiriusProjectSpaceManager
+//                            .defaultSummarizer(
+//                                    options.isTopHitSummary(),
+//                                    options.isTopHitWithAdductsSummary(),
+//                                    options.isFullSummary()
+//                            ));
+//            job.addJobProgressListener(listener);
+//            SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
+//            job.removePropertyChangeListener(listener);
+//
+//            if (options.isAnyPredictionOptionSet()) { // this includes options.predictionsOptions null check
+//                boolean writeIntoProjectSpace = (options.location == null);
+//                Path root = options.compress
+//                        ? FileUtils.asZipFSPath(options.location, false, true, ZipCompressionMethod.DEFLATED)
+//                        : options.location;
+//                try {
+//                    LOG.info("Writing positive ion mode predictions table...");
+//                    BasicJJob posJob;
+//                    if (writeIntoProjectSpace) {
+//                        posJob = project.getProjectSpaceImpl()
+//                                .makeSummarizerJob(options.location, options.compress, ids, new PredictionsSummarizer(listener, instances, 1, SummaryLocations.PREDICTIONS, options.predictionsOptions));
+//                    } else {
+//                        posJob = new ExportPredictionsOptions.ExportPredictionJJob(
+//                                options.predictionsOptions, 1, instances,
+//                                () -> Files.newBufferedWriter(root.resolve(SummaryLocations.PREDICTIONS)));
+//                    }
+//                    posJob.addJobProgressListener(listener);
+//                    SiriusJobs.getGlobalJobManager().submitJob(posJob).awaitResult();
+//                    posJob.removePropertyChangeListener(listener);
+//
+//                    LOG.info("Writing negative ion mode predictions table...");
+//                    BasicJJob negJob;
+//                    if (writeIntoProjectSpace) {
+//                        negJob = project.getProjectSpaceImpl()
+//                        .makeSummarizerJob(options.location, options.compress, ids, new PredictionsSummarizer(listener, instances, -1, SummaryLocations.PREDICTIONS_NEG, options.predictionsOptions));
+//                    } else {
+//                        negJob = new ExportPredictionsOptions.ExportPredictionJJob(
+//                                options.predictionsOptions, -1, instances,
+//                                () -> Files.newBufferedWriter(root.resolve(SummaryLocations.PREDICTIONS_NEG)));
+//                    }
+//                    negJob.addJobProgressListener(listener);
+//                    SiriusJobs.getGlobalJobManager().submitJob(negJob).awaitResult();
+//                    negJob.removePropertyChangeListener(listener);
+//                }finally {
+//                    //close and write zip file
+//                    if (!writeIntoProjectSpace && !root.getFileSystem().equals(FileSystems.getDefault()))
+//                        root.getFileSystem().close();
+//                }
+//            }
+//
+//            w.stop();
+//            LOG.info("Project-Space summaries successfully written in: " + w);
+//
+//            return true;
+//        } finally {
+//            if (!standalone)
+//                project.close(); // close project if this is a postprocessor
+//        }
+//        return null;
     }
 
     @Override

@@ -231,7 +231,7 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
         return inst -> {
             inst.deleteFormulaResults(); //this step creates the results, so we have to delete them before recompute
             inst.getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> it.remove(DetectedAdducts.Source.MS1_PREPROCESSOR.name()));
-            inst.getID().setDetectedAdducts(inst.getExperiment().getAnnotationOrNull(DetectedAdducts.class));
+            inst.getCompoundContainerId().setDetectedAdducts(inst.getExperiment().getAnnotationOrNull(DetectedAdducts.class));
             inst.updateCompoundID();
         };
     }
