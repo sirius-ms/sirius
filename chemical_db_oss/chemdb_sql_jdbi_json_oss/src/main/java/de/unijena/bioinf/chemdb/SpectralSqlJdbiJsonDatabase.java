@@ -55,7 +55,7 @@ public class SpectralSqlJdbiJsonDatabase implements SpectralLibrary {
     }
 
     @Override
-    public int countAllSpectra() {
+    public long countAllSpectra() {
         return jdbi.withExtension(Dao.class, Dao::countAll);
     }
 

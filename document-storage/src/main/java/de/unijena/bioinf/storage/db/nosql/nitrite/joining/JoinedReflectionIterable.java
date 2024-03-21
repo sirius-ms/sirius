@@ -18,14 +18,13 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.storage.db.nosql.nitrite;
+package de.unijena.bioinf.storage.db.nosql.nitrite.joining;
 
 import de.unijena.bioinf.storage.db.nosql.utils.ExtFieldUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
-import org.dizitart.no2.Document;
-import org.dizitart.no2.mapper.NitriteMapper;
-import org.dizitart.no2.objects.Cursor;
+import org.dizitart.no2.collection.Document;
+import org.dizitart.no2.common.mapper.NitriteMapper;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -37,93 +36,66 @@ import java.util.function.Function;
 
 public class JoinedReflectionIterable<P, C> implements Iterable<P> {
 
-    protected JoinedIterable<P, P> objectIterable = null;
+    private final Class<C> childClass;
 
-    protected Iterable<P> parents = null;
+    private final Iterable<P> parents;
 
-    protected Class<C> childClass;
+    private final Class<P> parentClass;
 
-    protected Class<P> parentClass;
+    private final Function<Object, Iterable<Document>> children;
 
-    protected Function<Object, Iterable<Document>> children;
+    private final String localField;
 
-    protected String localField;
+    private final String targetField;
 
-    protected String targetField;
-
-    protected NitriteMapper mapper;
+    private final NitriteMapper mapper;
 
     @SuppressWarnings("unchecked")
-    public JoinedReflectionIterable(
-            Class<C> childClass,
-            Iterable<P> parents,
-            Function<Object, Iterable<Document>> children,
-            String localField,
-            String targetField,
-            NitriteMapper mapper
-    ) throws IOException {
-        if (parents instanceof Cursor<P> pCursor) {
-            if (pCursor.size() > 0) {
-                P first = pCursor.firstOrDefault();
-                objectIterable = new JoinedIterable<>((Class<P>) first.getClass(), pCursor, children, localField, targetField, mapper);
-            }
-        } else {
-            if (parents.iterator().hasNext()) {
-                this.parentClass = (Class<P>) parents.iterator().next().getClass();
-                this.childClass = childClass;
-                this.parents = parents;
-                this.children = children;
-                this.localField = localField;
-                this.targetField = targetField;
-                this.mapper = mapper;
-            }
-        }
-
+    public JoinedReflectionIterable(Class<C> childClass, Iterable<P> parents, Function<Object, Iterable<Document>> children, String localField, String targetField, NitriteMapper mapper) {
+        this.childClass = childClass;
+        this.parents = parents;
+        this.parentClass = (parents.iterator().hasNext()) ? (Class<P>) parents.iterator().next().getClass() : null;
+        this.children = children;
+        this.localField = localField;
+        this.targetField = targetField;
+        this.mapper = mapper;
     }
 
     @NotNull
     @Override
     public Iterator<P> iterator() {
-        if (objectIterable != null) {
-            return objectIterable.iterator();
-        } else if (parents != null) {
-            try {
-                return new JoinedReflectionIterator<>(parentClass, childClass, parents, children, localField, targetField, mapper);
-            } catch (NoSuchFieldException | IOException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            return Collections.emptyIterator();
+        try {
+            return new JoinedReflectionIterator<>(parentClass, childClass, parents, children, localField, targetField, mapper);
+        } catch (NoSuchFieldException | IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
     static class JoinedReflectionIterator<P, C> implements Iterator<P> {
 
-        protected final Class<C> childClass;
+        private final Class<C> childClass;
 
-        protected final Iterator<P> parentIterator;
+        private final Iterator<P> parentIterator;
 
-        protected final Function<Object, Iterable<Document>> children;
+        private final Function<Object, Iterable<Document>> children;
 
-        protected final String localField;
+        private final String localField;
 
-        protected final Field targetField;
+        private final Field targetField;
 
-        protected final NitriteMapper mapper;
+        private final NitriteMapper mapper;
 
         JoinedReflectionIterator(Class<P> parentClass, Class<C> childClass, Iterable<P> parents, Function<Object, Iterable<Document>> children, String localField, String targetField, NitriteMapper mapper) throws NoSuchFieldException, IOException {
             this.childClass = childClass;
             this.parentIterator = parents.iterator();
             this.children = children;
             this.localField = localField;
+            this.mapper = mapper;
             this.targetField = ExtFieldUtils.getAllField(parentClass, targetField);
             if (!ClassUtils.getAllInterfaces(this.targetField.getType()).contains(Collection.class)) {
                 throw new IOException("targetField must be a collection.");
             }
-            parentClass.getModule().addOpens(parentClass.getPackageName(), getClass().getModule());
             this.targetField.setAccessible(true);
-
-            this.mapper = mapper;
         }
 
         @Override
@@ -151,7 +123,7 @@ public class JoinedReflectionIterable<P, C> implements Iterable<P> {
 
                 Set<C> targetChildren = new HashSet<>();
                 for (Document foreignDoc : children.apply(localObject)) {
-                    targetChildren.add(mapper.asObject(foreignDoc, childClass));
+                    targetChildren.add((C) mapper.tryConvert(foreignDoc, childClass));
                 }
                 if (!targetChildren.isEmpty()) {
                     Collection<C> collection = (Collection<C>) targetField.get(target);
@@ -166,8 +138,6 @@ public class JoinedReflectionIterable<P, C> implements Iterable<P> {
                             collection = new ArrayDeque<>();
                         } else if (targetField.getType() == Set.class) {
                             collection = new HashSet<>();
-                        } else if (targetField.getType() == SortedSet.class) {
-                            collection = new TreeSet<>();
                         } else if (targetField.getType() == TransferQueue.class) {
                             collection = new LinkedTransferQueue<>();
                         } else {
