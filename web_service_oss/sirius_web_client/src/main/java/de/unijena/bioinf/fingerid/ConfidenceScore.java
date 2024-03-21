@@ -40,7 +40,7 @@ public class ConfidenceScore extends FormulaScore {
 
     @Override
     public String shortName() {
-        return "Confidence";
+        return "Confidence (E)";
     }
 
 }
