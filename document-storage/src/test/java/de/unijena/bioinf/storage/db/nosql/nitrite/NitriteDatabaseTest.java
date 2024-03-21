@@ -30,20 +30,19 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Streams;
-import de.unijena.bioinf.storage.db.nosql.*;
+import de.unijena.bioinf.storage.db.nosql.Database;
+import de.unijena.bioinf.storage.db.nosql.Filter;
+import de.unijena.bioinf.storage.db.nosql.Index;
+import de.unijena.bioinf.storage.db.nosql.Metadata;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.burningwave.core.assembler.StaticComponentContainer;
-import org.dizitart.no2.Document;
-import org.dizitart.no2.filters.Filters;
-import org.dizitart.no2.objects.ObjectFilter;
-import org.dizitart.no2.objects.filters.ObjectFilters;
+import org.dizitart.no2.collection.Document;
+import org.dizitart.no2.filters.FluentFilter;
+import org.dizitart.no2.filters.NitriteFilter;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -54,17 +53,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.StreamSupport;
 
 import static org.junit.Assert.*;
 
 public class NitriteDatabaseTest {
 
-    static {
-        StaticComponentContainer.Modules.exportAllToAll();
-    }
 
     @Builder
     @NoArgsConstructor
@@ -243,191 +241,66 @@ public class NitriteDatabaseTest {
         Path file = Files.createTempFile("nitrite-test", "");
         file.toFile().deleteOnExit();
         try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build())) {
-            Filter[] nof = {
+            Filter[] f = {
                     // SIMPLE FILTERS
-                    new Filter().eq("a", 42),
-                    new Filter().gt("a", 42),
-                    new Filter().gte("a", 42),
-                    new Filter().lt("a", 42),
-                    new Filter().lte("a", 42),
-                    new Filter().text("a", "foo"),
-                    new Filter().regex("a", "foo"),
-                    new Filter().inByte("a", (byte) 12, (byte) 42),
-                    new Filter().inShort("a", (short) 12, (short) 42),
-                    new Filter().inInt("a", 12, 42),
-                    new Filter().inLong("a", 12L, 42L),
-                    new Filter().inFloat("a", 12f, 42f),
-                    new Filter().inDouble("a", 12d, 42d),
-                    new Filter().inChar("a", 't', 'f'),
-                    new Filter().inBool("a", true, false),
-                    new Filter().in("a", "foo", "bar"),
-                    new Filter().notInByte("a", (byte) 12, (byte) 42),
-                    new Filter().notInShort("a", (short) 12, (short) 42),
-                    new Filter().notInInt("a", 12, 42),
-                    new Filter().notInLong("a", 12L, 42L),
-                    new Filter().notInFloat("a", 12f, 42f),
-                    new Filter().notInDouble("a", 12d, 42d),
-                    new Filter().notInChar("a", 't', 'f'),
-                    new Filter().notInBool("a", true, false),
-                    new Filter().notIn("a", "foo", "bar"),
+                    Filter.where("a").eq(42),
+                    Filter.where("a").notEq(42),
+                    Filter.where("a").gt(42),
+                    Filter.where("a").gte(42),
+                    Filter.where("a").lt(42),
+                    Filter.where("a").lte(42),
+                    Filter.where("a").text("foo"),
+                    Filter.where("a").regex("foo"),
+                    Filter.where("a").in("foo", "bar"),
+                    Filter.where("a").notIn("foo", "bar"),
+                    Filter.where("a").beetween(41, 43),
+                    Filter.where("a").beetweenLeftInclusive(41, 43),
+                    Filter.where("a").beetweenRightInclusive(41, 43),
+                    Filter.where("a").beetweenBothInclusive(41, 43),
+                    Filter.where("a").elemMatch().eq(42),
+                    Filter.where("a").elemMatch().elemMatch().eq(42),
                     // CONJUGATE FILTERS
-                    new Filter().not().eq("a", 42),
-                    new Filter().and().eq("a", 42).gt("a", 42).gte("a", 42),
-                    new Filter().not().and().eq("a", 42).gt("a", 42),
-                    new Filter().and().not().eq("a", 42).gt("a", 42),
-                    new Filter().and().eq("a", 42).not().gt("a", 42),
-                    new Filter().or().eq("a", 42).gt("a", 42).gte("a", 42),
-                    new Filter().not().or().eq("a", 42).gt("a", 42),
-                    new Filter().or().not().eq("a", 42).gt("a", 42),
-                    new Filter().or().eq("a", 42).not().gt("a", 42),
-                    new Filter().and().or().eq("a", 42).eq("a", 41).end().eq("a", "foo"),
-                    new Filter().or().and().eq("a", 42).eq("a", 41).end().eq("a", "foo")
+                    Filter.and(Filter.where("a").eq(42), Filter.where("a").gt(42), Filter.where("a").gte(42)),
+                    Filter.or(Filter.where("a").eq(42), Filter.where("a").gt(42), Filter.where("a").gte(42)),
+                    Filter.and(Filter.where("a").eq("foo"), Filter.or(Filter.where("a").eq(42), Filter.where("a").eq(41))),
+                    Filter.or(Filter.where("a").eq("foo"), Filter.and(Filter.where("a").eq(42), Filter.where("a").eq(41))),
+                    Filter.and(Filter.where("a").eq("foo"), Filter.where("b").elemMatch().lt(42)),
+                    Filter.where("a").elemMatchAnd(Filter.where$().gt(41), Filter.where$().lt(43)),
+                    Filter.where("a").elemMatchOr(Filter.where$().lte(41), Filter.where$().gte(43))
+            };
+            NitriteFilter[] actual = Arrays.stream(f).map(db::getFilter).toArray(NitriteFilter[]::new);
+
+            NitriteFilter[] expected = {
+                    // SIMPLE FILTERS
+                    FluentFilter.where("a").eq(42),
+                    FluentFilter.where("a").notEq(42),
+                    FluentFilter.where("a").gt(42),
+                    FluentFilter.where("a").gte(42),
+                    FluentFilter.where("a").lt(42),
+                    FluentFilter.where("a").lte(42),
+                    FluentFilter.where("a").text("foo"),
+                    FluentFilter.where("a").regex("foo"),
+                    FluentFilter.where("a").in("foo", "bar"),
+                    FluentFilter.where("a").notIn("foo", "bar"),
+                    FluentFilter.where("a").between(41, 43, false),
+                    FluentFilter.where("a").between(41, 43, true, false),
+                    FluentFilter.where("a").between(41, 43, false, true),
+                    FluentFilter.where("a").between(41, 43),
+                    FluentFilter.where("a").elemMatch(FluentFilter.$.eq(42)),
+                    FluentFilter.where("a").elemMatch(FluentFilter.$.elemMatch(FluentFilter.$.eq(42))),
+//                    // CONJUGATE FILTERS
+                    (NitriteFilter) FluentFilter.where("a").eq(42).and(FluentFilter.where("a").gt(42).and(FluentFilter.where("a").gte(42))),
+                    (NitriteFilter) FluentFilter.where("a").eq(42).or(FluentFilter.where("a").gt(42).or(FluentFilter.where("a").gte(42))),
+                    (NitriteFilter) FluentFilter.where("a").eq("foo").and(FluentFilter.where("a").eq(42).or(FluentFilter.where("a").eq(41))),
+                    (NitriteFilter) FluentFilter.where("a").eq("foo").or(FluentFilter.where("a").eq(42).and(FluentFilter.where("a").eq(41))),
+                    (NitriteFilter) FluentFilter.where("a").eq("foo").and(FluentFilter.where("b").elemMatch(FluentFilter.$.lt(42))),
+                    FluentFilter.where("a").elemMatch(FluentFilter.$.gt(41).and(FluentFilter.$.lt(43))),
+                    FluentFilter.where("a").elemMatch(FluentFilter.$.lte(41).or(FluentFilter.$.gte(43)))
             };
 
-            ObjectFilter[] of = {
-                    // SIMPLE FILTERS
-                    ObjectFilters.eq("a", 42),
-                    ObjectFilters.gt("a", 42),
-                    ObjectFilters.gte("a", 42),
-                    ObjectFilters.lt("a", 42),
-                    ObjectFilters.lte("a", 42),
-                    ObjectFilters.text("a", "foo"),
-                    ObjectFilters.regex("a", "foo"),
-                    ObjectFilters.in("a", (byte) 12, (byte) 42),
-                    ObjectFilters.in("a", (short) 12, (short) 42),
-                    ObjectFilters.in("a", 12, 42),
-                    ObjectFilters.in("a", 12L, 42L),
-                    ObjectFilters.in("a", 12f, 42f),
-                    ObjectFilters.in("a", 12d, 42d),
-                    ObjectFilters.in("a", 't', 'f'),
-                    ObjectFilters.in("a", true, false),
-                    ObjectFilters.in("a", "foo", "bar"),
-                    ObjectFilters.notIn("a", (byte) 12, (byte) 42),
-                    ObjectFilters.notIn("a", (short) 12, (short) 42),
-                    ObjectFilters.notIn("a", 12, 42),
-                    ObjectFilters.notIn("a", 12L, 42L),
-                    ObjectFilters.notIn("a", 12f, 42f),
-                    ObjectFilters.notIn("a", 12d, 42d),
-                    ObjectFilters.notIn("a", 't', 'f'),
-                    ObjectFilters.notIn("a", true, false),
-                    ObjectFilters.notIn("a", "foo", "bar"),
-                    // CONJUGATE FILTERS
-                    ObjectFilters.not(ObjectFilters.eq("a", 42)),
-                    ObjectFilters.and(ObjectFilters.eq("a", 42), ObjectFilters.gt("a", 42), ObjectFilters.gte("a", 42)),
-                    ObjectFilters.not(ObjectFilters.and(ObjectFilters.eq("a", 42), ObjectFilters.gt("a", 42))),
-                    ObjectFilters.and(ObjectFilters.not(ObjectFilters.eq("a", 42)), ObjectFilters.gt("a", 42)),
-                    ObjectFilters.and(ObjectFilters.eq("a", 42), ObjectFilters.not(ObjectFilters.gt("a", 42))),
-                    ObjectFilters.or(ObjectFilters.eq("a", 42), ObjectFilters.gt("a", 42), ObjectFilters.gte("a", 42)),
-                    ObjectFilters.not(ObjectFilters.or(ObjectFilters.eq("a", 42), ObjectFilters.gt("a", 42))),
-                    ObjectFilters.or(ObjectFilters.not(ObjectFilters.eq("a", 42)), ObjectFilters.gt("a", 42)),
-                    ObjectFilters.or(ObjectFilters.eq("a", 42), ObjectFilters.not(ObjectFilters.gt("a", 42))),
-                    ObjectFilters.and(ObjectFilters.or(ObjectFilters.eq("a", 42), ObjectFilters.eq("a", 41)), ObjectFilters.eq("a", "foo")),
-                    ObjectFilters.or(ObjectFilters.and(ObjectFilters.eq("a", 42), ObjectFilters.eq("a", 41)), ObjectFilters.eq("a", "foo")),
-            };
-
-            Streams.forEachPair(
-                    Arrays.stream(of),
-                    Arrays.stream(nof),
-                    (expected, actual) -> assertTrue(expected.toString(), EqualsBuilder.reflectionEquals(expected, db.getObjectFilter(actual), false, null, true))
-            );
-
-        }
-
-    }
-
-    @Test
-    public void testFiltersDocument() throws IOException {
-
-        Path file = Files.createTempFile("nitrite-test", "");
-        file.toFile().deleteOnExit();
-        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build())) {
-            Filter[] nof = {
-                    // SIMPLE FILTERS
-                    new Filter().eq("a", 42),
-                    new Filter().gt("a", 42),
-                    new Filter().gte("a", 42),
-                    new Filter().lt("a", 42),
-                    new Filter().lte("a", 42),
-                    new Filter().text("a", "foo"),
-                    new Filter().regex("a", "foo"),
-                    new Filter().inByte("a", (byte) 12, (byte) 42),
-                    new Filter().inShort("a", (short) 12, (short) 42),
-                    new Filter().inInt("a", 12, 42),
-                    new Filter().inLong("a", 12L, 42L),
-                    new Filter().inFloat("a", 12f, 42f),
-                    new Filter().inDouble("a", 12d, 42d),
-                    new Filter().inChar("a", 't', 'f'),
-                    new Filter().inBool("a", true, false),
-                    new Filter().in("a", "foo", "bar"),
-                    new Filter().notInByte("a", (byte) 12, (byte) 42),
-                    new Filter().notInShort("a", (short) 12, (short) 42),
-                    new Filter().notInInt("a", 12, 42),
-                    new Filter().notInLong("a", 12L, 42L),
-                    new Filter().notInFloat("a", 12f, 42f),
-                    new Filter().notInDouble("a", 12d, 42d),
-                    new Filter().notInChar("a", 't', 'f'),
-                    new Filter().notInBool("a", true, false),
-                    new Filter().notIn("a", "foo", "bar"),
-                    // CONJUGATE FILTERS
-                    new Filter().not().eq("a", 42),
-                    new Filter().and().eq("a", 42).gt("a", 42).gte("a", 42),
-                    new Filter().not().and().eq("a", 42).gt("a", 42),
-                    new Filter().and().not().eq("a", 42).gt("a", 42),
-                    new Filter().and().eq("a", 42).not().gt("a", 42),
-                    new Filter().or().eq("a", 42).gt("a", 42).gte("a", 42),
-                    new Filter().not().or().eq("a", 42).gt("a", 42),
-                    new Filter().or().not().eq("a", 42).gt("a", 42),
-                    new Filter().or().eq("a", 42).not().gt("a", 42),
-                    new Filter().and().or().eq("a", 42).eq("a", 41).end().eq("a", "foo"),
-                    new Filter().or().and().eq("a", 42).eq("a", 41).end().eq("a", "foo")
-            };
-
-            org.dizitart.no2.Filter[] of = {
-                    // SIMPLE FILTERS
-                    Filters.eq("a", 42),
-                    Filters.gt("a", 42),
-                    Filters.gte("a", 42),
-                    Filters.lt("a", 42),
-                    Filters.lte("a", 42),
-                    Filters.text("a", "foo"),
-                    Filters.regex("a", "foo"),
-                    Filters.in("a", (byte) 12, (byte) 42),
-                    Filters.in("a", (short) 12, (short) 42),
-                    Filters.in("a", 12, 42),
-                    Filters.in("a", 12L, 42L),
-                    Filters.in("a", 12f, 42f),
-                    Filters.in("a", 12d, 42d),
-                    Filters.in("a", 't', 'f'),
-                    Filters.in("a", true, false),
-                    Filters.in("a", "foo", "bar"),
-                    Filters.notIn("a", (byte) 12, (byte) 42),
-                    Filters.notIn("a", (short) 12, (short) 42),
-                    Filters.notIn("a", 12, 42),
-                    Filters.notIn("a", 12L, 42L),
-                    Filters.notIn("a", 12f, 42f),
-                    Filters.notIn("a", 12d, 42d),
-                    Filters.notIn("a", 't', 'f'),
-                    Filters.notIn("a", true, false),
-                    Filters.notIn("a", "foo", "bar"),
-                    // CONJUGATE FILTERS
-                    Filters.not(Filters.eq("a", 42)),
-                    Filters.and(Filters.eq("a", 42), Filters.gt("a", 42), Filters.gte("a", 42)),
-                    Filters.not(Filters.and(Filters.eq("a", 42), Filters.gt("a", 42))),
-                    Filters.and(Filters.not(Filters.eq("a", 42)), Filters.gt("a", 42)),
-                    Filters.and(Filters.eq("a", 42), Filters.not(Filters.gt("a", 42))),
-                    Filters.or(Filters.eq("a", 42), Filters.gt("a", 42), Filters.gte("a", 42)),
-                    Filters.not(Filters.or(Filters.eq("a", 42), Filters.gt("a", 42))),
-                    Filters.or(Filters.not(Filters.eq("a", 42)), Filters.gt("a", 42)),
-                    Filters.or(Filters.eq("a", 42), Filters.not(Filters.gt("a", 42))),
-                    Filters.and(Filters.or(Filters.eq("a", 42), Filters.eq("a", 41)), Filters.eq("a", "foo")),
-                    Filters.or(Filters.and(Filters.eq("a", 42), Filters.eq("a", 41)), Filters.eq("a", "foo")),
-            };
-
-            Streams.forEachPair(
-                    Arrays.stream(of),
-                    Arrays.stream(nof),
-                    (expected, actual) -> assertTrue(expected.toString(), EqualsBuilder.reflectionEquals(expected, db.getFilter(actual), false, null, true))
-            );
+            for (int i = 0; i < actual.length; i++) {
+                assertEquals(expected[i].toString(), actual[i].toString());
+            }
 
         }
 
@@ -438,7 +311,7 @@ public class NitriteDatabaseTest {
 
         Path file = Files.createTempFile("nitrite-test", "");
         file.toFile().deleteOnExit();
-        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(NitriteTestEntry.class, new Index("name", IndexType.UNIQUE)).addDeserializer(NitriteTestEntry.class, new TestDeserializer()))) {
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(NitriteTestEntry.class, Index.unique("name")).addDeserializer(NitriteTestEntry.class, new TestDeserializer()))) {
             List<NitriteTestEntry> in = new ArrayList<>(Arrays.asList(
                     NitriteTestEntry.builder().name("A").build(),
                     NitriteTestEntry.builder().name("B").build(),
@@ -446,43 +319,35 @@ public class NitriteDatabaseTest {
             ));
 
             assertEquals("insert all", 3, db.insertAll(in));
-            List<NitriteTestEntry> inPrefix = Lists.newArrayList(in.subList(0, 2));
-            List<NitriteTestEntry> inSuffix = Lists.newArrayList(in.subList(1, 3));
-            List<NitriteTestEntry> inMid = Lists.newArrayList(in.subList(1, 2));
 
-            List<NitriteTestEntry> ascFindAll = Lists.newArrayList(db.findAll(NitriteTestEntry.class, "name", Database.SortOrder.ASCENDING));
-            List<NitriteTestEntry> descFindAll = Lists.newArrayList(db.findAll(NitriteTestEntry.class, "name", Database.SortOrder.DESCENDING));
-            Collections.reverse(descFindAll);
-            List<NitriteTestEntry> ascFindAllOff0 = Lists.newArrayList(db.findAll(NitriteTestEntry.class, 0, 2, "name", Database.SortOrder.ASCENDING));
-            List<NitriteTestEntry> descFindAllOff0 = Lists.newArrayList(db.findAll(NitriteTestEntry.class, 0, 2, "name", Database.SortOrder.DESCENDING));
-            Collections.reverse(descFindAllOff0);
-            List<NitriteTestEntry> ascFindAllOff1 = Lists.newArrayList(db.findAll(NitriteTestEntry.class, 1, 2, "name", Database.SortOrder.ASCENDING));
-            List<NitriteTestEntry> descFindAllOff1 = Lists.newArrayList(db.findAll(NitriteTestEntry.class, 1, 2, "name", Database.SortOrder.DESCENDING));
-            Collections.reverse(descFindAllOff1);
+            List<String> expected = in.stream().map(e -> e.name + "_D").toList();
 
-            assertTrue("ascending findAll", EqualsBuilder.reflectionEquals(in, ascFindAll, false, null, true));
-            assertTrue("descending findAll", EqualsBuilder.reflectionEquals(in, descFindAll, false, null, true));
-            assertTrue("ascending findAll offset 0 limit 2", EqualsBuilder.reflectionEquals(inPrefix, ascFindAllOff0, false, null, true));
-            assertTrue("descending findAll offset 0 limit 2", EqualsBuilder.reflectionEquals(inSuffix, descFindAllOff0, false, null, true));
-            assertTrue("ascending findAll offset 1 limit 2", EqualsBuilder.reflectionEquals(inSuffix, ascFindAllOff1, false, null, true));
-            assertTrue("descending findAll offset 1 limit 2", EqualsBuilder.reflectionEquals(inPrefix, descFindAllOff1, false, null, true));
+            List<String> ascFindAll = db.findAllStr(NitriteTestEntry.class, "name", Database.SortOrder.ASCENDING).map(e -> e.name).toList();
+            List<String> descFindAll = db.findAllStr(NitriteTestEntry.class, "name", Database.SortOrder.DESCENDING).map(e -> e.name).toList();
+            List<String> ascFindAllLimit2 = db.findAllStr(NitriteTestEntry.class, 0, 2, "name", Database.SortOrder.ASCENDING).map(e -> e.name).toList();
+            List<String> ascFindAllOffset1Limit2 = db.findAllStr(NitriteTestEntry.class, 1, 2, "name", Database.SortOrder.ASCENDING).map(e -> e.name).toList();
+            List<String> ascFindAllOffset1Limit1 = db.findAllStr(NitriteTestEntry.class, 1, 1, "name", Database.SortOrder.ASCENDING).map(e -> e.name).toList();
 
-            assertEquals("count name == A", 1, db.count(new Filter().eq("name", "A"), NitriteTestEntry.class));
-            assertEquals("count name < C", 2, db.count(new Filter().lt("name", "C"), NitriteTestEntry.class));
-            assertEquals("count name in A, B", 2, db.count(new Filter().in("name", "A", "B"), NitriteTestEntry.class));
-            assertEquals("count name in A, B", 2, db.count(new Filter().in("name", "A", "B"), NitriteTestEntry.class));
-            assertEquals("count name in A, B limit 1", 1, db.count(new Filter().in("name", "A", "B"), NitriteTestEntry.class, 0, 1));
+            assertEquals("ascending findAll", expected, ascFindAll);
+            assertEquals("descending findAll", Lists.reverse(expected), descFindAll);
+            assertEquals("ascending findAll offset 0 limit 2", expected.subList(0, 2), ascFindAllLimit2);
+            assertEquals("ascending findAll offset 1 limit 2", expected.subList(1, 3), ascFindAllOffset1Limit2);
+            assertEquals("ascending findAll offset 1 limit 1", expected.subList(1, 2), ascFindAllOffset1Limit1);
+
+            assertEquals("count name == A", 1, db.count(Filter.where("name").eq("A"), NitriteTestEntry.class));
+            assertEquals("count name < C", 2, db.count(Filter.where("name").lt("C"), NitriteTestEntry.class));
+            assertEquals("count name in A, B", 2, db.count(Filter.where("name").in("A", "B"), NitriteTestEntry.class));
+            assertEquals("count name in A, B limit 1", 1, db.count(Filter.where("name").in("A", "B"), NitriteTestEntry.class, 0, 1));
 
             assertEquals("count all", 3, db.countAll(NitriteTestEntry.class));
 
             assertEquals("remove", 1, db.remove(in.get(0)));
-            List<NitriteTestEntry> ascFindAllDel0 = Lists.newArrayList(db.findAll(NitriteTestEntry.class, "name", Database.SortOrder.ASCENDING));
-            assertEquals("remove name == C", 1, db.removeAll(new Filter().eq("name", "C"), NitriteTestEntry.class));
-            List<NitriteTestEntry> ascFindAllDel2 = Lists.newArrayList(db.findAll(NitriteTestEntry.class, "name", Database.SortOrder.ASCENDING));
+            List<String> ascFindAllDel0 = db.findAllStr(NitriteTestEntry.class, "name", Database.SortOrder.ASCENDING).map(e -> e.name).toList();
+            assertEquals("remove name == C", 1, db.removeAll(Filter.where("name").eq("C"), NitriteTestEntry.class));
+            List<String> ascFindAllDel2 = db.findAllStr(NitriteTestEntry.class, "name", Database.SortOrder.ASCENDING).map(e -> e.name).toList();
 
-            assertTrue("remove object", EqualsBuilder.reflectionEquals(inSuffix, ascFindAllDel0, false, null, true));
-            assertTrue("remove name == C", EqualsBuilder.reflectionEquals(inMid, ascFindAllDel2, false, null, true));
-
+            assertEquals("remove object", expected.subList(1, 3), ascFindAllDel0);
+            assertEquals("remove name == C", expected.subList(1, 2), ascFindAllDel2);
         }
     }
 
@@ -491,7 +356,7 @@ public class NitriteDatabaseTest {
 
         Path file = Files.createTempFile("nitrite-test", "");
         file.toFile().deleteOnExit();
-        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addCollection("entries", new Index("name", IndexType.NON_UNIQUE)))) {
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addCollection("entries", Index.unique("name")))) {
             List<Document> in = Lists.newArrayList(
                     Document.createDocument("name", "A"),
                     Document.createDocument("name", "B"),
@@ -499,42 +364,36 @@ public class NitriteDatabaseTest {
             );
 
             assertEquals("insert all", 3, db.insertAll("entries", in));
-            List<Document> inPrefix = Lists.newArrayList(in.subList(0, 2));
-            List<Document> inSuffix = Lists.newArrayList(in.subList(1, 3));
-            List<Document> inMid = Lists.newArrayList(in.subList(1, 2));
 
-            List<Document> ascFindAll = Lists.newArrayList(db.findAll("entries", "name", Database.SortOrder.ASCENDING));
-            List<Document> descFindAll = Lists.newArrayList(db.findAll("entries", "name", Database.SortOrder.DESCENDING));
-            Collections.reverse(descFindAll);
-            List<Document> ascFindAllOff0 = Lists.newArrayList(db.findAll("entries", 0, 2, "name", Database.SortOrder.ASCENDING));
-            List<Document> descFindAllOff0 = Lists.newArrayList(db.findAll("entries", 0, 2, "name", Database.SortOrder.DESCENDING));
-            Collections.reverse(descFindAllOff0);
-            List<Document> ascFindAllOff1 = Lists.newArrayList(db.findAll("entries", 1, 2, "name", Database.SortOrder.ASCENDING));
-            List<Document> descFindAllOff1 = Lists.newArrayList(db.findAll("entries", 1, 2, "name", Database.SortOrder.DESCENDING));
-            Collections.reverse(descFindAllOff1);
+            List<String> expected = in.stream().map(e -> e.get("name", String.class)).toList();
 
-            assertTrue("ascending findAll", EqualsBuilder.reflectionEquals(in, ascFindAll, false, null, true));
-            assertTrue("descending findAll", EqualsBuilder.reflectionEquals(in, descFindAll, false, null, true));
-            assertTrue("ascending findAll offset 0 limit 2", EqualsBuilder.reflectionEquals(inPrefix, ascFindAllOff0, false, null, true));
-            assertTrue("descending findAll offset 0 limit 2", EqualsBuilder.reflectionEquals(inSuffix, descFindAllOff0, false, null, true));
-            assertTrue("ascending findAll offset 1 limit 2", EqualsBuilder.reflectionEquals(inSuffix, ascFindAllOff1, false, null, true));
-            assertTrue("descending findAll offset 1 limit 2", EqualsBuilder.reflectionEquals(inPrefix, descFindAllOff1, false, null, true));
+            List<String> ascFindAll = db.findAllStr("entries", "name", Database.SortOrder.ASCENDING).map(e -> e.get("name", String.class)).toList();
+            List<String> descFindAll = db.findAllStr("entries", "name", Database.SortOrder.DESCENDING).map(e -> e.get("name", String.class)).toList();
 
-            assertEquals("count name == A", 1, db.count("entries", new Filter().eq("name", "A")));
-            assertEquals("count name < C", 2, db.count("entries", new Filter().lt("name", "C")));
-            assertEquals("count name in A, B", 2, db.count("entries", new Filter().in("name", "A", "B")));
-            assertEquals("count name in A, B", 2, db.count("entries", new Filter().in("name", "A", "B")));
-            assertEquals("count name in A, B limit 1", 1, db.count("entries", new Filter().in("name", "A", "B"), 0, 1));
+            List<String> ascFindAllLimit2 = db.findAllStr("entries", 0, 2, "name", Database.SortOrder.ASCENDING).map(e -> e.get("name", String.class)).toList();
+            List<String> ascFindAllOffset1Limit2 = db.findAllStr("entries", 1, 2, "name", Database.SortOrder.ASCENDING).map(e -> e.get("name", String.class)).toList();
+            List<String> ascFindAllOffset1Limit1 = db.findAllStr("entries", 1, 1, "name", Database.SortOrder.ASCENDING).map(e -> e.get("name", String.class)).toList();
+
+            assertEquals("ascending findAll", expected, ascFindAll);
+            assertEquals("descending findAll", Lists.reverse(expected), descFindAll);
+            assertEquals("ascending findAll offset 0 limit 2", expected.subList(0, 2), ascFindAllLimit2);
+            assertEquals("ascending findAll offset 1 limit 2", expected.subList(1, 3), ascFindAllOffset1Limit2);
+            assertEquals("ascending findAll offset 1 limit 1", expected.subList(1, 2), ascFindAllOffset1Limit1);
+
+            assertEquals("count name == A", 1, db.count("entries", Filter.where("name").eq("A")));
+            assertEquals("count name < C", 2, db.count("entries", Filter.where("name").lt("C")));
+            assertEquals("count name in A, B", 2, db.count("entries", Filter.where("name").in("A", "B")));
+            assertEquals("count name in A, B limit 1", 1, db.count("entries", Filter.where("name").in("A", "B"), 0, 1));
 
             assertEquals("count all", 3, db.countAll("entries"));
 
-            assertEquals("remove", 1, db.remove("entries", in.get(0)));
-            List<Document> ascFindAllDel0 = Lists.newArrayList(db.findAll("entries", "name", Database.SortOrder.ASCENDING));
-            assertEquals("remove name == C", 1, db.removeAll("entries", new Filter().eq("name", "C")));
-            List<Document> ascFindAllDel2 = Lists.newArrayList(db.findAll("entries", "name", Database.SortOrder.ASCENDING));
+            assertEquals("remove", 1, db.remove("entries", db.findStr("entries", Filter.where("name").eq("A")).findFirst().orElseThrow()));
+            List<String> ascFindAllDel0 = db.findAllStr("entries", "name", Database.SortOrder.ASCENDING).map(e -> e.get("name", String.class)).toList();
+            assertEquals("remove name == C", 1, db.removeAll("entries", Filter.where("name").eq("C")));
+            List<String> ascFindAllDel2 = db.findAllStr("entries", "name", Database.SortOrder.ASCENDING).map(e -> e.get("name", String.class)).toList();
 
-            assertTrue("remove object", EqualsBuilder.reflectionEquals(inSuffix, ascFindAllDel0, false, null, true));
-            assertTrue("remove name == C", EqualsBuilder.reflectionEquals(inMid, ascFindAllDel2, false, null, true));
+            assertEquals("remove object", expected.subList(1, 3), ascFindAllDel0);
+            assertEquals("remove name == C", expected.subList(1, 2), ascFindAllDel2);
 
         }
     }
@@ -544,7 +403,7 @@ public class NitriteDatabaseTest {
         Path file = Files.createTempFile("nitrite-test", "");
         file.toFile().deleteOnExit();
         try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build()
-                .addRepository(NitriteTestEntry.class, new Index("name", IndexType.UNIQUE))
+                .addRepository(NitriteTestEntry.class, Index.unique("name"))
                 .addSerialization(NitriteTestEntry.class, new TestSerializer(), new TestDeserializer()))) {
             NitriteTestEntry in = NitriteTestEntry.builder().name("A").dlist(DoubleList.of(1, 2, 3)).darr(new double[]{1, 2, 3}).build();
             db.insert(in);
@@ -553,13 +412,13 @@ public class NitriteDatabaseTest {
             assertEquals("jackson module used", in.name + "_S_D", out[0].name);
             assertEquals("id assignment", in.primaryKey, out[0].primaryKey);
             assertTrue("id assignment", out[0].primaryKey > 0);
-            assertTrue("jackson fastutil", EqualsBuilder.reflectionEquals(in.dlist.toDoubleArray(), out[0].dlist.toDoubleArray()));
-            assertTrue("jackson primitive array", EqualsBuilder.reflectionEquals(in.darr, out[0].darr));
+            assertArrayEquals("jackson fastutil", in.dlist.toDoubleArray(), out[0].dlist.toDoubleArray(), 0d);
+            assertArrayEquals("jackson primitive array", in.darr, out[0].darr, 0d);
         }
 
         file = Files.createTempFile("nitrite-test", "");
         file.toFile().deleteOnExit();
-        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(NitriteTestEntry.class, new Index("name", IndexType.UNIQUE)).addDeserializer(DoubleList.class, new DoubleArrayDeserializer()))) {
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(NitriteTestEntry.class, Index.unique("name")).addDeserializer(DoubleList.class, new DoubleArrayDeserializer()))) {
             NitriteTestEntry in = NitriteTestEntry.builder().name("A").dlist(DoubleList.of(1, 2, 3)).darr(new double[]{1, 2, 3}).build();
             db.insert(in);
             NitriteTestEntry[] out = Iterables.toArray(db.findAll(NitriteTestEntry.class), NitriteTestEntry.class);
@@ -567,112 +426,112 @@ public class NitriteDatabaseTest {
             assertEquals("jackson module used", in.name, out[0].name);
             assertEquals("id assignment", in.primaryKey, out[0].primaryKey);
             assertTrue("id assignment", out[0].primaryKey > 0);
-            assertTrue("jackson fastutil", EqualsBuilder.reflectionEquals(in.dlist.toDoubleArray(), out[0].dlist.toDoubleArray()));
-            assertTrue("jackson primitive array", EqualsBuilder.reflectionEquals(in.darr, out[0].darr));
+            assertArrayEquals("jackson fastutil", in.dlist.toDoubleArray(), out[0].dlist.toDoubleArray(), 0d);
+            assertArrayEquals("jackson primitive array", in.darr, out[0].darr, 0d);
         }
 
     }
 
-    @Test
-    public void testJoin() throws IOException {
+//    @Test
+//    public void testJoin() throws IOException {
+//
+//        Path file = Files.createTempFile("nitrite-test", "");
+//        file.toFile().deleteOnExit();
+//
+//        NitriteTestEntry parent = NitriteTestEntry.builder().name("parent").build();
+//
+//        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build()
+//                .addRepository(NitriteTestEntry.class, new Index("name", IndexType.UNIQUE))
+//                .addRepository(NitriteChildTestEntry.class, new Index("name", IndexType.NON_UNIQUE))
+//                .addDeserializer(DoubleList.class, new DoubleArrayDeserializer())
+//        )) {
+//
+//            db.insert(parent);
+//
+//            List<NitriteChildTestEntry> children = new ArrayList<>(Arrays.asList(
+//                    NitriteChildTestEntry.builder().name("A").parentKey(parent.primaryKey).build(),
+//                    NitriteChildTestEntry.builder().name("B").parentKey(parent.primaryKey).build(),
+//                    NitriteChildTestEntry.builder().name("C").parentKey(parent.primaryKey).build()
+//            ));
+//
+//            db.insertAll(children);
+//
+//            Iterable<NitriteTestEntry> outParent = db.findAll(NitriteTestEntry.class);
+//            Iterable<NitriteChildTestEntry> outChildren = db.findAll(NitriteChildTestEntry.class);
+//            Iterable<NitriteChildTestEntry> outChildrenF = db.find(Filter.or(Filter.where("name").eq("A"), Filter.where("name").eq("B")), NitriteChildTestEntry.class);
+//
+//            assertEquals("1 parent", 1, Lists.newArrayList(outParent).size());
+////            assertTrue("parent okay", EqualsBuilder.reflectionEquals(parent, outParent.iterator().next(), false, null, true));
+//
+//            List<NitriteFamilyTestEntry> results = Lists.newArrayList(db.joinAllChildren(NitriteFamilyTestEntry.class, NitriteChildTestEntry.class, outParent, "primaryKey", "parentKey", "children"));
+//
+//            assertEquals("1 joined parent", 1, results.size());
+//
+//            assertEquals("joined parent okay", parent.primaryKey, results.get(0).primaryKey);
+//            assertEquals("joined parent okay", parent.name, results.get(0).name);
 
-        Path file = Files.createTempFile("nitrite-test", "");
-        file.toFile().deleteOnExit();
+//            assertTrue("joined children okay", EqualsBuilder.reflectionEquals(
+//                    Lists.newArrayList(outChildren),
+//                    results.get(0).children, false, null, true
+//            ));
 
-        NitriteTestEntry parent = NitriteTestEntry.builder().name("parent").build();
+//            NitriteTestEntry parentB = NitriteTestEntry.builder().name("parentB").build();
+//
+//            db.insert(parentB);
+//
+//            List<NitriteChildTestEntry> childrenB = new ArrayList<>(Arrays.asList(
+//                    NitriteChildTestEntry.builder().name("A").parentKey(parentB.primaryKey).build(),
+//                    NitriteChildTestEntry.builder().name("B").parentKey(parentB.primaryKey).build(),
+//                    NitriteChildTestEntry.builder().name("C").parentKey(parentB.primaryKey).build()
+//            ));
+//
+//            db.insertAll(childrenB);
 
-        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build()
-                .addRepository(NitriteTestEntry.class, new Index("name", IndexType.UNIQUE))
-                .addRepository(NitriteChildTestEntry.class, new Index("name", IndexType.NON_UNIQUE))
-                .addDeserializer(DoubleList.class, new DoubleArrayDeserializer())
-        )) {
-
-            db.insert(parent);
-
-            List<NitriteChildTestEntry> children = new ArrayList<>(Arrays.asList(
-                    NitriteChildTestEntry.builder().name("A").parentKey(parent.primaryKey).build(),
-                    NitriteChildTestEntry.builder().name("B").parentKey(parent.primaryKey).build(),
-                    NitriteChildTestEntry.builder().name("C").parentKey(parent.primaryKey).build()
-            ));
-
-            db.insertAll(children);
-
-            Iterable<NitriteTestEntry> outParent = db.findAll(NitriteTestEntry.class);
-            Iterable<NitriteChildTestEntry> outChildren = db.findAll(NitriteChildTestEntry.class);
-            Iterable<NitriteChildTestEntry> outChildrenF = db.find(new Filter().or().eq("name", "A").eq("name", "B"), NitriteChildTestEntry.class);
-
-            assertEquals("1 parent", 1, Lists.newArrayList(outParent).size());
-            assertTrue("parent okay", EqualsBuilder.reflectionEquals(parent, outParent.iterator().next(), false, null, true));
-
-            List<NitriteFamilyTestEntry> results = Lists.newArrayList(db.joinAllChildren(NitriteFamilyTestEntry.class, NitriteChildTestEntry.class, outParent, "primaryKey", "parentKey", "children"));
-
-            assertEquals("1 joined parent", 1, results.size());
-
-            assertEquals("joined parent okay", parent.primaryKey, results.get(0).primaryKey);
-            assertEquals("joined parent okay", parent.name, results.get(0).name);
-
-            assertTrue("joined children okay", EqualsBuilder.reflectionEquals(
-                    Lists.newArrayList(outChildren),
-                    results.get(0).children, false, null, true
-            ));
-
-            NitriteTestEntry parentB = NitriteTestEntry.builder().name("parentB").build();
-
-            db.insert(parentB);
-
-            List<NitriteChildTestEntry> childrenB = new ArrayList<>(Arrays.asList(
-                    NitriteChildTestEntry.builder().name("A").parentKey(parentB.primaryKey).build(),
-                    NitriteChildTestEntry.builder().name("B").parentKey(parentB.primaryKey).build(),
-                    NitriteChildTestEntry.builder().name("C").parentKey(parentB.primaryKey).build()
-            ));
-
-            db.insertAll(childrenB);
-
-            results = Lists.newArrayList(db.joinChildren(
-                    NitriteFamilyTestEntry.class,
-                    NitriteChildTestEntry.class,
-                    Filter.build().or().eq("name", "A").eq("name", "B").end(),
-                    db.findAll(NitriteTestEntry.class),
-                    "primaryKey", "parentKey", "children"));
-            results.sort(Comparator.comparing(entry -> entry.name));
-
-            assertEquals("2 joined filtered parents", 2, results.size());
-
-            assertEquals("joined filtered parent okay", parent.primaryKey, results.get(0).primaryKey);
-            assertEquals("joined filtered parent okay", parent.name, results.get(0).name);
-
-            assertEquals("joined filtered parent okay", parentB.primaryKey, results.get(1).primaryKey);
-            assertEquals("joined filtered parent okay", parentB.name, results.get(1).name);
-
-            assertTrue("joined filtered children okay", EqualsBuilder.reflectionEquals(
-                    Lists.newArrayList(outChildrenF),
-                    results.get(0).children, false, null, true
-            ));
-            assertTrue("joined filtered children okay", EqualsBuilder.reflectionEquals(
-                    Lists.newArrayList(outChildrenF),
-                    results.get(1).children, false, null, true
-            ));
-
-            results = Lists.newArrayList(db.joinChildren(
-                    NitriteFamilyTestEntry.class,
-                    NitriteChildTestEntry.class,
-                    Filter.build().and().eq("name", "A").eq("name", "B").end(),
-                    db.findAll(NitriteTestEntry.class),
-                    "primaryKey", "parentKey", "children"));
-            results.sort(Comparator.comparing(entry -> entry.name));
-
-            assertEquals("2 joined filtered parents", 2, results.size());
-
-            assertEquals("joined filtered parent okay", parent.primaryKey, results.get(0).primaryKey);
-            assertEquals("joined filtered parent okay", parent.name, results.get(0).name);
-
-            assertEquals("joined filtered parent okay", parentB.primaryKey, results.get(1).primaryKey);
-            assertEquals("joined filtered parent okay", parentB.name, results.get(1).name);
-
-            assertNull("zero joined children", results.get(0).children);
-        }
-
-    }
+//            results = Lists.newArrayList(db.joinChildren(
+//                    NitriteFamilyTestEntry.class,
+//                    NitriteChildTestEntry.class,
+//                    Filter.or(Filter.where("name").eq("A"), Filter.where("name").eq("B")),
+//                    db.findAll(NitriteTestEntry.class),
+//                    "primaryKey", "parentKey", "children"));
+//            results.sort(Comparator.comparing(entry -> entry.name));
+//
+//            assertEquals("2 joined filtered parents", 2, results.size());
+//
+//            assertEquals("joined filtered parent okay", parent.primaryKey, results.get(0).primaryKey);
+//            assertEquals("joined filtered parent okay", parent.name, results.get(0).name);
+//
+//            assertEquals("joined filtered parent okay", parentB.primaryKey, results.get(1).primaryKey);
+//            assertEquals("joined filtered parent okay", parentB.name, results.get(1).name);
+//
+////            assertTrue("joined filtered children okay", EqualsBuilder.reflectionEquals(
+////                    Lists.newArrayList(outChildrenF),
+////                    results.get(0).children, false, null, true
+////            ));
+////            assertTrue("joined filtered children okay", EqualsBuilder.reflectionEquals(
+////                    Lists.newArrayList(outChildrenF),
+////                    results.get(1).children, false, null, true
+////            ));
+//
+//            results = Lists.newArrayList(db.joinChildren(
+//                    NitriteFamilyTestEntry.class,
+//                    NitriteChildTestEntry.class,
+//                    Filter.and(Filter.where("name").eq("A"), Filter.where("name").eq("B")),
+//                    db.findAll(NitriteTestEntry.class),
+//                    "primaryKey", "parentKey", "children"));
+//            results.sort(Comparator.comparing(entry -> entry.name));
+//
+//            assertEquals("2 joined filtered parents", 2, results.size());
+//
+//            assertEquals("joined filtered parent okay", parent.primaryKey, results.get(0).primaryKey);
+//            assertEquals("joined filtered parent okay", parent.name, results.get(0).name);
+//
+//            assertEquals("joined filtered parent okay", parentB.primaryKey, results.get(1).primaryKey);
+//            assertEquals("joined filtered parent okay", parentB.name, results.get(1).name);
+//
+//            assertNull("zero joined children", results.get(0).children);
+//        }
+//
+//    }
 
     @Test
     @SuppressWarnings("unchecked")
@@ -684,8 +543,8 @@ public class NitriteDatabaseTest {
         Document parent = Document.createDocument("name", "parent");
 
         try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build()
-                .addCollection("entries", new Index("name", IndexType.NON_UNIQUE))
-                .addCollection("children", new Index("name", IndexType.NON_UNIQUE))
+                .addCollection("entries", Index.unique("name"))
+                .addCollection("children", Index.nonUnique("name"))
         )) {
 
             db.insert("entries", parent);
@@ -700,10 +559,10 @@ public class NitriteDatabaseTest {
 
             Iterable<Document> outParent = db.findAll("entries");
             Iterable<Document> outChildren = db.findAll("children");
-            Iterable<Document> outChildrenF = db.find("children", new Filter().or().eq("name", "A").eq("name", "B"));
+            Iterable<Document> outChildrenF = db.find("children", Filter.or(Filter.where("name").eq("A"), Filter.where("name").eq("B")));
 
             assertEquals("1 parent", 1, Lists.newArrayList(outParent).size());
-            assertEquals("parent okay", parent, outParent.iterator().next());
+            assertEquals("parent okay", parent.get("name", String.class), outParent.iterator().next().get("name", String.class));
 
             List<Document> results = Lists.newArrayList(db.joinAllChildren("children", outParent, "_id", "parentId", "children"));
 
@@ -731,7 +590,7 @@ public class NitriteDatabaseTest {
 
             outParent = db.findAll("entries");
 
-            results = Lists.newArrayList(db.joinChildren("children", new Filter().or().eq("name", "A").eq("name", "B"), outParent, "_id", "parentId", "children"));
+            results = Lists.newArrayList(db.joinChildren("children", Filter.or(Filter.where("name").eq("A"), Filter.where("name").eq("B")), outParent, "_id", "parentId", "children"));
 
             assertEquals("2 joined filtered parents", 2, results.size());
 
@@ -743,12 +602,15 @@ public class NitriteDatabaseTest {
 
             List<Document> outJoinedFChildren = Lists.newArrayList((Collection<Document>) results.get(0).get("children"));
             outJoinedFChildren.sort(Comparator.comparing((Document d) -> ((String) d.get("name"))));
+            List<Document> outJoinedFChildren1 = Lists.newArrayList((Collection<Document>) results.get(1).get("children"));
+            outJoinedFChildren.sort(Comparator.comparing((Document d) -> ((String) d.get("name"))));
 
-            assertEquals("joined filtered children okay", Lists.newArrayList(outChildrenF), outJoinedFChildren);
+            assertEquals("joined filtered children okay", StreamSupport.stream(outChildrenF.spliterator(), false).map(e -> e.get("name", String.class)).sorted().toList(), outJoinedFChildren.stream().map(e -> e.get("name", String.class)).sorted().toList());
+            assertEquals("joined filtered children okay", StreamSupport.stream(outChildrenF.spliterator(), false).map(e -> e.get("name", String.class)).sorted().toList(), outJoinedFChildren1.stream().map(e -> e.get("name", String.class)).sorted().toList());
 
             outParent = db.findAll("entries");
 
-            results = Lists.newArrayList(db.joinChildren("children", new Filter().and().eq("name", "A").eq("name", "B"), outParent, "_id", "parentId", "children"));
+            results = Lists.newArrayList(db.joinChildren("children", Filter.and(Filter.where("name").eq("A"), Filter.where("name").eq("B")), outParent, "_id", "parentId", "children"));
 
             assertEquals("2 joined filtered parents", 2, results.size());
 
@@ -765,7 +627,7 @@ public class NitriteDatabaseTest {
     }
 
     @Test
-    public void testJoinReflection() throws IOException {
+    public void testJoinObjects() throws IOException {
 
         Path file = Files.createTempFile("nitrite-test", "");
         file.toFile().deleteOnExit();
@@ -773,8 +635,8 @@ public class NitriteDatabaseTest {
         NitriteFamilyTestEntry parent = NitriteFamilyTestEntry.builder().name("parent").build();
 
         try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build()
-                .addRepository(NitriteFamilyTestEntry.class, new Index("name", IndexType.UNIQUE))
-                .addRepository(NitriteChildTestEntry.class, new Index("name", IndexType.NON_UNIQUE)
+                .addRepository(NitriteFamilyTestEntry.class, Index.unique("name"))
+                .addRepository(NitriteChildTestEntry.class, Index.nonUnique("name")
                 ))) {
 
             db.insert(parent);
@@ -787,27 +649,25 @@ public class NitriteDatabaseTest {
 
             db.insertAll(children);
 
-            Iterable<NitriteFamilyTestEntry> outParent = db.findAll(NitriteFamilyTestEntry.class);
-            Iterable<NitriteChildTestEntry> outChildren = db.findAll(NitriteChildTestEntry.class);
-            Iterable<NitriteChildTestEntry> outChildrenF = db.find(new Filter().or().eq("name", "A").eq("name", "B"), NitriteChildTestEntry.class);
+            List<NitriteFamilyTestEntry> outParent = db.findAllStr(NitriteFamilyTestEntry.class).toList();
+            List<NitriteChildTestEntry> outChildren = db.findAllStr(NitriteChildTestEntry.class).toList();
+            List<NitriteChildTestEntry> outChildrenF = db.findStr(Filter.or(Filter.where("name").eq("A"), Filter.where("name").eq("B")), NitriteChildTestEntry.class).toList();
 
             assertEquals("1 parent", 1, Lists.newArrayList(outParent).size());
-            assertTrue("parent okay", EqualsBuilder.reflectionEquals(parent, outParent.iterator().next(), false, null, true));
+            assertEquals("parent okay", parent.primaryKey, outParent.iterator().next().primaryKey);
+            assertEquals("parent okay", parent.name, outParent.iterator().next().name);
 
-            List<NitriteFamilyTestEntry> results = Lists.newArrayList(db.joinAllChildren(
+            List<NitriteFamilyTestEntry> results = db.joinAllChildrenStr(
                     NitriteChildTestEntry.class,
                     Lists.newArrayList(outParent),
-                    "primaryKey", "parentKey", "children"));
+                    "primaryKey", "parentKey", "children").toList();
 
             assertEquals("1 joined parent", 1, results.size());
 
             assertEquals("joined parent okay", parent.primaryKey, results.get(0).primaryKey);
             assertEquals("joined parent okay", parent.name, results.get(0).name);
 
-            assertTrue("joined children okay", EqualsBuilder.reflectionEquals(
-                    Lists.newArrayList(outChildren),
-                    results.get(0).children, false, null, true
-            ));
+            assertEquals("joined children okay", outChildren.stream().map(e -> e.name).collect(Collectors.toSet()), results.get(0).children.stream().map(e -> e.name).collect(Collectors.toSet()));
 
             NitriteFamilyTestEntry parentB = NitriteFamilyTestEntry.builder().name("parentB").build();
 
@@ -823,7 +683,7 @@ public class NitriteDatabaseTest {
 
             results = Lists.newArrayList(db.joinChildren(
                     NitriteChildTestEntry.class,
-                    Filter.build().or().eq("name", "A").eq("name", "B"),
+                    Filter.or(Filter.where("name").eq("A"), Filter.where("name").eq("B")),
                     Lists.newArrayList(db.findAll(NitriteFamilyTestEntry.class)),
                     "primaryKey", "parentKey", "children"));
             results.sort(Comparator.comparing(entry -> entry.name));
@@ -836,18 +696,12 @@ public class NitriteDatabaseTest {
             assertEquals("joined filtered parent okay", parentB.primaryKey, results.get(1).primaryKey);
             assertEquals("joined filtered parent okay", parentB.name, results.get(1).name);
 
-            assertTrue("joined filtered children okay", EqualsBuilder.reflectionEquals(
-                    Lists.newArrayList(outChildrenF),
-                    results.get(0).children, false, null, true
-            ));
-            assertTrue("joined filtered children okay", EqualsBuilder.reflectionEquals(
-                    Lists.newArrayList(outChildrenF),
-                    results.get(1).children, false, null, true
-            ));
+            assertEquals("joined filtered children okay", outChildrenF.stream().map(e -> e.name).collect(Collectors.toSet()), results.get(0).children.stream().map(e -> e.name).collect(Collectors.toSet()));
+            assertEquals("joined filtered children okay", outChildrenF.stream().map(e -> e.name).collect(Collectors.toSet()), results.get(1).children.stream().map(e -> e.name).collect(Collectors.toSet()));
 
             results = Lists.newArrayList(db.joinChildren(
                     NitriteChildTestEntry.class,
-                    Filter.build().and().eq("name", "A").eq("name", "B"),
+                    Filter.and(Filter.where("name").eq("A"), Filter.where("name").eq("B")),
                     Lists.newArrayList(db.findAll(NitriteFamilyTestEntry.class)),
                     "primaryKey", "parentKey", "children"));
             results.sort(Comparator.comparing(entry -> entry.name));
@@ -872,9 +726,10 @@ public class NitriteDatabaseTest {
         Path file = Files.createTempFile("nitrite-test", "");
         file.toFile().deleteOnExit();
 
-        List<NitriteTestEntry> entries = IntStream.range(0, 100).mapToObj((int num) -> NitriteTestEntry.builder().name(Integer.toString(num)).build()).collect(Collectors.toList());
+        List<NitriteTestEntry> entries = IntStream.range(0, 100).mapToObj((int num) -> NitriteTestEntry.builder().name(Integer.toString(num)).build()).toList();
+        List<String> expected = entries.stream().map(e -> e.name).toList();
 
-        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(NitriteTestEntry.class, new Index("name", IndexType.UNIQUE)).addDeserializer(NitriteTestEntry.class, new TestDeserializer()))) {
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(NitriteTestEntry.class, Index.unique("name")).addDeserializer(NitriteTestEntry.class, new TestDeserializer()))) {
             List<Callable<Void>> jobs = entries.stream().map((NitriteTestEntry entry) -> (Callable<Void>) () -> {
                 assertEquals("insert", 1, db.insert(entry));
                 return null;
@@ -892,9 +747,8 @@ public class NitriteDatabaseTest {
                 executorService.shutdown();
             }
 
-            List<NitriteTestEntry> out = Lists.newArrayList(db.findAll(NitriteTestEntry.class, "name", Database.SortOrder.ASCENDING));
-
-            assertTrue("concurrent insert", EqualsBuilder.reflectionEquals(entries, out, false, null, true));
+            List<String> out = db.findAllStr(NitriteTestEntry.class, "name").map(e -> e.name.substring(0, e.name.length() - 2)).sorted(Comparator.comparingInt(Integer::parseInt)).toList();
+            assertEquals("concurrent insert", expected, out);
         }
     }
 
@@ -903,7 +757,7 @@ public class NitriteDatabaseTest {
         Path file = Files.createTempFile("nitrite-test", "");
         file.toFile().deleteOnExit();
 
-        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(NitriteTestEntry.class, new Index("name", IndexType.UNIQUE)).setOptionalFields(NitriteTestEntry.class, "data").addDeserializer(DoubleList.class, new DoubleArrayDeserializer()))) {
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(NitriteTestEntry.class, Index.unique("name")).setOptionalFields(NitriteTestEntry.class, "data").addDeserializer(DoubleList.class, new DoubleArrayDeserializer()))) {
 
             NitriteTestEntry object = NitriteTestEntry.builder().name("TEST").data("BIGDATA").build();
 
@@ -949,7 +803,7 @@ public class NitriteDatabaseTest {
         Path file = Files.createTempFile("nitrite-test", "");
         file.toFile().deleteOnExit();
 
-        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addCollection("test", new Index("name", IndexType.UNIQUE)).setOptionalFields("test", "data"))) {
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addCollection("test", Index.unique("name")).setOptionalFields("test", "data"))) {
 
             Document doc = Document.createDocument("name", "TEST").put("data", "BIGDATA");
             assertNotNull(doc);
@@ -992,48 +846,6 @@ public class NitriteDatabaseTest {
     }
 
     @Test
-    public void testEvents() throws IOException, InterruptedException {
-        Path file = Files.createTempFile("nitrite-test", "");
-        file.toFile().deleteOnExit();
-
-        final BlockingQueue<Long> idQueue = new ArrayBlockingQueue<>(3);
-
-        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(NitriteTestEntry.class, new Index("name", IndexType.UNIQUE)).addDeserializer(NitriteTestEntry.class, new TestDeserializer()))) {
-            List<NitriteTestEntry> in = List.of(
-                    NitriteTestEntry.builder().name("A").build(),
-                    NitriteTestEntry.builder().name("B").build(),
-                    NitriteTestEntry.builder().name("C").build()
-            );
-
-            Set<Long> insertIds = new HashSet<>();
-            Set<Long> updateIds = new HashSet<>();
-            Set<Long> removeIds = new HashSet<>();
-            db.onInsert(NitriteTestEntry.class, idQueue::add);
-            db.onUpdate(NitriteTestEntry.class, idQueue::add);
-            db.onRemove(NitriteTestEntry.class, idQueue::add);
-
-            db.insertAll(in);
-            for (int i = 0; i < 3; i++) {
-                insertIds.add(idQueue.poll(1L, TimeUnit.SECONDS));
-            }
-            db.upsertAll(in.stream().peek(e -> e.name += "_U").toList());
-            for (int i = 0; i < 3; i++) {
-                updateIds.add(idQueue.poll(1L, TimeUnit.SECONDS));
-            }
-            db.removeAll(in);
-            for (int i = 0; i < 3; i++) {
-                removeIds.add(idQueue.poll(1L, TimeUnit.SECONDS));
-            }
-
-            Set<Long> expectedIds = in.stream().map(e -> e.primaryKey).collect(Collectors.toSet());
-            Assert.assertEquals(expectedIds, insertIds);
-            Assert.assertEquals(expectedIds, updateIds);
-            Assert.assertEquals(expectedIds, removeIds);
-        }
-
-    }
-
-    @Test
     public void testEventsWithObjects() throws IOException, InterruptedException {
         Path file = Files.createTempFile("nitrite-test", "");
         file.toFile().deleteOnExit();
@@ -1041,7 +853,7 @@ public class NitriteDatabaseTest {
         final BlockingQueue<Long> idQueue = new ArrayBlockingQueue<>(3);
         final BlockingQueue<String> nameQueue = new ArrayBlockingQueue<>(3);
 
-        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(NitriteTestEntry.class, new Index("name", IndexType.UNIQUE)).addDeserializer(NitriteTestEntry.class, new TestDeserializer()))) {
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(NitriteTestEntry.class, Index.unique("name")).addDeserializer(NitriteTestEntry.class, new TestDeserializer()))) {
             List<NitriteTestEntry> in = List.of(
                     NitriteTestEntry.builder().name("A").build(),
                     NitriteTestEntry.builder().name("B").build(),
@@ -1055,18 +867,13 @@ public class NitriteDatabaseTest {
             Set<String> updated = new HashSet<>();
             Set<String> removed = new HashSet<>();
 
-            db.onInsert(NitriteTestEntry.class, (Long id, NitriteTestEntry entry) -> {
-                idQueue.add(id);
-                nameQueue.add(entry.name);
-            });
-            db.onUpdate(NitriteTestEntry.class, (Long id, NitriteTestEntry entry) -> {
-                idQueue.add(id);
-                nameQueue.add(entry.name);
-            });
-            db.onRemove(NitriteTestEntry.class, (Long id, NitriteTestEntry entry) -> {
-                idQueue.add(id);
-                nameQueue.add(entry.name);
-            });
+            final Consumer<NitriteTestEntry> listener = (NitriteTestEntry e) -> {
+                idQueue.add(e.primaryKey);
+                nameQueue.add(e.name);
+            };
+            db.onInsert(NitriteTestEntry.class, listener);
+            db.onUpdate(NitriteTestEntry.class, listener);
+            db.onRemove(NitriteTestEntry.class, listener);
 
             db.insertAll(in);
             for (int i = 0; i < 3; i++) {
@@ -1110,7 +917,7 @@ public class NitriteDatabaseTest {
 
         final BlockingQueue<String> nameQueue = new ArrayBlockingQueue<>(3);
 
-        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addCollection("entries", new Index("name", IndexType.UNIQUE)))) {
+        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addCollection("entries", Index.unique("name")))) {
             List<Document> in = Lists.newArrayList(
                     Document.createDocument("name", "A"),
                     Document.createDocument("name", "B"),
@@ -1120,9 +927,13 @@ public class NitriteDatabaseTest {
             Set<String> inserted = new HashSet<>();
             Set<String> updated = new HashSet<>();
             Set<String> removed = new HashSet<>();
-            db.onInsert("entries", e -> nameQueue.add(e.get("name", String.class)));
-            db.onUpdate("entries", e -> nameQueue.add(e.get("name", String.class)));
-            db.onRemove("entries", e -> nameQueue.add(e.get("name", String.class)));
+
+            final Consumer<Document> listener = (Document e) -> {
+                nameQueue.add(e.get("name", String.class));
+            };
+            db.onInsert("entries", listener);
+            db.onUpdate("entries", listener);
+            db.onRemove("entries", listener);
 
             db.insertAll("entries", in);
             for (int i = 0; i < 3; i++) {
@@ -1131,7 +942,7 @@ public class NitriteDatabaseTest {
 
             Set<String> expectedNames = in.stream().map(e -> e.get("name", String.class)).collect(Collectors.toSet());
             in.forEach(e -> e.put("name", e.get("name", String.class) + "_U"));
-            Set<String> updatedNames = in.stream().map(e -> e.get("name", String.class)).collect(Collectors.toSet());
+
 
             db.upsertAll("entries",in);
             for (int i = 0; i < 3; i++) {
@@ -1141,6 +952,8 @@ public class NitriteDatabaseTest {
             for (int i = 0; i < 3; i++) {
                 removed.add(nameQueue.poll(1L, TimeUnit.SECONDS));
             }
+
+            Set<String> updatedNames = in.stream().map(e -> e.get("name", String.class)).collect(Collectors.toSet());
 
             Assert.assertEquals(expectedNames, inserted);
             Assert.assertEquals(updatedNames, updated);

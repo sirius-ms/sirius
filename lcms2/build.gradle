@@ -16,9 +16,6 @@ application {
 dependencies {
     implementation 'it.unimi.dsi:fastutil:8.5.12'
 
-    // https://mvnrepository.com/artifact/org.dizitart/nitrite
-    implementation 'org.dizitart:nitrite:3.4.4'
-
     implementation "com.h2database:h2-mvstore"
     
     implementation "org.apache.commons:commons-text:1.11.0"

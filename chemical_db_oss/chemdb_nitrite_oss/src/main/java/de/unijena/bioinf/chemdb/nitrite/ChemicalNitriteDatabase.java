@@ -24,7 +24,7 @@ import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.chemdb.ChemicalNoSQLDatabase;
 import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
-import org.dizitart.no2.Document;
+import org.dizitart.no2.collection.Document;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -45,12 +45,13 @@ public class ChemicalNitriteDatabase extends ChemicalNoSQLDatabase<Document> {
 
     @Override
     public <O> Document asDocument(O object) {
-        return this.getStorage().getJacksonMapper().asDocument(object);
+        return (Document) this.getStorage().getNitriteMapper().tryConvert(object, Document.class);
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public <O> O asObject(Document document, Class<O> objectClass) {
-        return this.getStorage().getJacksonMapper().asObject(document, objectClass);
+        return (O) this.getStorage().getNitriteMapper().tryConvert(document, objectClass);
     }
 
     public NitriteDatabase getStorage(){
