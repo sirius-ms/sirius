@@ -161,7 +161,7 @@ public class WorkflowBuilder{
         );
 
         customDBOptions = new CustomDBOptions();
-        similarityMatrixOptions = new SimilarityMatrixOptions();
+        similarityMatrixOptions = new SimilarityMatrixOptions(spaceManagerFactory);
         decompOptions = new DecompOptions();
         mgfExporterOptions = new MgfExporterOptions();
         ftreeExporterOptions = new FTreeExporterOptions();

@@ -21,6 +21,23 @@
 package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
+import de.unijena.bioinf.babelms.projectspace.PassatuttoSerializer;
+import de.unijena.bioinf.canopus.CanopusResult;
+import de.unijena.bioinf.fingerid.FingerprintResult;
+import de.unijena.bioinf.fingerid.StructureSearchResult;
+import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
+import de.unijena.bioinf.fingerid.blast.FBCandidates;
+import de.unijena.bioinf.fingerid.blast.MsNovelistFBCandidateFingerprints;
+import de.unijena.bioinf.fingerid.blast.MsNovelistFBCandidates;
+import de.unijena.bioinf.networks.serialization.ConnectionTable;
+import de.unijena.bioinf.networks.serialization.ConnectionTableSerializer;
+import de.unijena.bioinf.passatutto.Decoy;
+import de.unijena.bioinf.projectspace.canopus.CanopusCfDataProperty;
+import de.unijena.bioinf.projectspace.canopus.CanopusNpcDataProperty;
+import de.unijena.bioinf.projectspace.canopus.CanopusSerializer;
+import de.unijena.bioinf.projectspace.fingerid.*;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,24 +46,77 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 @Slf4j
-public final class SiriusProjectSpaceManagerFactory implements ProjectSpaceManagerFactory<ProjectSpaceManager> {
-    public ProjectSpaceManager create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<?> factory, @Nullable Function<Ms2Experiment, String> formatter) {
-        return new ProjectSpaceManager(space, factory, formatter);
+public final class SiriusProjectSpaceManagerFactory implements ProjectSpaceManagerFactory<SiriusProjectSpaceManager> {
+    @NotNull
+    public static Supplier<ProjectSpaceConfiguration> DEFAULT_CONFIG = () -> {
+        final ProjectSpaceConfiguration config = new ProjectSpaceConfiguration();
+        //configure ProjectSpaceProperties
+        config.defineProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSPropertySerializer());
+        config.defineProjectSpaceProperty(CompressionFormat.class, new CompressionFormat.Serializer());
+        config.defineProjectSpaceProperty(VersionInfo.class, new VersionInfo.Serializer());
+        //configure compound container
+        config.registerContainer(CompoundContainer.class, new CompoundContainerSerializer());
+        config.registerComponent(CompoundContainer.class, ProjectSpaceConfig.class, new ProjectSpaceConfigSerializer());
+        config.registerComponent(CompoundContainer.class, Ms2Experiment.class, new MsExperimentSerializer());
+        //spectral search
+        config.registerComponent(CompoundContainer.class, SpectralSearchResult.class, new SpectralSearchResultSerializer());
+        //configure formula result
+        config.registerContainer(FormulaResult.class, new FormulaResultSerializer());
+        config.registerComponent(FormulaResult.class, FTree.class, new TreeSerializer());
+        config.registerComponent(FormulaResult.class, FormulaScoring.class, new FormulaScoringSerializer());
+        //pssatuto components
+        config.registerComponent(FormulaResult.class, Decoy.class, new PassatuttoSerializer());
+        //fingerid components
+        config.defineProjectSpaceProperty(FingerIdDataProperty.class, new FingerIdDataSerializer());
+        config.registerComponent(FormulaResult.class, FingerprintResult.class, new FingerprintSerializer());
+        config.registerComponent(FormulaResult.class, FBCandidates.class, new FBCandidatesSerializer());
+        config.registerComponent(FormulaResult.class, FBCandidateFingerprints.class, new FBCandidateFingerprintSerializer<>(FingerIdLocations.FINGERBLAST_FPs, FBCandidateFingerprints::new));
+        config.registerComponent(FormulaResult.class, StructureSearchResult.class, new StructureSearchResultSerializer());
+        //fingerid on msnovelist
+        config.registerComponent(FormulaResult.class, MsNovelistFBCandidates.class, new MsNovelistFBCandidatesSerializer());
+        config.registerComponent(FormulaResult.class, MsNovelistFBCandidateFingerprints.class, new FBCandidateFingerprintSerializer<>(FingerIdLocations.MSNOVELIST_FINGERBLAST_FPs, MsNovelistFBCandidateFingerprints::new));
+        //canopus
+        config.defineProjectSpaceProperty(CanopusCfDataProperty.class, new CanopusCfDataProperty.Serializer());
+        config.defineProjectSpaceProperty(CanopusNpcDataProperty.class, new CanopusNpcDataProperty.Serializer());
+        config.registerComponent(FormulaResult.class, CanopusResult.class, new CanopusSerializer());
+
+        config.registerComponent(CompoundContainer.class, ConnectionTable.class, new ConnectionTableSerializer());
+        config.registerComponent(CompoundContainer.class, LCMSPeakInformation.class, new LCMSPeakSerializer());
+
+        return config;
+    };
+
+    private final ProjectSpaceIO creator;
+
+    public SiriusProjectSpaceManagerFactory() {
+        this(newDefaultConfig());
     }
 
-    public ProjectSpaceManager create(SiriusProjectSpace space) {
+    public SiriusProjectSpaceManagerFactory(ProjectSpaceConfiguration config) {
+        this(new ProjectSpaceIO(config));
+    }
+    public SiriusProjectSpaceManagerFactory(ProjectSpaceIO creator) {
+        this.creator = creator;
+    }
+
+    public SiriusProjectSpaceManager create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<?> factory, @Nullable Function<Ms2Experiment, String> formatter) {
+        return new SiriusProjectSpaceManager(space, factory, formatter);
+    }
+
+    public SiriusProjectSpaceManager create(SiriusProjectSpace space) {
         return create(space, null);
     }
 
 
-    public ProjectSpaceManager create(@NotNull SiriusProjectSpace space, @Nullable Function<Ms2Experiment, String> formatter) {
+    public SiriusProjectSpaceManager create(@NotNull SiriusProjectSpace space, @Nullable Function<Ms2Experiment, String> formatter) {
         return create(space, new InstanceFactory.Default(), formatter);
     }
 
     @Override
-    public ProjectSpaceManager createOrOpen(@Nullable Path projectLocation) throws IOException {
+    public SiriusProjectSpaceManager createOrOpen(@Nullable Path projectLocation) throws IOException {
 
         if (projectLocation == null) {
             projectLocation = ProjectSpaceIO.createTmpProjectSpaceLocation();
@@ -55,13 +125,19 @@ public final class SiriusProjectSpaceManagerFactory implements ProjectSpaceManag
 
         final SiriusProjectSpace psTmp;
         if (Files.notExists(projectLocation)) {
-            psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(projectLocation, true);
+            psTmp = creator.createNewProjectSpace(projectLocation, true);
         } else {
-            psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(projectLocation);
+            psTmp = creator.openExistingProjectSpace(projectLocation);
         }
 
         //check for formatter
-
         return create(psTmp, new StandardMSFilenameFormatter());
     }
+
+
+    //region static helper
+    public static ProjectSpaceConfiguration newDefaultConfig() {
+        return DEFAULT_CONFIG.get();
+    }
+    //end region
 }

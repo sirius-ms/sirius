@@ -34,6 +34,7 @@ import de.unijena.bioinf.ms.frontend.core.Workspace;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainJob;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastSubToolJob;
 import de.unijena.bioinf.ms.frontend.subtools.middleware.MiddlewareAppOptions;
 import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
 import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
@@ -42,11 +43,12 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
-import de.unijena.bioinf.projectspace.SiriusProjectSpaceManagerFactory;
+import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.fingerid.*;
 import de.unijena.bioinf.rest.ProxyManager;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.Banner;
 import org.springframework.boot.CommandLineRunner;
@@ -64,12 +66,26 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Supplier;
 
 @SpringBootApplication
 @OpenAPIDefinition
 @Slf4j
 public class SiriusMiddlewareApplication extends SiriusCLIApplication implements CommandLineRunner, DisposableBean {
-    private final static ProjectSpaceManagerFactory<?> psf = new SiriusProjectSpaceManagerFactory();
+    private final static ProjectSpaceManagerFactory<?> psf = getProjectFactory();
+    private static ProjectSpaceManagerFactory<?> getProjectFactory() {
+        //enable gui support
+        // modify fingerid subtool so that it works with reduced GUI candidate list.
+        FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidatesTopK.class);
+        FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidateFingerprintsTopK.class);
+
+        ProjectSpaceConfiguration config = SiriusProjectSpaceManagerFactory.newDefaultConfig();
+        config.registerComponent(FormulaResult.class, FBCandidatesTopK.class, new FBCandidatesSerializerTopK(FBCandidateNumber.GUI_DEFAULT));
+        config.registerComponent(FormulaResult.class, FBCandidateFingerprintsTopK.class, new FBCandidateFingerprintSerializerTopK(FBCandidateNumber.GUI_DEFAULT));
+
+        return new SiriusProjectSpaceManagerFactory(config);
+    }
+
     private final static InstanceBufferFactory<?> bufferFactory = (bufferSize, instances, tasks, dependJob, progressSupport) ->
             new SimpleInstanceBuffer(bufferSize, instances, tasks, dependJob, progressSupport, new JobSubmitter() {
                 @Override
@@ -85,7 +101,6 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
     private final static MiddlewareAppOptions<?> middlewareOpts = new MiddlewareAppOptions<>();
 
     private final ApplicationContext appContext;
-
     @Bean
     public ProjectSpaceManagerFactory<?> projectSpaceManagerFactory() {
         return psf;

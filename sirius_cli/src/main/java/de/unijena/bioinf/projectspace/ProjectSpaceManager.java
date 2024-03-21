@@ -1,285 +1,71 @@
 /*
- *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
  *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
- *  This program is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Affero General Public License
- *  as published by the Free Software Foundation; either
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
  *  version 3 of the License, or (at your option) any later version.
  *
- *  This program is distributed in the hope that it will be useful,
+ *  This library is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Affero General Public License for more details.
+ *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
+ *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
 package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
-import de.unijena.bioinf.ChemistryBase.fp.FingerprintData;
-import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
-import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ChemistryBase.utils.IterableWithSize;
-import de.unijena.bioinf.GibbsSampling.ZodiacScore;
-import de.unijena.bioinf.babelms.projectspace.PassatuttoSerializer;
-import de.unijena.bioinf.canopus.CanopusResult;
-import de.unijena.bioinf.fingerid.ConfidenceScore;
-import de.unijena.bioinf.fingerid.FingerprintResult;
-import de.unijena.bioinf.fingerid.StructureSearchResult;
-import de.unijena.bioinf.fingerid.blast.*;
-import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
-import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
-import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
-import de.unijena.bioinf.networks.serialization.ConnectionTable;
-import de.unijena.bioinf.networks.serialization.ConnectionTableSerializer;
-import de.unijena.bioinf.passatutto.Decoy;
-import de.unijena.bioinf.projectspace.canopus.CanopusCfDataProperty;
-import de.unijena.bioinf.projectspace.canopus.CanopusNpcDataProperty;
-import de.unijena.bioinf.projectspace.canopus.CanopusSerializer;
-import de.unijena.bioinf.projectspace.fingerid.*;
-import de.unijena.bioinf.projectspace.summaries.CanopusSummaryWriter;
-import de.unijena.bioinf.projectspace.summaries.FormulaSummaryWriter;
-import de.unijena.bioinf.projectspace.summaries.StructureSummaryWriter;
-import de.unijena.bioinf.projectspace.summaries.mztab.MztabMExporter;
 import de.unijena.bioinf.rest.NetUtils;
-import de.unijena.bioinf.sirius.scores.IsotopeScore;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
-import de.unijena.bioinf.sirius.scores.TreeScore;
-import org.apache.commons.collections4.map.AbstractReferenceMap;
-import org.apache.commons.collections4.map.ReferenceMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
-/**
- * Manage the project space.
- * e.g. iteration on Instance level.
- * maybe some type of caching?
- */
-public class ProjectSpaceManager implements IterableWithSize<Instance> {
-    @NotNull
-    public static Supplier<ProjectSpaceConfiguration> DEFAULT_CONFIG = () -> {
-        final ProjectSpaceConfiguration config = new ProjectSpaceConfiguration();
-        //configure ProjectSpaceProperties
-        config.defineProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSPropertySerializer());
-        config.defineProjectSpaceProperty(CompressionFormat.class, new CompressionFormat.Serializer());
-        config.defineProjectSpaceProperty(VersionInfo.class, new VersionInfo.Serializer());
-        //configure compound container
-        config.registerContainer(CompoundContainer.class, new CompoundContainerSerializer());
-        config.registerComponent(CompoundContainer.class, ProjectSpaceConfig.class, new ProjectSpaceConfigSerializer());
-        config.registerComponent(CompoundContainer.class, Ms2Experiment.class, new MsExperimentSerializer());
-        //spectral search
-        config.registerComponent(CompoundContainer.class, SpectralSearchResult.class, new SpectralSearchResultSerializer());
-        //configure formula result
-        config.registerContainer(FormulaResult.class, new FormulaResultSerializer());
-        config.registerComponent(FormulaResult.class, FTree.class, new TreeSerializer());
-        config.registerComponent(FormulaResult.class, FormulaScoring.class, new FormulaScoringSerializer());
-        //pssatuto components
-        config.registerComponent(FormulaResult.class, Decoy.class, new PassatuttoSerializer());
-        //fingerid components
-        config.defineProjectSpaceProperty(FingerIdDataProperty.class, new FingerIdDataSerializer());
-        config.registerComponent(FormulaResult.class, FingerprintResult.class, new FingerprintSerializer());
-        config.registerComponent(FormulaResult.class, FBCandidates.class, new FBCandidatesSerializer());
-        config.registerComponent(FormulaResult.class, FBCandidateFingerprints.class, new FBCandidateFingerprintSerializer<>(FingerIdLocations.FINGERBLAST_FPs, FBCandidateFingerprints::new));
-        config.registerComponent(FormulaResult.class, StructureSearchResult.class, new StructureSearchResultSerializer());
-        //fingerid on msnovelist
-        config.registerComponent(FormulaResult.class, MsNovelistFBCandidates.class, new MsNovelistFBCandidatesSerializer());
-        config.registerComponent(FormulaResult.class, MsNovelistFBCandidateFingerprints.class, new FBCandidateFingerprintSerializer<>(FingerIdLocations.MSNOVELIST_FINGERBLAST_FPs, MsNovelistFBCandidateFingerprints::new));
-        //canopus
-        config.defineProjectSpaceProperty(CanopusCfDataProperty.class, new CanopusCfDataProperty.Serializer());
-        config.defineProjectSpaceProperty(CanopusNpcDataProperty.class, new CanopusNpcDataProperty.Serializer());
-        config.registerComponent(FormulaResult.class, CanopusResult.class, new CanopusSerializer());
+public interface ProjectSpaceManager extends IterableWithSize<Instance> {
+    @NotNull Instance newCompoundWithUniqueId(Ms2Experiment inputExperiment);
 
-        config.registerComponent(CompoundContainer.class, ConnectionTable.class, new ConnectionTableSerializer());
-        config.registerComponent(CompoundContainer.class, LCMSPeakInformation.class, new LCMSPeakSerializer());
+    Optional<Instance> findInstance(String id, Class<? extends DataAnnotation>... components);
 
-        return config;
-    };
+    <T extends ProjectSpaceProperty> Optional<T> getProjectSpaceProperty(Class<T> key);
 
-    private final SiriusProjectSpace space;
-    public final Function<Ms2Experiment, String> nameFormatter;
-    public final BiFunction<Integer, String, String> namingScheme;
-    protected final InstanceFactory<?> instFac;
+    <T extends ProjectSpaceProperty> T setProjectSpaceProperty(T value);
 
+    <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value);
 
-    public ProjectSpaceManager(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<?> factory, @Nullable Function<Ms2Experiment, String> formatter) {
-        this.space = space;
-        this.instFac = factory;
-        this.nameFormatter = space.getProjectSpaceProperty(FilenameFormatter.PSProperty.class)
-                .map(p -> (Function<Ms2Experiment, String>) new StandardMSFilenameFormatter(p.formatExpression))
-                .orElseGet(() -> {
-                    Function<Ms2Experiment, String> f = (formatter != null) ? formatter : new StandardMSFilenameFormatter();
-                    if (f instanceof FilenameFormatter)
-                        space.setProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSProperty((FilenameFormatter) f));
-                    return f;
-                });
-        this.namingScheme = (idx, name) -> idx + "_" + name;
-    }
+    <T extends ProjectSpaceProperty> T deleteProjectSpaceProperty(Class<T> key);
 
-    public SiriusProjectSpace getProjectSpaceImpl() {
-        return space;
-    }
-
-
-    @NotNull
-    public Instance newCompoundWithUniqueId(Ms2Experiment inputExperiment) {
-        final String name = nameFormatter.apply(inputExperiment);
-        final CompoundContainer container = getProjectSpaceImpl().newCompoundWithUniqueId(name, (idx) -> namingScheme.apply(idx, name), inputExperiment).orElseThrow(() -> new RuntimeException("Could not create an project space ID for the Instance"));
-        return instFac.create(container, this);
-    }
-
-    @SafeVarargs
-    private Instance newInstanceFromCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {
-        try {
-            CompoundContainer c = getProjectSpaceImpl().getCompound(id, components);
-            return instFac.create(c, this);
-        } catch (IOException e) {
-            LoggerFactory.getLogger(getClass()).error("Could not create read Input Experiment from Project Space.");
-            throw new RuntimeException("Could not create read Input Experiment from Project Space.", e);
-        }
-    }
-
-    private static final ReferenceMap<CompoundContainerId, Instance> instanceCache = new ReferenceMap<>(AbstractReferenceMap.ReferenceStrength.HARD, AbstractReferenceMap.ReferenceStrength.WEAK, true);
-
-    @SafeVarargs
-    public final Instance getInstanceFromCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {
-        Instance instance;
-        synchronized (instanceCache) {
-            instance = instanceCache.computeIfAbsent(id, i -> newInstanceFromCompound(id));
-        }
-        instance.loadCompoundContainer(components);
-        return instance;
-    }
-
-    @SafeVarargs
-    public final Optional<Instance> findInstance(String id, Class<? extends DataAnnotation>... components) {
-        return getProjectSpaceImpl().findCompound(id).map(cid -> getInstanceFromCompound(cid, components));
-    }
-
-    public final List<Instance> getInstancesFromCompounds(Collection<CompoundContainerId> ids, Class<? extends DataAnnotation>... components) {
-        List<Instance> instances;
-        synchronized (instanceCache) {
-            instances = ids.stream().map(id -> instanceCache.computeIfAbsent(id, i -> newInstanceFromCompound(id)))
-                    .collect(Collectors.toList());
-        }
-        instances.forEach(i -> i.loadCompoundContainer(components));
-        return instances;
-    }
-
-
-    public <T extends ProjectSpaceProperty> Optional<T> getProjectSpaceProperty(Class<T> key) {
-        return getProjectSpaceImpl().getProjectSpaceProperty(key);
-    }
-
-    public <T extends ProjectSpaceProperty> T setProjectSpaceProperty(T value) {
-        return setProjectSpaceProperty((Class<T>) value.getClass(), value);
-    }
-
-    public <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value) {
-        if (PosNegFpProperty.class.isAssignableFrom(key))
-            synchronized (dataCompatibilityCache) {
-                dataCompatibilityCache.remove(key);
-                return getProjectSpaceImpl().setProjectSpaceProperty(key, value);
-            }
-        else
-            return getProjectSpaceImpl().setProjectSpaceProperty(key, value);
-    }
-
-    public <T extends ProjectSpaceProperty> T deleteProjectSpaceProperty(Class<T> key) {
-        if (PosNegFpProperty.class.isAssignableFrom(key))
-            synchronized (dataCompatibilityCache) {
-                dataCompatibilityCache.remove(key);
-                return getProjectSpaceImpl().deleteProjectSpaceProperty(key);
-            }
-        else
-            return getProjectSpaceImpl().deleteProjectSpaceProperty(key);
-    }
-
-    @NotNull
-    public Iterator<Instance> filteredIterator(@Nullable Predicate<CompoundContainerId> cidFilter, @Nullable final Predicate<CompoundContainer> compoundFilter) {
-        if (compoundFilter == null && cidFilter == null)
-            return iterator();
-        return makeInstanceIterator(space.filteredCompoundIterator(cidFilter, compoundFilter, Ms2Experiment.class));
-    }
-
+    @NotNull Iterator<Instance> filteredIterator(@Nullable Predicate<CompoundContainerId> cidFilter, @Nullable Predicate<CompoundContainer> compoundFilter);
 
     @NotNull
     @Override
-    public Iterator<Instance> iterator() {
-        return instanceIterator();
-    }
+    Iterator<Instance> iterator();
 
-    public Iterator<Instance> instanceIterator(Class<? extends DataAnnotation>... c) {
-        return makeInstanceIterator(space.compoundIterator(c));
-    }
+    Iterator<Instance> instanceIterator(Class<? extends DataAnnotation>... c);
 
-    private Iterator<Instance> makeInstanceIterator(@NotNull final Iterator<CompoundContainer> compoundIt) {
-        return new Iterator<>() {
-            @Override
-            public boolean hasNext() {
-                return compoundIt.hasNext();
-            }
+    int size();
 
-            @Override
-            public Instance next() {
-                final CompoundContainer c = compoundIt.next();
-                if (c == null) return null;
-                return instFac.create(c, ProjectSpaceManager.this);
-            }
-        };
-    }
+    boolean containsCompound(String dirName);
 
-    public int size() {
-        return space.size();
-    }
+    void writeSummaries(@Nullable Path summaryLocation, @Nullable Collection<CompoundContainerId> inclusionList, @NotNull Summarizer... summarizers) throws ExecutionException;
 
-    public boolean containsCompound(String dirName) {
-        return space.containsCompound(dirName);
-    }
+    void writeSummaries(@Nullable Path summaryLocation, boolean compressed, @Nullable Collection<CompoundContainerId> inclusionList, @NotNull Summarizer... summarizers) throws ExecutionException;
 
-    public boolean containsCompound(CompoundContainerId id) {
-        return space.containsCompound(id);
-    }
-
-    public void writeSummaries(@Nullable Path summaryLocation, @Nullable Collection<CompoundContainerId> inclusionList, @NotNull Summarizer... summarizers) throws ExecutionException {
-        if (summaryLocation == null)
-            writeSummaries(null, false, inclusionList, summarizers);
-        else
-            writeSummaries(summaryLocation, summaryLocation.toString().endsWith(".zip"), inclusionList, summarizers);
-    }
-
-    public void writeSummaries(@Nullable Path summaryLocation, boolean compressed, @Nullable Collection<CompoundContainerId> inclusionList, @NotNull Summarizer... summarizers) throws ExecutionException {
-        space.writeSummaries(summaryLocation, compressed, inclusionList, summarizers);
-    }
-
-    public void close() throws IOException {
-        space.close();
-    }
-
-    private final Map<Class<? extends PosNegFpProperty<?, ?>>, Boolean> dataCompatibilityCache = new HashMap<>();
+    void close() throws IOException;
 
     /**
      * This checks whether the data files are compatible with them on the server. Since have had versions of the PS with
@@ -292,99 +78,11 @@ public class ProjectSpaceManager implements IterableWithSize<Instance> {
      * @throws TimeoutException     if server request times out
      * @throws InterruptedException if waiting for server request is interrupted
      */
-    public boolean checkAndFixDataFiles(NetUtils.InterruptionCheck interrupted) throws TimeoutException, InterruptedException {
-        if (PropertyManager.getBoolean("de.unijena.bioinf.sirius.project-check", null, false))
-            return true;
+    boolean checkAndFixDataFiles(NetUtils.InterruptionCheck interrupted) throws TimeoutException, InterruptedException;
 
-        synchronized (dataCompatibilityCache) {
-            try {
+    String getName();
 
-                checkFingerprintData(FingerIdDataProperty.class, FingerIdData.class, ApplicationCore.WEB_API::getFingerIdData, interrupted);
-                checkFingerprintData(CanopusCfDataProperty.class, CanopusCfData.class, ApplicationCore.WEB_API::getCanopusCfData, interrupted);
-                checkFingerprintData(CanopusNpcDataProperty.class, CanopusNpcData.class, ApplicationCore.WEB_API::getCanopusNpcData, interrupted);
+    String getLocation();
 
-                return dataCompatibilityCache.values().stream().reduce((a, b) -> a && b).orElse(true);
-            } catch (Exception e) {
-                dataCompatibilityCache.clear();
-                LoggerFactory.getLogger(getClass()).warn("Could not retrieve FingerprintData from server! \n" + e.getMessage());
-                throw e;
-            }
-        }
-    }
-
-    private <F extends FingerprintVersion, D extends FingerprintData<F>, P extends PosNegFpProperty<F, D>> void checkFingerprintData(
-            Class<P> propClz, Class<D> propDataClz, IOFunctions.IOFunction<PredictorType, D> dataLoader, NetUtils.InterruptionCheck interrupted)
-            throws InterruptedException, TimeoutException {
-        try {
-            if (!dataCompatibilityCache.containsKey(propClz)) {
-                final P cd = getProjectSpaceProperty(propClz).orElse(null);
-                if (cd != null) {
-                    dataCompatibilityCache.put(propClz, true);
-                    final D pos = NetUtils.tryAndWait(() -> dataLoader.apply(PredictorType.CSI_FINGERID_POSITIVE), interrupted);
-                    final D neg = NetUtils.tryAndWait(() -> dataLoader.apply(PredictorType.CSI_FINGERID_NEGATIVE), interrupted);
-                    if (cd.getPositive() != null) {
-                        if (!cd.getPositive().identical(pos)) {
-                            dataCompatibilityCache.put(propClz, false);
-                        } else if (cd.getNegative() == null) {
-                            LoggerFactory.getLogger(InstanceImporter.class).warn("Negative '" + propDataClz.getName() + "' file missing in project. Try to repair by reloading from webservice.");
-
-                            setProjectSpaceProperty(propClz,
-                                    propClz.getConstructor(propDataClz, propDataClz).newInstance(cd.getPositive(), neg));
-                        }
-                    }
-
-                    if (cd.getNegative() != null) {
-                        if (!cd.getNegative().identical(neg)) {
-                            dataCompatibilityCache.put(propClz, false);
-                        } else if (cd.getPositive() == null) {
-                            LoggerFactory.getLogger(InstanceImporter.class).warn("Positive '" + propDataClz.getName() + "' file missing in project. Try to repair by reloading from webservice.");
-                            setProjectSpaceProperty(propClz,
-                                    propClz.getConstructor(propDataClz, propDataClz).newInstance(neg, cd.getNegative()));
-                        }
-                    }
-                }
-            }
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
-                 NoSuchMethodException e) {
-            throw new RuntimeException("Error during java reflection Object instantiation of '" + propClz.getName() + "'.", e);
-        }
-    }
-
-    public String getName() {
-        return getProjectSpaceImpl().getLocation().getFileName().toString();
-    }
-    public String getLocation() {
-        return getProjectSpaceImpl().getLocation().toAbsolutePath().toString();
-    }
-
-    public void flush() throws IOException {
-        getProjectSpaceImpl().flush();
-    }
-
-    //region static helper
-    public static Summarizer[] defaultSummarizer(boolean writeTopHitGlobal, boolean writeTopHitWithAdductsGlobal, boolean writeFullGlobal) {
-        return new Summarizer[]{
-                new FormulaSummaryWriter(writeTopHitGlobal, writeTopHitWithAdductsGlobal, writeFullGlobal),
-                new StructureSummaryWriter(writeTopHitGlobal, writeTopHitWithAdductsGlobal, writeFullGlobal),
-                new CanopusSummaryWriter(writeTopHitGlobal, writeTopHitWithAdductsGlobal, writeFullGlobal),
-                new MztabMExporter()
-        };
-    }
-
-    public static List<Class<? extends FormulaScore>> scorePriorities() {
-        final LinkedList<Class<? extends FormulaScore>> list = new LinkedList<>();
-        list.add(ConfidenceScore.class);
-        list.add(TopCSIScore.class);
-        list.add(ZodiacScore.class);
-        list.add(SiriusScore.class);
-        list.add(TreeScore.class);
-        list.add(IsotopeScore.class);
-        return list;
-    }
-
-
-    public static ProjectSpaceConfiguration newDefaultConfig() {
-        return DEFAULT_CONFIG.get();
-    }
-    //end region
+    void flush() throws IOException;
 }

@@ -22,12 +22,12 @@ package de.unijena.bioinf.projectspace;
 import org.jetbrains.annotations.NotNull;
 
 public interface InstanceFactory<I extends Instance> {
-    I create(@NotNull CompoundContainer compoundContainer, @NotNull ProjectSpaceManager spaceManager);
+    I create(@NotNull CompoundContainer compoundContainer, @NotNull SiriusProjectSpaceManager spaceManager);
 
     final class Default implements InstanceFactory<Instance> {
 
         @Override
-        public Instance create(@NotNull CompoundContainer compoundContainer, @NotNull ProjectSpaceManager spaceManager) {
+        public Instance create(@NotNull CompoundContainer compoundContainer, @NotNull SiriusProjectSpaceManager spaceManager) {
             return new Instance(compoundContainer, spaceManager);
         }
     }
