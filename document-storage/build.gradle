@@ -27,7 +27,7 @@ dependencies {
     implementation "io.hypersistence:hypersistence-tsid:2.1.1"
 
     testImplementation 'org.burningwave:core:12.62.7'
-    testCompileOnly 'org.projectlombok:lombok:1.18.26'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.26'
+    testCompileOnly 'org.projectlombok:lombok:1.18.30'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
     testImplementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version:"$jackson_version"
 }

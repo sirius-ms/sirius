@@ -50,4 +50,9 @@ public class DataSource implements DataAnnotation, TreeAnnotation, Ms2Experiment
     public String toString() {
         return url.toString();
     }
+
+    public String getName(){
+        String path = url.getPath();
+        return path.substring(path.lastIndexOf('/') + 1);
+    }
 }

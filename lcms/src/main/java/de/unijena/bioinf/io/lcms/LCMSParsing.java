@@ -23,25 +23,25 @@ package de.unijena.bioinf.io.lcms;
 import de.unijena.bioinf.lcms.SpectrumStorage;
 import de.unijena.bioinf.model.lcms.LCMSRun;
 
-import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 
 public class LCMSParsing {
 
-    public static LCMSRun parseRun(File source, SpectrumStorage storage) throws IOException {
-        if (source.getName().toLowerCase().endsWith(".mzml")) {
+    public static LCMSRun parseRun(URI source, SpectrumStorage storage) throws IOException {
+        if (source.toString().toLowerCase().endsWith(".mzml")) {
             return parseRunFromMzMl(source, storage);
-        } else if (source.getName().toLowerCase().endsWith(".mzxml")) {
+        } else if (source.toString() .toLowerCase().endsWith(".mzxml")) {
             return parseRunFromMzXml(source, storage);
         }
         throw new IOException("Illegal file extension. Only .mzml and .mzxml are supported");
     }
 
-    public static LCMSRun parseRunFromMzXml(File source, SpectrumStorage storage) throws IOException {
+    public static LCMSRun parseRunFromMzXml(URI source, SpectrumStorage storage) throws IOException {
         return new MzXMLParser().parse(source, storage);
     }
 
-    public static LCMSRun parseRunFromMzMl(File source, SpectrumStorage storage) throws IOException {
+    public static LCMSRun parseRunFromMzMl(URI source, SpectrumStorage storage) throws IOException {
         return new MzMLParser().parse(source, storage);
     }
 }
