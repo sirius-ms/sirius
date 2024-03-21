@@ -119,7 +119,7 @@ public final class ProjectInfo {
         return Objects.hash(projectId, location);
     }
 
-    public static ProjectInfo of(String projectId, Path location) {
-        return ProjectInfo.builder().projectId(projectId).location(location.toAbsolutePath().toString()).build();
+    public static ProjectInfo of(String projectId, String location) {
+        return ProjectInfo.builder().projectId(projectId).location(location).build();
     }
 }

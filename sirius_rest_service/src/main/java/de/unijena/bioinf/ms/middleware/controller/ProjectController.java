@@ -229,7 +229,7 @@ public class ProjectController {
     @Deprecated
     @PutMapping(value = "/{projectId}/copy", produces = MediaType.APPLICATION_JSON_VALUE)
     public ProjectInfo copyProjectSpace(@PathVariable String projectId, @RequestParam String pathToCopiedProject, @RequestParam(required = false) String copyProjectId, @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields) throws IOException {
-        return projectsProvider.copyProjectSpace(projectId, copyProjectId, pathToCopiedProject, removeNone(optFields));
+        return projectsProvider.copyProjectSpace(projectId, pathToCopiedProject, copyProjectId, removeNone(optFields));
     }
 
     @Operation(summary = "Get CSI:FingerID fingerprint (prediction vector) definition")

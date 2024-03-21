@@ -151,7 +151,7 @@ public class SiriusProjectSpaceImpl implements Project {
     @Override
     public Page<Compound> findCompounds(Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields,
                                         @NotNull EnumSet<AlignedFeature.OptField> featureOptFields) {
-        Map<String, List<CompoundContainerId>> featureGroups = projectSpaceManager.projectSpace()
+        Map<String, List<CompoundContainerId>> featureGroups = projectSpaceManager.getProjectSpaceImpl()
                 .stream().filter(c -> c.getGroupId().isPresent())
                 .collect(Collectors.groupingBy(c -> c.getGroupId().get()));
 
@@ -178,7 +178,7 @@ public class SiriusProjectSpaceImpl implements Project {
     @Override
     public Compound findCompoundById(String compoundId, @NotNull EnumSet<Compound.OptField> optFields,
                                      @NotNull EnumSet<AlignedFeature.OptField> featureOptFields) {
-        List<CompoundContainerId> groupFeatures = projectSpaceManager.projectSpace()
+        List<CompoundContainerId> groupFeatures = projectSpaceManager.getProjectSpaceImpl()
                 .stream().filter(c -> c.getGroupId().map(compoundId::equals).orElse(false))
                 .toList();
         if (groupFeatures.isEmpty())
@@ -204,7 +204,7 @@ public class SiriusProjectSpaceImpl implements Project {
     @Override
     public Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable, @NotNull EnumSet<AlignedFeatureQuality.OptField> optFields) {
         LoggerFactory.getLogger(AlignedFeatureController.class).info("Started collecting aligned features quality...");
-        final List<AlignedFeatureQuality> alignedFeatureQualities = projectSpaceManager.projectSpace().stream()
+        final List<AlignedFeatureQuality> alignedFeatureQualities = projectSpaceManager.getProjectSpaceImpl().stream()
                 .skip(pageable.getOffset()).limit(pageable.getPageSize())
                 .map(ccid -> asAlignedFeatureQuality(ccid, optFields))
                 .toList();
@@ -222,7 +222,7 @@ public class SiriusProjectSpaceImpl implements Project {
     @Override
     public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         LoggerFactory.getLogger(AlignedFeatureController.class).info("Started collecting aligned features...");
-        final List<AlignedFeature> alignedFeatures = projectSpaceManager.projectSpace().stream()
+        final List<AlignedFeature> alignedFeatures = projectSpaceManager.getProjectSpaceImpl().stream()
                 .skip(pageable.getOffset()).limit(pageable.getPageSize())
                 .map(ccid -> asAlignedFeature(ccid, optFields))
                 .toList();
@@ -248,10 +248,10 @@ public class SiriusProjectSpaceImpl implements Project {
 
     @Override
     public void deleteAlignedFeaturesById(String alignedFeatureId) {
-        CompoundContainerId compound = projectSpaceManager.projectSpace().findCompound(alignedFeatureId)
+        CompoundContainerId compound = projectSpaceManager.getProjectSpaceImpl().findCompound(alignedFeatureId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT, "AlignedFeature with id '" + alignedFeatureId + "' does not exist. Already removed?"));
         try {
-            projectSpaceManager.projectSpace().deleteCompound(compound);
+            projectSpaceManager.getProjectSpaceImpl().deleteCompound(compound);
         } catch (IOException e) {
             log.error("Error when deleting feature with Id " + alignedFeatureId, e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when deleting feature with Id " + alignedFeatureId);
@@ -594,10 +594,10 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     protected CompoundContainerId parseCID(String cid) {
-        return projectSpaceManager.projectSpace().findCompound(cid)
+        return projectSpaceManager.getProjectSpaceImpl().findCompound(cid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "There is no Compound with ID '" + cid + "' in project with name '" +
-                                projectSpaceManager.projectSpace().getLocation() + "'"));
+                                projectSpaceManager.getProjectSpaceImpl().getLocation() + "'"));
     }
 
     protected FormulaResultId parseFID(String cid, String fid) {

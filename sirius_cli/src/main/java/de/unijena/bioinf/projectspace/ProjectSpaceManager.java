@@ -139,7 +139,7 @@ public class ProjectSpaceManager implements IterableWithSize<Instance> {
         this.namingScheme = (idx, name) -> idx + "_" + name;
     }
 
-    public SiriusProjectSpace projectSpace() {
+    public SiriusProjectSpace getProjectSpaceImpl() {
         return space;
     }
 
@@ -147,14 +147,14 @@ public class ProjectSpaceManager implements IterableWithSize<Instance> {
     @NotNull
     public Instance newCompoundWithUniqueId(Ms2Experiment inputExperiment) {
         final String name = nameFormatter.apply(inputExperiment);
-        final CompoundContainer container = projectSpace().newCompoundWithUniqueId(name, (idx) -> namingScheme.apply(idx, name), inputExperiment).orElseThrow(() -> new RuntimeException("Could not create an project space ID for the Instance"));
+        final CompoundContainer container = getProjectSpaceImpl().newCompoundWithUniqueId(name, (idx) -> namingScheme.apply(idx, name), inputExperiment).orElseThrow(() -> new RuntimeException("Could not create an project space ID for the Instance"));
         return instFac.create(container, this);
     }
 
     @SafeVarargs
     private Instance newInstanceFromCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {
         try {
-            CompoundContainer c = projectSpace().getCompound(id, components);
+            CompoundContainer c = getProjectSpaceImpl().getCompound(id, components);
             return instFac.create(c, this);
         } catch (IOException e) {
             LoggerFactory.getLogger(getClass()).error("Could not create read Input Experiment from Project Space.");
@@ -174,6 +174,11 @@ public class ProjectSpaceManager implements IterableWithSize<Instance> {
         return instance;
     }
 
+    @SafeVarargs
+    public final Optional<Instance> findInstance(String id, Class<? extends DataAnnotation>... components) {
+        return getProjectSpaceImpl().findCompound(id).map(cid -> getInstanceFromCompound(cid, components));
+    }
+
     public final List<Instance> getInstancesFromCompounds(Collection<CompoundContainerId> ids, Class<? extends DataAnnotation>... components) {
         List<Instance> instances;
         synchronized (instanceCache) {
@@ -186,7 +191,7 @@ public class ProjectSpaceManager implements IterableWithSize<Instance> {
 
 
     public <T extends ProjectSpaceProperty> Optional<T> getProjectSpaceProperty(Class<T> key) {
-        return projectSpace().getProjectSpaceProperty(key);
+        return getProjectSpaceImpl().getProjectSpaceProperty(key);
     }
 
     public <T extends ProjectSpaceProperty> T setProjectSpaceProperty(T value) {
@@ -197,20 +202,20 @@ public class ProjectSpaceManager implements IterableWithSize<Instance> {
         if (PosNegFpProperty.class.isAssignableFrom(key))
             synchronized (dataCompatibilityCache) {
                 dataCompatibilityCache.remove(key);
-                return projectSpace().setProjectSpaceProperty(key, value);
+                return getProjectSpaceImpl().setProjectSpaceProperty(key, value);
             }
         else
-            return projectSpace().setProjectSpaceProperty(key, value);
+            return getProjectSpaceImpl().setProjectSpaceProperty(key, value);
     }
 
     public <T extends ProjectSpaceProperty> T deleteProjectSpaceProperty(Class<T> key) {
         if (PosNegFpProperty.class.isAssignableFrom(key))
             synchronized (dataCompatibilityCache) {
                 dataCompatibilityCache.remove(key);
-                return projectSpace().deleteProjectSpaceProperty(key);
+                return getProjectSpaceImpl().deleteProjectSpaceProperty(key);
             }
         else
-            return projectSpace().deleteProjectSpaceProperty(key);
+            return getProjectSpaceImpl().deleteProjectSpaceProperty(key);
     }
 
     @NotNull
@@ -345,6 +350,17 @@ public class ProjectSpaceManager implements IterableWithSize<Instance> {
         }
     }
 
+    public String getName() {
+        return getProjectSpaceImpl().getLocation().getFileName().toString();
+    }
+    public String getLocation() {
+        return getProjectSpaceImpl().getLocation().toAbsolutePath().toString();
+    }
+
+    public void flush() throws IOException {
+        getProjectSpaceImpl().flush();
+    }
+
     //region static helper
     public static Summarizer[] defaultSummarizer(boolean writeTopHitGlobal, boolean writeTopHitWithAdductsGlobal, boolean writeFullGlobal) {
         return new Summarizer[]{
@@ -369,10 +385,6 @@ public class ProjectSpaceManager implements IterableWithSize<Instance> {
 
     public static ProjectSpaceConfiguration newDefaultConfig() {
         return DEFAULT_CONFIG.get();
-    }
-
-    public String getName() {
-        return projectSpace().getLocation().getFileName().toString();
     }
     //end region
 }

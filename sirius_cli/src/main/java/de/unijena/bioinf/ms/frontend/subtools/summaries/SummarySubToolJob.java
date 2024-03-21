@@ -37,7 +37,6 @@ import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.projectspace.summaries.PredictionsSummarizer;
 import de.unijena.bioinf.projectspace.summaries.SummaryLocations;
 import org.apache.commons.lang3.time.StopWatch;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +48,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Workflow {
+    //todo reimplement project independent!
     private static final Logger LOG = LoggerFactory.getLogger(SummarySubToolJob.class);
     private final SummaryOptions options;
 
@@ -100,7 +100,7 @@ public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Wor
                 ids = idsTMP;
             }
 
-            SiriusProjectSpace.SummarizerJob job = project.projectSpace()
+            SiriusProjectSpace.SummarizerJob job = project.getProjectSpaceImpl()
                     .makeSummarizerJob(options.location, options.compress, ids, ProjectSpaceManager
                             .defaultSummarizer(
                                     options.isTopHitSummary(),
@@ -120,7 +120,7 @@ public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Wor
                     LOG.info("Writing positive ion mode predictions table...");
                     BasicJJob posJob;
                     if (writeIntoProjectSpace) {
-                        posJob = project.projectSpace()
+                        posJob = project.getProjectSpaceImpl()
                                 .makeSummarizerJob(options.location, options.compress, ids, new PredictionsSummarizer(listener, instances, 1, SummaryLocations.PREDICTIONS, options.predictionsOptions));
                     } else {
                         posJob = new ExportPredictionsOptions.ExportPredictionJJob(
@@ -134,7 +134,7 @@ public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Wor
                     LOG.info("Writing negative ion mode predictions table...");
                     BasicJJob negJob;
                     if (writeIntoProjectSpace) {
-                        negJob = project.projectSpace()
+                        negJob = project.getProjectSpaceImpl()
                         .makeSummarizerJob(options.location, options.compress, ids, new PredictionsSummarizer(listener, instances, -1, SummaryLocations.PREDICTIONS_NEG, options.predictionsOptions));
                     } else {
                         negJob = new ExportPredictionsOptions.ExportPredictionJJob(

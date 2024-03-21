@@ -223,33 +223,29 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
     }
 
 
-    private ProjectSpaceManager computeRemappingWorkflow(LCMSProccessingInstance instance, RemappingWorkflow lcmsWorkflow) {
+    private ProjectSpaceManager computeRemappingWorkflow(LCMSProccessingInstance lcmsInstance, RemappingWorkflow lcmsWorkflow) {
         // read all files
         final JobManager jm = SiriusJobs.getGlobalJobManager();
-        final ProcessedSample[] ms1Samples = Arrays.stream(lcmsWorkflow.getFiles()).map(filename -> jm.submitJob(processRunJob(instance, filename))).collect(Collectors.toList()).stream().map(JJob::takeResult).toArray(ProcessedSample[]::new);
-        final Iterator<CompoundContainer> compoundContainerIterator = space.projectSpace().compoundIterator(LCMSPeakInformation.class, Ms2Experiment.class);
+        final ProcessedSample[] ms1Samples = Arrays.stream(lcmsWorkflow.getFiles()).map(filename -> jm.submitJob(processRunJob(lcmsInstance, filename))).collect(Collectors.toList()).stream().map(JJob::takeResult).toArray(ProcessedSample[]::new);
+        final Iterator<Instance> compoundContainerIterator = space.instanceIterator(LCMSPeakInformation.class, Ms2Experiment.class);
         final List<Ms2Experiment> exps = new ArrayList<>();
         final List<LCMSPeakInformation> peaks = new ArrayList<>();
         final List<CompoundContainerId> ids = new ArrayList<>();
         while (compoundContainerIterator.hasNext()) {
-            final CompoundContainer next = compoundContainerIterator.next();
+            final CompoundContainer next = compoundContainerIterator.next().loadCompoundContainer(LCMSPeakInformation.class, Ms2Experiment.class);
             if (next.getAnnotation(Ms2Experiment.class).isEmpty() || next.getAnnotation(LCMSPeakInformation.class).isEmpty())
                 continue;
             exps.add(next.getAnnotation(Ms2Experiment.class).get());
             peaks.add(next.getAnnotation(LCMSPeakInformation.class).get());
             ids.add(next.getId());
         }
-        LCMSPeakInformation[] replaced = Ms1Remapping.remapMS1(instance, ms1Samples, peaks.toArray(LCMSPeakInformation[]::new), exps.toArray(Ms2Experiment[]::new), true);
+        LCMSPeakInformation[] replaced = Ms1Remapping.remapMS1(lcmsInstance, ms1Samples, peaks.toArray(LCMSPeakInformation[]::new), exps.toArray(Ms2Experiment[]::new), true);
         for (int i = 0; i < ids.size(); ++i) {
             final CompoundContainerId compoundContainerId = ids.get(i);
-            final CompoundContainer compound;
-            try {
-                compound = space.projectSpace().getCompound(compoundContainerId, Ms2Experiment.class, LCMSPeakInformation.class);
-                compound.setAnnotation(LCMSPeakInformation.class, replaced[i]);
-                space.projectSpace().updateCompound(compound, LCMSPeakInformation.class);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            final Instance instance = space.getInstanceFromCompound(compoundContainerId);
+            CompoundContainer compound = instance.loadCompoundContainer();
+            compound.setAnnotation(LCMSPeakInformation.class, replaced[i]);
+            instance.updateCompound(compound, LCMSPeakInformation.class);
         }
         return space;
     }
@@ -365,15 +361,10 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
             final MolecularNetwork M = network.done(true);
             final ConnectionTable[] connectionTables = M.toConnectionTables();
             for (ConnectionTable t : connectionTables) {
-                final SiriusProjectSpace ps = space.projectSpace();
-                ps.findCompound(t.id).ifPresent(x -> {
-                    try {
-                        final CompoundContainer c = ps.getCompound(x);
-                        c.setAnnotation(ConnectionTable.class, t);
-                        ps.updateCompound(c, ConnectionTable.class);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                space.findInstance(t.id).ifPresent(x -> {
+                    final CompoundContainer c = x.loadCompoundContainer();
+                    c.setAnnotation(ConnectionTable.class, t);
+                    x.updateCompound(c, ConnectionTable.class);
                 });
             }
         }
