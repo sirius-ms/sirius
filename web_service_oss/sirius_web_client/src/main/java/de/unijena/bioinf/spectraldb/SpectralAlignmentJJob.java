@@ -149,6 +149,9 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
                             .splash(reference.getSplash())
                             .candidateInChiKey(reference.getCandidateInChiKey())
                             .smiles(reference.getSmiles())
+                            .molecularFormula(reference.getFormula())
+                            .adduct(reference.getPrecursorIonType())
+                            .exactMass(reference.getExactMass())
                             .build();
                 });
     }
