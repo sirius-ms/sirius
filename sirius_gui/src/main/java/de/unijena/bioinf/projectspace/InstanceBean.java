@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.WrapperSpectrum;
+import de.unijena.bioinf.confidence_score.ConfidenceMode;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingResult;
@@ -256,7 +257,9 @@ public class InstanceBean implements SiriusPCS {
     }
 
     public Optional<Double> getConfidenceScoreDefault() {
-        return getStructureAnnotation().map(StructureCandidateScored::getConfidenceExactMatch);
+        return projectManager.getConfidenceDisplayMode()== ConfidenceMode.APPROXIMATE ?
+                getStructureAnnotation().map(StructureCandidateScored::getConfidenceApproxMatch) :
+                getStructureAnnotation().map(StructureCandidateScored::getConfidenceExactMatch);
     }
 
     public List<FormulaResultBean> getFormulaCandidates() {

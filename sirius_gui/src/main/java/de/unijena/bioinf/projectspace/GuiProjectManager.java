@@ -22,7 +22,9 @@ package de.unijena.bioinf.projectspace;
 import ca.odell.glazedlists.BasicEventList;
 import de.unijena.bioinf.ChemistryBase.utils.DebouncedExecutionJJob;
 import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
+import de.unijena.bioinf.confidence_score.ConfidenceMode;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.table.SiriusGlazedLists;
 import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
@@ -34,6 +36,7 @@ import de.unijena.bioinf.sse.DataEventType;
 import de.unijena.bioinf.sse.DataObjectEvents;
 import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -66,10 +69,14 @@ public class GuiProjectManager implements Closeable {
     private PropertyChangeListener projectListener;
     private PropertyChangeListener computeListener;
 
+    public ConfidenceMode confidenceDisplayMode;
+
 
     public GuiProjectManager(@NotNull String projectId, @NotNull NightSkyClient siriusClient) {
         this.projectId = projectId;
         this.siriusClient = siriusClient;
+
+        confidenceDisplayMode = readConfidenceModeProperty();
 
         List<InstanceBean> tmp = siriusClient.features()
                 .getAlignedFeatures(projectId, List.of(AlignedFeatureOptField.TOPANNOTATIONS))
@@ -112,6 +119,17 @@ public class GuiProjectManager implements Closeable {
             });
         };
         siriusClient.addEventListener(computeListener, projectId, DataEventType.BACKGROUND_COMPUTATIONS_STATE);
+    }
+
+    private ConfidenceMode readConfidenceModeProperty() {
+        String modeString = SiriusProperties.getProperty("de.unijena.bioinf.sirius.ui.confidenceDisplayMode");
+        modeString = Objects.isNull(modeString) ? null : modeString.toUpperCase();
+        try {
+            return ConfidenceMode.valueOf(modeString);
+        } catch (IllegalArgumentException e) {
+            LoggerFactory.getLogger(this.getClass()).error("Unkown confidence display mode provided, switching to default.");
+            return ConfidenceMode.APPROXIMATE;
+        }
     }
 
     private final ArrayBlockingQueue<ProjectChangeEvent> events = new ArrayBlockingQueue<>(1000);
@@ -233,5 +251,18 @@ public class GuiProjectManager implements Closeable {
         if (canopusNpcDataNeg == null)
             canopusNpcDataNeg = CanopusNpcData.readAndClose(new StringReader(siriusClient.projects().getCanopusNpcData(projectId, -1)));
         return canopusNpcDataNeg;
+    }
+
+    public ConfidenceMode getConfidenceDisplayMode() {
+        return confidenceDisplayMode;
+    }
+
+    protected void setConfidenceDisplayMode(ConfidenceMode confidenceMode) {
+        this.confidenceDisplayMode = confidenceMode;
+    }
+
+    public void switchConfidenceDisplayMode() {
+        if (confidenceDisplayMode == ConfidenceMode.EXACT)  setConfidenceDisplayMode(ConfidenceMode.APPROXIMATE);
+        else setConfidenceDisplayMode(ConfidenceMode.EXACT);
     }
 }
