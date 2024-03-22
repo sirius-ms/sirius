@@ -43,7 +43,7 @@ public class NoSQLCustomDatabase<Doctype, DB extends ChemicalNoSQLDatabase<Docty
         String n = super.name();
         if (n != null)
             return n;
-        return database.getName();
+        return database.name();
     }
 
     @Override
@@ -59,6 +59,7 @@ public class NoSQLCustomDatabase<Doctype, DB extends ChemicalNoSQLDatabase<Docty
     @Override
     public void readSettings() throws IOException {
         setSettings(database.asObject(getSettingsFromDB().orElseThrow(() -> new IllegalArgumentException("No custom DB settings! Please reimport.")), CustomDatabaseSettings.class));
+        database.setName(getSettings().getName());
     }
 
     private Optional<Doctype> getSettingsFromDB() throws IOException {

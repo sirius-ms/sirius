@@ -70,7 +70,13 @@ public class MassbankExperimentParser extends MassbankSpectralParser implements 
         parsePrecursorIonType(fields).ifPresent(exp::setPrecursorIonType);
         parsePrecursorMZ(fields).ifPresent(exp::setIonMass);
         // optional
-        fields.getField(CH_NAME.k()).ifPresent(v -> exp.annotate(CompoundMetaData.builder().compoundName(v).build()));
+        CompoundMetaData b = CompoundMetaData.builder()
+                .compoundName(fields.getField(CH_NAME.k()).orElse(null))
+                .compoundId(fields.getField(ACCESSION.k()).orElse(null))
+                .build();
+        if (b.getCompoundId() !=  null || b.getCompoundName() != null)
+            exp.annotate(b);
+
         fields.getField(CH_IUPAC.k()).ifPresent(inchi -> fields.getField(CH_IUPAC_KEY.k()).ifPresentOrElse(key -> exp.annotate(InChIs.newInChI(key, inchi)), () -> exp.annotate(InChIs.newInChI(inchi))));
         fields.getField(CH_SMILES.k()).map(Smiles::new).ifPresent(exp::annotate);
         fields.getField(PK_SPLASH.k()).map(Splash::new).ifPresent(exp::annotate);

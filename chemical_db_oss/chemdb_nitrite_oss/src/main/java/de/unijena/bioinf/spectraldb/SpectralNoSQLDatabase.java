@@ -27,7 +27,11 @@ import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.ms.annotations.SpectrumAnnotation;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
-import de.unijena.bioinf.storage.db.nosql.*;
+import de.unijena.bioinf.storage.db.nosql.Database;
+import de.unijena.bioinf.storage.db.nosql.Filter;
+import de.unijena.bioinf.storage.db.nosql.Index;
+import de.unijena.bioinf.storage.db.nosql.Metadata;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
@@ -37,6 +41,7 @@ import java.util.List;
 import java.util.function.Consumer;
 //todo check when data/spectra should be included an when not
 
+@Getter
 public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary, WriteableSpectralLibrary, Closeable {
 
     final protected Database<Doctype> storage;
@@ -49,10 +54,10 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
         return Metadata.build()
                 .addRepository(
                         Ms2ReferenceSpectrum.class,
-                        new Index("exactMass", IndexType.NON_UNIQUE),
-                        new Index("precursorMz", IndexType.NON_UNIQUE),
-                        new Index("formula", IndexType.NON_UNIQUE),
-                        new Index("candidateInChiKey", IndexType.NON_UNIQUE)
+                        Index.nonUnique("exactMass"),
+                        Index.nonUnique("precursorMz"),
+                        Index.nonUnique("formula"),
+                        Index.nonUnique("candidateInChiKey")
                 ).addSerializer(
                         AdditionalFields.class,
                         new SimpleSerializers.AnnotationSerializer()
@@ -66,10 +71,6 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
 
     public abstract <O> O asObject(Doctype document, Class<O> objectClass);
 
-    public Database<Doctype> getStorage() {
-        return storage;
-    }
-
     public String name() {
         return this.storage.location().getFileName().toString();
     }
@@ -79,7 +80,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
     }
 
     @Override
-    public int countAllSpectra() throws IOException {
+    public long countAllSpectra() throws IOException {
         return this.storage.countAll(Ms2ReferenceSpectrum.class);
     }
 
@@ -87,7 +88,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
     public Iterable<Ms2ReferenceSpectrum> lookupSpectra(double precursorMz, Deviation deviation, boolean withData) throws ChemicalDatabaseException {
         try {
             double abs = deviation.absoluteFor(precursorMz);
-            Filter filter = new Filter().and().gte("precursorMz", precursorMz - abs).lte("precursorMz", precursorMz + abs);
+            Filter filter = Filter.where("precursorMz").beetweenBothInclusive(precursorMz - abs, precursorMz + abs);
             if (withData) {
                 return withLibrary(this.storage.find(filter, Ms2ReferenceSpectrum.class, "spectrum"));
             } else {
@@ -104,7 +105,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
 
     public Iterable<Ms2ReferenceSpectrum> lookupSpectraBy(@NotNull String field, @NotNull Object value, boolean withData) throws ChemicalDatabaseException {
         try {
-            Filter filter = new Filter().eq(field, value);
+            Filter filter = Filter.where(field).eq(value);
             if (withData) {
                 return withLibrary(this.storage.find(filter, Ms2ReferenceSpectrum.class, "spectrum"));
             } else {
@@ -128,7 +129,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
     @Override
     public Ms2ReferenceSpectrum getReferenceSpectrum(long uuid) throws ChemicalDatabaseException {
         try {
-            return fillLibrary(this.storage.find(Filter.build().eq("uuid", uuid), Ms2ReferenceSpectrum.class).iterator().next());
+            return fillLibrary(this.storage.find(Filter.where("uuid").eq(uuid), Ms2ReferenceSpectrum.class).iterator().next());
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
@@ -164,7 +165,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
 
     @Override
     public void updateSpectraMatchingSmiles(Consumer<Ms2ReferenceSpectrum> updater, String smiles) throws IOException {
-        List<Ms2ReferenceSpectrum> spectra = this.storage.findStr(Filter.build().eq("smiles", smiles), Ms2ReferenceSpectrum.class, "spectrum").peek(updater).toList();
+        List<Ms2ReferenceSpectrum> spectra = this.storage.findStr(Filter.where("smiles").eq(smiles), Ms2ReferenceSpectrum.class, "spectrum").peek(updater).toList();
         this.storage.upsertAll(spectra);
     }
 
