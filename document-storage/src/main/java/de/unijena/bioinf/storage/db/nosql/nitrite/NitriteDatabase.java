@@ -225,7 +225,7 @@ public class NitriteDatabase implements Database<Document> {
         dropSet.removeAll(nI.keySet());
 
         Set<Set<String>> addSet = new HashSet<>(nI.keySet());
-        dropSet.removeAll(rI.keySet());
+        addSet.removeAll(rI.keySet());
 
         dropSet.stream().map(rI::get).forEach(toDrop::add);
         addSet.stream().map(nI::get).forEach(toBuild::add);
@@ -251,15 +251,12 @@ public class NitriteDatabase implements Database<Document> {
 
         for (Index index : toBuild) {
             switch (index.getType()) {
-                case UNIQUE:
-                    repository.createIndex(IndexOptions.indexOptions(org.dizitart.no2.index.IndexType.UNIQUE), index.getFields());
-                    break;
-                case NON_UNIQUE:
-                    repository.createIndex(IndexOptions.indexOptions(org.dizitart.no2.index.IndexType.NON_UNIQUE), index.getFields());
-                    break;
-                case FULL_TEXT:
-                    repository.createIndex(IndexOptions.indexOptions(org.dizitart.no2.index.IndexType.FULL_TEXT), index.getFields());
-                    break;
+                case UNIQUE ->
+                        repository.createIndex(IndexOptions.indexOptions(org.dizitart.no2.index.IndexType.UNIQUE), index.getFields());
+                case NON_UNIQUE ->
+                        repository.createIndex(IndexOptions.indexOptions(org.dizitart.no2.index.IndexType.NON_UNIQUE), index.getFields());
+                case FULL_TEXT ->
+                        repository.createIndex(IndexOptions.indexOptions(org.dizitart.no2.index.IndexType.FULL_TEXT), index.getFields());
             }
         }
     }

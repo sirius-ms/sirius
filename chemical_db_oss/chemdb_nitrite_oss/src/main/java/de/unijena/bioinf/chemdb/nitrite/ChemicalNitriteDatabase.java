@@ -31,16 +31,12 @@ import java.nio.file.Path;
 
 public class ChemicalNitriteDatabase extends ChemicalNoSQLDatabase<Document> {
 
-    private final String name;
-
     public ChemicalNitriteDatabase(Path file) throws IOException {
         super(new NitriteDatabase(file, initMetadata(USE_EXTENDED_FINGERPRINTS ? CdkFingerprintVersion.getExtended() : CdkFingerprintVersion.getDefault())));
-        this.name = file.getFileName().toString();
     }
 
     public ChemicalNitriteDatabase(Path file, FingerprintVersion version) throws IOException {
         super(new NitriteDatabase(file, initMetadata(version)));
-        this.name = file.getFileName().toString();
     }
 
     @Override
@@ -56,10 +52,5 @@ public class ChemicalNitriteDatabase extends ChemicalNoSQLDatabase<Document> {
 
     public NitriteDatabase getStorage(){
         return (NitriteDatabase) storage;
-    }
-
-    @Override
-    public String getName() {
-        return name;
     }
 }

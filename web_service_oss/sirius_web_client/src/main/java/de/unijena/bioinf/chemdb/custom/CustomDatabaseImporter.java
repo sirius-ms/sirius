@@ -35,6 +35,7 @@ import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.spectraldb.io.SpectralDbMsExperimentParser;
@@ -69,10 +70,6 @@ public class CustomDatabaseImporter {
 
     Queue<Listener> listeners = new ConcurrentLinkedQueue<>();
 
-    // fingerprint buffer: used to compute and import multiple fps at once but keep not all in memory
-    private final List<FingerprintCandidateWrapper> buffer;
-    private final int bufferSize;
-
     // molecule buffer:  used to bundle molecular formula requests
     private final List<Molecule> moleculeBuffer;
     private final int molBufferSize;
@@ -95,11 +92,9 @@ public class CustomDatabaseImporter {
         this.dbname = database.name();
         this.fingerprintVersion = version;
 
-        this.bufferSize = bufferSize;
         this.molBufferSize = bufferSize;
         this.specBufferSize = bufferSize;
 
-        this.buffer = new ArrayList<>((int) (this.bufferSize * 1.25));
         this.moleculeBuffer = new ArrayList<>((int) (molBufferSize * 1.25));
         this.spectraBuffer = new ArrayList<>((int) (specBufferSize * 1.25));
 
@@ -114,25 +109,27 @@ public class CustomDatabaseImporter {
     }
 
     public synchronized void flushAll() throws IOException {
-        flushBuffer();
         flushSpectraBuffer();
+        flushMoleculeBuffer();
     }
 
     public synchronized void updateStatistics() throws IOException {
-        // update tags & statistics
-        database.toSpectralLibrary()
-                .ifPresent(sl -> {
-                    try {
-                        database.getStatistics().spectra().set(sl.countAllSpectra());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                });
+        synchronized (database) {
+            // update tags & statistics
+            database.toSpectralLibrary()
+                    .ifPresent(sl -> {
+                        try {
+                            database.getStatistics().spectra().set(sl.countAllSpectra());
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    });
 
-        database.database.updateTags(null, -1);
-        database.getStatistics().compounds().set(database.database.countAllFingerprints());
-        database.getStatistics().formulas().set(database.database.countAllFormulas());
-        database.writeSettings();
+            database.database.updateTags(null, -1);
+            database.getStatistics().compounds().set(database.database.countAllFingerprints());
+            database.getStatistics().formulas().set(database.database.countAllFormulas());
+            database.writeSettings();
+        }
     }
 
     public synchronized void flushAllAndUpdateStatistics() throws IOException {
@@ -275,7 +272,7 @@ public class CustomDatabaseImporter {
                 if (inchi != null) {
                     Molecule molecule = new Molecule(c, smiles, inchi);
                     addMolecule(molecule);
-                }else {
+                } else {
                     LoggerFactory.getLogger(getClass()).warn("Could not create InChI from parsed Atom container. Skipping Molecule: " + smiles);
                 }
             }
@@ -348,139 +345,164 @@ public class CustomDatabaseImporter {
         synchronized (moleculeBuffer) {
             moleculeBuffer.add(mol);
             for (Listener l : listeners) l.newMoleculeBufferSize(moleculeBuffer.size());
-            if (moleculeBuffer.size() > molBufferSize) {
-                flushMoleculeBuffer();
-            }
         }
+        if (moleculeBuffer.size() > molBufferSize)
+            flushMoleculeBuffer();
     }
 
     private void flushMoleculeBuffer() {
         // start downloading
         if (!moleculeBuffer.isEmpty()) {
-            final ConcurrentHashMap<String, Comp> key2DToComp = new ConcurrentHashMap<>(moleculeBuffer.size());
-            try {
-                for (Molecule c : moleculeBuffer) {
-                    checkCancellation();
-                    try {
-                        final InChI inchi = c.inchi;
-                        final String key2d = inchi.key2D();
-                        if (key2DToComp.containsKey(key2d)) {
-                            Comp comp = key2DToComp.get(key2d);
-                            if (comp.molecule.id == null && c.id != null)
-                                comp.molecule.id = c.id;
-                            if (comp.molecule.name == null && c.name != null)
-                                comp.molecule.name = c.name;
-                        } else {
-                            Comp comp = new Comp(c);
-                            key2DToComp.put(key2d, comp);
+            synchronized (moleculeBuffer) {
+                checkCancellation();
+                try {
+                    final ConcurrentHashMap<String, Comp> key2DToComp = new ConcurrentHashMap<>(moleculeBuffer.size());
+
+                    for (Molecule c : moleculeBuffer) {
+                        checkCancellation();
+                        try {
+                            final InChI inchi = c.inchi;
+                            final String key2d = inchi.key2D();
+                            if (key2DToComp.containsKey(key2d)) {
+                                Comp comp = key2DToComp.get(key2d);
+                                if (comp.molecule.id == null && c.id != null)
+                                    comp.molecule.id = c.id;
+                                if (comp.molecule.name == null && c.name != null)
+                                    comp.molecule.name = c.name;
+                            } else {
+                                Comp comp = new Comp(c);
+                                key2DToComp.put(key2d, comp);
+                            }
+                        } catch (IllegalArgumentException e) {
+                            CustomDatabase.logger.error("Error when flushing molecule. Skipping: " + c.id + " - " + c.name, e);
                         }
-                    } catch (IllegalArgumentException e) {
+                    }
+                    checkCancellation();
+
+                    CustomDatabase.logger.info("Looking up compounds to find existing fps");
+                    try {
+                        lookupAndAnnotateMissingCandidates(key2DToComp);
+                    } catch (Exception e) {
+                        // if lookup fails, we can still download or compute locally and override
                         CustomDatabase.logger.error(e.getMessage(), e);
                     }
-                }
-            } catch (IllegalArgumentException e) {
-                CustomDatabase.logger.error(e.getMessage(), e);
-            }
+                    checkCancellation();
 
-            moleculeBuffer.clear();
-            CustomDatabase.logger.info("Try downloading compounds");
-            try { //try to download fps for compound
-                lookupAndAnnotateFingerprints(key2DToComp);
-            } catch (Exception e) {
-                CustomDatabase.logger.error(e.getMessage(), e);
-            }
-
-            // compound fps locally if not already downloaded or loaded from local db
-            List<BasicJJob<Void>> jobs = key2DToComp.values().stream()
-                    .map(c -> new BasicJJob<Void>() {
-                        @Override
-                        protected Void compute() throws Exception {
-                            if (c.candidate == null) {
-                                FingerprintCalculator fcalc = null;
-                                try {
-                                    fcalc = getFingerprintCalculator();
-                                    addToBuffer(fcalc.computeCompound(c.molecule));
-                                } finally {
-                                    if (fcalc != null)
-                                        freeFingerprinter.offer(fcalc);
-                                }
-                            } else {
-                                annotateCandidate(c.molecule, c.candidate);
-                                addToBuffer(c.candidate);
-                            }
-                            return null;
-                        }
-                    }).collect(Collectors.toList());
-
-            List<BasicJJob<Void>> batches = SiriusJobs.getGlobalJobManager().submitJobsInBatches(jobs);
-
-            jobs.forEach(j -> {
-                try {
-                    if (shutdown.get()) {
-                        batches.forEach(JJob::cancel);
-                        checkCancellation();
+                    CustomDatabase.logger.info("Try downloading missing fps");
+                    try { //try to download fps for compound
+                        downloadAndAnnotateMissingCandidates(key2DToComp);
+                    } catch (Exception e) {
+                        // if download fails, we can still compute locally
+                        CustomDatabase.logger.error(e.getMessage(), e);
                     }
-                    j.awaitResult();
-                } catch (ExecutionException e) {
-                    CustomDatabase.logger.error(e.getMessage(), e);
-                }
-            });
+                    checkCancellation();
 
-            for (Listener l : listeners) l.newMoleculeBufferSize(0);
+                    CustomDatabase.logger.info("Computing missing fps that are still missing.");
+                    computeAndAnnotateMissingCandidates(key2DToComp);
+                    checkCancellation();
+
+                    storeCandidates(key2DToComp.values().stream().map(c -> c.candidate).filter(Objects::nonNull).toList());
+                    checkCancellation();
+                } catch (Exception e) {
+                    //now we might have inconsistent data -> fail/stop import.
+                    CustomDatabase.logger.error(e.getMessage(), e);
+                    cancel();
+                    throw new RuntimeException("Databse import failed!", e);
+                } finally {
+                    moleculeBuffer.clear();
+                    for (Listener l : listeners) l.newMoleculeBufferSize(0);
+                }
+            }
         }
     }
 
-    private void lookupAndAnnotateFingerprints(final ConcurrentHashMap<String, Comp> key2DToComp) throws IOException {
+    private void lookupAndAnnotateMissingCandidates(final ConcurrentHashMap<String, Comp> key2DToComp) throws IOException {
+        synchronized (database) {
+            for (Comp comp : key2DToComp.values()) {
+                checkCancellation();
+                if (comp.candidate == null) {
+                    comp.candidate = database.database.getStorage() //todo do we need the fp here?
+                            .findStr(Filter.where("inchiKey").eq(comp.key2D()), FingerprintCandidateWrapper.class, "fingerprint")
+                            .findFirst()
+                            .orElse(null);
+                    mergeCandidateLinksIfPresent(comp);
+                }
+            }
+        }
+    }
+
+    private void downloadAndAnnotateMissingCandidates(final ConcurrentHashMap<String, Comp> key2DToComp) throws IOException {
         Set<MolecularFormula> formulasToSearch = new HashSet<>();
         checkCancellation();
         try {
-            for (Comp comp : key2DToComp.values()) {
-                comp.candidate = database.database.getStorage() //todo do we need the fp here?
-                        .findStr(Filter.where("inchiKey").eq(comp.key2D()), FingerprintCandidateWrapper.class, "fingerprint")
-                        .findFirst()
-                        .orElse(null);
-
+            for (Comp comp : key2DToComp.values())
                 if (comp.candidate == null) //group by formula to reduce unnecessary downloads
                     formulasToSearch.add(InChIs.extractNeutralFormulaByAdjustingHsOrThrow(comp.inChI2D()));
-                else
-                    LoggerFactory.getLogger(getClass()).info(comp.inChI2D() + " already exists in db. Merging!");
-            }
         } catch (UnknownElementException e) {
             throw new IOException(e);
         }
 
         checkCancellation();
-        List<JJob<Boolean>> jobs = formulasToSearch.stream().map(formula -> new BasicJJob<Boolean>() {
+        List<JJob<Boolean>> jobs = formulasToSearch.stream().map(formula -> new TinyBackgroundJJob<Boolean>() {
             @Override
             protected Boolean compute() throws Exception {
+                checkCancellation();
                 api.consumeStructureDB(DataSource.ALL.flag(), db -> {
                     List<FingerprintCandidate> cans = db.lookupStructuresAndFingerprintsByFormula(formula);
                     for (FingerprintCandidate can : cans) {
+                        checkCancellation();
                         Comp toAdd = key2DToComp.get(can.getInchi().key2D());
                         if (toAdd != null) {
                             toAdd.candidate = FingerprintCandidateWrapper.of(formula, can);
+                            mergeCandidateLinksIfPresent(toAdd);
                             CustomDatabase.logger.info(toAdd.candidate.getCandidate().getInchi().in2D + " downloaded");
                         }
                     }
                 });
                 return true;
             }
-        }.asCPU()).collect(Collectors.toList());
+        }).collect(Collectors.toList());
 
-        List<JJob<Boolean>> batches = SiriusJobs.getGlobalJobManager().submitJobsInBatches(jobs);
+        checkCancellation();
 
-        jobs.forEach(j -> {
+        SiriusJobs.getGlobalJobManager().submitJobsInBatches(jobs).forEach(JJob::getResult);
+    }
+
+    private void computeAndAnnotateMissingCandidates(final ConcurrentHashMap<String, Comp> key2DToComp) throws IOException {
+        // compound fps locally if not already downloaded or loaded from local db
+        List<BasicJJob<Void>> jobs = key2DToComp.values().stream()
+                .filter(c -> c.candidate == null)
+                .map(c -> new BasicJJob<Void>() {
+                    @Override
+                    protected Void compute() throws Exception {
+                        FingerprintCalculator fcalc = null;
+                        try {
+                            fcalc = getFingerprintCalculator();
+                            c.candidate = fcalc.computeNewCandidate(c.molecule);
+                            //no link merging needed since newly created candidate contains all links
+                        } finally {
+                            if (fcalc != null)
+                                freeFingerprinter.offer(fcalc);
+                        }
+                        return null;
+                    }
+                }).collect(Collectors.toList());
+
+        checkCancellation();
+
+        List<BasicJJob<Void>> batches = SiriusJobs.getGlobalJobManager().submitJobsInBatches(jobs);
+
+        batches.forEach(j -> {
             try {
-                if (shutdown.get()) {
-                    batches.forEach(JJob::cancel);
-                    checkCancellation();
-                }
+                if (shutdown.get())
+                    j.cancel(true);
                 j.awaitResult();
             } catch (ExecutionException e) {
-                CustomDatabase.logger.error("Error during Download", e);
+                CustomDatabase.logger.error(e.getMessage(), e);
             }
         });
     }
+
 
     private FingerprintCalculator getFingerprintCalculator() {
         FingerprintCalculator calc = freeFingerprinter.poll();
@@ -489,32 +511,22 @@ public class CustomDatabaseImporter {
         return calc;
     }
 
-    private void addToBuffer(FingerprintCandidateWrapper fingerprintCandidate) throws IOException {
-        synchronized (buffer) {
-            buffer.add(fingerprintCandidate);
-            for (Listener l : listeners) {
-                l.newFingerprintBufferSize(buffer.size());
-                l.newInChI(fingerprintCandidate.getCandidate().getInchi());
-            }
-            if (buffer.size() > bufferSize)
-                flushBuffer();
+    private void storeCandidates(Collection<FingerprintCandidateWrapper> candidates) throws IOException {
+        synchronized (database) {
+            database.database.getStorage().upsertAll(candidates);
+            List<InChI> inchis = candidates.stream().map(candidate -> candidate.getCandidate().getInchi()).toList();
+            for (Listener l : listeners)
+                l.newInChI(inchis);
         }
     }
 
-    protected void flushBuffer() throws IOException {
-        //todo flush buffer in background?
-        flushMoleculeBuffer();
-        final ArrayList<FingerprintCandidateWrapper> candidates;
-        synchronized (buffer) {
-            candidates = new ArrayList<>(buffer);
-            buffer.clear();
-        }
-        database.database.getStorage().upsertAll(candidates);
-        for (Listener l : listeners) l.newFingerprintBufferSize(buffer.size());
-    }
+    protected void mergeCandidateLinksIfPresent(@NotNull Comp comp) {
+        if (comp.molecule == null || comp.candidate == null)
+            return;
 
-    protected void annotateCandidate(@NotNull Molecule molecule, @NotNull FingerprintCandidateWrapper fcw) {
-        CompoundCandidate fc = fcw.getCandidate();
+        Molecule molecule = comp.molecule;
+        CompoundCandidate fc = comp.candidate.getCandidate();
+
         if (fc.getLinks() == null)
             fc.setLinks(new ArrayList<>(0));
 
@@ -586,7 +598,7 @@ public class CustomDatabaseImporter {
             this.logPEstimator = new LogPEstimator();
         }
 
-        protected FingerprintCandidateWrapper computeCompound(Molecule molecule) throws CDKException, IllegalArgumentException, UnknownElementException {
+        private FingerprintCandidateWrapper computeNewCandidate(Molecule molecule) throws CDKException, IllegalArgumentException, UnknownElementException {
             CustomDatabase.logger.info("Compute fingerprint for " + molecule.getInchi().in2D);
             final ArrayFingerprint fps = fingerprinter.computeFingerprintFromSMILES(molecule.smiles.smiles);
 
@@ -611,10 +623,6 @@ public class CustomDatabaseImporter {
 
     @FunctionalInterface
     public interface Listener {
-        // informs about fingerprints that have to be computed
-        default void newFingerprintBufferSize(int size) {
-        }
-
         // informs about molecules that have to be parsed
         default void newMoleculeBufferSize(int size) {
         }
@@ -623,6 +631,6 @@ public class CustomDatabaseImporter {
         }
 
         // informs about imported molecule
-        void newInChI(InChI inchi);
+        void newInChI(List<InChI> inchis);
     }
 }
