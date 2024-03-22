@@ -8,30 +8,25 @@ import org.h2.mvstore.WriteBuffer;
 
 import java.nio.ByteBuffer;
 
-public class MsSpectrumHeaderDatatype extends CustomDataType  {
-    @Override
-    public int compare(Object a, Object b) {
-        throw new UnsupportedOperationException();
-    }
+public class MsSpectrumHeaderDatatype extends CustomDataType<Ms1SpectrumHeader>  {
 
     @Override
-    public int getMemory(Object obj) {
+    public int getMemory(Ms1SpectrumHeader obj) {
         return 0;
     }
 
     @Override
-    public void write(WriteBuffer buff, Object obj) {
-        Ms1SpectrumHeader header = (Ms1SpectrumHeader) obj;
+    public void write(WriteBuffer buff, Ms1SpectrumHeader obj) {
         byte flags = 0;
-        if (header.polarity>0) flags |= 2;
-        if (header.polarity<0) flags |= 4;
-        if (header.centroided) flags |= 8;
-        if (header instanceof Ms2SpectrumHeader) flags |= 16;
-        buff.putInt(header.uid);
-        buff.putInt(header.sourceId.length());
-        buff.putStringData(header.sourceId, header.sourceId.length());
+        if (obj.polarity>0) flags |= 2;
+        if (obj.polarity<0) flags |= 4;
+        if (obj.centroided) flags |= 8;
+        if (obj instanceof Ms2SpectrumHeader) flags |= 16;
+        buff.putInt(obj.uid);
+        buff.putInt(obj.sourceId.length());
+        buff.putStringData(obj.sourceId, obj.sourceId.length());
         buff.put(flags);
-        if (header instanceof Ms2SpectrumHeader header2) {
+        if (obj instanceof Ms2SpectrumHeader header2) {
             String ce = header2.energy==null ? "" : header2.energy.toString();
             buff.putInt(ce.length());
             buff.putStringData(ce, ce.length());
@@ -44,7 +39,7 @@ public class MsSpectrumHeaderDatatype extends CustomDataType  {
     }
 
     @Override
-    public Object read(ByteBuffer buff) {
+    public Ms1SpectrumHeader read(ByteBuffer buff) {
         int uid = buff.getInt();
         int ilen = buff.getInt();
         String sourceId = DataUtils.readString(buff, ilen);
@@ -72,6 +67,11 @@ public class MsSpectrumHeaderDatatype extends CustomDataType  {
         } else { // MS1 Header
             return new Ms1SpectrumHeader(uid, sourceId, polarity, centroided);
         }
+    }
+
+    @Override
+    public Ms1SpectrumHeader[] createStorage(int i) {
+        return new Ms1SpectrumHeader[i];
     }
 
 }
