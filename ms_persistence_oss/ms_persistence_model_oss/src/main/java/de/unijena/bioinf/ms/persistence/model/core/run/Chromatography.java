@@ -21,14 +21,12 @@
 package de.unijena.bioinf.ms.persistence.model.core.run;
 
 import lombok.Getter;
-
-import javax.validation.constraints.NotNull;
+import org.jetbrains.annotations.NotNull;
 
 @Getter
 public enum Chromatography {
     LC("Liquid Chromatography"),
     GC("Gas Chromatography");
-
 
     @NotNull
     private final String fullName;

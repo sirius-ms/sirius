@@ -11,26 +11,20 @@ import lombok.Getter;
 import org.h2.mvstore.WriteBuffer;
 
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Locale;
 
+@Getter
 public class MergedTrace {
 
-    @Getter
     private int uid;
-    @Getter
     private double[] mz;
-    @Getter
     private double[] ints;
-    @Getter
     private IntArrayList sampleIds, traceIds;
-    @Getter
     private int startId;
-    @Getter
     private int endId;
-    @Getter
     private IntArrayList isotopeUids;
 
-    @Getter
     private Int2ObjectOpenHashMap<int[]> ms2SpectraIds;
 
     public MergedTrace(int uid) {
@@ -191,34 +185,32 @@ public class MergedTrace {
         ms2SpectraIds.put(sampleId, xs);
     }
 
-    public static class DataType extends CustomDataType {
+    public static class DataType extends CustomDataType<MergedTrace> {
 
         @Override
-        public int getMemory(Object obj) {
-            MergedTrace t = (MergedTrace)obj;
-            return 8*4 + 12 + t.mz.length*16 + t.sampleIds.size()*8 + t.isotopeUids.size()*8;
+        public int getMemory(MergedTrace obj) {
+            return 8*4 + 12 + obj.mz.length*16 + obj.sampleIds.size()*8 + obj.isotopeUids.size()*8;
         }
 
         @Override
-        public void write(WriteBuffer buff, Object obj) {
-            MergedTrace t = (MergedTrace)obj;
-            buff.putInt(t.uid);
-            buff.putInt(t.startId);
-            buff.putInt(t.endId);
-            writeDouble(buff, t.mz);
-            writeDouble(buff, t.ints);
-            writeInt(buff, t.sampleIds.toIntArray());
-            writeInt(buff, t.traceIds.toIntArray());
-            writeInt(buff, t.isotopeUids.toIntArray());
-            buff.putInt(t.ms2SpectraIds.size());
-            for (int id : t.ms2SpectraIds.keySet()) {
+        public void write(WriteBuffer buff, MergedTrace obj) {
+            buff.putInt(obj.uid);
+            buff.putInt(obj.startId);
+            buff.putInt(obj.endId);
+            writeDouble(buff, obj.mz);
+            writeDouble(buff, obj.ints);
+            writeInt(buff, obj.sampleIds.toIntArray());
+            writeInt(buff, obj.traceIds.toIntArray());
+            writeInt(buff, obj.isotopeUids.toIntArray());
+            buff.putInt(obj.ms2SpectraIds.size());
+            for (int id : obj.ms2SpectraIds.keySet()) {
                 buff.putInt(id);
-                writeInt(buff, t.ms2SpectraIds.get(id));
+                writeInt(buff, obj.ms2SpectraIds.get(id));
             }
         }
 
         @Override
-        public Object read(ByteBuffer buff) {
+        public MergedTrace read(ByteBuffer buff) {
             int uid = buff.getInt();
             int startId = buff.getInt();
             int endId = buff.getInt();
@@ -235,6 +227,11 @@ public class MergedTrace {
                 ms2.put(sampleId, uids);
             }
             return new MergedTrace(uid, mz, ints, sampleIds, traceIds, isotopeUids, ms2, startId, endId);
+        }
+
+        @Override
+        public MergedTrace[] createStorage(int i) {
+            return new MergedTrace[i];
         }
     }
 }
