@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.chemdb.custom;
 
-import com.github.f4b6a3.tsid.Tsid;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
@@ -46,11 +45,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.interfaces.IChemFile;
-import org.openscience.cdk.interfaces.IChemModel;
-import org.openscience.cdk.interfaces.IChemSequence;
 import org.openscience.cdk.io.ISimpleChemObjectReader;
 import org.openscience.cdk.io.ReaderFactory;
+import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
@@ -165,7 +162,8 @@ public class CustomDatabaseImporter {
             Ms2Experiment experiment = iterator.next();
             List<Ms2ReferenceSpectrum> specs = SpectralUtils.ms2ExpToMs2Ref((MutableMs2Experiment) experiment);
 
-            String smiles = experiment.getAnnotation(Smiles.class).map(Smiles::toString)
+            String smiles = experiment.getAnnotation(Smiles.class)
+                    .map(Smiles::toString)
                     .orElseThrow(() -> new IllegalArgumentException("Spectrum file does not contain SMILES: " + experiment.getSource()));
             CompoundMetaData metaData = experiment.getAnnotation(CompoundMetaData.class)
                     .orElseGet(() -> CompoundMetaData.builder()
@@ -173,7 +171,7 @@ public class CustomDatabaseImporter {
                             .build());
 
             //todo speclib: add support for custom structure ids to spectra formats -> important to import in house ref-libs without needing the structure tsv
-            importStructureFromString(smiles, metaData.getCompoundId(), metaData.getCompoundName())
+            importStructuresFromSmileAndInChis(smiles, metaData.getCompoundId(), metaData.getCompoundName())
                     .map(CustomDatabaseImporter.Molecule::getInchi)
                     .map(InChI::key2D)
                     .ifPresent(key -> specs.forEach(s -> s.setCandidateInChiKey(key)));
@@ -182,12 +180,12 @@ public class CustomDatabaseImporter {
         }
     }
 
-    public void importStructureFromString(String smilesOrInChI) throws IOException {
+    public void importStructuresFromSmileAndInChis(String smilesOrInChI) throws IOException {
         throwIfShutdown();
-        importStructureFromString(smilesOrInChI, null, null);
+        importStructuresFromSmileAndInChis(smilesOrInChI, null, null);
     }
 
-    public Optional<Molecule> importStructureFromString(@Nullable String smilesOrInChI, @Nullable String id, @Nullable String name) throws IOException {
+    public Optional<Molecule> importStructuresFromSmileAndInChis(@Nullable String smilesOrInChI, @Nullable String id, @Nullable String name) throws IOException {
         throwIfShutdown();
         if (smilesOrInChI == null || smilesOrInChI.isBlank()) {
             LoggerFactory.getLogger(getClass()).warn("No structure information given in Line ' " + smilesOrInChI + "\t" + id + "\t" + name + "'. Skipping!");
@@ -245,7 +243,7 @@ public class CustomDatabaseImporter {
         return Optional.of(molecule);
     }
 
-    public void importStructureFromStream(InputStream stream) throws IOException {
+    public void importStructuresFromSmileAndInChis(InputStream stream) throws IOException {
         throwIfShutdown();
         // checkConnectionToUrl for SMILES and InChI formats
         final BufferedReader br = new BufferedReader(new InputStreamReader(stream));
@@ -259,8 +257,30 @@ public class CustomDatabaseImporter {
 
                 final String id = parts.length > 1 ? parts[1] : null;
                 final String name = parts.length > 2 ? parts[2] : null;
-                importStructureFromString(structure, id, name);
+                importStructuresFromSmileAndInChis(structure, id, name);
             }
+        }
+    }
+
+    public void importStructuresFromSdf(InputStream stream) throws IOException {
+        throwIfShutdown();
+        try {
+            IteratingSDFReader reader = new IteratingSDFReader(new BufferedReader(new InputStreamReader(stream)), SilentChemObjectBuilder.getInstance());
+            while (reader.hasNext()) {
+                checkCancellation();
+                IAtomContainer c = reader.next();
+                checkCancellation();
+                Smiles smiles = new Smiles(smilesGen.create(c));
+                InChI inchi = InChISMILESUtils.getInchi(c, false);
+                if (inchi != null) {
+                    Molecule molecule = new Molecule(c, smiles, inchi);
+                    addMolecule(molecule);
+                }else {
+                    LoggerFactory.getLogger(getClass()).warn("Could not create InChI from parsed Atom container. Skipping Molecule: " + smiles);
+                }
+            }
+        } catch (CDKException e) {
+            throw new IOException(e);
         }
     }
 
@@ -268,7 +288,11 @@ public class CustomDatabaseImporter {
         throwIfShutdown();
         for (InputResource<?> f : structureFiles) {
             try (InputStream s = f.getInputStream()) {
-                importStructureFromStream(s);
+                if (f.getFileExt().equalsIgnoreCase("sdf")) {
+                    importStructuresFromSdf(s);
+                } else {
+                    importStructuresFromSmileAndInChis(s);
+                }
             }
         }
     }
@@ -282,28 +306,11 @@ public class CustomDatabaseImporter {
         }
         if (reader != null) {
             try (InputStream stream = new FileInputStream(file)) {
-                try {
-                    reader.setReader(stream);
-                    IChemFile chemFile = SilentChemObjectBuilder.getInstance().newInstance(IChemFile.class);
-                    chemFile = reader.read(chemFile);
-                    for (IChemSequence s : chemFile.chemSequences()) {
-                        for (IChemModel m : s.chemModels()) {
-                            for (IAtomContainer c : m.getMoleculeSet().atomContainers()) {
-                                checkCancellation();
-                                InChI inchi = InChISMILESUtils.getInchi(c, false);
-                                Smiles smiles = new Smiles(smilesGen.create(c));
-                                Molecule molecule = new Molecule(c, smiles, inchi);
-                                addMolecule(molecule);
-                            }
-                        }
-                    }
-                } catch (CDKException e) {
-                    throw new IOException(e);
-                }
+                importStructuresFromSdf(stream);
             }
         } else {
             try (FileInputStream s = new FileInputStream(file)) {
-                importStructureFromStream(s);
+                importStructuresFromSmileAndInChis(s);
             }
         }
     }
