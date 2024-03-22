@@ -54,6 +54,10 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
 
     public static final String SETTINGS_COLLECTION = "CUSTOM-DB-SETTINGS";
 
+    @Getter
+    @Setter
+    private String name = null;
+
     public ChemicalNoSQLDatabase(Database<Doctype> database) throws IOException {
         super(database);
     }
@@ -72,6 +76,13 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
                         FingerprintCandidateWrapper.class,
                         new FingerprintCandidateWrapperSerializer(),
                         new FingerprintCandidateWrapperDeserializer(version));
+    }
+
+    @Override
+    public String name() { //this is ugly should we add metadata from custom dbs completely?
+        if (getName() != null)
+            return getName();
+        return super.name();
     }
 
     @Override
