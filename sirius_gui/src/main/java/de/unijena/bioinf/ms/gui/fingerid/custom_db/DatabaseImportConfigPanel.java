@@ -35,7 +35,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.chemdb.custom.CustomDatabases.NOSQL_SUFFIX;
+import static de.unijena.bioinf.chemdb.custom.CustomDatabases.CUSTOM_DB_SUFFIX;
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isLoggedIn;
 
@@ -115,7 +115,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
 
 
     private boolean checkName(String name) {
-        final String n = !name.endsWith(NOSQL_SUFFIX) ? (name + NOSQL_SUFFIX) : name;
+        final String n = !name.endsWith(CUSTOM_DB_SUFFIX) ? (name + CUSTOM_DB_SUFFIX) : name;
         return gui.applySiriusClient((c, pid) -> c.databases().getDatabaseWithResponseSpec(n, false)
                 .bodyToMono(SearchableDatabase.class).onErrorComplete().blockOptional().isPresent());
     }
@@ -129,8 +129,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
                 "If not given the filename will be used."));
         parameterBindings.put("displayName", dbDisplayNameField::getText);
         dbNameField = new PlaceholderTextField("");
-        smalls.addNamed("Filename", dbNameField, GuiUtils.formatToolTip("Filename and unique identifier of the new custom database, should end in " + NOSQL_SUFFIX));
-        parameterBindings.put("name", dbNameField::getText);
+        smalls.addNamed("Filename", dbNameField, GuiUtils.formatToolTip("Filename and unique identifier of the new custom database, should end in " + CUSTOM_DB_SUFFIX));
 
         String dbDirectory = db != null ? Path.of(db.getLocation()).getParent().toString()
                 : PropertyManager.getProperty(SiriusProperties.DEFAULT_SAVE_DIR_PATH, null, "");
@@ -150,7 +149,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
             validDbDisplayName = true;
         } else {
             dbDisplayNameField.setPlaceholder("My Database");
-            dbNameField.setPlaceholder("my_database" + NOSQL_SUFFIX);
+            dbNameField.setPlaceholder("my_database" + CUSTOM_DB_SUFFIX);
         }
 
         dbDisplayNameField.addFocusListener(new FocusAdapter() {
@@ -161,8 +160,8 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
                 if (dbNameField.getText() == null || dbNameField.getText().isBlank()) {
                     if (!name.isBlank()) {
                         name = FileUtils.sanitizeFilename(name).toLowerCase();
-                        if (!name.endsWith(NOSQL_SUFFIX))
-                            name = name + NOSQL_SUFFIX;
+                        if (!name.endsWith(CUSTOM_DB_SUFFIX))
+                            name = name + CUSTOM_DB_SUFFIX;
                         dbNameField.setText(name);
                     }
                 }
@@ -178,12 +177,12 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
                     String displayName = dbDisplayNameField.getText();
                     if (!displayName.isBlank()) {
                         name = FileUtils.sanitizeFilename(displayName).toLowerCase();
-                        if (!name.endsWith(NOSQL_SUFFIX))
-                            name = name + NOSQL_SUFFIX;
+                        if (!name.endsWith(CUSTOM_DB_SUFFIX))
+                            name = name + CUSTOM_DB_SUFFIX;
                         dbNameField.setText(name);
                     }
-                } else if (!name.endsWith(NOSQL_SUFFIX)) {
-                    dbNameField.setText(name + NOSQL_SUFFIX);
+                } else if (!name.endsWith(CUSTOM_DB_SUFFIX)) {
+                    dbNameField.setText(name + CUSTOM_DB_SUFFIX);
                 }
             }
         });
