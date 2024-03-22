@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.chemdb.custom;
 
+import com.github.f4b6a3.tsid.Tsid;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
@@ -166,8 +167,10 @@ public class CustomDatabaseImporter {
 
             String smiles = experiment.getAnnotation(Smiles.class).map(Smiles::toString)
                     .orElseThrow(() -> new IllegalArgumentException("Spectrum file does not contain SMILES: " + experiment.getSource()));
-            CompoundMetaData metaData = experiment.getAnnotation(CompoundMetaData.class).orElseGet(() ->
-                    CompoundMetaData.builder().compoundName(experiment.getName()).build());
+            CompoundMetaData metaData = experiment.getAnnotation(CompoundMetaData.class)
+                    .orElseGet(() -> CompoundMetaData.builder()
+                            .compoundName(experiment.getName())
+                            .build());
 
             //todo speclib: add support for custom structure ids to spectra formats -> important to import in house ref-libs without needing the structure tsv
             importStructureFromString(smiles, metaData.getCompoundId(), metaData.getCompoundName())
