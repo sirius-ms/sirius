@@ -122,7 +122,7 @@ public class GuiProjectManager implements Closeable {
     }
 
     private ConfidenceMode readConfidenceModeProperty() {
-        String modeString = SiriusProperties.getProperty("de.unijena.bioinf.sirius.ui.confidenceDisplayMode");
+        String modeString = SiriusProperties.getProperty("de.unijena.bioinf.sirius.ui.confidenceDisplayMode", null, ConfidenceMode.APPROXIMATE.name());
         modeString = Objects.isNull(modeString) ? null : modeString.toUpperCase();
         try {
             return ConfidenceMode.valueOf(modeString);
