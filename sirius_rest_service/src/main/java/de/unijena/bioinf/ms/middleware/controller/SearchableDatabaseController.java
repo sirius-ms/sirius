@@ -27,12 +27,13 @@ import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabaseParamet
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.validation.Valid;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
@@ -76,7 +77,7 @@ public class SearchableDatabaseController {
     }
 
     @PostMapping(value = "/{databaseId}", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
-    public SearchableDatabase createDatabase(@PathVariable String databaseId, @Valid @RequestBody(required = false) SearchableDatabaseParameters dbToCreate) {
+    public SearchableDatabase createDatabase(@PathVariable @Pattern(regexp = "^[a-zA-Z0-9-_]+$") String databaseId, @Valid @RequestBody(required = false) SearchableDatabaseParameters dbToCreate) {
         return chemDbService.create(databaseId, dbToCreate);
     }
 

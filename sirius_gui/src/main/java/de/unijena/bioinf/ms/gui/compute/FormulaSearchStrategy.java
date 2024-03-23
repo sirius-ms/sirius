@@ -251,11 +251,10 @@ public class FormulaSearchStrategy extends ConfigPanel {
         JButton buttonEdit = new JButton("…");  // Ellipsis symbol instead of ... because 1-char buttons don't get side insets
         buttonEdit.setToolTipText("Customize allowed elements and their quantities");
         buttonPanel.add(buttonEdit);
-        JButton buttonAutodetect = !isBatchDialog ? new JButton("Redetect") : null;
+        JButton buttonAutodetect = !isBatchDialog ? new JButton("Re-detect") : null;
         if (!isBatchDialog) {
-            buttonAutodetect.addActionListener(e -> {
-                detectElements(allAutoDetectableElements, enforcedTextBox);
-            });
+            buttonAutodetect.addActionListener(e ->
+                    detectElements(ecs.get(0), allAutoDetectableElements, enforcedTextBox));
             buttonPanel.add(buttonAutodetect);
         }
 
@@ -298,8 +297,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         //reset element filter when switching strategies
         addStrategyChangeListener(strategy -> {
-            detectElements(allAutoDetectableElements, enforcedTextBox);
             if (!isBatchDialog) {
+                detectElements(ecs.get(0), allAutoDetectableElements, enforcedTextBox);
                 buttonAutodetect.setToolTipText("Elementdetection has already been performed once opened the compute dialog."
                         + "Auto detectable element are: " + join(allAutoDetectableElements)
                         + ".\nIf no elements can be detected the following fallback is used: "+formulaSettings.getFallbackAlphabet().toString(",")
@@ -405,10 +404,9 @@ public class FormulaSearchStrategy extends ConfigPanel {
      * @param autoDetectable
      * @param formulaConstraintsTextBox
      */
-    protected void detectElements(Set<Element> autoDetectable, JTextField formulaConstraintsTextBox) {
+    protected void detectElements(InstanceBean ec, Set<Element> autoDetectable, JTextField formulaConstraintsTextBox) {
         //todo nightsky: do we want todo that in the frontend?
         String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
-        InstanceBean ec = ecs.get(0);
         MsData msData = ec.getMsData();
         if (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null) {
             Jobs.runInBackgroundAndLoad(owner, "Detecting Elements...", () -> {
@@ -426,8 +424,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
                                 () -> new ExceptionDialog(owner, notWorkingMessage)
                         );
             }).getResult();
-        } else {
-            new ExceptionDialog(owner, notWorkingMessage);
         }
     }
 
