@@ -101,7 +101,7 @@ public class StructureCandidateFormula extends StructureCandidateScored {
         // scores
         sSum.setCsiScore(can.getScore());
         sSum.setTanimotoSimilarity(can.getCandidate().getTanimoto());
-        sSum.setStructDistToTopHit(can.getCandidate().getStructDistToTopHit());
+        sSum.setStructDistToTopHit(can.getCandidate().getMcesToTopHit());
         if (confidenceScoreProvider != null) {
             confidenceScoreProvider.getAnnotation(ConfidenceScore.class).map(ConfidenceScore::score).ifPresent(sSum::setConfidenceExactMatch);
             confidenceScoreProvider.getAnnotation(ConfidenceScoreApproximate.class).map(ConfidenceScoreApproximate::score).ifPresent(sSum::setConfidenceApproxMatch);
