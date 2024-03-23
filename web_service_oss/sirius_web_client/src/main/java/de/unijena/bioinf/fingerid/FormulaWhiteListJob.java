@@ -45,29 +45,26 @@ import java.util.stream.Collectors;
 public class FormulaWhiteListJob extends BasicJJob<CandidateFormulas> {
     private final List<CustomDataSources.Source> dbToSearch;
     private final WebWithCustomDatabase searchDB;
-    //job parameter
-    private final boolean onlyOrganic;
 
     //experiment parameter
     private final double precursorMass;
     private final Deviation massDev;
     private final PrecursorIonType[] allowedIons;
 
-    private FormulaWhiteListJob(WebWithCustomDatabase searchDB, List<CustomDataSources.Source> dbToSearch, double precursorMass, Deviation massDev, PrecursorIonType[] allowedIonTypes, boolean onlyOrganic) {
+    private FormulaWhiteListJob(WebWithCustomDatabase searchDB, List<CustomDataSources.Source> dbToSearch, double precursorMass, Deviation massDev, PrecursorIonType[] allowedIonTypes) {
         super(JobType.WEBSERVICE);
         this.massDev = massDev;
         this.dbToSearch = dbToSearch;
         this.precursorMass = precursorMass;
         this.allowedIons = allowedIonTypes;
         this.searchDB = searchDB;
-        this.onlyOrganic = onlyOrganic;
     }
 
     //todo as soon as we always perform adduct detection directly at import (and not as part of MS1PreProcessor), we can change this and retrieve the allowedIonTypes from PossibleAdducts
-    public static FormulaWhiteListJob create(WebWithCustomDatabase searchDB, List<CustomDataSources.Source> dbToSearch, Ms2Experiment experiment , PrecursorIonType[] allowedIonTypes, boolean onlyOrganic) {
+    public static FormulaWhiteListJob create(WebWithCustomDatabase searchDB, List<CustomDataSources.Source> dbToSearch, Ms2Experiment experiment , PrecursorIonType[] allowedIonTypes) {
         final double precursorMass = experiment.getIonMass();
         final Deviation massDev = getMassDeviation(experiment);
-        return new FormulaWhiteListJob(searchDB, dbToSearch, precursorMass, massDev, allowedIonTypes, onlyOrganic);
+        return new FormulaWhiteListJob(searchDB, dbToSearch, precursorMass, massDev, allowedIonTypes);
     }
 
     /**
@@ -86,8 +83,7 @@ public class FormulaWhiteListJob extends BasicJJob<CandidateFormulas> {
     protected CandidateFormulas compute() throws Exception {
         final Set<MolecularFormula> formulas = NetUtils.tryAndWait(() ->
                 searchDB.loadMolecularFormulas(precursorMass, massDev, allowedIons, dbToSearch) //todo ElementFilter: I am not sure that every Database implementation only retrieves MFs that respect the adduct (and not just the mass)
-                .stream().map(FormulaCandidate::getFormula).filter(f -> !onlyOrganic || f.isCHNOPSBBrClFI()) //todo ElementFilter: handle this as part of element filter -> but if so, set reasonable defaults...
-                .collect(Collectors.toSet()), this::checkForInterruption);
+                .stream().map(FormulaCandidate::getFormula).collect(Collectors.toSet()), this::checkForInterruption);
         return CandidateFormulas.fromSet(formulas, FormulaWhiteListJob.class);
     }
 
