@@ -1,34 +1,29 @@
 package de.unijena.bioinf.lcms.trace;
 
-import de.unijena.bioinf.lcms.ScanPointMapping;
 import de.unijena.bioinf.lcms.datatypes.CustomDataType;
-import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import org.h2.mvstore.WriteBuffer;
 
 import java.nio.ByteBuffer;
 
-public class ContigousTraceDatatype extends CustomDataType {
+public class ContigousTraceDatatype extends CustomDataType<ContiguousTrace> {
     @Override
-    public int getMemory(Object obj) {
-        ContiguousTrace trace = (ContiguousTrace)obj;
-        int mem = 16+24+trace.mz.length*8 + trace.intensity.length*4;
-        return mem;
+    public int getMemory(ContiguousTrace obj) {
+        return 16+24+obj.mz.length*8 + obj.intensity.length*4;
     }
 
     @Override
-    public void write(WriteBuffer buff, Object obj) {
-        ContiguousTrace trace = (ContiguousTrace)obj;
-        writeFixedLenInt(buff, new int[]{trace.getUid(), trace.startId(), trace.endId(), trace.apex()});
-        writeFixedLenDouble(buff, new double[]{trace.averagedMz(), trace.minMz(), trace.maxMz()});
-        writeFixedLenDouble(buff, trace.mz);
-        writeFixedLenFloat(buff, trace.intensity);
-        if (trace.segments==null) buff.putInt(-1);
+    public void write(WriteBuffer buff, ContiguousTrace obj) {
+        writeFixedLenInt(buff, new int[]{obj.getUid(), obj.startId(), obj.endId(), obj.apex()});
+        writeFixedLenDouble(buff, new double[]{obj.averagedMz(), obj.minMz(), obj.maxMz()});
+        writeFixedLenDouble(buff, obj.mz);
+        writeFixedLenFloat(buff, obj.intensity);
+        if (obj.segments==null) buff.putInt(-1);
         else {
-            buff.putInt(trace.segments.length);
-            final int[] segs = new int[trace.segments.length*3];
+            buff.putInt(obj.segments.length);
+            final int[] segs = new int[obj.segments.length*3];
             int k=0;
-            for (TraceSegment t : trace.segments) {
+            for (TraceSegment t : obj.segments) {
                 segs[k++] = t.apex;
                 segs[k++] = t.leftEdge;
                 segs[k++] = t.rightEdge;
@@ -38,7 +33,7 @@ public class ContigousTraceDatatype extends CustomDataType {
     }
 
     @Override
-    public Object read(ByteBuffer buff) {
+    public ContiguousTrace read(ByteBuffer buff) {
         int[] ints = readFixedLenInt(buff, 4);
         double[] doubles = readFixedLenDouble(buff, 3);
         int len = ints[2]-ints[1]+1;
@@ -58,4 +53,10 @@ public class ContigousTraceDatatype extends CustomDataType {
         }
         return new ContiguousTrace(null, ints[0], ints[1], ints[2], ints[3], doubles[0], doubles[1], doubles[2], mz, intenss, segs);
     }
+
+    @Override
+    public ContiguousTrace[] createStorage(int i) {
+        return new ContiguousTrace[i];
+    }
+
 }

@@ -50,7 +50,11 @@ public class CustomDatabases {
 
     public static final String PROPERTY_PREFIX = "de.unijena.bioinf.stores.custom";
 
-    public static final String NOSQL_SUFFIX = ".db";
+    public static final String CUSTOM_DB_SUFFIX = ".siriusdb";
+
+    public static String sanitizeDbName(String inputName) {
+        return inputName.replaceAll("[^a-zA-Z0-9-_]", "_");
+    }
 
     //todo we should cache blob database as well if the use caching here.
     private final static Map<String, NoSQLCustomDatabase<?, ?>> NOSQL_LIBRARIES = new ConcurrentHashMap<>();
@@ -169,7 +173,7 @@ public class CustomDatabases {
 
     public static CustomDatabase open(String location, CdkFingerprintVersion version) throws IOException {
         CustomDatabase db;
-        if (location.endsWith(NOSQL_SUFFIX)) {
+        if (location.endsWith(CUSTOM_DB_SUFFIX)) {
             db = getNoSQLibrary(location, version);
         } else {
             db = new BlobCustomDatabase<>(CompressibleBlobStorage.of(BlobStorages.openDefault(PROPERTY_PREFIX, location)), version);
@@ -184,7 +188,7 @@ public class CustomDatabases {
         if (!location.contains("/"))
             location = custom.resolve(location).toAbsolutePath().toString();
 
-        if (location.endsWith(NOSQL_SUFFIX) && Files.isRegularFile(Path.of(location))) {
+        if (location.endsWith(CUSTOM_DB_SUFFIX) && Files.isRegularFile(Path.of(location))) {
             return open(location, version);
         } else if (BlobStorages.exists(PROPERTY_PREFIX, location)) {
             return open(location, version);
@@ -193,8 +197,12 @@ public class CustomDatabases {
     }
 
     public static CustomDatabase create(String location, CustomDatabaseSettings config, CdkFingerprintVersion version) throws IOException {
+        //sanitize db name:
+        if (!config.getName().equals(sanitizeDbName(config.getName())))
+            throw new IllegalArgumentException("Unsupported databse name. Name was: '" + config.getName() + "'. Allowed would be: " + sanitizeDbName(config.getName()));
+
         CustomDatabase db;
-        if (location.endsWith(NOSQL_SUFFIX)) {
+        if (location.endsWith(CUSTOM_DB_SUFFIX)) {
             Path dir = Path.of(location).getParent();
             if (Files.notExists(dir)) {
                 Files.createDirectories(dir);
