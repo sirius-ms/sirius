@@ -130,7 +130,7 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
         final FBCandidates fingerblastResult = optFingeridResult.orElseThrow(() -> new IllegalArgumentException("Could not find FingerIdResult to write for ID: " + id));
 
         final String[] header = new String[]{
-                "inchikey2D", "inchi", "molecularFormula", "rank", "score", "name", "smiles", "xlogp", "PubMedIds", "links", "tanimotoSimilarity","structDistanceToTopHit", "dbflags"
+                "inchikey2D", "inchi", "molecularFormula", "rank", "score", "name", "smiles", "xlogp", "PubMedIds", "links", "tanimotoSimilarity","mcesDistanceToTopHit", "dbflags"
         };
         final String[] row = new String[header.length];
         final AtomicInteger ranking = new AtomicInteger(0);
