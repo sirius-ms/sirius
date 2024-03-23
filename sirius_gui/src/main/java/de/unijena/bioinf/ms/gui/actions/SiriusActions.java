@@ -46,6 +46,8 @@ public enum SiriusActions {
     ORDER_BY_NAME(OrderCompoundByName.class),
     ORDER_BY_CONFIDENCE(OrderCompoundByConfidence.class),
 
+    TOOGLE_CONFIDENCE_MODE(SwitchConfidenceModeAction.class),
+
     TOOGLE_INVERT_FILTER(InvertFilterAction.class),
     RESET_FILTER(ResetFilterAction.class),
 

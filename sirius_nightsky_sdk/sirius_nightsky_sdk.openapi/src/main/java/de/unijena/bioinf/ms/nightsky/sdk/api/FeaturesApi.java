@@ -2023,7 +2023,7 @@ public class FeaturesApi {
     /**
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
-     * <p><b>200</b> - Fragmentation Tree in internal format.   NOTE: This endpoint is likely to be removed in future versions of the API.
+     * <p><b>200</b> - Fragmentation Tree in internal format.  &lt;p&gt;  NOTE: This endpoint is likely to be removed in future versions of the API.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2074,7 +2074,7 @@ public class FeaturesApi {
     /**
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
-     * <p><b>200</b> - Fragmentation Tree in internal format.   NOTE: This endpoint is likely to be removed in future versions of the API.
+     * <p><b>200</b> - Fragmentation Tree in internal format.  &lt;p&gt;  NOTE: This endpoint is likely to be removed in future versions of the API.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2089,7 +2089,7 @@ public class FeaturesApi {
     /**
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
-     * <p><b>200</b> - Fragmentation Tree in internal format.   NOTE: This endpoint is likely to be removed in future versions of the API.
+     * <p><b>200</b> - Fragmentation Tree in internal format.  &lt;p&gt;  NOTE: This endpoint is likely to be removed in future versions of the API.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
@@ -2104,7 +2104,7 @@ public class FeaturesApi {
     /**
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
-     * <p><b>200</b> - Fragmentation Tree in internal format.   NOTE: This endpoint is likely to be removed in future versions of the API.
+     * <p><b>200</b> - Fragmentation Tree in internal format.  &lt;p&gt;  NOTE: This endpoint is likely to be removed in future versions of the API.
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId identifier of the requested formula result
