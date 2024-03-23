@@ -22,12 +22,12 @@ package de.unijena.bioinf.ms.gui.fingerid;
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
-import de.unijena.bioinf.confidence_score.ConfidenceMode;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
+import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -49,6 +49,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
     private final CompoundList compoundList;
 
     private final IOFunctions.BiIOFunction<InstanceBean, Integer, List<FingerprintCandidateBean>> dataExtractor; //todo allow user specifiable or pagination
+
     public StructureList(final CompoundList compoundList, IOFunctions.BiIOFunction<InstanceBean, Integer, List<FingerprintCandidateBean>> dataExtractor) {
         super(FingerprintCandidateBean.class);
         this.dataExtractor = dataExtractor;
@@ -164,8 +165,8 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
 
     protected Function<FingerprintCandidateBean, Boolean> getBestFunc() {
         return c -> {
-            if (compoundList.getConfidenceDisplayMode() == ConfidenceMode.APPROXIMATE) {
-                return c.getCandidate().getStructDistToTopHit()!=null && c.getCandidate().getStructDistToTopHit()<=2;
+            if (compoundList.getGui().getProperties().isConfidenceViewMode( ConfidenceDisplayMode.APPROXIMATE)) {
+                return c.getCandidate().getMcesDistToTopHit()!=null && c.getCandidate().getMcesDistToTopHit()<=2;
             } else {
                 return c.getScore() >= csiScoreStats.getMax();
             }
