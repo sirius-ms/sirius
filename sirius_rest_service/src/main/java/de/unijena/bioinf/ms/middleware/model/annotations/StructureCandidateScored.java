@@ -34,15 +34,32 @@ public class StructureCandidateScored extends StructureCandidate {
     @Schema(enumAsRef = true, name = "StructureCandidateOptField", nullable = true)
     public enum OptField {none, fingerprint, dbLinks, libraryMatches}
 
+    /**
+     * CSI:FingerID score of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID
+     * This is the score used for ranking structure candidates
+     */
     protected Double csiScore;
+    /**
+     * Tanimoto similarly of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID
+     */
     @Schema(nullable = true)
     protected Double tanimotoSimilarity;
+    /**
+     * Confidence Score that represents the confidence whether the top hit is correct.
+     */
     @Schema(nullable = true)
     protected Double confidenceExactMatch;
+    /**
+     * Confidence Score that represents the confidence whether the top hit or a very similar hit (estimated by MCES distance) is correct.
+     */
     @Schema(nullable = true)
     protected Double confidenceApproxMatch;
+    /**
+     * Maximum Common Edge Subgraph (MCES) distance to the top scoring hit (CSI:FingerID) in a candidate list.
+     * @see <a href="https://doi.org/10.1101/2023.03.27.534311">Small molecule machine learning: All models are wrong, some may not even be useful</a>
+     */
     @Schema(nullable = true)
-    protected Double structDistToTopHit;
+    protected Double mcesDistToTopHit;
 
     //Extended Results
     /**

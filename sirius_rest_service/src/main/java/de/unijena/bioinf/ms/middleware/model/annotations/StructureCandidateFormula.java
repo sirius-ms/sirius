@@ -45,7 +45,7 @@ import java.util.EnumSet;
 @JsonIgnoreProperties({})
 public class StructureCandidateFormula extends StructureCandidateScored {
     /**
-     * molecular formula of this candidate
+     * Molecular formula of this candidate
      */
     protected String molecularFormula;
     /**
@@ -101,10 +101,14 @@ public class StructureCandidateFormula extends StructureCandidateScored {
         // scores
         sSum.setCsiScore(can.getScore());
         sSum.setTanimotoSimilarity(can.getCandidate().getTanimoto());
-        sSum.setStructDistToTopHit(can.getCandidate().getMcesToTopHit());
+        sSum.setMcesDistToTopHit(can.getCandidate().getMcesToTopHit());
         if (confidenceScoreProvider != null) {
-            confidenceScoreProvider.getAnnotation(ConfidenceScore.class).map(ConfidenceScore::score).ifPresent(sSum::setConfidenceExactMatch);
-            confidenceScoreProvider.getAnnotation(ConfidenceScoreApproximate.class).map(ConfidenceScoreApproximate::score).ifPresent(sSum::setConfidenceApproxMatch);
+            confidenceScoreProvider.getAnnotation(ConfidenceScore.class)
+                    .map(ConfidenceScore::score)
+                    .ifPresent(sSum::setConfidenceExactMatch);
+            confidenceScoreProvider.getAnnotation(ConfidenceScoreApproximate.class)
+                    .map(ConfidenceScoreApproximate::score)
+                    .ifPresent(sSum::setConfidenceApproxMatch);
         }
 
 

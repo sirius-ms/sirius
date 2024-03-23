@@ -22,10 +22,10 @@ package de.unijena.bioinf.ms.gui.fingerid;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
-import de.unijena.bioinf.confidence_score.ConfidenceMode;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
+import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 
 import javax.swing.*;
@@ -108,12 +108,12 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         }
         image.molecule = value;
         if(value != null){
-            if(gui.getProjectManager().getConfidenceDisplayMode() == ConfidenceMode.EXACT || value.getCandidate().getStructDistToTopHit()==null){
+            if(gui.getProperties().isConfidenceViewMode(ConfidenceDisplayMode.EXACT) || value.getCandidate().getMcesDistToTopHit() == null){
                 image.backgroundColor = value.getScore()>= stats.getMax() ? Colors.LIST_LIGHT_GREEN : (index % 2 == 0 ? EVEN : ODD);
             }
             else {
-                if(value.getCandidate().getStructDistToTopHit()!=null)
-                    image.backgroundColor = value.getCandidate().getStructDistToTopHit() <= this.structDistanceThreshold ? Colors.LIST_LIGHT_GREEN : (index % 2 == 0 ? EVEN : ODD);
+                if(value.getCandidate().getMcesDistToTopHit()!=null)
+                    image.backgroundColor = value.getCandidate().getMcesDistToTopHit() <= this.structDistanceThreshold ? Colors.LIST_LIGHT_GREEN : (index % 2 == 0 ? EVEN : ODD);
             }
         }
         setOpaque(true);

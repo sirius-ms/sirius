@@ -26,17 +26,13 @@ import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import ca.odell.glazedlists.swing.GlazedListsSwing;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
-import de.unijena.bioinf.confidence_score.ConfidenceMode;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.dialogs.CompoundFilterOptionsDialog;
-import de.unijena.bioinf.ms.gui.table.SiriusGlazedLists;
-import de.unijena.bioinf.ms.gui.utils.CompoundFilterMatcherEditor;
-import de.unijena.bioinf.ms.gui.utils.CompoundFilterModel;
-import de.unijena.bioinf.ms.gui.utils.MatcherEditorWithOptionalInvert;
-import de.unijena.bioinf.ms.gui.utils.SearchTextField;
+import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.matchers.BackgroundJJobMatcheEditor;
 import de.unijena.bioinf.projectspace.GuiProjectManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -65,11 +61,10 @@ public class CompoundList {
     final private MatcherEditorWithOptionalInvert<InstanceBean> compoundListMatchEditor;
 
     private final Queue<ExperimentListChangeListener> listeners = new ConcurrentLinkedQueue<>();
-
-    final private GuiProjectManager projectManager;
-
+    @Getter
+    private @NotNull SiriusGui gui;
     public CompoundList(@NotNull SiriusGui gui) {
-        this.projectManager = gui.getProjectManager();
+        this.gui = gui;
         searchField = new SearchTextField("Hit enter to search...");
         obsevableScource = new ObservableElementList<>(gui.getProjectManager().INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
         sortedSource = new SortedList<>(obsevableScource, Comparator.comparing(InstanceBean::getIndex));
@@ -84,7 +79,7 @@ public class CompoundList {
         }, false));
         //additional filter based on specific parameters
         compoundFilterModel = new CompoundFilterModel();
-        listOfFilters.add(new CompoundFilterMatcherEditor(compoundFilterModel));
+        listOfFilters.add(new CompoundFilterMatcherEditor(new CompoundFilterMatcher(gui.getProperties(), compoundFilterModel)));
         //combined filters
         CompositeMatcherEditor<InstanceBean> compositeMatcherEditor = new CompositeMatcherEditor<>(listOfFilters);
         compositeMatcherEditor.setMode(CompositeMatcherEditor.AND);
@@ -142,15 +137,6 @@ public class CompoundList {
         searchField.textField.setText("");
         searchField.textField.postActionEvent();
         colorByActiveFilter(openFilterPanelButton, compoundFilterModel);
-    }
-
-    public void switchConfidenceDisplayMode() {
-        projectManager.switchConfidenceDisplayMode();
-        SiriusGlazedLists.allUpdate(obsevableScource);
-    }
-
-    public ConfidenceMode getConfidenceDisplayMode() {
-        return projectManager.confidenceDisplayMode;
     }
 
     private void notifyListenerDataChange(ListEvent<InstanceBean> event) {
