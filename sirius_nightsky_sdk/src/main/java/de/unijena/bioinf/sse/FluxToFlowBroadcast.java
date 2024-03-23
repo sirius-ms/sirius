@@ -43,7 +43,7 @@ public class FluxToFlowBroadcast implements Closeable {
         this.objectMapper = objectMapper;
     }
 
-    public void unSubscribe(Flow.Subscriber<DataObjectEvent<?>> subscriber) {
+    public synchronized void unSubscribe(Flow.Subscriber<DataObjectEvent<?>> subscriber) {
         subscribers.values().forEach(v -> v.remove(subscriber));
     }
 

@@ -379,6 +379,7 @@
             "in": "path",
             "required": true,
             "schema": {
+              "pattern": "^[a-zA-Z0-9-_]+$",
               "type": "string"
             }
           }
@@ -6575,20 +6576,30 @@
           },
           "csiScore": {
             "type": "number",
+            "description": "CSI:FingerID score of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID\n This is the score used for ranking structure candidates",
             "format": "double"
           },
           "tanimotoSimilarity": {
             "type": "number",
+            "description": "Tanimoto similarly of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID",
             "format": "double",
             "nullable": true
           },
           "confidenceExactMatch": {
             "type": "number",
+            "description": "Confidence Score that represents the confidence whether the top hit is correct.",
             "format": "double",
             "nullable": true
           },
           "confidenceApproxMatch": {
             "type": "number",
+            "description": "Confidence Score that represents the confidence whether the top hit or a very similar hit (estimated by MCES distance) is correct.",
+            "format": "double",
+            "nullable": true
+          },
+          "mcesDistToTopHit": {
+            "type": "number",
+            "description": "Maximum Common Edge Subgraph (MCES) distance to the top scoring hit (CSI:FingerID) in a candidate list.",
             "format": "double",
             "nullable": true
           },
@@ -6973,20 +6984,30 @@
           },
           "csiScore": {
             "type": "number",
+            "description": "CSI:FingerID score of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID\n This is the score used for ranking structure candidates",
             "format": "double"
           },
           "tanimotoSimilarity": {
             "type": "number",
+            "description": "Tanimoto similarly of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID",
             "format": "double",
             "nullable": true
           },
           "confidenceExactMatch": {
             "type": "number",
+            "description": "Confidence Score that represents the confidence whether the top hit is correct.",
             "format": "double",
             "nullable": true
           },
           "confidenceApproxMatch": {
             "type": "number",
+            "description": "Confidence Score that represents the confidence whether the top hit or a very similar hit (estimated by MCES distance) is correct.",
+            "format": "double",
+            "nullable": true
+          },
+          "mcesDistToTopHit": {
+            "type": "number",
+            "description": "Maximum Common Edge Subgraph (MCES) distance to the top scoring hit (CSI:FingerID) in a candidate list.",
             "format": "double",
             "nullable": true
           },
@@ -6995,7 +7016,7 @@
           },
           "molecularFormula": {
             "type": "string",
-            "description": "molecular formula of this candidate"
+            "description": "Molecular formula of this candidate"
           },
           "adduct": {
             "type": "string",

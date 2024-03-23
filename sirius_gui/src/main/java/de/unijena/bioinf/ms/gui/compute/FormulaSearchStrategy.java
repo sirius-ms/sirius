@@ -4,6 +4,7 @@ import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
@@ -25,12 +26,14 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Ms1Preprocessor;
 import de.unijena.bioinf.sirius.ProcessedInput;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class FormulaSearchStrategy extends ConfigPanel {
@@ -83,6 +86,9 @@ public class FormulaSearchStrategy extends ConfigPanel {
         }
     }
 
+    /**
+     * currently selected strategy
+     */
     protected Strategy strategy;
 
     protected final Dialog owner;
@@ -98,6 +104,11 @@ public class FormulaSearchStrategy extends ConfigPanel {
      */
     private final Map<Strategy, List<Component>> strategyComponents;
 
+    /**
+     * box to select the active formula generation strategy. User addStrategyChangeListener to easily add listeners
+     */
+    private final JComboBox<Strategy> strategyBox;
+
     public FormulaSearchStrategy(SiriusGui gui, Dialog owner, List<InstanceBean> ecs, boolean isMs2, boolean isBatchDialog, ParameterBinding parameterBindings) {
         super(parameterBindings);
         this.owner = owner;
@@ -112,7 +123,10 @@ public class FormulaSearchStrategy extends ConfigPanel {
         strategyComponents.put(Strategy.DE_NOVO, new ArrayList<>());
         strategyComponents.put(Strategy.DATABASE, new ArrayList<>());
 
+        strategyBox =  GuiUtils.makeParameterComboBoxFromDescriptiveValues(Strategy.values());
+
         createPanel();
+        strategyBox.setSelectedItem(Strategy.DE_NOVO); strategyBox.setSelectedItem(Strategy.DEFAULT); //fire change to initialize fields
     }
 
     public JCheckboxListPanel<SearchableDatabase> getSearchDBList() {
@@ -125,7 +139,6 @@ public class FormulaSearchStrategy extends ConfigPanel {
         final JPanel formulaSearchStrategySelection = new JPanel();
         formulaSearchStrategySelection.setLayout(new BoxLayout(formulaSearchStrategySelection, BoxLayout.PAGE_AXIS));
         formulaSearchStrategySelection.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
-        JComboBox<Strategy> strategyBox =  GuiUtils.makeParameterComboBoxFromDescriptiveValues(Strategy.values());
         formulaSearchStrategySelection.add(new TextHeaderBoxPanel("Molecular formula generation", strategyBox));
 
         add(formulaSearchStrategySelection);
@@ -153,12 +166,9 @@ public class FormulaSearchStrategy extends ConfigPanel {
         hideAllStrategySpecific();
         showStrategySpecific(strategy, true);
 
-        strategyBox.addItemListener(e -> {
-            if (e.getStateChange() != ItemEvent.SELECTED) {
-                return;
-            }
+        addStrategyChangeListener(s -> {
             showStrategySpecific(strategy, false);
-            strategy = (Strategy) e.getItem();
+            strategy = s; //upate current strategy
             showStrategySpecific(strategy, true);
         });
     }
@@ -221,25 +231,30 @@ public class FormulaSearchStrategy extends ConfigPanel {
     }
 
     private JPanel createElementFilterPanel() {
-        Set<Element> autoDetectableElements = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor().getSetOfPredictableElements();
         final FormulaSettings formulaSettings = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
+        Set<Element> allAutoDetectableElements = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor().getSetOfPredictableElements(); //intersection of detectable elements of the used predictor and the specified detectable alphabet
 
         final TwoColumnPanel filterFields = new TwoColumnPanel();
 
         JLabel constraintsLabel = new JLabel("Allowed elements");
-        JTextField enforcedTextBox = makeParameterTextField("FormulaSettings.enforced", formulaSettings.getEnforcedAlphabet().toString(), 20);
+        JTextField enforcedTextBox = makeParameterTextField("FormulaSettings.enforced", 20);
+        enforcedTextBox.setEditable(false); //todo if we want to allow editing this text we need validation.
 
         JLabel autodetectLabel = new JLabel("Autodetect");
-        final JTextField detectableTextBox = isBatchDialog ? makeParameterTextField("FormulaSettings.detectable", 20) : null;
+        final JTextField selectedDetectableElementsTextBox = isBatchDialog ? makeParameterTextField("FormulaSettings.detectable", 20) : null;
+        if (selectedDetectableElementsTextBox != null) {
+            selectedDetectableElementsTextBox.setEditable(false);
+            selectedDetectableElementsTextBox.setText(join(allAutoDetectableElements.stream().filter(e -> formulaSettings.getAutoDetectionElements().contains(e)).collect(Collectors.toList()))); //intersection of detectable elements of the used predictor and the specified detectable alphabet
+        }
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         JButton buttonEdit = new JButton("…");  // Ellipsis symbol instead of ... because 1-char buttons don't get side insets
         buttonEdit.setToolTipText("Customize allowed elements and their quantities");
         buttonPanel.add(buttonEdit);
+        JButton buttonAutodetect = !isBatchDialog ? new JButton("Re-detect") : null;
         if (!isBatchDialog) {
-            JButton buttonAutodetect = new JButton("Detect");
-            buttonAutodetect.setToolTipText("Auto detectable element are: " + join(autoDetectableElements));
-            buttonAutodetect.addActionListener(e -> detectElements(autoDetectableElements, enforcedTextBox));
+            buttonAutodetect.addActionListener(e ->
+                    detectElements(ecs.get(0), allAutoDetectableElements, enforcedTextBox));
             buttonPanel.add(buttonAutodetect);
         }
 
@@ -247,7 +262,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         List<Component> filterComponents = new ArrayList<>(List.of(constraintsLabel, enforcedTextBox, buttonPanel));
         if (isBatchDialog) {
-            filterComponents.addAll(List.of(autodetectLabel, detectableTextBox));
+            filterComponents.addAll(List.of(autodetectLabel, selectedDetectableElementsTextBox));
         }
         int columnWidth = enforcedTextBox.getPreferredSize().width;
         int sidePanelWidth = buttonPanel.getPreferredSize().width;
@@ -257,7 +272,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         int constraintsGridY = filterFields.both.gridy;
         filterFields.add(constraintsLabel, enforcedTextBox);
         if (isBatchDialog) {
-            filterFields.add(autodetectLabel, detectableTextBox);
+            filterFields.add(autodetectLabel, selectedDetectableElementsTextBox);
         }
 
 
@@ -267,22 +282,27 @@ public class FormulaSearchStrategy extends ConfigPanel {
         c.gridheight = isBatchDialog ? 2 : 1;
         filterFields.add(buttonPanel, c);
 
+        //open element selection panel
         buttonEdit.addActionListener(e -> {
             FormulaConstraints currentConstraints = FormulaConstraints.fromString(enforcedTextBox.getText());
-            Set<Element> currentAuto = null;
-            if (isBatchDialog) {
-                try {
-                    currentAuto = ChemicalAlphabet.fromString(detectableTextBox.getText()).toSet();
-                } catch (UnknownElementException ex) {
-                    currentAuto = autoDetectableElements;
+            Set<Element> currentAuto = isBatchDialog? getAutodetectableElementsInBatchMode(selectedDetectableElementsTextBox, allAutoDetectableElements) : null;
+            ElementSelectionDialog dialog = new ElementSelectionDialog(owner, "Filter Elements", isBatchDialog ? allAutoDetectableElements : null, currentAuto, currentConstraints);
+            if (dialog.isSuccess()) {
+                enforcedTextBox.setText(dialog.getConstraints().toString(","));
+                if (isBatchDialog) {
+                    selectedDetectableElementsTextBox.setText(join(dialog.getAutoDetect()));
                 }
             }
-            ElementSelectionDialog dialog = new ElementSelectionDialog(owner, "Filter Elements", isBatchDialog ? autoDetectableElements : null, currentAuto, currentConstraints);
-            if (dialog.isSuccess()) {
-                enforcedTextBox.setText(dialog.getConstraints().toString());
-                if (isBatchDialog) {
-                    detectableTextBox.setText(join(dialog.getAutoDetect()));
-                }
+        });
+
+        //reset element filter when switching strategies
+        addStrategyChangeListener(strategy -> {
+            if (!isBatchDialog) {
+                detectElements(ecs.get(0), allAutoDetectableElements, enforcedTextBox);
+                buttonAutodetect.setToolTipText("Elementdetection has already been performed once opened the compute dialog."
+                        + "Auto detectable element are: " + join(allAutoDetectableElements)
+                        + ".\nIf no elements can be detected the following fallback is used: "+formulaSettings.getFallbackAlphabet().toString(",")
+                        + ".\nAdditionally, the following default elements are always used: "+ getEnforedElements(formulaSettings, allAutoDetectableElements).toString(","));
             }
         });
 
@@ -292,12 +312,36 @@ public class FormulaSearchStrategy extends ConfigPanel {
         return elementFilterPanel;
     }
 
+    @Nullable
+    private Set<Element> getAutodetectableElementsInBatchMode(JTextField detectableTextBox, Set<Element> fallbackAutoDetectableElements) {
+        Set<Element> currentAuto = null;
+        if (isBatchDialog) {
+            try {
+                currentAuto = ChemicalAlphabet.fromString(detectableTextBox.getText()).toSet();
+            } catch (UnknownElementException ex) {
+                currentAuto = fallbackAutoDetectableElements;
+            }
+        }
+        return currentAuto;
+    }
+
+    private FormulaConstraints getOrganicElementsWithoutAutodetectables(Set<Element> autodetectables) {
+        FormulaConstraints constraints = FormulaSettings.ORGANIC_ELEMENT_FILTER_CHNOPSBBrClIF;
+        Set<Element> alphabetWithoutAutodetectable = new HashSet<>(constraints.getChemicalAlphabet().toSet());
+        alphabetWithoutAutodetectable.removeAll(autodetectables);
+        return constraints.intersection(alphabetWithoutAutodetectable.toArray(Element[]::new));
+    }
+
     private void addDefaultStrategyElementFilterSettings(TwoColumnPanel filterFields) {
         JComboBox<ElementAlphabetStrategy> elementAlphabetStrategySelector = new JComboBox<>(); //todo NewWorflow: implement this feature in sirius-libs
         List<ElementAlphabetStrategy> settingsElements = List.copyOf(EnumSet.allOf(ElementAlphabetStrategy.class));
         settingsElements.forEach(elementAlphabetStrategySelector::addItem);
         elementAlphabetStrategySelector.setSelectedItem(ElementAlphabetStrategy.DE_NOVO_ONLY);
-        parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToBottomUp", () -> Boolean.toString(elementAlphabetStrategySelector.getSelectedItem() == ElementAlphabetStrategy.BOTH));
+        addStrategyChangeListener(strategy -> {
+            if (strategy==Strategy.DEFAULT) {
+                parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToBottomUp", () -> Boolean.toString(elementAlphabetStrategySelector.getSelectedItem() == ElementAlphabetStrategy.BOTH)); //only set for correct strategy, since bottom up is part of multiple strategies
+            }
+        });
 
         JLabel label = new JLabel("Apply element filter to");
         filterFields.add(label, elementAlphabetStrategySelector);
@@ -307,7 +351,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
     }
 
     private void addElementFilterEnabledCheckboxForStrategy(TwoColumnPanel filterFields, List<Component> filterComponents, Strategy s, int columnWidth, int sidePanelWidth) {
-        JCheckBox useElementFilter = new JCheckBox() { //todo NewWorkflow: implement this feature. This makes the organics filter obsolete. Maybe dont use the checkbox but always select the organics. Make new Element panel popup
+        JCheckBox useElementFilter = new JCheckBox() {
             @Override
             public void setVisible(boolean flag) {
                 super.setVisible(flag);
@@ -320,6 +364,11 @@ public class FormulaSearchStrategy extends ConfigPanel {
         };
 
         parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates", () -> Boolean.toString(useElementFilter.isSelected()));
+        addStrategyChangeListener(strategy -> {
+            if (strategy==Strategy.BOTTOM_UP) {
+                parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToBottomUp", () -> Boolean.toString(useElementFilter.isSelected())); //only set for correct strategy, since bottom up is part of multiple strategies
+            }
+        });
 
         JLabel label = new JLabel("Enable element filter");
 
@@ -350,33 +399,51 @@ public class FormulaSearchStrategy extends ConfigPanel {
         return objects.stream().map(Object::toString).collect(Collectors.joining(","));
     }
 
-    protected void detectElements(Set<Element> autoDetectable, JTextField formulaConstraintsTextBox) {
+    /**
+     * only used in single mode, not in batch mode
+     * @param autoDetectable
+     * @param formulaConstraintsTextBox
+     */
+    protected void detectElements(InstanceBean ec, Set<Element> autoDetectable, JTextField formulaConstraintsTextBox) {
         //todo nightsky: do we want todo that in the frontend?
         String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
-        FormulaConstraints currentConstraints = FormulaConstraints.fromString(formulaConstraintsTextBox.getText());
-        InstanceBean ec = ecs.get(0);
         MsData msData = ec.getMsData();
         if (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null) {
             Jobs.runInBackgroundAndLoad(owner, "Detecting Elements...", () -> {
                 final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
-                ProcessedInput pi = pp.preprocess(new MutableMs2Experiment(ec.asMs2Experiment(), false));
+                Ms2Experiment experiment = new MutableMs2Experiment(ec.asMs2Experiment(), false);
+                FormulaSettings formulaSettings = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
+                formulaSettings = formulaSettings.autoDetect(autoDetectable.toArray(Element[]::new)).enforce(getEnforedElements(formulaSettings, autoDetectable));
+                experiment.setAnnotation(FormulaSettings.class, formulaSettings);
+                ProcessedInput pi = pp.preprocess(experiment);
 
                 pi.getAnnotation(FormulaConstraints.class).
                         ifPresentOrElse(c -> {
-                                    for (Element element : c.getChemicalAlphabet()) {
-                                        if (autoDetectable.contains(element)) {
-                                            currentConstraints.setBound(element, c.getLowerbound(element), c.getUpperbound(element));
-                                        }
-                                    }
-                                    formulaConstraintsTextBox.setText(currentConstraints.toString());
+                                    formulaConstraintsTextBox.setText(c.toString(","));
                                 },
                                 () -> new ExceptionDialog(owner, notWorkingMessage)
                         );
             }).getResult();
-        } else {
-            new ExceptionDialog(owner, notWorkingMessage);
         }
     }
+
+    protected FormulaConstraints getEnforedElements(FormulaSettings defaultFormulaSettings, Set<Element> autoDetectable) {
+        return isBottomUpOrDatabaseStrategy() ? getOrganicElementsWithoutAutodetectables(autoDetectable) : defaultFormulaSettings.getEnforcedAlphabet();
+    }
+
+    protected void addStrategyChangeListener(Consumer<Strategy> consumer) {
+        strategyBox.addItemListener(e -> {
+            if (e.getStateChange() != ItemEvent.SELECTED) {
+                return;
+            }
+            consumer.accept((Strategy)e.getItem());
+        });
+    }
+
+    protected boolean isBottomUpOrDatabaseStrategy() {
+        return (strategy == Strategy.BOTTOM_UP || strategy == Strategy.DATABASE);
+    }
+
 
     public List<SearchableDatabase> getFormulaSearchDBs() {
         return searchDBList.checkBoxList.getCheckedItems();

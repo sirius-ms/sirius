@@ -194,8 +194,9 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
 
     @Override
     public Job deleteJob(@NotNull SiriusProjectSpaceImpl psm, String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<Job.OptField> optFields) {
+        BackgroundRuns.BackgroundRunJob j = findJob(psm, jobId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NO_CONTENT, "Job with ID '" + jobId + " not found! Hint: It is either already finished and has been auto removed (if enabled) or the ID never existed. Doing nothing!"));
 
-        BackgroundRuns.BackgroundRunJob j = getJob(psm, jobId);
         if (j.isFinished()) {
             backgroundRuns(psm).removeFinishedRun(j.getRunId());
         } else {
@@ -237,17 +238,14 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
         return jobs;
     }
 
+    public Optional<BackgroundRuns.BackgroundRunJob> findJob(@NotNull SiriusProjectSpaceImpl psm, String jobId) {
+        int intId = Integer.parseInt(jobId);
+        return Optional.ofNullable(backgroundRuns(psm).getRunById(intId));
+    }
     public BackgroundRuns.BackgroundRunJob getJob(@NotNull SiriusProjectSpaceImpl psm, String jobId) {
         try {
-            int intId = Integer.parseInt(jobId);
-            BackgroundRuns.BackgroundRunJob j = backgroundRuns(psm).getRunById(intId);
-            if (j == null)
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job with ID '" + jobId + " does not Exist! Hint: It is either already finished and has been auto removed (if enabled) or the ID never existed.");
-
-//            if (!psm.getProjectSpaceManager().equals(j.getProject()))
-//                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Job with ID '" + jobId + " is not part of the requested project but does exist! Hint: Request the job with the correct projectId.");
-
-            return j;
+            return findJob(psm, jobId).orElseThrow(
+                    () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job with ID '" + jobId + " does not Exist! Hint: It is either already finished and has been auto removed (if enabled) or the ID never existed."));
         } catch (NumberFormatException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Illegal JobId '" + jobId + "! Hint: JobIds are usually integer numbers.", e);
         }

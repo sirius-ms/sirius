@@ -43,6 +43,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StructureCandidateFormula.JSON_PROPERTY_TANIMOTO_SIMILARITY,
   StructureCandidateFormula.JSON_PROPERTY_CONFIDENCE_EXACT_MATCH,
   StructureCandidateFormula.JSON_PROPERTY_CONFIDENCE_APPROX_MATCH,
+  StructureCandidateFormula.JSON_PROPERTY_MCES_DIST_TO_TOP_HIT,
   StructureCandidateFormula.JSON_PROPERTY_FINGERPRINT,
   StructureCandidateFormula.JSON_PROPERTY_MOLECULAR_FORMULA,
   StructureCandidateFormula.JSON_PROPERTY_ADDUCT,
@@ -79,6 +80,9 @@ public class StructureCandidateFormula {
 
   public static final String JSON_PROPERTY_CONFIDENCE_APPROX_MATCH = "confidenceApproxMatch";
   private Double confidenceApproxMatch;
+
+  public static final String JSON_PROPERTY_MCES_DIST_TO_TOP_HIT = "mcesDistToTopHit";
+  private Double mcesDistToTopHit;
 
   public static final String JSON_PROPERTY_FINGERPRINT = "fingerprint";
   private BinaryFingerprint fingerprint;
@@ -274,7 +278,7 @@ public class StructureCandidateFormula {
   }
 
    /**
-   * Get csiScore
+   * CSI:FingerID score of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID  This is the score used for ranking structure candidates
    * @return csiScore
   **/
   @jakarta.annotation.Nullable
@@ -300,7 +304,7 @@ public class StructureCandidateFormula {
   }
 
    /**
-   * Get tanimotoSimilarity
+   * Tanimoto similarly of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID
    * @return tanimotoSimilarity
   **/
   @jakarta.annotation.Nullable
@@ -326,7 +330,7 @@ public class StructureCandidateFormula {
   }
 
    /**
-   * Get confidenceExactMatch
+   * Confidence Score that represents the confidence whether the top hit is correct.
    * @return confidenceExactMatch
   **/
   @jakarta.annotation.Nullable
@@ -352,7 +356,7 @@ public class StructureCandidateFormula {
   }
 
    /**
-   * Get confidenceApproxMatch
+   * Confidence Score that represents the confidence whether the top hit or a very similar hit (estimated by MCES distance) is correct.
    * @return confidenceApproxMatch
   **/
   @jakarta.annotation.Nullable
@@ -368,6 +372,32 @@ public class StructureCandidateFormula {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setConfidenceApproxMatch(Double confidenceApproxMatch) {
     this.confidenceApproxMatch = confidenceApproxMatch;
+  }
+
+
+  public StructureCandidateFormula mcesDistToTopHit(Double mcesDistToTopHit) {
+    
+    this.mcesDistToTopHit = mcesDistToTopHit;
+    return this;
+  }
+
+   /**
+   * Maximum Common Edge Subgraph (MCES) distance to the top scoring hit (CSI:FingerID) in a candidate list.
+   * @return mcesDistToTopHit
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_MCES_DIST_TO_TOP_HIT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getMcesDistToTopHit() {
+    return mcesDistToTopHit;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_MCES_DIST_TO_TOP_HIT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setMcesDistToTopHit(Double mcesDistToTopHit) {
+    this.mcesDistToTopHit = mcesDistToTopHit;
   }
 
 
@@ -404,7 +434,7 @@ public class StructureCandidateFormula {
   }
 
    /**
-   * molecular formula of this candidate
+   * Molecular formula of this candidate
    * @return molecularFormula
   **/
   @jakarta.annotation.Nullable
@@ -493,6 +523,7 @@ public class StructureCandidateFormula {
         Objects.equals(this.tanimotoSimilarity, structureCandidateFormula.tanimotoSimilarity) &&
         Objects.equals(this.confidenceExactMatch, structureCandidateFormula.confidenceExactMatch) &&
         Objects.equals(this.confidenceApproxMatch, structureCandidateFormula.confidenceApproxMatch) &&
+        Objects.equals(this.mcesDistToTopHit, structureCandidateFormula.mcesDistToTopHit) &&
         Objects.equals(this.fingerprint, structureCandidateFormula.fingerprint) &&
         Objects.equals(this.molecularFormula, structureCandidateFormula.molecularFormula) &&
         Objects.equals(this.adduct, structureCandidateFormula.adduct) &&
@@ -501,7 +532,7 @@ public class StructureCandidateFormula {
 
   @Override
   public int hashCode() {
-    return Objects.hash(inchiKey, smiles, structureName, xlogP, dbLinks, spectralLibraryMatches, csiScore, tanimotoSimilarity, confidenceExactMatch, confidenceApproxMatch, fingerprint, molecularFormula, adduct, formulaId);
+    return Objects.hash(inchiKey, smiles, structureName, xlogP, dbLinks, spectralLibraryMatches, csiScore, tanimotoSimilarity, confidenceExactMatch, confidenceApproxMatch, mcesDistToTopHit, fingerprint, molecularFormula, adduct, formulaId);
   }
 
   @Override
@@ -518,6 +549,7 @@ public class StructureCandidateFormula {
     sb.append("    tanimotoSimilarity: ").append(toIndentedString(tanimotoSimilarity)).append("\n");
     sb.append("    confidenceExactMatch: ").append(toIndentedString(confidenceExactMatch)).append("\n");
     sb.append("    confidenceApproxMatch: ").append(toIndentedString(confidenceApproxMatch)).append("\n");
+    sb.append("    mcesDistToTopHit: ").append(toIndentedString(mcesDistToTopHit)).append("\n");
     sb.append("    fingerprint: ").append(toIndentedString(fingerprint)).append("\n");
     sb.append("    molecularFormula: ").append(toIndentedString(molecularFormula)).append("\n");
     sb.append("    adduct: ").append(toIndentedString(adduct)).append("\n");

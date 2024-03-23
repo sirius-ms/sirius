@@ -18,6 +18,7 @@
 package de.unijena.bioinf.ms.frontend.subtools.sirius;
 
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.completion.DataSourceCandidates;
@@ -109,6 +110,15 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     @Option(names = {"-E", "--elements-enforced"}, descriptionKey = "FormulaSettings.enforced", description = {"Enforce elements for molecular formula determination. ", "Example: CHNOPSCl to allow the elements C, H, N, O, P, S and Cl. Add numbers in brackets to restrict the minimal and maximal allowed occurrence of these elements: CHNOP[5]S[8]Cl[1-2]. When one number is given then it is interpreted as upper bound."})
     public void setEnforcedElements(DefaultParameter elements) throws Exception {
         defaultConfigOptions.changeOption("FormulaSettings.enforced", elements);
+    }
+
+    @Option(names = {"--elements-extended-organic"}, description = {"Use extended set of elements for molecular formula generation. DO NOT USE IN COMBINATION WITH DE NOVO FORMULA GENERATION!", " Enforced elements are: "+FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_ENFORCED_CHNOPFI_STRING, " Detectable elements are: "+FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrCl_STRING})
+    public void setEnforcedOrganicElements(boolean enabled) throws Exception {
+        if (enabled) {
+            defaultConfigOptions.changeOption("FormulaSettings.enforced", FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_ENFORCED_CHNOPFI_STRING);
+            defaultConfigOptions.changeOption("FormulaSettings.detectable", FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrCl_STRING);
+            defaultConfigOptions.changeOption("FormulaSettings.fallback", FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrCl_STRING);
+        }
     }
 
     @Option(names = {"--database", "-d", "--db"}, descriptionKey = "FormulaSearchDB" , paramLabel = DataSourceCandidates.PATAM_LABEL, completionCandidates = DataSourceCandidates.class,
