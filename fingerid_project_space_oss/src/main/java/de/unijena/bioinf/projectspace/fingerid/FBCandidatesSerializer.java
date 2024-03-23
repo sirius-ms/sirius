@@ -102,9 +102,9 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
                 candidate.setTanimoto(null);
 
             if (row.length > 11 && row[11] != null && !row[11].isBlank() && !row[11].equals("N/A")) {
-                candidate.setStructDistToTopHit(Double.valueOf(row[11]));
+                candidate.setMcesToTopHit(Double.valueOf(row[11]));
             } else
-                candidate.setStructDistToTopHit(null);
+                candidate.setMcesToTopHit(null);
 
             // we sanity check if reconstructed NON custom db bits match the stored bit set.
             if (row.length > 12 && !row[12].isBlank()) {
@@ -113,12 +113,6 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
                 if (linkbasedNonCustomBits != bits)
                     LoggerFactory.getLogger(getClass()).warn("Reconstructed db flags differ from imported.'" + linkbasedNonCustomBits + "' vs '" + bits + "'.");
             }
-
-            if (row.length > 13 && row[13] != null && !row[13].isBlank())
-                candidate.setTaxonomicScore(Double.parseDouble(row[13]));
-
-            if (row.length > 14 && row[14] != null && !row[14].isBlank())
-                candidate.setTaxonomicSpecies(row[14]);
 
             results.add(new Scored<>(candidate, score));
         });
@@ -136,7 +130,7 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
         final FBCandidates fingerblastResult = optFingeridResult.orElseThrow(() -> new IllegalArgumentException("Could not find FingerIdResult to write for ID: " + id));
 
         final String[] header = new String[]{
-                "inchikey2D", "inchi", "molecularFormula", "rank", "score", "name", "smiles", "xlogp", "PubMedIds", "links", "tanimotoSimilarity","structDistanceToTopHit", "dbflags", "biological_score", "species"
+                "inchikey2D", "inchi", "molecularFormula", "rank", "score", "name", "smiles", "xlogp", "PubMedIds", "links", "tanimotoSimilarity","structDistanceToTopHit", "dbflags"
         };
         final String[] row = new String[header.length];
         final AtomicInteger ranking = new AtomicInteger(0);
@@ -153,10 +147,8 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
             row[8] = c.getPubmedIDs() != null ? c.getPubmedIDs().toString() : "";
             row[9] = c.getLinkedDatabases().asMap().entrySet().stream().map((k) -> k.getValue().isEmpty() ? k.getKey() : k.getKey() + ":(" + String.join(", ", k.getValue()) + ")").collect(Collectors.joining("; "));
             row[10] = c.getTanimoto() == null ? "N/A" : String.valueOf(c.getTanimoto());
-            row[11] = c.getStructDistToTopHit() == null ? "N/A": String.valueOf(c.getStructDistToTopHit());
+            row[11] = c.getMcesToTopHit() == null ? "N/A": String.valueOf(c.getMcesToTopHit());
             row[12] = String.valueOf(CustomDataSources.removeCustomSourceFromFlag(c.getBitset())); //We remove custom db bits since they are only valid ad runtime and user dependent.
-            row[13] = c.getTaxonomicScore() != null ? String.valueOf(c.getTaxonomicScore()) : "";
-            row[14] = c.getTaxonomicSpecies() != null ? c.getTaxonomicSpecies() : "";
             return row;
         })::iterator);
 

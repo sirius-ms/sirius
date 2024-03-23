@@ -32,6 +32,8 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,42 +46,66 @@ import java.util.stream.Stream;
 
 @JsonSerialize(using = CompoundCandidate.Serializer.class)
 public class CompoundCandidate {
-    //The 2d inchi is the UID of an CompoundCandidate
+    //The 2d inchi key is the UUID of an CompoundCandidate
+    @Getter
+    @NotNull
     protected final InChI inchi;
+    @Getter
+    @Setter
     protected String name;
+    @Getter
+    @Setter
     protected String smiles;
+    @Getter
+    @Setter
     protected int pLayer;
+    @Getter
+    @Setter
     protected int qLayer;
+    @Getter
+    @Setter
     protected double xlogp = Double.NaN;
-
     //database info
+    @Getter
+    @Setter
     protected long bitset;
-    protected ArrayList<DBLink> links;
 
+    protected ArrayList<DBLink> links;
     //citation info
+    @Getter
+    @Setter
     protected PubmedLinks pubmedIDs;
 
-    protected Double taxonomicScore;
 
-    protected Double structDistToTopHit;
-    protected String taxonomicSpecies;
+    //todo the following fields are results and should be in an extended class. In the meantime they should not be part of the constructor
+    /**
+     * Maximum Common Edge Subgraph (MCES) distance to the top scoring hit (CSI:FingerID) in a candidate list.
+     * @see <a href="https://doi.org/10.1101/2023.03.27.534311">Small molecule machine learning: All models are wrong, some may not even be useful</a>
+     */
+    @Nullable
+    @Getter
+    @Setter
+    protected Double mcesToTopHit = null;
 
+    /**
+     * Tanimoto distance to a predicted molecular fingerprint (CSI:FingerID).
+     */
     @Nullable //this is the tanimoto to a matched fingerprint.
+    @Getter
+    @Setter
     protected Double tanimoto = null;
 
-    public CompoundCandidate(InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, @Nullable Double tanimoto, @Nullable Double structDistToTopHit, long bitset, DBLink[] links, PubmedLinks pubmedIDs) {
-        this(inchi, name, smiles, pLayer, qLayer, xlogp, tanimoto,structDistToTopHit, bitset, new ArrayList<>(List.of(links)), pubmedIDs);
+    public CompoundCandidate(@NotNull InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, long bitset, DBLink[] links, PubmedLinks pubmedIDs) {
+        this(inchi, name, smiles, pLayer, qLayer, xlogp, bitset, new ArrayList<>(List.of(links)), pubmedIDs);
     }
 
-    public CompoundCandidate(InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, @Nullable Double tanimoto, @Nullable Double structDistToTopHit, long bitset, ArrayList<DBLink> links, PubmedLinks pubmedIDs) {
+    public CompoundCandidate(@NotNull InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, long bitset, ArrayList<DBLink> links, PubmedLinks pubmedIDs) {
         this.inchi = inchi;
         this.name = name;
         this.smiles = smiles;
         this.pLayer = pLayer;
         this.qLayer = qLayer;
         this.xlogp = xlogp;
-        this.tanimoto = tanimoto;
-        this.structDistToTopHit=structDistToTopHit;
         this.bitset = bitset;
         this.links = links;
         this.pubmedIDs = pubmedIDs;
@@ -96,10 +122,8 @@ public class CompoundCandidate {
         this.qLayer = c.qLayer;
         this.xlogp = c.xlogp;
         this.tanimoto = c.tanimoto;
-        this.structDistToTopHit=c.structDistToTopHit;
+        this.mcesToTopHit = c.mcesToTopHit;
         this.pubmedIDs = c.pubmedIDs;
-        this.taxonomicScore = c.taxonomicScore;
-        this.taxonomicSpecies = c.taxonomicSpecies;
     }
 
 
@@ -107,29 +131,10 @@ public class CompoundCandidate {
         this.inchi = inchi;
     }
 
-    public PubmedLinks getPubmedIDs() {
-        return pubmedIDs;
-    }
-
-    public void setPubmedIDs(PubmedLinks pubmedIDs) {
-        this.pubmedIDs = pubmedIDs;
-    }
-
-    public InChI getInchi() {
-        return inchi;
-    }
-
     public String getInchiKey2D() {
         return inchi.key2D();
     }
 
-    public long getBitset() {
-        return bitset;
-    }
-
-    public void setBitset(long bitset) {
-        this.bitset = bitset;
-    }
 
     public List<DBLink> getMutableLinks() {
         return links;
@@ -166,80 +171,6 @@ public class CompoundCandidate {
                 databases.put(aname, null);
 
         return databases;
-    }
-
-    public String getSmiles() {
-        return smiles;
-    }
-
-    public void setSmiles(String smiles) {
-        this.smiles = smiles;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public int getpLayer() {
-        return pLayer;
-    }
-
-    public void setpLayer(int pLayer) {
-        this.pLayer = pLayer;
-    }
-
-    public int getqLayer() {
-        return qLayer;
-    }
-
-    public void setqLayer(int qLayer) {
-        this.qLayer = qLayer;
-    }
-
-    public double getXlogp() {
-        return xlogp;
-    }
-
-    public void setXlogp(double xlogp) {
-        this.xlogp = xlogp;
-    }
-
-    public Double getTanimoto() {
-        return tanimoto;
-    }
-
-    public void setTanimoto(Double tanimoto) {
-        this.tanimoto = tanimoto;
-    }
-
-    @Nullable
-    public Double getTaxonomicScore() {
-        return taxonomicScore;
-    }
-
-    public Double getStructDistToTopHit() {
-        return structDistToTopHit;
-    }
-
-    public void setStructDistToTopHit(Double structDistToTopHit) {
-        this.structDistToTopHit = structDistToTopHit;
-    }
-
-    public void setTaxonomicScore(Double taxonomicScore) {
-        this.taxonomicScore = taxonomicScore;
-    }
-
-    @Nullable
-    public String getTaxonomicSpecies() {
-        return taxonomicSpecies;
-    }
-
-    public void setTaxonomicSpecies(String taxonomicSpecies) {
-        this.taxonomicSpecies = taxonomicSpecies;
     }
 
     @Deprecated
@@ -357,8 +288,8 @@ public class CompoundCandidate {
         generator.flush();
     }
 
-    public FormulaCandidate toFormulaCandidate(PrecursorIonType ionization){
-        return new FormulaCandidate(inchi.extractFormulaOrThrow(), ionization ,bitset);
+    public FormulaCandidate toFormulaCandidate(PrecursorIonType ionization) {
+        return new FormulaCandidate(inchi.extractFormulaOrThrow(), ionization, bitset);
     }
 }
 
