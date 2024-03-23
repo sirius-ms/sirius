@@ -346,7 +346,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         // create deletion matcher
         CompoundFilterModel tmpModel = new CompoundFilterModel();
         applyToModel(tmpModel);
-        CompoundFilterMatcher matcher = new CompoundFilterMatcher(tmpModel);
+        CompoundFilterMatcher matcher = new CompoundFilterMatcher(gui.getProperties(), tmpModel);
 
         // reset global filter and close
         resetFilter();

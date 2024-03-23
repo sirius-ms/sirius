@@ -113,7 +113,7 @@ public class ElementsPanel extends TextHeaderBoxPanel implements ActionListener 
         scrollPane.getVerticalScrollBar().setUnitIncrement(16);
         mainP.add(scrollPane);
 
-        elementButton = new JButton("Select elements");
+        elementButton = new JButton("Select additional elements");
         elementButton.addActionListener(this);
 
         lowerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT,0,0));
