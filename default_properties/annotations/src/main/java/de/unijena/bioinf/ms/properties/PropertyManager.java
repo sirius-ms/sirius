@@ -305,7 +305,7 @@ public class PropertyManager {
     }
 
     public static <E extends Enum<E>> E getEnum(@NotNull String key, @Nullable String backupKey, @NotNull E defaultValue) {
-        return getEnum(key, backupKey, defaultValue, (Class<E>) defaultValue.getClass());
+        return getEnum(key, backupKey, defaultValue, defaultValue.getDeclaringClass());
     }
 
     public static <E extends Enum<E>> E getEnum(@NotNull String key, @Nullable String backupKey, @Nullable E defaultValue, @NotNull Class<E> cls) {

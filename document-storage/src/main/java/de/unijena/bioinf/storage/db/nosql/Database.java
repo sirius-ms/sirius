@@ -27,6 +27,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -105,15 +106,15 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     <P, C> Iterable<P> joinChildren(Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException;
 
-    <T, P, C> Iterable<T> joinAllChildren(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException;
-
-    <T, P, C> Iterable<T> joinChildren(Class<T> targetClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException;
+    // TODO do we really need the conversion from type P to T?
+//    <T, P, C> Iterable<T> joinAllChildren(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException;
+//
+//    <T, P, C> Iterable<T> joinChildren(Class<T> targetClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException;
 
     Iterable<DocType> joinAllChildren(String childCollection, Iterable<DocType> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException;
 
     Iterable<DocType> joinChildren(String childCollectionName, Filter childFilter, Iterable<DocType> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException;
 
-    //todo @MEL implement stream based join/fetch api for documents as well.
     default <P, C> P fetchChild(final P parent, String matchingField, String targetField, Class<C> childClass, String... withOptionalChildFields) throws IOException {
         return fetchChild(parent, matchingField, matchingField, targetField, childClass, withOptionalChildFields);
     }
@@ -124,7 +125,7 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
             Field target = getAllField(parent.getClass(), targetField);
 
             List<C> targetChildren =
-                    findStr(Filter.build().eq(foreignField, matchingValue), childClass, withOptionalChildFields)
+                    findStr(Filter.where(foreignField).eq(matchingValue), childClass, withOptionalChildFields)
                             .toList();
 
             if (targetChildren.isEmpty())
@@ -192,7 +193,7 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
             Object matchingValue = getAllFieldValue(parent, localField);
 
             List<C> targetChildren =
-                    findStr(Filter.build().eq(foreignField, matchingValue), childClass, withOptionalChildFields)
+                    findStr(Filter.where(foreignField).eq(matchingValue), childClass, withOptionalChildFields)
                             .toList();
 
             fetchChildren(parent, targetField, targetChildren);
@@ -202,17 +203,17 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         return parent;
     }
 
-    <T> int count(Filter filter, Class<T> clazz) throws IOException;
+    <T> long count(Filter filter, Class<T> clazz) throws IOException;
 
-    <T> int count(Filter filter, Class<T> clazz, int offset, int pageSize) throws IOException;
+    <T> long count(Filter filter, Class<T> clazz, int offset, int pageSize) throws IOException;
 
-    <T> int countAll(Class<T> clazz) throws IOException;
+    <T> long countAll(Class<T> clazz) throws IOException;
 
-    int count(String collectionName, Filter filter) throws IOException;
+    long count(String collectionName, Filter filter) throws IOException;
 
-    int count(String collectionName, Filter filter, int offset, int pageSize) throws IOException;
+    long count(String collectionName, Filter filter, int offset, int pageSize) throws IOException;
 
-    int countAll(String collectionName) throws IOException;
+    long countAll(String collectionName) throws IOException;
 
     <T> int remove(T object) throws IOException;
 
@@ -227,7 +228,6 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
     int removeAll(String collectionName, Filter filter) throws IOException;
 
     //endregion
-    <ObjectFilterType> ObjectFilterType getObjectFilter(Filter filter);
 
     <FilterType> FilterType getFilter(Filter filter);
 
@@ -321,13 +321,13 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         return StreamSupport.stream(joinChildren(childClass, childFilter, parents, localField, foreignField, targetField, withOptionalChildFields).spliterator(), false);
     }
 
-    default <T, P, C> Stream<T> joinAllChildrenStr(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
-        return StreamSupport.stream(joinAllChildren(targetClass, childClass, parents, localField, foreignField, targetField, withOptionalChildFields).spliterator(), false);
-    }
-
-    default <T, P, C> Stream<T> joinChildrenStr(Class<T> targetClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
-        return StreamSupport.stream(joinChildren(targetClass, childClass, childFilter, parents, localField, foreignField, targetField, withOptionalChildFields).spliterator(), false);
-    }
+//    default <T, P, C> Stream<T> joinAllChildrenStr(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
+//        return StreamSupport.stream(joinAllChildren(targetClass, childClass, parents, localField, foreignField, targetField, withOptionalChildFields).spliterator(), false);
+//    }
+//
+//    default <T, P, C> Stream<T> joinChildrenStr(Class<T> targetClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
+//        return StreamSupport.stream(joinChildren(targetClass, childClass, childFilter, parents, localField, foreignField, targetField, withOptionalChildFields).spliterator(), false);
+//    }
 
     default Stream<DocType> joinAllChildrenStr(String childCollectionName, Iterable<DocType> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
         return StreamSupport.stream(joinAllChildren(childCollectionName, parents, localField, foreignField, targetField, withOptionalChildFields).spliterator(), false);
@@ -337,4 +337,21 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         return StreamSupport.stream(joinChildren(childCollectionName, childFilter, parents, localField, foreignField, targetField, withOptionalChildFields).spliterator(), false);
     }
     //endregion
+
+    // region event support
+
+    <T> void onInsert(Class<T> clazz, Consumer<T> listener, String... withOptionalFields) throws IOException;
+
+    void onInsert(String collectionName, Consumer<DocType> listener, String... withOptionalFields) throws IOException;
+
+    <T> void onUpdate(Class<T> clazz, Consumer<T> listener, String... withOptionalFields) throws IOException;
+
+    void onUpdate(String collectionName, Consumer<DocType> listener, String... withOptionalFields) throws IOException;
+
+    <T> void onRemove(Class<T> clazz, Consumer<T> listener, String... withOptionalFields) throws IOException;
+
+    void onRemove(String collectionName, Consumer<DocType> listener, String... withOptionalFields) throws IOException;
+
+    // endregion
+
 }

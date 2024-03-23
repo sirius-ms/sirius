@@ -1,35 +1,20 @@
 package de.unijena.bioinf.lcms.datatypes;
 
 
-import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
 import org.h2.mvstore.DataUtils;
 import org.h2.mvstore.WriteBuffer;
-import org.h2.mvstore.type.DataType;
+import org.h2.mvstore.type.BasicDataType;
 
 import java.nio.ByteBuffer;
-import java.nio.DoubleBuffer;
 
 /**
  * Java serialization is rather slow and cannot deal with immutable types. Therefore, it makes
  * sense to define custom data types, in particular for the classes which are used a lot.
  */
-public abstract class CustomDataType implements DataType {
+public abstract class CustomDataType<T> extends BasicDataType<T> {
     @Override
-    public int compare(Object a, Object b) {
+    public int compare(T a, T b) {
         throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void write(WriteBuffer buff, Object[] obj, int len, boolean key) {
-        for (int i=0; i < len; ++i) {
-            write(buff, obj[i]);
-        }
-    }
-    @Override
-    public void read(ByteBuffer buff, Object[] obj, int len, boolean key) {
-        for (int i=0; i < len; ++i) {
-            obj[i] = read(buff);
-        }
     }
 
     protected void writeDouble(WriteBuffer out, double[] array) {
