@@ -2,7 +2,6 @@ package de.unijena.bioinf.lcms.trace;
 
 import de.unijena.bioinf.lcms.ScanPointMapping;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
-import org.h2.mvstore.rtree.SpatialKey;
 
 import java.io.Serializable;
 import java.util.Locale;
