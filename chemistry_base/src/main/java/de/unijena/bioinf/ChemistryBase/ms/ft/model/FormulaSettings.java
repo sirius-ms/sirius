@@ -35,6 +35,15 @@ import java.util.Set;
  * Note: If the compound is already assigned to a specific molecular formula, this annotation is ignored.
  */
 public class FormulaSettings implements Ms2ExperimentAnnotation {
+
+    public final static String EXTENDED_ORGANIC_ELEMENT_FILTER_ENFORCED_CHNOPFI_STRING = "CHNOPFI";
+    public final static String EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrCl_STRING = "SBBrCl"; //todo NewWorkflow: add Se?
+
+    /**
+     * This Formula contraint allowing "only organic" formulas can e.g. be used as a default if the element filter for database search is activated in the GUI compute dialog
+     */
+    public final static FormulaConstraints ORGANIC_ELEMENT_FILTER_CHNOPSBBrClIF = FormulaConstraints.fromString(EXTENDED_ORGANIC_ELEMENT_FILTER_ENFORCED_CHNOPFI_STRING+EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrCl_STRING);
+
     @NotNull protected final FormulaConstraints enforced;
     @NotNull protected final FormulaConstraints fallback;
     @NotNull protected final ChemicalAlphabet detectable;

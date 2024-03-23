@@ -512,12 +512,17 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
 //    }
 
     public String toString() {
+        return toString("");
+    }
+
+    public String toString(String separator) {
         StringBuilder buf = new StringBuilder();
         for (Element e : getChemicalAlphabet()) {
             final int i = chemicalAlphabet.indexOf(e);
             final int up = upperbounds[i];
             final int low = lowerbounds[i];
             if (up>0) {
+                if (buf.length()>0) buf.append(separator);
                 buf.append(e.getSymbol());
                 if (low > 0 || up < Short.MAX_VALUE) {
                     buf.append('[');

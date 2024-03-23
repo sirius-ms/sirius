@@ -358,8 +358,8 @@ public class WebWithCustomDatabase {
 
 
             if (x != null) {
-                x.setpLayer(x.getpLayer() | c.getpLayer());
-                x.setqLayer(x.getqLayer() | c.getqLayer());
+                x.setPLayer(x.getPLayer() | c.getPLayer());
+                x.setQLayer(x.getQLayer() | c.getQLayer());
                 x.mergeDBLinks(c.links);
                 x.mergeBits(c.bitset);
                 x.mergeCompoundName(c.getName());

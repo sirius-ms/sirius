@@ -166,7 +166,7 @@ public abstract class CustomDatabase implements SearchableDatabase {
 
         try {
             if (structureFiles != null && !structureFiles.isEmpty())
-                importer.importSpectraFromResources(structureFiles);
+                importer.importStructuresFromResources(structureFiles);
 
             if (spectrumFiles != null && !spectrumFiles.isEmpty())
                 importer.importSpectraFromResources(spectrumFiles);
