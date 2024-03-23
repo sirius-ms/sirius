@@ -46,7 +46,7 @@ public class ExperimentListView extends JScrollPane {
         compoundListView = new JListDropImage<>(new DefaultEventListModel<>(sourceList.compoundList));
         compoundListView.setSelectionModel(sourceList.compountListSelectionModel);
         compoundListView.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        compoundListView.setCellRenderer(new CompoundCellRenderer());
+        compoundListView.setCellRenderer(new CompoundCellRenderer(gui));
         expPopMenu = new CompoundContextMenu(gui);
 
         compoundListView.addMouseListener(new MouseListener() {
