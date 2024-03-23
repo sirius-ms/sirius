@@ -259,7 +259,7 @@ public class JSONReader extends CompoundReader {
             }
 
             final CompoundCandidate c = new CompoundCandidate(
-                    new InChI(inchikey, inchi), name, smiles, player, qlayer, xlogp, null,null, bitset, links.toArray(DBLink[]::new),
+                    new InChI(inchikey, inchi), name, smiles, player, qlayer, xlogp, bitset, links.toArray(DBLink[]::new),
                     pubmedIds == null ? null : new PubmedLinks(pubmedIds.toArray())
             );
 
