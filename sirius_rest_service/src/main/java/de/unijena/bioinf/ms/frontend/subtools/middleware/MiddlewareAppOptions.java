@@ -89,7 +89,7 @@ public class MiddlewareAppOptions<I extends Instance> implements StandaloneTool<
                 Path p = location.orElse(FileUtils.createTmpProjectSpaceLocation(null)); //todo should be part of project provider to be implementation independent
                 try {
                     //open default project if given
-                    ProjectInfo startPs = projectsProvider.createProjectSpace(
+                    ProjectInfo startPs = projectsProvider.createProject(
                                     p.getFileName().toString(),
                                     p.toAbsolutePath().toString(),
                                     EnumSet.noneOf(ProjectInfo.OptField.class), false);

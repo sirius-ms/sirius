@@ -46,14 +46,10 @@ public class Instance {
         this.spaceManager = spaceManager;
     }
 
-    public final Ms2Experiment getExperiment() {
-        return loadCompoundContainer(Ms2Experiment.class).getAnnotationOrThrow(Ms2Experiment.class);
-    }
-
     /**
      * @return The ID (primary key) of this aligned feature (usaully alignedFeatureId).
      */
-    public String getId(){
+    public String getId() {
         return getCompoundContainerId().getDirectoryName();
     }
 
@@ -61,28 +57,28 @@ public class Instance {
      * @return The ID (primary key) of this aligned feature (usaully alignedFeatureId) as long or some equivalent id.
      */
     @Deprecated
-    public Optional<Long> getLongId(){
+    public Optional<Long> getLongId() {
         return Optional.of(getCompoundContainerId().getCompoundIndex()).map(Integer::longValue);
     }
 
     /**
      * @return Optional Compound this Instance belongs to (adduct group)
      */
-    public Optional<String> getCompoundId(){
+    public Optional<String> getCompoundId() {
         return getCompoundContainerId().getGroupId();
     }
 
     /**
      * @return FeatureId provided from some external preprocessing tool
      */
-    public Optional<String> getProvidedFeatureId(){
+    public Optional<String> getProvidedFeatureId() {
         return getCompoundContainerId().getFeatureId();
     }
 
     /**
      * @return Display name of this feature
      */
-    public String getName(){
+    public String getName() {
         return getCompoundContainerId().getCompoundName();
     }
 
@@ -97,7 +93,7 @@ public class Instance {
     }
 
     private SiriusProjectSpace projectSpace() {
-        return ((SiriusProjectSpaceManager)getProjectSpaceManager()).getProjectSpaceImpl();
+        return ((SiriusProjectSpaceManager) getProjectSpaceManager()).getProjectSpaceImpl();
     }
 
     public ProjectSpaceManager getProjectSpaceManager() {
@@ -105,7 +101,10 @@ public class Instance {
     }
 
 
-    //load from projectSpace
+    //region load from projectSpace
+    public final Ms2Experiment getExperiment() {
+        return loadCompoundContainer(Ms2Experiment.class).getAnnotationOrThrow(Ms2Experiment.class);
+    }
     public final synchronized Optional<ProjectSpaceConfig> loadConfig() {
         return loadCompoundContainer(ProjectSpaceConfig.class).getAnnotation(ProjectSpaceConfig.class);
     }
@@ -211,8 +210,14 @@ public class Instance {
             throw new RuntimeException(e);
         }
     }
+    //endregion
 
-    //write to projectSpace
+    //region write to projectSpace
+    public synchronized Optional<FormulaResult> newFormulaResultWithUniqueId(FTree tree) {
+        Optional<FormulaResult> frOpt = projectSpace().newFormulaResultWithUniqueId(compoundCache, tree);
+        frOpt.ifPresent(fr -> formulaResultCache.put(fr.getId(), fr));
+        return frOpt;
+    }
     @SafeVarargs
     public final synchronized void updateCompound(CompoundContainer container, Class<? extends DataAnnotation>... components) {
         try {
@@ -256,6 +261,20 @@ public class Instance {
         }
     }
 
+    @SafeVarargs
+    private <T extends DataAnnotation> void updateAnnotations(final Annotated<T> toRefresh, final Annotated<T> refresher, final Class<? extends DataAnnotation>... components) {
+        if (toRefresh != refresher) {
+            Set<Class<? extends DataAnnotation>> comps = Arrays.stream(components).collect(Collectors.toSet());
+            refresher.annotations().forEach((k, v) -> {
+                if (comps.contains(k))
+                    toRefresh.setAnnotation(k, v);
+            });
+        }
+    }
+    //endregion
+
+
+    //region delete from project space
     @SafeVarargs
     public final synchronized void deleteFromFormulaResults(Class<? extends DataAnnotation>... components) {
         if (components.length == 0)
@@ -311,8 +330,9 @@ public class Instance {
             }
         });
     }
+    //endregion
 
-    //remove from cache
+    //region clear cache
     public synchronized void clearCompoundCache() {
         compoundCache.clearAnnotations();
     }
@@ -350,38 +370,21 @@ public class Instance {
             for (Class<? extends DataAnnotation> comp : components)
                 formulaResultCache.get(id).removeAnnotation(comp);
     }
+    //endregion
 
-    public synchronized Optional<FormulaResult> newFormulaResultWithUniqueId(FTree tree) {
-        Optional<FormulaResult> frOpt = projectSpace().newFormulaResultWithUniqueId(compoundCache, tree);
-        frOpt.ifPresent(fr -> formulaResultCache.put(fr.getId(), fr));
-        return frOpt;
-    }
-
-
-    @SafeVarargs
-    private <T extends DataAnnotation> void updateAnnotations(final Annotated<T> toRefresh, final Annotated<T> refresher, final Class<? extends DataAnnotation>... components) {
-        if (toRefresh != refresher) {
-            Set<Class<? extends DataAnnotation>> comps = Arrays.stream(components).collect(Collectors.toSet());
-            refresher.annotations().forEach((k, v) -> {
-                if (comps.contains(k))
-                    toRefresh.setAnnotation(k, v);
-            });
-        }
-    }
-
-    public synchronized void enableComputing(){
+    public synchronized void enableComputing() {
         setComputing(true);
     }
 
-    public synchronized void disableComputing(){
+    public synchronized void disableComputing() {
         setComputing(false);
     }
 
-    public synchronized void setComputing(boolean computing){
+    public synchronized void setComputing(boolean computing) {
         projectSpace().setFlags(CompoundContainerId.Flag.COMPUTING, computing, getCompoundContainerId());
     }
 
-    public synchronized boolean isComputing(){
+    public synchronized boolean isComputing() {
         return projectSpace().flag(getCompoundContainerId(), CompoundContainerId.Flag.COMPUTING);
     }
 }
