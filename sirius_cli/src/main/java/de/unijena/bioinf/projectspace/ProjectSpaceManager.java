@@ -22,48 +22,59 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.IterableWithSize;
-import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.rest.NetUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Predicate;
 
 public interface ProjectSpaceManager extends IterableWithSize<Instance> {
-    @NotNull Instance newCompoundWithUniqueId(Ms2Experiment inputExperiment);
+    @NotNull Instance importInstanceWithUniqueId(Ms2Experiment inputExperiment);
 
-    Optional<Instance> findInstance(String id, Class<? extends DataAnnotation>... components);
+    //    @NotNull Instance importInstanceWithUniqueId(AlignedFeatures inputExperiment);
 
-    <T extends ProjectSpaceProperty> Optional<T> getProjectSpaceProperty(Class<T> key);
+    @NotNull Optional<Instance> findInstance(String id);
 
-    <T extends ProjectSpaceProperty> T setProjectSpaceProperty(T value);
+    void writeFingerIdData(@NotNull FingerIdData pos, @NotNull FingerIdData neg);
+    void deleteFingerIdData();
 
-    <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value);
+    @NotNull Optional<FingerIdData> getFingerIdData(int charge);
+    default boolean hasFingerIdData(int charge){
+        return getFingerIdData(charge).isPresent();
+    }
 
-    <T extends ProjectSpaceProperty> T deleteProjectSpaceProperty(Class<T> key);
+    void writeCanopusData(@NotNull CanopusCfData cfPos, @NotNull CanopusCfData cfNeg, @NotNull CanopusNpcData npcPos, @NotNull CanopusNpcData npcNeg);
+    void deleteCanopusData();
 
-    @NotNull Iterator<Instance> filteredIterator(@Nullable Predicate<CompoundContainerId> cidFilter, @Nullable Predicate<CompoundContainer> compoundFilter);
+    @NotNull Optional<CanopusCfData> getCanopusCfData(int charge);
+    default boolean hasCanopusCfData(int charge){
+        return getCanopusCfData(charge).isPresent();
+    }
+
+    @NotNull Optional<CanopusNpcData> getCanopusNpcData(int charge);
+    default boolean hasCanopusNpcData(int charge){
+        return getCanopusNpcData(charge).isPresent();
+    }
 
     @NotNull
     @Override
     Iterator<Instance> iterator();
 
-    Iterator<Instance> instanceIterator(Class<? extends DataAnnotation>... c);
+    int countFeatures();
 
-    int size();
+    int countCompounds();
 
-    boolean containsCompound(String dirName);
+    long sizeInBytes();
 
-    void writeSummaries(@Nullable Path summaryLocation, @Nullable Collection<CompoundContainerId> inclusionList, @NotNull Summarizer... summarizers) throws ExecutionException;
-
-    void writeSummaries(@Nullable Path summaryLocation, boolean compressed, @Nullable Collection<CompoundContainerId> inclusionList, @NotNull Summarizer... summarizers) throws ExecutionException;
+    @Override
+    default int size() {
+        return countFeatures();
+    }
 
     void close() throws IOException;
 

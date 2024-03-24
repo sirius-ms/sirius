@@ -29,9 +29,6 @@ import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.projectspace.canopus.CanopusCfDataProperty;
-import de.unijena.bioinf.projectspace.canopus.CanopusNpcDataProperty;
-import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
@@ -43,6 +40,7 @@ import java.util.function.Consumer;
 public class UpdateFingerprintsWorkflow extends BasicMasterJJob<Boolean> implements Workflow {
 
     private final PreprocessingJob<?> preprocessingJob;
+
     public UpdateFingerprintsWorkflow(PreprocessingJob<?> preprocessingJob) {
         super(JobType.SCHEDULER);
         this.preprocessingJob = preprocessingJob;
@@ -67,11 +65,9 @@ public class UpdateFingerprintsWorkflow extends BasicMasterJJob<Boolean> impleme
         }));
         //remove Fingerprint data
         updateProgress(0, max, progress.getAndIncrement(), "delete CSI:FinerID Data");
-        projectSpace.deleteProjectSpaceProperty(FingerIdDataProperty.class);
-        updateProgress(0, max, progress.getAndIncrement(), "delete CANOPUS ClassyFire Data");
-        projectSpace.deleteProjectSpaceProperty(CanopusCfDataProperty.class);
-        updateProgress(0, max, progress.getAndIncrement(), "delete CANOPUS NPC Data");
-        projectSpace.deleteProjectSpaceProperty(CanopusNpcDataProperty.class);
+        projectSpace.deleteFingerIdData();
+        updateProgress(0, max, progress.getAndIncrement(), "delete CANOPUS Data");
+        projectSpace.deleteCanopusData();
         updateProgress(0, max, progress.get(), "DONE!");
         return true;
     }

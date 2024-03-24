@@ -61,11 +61,8 @@ import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.*;
-import de.unijena.bioinf.projectspace.canopus.CanopusCfDataProperty;
-import de.unijena.bioinf.projectspace.canopus.CanopusNpcDataProperty;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateNumber;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidatesTopK;
-import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
@@ -170,7 +167,7 @@ public class SiriusProjectSpaceImpl implements Project {
             FeatureGroup fg = FeatureGroup.builder().groupName(c.getName()).groupId(cuuid.toString()).build();
             return FeatureImports.toExperimentsStr(c.getFeatures())
                     .peek(exp -> exp.annotate(fg))
-                    .map(projectSpaceManager::newCompoundWithUniqueId)
+                    .map(projectSpaceManager::importInstanceWithUniqueId)
                     .map(Instance::getCompoundContainerId).toList();
         }).map(cids -> asCompound(cids, optFields, optFieldsFeatures)).toList();
     }
@@ -234,7 +231,7 @@ public class SiriusProjectSpaceImpl implements Project {
     @Override
     public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         return FeatureImports.toExperimentsStr(features)
-                .map(projectSpaceManager::newCompoundWithUniqueId)
+                .map(projectSpaceManager::importInstanceWithUniqueId)
                 .map(Instance::getCompoundContainerId).map(cid -> asAlignedFeature(cid, optFields))
                 .toList();
     }
@@ -642,9 +639,9 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     public void writeFingerIdData(@NotNull Writer writer, int charge) {
-        projectSpaceManager.getProjectSpaceProperty(FingerIdDataProperty.class).ifPresent(data -> {
+        projectSpaceManager.getFingerIdData(charge).ifPresent(data -> {
             try {
-                FingerIdData.write(writer, data.getByCharge(charge));
+                FingerIdData.write(writer, data);
             } catch (IOException e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                         "Error when extracting FingerIdData from project '" + projectId + "'. Message: " + e.getMessage());
@@ -653,9 +650,9 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     public void writeCanopusClassyFireData(@NotNull Writer writer, int charge) {
-        projectSpaceManager.getProjectSpaceProperty(CanopusCfDataProperty.class).ifPresent(data -> {
+        projectSpaceManager.getCanopusCfData(charge).ifPresent(data -> {
             try {
-                CanopusCfData.write(writer, data.getByCharge(charge));
+                CanopusCfData.write(writer, data);
             } catch (IOException e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                         "Error when extracting CanopusClassyFireData from project '" + projectId + "'. Message: " + e.getMessage());
@@ -664,9 +661,9 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     public void writeCanopusNpcData(@NotNull Writer writer, int charge) {
-        projectSpaceManager.getProjectSpaceProperty(CanopusNpcDataProperty.class).ifPresent(data -> {
+        projectSpaceManager.getCanopusNpcData(charge).ifPresent(data -> {
             try {
-                CanopusNpcData.write(writer, data.getByCharge(charge));
+                CanopusNpcData.write(writer, data);
             } catch (IOException e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                         "Error when extracting CanopusNpcData from project '" + projectId + "'. Message: " + e.getMessage());

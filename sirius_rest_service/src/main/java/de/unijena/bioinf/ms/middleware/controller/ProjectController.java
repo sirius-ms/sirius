@@ -89,7 +89,7 @@ public class ProjectController {
                                         @Deprecated @RequestParam(required = false) String pathToProject,
                                         @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields
     ) throws IOException {
-        return projectsProvider.openProjectSpace(projectId, pathToProject, removeNone(optFields));
+        return projectsProvider.openProject(projectId, pathToProject, removeNone(optFields));
     }
 
     /**
@@ -103,7 +103,7 @@ public class ProjectController {
                                           @Deprecated @RequestParam(required = false) String pathToProject,
                                           @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields
     ) throws IOException {
-        return projectsProvider.createProjectSpace(projectId, pathToProject, removeNone(optFields));
+        return projectsProvider.createProject(projectId, pathToProject, removeNone(optFields));
     }
 
     /**
@@ -229,7 +229,7 @@ public class ProjectController {
     @Deprecated
     @PutMapping(value = "/{projectId}/copy", produces = MediaType.APPLICATION_JSON_VALUE)
     public ProjectInfo copyProjectSpace(@PathVariable String projectId, @RequestParam String pathToCopiedProject, @RequestParam(required = false) String copyProjectId, @RequestParam(defaultValue = "") EnumSet<ProjectInfo.OptField> optFields) throws IOException {
-        return projectsProvider.copyProjectSpace(projectId, pathToCopiedProject, copyProjectId, removeNone(optFields));
+        return projectsProvider.copyProject(projectId, pathToCopiedProject, copyProjectId, removeNone(optFields));
     }
 
     @Operation(summary = "Get CSI:FingerID fingerprint (prediction vector) definition")

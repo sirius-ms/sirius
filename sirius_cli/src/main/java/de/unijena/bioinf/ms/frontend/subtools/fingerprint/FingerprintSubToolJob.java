@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.frontend.subtools.fingerprint;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.fingerid.*;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
@@ -31,11 +30,11 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
+import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
-import de.unijena.bioinf.projectspace.FormulaResult;
+import de.unijena.bioinf.projectspace.ProjectSpaceManagers;
+import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import org.jetbrains.annotations.NotNull;
 
@@ -79,11 +78,7 @@ public class FingerprintSubToolJob extends InstanceJob {
         checkForInterruption();
 
         // add CSIClientData to PS if it is not already there
-        if (inst.getProjectSpaceManager().getProjectSpaceProperty(FingerIdDataProperty.class).isEmpty()) {
-            final FingerIdData pos = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE), this::checkForInterruption);
-            final FingerIdData neg = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE), this::checkForInterruption);
-            inst.getProjectSpaceManager().setProjectSpaceProperty(FingerIdDataProperty.class, new FingerIdDataProperty(pos, neg));
-        }
+        NetUtils.tryAndWait(() -> ProjectSpaceManagers.writeFingerIdDataIfMissing(inst.getProjectSpaceManager(), ApplicationCore.WEB_API), this::checkForInterruption);
 
         updateProgress(10);
         checkForInterruption();

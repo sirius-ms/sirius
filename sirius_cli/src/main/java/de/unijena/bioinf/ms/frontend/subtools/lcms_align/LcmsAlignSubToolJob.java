@@ -199,10 +199,19 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
     private ProjectSpaceManager computePooledWorkflow(LCMSProccessingInstance instance, PooledMs2Workflow lcmsWorkflow) {
         // read all files
         final JobManager jm = SiriusJobs.getGlobalJobManager();
-        final ProcessedSample[] ms2Samples = Arrays.stream(lcmsWorkflow.getPooledMs2()).map(filename -> jm.submitJob(processRunJob(instance, filename))).collect(Collectors.toList()).stream().map(JJob::takeResult).toArray(ProcessedSample[]::new);
+        final ProcessedSample[] ms2Samples = Arrays.stream(lcmsWorkflow.getPooledMs2())
+                .map(filename -> jm.submitJob(processRunJob(instance, filename)))
+                .toList().stream()
+                .map(JJob::takeResult).toArray(ProcessedSample[]::new);
         System.out.println("MS2 DONE");
-        final ProcessedSample[] ms1Samples = Arrays.stream(lcmsWorkflow.getPooledMs1()).map(filename -> jm.submitJob(processRunJob(instance, filename))).collect(Collectors.toList()).stream().map(JJob::takeResult).toArray(ProcessedSample[]::new);
-        final ProcessedSample[] remainingSamples = Arrays.stream(lcmsWorkflow.getRemainingMs1()).map(filename -> jm.submitJob(processRunJob(instance, filename))).collect(Collectors.toList()).stream().map(JJob::takeResult).toArray(ProcessedSample[]::new);
+        final ProcessedSample[] ms1Samples = Arrays.stream(lcmsWorkflow.getPooledMs1())
+                .map(filename -> jm.submitJob(processRunJob(instance, filename)))
+                .toList().stream()
+                .map(JJob::takeResult).toArray(ProcessedSample[]::new);
+        final ProcessedSample[] remainingSamples = Arrays.stream(lcmsWorkflow.getRemainingMs1())
+                .map(filename -> jm.submitJob(processRunJob(instance, filename)))
+                .toList().stream()
+                .map(JJob::takeResult).toArray(ProcessedSample[]::new);
         if (ms1Samples.length > 1) {
             LoggerFactory.getLogger(LcmsAlignSubToolJob.class).warn("Multiple pooled MS1 samples are not supported yet. We will just process the first one.");
         }
@@ -212,7 +221,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         // attach remaining ms1
         RealDistribution error = ms1Ms2Pairing.attachRemainingMs1(instance, remainingSamples);
         // start alignment
-        int deleted = jm.submitJob(new Aligner(false).prealignAndFeatureCutoff2(instance.getSamples(), new Aligner2(error).maxRetentionError(), 1)).takeResult();
+        jm.submitJob(new Aligner(false).prealignAndFeatureCutoff2(instance.getSamples(), new Aligner2(error).maxRetentionError(), 1)).takeResult();
         Cluster cluster = jm.submitJob(new Aligner2(error).align(instance.getSamples())).takeResult().deleteRowsWithNoMsMs().deleteDuplicateRows();
         instance.detectAdductsWithGibbsSampling(cluster);
         cluster = cluster.deleteDuplicateRows();
@@ -226,24 +235,28 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
     private ProjectSpaceManager computeRemappingWorkflow(LCMSProccessingInstance lcmsInstance, RemappingWorkflow lcmsWorkflow) {
         // read all files
         final JobManager jm = SiriusJobs.getGlobalJobManager();
-        final ProcessedSample[] ms1Samples = Arrays.stream(lcmsWorkflow.getFiles()).map(filename -> jm.submitJob(processRunJob(lcmsInstance, filename))).collect(Collectors.toList()).stream().map(JJob::takeResult).toArray(ProcessedSample[]::new);
-        final Iterator<Instance> compoundContainerIterator = space.instanceIterator(LCMSPeakInformation.class, Ms2Experiment.class);
+        final ProcessedSample[] ms1Samples = Arrays.stream(lcmsWorkflow.getFiles())
+                .map(filename -> jm.submitJob(processRunJob(lcmsInstance, filename)))
+                .toList().stream()
+                .map(JJob::takeResult).toArray(ProcessedSample[]::new);
+
         final List<Ms2Experiment> exps = new ArrayList<>();
         final List<LCMSPeakInformation> peaks = new ArrayList<>();
         final List<String> ids = new ArrayList<>();
-        while (compoundContainerIterator.hasNext()) {
-            final CompoundContainer next = compoundContainerIterator.next().loadCompoundContainer(LCMSPeakInformation.class, Ms2Experiment.class);
-            if (next.getAnnotation(Ms2Experiment.class).isEmpty() || next.getAnnotation(LCMSPeakInformation.class).isEmpty())
-                continue;
-            exps.add(next.getAnnotation(Ms2Experiment.class).get());
-            peaks.add(next.getAnnotation(LCMSPeakInformation.class).get());
-            ids.add(next.getId().getDirectoryName()); //todo getDirectoryName correct
-        }
+        space.forEach(inst -> {
+            final CompoundContainer next = inst.loadCompoundContainer(LCMSPeakInformation.class, Ms2Experiment.class);
+            if (next.getAnnotation(Ms2Experiment.class).isPresent() && next.getAnnotation(LCMSPeakInformation.class).isPresent()) {
+                exps.add(next.getAnnotation(Ms2Experiment.class).get());
+                peaks.add(next.getAnnotation(LCMSPeakInformation.class).get());
+                ids.add(next.getId().getDirectoryName()); //todo getDirectoryName correct
+            }
+        });
+
         final LCMSPeakInformation[] replaced = Ms1Remapping.remapMS1(lcmsInstance, ms1Samples, peaks.toArray(LCMSPeakInformation[]::new), exps.toArray(Ms2Experiment[]::new), true);
         for (int i = 0; i < ids.size(); ++i) {
             final String instanceId = ids.get(i);
             LCMSPeakInformation replacement = replaced[i];
-            space.findInstance(instanceId).ifPresent(instance ->{
+            space.findInstance(instanceId).ifPresent(instance -> {
                 CompoundContainer compound = instance.loadCompoundContainer();
                 compound.setAnnotation(LCMSPeakInformation.class, replacement);
                 instance.updateCompound(compound, LCMSPeakInformation.class);
@@ -258,7 +271,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
             return;
         }
 
-        final Instance compound = space.newCompoundWithUniqueId(experiment);
+        final Instance compound = space.importInstanceWithUniqueId(experiment);
         importedCompounds.add(compound);
     }
 
@@ -272,8 +285,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         int progress = 0;
         final HashMap<ConsensusFeature, CompoundContainerId> feature2compoundId = new HashMap<>();
         List<LCMSCompoundSummary> allSummaries = new ArrayList<>();
-        for (int K = 0; K < consensusFeatures.length; ++K) {
-            final ConsensusFeature feature = consensusFeatures[K];
+        for (final ConsensusFeature feature : consensusFeatures) {
             final Ms2Experiment experiment = feature.toMs2Experiment();
             if (isInvalidExp(experiment)) {
                 LoggerFactory.getLogger(getClass()).warn("Skipping invalid experiment '" + experiment.getName() + "'.");
@@ -315,7 +327,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
             // kaidu: this is super slow, so we just ignore the filename
             experiment.setAnnotation(SpectrumFileSource.class, new SpectrumFileSource(sourcelocation.value));
 
-            final Instance compound = space.newCompoundWithUniqueId(experiment);
+            final Instance compound = space.importInstanceWithUniqueId(experiment);
             importedCompounds.add(compound);
             final CompoundContainer compoundContainer = compound.loadCompoundContainer(LCMSPeakInformation.class);
             compoundContainer.setAnnotation(LCMSPeakInformation.class, lcmsPeakInformation);

@@ -58,7 +58,7 @@ class InstanceImportIteratorMS2Exp implements Iterator<Instance> {
 
         if (ms2ExperimentIterator.hasNext()) {
             final Ms2Experiment input = ms2ExperimentIterator.next();
-            @NotNull Instance inst = spaceManager.newCompoundWithUniqueId(input); //this writers
+            @NotNull Instance inst = spaceManager.importInstanceWithUniqueId(input); //this writers
 
             // TODO: hacky solution
             // store LC/MS data into project space

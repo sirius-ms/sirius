@@ -23,6 +23,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintData;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
@@ -95,7 +96,7 @@ public class SiriusProjectSpaceManager implements ProjectSpaceManager {
 
     @Override
     @NotNull
-    public Instance newCompoundWithUniqueId(Ms2Experiment inputExperiment) {
+    public Instance importInstanceWithUniqueId(Ms2Experiment inputExperiment) {
         final String name = nameFormatter.apply(inputExperiment);
         final CompoundContainer container = getProjectSpaceImpl().newCompoundWithUniqueId(name, (idx) -> namingScheme.apply(idx, name), inputExperiment).orElseThrow(() -> new RuntimeException("Could not create an project space ID for the Instance"));
         return instFac.create(container, this);
@@ -126,9 +127,8 @@ public class SiriusProjectSpaceManager implements ProjectSpaceManager {
     }
 
     @Override
-    @SafeVarargs
-    public final Optional<Instance> findInstance(String id, Class<? extends DataAnnotation>... components) {
-        return getProjectSpaceImpl().findCompound(id).map(cid -> getInstanceFromCompound(cid, components));
+    public final @NotNull Optional<Instance> findInstance(String id) {
+        return getProjectSpaceImpl().findCompound(id).map(this::getInstanceFromCompound);
     }
 
     private List<Instance> getInstancesFromCompounds(Collection<CompoundContainerId> ids, Class<? extends DataAnnotation>... components) {
@@ -141,19 +141,53 @@ public class SiriusProjectSpaceManager implements ProjectSpaceManager {
         return instances;
     }
 
+    @Override
+    public void writeFingerIdData(@NotNull FingerIdData pos, @NotNull FingerIdData neg) {
+        setProjectSpaceProperty(FingerIdDataProperty.class, new FingerIdDataProperty(pos, neg));
+    }
 
     @Override
-    public <T extends ProjectSpaceProperty> Optional<T> getProjectSpaceProperty(Class<T> key) {
+    public void writeCanopusData(@NotNull CanopusCfData cfPos, @NotNull CanopusCfData cfNeg, @NotNull CanopusNpcData npcPos, @NotNull CanopusNpcData npcNeg) {
+        setProjectSpaceProperty(new CanopusCfDataProperty(cfPos, cfNeg));
+        setProjectSpaceProperty(new CanopusNpcDataProperty(npcPos, npcNeg));
+    }
+
+    @Override
+    public void deleteFingerIdData() {
+        deleteProjectSpaceProperty(FingerIdDataProperty.class);
+    }
+
+    @Override
+    public void deleteCanopusData() {
+        deleteProjectSpaceProperty(CanopusCfDataProperty.class);
+        deleteProjectSpaceProperty(CanopusNpcDataProperty.class);
+    }
+
+    @Override
+    public @NotNull Optional<FingerIdData> getFingerIdData(int charge) {
+        return getProjectSpaceProperty(FingerIdDataProperty.class).map(fp -> fp.getByCharge(charge));
+    }
+
+    @Override
+    public @NotNull Optional<CanopusCfData> getCanopusCfData(int charge) {
+        return getProjectSpaceProperty(CanopusCfDataProperty.class).map(fp -> fp.getByCharge(charge));
+
+    }
+
+    @Override
+    public @NotNull Optional<CanopusNpcData> getCanopusNpcData(int charge) {
+        return getProjectSpaceProperty(CanopusNpcDataProperty.class).map(fp -> fp.getByCharge(charge));
+    }
+
+    private <T extends ProjectSpaceProperty> Optional<T> getProjectSpaceProperty(Class<T> key) {
         return getProjectSpaceImpl().getProjectSpaceProperty(key);
     }
 
-    @Override
-    public <T extends ProjectSpaceProperty> T setProjectSpaceProperty(T value) {
+    private <T extends ProjectSpaceProperty> T setProjectSpaceProperty(T value) {
         return setProjectSpaceProperty((Class<T>) value.getClass(), value);
     }
 
-    @Override
-    public <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value) {
+    private <T extends ProjectSpaceProperty> T setProjectSpaceProperty(Class<T> key, T value) {
         if (PosNegFpProperty.class.isAssignableFrom(key))
             synchronized (dataCompatibilityCache) {
                 dataCompatibilityCache.remove(key);
@@ -163,8 +197,7 @@ public class SiriusProjectSpaceManager implements ProjectSpaceManager {
             return getProjectSpaceImpl().setProjectSpaceProperty(key, value);
     }
 
-    @Override
-    public <T extends ProjectSpaceProperty> T deleteProjectSpaceProperty(Class<T> key) {
+    private <T extends ProjectSpaceProperty> T deleteProjectSpaceProperty(Class<T> key) {
         if (PosNegFpProperty.class.isAssignableFrom(key))
             synchronized (dataCompatibilityCache) {
                 dataCompatibilityCache.remove(key);
@@ -174,7 +207,6 @@ public class SiriusProjectSpaceManager implements ProjectSpaceManager {
             return getProjectSpaceImpl().deleteProjectSpaceProperty(key);
     }
 
-    @Override
     @NotNull
     public Iterator<Instance> filteredIterator(@Nullable Predicate<CompoundContainerId> cidFilter, @Nullable final Predicate<CompoundContainer> compoundFilter) {
         if (compoundFilter == null && cidFilter == null)
@@ -189,8 +221,8 @@ public class SiriusProjectSpaceManager implements ProjectSpaceManager {
         return instanceIterator();
     }
 
-    @Override
-    public Iterator<Instance> instanceIterator(Class<? extends DataAnnotation>... c) {
+    @SafeVarargs
+    public final Iterator<Instance> instanceIterator(Class<? extends DataAnnotation>... c) {
         return makeInstanceIterator(space.compoundIterator(c));
     }
 
@@ -216,15 +248,21 @@ public class SiriusProjectSpaceManager implements ProjectSpaceManager {
     }
 
     @Override
-    public boolean containsCompound(String dirName) {
-        return space.containsCompound(dirName);
-    }
-
-    private boolean containsCompound(CompoundContainerId id) {
-        return space.containsCompound(id);
+    public int countFeatures() {
+        return space.size();
     }
 
     @Override
+    public int countCompounds() {
+        int count = (int) space.stream().map(CompoundContainerId::getGroupId).distinct().filter(Objects::nonNull).count();
+        return (int) (count + space.stream().filter(Objects::isNull).count());
+    }
+
+    @Override
+    public long sizeInBytes() {
+        return FileUtils.getFolderSizeOrThrow(space.getLocation());
+    }
+
     public void writeSummaries(@Nullable Path summaryLocation, @Nullable Collection<CompoundContainerId> inclusionList, @NotNull Summarizer... summarizers) throws ExecutionException {
         if (summaryLocation == null)
             writeSummaries(null, false, inclusionList, summarizers);
@@ -232,7 +270,6 @@ public class SiriusProjectSpaceManager implements ProjectSpaceManager {
             writeSummaries(summaryLocation, summaryLocation.toString().endsWith(".zip"), inclusionList, summarizers);
     }
 
-    @Override
     public void writeSummaries(@Nullable Path summaryLocation, boolean compressed, @Nullable Collection<CompoundContainerId> inclusionList, @NotNull Summarizer... summarizers) throws ExecutionException {
         space.writeSummaries(summaryLocation, compressed, inclusionList, summarizers);
     }
@@ -318,6 +355,7 @@ public class SiriusProjectSpaceManager implements ProjectSpaceManager {
     public String getName() {
         return getProjectSpaceImpl().getLocation().getFileName().toString();
     }
+
     @Override
     public String getLocation() {
         return getProjectSpaceImpl().getLocation().toAbsolutePath().toString();
