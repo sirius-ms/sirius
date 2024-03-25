@@ -92,6 +92,7 @@ public class FingerprintSubToolJob extends InstanceJob {
         // expand IDResult list with adducts
         final FingerprintPreprocessingJJob<?> fpPreproJob = new FingerprintPreprocessingJJob<>(inst.getExperiment(),
                 formulaResults.stream().map(res ->
+                        //todo handle zodiac score
                         new IdentificationResult<>(res.getCandidate().getAnnotationOrThrow(FTree.class),
                                 res.getScoreObject())).collect(Collectors.toList()));
 
@@ -120,8 +121,6 @@ public class FingerprintSubToolJob extends InstanceJob {
         addedResults.forEach((k, v) ->
                 inst.newFormulaResultWithUniqueId(k.getTree())
                         .ifPresent(fr -> {
-//                            fr.getAnnotationOrThrow(FormulaScoring.class).setAnnotationsFrom(
-//                                    formulaResultsMap.get(v.getTree()).getAnnotationOrThrow(FormulaScoring.class));
                             //do not override but only set missing scores (may have different tree/SIRIUS score)
                             FormulaScoring formulaScoring = fr.getAnnotationOrThrow(FormulaScoring.class);
                             final Iterator<Map.Entry<Class<FormulaScore>, FormulaScore>> iter = formulaResultsMap.get(v.getTree()).getAnnotationOrThrow(FormulaScoring.class).annotationIterator();
