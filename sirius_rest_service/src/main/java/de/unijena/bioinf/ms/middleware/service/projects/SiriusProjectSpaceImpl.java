@@ -120,11 +120,12 @@ public class SiriusProjectSpaceImpl implements Project {
 
         return ImportResult.builder()
                 .affectedAlignedFeatureIds(importTask.getImportedInstancesStr()
-                        .map(Instance::getCompoundContainerId)
-                        .map(CompoundContainerId::getDirectoryName).collect(Collectors.toList()))
+                        .map(Instance::getId)
+                        .collect(Collectors.toList()))
                 .affectedCompoundIds(importTask.getImportedInstancesStr()
-                        .map(Instance::getCompoundContainerId)
-                        .map(CompoundContainerId::getGroupId).filter(Optional::isPresent).flatMap(Optional::stream)
+                        .map(Instance::getCompoundId)
+                        .filter(Optional::isPresent)
+                        .flatMap(Optional::stream)
                         .distinct().collect(Collectors.toList()))
                 .build();
     }
@@ -136,11 +137,11 @@ public class SiriusProjectSpaceImpl implements Project {
         importTask.run();
         return ImportResult.builder()
                 .affectedAlignedFeatureIds(importTask.getImportedInstancesStr()
-                        .map(Instance::getCompoundContainerId)
-                        .map(CompoundContainerId::getDirectoryName).collect(Collectors.toList()))
+                        .map(Instance::getId)
+                        .collect(Collectors.toList()))
                 .affectedCompoundIds(importTask.getImportedInstancesStr()
-                        .map(Instance::getCompoundContainerId)
-                        .map(CompoundContainerId::getGroupId).filter(Optional::isPresent).flatMap(Optional::stream)
+                        .map(Instance::getCompoundId)
+                        .filter(Optional::isPresent).flatMap(Optional::stream)
                         .distinct().collect(Collectors.toList()))
                 .build();
     }
@@ -579,7 +580,7 @@ public class SiriusProjectSpaceImpl implements Project {
     protected static Ms2Experiment loadExperiment(Instance instance) {
         return instance.loadCompoundContainer(Ms2Experiment.class).getAnnotation(Ms2Experiment.class)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Could not find spectra data for '" + instance.getCompoundContainerId().getFeatureId() + "'!"));
+                        "Could not find spectra data for '" + instance.getProvidedFeatureId().orElseGet(instance::getId) + "'!"));
     }
 
     public Instance loadInstance(String alignedFeatureId) {

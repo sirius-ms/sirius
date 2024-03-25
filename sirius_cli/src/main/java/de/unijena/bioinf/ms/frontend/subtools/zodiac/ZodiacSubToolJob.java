@@ -45,7 +45,6 @@ import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.FormulaResult;
-import de.unijena.bioinf.projectspace.FormulaResultRankingScore;
 import de.unijena.bioinf.quality_assessment.TreeQualityEvaluator;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
@@ -261,12 +260,6 @@ public class ZodiacSubToolJob extends DataSetJob {
                     inst.updateFormulaResult(fr, FormulaScoring.class);
 //                    System.out.println(fr.getId().getFormula().toString() + sTress.get(fr.getAnnotationOrThrow(FTree.class)));
                 });
-
-                // set zodiac as ranking score
-                if (inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
-                    inst.getCompoundContainerId().setRankingScoreTypes(ZodiacScore.class, SiriusScore.class);
-                    inst.updateCompoundID();
-                }
             } catch (Throwable e) {
                 logError("Error when retrieving Zodiac Results for instance: " + inst.getId(), e);
             }

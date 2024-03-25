@@ -283,7 +283,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         //save
         updateProgress(0, consensusFeatures.length, 0, "Write project space.");
         int progress = 0;
-        final HashMap<ConsensusFeature, CompoundContainerId> feature2compoundId = new HashMap<>();
+        final HashMap<ConsensusFeature, Instance> feature2Instance = new HashMap<>();
         List<LCMSCompoundSummary> allSummaries = new ArrayList<>();
         for (final ConsensusFeature feature : consensusFeatures) {
             final Ms2Experiment experiment = feature.toMs2Experiment();
@@ -327,13 +327,13 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
             // kaidu: this is super slow, so we just ignore the filename
             experiment.setAnnotation(SpectrumFileSource.class, new SpectrumFileSource(sourcelocation.value));
 
-            final Instance compound = space.importInstanceWithUniqueId(experiment);
-            importedCompounds.add(compound);
-            final CompoundContainer compoundContainer = compound.loadCompoundContainer(LCMSPeakInformation.class);
+            final Instance instance = space.importInstanceWithUniqueId(experiment);
+            importedCompounds.add(instance);
+            final CompoundContainer compoundContainer = instance.loadCompoundContainer(LCMSPeakInformation.class);
             compoundContainer.setAnnotation(LCMSPeakInformation.class, lcmsPeakInformation);
-            compound.updateCompound(compoundContainer, LCMSPeakInformation.class);
-
-            feature2compoundId.put(feature, compound.getCompoundContainerId());
+            instance.updateCompound(compoundContainer, LCMSPeakInformation.class);
+            instance.clearCompoundCache(); //clear cache after storage since we keep the instance.
+            feature2Instance.put(feature, instance);
             updateProgress(0, consensusFeatures.length, ++progress, "Write project space.");
         }
         if (i.getInternalStatistics().isPresent() && statistics != null) {
@@ -349,22 +349,22 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         // add connection tables
         {
             final MolecularNetwork.NetworkBuilder network = new MolecularNetwork.NetworkBuilder();
-            for (CompoundContainerId id : feature2compoundId.values()) {
-                network.addNode(id.getDirectoryName(), id.getIonMass().orElse(0d));
+            for (Instance inst : feature2Instance.values()) {
+                network.addNode(inst.getId(), inst.getIonMass());
             }
-            final TObjectFloatHashMap<CompoundContainerId> others = new TObjectFloatHashMap<>(5, 0.75f, 0f);
-            for (Map.Entry<ConsensusFeature, CompoundContainerId> entry : feature2compoundId.entrySet()) {
-                final NetworkNode left = network.getNode(entry.getValue().getDirectoryName());
+            final TObjectFloatHashMap<Instance> others = new TObjectFloatHashMap<>(5, 0.75f, 0f);
+            for (Map.Entry<ConsensusFeature, Instance> entry : feature2Instance.entrySet()) {
+                final NetworkNode left = network.getNode(entry.getValue().getId());
                 others.clear();
                 for (IonConnection<ConsensusFeature> connection : entry.getKey().getConnections()) {
-                    final CompoundContainerId other = feature2compoundId.get(connection.getRight());
+                    final Instance other = feature2Instance.get(connection.getRight());
                     if (other != null && connection.getType() == IonConnection.ConnectionType.IN_SOURCE_OR_ADDUCT) {
                         float prev = others.get(other);
                         others.put(other, Math.max(prev, connection.getWeight()));
                     }
                 }
                 others.forEachEntry((key, weight) -> {
-                    final NetworkNode right = network.getNode(key.getDirectoryName());
+                    final NetworkNode right = network.getNode(key.getId());
                     if (left.getVertexId() < right.getVertexId()) {
                         network.addEdge(left.getVertexId(), right.getVertexId(), new Correlation(weight));
                     }

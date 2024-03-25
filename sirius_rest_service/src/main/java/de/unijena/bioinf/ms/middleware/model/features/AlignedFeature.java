@@ -47,7 +47,8 @@ public class AlignedFeature {
 
     // additional attributes
     protected Double ionMass;
-    protected String adduct;
+    @Deprecated
+    protected String adduct; //todo remove
 
     @Schema(nullable = true)
     protected Double rtStartSeconds;

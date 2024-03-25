@@ -30,7 +30,6 @@ import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.FormulaResultRankingScore;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -73,7 +72,7 @@ public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSet
     //library hits     ///
     /////////////////////
     @Option(names = "--min-cosine", descriptionKey = "ZodiacLibraryScoring.minCosine",
-            description = {"Spectral library hits must have at least this cosine or higher to be considered in scoring.","Value must be in [0,1]."})
+            description = {"Spectral library hits must have at least this cosine or higher to be considered in scoring.", "Value must be in [0,1]."})
     public void setMinCosine(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("ZodiacLibraryScoring.minCosine", value);
     }
@@ -151,6 +150,7 @@ public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSet
     }
 
     public Path bestMFSimilarityGraphFile;
+
     @Option(names = "--graph", hidden = true,
             description = {"Writes the similarity graph based on the top molecular formula annotations of each compound."})
     public void setSimilarityGraphFile(String filePath) throws Exception {
@@ -173,10 +173,6 @@ public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSet
                         if (z.removeAnnotation(ZodiacScore.class) != null)
                             inst.updateFormulaResult(it, FormulaScoring.class); //update only if there was something to remove
                     }));
-            if (inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
-                inst.getCompoundContainerId().getRankingScoreTypes().remove(ZodiacScore.class);
-                inst.updateCompoundID();
-            }
         };
     }
 

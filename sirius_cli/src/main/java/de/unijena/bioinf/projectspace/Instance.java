@@ -21,9 +21,15 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
+import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
+import de.unijena.bioinf.fingerid.*;
+import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
+import de.unijena.bioinf.fingerid.blast.FBCandidates;
+import de.unijena.bioinf.fingerid.blast.FingerblastResult;
+import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import org.jetbrains.annotations.NotNull;
@@ -87,8 +93,12 @@ public class Instance {
         return getCompoundContainerId().toString();
     }
 
+    public double getIonMass() {
+        return getCompoundContainerId().getIonMass().orElse(Double.NaN);
+    }
+
     @Deprecated
-    public final CompoundContainerId getCompoundContainerId() {
+    public final synchronized CompoundContainerId getCompoundContainerId() {
         return compoundCache.getId();
     }
 
@@ -153,7 +163,7 @@ public class Instance {
      */
     @SafeVarargs
     public final synchronized List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadFormulaResults(Class<? extends DataAnnotation>... components) {
-        return loadFormulaResults(getCompoundContainerId().getRankingScoreTypes(), components);
+        return loadFormulaResults(projectSpace().getDefaultRankingScores(), components);
     }
 
     @SafeVarargs
@@ -179,7 +189,9 @@ public class Instance {
     public final synchronized List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadFormulaResults(List<Class<? extends FormulaScore>> rankingScoreTypes, Class<? extends DataAnnotation>... components) {
         try {
             if (!formulaResultCache.keySet().containsAll(compoundCache.getResultsRO().values())) {
-                final List<? extends SScored<FormulaResult, ? extends FormulaScore>> returnList = projectSpace().getFormulaResultsOrderedBy(getCompoundContainerId(), rankingScoreTypes, components);
+                final List<? extends SScored<FormulaResult, ? extends FormulaScore>> returnList = projectSpace()
+                        .getFormulaResultsOrderedBy(getCompoundContainerId(), rankingScoreTypes, components);
+
                 formulaResultCache = returnList.stream().collect(Collectors.toMap(r -> r.getCandidate().getId(), SScored::getCandidate));
                 return returnList;
             } else {
@@ -203,7 +215,7 @@ public class Instance {
                     }
                 });
 
-                //return updated an sorted formula results
+                //return updated and sorted formula results
                 return FormulaScoring.rankBy(formulaResultCache.values(), rankingScoreTypes, true);
             }
         } catch (IOException e) {
@@ -387,4 +399,68 @@ public class Instance {
     public synchronized boolean isComputing() {
         return projectSpace().flag(getCompoundContainerId(), CompoundContainerId.Flag.COMPUTING);
     }
+
+    public synchronized void saveDetectedAdducts(DetectedAdducts detectedAdducts){
+        getCompoundContainerId().setDetectedAdducts(detectedAdducts);
+        updateCompoundID();
+    }
+    public synchronized Optional<DetectedAdducts> getDetectedAdducts(){
+        return getCompoundContainerId().getDetectedAdducts();
+    }
+    public synchronized void deleteDetectedAdducts(){
+        saveDetectedAdducts(null);
+    }
+
+    //TODO TEMP solution -> make better api method without FormulaResult but with Id
+    public synchronized void saveStructureSearchResults(@NotNull Map<FormulaResult, FingerIdResult> structureSearchResults){
+        for (Map.Entry<FormulaResult, FingerIdResult> entry : structureSearchResults.entrySet()) {
+            final FormulaResult formRes = entry.getKey();
+            final FingerIdResult structRes = entry.getValue();
+            assert structRes.sourceTree == formRes.getAnnotationOrThrow(FTree.class);
+
+            // annotate results
+            formRes.setAnnotation(FBCandidates.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getCandidates).orElse(null));
+            formRes.setAnnotation(FBCandidateFingerprints.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getCandidateFingerprints).orElse(null));
+            formRes.setAnnotation(StructureSearchResult.class, structRes.getAnnotation(StructureSearchResult.class).orElse(null));
+            // add scores
+            formRes.getAnnotationOrThrow(FormulaScoring.class)
+                    .setAnnotation(TopCSIScore.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getTopHitScore).orElse(null));
+            formRes.getAnnotationOrThrow(FormulaScoring.class)
+                    .setAnnotation(ConfidenceScore.class, structRes.getAnnotation(ConfidenceResult.class).map(x -> x.score).orElse(null));
+            formRes.getAnnotationOrThrow(FormulaScoring.class)
+                    .setAnnotation(ConfidenceScoreApproximate.class, structRes.getAnnotation(ConfidenceResult.class).map(x -> x.scoreApproximate).orElse(null));
+
+            // write results
+            updateFormulaResult(formRes,
+                    FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class, StructureSearchResult.class);
+        }
+
+
+        loadTopFormulaResult(List.of(TopCSIScore.class))
+                .flatMap(r -> r.getAnnotation(StructureSearchResult.class))
+                .ifPresentOrElse(sr -> {
+                    getCompoundContainerId().setConfidenceScore(sr.getConfidenceScore());
+                    getCompoundContainerId().setConfidenceScoreApproximate(sr.getConfidenceScore());
+                }, () -> {
+                    getCompoundContainerId().setConfidenceScore(null);
+                    getCompoundContainerId().setConfidenceScoreApproximate(null);
+                });
+
+        updateCompoundID();
+    }
+
+    public synchronized void deleteStructureSearchResults(){
+        deleteFromFormulaResults(FBCandidates.class, FBCandidateFingerprints.class, StructureSearchResult.class);
+        loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate)
+                .forEach(it -> it.getAnnotation(FormulaScoring.class).ifPresent(z -> {
+                    if (z.removeAnnotation(TopCSIScore.class) != null || z.removeAnnotation(ConfidenceScore.class) != null || z.removeAnnotation(ConfidenceScoreApproximate.class) != null)
+                        updateFormulaResult(it, FormulaScoring.class); //update only if there was something to remove
+                }));
+        if (getCompoundContainerId().getConfidenceScore().isPresent()) {
+            getCompoundContainerId().setConfidenceScore(null);
+            getCompoundContainerId().setConfidenceScoreApproximate(null);
+            updateCompoundID();
+        }
+    }
+
 }
