@@ -754,7 +754,6 @@ public class SiriusProjectSpaceImpl implements Project {
         final AlignedFeature id = new AlignedFeature();
         id.setAlignedFeatureId(cid.getDirectoryName());
         id.setName(cid.getCompoundName());
-        id.setIndex(cid.getCompoundIndex());
         id.setIonMass(cid.getIonMass().orElse(0d));
         id.setComputing(cid.hasFlag(CompoundContainerId.Flag.COMPUTING));
         cid.getIonType().map(PrecursorIonType::toString).ifPresent(id::setAdduct);

@@ -199,11 +199,7 @@ public class InstanceBean implements SiriusPCS {
     public String getFeatureId() {
         return featureId;
     }
-
-    public long getIndex() {
-        return getSourceFeature().getIndex();
-    }
-
+    
     public String getName() {
         return getSourceFeature().getName(); //todo nightsky: check if this is the correct name
     }
@@ -242,6 +238,10 @@ public class InstanceBean implements SiriusPCS {
         }
 
         return Optional.empty();
+    }
+
+    public RetentionTime getRTOrMissing(){
+        return getRT().orElseGet(RetentionTime::NA);
     }
 
     public Optional<FormulaResultBean> getFormulaAnnotationAsBean() {

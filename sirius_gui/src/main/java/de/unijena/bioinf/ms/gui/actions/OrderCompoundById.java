@@ -25,14 +25,14 @@ import de.unijena.bioinf.projectspace.InstanceBean;
 import java.awt.event.ActionEvent;
 import java.util.Comparator;
 
-public class OrderCompoundByIndex extends AbstractGuiAction {
+public class OrderCompoundById extends AbstractGuiAction {
 
-    public OrderCompoundByIndex(SiriusGui gui) {
-        super("Order by Index (default)", gui);
+    public OrderCompoundById(SiriusGui gui) {
+        super("Order by its ID", gui);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        mainFrame.getCompoundList().orderBy(Comparator.comparing(InstanceBean::getIndex));
+        mainFrame.getCompoundList().orderBy(Comparator.comparing(InstanceBean::getFeatureId));
     }
 }
