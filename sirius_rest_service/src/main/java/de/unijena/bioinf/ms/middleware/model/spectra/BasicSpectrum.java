@@ -25,12 +25,10 @@ import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
-import lombok.Getter;
+import it.unimi.dsi.fastutil.Pair;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,15 +52,17 @@ public class BasicSpectrum extends AbstractSpectrum<SimplePeak> {
     }
 
     public BasicSpectrum(@NotNull Spectrum<Peak> spec, boolean makeRelative) {
-        Double factor = null;
+        Double scale = null;
         if (makeRelative) {
-            double maxInt = spec.getMaxIntensity();
-            if (maxInt > 1d){
-                factor = maxInt;
-                spec = Spectrums.getNormalizedSpectrum(spec, Normalization.Max);
+            final double maxInt = spec.getMaxIntensity();
+            //check if spectrum is not normalized or max normalized
+            if (maxInt > 1d || Math.abs(maxInt - 1d) < 0.000001d){
+                Pair<SimpleSpectrum, Double> specAndScale = Spectrums.getNormalizedSpectrumWithScale(spec, Normalization.Sum);
+                spec = specAndScale.first();
+                scale = specAndScale.second();
             }
         }
-        init(Spectrums.copyMasses(spec), Spectrums.copyIntensities(spec), factor);
+        init(Spectrums.copyMasses(spec), Spectrums.copyIntensities(spec), scale);
     }
 
     public BasicSpectrum(double[] masses, double[] intensities, @Nullable Double intFactor) {

@@ -27,7 +27,6 @@ import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.jjobs.ProgressJJob;
 import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.ms.annotations.PrintCitations;
-import de.unijena.bioinf.ms.frontend.BackgroundRuns;
 import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -37,12 +36,12 @@ import de.unijena.bioinf.ms.frontend.subtools.ToolChainJob;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastSubToolJob;
 import de.unijena.bioinf.ms.frontend.subtools.middleware.MiddlewareAppOptions;
+import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
 import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
-import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceProviderImpl;
+import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.fingerid.*;
@@ -50,7 +49,6 @@ import de.unijena.bioinf.rest.ProxyManager;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.Banner;
 import org.springframework.boot.CommandLineRunner;
@@ -60,7 +58,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.ApplicationPidFileWriter;
 import org.springframework.boot.web.context.WebServerPortFileWriter;
-import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -73,31 +72,56 @@ import java.util.function.Supplier;
 @OpenAPIDefinition
 @Slf4j
 public class SiriusMiddlewareApplication extends SiriusCLIApplication implements CommandLineRunner, DisposableBean {
-    private static CLIRootOptions<?, ?> rootOptions;
+    private final static ProjectSpaceManagerFactory<?> psf = getProjectFactory();
+    private static ProjectSpaceManagerFactory<?> getProjectFactory() {
+        //enable gui support
+        // modify fingerid subtool so that it works with reduced GUI candidate list.
+        FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidatesTopK.class);
+        FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidateFingerprintsTopK.class);
 
-    public static CLIRootOptions<?, ?> getRootOptions() {
-        return rootOptions;
+        ProjectSpaceConfiguration config = SiriusProjectSpaceManagerFactory.newDefaultConfig();
+        config.registerComponent(FormulaResult.class, FBCandidatesTopK.class, new FBCandidatesSerializerTopK(FBCandidateNumber.GUI_DEFAULT));
+        config.registerComponent(FormulaResult.class, FBCandidateFingerprintsTopK.class, new FBCandidateFingerprintSerializerTopK(FBCandidateNumber.GUI_DEFAULT));
+
+        return new SiriusProjectSpaceManagerFactory(config);
     }
 
-    //todo nightsky implement GUI only mode
+    private final static InstanceBufferFactory<?> bufferFactory = (bufferSize, instances, tasks, dependJob, progressSupport) ->
+            new SimpleInstanceBuffer(bufferSize, instances, tasks, dependJob, progressSupport, new JobSubmitter() {
+                @Override
+                public <Job extends JJob<Result>, Result> Job submitJob(Job j) {
+                    if (j instanceof ToolChainJob<?> tj) {
+                        Jobs.submit((ProgressJJob<?>) j, j::identifier, tj::getProjectName, tj::getToolName);
+                        return j;
+                    } else {
+                        return Jobs.MANAGER().submitJob(j);
+                    }
+                }
+            });
+    private final static MiddlewareAppOptions<?> middlewareOpts = new MiddlewareAppOptions<>();
+
+    private final ApplicationContext appContext;
+    @Bean
+    public ProjectSpaceManagerFactory<?> projectSpaceManagerFactory() {
+        return psf;
+    }
+
+    @Bean
+    public InstanceBufferFactory<?> instanceBufferFactory() {
+        return bufferFactory;
+    }
+
+    public SiriusMiddlewareApplication(ApplicationContext appContext) {
+        this.appContext = appContext;
+    }
+
     public static void main(String[] args) {
-        //enable gui support
-        {
-            // modify fingerid subtool so that it works with reduced GUI candidate list.
-            FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidatesTopK.class);
-            FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidateFingerprintsTopK.class);
-
-            final @NotNull Supplier<ProjectSpaceConfiguration> dc = ProjectSpaceManager.DEFAULT_CONFIG;
-            ProjectSpaceManager.DEFAULT_CONFIG = () -> {
-                final ProjectSpaceConfiguration config = dc.get();
-                config.registerComponent(FormulaResult.class, FBCandidatesTopK.class, new FBCandidatesSerializerTopK(FBCandidateNumber.GUI_DEFAULT));
-                config.registerComponent(FormulaResult.class, FBCandidateFingerprintsTopK.class, new FBCandidateFingerprintSerializerTopK(FBCandidateNumber.GUI_DEFAULT));
-                return config;
-            };
-        }
-
+        //start gui as default if no command is given
         if (args == null || args.length == 0)
             args = new String[]{"rest", "-s", "--gui"};
+
+        //check if service mode is used before command line is really parsed to decide whether we need to
+        //configure a spring app or not.
         if (Arrays.stream(args).anyMatch(it ->
                 it.equalsIgnoreCase(MiddlewareAppOptions.class.getAnnotation(CommandLine.Command.class).name())
                         || Arrays.stream(MiddlewareAppOptions.class.getAnnotation(CommandLine.Command.class).aliases())
@@ -105,107 +129,75 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                         || it.equalsIgnoreCase("-h") || it.equalsIgnoreCase("--help") // just to get Middleware help.
         )) {
 
-            System.setProperty("de.unijena.bioinf.sirius.springSupport", "true");
-            System.setProperty(APP_TYPE_PROPERTY_KEY, "SERVICE");
-//            SiriusJobs.enforceClassLoaderGlobally(Thread.currentThread().getContextClassLoader());
-            measureTime("Init Swing Job Manager");
-            // The spring app classloader seems not to be correctly inherited to sub thread
-            // So we need to ensure that the apache.configuration2 libs gets access otherwise.
-            // SwingJobManager is needed to show loading screens in GUI
-            SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(
-                    cpuThreads,
-                    Math.min(PropertyManager.getNumberOfThreads(), 4),
-                    Thread.currentThread().getContextClassLoader()
-            ));
+            try {
+                System.setProperty("de.unijena.bioinf.sirius.springSupport", "true");
+                System.setProperty(APP_TYPE_PROPERTY_KEY, "SERVICE");
 
-            ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
+                measureTime("Init Swing Job Manager");
+                // The spring app classloader seems not to be correctly inherited to sub thread
+                // So we need to ensure that the apache.configuration2 libs gets access otherwise.
+                // SwingJobManager is needed to show loading screens in GUI
+                SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(
+                        cpuThreads,
+                        Math.min(PropertyManager.getNumberOfThreads(), 4),
+                        Thread.currentThread().getContextClassLoader()
+                ));
 
-            // todo convert to a native spring based approach
-            try {//todo nightsky: WORKAROUND until GUI JOb panel works with SSE based progress updates
-                BackgroundRuns.setBufferFactory((bufferSize, instances, tasks, dependJob, progressSupport) ->
-                        new SimpleInstanceBuffer(bufferSize, instances, tasks, dependJob, progressSupport, new JobSubmitter() {
-                            @Override
-                            public <Job extends JJob<Result>, Result> Job submitJob(Job j) {
-                                if (j instanceof ToolChainJob<?> tj) {
-                                    Jobs.submit((ProgressJJob<?>) j, j::identifier, tj::getProjectName, tj::getToolName);
-                                    return j;
-                                } else {
-                                    return Jobs.MANAGER().submitJob(j);
-                                }
-                            }
-                        }));
-
+                ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
                 PropertyManager.setProperty("de.unijena.bioinf.sirius.BackgroundRuns.autoremove", "false");
-                final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
 
-                final ProjectSpaceManagerFactory<?, ?> psf = new ProjectSpaceManagerFactory.Default();
-
-                rootOptions = new CLIRootOptions<>(configOptionLoader, psf);
-                MiddlewareAppOptions<Instance, ProjectSpaceManager<Instance>> middlewareOpts = new MiddlewareAppOptions<>();
-
-                if (RUN != null)
-                    throw new IllegalStateException("Application can only run Once!");
+                //parse args before spring app starts so we can manipulate app behaviour via command line
+                CLIRootOptions rootOptions = new CLIRootOptions(new DefaultParameterConfigLoader(), psf);
                 measureTime("init Run");
-                RUN = new Run(new WorkflowBuilder<>(rootOptions, configOptionLoader, BackgroundRuns.getBufferFactory(),
-                        List.of(middlewareOpts)));
+                RUN = new Run(new WorkflowBuilder(rootOptions, bufferFactory, List.of(middlewareOpts)));
                 measureTime("Start Parse args");
-                successfulParsed = RUN.parseArgs(args);
-                measureTime("Parse args Done!");
+                RUN.parseArgs(args);
+                measureTime("Parse args Done");
 
-                if (successfulParsed) {
-                    // decides whether the app runs infinitely
-                    WebApplicationType webType = WebApplicationType.NONE;
-                    if (RUN.getFlow() instanceof MiddlewareAppOptions.Flow) //run rest service (infinitely)
-                        webType = WebApplicationType.SERVLET;
 
-                    measureTime("Configure Boot Environment");
-                    //configure boot app
-                    final SpringApplicationBuilder appBuilder = new SpringApplicationBuilder(SiriusMiddlewareApplication.class)
-                            .web(webType)
-                            .headless(webType.equals(WebApplicationType.NONE))
-                            .bannerMode(Banner.Mode.OFF);
+                // decides whether the app runs infinitely
+                WebApplicationType webType = WebApplicationType.SERVLET;
+                measureTime("Configure Boot Environment");
+                //configure boot app
+                final SpringApplicationBuilder appBuilder = new SpringApplicationBuilder(SiriusMiddlewareApplication.class)
+                        .web(webType)
+                        .headless(webType.equals(WebApplicationType.NONE))
+                        .bannerMode(Banner.Mode.OFF);
 
-                    measureTime("Start Workflow");
-                    SpringApplication app = appBuilder.application();
-                    app.addListeners(new ApplicationPidFileWriter(Workspace.WORKSPACE.resolve("sirius.pid").toFile()));
-                    app.addListeners(new WebServerPortFileWriter(Workspace.WORKSPACE.resolve("sirius.port").toFile()));
-                    ConfigurableApplicationContext appContext = app.run(args);
-
-                    //add default project to project service
-                    //todo make generic that it works with arbitrary provider ore remove if not needed...
-                    final SiriusProjectSpace ps = rootOptions.getProjectSpace().projectSpace();
-                    ProjectInfo startPs = appContext
-                            .getBean("projectsProvider", SiriusProjectSpaceProviderImpl.class)
-                            .addProjectSpace(ps.getLocation().getFileName().toString(), ps);
-
-                    measureTime("Workflow DONE!");
-                    System.err.println("SIRIUS Service started successfully!");
-
-                    if (middlewareOpts.isStartGui()) ((GuiService<?>) appContext.getBean("guiService"))
-                            .createGuiInstance(startPs.getProjectId());
-                } else {
-                    System.exit(0);// Zero because this is the help message case
-                }
+                measureTime("Start Workflow");
+                SpringApplication app = appBuilder.application();
+                app.addListeners(new ApplicationPidFileWriter(Workspace.WORKSPACE.resolve("sirius.pid").toFile()));
+                app.addListeners(new WebServerPortFileWriter(Workspace.WORKSPACE.resolve("sirius.port").toFile()));
+                app.run(args);
             } catch (IOException e) {
                 e.printStackTrace();
+                System.exit(1);// Zero because this is the help message case
             }
         } else {
-            SiriusCLIApplication.main(args);
+            SiriusCLIApplication.runMain(args, List.of());
         }
     }
 
 
     @Override
     public void run(String... args) {
-        RUN.compute();
+        middlewareOpts.setProjectsProvider(appContext.getBean(ProjectsProvider.class));
+        middlewareOpts.setGuiService(appContext.getBean(GuiService.class));
+
+        successfulParsed = RUN.makeWorkflow() != null;
+        measureTime("Parse args Done!");
+
+        if (successfulParsed) {
+            RUN.compute();
+            System.err.println("SIRIUS Service started successfully!");
+        } else {
+            System.exit(0);// Zero because this is the help message case
+        }
     }
 
     @Override
     public void destroy() {
-        System.out.println("SIRIUS context shutdown...");
-        log.info("LOMBOK: SIRIUS is cleaning up threads and shuts down...");
-        LoggerFactory.getLogger(getClass()).info("DEFAULT: SIRIUS is cleaning up threads and shuts down...");
-
+        log.info("SIRIUS is cleaning up threads and shuts down...");
         // ensure that token is not in bad state after shut down.
         try {
             AuthService as = ApplicationCore.WEB_API.getAuthService();
@@ -228,7 +220,5 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
             if (successfulParsed && PropertyManager.DEFAULTS.createInstanceWithDefaults(PrintCitations.class).value)
                 ApplicationCore.BIBTEX.citeToSystemErr();
         }
-
-        System.out.println("SIRIUS context DONE");
     }
 }

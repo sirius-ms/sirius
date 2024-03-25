@@ -20,7 +20,6 @@
 package de.unijena.bioinf.ms.frontend.subtools.similarity;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.FPIter2;
@@ -50,9 +49,11 @@ import de.unijena.bioinf.ms.frontend.subtools.config.AddConfigsJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
-import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.ProjectSpaceIO;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
-import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
@@ -83,15 +84,17 @@ public class SimilarityMatrixWorkflow implements Workflow {
     private final static List<Class<? extends FormulaScore>> rankSores =
             List.of(TopCSIScore.class, ZodiacScore.class, SiriusScore.class);
     protected final SimilarityMatrixOptions options;
-    protected ProjectSpaceManager<?> ps;
+    protected ProjectSpaceManager ps;
     protected final ParameterConfig config;
 
-    protected final PreprocessingJob<ProjectSpaceManager<?>> ppj;
+    protected final PreprocessingJob<? extends ProjectSpaceManager> ppj;
+    protected final ProjectSpaceManagerFactory<?> projectFactory;
 
-    public SimilarityMatrixWorkflow(PreprocessingJob<ProjectSpaceManager<?>> ppj, SimilarityMatrixOptions options, ParameterConfig config) {
+    public SimilarityMatrixWorkflow(PreprocessingJob<? extends ProjectSpaceManager> ppj, ProjectSpaceManagerFactory<?> projectFactory, SimilarityMatrixOptions options, ParameterConfig config) {
         this.ppj = ppj;
         this.options = options;
         this.config = config;
+        this.projectFactory = projectFactory;
     }
 
     @Override
@@ -146,7 +149,7 @@ public class SimilarityMatrixWorkflow implements Workflow {
         }
         jobManager.submitJob(MatrixUtils.parallelizeSymmetricMatrixComputation(M, (i, j) -> fpcos(fps[i],fps[j]))).takeResult();
         //MatrixUtils.normalize(M);
-        writeMatrix("tanimoto", M, xs.stream().map(y -> y.getID().getCompoundName()).toArray(String[]::new), options.digits);
+        writeMatrix("tanimoto", M, xs.stream().map(Instance::getName).toArray(String[]::new), options.digits);
     }
 
 
@@ -172,7 +175,7 @@ public class SimilarityMatrixWorkflow implements Workflow {
         }
         jobManager.submitJob(MatrixUtils.parallelizeSymmetricMatrixComputation(M, (i, j) -> fps[i].asDeterministic().tanimoto(fps[j].asDeterministic()))).takeResult();
         //MatrixUtils.normalize(M);
-        writeMatrix("canopus", M, xs.stream().map(y -> y.getID().getCompoundName()).toArray(String[]::new), options.digits);
+        writeMatrix("canopus", M, xs.stream().map(Instance::getName).toArray(String[]::new), options.digits);
     }
 
     private static double specialTanimoto(ProbabilityFingerprint left, ProbabilityFingerprint right, double varianceLeft, double varianceRight) {
@@ -233,13 +236,12 @@ public class SimilarityMatrixWorkflow implements Workflow {
         final List<FTree> libTrees = new ArrayList<>();
         if (ProjectSpaceIO.isExistingProjectspaceDirectory(options.useFtblast.toPath())) {
             try {
-                SiriusProjectSpace compoundContainerIds = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(options.useFtblast.toPath());
-                for (CompoundContainerId id : compoundContainerIds) {
-                    List<? extends SScored<FormulaResult, ? extends FormulaScore>> list = compoundContainerIds.getFormulaResultsOrderedBy(id, id.getRankingScoreTypes());
-                    if (list.size()>0) {
-                        compoundContainerIds.getFormulaResult(list.get(0).getCandidate().getId(),FTree.class).getAnnotation(FTree.class).ifPresent(libTrees::add);
-                    }
-                }
+                ProjectSpaceManager passatuttoProject = projectFactory.createOrOpen(options.useFtblast.toPath());
+
+                passatuttoProject.forEach(instance ->
+                        instance.loadTopFormulaResult(FTree.class)
+                                .flatMap(fr -> fr.getAnnotation(FTree.class))
+                                .ifPresent(libTrees::add));
             } catch (IOException e) {
                 throw new RuntimeException("Cannot open project space at '" + options.useFtblast + "'");
             }
@@ -283,7 +285,7 @@ public class SimilarityMatrixWorkflow implements Workflow {
         jobs.clear();
 
         Jobs.submitJob(MatrixUtils.parallelizeSymmetricMatrixComputation(M, (i,j)->Pearson.pearson(C[i],C[j]))).takeResult();
-        writeMatrix("ftblast", M, xs.stream().map(x->x.getID().getCompoundName()).toArray(String[]::new), options.digits);
+        writeMatrix("ftblast", M, xs.stream().map(x->x.getName()).toArray(String[]::new), options.digits);
     }
 
     private void align(List<Instance> xs, FTree[] trees) {
@@ -313,7 +315,7 @@ public class SimilarityMatrixWorkflow implements Workflow {
                 M[i][j] = (norm[i]==0 || norm[j]==0) ? 0 :  M[i][j] / Math.sqrt(norm[i] * norm[j]);
             }
         }
-        writeMatrix("ftalign", M, xs.stream().map(x->x.getID().getCompoundName()).toArray(String[]::new), options.digits);
+        writeMatrix("ftalign", M, xs.stream().map(Instance::getName).toArray(String[]::new), options.digits);
 
     }
 
@@ -326,7 +328,7 @@ public class SimilarityMatrixWorkflow implements Workflow {
         final CosineQueryUtils cosineQueryUtils = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(config.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.multiply(2)));
         final double[][] M = new double[xs.size()][xs.size()];
         J.submitJob(MatrixUtils.parallelizeSymmetricMatrixComputation(M, (i,j)-> withAtLeast(cosineQueryUtils.cosineProductWithLosses(cosineQuerySpectrums[i],cosineQuerySpectrums[j]), minPeaks))).takeResult();
-        writeMatrix("cosine", M, xs.stream().map(x->x.getID().getCompoundName()).toArray(String[]::new), options.digits);
+        writeMatrix("cosine", M, xs.stream().map(Instance::getName).toArray(String[]::new), options.digits);
     }
 
     private static double withAtLeast(SpectralSimilarity similarity, int minPeaks) {
@@ -452,49 +454,4 @@ public class SimilarityMatrixWorkflow implements Workflow {
     private static double unsmooth(double val) {
         return unsmooth(val, 0.01);
     }
-
-    public void computePValueEstimation(List<Instance> xs) {
-        final ArrayList<ProbabilityFingerprint> fingerprintValues = new ArrayList<>();
-        for (Instance x : xs) {
-            fingerprintValues.add(x.loadTopFormulaResult(rankSores, FingerprintResult.class)
-                    .map(it -> it.getAnnotationOrThrow(FingerprintResult.class).fingerprint).orElseThrow());
-        }
-
-        final ProbabilityFingerprint[] fps = fingerprintValues.toArray(ProbabilityFingerprint[]::new);
-
-        final FingerIdData data = ps.getProjectSpaceProperty(FingerIdDataProperty.class).get().getByCharge(xs.get(0).getID().getIonType().orElseGet(() -> xs.get(0).getExperiment().getPrecursorIonType()).getCharge());
-
-    }
-/*
-    public double[][] pvalueEstimation(ProbabilityFingerprint[] fingerprints, FingerIdData data) {
-        final PredictionPerformance[] performances = data.getPerformances();
-        final double[] expectedFrequencies = new double[performances.length];
-        for (int k=0; k < performances.length; ++k) {
-            expectedFrequencies[k] = performances[k].getCount()/30d;
-        }
-        for (ProbabilityFingerprint fp : fingerprints) {
-            int k=0;
-            for (FPIter x : fp) {
-                expectedFrequencies[k] += unsmooth(x.getProbability(), 0.2);
-                ++k;
-            }
-        }
-        for (int i=0; i < expectedFrequencies.length; ++i) {
-            expectedFrequencies[i] /= (performances.length/30d + fingerprints.length);
-        }
-        final double[][] missmatches = new double[fingerprints.length][fingerprints.length];
-        MatrixUtils.parallelizeSymmetricMatrixComputation(missmatches, (i, j) -> {
-           double dist = 0;
-           for (FPIter2 pair : fingerprints[i].foreachPair(fingerprints[j])) {
-               dist += pair.getLeftProbability()*(1d-pair.getRightProbability()) + pair.getRightProbability()*(1d-pair.getLeftProbability());
-           }
-           return dist;
-        }).takeResult();
-
-        final SimpleIndepDP dp = new SimpleIndepDP(expectedFrequencies);
-        for (ProbabilityFingerprint fp : fingerprints) {
-
-        }
-    }
- */
 }

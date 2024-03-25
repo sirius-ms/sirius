@@ -72,7 +72,7 @@ public abstract class DataSetJob extends ToolChainJobImpl<Iterable<Instance>> im
                     try{
                         invalidateResults(ins);
                     } catch (Exception e){
-                        logWarn("Cannot invalidate results for "+ins.getID().getDirectoryName()+". Hence, this instance may be ignored in further computations. Error: "+e.getMessage());
+                        logWarn("Cannot invalidate results for "+ins.getId()+". Hence, this instance may be ignored in further computations. Error: "+e.getMessage());
                     }
                 });
             }

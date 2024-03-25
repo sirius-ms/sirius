@@ -18,6 +18,7 @@
 package de.unijena.bioinf.ms.frontend.subtools.sirius;
 
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.completion.DataSourceCandidates;
@@ -111,6 +112,15 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
         defaultConfigOptions.changeOption("FormulaSettings.enforced", elements);
     }
 
+    @Option(names = {"--elements-extended-organic"}, description = {"Use extended set of elements for molecular formula generation. DO NOT USE IN COMBINATION WITH DE NOVO FORMULA GENERATION!", " Enforced elements are: "+FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_ENFORCED_CHNOPFI_STRING, " Detectable elements are: "+FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrCl_STRING})
+    public void setEnforcedOrganicElements(boolean enabled) throws Exception {
+        if (enabled) {
+            defaultConfigOptions.changeOption("FormulaSettings.enforced", FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_ENFORCED_CHNOPFI_STRING);
+            defaultConfigOptions.changeOption("FormulaSettings.detectable", FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrCl_STRING);
+            defaultConfigOptions.changeOption("FormulaSettings.fallback", FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrCl_STRING);
+        }
+    }
+
     @Option(names = {"--database", "-d", "--db"}, descriptionKey = "FormulaSearchDB" , paramLabel = DataSourceCandidates.PATAM_LABEL, completionCandidates = DataSourceCandidates.class,
             description = {"Search formulas in the Union of the given databases. If no database is given all possible molecular formulas will be respected (no database is used).", DataSourceCandidates.VALID_DATA_STRING})
     public void setDatabase(DefaultParameter dbList) throws Exception {
@@ -139,13 +149,13 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     }
 
     //Adducts
-    @Option(names = {"-i", "--ions-considered"}, descriptionKey = "AdductSettings.detectable" , description = "Adducts which are considered during adduct detection. They are only used for further analyses if there is an indication in the MS1 scan. If none of them could be detected in MS1, all of them will be used as a fallback. Example: [M+H]+,[M-H]-,[M+Cl]-,[M+Na]+,[M]+,[M-H2O+H]+.")
+    @Option(names = {"-i", "--adducts-considered"}, descriptionKey = "AdductSettings.detectable" , description = "Adducts which are considered during adduct detection. They are only used for further analyses if there is an indication in the MS1 scan. If none of them could be detected in MS1, all of them will be used as a fallback. Example: [M+H]+,[M-H]-,[M+Cl]-,[M+Na]+,[M]+,[M-H2O+H]+.")
     public void setIonsConsidered(DefaultParameter adductList) throws Exception {
         defaultConfigOptions.changeOption("AdductSettings.detectable", adductList);
         defaultConfigOptions.changeOption("AdductSettings.fallback", adductList);
     }
 
-    @Option(names = {"-I", "--ions-enforced"}, descriptionKey = "AdductSettings.enforced", description = "Adducts that are always considered during the analysis. Example: [M+H]+,[M-H]-,[M+Cl]-,[M+Na]+,[M]+,[M-H2O+H]+.")
+    @Option(names = {"-I", "--adducts-enforced"}, descriptionKey = "AdductSettings.enforced", description = "Adducts that are always considered during the analysis. Example: [M+H]+,[M-H]-,[M+Cl]-,[M+Na]+,[M]+,[M-H2O+H]+.")
     public void setIonsEnforced(DefaultParameter adductList) throws Exception {
         defaultConfigOptions.changeOption("AdductSettings.enforced", adductList);
     }
@@ -200,12 +210,6 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
         }
     }
 
-    @Option(names = "--trust-ion-prediction", description = "By default we use MS1 information to select additional ionizations ([M+Na]+,[M+K]+,[M+Cl]-,[M+Br]-) for considerations. With this parameter we trust the MS1 prediction and only consider these found ionizations.", hidden = true)
-    public void setTrustGuessIonFromMS1(boolean trust) {
-        throw new IllegalArgumentException("Parameter not implemented!");
-        //todo manipulate adduct lists for marcus?????
-    }
-
     @Option(names = {"--mostintense-ms2"}, hidden = true,
             description = "Only use the fragmentation spectrum with the most intense precursor peak (for each compound).")
     public boolean mostIntenseMs2;
@@ -237,8 +241,7 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
         return inst -> {
             inst.deleteFormulaResults(); //this step creates the results, so we have to delete them before recompute
             inst.getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> it.remove(DetectedAdducts.Source.MS1_PREPROCESSOR.name()));
-            inst.getID().setDetectedAdducts(inst.getExperiment().getAnnotationOrNull(DetectedAdducts.class));
-            inst.updateCompoundID();
+            inst.saveDetectedAdducts(inst.getExperiment().getAnnotationOrNull(DetectedAdducts.class));
         };
     }
 

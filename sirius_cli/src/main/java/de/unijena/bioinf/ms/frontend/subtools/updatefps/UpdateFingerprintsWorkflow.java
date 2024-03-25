@@ -22,18 +22,14 @@ package de.unijena.bioinf.ms.frontend.subtools.updatefps;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
-import de.unijena.bioinf.ms.frontend.subtools.Provide;
+import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.projectspace.canopus.CanopusCfDataProperty;
-import de.unijena.bioinf.projectspace.canopus.CanopusNpcDataProperty;
-import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import org.slf4j.LoggerFactory;
-import picocli.CommandLine;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,15 +39,18 @@ import java.util.function.Consumer;
 
 public class UpdateFingerprintsWorkflow extends BasicMasterJJob<Boolean> implements Workflow {
 
-    private final ProjectSpaceManager<?> projectSpace;
+    private final PreprocessingJob<?> preprocessingJob;
 
-    public UpdateFingerprintsWorkflow(ProjectSpaceManager<?> projectSpace) {
+    public UpdateFingerprintsWorkflow(PreprocessingJob<?> preprocessingJob) {
         super(JobType.SCHEDULER);
-        this.projectSpace = projectSpace;
+        this.preprocessingJob = preprocessingJob;
     }
 
     @Override
     protected Boolean compute() throws Exception {
+        Iterable<? extends Instance> instances = SiriusJobs.getGlobalJobManager().submitJob(preprocessingJob).awaitResult();
+        ProjectSpaceManager projectSpace = instances.iterator().next().getProjectSpaceManager(); // todo Hacky: implement real multi project solution?!
+
         List<Consumer<Instance>> invalidators = new ArrayList<>();
         invalidators.add(new FingerprintOptions(null).getInvalidator());
         invalidators.add(new FingerblastOptions(null).getInvalidator());
@@ -61,16 +60,14 @@ public class UpdateFingerprintsWorkflow extends BasicMasterJJob<Boolean> impleme
         updateProgress(0, max, progress.getAndIncrement(), "Starting Update...");
         // remove fingerprint related results
         projectSpace.forEach(i -> invalidators.forEach(inv -> {
-            updateProgress(0, max, progress.getAndIncrement(), "Deleting results for '" + i.getID().getCompoundName() + "'...");
+            updateProgress(0, max, progress.getAndIncrement(), "Deleting results for '" + i.getName() + "'...");
             inv.accept(i);
         }));
         //remove Fingerprint data
         updateProgress(0, max, progress.getAndIncrement(), "delete CSI:FinerID Data");
-        projectSpace.deleteProjectSpaceProperty(FingerIdDataProperty.class);
-        updateProgress(0, max, progress.getAndIncrement(), "delete CANOPUS ClassyFire Data");
-        projectSpace.deleteProjectSpaceProperty(CanopusCfDataProperty.class);
-        updateProgress(0, max, progress.getAndIncrement(), "delete CANOPUS NPC Data");
-        projectSpace.deleteProjectSpaceProperty(CanopusNpcDataProperty.class);
+        projectSpace.deleteFingerIdData();
+        updateProgress(0, max, progress.getAndIncrement(), "delete CANOPUS Data");
+        projectSpace.deleteCanopusData();
         updateProgress(0, max, progress.get(), "DONE!");
         return true;
     }

@@ -25,7 +25,9 @@ User/developer friendly parameter subset for the Formula/SIRIUS tool  Can use re
 |**detectableElements** | **List&lt;String&gt;** | These configurations hold the information how to autodetect elements based on the given formula constraints.  Note: If the compound is already assigned to a specific molecular formula, this annotation is ignored.  &lt;p&gt;  Detectable: Detectable elements are added to the chemical alphabet, if there are indications for them (e.g. in isotope pattern) |  [optional] |
 |**ilpTimeout** | [**Timeout**](Timeout.md) |  |  [optional] |
 |**useHeuristic** | [**UseHeuristic**](UseHeuristic.md) |  |  [optional] |
-|**minScoreToInjectSpecLibMatch** | **Double** | Similarity Threshold to inject formula candidates no matter which score/rank they have or which filter settings are applied.  If threshold &gt;&#x3D; 0 formulas candidates with reference spectrum similarity above the threshold will be injected.  If NULL injection is disables. |  [optional] |
+|**injectSpecLibMatchFormulas** | **Boolean** | If true formula candidates that belong to spectral library matches above a certain threshold will  we inject/preserved for further analyses no matter which score they have or which filter is applied |  [optional] |
+|**minScoreToInjectSpecLibMatch** | **Double** | Similarity Threshold to inject formula candidates no matter which score/rank they have or which filter settings are applied.  If threshold &gt;&#x3D; 0 formulas candidates with reference spectrum similarity above the threshold will be injected. |  [optional] |
+|**minPeaksToInjectSpecLibMatch** | **Integer** | Matching peaks threshold to inject formula candidates no matter which score they have or which filter is applied. |  [optional] |
 
 
 

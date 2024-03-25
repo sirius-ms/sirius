@@ -222,10 +222,11 @@ public class ProjectsApi {
      * <p><b>200</b> - OK
      * @param projectId unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-].
      * @param pathToProject local file path where the project will be created. If NULL, project will be stored by its projectId in default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
+     * @param optFields The optFields parameter
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec createProjectSpaceRequestCreation(String projectId, String pathToProject) throws WebClientResponseException {
+    private ResponseSpec createProjectSpaceRequestCreation(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -242,6 +243,7 @@ public class ProjectsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "pathToProject", pathToProject));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
             "application/json"
@@ -262,12 +264,13 @@ public class ProjectsApi {
      * <p><b>200</b> - OK
      * @param projectId unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-].
      * @param pathToProject local file path where the project will be created. If NULL, project will be stored by its projectId in default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
+     * @param optFields The optFields parameter
      * @return ProjectInfo
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ProjectInfo createProjectSpace(String projectId, String pathToProject) throws WebClientResponseException {
+    public ProjectInfo createProjectSpace(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
-        return createProjectSpaceRequestCreation(projectId, pathToProject).bodyToMono(localVarReturnType).block();
+        return createProjectSpaceRequestCreation(projectId, pathToProject, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -276,12 +279,13 @@ public class ProjectsApi {
      * <p><b>200</b> - OK
      * @param projectId unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-].
      * @param pathToProject local file path where the project will be created. If NULL, project will be stored by its projectId in default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
+     * @param optFields The optFields parameter
      * @return ResponseEntity&lt;ProjectInfo&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<ProjectInfo> createProjectSpaceWithHttpInfo(String projectId, String pathToProject) throws WebClientResponseException {
+    public ResponseEntity<ProjectInfo> createProjectSpaceWithHttpInfo(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<ProjectInfo> localVarReturnType = new ParameterizedTypeReference<ProjectInfo>() {};
-        return createProjectSpaceRequestCreation(projectId, pathToProject).toEntity(localVarReturnType).block();
+        return createProjectSpaceRequestCreation(projectId, pathToProject, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -290,11 +294,12 @@ public class ProjectsApi {
      * <p><b>200</b> - OK
      * @param projectId unique name/identifier that shall be used to access the newly created project-space. Must consist only of [a-zA-Z0-9_-].
      * @param pathToProject local file path where the project will be created. If NULL, project will be stored by its projectId in default project location. DEPRECATED: This parameter relies on the local filesystem and will likely be removed in later versions of this API to allow for more flexible use cases.
+     * @param optFields The optFields parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec createProjectSpaceWithResponseSpec(String projectId, String pathToProject) throws WebClientResponseException {
-        return createProjectSpaceRequestCreation(projectId, pathToProject);
+    public ResponseSpec createProjectSpaceWithResponseSpec(String projectId, String pathToProject, List<ProjectInfoOptField> optFields) throws WebClientResponseException {
+        return createProjectSpaceRequestCreation(projectId, pathToProject, optFields);
     }
     /**
      * Get CANOPUS prediction vector definition for ClassyFire classes

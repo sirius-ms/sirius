@@ -50,7 +50,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Sirius.JSON_PROPERTY_DETECTABLE_ELEMENTS,
   Sirius.JSON_PROPERTY_ILP_TIMEOUT,
   Sirius.JSON_PROPERTY_USE_HEURISTIC,
-  Sirius.JSON_PROPERTY_MIN_SCORE_TO_INJECT_SPEC_LIB_MATCH
+  Sirius.JSON_PROPERTY_INJECT_SPEC_LIB_MATCH_FORMULAS,
+  Sirius.JSON_PROPERTY_MIN_SCORE_TO_INJECT_SPEC_LIB_MATCH,
+  Sirius.JSON_PROPERTY_MIN_PEAKS_TO_INJECT_SPEC_LIB_MATCH
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class Sirius {
@@ -142,8 +144,14 @@ public class Sirius {
   public static final String JSON_PROPERTY_USE_HEURISTIC = "useHeuristic";
   private UseHeuristic useHeuristic;
 
+  public static final String JSON_PROPERTY_INJECT_SPEC_LIB_MATCH_FORMULAS = "injectSpecLibMatchFormulas";
+  private Boolean injectSpecLibMatchFormulas;
+
   public static final String JSON_PROPERTY_MIN_SCORE_TO_INJECT_SPEC_LIB_MATCH = "minScoreToInjectSpecLibMatch";
   private Double minScoreToInjectSpecLibMatch;
+
+  public static final String JSON_PROPERTY_MIN_PEAKS_TO_INJECT_SPEC_LIB_MATCH = "minPeaksToInjectSpecLibMatch";
+  private Integer minPeaksToInjectSpecLibMatch;
 
   public Sirius() {
   }
@@ -606,6 +614,32 @@ public class Sirius {
   }
 
 
+  public Sirius injectSpecLibMatchFormulas(Boolean injectSpecLibMatchFormulas) {
+    
+    this.injectSpecLibMatchFormulas = injectSpecLibMatchFormulas;
+    return this;
+  }
+
+   /**
+   * If true formula candidates that belong to spectral library matches above a certain threshold will  we inject/preserved for further analyses no matter which score they have or which filter is applied
+   * @return injectSpecLibMatchFormulas
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_INJECT_SPEC_LIB_MATCH_FORMULAS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isInjectSpecLibMatchFormulas() {
+    return injectSpecLibMatchFormulas;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_INJECT_SPEC_LIB_MATCH_FORMULAS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setInjectSpecLibMatchFormulas(Boolean injectSpecLibMatchFormulas) {
+    this.injectSpecLibMatchFormulas = injectSpecLibMatchFormulas;
+  }
+
+
   public Sirius minScoreToInjectSpecLibMatch(Double minScoreToInjectSpecLibMatch) {
     
     this.minScoreToInjectSpecLibMatch = minScoreToInjectSpecLibMatch;
@@ -613,7 +647,7 @@ public class Sirius {
   }
 
    /**
-   * Similarity Threshold to inject formula candidates no matter which score/rank they have or which filter settings are applied.  If threshold &gt;&#x3D; 0 formulas candidates with reference spectrum similarity above the threshold will be injected.  If NULL injection is disables.
+   * Similarity Threshold to inject formula candidates no matter which score/rank they have or which filter settings are applied.  If threshold &gt;&#x3D; 0 formulas candidates with reference spectrum similarity above the threshold will be injected.
    * @return minScoreToInjectSpecLibMatch
   **/
   @jakarta.annotation.Nullable
@@ -629,6 +663,32 @@ public class Sirius {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMinScoreToInjectSpecLibMatch(Double minScoreToInjectSpecLibMatch) {
     this.minScoreToInjectSpecLibMatch = minScoreToInjectSpecLibMatch;
+  }
+
+
+  public Sirius minPeaksToInjectSpecLibMatch(Integer minPeaksToInjectSpecLibMatch) {
+    
+    this.minPeaksToInjectSpecLibMatch = minPeaksToInjectSpecLibMatch;
+    return this;
+  }
+
+   /**
+   * Matching peaks threshold to inject formula candidates no matter which score they have or which filter is applied.
+   * @return minPeaksToInjectSpecLibMatch
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_MIN_PEAKS_TO_INJECT_SPEC_LIB_MATCH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Integer getMinPeaksToInjectSpecLibMatch() {
+    return minPeaksToInjectSpecLibMatch;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_MIN_PEAKS_TO_INJECT_SPEC_LIB_MATCH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setMinPeaksToInjectSpecLibMatch(Integer minPeaksToInjectSpecLibMatch) {
+    this.minPeaksToInjectSpecLibMatch = minPeaksToInjectSpecLibMatch;
   }
 
   @Override
@@ -657,12 +717,14 @@ public class Sirius {
         Objects.equals(this.detectableElements, sirius.detectableElements) &&
         Objects.equals(this.ilpTimeout, sirius.ilpTimeout) &&
         Objects.equals(this.useHeuristic, sirius.useHeuristic) &&
-        Objects.equals(this.minScoreToInjectSpecLibMatch, sirius.minScoreToInjectSpecLibMatch);
+        Objects.equals(this.injectSpecLibMatchFormulas, sirius.injectSpecLibMatchFormulas) &&
+        Objects.equals(this.minScoreToInjectSpecLibMatch, sirius.minScoreToInjectSpecLibMatch) &&
+        Objects.equals(this.minPeaksToInjectSpecLibMatch, sirius.minPeaksToInjectSpecLibMatch);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(enabled, profile, numberOfCandidates, numberOfCandidatesPerIonization, massAccuracyMS2ppm, isotopeMs2Settings, filterByIsotopePattern, enforceElGordoFormula, performBottomUpSearch, performDenovoBelowMz, formulaSearchDBs, applyFormulaConstraintsToDBAndBottomUpSearch, enforcedFormulaConstraints, fallbackFormulaConstraints, detectableElements, ilpTimeout, useHeuristic, minScoreToInjectSpecLibMatch);
+    return Objects.hash(enabled, profile, numberOfCandidates, numberOfCandidatesPerIonization, massAccuracyMS2ppm, isotopeMs2Settings, filterByIsotopePattern, enforceElGordoFormula, performBottomUpSearch, performDenovoBelowMz, formulaSearchDBs, applyFormulaConstraintsToDBAndBottomUpSearch, enforcedFormulaConstraints, fallbackFormulaConstraints, detectableElements, ilpTimeout, useHeuristic, injectSpecLibMatchFormulas, minScoreToInjectSpecLibMatch, minPeaksToInjectSpecLibMatch);
   }
 
   @Override
@@ -686,7 +748,9 @@ public class Sirius {
     sb.append("    detectableElements: ").append(toIndentedString(detectableElements)).append("\n");
     sb.append("    ilpTimeout: ").append(toIndentedString(ilpTimeout)).append("\n");
     sb.append("    useHeuristic: ").append(toIndentedString(useHeuristic)).append("\n");
+    sb.append("    injectSpecLibMatchFormulas: ").append(toIndentedString(injectSpecLibMatchFormulas)).append("\n");
     sb.append("    minScoreToInjectSpecLibMatch: ").append(toIndentedString(minScoreToInjectSpecLibMatch)).append("\n");
+    sb.append("    minPeaksToInjectSpecLibMatch: ").append(toIndentedString(minPeaksToInjectSpecLibMatch)).append("\n");
     sb.append("}");
     return sb.toString();
   }

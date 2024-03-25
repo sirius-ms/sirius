@@ -60,7 +60,7 @@ public class SpectralLibraryMatch {
   private String dbId;
 
   public static final String JSON_PROPERTY_UUID = "uuid";
-  private String uuid;
+  private Long uuid;
 
   public static final String JSON_PROPERTY_SPLASH = "splash";
   private String splash;
@@ -216,7 +216,7 @@ public class SpectralLibraryMatch {
   }
 
 
-  public SpectralLibraryMatch uuid(String uuid) {
+  public SpectralLibraryMatch uuid(Long uuid) {
     
     this.uuid = uuid;
     return this;
@@ -230,14 +230,14 @@ public class SpectralLibraryMatch {
   @JsonProperty(JSON_PROPERTY_UUID)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
-  public String getUuid() {
+  public Long getUuid() {
     return uuid;
   }
 
 
   @JsonProperty(JSON_PROPERTY_UUID)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setUuid(String uuid) {
+  public void setUuid(Long uuid) {
     this.uuid = uuid;
   }
 

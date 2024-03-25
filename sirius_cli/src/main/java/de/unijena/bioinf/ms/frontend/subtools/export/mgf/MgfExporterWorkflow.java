@@ -32,10 +32,8 @@ import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.mgf.MgfWriter;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
-import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.translate.CsvTranslators;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +46,6 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
 
 /**
  * Standalone-Tool to export spectra to mgf format.
@@ -56,13 +53,13 @@ import java.util.function.Consumer;
 public class MgfExporterWorkflow implements Workflow {
     private final Path outputPath;
     private final MgfWriter mgfWriter;
-    private final PreprocessingJob<? extends Iterable<Instance>> ppj;
+    private final PreprocessingJob<?> ppj;
     private final Optional<Path> quantPath;
 
     private final AtomicBoolean useFeatureId;
 
 
-    public MgfExporterWorkflow(PreprocessingJob<? extends Iterable<Instance>> ppj, MgfExporterOptions options, ParameterConfig config) {
+    public MgfExporterWorkflow(PreprocessingJob<?> ppj, MgfExporterOptions options) {
         outputPath = options.output;
         Deviation mergeMs2Deviation = new Deviation(options.ppmDev);
         mgfWriter = new MgfWriter(options.writeMs1, options.mergeMs2, mergeMs2Deviation, true);
@@ -75,48 +72,34 @@ public class MgfExporterWorkflow implements Workflow {
     @Override
     public void run() {
         try {
-            final Iterable<Instance> ps = SiriusJobs.getGlobalJobManager().submitJob(ppj).awaitResult();
-            boolean zeroIndex;
+            final Iterable<? extends Instance> ps = SiriusJobs.getGlobalJobManager().submitJob(ppj).awaitResult();
             {
-                final AtomicInteger minIndex = new AtomicInteger(Integer.MAX_VALUE);
                 final AtomicInteger size = new AtomicInteger(0);
                 final Set<String> ids = new HashSet<>();
-                final Consumer<CompoundContainerId> checkId = id -> {
+
+                ps.forEach(i -> {
                     size.incrementAndGet();
-                    minIndex.set(Math.min(minIndex.get(), id.getCompoundIndex()));
                     if (useFeatureId.get())
-                        id.getFeatureId().ifPresentOrElse(ids::add, (() -> useFeatureId.set(false)));
-                };
+                        i.getProvidedFeatureId().ifPresentOrElse(ids::add, (() -> useFeatureId.set(false)));
+                });
 
-                if (ps instanceof ProjectSpaceManager)
-                    ((ProjectSpaceManager<Instance>) ps).projectSpace().forEach(checkId);
-                else
-                    ps.forEach(i -> checkId.accept(i.getID()));
+                useFeatureId.set(ids.size() >= size.get());
 
-                if (ids.size() < size.get())
-                    useFeatureId.set(false);
-                zeroIndex = minIndex.get() <= 0;
-                if (useFeatureId.get()){
-                    LoggerFactory.getLogger(getClass()).info("Using imported/generated feature ids.");
-                }else {
-                    LoggerFactory.getLogger(getClass()).info("Using SIRIUS internal IDs as feature ids.");
-                    if (zeroIndex)
-                        LoggerFactory.getLogger(getClass()).warn("Index value 0 found (old project-space format). Using index + 1 as Feature ID to make them compatible with GNPS FBMN.");
-                }
+                LoggerFactory.getLogger(getClass()).info(useFeatureId.get()
+                        ? "Using provided feature ids."
+                        : "Using SIRIUS internal IDs as feature ids.");
+
             }
 
 
             try (final BufferedWriter writer = Files.newBufferedWriter(outputPath)) {
                 for (Instance inst : ps) {
                     try {
-                        final String fid = useFeatureId.get() && inst.getID().getFeatureId().isPresent()
-                                ? inst.getID().getFeatureId().get()
-                                : extractFid(inst, zeroIndex);
-                        mgfWriter.write(writer, inst.getExperiment(), fid);
+                        mgfWriter.write(writer, inst.getExperiment(), extractFid(inst));
                     } catch (IOException e) {
                         throw e;
                     } catch (Exception e) {
-                        LoggerFactory.getLogger(getClass()).warn("Invalid instance '" + inst.getID() + "'. Skipping this instance!", e);
+                        LoggerFactory.getLogger(getClass()).warn("Invalid instance '" + inst + "'. Skipping this instance!", e);
                     } finally {
                         inst.clearCompoundCache();
                         inst.clearFormulaResultsCache();
@@ -125,7 +108,7 @@ public class MgfExporterWorkflow implements Workflow {
             }
             quantPath.ifPresent(path -> {
                 try {
-                    writeQuantifiactionTable(ps, path, zeroIndex);
+                    writeQuantifiactionTable(ps, path);
                 } catch (IOException e) {
                     LoggerFactory.getLogger(MgfExporterWorkflow.class).error(e.getMessage(), e);
                 }
@@ -137,11 +120,13 @@ public class MgfExporterWorkflow implements Workflow {
         }
     }
 
-    private String extractFid(Instance inst, boolean zeroIndex){
-        return String.valueOf(zeroIndex ? inst.getID().getCompoundIndex() + 1 : inst.getID().getCompoundIndex());
+    private String extractFid(Instance i) {
+        return useFeatureId.get() && i.getProvidedFeatureId().map(StringUtils::isNumeric).orElse(false)
+                ? i.getProvidedFeatureId().get()
+                : i.getLongId().map(String::valueOf).orElseGet(i::getId);
     }
 
-    private void writeQuantifiactionTable(Iterable<Instance> ps, Path path, boolean zeroIndex) throws IOException {
+    private void writeQuantifiactionTable(Iterable<? extends Instance> ps, Path path) throws IOException {
         final HashMap<String, QuantInfo> compounds = new HashMap<>();
         final Set<String> sampleNames = new HashSet<>();
 
@@ -150,13 +135,11 @@ public class MgfExporterWorkflow implements Workflow {
                 final Ms2Experiment experiment = i.getExperiment();
                 getQuantificationTable(i, experiment).ifPresent(quant -> {
                     for (int j = 0; j < quant.length(); ++j) sampleNames.add(quant.getName(j));
-                    final String fid = useFeatureId.get() && i.getID().getFeatureId().isPresent()
-                            ? i.getID().getFeatureId().get()
-                            : extractFid(i, zeroIndex);
 
-                    compounds.put(fid, new QuantInfo(
-                            experiment.getIonMass(),
-                            experiment.getAnnotation(RetentionTime.class).orElse(new RetentionTime(0d)).getRetentionTimeInSeconds() / 60d, //use min
+                    compounds.put(extractFid(i), new QuantInfo(experiment.getIonMass(),
+                            experiment.getAnnotation(RetentionTime.class)
+                                    .orElse(new RetentionTime(0d))
+                                    .getRetentionTimeInSeconds() / 60d, //use min
                             quant
                     ));
                 });
@@ -194,7 +177,8 @@ public class MgfExporterWorkflow implements Workflow {
     }
 
     private Optional<QuantificationTable> getQuantificationTable(Instance i, Ms2Experiment experiment) {
-        LCMSPeakInformation lcms = i.loadCompoundContainer(LCMSPeakInformation.class).getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
+        LCMSPeakInformation lcms = i.loadCompoundContainer(LCMSPeakInformation.class)
+                .getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
         if (lcms.isEmpty()) {
             lcms = experiment.getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
         }

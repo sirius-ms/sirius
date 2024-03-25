@@ -32,8 +32,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonPropertyOrder({
   CommandSubmission.JSON_PROPERTY_COMPOUND_IDS,
   CommandSubmission.JSON_PROPERTY_ALIGNED_FEATURE_IDS,
-  CommandSubmission.JSON_PROPERTY_COMMAND,
-  CommandSubmission.JSON_PROPERTY_INPUT_PATHS
+  CommandSubmission.JSON_PROPERTY_COMMAND
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class CommandSubmission {
@@ -45,9 +44,6 @@ public class CommandSubmission {
 
   public static final String JSON_PROPERTY_COMMAND = "command";
   private List<String> command = new ArrayList<>();
-
-  public static final String JSON_PROPERTY_INPUT_PATHS = "inputPaths";
-  private List<String> inputPaths;
 
   public CommandSubmission() {
   }
@@ -153,40 +149,6 @@ public class CommandSubmission {
     this.command = command;
   }
 
-
-  public CommandSubmission inputPaths(List<String> inputPaths) {
-    
-    this.inputPaths = inputPaths;
-    return this;
-  }
-
-  public CommandSubmission addInputPathsItem(String inputPathsItem) {
-    if (this.inputPaths == null) {
-      this.inputPaths = new ArrayList<>();
-    }
-    this.inputPaths.add(inputPathsItem);
-    return this;
-  }
-
-   /**
-   * Get inputPaths
-   * @return inputPaths
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_INPUT_PATHS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public List<String> getInputPaths() {
-    return inputPaths;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_INPUT_PATHS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setInputPaths(List<String> inputPaths) {
-    this.inputPaths = inputPaths;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -198,13 +160,12 @@ public class CommandSubmission {
     CommandSubmission commandSubmission = (CommandSubmission) o;
     return Objects.equals(this.compoundIds, commandSubmission.compoundIds) &&
         Objects.equals(this.alignedFeatureIds, commandSubmission.alignedFeatureIds) &&
-        Objects.equals(this.command, commandSubmission.command) &&
-        Objects.equals(this.inputPaths, commandSubmission.inputPaths);
+        Objects.equals(this.command, commandSubmission.command);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(compoundIds, alignedFeatureIds, command, inputPaths);
+    return Objects.hash(compoundIds, alignedFeatureIds, command);
   }
 
   @Override
@@ -214,7 +175,6 @@ public class CommandSubmission {
     sb.append("    compoundIds: ").append(toIndentedString(compoundIds)).append("\n");
     sb.append("    alignedFeatureIds: ").append(toIndentedString(alignedFeatureIds)).append("\n");
     sb.append("    command: ").append(toIndentedString(command)).append("\n");
-    sb.append("    inputPaths: ").append(toIndentedString(inputPaths)).append("\n");
     sb.append("}");
     return sb.toString();
   }

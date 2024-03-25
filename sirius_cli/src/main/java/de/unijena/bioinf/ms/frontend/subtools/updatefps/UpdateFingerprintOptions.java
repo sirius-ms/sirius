@@ -30,7 +30,7 @@ import picocli.CommandLine;
 public class UpdateFingerprintOptions implements StandaloneTool<UpdateFingerprintsWorkflow> {
 
     @Override
-    public UpdateFingerprintsWorkflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
-        return new UpdateFingerprintsWorkflow(rootOptions.getProjectSpace());
+    public UpdateFingerprintsWorkflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
+        return new UpdateFingerprintsWorkflow(rootOptions.makeDefaultPreprocessingJob());
     }
 }

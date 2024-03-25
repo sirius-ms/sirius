@@ -55,7 +55,7 @@ public class SpectralLibraryMatch {
     private final String dbId;
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-    private final String uuid;
+    private final long uuid;
 
     private final String splash;
 

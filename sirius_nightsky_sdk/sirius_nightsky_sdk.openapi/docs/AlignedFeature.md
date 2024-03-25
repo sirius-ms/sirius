@@ -2,7 +2,7 @@
 
 # AlignedFeature
 
-The AlignedFeature contains the ID of a featured (aligned over runs) together with some read-only information  that might be displayed in some summary view.
+The AlignedFeature contains the ID of a feature (aligned over runs) together with some read-only information  that might be displayed in some summary view.
 
 ## Properties
 
@@ -10,7 +10,6 @@ The AlignedFeature contains the ID of a featured (aligned over runs) together wi
 |------------ | ------------- | ------------- | -------------|
 |**alignedFeatureId** | **String** |  |  [optional] |
 |**name** | **String** |  |  [optional] |
-|**index** | **Long** |  |  [optional] |
 |**ionMass** | **Double** |  |  [optional] |
 |**adduct** | **String** |  |  [optional] |
 |**rtStartSeconds** | **Double** |  |  [optional] |

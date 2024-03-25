@@ -50,7 +50,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
     final JComboBox<String> themeBox;
 
     final FileChooserPanel db;
-    final JComboBox<String> solver;
+    final JComboBox<String> solver, confidenceDisplayMode;
     private boolean restartRequired = false;
 
     final JCheckBox allowMS1Only, ignoreFormulas;
@@ -83,6 +83,13 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         ignoreFormulas.setSelected(Boolean.parseBoolean(props.getProperty("de.unijena.bioinf.sirius.ui.ignoreFormulas","false")));
         ignoreFormulas.setToolTipText(GuiUtils.formatToolTip("If checked molecular formula and structure annotations will be ignored during import when  given in the input file."));
         addNamed("Ignore formulas", ignoreFormulas);
+        add(new JXTitledSeparator("Display settings"));
+        Vector<String> modes =  new Vector<>(Arrays.asList("approximate (default)","exact"));
+        String selectedMode = props.getProperty("de.unijena.bioinf.sirius.ui.confidenceDisplayMode");
+        confidenceDisplayMode = new JComboBox<>(modes);
+        confidenceDisplayMode.setSelectedItem(selectedMode);
+        confidenceDisplayMode.setToolTipText(GuiUtils.formatToolTip("Select the confidence score display mode. \"exact\" will show confidences for the exact top hit structure to be correct. \"approximate\" will show confidences for the top hit or a sufficiently similar structure to be correct. Structure candidates that are within the similarity threshold are marked in green"));
+        add(new JLabel("Confidence score display mode"),confidenceDisplayMode);
 
         add(new JXTitledSeparator("ILP solver"));
         Vector<String> items = new Vector<>(Arrays.asList("clp,cplex,gurobi,glpk", "cplex,gurobi,clp,glpk", "cplex,clp,glpk", "gurobi,clp,glpk", "clp,glpk", "glpk,clp", "gurobi", "cplex", "clp", "glpk"));
@@ -129,7 +136,9 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         props.setProperty("de.unijena.bioinf.sirius.treebuilder.solvers", (String) solver.getSelectedItem());
         props.setProperty("de.unijena.bioinf.sirius.ui.allowMs1Only", String.valueOf(allowMS1Only.isSelected()));
         props.setProperty("de.unijena.bioinf.sirius.ui.ignoreFormulas", String.valueOf(ignoreFormulas.isSelected()));
+        props.setProperty("de.unijena.bioinf.sirius.ui.confidenceDisplayMode",String.valueOf(confidenceDisplayMode.getSelectedItem()));
 //        props.setProperty("de.unijena.bioinf.sirius.treebuilder.timeout", treeTimeout.getNumber().toString());
+
         final Path dir = Paths.get(db.getFilePath());
         if (Files.isDirectory(dir)) {
             props.setProperty("de.unijena.bioinf.sirius.fingerID.cache", dir.toAbsolutePath().toString());
