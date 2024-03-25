@@ -27,12 +27,13 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
-import de.unijena.bioinf.fingerid.*;
+import de.unijena.bioinf.fingerid.CSIPredictor;
+import de.unijena.bioinf.fingerid.FingerIdResult;
+import de.unijena.bioinf.fingerid.FingerblastJJob;
+import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
-import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
@@ -47,7 +48,6 @@ import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagers;
 import de.unijena.bioinf.rest.NetUtils;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.apache.commons.math3.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -162,47 +162,13 @@ public class FingerblastSubToolJob extends InstanceJob {
             updateProgress(70);
             jobs.forEach(JJob::getResult);
 
-            updateProgress(80);
+            updateProgress(85);
             checkForInterruption();
         }
 
+
         //annotate FingerIdResults to FormulaResult
-        for (Map.Entry<FormulaResult, FingerIdResult> entry : formulaResultsMap.entrySet()) {
-            final FormulaResult formRes = entry.getKey();
-            final FingerIdResult structRes = entry.getValue();
-            assert structRes.sourceTree == formRes.getAnnotationOrThrow(FTree.class);
-
-            // annotate results
-            formRes.setAnnotation(FBCandidates.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getCandidates).orElse(null));
-            formRes.setAnnotation(FBCandidateFingerprints.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getCandidateFingerprints).orElse(null));
-            formRes.setAnnotation(StructureSearchResult.class, structRes.getAnnotation(StructureSearchResult.class).orElse(null));
-            // add scores
-            formRes.getAnnotationOrThrow(FormulaScoring.class)
-                    .setAnnotation(TopCSIScore.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getTopHitScore).orElse(null));
-            formRes.getAnnotationOrThrow(FormulaScoring.class)
-                    .setAnnotation(ConfidenceScore.class, structRes.getAnnotation(ConfidenceResult.class).map(x -> x.score).orElse(null));
-            formRes.getAnnotationOrThrow(FormulaScoring.class)
-                    .setAnnotation(ConfidenceScoreApproximate.class, structRes.getAnnotation(ConfidenceResult.class).map(x -> x.scoreApproximate).orElse(null));
-
-            // write results
-            inst.updateFormulaResult(formRes,
-                    FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class, StructureSearchResult.class);
-        }
-        updateProgress(90);
-
-        inst.loadTopFormulaResult(List.of(TopCSIScore.class, SiriusScore.class))
-                .flatMap(r -> r.getAnnotation(StructureSearchResult.class))
-                .ifPresentOrElse(sr -> {
-                    inst.getCompoundContainerId().setConfidenceScore(sr.getConfidenceScore());
-                    inst.getCompoundContainerId().setConfidenceScoreApproximate(sr.getConfidenceScore());
-                    inst.getCompoundContainerId().setUseApproximate(sr.getExpansiveSearchConfidenceMode() != ExpansiveSearchConfidenceMode.Mode.EXACT);
-                }, () -> {
-                    inst.getCompoundContainerId().setConfidenceScore(null);
-                    inst.getCompoundContainerId().setConfidenceScoreApproximate(null);
-                    inst.getCompoundContainerId().setUseApproximate(false);
-                });
-
-        inst.updateCompoundID();
+        inst.saveStructureSearchResults(formulaResultsMap);
         updateProgress(97);
 
     }

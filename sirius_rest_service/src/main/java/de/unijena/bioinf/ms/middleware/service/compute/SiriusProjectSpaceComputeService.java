@@ -121,7 +121,7 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
                                   @NotNull EnumSet<Job.OptField> optFields) {
         Iterable<Instance> instances = extractCompoundIds(jobSubmission, psmI);
         if (instances == null)
-            instances = (Iterable<Instance>) psmI.getProjectSpaceManager();
+            instances = psmI.getProjectSpaceManager();
 
         try {
             List<String> commandList = jobSubmission.asCommand();
@@ -146,7 +146,7 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
                 alignedFeatureIds.forEach(id -> instances.add(psmI.loadInstance(id)));
                 run = backgroundRuns(psmI).runCommand(commandList, instances);
             } else {
-                run = backgroundRuns(psmI).runCommand(commandList, (Iterable<Instance>) psmI.getProjectSpaceManager());
+                run = backgroundRuns(psmI).runCommand(commandList, psmI.getProjectSpaceManager());
             }
 
             registerServerEventListener(run, psmI.getProjectId());

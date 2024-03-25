@@ -23,14 +23,14 @@ package de.unijena.bioinf.projectspace;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
+import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.babelms.projectspace.PassatuttoSerializer;
 import de.unijena.bioinf.canopus.CanopusResult;
+import de.unijena.bioinf.fingerid.ConfidenceScore;
+import de.unijena.bioinf.fingerid.ConfidenceScoreApproximate;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.StructureSearchResult;
-import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
-import de.unijena.bioinf.fingerid.blast.FBCandidates;
-import de.unijena.bioinf.fingerid.blast.MsNovelistFBCandidateFingerprints;
-import de.unijena.bioinf.fingerid.blast.MsNovelistFBCandidates;
+import de.unijena.bioinf.fingerid.blast.*;
 import de.unijena.bioinf.networks.serialization.ConnectionTable;
 import de.unijena.bioinf.networks.serialization.ConnectionTableSerializer;
 import de.unijena.bioinf.passatutto.Decoy;
@@ -38,6 +38,9 @@ import de.unijena.bioinf.projectspace.canopus.CanopusCfDataProperty;
 import de.unijena.bioinf.projectspace.canopus.CanopusNpcDataProperty;
 import de.unijena.bioinf.projectspace.canopus.CanopusSerializer;
 import de.unijena.bioinf.projectspace.fingerid.*;
+import de.unijena.bioinf.sirius.scores.IsotopeScore;
+import de.unijena.bioinf.sirius.scores.SiriusScore;
+import de.unijena.bioinf.sirius.scores.TreeScore;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,9 +56,11 @@ public final class SiriusProjectSpaceManagerFactory implements ProjectSpaceManag
     @NotNull
     public static Supplier<ProjectSpaceConfiguration> DEFAULT_CONFIG = () -> {
         final ProjectSpaceConfiguration config = new ProjectSpaceConfiguration();
+        config.defineDefaultRankingScores(ConfidenceScoreApproximate.class, ConfidenceScore.class, TopCSIScore.class, ZodiacScore.class, SiriusScore.class, TreeScore.class, IsotopeScore.class);
         //configure ProjectSpaceProperties
         config.defineProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSPropertySerializer());
         config.defineProjectSpaceProperty(CompressionFormat.class, new CompressionFormat.Serializer());
+        config.defineProjectSpaceProperty(VersionInfo.class, new VersionInfo.Serializer());
         config.defineProjectSpaceProperty(VersionInfo.class, new VersionInfo.Serializer());
         //configure compound container
         config.registerContainer(CompoundContainer.class, new CompoundContainerSerializer());
