@@ -28,7 +28,7 @@ import java.util.Comparator;
 public class OrderCompoundById extends AbstractGuiAction {
 
     public OrderCompoundById(SiriusGui gui) {
-        super("Order by its ID", gui);
+        super("Order by ID", gui);
     }
 
     @Override

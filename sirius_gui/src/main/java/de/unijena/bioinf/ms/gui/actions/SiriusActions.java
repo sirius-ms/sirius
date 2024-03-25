@@ -40,7 +40,7 @@ public enum SiriusActions {
 
     COMPUTE(ComputeAction.class),
     COMPUTE_ALL(ComputeAllAction.class),
-    ORDER_BY_INDEX(OrderCompoundById.class),
+    ORDER_BY_ID(OrderCompoundById.class),
     ORDER_BY_RT(OrderCompoundByRT.class),
     ORDER_BY_MASS(OrderCompoundByMass.class),
     ORDER_BY_NAME(OrderCompoundByName.class),
