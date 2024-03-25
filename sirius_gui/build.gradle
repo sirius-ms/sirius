@@ -3,8 +3,8 @@ apply plugin: 'java-library'
 mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
 
 dependencies {
-    compileOnly 'org.projectlombok:lombok:1.18.26'
-    annotationProcessor 'org.projectlombok:lombok:1.18.26'
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
 //project
     implementation(project(':sirius_cli')){
 //        exclude group: "de.unijena.bioinf.ms", module: "sirius_web_client"

@@ -26,6 +26,7 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectDirectoryFilter;
+import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectInfoOptField;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.File;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 
@@ -108,7 +110,7 @@ public class ProjectCreateAction extends ProjectOpenAction {
         try {
             String pid = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Creating Project...", () ->
                     gui.getSiriusClient().projects()
-                            .createProjectSpace(projectPath.getFileName().toString(), projectPath.toAbsolutePath().toString())
+                            .createProjectSpace(projectPath.getFileName().toString(), projectPath.toAbsolutePath().toString(), List.of(ProjectInfoOptField.NONE))
                             .getProjectId()
 
             ).awaitResult();

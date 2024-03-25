@@ -97,7 +97,7 @@ public class ImportAction extends AbstractGuiAction {
     //ATTENTION Synchronizing around background tasks that block gui thread is dangerous
     public synchronized void importOneExperimentPerLocation(@NotNull final InputFilesOptions input, Window popupOwner) {
         boolean lcms = Jobs.runInBackgroundAndLoad(popupOwner, "Analyzing input...", () ->
-                        (!input.msInput.msParserfiles.isEmpty() && input.msInput.projects.isEmpty() && input.msInput.msParserfiles.keySet().stream().map(p -> p.getFileName().toString().toLowerCase()).allMatch(n -> n.endsWith(".mzml") || n.endsWith(".mzxml"))))
+                        (!input.msInput.msParserfiles.isEmpty() && input.msInput.msParserfiles.keySet().stream().map(p -> p.getFileName().toString().toLowerCase()).allMatch(n -> n.endsWith(".mzml") || n.endsWith(".mzxml"))))
                 .getResult();
 
         // todo this is hacky we need some real view for that at some stage.

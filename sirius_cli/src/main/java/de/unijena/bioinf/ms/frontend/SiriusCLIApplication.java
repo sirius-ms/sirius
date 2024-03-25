@@ -32,7 +32,7 @@ import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.WorkFlowSupplier;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import de.unijena.bioinf.projectspace.SiriusProjectSpaceManagerFactory;
 import de.unijena.bioinf.rest.ProxyManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -73,10 +73,9 @@ public class SiriusCLIApplication {
 
             configureShutDownHook(shutdownWebservice());
             measureTime("Start Run method");
-            run(args, () -> {
-                final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-                return new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader, new SimpleInstanceBuffer.Factory(), injectTools);
-            });
+            run(args, () -> new WorkflowBuilder(
+                    new CLIRootOptions(new DefaultParameterConfigLoader(), new SiriusProjectSpaceManagerFactory()),
+                    new SimpleInstanceBuffer.Factory(), injectTools));
         } finally {
             System.exit(0);
         }
@@ -138,7 +137,8 @@ public class SiriusCLIApplication {
             measureTime("init Run");
             RUN = new Run(supplier.make());
             measureTime("Start Parse args");
-            successfulParsed = RUN.parseArgs(args);
+            RUN.parseArgs(args);
+            successfulParsed = RUN.makeWorkflow() != null;
             measureTime("Parse args Done!");
             if (successfulParsed) {
                 measureTime("Compute");

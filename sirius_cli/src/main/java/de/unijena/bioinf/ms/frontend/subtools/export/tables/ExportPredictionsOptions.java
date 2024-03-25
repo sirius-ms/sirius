@@ -21,7 +21,6 @@ package de.unijena.bioinf.ms.frontend.subtools.export.tables;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
@@ -33,14 +32,8 @@ import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
-import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.canopus.CanopusCfDataProperty;
-import de.unijena.bioinf.projectspace.canopus.CanopusNpcDataProperty;
-import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
@@ -71,8 +64,8 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
     protected PredictionsOptions predictionsOptions;
 
     @Override
-    public ExportPredictionWorkflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
-        return new ExportPredictionWorkflow((PreprocessingJob<? extends Iterable<Instance>>) rootOptions.makeDefaultPreprocessingJob(), this, config);
+    public ExportPredictionWorkflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
+        return new ExportPredictionWorkflow(rootOptions.makeDefaultPreprocessingJob(), this, config);
     }
 
     public static class ExportPredictionJJob extends BasicJJob<Boolean> {
@@ -139,7 +132,7 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
                     } catch (IOException e) {
                         throw e;
                     } catch (Exception e) {
-                        LoggerFactory.getLogger(getClass()).warn("Invalid instance '" + inst.getID() + "'. Skipping this instance!", e);
+                        LoggerFactory.getLogger(getClass()).warn("Invalid instance '" + inst + "'. Skipping this instance!", e);
                     } finally {
                         inst.clearCompoundCache();
                         inst.clearFormulaResultsCache();
@@ -152,24 +145,17 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
 
         private void loadVersions(Instance inst, int polarity) {
             if (versions[X.CLASSYFIRE.ordinal()] == null) {
-                final Optional<CanopusCfDataProperty> ps = inst.getProjectSpaceManager().getProjectSpaceProperty(CanopusCfDataProperty.class);
-                if (ps.isPresent()) {
-                    final CanopusCfData byCharge = ps.get().getByCharge(polarity);
-                    versions[X.CLASSYFIRE.ordinal()] = byCharge.getFingerprintVersion();
-                }
+                versions[X.CLASSYFIRE.ordinal()] = inst.getProjectSpaceManager().getCanopusCfData(polarity)
+                        .map(FingerprintData::getFingerprintVersion).orElse(null);
             }
             if (versions[X.NPC.ordinal()] == null) {
-                final Optional<CanopusNpcDataProperty> ps = inst.getProjectSpaceManager().getProjectSpaceProperty(CanopusNpcDataProperty.class);
-                if (ps.isPresent()) {
-                    final CanopusNpcData byCharge = ps.get().getByCharge(polarity);
-                    versions[X.NPC.ordinal()] = byCharge.getFingerprintVersion();
-                }
+                versions[X.NPC.ordinal()] = inst.getProjectSpaceManager().getCanopusNpcData(polarity)
+                        .map(FingerprintData::getFingerprintVersion).orElse(null);
             }
             if (versions[X.FP.ordinal()] == null) {
-                final Optional<FingerIdDataProperty> ps = inst.getProjectSpaceManager().getProjectSpaceProperty(FingerIdDataProperty.class);
-                if (ps.isPresent()) {
-                    final FingerIdData byCharge = ps.get().getByCharge(polarity);
-                    versions[X.FP.ordinal()] = byCharge.getFingerprintVersion();
+                versions[X.FP.ordinal()] = inst.getProjectSpaceManager().getFingerIdData(polarity)
+                        .map(FingerprintData::getFingerprintVersion).orElse(null);
+                if (versions[X.FP.ordinal()] != null) {
                     versions[X.PUBCHEM.ordinal()] = versions[X.FP.ordinal()].getIntersection(CdkFingerprintVersion.getComplete().getMaskFor(CdkFingerprintVersion.USED_FINGERPRINTS.PUBCHEM));
                     versions[X.MACCS.ordinal()] = versions[X.FP.ordinal()].getIntersection(CdkFingerprintVersion.getComplete().getMaskFor(CdkFingerprintVersion.USED_FINGERPRINTS.MACCS));
                 }
@@ -180,9 +166,9 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
             Optional<FormulaResult> fid = inst.loadTopFormulaResult(components);
             if (fid.isPresent()) {
                 final FormulaResult formulaResult = fid.get();
-                writer.write(inst.getID().getDirectoryName());
+                writer.write(inst.getId());
                 writer.write('\t');
-                writer.write(inst.getID().getCompoundName());
+                writer.write(inst.getName());
                 writer.write('\t');
                 writer.write(formulaResult.getId().getMolecularFormula().toString());
                 writer.write('\t');
@@ -295,10 +281,10 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
 
     public static class ExportPredictionWorkflow implements Workflow {
 
-        private final PreprocessingJob<? extends Iterable<Instance>> job;
+        private final PreprocessingJob<?> job;
         private final ExportPredictionsOptions options;
 
-        public ExportPredictionWorkflow(PreprocessingJob<? extends Iterable<Instance>> job, ExportPredictionsOptions options, ParameterConfig config) {
+        public ExportPredictionWorkflow(PreprocessingJob<?> job, ExportPredictionsOptions options, ParameterConfig config) {
             this.options = options;
             this.job = job;
         }
@@ -306,7 +292,7 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
         @Override
         public void run() {
             try {
-                final Iterable<Instance> ps = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
+                final Iterable<? extends Instance> ps = SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
                 try {
                     SiriusJobs.getGlobalJobManager().submitJob(new ExportPredictionJJob(options.predictionsOptions, options.polarity, ps, () -> Files.newBufferedWriter(options.output))).awaitResult();
                 } catch (ExecutionException e) {

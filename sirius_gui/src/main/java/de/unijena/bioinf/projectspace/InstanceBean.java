@@ -31,6 +31,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.WrapperSpectrum;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
+import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingResult;
 import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
 import de.unijena.bioinf.ms.nightsky.sdk.model.*;
@@ -198,11 +199,7 @@ public class InstanceBean implements SiriusPCS {
     public String getFeatureId() {
         return featureId;
     }
-
-    public long getIndex() {
-        return getSourceFeature().getIndex();
-    }
-
+    
     public String getName() {
         return getSourceFeature().getName(); //todo nightsky: check if this is the correct name
     }
@@ -243,6 +240,10 @@ public class InstanceBean implements SiriusPCS {
         return Optional.empty();
     }
 
+    public RetentionTime getRTOrMissing(){
+        return getRT().orElseGet(RetentionTime::NA);
+    }
+
     public Optional<FormulaResultBean> getFormulaAnnotationAsBean() {
         return getFormulaAnnotation().map(fc -> new FormulaResultBean(fc, this));
     }
@@ -255,8 +256,10 @@ public class InstanceBean implements SiriusPCS {
         return Optional.ofNullable(getSourceFeature().getTopAnnotations().getStructureAnnotation());
     }
 
-    public Optional<Double> getConfidenceScoreDefault() {
-        return getStructureAnnotation().map(StructureCandidateScored::getConfidenceExactMatch);
+    public Optional<Double> getConfidenceScore(ConfidenceDisplayMode viewMode) {
+        return viewMode == ConfidenceDisplayMode.APPROXIMATE ?
+                getStructureAnnotation().map(StructureCandidateScored::getConfidenceApproxMatch) :
+                getStructureAnnotation().map(StructureCandidateScored::getConfidenceExactMatch);
     }
 
     public List<FormulaResultBean> getFormulaCandidates() {

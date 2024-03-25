@@ -26,10 +26,8 @@ import de.unijena.bioinf.babelms.ms.InputFileConfig;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.projectspace.FormulaResultRankingScore;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceConfig;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.apache.commons.configuration2.CombinedConfiguration;
 import org.jetbrains.annotations.NotNull;
 
@@ -99,24 +97,8 @@ public class AddConfigsJob extends InstanceJob {
 
         checkForInterruption();
 
-        final FormulaResultRankingScore it = exp.getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO);
-        // this value is a commandline parameter that specifies how to handle the ranking score. If auto we decide how to
-        // handle, otherwise we set the user defined value
-        if (it.isAuto()) {
-            if (inst.getID().getRankingScoreTypes().isEmpty()) //set a default if nothing else is already set
-                inst.getID().setRankingScoreTypes(SiriusScore.class);
-        } else {
-            inst.getID().setRankingScoreTypes(it.value);
-        }
-
-        checkForInterruption();
-
         inst.updateExperiment(); //todo we should optimize this, so that this is not needed anymore
         inst.updateConfig();
-    }
-
-    private void clearRuntimeConfigs(final ParameterConfig config) {
-        //todo fill me
     }
 
     @Override

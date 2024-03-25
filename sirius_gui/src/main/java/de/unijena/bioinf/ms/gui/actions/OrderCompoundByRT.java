@@ -27,7 +27,7 @@ import java.awt.event.ActionEvent;
 public class OrderCompoundByRT extends AbstractGuiAction {
 
     public OrderCompoundByRT(SiriusGui gui) {
-        super("Order by RT", gui);
+        super("Order by RT (default)", gui);
     }
 
     @Override

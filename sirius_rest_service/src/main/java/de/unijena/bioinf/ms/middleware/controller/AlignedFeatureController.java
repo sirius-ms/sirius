@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
@@ -69,8 +70,8 @@ public class AlignedFeatureController {
     /**
      * Get all available features (aligned over runs) in the given project-space.
      *
-     * @param projectId   project-space to read from.
-     * @param optFields   set of optional fields to be included. Use 'none' only to override defaults.
+     * @param projectId project-space to read from.
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      * @return AlignedFeatures with additional annotations and MS/MS data (if specified).
      */
     @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -84,8 +85,8 @@ public class AlignedFeatureController {
     /**
      * Get all available features (aligned over runs) in the given project-space.
      *
-     * @param projectId   project-space to read from.
-     * @param optFields   set of optional fields to be included. Use 'none' only to override defaults.
+     * @param projectId project-space to read from.
+     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
      * @return AlignedFeatures with additional annotations and MS/MS data (if specified).
      */
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
@@ -100,6 +101,7 @@ public class AlignedFeatureController {
     /**
      * Import (aligned) features into the project. Features must not exist in the project.
      * Otherwise, they will exist twice.
+     *
      * @param projectId project-space to import into.
      * @param features  the feature data to be imported
      * @param optFields set of optional fields to be included. Use 'none' to override defaults.
@@ -225,17 +227,25 @@ public class AlignedFeatureController {
             @ParameterObject Pageable pageable,
             @RequestParam(defaultValue = "") EnumSet<SpectralLibraryMatch.OptField> optFields
     ) {
+
+
         Page<SpectralLibraryMatch> matches = projectsProvider.getProjectOrThrow(projectId)
                 .findLibraryMatchesByFeatureId(alignedFeatureId, pageable);
+
+
         if (matches != null && optFields.contains(SpectralLibraryMatch.OptField.referenceSpectrum))
-            matches.getContent().forEach(match -> {
-                try {
-                    Ms2ReferenceSpectrum spec = chemDbService.db().getReferenceSpectrum(CustomDataSources.getSourceFromName(match.getDbName()), match.getUuid(), true);
-                    match.setReferenceSpectrum(Spectrums.createMs2ReferenceSpectrum(spec));
-                } catch (ChemicalDatabaseException e) {
-                    LoggerFactory.getLogger(getClass()).error("Could not load Spectrum: " + match.getUuid(), e);
-                }
-            });
+            matches.getContent().forEach(match -> CustomDataSources.getSourceFromNameOpt(match.getDbName()).ifPresentOrElse(
+                    db -> {
+                        try {
+                            Ms2ReferenceSpectrum spec = chemDbService.db().getReferenceSpectrum(db, match.getUuid(), true);
+                            match.setReferenceSpectrum(Spectrums.createMs2ReferenceSpectrum(spec));
+
+
+                        } catch (ChemicalDatabaseException e) {
+                            LoggerFactory.getLogger(getClass()).error("Could not load Spectrum: " + match.getUuid(), e);
+                        }
+                    }, () -> LoggerFactory.getLogger(getClass()).warn("Could not load Spectrum! Custom database not available: " + match.getDbName())
+            ));
         return matches;
     }
 
@@ -360,7 +370,7 @@ public class AlignedFeatureController {
             @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String formulaId,
             @RequestParam(defaultValue = "") EnumSet<StructureCandidateScored.OptField> optFields
     ) {
-        return getStructureCandidatesByFormulaPaged(projectId, formulaId, alignedFeatureId, globalConfig.unpaged(), optFields)
+        return getStructureCandidatesByFormulaPaged(projectId, alignedFeatureId,formulaId, globalConfig.unpaged(), optFields)
                 .stream().toList();
     }
 
@@ -466,7 +476,7 @@ public class AlignedFeatureController {
      * @param alignedFeatureId feature (aligned over runs) the formula result belongs to.
      * @param formulaId        identifier of the requested formula result
      * @return Fragmentation Tree in internal format.
-     *
+     * <p>
      * NOTE: This endpoint is likely to be removed in future versions of the API.
      */
     @Deprecated

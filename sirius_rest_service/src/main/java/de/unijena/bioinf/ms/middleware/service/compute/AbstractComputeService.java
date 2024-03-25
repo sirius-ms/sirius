@@ -21,12 +21,12 @@
 package de.unijena.bioinf.ms.middleware.service.compute;
 
 import de.unijena.bioinf.jjobs.JobProgressEvent;
-import de.unijena.bioinf.ms.frontend.BackgroundRuns;
+import de.unijena.bioinf.ms.backgroundruns.BackgroundRuns;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.compute.JobProgress;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
+import de.unijena.bioinf.projectspace.Instance;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
@@ -46,7 +46,7 @@ public abstract class AbstractComputeService<P extends Project> implements Compu
         this.eventService = eventService;
     }
 
-    protected Job extractJobId(BackgroundRuns<?, ?>.BackgroundRunJob runJob, @NotNull EnumSet<Job.OptField> optFields) {
+    protected Job extractJobId(BackgroundRuns.BackgroundRunJob runJob, @NotNull EnumSet<Job.OptField> optFields) {
         Job id = new Job();
         id.setId(String.valueOf(runJob.getRunId()));
         if (optFields.contains(Job.OptField.command))
@@ -61,21 +61,19 @@ public abstract class AbstractComputeService<P extends Project> implements Compu
         return id;
     }
 
-    protected List<String> extractEffectedAlignedFeatures(BackgroundRuns<?, ?>.BackgroundRunJob runJob) {
-        if (runJob.getInstanceIds() == null || runJob.getInstanceIds().isEmpty())
-            return List.of();
-        return runJob.getInstanceIds().stream().map(CompoundContainerId::getDirectoryName).collect(Collectors.toList());
+    protected List<String> extractEffectedAlignedFeatures(BackgroundRuns.BackgroundRunJob runJob) {
+        return runJob.getInstancesStr().map(Instance::getId).collect(Collectors.toList());
     }
 
-    protected List<String> extractCompoundIds(BackgroundRuns<?, ?>.BackgroundRunJob runJob) {
-        if (runJob.getInstanceIds() == null || runJob.getInstanceIds().isEmpty())
-            return List.of();
-        return runJob.getInstanceIds().stream()
-                .map(CompoundContainerId::getGroupId).filter(Optional::isPresent).flatMap(Optional::stream)
+    protected List<String> extractCompoundIds(BackgroundRuns.BackgroundRunJob runJob) {
+        return runJob.getInstancesStr()
+                .map(Instance::getCompoundId)
+                .filter(Optional::isPresent)
+                .flatMap(Optional::stream)
                 .distinct().collect(Collectors.toList());
     }
 
-    protected JobProgress extractProgress(BackgroundRuns<?, ?>.BackgroundRunJob runJob) {
+    protected JobProgress extractProgress(BackgroundRuns.BackgroundRunJob runJob) {
         JobProgress p = new JobProgress();
         p.setState(runJob.getState());
 

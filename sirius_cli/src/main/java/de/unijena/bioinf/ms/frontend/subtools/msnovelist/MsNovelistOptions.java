@@ -28,7 +28,6 @@ import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.projectspace.FormulaResultRankingScore;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
 import picocli.CommandLine;
@@ -74,12 +73,6 @@ public class MsNovelistOptions implements ToolChainOptions<MsNovelistSubToolJob,
                         if (z.removeAnnotation(TopMsNovelistScore.class) != null)
                             inst.updateFormulaResult(it, FormulaScoring.class); //update only if there was something to remove
                     }));
-            if (inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
-                inst.getID().getRankingScoreTypes().removeAll(List.of(TopMsNovelistScore.class));
-                inst.updateCompoundID();
-            } else if (inst.getID().getConfidenceScore().isPresent()) {
-                inst.updateCompoundID();
-            }
         };
     }
 

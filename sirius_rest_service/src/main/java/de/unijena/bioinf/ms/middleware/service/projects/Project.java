@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.service.projects;
 
 import de.unijena.bioinf.babelms.inputresource.InputResource;
+import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
 import de.unijena.bioinf.ms.middleware.model.annotations.SpectralLibraryMatch;
 import de.unijena.bioinf.ms.middleware.model.annotations.StructureCandidateFormula;
@@ -57,7 +58,7 @@ public interface Project {
                                 @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures);
 
     ImportResult importPreprocessedData(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData);
-    ImportResult importMsRunData(Collection<InputResource<?>> inputResources, boolean alignRuns, boolean allowMs1OnlyData);
+    ImportResult importMsRunData(Collection<PathInputResource> inputResources, boolean alignRuns, boolean allowMs1OnlyData);
 
     default Page<Compound> findCompounds(Pageable pageable, Compound.OptField... optFields) {
         return findCompounds(pageable, toEnumSet(Compound.OptField.class, optFields),

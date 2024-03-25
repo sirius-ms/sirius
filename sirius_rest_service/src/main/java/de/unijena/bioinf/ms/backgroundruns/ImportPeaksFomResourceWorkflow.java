@@ -18,42 +18,57 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.frontend.subtools.projectspace;
+package de.unijena.bioinf.ms.backgroundruns;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
+import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.jjobs.ProgressSupport;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
+import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.InstanceImporter;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import lombok.extern.slf4j.Slf4j;
 
+import java.io.IOException;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
 import java.util.Collection;
-import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
-public class ImportFromMemoryWorkflow implements Workflow, ProgressSupport {
+@Slf4j
+public class ImportPeaksFomResourceWorkflow implements Workflow, ProgressSupport {
     protected final JobProgressMerger progressSupport = new JobProgressMerger(this);
     private final boolean ignoreFormulas;
     private final boolean allowMs1OnlyData;
-    private List<CompoundContainerId> importedCompounds = null;
+    private final boolean clearInput;
+    private Iterable<Instance> importedCompounds = null;
 
-    public List<CompoundContainerId> getImportedInstanceIds() {
+    public Iterable<Instance> getImportedInstances() {
         return importedCompounds;
     }
 
-    private ProjectSpaceManager<?> psm;
+    public Stream<Instance> getImportedInstancesStr() {
+        return StreamSupport.stream(importedCompounds.spliterator(), false);
+    }
 
-    private Collection<InputResource<?>> inputResources;
+    private final ProjectSpaceManager psm;
 
-    public ImportFromMemoryWorkflow(ProjectSpaceManager<?> psm, Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData) {
+    private final Collection<InputResource<?>> inputResources;
+
+    public ImportPeaksFomResourceWorkflow(ProjectSpaceManager psm, Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData, boolean clearInput) {
         this.psm = psm;
         this.inputResources = inputResources;
         this.ignoreFormulas = ignoreFormulas;
         this.allowMs1OnlyData = allowMs1OnlyData;
+        this.clearInput = clearInput;
     }
 
     @Override
@@ -83,7 +98,7 @@ public class ImportFromMemoryWorkflow implements Workflow, ProgressSupport {
 
     @Override
     public void run() {
-        InstanceImporter.ImportInstancesJJob importerJJob = new InstanceImporter(psm, x -> true, x -> true, false, false)
+        InstanceImporter.ImportInstancesJJob importerJJob = new InstanceImporter(psm, x -> true, x -> true)
                 .makeImportJJob(inputResources, ignoreFormulas, allowMs1OnlyData);
         importerJJob.addJobProgressListener(progressSupport);
 
@@ -91,6 +106,29 @@ public class ImportFromMemoryWorkflow implements Workflow, ProgressSupport {
             importedCompounds = SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
+        } finally {
+            if (clearInput) {
+                inputResources.forEach(r -> {
+                    try {
+                        if (r instanceof PathInputResource pr)
+                            FileUtils.deleteRecursively(pr.getResource());
+                    } catch (IOException e) {
+                        log.warn("Error when deleting lcms input data.", e);
+                    }
+                });
+
+                inputResources.stream().filter(r -> r instanceof PathInputResource)
+                        .map(r -> (PathInputResource) r)
+                        .map(PathInputResource::getResource).map(Path::getFileSystem).distinct()
+                        .filter(it -> !Objects.equals(it, FileSystems.getDefault()))
+                        .forEach(fs -> {
+                            try {
+                                fs.close();
+                            } catch (IOException e) {
+                                log.warn("Error when closing non default file system of lcms input data.", e);
+                            }
+                        });
+            }
         }
     }
 }

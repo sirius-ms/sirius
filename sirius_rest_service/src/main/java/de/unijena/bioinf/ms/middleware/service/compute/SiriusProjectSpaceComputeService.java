@@ -22,15 +22,16 @@ package de.unijena.bioinf.ms.middleware.service.compute;
 
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobStateEvent;
-import de.unijena.bioinf.ms.frontend.BackgroundRuns;
-import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
+import de.unijena.bioinf.ms.backgroundruns.BackgroundRuns;
+import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
 import de.unijena.bioinf.ms.middleware.model.compute.*;
 import de.unijena.bioinf.ms.middleware.model.events.BackgroundComputationsStateEvent;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceImpl;
-import de.unijena.bioinf.projectspace.CompoundContainerId;
+import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,33 +41,34 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @Slf4j
 public class SiriusProjectSpaceComputeService extends AbstractComputeService<SiriusProjectSpaceImpl> {
 
-    private final ConcurrentHashMap<String, BackgroundRuns<?, ?>> backgroundRuns = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, BackgroundRuns> backgroundRuns = new ConcurrentHashMap<>();
+    private final InstanceBufferFactory<?> instanceBufferFactory;
+    private final ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory;
 
-    public SiriusProjectSpaceComputeService(EventService<?> eventService) {
+    public SiriusProjectSpaceComputeService(EventService<?> eventService, InstanceBufferFactory<?> instanceBufferFactory, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory) {
         super(eventService);
+        this.instanceBufferFactory = instanceBufferFactory;
+        this.projectSpaceManagerFactory = projectSpaceManagerFactory;
 
     }
 
-    private BackgroundRuns<?, ?> backgroundRuns(SiriusProjectSpaceImpl psm) {
+    private BackgroundRuns backgroundRuns(SiriusProjectSpaceImpl psm) {
         return backgroundRuns.computeIfAbsent(psm.getProjectId(), p -> {
-            BackgroundRuns br = new BackgroundRuns<>(psm.getProjectSpaceManager());
+            BackgroundRuns br = new BackgroundRuns(psm.getProjectSpaceManager(), instanceBufferFactory, projectSpaceManagerFactory);
             br.addUnfinishedRunsListener(evt -> {
-                if (evt instanceof BackgroundRuns<?, ?>.ChangeEvent) {
-                    BackgroundRuns.ChangeEvent e = (BackgroundRuns<?, ?>.ChangeEvent) evt;
+                if (evt instanceof BackgroundRuns.ChangeEvent e) {
                     eventService.sendEvent(ServerEvents.newComputeStateEvent(
                             BackgroundComputationsStateEvent.builder()
                                     .numberOfJobs(e.getNumOfRunsNew())
                                     .numberOfRunningJobs(e.getNumOfUnfinishedNew())
                                     .numberOfFinishedJobs(e.getNumOfRunsNew() - e.getNumOfUnfinishedNew())
-                                    .affectedJobs(e.getEffectedJobs().stream().map(j -> extractJobId((BackgroundRuns<?, ?>.BackgroundRunJob) j, EnumSet.of(Job.OptField.progress, Job.OptField.affectedIds))).toList())
+                                    .affectedJobs(e.getEffectedJobs().stream().map(j -> extractJobId(j, EnumSet.of(Job.OptField.progress, Job.OptField.affectedIds))).toList())
                                     .build()
                             , psm.getProjectId()));
                 }
@@ -76,30 +78,27 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
     }
 
     private void removeBackgroundRuns(SiriusProjectSpaceImpl psm) {
-        BackgroundRuns<?, ?> br = backgroundRuns.remove(psm.getProjectId());
+        BackgroundRuns br = backgroundRuns.remove(psm.getProjectId());
         if (br != null)
             br.cancelAllRuns();
     }
 
-    private void registerServerEventListener(BackgroundRuns<?, ?>.BackgroundRunJob run, String projectId) {
+    private void registerServerEventListener(BackgroundRuns.BackgroundRunJob run, String projectId) {
         run.addJobProgressListener(evt ->
                 eventService.sendEvent(ServerEvents.newJobEvent(
                         extractJobId(run, EnumSet.of(Job.OptField.progress)), projectId)));
     }
 
     @Nullable
-    private List<CompoundContainerId> extractCompoundIds(@NotNull AbstractSubmission jobSubmission,
-                                                         @NotNull ProjectSpaceManager<?> psm) {
-        List<CompoundContainerId> compounds = null;
+    private List<Instance> extractCompoundIds(@NotNull AbstractSubmission jobSubmission,
+                                              @NotNull SiriusProjectSpaceImpl psm) {
+        List<Instance> compounds = null;
 
         if (jobSubmission.getCompoundIds() == null || jobSubmission.getCompoundIds().isEmpty()) {
             if (jobSubmission.getAlignedFeatureIds() != null && !jobSubmission.getAlignedFeatureIds().isEmpty()) {
                 compounds = new ArrayList<>();
-                for (String cid : jobSubmission.getAlignedFeatureIds()) {
-                    compounds.add(psm.projectSpace().findCompound(cid)
-                            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT,
-                                    "Compound with id '" + cid + "' does not exist!'. No job has been started!")));
-                }
+                for (String cid : jobSubmission.getAlignedFeatureIds())
+                    compounds.add(psm.loadInstance(cid));
             }
         } else {
             compounds = new ArrayList<>();
@@ -108,10 +107,10 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
                     ? new HashSet<>(jobSubmission.getAlignedFeatureIds())
                     : Set.of();
 
-            psm.projectSpace()
-                    .filteredIterator(id -> id.getGroupId().map(cids::contains).orElse(false)
-                            || fids.contains(id.getDirectoryName()))
-                    .forEachRemaining(compounds::add);
+            psm.getProjectSpaceManager().filteredIterator(
+                    id -> id.getGroupId().map(cids::contains).orElse(false) || fids.contains(id.getDirectoryName()),
+                    null
+            ).forEachRemaining(compounds::add);
         }
 
         return compounds;
@@ -120,12 +119,13 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
     @Override
     public Job createAndSubmitJob(@NotNull SiriusProjectSpaceImpl psmI, JobSubmission jobSubmission,
                                   @NotNull EnumSet<Job.OptField> optFields) {
-        BackgroundRuns<?, ?> br = backgroundRuns(psmI);
-        List<CompoundContainerId> compounds = extractCompoundIds(jobSubmission, br.getProjectSpaceManager());
+        Iterable<Instance> instances = extractCompoundIds(jobSubmission, psmI);
+        if (instances == null)
+            instances = psmI.getProjectSpaceManager();
 
         try {
             List<String> commandList = jobSubmission.asCommand();
-            BackgroundRuns<?, ?>.BackgroundRunJob run = backgroundRuns(psmI).runCommand(commandList, compounds);
+            BackgroundRuns.BackgroundRunJob run = backgroundRuns(psmI).runCommand(commandList, instances);
             registerServerEventListener(run, psmI.getProjectId());
             return extractJobId(run, optFields);
         } catch (Exception e) {
@@ -137,18 +137,16 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
     @Override
     public Job createAndSubmitJob(@NotNull SiriusProjectSpaceImpl psmI, List<String> commandList,
                                   @Nullable Iterable<String> alignedFeatureIds,
-                                  @Nullable InputFilesOptions toImport,
                                   @NotNull EnumSet<Job.OptField> optFields) {
         try {
-
             //create instance iterator from ids
-            BackgroundRuns<?, ?>.BackgroundRunJob run;
+            BackgroundRuns.BackgroundRunJob run;
             if (alignedFeatureIds != null) {
-                final Set<String> ids = new HashSet<>();
-                alignedFeatureIds.forEach(ids::add);
-                run = backgroundRuns(psmI).runCommand(commandList, cid -> ids.contains(cid.getDirectoryName()), null, toImport);
+                List<Instance> instances = new ArrayList<>();
+                alignedFeatureIds.forEach(id -> instances.add(psmI.loadInstance(id)));
+                run = backgroundRuns(psmI).runCommand(commandList, instances);
             } else {
-                run = backgroundRuns(psmI).runCommand(commandList, (Iterable) null, toImport);
+                run = backgroundRuns(psmI).runCommand(commandList, psmI.getProjectSpaceManager());
             }
 
             registerServerEventListener(run, psmI.getProjectId());
@@ -158,33 +156,21 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot create Job Command!", e);
         }
     }
-
+    //TODO implement new lcms workflow
     @Override
-    public Job createAndSubmitImportJob(@NotNull SiriusProjectSpaceImpl psmI, ImportLocalFilesSubmission jobSubmission,
-                                        @NotNull EnumSet<Job.OptField> optFields) {
-        InputFilesOptions inputFiles = new InputFilesOptions();
-        inputFiles.msInput = new InputFilesOptions.MsInput();
-        inputFiles.msInput.setAllowMS1Only(jobSubmission.isAllowMs1OnlyData());
-        inputFiles.msInput.setIgnoreFormula(jobSubmission.isIgnoreFormulas());
-        inputFiles.msInput.setInputPath(jobSubmission.getInputPaths().stream().map(Path::of)
-                .collect(Collectors.toList()));
-
-        boolean alignLCMSRuns = jobSubmission.isAlignLCMSRuns() && inputFiles.msInput.msParserfiles.keySet().stream()
-                .anyMatch(p -> p.getFileName().toString().toLowerCase().endsWith("mzml")
-                        || p.getFileName().toString().toLowerCase().endsWith("mzxml"));
-        System.out.println("Alignment: " + alignLCMSRuns);
-
-        return createAndSubmitJob(psmI, alignLCMSRuns
-                        ? List.of("lcms-align")
-                        : List.of("project-space", "--keep-open"),
-                null, inputFiles, optFields);
+    public Job createAndSubmitMsDataImportJob(@NotNull SiriusProjectSpaceImpl psmI, ImportMultipartFilesSubmission importSubmission,
+                                              @NotNull EnumSet<Job.OptField> optFields) {
+        BackgroundRuns.BackgroundRunJob run = backgroundRuns(psmI)
+                .runImportMsData(importSubmission.asPathInputResource(), importSubmission.isIgnoreFormulas(), importSubmission.isAllowMs1OnlyData());
+        registerServerEventListener(run, psmI.getProjectId());
+        return extractJobId(run, optFields);
     }
 
     @Override
-    public Job createAndSubmitPeakListImportJob(@NotNull SiriusProjectSpaceImpl psmI, AbstractImportSubmission importSubmission,
+    public Job createAndSubmitPeakListImportJob(@NotNull SiriusProjectSpaceImpl psmI, ImportMultipartFilesSubmission importSubmission,
                                                 @NotNull EnumSet<Job.OptField> optFields) {
-        BackgroundRuns<?, ?>.BackgroundRunJob run = backgroundRuns(psmI)
-                .runImport(importSubmission.asInputResource(), importSubmission.isIgnoreFormulas(), importSubmission.isAllowMs1OnlyData());
+        BackgroundRuns.BackgroundRunJob run = backgroundRuns(psmI)
+                .runImportPeakData(importSubmission.asInputResource(), importSubmission.isIgnoreFormulas(), importSubmission.isAllowMs1OnlyData());
         registerServerEventListener(run, psmI.getProjectId());
         return extractJobId(run, optFields);
     }
@@ -192,16 +178,12 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
     @Override
     public Job createAndSubmitCommandJob(@NotNull SiriusProjectSpaceImpl psmI, CommandSubmission commandSubmission,
                                          @NotNull EnumSet<Job.OptField> optFields) {
-        BackgroundRuns<?, ?> br = backgroundRuns(psmI);
-        List<CompoundContainerId> compounds = extractCompoundIds(commandSubmission, br.getProjectSpaceManager());
-        InputFilesOptions inputFiles = null;
-        if (commandSubmission.getInputPaths() != null && !commandSubmission.getInputPaths().isEmpty()){
-            inputFiles = new InputFilesOptions();
-            inputFiles.msInput = new InputFilesOptions.MsInput();
-        }
-
+        BackgroundRuns br = backgroundRuns(psmI);
+        Iterable<? extends Instance> instances = extractCompoundIds(commandSubmission, psmI);
+        if (instances == null)
+            instances = psmI.getProjectSpaceManager();
         try {
-            BackgroundRuns<?, ?>.BackgroundRunJob run = br.runCommand(commandSubmission.getCommand(), compounds, inputFiles);
+            BackgroundRuns.BackgroundRunJob run = br.runCommand(commandSubmission.getCommand(), (Iterable<Instance>) instances);
             registerServerEventListener(run, psmI.getProjectId());
             return extractJobId(run, optFields);
         } catch (Exception e) {
@@ -212,8 +194,9 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
 
     @Override
     public Job deleteJob(@NotNull SiriusProjectSpaceImpl psm, String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<Job.OptField> optFields) {
+        BackgroundRuns.BackgroundRunJob j = findJob(psm, jobId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NO_CONTENT, "Job with ID '" + jobId + " not found! Hint: It is either already finished and has been auto removed (if enabled) or the ID never existed. Doing nothing!"));
 
-        BackgroundRuns<?, ?>.BackgroundRunJob j = getJob(psm, jobId);
         if (j.isFinished()) {
             backgroundRuns(psm).removeFinishedRun(j.getRunId());
         } else {
@@ -232,7 +215,7 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
             } else {
                 j.addPropertyChangeListener(JobStateEvent.JOB_STATE_EVENT, evt -> {
                     if (evt instanceof JobStateEvent) {
-                        final BackgroundRuns<?, ?>.BackgroundRunJob jj = (BackgroundRuns<?, ?>.BackgroundRunJob) evt.getSource();
+                        final BackgroundRuns.BackgroundRunJob jj = (BackgroundRuns.BackgroundRunJob) evt.getSource();
                         if (jj.isFinished())
                             backgroundRuns(psm).removeFinishedRun(jj.getRunId());
                     }
@@ -255,17 +238,14 @@ public class SiriusProjectSpaceComputeService extends AbstractComputeService<Sir
         return jobs;
     }
 
-    public BackgroundRuns<?, ?>.BackgroundRunJob getJob(@NotNull SiriusProjectSpaceImpl psm, String jobId) {
+    public Optional<BackgroundRuns.BackgroundRunJob> findJob(@NotNull SiriusProjectSpaceImpl psm, String jobId) {
+        int intId = Integer.parseInt(jobId);
+        return Optional.ofNullable(backgroundRuns(psm).getRunById(intId));
+    }
+    public BackgroundRuns.BackgroundRunJob getJob(@NotNull SiriusProjectSpaceImpl psm, String jobId) {
         try {
-            int intId = Integer.parseInt(jobId);
-            BackgroundRuns<?, ?>.BackgroundRunJob j = backgroundRuns(psm).getRunById(intId);
-            if (j == null)
-                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Job with ID '" + jobId + " does not Exist! Hint: It is either already finished and has been auto removed (if enabled) or the ID never existed.");
-
-            if (!psm.getProjectSpaceManager().equals(j.getProject()))
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Job with ID '" + jobId + " is not part of the requested project but does exist! Hint: Request the job with the correct projectId.");
-
-            return j;
+            return findJob(psm, jobId).orElseThrow(
+                    () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job with ID '" + jobId + " does not Exist! Hint: It is either already finished and has been auto removed (if enabled) or the ID never existed."));
         } catch (NumberFormatException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Illegal JobId '" + jobId + "! Hint: JobIds are usually integer numbers.", e);
         }

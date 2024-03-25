@@ -26,7 +26,6 @@ import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
-import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.Instance;
 import org.slf4j.LoggerFactory;
 
@@ -43,11 +42,11 @@ import java.util.stream.Collectors;
  * Standalone-Tool to export spectra to mgf format.
  */
 public class FTreeExporterWorkflow implements Workflow {
-    private final PreprocessingJob<? extends Iterable<Instance>> ppj;
+    private final PreprocessingJob<?> ppj;
     private final FTreeExporterOptions options;
 
 
-    public FTreeExporterWorkflow(PreprocessingJob<? extends Iterable<Instance>> ppj, FTreeExporterOptions options, ParameterConfig config) {
+    public FTreeExporterWorkflow(PreprocessingJob<?> ppj, FTreeExporterOptions options) {
         this.options = options;
         this.ppj = ppj;
     }
@@ -57,7 +56,7 @@ public class FTreeExporterWorkflow implements Workflow {
     public void run() {
         final Path outputPath = options.output;
         try {
-            final Iterable<Instance> ps = SiriusJobs.getGlobalJobManager().submitJob(ppj).awaitResult();
+            final Iterable<? extends Instance> ps = SiriusJobs.getGlobalJobManager().submitJob(ppj).awaitResult();
             if (Files.notExists(outputPath))
                 Files.createDirectories(outputPath);
             if (!Files.isDirectory(outputPath))
@@ -78,20 +77,20 @@ public class FTreeExporterWorkflow implements Workflow {
 
                     for (NamedFTree nTree : trees) {
                         if (options.exportJson){
-                            try (final BufferedWriter writer = Files.newBufferedWriter(outputPath.resolve(inst.getID().getDirectoryName() + "_" + nTree.name + ".json"))) {
+                            try (final BufferedWriter writer = Files.newBufferedWriter(outputPath.resolve(inst.getId() + "_" + nTree.name + ".json"))) {
                                 jsonWriter.writeTree(writer, nTree.tree);
                             }
                         }
 
                         if (options.exportDot) {
-                            try (final BufferedWriter writer = Files.newBufferedWriter(outputPath.resolve(inst.getID().getDirectoryName() + "_" + nTree.name + ".dot"))) {
+                            try (final BufferedWriter writer = Files.newBufferedWriter(outputPath.resolve(inst.getId() + "_" + nTree.name + ".dot"))) {
                                 dotWriter.writeTree(writer, nTree.tree);
                             }
                         }
                     }
 
                 } catch (Exception e) {
-                    LoggerFactory.getLogger(getClass()).warn("Invalid instance '" + inst.getID() + "'. Skipping this instance!", e);
+                    LoggerFactory.getLogger(getClass()).warn("Invalid instance '" + inst + "'. Skipping this instance!", e);
                 } finally {
                     inst.clearCompoundCache();
                     inst.clearFormulaResultsCache();

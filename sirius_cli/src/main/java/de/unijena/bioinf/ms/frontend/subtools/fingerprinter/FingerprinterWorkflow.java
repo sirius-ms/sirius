@@ -44,7 +44,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 public class FingerprinterWorkflow implements Workflow {
     private final Path outputFile;
-    private final RootOptions<?, ?, ?, ?> rootOptions;
+    private final RootOptions<?> rootOptions;
     private final Path versionFile;
     private final int charge;
     private final BlockingSet<BasicJJob<Void>> jobs;
@@ -53,7 +53,7 @@ public class FingerprinterWorkflow implements Workflow {
     private CdkFingerprintVersion cdkVersion;
     private final Map<String, Exception> failedComputations = new ConcurrentHashMap<>();
 
-    public FingerprinterWorkflow(RootOptions<?, ?, ?, ?> rootOptions, Path outputFile, int charge, Path versionFile, int bufferSize) {
+    public FingerprinterWorkflow(RootOptions<?> rootOptions, Path outputFile, int charge, Path versionFile, int bufferSize) {
         this.outputFile = outputFile;
         this.rootOptions = rootOptions;
         this.charge = charge;

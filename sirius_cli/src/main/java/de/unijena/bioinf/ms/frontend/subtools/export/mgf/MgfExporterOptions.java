@@ -20,12 +20,10 @@
 package de.unijena.bioinf.ms.frontend.subtools.export.mgf;
 
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
-import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.projectspace.Instance;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -39,9 +37,6 @@ import java.nio.file.Paths;
 public class MgfExporterOptions implements StandaloneTool<MgfExporterWorkflow> {
     protected Path output = null;
     protected double ppmDev = Double.NaN;
-
-    public MgfExporterOptions() {
-    }
 
     @CommandLine.Option(names = "--write-ms1", description = "Write MS1 spectra into file.")
     public boolean writeMs1;
@@ -67,7 +62,7 @@ public class MgfExporterOptions implements StandaloneTool<MgfExporterWorkflow> {
 
 
     @Override
-    public MgfExporterWorkflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
-        return new MgfExporterWorkflow((PreprocessingJob<? extends Iterable<Instance>>) rootOptions.makeDefaultPreprocessingJob(), this, config);
+    public MgfExporterWorkflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
+        return new MgfExporterWorkflow(rootOptions.makeDefaultPreprocessingJob(), this);
     }
 }
