@@ -98,6 +98,9 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
         }
     }
 
+    public List<Class<? extends FormulaScore>> getDefaultRankingScores() {
+        return configuration.getDefaultRankingScores();
+    }
 
     public Path getLocation() {
         return ioProvider.getLocation();
@@ -146,7 +149,6 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
 
                         final Double confidenceScore = Optional.ofNullable(keyValues.get("confidenceScore")).map(Double::parseDouble).orElse(null);
                         final Double confidenceScoreApproximate = Optional.ofNullable(keyValues.get("confidenceScoreApproximate")).map(Double::parseDouble).orElse(null);
-                        final boolean useApproximate = Optional.ofNullable(keyValues.get("useApproximate")).map(Boolean::parseBoolean).orElse(false);
 
                         final String featureId = keyValues.get("featureId");
                         final String groupId = keyValues.get("groupId");
@@ -157,15 +159,8 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
                                 rt, confidenceScore, featureId, groupId, groupRt, groupName);
 
                         cid.setConfidenceScoreApproximate(confidenceScoreApproximate);
-                        cid.setUseApproximate(useApproximate);
-
                         cid.setDetectedAdducts(
                                 Optional.ofNullable(keyValues.get("detectedAdducts")).map(DetectedAdducts::fromString).orElse(null));
-
-                        cid.setRankingScoreTypes(
-                                Optional.ofNullable(keyValues.get(CompoundContainerId.RANKING_KEY))
-                                        .flatMap(FormulaResultRankingScore::parseFromString).map(FormulaResultRankingScore::value)
-                                        .orElse(Collections.emptyList()));
 
                         ids.put(dirName, cid);
                         return index;
@@ -468,6 +463,11 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
     }
 
     // shorthand methods
+
+    @SafeVarargs
+    public final List<SScored<FormulaResult, ? extends FormulaScore>> getFormulaResultsInDefaultOrder(CompoundContainerId cid,  Class<? extends DataAnnotation>... components) throws IOException {
+        return getFormulaResultsOrderedBy(getCompound(cid).getResultsRO().values(), configuration.getDefaultRankingScores(), components);
+    }
     @SafeVarargs
     public final List<SScored<FormulaResult, ? extends FormulaScore>> getFormulaResultsOrderedBy(CompoundContainerId cid, List<Class<? extends FormulaScore>> scores, Class<? extends DataAnnotation>... components) throws IOException {
         return getFormulaResultsOrderedBy(getCompound(cid).getResultsRO().values(), scores, components);
@@ -991,7 +991,7 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
                                     SummarizerJob.this.updateProgress(0, max, p.incrementAndGet(), "Collection '" + cid.getCompoundName() + "'...");
                                     checkForInterruption();
                                     final CompoundContainer c = getCompound(cid, Ms2Experiment.class);
-                                    final List<SScored<FormulaResult, ? extends FormulaScore>> results = getFormulaResultsOrderedBy(cid, cid.getRankingScoreTypes(), annotations);
+                                    final List<SScored<FormulaResult, ? extends FormulaScore>> results = getFormulaResultsInDefaultOrder(cid, annotations);
                                     // write compound summaries
                                     List<BasicJJob<Boolean>> subs = Arrays.stream(summarizers).map(sim -> new BasicJJob<Boolean>(JobType.CPU) {
                                         @Override
