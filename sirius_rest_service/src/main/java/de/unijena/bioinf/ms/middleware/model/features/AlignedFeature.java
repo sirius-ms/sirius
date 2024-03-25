@@ -43,12 +43,11 @@ public class AlignedFeature {
 
     // identifier source
     protected String name;
-    protected long index;
 
     // additional attributes
     protected Double ionMass;
     @Deprecated
-    protected String adduct; //todo remove
+    protected String adduct;
 
     @Schema(nullable = true)
     protected Double rtStartSeconds;

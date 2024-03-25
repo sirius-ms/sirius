@@ -5618,16 +5618,13 @@
           "name": {
             "type": "string"
           },
-          "index": {
-            "type": "integer",
-            "format": "int64"
-          },
           "ionMass": {
             "type": "number",
             "format": "double"
           },
           "adduct": {
-            "type": "string"
+            "type": "string",
+            "deprecated": true
           },
           "rtStartSeconds": {
             "type": "number",
