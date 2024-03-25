@@ -36,6 +36,7 @@ import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceProviderImpl;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import de.unijena.bioinf.projectspace.SiriusProjectSpaceManager;
 import de.unijena.bioinf.webapi.WebAPI;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -65,8 +66,8 @@ public class SiriusContext{
 
     @Bean
     @DependsOn({"jobManager"})
-    public ProjectsProvider<?> projectsProvider(EventService<?> eventService) {
-        return new SiriusProjectSpaceProviderImpl(eventService);
+    public ProjectsProvider<?> projectsProvider(EventService<?> eventService, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory) {
+        return new SiriusProjectSpaceProviderImpl((ProjectSpaceManagerFactory<SiriusProjectSpaceManager>) projectSpaceManagerFactory, eventService);
     }
 
     @Bean(destroyMethod = "shutdown")
