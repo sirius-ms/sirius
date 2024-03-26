@@ -21,6 +21,7 @@
 package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.fingerid.annotations.FormulaResultThreshold;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -28,6 +29,7 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Preprocessing JJob to filter and prepare IdentificationResults for Fingerprint prediction.
@@ -43,26 +45,29 @@ public class FingerprintPreprocessingJJob<S extends FormulaScore> extends BasicJ
     // input data
     private Ms2Experiment experiment;
     private List<IdentificationResult<S>> idResult;
-    protected Map<IdentificationResult<S>, IdentificationResult<S>> addedIdentificationResults = Map.of();
+    protected Map<IdentificationResult<S>, IdentificationResult<S>> addedIdentificationResults = Map.of(); //todo NewWorkflow: still necessary?
+    private Set<MolecularFormula> enforcedFormulas;
 
     public FingerprintPreprocessingJJob() {
         this(null);
     }
 
     public FingerprintPreprocessingJJob(@Nullable Ms2Experiment experiment) {
-        this(experiment, null);
+        this(experiment, null, null);
     }
 
-    public FingerprintPreprocessingJJob(@Nullable Ms2Experiment experiment, @Nullable List<IdentificationResult<S>> formulaIDResults) {
+    public FingerprintPreprocessingJJob(@Nullable Ms2Experiment experiment, @Nullable List<IdentificationResult<S>> formulaIDResults, @Nullable Set<MolecularFormula> enforcedFormulas) {
         super(JobType.CPU);
         this.experiment = experiment;
         this.idResult = formulaIDResults;
+        this.enforcedFormulas = Objects.isNull(enforcedFormulas) ? Collections.EMPTY_SET : enforcedFormulas;
     }
 
-    public void setInput(Ms2Experiment experiment, List<IdentificationResult<S>> formulaIDResults) {
+    public void setInput(Ms2Experiment experiment, List<IdentificationResult<S>> formulaIDResults, Set<MolecularFormula> enforcedFormulas) {
         notSubmittedOrThrow();
         this.experiment = experiment;
         this.idResult = formulaIDResults;
+        this.enforcedFormulas = enforcedFormulas;
     }
 
 
@@ -96,7 +101,7 @@ public class FingerprintPreprocessingJJob<S extends FormulaScore> extends BasicJ
 
 
         checkForInterruption();
-        final ArrayList<IdentificationResult<S>> filteredResults = new ArrayList<>();
+        ArrayList<IdentificationResult<S>> filteredResults = new ArrayList<>();
         {
             // WORKAROUND
             boolean isLogarithmic = false;
@@ -127,6 +132,12 @@ public class FingerprintPreprocessingJJob<S extends FormulaScore> extends BasicJ
                         continue;
                     }
                     filteredResults.add(e);
+                }
+                if (!enforcedFormulas.isEmpty()) {
+                    //add results that must always be considered
+                    Set<IdentificationResult<S>> resultsSet = new HashSet<>(filteredResults);
+                    idResult.stream().filter(r -> enforcedFormulas.contains(r.getMolecularFormula())).forEach(r -> resultsSet.add(r));
+                    filteredResults = resultsSet.stream().collect(Collectors.toCollection(ArrayList::new));
                 }
             } else {
                 filteredResults.addAll(idResult);
