@@ -31,6 +31,7 @@ dependencies {
         exclude group: 'jakarta.xml.bind', module: 'jakarta.xml.bind-api'
     }
     api 'org.dizitart:nitrite-mvstore-adapter'
+//    implementation 'org.dizitart:nitrite-rocksdb-adapter'
 
     implementation 'it.unimi.dsi:fastutil:8.5.12'
     implementation "jakarta.persistence:jakarta.persistence-api:$jakarta_version"
