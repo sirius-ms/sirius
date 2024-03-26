@@ -62,8 +62,10 @@ public class FingerprintCandidate extends CompoundCandidate {
         protected void serializeInternal(FingerprintCandidate value, JsonGenerator gen) throws IOException {
             super.serializeInternal(value, gen);
             gen.writeArrayFieldStart("fingerprint");
-            for (FPIter iter : value.fingerprint.presentFingerprints()) {
-                gen.writeNumber(iter.getIndex());
+            if (value.fingerprint != null) {
+                for (FPIter iter : value.fingerprint.presentFingerprints()) {
+                    gen.writeNumber(iter.getIndex());
+                }
             }
             gen.writeEndArray();
         }

@@ -21,12 +21,14 @@
 package de.unijena.bioinf.ms.persistence.model.sirius;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @Getter
 @Setter
+@NoArgsConstructor
 public abstract class FormulaAnnotation extends FeatureAnnotation {
     protected long formulaId;
 }

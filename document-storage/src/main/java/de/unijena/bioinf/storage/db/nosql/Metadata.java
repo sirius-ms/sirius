@@ -142,7 +142,7 @@ public class Metadata {
     }
 
     private static Field findAndValidatePrimaryKeyField(@NotNull Class<?> clazz) throws IOException {
-        List<Field> pkFields = Arrays.stream(FieldUtils.getAllFields(clazz)).filter(f -> f.getAnnotationsByType(jakarta.persistence.Id.class).length > 0).toList();
+        List<Field> pkFields = FieldUtils.getFieldsListWithAnnotation(clazz, jakarta.persistence.Id.class);
         if (pkFields.isEmpty()) {
             throw new IOException(clazz + " has no primary key. The primary key must be annotated with jakarta.persistence.Id!");
         } else if (pkFields.size() > 1) {
@@ -153,10 +153,13 @@ public class Metadata {
     }
 
     private static Field findAndValidatePrimaryKeyFieldByName(@NotNull Class<?> clazz, @NotNull String fieldName) throws IOException {
-        Field pkField = FieldUtils.getField(clazz, fieldName);
-        if (pkField == null)
-            throw new IOException(clazz + " has no field with name '" + fieldName + "'. A valid primary key field is mandatory");
-
+        List<Field> pkFields = FieldUtils.getAllFieldsList(clazz).stream().filter(f -> Objects.equals(f.getName(), fieldName)).toList();
+        if (pkFields.isEmpty()) {
+            throw new IOException(clazz + " has no primary key. The primary key must be annotated with jakarta.persistence.Id!");
+        } else if (pkFields.size() > 1) {
+            throw new IOException(clazz + " has multiple primary keys. Only one primary key is allowed!");
+        }
+        Field pkField = pkFields.get(0);
         return validatePrimaryKeyField(clazz, pkField);
     }
 
