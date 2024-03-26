@@ -21,11 +21,10 @@
 package de.unijena.bioinf.babelms.cef;
 
 import de.unijena.bioinf.babelms.GenericParser;
-import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
-import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
-import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
+import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import org.apache.commons.lang3.time.StopWatch;
 import org.junit.Assert;
 import org.junit.Test;
@@ -76,8 +75,7 @@ public class AgilentCefCompoundParserTest {
     public void testReadFMEStore() throws IOException {
         StopWatch watch = new StopWatch();
         watch.start();
-        try (NitriteDatabase store = new NitriteDatabase(Path.of("/tmp/NITRITE-Project-" + UUID.randomUUID() + ".nitrite"), SiriusProjectDocumentDatabase.buildMetadata())) {
-            SiriusProjectDatabaseImpl<?> ps = new SiriusProjectDatabaseImpl<>(store);
+        try (SiriusProjectDatabaseImpl<?> ps = new NitriteSirirusProject(Path.of("/tmp/NITRITE-Project-" + UUID.randomUUID() + SiriusProjectDatabaseImpl.SIRIUS_PROJECT_SUFFIX))) {
             final List<Compound> compounds = new ArrayList<>();
             final List<String> locations = provideParameters().map(arguments -> (String)arguments.get()[0]).toList();
 
