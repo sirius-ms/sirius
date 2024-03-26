@@ -297,10 +297,10 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             } else if (optionName.equals("formula") || optionName.equals("formulas")) {
                 final List<String> valueList = Arrays.asList(value.split("\\s+|,"));
                 if (this.formulas == null) {
-                    this.formulas = CandidateFormulas.of(valueList, JenaMsParser.class);
+                    this.formulas = CandidateFormulas.of(valueList, JenaMsParser.class, true, false);
                 } else {
                     warn("Molecular formulas is set twice, Sirius will collect them as a Whitelist!");
-                    this.formulas.addAndMerge(CandidateFormulas.of(valueList, JenaMsParser.class));
+                    this.formulas.addAndMerge(CandidateFormulas.of(valueList, JenaMsParser.class, true, false));
                 }
             } else if (optionName.equals("parentmass")) {
                 if (parentMass != 0) warn("parent mass is set twice");

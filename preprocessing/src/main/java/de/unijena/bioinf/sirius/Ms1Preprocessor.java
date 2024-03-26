@@ -37,11 +37,13 @@ import de.unijena.bioinf.sirius.iondetection.AdductDetection;
 import de.unijena.bioinf.sirius.iondetection.DetectIonsFromMs1;
 import de.unijena.bioinf.sirius.merging.Ms1Merging;
 import de.unijena.bioinf.sirius.validation.Ms1Validator;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Performs element detection, adduct detection, isotope pattern merging. But NOT MS/MS spectrum merging
@@ -184,6 +186,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
             if (formulaSettings.prioritizeAndForceCandidatesFromInputFiles) {
                 //molecular formula given in input file. Force it.
                 //PossibleAdducts should always contain a matching adduct after Ms2Validator was run -> is this also true for MS1?
+                warnIfFormulaCandidateWithoutMatchingAdduct(inputFormulaSingleton, possibleAdducts, pinput.getExperimentInformation().getIonMass());
                 whiteset = Whiteset.ofNeutralizedFormulas(inputFormulaSingleton, Ms1Preprocessor.class).setRequiresDeNovo(false).setRequiresBottomUp(false).setIgnoreMassDeviationToResolveIonType(true).setFinalized(true);
                 pinput.setAnnotation(Whiteset.class, whiteset);
                 return;
@@ -199,10 +202,17 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
             CandidateFormulas candidateFormulas = pinput.getAnnotationOrThrow(CandidateFormulas.class);
             if (formulaSettings.prioritizeAndForceCandidatesFromInputFiles && candidateFormulas.hasInputFileProvider()) {
                 //molecular formula candidate set given in input file. Force it.
+                warnIfFormulaCandidateWithoutMatchingAdduct(candidateFormulas.getWhitesetOfInputFileCandidates().getNeutralFormulas(), possibleAdducts, pinput.getExperimentInformation().getIonMass());
                 whiteset = candidateFormulas.getWhitesetOfInputFileCandidates().setRequiresDeNovo(false).setRequiresBottomUp(false).setIgnoreMassDeviationToResolveIonType(true);
             } else {
                 Whiteset candidateWhiteset = candidateFormulas.toWhiteSet();
                 if (formulaSettings.applyFormulaConstraintsToDatabaseCandidates) candidateWhiteset = candidateWhiteset.filter(formulaConstraints, possibleAdducts.getAdducts(), Ms1Preprocessor.class);
+
+                if (candidateFormulas.hasSpectralLibraryMatchProvidersProvider()) {
+                    warnIfFormulaCandidateWithoutMatchingAdduct(candidateFormulas.getCandidatesFromSpectralLibraryMatches(), possibleAdducts, pinput.getExperimentInformation().getIonMass());
+                    candidateWhiteset = candidateWhiteset.addEnforedNeutral(candidateFormulas.getCandidatesFromSpectralLibraryMatches(), CandidateFormulas.class);
+                }
+
                 if (whiteset.isEmpty()) {
                     whiteset = candidateWhiteset;
                 } else {
@@ -216,6 +226,22 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
                 .setRequiresBottomUp(formulaSettings.useBottomUpFor(pinput.getExperimentInformation().getIonMass()));
 
         pinput.setAnnotation(Whiteset.class, whiteset);
+    }
+
+    /**
+     * check and warn for enforced molecular formulas
+     * @param candidatesFromSpectralLibraryMatches
+     * @param possibleAdducts
+     * @param precursorMass
+     * @return
+     */
+    private boolean warnIfFormulaCandidateWithoutMatchingAdduct(Set<MolecularFormula> candidatesFromSpectralLibraryMatches, PossibleAdducts possibleAdducts, double precursorMass) {
+        Set<MolecularFormula> issues = candidatesFromSpectralLibraryMatches.stream().filter(mf -> possibleAdducts.getAdducts().stream().anyMatch(adduct -> adduct.isApplicableToNeutralFormula(mf) && Math.abs(adduct.addIonAndAdduct(mf.getMass()))<0.1)).collect(Collectors.toSet());
+        if (!issues.isEmpty()) {
+            LoggerFactory.getLogger(this.getClass()).warn("Enforced molecular formula has no matching adduct: "+issues.stream().map(MolecularFormula::toString).collect(Collectors.joining(",")) + ". Adducts are: "+possibleAdducts.getAdducts().stream().map(PrecursorIonType::toString).collect(Collectors.joining(",")));
+            return true;
+        }
+        return false;
     }
 
     public Set<Element> getSetOfPredictableElements() {

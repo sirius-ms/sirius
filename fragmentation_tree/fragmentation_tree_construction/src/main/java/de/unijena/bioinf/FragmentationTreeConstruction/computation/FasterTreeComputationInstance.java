@@ -21,6 +21,7 @@
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
@@ -207,6 +208,12 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
 //        final int MAX_GRAPH_CACHE_SIZE = Math.max(30, BATCH_SIZE);
 //        final int n = Math.min(decompositions.size(), numberOfResultsToKeep);
 
+
+        //enforced molecular formulas that must be kept independent of score
+        Set<PrecursorIonType> ionTypes = pinput.getAnnotationOrThrow(PossibleAdducts.class).getAdducts();
+        Set<MolecularFormula> enforcedMeasuredFormulas = pinput.getAnnotationOr(Whiteset.class, c -> Whiteset.empty()).getNeutralEnforcedAsMeasuredFormulasSet(ionTypes);
+
+
         TreeSizeScorer.TreeSizeBonus treeSizeBonus;
         final TreeSizeScorer tss = FragmentationPatternAnalysis.getByClassName(TreeSizeScorer.class, analyzer.getFragmentPeakScorers());
         if (tss != null) {
@@ -265,7 +272,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         final int numberOfResultsToKeep = Math.min(results.size(), this.numberOfResultsToKeep);
         final int numberOfResultsToKeepPerIonization = Math.min(this.numberOfResultsToKeepPerIonization, results.size());
 
-        final List<ExactResult> topResults = extractTopResults(results, numberOfResultsToKeep + 10, numberOfResultsToKeepPerIonization + 5);
+        final List<ExactResult> topResults = extractTopResults(results, numberOfResultsToKeep + 10, numberOfResultsToKeepPerIonization + 5, enforcedMeasuredFormulas);
         configureProgress(100, topResults.size());
         checkForInterruption();
 
@@ -282,7 +289,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             checkForInterruption();
             return extractTopResults(jobs.stream()
                     .map(JJob::takeResult).sorted(Collections.reverseOrder())
-                    .collect(Collectors.toList()), numberOfResultsToKeep, numberOfResultsToKeepPerIonization)
+                    .collect(Collectors.toList()), numberOfResultsToKeep, numberOfResultsToKeepPerIonization, enforcedMeasuredFormulas)
                     .toArray(ExactResult[]::new);
         }
         final List<RecalibrationJob> recalibrationJobs = new ArrayList<>();
@@ -297,7 +304,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         final ExactResult[] recalibrated = extractTopResults(recalibrationJobs.stream()
                 .map(JJob::takeResult)
                 .sorted(Collections.reverseOrder())
-                .collect(Collectors.toList()), numberOfResultsToKeep, numberOfResultsToKeepPerIonization)
+                .collect(Collectors.toList()), numberOfResultsToKeep, numberOfResultsToKeepPerIonization, enforcedMeasuredFormulas)
                 .toArray(ExactResult[]::new);
         final double[] originalScores = new double[recalibrated.length];
         for (int k = 0; k < recalibrated.length; ++k) originalScores[k] = recalibrated[k].score;
@@ -372,7 +379,7 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
         exactResult.tree.setAnnotation(Beautified.class, Beautified.ugly());
     }
 
-    private List<ExactResult> extractTopResults(List<ExactResult> results, int numberOfResultsToKeep, int numberOfResultsToKeepPerIonization) {
+    private List<ExactResult> extractTopResults(List<ExactResult> results, int numberOfResultsToKeep, int numberOfResultsToKeepPerIonization, Set<MolecularFormula> enforcedPrecursorFormulas) {
         List<ExactResult> returnList;
         if (numberOfResultsToKeepPerIonization<=0 || results.size()<=numberOfResultsToKeep){
             returnList = results.subList(0, Math.min(results.size(), numberOfResultsToKeep));
@@ -398,16 +405,27 @@ public class FasterTreeComputationInstance extends BasicMasterJJob<FasterTreeCom
             returnList = new ArrayList<>(exractedResults);
             returnList.sort(Collections.reverseOrder());
         }
+
+        //enforce some results into the top list
+        Set<ExactResult> resultsSet = new HashSet<>();
         //make sure that annotated lipid MFs from ElGordo are always part of the list
         if (results.stream().anyMatch(r -> r.tree.hasAnnotation(LipidSpecies.class))) { //annotation should be on each tree. But for future fail-safety, we check all
             //in principle, this should only be a single tree possible
             List<ExactResult> lipids = results.stream().filter(r->r.tree.getAnnotation(LipidSpecies.class).map(ls -> ls.getHypotheticalMolecularFormula().map(mf->pinput.getAnnotation(PossibleAdducts.class, PossibleAdducts::empty).getAdducts(r.decomposition.getIon()).stream().anyMatch(it -> it.measuredNeutralMoleculeToNeutralMolecule(r.decomposition.getCandidate()).equals(mf))).orElse(false)).orElse(false)).collect(Collectors.toList());
-            Set<ExactResult> resultsSet = new HashSet<>();
-            resultsSet.addAll(returnList);
+
             resultsSet.addAll(lipids);
+        }
+        //enforced formulas always part of results
+        if (enforcedPrecursorFormulas!=null && enforcedPrecursorFormulas.size()>0) {
+            List<ExactResult> enforced = results.stream().filter(r -> enforcedPrecursorFormulas.contains(r.decomposition.getCandidate())).collect(Collectors.toList());
+            resultsSet.addAll(enforced);
+        }
+        if (resultsSet.size()>0) {
+            resultsSet.addAll(returnList);
             returnList = new ArrayList<>(resultsSet);
             returnList.sort(Collections.reverseOrder());
         }
+
         return returnList;
     }
 
