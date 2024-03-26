@@ -139,7 +139,7 @@ public class FormulaSummaryWriter extends CandidateSummarizer {
                 types.remove(ConfidenceScore.class);
                 List<ResultEntry> r = results.stream()
                         .sorted((i1, i2) -> FormulaScoring.comparingMultiScore(
-                                        ProjectSpaceManager.scorePriorities()
+                                        SiriusProjectSpaceManager.scorePriorities()
                                                 .stream().filter(types::containsKey).toList())
                                 .compare(i1.scoring, i2.scoring))
                         .toList();
@@ -206,7 +206,7 @@ public class FormulaSummaryWriter extends CandidateSummarizer {
     }
 
     private void writeCSV(Writer w, LinkedHashMap<Class<? extends FormulaScore>, String> types, List<ResultEntry> results, boolean suffix) throws IOException {
-        final List<Class<? extends FormulaScore>> scoreOrder = ProjectSpaceManager.scorePriorities()
+        final List<Class<? extends FormulaScore>> scoreOrder = SiriusProjectSpaceManager.scorePriorities()
                 .stream().filter(types::containsKey).toList();
 
         String header = makeHeader(scoreOrder.stream().map(types::get).collect(Collectors.joining("\t")));

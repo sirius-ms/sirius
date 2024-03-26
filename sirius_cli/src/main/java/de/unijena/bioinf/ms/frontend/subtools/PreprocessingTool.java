@@ -21,7 +21,10 @@ package de.unijena.bioinf.ms.frontend.subtools;
 
 
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface PreprocessingTool<T extends PreprocessingJob<?>> {
-    T makePreprocessingJob(RootOptions<?,?,?,?> rootOptions, ParameterConfig config);
+    T makePreprocessingJob(@Nullable InputFilesOptions input, @NotNull OutputOptions outputProject, @NotNull ProjectSpaceManagerFactory<?> projectFactory, @Nullable ParameterConfig config);
 }

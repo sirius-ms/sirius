@@ -19,12 +19,10 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.export.trees;
 
-import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.projectspace.Instance;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -57,7 +55,7 @@ public class FTreeExporterOptions implements StandaloneTool<FTreeExporterWorkflo
 
 
     @Override
-    public FTreeExporterWorkflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
-        return new FTreeExporterWorkflow((PreprocessingJob<? extends Iterable<Instance>>) rootOptions.makeDefaultPreprocessingJob(), this, config);
+    public FTreeExporterWorkflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
+        return new FTreeExporterWorkflow(rootOptions.makeDefaultPreprocessingJob(), this);
     }
 }

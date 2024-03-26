@@ -21,7 +21,6 @@
 package de.unijena.bioinf.ms.middleware.service.compute;
 
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.middleware.model.compute.*;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import org.jetbrains.annotations.NotNull;
@@ -37,18 +36,23 @@ public interface ComputeService<P extends Project> extends DisposableBean {
 
     Job createAndSubmitJob(@NotNull P psm, JobSubmission jobSubmission, @NotNull EnumSet<Job.OptField> optFields);
 
-    Job createAndSubmitJob(@NotNull P psm, List<String> commandList, @Nullable Iterable<String> alignedFeatureIds, @Nullable InputFilesOptions toImport, @NotNull EnumSet<Job.OptField> optFields);
+    Job createAndSubmitJob(@NotNull P psm, List<String> commandList, @Nullable Iterable<String> alignedFeatureIds,
+                           @NotNull EnumSet<Job.OptField> optFields);
 
-    Job createAndSubmitImportJob(@NotNull P psm, ImportLocalFilesSubmission jobSubmission, @NotNull EnumSet<Job.OptField> optFields);
+    Job createAndSubmitMsDataImportJob(@NotNull P psm, ImportMultipartFilesSubmission importSubmission,
+                                       @NotNull EnumSet<Job.OptField> optFields);
 
-    Job createAndSubmitPeakListImportJob(@NotNull P psm, AbstractImportSubmission importSubmission,
+    Job createAndSubmitPeakListImportJob(@NotNull P psm, ImportMultipartFilesSubmission importSubmission,
                                          @NotNull EnumSet<Job.OptField> optFields);
 
-    Job createAndSubmitCommandJob(@NotNull P psm, CommandSubmission commandSubmission, @NotNull EnumSet<Job.OptField> optFields);
+    Job createAndSubmitCommandJob(@NotNull P psm, CommandSubmission commandSubmission,
+                                  @NotNull EnumSet<Job.OptField> optFields);
 
-    Job deleteJob(@NotNull P psm, String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<Job.OptField> optFields);
+    Job deleteJob(@NotNull P psm, String jobId, boolean cancelIfRunning, boolean awaitDeletion,
+                  @NotNull EnumSet<Job.OptField> optFields);
 
-    List<Job> deleteJobs(@NotNull P psm, boolean cancelIfRunning, boolean awaitDeletion, boolean closeProject, @NotNull EnumSet<Job.OptField> optFields);
+    List<Job> deleteJobs(@NotNull P psm, boolean cancelIfRunning, boolean awaitDeletion, boolean closeProject,
+                         @NotNull EnumSet<Job.OptField> optFields);
 
     Job getJob(@NotNull P psm, String jobId, @NotNull EnumSet<Job.OptField> optFields);
 

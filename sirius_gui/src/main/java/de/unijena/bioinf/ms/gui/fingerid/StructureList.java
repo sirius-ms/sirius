@@ -27,6 +27,7 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
+import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -45,10 +46,14 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
 
     private final AtomicBoolean loadAll = new AtomicBoolean(false);
 
+    private final CompoundList compoundList;
+
     private final IOFunctions.BiIOFunction<InstanceBean, Integer, List<FingerprintCandidateBean>> dataExtractor; //todo allow user specifiable or pagination
+
     public StructureList(final CompoundList compoundList, IOFunctions.BiIOFunction<InstanceBean, Integer, List<FingerprintCandidateBean>> dataExtractor) {
         super(FingerprintCandidateBean.class);
         this.dataExtractor = dataExtractor;
+        this.compoundList = compoundList;
         elementListSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         csiScoreStats = new DoubleListStats();
         logPStats = new DoubleListStats();
@@ -159,6 +164,12 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
     }
 
     protected Function<FingerprintCandidateBean, Boolean> getBestFunc() {
-        return c -> c.getScore() >= csiScoreStats.getMax();
+        return c -> {
+            if (compoundList.getGui().getProperties().isConfidenceViewMode( ConfidenceDisplayMode.APPROXIMATE)) {
+                return c.getCandidate().getMcesDistToTopHit()!=null && c.getCandidate().getMcesDistToTopHit()<=2;
+            } else {
+                return c.getScore() >= csiScoreStats.getMax();
+            }
+        };
     }
 }

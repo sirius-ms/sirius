@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.nio.file.Path;
 import java.util.List;
 
 
@@ -44,10 +43,10 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
 
     private final SiriusGui gui;
 
-    public ExecutionDialog(SiriusGui gui, @NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput, MainFrame owner, String title, boolean modal) {
+    public ExecutionDialog(SiriusGui gui, @NotNull P configPanel, @Nullable List<InstanceBean> compounds, MainFrame owner, String title, boolean modal) {
         super(owner, title, modal);
         this.gui = gui;
-        init(configPanel, compounds, nonCompoundInput);
+        init(configPanel, compounds);
     }
 
     private MainFrame mf() {
@@ -59,12 +58,10 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
     protected boolean indeterminateProgress = true;
 
     @Nullable List<InstanceBean> compounds = null;
-    @Nullable List<Path> nonCompoundInput = null;
 
-    protected void init(@NotNull P configPanel, @Nullable List<InstanceBean> compounds, @Nullable List<Path> nonCompoundInput) {
+    protected void init(@NotNull P configPanel, @Nullable List<InstanceBean> compounds) {
         this.configPanel = configPanel;
         this.compounds = compounds;
-        this.nonCompoundInput = nonCompoundInput;
 
         setLayout(new BorderLayout());
         add(this.configPanel, BorderLayout.CENTER);
@@ -101,9 +98,6 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
         this.compounds = compounds;
     }
 
-    public void setNonCompoundInput(@Nullable List<Path> nonCompoundInput) {
-        this.nonCompoundInput = nonCompoundInput;
-    }
 
     protected void cancel() {
         dispose();
@@ -118,8 +112,6 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
 
             if (compounds != null)
                 sub.alignedFeatureIds(compounds.stream().map(InstanceBean::getFeatureId).toList());
-            if (nonCompoundInput != null)
-                sub.inputPaths(nonCompoundInput.stream().map(Path::toString).toList());
 
             gui.applySiriusClient((c, pid) -> {
                 Job j = c.jobs().startCommand(pid, sub, List.of(JobOptField.PROGRESS));

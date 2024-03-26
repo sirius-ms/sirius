@@ -21,10 +21,14 @@ package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
+import de.unijena.bioinf.fingerid.ConfidenceScoreApproximate;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
+import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,6 +39,7 @@ import java.util.stream.Stream;
 
 public class CompoundCellRenderer extends JLabel implements ListCellRenderer<InstanceBean> {
 
+    private final SiriusGui gui;
     private InstanceBean ec;
 
     private Color backColor, foreColor;
@@ -44,9 +49,10 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
     private Color selectedBackground, evenBackground, unevenBackground, selectedForeground;
     private Color activatedForeground;
 
-    private DecimalFormat numberFormat;
+    private final DecimalFormat numberFormat;
 
-    public CompoundCellRenderer() {
+    public CompoundCellRenderer(@NotNull SiriusGui gui) {
+        this.gui = gui;
         this.setPreferredSize(new Dimension(210, 86));
         initColorsAndFonts();
         this.numberFormat = new DecimalFormat("#0.00");
@@ -98,7 +104,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 
         FontMetrics compoundFm = g2.getFontMetrics(this.compoundFont);
         FontMetrics propertyFm = g2.getFontMetrics(this.propertyFont);
-        FontMetrics valueFm = g2.getFontMetrics(this.valueFont);
+//        FontMetrics valueFm = g2.getFontMetrics(this.valueFont);
 
         g2.setColor(this.foreColor);
 
@@ -123,7 +129,9 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
         String ionizationProp = "Ionization";
         String focMassProp = "Precursor";
         String rtProp = "RT";
-        String confProp = ConfidenceScore.NA(ConfidenceScore.class).shortName();
+        String confProp = gui.getProperties().isConfidenceViewMode(ConfidenceDisplayMode.APPROXIMATE)
+                ? ConfidenceScore.NA(ConfidenceScoreApproximate.class).shortName()
+                : ConfidenceScore.NA(ConfidenceScore.class).shortName();
 
         g2.setFont(propertyFont);
         g2.drawString(ionizationProp, 4, 32);
@@ -149,7 +157,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
         g2.drawString(focMass, xPos, 48);
         g2.drawString(rtValue, xPos, 64);
 
-        ec.getConfidenceScoreDefault().ifPresent(confScore -> {
+        ec.getConfidenceScore(gui.getProperties().getConfidenceDisplayMode()).ifPresent(confScore -> {
             g2.setFont(propertyFont);
             String conf = confScore < 0 || Double.isNaN(confScore) ? ConfidenceScore.NA() : BigDecimal.valueOf(confScore).setScale(3, RoundingMode.HALF_UP).toString();
             g2.drawString(conf, xPos, 80);

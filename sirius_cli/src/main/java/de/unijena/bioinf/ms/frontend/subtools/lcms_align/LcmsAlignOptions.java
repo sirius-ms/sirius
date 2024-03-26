@@ -21,10 +21,14 @@ package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.workflows.LCMSWorkflow;
+import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
+import de.unijena.bioinf.ms.frontend.subtools.OutputOptions;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingTool;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
-import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
@@ -36,8 +40,8 @@ import java.util.Optional;
 public class LcmsAlignOptions implements PreprocessingTool<LcmsAlignSubToolJob> {
 
     @Override
-    public LcmsAlignSubToolJob makePreprocessingJob(RootOptions<?,?,?,?> rootOptions, ParameterConfig config) {
-        return new LcmsAlignSubToolJob(rootOptions.getInput(), rootOptions.getProjectSpace(), config, this);
+    public LcmsAlignSubToolJob makePreprocessingJob(@Nullable InputFilesOptions input, @NotNull OutputOptions outputProject, @NotNull ProjectSpaceManagerFactory<?> projectFactory, @Nullable ParameterConfig config) {
+        return new LcmsAlignSubToolJob(input, () -> projectFactory.createOrOpen(outputProject.getOutputProjectLocation()), this);
     }
 
     protected Optional<LCMSWorkflow> workflow = Optional.empty();

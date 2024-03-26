@@ -1597,7 +1597,7 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | Fragmentation Tree in internal format.   NOTE: This endpoint is likely to be removed in future versions of the API. |  -  |
+| **200** | Fragmentation Tree in internal format.  &lt;p&gt;  NOTE: This endpoint is likely to be removed in future versions of the API. |  -  |
 
 
 ## getSpectralLibraryMatches

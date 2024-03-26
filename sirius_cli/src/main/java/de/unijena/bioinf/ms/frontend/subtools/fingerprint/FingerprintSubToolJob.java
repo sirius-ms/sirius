@@ -31,9 +31,10 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
-import de.unijena.bioinf.projectspace.*;
-import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
+import de.unijena.bioinf.projectspace.FormulaResult;
+import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.ProjectSpaceManagers;
 import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.spectraldb.InjectSpectralLibraryMatchFormulas;
@@ -78,11 +79,7 @@ public class FingerprintSubToolJob extends InstanceJob {
         checkForInterruption();
 
         // add CSIClientData to PS if it is not already there
-        if (inst.getProjectSpaceManager().getProjectSpaceProperty(FingerIdDataProperty.class).isEmpty()) {
-            final FingerIdData pos = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE), this::checkForInterruption);
-            final FingerIdData neg = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE), this::checkForInterruption);
-            inst.getProjectSpaceManager().setProjectSpaceProperty(FingerIdDataProperty.class, new FingerIdDataProperty(pos, neg));
-        }
+        NetUtils.tryAndWait(() -> ProjectSpaceManagers.writeFingerIdDataIfMissing(inst.getProjectSpaceManager(), ApplicationCore.WEB_API), this::checkForInterruption);
 
         updateProgress(10);
         checkForInterruption();
@@ -96,6 +93,7 @@ public class FingerprintSubToolJob extends InstanceJob {
         // expand IDResult list with adducts
         final FingerprintPreprocessingJJob<?> fpPreproJob = new FingerprintPreprocessingJJob<>(inst.getExperiment(),
                 formulaResults.stream().map(res ->
+                        //todo handle zodiac score
                         new IdentificationResult<>(res.getCandidate().getAnnotationOrThrow(FTree.class),
                                 res.getScoreObject())).collect(Collectors.toList()), enforcedFormulas);
 
@@ -124,8 +122,6 @@ public class FingerprintSubToolJob extends InstanceJob {
         addedResults.forEach((k, v) ->
                 inst.newFormulaResultWithUniqueId(k.getTree())
                         .ifPresent(fr -> {
-//                            fr.getAnnotationOrThrow(FormulaScoring.class).setAnnotationsFrom(
-//                                    formulaResultsMap.get(v.getTree()).getAnnotationOrThrow(FormulaScoring.class));
                             //do not override but only set missing scores (may have different tree/SIRIUS score)
                             FormulaScoring formulaScoring = fr.getAnnotationOrThrow(FormulaScoring.class);
                             final Iterator<Map.Entry<Class<FormulaScore>, FormulaScore>> iter = formulaResultsMap.get(v.getTree()).getAnnotationOrThrow(FormulaScoring.class).annotationIterator();

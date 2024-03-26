@@ -164,7 +164,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
 
 
     @Override
-    public LoginWorkflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
+    public LoginWorkflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
         return new LoginWorkflow();
     }
 

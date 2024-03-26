@@ -20,6 +20,8 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.projectspace.Instance;
 
 /**
  * Only one postprocessing Subtool is allowed per Workflow. They can only run in last position
@@ -28,5 +30,11 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 public abstract class PostprocessingJob<P> extends BasicJJob<P> {
     public PostprocessingJob() {
                 super(JobType.SCHEDULER);
+    }
+    public abstract void setInput(Iterable<? extends Instance> instances, ParameterConfig config);
+
+    @Override
+    protected void cleanup() {
+        super.cleanup();
     }
 }
