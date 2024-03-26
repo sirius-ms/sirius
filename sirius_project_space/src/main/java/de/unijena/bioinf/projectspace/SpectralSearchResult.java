@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
@@ -59,12 +60,12 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
         return results.iterator();
     }
 
-    @Builder
+    @SuperBuilder
     @Getter
     @Setter
     @NoArgsConstructor
     @AllArgsConstructor
-    public static final class SearchResult {
+    public static class SearchResult {
         @Builder.Default
         private int rank = -1;
 

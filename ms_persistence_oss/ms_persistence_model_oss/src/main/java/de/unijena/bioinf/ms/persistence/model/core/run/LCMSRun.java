@@ -24,7 +24,6 @@ import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Getter
@@ -54,7 +53,6 @@ public class LCMSRun extends AbstractLCMSRun {
     /**
      * A reference to a certain LC/MS run in a mzml file.
      */
-    @NotNull
     private MsDataSourceReference sourceReference;
 
 

@@ -1,11 +1,11 @@
 package de.unijena.bioinf.lcms.trace;
 
 import de.unijena.bioinf.lcms.ScanPointMapping;
-import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
+import org.dizitart.no2.mvstore.MVSpatialKey;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.rtree.MVRTreeMap;
-import org.h2.mvstore.rtree.SpatialKey;
+import org.h2.mvstore.rtree.Spatial;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -85,10 +85,10 @@ public abstract class TraceStorage implements Iterable<ContiguousTrace>  {
             ContiguousTrace t = this.traceMap.get(uid);
             if (t!=null) {
                 if (t.endId >= t.startId) {
-                    SpatialKey key = new SpatialKey(t.uid, (float)t.averageMz, (float)t.averageMz, t.startId, t.endId);
-                    Iterator<SpatialKey> it = spatialTraceMap.findIntersectingKeys(key);
+                    MVSpatialKey key = new MVSpatialKey(t.uid, (float)t.averageMz, (float)t.averageMz, t.startId, t.endId);
+                    MVRTreeMap.RTreeCursor<Integer> it = spatialTraceMap.findIntersectingKeys(key);
                     while (it.hasNext()) {
-                        SpatialKey next = it.next();
+                        Spatial next = it.next();
                         if (next.getId()==uid) {
                             spatialTraceMap.remove(next);
                             break;
@@ -102,9 +102,9 @@ public abstract class TraceStorage implements Iterable<ContiguousTrace>  {
 
         @Override
         public Optional<ContiguousTrace> getContigousTrace(double fromMz, double toMz, int scanId) {
-            SpatialKey key = new SpatialKey(0, (float)fromMz, (float)toMz, scanId, scanId);
-            Iterator<SpatialKey> it = spatialTraceMap.findIntersectingKeys(key);
-            for(SpatialKey k; it.hasNext();) {
+            MVSpatialKey key = new MVSpatialKey(0, (float)fromMz, (float)toMz, scanId, scanId);
+            MVRTreeMap.RTreeCursor<Integer> it = spatialTraceMap.findIntersectingKeys(key);
+            for(Spatial k; it.hasNext();) {
                 k = it.next();
                 ContiguousTrace tr = traceMap.get((int)k.getId());
                 double avgmz = tr.averagedMz();
@@ -117,10 +117,10 @@ public abstract class TraceStorage implements Iterable<ContiguousTrace>  {
 
         @Override
         public List<ContiguousTrace> getContigousTraces(double fromMz, double toMz, int fromScanId, int toScanId) {
-            SpatialKey key = new SpatialKey(0, (float)fromMz, (float)toMz, fromScanId, toScanId);
-            Iterator<SpatialKey> it = spatialTraceMap.findIntersectingKeys(key);
+            MVSpatialKey key = new MVSpatialKey(0, (float)fromMz, (float)toMz, fromScanId, toScanId);
+            MVRTreeMap.RTreeCursor<Integer> it = spatialTraceMap.findIntersectingKeys(key);
             List<ContiguousTrace> outp = new ArrayList<>();
-            for(SpatialKey k; it.hasNext();) {
+            for(Spatial k; it.hasNext();) {
                 k = it.next();
                 ContiguousTrace tr = traceMap.get((int)k.getId());
                 double avgmz = tr.averagedMz();
@@ -146,9 +146,9 @@ public abstract class TraceStorage implements Iterable<ContiguousTrace>  {
 
         @Override
         public List<ContiguousTrace> getContigousTracesByMass(double from, double to) {
-            final SpatialKey key = new SpatialKey(0, (float)from, (float)to, Integer.MIN_VALUE, Integer.MAX_VALUE);
+            final MVSpatialKey key = new MVSpatialKey(0, (float)from, (float)to, Integer.MIN_VALUE, Integer.MAX_VALUE);
             final ArrayList<ContiguousTrace> traces = new ArrayList<>();
-            MVRTreeMap.RTreeCursor iter = spatialTraceMap.findIntersectingKeys(key);
+            MVRTreeMap.RTreeCursor<Integer> iter = spatialTraceMap.findIntersectingKeys(key);
             while (iter.hasNext()) {
                 traces.add(traceMap.get((int)(iter.next().getId())).withMapping(mapping));
             }
@@ -165,9 +165,9 @@ public abstract class TraceStorage implements Iterable<ContiguousTrace>  {
             }
             while (true) {
                 int currentIndex = uids.get();
-                SpatialKey key = new SpatialKey(currentIndex, (float) trace.minMz(), (float) trace.maxMz(), trace.startId(), trace.endId());
-                Iterator<SpatialKey> it = spatialTraceMap.findIntersectingKeys(key);
-                for (SpatialKey k; it.hasNext(); ) {
+                MVSpatialKey key = new MVSpatialKey(currentIndex, (float) trace.minMz(), (float) trace.maxMz(), trace.startId(), trace.endId());
+                MVRTreeMap.RTreeCursor<Integer> it = spatialTraceMap.findIntersectingKeys(key);
+                for (Spatial k; it.hasNext(); ) {
                     k = it.next();
                     ContiguousTrace contiguousTrace = traceMap.get((int)k.getId());
                     if (contiguousTrace.apex() == trace.apex()) {

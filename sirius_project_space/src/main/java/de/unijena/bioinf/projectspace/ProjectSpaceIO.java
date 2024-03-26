@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.projectspace;
 
-import com.github.f4b6a3.tsid.TsidCreator;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import net.lingala.zip4j.ZipFile;
@@ -179,9 +178,8 @@ public class ProjectSpaceIO {
         return space;
     }
 
-    public static Path createTmpProjectSpaceLocation() throws IOException {
-        String tmpDir = System.getProperty("java.io.tmpdir");
-        return Path.of(tmpDir).resolve("sirius-tmp-project-" + TsidCreator.getTsid());
+    public static Path createTmpProjectSpaceLocation() {
+        return FileUtils.createTmpProjectSpaceLocation(null);
     }
 
     /**

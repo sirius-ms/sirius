@@ -20,28 +20,27 @@
 
 package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Score;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.Collectors;
 
 public final class CompoundContainerId extends ProjectSpaceContainerId {
     public enum Flag {COMPUTING}
-    public static final String RANKING_KEY = "rankingScoreType";
 
     //transient fields
-    protected final transient ReentrantReadWriteLock containerLock = new ReentrantReadWriteLock(); //lock for IO
-    protected final transient Lock flagsLock = new ReentrantLock(); //lock for non persistent changes
-    protected final transient EnumSet<Flag> flags = EnumSet.noneOf(Flag.class);
+    final transient ReentrantReadWriteLock containerLock = new ReentrantReadWriteLock(); //lock for IO
+    final transient Lock flagsLock = new ReentrantLock(); //lock for non persistent changes
+    final transient EnumSet<Flag> flags = EnumSet.noneOf(Flag.class);
 
     // ID defining fields
     private final int compoundIndex;
@@ -75,24 +74,17 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
     private PrecursorIonType ionType = null;
     @Nullable
     private DetectedAdducts detectedAdducts = null;
-    @NotNull
-    private List<Class<? extends FormulaScore>> rankingScores = Collections.emptyList();
     @Nullable
     private RetentionTime rt;
     @Nullable
     private Double confidenceScore;
     @Nullable
     private Double confidenceScoreApproximate;
-    private boolean useApproximate = false;
 
-    protected CompoundContainerId(@NotNull String directoryName, @NotNull String compoundName, int compoundIndex) {
-        this(directoryName, compoundName, compoundIndex, null, null, null, null, null, null, null, null);
-    }
-
-    protected CompoundContainerId(@NotNull String directoryName, @NotNull String compoundName, int compoundIndex,
-                                  @Nullable Double ionMass, @Nullable PrecursorIonType ionType,
-                                  @Nullable RetentionTime rt, @Nullable Double confidenceScore,
-                                  @Nullable String featureId, @Nullable String groupId, @Nullable RetentionTime groupRt, @Nullable String groupName) {
+    CompoundContainerId(@NotNull String directoryName, @NotNull String compoundName, int compoundIndex,
+                        @Nullable Double ionMass, @Nullable PrecursorIonType ionType,
+                        @Nullable RetentionTime rt, @Nullable Double confidenceScore,
+                        @Nullable String featureId, @Nullable String groupId, @Nullable RetentionTime groupRt, @Nullable String groupName) {
         this.directoryName = directoryName;
         this.compoundName = compoundName;
         this.compoundIndex = compoundIndex;
@@ -142,10 +134,6 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         this.ionType = ionType;
     }
 
-    public List<Class<? extends FormulaScore>> getRankingScoreTypes() {
-        return rankingScores;
-    }
-
     @NotNull
     public Optional<DetectedAdducts> getDetectedAdducts() {
         return Optional.ofNullable(detectedAdducts);
@@ -179,15 +167,6 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
     public void setConfidenceScoreApproximate(@Nullable Double confidenceScoreApproximate) {
         this.confidenceScoreApproximate = confidenceScoreApproximate;
     }
-
-    public boolean isUseApproximate() {
-        return useApproximate;
-    }
-
-    public void setUseApproximate(boolean useApproximate) {
-        this.useApproximate = useApproximate;
-    }
-
     @NotNull
     public Optional<String> getFeatureId() {
         return Optional.ofNullable(featureId);
@@ -210,7 +189,7 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         return Optional.ofNullable(groupRt);
     }
 
-    public void setGroupName(String groupName) {
+    public void setGroupName(@Nullable String groupName) {
         this.groupName = groupName;
     }
 
@@ -221,15 +200,6 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
 
     public void setGroupRt(@Nullable RetentionTime rt) {
         this.groupRt = rt;
-    }
-
-    @SafeVarargs
-    public final void setRankingScoreTypes(@NotNull Class<? extends FormulaScore>... rankingScores) {
-        setRankingScoreTypes(Arrays.asList(rankingScores));
-    }
-
-    public void setRankingScoreTypes(@NotNull List<Class<? extends FormulaScore>> rankingScores) {
-        this.rankingScores = new ArrayList<>(rankingScores);
     }
 
     /**
@@ -249,7 +219,6 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         Map<String, String> kv = new LinkedHashMap<>(3);
         kv.put("index", String.valueOf(getCompoundIndex()));
         kv.put("name", getCompoundName());
-        kv.put("useApproximate", String.valueOf(isUseApproximate()));
         getIonMass().ifPresent(im -> kv.put("ionMass", String.valueOf(im)));
         getIonType().ifPresent(it -> kv.put("ionType", it.toString()));
         getDetectedAdducts().ifPresent(pa -> kv.put("detectedAdducts", pa.toString()));
@@ -262,26 +231,6 @@ public final class CompoundContainerId extends ProjectSpaceContainerId {
         getGroupName().ifPresent(groupName -> kv.put("groupName", groupName));
 
 
-        if (!rankingScores.isEmpty())
-            kv.put(RANKING_KEY, rankingScores.stream().map(Score::simplify).collect(Collectors.joining(",")));
-
         return kv;
-    }
-
-    public void setAllNonFinal(final CompoundContainerId cid) {
-        if (cid == null || cid == this)
-            return;
-        setRankingScoreTypes(cid.rankingScores);
-        setIonMass(cid.ionMass);
-        setIonType(cid.ionType);
-        setDetectedAdducts(cid.detectedAdducts);
-        setRt(cid.rt);
-        setConfidenceScore(cid.confidenceScore);
-        setConfidenceScoreApproximate(cid.confidenceScoreApproximate);
-        setUseApproximate(cid.useApproximate);
-        setFeatureId(cid.featureId);
-        setGroupId(cid.groupId);
-        setGroupRt(cid.groupRt);
-        setGroupName(cid.groupName);
     }
 }

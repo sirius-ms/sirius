@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -18,33 +18,17 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.storage.db.nosql.nitrite;
+package de.unijena.bioinf.ChemistryBase.fp;
 
-import org.dizitart.no2.Document;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
 
-import java.util.Iterator;
-import java.util.function.Function;
+import java.io.IOException;
 
-abstract class CombiningDocumentIterator implements Iterator<Document> {
-
-    protected Iterator<Document> parentIterator;
-
-    protected final Function<Object, Iterable<Document>> children;
-
-    protected final String localField;
-
-    public CombiningDocumentIterator(Iterable<Document> parents, Function<Object, Iterable<Document>> children, String localField) {
-        this.parentIterator = parents.iterator();
-        this.children = children;
-        this.localField = localField;
-    }
-
-    /**
-     * Just a default Override for more complex handling
-     * @return true if another element is available
-     */
+public class BinaryFpDeserializer extends FpDeserializer<Fingerprint> {
     @Override
-    public boolean hasNext() {
-        return parentIterator.hasNext();
+    public ArrayFingerprint deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+        short[] indizes = p.readValueAs(short[].class);
+        return new ArrayFingerprint(version, indizes);
     }
 }
