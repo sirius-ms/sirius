@@ -32,6 +32,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,11 @@ import java.util.stream.Stream;
 
 @JsonSerialize(using = CompoundCandidate.Serializer.class)
 public class CompoundCandidate {
-    //The 2d inchi key is the UUID of an CompoundCandidate
+    //The 2d inchi key is the UUID of an CompoundCandidate, field need to exist fot proper object based serialization
+    @Id
+    @Getter
+    @NotNull
+    final String inchikey;
     @Getter
     @NotNull
     protected final InChI inchi;
@@ -100,7 +105,7 @@ public class CompoundCandidate {
     }
 
     public CompoundCandidate(@NotNull InChI inchi, String name, String smiles, int pLayer, int qLayer, double xlogp, long bitset, ArrayList<DBLink> links, PubmedLinks pubmedIDs) {
-        this.inchi = inchi;
+        this(inchi);
         this.name = name;
         this.smiles = smiles;
         this.pLayer = pLayer;
@@ -114,6 +119,7 @@ public class CompoundCandidate {
 
     public CompoundCandidate(CompoundCandidate c) {
         this.inchi = c.inchi;
+        this.inchikey = c.inchikey;
         this.name = c.name;
         this.bitset = c.bitset;
         this.smiles = c.smiles;
@@ -129,10 +135,11 @@ public class CompoundCandidate {
 
     public CompoundCandidate(InChI inchi) {
         this.inchi = inchi;
+        this.inchikey = inchi.key2D();
     }
 
     public String getInchiKey2D() {
-        return inchi.key2D();
+        return inchikey;
     }
 
 
@@ -233,7 +240,7 @@ public class CompoundCandidate {
         protected void serializeInternal(C value, JsonGenerator gen) throws IOException {
             gen.writeStringField("name", value.name);
             gen.writeStringField("inchi", value.inchi.in3D);
-            gen.writeStringField("inchikey", value.getInchiKey2D());
+            gen.writeStringField("inchikey", value.inchikey);
             if (value.pLayer != 0) gen.writeNumberField("pLayer", value.pLayer);
             if (value.qLayer != 0) gen.writeNumberField("qLayer", value.qLayer);
             gen.writeNumberField("xlogp", value.xlogp);

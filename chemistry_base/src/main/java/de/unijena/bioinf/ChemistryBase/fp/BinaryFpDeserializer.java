@@ -1,4 +1,5 @@
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
@@ -17,30 +18,17 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.storage;
+package de.unijena.bioinf.ChemistryBase.fp;
 
-import de.unijena.bioinf.storage.db.nosql.Database;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
 
 import java.io.IOException;
 
-public class SiriusProjectDatabaseImpl<Storage extends Database<?>> implements SiriusProjectDocumentDatabase<Storage> {
-
-    protected Storage storage;
-
-    public SiriusProjectDatabaseImpl(Storage storage) {
-        this.storage = storage;
-    }
-
-    protected SiriusProjectDatabaseImpl() {
-        this.storage = null;
-    }
-
-    protected void setStorage(Storage storage) {
-        this.storage = storage;
-    }
-
+public class BinaryFpDeserializer extends FpDeserializer<Fingerprint> {
     @Override
-    public Storage getStorage() {
-        return storage;
+    public ArrayFingerprint deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+        short[] indizes = p.readValueAs(short[].class);
+        return new ArrayFingerprint(version, indizes);
     }
 }

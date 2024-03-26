@@ -1,4 +1,5 @@
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
@@ -17,30 +18,20 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.storage;
+package de.unijena.bioinf.ms.persistence.model.sirius;
 
-import de.unijena.bioinf.storage.db.nosql.Database;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+import lombok.extern.jackson.Jacksonized;
 
-import java.io.IOException;
-
-public class SiriusProjectDatabaseImpl<Storage extends Database<?>> implements SiriusProjectDocumentDatabase<Storage> {
-
-    protected Storage storage;
-
-    public SiriusProjectDatabaseImpl(Storage storage) {
-        this.storage = storage;
-    }
-
-    protected SiriusProjectDatabaseImpl() {
-        this.storage = null;
-    }
-
-    protected void setStorage(Storage storage) {
-        this.storage = storage;
-    }
-
-    @Override
-    public Storage getStorage() {
-        return storage;
-    }
+@SuperBuilder
+@Jacksonized
+@Getter
+@Setter
+public class DenovoStructureMatch extends StructureMatch {
+    /**
+     * Score produced but the model that generated this structure
+     */
+    protected Double modelScore;
 }

@@ -30,12 +30,16 @@ import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.JSONReader;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.IOException;
 
 public class FingerprintCandidateWrapperDeserializer extends StdDeserializer<FingerprintCandidateWrapper> {
 
-    private final FingerprintVersion version;
+    @Getter
+    @Setter
+    private FingerprintVersion version;
 
     private final JSONReader.CompoundCandidateDeserializer compoundCandidateDeserializer = new JSONReader.CompoundCandidateDeserializer();
 

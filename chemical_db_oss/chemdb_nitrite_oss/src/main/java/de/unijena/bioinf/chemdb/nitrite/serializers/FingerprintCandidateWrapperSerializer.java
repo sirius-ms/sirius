@@ -24,6 +24,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 
@@ -53,10 +54,7 @@ public class FingerprintCandidateWrapperSerializer extends StdSerializer<Fingerp
         Fingerprint fingerprint = value.getFingerprint();
         if (fingerprint != null) {
             short[] indices = value.getFingerprint().toIndizesArray();
-            int[] indicesInt = new int[indices.length];
-            for (int i = 0; i < indices.length; i++) {
-                indicesInt[i] = indices[i];
-            }
+            int[] indicesInt = Utils.shortsToInts(indices);
             gen.writeArrayFieldStart("fingerprint");
             gen.writeArray(indicesInt, 0, indicesInt.length);
             gen.writeEndArray();

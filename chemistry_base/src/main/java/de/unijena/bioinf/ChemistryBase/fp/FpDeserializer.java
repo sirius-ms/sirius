@@ -1,8 +1,9 @@
 /*
+ *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schiller University.
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -17,30 +18,22 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.storage;
+package de.unijena.bioinf.ChemistryBase.fp;
 
-import de.unijena.bioinf.storage.db.nosql.Database;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import lombok.Getter;
+import lombok.Setter;
 
-import java.io.IOException;
+public abstract class FpDeserializer<T> extends JsonDeserializer<T> {
+    @Getter
+    @Setter
+    protected FingerprintVersion version;
 
-public class SiriusProjectDatabaseImpl<Storage extends Database<?>> implements SiriusProjectDocumentDatabase<Storage> {
-
-    protected Storage storage;
-
-    public SiriusProjectDatabaseImpl(Storage storage) {
-        this.storage = storage;
+    public FpDeserializer(FingerprintVersion version) {
+        this.version = version;
     }
 
-    protected SiriusProjectDatabaseImpl() {
-        this.storage = null;
-    }
-
-    protected void setStorage(Storage storage) {
-        this.storage = storage;
-    }
-
-    @Override
-    public Storage getStorage() {
-        return storage;
+    protected FpDeserializer() {
+        this(null);
     }
 }

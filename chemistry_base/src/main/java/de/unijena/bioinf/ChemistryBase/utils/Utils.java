@@ -35,6 +35,13 @@ public class Utils {
 
     public static final Comparator<String> ALPHANUMERIC_COMPARATOR = new AlphanumComparator();
 
+    public static int[] shortsToInts(short[] shorts){
+        int[] ints = new int[shorts.length];
+        for (int i = 0; i < shorts.length; i++) {
+            ints[i] = shorts[i];
+        }
+        return ints;
+    }
 
     public static void withTime(String text, Consumer<StopWatch> exec) {
         withTimeR(text, (w) -> {
