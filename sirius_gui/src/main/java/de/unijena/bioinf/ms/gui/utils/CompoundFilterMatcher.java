@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.ms.utils.WrapperSpectrum;
+import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.nightsky.sdk.model.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
@@ -37,9 +38,11 @@ import java.util.Optional;
 
 public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     final CompoundFilterModel filterModel;
+    private final GuiProperties properties;
 
-    public CompoundFilterMatcher(CompoundFilterModel filterModel) {
+    public CompoundFilterMatcher(GuiProperties properties, CompoundFilterModel filterModel) {
         this.filterModel = filterModel;
+        this.properties = properties;
     }
 
     @Override
@@ -47,7 +50,7 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
         double mz = item.getIonMass();
         double rt = item.getRT().map(RetentionTime::getRetentionTimeInSeconds).orElse(Double.NaN);
         //todo hotfix, since the confidence score is a FormulaScore which sets all NaN to -Infinity (after computation, and thus also in project space)
-        double confidence = item.getConfidenceScoreDefault().filter(conf -> !Double.isInfinite(conf)).orElse(Double.NaN);
+        double confidence = item.getConfidenceScore(properties.getConfidenceDisplayMode()).filter(conf -> !Double.isInfinite(conf)).orElse(Double.NaN);
 
         {
             if (mz < filterModel.getCurrentMinMz())

@@ -19,13 +19,6 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.fingerblast;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
-import de.unijena.bioinf.fingerid.ConfidenceScore;
-import de.unijena.bioinf.fingerid.ConfidenceScoreApproximate;
-import de.unijena.bioinf.fingerid.StructureSearchResult;
-import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
-import de.unijena.bioinf.fingerid.blast.FBCandidates;
-import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.completion.DataSourceCandidates;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
@@ -33,8 +26,6 @@ import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.msnovelist.MsNovelistOptions;
-import de.unijena.bioinf.projectspace.FormulaResultRankingScore;
-import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -92,26 +83,7 @@ public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJo
 
     @Override
     public Consumer<Instance> getInvalidator() {
-        return inst -> {
-            inst.deleteFromFormulaResults(FBCandidates.class, FBCandidateFingerprints.class, StructureSearchResult.class);
-            inst.loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate)
-                    .forEach(it -> it.getAnnotation(FormulaScoring.class).ifPresent(z -> {
-                        if (z.removeAnnotation(TopCSIScore.class) != null || z.removeAnnotation(ConfidenceScore.class) != null || z.removeAnnotation(ConfidenceScoreApproximate.class) != null)
-                            inst.updateFormulaResult(it, FormulaScoring.class); //update only if there was something to remove
-                    }));
-            if (inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
-                inst.getID().getRankingScoreTypes().removeAll(List.of(TopCSIScore.class, ConfidenceScore.class, ConfidenceScoreApproximate.class));
-                inst.getID().setConfidenceScore(null);
-                inst.getID().setConfidenceScoreApproximate(null);
-                inst.getID().setUseApproximate(false); //todo proper default
-                inst.updateCompoundID();
-            } else if (inst.getID().getConfidenceScore().isPresent()) {
-                inst.getID().setConfidenceScore(null);
-                inst.getID().setConfidenceScoreApproximate(null);
-                inst.getID().setUseApproximate(false); //todo proper default
-                inst.updateCompoundID();
-            }
-        };
+        return Instance::deleteStructureSearchResults;
     }
 
     @Override

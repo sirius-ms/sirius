@@ -25,7 +25,10 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
-import de.unijena.bioinf.chemdb.custom.*;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.chemdb.custom.CustomDatabase;
+import de.unijena.bioinf.chemdb.custom.CustomDatabaseSettings;
+import de.unijena.bioinf.chemdb.custom.CustomDatabases;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabase;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabaseParameters;
@@ -137,9 +140,9 @@ public class ChemDbServiceImpl implements ChemDbService {
                 .map(Path::of).orElse(CustomDataSources.getCustomDatabaseDirectory());
         try {
             if (Files.isDirectory(location))
-                location = location.resolve(databaseId + CustomDatabases.NOSQL_SUFFIX);
-            else if (!location.getFileName().toString().endsWith(CustomDatabases.NOSQL_SUFFIX))
-                location = location.getParent().resolve(location.getFileName() + CustomDatabases.NOSQL_SUFFIX); //add correct file extension to db.
+                location = location.resolve(databaseId + CustomDatabases.CUSTOM_DB_SUFFIX);
+            else if (!location.getFileName().toString().endsWith(CustomDatabases.CUSTOM_DB_SUFFIX))
+                location = location.getParent().resolve(location.getFileName() + CustomDatabases.CUSTOM_DB_SUFFIX); //add correct file extension to db.
 
             CustomDatabaseSettings.CustomDatabaseSettingsBuilder configBuilder = CustomDatabaseSettings.builder()
                     .name(databaseId)

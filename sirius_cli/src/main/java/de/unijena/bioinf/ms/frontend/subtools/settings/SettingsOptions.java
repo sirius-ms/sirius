@@ -83,7 +83,7 @@ public class SettingsOptions implements StandaloneTool<SettingsOptions.SettingsW
     }
 
     @Override
-    public SettingsWorkflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
+    public SettingsWorkflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
         return new SettingsWorkflow();
     }
 

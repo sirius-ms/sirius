@@ -21,9 +21,15 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
+import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
+import de.unijena.bioinf.fingerid.*;
+import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
+import de.unijena.bioinf.fingerid.blast.FBCandidates;
+import de.unijena.bioinf.fingerid.blast.FingerblastResult;
+import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import org.jetbrains.annotations.NotNull;
@@ -36,39 +42,79 @@ import java.util.stream.Collectors;
 
 public class Instance {
     @NotNull
-    protected final ProjectSpaceManager<?> spaceManager;
+    protected final SiriusProjectSpaceManager spaceManager;
     private CompoundContainer compoundCache;
 
     protected Map<FormulaResultId, FormulaResult> formulaResultCache = new HashMap<>();
 
-    protected Instance(@NotNull CompoundContainer compoundContainer, @NotNull ProjectSpaceManager<?> spaceManager) {
+    protected Instance(@NotNull CompoundContainer compoundContainer, @NotNull SiriusProjectSpaceManager spaceManager) {
         this.compoundCache = compoundContainer;
         this.spaceManager = spaceManager;
     }
 
-    public final Ms2Experiment getExperiment() {
-        return loadCompoundContainer(Ms2Experiment.class).getAnnotationOrThrow(Ms2Experiment.class);
+    /**
+     * @return The ID (primary key) of this aligned feature (usaully alignedFeatureId).
+     */
+    public String getId() {
+        return getCompoundContainerId().getDirectoryName();
     }
 
-    public final CompoundContainerId getID() {
-        return compoundCache.getId();
+    /**
+     * @return The ID (primary key) of this aligned feature (usaully alignedFeatureId) as long or some equivalent id.
+     */
+    @Deprecated
+    public Optional<Long> getLongId() {
+        return Optional.of(getCompoundContainerId().getCompoundIndex()).map(Integer::longValue);
+    }
+
+    /**
+     * @return Optional Compound this Instance belongs to (adduct group)
+     */
+    public Optional<String> getCompoundId() {
+        return getCompoundContainerId().getGroupId();
+    }
+
+    /**
+     * @return FeatureId provided from some external preprocessing tool
+     */
+    public Optional<String> getProvidedFeatureId() {
+        return getCompoundContainerId().getFeatureId();
+    }
+
+    /**
+     * @return Display name of this feature
+     */
+    public String getName() {
+        return getCompoundContainerId().getCompoundName();
     }
 
     @Override
     public String toString() {
-        return getID().toString();
+        return getCompoundContainerId().toString();
     }
 
-    SiriusProjectSpace projectSpace() {
-        return getProjectSpaceManager().projectSpace();
+    public double getIonMass() {
+        return getCompoundContainerId().getIonMass().orElse(Double.NaN);
     }
 
-    public ProjectSpaceManager<?> getProjectSpaceManager() {
+    @Deprecated
+    public final synchronized CompoundContainerId getCompoundContainerId() {
+        return compoundCache.getId();
+    }
+
+    private SiriusProjectSpace projectSpace() {
+        return ((SiriusProjectSpaceManager) getProjectSpaceManager()).getProjectSpaceImpl();
+    }
+
+    public ProjectSpaceManager getProjectSpaceManager() {
         return spaceManager;
     }
 
 
-    //load from projectSpace
+    //region load from projectSpace
+    public final Ms2Experiment getExperiment() {
+        return loadCompoundContainer(Ms2Experiment.class).getAnnotationOrThrow(Ms2Experiment.class);
+    }
     public final synchronized Optional<ProjectSpaceConfig> loadConfig() {
         return loadCompoundContainer(ProjectSpaceConfig.class).getAnnotation(ProjectSpaceConfig.class);
     }
@@ -78,22 +124,12 @@ public class Instance {
         try {
             Class[] missingComps = Arrays.stream(components).filter(comp -> !compoundCache.hasAnnotation(comp)).distinct().toArray(Class[]::new);
             if (missingComps.length > 0) { //load missing comps
-                final CompoundContainer tmpComp = projectSpace().getCompound(getID(), missingComps);
+                final CompoundContainer tmpComp = projectSpace().getCompound(getCompoundContainerId(), missingComps);
                 compoundCache.setAnnotationsFrom(tmpComp);
             }
             return compoundCache;
         } catch (IOException e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    @SafeVarargs
-    public final synchronized void reloadCompoundCache(Class<? extends DataAnnotation>... components) {
-        try {
-            compoundCache = projectSpace().getCompound(getID(), components);
-        } catch (IOException e) {
-            LoggerFactory.getLogger(Instance.class).error("Could not create read Input Experiment from Project Space.");
-            throw new RuntimeException("Could not create read Input Experiment from Project Space.", e);
         }
     }
 
@@ -127,7 +163,7 @@ public class Instance {
      */
     @SafeVarargs
     public final synchronized List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadFormulaResults(Class<? extends DataAnnotation>... components) {
-        return loadFormulaResults(getID().getRankingScoreTypes(), components);
+        return loadFormulaResults(projectSpace().getDefaultRankingScores(), components);
     }
 
     @SafeVarargs
@@ -149,28 +185,13 @@ public class Instance {
         return loadFormulaResult(candidate.getId(), components);
     }
 
-
-    @SafeVarargs
-    public final synchronized List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadTopKFormulaResults(int k, List<Class<? extends FormulaScore>> rankingScoreTypes, Class<? extends DataAnnotation>... components) {
-        return getTopK(k, loadFormulaResults(rankingScoreTypes), components);
-    }
-
-    @SafeVarargs
-    private List<? extends SScored<FormulaResult, ? extends FormulaScore>> getTopK(int k, List<? extends SScored<FormulaResult, ? extends FormulaScore>> sScoreds, Class<? extends DataAnnotation>... components) {
-        return getPage(0,k,sScoreds,components);
-    }
-
-    @SafeVarargs
-    private List<? extends SScored<FormulaResult, ? extends FormulaScore>> getPage(long offset, long limit, List<? extends SScored<FormulaResult, ? extends FormulaScore>> sScoreds, Class<? extends DataAnnotation>... components) {
-        return sScoreds.stream().skip(offset).limit(limit).peek(ss -> loadFormulaResult(ss.getCandidate().getId(), components)
-                .ifPresent(r -> ss.getCandidate().setAnnotationsFrom(r))).toList();
-    }
-
     @SafeVarargs
     public final synchronized List<? extends SScored<FormulaResult, ? extends FormulaScore>> loadFormulaResults(List<Class<? extends FormulaScore>> rankingScoreTypes, Class<? extends DataAnnotation>... components) {
         try {
             if (!formulaResultCache.keySet().containsAll(compoundCache.getResultsRO().values())) {
-                final List<? extends SScored<FormulaResult, ? extends FormulaScore>> returnList = projectSpace().getFormulaResultsOrderedBy(getID(), rankingScoreTypes, components);
+                final List<? extends SScored<FormulaResult, ? extends FormulaScore>> returnList = projectSpace()
+                        .getFormulaResultsOrderedBy(getCompoundContainerId(), rankingScoreTypes, components);
+
                 formulaResultCache = returnList.stream().collect(Collectors.toMap(r -> r.getCandidate().getId(), SScored::getCandidate));
                 return returnList;
             } else {
@@ -194,15 +215,21 @@ public class Instance {
                     }
                 });
 
-                //return updated an sorted formula results
+                //return updated and sorted formula results
                 return FormulaScoring.rankBy(formulaResultCache.values(), rankingScoreTypes, true);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
+    //endregion
 
-    //write to projectSpace
+    //region write to projectSpace
+    public synchronized Optional<FormulaResult> newFormulaResultWithUniqueId(FTree tree) {
+        Optional<FormulaResult> frOpt = projectSpace().newFormulaResultWithUniqueId(compoundCache, tree);
+        frOpt.ifPresent(fr -> formulaResultCache.put(fr.getId(), fr));
+        return frOpt;
+    }
     @SafeVarargs
     public final synchronized void updateCompound(CompoundContainer container, Class<? extends DataAnnotation>... components) {
         try {
@@ -247,6 +274,20 @@ public class Instance {
     }
 
     @SafeVarargs
+    private <T extends DataAnnotation> void updateAnnotations(final Annotated<T> toRefresh, final Annotated<T> refresher, final Class<? extends DataAnnotation>... components) {
+        if (toRefresh != refresher) {
+            Set<Class<? extends DataAnnotation>> comps = Arrays.stream(components).collect(Collectors.toSet());
+            refresher.annotations().forEach((k, v) -> {
+                if (comps.contains(k))
+                    toRefresh.setAnnotation(k, v);
+            });
+        }
+    }
+    //endregion
+
+
+    //region delete from project space
+    @SafeVarargs
     public final synchronized void deleteFromFormulaResults(Class<? extends DataAnnotation>... components) {
         if (components.length == 0)
             return;
@@ -263,7 +304,7 @@ public class Instance {
             try {
                 projectSpace().deleteFromAllFormulaResults(compoundCache, components);
             } catch (IOException e) {
-                LoggerFactory.getLogger(getClass()).error("Error when deleting results from '" + getID() + "'.");
+                LoggerFactory.getLogger(getClass()).error("Error when deleting results from '" + getCompoundContainerId() + "'.");
             }
         }
     }
@@ -273,12 +314,8 @@ public class Instance {
             clearFormulaResultsCache();
             projectSpace().deleteAllFormulaResults(loadCompoundContainer());
         } catch (IOException e) {
-            LoggerFactory.getLogger(getClass()).error("Error when deleting all results from '" + getID() + "'.");
+            LoggerFactory.getLogger(getClass()).error("Error when deleting all results from '" + getCompoundContainerId() + "'.");
         }
-    }
-
-    public synchronized void deleteFormulaResults(@NotNull FormulaResultId... ridToRemove) {
-        deleteFormulaResults(Set.of(ridToRemove));
     }
 
     public synchronized void deleteFormulaResults(@Nullable Collection<FormulaResultId> ridToRemove) {
@@ -301,12 +338,13 @@ public class Instance {
             try {
                 projectSpace().deleteFormulaResult(compoundCache, v);
             } catch (IOException e) {
-                LoggerFactory.getLogger(getClass()).error("Error when deleting result '" + v + "' from '" + getID() + "'.");
+                LoggerFactory.getLogger(getClass()).error("Error when deleting result '" + v + "' from '" + getCompoundContainerId() + "'.");
             }
         });
     }
+    //endregion
 
-    //remove from cache
+    //region clear cache
     public synchronized void clearCompoundCache() {
         compoundCache.clearAnnotations();
     }
@@ -331,7 +369,7 @@ public class Instance {
     }
 
     @SafeVarargs
-    public final synchronized void clearFormulaResultsCache(Collection<FormulaResultId> results, Class<? extends DataAnnotation>... components) {
+    private synchronized void clearFormulaResultsCache(Collection<FormulaResultId> results, Class<? extends DataAnnotation>... components) {
         if (components == null || components.length == 0)
             return;
         for (FormulaResultId result : results)
@@ -339,63 +377,90 @@ public class Instance {
     }
 
     @SafeVarargs
-    public final synchronized void clearFormulaResultCache(FormulaResultId id, Class<? extends DataAnnotation>... components) {
+    private synchronized void clearFormulaResultCache(FormulaResultId id, Class<? extends DataAnnotation>... components) {
         if (formulaResultCache.containsKey(id))
             for (Class<? extends DataAnnotation> comp : components)
                 formulaResultCache.get(id).removeAnnotation(comp);
     }
+    //endregion
 
-    public synchronized Optional<FormulaResult> newFormulaResultWithUniqueId(FTree tree) {
-        Optional<FormulaResult> frOpt = projectSpace().newFormulaResultWithUniqueId(compoundCache, tree);
-        frOpt.ifPresent(fr -> formulaResultCache.put(fr.getId(), fr));
-        return frOpt;
+    public synchronized void enableComputing() {
+        setComputing(true);
     }
 
+    public synchronized void disableComputing() {
+        setComputing(false);
+    }
 
-    @SafeVarargs
-    private <T extends DataAnnotation> void updateAnnotations(final Annotated<T> toRefresh, final Annotated<T> refresher, final Class<? extends DataAnnotation>... components) {
-        if (toRefresh != refresher) {
-            Set<Class<? extends DataAnnotation>> comps = Arrays.stream(components).collect(Collectors.toSet());
-            refresher.annotations().forEach((k, v) -> {
-                if (comps.contains(k))
-                    toRefresh.setAnnotation(k, v);
-            });
+    public synchronized void setComputing(boolean computing) {
+        projectSpace().setFlags(CompoundContainerId.Flag.COMPUTING, computing, getCompoundContainerId());
+    }
+
+    public synchronized boolean isComputing() {
+        return projectSpace().flag(getCompoundContainerId(), CompoundContainerId.Flag.COMPUTING);
+    }
+
+    public synchronized void saveDetectedAdducts(DetectedAdducts detectedAdducts){
+        getCompoundContainerId().setDetectedAdducts(detectedAdducts);
+        updateCompoundID();
+    }
+    public synchronized Optional<DetectedAdducts> getDetectedAdducts(){
+        return getCompoundContainerId().getDetectedAdducts();
+    }
+    public synchronized void deleteDetectedAdducts(){
+        saveDetectedAdducts(null);
+    }
+
+    //TODO TEMP solution -> make better api method without FormulaResult but with Id
+    public synchronized void saveStructureSearchResults(@NotNull Map<FormulaResult, FingerIdResult> structureSearchResults){
+        for (Map.Entry<FormulaResult, FingerIdResult> entry : structureSearchResults.entrySet()) {
+            final FormulaResult formRes = entry.getKey();
+            final FingerIdResult structRes = entry.getValue();
+            assert structRes.sourceTree == formRes.getAnnotationOrThrow(FTree.class);
+
+            // annotate results
+            formRes.setAnnotation(FBCandidates.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getCandidates).orElse(null));
+            formRes.setAnnotation(FBCandidateFingerprints.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getCandidateFingerprints).orElse(null));
+            formRes.setAnnotation(StructureSearchResult.class, structRes.getAnnotation(StructureSearchResult.class).orElse(null));
+            // add scores
+            formRes.getAnnotationOrThrow(FormulaScoring.class)
+                    .setAnnotation(TopCSIScore.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getTopHitScore).orElse(null));
+            formRes.getAnnotationOrThrow(FormulaScoring.class)
+                    .setAnnotation(ConfidenceScore.class, structRes.getAnnotation(ConfidenceResult.class).map(x -> x.score).orElse(null));
+            formRes.getAnnotationOrThrow(FormulaScoring.class)
+                    .setAnnotation(ConfidenceScoreApproximate.class, structRes.getAnnotation(ConfidenceResult.class).map(x -> x.scoreApproximate).orElse(null));
+
+            // write results
+            updateFormulaResult(formRes,
+                    FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class, StructureSearchResult.class);
+        }
+
+
+        loadTopFormulaResult(List.of(TopCSIScore.class))
+                .flatMap(r -> r.getAnnotation(StructureSearchResult.class))
+                .ifPresentOrElse(sr -> {
+                    getCompoundContainerId().setConfidenceScore(sr.getConfidenceScore());
+                    getCompoundContainerId().setConfidenceScoreApproximate(sr.getConfidenceScore());
+                }, () -> {
+                    getCompoundContainerId().setConfidenceScore(null);
+                    getCompoundContainerId().setConfidenceScoreApproximate(null);
+                });
+
+        updateCompoundID();
+    }
+
+    public synchronized void deleteStructureSearchResults(){
+        deleteFromFormulaResults(FBCandidates.class, FBCandidateFingerprints.class, StructureSearchResult.class);
+        loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate)
+                .forEach(it -> it.getAnnotation(FormulaScoring.class).ifPresent(z -> {
+                    if (z.removeAnnotation(TopCSIScore.class) != null || z.removeAnnotation(ConfidenceScore.class) != null || z.removeAnnotation(ConfidenceScoreApproximate.class) != null)
+                        updateFormulaResult(it, FormulaScoring.class); //update only if there was something to remove
+                }));
+        if (getCompoundContainerId().getConfidenceScore().isPresent()) {
+            getCompoundContainerId().setConfidenceScore(null);
+            getCompoundContainerId().setConfidenceScoreApproximate(null);
+            updateCompoundID();
         }
     }
-
-    /**
-     * Add the given flag (set to true)
-     *
-     * @param flag flag to add
-     * @return true if value has changed
-     */
-    public boolean flag(@NotNull CompoundContainerId.Flag flag) {
-        return projectSpace().flag(getID(), flag);
-    }
-
-    /**
-     * Remove the given flag (set to false)
-     *
-     * @param flag flag to remove
-     * @return true if value has changed
-     */
-    public boolean unFlag(@NotNull CompoundContainerId.Flag flag) {
-        return projectSpace().unFlag(getID(), flag);
-    }
-
-    /**
-     * Flip state of the given flag
-     *
-     * @param flag flag to flip
-     * @return new Value of the given flag
-     */
-    public boolean flipFlag(@NotNull CompoundContainerId.Flag flag) {
-        return projectSpace().flipFlag(getID(), flag);
-    }
-
-    public boolean hasFlag(@NotNull CompoundContainerId.Flag flag) {
-        return getID().hasFlag(flag);
-    }
-
 
 }

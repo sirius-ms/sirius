@@ -23,7 +23,9 @@ import ca.odell.glazedlists.BasicEventList;
 import de.unijena.bioinf.ChemistryBase.utils.DebouncedExecutionJJob;
 import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.PropertyChangeListenerEDT;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.gui.table.SiriusGlazedLists;
 import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
 import de.unijena.bioinf.ms.nightsky.sdk.model.*;
@@ -47,13 +49,12 @@ import static de.unijena.bioinf.ms.nightsky.sdk.model.ProjectChangeEvent.EventTy
 import static de.unijena.bioinf.ms.nightsky.sdk.model.ProjectChangeEvent.EventTypeEnum.FEATURE_DELETED;
 
 public class GuiProjectManager implements Closeable {
-
     private final ArrayList<InstanceBean> innerList;
     public final BasicEventList<InstanceBean> INSTANCE_LIST;
 
     public final String projectId;
     private final NightSkyClient siriusClient;
-
+    private final GuiProperties properties;
     protected final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
     private FingerIdData fingerIdDataPos;
@@ -65,9 +66,10 @@ public class GuiProjectManager implements Closeable {
 
     private PropertyChangeListener projectListener;
     private PropertyChangeListener computeListener;
+    private PropertyChangeListenerEDT confidenceModeListender;
 
-
-    public GuiProjectManager(@NotNull String projectId, @NotNull NightSkyClient siriusClient) {
+    public GuiProjectManager(@NotNull String projectId, @NotNull NightSkyClient siriusClient,  @NotNull GuiProperties properties) {
+        this.properties = properties;
         this.projectId = projectId;
         this.siriusClient = siriusClient;
 
@@ -84,6 +86,9 @@ public class GuiProjectManager implements Closeable {
             INSTANCE_LIST.addAll(tmp);
         });
 
+        confidenceModeListender = (evt) -> SiriusGlazedLists.allUpdate(INSTANCE_LIST);
+        properties.addPropertyChangeListener("confidenceDisplayMode", confidenceModeListender);
+
         //fire events for data changes
         projectListener = evt -> DataObjectEvents.toDataObjectEventData(evt.getNewValue(), ProjectChangeEvent.class)
                 .ifPresent(pce -> {
@@ -96,21 +101,19 @@ public class GuiProjectManager implements Closeable {
                 });
         siriusClient.addEventListener(projectListener, projectId, DataEventType.PROJECT);
 
-        computeListener = evt -> {
-            DataObjectEvents.toDataObjectEventData(evt.getNewValue(), BackgroundComputationsStateEvent.class).ifPresent(computeEvent -> {
-                Set<String> ids = computeEvent.getAffectedJobs().stream()
-                        .map(Job::getAffectedAlignedFeatureIds)
-                        .filter(Objects::nonNull)
-                        .flatMap(List::stream)
-                        .collect(Collectors.toSet());
+        computeListener = evt -> DataObjectEvents.toDataObjectEventData(evt.getNewValue(), BackgroundComputationsStateEvent.class).ifPresent(computeEvent -> {
+            Set<String> ids = computeEvent.getAffectedJobs().stream()
+                    .map(Job::getAffectedAlignedFeatureIds)
+                    .filter(Objects::nonNull)
+                    .flatMap(List::stream)
+                    .collect(Collectors.toSet());
 
-                Set<InstanceBean> change = INSTANCE_LIST.stream()
-                        .filter(i -> ids.contains(i.getFeatureId()))
-                        .peek(InstanceBean::clearCache)
-                        .collect(Collectors.toSet());
-                Jobs.runEDTLater(() -> SiriusGlazedLists.multiUpdate(INSTANCE_LIST, change));
-            });
-        };
+            Set<InstanceBean> change = INSTANCE_LIST.stream()
+                    .filter(i -> ids.contains(i.getFeatureId()))
+                    .peek(InstanceBean::clearCache)
+                    .collect(Collectors.toSet());
+            Jobs.runEDTLater(() -> SiriusGlazedLists.multiUpdate(INSTANCE_LIST, change));
+        });
         siriusClient.addEventListener(computeListener, projectId, DataEventType.BACKGROUND_COMPUTATIONS_STATE);
     }
 
@@ -179,6 +182,8 @@ public class GuiProjectManager implements Closeable {
         projectListener = null;
         siriusClient.removeEventListener(computeListener);
         computeListener = null;
+        properties.removePropertyChangeListener(confidenceModeListender);
+        confidenceModeListender = null;
     }
 
     public FingerIdData getFingerIdData(int charge) {

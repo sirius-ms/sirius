@@ -107,7 +107,7 @@ public class ProjectSaveAction extends ProjectOpenAction {
         try {
             String nuPid = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Copying Project...", () ->
                     gui.applySiriusClient((c, pid) -> c.projects().copyProjectSpace(
-                            pid, projectPath.getFileName().toString(), projectPath.toAbsolutePath().toString(),
+                            pid, projectPath.toAbsolutePath().toString(), projectPath.getFileName().toString(),
                             List.of(ProjectInfoOptField.NONE)
                     ).getProjectId())
             ).awaitResult();

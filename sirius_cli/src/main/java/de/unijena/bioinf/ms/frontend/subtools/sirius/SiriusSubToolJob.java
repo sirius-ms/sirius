@@ -32,7 +32,6 @@ import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
-import de.unijena.bioinf.projectspace.FormulaResultRankingScore;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Ms1Preprocessor;
@@ -42,12 +41,10 @@ import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class SiriusSubToolJob extends InstanceJob {
-//    JobProgressMerger merger = new JobProgressMerger(pcs);
     public SiriusSubToolJob(JobSubmitter jobSubmitter) {
         super(jobSubmitter);
     }
@@ -92,36 +89,28 @@ public class SiriusSubToolJob extends InstanceJob {
         updateProgress(5);
         checkForInterruption();
         //todo improve progress with progress merger
-        final Sirius sirius = ApplicationCore.SIRIUS_PROVIDER.sirius(inst.loadCompoundContainer(FinalConfig.class).getAnnotationOrThrow(FinalConfig.class).config.getConfigValue("AlgorithmProfile"));
+        final Sirius sirius = ApplicationCore.SIRIUS_PROVIDER.sirius(inst.loadCompoundContainer(FinalConfig.class)
+                .getAnnotationOrThrow(FinalConfig.class).config.getConfigValue("AlgorithmProfile"));
+
         Sirius.SiriusIdentificationJob idjob = sirius.makeIdentificationJob(exp);
         idjob.addJobProgressListener(evt -> updateProgress(evt.getMinValue() + 5, evt.getMaxValue() + 10, evt.getProgress() + 5));
         List<IdentificationResult<SiriusScore>> results = submitSubJob(idjob).awaitResult();
 
-//        updateProgress(90, 110);
         checkForInterruption();
 
         //write results to project space
         for (IdentificationResult<SiriusScore> result : results)
             inst.newFormulaResultWithUniqueId(result.getTree());
 
-//        checkForInterruption();
-
-        // set sirius to ranking score
-        if (exp.getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto())
-            inst.getID().setRankingScoreTypes(new ArrayList<>(List.of(SiriusScore.class)));
-
         updateProgress(currentProgress().getProgress() + 3);
         checkForInterruption();
 
         //make possible adducts persistent without rewriting whole experiment
-        inst.getID().setDetectedAdducts(exp.getAnnotationOrNull(DetectedAdducts.class));
-        inst.updateCompoundID();
+        exp.getAnnotation(DetectedAdducts.class).ifPresent(inst::saveDetectedAdducts);
         updateProgress(currentProgress().getProgress() + 2);
-
-//        updateProgress(99);
     }
 
-    //todo remove when detection is always performed at import and this is not necessary anymore
+    @Deprecated //todo remove when detection is always performed at import and this is not necessary anymore
     protected PrecursorIonType[] detectPossibleAdducts(Ms2Experiment experiment) {
         final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
         Ms2Experiment me = new MutableMs2Experiment(experiment, true);

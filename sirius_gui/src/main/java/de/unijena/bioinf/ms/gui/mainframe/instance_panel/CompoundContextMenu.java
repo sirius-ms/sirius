@@ -37,12 +37,14 @@ public class CompoundContextMenu extends JPopupMenu {
 //        add(new JMenuItem(SiriusActions.EDIT_EXP.getInstance(gui, true))); //todo nightsky: enable edit if needed.
         add(new JMenuItem(SiriusActions.CHANGE_ADDCUCT_EXP.getInstance(gui, true)));
         addSeparator();
-        add(new JMenuItem(SiriusActions.ORDER_BY_INDEX.getInstance(gui, true)));
         add(new JMenuItem(SiriusActions.ORDER_BY_RT.getInstance(gui, true)));
         add(new JMenuItem(SiriusActions.ORDER_BY_MASS.getInstance(gui, true)));
         add(new JMenuItem(SiriusActions.ORDER_BY_NAME.getInstance(gui, true)));
+        add(new JMenuItem(SiriusActions.ORDER_BY_ID.getInstance(gui, true)));
         add(new JMenuItem(SiriusActions.ORDER_BY_CONFIDENCE.getInstance(gui, true)));
         addSeparator();
         add(new JMenuItem(SiriusActions.RESET_FILTER.getInstance(gui, true)));
+
+        add(new JMenuItem(SiriusActions.TOOGLE_CONFIDENCE_MODE.getInstance(gui, true)));
     }
 }

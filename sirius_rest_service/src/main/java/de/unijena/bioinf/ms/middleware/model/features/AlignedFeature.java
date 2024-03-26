@@ -43,7 +43,6 @@ public class AlignedFeature {
 
     // identifier source
     protected String name;
-    protected long index;
 
     // additional attributes
     protected Double ionMass;

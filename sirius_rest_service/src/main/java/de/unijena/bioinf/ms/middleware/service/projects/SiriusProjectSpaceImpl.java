@@ -37,6 +37,7 @@ import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
+import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
@@ -45,8 +46,8 @@ import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.*;
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
-import de.unijena.bioinf.ms.frontend.subtools.projectspace.ImportFromMemoryWorkflow;
+import de.unijena.bioinf.ms.backgroundruns.ImportMsFomResourceWorkflow;
+import de.unijena.bioinf.ms.backgroundruns.ImportPeaksFomResourceWorkflow;
 import de.unijena.bioinf.ms.middleware.controller.AlignedFeatureController;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
@@ -60,11 +61,8 @@ import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.*;
-import de.unijena.bioinf.projectspace.canopus.CanopusCfDataProperty;
-import de.unijena.bioinf.projectspace.canopus.CanopusNpcDataProperty;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidateNumber;
 import de.unijena.bioinf.projectspace.fingerid.FBCandidatesTopK;
-import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
@@ -94,11 +92,11 @@ import java.util.stream.Stream;
 public class SiriusProjectSpaceImpl implements Project {
 
     @NotNull
-    private final ProjectSpaceManager<?> projectSpaceManager;
+    private final SiriusProjectSpaceManager projectSpaceManager;
     @NotNull
     private final String projectId;
 
-    public SiriusProjectSpaceImpl(@NotNull String projectId, @NotNull ProjectSpaceManager<?> projectSpaceManager) {
+    public SiriusProjectSpaceImpl(@NotNull String projectId, @NotNull SiriusProjectSpaceManager projectSpaceManager) {
         this.projectSpaceManager = projectSpaceManager;
         this.projectId = projectId;
     }
@@ -109,41 +107,49 @@ public class SiriusProjectSpaceImpl implements Project {
         return projectId;
     }
 
-    public @NotNull ProjectSpaceManager<?> getProjectSpaceManager() {
+    public @NotNull SiriusProjectSpaceManager getProjectSpaceManager() {
         return projectSpaceManager;
     }
 
 
     @Override
     public ImportResult importPreprocessedData(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData) {
-        ImportFromMemoryWorkflow importTask = new ImportFromMemoryWorkflow(
-                getProjectSpaceManager(), inputResources, ignoreFormulas, allowMs1OnlyData);
+        ImportPeaksFomResourceWorkflow importTask = new ImportPeaksFomResourceWorkflow(getProjectSpaceManager(), inputResources, ignoreFormulas, allowMs1OnlyData, true);
 
         importTask.run();
 
         return ImportResult.builder()
-                .affectedAlignedFeatureIds(importTask.getImportedInstanceIds().stream()
-                        .map(CompoundContainerId::getDirectoryName).collect(Collectors.toList()))
-                .affectedCompoundIds(importTask.getImportedInstanceIds().stream()
-                        .map(CompoundContainerId::getGroupId).filter(Optional::isPresent).flatMap(Optional::stream)
+                .affectedAlignedFeatureIds(importTask.getImportedInstancesStr()
+                        .map(Instance::getId)
+                        .collect(Collectors.toList()))
+                .affectedCompoundIds(importTask.getImportedInstancesStr()
+                        .map(Instance::getCompoundId)
+                        .filter(Optional::isPresent)
+                        .flatMap(Optional::stream)
                         .distinct().collect(Collectors.toList()))
                 .build();
     }
 
     @Override
-    public ImportResult importMsRunData(Collection<InputResource<?>> inputResources, boolean alignRuns, boolean allowMs1OnlyData) {
-        if (alignRuns){
-            throw new UnsupportedOperationException("LCMS import not implemented");
-            //todo fleisch implement
-        }else {
-            return importPreprocessedData(inputResources, false, allowMs1OnlyData);
-        }
+    public ImportResult importMsRunData(Collection<PathInputResource> inputResources, boolean alignRuns, boolean allowMs1OnlyData) {
+        ImportMsFomResourceWorkflow importTask = new ImportMsFomResourceWorkflow(getProjectSpaceManager(), inputResources, allowMs1OnlyData, alignRuns, true);
+
+        importTask.run();
+        return ImportResult.builder()
+                .affectedAlignedFeatureIds(importTask.getImportedInstancesStr()
+                        .map(Instance::getId)
+                        .collect(Collectors.toList()))
+                .affectedCompoundIds(importTask.getImportedInstancesStr()
+                        .map(Instance::getCompoundId)
+                        .filter(Optional::isPresent).flatMap(Optional::stream)
+                        .distinct().collect(Collectors.toList()))
+                .build();
     }
 
     @Override
     public Page<Compound> findCompounds(Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields,
                                         @NotNull EnumSet<AlignedFeature.OptField> featureOptFields) {
-        Map<String, List<CompoundContainerId>> featureGroups = projectSpaceManager.projectSpace()
+        Map<String, List<CompoundContainerId>> featureGroups = projectSpaceManager.getProjectSpaceImpl()
                 .stream().filter(c -> c.getGroupId().isPresent())
                 .collect(Collectors.groupingBy(c -> c.getGroupId().get()));
 
@@ -162,15 +168,15 @@ public class SiriusProjectSpaceImpl implements Project {
             FeatureGroup fg = FeatureGroup.builder().groupName(c.getName()).groupId(cuuid.toString()).build();
             return FeatureImports.toExperimentsStr(c.getFeatures())
                     .peek(exp -> exp.annotate(fg))
-                    .map(projectSpaceManager::newCompoundWithUniqueId)
-                    .map(Instance::getID).toList();
+                    .map(projectSpaceManager::importInstanceWithUniqueId)
+                    .map(Instance::getCompoundContainerId).toList();
         }).map(cids -> asCompound(cids, optFields, optFieldsFeatures)).toList();
     }
 
     @Override
     public Compound findCompoundById(String compoundId, @NotNull EnumSet<Compound.OptField> optFields,
                                      @NotNull EnumSet<AlignedFeature.OptField> featureOptFields) {
-        List<CompoundContainerId> groupFeatures = projectSpaceManager.projectSpace()
+        List<CompoundContainerId> groupFeatures = projectSpaceManager.getProjectSpaceImpl()
                 .stream().filter(c -> c.getGroupId().map(compoundId::equals).orElse(false))
                 .toList();
         if (groupFeatures.isEmpty())
@@ -196,7 +202,7 @@ public class SiriusProjectSpaceImpl implements Project {
     @Override
     public Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable, @NotNull EnumSet<AlignedFeatureQuality.OptField> optFields) {
         LoggerFactory.getLogger(AlignedFeatureController.class).info("Started collecting aligned features quality...");
-        final List<AlignedFeatureQuality> alignedFeatureQualities = projectSpaceManager.projectSpace().stream()
+        final List<AlignedFeatureQuality> alignedFeatureQualities = projectSpaceManager.getProjectSpaceImpl().stream()
                 .skip(pageable.getOffset()).limit(pageable.getPageSize())
                 .map(ccid -> asAlignedFeatureQuality(ccid, optFields))
                 .toList();
@@ -214,7 +220,7 @@ public class SiriusProjectSpaceImpl implements Project {
     @Override
     public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         LoggerFactory.getLogger(AlignedFeatureController.class).info("Started collecting aligned features...");
-        final List<AlignedFeature> alignedFeatures = projectSpaceManager.projectSpace().stream()
+        final List<AlignedFeature> alignedFeatures = projectSpaceManager.getProjectSpaceImpl().stream()
                 .skip(pageable.getOffset()).limit(pageable.getPageSize())
                 .map(ccid -> asAlignedFeature(ccid, optFields))
                 .toList();
@@ -226,8 +232,8 @@ public class SiriusProjectSpaceImpl implements Project {
     @Override
     public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         return FeatureImports.toExperimentsStr(features)
-                .map(projectSpaceManager::newCompoundWithUniqueId)
-                .map(Instance::getID).map(cid -> asAlignedFeature(cid, optFields))
+                .map(projectSpaceManager::importInstanceWithUniqueId)
+                .map(Instance::getCompoundContainerId).map(cid -> asAlignedFeature(cid, optFields))
                 .toList();
     }
 
@@ -240,10 +246,10 @@ public class SiriusProjectSpaceImpl implements Project {
 
     @Override
     public void deleteAlignedFeaturesById(String alignedFeatureId) {
-        CompoundContainerId compound = projectSpaceManager.projectSpace().findCompound(alignedFeatureId)
+        CompoundContainerId compound = projectSpaceManager.getProjectSpaceImpl().findCompound(alignedFeatureId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT, "AlignedFeature with id '" + alignedFeatureId + "' does not exist. Already removed?"));
         try {
-            projectSpaceManager.projectSpace().deleteCompound(compound);
+            projectSpaceManager.getProjectSpaceImpl().deleteCompound(compound);
         } catch (IOException e) {
             log.error("Error when deleting feature with Id " + alignedFeatureId, e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when deleting feature with Id " + alignedFeatureId);
@@ -574,18 +580,22 @@ public class SiriusProjectSpaceImpl implements Project {
     protected static Ms2Experiment loadExperiment(Instance instance) {
         return instance.loadCompoundContainer(Ms2Experiment.class).getAnnotation(Ms2Experiment.class)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Could not find spectra data for '" + instance.getID().getFeatureId() + "'!"));
+                        "Could not find spectra data for '" + instance.getProvidedFeatureId().orElseGet(instance::getId) + "'!"));
     }
 
-    protected Instance loadInstance(String alignedFeatureId) {
-        return projectSpaceManager.getInstanceFromCompound(parseCID(alignedFeatureId));
+    public Instance loadInstance(String alignedFeatureId) {
+        try {
+            return projectSpaceManager.getInstanceFromCompound(parseCID(alignedFeatureId));
+        } catch (RuntimeException e) {
+           throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Instance with id '" + alignedFeatureId + "' does not exist!'.");
+        }
     }
 
     protected CompoundContainerId parseCID(String cid) {
-        return projectSpaceManager.projectSpace().findCompound(cid)
+        return projectSpaceManager.getProjectSpaceImpl().findCompound(cid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "There is no Compound with ID '" + cid + "' in project with name '" +
-                                projectSpaceManager.projectSpace().getLocation() + "'"));
+                                projectSpaceManager.getProjectSpaceImpl().getLocation() + "'"));
     }
 
     protected FormulaResultId parseFID(String cid, String fid) {
@@ -630,9 +640,9 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     public void writeFingerIdData(@NotNull Writer writer, int charge) {
-        projectSpaceManager.getProjectSpaceProperty(FingerIdDataProperty.class).ifPresent(data -> {
+        projectSpaceManager.getFingerIdData(charge).ifPresent(data -> {
             try {
-                FingerIdData.write(writer, data.getByCharge(charge));
+                FingerIdData.write(writer, data);
             } catch (IOException e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                         "Error when extracting FingerIdData from project '" + projectId + "'. Message: " + e.getMessage());
@@ -641,9 +651,9 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     public void writeCanopusClassyFireData(@NotNull Writer writer, int charge) {
-        projectSpaceManager.getProjectSpaceProperty(CanopusCfDataProperty.class).ifPresent(data -> {
+        projectSpaceManager.getCanopusCfData(charge).ifPresent(data -> {
             try {
-                CanopusCfData.write(writer, data.getByCharge(charge));
+                CanopusCfData.write(writer, data);
             } catch (IOException e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                         "Error when extracting CanopusClassyFireData from project '" + projectId + "'. Message: " + e.getMessage());
@@ -652,9 +662,9 @@ public class SiriusProjectSpaceImpl implements Project {
     }
 
     public void writeCanopusNpcData(@NotNull Writer writer, int charge) {
-        projectSpaceManager.getProjectSpaceProperty(CanopusNpcDataProperty.class).ifPresent(data -> {
+        projectSpaceManager.getCanopusNpcData(charge).ifPresent(data -> {
             try {
-                CanopusNpcData.write(writer, data.getByCharge(charge));
+                CanopusNpcData.write(writer, data);
             } catch (IOException e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR,
                         "Error when extracting CanopusNpcData from project '" + projectId + "'. Message: " + e.getMessage());
@@ -744,7 +754,6 @@ public class SiriusProjectSpaceImpl implements Project {
         final AlignedFeature id = new AlignedFeature();
         id.setAlignedFeatureId(cid.getDirectoryName());
         id.setName(cid.getCompoundName());
-        id.setIndex(cid.getCompoundIndex());
         id.setIonMass(cid.getIonMass().orElse(0d));
         id.setComputing(cid.hasFlag(CompoundContainerId.Flag.COMPUTING));
         cid.getIonType().map(PrecursorIonType::toString).ifPresent(id::setAdduct);

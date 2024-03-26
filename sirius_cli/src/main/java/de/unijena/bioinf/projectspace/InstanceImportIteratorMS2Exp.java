@@ -31,7 +31,7 @@ import java.util.function.Predicate;
 
 class InstanceImportIteratorMS2Exp implements Iterator<Instance> {
 
-    private final ProjectSpaceManager<?> spaceManager;
+    private final ProjectSpaceManager spaceManager;
     private final Iterator<Ms2Experiment> ms2ExperimentIterator;
     @NotNull
     private final Predicate<CompoundContainer> filter;
@@ -39,11 +39,11 @@ class InstanceImportIteratorMS2Exp implements Iterator<Instance> {
     private Instance next = null;
 
 
-    public InstanceImportIteratorMS2Exp(@NotNull Iterator<Ms2Experiment> ms2ExperimentIterator, @NotNull ProjectSpaceManager<?> spaceManager) {
+    public InstanceImportIteratorMS2Exp(@NotNull Iterator<Ms2Experiment> ms2ExperimentIterator, @NotNull ProjectSpaceManager spaceManager) {
        this(ms2ExperimentIterator,spaceManager, (c) -> true);
     }
 
-    public InstanceImportIteratorMS2Exp(@NotNull Iterator<Ms2Experiment> ms2ExperimentIterator, @NotNull ProjectSpaceManager<?> spaceManager, @NotNull Predicate<CompoundContainer> compoundFilter) {
+    public InstanceImportIteratorMS2Exp(@NotNull Iterator<Ms2Experiment> ms2ExperimentIterator, @NotNull ProjectSpaceManager spaceManager, @NotNull Predicate<CompoundContainer> compoundFilter) {
         this.ms2ExperimentIterator = ms2ExperimentIterator;
         this.spaceManager = spaceManager;
         this.filter = compoundFilter;
@@ -58,7 +58,7 @@ class InstanceImportIteratorMS2Exp implements Iterator<Instance> {
 
         if (ms2ExperimentIterator.hasNext()) {
             final Ms2Experiment input = ms2ExperimentIterator.next();
-            @NotNull Instance inst = spaceManager.newCompoundWithUniqueId(input); //this writers
+            @NotNull Instance inst = spaceManager.importInstanceWithUniqueId(input); //this writers
 
             // TODO: hacky solution
             // store LC/MS data into project space
@@ -94,7 +94,7 @@ class InstanceImportIteratorMS2Exp implements Iterator<Instance> {
             }
 
             if (input == null || !filter.test(inst.loadCompoundContainer(Ms2Experiment.class))) {
-                LoggerFactory.getLogger(getClass()).info("Skipping instance " + inst.getID().getDirectoryName() + " because it does not match the Filter criterion.");
+                LoggerFactory.getLogger(getClass()).info("Skipping instance " + inst.getId() + " because it does not match the Filter criterion.");
                 return hasNext();
             } else {
                 next = inst;

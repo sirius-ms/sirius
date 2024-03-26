@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.custom_db;
 
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
@@ -37,7 +38,6 @@ import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -80,12 +80,16 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                         "An absolute local path to a new database file file to be created (file name must end with .db)",
                         "If no input data is given (--input), the database will just be added to SIRIUS",
                         "The added db will also be available in the GUI."}, order = 201)
-        String location = null;
+        private String location = null;
+
 
         @Option(names = "--name", order = 202,
                 description = {"Name/Identifier of the custom database.",
                         "If not given filename from location will be used."})
-        String name = null;
+        public void setName(String name) {
+            this.name = CustomDatabases.sanitizeDbName(name);
+        }
+        private String name = null;
 
         @Option(names = "--displayName", order = 203,
                 description = {"Displayable name of the custom database.",
@@ -97,12 +101,12 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
             this.displayName = displayName;
         }
 
-        String displayName = null;
+        private String displayName = null;
 
         @Option(names = {"--buffer-size", "--buffer"}, defaultValue = "1000",
                 description = {"Maximum number of downloaded/computed compounds to keep in memory before writing them to disk (into the db directory). Can be set higher when importing large files on a fast computer."},
                 order = 210)
-        public int writeBuffer;
+        private int writeBuffer;
 
         @Option(names = {"--input", "-i"}, split = ",", description = {
                 "Files or directories to import into the database.",
@@ -110,7 +114,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 "Structures without spectra can be passed as a tab-separated (.tsv) file with fields [SMILES, id (optional), name (optional)].",
                 "Directories will be recursively expanded."
         }, order = 220)
-        public List<Path> input;
+        private List<Path> input;
     }
 
     public static class Remove {
@@ -137,7 +141,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
     }
 
     @Override
-    public Workflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
+    public Workflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
         return new CustomDBWorkflow(rootOptions.getInput());
     }
 
@@ -174,6 +178,9 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 }
 
                 checkForInterruption();
+
+                if (mode.importParas.name == null || mode.importParas.name.isBlank())
+                    mode.importParas.name = CustomDatabases.sanitizeDbName(Path.of(mode.importParas.location.substring(0, mode.importParas.location.lastIndexOf('.'))).getFileName().toString());
 
                 checkConflictingName(mode.importParas.location, mode.importParas.name);
 
@@ -216,13 +223,12 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 dbjob = db.importToDatabaseJob(
                         spectrumFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
                         structureFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
-                        inChI -> updateProgress(0, Math.max(lines.intValue(), count.incrementAndGet() + 1), count.get(), "Importing '" + inChI.key2D() + "'"),
+                        inChIs -> updateProgress(0, Math.max(lines.intValue(), count.incrementAndGet() + 1), count.get(), "Imported: " + inChIs.stream().map(InChI::key2D).collect(Collectors.joining(", "))),
                         ApplicationCore.WEB_API, mode.importParas.writeBuffer
                 );
                 checkForInterruption();
                 submitJob(dbjob).awaitResult();
-                logInfo("...New structures imported to custom database '" + mode.importParas.location + "'.");
-
+                logInfo("...New structures imported to custom database '" + mode.importParas.location + "'. Database ID is: " + db.getSettings().getName());
                 return true;
             } else if (mode.removeParas != null) {
                 if (mode.removeParas.location == null || mode.removeParas.location.isBlank())
@@ -296,13 +302,12 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 .collect(Collectors.joining(",")));
     }
 
-    private static void checkConflictingName(@NotNull String location, @Nullable String name) {
-        final String dbName = name != null ? name : Path.of(location).getFileName().toString();
+    private static void checkConflictingName(@NotNull String location, @NotNull String dbName) {
         CustomDataSources.sourcesStream().filter(CustomDataSources.Source::isCustomSource)
                 .filter(db -> db.name().equals(dbName) && !location.equals(db.isCustomSource() ? ((CustomDataSources.CustomSource) db).location() : null))
                 .findAny()
                 .ifPresent(db -> {
-                    throw new RuntimeException("Database with name " + dbName + " already exists in " /*+ db.id()*/);
+                    throw new RuntimeException("Database with name " + dbName + " already exists in " + db.URI());
                 });
     }
 

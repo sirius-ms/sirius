@@ -22,9 +22,11 @@ package de.unijena.bioinf.ms.gui;
 
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
+import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
 import de.unijena.bioinf.projectspace.GuiProjectManager;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.BiConsumer;
@@ -46,6 +48,15 @@ public class SiriusGui {
 //        });
     }
 
+    @Getter
+    private final GuiProperties properties;
+    @Getter
+    private final ConnectionMonitor connectionMonitor;
+    @Getter
+    private final MainFrame mainFrame;
+    @Getter
+    private GuiProjectManager projectManager;
+
     private NightSkyClient siriusClient;
 
     public NightSkyClient getSiriusClient() {
@@ -54,28 +65,11 @@ public class SiriusGui {
         return siriusClient;
     }
 
-    private final ConnectionMonitor connectionMonitor;
-
-    public ConnectionMonitor getConnectionMonitor() {
-        return connectionMonitor;
-    }
-
-    private final MainFrame mainFrame;
-
-    public MainFrame getMainFrame() {
-        return mainFrame;
-    }
-
-    private GuiProjectManager projectManager;
-
-    public GuiProjectManager getProjectManager() {
-        return projectManager;
-    }
-
     public SiriusGui(@NotNull String projectId, @NotNull NightSkyClient nightSkyClient, @NotNull ConnectionMonitor connectionMonitor) {
         this.connectionMonitor = connectionMonitor;
         siriusClient = nightSkyClient;
-        projectManager = new GuiProjectManager(projectId, siriusClient);
+        properties = new GuiProperties();
+        projectManager = new GuiProjectManager(projectId, siriusClient, properties);
         mainFrame = new MainFrame(this);
         mainFrame.decoradeMainFrame();
         //todo nightsky: GUI standablone mode with external SIRIUS Service

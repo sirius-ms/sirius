@@ -40,11 +40,13 @@ public enum SiriusActions {
 
     COMPUTE(ComputeAction.class),
     COMPUTE_ALL(ComputeAllAction.class),
-    ORDER_BY_INDEX(OrderCompoundByIndex.class),
+    ORDER_BY_ID(OrderCompoundById.class),
     ORDER_BY_RT(OrderCompoundByRT.class),
     ORDER_BY_MASS(OrderCompoundByMass.class),
     ORDER_BY_NAME(OrderCompoundByName.class),
     ORDER_BY_CONFIDENCE(OrderCompoundByConfidence.class),
+
+    TOOGLE_CONFIDENCE_MODE(SwitchConfidenceModeAction.class),
 
     TOOGLE_INVERT_FILTER(InvertFilterAction.class),
     RESET_FILTER(ResetFilterAction.class),

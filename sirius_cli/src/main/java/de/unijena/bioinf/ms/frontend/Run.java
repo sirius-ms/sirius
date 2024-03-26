@@ -46,10 +46,11 @@ import java.util.List;
  */
 public class Run extends ApplicationCore {
     protected final static Logger logger = LoggerFactory.getLogger(Run.class);
+    protected CommandLine.ParseResult result;
     protected Workflow flow;
-    private final WorkflowBuilder<?> builder;
+    private final WorkflowBuilder builder;
 
-    public Run(WorkflowBuilder<?> builder) {
+    public Run(WorkflowBuilder builder) {
         this.builder = builder;
         this.builder.initRootSpec();
     }
@@ -66,7 +67,7 @@ public class Run extends ApplicationCore {
     }
 
     /*Returns true if a workflow was parsed*/
-    public boolean parseArgs(String[] args) {
+    public CommandLine.ParseResult parseArgs(String[] args) {
         if (args == null || args.length < 1)
             args = new String[]{"--help"};
 
@@ -75,18 +76,17 @@ public class Run extends ApplicationCore {
         final CommandLine commandline = new CommandLine(builder.getRootSpec());
         commandline.setCaseInsensitiveEnumValuesAllowed(true);
         commandline.registerConverter(DefaultParameter.class, new DefaultParameter.Converter());
-        flow = commandline.parseWithHandler(builder.makeParseResultHandler(), args);
-        List<Exception> l = commandline.getParseResult().errors();
-        CommandLine.ParseResult r = commandline.getParseResult();
-        return flow != null; //todo maybe workflow validation would be nice here???
+        result = commandline.parseArgs(args);
+        return result;
+    }
+
+    public Workflow makeWorkflow(){
+        flow = builder.makeParseResultHandler().handleParseResult(result);
+        return flow;
     }
 
     public void cancel() {
         if (flow != null)
             flow.cancel();
-    }
-
-    public Workflow getFlow() {
-        return flow;
     }
 }

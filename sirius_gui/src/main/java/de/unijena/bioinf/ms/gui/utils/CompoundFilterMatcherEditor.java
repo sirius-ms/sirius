@@ -27,9 +27,9 @@ import java.beans.PropertyChangeListener;
 public class CompoundFilterMatcherEditor extends AbstractMatcherEditor<InstanceBean> implements PropertyChangeListener {
     final CompoundFilterMatcher matchter;
 
-    public CompoundFilterMatcherEditor(CompoundFilterModel filterModel) {
-        this.matchter = new CompoundFilterMatcher(filterModel);
-        filterModel.addPropertyChangeListener("filterUpdateCompleted", this);
+    public CompoundFilterMatcherEditor(CompoundFilterMatcher matchter) {
+        this.matchter = matchter;
+        this.matchter.filterModel.addPropertyChangeListener("filterUpdateCompleted", this);
     }
 
     @Override

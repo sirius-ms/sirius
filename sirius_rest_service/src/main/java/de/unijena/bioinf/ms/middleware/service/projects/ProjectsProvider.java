@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
-public interface ProjectsProvider<P extends de.unijena.bioinf.ms.middleware.service.projects.Project> extends DisposableBean {
+public interface ProjectsProvider<P extends Project> extends DisposableBean {
 
     List<ProjectInfo> listAllProjectSpaces();
 
@@ -50,25 +50,29 @@ public interface ProjectsProvider<P extends de.unijena.bioinf.ms.middleware.serv
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no project space with name '" + projectId + "'"));
     }
 
-    ProjectInfo openProjectSpace(@NotNull String projectId, @Nullable String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException;
+    ProjectInfo openProject(@NotNull String projectId, @Nullable String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException;
 
-    default ProjectInfo createProjectSpace(String projectIdSuggestion) throws IOException {
-        return createProjectSpace(projectIdSuggestion, null);
+    default ProjectInfo createProject(String projectIdSuggestion, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
+        return createProject(projectIdSuggestion, null, optFields);
     }
 
-    ProjectInfo createProjectSpace(@NotNull String projectIdSuggestion, @Nullable String location) throws IOException;
+    default ProjectInfo createProject(@NotNull String projectIdSuggestion, @Nullable String location, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException{
+        return createProject(projectIdSuggestion, location, optFields, true);
+    }
+
+    ProjectInfo createProject(@NotNull String projectIdSuggestion, @Nullable String location, @NotNull EnumSet<ProjectInfo.OptField> optFields, boolean failIfExists) throws IOException;
 
     boolean containsProject(@NotNull String projectId);
 
     void closeProjectSpace(String projectId) throws IOException;
 
     @Deprecated
-    default ProjectInfo copyProjectSpace(@NotNull String projectId, @NotNull String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
-        return copyProjectSpace(projectId, null, pathToProject, optFields);
+    default ProjectInfo copyProject(@NotNull String projectId, @NotNull String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
+        return copyProject(projectId, pathToProject, null, optFields);
     }
 
     @Deprecated
-    ProjectInfo copyProjectSpace(@NotNull String projectId, @Nullable String copyId, @NotNull String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException;
+    ProjectInfo copyProject(@NotNull String projectId, @NotNull String pathToProject, @Nullable String copyId, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException;
 
     void closeAll();
 
