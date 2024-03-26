@@ -20,11 +20,14 @@
 
 package de.unijena.bioinf.ChemistryBase.fp;
 
+import lombok.EqualsAndHashCode;
+
 import java.util.Locale;
 
 /**
  * measures F1-Score, accuracy, recall and precision of the predictions
  */
+@EqualsAndHashCode
 public final class PredictionPerformance {
 
     public final static class Modify {

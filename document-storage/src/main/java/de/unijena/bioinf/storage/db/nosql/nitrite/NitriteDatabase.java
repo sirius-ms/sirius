@@ -44,6 +44,7 @@ import org.dizitart.no2.common.RecordStream;
 import org.dizitart.no2.common.WriteResult;
 import org.dizitart.no2.common.mapper.JacksonMapperModule;
 import org.dizitart.no2.common.mapper.NitriteMapper;
+import org.dizitart.no2.common.module.NitriteModule;
 import org.dizitart.no2.common.processors.ProcessorChain;
 import org.dizitart.no2.filters.FluentFilter;
 import org.dizitart.no2.filters.NitriteFilter;
@@ -100,15 +101,19 @@ public class NitriteDatabase implements Database<Document> {
     private boolean isClosed = false;
 
     public NitriteDatabase(Path file, Metadata meta) throws IOException {
+        this(file, meta, true, 64);
+    }
+
+    public NitriteDatabase(Path file, Metadata meta, boolean compress, int cacheSizeMiB) throws IOException {
         this.file = file;
-        this.db = initDB(file, meta);
+        this.db = initDB(file, meta, compress, cacheSizeMiB);
         this.initCollections(meta);
         this.initRepositories(meta);
         this.initOptionalFields(meta);
         this.nitriteMapper = this.db.getConfig().nitriteMapper();
     }
 
-    private Nitrite initDB(Path file, Metadata meta) {
+    private Nitrite initDB(Path file, Metadata meta, boolean compress, int cacheSizeMiB) {
         SimpleModule module = new SimpleModule("sirius-nitrite", Version.unknownVersion());
         for (Map.Entry<Class<?>, JsonSerializer<?>> entry : meta.serializers.entrySet()) {
             addSerializer(module, entry.getKey(), entry.getValue());
@@ -116,7 +121,12 @@ public class NitriteDatabase implements Database<Document> {
         for (Map.Entry<Class<?>, JsonDeserializer<?>> entry : meta.deserializers.entrySet()) {
             addDeserializer(module, entry.getKey(), entry.getValue());
         }
-        MVStoreModule storeModule = MVStoreModule.withConfig().filePath(file.toFile()).build();
+        NitriteModule storeModule = MVStoreModule.withConfig().filePath(file.toFile())
+                .compress(compress)
+                .autoCommitBufferSize(8192) //8kib for 2048 and lower there is a weired bug in Nitrite + MvStore where the db crashed during close operation in 2% of the cases.
+                .cacheSize(cacheSizeMiB)
+                .build();
+//        NitriteModule storeModule = RocksDBModule.withConfig().filePath(file.toFile()).build();
 
         return Nitrite.builder().loadModule(storeModule).loadModule(new JacksonMapperModule(module)).openOrCreate();
     }
@@ -238,8 +248,8 @@ public class NitriteDatabase implements Database<Document> {
             String repoType = repoIndex.getIndexType();
             IndexType iType = index.getType();
             if ((Objects.equals(repoType, org.dizitart.no2.index.IndexType.UNIQUE) && iType != IndexType.UNIQUE) ||
-                        (Objects.equals(repoType, org.dizitart.no2.index.IndexType.NON_UNIQUE) && iType != IndexType.NON_UNIQUE) ||
-                        (Objects.equals(repoType, org.dizitart.no2.index.IndexType.FULL_TEXT) && iType != IndexType.FULL_TEXT)) {
+                    (Objects.equals(repoType, org.dizitart.no2.index.IndexType.NON_UNIQUE) && iType != IndexType.NON_UNIQUE) ||
+                    (Objects.equals(repoType, org.dizitart.no2.index.IndexType.FULL_TEXT) && iType != IndexType.FULL_TEXT)) {
                 toDrop.add(repoIndex);
                 toBuild.add(index);
             }
@@ -266,7 +276,8 @@ public class NitriteDatabase implements Database<Document> {
         stateWriteLock.lock();
         try {
             this.isClosed = true;
-            this.db.close();
+            if (!this.db.isClosed())
+                this.db.close();
         } finally {
             stateWriteLock.unlock();
         }
@@ -966,7 +977,6 @@ public class NitriteDatabase implements Database<Document> {
     }
 
 
-
     @Override
     @SuppressWarnings("unchecked")
     public NitriteFilter getFilter(Filter filter) {
@@ -1001,12 +1011,16 @@ public class NitriteDatabase implements Database<Document> {
                 case GTE -> FluentFilter.where(literal.getField()).gte((Comparable<?>) literal.getValues()[0]);
                 case LT -> FluentFilter.where(literal.getField()).lt((Comparable<?>) literal.getValues()[0]);
                 case LTE -> FluentFilter.where(literal.getField()).lte((Comparable<?>) literal.getValues()[0]);
-                case BETWEEN -> FluentFilter.where(literal.getField()).between((Comparable<?>) literal.getValues()[0], (Comparable<?>) literal.getValues()[1], (boolean) literal.getValues()[2], (boolean) literal.getValues()[3]);
+                case BETWEEN ->
+                        FluentFilter.where(literal.getField()).between((Comparable<?>) literal.getValues()[0], (Comparable<?>) literal.getValues()[1], (boolean) literal.getValues()[2], (boolean) literal.getValues()[3]);
                 case TEXT -> FluentFilter.where(literal.getField()).text((String) literal.getValues()[0]);
                 case REGEX -> FluentFilter.where(literal.getField()).regex((String) literal.getValues()[0]);
-                case IN -> FluentFilter.where(literal.getField()).in(Arrays.stream(literal.getValues()).map(o -> (Comparable<?>) o).toArray(Comparable[]::new));
-                case NOT_IN -> FluentFilter.where(literal.getField()).notIn(Arrays.stream(literal.getValues()).map(o -> (Comparable<?>) o).toArray(Comparable[]::new));
-                case ELEM_MATCH -> FluentFilter.where(literal.getField()).elemMatch(filterRecursion((Filter.FilterNode) literal.getValues()[0]));
+                case IN ->
+                        FluentFilter.where(literal.getField()).in(Arrays.stream(literal.getValues()).map(o -> (Comparable<?>) o).toArray(Comparable[]::new));
+                case NOT_IN ->
+                        FluentFilter.where(literal.getField()).notIn(Arrays.stream(literal.getValues()).map(o -> (Comparable<?>) o).toArray(Comparable[]::new));
+                case ELEM_MATCH ->
+                        FluentFilter.where(literal.getField()).elemMatch(filterRecursion((Filter.FilterNode) literal.getValues()[0]));
             };
         } else if (node instanceof Filter.FilterClause clause) {
             Filter.FilterNode[] children = clause.getChildren();
