@@ -20,12 +20,12 @@
 
 package de.unijena.bioinf.ms.persistence.storage;
 
-import de.unijena.bioinf.ChemistryBase.ms.SourceLocation;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ms.persistence.model.Tag;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
-import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
@@ -33,7 +33,6 @@ import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Index;
-import de.unijena.bioinf.storage.db.nosql.IndexType;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,25 +51,25 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
     static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
         MetadataUtils.addFasUtilCollectionSupport(sourceMetadata);
         return sourceMetadata
-                .addRepository(Tag.class, new Index("name", IndexType.UNIQUE))
+                .addRepository(Tag.class, Index.unique("name"))
 
                 .addRepository(LCMSRun.class,
-                        new Index("name", IndexType.NON_UNIQUE),
-                        new Index("runType", IndexType.NON_UNIQUE))
+                        Index.nonUnique("name"),
+                        Index.nonUnique("runType"))
 
                 .addRepository(MergedLCMSRun.class,
-                        new Index("name", IndexType.NON_UNIQUE),
-                        new Index("runType", IndexType.NON_UNIQUE))
+                        Index.nonUnique("name"),
+                        Index.nonUnique("runType"))
 
                 .addRepository(Scan.class,
-                        new Index("runId", IndexType.NON_UNIQUE),
-                        new Index("scanTime", IndexType.NON_UNIQUE))
+                        Index.nonUnique("runId"),
+                        Index.nonUnique("scanTime"))
                 .setOptionalFields(Scan.class, "peaks")
 
                 .addRepository(MSMSScan.class,
-                        new Index("runId", IndexType.NON_UNIQUE),
-                        new Index("scanTime", IndexType.NON_UNIQUE),
-                        new Index("precursorScanId", IndexType.NON_UNIQUE))
+                        Index.nonUnique("runId"),
+                        Index.nonUnique("scanTime"),
+                        Index.nonUnique("precursorScanId"))
                 .setOptionalFields(MSMSScan.class, "peaks")
 
                 .addRepository(MergedTrace.class)
@@ -80,36 +79,36 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                 .addRepository(MSData.class)
 
                 .addRepository(Feature.class,
-                        new Index("alignedFeatureId", IndexType.NON_UNIQUE),
-                        new Index("averageMass", IndexType.NON_UNIQUE),
-                        new Index("apexMass", IndexType.NON_UNIQUE),
-                        new Index("retentionTime.start", IndexType.NON_UNIQUE),
-                        new Index("retentionTime.end", IndexType.NON_UNIQUE))
+                        Index.nonUnique("alignedFeatureId"),
+                        Index.nonUnique("averageMass"),
+                        Index.nonUnique("apexMass"),
+                        Index.nonUnique("retentionTime.start"),
+                        Index.nonUnique("retentionTime.end"))
 
                 .addRepository(AlignedFeatures.class,
-                        new Index("compoundId", IndexType.NON_UNIQUE),
-                        new Index("averageMass", IndexType.NON_UNIQUE),
-                        new Index("apexMass", IndexType.NON_UNIQUE),
-                        new Index("retentionTime.start", IndexType.NON_UNIQUE),
-                        new Index("retentionTime.end", IndexType.NON_UNIQUE))
+                        Index.nonUnique("compoundId"),
+                        Index.nonUnique("averageMass"),
+                        Index.nonUnique("apexMass"),
+                        Index.nonUnique("retentionTime.start"),
+                        Index.nonUnique("retentionTime.end"))
 
                 .addRepository(AlignedIsotopicFeatures.class,
-                        new Index("alignedFeatureId", IndexType.NON_UNIQUE),
-                        new Index("averageMass", IndexType.NON_UNIQUE),
-                        new Index("apexMass", IndexType.NON_UNIQUE),
-                        new Index("retentionTime.start", IndexType.NON_UNIQUE),
-                        new Index("retentionTime.end", IndexType.NON_UNIQUE))
+                        Index.nonUnique("compoundId"),
+                        Index.nonUnique("averageMass"),
+                        Index.nonUnique("apexMass"),
+                        Index.nonUnique("retentionTime.start"),
+                        Index.nonUnique("retentionTime.end"))
 
                 .addRepository(CorrelatedIonPair.class,
-                        new Index("alignedFeatureId1", IndexType.NON_UNIQUE),
-                        new Index("alignedFeatureId2", IndexType.NON_UNIQUE),
-                        new Index("type", IndexType.NON_UNIQUE))
+                        Index.nonUnique("alignedFeatureId1"),
+                        Index.nonUnique("alignedFeatureId2"),
+                        Index.nonUnique("type"))
 
                 .addRepository(Compound.class,
-                        new Index("name", IndexType.NON_UNIQUE),
-                        new Index("neutralMass", IndexType.NON_UNIQUE),
-                        new Index("rt.start", IndexType.NON_UNIQUE),
-                        new Index("rt.end", IndexType.NON_UNIQUE));
+                        Index.nonUnique("name"),
+                        Index.nonUnique("neutralMass"),
+                        Index.nonUnique("rt.start"),
+                        Index.nonUnique("rt.end"));
     }
 
     default Stream<Compound> getAllCompounds() throws IOException {
@@ -206,17 +205,10 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
         getStorage().insertAll(features);
     }
 
-    private <T> void importOptionals(Optional<List<T>> optionals, long parentId, IOThrowingBiConsumer<List<T>, Long> importer) throws IOException {
+    private <T> void importOptionals(Optional<List<T>> optionals, long parentId, IOFunctions.BiIOConsumer<List<T>, Long> importer) throws IOException {
         if (optionals.isPresent()) {
-            importer.apply(optionals.get(), parentId);
+            importer.accept(optionals.get(), parentId);
         }
-    }
-
-    @FunctionalInterface
-    interface IOThrowingBiConsumer<T, U> {
-
-        void apply(T object1, U object2) throws IOException;
-
     }
 
     Storage getStorage();

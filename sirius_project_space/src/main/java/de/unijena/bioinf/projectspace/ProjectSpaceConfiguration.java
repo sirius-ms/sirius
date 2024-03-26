@@ -20,36 +20,45 @@
 
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class ProjectSpaceConfiguration {
     private final HashMap<Class, ComponentSerializer> componentSerializers;
     private final HashMap<Class, ContainerSerializer> containerSerializers;
     private final HashMap<Class, List<Class>> containerComponents;
-
     private final HashMap<Class, ComponentSerializer> projectSpacePropertySerializers;
+    private final List<Class<? extends FormulaScore>> defaultRankingScores;
 
     public ProjectSpaceConfiguration() {
         this.componentSerializers = new HashMap<>();
         this.containerSerializers = new HashMap<>();
         this.containerComponents = new HashMap<>();
         this.projectSpacePropertySerializers = new HashMap<>();
+        this.defaultRankingScores = new ArrayList<>();
     }
 
-    public <T extends ProjectSpaceProperty> void defineProjectSpaceProperty(Class<T> propertyClass, ComponentSerializer<ProjectSpaceContainerId,ProjectSpaceContainer<ProjectSpaceContainerId>, T> serializer) {
+    @SafeVarargs
+    public final void defineDefaultRankingScores(Class<? extends FormulaScore>... rankingScores) {
+        defaultRankingScores.clear();
+        defaultRankingScores.addAll(Arrays.asList(rankingScores));
+    }
+
+    public List<Class<? extends FormulaScore>> getDefaultRankingScores() {
+        return Collections.unmodifiableList(defaultRankingScores);
+    }
+
+    public <T extends ProjectSpaceProperty> void defineProjectSpaceProperty(Class<T> propertyClass, ComponentSerializer<ProjectSpaceContainerId, ProjectSpaceContainer<ProjectSpaceContainerId>, T> serializer) {
         this.projectSpacePropertySerializers.put(propertyClass, serializer);
     }
 
-    public <T extends ProjectSpaceProperty> ComponentSerializer<ProjectSpaceContainerId,ProjectSpaceContainer<ProjectSpaceContainerId>, T>  getProjectSpacePropertySerializer(Class<T> propertyClass) {
+    public <T extends ProjectSpaceProperty> ComponentSerializer<ProjectSpaceContainerId, ProjectSpaceContainer<ProjectSpaceContainerId>, T> getProjectSpacePropertySerializer(Class<T> propertyClass) {
         return projectSpacePropertySerializers.get(propertyClass);
     }
 
-    public <T extends ProjectSpaceProperty> boolean hasProjectSpacePropertyRegistered(Class<T> propertyClass){
+    public <T extends ProjectSpaceProperty> boolean hasProjectSpacePropertyRegistered(Class<T> propertyClass) {
         return projectSpacePropertySerializers.containsKey(propertyClass);
     }
 
@@ -61,25 +70,25 @@ public class ProjectSpaceConfiguration {
     public <ID extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<ID>, Component>
     void registerComponent(Class<Container> container, Class<Component> componentClass, ComponentSerializer<ID, Container, Component> serializer) {
         componentSerializers.put(componentClass, serializer);
-        containerComponents.computeIfAbsent(container, (n)->new ArrayList<>()).add(componentClass);
+        containerComponents.computeIfAbsent(container, (n) -> new ArrayList<>()).add(componentClass);
     }
 
     @SuppressWarnings("unchecked")
     public <ID extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<ID>>
-    @NotNull  ContainerSerializer<ID,Container> getContainerSerializer(Class<Container> klass) {
+    @NotNull ContainerSerializer<ID, Container> getContainerSerializer(Class<Container> klass) {
         final ContainerSerializer containerSerializer = containerSerializers.get(klass);
-        if (containerSerializer==null)
+        if (containerSerializer == null)
             throw new IllegalArgumentException("No container of class '" + klass.getSimpleName() + "' registered");
-        return (ContainerSerializer<ID,Container>) containerSerializer;
+        return (ContainerSerializer<ID, Container>) containerSerializer;
     }
 
     @SuppressWarnings("unchecked")
     public <ID extends ProjectSpaceContainerId, Container extends ProjectSpaceContainer<ID>, Component>
-    @NotNull ComponentSerializer<ID,Container,Component> getComponentSerializer(Class<Container> klass, Class<Component> componentClass) {
+    @NotNull ComponentSerializer<ID, Container, Component> getComponentSerializer(Class<Container> klass, Class<Component> componentClass) {
         final ComponentSerializer componentSerializer = componentSerializers.get(componentClass);
-        if (componentSerializer==null)
+        if (componentSerializer == null)
             throw new IllegalArgumentException("No component of class '" + componentClass.getSimpleName() + "' registered.");
-        return (ComponentSerializer<ID,Container,Component>) componentSerializer;
+        return (ComponentSerializer<ID, Container, Component>) componentSerializer;
     }
 
     public <T extends ProjectSpaceContainer<?>>
