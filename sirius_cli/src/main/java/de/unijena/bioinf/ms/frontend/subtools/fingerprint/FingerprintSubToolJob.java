@@ -21,8 +21,8 @@ package de.unijena.bioinf.ms.frontend.subtools.fingerprint;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.fingerid.*;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
@@ -32,17 +32,14 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
-import de.unijena.bioinf.projectspace.FormulaScoring;
-import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
-import de.unijena.bioinf.projectspace.FormulaResult;
+import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.sirius.IdentificationResult;
+import de.unijena.bioinf.spectraldb.InjectSpectralLibraryMatchFormulas;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.EnumSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -66,6 +63,8 @@ public class FingerprintSubToolJob extends InstanceJob {
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         List<? extends SScored<FormulaResult, ? extends FormulaScore>> formulaResults =
                 inst.loadFormulaResults(FormulaScoring.class, FTree.class, FingerprintResult.class);
+
+        Set<MolecularFormula> enforcedFormulas = extractEnforcedFormulasFromSpectralLibrarySearch(inst);
 
         checkForInterruption();
 
@@ -98,7 +97,7 @@ public class FingerprintSubToolJob extends InstanceJob {
         final FingerprintPreprocessingJJob<?> fpPreproJob = new FingerprintPreprocessingJJob<>(inst.getExperiment(),
                 formulaResults.stream().map(res ->
                         new IdentificationResult<>(res.getCandidate().getAnnotationOrThrow(FTree.class),
-                                res.getScoreObject())).collect(Collectors.toList()));
+                                res.getScoreObject())).collect(Collectors.toList()), enforcedFormulas);
 
 
         // do computation and await results
@@ -158,6 +157,17 @@ public class FingerprintSubToolJob extends InstanceJob {
         }
         inst.updateCompoundID();
         updateProgress(97);
+    }
+
+    private Set<MolecularFormula> extractEnforcedFormulasFromSpectralLibrarySearch(Instance inst) {
+        InjectSpectralLibraryMatchFormulas injectionSettings = inst.getExperiment().getAnnotationOrDefault(InjectSpectralLibraryMatchFormulas.class);
+        if (!injectionSettings.isAlwaysPredict()) return Collections.EMPTY_SET;
+        CompoundContainer container = inst.loadCompoundContainer(SpectralSearchResult.class);
+        if (container.hasAnnotation(SpectralSearchResult.class)) {
+            SpectralSearchResult results = container.getAnnotation(SpectralSearchResult.class).get();
+            return results.deriveDistinctFormulaSetWithThreshold(inst.getExperiment(), injectionSettings.getMinScoreToInject(), injectionSettings.getMinPeakMatchesToInject());
+        }
+        return Collections.EMPTY_SET;
     }
 
     @Override
