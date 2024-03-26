@@ -23,6 +23,7 @@ package de.unijena.bioinf.projectspace;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
@@ -31,6 +32,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Builder
 @NoArgsConstructor
@@ -80,5 +86,33 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
         private String smiles;
 
         private String candidateInChiKey;
+
+        public PrecursorIonType derivePrecursorAdductOrNull(Ms2Experiment exp) {
+            //to be future proof, make sure, if it is not a hit from analog search
+            if (Math.abs(exp.getIonMass() - getExactMass())<0.2) return getAdduct();
+            else return null;
+        }
+
+        public MolecularFormula deriveNeutralFormulaOrNull(Ms2Experiment exp) {
+            //to be future proof, make sure, if it is not a hit from analog search
+            if(Math.abs(exp.getIonMass() - getExactMass())<0.2) return getMolecularFormula();
+            else return null;
+        }
+    }
+
+    public Set<MolecularFormula> deriveDistinctFormulaSetWithThreshold(Ms2Experiment exp, double minSimilarity, double minSharedPeaks) {
+        return deriveDistinctSetWithThreshold(exp, (e, r) -> r.deriveNeutralFormulaOrNull(e), minSimilarity, minSharedPeaks);
+    }
+
+    public Set<PrecursorIonType> deriveDistinctAdductsSetWithThreshold(Ms2Experiment exp, double minSimilarity, double minSharedPeaks) {
+        return deriveDistinctSetWithThreshold(exp, (e, r) -> r.derivePrecursorAdductOrNull(e), minSimilarity, minSharedPeaks);
+    }
+
+    public <T> Set<T> deriveDistinctSetWithThreshold(Ms2Experiment exp, BiFunction<Ms2Experiment, SearchResult, T> f, double minSimilarity, double minSharedPeaks) {
+        return getResults().stream()
+                .filter(r -> r.getSimilarity().similarity >= minSimilarity && r.getSimilarity().sharedPeaks >= minSharedPeaks)
+                .map(r -> f.apply(exp, r))
+                .filter(Objects::nonNull)
+                .distinct().collect(Collectors.toSet());
     }
 }
