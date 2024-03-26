@@ -46,7 +46,6 @@ public class AlignedFeature {
 
     // additional attributes
     protected Double ionMass;
-    @Deprecated
     protected String adduct;
 
     @Schema(nullable = true)
