@@ -26,17 +26,9 @@ import java.io.IOException;
 
 public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> implements SiriusProjectDocumentDatabase<Storage>, Closeable, AutoCloseable {
 
-    protected Storage storage;
+    protected final Storage storage;
 
     public SiriusProjectDatabaseImpl(Storage storage) {
-        this.storage = storage;
-    }
-
-    protected SiriusProjectDatabaseImpl() {
-        this.storage = null;
-    }
-
-    protected void setStorage(Storage storage) {
         this.storage = storage;
     }
 
@@ -47,6 +39,6 @@ public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> imp
 
     @Override
     public void close() throws IOException {
-
+        storage.close();
     }
 }

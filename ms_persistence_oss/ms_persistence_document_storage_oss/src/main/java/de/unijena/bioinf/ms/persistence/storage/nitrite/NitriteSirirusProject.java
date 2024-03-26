@@ -47,9 +47,12 @@ import java.util.function.Function;
 
 public class NitriteSirirusProject extends SiriusProjectDatabaseImpl<NitriteDatabase> {
 
-    public NitriteSirirusProject(Path location) throws IOException {
-        Metadata metadata = SiriusProjectDocumentDatabase.buildMetadata();
-        setStorage(new NitriteDatabase(location, metadata));
+    public NitriteSirirusProject(@NotNull Path location) throws IOException {
+        this(location, SiriusProjectDocumentDatabase.buildMetadata());
+    }
+    private NitriteSirirusProject(@NotNull Path location, @NotNull final Metadata metadata) throws IOException {
+        super(new NitriteDatabase(location, metadata));
+
 
         Optional<FingerIdData> csiPos = findFingerprintData(FingerIdData.class, 1);
         Optional<FingerIdData> csiNeg = findFingerprintData(FingerIdData.class, -1);
@@ -111,6 +114,4 @@ public class NitriteSirirusProject extends SiriusProjectDatabaseImpl<NitriteData
             throw new RuntimeException(e);
         }
     }
-
-
 }
