@@ -69,7 +69,7 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
                 .addRepository(SpectraMatch.class, "uuid",
                         Index.nonUnique("candidateInChiKey"),
                         Index.nonUnique("alignedFeatureId"))
-                .addRepository(FingerprintCandidate.class, "inchikey")
+                .addRepository(FingerprintCandidate.class)
                 .addSerialization(FingerprintCandidate.class,
                         new FingerprintCandidate.Serializer(),
                         new JSONReader.FingerprintCandidateDeserializer(null)) //will be added later because it has to be read from project
