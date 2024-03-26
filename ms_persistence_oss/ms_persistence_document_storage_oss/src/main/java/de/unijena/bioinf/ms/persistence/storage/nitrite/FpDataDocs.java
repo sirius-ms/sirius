@@ -27,7 +27,23 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import org.dizitart.no2.collection.Document;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
+import java.util.function.Function;
+
 public class FpDataDocs {
+    private static Map<Class<? extends FingerprintData<?>>, Function<Document, FingerprintData<?>>> MAPPERS = Map.of(
+            FingerIdData.class, FpDataDocs::toFingerIdData,
+            CanopusCfData.class, FpDataDocs::toCanopusCfData,
+            CanopusNpcData.class, FpDataDocs::toCanopusNpcData
+    );
+
+    public static <T extends FingerprintData<?>> Function<Document, T> toDataFunction(Class<T> clzz){
+        return (Function<Document, T>) MAPPERS.get(clzz);
+    }
+    public static <T extends FingerprintData<?>> T toData(Class<T> clzz, Document doc){
+        return toDataFunction(clzz).apply(doc);
+    }
+
     public static Document toDoc(FingerIdData data, int charge) {
         int[] absoluteIndices = data.getFingerprintVersion().allowedIndizes();
         double[] tps = new double[absoluteIndices.length];
