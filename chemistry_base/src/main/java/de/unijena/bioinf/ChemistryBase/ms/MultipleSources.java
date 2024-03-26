@@ -22,25 +22,25 @@ package de.unijena.bioinf.ChemistryBase.ms;
 
 import java.io.File;
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-// TODO: not supported yet
 public class MultipleSources extends SourceLocation {
 
     protected Set<URI> allSources;
 
-    public static MultipleSources leastCommonAncestor(File... sources) {
-            String a = sources[0].getAbsolutePath();
-            String b = sources[sources.length - 1].getAbsolutePath();
+    public static MultipleSources leastCommonAncestor(Path... sources) {
+            String a = sources[0].toAbsolutePath().toString();
+            String b = sources[sources.length - 1].toAbsolutePath().toString();
             for (int k = 0; k < Math.min(a.length(), b.length()); ++k) {
                 if (a.charAt(k) != b.charAt(k)) {
-                    return new MultipleSources(new File(a.substring(0, k)).toURI(), Arrays.stream(sources).map(File::toURI).toArray(URI[]::new));
+                    return new MultipleSources(new File(a.substring(0, k)).toURI(), Arrays.stream(sources).map(Path::toUri).toArray(URI[]::new));
                 }
             }
-            return new MultipleSources(sources[0].toURI(), Arrays.stream(sources).map(File::toURI).toArray(URI[]::new));
+            return new MultipleSources(sources[0].toUri(), Arrays.stream(sources).map(Path::toUri).toArray(URI[]::new));
 
     }
 
@@ -55,6 +55,6 @@ public class MultipleSources extends SourceLocation {
 
     @Override
     public String toString() {
-        return allSources.stream().map(x->x.toString()).collect(Collectors.joining(";"));
+        return allSources.stream().map(URI::toString).collect(Collectors.joining(";"));
     }
 }

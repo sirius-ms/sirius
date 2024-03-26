@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ChemistryBase.utils;
 
+import com.github.f4b6a3.tsid.TsidCreator;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.list.array.TIntArrayList;
@@ -116,8 +117,7 @@ public class FileUtils {
 
     public static Path asZipFSPath(Path zipFile, boolean createNew, boolean useTempFile, @Nullable ZipCompressionMethod method) throws IOException {
         FileSystem zipFS = asZipFS(zipFile, createNew, useTempFile, method);
-        Path p = zipFS.getPath(zipFS.getSeparator());
-        return p;
+        return zipFS.getPath(zipFS.getSeparator());
     }
 
     /**
@@ -806,13 +806,28 @@ public class FileUtils {
         return lines;
     }
 
+    public static Path createTmpProjectSpaceLocation(@Nullable String ext) {
+        return createTmpProjectSpaceLocation(ext, FileSystems.getDefault());
+    }
+
+    public static Path createTmpProjectSpaceLocation(@Nullable String ext, @NotNull FileSystem fs) {
+        String tmpDir = System.getProperty("java.io.tmpdir");
+        return fs.getPath(tmpDir).resolve("sirius-tmp-project-" + TsidCreator.getTsid() + (ext == null || ext.isBlank() ? "": ("." + ext)));
+    }
 
     public static Path newTempFile(@NotNull String directory, @NotNull String prefix, @NotNull String suffix) {
-        return Paths.get(directory, MessageFormat.format("{0}{1}{2}", prefix, UUID.randomUUID(), suffix));
+        return newTempFile(directory, prefix, suffix, FileSystems.getDefault());
+    }
+    public static Path newTempFile(@NotNull String directory, @NotNull String prefix, @NotNull String suffix, @NotNull FileSystem fs) {
+        return fs.getPath(directory, MessageFormat.format("{0}{1}{2}", prefix, TsidCreator.getTsid(), suffix));
     }
 
     public static Path newTempFile(@NotNull String prefix, @NotNull String suffix) {
-        return newTempFile(System.getProperty("java.io.tmpdir"), prefix, suffix);
+        return newTempFile(prefix,suffix,FileSystems.getDefault());
+    }
+
+    public static Path newTempFile(@NotNull String prefix, @NotNull String suffix, @NotNull FileSystem fs) {
+        return newTempFile(System.getProperty("java.io.tmpdir"), prefix, suffix, fs);
     }
 
     public static <R> R listAndClose(Path p, Function<Stream<Path>, R> tryWith) throws IOException {

@@ -30,12 +30,16 @@ import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.JSONReader;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.IOException;
 
 public class FingerprintCandidateWrapperDeserializer extends StdDeserializer<FingerprintCandidateWrapper> {
 
-    private final FingerprintVersion version;
+    @Getter
+    @Setter
+    private FingerprintVersion version;
 
     private final JSONReader.CompoundCandidateDeserializer compoundCandidateDeserializer = new JSONReader.CompoundCandidateDeserializer();
 
@@ -69,12 +73,17 @@ public class FingerprintCandidateWrapperDeserializer extends StdDeserializer<Fin
                     break;
                 case "candidate":
                     p.nextToken();
-                    candidate = compoundCandidateDeserializer.deserialize(p, ctxt);
+                    if (p.currentToken() != JsonToken.VALUE_NULL) {
+                        candidate = compoundCandidateDeserializer.deserialize(p, ctxt);
+                    }
                     break;
                 case "fingerprint":
-                    p.nextToken(); p.nextToken();
-                    short[] indices = p.readValueAs(short[].class);
-                    fingerprint = new ArrayFingerprint(version, indices);
+                    p.nextToken();
+                    if (p.currentToken() != JsonToken.VALUE_NULL) {
+                        p.nextToken();
+                        short[] indices = p.readValueAs(short[].class);
+                        fingerprint = new ArrayFingerprint(version, indices);
+                    }
                     break;
             }
         }

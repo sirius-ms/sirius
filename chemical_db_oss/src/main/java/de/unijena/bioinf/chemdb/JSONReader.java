@@ -30,6 +30,8 @@ import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TShortArrayList;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -150,10 +152,12 @@ public class JSONReader extends CompoundReader {
     }
     public static class FingerprintCandidateDeserializer extends JsonDeserializer<FingerprintCandidate> {
 
-        private final FingerprintVersion version;
+        @Setter
+        @Getter
+        private FingerprintVersion version;
 
-        public FingerprintCandidateDeserializer() {
-            this(CdkFingerprintVersion.getDefault());
+        protected FingerprintCandidateDeserializer() {
+            this(null);
         }
 
         public FingerprintCandidateDeserializer(FingerprintVersion version) {
@@ -202,7 +206,7 @@ public class JSONReader extends CompoundReader {
                         if (p.nextToken().isNumeric()) {
                             xlogp = p.getNumberValue().doubleValue();
                         } else {
-                            LoggerFactory.getLogger("Warning: xlogp is invalid value for " + String.valueOf(inchikey));
+                            LoggerFactory.getLogger("Warning: xlogp is invalid value for " + inchikey);
                         }
                         break;
                     case "smiles":
@@ -259,7 +263,7 @@ public class JSONReader extends CompoundReader {
             }
 
             final CompoundCandidate c = new CompoundCandidate(
-                    new InChI(inchikey, inchi), name, smiles, player, qlayer, xlogp, null, bitset, links.toArray(DBLink[]::new),
+                    new InChI(inchikey, inchi), name, smiles, player, qlayer, xlogp, bitset, links.toArray(DBLink[]::new),
                     pubmedIds == null ? null : new PubmedLinks(pubmedIds.toArray())
             );
 

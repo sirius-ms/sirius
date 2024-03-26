@@ -89,10 +89,10 @@ public class MoI {
         return rect.avgMz;
     }
 
-    public static class DataType extends CustomDataType {
+    public static class DataType extends CustomDataType<MoI> {
 
         @Override
-        public int getMemory(Object obj) {
+        public int getMemory(MoI obj) {
             int base = 60;
             if (obj instanceof AlignedMoI) {
                 base *= (1+((AlignedMoI) obj).getAligned().length);
@@ -102,32 +102,31 @@ public class MoI {
         }
 
         @Override
-        public void write(WriteBuffer buff, Object obj) {
-            MoI m = (MoI)obj;
-            buff.putLong(m.uid);
-            writeFixedLenFloat(buff, m.rect.toArray());
-            buff.putDouble(m.rect.avgMz);
-            buff.putInt(m.rect.id);
-            buff.putDouble(m.retentionTime);
-            buff.putFloat(m.intensity);
-            buff.putFloat(m.confidence);
-            buff.putInt(m.scanId);
-            buff.putInt(m.sampleIdx);
-            buff.put(m.state);
-            if (m instanceof AlignedMoI) {
-                AlignedMoI n = (AlignedMoI) m;
+        public void write(WriteBuffer buff, MoI obj) {
+            buff.putLong(obj.uid);
+            writeFixedLenFloat(buff, obj.rect.toArray());
+            buff.putDouble(obj.rect.avgMz);
+            buff.putInt(obj.rect.id);
+            buff.putDouble(obj.retentionTime);
+            buff.putFloat(obj.intensity);
+            buff.putFloat(obj.confidence);
+            buff.putInt(obj.scanId);
+            buff.putInt(obj.sampleIdx);
+            buff.put(obj.state);
+            if (obj instanceof AlignedMoI) {
+                AlignedMoI n = (AlignedMoI) obj;
                 buff.putInt(n.getAligned().length);
                 for (MoI a : n.getAligned()) {
                     write(buff, a);
                 }
             } else {
                 buff.putInt(-1);
-                IsotopeResult.writeBinary(buff, m.isotopes);
+                IsotopeResult.writeBinary(buff, obj.isotopes);
             }
         }
 
         @Override
-        public Object read(ByteBuffer buff) {
+        public MoI read(ByteBuffer buff) {
             long uid = buff.getLong();
             float[] rect = readFixedLenFloat(buff, 4);
             double avgMz = buff.getDouble();
@@ -147,6 +146,11 @@ public class MoI {
                 IsotopeResult is = IsotopeResult.loadBinary(buff);
                 return new MoI(new Rect(rect[0],rect[1],rect[2],rect[3], avgMz, rectId), rt, scanId, sampleIdx, uid, intensity, confidence, is, state);
             }
+        }
+
+        @Override
+        public MoI[] createStorage(int i) {
+            return new MoI[i];
         }
     }
     public boolean hasIsotopes() {

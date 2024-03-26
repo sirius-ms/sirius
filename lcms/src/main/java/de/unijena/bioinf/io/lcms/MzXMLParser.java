@@ -47,6 +47,10 @@ public class MzXMLParser implements LCMSParser{
         return run;
     }
 
+    public LCMSRun parse(URI source, SpectrumStorage storage) throws IOException {
+        return new MzXMLParser().parse(new DataSource(source), new InputSource(source.toASCIIString()), storage);
+    }
+
     public LCMSRun parse(DataSource source, InputSource input, SpectrumStorage storage) throws IOException {
         final LCMSRun run = new LCMSRun(source);
         try {

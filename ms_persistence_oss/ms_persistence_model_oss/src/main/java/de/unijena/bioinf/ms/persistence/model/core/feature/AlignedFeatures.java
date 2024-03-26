@@ -57,6 +57,8 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
      */
     private long compoundId;
 
+    //todo add detected adducts here
+
     @JsonIgnore
     @ToString.Exclude
     private List<AlignedIsotopicFeatures> isotopicFeatures;

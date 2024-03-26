@@ -21,13 +21,13 @@
 package de.unijena.bioinf.ms.persistence.model.core.trace;
 
 import it.unimi.dsi.fastutil.doubles.DoubleList;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @SuperBuilder
 @ToString(onlyExplicitlyIncluded = true)
 public abstract class AbstractTrace {

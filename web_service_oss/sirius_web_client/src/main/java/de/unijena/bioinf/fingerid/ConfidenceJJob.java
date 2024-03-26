@@ -140,7 +140,7 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
     protected ConfidenceResult compute() throws Exception {
         checkForInterruption();
         if (this.requestedMergedCandidates.isEmpty())
-            return new ConfidenceResult(Double.NaN, Double.NaN, null,0);
+            return new ConfidenceResult(Double.NaN, Double.NaN, null);
 
 
             parseEpiResults();
@@ -169,7 +169,7 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
 
 
             checkForInterruption();
-            return new ConfidenceResult(score, scoreApproximate, requestedMergedCandidates.size() > 0 ? requestedMergedCandidates.get(0) : null, mcesIndex);
+            return new ConfidenceResult(score, scoreApproximate, requestedMergedCandidates.size() > 0 ? requestedMergedCandidates.get(0) : null);
         }
 
 

@@ -20,10 +20,11 @@
 
 package de.unijena.bioinf.storage.db.nosql;
 
-import javax.validation.constraints.NotNull;
-import java.util.ArrayDeque;
+import lombok.Getter;
+import lombok.Setter;
+
+import javax.annotation.Nullable;
 import java.util.Arrays;
-import java.util.Deque;
 
 /**
  * A class to specify filtering criteria during {@link Database}'s
@@ -34,389 +35,202 @@ import java.util.Deque;
  * with Object value parameters are called with the same value type as the field type.
  * Otherwise, the filtering might fail.
  */
+@Setter
+@Getter
 public class Filter {
 
-    public enum FilterType {
-        AND, OR, END, NOT, EQ, GT, GTE, LT, LTE, TEXT, REGEX, IN, NOT_IN, ELEM_MATCH
+    private FilterNode parent;
+
+    public Filter(FilterNode parent) {
+        this.parent = parent;
     }
 
-    public static class FilterElement {
+    public interface FilterNode {
+        FilterNode getParent();
 
-        public FilterType filterType;
+        void setParent(FilterNode parent);
+    }
 
-        public FilterElement(FilterType filterType) {
-            this.filterType = filterType;
+    @Getter
+    public static class FilterLiteral implements FilterNode {
+
+        public enum Type {
+            EQ, NOT_EQ, GT, GTE, LT, LTE, BETWEEN, TEXT, REGEX, IN, NOT_IN, ELEM_MATCH
         }
-    }
 
-    public static class FieldFilterElement extends FilterElement {
+        @Setter
+        private FilterNode parent;
 
-        public String field;
-        public Object[] values;
+        private final String field;
 
-        public FieldFilterElement(@NotNull FilterType filterType, @NotNull String field, Object... values) {
-            super(filterType);
+        private Object[] values;
+
+        protected Type type;
+
+        private FilterLiteral(String field, @Nullable FilterNode parent) {
+            this.parent = parent;
             this.field = field;
+        }
+
+        protected Filter singleValue(Object value, Type type) {
+            this.values = new Object[]{value};
+            this.type = type;
+            return new Filter(this);
+        }
+
+        private Filter multiValue(Object[] values, Type type) {
+            if (values.length == 0) {
+                throw new IllegalArgumentException("not enough values");
+            }
             this.values = values;
+            this.type = type;
+            return new Filter(this);
+        }
+
+        public Filter eq(Object value) {
+            return singleValue(value, Type.EQ);
+        }
+
+        public Filter notEq(Object value) {
+            return singleValue(value, Type.NOT_EQ);
+        }
+
+        public Filter gt(Comparable<?> value) {
+            return singleValue(value, Type.GT);
+        }
+
+        public Filter gte(Comparable<?> value) {
+            return singleValue(value, Type.GTE);
+        }
+
+        public Filter lt(Comparable<?> value) {
+            return singleValue(value, Type.LT);
+        }
+
+        public Filter lte(Comparable<?> value) {
+            return singleValue(value, Type.LTE);
+        }
+
+        public <T extends Comparable<T>> Filter beetween(T left, T right) {
+            if (left.compareTo(right) >= 0) {
+                throw new IllegalArgumentException(left + " must be > " + right);
+            }
+            return multiValue(new Object[]{left, right, false, false}, Type.BETWEEN);
+        }
+
+        public <T extends Comparable<T>> Filter beetweenLeftInclusive(T left, T right) {
+            if (left.compareTo(right) >= 0) {
+                throw new IllegalArgumentException(left + " must be > " + right);
+            }
+            return multiValue(new Object[]{left, right, true, false}, Type.BETWEEN);
+        }
+
+        public <T extends Comparable<T>> Filter beetweenRightInclusive(T left, T right) {
+            if (left.compareTo(right) >= 0) {
+                throw new IllegalArgumentException(left + " must be > " + right);
+            }
+            return multiValue(new Object[]{left, right, false, true}, Type.BETWEEN);
+        }
+
+        public <T extends Comparable<T>> Filter beetweenBothInclusive(T left, T right) {
+            if (left.compareTo(right) > 0) {
+                throw new IllegalArgumentException(left + " must be >= " + right);
+            }
+            return multiValue(new Object[]{left, right, true, true}, Type.BETWEEN);
+        }
+
+        public Filter text(String value) {
+            return singleValue(value, Type.TEXT);
+        }
+
+        public Filter regex(String value) {
+            return singleValue(value, Type.REGEX);
+        }
+
+        public Filter in(Comparable<?>... values) {
+            return multiValue(values, Type.IN);
+        }
+
+        public Filter notIn(Comparable<?>... values) {
+            return multiValue(values, Type.NOT_IN);
+        }
+
+        public FilterLiteral elemMatch() {
+            FilterLiteral literal = new FilterLiteral("$", this);
+            this.values = new Object[]{literal};
+            this.type = Type.ELEM_MATCH;
+            return literal;
+        }
+
+        // TODO possible issue: elemMatchAnd() and elemMatchOr() do not enforce child filters to have "$" fields
+        public FilterClause elemMatchAnd(Filter... filters) {
+            FilterClause clause = clause(filters, FilterClause.Type.AND);
+            clause.setParent(this);
+            this.values = new Object[]{clause};
+            this.type = Type.ELEM_MATCH;
+            return clause;
+        }
+
+        public FilterClause elemMatchOr(Filter... filters) {
+            FilterClause clause = clause(filters, FilterClause.Type.OR);
+            clause.setParent(this);
+            this.values = new Object[]{clause};
+            this.type = Type.ELEM_MATCH;
+            return clause;
         }
 
     }
 
-    /**
-     *
-     * @return new Instance of the Filter class.
-     */
-    public static Filter build(){
-        return new Filter();
-    }
+    @Getter
+    public static class FilterClause extends Filter implements FilterNode {
 
-    public Deque<FilterElement> filterChain = new ArrayDeque<>();
-
-    public Filter() {}
-
-    /**
-     * Concatenate multiple filters using an and operation, for example: {@code Filter.build().and().eq(...).gt(...).in(...)end()}.
-     * To avoid confusion, the end should be marked with {@link #end()}.
-     *
-     * @return Filter object.
-     */
-    public Filter and() {
-        this.filterChain.addLast(new FilterElement(FilterType.AND));
-        return this;
-    }
-
-    /**
-     * Concatenate multiple filters using an or operation, for example: {@code Filter.build().or().eq(...).gt(...).in(...)end()}.
-     * To avoid confusion, the end should be marked with {@link #end()}.
-     *
-     * @return Filter object.
-     */
-    public Filter or() {
-        this.filterChain.addLast(new FilterElement(FilterType.OR));
-        return this;
-    }
-
-    /**
-     * Mark the end of multiple filters concatenated by {@link #and()} or {@link #or()}.
-     *
-     * @return Filter object.
-     */
-    public Filter end() {
-        this.filterChain.addLast(new FilterElement(FilterType.END));
-        return this;
-    }
-
-    /**
-     * Negate the following filter.
-     *
-     * @return Filter object.
-     */
-    public Filter not() {
-        this.filterChain.addLast(new FilterElement(FilterType.NOT));
-        return this;
-    }
-
-    /**
-     * Equality filter. Please make sure that value is of the same type as the field type.
-     *
-     * @return Filter object.
-     */
-    public Filter eq(String field, Object value) {
-        this.filterChain.addLast(new FieldFilterElement(FilterType.EQ, field, value));
-        return this;
-    }
-
-    /**
-     * Greater than filter. Please make sure that value is of the same type as the field type.
-     *
-     * @return Filter object.
-     */
-    public Filter gt(String field, Object value) {
-        this.filterChain.addLast(new FieldFilterElement(FilterType.GT, field, value));
-        return this;
-    }
-
-    /**
-     * Greater than equals filter. Please make sure that value is of the same type as the field type.
-     *
-     * @return Filter object.
-     */
-    public Filter gte(String field, Object value) {
-        this.filterChain.addLast(new FieldFilterElement(FilterType.GTE, field, value));
-        return this;
-    }
-
-    /**
-     * Less then filter. Please make sure that value is of the same type as the field type.
-     *
-     * @return Filter object.
-     */
-    public Filter lt(String field, Object value) {
-        this.filterChain.addLast(new FieldFilterElement(FilterType.LT, field, value));
-        return this;
-    }
-
-    /**
-     * Less than equals filter. Please make sure that value is of the same type as the field type.
-     *
-     * @return Filter object.
-     */
-    public Filter lte(String field, Object value) {
-        this.filterChain.addLast(new FieldFilterElement(FilterType.LTE, field, value));
-        return this;
-    }
-
-    /**
-     * Full text search filter.
-     *
-     * @return Filter object.
-     */
-    public Filter text(String field, String value) {
-        this.filterChain.addLast(new FieldFilterElement(FilterType.TEXT, field, value));
-        return this;
-    }
-
-    /**
-     * Regex search filter.
-     *
-     * @return Filter object.
-     */
-    public Filter regex(String field, String value) {
-        this.filterChain.addLast(new FieldFilterElement(FilterType.REGEX, field, value));
-        return this;
-    }
-
-    /**
-     * In filter, field value may be one of the given values.
-     *
-     * @return Filter object.
-     */
-    public Filter inByte(String field, byte... values) {
-        Object[] objects = new Object[values.length];
-        for (int i = 0; i < values.length; i++) {
-            objects[i] = values[i];
+        public enum Type {
+            AND, OR
         }
-        this.filterChain.addLast(new FieldFilterElement(FilterType.IN, field, objects));
-        return this;
-    }
 
-    /**
-     * In filter, field value may be one of the given values.
-     *
-     * @return Filter object.
-     */
-    public Filter inShort(String field, short... values) {
-        Object[] objects = new Object[values.length];
-        for (int i = 0; i < values.length; i++) {
-            objects[i] = values[i];
+        private final FilterNode[] children;
+
+        private final Type type;
+
+        private FilterClause(FilterNode[] children, @Nullable FilterNode parent, Type type) {
+            super(parent);
+            this.children = children;
+            this.type = type;
         }
-        this.filterChain.addLast(new FieldFilterElement(FilterType.IN, field, objects));
-        return this;
+
     }
 
-    /**
-     * In filter, field value may be one of the given values.
-     *
-     * @return Filter object.
-     */
-    public Filter inInt(String field, int... values) {
-        this.filterChain.addLast(new FieldFilterElement(FilterType.IN, field, Arrays.stream(values).boxed().toArray()));
-        return this;
+    public static FilterLiteral where(String field) {
+        return new FilterLiteral(field, null);
     }
 
-    /**
-     * In filter, field value may be one of the given values.
-     *
-     * @return Filter object.
-     */
-    public Filter inLong(String field, long... values) {
-        this.filterChain.addLast(new FieldFilterElement(FilterType.IN, field, Arrays.stream(values).boxed().toArray()));
-        return this;
+    public static FilterLiteral where$() {
+        return new FilterLiteral("$", null);
     }
 
-    /**
-     * In filter, field value may be one of the given values.
-     *
-     * @return Filter object.
-     */
-    public Filter inFloat(String field, float... values) {
-        Object[] objects = new Object[values.length];
-        for (int i = 0; i < values.length; i++) {
-            objects[i] = values[i];
+    private static FilterClause clause(Filter[] filters, FilterClause.Type type) {
+        if (filters.length < 2) {
+            throw  new IllegalArgumentException("Not enough arguments");
         }
-        this.filterChain.addLast(new FieldFilterElement(FilterType.IN, field, objects));
-        return this;
-    }
-
-    /**
-     * In filter, field value may be one of the given values.
-     *
-     * @return Filter object.
-     */
-    public Filter inDouble(String field, double... values) {
-        this.filterChain.addLast(new FieldFilterElement(FilterType.IN, field, Arrays.stream(values).boxed().toArray()));
-        return this;
-    }
-
-    /**
-     * In filter, field value may be one of the given values.
-     *
-     * @return Filter object.
-     */
-    public Filter inBool(String field, boolean... values) {
-        Object[] objects = new Object[values.length];
-        for (int i = 0; i < values.length; i++) {
-            objects[i] = values[i];
+        FilterNode[] f = Arrays.stream(filters).map(filter -> {
+            FilterNode root = (filter instanceof FilterClause) ? (FilterNode) filter : filter.getParent();
+            while (root.getParent() != null)
+                root = root.getParent();
+            return root;
+        }).toArray(FilterNode[]::new);
+        FilterClause clause = new FilterClause(f, null, type);
+        for (FilterNode filter : f) {
+            filter.setParent(clause);
         }
-        this.filterChain.addLast(new FieldFilterElement(FilterType.IN, field, objects));
-        return this;
+        return clause;
     }
 
-    /**
-     * In filter, field value may be one of the given values.
-     *
-     * @return Filter object.
-     */
-    public Filter inChar(String field, char... values) {
-        Object[] objects = new Object[values.length];
-        for (int i = 0; i < values.length; i++) {
-            objects[i] = values[i];
-        }
-        this.filterChain.addLast(new FieldFilterElement(FilterType.IN, field, objects));
-        return this;
+    public static FilterClause and(Filter... filters) {
+        return clause(filters, FilterClause.Type.AND);
     }
 
-    /**
-     * In filter, field may be one of the values.
-     *
-     * @return Filter object.
-     */
-    public Filter in(String field, Object... values) {
-        this.filterChain.addLast(new FieldFilterElement(FilterType.IN, field, values));
-        return this;
-    }
-
-    /**
-     * Negated in filter, field value must not be one of the values.
-     *
-     * @return Filter object.
-     */
-    public Filter notInByte(String field, byte... values) {
-        Object[] objects = new Object[values.length];
-        for (int i = 0; i < values.length; i++) {
-            objects[i] = values[i];
-        }
-        this.filterChain.addLast(new FieldFilterElement(FilterType.NOT_IN, field, objects));
-        return this;
-    }
-
-    /**
-     * Negated in filter, field value must not be one of the values.
-     *
-     * @return Filter object.
-     */
-    public Filter notInShort(String field, short... values) {
-        Object[] objects = new Object[values.length];
-        for (int i = 0; i < values.length; i++) {
-            objects[i] = values[i];
-        }
-        this.filterChain.addLast(new FieldFilterElement(FilterType.NOT_IN, field, objects));
-        return this;
-    }
-
-    /**
-     * Negated in filter, field value must not be one of the values.
-     *
-     * @return Filter object.
-     */
-    public Filter notInInt(String field, int... values) {
-        this.filterChain.addLast(new FieldFilterElement(FilterType.NOT_IN, field, Arrays.stream(values).boxed().toArray()));
-        return this;
-    }
-
-    /**
-     * Negated in filter, field value must not be one of the values.
-     *
-     * @return Filter object.
-     */
-    public Filter notInLong(String field, long... values) {
-        this.filterChain.addLast(new FieldFilterElement(FilterType.NOT_IN, field, Arrays.stream(values).boxed().toArray()));
-        return this;
-    }
-
-    /**
-     * Negated in filter, field value must not be one of the values.
-     *
-     * @return Filter object.
-     */
-    public Filter notInFloat(String field, float... values) {
-        Object[] objects = new Object[values.length];
-        for (int i = 0; i < values.length; i++) {
-            objects[i] = values[i];
-        }
-        this.filterChain.addLast(new FieldFilterElement(FilterType.NOT_IN, field, objects));
-        return this;
-    }
-
-    /**
-     * Negated in filter, field value must not be one of the values.
-     *
-     * @return Filter object.
-     */
-    public Filter notInDouble(String field, double... values) {
-        this.filterChain.addLast(new FieldFilterElement(FilterType.NOT_IN, field, Arrays.stream(values).boxed().toArray()));
-        return this;
-    }
-
-    /**
-     * Negated in filter, field value must not be one of the values.
-     *
-     * @return Filter object.
-     */
-    public Filter notInBool(String field, boolean... values) {
-        Object[] objects = new Object[values.length];
-        for (int i = 0; i < values.length; i++) {
-            objects[i] = values[i];
-        }
-        this.filterChain.addLast(new FieldFilterElement(FilterType.NOT_IN, field, objects));
-        return this;
-    }
-
-    /**
-     * Negated in filter, field value must not be one of the values.
-     *
-     * @return Filter object.
-     */
-    public Filter notInChar(String field, char... values) {
-        Object[] objects = new Object[values.length];
-        for (int i = 0; i < values.length; i++) {
-            objects[i] = values[i];
-        }
-        this.filterChain.addLast(new FieldFilterElement(FilterType.NOT_IN, field, objects));
-        return this;
-    }
-
-    /**
-     * Negated in filter, field value must not be one of the values.
-     *
-     * @return Filter object.
-     */
-    public Filter notIn(String field, Object... values) {
-        this.filterChain.addLast(new FieldFilterElement(FilterType.NOT_IN, field, values));
-        return this;
-    }
-
-    /**
-     * Array and list matching filter. The following filter will be applied to all entries in the field.
-     * The array/list elements must be referenced using "$".
-     * <p>
-     * Example usage: {@code Filter.build().elemMatch("arrField").eq("$", value) }
-     *
-     * @return Filter object
-     */
-    public Filter elemMatch(String field) {
-        this.filterChain.addLast(new FieldFilterElement(FilterType.ELEM_MATCH, field));
-        return this;
+    public static FilterClause or(Filter... filters) {
+        return clause(filters, FilterClause.Type.OR);
     }
 
 }

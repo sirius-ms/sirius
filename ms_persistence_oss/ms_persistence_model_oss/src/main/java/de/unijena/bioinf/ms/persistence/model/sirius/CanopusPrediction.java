@@ -20,44 +20,21 @@
 
 package de.unijena.bioinf.ms.persistence.model.sirius;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.canopus.CanopusResult;
-import de.unijena.bioinf.fingerid.FingerprintResult;
-import de.unijena.bioinf.fingerid.blast.FingerblastResult;
-import lombok.*;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+import lombok.extern.jackson.Jacksonized;
 
+@SuperBuilder
+@Jacksonized
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class FormulaIdResult {
-    protected MolecularFormula molecularFormula;
-    protected PrecursorIonType adduct;
-
-    //scores
-    protected Double isotopeScore;
-    protected Double treeScore;
-    protected Double zodiacScore;
-
-    FingerprintResult fingerprintResult;
-    FingerblastResult fingerblastResult;
-    CanopusResult canopusResult;
-
-    public Double getSiriusScore() {
-        if (treeScore == null && isotopeScore == null)
-            return null;
-
-        double siriusScore = 0;
-
-        if (isotopeScore != null)
-            siriusScore += isotopeScore;
-        if (treeScore != null)
-            siriusScore += treeScore;
-        return siriusScore;
-    }
-
-
-
+public class CanopusPrediction extends FormulaAnnotationWithId {
+    private int charge;
+    @JsonSerialize(using = ProbabilityFingerprint.Serializer.class)
+    private ProbabilityFingerprint cfFingerprint;
+    @JsonSerialize(using = ProbabilityFingerprint.Serializer.class)
+    private ProbabilityFingerprint npcFingerprint;
 }

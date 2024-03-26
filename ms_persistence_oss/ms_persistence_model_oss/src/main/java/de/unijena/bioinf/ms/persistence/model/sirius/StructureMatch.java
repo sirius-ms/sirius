@@ -18,35 +18,27 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.storage.db.nosql.nitrite;
+package de.unijena.bioinf.ms.persistence.model.sirius;
 
-import org.dizitart.no2.Document;
-import org.dizitart.no2.mapper.NitriteMapper;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import jakarta.persistence.Id;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
-import java.util.Iterator;
+@SuperBuilder
+@Getter
+@Setter
+public abstract class StructureMatch extends FormulaAnnotation {
+    @Id
+    protected String candidateInChiKey; //can also be used to
 
-public class CombiningIterator<T, I extends CombiningDocumentIterator> implements Iterator<T> {
+    protected Double csiScore;
 
-    protected final I documentIterator;
+    protected Double tanimotoSimilarity;
 
-    protected final Class<T> targetClass;
-
-    protected final NitriteMapper mapper;
-
-    public CombiningIterator(Class<T> targetClass, I documentIterator, NitriteMapper mapper) {
-        this.documentIterator = documentIterator;
-        this.targetClass = targetClass;
-        this.mapper = mapper;
-    }
-
-    @Override
-    public boolean hasNext() {
-        return documentIterator.hasNext();
-    }
-
-    @Override
-    public T next() {
-        Document document = documentIterator.next();
-        return mapper.asObject(document, targetClass);
-    }
+    //foreign field can be retrieved joined candidateInChiKey
+    @JsonIgnore
+    private FingerprintCandidate candidate;
 }
