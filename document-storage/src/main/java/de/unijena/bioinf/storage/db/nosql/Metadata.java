@@ -23,6 +23,7 @@ package de.unijena.bioinf.storage.db.nosql;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import org.apache.commons.lang3.reflect.FieldUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -66,6 +67,17 @@ public class Metadata {
             Index... indices
     ) throws IOException {
         Field pkField = findAndValidatePrimaryKeyField(clazz);
+        this.pkFields.put(clazz, pkField);
+        this.repoIndices.put(clazz, indices);
+        return this;
+    }
+
+    public <T> Metadata addRepository(
+            Class<T> clazz,
+            String pkFieldName,
+            Index... indices
+    ) throws IOException {
+        Field pkField = findAndValidatePrimaryKeyFieldByName(clazz, pkFieldName);
         this.pkFields.put(clazz, pkField);
         this.repoIndices.put(clazz, indices);
         return this;
@@ -129,14 +141,27 @@ public class Metadata {
         return this;
     }
 
-    private static Field findAndValidatePrimaryKeyField(Class<?> clazz) throws IOException {
+    private static Field findAndValidatePrimaryKeyField(@NotNull Class<?> clazz) throws IOException {
         List<Field> pkFields = Arrays.stream(FieldUtils.getAllFields(clazz)).filter(f -> f.getAnnotationsByType(jakarta.persistence.Id.class).length > 0).toList();
         if (pkFields.isEmpty()) {
-            throw new IOException(clazz + " has no primary key. The primary key must be anootated with jakarta.persistence.Id!");
+            throw new IOException(clazz + " has no primary key. The primary key must be annotated with jakarta.persistence.Id!");
         } else if (pkFields.size() > 1) {
             throw new IOException(clazz + " has multiple primary keys. Only one primary key is allowed!");
         }
         Field pkField = pkFields.get(0);
+        return validatePrimaryKeyField(clazz, pkField);
+    }
+
+    private static Field findAndValidatePrimaryKeyFieldByName(@NotNull Class<?> clazz, @NotNull String fieldName) throws IOException {
+        Field pkField = FieldUtils.getField(clazz, fieldName);
+        if (pkField == null)
+            throw new IOException(clazz + " has no field with name '" + fieldName + "'. A valid primary key field is mandatory");
+
+        return validatePrimaryKeyField(clazz, pkField);
+    }
+
+    @NotNull
+    private static Field validatePrimaryKeyField(@NotNull Class<?> clazz, @NotNull Field pkField) throws IOException {
         Class<?> pkType = pkField.getType();
         if (pkType.isPrimitive() || ALLOWED_PRIMARY_KEYS.contains(pkType)) {
             return pkField;

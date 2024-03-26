@@ -27,11 +27,17 @@ public class SiriusProjectDatabaseImpl<Storage extends Database<?>> implements S
 
     protected Storage storage;
 
-    public SiriusProjectDatabaseImpl(Storage storage) throws IOException {
+    public SiriusProjectDatabaseImpl(Storage storage) {
         this.storage = storage;
     }
 
+    protected SiriusProjectDatabaseImpl() {
+        this.storage = null;
+    }
 
+    protected void setStorage(Storage storage) {
+        this.storage = storage;
+    }
 
     @Override
     public Storage getStorage() {

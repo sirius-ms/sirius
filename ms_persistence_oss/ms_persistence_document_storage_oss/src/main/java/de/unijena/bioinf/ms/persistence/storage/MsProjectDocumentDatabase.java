@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.persistence.storage;
 
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ms.persistence.model.Tag;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
@@ -204,17 +205,10 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
         getStorage().insertAll(features);
     }
 
-    private <T> void importOptionals(Optional<List<T>> optionals, long parentId, IOThrowingBiConsumer<List<T>, Long> importer) throws IOException {
+    private <T> void importOptionals(Optional<List<T>> optionals, long parentId, IOFunctions.BiIOConsumer<List<T>, Long> importer) throws IOException {
         if (optionals.isPresent()) {
-            importer.apply(optionals.get(), parentId);
+            importer.accept(optionals.get(), parentId);
         }
-    }
-
-    @FunctionalInterface
-    interface IOThrowingBiConsumer<T, U> {
-
-        void apply(T object1, U object2) throws IOException;
-
     }
 
     Storage getStorage();

@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.rest.model.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.projectspace.ProjectSpaceProperty;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -113,5 +112,4 @@ public class FingerIdData implements FingerprintData<CdkFingerprintVersion> {
             return row;
         })::iterator);
     }
-
 }

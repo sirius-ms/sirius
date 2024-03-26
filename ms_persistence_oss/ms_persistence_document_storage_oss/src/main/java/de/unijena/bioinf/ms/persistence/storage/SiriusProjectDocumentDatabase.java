@@ -20,7 +20,14 @@
 
 package de.unijena.bioinf.ms.persistence.storage;
 
+import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.JSONReader;
+import de.unijena.bioinf.ms.persistence.model.sirius.*;
+import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CanopusPredictionDeserializer;
+import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CsiPredictionDeserializer;
 import de.unijena.bioinf.storage.db.nosql.Database;
+import de.unijena.bioinf.storage.db.nosql.Index;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,37 +35,50 @@ import java.io.IOException;
 
 public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> extends NetworkingProjectDocumentDatabase<Storage> {
 
+    String FP_DATA_COLLECTION = "FP_DATA";
     static Metadata buildMetadata() throws IOException {
         return buildMetadata(Metadata.build());
     }
-
+    //todo store configmaps
+    //todo store detected adducts
+    //todo store zodiac and confidence scores
+    //todo store extended structure search results
+    //todo should we store db and msnovelist structure separately? scroing it together should not have much drawbacks
     static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
-        NetworkingProjectDocumentDatabase.buildMetadata(sourceMetadata);
-        return sourceMetadata; //todo fill me with result Objects
-                /*.addRepository(
-                        FTree.class,
-                        new Index("formula", IndexType.NON_UNIQUE),
-                        new Index("mass", IndexType.NON_UNIQUE),
-                        new Index("candidate.inchikey", IndexType.UNIQUE),
-                        new Index("candidate.bitset", IndexType.NON_UNIQUE),
-                        new Index("candidate.name", IndexType.NON_UNIQUE))
-                .addSerialization(
-                        FTree.class,
-                new FTJsonReader(),
-                new JSONReader.FingerprintCandidateDeserializer(version)
-        )
-                .addCollection(
-                        SETTINGS_COLLECTION
-                ).setOptionalFields(
-                        FingerprintCandidateWrapper.class, "candidate.fingerprint"
-                ).addSerialization(
-                        FingerprintCandidate.class,
-                        new FingerprintCandidateDbSerializer(),
-                        new JSONReader.FingerprintCandidateDeserializer(version)
-                );*/
-//                .addRepository(SourceFile.class,
-//                        new Index("fileName", IndexType.UNIQUE))
-//                .setOptionalFields(SourceFile.class, "data");
+        NetworkingProjectDocumentDatabase.buildMetadata(sourceMetadata)
+                .addCollection(FP_DATA_COLLECTION, Index.unique("type", "charge"))
+                .addRepository(FTreeResult.class,
+                        Index.unique("formulaId"),
+                        Index.nonUnique("alignedFeatureId")) //todo needed?
+                .addRepository(CsiPrediction.class,
+                        Index.unique("formulaId"),
+                        Index.nonUnique("alignedFeatureId"))  //todo needed?
+                .addDeserializer(CsiPrediction.class,
+                        new CsiPredictionDeserializer())
+                .addRepository(CanopusPrediction.class,
+                        Index.unique("formulaId"),
+                        Index.nonUnique("alignedFeatureId"))  //todo needed?
+                .addDeserializer(CanopusPrediction.class,
+                        new CanopusPredictionDeserializer())
+                .addRepository(CsiStructureMatch.class,
+                        Index.nonUnique("formulaId"),
+                        Index.nonUnique("alignedFeatureId"))
+                .addRepository(DenovoStructureMatch.class,
+                        Index.nonUnique("formulaId"),
+                        Index.nonUnique("alignedFeatureId"))
+                .addRepository(SpectraMatch.class, "uuid",
+                        Index.nonUnique("candidateInChiKey"),
+                        Index.nonUnique("alignedFeatureId"))
+                .addRepository(FingerprintCandidate.class, "inchikey")
+                .addSerialization(FingerprintCandidate.class,
+                        new FingerprintCandidate.Serializer(),
+                        new JSONReader.FingerprintCandidateDeserializer(null)) //will be added later because it has to be read from project
+                .addSerialization(ProbabilityFingerprint.class,
+                        new ProbabilityFingerprint.Serializer(),
+                        new ProbabilityFingerprint.Deserializer()) // version needs to be added later
+        ;
+
+        return sourceMetadata;
 
     }
 }
