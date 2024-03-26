@@ -20,6 +20,59 @@
 
 package de.unijena.bioinf.ms.persistence.model.sirius;
 
-public class FormulaCandidate {
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
+import jakarta.persistence.Id;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.jackson.Jacksonized;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+@Getter
+@Setter
+@Builder
+@Jacksonized
+public class FormulaCandidate {
+    /**
+     * Unique identifier of this formula candidate
+     */
+    @Id
+    protected long formulaId;
+    /**
+     * molecular formula of this formula candidate
+     */
+    @JsonSerialize(using = ToStringSerializer.class)
+    @JsonDeserialize(using = SimpleSerializers.MolecularFormulaDeserializer.class)
+    @NotNull
+    protected MolecularFormula molecularFormula;
+    /**
+     * Adduct of this formula candidate
+     */
+    @JsonSerialize(using = ToStringSerializer.class)
+    @JsonDeserialize(using = SimpleSerializers.PrecursorIonTypeDeserializer.class)
+    @NotNull
+    protected PrecursorIonType adduct;
+
+    /**
+     * Sirius Score (isotope + tree score) of the formula candidate.
+     * If NULL result is not available
+     */
+    @Nullable
+    protected Double siriusScore;
+    @Nullable
+    protected Double isotopeScore;
+    @Nullable
+    protected Double treeScore;
+    /**
+     * Zodiac Score of the formula candidate.
+     * If NULL result is not available
+     */
+    @Nullable
+    protected Double zodiacScore;
 }

@@ -20,44 +20,25 @@
 
 package de.unijena.bioinf.ms.persistence.model.sirius;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.canopus.CanopusResult;
-import de.unijena.bioinf.fingerid.FingerprintResult;
-import de.unijena.bioinf.fingerid.blast.FingerblastResult;
-import lombok.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import jakarta.persistence.Id;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
+@SuperBuilder
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class FormulaIdResult {
-    protected MolecularFormula molecularFormula;
-    protected PrecursorIonType adduct;
+public abstract class StructureMatch extends FormulaAnnotation {
+    @Id
+    protected String candidateInChiKey; //can also be used to
 
-    //scores
-    protected Double isotopeScore;
-    protected Double treeScore;
-    protected Double zodiacScore;
+    protected Double csiScore;
 
-    FingerprintResult fingerprintResult;
-    FingerblastResult fingerblastResult;
-    CanopusResult canopusResult;
+    protected Double tanimotoSimilarity;
 
-    public Double getSiriusScore() {
-        if (treeScore == null && isotopeScore == null)
-            return null;
-
-        double siriusScore = 0;
-
-        if (isotopeScore != null)
-            siriusScore += isotopeScore;
-        if (treeScore != null)
-            siriusScore += treeScore;
-        return siriusScore;
-    }
-
-
-
+    //foreign field can be retrieved joined candidateInChiKey
+    @JsonIgnore
+    private FingerprintCandidate candidate;
 }
