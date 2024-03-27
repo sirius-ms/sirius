@@ -135,7 +135,7 @@ public class CompoundCandidate {
 
     public CompoundCandidate(InChI inchi) {
         this.inchi = inchi;
-        this.inchikey = inchi.key2D();
+        this.inchikey = (inchi != null) ? inchi.key2D() : null;
     }
 
     public String getInchiKey2D() {
@@ -239,7 +239,7 @@ public class CompoundCandidate {
 
         protected void serializeInternal(C value, JsonGenerator gen) throws IOException {
             gen.writeStringField("name", value.name);
-            gen.writeStringField("inchi", value.inchi.in3D);
+            gen.writeStringField("inchi", (value.inchi != null) ? value.inchi.in3D : null);
             gen.writeStringField("inchikey", value.inchikey);
             if (value.pLayer != 0) gen.writeNumberField("pLayer", value.pLayer);
             if (value.qLayer != 0) gen.writeNumberField("qLayer", value.qLayer);

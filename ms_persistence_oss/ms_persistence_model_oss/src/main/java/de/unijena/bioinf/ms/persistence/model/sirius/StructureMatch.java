@@ -24,12 +24,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import jakarta.persistence.Id;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @Getter
 @Setter
+@NoArgsConstructor
 public abstract class StructureMatch extends FormulaAnnotation {
     @Id
     protected String candidateInChiKey; //can also be used to
