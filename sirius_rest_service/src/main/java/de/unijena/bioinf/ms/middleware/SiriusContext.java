@@ -24,7 +24,7 @@ import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
-import de.unijena.bioinf.ms.middleware.service.compute.SiriusProjectSpaceComputeService;
+import de.unijena.bioinf.ms.middleware.service.compute.ProjectSpaceComputeService;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbServiceImpl;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
@@ -32,11 +32,9 @@ import de.unijena.bioinf.ms.middleware.service.events.SseEventService;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.gui.SiriusProjectSpaceGuiService;
 import de.unijena.bioinf.ms.middleware.service.info.ConnectionChecker;
-import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
-import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceProviderImpl;
+import de.unijena.bioinf.ms.middleware.service.projects.*;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
-import de.unijena.bioinf.projectspace.SiriusProjectSpaceManager;
 import de.unijena.bioinf.webapi.WebAPI;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -59,15 +57,21 @@ public class SiriusContext{
     }
 
     @Bean
+    public ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory() {
+        return SiriusMiddlewareApplication.getPsf();
+    }
+
+    @Bean
     @DependsOn({"webAPI", "jobManager", "projectsProvider"})
     public ComputeService<?> computeService(EventService<?> eventService, InstanceBufferFactory<?> instanceBufferFactory, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory) {
-        return new SiriusProjectSpaceComputeService(eventService, instanceBufferFactory, projectSpaceManagerFactory);
+        return new ProjectSpaceComputeService<NoSQLProjectImpl>(eventService, instanceBufferFactory, projectSpaceManagerFactory);
     }
 
     @Bean
     @DependsOn({"jobManager"})
+    @SuppressWarnings("unchecked")
     public ProjectsProvider<?> projectsProvider(EventService<?> eventService, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory) {
-        return new SiriusProjectSpaceProviderImpl((ProjectSpaceManagerFactory<SiriusProjectSpaceManager>) projectSpaceManagerFactory, eventService);
+        return new NoSQLProjectProviderImpl((ProjectSpaceManagerFactory<NoSQLProjectSpaceManager>) projectSpaceManagerFactory, eventService);
     }
 
     @Bean(destroyMethod = "shutdown")

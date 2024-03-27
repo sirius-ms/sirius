@@ -89,7 +89,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
-public class SiriusProjectSpaceImpl implements Project {
+public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager> {
 
     @NotNull
     private final SiriusProjectSpaceManager projectSpaceManager;
@@ -107,6 +107,7 @@ public class SiriusProjectSpaceImpl implements Project {
         return projectId;
     }
 
+    @Override
     public @NotNull SiriusProjectSpaceManager getProjectSpaceManager() {
         return projectSpaceManager;
     }
