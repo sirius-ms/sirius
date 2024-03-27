@@ -16,10 +16,8 @@ import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
-import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
-import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
+import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.storage.db.nosql.Database;
-import de.unijena.bioinf.storage.db.nosql.nitrite.NitriteDatabase;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import picocli.CommandLine;
 
@@ -31,6 +29,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.LogManager;
+
+import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
 
 /**
  * Aktuelle Vorgehensweise:
@@ -88,10 +88,10 @@ public class TestMain {
         final de.unijena.bioinf.lcms.trace.ProcessedSample[] samples;
         LCMSProcessing processing = new LCMSProcessing();
 
-        Path storeLocation = Files.createTempFile("nitrite", ".db");
-        try (NitriteDatabase db = new NitriteDatabase(storeLocation, SiriusProjectDocumentDatabase.buildMetadata())) {
-            Database<?> store = new SiriusProjectDatabaseImpl<>(db).getStorage();
-            processing.setImportStrategy(new ProjectSpaceImporter(new SiriusProjectDatabaseImpl<>(store)));
+        Path storeLocation = Files.createTempFile("nitrite", SIRIUS_PROJECT_SUFFIX);
+        try (NitriteSirirusProject ps = new NitriteSirirusProject(storeLocation)) {
+            Database<?> store = ps.getStorage();
+            processing.setImportStrategy(new ProjectSpaceImporter(ps));
             {
                 if (ops.cores >= 1) {
                     SiriusJobs.setGlobalJobManager(ops.cores);

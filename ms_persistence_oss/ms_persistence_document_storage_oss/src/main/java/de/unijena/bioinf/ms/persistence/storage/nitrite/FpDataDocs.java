@@ -27,7 +27,24 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import org.dizitart.no2.collection.Document;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
+import java.util.function.Function;
+
 public class FpDataDocs {
+    private static Map<Class<? extends FingerprintData<?>>, Function<Document, FingerprintData<?>>> MAPPERS = Map.of(
+            FingerIdData.class, FpDataDocs::toFingerIdData,
+            CanopusCfData.class, FpDataDocs::toCanopusCfData,
+            CanopusNpcData.class, FpDataDocs::toCanopusNpcData
+    );
+
+    public static <T extends FingerprintData<?>> Function<Document, T> toDataFunction(Class<T> clzz) {
+        return (Function<Document, T>) MAPPERS.get(clzz);
+    }
+
+    public static <T extends FingerprintData<?>> T toData(Class<T> clzz, Document doc) {
+        return toDataFunction(clzz).apply(doc);
+    }
+
     public static Document toDoc(FingerIdData data, int charge) {
         int[] absoluteIndices = data.getFingerprintVersion().allowedIndizes();
         double[] tps = new double[absoluteIndices.length];
@@ -36,13 +53,16 @@ public class FpDataDocs {
         double[] fns = new double[absoluteIndices.length];
         double[] pseudoCounts = new double[absoluteIndices.length];
 
-        for (int abs : absoluteIndices) {
-            PredictionPerformance performance = data.getPerformances()[abs];
-            tps[abs] = performance.getTp();
-            fps[abs] = performance.getFp();
-            tns[abs] = performance.getTn();
-            fns[abs] = performance.getFn();
-            pseudoCounts[abs] = performance.getPseudoCount();
+        for (int i = 0; i < absoluteIndices.length; i++) {
+            int abs = absoluteIndices[i];
+            int rel = data.getFingerprintVersion().getRelativeIndexOf(abs);
+            PredictionPerformance performance = data.getPerformances()[rel];
+
+            tps[i] = performance.getTp();
+            fps[i] = performance.getFp();
+            tns[i] = performance.getTn();
+            fns[i] = performance.getFn();
+            pseudoCounts[i] = performance.getPseudoCount();
         }
 
         return Document.createDocument()
@@ -72,8 +92,8 @@ public class FpDataDocs {
         double[] pseudoCounts = doc.get("pseudoCounts", double[].class);
 
         final PredictionPerformance[] performances = new PredictionPerformance[absoluteIndices.length];
-        for (int abs : absoluteIndices)
-            performances[abs] = new PredictionPerformance(tps[abs], fps[abs], tns[abs], fns[abs], pseudoCounts[abs]);
+        for (int i = 0; i < absoluteIndices.length; i++)
+            performances[i] = new PredictionPerformance(tps[i], fps[i], tns[i], fns[i], pseudoCounts[i]);
 
         return new FingerIdData(readMask(CdkFingerprintVersion.getDefault(), absoluteIndices), performances);
     }

@@ -20,21 +20,25 @@
 
 package de.unijena.bioinf.ms.persistence.storage;
 
+import de.unijena.bioinf.ChemistryBase.fp.FingerprintData;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.ChemistryBase.fp.StandardFingerprintData;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.JSONReader;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CanopusPredictionDeserializer;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CsiPredictionDeserializer;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Index;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Optional;
 
 public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> extends NetworkingProjectDocumentDatabase<Storage> {
-
+    String SIRIUS_PROJECT_SUFFIX = ".sirius";
     String FP_DATA_COLLECTION = "FP_DATA";
     static Metadata buildMetadata() throws IOException {
         return buildMetadata(Metadata.build());
@@ -69,7 +73,7 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
                 .addRepository(SpectraMatch.class, "uuid",
                         Index.nonUnique("candidateInChiKey"),
                         Index.nonUnique("alignedFeatureId"))
-                .addRepository(FingerprintCandidate.class, "inchikey")
+                .addRepository(FingerprintCandidate.class)
                 .addSerialization(FingerprintCandidate.class,
                         new FingerprintCandidate.Serializer(),
                         new JSONReader.FingerprintCandidateDeserializer(null)) //will be added later because it has to be read from project
@@ -79,6 +83,9 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
         ;
 
         return sourceMetadata;
-
     }
+
+    void insertFingerprintData(StandardFingerprintData<?> fpData, int charge);
+    void insertFingerprintData(FingerIdData fpData, int charge);
+    <T extends FingerprintData<?>> Optional<T> findFingerprintData(Class<T> dataClazz, int charge);
 }
