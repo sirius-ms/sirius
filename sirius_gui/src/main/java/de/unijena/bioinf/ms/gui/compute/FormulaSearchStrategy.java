@@ -8,8 +8,6 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
-import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
-import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -98,7 +96,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
     protected final boolean hasMs1AndIsSingleMode;
     protected final boolean isBatchDialog;
 
-    protected  JCheckboxListPanel<SearchableDatabase> searchDBList;
+    protected  DBSelectionListPanel searchDBList;
 
     /**
      * Map of strategy-specific UI components for showing/hiding when changing the strategy
@@ -223,15 +221,12 @@ public class FormulaSearchStrategy extends ConfigPanel {
     }
 
     private void initDatabasePanel() {
-        searchDBList = new JCheckboxListPanel<>(DBSelectionList.fromSearchableDatabases(gui.getSiriusClient()), "Use DB formulas only");
+        searchDBList = DBSelectionListPanel.newInstance("Use DB formulas only", gui.getSiriusClient());//new JCheckboxListPanel<>(DBSelectionList.fromSearchableDatabases(gui.getSiriusClient(), Collections.singleton(bioDB)), "Use DB formulas only");
         GuiUtils.assignParameterToolTip(searchDBList.checkBoxList, "FormulaSearchDB");
 
-        PropertyManager.DEFAULTS.createInstanceWithDefaults(StructureSearchDB.class).searchDBs
-                .forEach(s -> searchDBList.checkBoxList.check(gui.getSiriusClient().databases().getDatabase(s.name(), false)));
+        searchDBList.selectDefaultDatabases();
 
         parameterBindings.put("FormulaSearchDB", () -> strategy == Strategy.DATABASE ? String.join(",", getFormulaSearchDBStrings()) : ",");
-        PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSearchDB.class).searchDBs
-                .forEach(s -> searchDBList.checkBoxList.check(gui.getSiriusClient().databases().getDatabase(s.name(), false)));
     }
 
     private JPanel createElementFilterPanel() {

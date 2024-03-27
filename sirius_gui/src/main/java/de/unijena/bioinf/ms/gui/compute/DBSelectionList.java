@@ -49,9 +49,18 @@ public class DBSelectionList extends JCheckBoxList<SearchableDatabase> {
         return fromSearchableDatabases(null, includeCustom, client);
     }
     public static DBSelectionList fromSearchableDatabases(@Nullable String descriptionKey, boolean includeCustom, NightSkyClient client){
+        return fromSearchableDatabases(descriptionKey, includeCustom, client, Collections.emptyList());
+    }
+
+    public static DBSelectionList fromSearchableDatabases(NightSkyClient client, Collection<SearchableDatabase> exclude){
+        return fromSearchableDatabases(null, true, client, exclude);
+    }
+
+    public static DBSelectionList fromSearchableDatabases(@Nullable String descriptionKey, boolean includeCustom, NightSkyClient client, Collection<SearchableDatabase> exclude){
         List<SearchableDatabase> dbLsit = (includeCustom ? client.databases().getDatabases(false) : client.databases().getIncludedDatabases(false))
                 .stream()
                 .filter(SearchableDatabase::isSearchable)
+                .filter(s -> !exclude.contains(s))
                 .sorted(Comparator.comparing(SearchableDatabase::getDatabaseId))
                 .toList();
         return new DBSelectionList(descriptionKey, dbLsit);
