@@ -21,26 +21,24 @@ package de.unijena.bioinf.ms.persistence.storage;
 
 import de.unijena.bioinf.storage.db.nosql.Database;
 
+import java.io.Closeable;
 import java.io.IOException;
 
-public class SiriusProjectDatabaseImpl<Storage extends Database<?>> implements SiriusProjectDocumentDatabase<Storage> {
+public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> implements SiriusProjectDocumentDatabase<Storage>, Closeable, AutoCloseable {
 
-    protected Storage storage;
+    protected final Storage storage;
 
     public SiriusProjectDatabaseImpl(Storage storage) {
-        this.storage = storage;
-    }
-
-    protected SiriusProjectDatabaseImpl() {
-        this.storage = null;
-    }
-
-    protected void setStorage(Storage storage) {
         this.storage = storage;
     }
 
     @Override
     public Storage getStorage() {
         return storage;
+    }
+
+    @Override
+    public void close() throws IOException {
+        storage.close();
     }
 }
