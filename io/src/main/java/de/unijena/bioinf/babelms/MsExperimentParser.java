@@ -114,6 +114,7 @@ public class MsExperimentParser {
         endings.put(".mat", MSPExperimentParser.class);
         endings.put(".txt", MassbankExperimentParser.class); //Too bad that Massbank format has no unique file extension
         endings.put(".mb", MassbankExperimentParser.class);
+        endings.put(".mblib", MassbankExperimentParser.class);
         endings.put(".json", JsonExperimentParserDispatcher.class);
         return endings;
     }
