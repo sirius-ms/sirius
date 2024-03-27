@@ -1,8 +1,13 @@
 package de.unijena.bioinf.ms.persistence.storage;
+
 import de.unijena.bioinf.ChemistryBase.fp.StandardFingerprintData;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
+import de.unijena.bioinf.babelms.json.FTJsonReader;
+import de.unijena.bioinf.ms.persistence.model.sirius.FTreeResult;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
@@ -28,53 +33,66 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class SiriusProjectDatabaseImplTest {
+    private static void withDb(ExFunctions.Consumer<NitriteSirirusProject> projectConsumer) {
+        try {
+            Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
+            try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
+                projectConsumer.accept(ps);
+            } finally {
+                Files.deleteIfExists(location);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 
-
-    @Test
-    public void testInitEmpty() throws IOException {
+    private static void withDb(String dbResource, ExFunctions.Consumer<NitriteSirirusProject> projectConsumer) {
+        //prepare ->  copy database to not accidentally break in on error and to be sure that we can access a valid path
         Path path = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         try {
-            try (NitriteSirirusProject ps = new NitriteSirirusProject(path)) {
-                assertTrue(ps.findFingerprintData(FingerIdData.class, 1).isEmpty());
-                assertTrue(ps.findFingerprintData(FingerIdData.class, -1).isEmpty());
-                assertTrue(ps.findFingerprintData(CanopusCfData.class, 1).isEmpty());
-                assertTrue(ps.findFingerprintData(CanopusCfData.class, -1).isEmpty());
-                assertTrue(ps.findFingerprintData(CanopusNpcData.class, 1).isEmpty());
-                assertTrue(ps.findFingerprintData(CanopusNpcData.class, -1).isEmpty());
+            try (InputStream s = SiriusProjectDatabaseImplTest.class.getResourceAsStream(dbResource)) {
+                Files.write(path, Objects.requireNonNull(s).readAllBytes());
             }
-        } finally {
-            Files.deleteIfExists(path);
+
+            try (NitriteSirirusProject ps = new NitriteSirirusProject(path)) {
+                projectConsumer.accept(ps);
+            } finally {
+                Files.deleteIfExists(path);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
     @Test
-    public void testInitWithFingerprintData() throws IOException {
-        //prepare ->  copy database to not accidentally break in on error and to be sure that we can access a valid path
-        Path path = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
-        try {
-            try (InputStream s = getClass().getResourceAsStream("/sirius-project-all-fp-data.sirius")) {
-                Files.write(path, Objects.requireNonNull(s).readAllBytes());
-            }
-            try (NitriteSirirusProject ps = new NitriteSirirusProject(path)) {
-                assertTrue(ps.findFingerprintData(FingerIdData.class, 1).isPresent());
-                assertTrue(ps.findFingerprintData(FingerIdData.class, -1).isPresent());
-                assertTrue(ps.findFingerprintData(CanopusCfData.class, 1).isPresent());
-                assertTrue(ps.findFingerprintData(CanopusCfData.class, -1).isPresent());
-                assertTrue(ps.findFingerprintData(CanopusNpcData.class, 1).isPresent());
-                assertTrue(ps.findFingerprintData(CanopusNpcData.class, -1).isPresent());
-            }
-        } finally {
-            Files.deleteIfExists(path);
-        }
+    public void testInitEmpty() {
+        withDb(ps -> {
+            assertTrue(ps.findFingerprintData(FingerIdData.class, 1).isEmpty());
+            assertTrue(ps.findFingerprintData(FingerIdData.class, -1).isEmpty());
+            assertTrue(ps.findFingerprintData(CanopusCfData.class, 1).isEmpty());
+            assertTrue(ps.findFingerprintData(CanopusCfData.class, -1).isEmpty());
+            assertTrue(ps.findFingerprintData(CanopusNpcData.class, 1).isEmpty());
+            assertTrue(ps.findFingerprintData(CanopusNpcData.class, -1).isEmpty());
+        });
+    }
 
+    @Test
+    public void testInitWithFingerprintData() {
+        withDb("/sirius-project-all-fp-data.sirius", ps -> {
+            assertTrue(ps.findFingerprintData(FingerIdData.class, 1).isPresent());
+            assertTrue(ps.findFingerprintData(FingerIdData.class, -1).isPresent());
+            assertTrue(ps.findFingerprintData(CanopusCfData.class, 1).isPresent());
+            assertTrue(ps.findFingerprintData(CanopusCfData.class, -1).isPresent());
+            assertTrue(ps.findFingerprintData(CanopusNpcData.class, 1).isPresent());
+            assertTrue(ps.findFingerprintData(CanopusNpcData.class, -1).isPresent());
+        });
     }
 
 
     @ParameterizedTest
     @ValueSource(ints = {1, -1})
-    public void testWriteFingerIdData(int charge) throws IOException {
-        Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
-        try (NitriteSirirusProject db = new NitriteSirirusProject(location)) {
+    public void testWriteFingerIdData(int charge) {
+        withDb(db -> {
             final FingerIdData input;
             try (BufferedReader r = new BufferedReader(new InputStreamReader(Objects.requireNonNull(getClass().getResourceAsStream("/csi_fingerid.tsv"))))) {
                 input = FingerIdData.read(r);
@@ -86,9 +104,7 @@ public class SiriusProjectDatabaseImplTest {
             assertInstanceOf(FingerIdData.class, out.get());
             assertTrue(input.getFingerprintVersion().compatible(out.get().getFingerprintVersion()));
             assertArrayEquals(input.getPerformances(), out.get().getPerformances());
-        } finally {
-            Files.deleteIfExists(location);
-        }
+        });
     }
 
     private static Stream<Arguments> standardFingerprintData() {
@@ -102,9 +118,8 @@ public class SiriusProjectDatabaseImplTest {
 
     @ParameterizedTest
     @MethodSource("standardFingerprintData")
-    public void testWriteStandardFingerprintData(int charge, String file, IOFunctions.IOFunction<BufferedReader, StandardFingerprintData<?>> reader) throws IOException {
-        Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
-        try (NitriteSirirusProject db = new NitriteSirirusProject(location)) {
+    public void testWriteStandardFingerprintData(int charge, String file, IOFunctions.IOFunction<BufferedReader, StandardFingerprintData<?>> reader) {
+        withDb(db -> {
             final StandardFingerprintData<?> input;
             try (BufferedReader r = new BufferedReader(new InputStreamReader(Objects.requireNonNull(getClass().getResourceAsStream(file))))) {
                 input = reader.apply(r);
@@ -116,16 +131,13 @@ public class SiriusProjectDatabaseImplTest {
             assertTrue(out.isPresent());
             assertInstanceOf(input.getClass(), out.get());
             assertTrue(input.getFingerprintVersion().compatible(out.get().getFingerprintVersion()));
-        } finally {
-            Files.deleteIfExists(location);
-        }
+        });
     }
 
     @ParameterizedTest
     @MethodSource("standardFingerprintData")
-    public void testWriteStandardFingerprintDataExists(int charge, String file, IOFunctions.IOFunction<BufferedReader, StandardFingerprintData<?>> reader) throws IOException {
-        Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
-        try (NitriteSirirusProject db = new NitriteSirirusProject(location)) {
+    public void testWriteStandardFingerprintDataExists(int charge, String file, IOFunctions.IOFunction<BufferedReader, StandardFingerprintData<?>> reader) {
+        withDb(db -> {
             final StandardFingerprintData<?> input;
             try (BufferedReader r = new BufferedReader(new InputStreamReader(Objects.requireNonNull(getClass().getResourceAsStream(file))))) {
                 input = reader.apply(r);
@@ -138,9 +150,54 @@ public class SiriusProjectDatabaseImplTest {
             });
 
             assertInstanceOf(UniqueConstraintException.class, thrown.getCause());
-        } finally {
-            Files.deleteIfExists(location);
-        }
+        });
+    }
+
+
+    @Test
+    public void crudFTreeTest() {
+        withDb(db ->{
+            //prepare
+            String[] ftreeFiles = new String[]{"/trees/C20H17NO6_[M+H]+.json", "/trees/C18H19NO6_[M+Na]+.json"};
+            FTree[] ftrees = new FTree[2];
+            for (int i = 0; i < ftreeFiles.length; i++) {
+                try (BufferedReader r = new BufferedReader(new InputStreamReader(Objects.requireNonNull(getClass().getResourceAsStream(ftreeFiles[0]))))) {
+                    ftrees[i] = new FTJsonReader().parse(r);
+                }
+            }
+
+            FTreeResult source = FTreeResult.builder().fTree(ftrees[0]).alignedFeatureId(1).formulaId(2).build();
+
+            {   // insert and get
+                db.getStorage().insert(source);
+                Optional<FTreeResult> ftree = db.getStorage().getByPrimaryKey(source.getId(), FTreeResult.class);
+                assertTrue(ftree.isPresent());
+                assertEquals(ftrees[0].getTreeWeight(), ftree.map(FTreeResult::getFTree).map(FTree::getTreeWeight).get());
+                assertEquals(ftrees[0].numberOfEdges(), ftree.map(FTreeResult::getFTree).map(FTree::numberOfEdges).get());
+                assertEquals(ftrees[0].numberOfVertices(), ftree.map(FTreeResult::getFTree).map(FTree::numberOfVertices).get());
+                assertEquals(2, ftree.map(FTreeResult::getFormulaId).get());
+                assertEquals(1, ftree.map(FTreeResult::getAlignedFeatureId).get());
+            }
+
+            {   //modify and update
+                source.setFTree(ftrees[1]);
+                source.setFormulaId(22);
+                db.getStorage().upsert(source);
+                Optional<FTreeResult> ftree = db.getStorage().getByPrimaryKey(source.getId(), FTreeResult.class);
+                assertTrue(ftree.isPresent());
+                assertEquals(ftrees[1].getTreeWeight(), ftree.map(FTreeResult::getFTree).map(FTree::getTreeWeight).get());
+                assertEquals(ftrees[1].numberOfEdges(), ftree.map(FTreeResult::getFTree).map(FTree::numberOfEdges).get());
+                assertEquals(ftrees[1].numberOfVertices(), ftree.map(FTreeResult::getFTree).map(FTree::numberOfVertices).get());
+                assertEquals(22, ftree.map(FTreeResult::getFormulaId).get());
+                assertEquals(1, ftree.map(FTreeResult::getAlignedFeatureId).get());
+            }
+
+            {   //modify and update
+                db.getStorage().remove(source);
+                Optional<FTreeResult> ftree = db.getStorage().getByPrimaryKey(source.getId(), FTreeResult.class);
+                assertTrue(ftree.isEmpty());
+            }
+        });
     }
 
 
