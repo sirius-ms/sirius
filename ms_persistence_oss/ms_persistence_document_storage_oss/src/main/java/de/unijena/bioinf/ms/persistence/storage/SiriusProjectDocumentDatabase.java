@@ -48,6 +48,8 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     //todo store zodiac and confidence scores
     //todo store extended structure search results
     //todo should we store db and msnovelist structure separately? scroing it together should not have much drawbacks
+    //todo import data from MsExperiment
+    //todo load input data as MsExperiment
     static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
         NetworkingProjectDocumentDatabase.buildMetadata(sourceMetadata)
                 .addCollection(FP_DATA_COLLECTION, Index.unique("type", "charge"))

@@ -1,17 +1,26 @@
 package de.unijena.bioinf.ms.persistence.storage;
 
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
+import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.StandardFingerprintData;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
+import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
+import de.unijena.bioinf.chemdb.CompoundCandidate;
+import de.unijena.bioinf.chemdb.DBLink;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.JSONReader;
 import de.unijena.bioinf.ms.persistence.model.sirius.FTreeResult;
+import de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
+import de.unijena.bioinf.storage.blob.Compressible;
 import org.dizitart.no2.exceptions.UniqueConstraintException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -26,6 +35,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -156,7 +167,7 @@ public class SiriusProjectDatabaseImplTest {
 
     @Test
     public void crudFTreeTest() {
-        withDb(db ->{
+        withDb(db -> {
             //prepare
             String[] ftreeFiles = new String[]{"/trees/C20H17NO6_[M+H]+.json", "/trees/C18H19NO6_[M+Na]+.json"};
             FTree[] ftrees = new FTree[2];
@@ -196,6 +207,73 @@ public class SiriusProjectDatabaseImplTest {
                 db.getStorage().remove(source);
                 Optional<FTreeResult> ftree = db.getStorage().getByPrimaryKey(source.getId(), FTreeResult.class);
                 assertTrue(ftree.isEmpty());
+            }
+        });
+    }
+
+    @Test
+    public void crudFingerprintCandidateTest() {
+        withDb("/sirius-project-all-fp-data.sirius", db -> {
+            //prepare
+            List<FingerprintCandidate> inputCompounds = Stream.of("/structures/C6H4ClN3.json.gz", "/structures/C47H75NO17.json.gz").flatMap(s -> {
+                try (InputStream i = Objects.requireNonNull(getClass().getResourceAsStream(s))) {
+                    List<FingerprintCandidate> compounds = new ArrayList<>();
+                    try (final CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(),
+                            Compressible.decompressRawStream(i, Compressible.Compression.GZIP).get())) {
+                        while (fciter.hasNext())
+                            compounds.add(fciter.next());
+                        return compounds.stream();
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }).toList();
+
+            //test
+            {   // insert and get
+                db.getStorage().insertAll(inputCompounds);
+                assertEquals(db.getStorage().countAll(FingerprintCandidate.class), inputCompounds.size());
+                for (FingerprintCandidate source : inputCompounds) {
+                    Optional<FingerprintCandidate> compound = db.getStorage().getByPrimaryKey(source.getInchiKey2D(), FingerprintCandidate.class);
+                    assertTrue(compound.isPresent());
+                    assertArrayEquals(source.getFingerprint().toIndizesArray(), compound.map(FingerprintCandidate::getFingerprint).map(Fingerprint::toIndizesArray).orElse(null));
+
+                    assertEquals(source.getLinks(), compound.map(FingerprintCandidate::getLinks).orElse(null));
+                    assertEquals(source.getName(), compound.map(CompoundCandidate::getName).orElse(null));
+                }
+            }
+
+            //insert duplicate fil
+            {
+                RuntimeException thrown = Assertions.assertThrows(RuntimeException.class, () ->
+                        db.getStorage().insert(inputCompounds.iterator().next()));
+                assertInstanceOf(UniqueConstraintException.class, thrown.getCause());
+            }
+
+
+            {   //modify and update success
+                FingerprintCandidate source = inputCompounds.iterator().next();
+                source.setName("TEST NAME");
+                DBLink testLink = new DBLink("TEST_DB", "0815");
+                source.mergeDBLinks(List.of(testLink));
+                db.getStorage().upsert(source);
+                Optional<FingerprintCandidate> compound = db.getStorage().getByPrimaryKey(source.getInchiKey2D(), FingerprintCandidate.class);
+                assertTrue(compound.isPresent());
+                //test for changes
+                assertEquals(source.getName(), compound.map(FingerprintCandidate::getName).orElse(null));
+                assertTrue(compound.map(FingerprintCandidate::getLinks).orElseThrow().contains(testLink));
+                //test if other still correct
+                assertArrayEquals(source.getFingerprint().toIndizesArray(), compound.map(FingerprintCandidate::getFingerprint).map(Fingerprint::toIndizesArray).orElse(null));
+                assertEquals(source.getLinks(), compound.map(FingerprintCandidate::getLinks).orElse(null));
+                assertEquals(source.getName(), compound.map(CompoundCandidate::getName).orElse(null));
+            }
+
+            {   //modify and update
+                db.getStorage().removeAll(inputCompounds);
+                for (FingerprintCandidate source : inputCompounds) {
+                    Optional<FingerprintCandidate> compound = db.getStorage().getByPrimaryKey(source.getInchiKey2D(), FingerprintCandidate.class);
+                    assertTrue(compound.isEmpty());
+                }
             }
         });
     }
