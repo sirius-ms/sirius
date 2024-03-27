@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.service.projects;
 
 import de.unijena.bioinf.babelms.inputresource.InputResource;
+import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
 import de.unijena.bioinf.ms.middleware.model.annotations.SpectralLibraryMatch;
 import de.unijena.bioinf.ms.middleware.model.annotations.StructureCandidateFormula;
@@ -35,37 +36,79 @@ import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
+import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
-import java.util.Collection;
-import java.util.EnumSet;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 
-public class NoSQLProjectImpl implements Project {
+public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @NotNull
     private final String projectId;
 
+    @NotNull
+    private final NoSQLProjectSpaceManager projectSpaceManager;
+
     private final SiriusProjectDocumentDatabase<? extends Database<?>> database;
 
+    @Getter
     private final Database<?> storage;
 
-    public NoSQLProjectImpl(@NotNull String projectId, @NotNull SiriusProjectDocumentDatabase<? extends Database<?>> database) {
+    private final Map<Class<?>, AtomicLong> totalCounts = Collections.synchronizedMap(new HashMap<>());
+
+    @SneakyThrows
+    public NoSQLProjectImpl(@NotNull String projectId, @NotNull NoSQLProjectSpaceManager projectSpaceManager) {
         this.projectId = projectId;
-        this.database = database;
+        this.projectSpaceManager = projectSpaceManager;
+        this.database = projectSpaceManager.getProject();
         this.storage = database.getStorage();
+
+        this.totalCounts.put(
+                de.unijena.bioinf.ms.persistence.model.core.Compound.class,
+                new AtomicLong(this.storage.countAll(de.unijena.bioinf.ms.persistence.model.core.Compound.class))
+        );
+        this.totalCounts.put(AlignedFeatures.class, new AtomicLong(this.storage.countAll(AlignedFeatures.class)));
+
+        this.storage.onInsert(de.unijena.bioinf.ms.persistence.model.core.Compound.class,
+                c -> totalCounts.get(de.unijena.bioinf.ms.persistence.model.core.Compound.class).getAndIncrement()
+        );
+        this.storage.onRemove(de.unijena.bioinf.ms.persistence.model.core.Compound.class,
+                c -> totalCounts.get(de.unijena.bioinf.ms.persistence.model.core.Compound.class).getAndDecrement()
+        );
+        this.storage.onInsert(AlignedFeatures.class,
+                c -> totalCounts.get(AlignedFeatures.class).getAndIncrement()
+        );
+        this.storage.onRemove(AlignedFeatures.class,
+                c -> totalCounts.get(AlignedFeatures.class).getAndDecrement()
+        );
     }
 
     @Override
     public @NotNull String getProjectId() {
         return projectId;
+    }
+
+    @Override
+    public @NotNull NoSQLProjectSpaceManager getProjectSpaceManager() {
+        return projectSpaceManager;
+    }
+
+    @Override
+    public @NotNull Instance loadInstance(String alignedFeatureId) {
+        return projectSpaceManager.findInstance(alignedFeatureId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Instance with ID " + alignedFeatureId + " not found in project + " + getProjectId() + ".")
+        );
     }
 
     private Compound toMiddlewareCompound(de.unijena.bioinf.ms.persistence.model.core.Compound compound) {
@@ -90,13 +133,17 @@ public class NoSQLProjectImpl implements Project {
                 .build();
     }
 
+    private AlignedFeature toMiddleWareAlignedFeature(AlignedFeatures features) {
+        return new AlignedFeature();
+    }
+
     @SneakyThrows
     @Override
     public Page<Compound> findCompounds(Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
         List<Compound> compounds = storage
                 .findAllStr(de.unijena.bioinf.ms.persistence.model.core.Compound.class, (int) pageable.getOffset(), pageable.getPageSize())
                 .map(this::toMiddlewareCompound).toList();
-        int total = storage.countAll(de.unijena.bioinf.ms.persistence.model.core.Compound.class);
+        long total = totalCounts.get(de.unijena.bioinf.ms.persistence.model.core.Compound.class).get();
 
         return new PageImpl<>(compounds, pageable, total);
     }
@@ -116,8 +163,7 @@ public class NoSQLProjectImpl implements Project {
     }
 
     @Override
-    public ImportResult importMsRunData(Collection<InputResource<?>> inputResources, boolean alignRuns, boolean allowMs1OnlyData) {
-        // TODO
+    public ImportResult importMsRunData(Collection<PathInputResource> inputResources, boolean alignRuns, boolean allowMs1OnlyData) {
         return null;
     }
 
@@ -127,14 +173,14 @@ public class NoSQLProjectImpl implements Project {
         long id = Long.parseLong(compoundId);
         return storage.getByPrimaryKey(id, de.unijena.bioinf.ms.persistence.model.core.Compound.class)
                 .map(this::toMiddlewareCompound)
-                .orElseThrow(() -> new IllegalArgumentException(compoundId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no compound '" + compoundId + "' in project " + projectId + "."));
     }
 
     @SneakyThrows
     @Override
     public void deleteCompoundById(String compoundId) {
         long id = Long.parseLong(compoundId);
-        storage.removeAll(Filter.build().eq("compoundId", id), de.unijena.bioinf.ms.persistence.model.core.Compound.class);
+        storage.removeAll(Filter.where("compoundId").eq(id), de.unijena.bioinf.ms.persistence.model.core.Compound.class);
     }
 
     @Override
@@ -147,9 +193,15 @@ public class NoSQLProjectImpl implements Project {
         return null;
     }
 
+    @SneakyThrows
     @Override
     public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
-        return null;
+        List<AlignedFeature> features = storage
+                .findAllStr(AlignedFeatures.class, (int) pageable.getOffset(), pageable.getPageSize())
+                .map(this::toMiddleWareAlignedFeature).toList();
+        long total = totalCounts.get(de.unijena.bioinf.ms.persistence.model.core.Compound.class).get();
+
+        return new PageImpl<>(features, pageable, total);
     }
 
     @Override
