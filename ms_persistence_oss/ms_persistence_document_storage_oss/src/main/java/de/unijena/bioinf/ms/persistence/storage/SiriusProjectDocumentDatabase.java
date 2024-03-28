@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -44,8 +44,6 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
         return buildMetadata(Metadata.build());
     }
     //todo store configmaps
-    //todo store detected adducts
-    //todo store zodiac and confidence scores
     //todo store extended structure search results
     //todo should we store db and msnovelist structure separately? scroing it together should not have much drawbacks
     //todo import data from MsExperiment
@@ -55,17 +53,18 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
                 .addCollection(FP_DATA_COLLECTION, Index.unique("type", "charge"))
                 .addRepository(FTreeResult.class,
                         Index.unique("formulaId"),
-                        Index.nonUnique("alignedFeatureId")) //todo needed?
+                        Index.nonUnique("alignedFeatureId")) //todo needed? //if we want to search for a formulaId the alignedFeatureId is implicitly known.
                 .addRepository(CsiPrediction.class,
                         Index.unique("formulaId"),
-                        Index.nonUnique("alignedFeatureId"))  //todo needed?
+                        Index.nonUnique("alignedFeatureId"))  //todo needed? //if we want to search for a formulaId the alignedFeatureId is implicitly known.
                 .addDeserializer(CsiPrediction.class,
                         new CsiPredictionDeserializer())
                 .addRepository(CanopusPrediction.class,
                         Index.unique("formulaId"),
-                        Index.nonUnique("alignedFeatureId"))  //todo needed?
+                        Index.nonUnique("alignedFeatureId"))  //todo needed? //if we want to search for a formulaId the alignedFeatureId is implicitly known.
                 .addDeserializer(CanopusPrediction.class,
                         new CanopusPredictionDeserializer())
+                .addRepository(CsiStructureSearchResult.class,"alignedFeatureId")
                 .addRepository(CsiStructureMatch.class,
                         Index.nonUnique("formulaId"),
                         Index.nonUnique("alignedFeatureId"))
@@ -82,6 +81,7 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
                 .addSerialization(ProbabilityFingerprint.class,
                         new ProbabilityFingerprint.Serializer(),
                         new ProbabilityFingerprint.Deserializer()) // version needs to be added later
+
         ;
 
         return sourceMetadata;

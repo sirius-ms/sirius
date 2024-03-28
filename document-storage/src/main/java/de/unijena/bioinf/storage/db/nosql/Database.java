@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -53,6 +54,20 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
     int insertAll(String collectionName, Iterable<DocType> documents) throws IOException;
 
     <T> int upsert(T object) throws IOException;
+
+    default <T> int modify(Object primaryKey, Class<T> clazz, Function<T, T> modifier) throws IOException {
+        //if we move this to database implementation level this could be a transaction.
+        T obj = getByPrimaryKey(primaryKey, clazz).orElseThrow(() -> new IllegalArgumentException("Entity to modify not found"));
+        obj = modifier.apply(obj);
+        return upsert(obj);
+    }
+
+    default <T> int modify(Object primaryKey, Class<T> clazz, Consumer<T> modifier) throws IOException {
+        return modify(primaryKey, clazz, t -> {
+            modifier.accept(t);
+            return t;
+        });
+    }
 
     <T> int upsertAll(Iterable<T> objects) throws IOException;
 
@@ -105,11 +120,6 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
     <P, C> Iterable<P> joinAllChildren(Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException;
 
     <P, C> Iterable<P> joinChildren(Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException;
-
-    // TODO do we really need the conversion from type P to T?
-//    <T, P, C> Iterable<T> joinAllChildren(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException;
-//
-//    <T, P, C> Iterable<T> joinChildren(Class<T> targetClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException;
 
     Iterable<DocType> joinAllChildren(String childCollection, Iterable<DocType> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException;
 
@@ -320,14 +330,6 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
     default <P, C> Stream<P> joinChildrenStr(Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
         return StreamSupport.stream(joinChildren(childClass, childFilter, parents, localField, foreignField, targetField, withOptionalChildFields).spliterator(), false);
     }
-
-//    default <T, P, C> Stream<T> joinAllChildrenStr(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
-//        return StreamSupport.stream(joinAllChildren(targetClass, childClass, parents, localField, foreignField, targetField, withOptionalChildFields).spliterator(), false);
-//    }
-//
-//    default <T, P, C> Stream<T> joinChildrenStr(Class<T> targetClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
-//        return StreamSupport.stream(joinChildren(targetClass, childClass, childFilter, parents, localField, foreignField, targetField, withOptionalChildFields).spliterator(), false);
-//    }
 
     default Stream<DocType> joinAllChildrenStr(String childCollectionName, Iterable<DocType> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
         return StreamSupport.stream(joinAllChildren(childCollectionName, parents, localField, foreignField, targetField, withOptionalChildFields).spliterator(), false);

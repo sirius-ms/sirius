@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Nullable;
 @Setter
 @Builder
 @Jacksonized
-public class FormulaCandidate {
+public class FormulaCandidate extends FeatureAnnotation {
     /**
      * Unique identifier of this formula candidate
      */

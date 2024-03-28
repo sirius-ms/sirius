@@ -128,7 +128,9 @@ public class NitriteDatabase implements Database<Document> {
                 .build();
 //        NitriteModule storeModule = RocksDBModule.withConfig().filePath(file.toFile()).build();
 
-        return Nitrite.builder().loadModule(storeModule).loadModule(new JacksonMapperModule(module)).openOrCreate();
+        return Nitrite.builder().loadModule(storeModule)
+                .loadModule(new JacksonMapperModule(module))
+                .openOrCreate();
     }
 
     private void initCollections(Metadata meta) {
@@ -727,54 +729,6 @@ public class NitriteDatabase implements Database<Document> {
             }
         }, localField, targetField);
     }
-
-//    @Override
-//    public <T, P, C> Iterable<T> joinAllChildren(Class<T> targetClass, Class<C> childClass, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
-//        return null;
-////        if (parents instanceof org.dizitart.no2.objects.Cursor<P> pCursor) {
-////            return new JoinedIterable<>(
-////                    targetClass,
-////                    pCursor,
-////                    (localObject) -> {
-////                        try {
-////                            return maybeProjectDocuments(childClass.getName(), Filter.build().eq(foreignField, localObject), null, withOptionalChildFields);
-////                        } catch (IOException e) {
-////                            throw new RuntimeException(e);
-////                        }
-////                    },
-////                    localField,
-////                    targetField,
-////                    nitriteMapper
-////            );
-////        } else {
-////            throw new IllegalArgumentException("parents must be a org.dizitart.no2.objects.Cursor!");
-////        }
-//    }
-//
-//    @Override
-//    public <T, P, C> Iterable<T> joinChildren(Class<T> targetClass, Class<C> childClass, Filter childFilter, Iterable<P> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {
-//        return null;
-////        if (parents instanceof org.dizitart.no2.objects.Cursor<P> pCursor) {
-////            return new JoinedIterable<>(
-////                    targetClass,
-////                    pCursor,
-////                    (localObject) -> {
-////                        try {
-////                            Filter cFilter = new Filter().and().eq(foreignField, localObject);
-////                            cFilter.filterChain.addAll(childFilter.filterChain);
-////                            return maybeProjectDocuments(childClass.getName(), cFilter, null, withOptionalChildFields);
-////                        } catch (IOException e) {
-////                            throw new RuntimeException(e);
-////                        }
-////                    },
-////                    localField,
-////                    targetField,
-////                    nitriteMapper
-////            );
-////        } else {
-////            throw new IllegalArgumentException("parents must be a org.dizitart.no2.objects.Cursor!");
-////        }
-//    }
 
     @Override
     public Iterable<Document> joinAllChildren(String childCollectionName, Iterable<Document> parents, String localField, String foreignField, String targetField, String... withOptionalChildFields) throws IOException {

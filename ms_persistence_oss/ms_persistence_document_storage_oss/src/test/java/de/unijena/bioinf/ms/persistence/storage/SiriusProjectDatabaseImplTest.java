@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.persistence.storage;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.StandardFingerprintData;
@@ -14,8 +15,10 @@ import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.JSONReader;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
+import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts;
 import de.unijena.bioinf.ms.persistence.model.sirius.FTreeResult;
-import de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
@@ -196,9 +199,9 @@ public class SiriusProjectDatabaseImplTest {
                 db.getStorage().upsert(source);
                 Optional<FTreeResult> ftree = db.getStorage().getByPrimaryKey(source.getId(), FTreeResult.class);
                 assertTrue(ftree.isPresent());
-                assertEquals(ftrees[1].getTreeWeight(), ftree.map(FTreeResult::getFTree).map(FTree::getTreeWeight).get());
-                assertEquals(ftrees[1].numberOfEdges(), ftree.map(FTreeResult::getFTree).map(FTree::numberOfEdges).get());
-                assertEquals(ftrees[1].numberOfVertices(), ftree.map(FTreeResult::getFTree).map(FTree::numberOfVertices).get());
+                assertEquals(ftrees[1].getTreeWeight(), ftree.map(FTreeResult::getFTree).map(FTree::getTreeWeight).orElse(null));
+                assertEquals(ftrees[1].numberOfEdges(), ftree.map(FTreeResult::getFTree).map(FTree::numberOfEdges).orElse(null));
+                assertEquals(ftrees[1].numberOfVertices(), ftree.map(FTreeResult::getFTree).map(FTree::numberOfVertices).orElse(null));
                 assertEquals(22, ftree.map(FTreeResult::getFormulaId).get());
                 assertEquals(1, ftree.map(FTreeResult::getAlignedFeatureId).get());
             }
@@ -219,7 +222,7 @@ public class SiriusProjectDatabaseImplTest {
                 try (InputStream i = Objects.requireNonNull(getClass().getResourceAsStream(s))) {
                     List<FingerprintCandidate> compounds = new ArrayList<>();
                     try (final CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(),
-                            Compressible.decompressRawStream(i, Compressible.Compression.GZIP).get())) {
+                            Compressible.decompressRawStream(i, Compressible.Compression.GZIP).orElse(null))) {
                         while (fciter.hasNext())
                             compounds.add(fciter.next());
                         return compounds.stream();
@@ -274,6 +277,42 @@ public class SiriusProjectDatabaseImplTest {
                     Optional<FingerprintCandidate> compound = db.getStorage().getByPrimaryKey(source.getInchiKey2D(), FingerprintCandidate.class);
                     assertTrue(compound.isEmpty());
                 }
+            }
+        });
+    }
+
+    @Test
+    public void upsertAdductOnFeatureTest() {
+        withDb("/sirius-project-features.sirius", db -> {
+            //prepare
+            AlignedFeatures feature = db.getStorage().findAllStr(AlignedFeatures.class).findFirst().orElseThrow();
+            assertNull(feature.getDetectedAdducts());
+
+            DetectedAdducts adducts = new DetectedAdducts().add(
+                    DetectedAdduct.builder().adduct(PrecursorIonType.fromString("[M+H]+")).score(.6)
+                            .source(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.MS1_PREPROCESSOR).build(),
+                    DetectedAdduct.builder().adduct(PrecursorIonType.fromString("[M-H20+H]+")).score(.3)
+                            .source(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.MS1_PREPROCESSOR).build(),
+                    DetectedAdduct.builder().adduct(PrecursorIonType.fromString("[M+Na]+")).score(.1)
+                            .source(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.MS1_PREPROCESSOR).build(),
+                    DetectedAdduct.builder().adduct(PrecursorIonType.fromString("[M+H]+")).score(.9)
+                            .source(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN).build()
+            );
+
+            {//add adducts to feature
+                feature.setDetectedAdducts(adducts);
+                assertEquals(1, db.getStorage().upsert(feature), "Updated Feature with Adducts");
+                assertEquals(feature.getDetectedAdducts(), db.getStorage().getByPrimaryKey(feature.getAlignedFeatureId(), feature.getClass()).map(AlignedFeatures::getDetectedAdducts).orElse(null));
+            }
+
+            {//modify adducts on feature
+                feature.getDetectedAdducts().remove(PrecursorIonType.fromString("[M-H20+H]+"));
+                assertEquals(1, db.getStorage().upsert(feature), "Remove adduct from Feature");
+                assertEquals(feature.getDetectedAdducts(), db.getStorage().getByPrimaryKey(feature.getAlignedFeatureId(), feature.getClass()).map(AlignedFeatures::getDetectedAdducts).orElse(null));
+
+                feature.getDetectedAdducts().removeBySource(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN);
+                assertEquals(1, db.getStorage().upsert(feature), "Remove adduct by source from Feature");
+                assertEquals(feature.getDetectedAdducts(), db.getStorage().getByPrimaryKey(feature.getAlignedFeatureId(), feature.getClass()).map(AlignedFeatures::getDetectedAdducts).orElse(null));
             }
         });
     }

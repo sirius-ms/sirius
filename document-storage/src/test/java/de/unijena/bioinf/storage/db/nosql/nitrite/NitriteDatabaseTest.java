@@ -37,9 +37,7 @@ import de.unijena.bioinf.storage.db.nosql.Metadata;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.dizitart.no2.collection.Document;
 import org.dizitart.no2.filters.FluentFilter;
 import org.dizitart.no2.filters.NitriteFilter;
@@ -67,6 +65,8 @@ public class NitriteDatabaseTest {
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @Getter
+    @Setter
     private static class NitriteTestEntry {
 
         @Id
@@ -341,6 +341,17 @@ public class NitriteDatabaseTest {
 
             assertEquals("count all", 3, db.countAll(NitriteTestEntry.class));
 
+            { //test upsert and modify
+                in.get(0).setName("E");
+                assertEquals("Update one", 1, db.upsert(in.get(0)));
+                assertEquals("Check Update Change", "E_D", db.getByPrimaryKey(in.get(0).primaryKey, NitriteTestEntry.class).map(NitriteTestEntry::getName).orElse(null));
+            }
+
+            {
+                assertEquals("Update one", 1, db.modify(in.get(0).getPrimaryKey(), NitriteTestEntry.class, entry -> {entry.setName("A");}));
+                assertEquals("Check Modify Change", "A_D", db.getByPrimaryKey(in.get(0).primaryKey, NitriteTestEntry.class).map(NitriteTestEntry::getName).orElse(null));
+            }
+
             assertEquals("remove", 1, db.remove(in.get(0)));
             List<String> ascFindAllDel0 = db.findAllStr(NitriteTestEntry.class, "name", Database.SortOrder.ASCENDING).map(e -> e.name).toList();
             assertEquals("remove name == C", 1, db.removeAll(Filter.where("name").eq("C"), NitriteTestEntry.class));
@@ -432,106 +443,6 @@ public class NitriteDatabaseTest {
 
     }
 
-//    @Test
-//    public void testJoin() throws IOException {
-//
-//        Path file = Files.createTempFile("nitrite-test", "");
-//        file.toFile().deleteOnExit();
-//
-//        NitriteTestEntry parent = NitriteTestEntry.builder().name("parent").build();
-//
-//        try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build()
-//                .addRepository(NitriteTestEntry.class, new Index("name", IndexType.UNIQUE))
-//                .addRepository(NitriteChildTestEntry.class, new Index("name", IndexType.NON_UNIQUE))
-//                .addDeserializer(DoubleList.class, new DoubleArrayDeserializer())
-//        )) {
-//
-//            db.insert(parent);
-//
-//            List<NitriteChildTestEntry> children = new ArrayList<>(Arrays.asList(
-//                    NitriteChildTestEntry.builder().name("A").parentKey(parent.primaryKey).build(),
-//                    NitriteChildTestEntry.builder().name("B").parentKey(parent.primaryKey).build(),
-//                    NitriteChildTestEntry.builder().name("C").parentKey(parent.primaryKey).build()
-//            ));
-//
-//            db.insertAll(children);
-//
-//            Iterable<NitriteTestEntry> outParent = db.findAll(NitriteTestEntry.class);
-//            Iterable<NitriteChildTestEntry> outChildren = db.findAll(NitriteChildTestEntry.class);
-//            Iterable<NitriteChildTestEntry> outChildrenF = db.find(Filter.or(Filter.where("name").eq("A"), Filter.where("name").eq("B")), NitriteChildTestEntry.class);
-//
-//            assertEquals("1 parent", 1, Lists.newArrayList(outParent).size());
-////            assertTrue("parent okay", EqualsBuilder.reflectionEquals(parent, outParent.iterator().next(), false, null, true));
-//
-//            List<NitriteFamilyTestEntry> results = Lists.newArrayList(db.joinAllChildren(NitriteFamilyTestEntry.class, NitriteChildTestEntry.class, outParent, "primaryKey", "parentKey", "children"));
-//
-//            assertEquals("1 joined parent", 1, results.size());
-//
-//            assertEquals("joined parent okay", parent.primaryKey, results.get(0).primaryKey);
-//            assertEquals("joined parent okay", parent.name, results.get(0).name);
-
-//            assertTrue("joined children okay", EqualsBuilder.reflectionEquals(
-//                    Lists.newArrayList(outChildren),
-//                    results.get(0).children, false, null, true
-//            ));
-
-//            NitriteTestEntry parentB = NitriteTestEntry.builder().name("parentB").build();
-//
-//            db.insert(parentB);
-//
-//            List<NitriteChildTestEntry> childrenB = new ArrayList<>(Arrays.asList(
-//                    NitriteChildTestEntry.builder().name("A").parentKey(parentB.primaryKey).build(),
-//                    NitriteChildTestEntry.builder().name("B").parentKey(parentB.primaryKey).build(),
-//                    NitriteChildTestEntry.builder().name("C").parentKey(parentB.primaryKey).build()
-//            ));
-//
-//            db.insertAll(childrenB);
-
-//            results = Lists.newArrayList(db.joinChildren(
-//                    NitriteFamilyTestEntry.class,
-//                    NitriteChildTestEntry.class,
-//                    Filter.or(Filter.where("name").eq("A"), Filter.where("name").eq("B")),
-//                    db.findAll(NitriteTestEntry.class),
-//                    "primaryKey", "parentKey", "children"));
-//            results.sort(Comparator.comparing(entry -> entry.name));
-//
-//            assertEquals("2 joined filtered parents", 2, results.size());
-//
-//            assertEquals("joined filtered parent okay", parent.primaryKey, results.get(0).primaryKey);
-//            assertEquals("joined filtered parent okay", parent.name, results.get(0).name);
-//
-//            assertEquals("joined filtered parent okay", parentB.primaryKey, results.get(1).primaryKey);
-//            assertEquals("joined filtered parent okay", parentB.name, results.get(1).name);
-//
-////            assertTrue("joined filtered children okay", EqualsBuilder.reflectionEquals(
-////                    Lists.newArrayList(outChildrenF),
-////                    results.get(0).children, false, null, true
-////            ));
-////            assertTrue("joined filtered children okay", EqualsBuilder.reflectionEquals(
-////                    Lists.newArrayList(outChildrenF),
-////                    results.get(1).children, false, null, true
-////            ));
-//
-//            results = Lists.newArrayList(db.joinChildren(
-//                    NitriteFamilyTestEntry.class,
-//                    NitriteChildTestEntry.class,
-//                    Filter.and(Filter.where("name").eq("A"), Filter.where("name").eq("B")),
-//                    db.findAll(NitriteTestEntry.class),
-//                    "primaryKey", "parentKey", "children"));
-//            results.sort(Comparator.comparing(entry -> entry.name));
-//
-//            assertEquals("2 joined filtered parents", 2, results.size());
-//
-//            assertEquals("joined filtered parent okay", parent.primaryKey, results.get(0).primaryKey);
-//            assertEquals("joined filtered parent okay", parent.name, results.get(0).name);
-//
-//            assertEquals("joined filtered parent okay", parentB.primaryKey, results.get(1).primaryKey);
-//            assertEquals("joined filtered parent okay", parentB.name, results.get(1).name);
-//
-//            assertNull("zero joined children", results.get(0).children);
-//        }
-//
-//    }
 
     @Test
     @SuppressWarnings("unchecked")
