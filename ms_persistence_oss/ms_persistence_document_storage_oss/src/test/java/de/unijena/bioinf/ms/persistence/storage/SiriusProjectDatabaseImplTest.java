@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.persistence.storage;
 
+import com.google.common.collect.Streams;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
@@ -19,7 +20,11 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts;
 import de.unijena.bioinf.ms.persistence.model.sirius.FTreeResult;
+import de.unijena.bioinf.ms.persistence.model.sirius.Parameters;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
+import de.unijena.bioinf.ms.properties.ConfigType;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
@@ -42,6 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -314,6 +320,47 @@ public class SiriusProjectDatabaseImplTest {
                 assertEquals(1, db.getStorage().upsert(feature), "Remove adduct by source from Feature");
                 assertEquals(feature.getDetectedAdducts(), db.getStorage().getByPrimaryKey(feature.getAlignedFeatureId(), feature.getClass()).map(AlignedFeatures::getDetectedAdducts).orElse(null));
             }
+        });
+    }
+
+    @Test
+    public void crudParametersTest() {
+        //prepare
+        ParameterConfig projectConfig = PropertyManager.DEFAULTS.newIndependentInstance(ConfigType.PROJECT.name());
+        ParameterConfig computeConfig = PropertyManager.DEFAULTS.newIndependentInstance(ConfigType.BATCH_COMPUTE.name());
+
+        Parameters project1 = Parameters.of(projectConfig, ConfigType.PROJECT);
+        project1.setAlignedFeatureId(1);
+        Parameters project2 = Parameters.of(projectConfig, ConfigType.PROJECT);
+        project2.setAlignedFeatureId(1);
+        Parameters input = Parameters.of(computeConfig, ConfigType.BATCH_COMPUTE);
+        project2.setAlignedFeatureId(1);
+
+        withDb(db -> {
+            //insert
+            assertEquals(1, db.getStorage().insert(project1), "Insert project config");
+            assertTrue(db.getStorage().getByPrimaryKey(project1.getParametersId(), project1.getClass()).isPresent(), "check if inserted config exists");
+            assertEquals(
+                    Streams.stream(project1.getConfig().getConfigKeys()).collect(Collectors.toSet()),
+                    db.getStorage().getByPrimaryKey(project1.getParametersId(), project1.getClass())
+                            .map(Parameters::getConfig).map(ParameterConfig::getConfigKeys).stream()
+                            .flatMap(Streams::stream).collect(Collectors.toSet()),
+                    "Check if content has been preserved"
+            );
+
+            //fail duplicate entry
+            RuntimeException thrown = assertThrowsExactly(RuntimeException.class, () -> db.getStorage().insert(project2));
+            assertInstanceOf(UniqueConstraintException.class, thrown.getCause());
+
+            //insert second type same feature
+            assertEquals(1, db.getStorage().insert(input), "Insert input config");
+            assertTrue(db.getStorage().getByPrimaryKey(input.getParametersId(), input.getClass()).isPresent(), "check if inserted config exists");
+            assertEquals(2, db.getStorage().countAll(Parameters.class));
+
+            //delete entry
+            assertEquals(1, db.getStorage().remove(project1), "Delete project config");
+            assertTrue(db.getStorage().getByPrimaryKey(project1.getParametersId(), project1.getClass()).isEmpty(), "check if deleted project not exists");
+            assertEquals(1, db.getStorage().countAll(Parameters.class));
         });
     }
 
