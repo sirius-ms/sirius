@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.properties.ConfigAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.babelms.ms.InputFileConfig;
 import de.unijena.bioinf.fingerid.*;
@@ -262,13 +263,15 @@ public class Instance {
     }
 
     @Nullable
-    public final synchronized InputFileConfig loadInputFileConfig(){
-        return getExperiment().getAnnotationOrNull(InputFileConfig.class);
+    public final synchronized ParameterConfig loadInputFileConfig(){
+        return getExperiment().getAnnotation(InputFileConfig.class)
+                .map(ConfigAnnotation::config).orElse(null);
     }
 
     @Nullable
-    public final synchronized ProjectSpaceConfig loadProjectConfig() {
-        return loadCompoundContainer(ProjectSpaceConfig.class).getAnnotationOrNull(ProjectSpaceConfig.class);
+    public final synchronized ParameterConfig loadProjectConfig() {
+        return loadCompoundContainer(ProjectSpaceConfig.class).getAnnotation(ProjectSpaceConfig.class)
+                .map(ConfigAnnotation::config).orElse(null);
     }
 
     public synchronized void updateConfig(@NotNull ParameterConfig config){

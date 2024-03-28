@@ -20,11 +20,10 @@
 package de.unijena.bioinf.ms.frontend.subtools.config;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.babelms.ms.InputFileConfig;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
+import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.ProjectSpaceConfig;
 import org.apache.commons.configuration2.CombinedConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,35 +54,34 @@ public class AddConfigsJob extends InstanceJob {
         {
             //override defaults
             // CLI_CONFIG might already exist from previous runs and needs to be updated.
-            @Nullable final ProjectSpaceConfig projectSpaceConfig = inst.loadProjectConfig();
+            @Nullable ParameterConfig projectSpaceConfig = inst.loadProjectConfig();
             checkForInterruption();
             if (projectSpaceConfig != null){
-                ParameterConfig conf = projectSpaceConfig.config;
-                if (!computeConfig.getLocalConfigName().equals(DefaultParameterConfigLoader.CLI_CONFIG_NAME) && computeConfig.containsConfiguration(DefaultParameterConfigLoader.CLI_CONFIG_NAME)) {
-                    conf = conf.newIndependentInstance(DefaultParameterConfigLoader.CLI_CONFIG_NAME);
-                    conf.updateConfig(DefaultParameterConfigLoader.CLI_CONFIG_NAME, ((CombinedConfiguration) computeConfig.getConfigs()).getConfiguration(DefaultParameterConfigLoader.CLI_CONFIG_NAME));
+                if (!computeConfig.getLocalConfigName().equals(ConfigType.CLI.name()) && computeConfig.containsConfiguration(ConfigType.CLI.name())) {
+                    projectSpaceConfig = projectSpaceConfig.newIndependentInstance(ConfigType.CLI.name());
+                    projectSpaceConfig.updateConfig(ConfigType.CLI.name(), ((CombinedConfiguration) computeConfig.getConfigs()).getConfiguration(ConfigType.CLI.name()));
                 }
-                baseConfig = conf.newIndependentInstance(computeConfig, true);
+                baseConfig = projectSpaceConfig.newIndependentInstance(computeConfig, true);
             }
         }
 
         //remove runtime configs from previous analyses
-        baseConfig.getConfigNames().stream().filter(s -> s.startsWith("RUNTIME_CONFIG")).forEach(baseConfig::removeConfig);
+        baseConfig.getConfigNames().stream().filter(s -> s.startsWith(ConfigType.RUNTIME.name())).forEach(baseConfig::removeConfig);
 
         //input file configs are intended to be immutable, we still reload to ensure that it is on top position after CLI config
         {
-            @Nullable final InputFileConfig msConf = inst.loadInputFileConfig();
+            @Nullable final ParameterConfig msConf = inst.loadInputFileConfig();
             checkForInterruption();
             if (msConf != null) {
-                baseConfig.removeConfig(msConf.config.getLocalConfigName());
-                baseConfig = baseConfig.newIndependentInstance(msConf.config, false);
+                baseConfig.removeConfig(msConf.getLocalConfigName());
+                baseConfig = baseConfig.newIndependentInstance(msConf, false);
             }
         }
         checkForInterruption();
 
         //runtime modification layer,  that does not affect the other configs, needs to be cleared before further analyses starts
         //name cannot be based on the ID because people might rename their compounds
-        baseConfig = baseConfig.newIndependentInstance("RUNTIME_CONFIG", true);
+        baseConfig = baseConfig.newIndependentInstance(ConfigType.RUNTIME.name(), true);
         inst.updateConfig(baseConfig);
     }
 
