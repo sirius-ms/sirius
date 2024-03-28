@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
+import de.unijena.bioinf.babelms.ms.InputFileConfig;
 import de.unijena.bioinf.fingerid.*;
 import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
@@ -32,6 +33,7 @@ import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -260,9 +262,18 @@ public class Instance {
         updateCompound(compoundCache, Ms2Experiment.class);
     }
 
-    public synchronized void updateConfig() {
+    @Nullable
+    public synchronized InputFileConfig loadInputFileConfig(){
+        return getExperiment().getAnnotationOrNull(InputFileConfig.class);
+    }
+
+    public synchronized void updateFinalConfig(FinalConfig config){
+        loadCompoundContainer().setAnnotation(FinalConfig.class, config);
+        //Update annotations of the Experiment with annotations in the newly created Config
+        getExperiment().setAnnotationsFrom(config.config, Ms2ExperimentAnnotation.class);
+
         compoundCache.setAnnotation(ProjectSpaceConfig.class, new ProjectSpaceConfig(compoundCache.getAnnotationOrThrow(FinalConfig.class).config));
-        updateCompound(compoundCache, ProjectSpaceConfig.class);
+        updateCompound(compoundCache, ProjectSpaceConfig.class, Ms2Experiment.class);//this also writes spectra which is bad but won't fix since this is deprecated
     }
 
     public synchronized void updateCompoundID() {
