@@ -34,6 +34,7 @@ import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -117,9 +118,7 @@ public class Instance {
     public final Ms2Experiment getExperiment() {
         return loadCompoundContainer(Ms2Experiment.class).getAnnotationOrThrow(Ms2Experiment.class);
     }
-    public final synchronized Optional<ProjectSpaceConfig> loadConfig() {
-        return loadCompoundContainer(ProjectSpaceConfig.class).getAnnotation(ProjectSpaceConfig.class);
-    }
+
 
     @SafeVarargs
     public final synchronized CompoundContainer loadCompoundContainer(Class<? extends DataAnnotation>... components) {
@@ -263,18 +262,24 @@ public class Instance {
     }
 
     @Nullable
-    public synchronized InputFileConfig loadInputFileConfig(){
+    public final synchronized InputFileConfig loadInputFileConfig(){
         return getExperiment().getAnnotationOrNull(InputFileConfig.class);
     }
 
-    public synchronized void updateFinalConfig(FinalConfig config){
-        loadCompoundContainer().setAnnotation(FinalConfig.class, config);
-        //Update annotations of the Experiment with annotations in the newly created Config
-        getExperiment().setAnnotationsFrom(config.config, Ms2ExperimentAnnotation.class);
+    @Nullable
+    public final synchronized ProjectSpaceConfig loadProjectConfig() {
+        return loadCompoundContainer(ProjectSpaceConfig.class).getAnnotationOrNull(ProjectSpaceConfig.class);
+    }
 
+    public synchronized void updateConfig(@NotNull ParameterConfig config){
+        loadCompoundContainer().setAnnotation(FinalConfig.class, new FinalConfig(config));
+        //Update annotations of the Experiment with annotations in the newly created Config
+        getExperiment().setAnnotationsFrom(config, Ms2ExperimentAnnotation.class);
         compoundCache.setAnnotation(ProjectSpaceConfig.class, new ProjectSpaceConfig(compoundCache.getAnnotationOrThrow(FinalConfig.class).config));
         updateCompound(compoundCache, ProjectSpaceConfig.class, Ms2Experiment.class);//this also writes spectra which is bad but won't fix since this is deprecated
     }
+
+
 
     public synchronized void updateCompoundID() {
         try {
