@@ -26,6 +26,7 @@ import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidate;
 import de.unijena.bioinf.ms.nightsky.sdk.model.LipidAnnotation;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -95,7 +96,7 @@ public class LipidLabel extends JLabel implements ActiveElementChangedListener<F
         setVisible(false);
         this.lipidSpecies = null;
         if (elementsParent != null) {
-            this.lipidSpecies = elementsParent.getFormulaAnnotation().map(FormulaCandidate::getLipidAnnotation).orElse(null);
+            this.lipidSpecies = elementsParent.getFormulaAnnotationAsBean().map(b -> b.getLipidAnnotation().orElse(null)).orElse(null);
             if (this.lipidSpecies != null && lipidSpecies.getLipidSpecies() != null){
                 setText("<html>" +
                         "<b>" + lipidSpecies.getLipidSpecies() + "</b>" +
