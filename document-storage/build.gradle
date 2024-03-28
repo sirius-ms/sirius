@@ -21,7 +21,9 @@
 
 dependencies {
     // external
-    api platform('org.dizitart:nitrite-bom:4.3.0-SNAPSHOT')
+    api platform('org.dizitart:nitrite-bom:4.3.0-SNAPSHOT'){
+        exclude group: 'jakarta.xml.bind', module: 'jakarta.xml.bind-api'
+    }
     implementation ('org.dizitart:nitrite-jackson-mapper') {
         exclude group: 'jakarta.xml.bind', module: 'jakarta.xml.bind-api'
     }
