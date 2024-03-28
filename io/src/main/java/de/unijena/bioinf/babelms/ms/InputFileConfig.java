@@ -24,6 +24,12 @@ import de.unijena.bioinf.ChemistryBase.ms.properties.ConfigAnnotation;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 
+/**
+ * This annotation stores the configuration given in input files such as .ms file.
+ * The idea is to preserver the input state in this  object.
+ * for computation the content of theis config will be annotated as individual annotations to the MS2Experiment.
+ * If no InputFileConfig is given the DEFAULT values need to be annotated to MS2Experiment.
+ */
 public class InputFileConfig extends ConfigAnnotation implements Ms2ExperimentAnnotation {
     public InputFileConfig(ParameterConfig config) {
         super(config);
