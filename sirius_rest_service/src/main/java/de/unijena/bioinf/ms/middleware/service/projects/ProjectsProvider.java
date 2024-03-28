@@ -87,10 +87,10 @@ public interface ProjectsProvider<P extends Project> extends DisposableBean {
         }
     }
 
-    Pattern projectIdValidator = Pattern.compile("[a-zA-Z0-9_-]*", Pattern.CASE_INSENSITIVE);
+    Pattern projectIdValidator = Pattern.compile("[a-zA-Z0-9_-]+", Pattern.CASE_INSENSITIVE);
     default String validateId(String projectId){
         if (!projectIdValidator.matcher(projectId).matches())
-            throw new IllegalArgumentException("Illegal ProjectId. ProjectId must only contain [a-zA-Z0-9_-]!");
+            throw new IllegalArgumentException("Illegal ProjectId. ProjectId must only contain [a-zA-Z0-9_-]+!");
         return projectId;
     }
 }
