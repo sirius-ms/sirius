@@ -77,7 +77,7 @@ public class PropertyManager {
             PERSISTENT_PROPERTIES = SiriusConfigUtils.newCombinedConfiguration();
 
             PROPERTIES = SiriusConfigUtils.newCombinedConfiguration();
-            PROPERTIES.addConfiguration(PERSISTENT_PROPERTIES, "PERSISTENT_PROPERTIES");
+            PROPERTIES.addConfiguration(PERSISTENT_PROPERTIES, ConfigType.PERSISTENT_PROPERTIES.name());
             PERSISTENT_PROPERTIES.addEventListener(CombinedConfiguration.COMBINED_INVALIDATE, event -> PROPERTIES.invalidate());
             CHANGED_PROPERTIES = loadDefaultProperties();
             Reflections.log.ifPresent(l -> {
@@ -92,9 +92,9 @@ public class PropertyManager {
             CombinedConfiguration classConfig = addPropertiesFromResources(classResources, MS_CONFIG_CLASSES_BASE, "CONFIG_CLASSES");
 
             LinkedHashSet<String> configResources =  new LinkedHashSet<>(reflections.getResources(Pattern.compile(".*\\.config")));
-            // this addes changed defaults from some locations specified by this key
+            // this adds changed defaults from some locations specified by this key
             configResources.addAll(SiriusConfigUtils.parseResourcesLocation(PROPERTIES.getString(CONFIGS_LOCATIONS_KEY)));
-            CombinedConfiguration globalConfig = addPropertiesFromResources(configResources, MS_CONFIGS_BASE, "GLOBAL_CONFIG");
+            CombinedConfiguration globalConfig = addPropertiesFromResources(configResources, MS_CONFIGS_BASE, ConfigType.GLOBAL.name());
 
 
             DEFAULTS = new ParameterConfig(

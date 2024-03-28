@@ -29,6 +29,6 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @NoArgsConstructor
-public abstract class FeatureAnnotation {
+public abstract class AlignedFeatureAnnotation {
     protected long alignedFeatureId;
 }

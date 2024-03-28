@@ -43,7 +43,6 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     static Metadata buildMetadata() throws IOException {
         return buildMetadata(Metadata.build());
     }
-    //todo store configmaps
     //todo merge msNovelist candidate with normal candidates so they can be stored together
       //todo update links of existing candidates with msnovelist flag!
     //todo import data from MsExperiment
@@ -51,6 +50,7 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
         NetworkingProjectDocumentDatabase.buildMetadata(sourceMetadata)
                 .addCollection(FP_DATA_COLLECTION, Index.unique("type", "charge"))
+                .addRepository(Parameters.class, Index.unique("alignedFeatureId", "type"))
                 .addRepository(FTreeResult.class,
                         Index.unique("formulaId"),
                         Index.nonUnique("alignedFeatureId")) //todo needed? //if we want to search for a formulaId the alignedFeatureId is implicitly known.

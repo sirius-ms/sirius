@@ -29,6 +29,6 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @NoArgsConstructor
-public abstract class FormulaAnnotation extends FeatureAnnotation {
+public abstract class FormulaAnnotation extends AlignedFeatureAnnotation {
     protected long formulaId;
 }

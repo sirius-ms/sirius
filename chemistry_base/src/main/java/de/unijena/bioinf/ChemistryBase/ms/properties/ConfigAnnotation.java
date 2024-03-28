@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -24,8 +24,12 @@ import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 
 public abstract class ConfigAnnotation implements DataAnnotation {
-    // this are the the configs read from this file (@ParameterConfig)
+    // this are the configs read from this file (@ParameterConfig)
     public final ParameterConfig config;
+
+    public ParameterConfig config() {
+        return config;
+    }
 
     protected ConfigAnnotation(ParameterConfig config) {
         this.config = config;

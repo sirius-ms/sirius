@@ -30,7 +30,7 @@ import java.util.List;
 @SuperBuilder
 @Getter
 @Setter
-public abstract class StructureSearchResult<Match extends StructureMatch> extends FeatureAnnotation{
+public abstract class StructureSearchResult<Match extends StructureMatch> extends AlignedFeatureAnnotation {
     // foreign field -> get via featureId
     @JsonIgnore
     protected List<Match> matches;

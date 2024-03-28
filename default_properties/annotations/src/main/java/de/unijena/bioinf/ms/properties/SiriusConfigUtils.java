@@ -40,7 +40,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.*;
-import java.util.function.Supplier;
 
 public class SiriusConfigUtils {
 
@@ -153,6 +152,13 @@ public class SiriusConfigUtils {
     public static PropertiesConfiguration makeConfigFromStream(@NotNull final InputStream input) throws ConfigurationException {
         final PropertiesConfiguration config = newConfiguration();
         new FileHandler(config).load(input);
+        return config;
+    }
+
+    public static PropertiesConfiguration makeConfigFromMap(@Nullable final Map<String, String> values) {
+        final PropertiesConfiguration config = newConfiguration();
+        if (values != null)
+            values.forEach(config::setProperty);
         return config;
     }
 
