@@ -104,9 +104,9 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
                 .build();
 
 
-        //add adduct from high-scoring library hits to detected adducts list
+        //add adduct and formula from high-scoring library hits to detected adducts and formula candiadates list
         InjectSpectralLibraryMatchFormulas injectFormulas = experiment.getAnnotationOrDefault(InjectSpectralLibraryMatchFormulas.class);
-        addAdductsAndFormulasFromHighScoringLibraryMatches(experiment, searchResults, injectFormulas.getMinScoreToInject(), injectFormulas.getMinPeakMatchesToInject()); //todo add parameters
+        addAdductsAndFormulasFromHighScoringLibraryMatches(experiment, searchResults, injectFormulas.getMinScoreToInject(), injectFormulas.getMinPeakMatchesToInject());
 
         return searchResults;
     }

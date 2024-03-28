@@ -87,33 +87,30 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
         private String smiles;
 
         private String candidateInChiKey;
-
-        public PrecursorIonType derivePrecursorAdductOrNull(Ms2Experiment exp) {
-            //to be future proof, make sure, if it is not a hit from analog search
-            if (Math.abs(exp.getIonMass() - getExactMass())<0.2) return getAdduct();
-            else return null;
-        }
-
-        public MolecularFormula deriveNeutralFormulaOrNull(Ms2Experiment exp) {
-            //to be future proof, make sure, if it is not a hit from analog search
-            if(Math.abs(exp.getIonMass() - getExactMass())<0.2) return getMolecularFormula();
-            else return null;
-        }
     }
 
+    /*
+    in case we perform analog search in the future, this threshold determines the exact matches
+    we only use exact matches to get the formula and adduct, not an analog with e.g. H2O difference
+     */
+    private final static double EXACT_SEARCH_MZ_THRESHOLD = 0.2;
+
     public Set<MolecularFormula> deriveDistinctFormulaSetWithThreshold(Ms2Experiment exp, double minSimilarity, double minSharedPeaks) {
-        return deriveDistinctSetWithThreshold(exp, (e, r) -> r.deriveNeutralFormulaOrNull(e), minSimilarity, minSharedPeaks);
+        return deriveDistinctSetWithThreshold(exp, SearchResult::getMolecularFormula, minSimilarity, minSharedPeaks);
     }
 
     public Set<PrecursorIonType> deriveDistinctAdductsSetWithThreshold(Ms2Experiment exp, double minSimilarity, double minSharedPeaks) {
-        return deriveDistinctSetWithThreshold(exp, (e, r) -> r.derivePrecursorAdductOrNull(e), minSimilarity, minSharedPeaks);
+        return deriveDistinctSetWithThreshold(exp, SearchResult::getAdduct, minSimilarity, minSharedPeaks);
     }
 
-    public <T> Set<T> deriveDistinctSetWithThreshold(Ms2Experiment exp, BiFunction<Ms2Experiment, SearchResult, T> f, double minSimilarity, double minSharedPeaks) {
+    /**
+     * ignores any matches from analog spectral library search (different precursor mass)
+     */
+    public <T> Set<T> deriveDistinctSetWithThreshold(Ms2Experiment exp, Function<SearchResult, T> f, double minSimilarity, double minSharedPeaks) {
         return getResults().stream()
                 .filter(r -> r.getSimilarity().similarity >= minSimilarity && r.getSimilarity().sharedPeaks >= minSharedPeaks)
-                .map(r -> f.apply(exp, r))
-                .filter(Objects::nonNull)
+                .filter(r -> Math.abs(exp.getIonMass() - r.getExactMass()) < EXACT_SEARCH_MZ_THRESHOLD)
+                .map(f)
                 .distinct().collect(Collectors.toSet());
     }
 }
