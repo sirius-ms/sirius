@@ -44,10 +44,10 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
         return buildMetadata(Metadata.build());
     }
     //todo store configmaps
-    //todo store extended structure search results
-    //todo should we store db and msnovelist structure separately? scroing it together should not have much drawbacks
+    //todo merge msNovelist candidate with normal candidates so they can be stored together
+      //todo update links of existing candidates with msnovelist flag!
     //todo import data from MsExperiment
-    //todo load input data as MsExperiment
+    //todo provide feature as MsExperiment for computation
     static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
         NetworkingProjectDocumentDatabase.buildMetadata(sourceMetadata)
                 .addCollection(FP_DATA_COLLECTION, Index.unique("type", "charge"))
