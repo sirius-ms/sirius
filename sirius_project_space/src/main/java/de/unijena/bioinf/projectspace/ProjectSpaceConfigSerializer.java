@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.apache.commons.configuration2.ex.ConfigurationException;
@@ -34,7 +35,7 @@ public class ProjectSpaceConfigSerializer implements ComponentSerializer<Compoun
         if (reader.exists(SiriusLocations.COMPOUND_CONFIG)) {
             return reader.binaryFile(SiriusLocations.COMPOUND_CONFIG, s -> {
                 try {
-                    ParameterConfig c = PropertyManager.DEFAULTS.newIndependentInstance(s, "PROJECT_SPACE:" + id.getDirectoryName(),false, "CLI_CONFIG");
+                    ParameterConfig c = PropertyManager.DEFAULTS.newIndependentInstance(s, ConfigType.PROJECT.name(),false, ConfigType.CLI.name());
                     return new ProjectSpaceConfig(c);
                 } catch (ConfigurationException e) {
                     LoggerFactory.getLogger(getClass()).error("Error when reading config for Compound with ID: " + id, e);

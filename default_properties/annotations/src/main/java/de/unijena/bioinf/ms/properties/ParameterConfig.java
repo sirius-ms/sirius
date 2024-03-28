@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -69,6 +69,12 @@ public final class ParameterConfig {
         }
     }
 
+    public Map<String, String> toMap(){
+        final Map<String, String> toWrite = new HashMap<>(config.size());
+        getConfigKeys().forEachRemaining(key -> toWrite.put(key, config.getString(key)));
+        return toWrite;
+    }
+
     public void writeModified(Writer writer) throws IOException {
         try {
             layout.save(localConfig(), writer);
@@ -82,21 +88,25 @@ public final class ParameterConfig {
     }
 
     public ParameterConfig newIndependentInstance(@NotNull final String name, boolean overrideExisting, String... exclusions) {
-        return newIdependendInstance(SiriusConfigUtils.newConfiguration(), name, overrideExisting, Arrays.stream(exclusions).collect(Collectors.toSet()));
+        return newIndependentInstance(SiriusConfigUtils.newConfiguration(), name, overrideExisting, Arrays.stream(exclusions).collect(Collectors.toSet()));
     }
 
+    public ParameterConfig newIndependentInstance(@Nullable final Map<String,String> properties, @NotNull final String name, boolean overrideExisting, String... exclusions) {
+        return newIndependentInstance(SiriusConfigUtils.makeConfigFromMap(properties), name, overrideExisting, Arrays.stream(exclusions).collect(Collectors.toSet()));
+
+    }
     public ParameterConfig newIndependentInstance(@NotNull final ParameterConfig modificationLayer, boolean overrideExisting, String... exclusions) {
         if (!modificationLayer.isModifiable())
             throw new IllegalArgumentException("Unmodifiable \"modificationLayer\"! Only modifiable ParameterConfigs are allowed as modification layer.");
 
-        return newIdependendInstance(modificationLayer.localConfig(), modificationLayer.localConfigName, overrideExisting, Arrays.stream(exclusions).collect(Collectors.toSet()));
+        return newIndependentInstance(modificationLayer.localConfig(), modificationLayer.localConfigName, overrideExisting, Arrays.stream(exclusions).collect(Collectors.toSet()));
     }
 
     public ParameterConfig newIndependentInstance(@NotNull final InputStream streamToLoad, @NotNull final String name, boolean overrideExisting, String... exclusions) throws ConfigurationException {
-        return newIdependendInstance(SiriusConfigUtils.makeConfigFromStream(streamToLoad), name, overrideExisting, Arrays.stream(exclusions).collect(Collectors.toSet()));
+        return newIndependentInstance(SiriusConfigUtils.makeConfigFromStream(streamToLoad), name, overrideExisting, Arrays.stream(exclusions).collect(Collectors.toSet()));
     }
 
-    private ParameterConfig newIdependendInstance(@NotNull final PropertiesConfiguration modifiableLayer, @NotNull final String name, boolean overrideExisting, @NotNull Set<String> excludeConfigs) {
+    private ParameterConfig newIndependentInstance(@NotNull final PropertiesConfiguration modifiableLayer, @NotNull final String name, boolean overrideExisting, @NotNull Set<String> excludeConfigs) {
         if (name.isEmpty())
             throw new IllegalArgumentException("Empty name is not Allowed here");
         if (excludeConfigs.remove(name))

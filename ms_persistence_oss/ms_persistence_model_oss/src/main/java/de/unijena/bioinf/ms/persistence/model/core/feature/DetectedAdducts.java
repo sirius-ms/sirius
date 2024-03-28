@@ -130,14 +130,14 @@ public class DetectedAdducts {
         return !detectedAdducts.isEmpty();
     }
 
-    @JsonInclude
-    public List<DetectedAdduct> getDetectedAdductsList() {
+    @JsonInclude //getter just for serialization
+    private List<DetectedAdduct> getDetectedAdductsList() {
         System.out.println("Call serializer");
         return this.detectedAdducts.values().stream().flatMap(Collection::stream).toList();
     }
 
-    @JsonInclude
-    public void setDetectedAdductsList(List<DetectedAdduct> detectedAdductsList) {
+    @JsonInclude //setter just for deserialization
+    private void setDetectedAdductsList(List<DetectedAdduct> detectedAdductsList) {
         System.out.println("Call deserializer");
         this.detectedAdducts.clear();
         add(detectedAdductsList);
