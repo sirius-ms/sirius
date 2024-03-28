@@ -80,6 +80,7 @@ public interface ProjectsProvider<P extends Project> extends DisposableBean {
         if (!containsProject(nameSuggestion))
             return nameSuggestion;
         int app = 2;
+        nameSuggestion = nameSuggestion.replaceAll("_[0-9]+$", "");
         while (true) {
             final String n = nameSuggestion + "_" + app++;
             if (!containsProject(n))

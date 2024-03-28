@@ -24,6 +24,8 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.ms.gui.io.filefilter.NoSQLProjectFileFilter;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.ErrorReportingDocumentListener;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectInfoOptField;
@@ -37,11 +39,13 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
+import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 
 import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
@@ -56,7 +60,7 @@ public class ProjectCreateAction extends ProjectOpenAction {
 
     public static final String DONT_ASK_NEW_WINDOW_CREATE_KEY = "de.unijena.bioinf.sirius.dragdrop.newWindowCreate.dontAskAgain";
 
-    private static final Pattern projectIdValidator = Pattern.compile("[a-zA-Z0-9_-]+", Pattern.CASE_INSENSITIVE);
+    public static final Pattern PROJECT_ID_VALIDATOR = Pattern.compile("[a-zA-Z0-9_-]+", Pattern.CASE_INSENSITIVE);
 
     public ProjectCreateAction(SiriusGui gui) {
         super("New", gui);
@@ -67,10 +71,16 @@ public class ProjectCreateAction extends ProjectOpenAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+        openDialog(mainFrame,"Create", this::createProject);
+    }
+
+    public static void openDialog(MainFrame mainFrame, String buttonText, BiConsumer<String, Path> onSuccess) {
         JFileChooser jfc = new JFileChooser();
 
         jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.DEFAULT_SAVE_DIR_PATH));
-        jfc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+        jfc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        jfc.removeChoosableFileFilter(jfc.getAcceptAllFileFilter());
+        jfc.addChoosableFileFilter(new NoSQLProjectFileFilter());
 
         Path selectedFile = null;
         String projectName = null;
@@ -121,8 +131,11 @@ public class ProjectCreateAction extends ProjectOpenAction {
                 } else if (name.isBlank()) {
                     error = "Project name must not contain only white spaces.";
                     SwingUtilities.invokeLater(() -> cButton.setEnabled(false));
-                } else if (!projectIdValidator.matcher(name).matches()) {
+                } else if (!PROJECT_ID_VALIDATOR.matcher(name).matches()) {
                     error = "Project name must be valid: \"([a-zA-Z0-9_-]+).sirius\"";
+                    SwingUtilities.invokeLater(() -> cButton.setEnabled(false));
+                } else if(jfc.getCurrentDirectory() != null && Files.exists(jfc.getCurrentDirectory().toPath().resolve(name + SIRIUS_PROJECT_SUFFIX))) {
+                    error = "Project already exists";
                     SwingUtilities.invokeLater(() -> cButton.setEnabled(false));
                 } else {
                     SwingUtilities.invokeLater(() -> cButton.setEnabled(true));
@@ -133,7 +146,8 @@ public class ProjectCreateAction extends ProjectOpenAction {
 
         });
 
-        Component folderLabel = ((JPanel) chooserSouthComponent.getComponent(0)).getComponent(0);
+        JLabel folderLabel = (JLabel) ((JPanel) chooserSouthComponent.getComponent(0)).getComponent(0);
+        folderLabel.setText("Folder name:");
         JLabel projectLabel = new JLabel("Project name:");
         projectLabel.setPreferredSize(new Dimension(folderLabel.getPreferredSize().width, projectNameField.getPreferredSize().height));
 
@@ -141,14 +155,26 @@ public class ProjectCreateAction extends ProjectOpenAction {
         nameComponent.add(projectNameField);
 
         chooserSouthComponent.remove(2);
-        chooserSouthComponent.add(nameComponent, 2);
+        chooserSouthComponent.remove(1);
+        chooserSouthComponent.remove(0);
+        chooserSouthComponent.add(nameComponent, 0);
+
+        jfc.addPropertyChangeListener(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY, (e) -> {
+            if (e.getNewValue() instanceof File file) {
+                final Path f = file.toPath();
+                if (Files.isDirectory(f)) {
+                    SwingUtilities.invokeLater(() -> jfc.setCurrentDirectory(f.toFile()));
+                } else {
+                    SwingUtilities.invokeLater(() -> projectNameField.setText(ensureUniqueProjectId(f)));
+                }
+            }
+        });
 
         // endregion
 
-
-        int returnval = jfc.showDialog(mainFrame, "Create");
+        int returnval = jfc.showDialog(mainFrame, buttonText);
         if (returnval == JFileChooser.APPROVE_OPTION) {
-            Path selDir = jfc.getSelectedFile().toPath();
+            Path selDir = jfc.getCurrentDirectory().toPath();
             projectName = projectNameField.getText();
 
             if (projectName.endsWith(SIRIUS_PROJECT_SUFFIX)) {
@@ -156,21 +182,41 @@ public class ProjectCreateAction extends ProjectOpenAction {
             }
 
             if (Files.exists(selDir) && Files.isDirectory(selDir)) {
-            Jobs.runInBackground(() ->
-                    SiriusProperties.SIRIUS_PROPERTIES_FILE(). setAndStoreProperty(SiriusProperties.DEFAULT_SAVE_DIR_PATH, selDir.toAbsolutePath().toString())
-            );
+                Jobs.runInBackground(() ->
+                        SiriusProperties.SIRIUS_PROPERTIES_FILE(). setAndStoreProperty(SiriusProperties.DEFAULT_SAVE_DIR_PATH, selDir.toAbsolutePath().toString())
+                );
 
-            if (projectIdValidator.matcher(projectName).matches())
-                selectedFile = selDir.resolve(projectName + SIRIUS_PROJECT_SUFFIX);
+                if (PROJECT_ID_VALIDATOR.matcher(projectName).matches())
+                    selectedFile = selDir.resolve(projectName + SIRIUS_PROJECT_SUFFIX);
             }
         }
 
-        if (selectedFile != null) {
+        if (projectName != null) {
             try {
-                createProject(projectName, selectedFile);
+                if (projectName.endsWith(SIRIUS_PROJECT_SUFFIX)) {
+                    projectName = projectName.substring(0, projectName.length() - SIRIUS_PROJECT_SUFFIX.length());
+                }
+
+                onSuccess.accept(projectName, selectedFile);
             } catch (Exception e2) {
                 new StacktraceDialog(mainFrame, e2.getMessage(), e2);
             }
+        }
+    }
+
+    private static String ensureUniqueProjectId(Path nameSuggestion) {
+        if (!Files.exists(nameSuggestion))
+            return nameSuggestion.getFileName().toString();
+        int app = 2;
+        String base = nameSuggestion.getFileName().toString();
+        if (base.endsWith(SIRIUS_PROJECT_SUFFIX)) {
+            base = base.substring(0, base.length() - SIRIUS_PROJECT_SUFFIX.length());
+        }
+        base = base.replaceAll("_[0-9]+$", "");
+        while (true) {
+            Path n = nameSuggestion.getParent().resolve(base + "_" + app++ + SIRIUS_PROJECT_SUFFIX);
+            if (!Files.exists(n))
+                return n.getFileName().toString();
         }
     }
 
@@ -187,7 +233,7 @@ public class ProjectCreateAction extends ProjectOpenAction {
 
             ).awaitResult();
 
-            openProject(pid, closeCurrent);
+            openProjectByID(pid, closeCurrent);
         } catch (ExecutionException e) {
             LoggerFactory.getLogger(getClass()).error("Error when creating new project!", e);
             Jobs.runEDTLater(() -> new StacktraceDialog(gui.getMainFrame(), "Error when creating new project!", e));
