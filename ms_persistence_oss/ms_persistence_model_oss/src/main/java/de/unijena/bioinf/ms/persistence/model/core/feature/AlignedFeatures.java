@@ -57,7 +57,10 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
      */
     private long compoundId;
 
-    //todo add detected adducts here
+    /**
+     * Detected adducts with score and source information for this feature
+     */
+    private DetectedAdducts detectedAdducts;
 
     @JsonIgnore
     @ToString.Exclude
