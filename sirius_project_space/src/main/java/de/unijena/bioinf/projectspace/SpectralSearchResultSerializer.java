@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
@@ -67,6 +69,9 @@ public class SpectralSearchResultSerializer implements ComponentSerializer<Compo
                         .candidateInChiKey(row[6])
                         .smiles(row[7])
                         .similarity(new SpectralSimilarity(Double.parseDouble(row[8]), Integer.parseInt(row[9])))
+                        .exactMass(Double.parseDouble(row[10]))
+                        .molecularFormula(MolecularFormula.parseOrThrow(row[11]))
+                        .adduct(PrecursorIonType.fromString(row[12]))
                         .build()
         ));
 
@@ -92,7 +97,7 @@ public class SpectralSearchResultSerializer implements ComponentSerializer<Compo
         }}));
 
         final String[] header = new String[]{
-                "rank", "querySpectrumIndex", "dbName", "dbId", "uuid", "splash", "candidateInChiKey", "smiles", "similarity", "sharedPeaks"
+                "rank", "querySpectrumIndex", "dbName", "dbId", "uuid", "splash", "candidateInChiKey", "smiles", "similarity", "sharedPeaks", "exactMass", "molecularFormula", "adduct"
         };
         final String[] row = new String[header.length];
         writer.table(SpectralSearchLocations.SEARCH_RESULTS.relFilePath(id), header, searchResult.getResults().stream().map((hit) -> {
@@ -106,6 +111,9 @@ public class SpectralSearchResultSerializer implements ComponentSerializer<Compo
             row[7] = hit.getSmiles();
             row[8] = Double.toString(hit.getSimilarity().similarity);
             row[9] = Integer.toString(hit.getSimilarity().sharedPeaks);
+            row[10] = Double.toString(hit.getExactMass()); //todo: just added this to the serialization. Do we want this? mass, formula and addcut
+            row[11] = hit.getMolecularFormula().toString();
+            row[12] = hit.getAdduct().toString();
             return row;
         })::iterator);
     }
