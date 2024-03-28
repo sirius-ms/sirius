@@ -21,6 +21,7 @@
 package de.unijena.bioinf.spectraldb;
 
 
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 import lombok.Getter;
 
@@ -29,7 +30,7 @@ import lombok.Getter;
  * high scoring reference spectra.
  */
 @Getter
-public class InjectSpectralLibraryMatchFormulas {
+public class InjectSpectralLibraryMatchFormulas implements Ms2ExperimentAnnotation {
 
     /**
      * Similarity Threshold to inject formula candidates no matter which score they have or which filter is applied.

@@ -23,6 +23,7 @@ package de.unijena.bioinf.projectspace;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
@@ -32,6 +33,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Builder
 @NoArgsConstructor
@@ -81,5 +87,30 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
         private String smiles;
 
         private String candidateInChiKey;
+    }
+
+    /*
+    in case we perform analog search in the future, this threshold determines the exact matches
+    we only use exact matches to get the formula and adduct, not an analog with e.g. H2O difference
+     */
+    private final static double EXACT_SEARCH_MZ_THRESHOLD = 0.2;
+
+    public Set<MolecularFormula> deriveDistinctFormulaSetWithThreshold(Ms2Experiment exp, double minSimilarity, double minSharedPeaks) {
+        return deriveDistinctSetWithThreshold(exp, SearchResult::getMolecularFormula, minSimilarity, minSharedPeaks);
+    }
+
+    public Set<PrecursorIonType> deriveDistinctAdductsSetWithThreshold(Ms2Experiment exp, double minSimilarity, double minSharedPeaks) {
+        return deriveDistinctSetWithThreshold(exp, SearchResult::getAdduct, minSimilarity, minSharedPeaks);
+    }
+
+    /**
+     * ignores any matches from analog spectral library search (different precursor mass)
+     */
+    public <T> Set<T> deriveDistinctSetWithThreshold(Ms2Experiment exp, Function<SearchResult, T> f, double minSimilarity, double minSharedPeaks) {
+        return getResults().stream()
+                .filter(r -> r.getSimilarity().similarity >= minSimilarity && r.getSimilarity().sharedPeaks >= minSharedPeaks)
+                .filter(r -> Math.abs(exp.getIonMass() - r.getExactMass()) < EXACT_SEARCH_MZ_THRESHOLD)
+                .map(f)
+                .distinct().collect(Collectors.toSet());
     }
 }

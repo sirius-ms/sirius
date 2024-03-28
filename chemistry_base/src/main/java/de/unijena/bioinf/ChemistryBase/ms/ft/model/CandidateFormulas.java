@@ -44,11 +44,28 @@ public class CandidateFormulas implements Ms2ExperimentAnnotation {
     @NotNull
     protected final Map<Class, Set<MolecularFormula>> providersToNeutralFormulas;
 
+    @NotNull
+    protected final Set<Class> inputFileProviders;
+
+    @NotNull
+    protected final Set<Class> spectralLibraryMatchProviders;
+
     private CandidateFormulas(@NotNull Set<MolecularFormula> neutralformulas, Class provider) {
         //if non-private contructor is needed, add check for only neutral formulas
         //if we actually want to allow measured formulas, this should be done explicitly, not implicitly
         this.providersToNeutralFormulas = new HashMap<>();
         this.providersToNeutralFormulas.put(provider, neutralformulas);
+        this.inputFileProviders = new HashSet<>();
+        this.spectralLibraryMatchProviders = new HashSet<>();
+
+    }
+
+    private CandidateFormulas(@NotNull Map<Class, Set<MolecularFormula>> providersToNeutralFormulas, @NotNull Set<Class> inputFileProviders, @NotNull Set<Class> spectralLibraryMatchProviders) {
+        //if non-private contructor is needed, add check for only neutral formulas
+        //if we actually want to allow measured formulas, this should be done explicitly, not implicitly
+        this.providersToNeutralFormulas = providersToNeutralFormulas;
+        this.inputFileProviders = inputFileProviders;
+        this.spectralLibraryMatchProviders = spectralLibraryMatchProviders;
     }
 
     /**
@@ -64,6 +81,25 @@ public class CandidateFormulas implements Ms2ExperimentAnnotation {
             Set<MolecularFormula> neutralFormulas = providersToNeutralFormulas.computeIfAbsent(provider, (x) -> new HashSet<>());
             neutralFormulas.addAll(otherFormulas.providersToNeutralFormulas.get(provider));
         }
+        inputFileProviders.addAll(otherFormulas.inputFileProviders);
+        spectralLibraryMatchProviders.addAll(spectralLibraryMatchProviders);
+    }
+
+    public void addAndMerge(Set<MolecularFormula> neutralFormulas, Class provider) {
+        Set<MolecularFormula> formulas = providersToNeutralFormulas.computeIfAbsent(provider, (x) -> new HashSet<>());
+        formulas.addAll(neutralFormulas);
+    }
+
+    public void addAndMergeInputFileFormulas(Set<MolecularFormula> neutralFormulas, Class provider) {
+        Set<MolecularFormula> formulas = providersToNeutralFormulas.computeIfAbsent(provider, (x) -> new HashSet<>());
+        formulas.addAll(neutralFormulas);
+        inputFileProviders.add(provider);
+    }
+
+    public void addAndMergeSpectralLibrarySearchFormulas(Set<MolecularFormula> neutralFormulas, Class provider) {
+        Set<MolecularFormula> formulas = providersToNeutralFormulas.computeIfAbsent(provider, (x) -> new HashSet<>());
+        formulas.addAll(neutralFormulas);
+        spectralLibraryMatchProviders.add(provider);
     }
 
     public Whiteset toWhiteSet() {
@@ -71,9 +107,12 @@ public class CandidateFormulas implements Ms2ExperimentAnnotation {
     }
 
     public Whiteset getWhitesetOfInputFileCandidates() {
-        return getCandidatesFromInputFile().map(set -> Whiteset.ofNeutralizedFormulas(set, CandidateFormulas.class)).orElse(null);
+        return Whiteset.ofNeutralizedFormulas(getCandidatesFromInputFile(), CandidateFormulas.class);
     }
 
+    public Whiteset getWhitesetOfSpectralLibaryMatches() {
+        return Whiteset.ofNeutralizedFormulas(getCandidatesFromSpectralLibraryMatches(), CandidateFormulas.class);
+    }
 
     public Set<MolecularFormula> getFormulas() {
         return Collections.unmodifiableSet(collectFormulasFromAllProviders());
@@ -92,17 +131,22 @@ public class CandidateFormulas implements Ms2ExperimentAnnotation {
     }
 
     /**
-     * For now only the JenaMsParser can provide a candidate list.
-     * IF NEW INPUT FORMATS SUPPORT CANDIDATE LISTS, THIS NEEDS BE UPDATED
-     * @return true if candidate formulas were provided by JenaMsParser
+     * @return true if candidate formulas were provided by inputFileProviders such as JenaMsParser
      */
     public boolean hasInputFileProvider() {
-        return getCandidatesFromInputFile().isPresent(); //todo ElementFilter: test
+        return inputFileProviders.size()>0;
     }
 
-    private Optional<Set<MolecularFormula>> getCandidatesFromInputFile() {
-        //currently, only our .ms format can specify candidate lists
-        return providersToNeutralFormulas.entrySet().stream().filter((entry -> entry.getKey().getSimpleName().equals("JenaMsParser"))).map(Map.Entry::getValue).findFirst();
+    private Set<MolecularFormula> getCandidatesFromInputFile() {
+        return providersToNeutralFormulas.entrySet().stream().filter((entry -> inputFileProviders.contains(entry.getKey()))).flatMap(e -> e.getValue().stream()).collect(Collectors.toSet());
+    }
+
+    public boolean hasSpectralLibraryMatchProvidersProvider() {
+        return spectralLibraryMatchProviders.size()>0;
+    }
+
+    public Set<MolecularFormula> getCandidatesFromSpectralLibraryMatches() {
+        return providersToNeutralFormulas.entrySet().stream().filter((entry -> spectralLibraryMatchProviders.contains(entry.getKey()))).flatMap(e -> e.getValue().stream()).collect(Collectors.toSet());
     }
 
     /**
@@ -112,6 +156,10 @@ public class CandidateFormulas implements Ms2ExperimentAnnotation {
      * @return
      */
     public static CandidateFormulas of(List<String> formulas, Class provider) {
+        return of(formulas, provider, false, false);
+    }
+
+    public static CandidateFormulas of(List<String> formulas, Class provider, boolean isInputFileProvider,  boolean isSpectralLibrarySearchProvider) {
         final Set<MolecularFormula> fs = formulas.stream().map(s -> {
             try {
                 return MolecularFormula.parse(s);
@@ -120,7 +168,10 @@ public class CandidateFormulas implements Ms2ExperimentAnnotation {
                 return null;
             }
         }).filter(Objects::nonNull).collect(Collectors.toSet());
-        return new CandidateFormulas(fs, provider);
+        CandidateFormulas cf =  new CandidateFormulas(fs, provider);
+        if (isInputFileProvider) cf.inputFileProviders.add(provider);
+        if (isSpectralLibrarySearchProvider) cf.spectralLibraryMatchProviders.add(provider);
+        return cf;
     }
 
     /**
