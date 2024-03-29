@@ -20,22 +20,25 @@
 
 package de.unijena.bioinf.projectspace;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import lombok.extern.jackson.Jacksonized;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -63,8 +66,7 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
     @SuperBuilder
     @Getter
     @Setter
-    @NoArgsConstructor
-    @AllArgsConstructor
+    @Jacksonized
     public static class SearchResult {
         @Builder.Default
         private int rank = -1;
@@ -81,7 +83,12 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
 
         private String splash;
 
+        @JsonSerialize(using = ToStringSerializer.class)
+        @JsonDeserialize(using = SimpleSerializers.MolecularFormulaDeserializer.class)
         private MolecularFormula molecularFormula;
+
+        @JsonSerialize(using = ToStringSerializer.class)
+        @JsonDeserialize(using = SimpleSerializers.PrecursorIonTypeDeserializer.class)
         private PrecursorIonType adduct;
         private double exactMass;
         private String smiles;
@@ -110,7 +117,6 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
         return getResults().stream()
                 .filter(r -> r.getSimilarity().similarity >= minSimilarity && r.getSimilarity().sharedPeaks >= minSharedPeaks)
                 .filter(r -> Math.abs(exp.getIonMass() - r.getExactMass()) < EXACT_SEARCH_MZ_THRESHOLD)
-                .map(f)
-                .distinct().collect(Collectors.toSet());
+                .map(f).collect(Collectors.toSet());
     }
 }
