@@ -153,12 +153,8 @@ public class SiriusProjectSpaceManager implements ProjectSpaceManager {
     }
 
     @Override
-    public void deleteFingerIdData() {
+    public void deleteFingerprintData() {
         deleteProjectSpaceProperty(FingerIdDataProperty.class);
-    }
-
-    @Override
-    public void deleteCanopusData() {
         deleteProjectSpaceProperty(CanopusCfDataProperty.class);
         deleteProjectSpaceProperty(CanopusNpcDataProperty.class);
     }

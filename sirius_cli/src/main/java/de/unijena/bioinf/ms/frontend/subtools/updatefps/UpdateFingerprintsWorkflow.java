@@ -64,10 +64,8 @@ public class UpdateFingerprintsWorkflow extends BasicMasterJJob<Boolean> impleme
             inv.accept(i);
         }));
         //remove Fingerprint data
-        updateProgress(0, max, progress.getAndIncrement(), "delete CSI:FinerID Data");
-        projectSpace.deleteFingerIdData();
-        updateProgress(0, max, progress.getAndIncrement(), "delete CANOPUS Data");
-        projectSpace.deleteCanopusData();
+        updateProgress(0, max, progress.getAndIncrement(), "delete CSI:FinerID and CANOPUS fingerprint Data");
+        projectSpace.deleteFingerprintData();
         updateProgress(0, max, progress.get(), "DONE!");
         return true;
     }
