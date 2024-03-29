@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.persistence.model.core.spectrum;
 
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import jakarta.persistence.Id;
 import lombok.*;
 
@@ -52,5 +53,10 @@ public class MSData {
      * Extracted isotope pattern
      */
     private IsotopePattern isotopePattern;
+
+    /**
+     * A merged or representative MS1 spectrum e.g. for visualization in the gui
+     */
+    private SimpleSpectrum mergedMs1Spectrum;
 
 }

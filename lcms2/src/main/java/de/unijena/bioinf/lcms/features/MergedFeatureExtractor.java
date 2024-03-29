@@ -184,11 +184,9 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
 
         feature.setRetentionTime(rt);
         feature.setApexMass(mTrace.mz(segment.apex));
-        feature.setApexIntensity(mTrace.intensity(segment.apex));
+        feature.setApexIntensity((double) mTrace.intensity(segment.apex));
         feature.setAverageMass(mTrace.averagedMz());
-        feature.setSnr(
-                (stats.noiseLevel(segment.apex) > 0) ? mTrace.intensity(segment.apex) / stats.noiseLevel(segment.apex) : 0
-        );
+        feature.setSnr(((stats.noiseLevel(segment.apex) > 0) ? (double) (mTrace.intensity(segment.apex) / stats.noiseLevel(segment.apex)) : null));
 
         if (!trace2trace.containsKey(traceUid)) {
             throw new RuntimeException(String.format("Unknown trace with uid %d", traceUid));
