@@ -23,8 +23,10 @@ package de.unijena.bioinf.ms.persistence.storage;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintData;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.StandardFingerprintData;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.JSONReader;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CanopusPredictionDeserializer;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CsiPredictionDeserializer;
@@ -32,9 +34,11 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Index;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
+import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 
 public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> extends NetworkingProjectDocumentDatabase<Storage> {
@@ -104,14 +108,23 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
     <T extends FingerprintData<?>> Optional<T> findFingerprintData(Class<T> dataClazz, int charge);
 
+    @SneakyThrows
     default Optional<CsiStructureSearchResult> findCsiStructureSearchResult(long alignedFeatureId, boolean includeStructureMatches) {
-        try {
-            Optional<CsiStructureSearchResult> result = getStorage().getByPrimaryKey(alignedFeatureId, CsiStructureSearchResult.class);
-            if (includeStructureMatches && result.isPresent())
-                getStorage().fetchAllChildren(result.get(), "alignedFeatureId", "matches", CsiStructureMatch.class);
-            return result;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        Optional<CsiStructureSearchResult> result = getStorage().getByPrimaryKey(alignedFeatureId, CsiStructureSearchResult.class);
+        if (includeStructureMatches && result.isPresent())
+            getStorage().fetchAllChildren(result.get(), "alignedFeatureId", "matches", CsiStructureMatch.class);
+        return result;
+    }
+
+    default AlignedFeatures importMs2ExperimentAsAlignedFeature(Ms2Experiment exp) throws IOException {
+        AlignedFeatures alignedFeature = StorageUtils.fromMs2Experiment(exp);
+        importAlignedFeatures(List.of(alignedFeature));
+        return alignedFeature;
+    }
+
+    default List<AlignedFeatures> importMs2ExperimentsAsAlignedFeatures(List<Ms2Experiment> ms2Experiments) throws IOException {
+        List<AlignedFeatures> alignedFeatures = ms2Experiments.stream().map(StorageUtils::fromMs2Experiment).toList();
+        importAlignedFeatures(alignedFeatures);
+        return alignedFeatures;
     }
 }
