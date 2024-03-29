@@ -27,7 +27,6 @@ import de.unijena.bioinf.fingerid.*;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.jjobs.JobSubmitter;
-import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
@@ -44,8 +43,6 @@ import java.util.stream.Collectors;
  * Subtooljob for CSI:FingerID fingerprint prediction
  */
 public class FingerprintSubToolJob extends InstanceJob {
-
-    public static final List<Class<? extends DataAnnotation>> formulaResultComponentsToClear = List.of();
 
     public FingerprintSubToolJob(JobSubmitter submitter) {
         super(submitter);
@@ -162,12 +159,6 @@ public class FingerprintSubToolJob extends InstanceJob {
         }
         return Collections.EMPTY_SET;
     }
-
-    @Override
-    protected Class<? extends DataAnnotation>[] formulaResultComponentsToClear() {
-        return formulaResultComponentsToClear.toArray(Class[]::new);
-    }
-
 
     @Override
     public String getToolName() {

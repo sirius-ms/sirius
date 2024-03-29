@@ -24,6 +24,8 @@ import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,15 +54,14 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
     public static final Logger LOG = LoggerFactory.getLogger(CLIRootOptions.class);
 
     protected final DefaultParameterConfigLoader defaultConfigOptions;
+
+    @Getter
+    @Setter
     protected ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory;
 
     public CLIRootOptions(@NotNull DefaultParameterConfigLoader defaultConfigOptions, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory) {
         this.defaultConfigOptions = defaultConfigOptions;
         this.spaceManagerFactory = spaceManagerFactory;
-    }
-
-    public ProjectSpaceManagerFactory<? extends ProjectSpaceManager> getSpaceManagerFactory() {
-        return spaceManagerFactory;
     }
 
     public DefaultParameterConfigLoader getDefaultConfigOptions() {

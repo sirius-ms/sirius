@@ -21,12 +21,12 @@
 package de.unijena.bioinf.ms.middleware.service.gui;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.SiriusGuiFactory;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.gui.GuiInfo;
 import de.unijena.bioinf.ms.middleware.model.gui.GuiParameters;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
-import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.context.ApplicationContext;
@@ -40,16 +40,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public abstract class AbstractGuiService<P extends Project> implements GuiService<P> {
+public class GuiServiceImpl implements GuiService {
 
     protected final Map<String, SiriusGui> siriusGuiInstances = new ConcurrentHashMap<>();
 
     protected final EventService<?> eventService;
     private final ApplicationContext applicationContext;
 
-    protected AbstractGuiService(EventService<?> eventService, ApplicationContext applicationContext) {
+    private final SiriusGuiFactory guiFactory;
+
+    public GuiServiceImpl(EventService<?> eventService, ApplicationContext applicationContext) {
+        this(new SiriusGuiFactory(), eventService, applicationContext);
+    }
+    public GuiServiceImpl(SiriusGuiFactory guiFactory, EventService<?> eventService, ApplicationContext applicationContext) {
         this.eventService = eventService;
         this.applicationContext = applicationContext;
+        this.guiFactory = guiFactory;
     }
 
     @Override
@@ -103,6 +109,10 @@ public abstract class AbstractGuiService<P extends Project> implements GuiServic
         return false;
     }
 
+    protected SiriusGui makeGuiInstance(String projectId) {
+        return guiFactory.newGui(projectId);
+    }
+
     @Override
     public void applyToGuiInstance(@NotNull String projectId, @NotNull GuiParameters guiParameters) {
         SiriusGui gui = siriusGuiInstances.get(projectId);
@@ -116,7 +126,6 @@ public abstract class AbstractGuiService<P extends Project> implements GuiServic
     @Override
     public void shutdown() {
         siriusGuiInstances.forEach((k, v) -> v.shutdown());
+        guiFactory.shutdowm();
     }
-
-    protected abstract SiriusGui makeGuiInstance(String projectId);
 }

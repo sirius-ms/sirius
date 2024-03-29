@@ -23,13 +23,12 @@ package de.unijena.bioinf.ms.middleware.service.gui;
 
 import de.unijena.bioinf.ms.middleware.model.gui.GuiInfo;
 import de.unijena.bioinf.ms.middleware.model.gui.GuiParameters;
-import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public interface GuiService<P extends Project> {
+public interface GuiService {
     default void createGuiInstance(@NotNull String projectId) {
         createGuiInstance(projectId, null);
     }

@@ -22,9 +22,6 @@ package de.unijena.bioinf.ms.middleware;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
-import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.jjobs.JobSubmitter;
-import de.unijena.bioinf.jjobs.ProgressJJob;
 import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.ms.annotations.PrintCitations;
 import de.unijena.bioinf.ms.frontend.Run;
@@ -32,21 +29,16 @@ import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.Workspace;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
-import de.unijena.bioinf.ms.frontend.subtools.ToolChainJob;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.middleware.MiddlewareAppOptions;
 import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
-import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
-import de.unijena.bioinf.ms.middleware.service.projects.NitriteProjectSpaceManagerFactory;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import de.unijena.bioinf.rest.ProxyManager;
 import io.swagger.v3.oas.annotations.OpenAPIDefinition;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.boot.Banner;
@@ -58,7 +50,6 @@ import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.ApplicationPidFileWriter;
 import org.springframework.boot.web.context.WebServerPortFileWriter;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Bean;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -70,44 +61,10 @@ import java.util.List;
 @OpenAPIDefinition
 @Slf4j
 public class SiriusMiddlewareApplication extends SiriusCLIApplication implements CommandLineRunner, DisposableBean {
-
-    @Getter
-    private static final ProjectSpaceManagerFactory<? extends ProjectSpaceManager> psf = initProjectFactory();
-
-    protected static ProjectSpaceManagerFactory<? extends ProjectSpaceManager> initProjectFactory() {
-        // TODO how is the config managed in the new project space?
-        //enable gui support
-        // modify fingerid subtool so that it works with reduced GUI candidate list.
-//        FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidatesTopK.class);
-//        FingerblastSubToolJob.formulaResultComponentsToClear.add(FBCandidateFingerprintsTopK.class);
-//
-//        ProjectSpaceConfiguration config = SiriusProjectSpaceManagerFactory.newDefaultConfig();
-//        config.registerComponent(FormulaResult.class, FBCandidatesTopK.class, new FBCandidatesSerializerTopK(FBCandidateNumber.GUI_DEFAULT));
-//        config.registerComponent(FormulaResult.class, FBCandidateFingerprintsTopK.class, new FBCandidateFingerprintSerializerTopK(FBCandidateNumber.GUI_DEFAULT));
-
-        return new NitriteProjectSpaceManagerFactory();
-    }
-
-    private final static InstanceBufferFactory<?> bufferFactory = (bufferSize, instances, tasks, dependJob, progressSupport) ->
-            new SimpleInstanceBuffer(bufferSize, instances, tasks, dependJob, progressSupport, new JobSubmitter() {
-                @Override
-                public <Job extends JJob<Result>, Result> Job submitJob(Job j) {
-                    if (j instanceof ToolChainJob<?> tj) {
-                        Jobs.submit((ProgressJJob<?>) j, j::identifier, tj::getProjectName, tj::getToolName);
-                        return j;
-                    } else {
-                        return Jobs.MANAGER().submitJob(j);
-                    }
-                }
-            });
-    private final static MiddlewareAppOptions<?> middlewareOpts = new MiddlewareAppOptions<>();
+    private static MiddlewareAppOptions<?> middlewareOpts;
+    private static CLIRootOptions rootOptions ;
 
     private final ApplicationContext appContext;
-
-    @Bean
-    public InstanceBufferFactory<?> instanceBufferFactory() {
-        return bufferFactory;
-    }
 
     public SiriusMiddlewareApplication(ApplicationContext appContext) {
         this.appContext = appContext;
@@ -145,9 +102,11 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 PropertyManager.setProperty("de.unijena.bioinf.sirius.BackgroundRuns.autoremove", "false");
 
                 //parse args before spring app starts so we can manipulate app behaviour via command line
-                CLIRootOptions rootOptions = new CLIRootOptions(new DefaultParameterConfigLoader(), psf);
+                //Init without space factory, will be added later when spring is running.
+                middlewareOpts = new MiddlewareAppOptions<>();
+                rootOptions = new CLIRootOptions(new DefaultParameterConfigLoader(), null);
                 measureTime("init Run");
-                RUN = new Run(new WorkflowBuilder(rootOptions, bufferFactory, List.of(middlewareOpts)));
+                RUN = new Run(new WorkflowBuilder(rootOptions, List.of(middlewareOpts)));
                 measureTime("Start Parse args");
                 RUN.parseArgs(args);
                 measureTime("Parse args Done");
@@ -181,8 +140,9 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
     public void run(String... args) {
         middlewareOpts.setProjectsProvider(appContext.getBean(ProjectsProvider.class));
         middlewareOpts.setGuiService(appContext.getBean(GuiService.class));
+        rootOptions.setSpaceManagerFactory(appContext.getBean(ProjectSpaceManagerFactory.class));
 
-        successfulParsed = RUN.makeWorkflow() != null;
+        successfulParsed = RUN.makeWorkflow(appContext.getBean(InstanceBufferFactory.class)) != null;
         measureTime("Parse args Done!");
 
         if (successfulParsed) {

@@ -231,11 +231,6 @@ public class MsNovelistSubToolJob extends InstanceJob {
     }
 
     @Override
-    protected Class<? extends DataAnnotation>[] formulaResultComponentsToClear() {
-        return formulaResultComponentsToClear.toArray(Class[]::new);
-    }
-
-    @Override
     public String getToolName() {
         return PicoUtils.getCommand(MsNovelistOptions.class).name();
     }
