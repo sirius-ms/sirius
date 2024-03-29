@@ -50,10 +50,17 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
 
     private final IOFunctions.BiIOFunction<InstanceBean, Integer, List<FingerprintCandidateBean>> dataExtractor; //todo allow user specifiable or pagination
 
-    public StructureList(final CompoundList compoundList, IOFunctions.BiIOFunction<InstanceBean, Integer, List<FingerprintCandidateBean>> dataExtractor) {
+    /**
+     * true if the extracted structre data are denovo structure (from MSNovelist).
+     * Required since InstanceBean has some information (expansive search) that is specific to the database structures)
+     */
+    private final boolean isDenovoStructureCandidates;
+
+    public StructureList(final CompoundList compoundList, IOFunctions.BiIOFunction<InstanceBean, Integer, List<FingerprintCandidateBean>> dataExtractor, boolean isDenovoStructureCandidates) {
         super(FingerprintCandidateBean.class);
         this.dataExtractor = dataExtractor;
         this.compoundList = compoundList;
+        this.isDenovoStructureCandidates = isDenovoStructureCandidates;
         elementListSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         csiScoreStats = new DoubleListStats();
         logPStats = new DoubleListStats();
@@ -171,5 +178,9 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
                 return c.getScore() >= csiScoreStats.getMax();
             }
         };
+    }
+
+    public boolean isDenovoStructureCandidates() {
+        return isDenovoStructureCandidates;
     }
 }

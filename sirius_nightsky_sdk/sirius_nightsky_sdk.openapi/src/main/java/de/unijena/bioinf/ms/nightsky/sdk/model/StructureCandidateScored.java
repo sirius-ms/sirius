@@ -41,8 +41,6 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StructureCandidateScored.JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES,
   StructureCandidateScored.JSON_PROPERTY_CSI_SCORE,
   StructureCandidateScored.JSON_PROPERTY_TANIMOTO_SIMILARITY,
-  StructureCandidateScored.JSON_PROPERTY_CONFIDENCE_EXACT_MATCH,
-  StructureCandidateScored.JSON_PROPERTY_CONFIDENCE_APPROX_MATCH,
   StructureCandidateScored.JSON_PROPERTY_MCES_DIST_TO_TOP_HIT,
   StructureCandidateScored.JSON_PROPERTY_FINGERPRINT
 })
@@ -71,12 +69,6 @@ public class StructureCandidateScored {
 
   public static final String JSON_PROPERTY_TANIMOTO_SIMILARITY = "tanimotoSimilarity";
   private Double tanimotoSimilarity;
-
-  public static final String JSON_PROPERTY_CONFIDENCE_EXACT_MATCH = "confidenceExactMatch";
-  private Double confidenceExactMatch;
-
-  public static final String JSON_PROPERTY_CONFIDENCE_APPROX_MATCH = "confidenceApproxMatch";
-  private Double confidenceApproxMatch;
 
   public static final String JSON_PROPERTY_MCES_DIST_TO_TOP_HIT = "mcesDistToTopHit";
   private Double mcesDistToTopHit;
@@ -311,58 +303,6 @@ public class StructureCandidateScored {
   }
 
 
-  public StructureCandidateScored confidenceExactMatch(Double confidenceExactMatch) {
-    
-    this.confidenceExactMatch = confidenceExactMatch;
-    return this;
-  }
-
-   /**
-   * Confidence Score that represents the confidence whether the top hit is correct.
-   * @return confidenceExactMatch
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CONFIDENCE_EXACT_MATCH)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Double getConfidenceExactMatch() {
-    return confidenceExactMatch;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_CONFIDENCE_EXACT_MATCH)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setConfidenceExactMatch(Double confidenceExactMatch) {
-    this.confidenceExactMatch = confidenceExactMatch;
-  }
-
-
-  public StructureCandidateScored confidenceApproxMatch(Double confidenceApproxMatch) {
-    
-    this.confidenceApproxMatch = confidenceApproxMatch;
-    return this;
-  }
-
-   /**
-   * Confidence Score that represents the confidence whether the top hit or a very similar hit (estimated by MCES distance) is correct.
-   * @return confidenceApproxMatch
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_CONFIDENCE_APPROX_MATCH)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Double getConfidenceApproxMatch() {
-    return confidenceApproxMatch;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_CONFIDENCE_APPROX_MATCH)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setConfidenceApproxMatch(Double confidenceApproxMatch) {
-    this.confidenceApproxMatch = confidenceApproxMatch;
-  }
-
-
   public StructureCandidateScored mcesDistToTopHit(Double mcesDistToTopHit) {
     
     this.mcesDistToTopHit = mcesDistToTopHit;
@@ -431,15 +371,13 @@ public class StructureCandidateScored {
         Objects.equals(this.spectralLibraryMatches, structureCandidateScored.spectralLibraryMatches) &&
         Objects.equals(this.csiScore, structureCandidateScored.csiScore) &&
         Objects.equals(this.tanimotoSimilarity, structureCandidateScored.tanimotoSimilarity) &&
-        Objects.equals(this.confidenceExactMatch, structureCandidateScored.confidenceExactMatch) &&
-        Objects.equals(this.confidenceApproxMatch, structureCandidateScored.confidenceApproxMatch) &&
         Objects.equals(this.mcesDistToTopHit, structureCandidateScored.mcesDistToTopHit) &&
         Objects.equals(this.fingerprint, structureCandidateScored.fingerprint);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(inchiKey, smiles, structureName, xlogP, dbLinks, spectralLibraryMatches, csiScore, tanimotoSimilarity, confidenceExactMatch, confidenceApproxMatch, mcesDistToTopHit, fingerprint);
+    return Objects.hash(inchiKey, smiles, structureName, xlogP, dbLinks, spectralLibraryMatches, csiScore, tanimotoSimilarity, mcesDistToTopHit, fingerprint);
   }
 
   @Override
@@ -454,8 +392,6 @@ public class StructureCandidateScored {
     sb.append("    spectralLibraryMatches: ").append(toIndentedString(spectralLibraryMatches)).append("\n");
     sb.append("    csiScore: ").append(toIndentedString(csiScore)).append("\n");
     sb.append("    tanimotoSimilarity: ").append(toIndentedString(tanimotoSimilarity)).append("\n");
-    sb.append("    confidenceExactMatch: ").append(toIndentedString(confidenceExactMatch)).append("\n");
-    sb.append("    confidenceApproxMatch: ").append(toIndentedString(confidenceApproxMatch)).append("\n");
     sb.append("    mcesDistToTopHit: ").append(toIndentedString(mcesDistToTopHit)).append("\n");
     sb.append("    fingerprint: ").append(toIndentedString(fingerprint)).append("\n");
     sb.append("}");

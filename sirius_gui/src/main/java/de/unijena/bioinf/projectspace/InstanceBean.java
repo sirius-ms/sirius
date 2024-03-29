@@ -258,8 +258,8 @@ public class InstanceBean implements SiriusPCS {
 
     public Optional<Double> getConfidenceScore(ConfidenceDisplayMode viewMode) {
         return viewMode == ConfidenceDisplayMode.APPROXIMATE ?
-                getStructureAnnotation().map(StructureCandidateScored::getConfidenceApproxMatch) :
-                getStructureAnnotation().map(StructureCandidateScored::getConfidenceExactMatch);
+                Optional.ofNullable(getSourceFeature().getTopAnnotations().getConfidenceApproxMatch()) :
+                Optional.ofNullable(getSourceFeature().getTopAnnotations().getConfidenceExactMatch());
     }
 
     public List<FormulaResultBean> getFormulaCandidates() {
