@@ -52,7 +52,12 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
     protected JPanel getNorth() {
         final JPanel north = super.getNorth();
         north.add(dbFilterPanel, BorderLayout.CENTER);
-        north.add(new LipidLabel(source), BorderLayout.SOUTH); //tpd
+        final JPanel south = new JPanel();
+        final BoxLayout southLayout = new BoxLayout(south, BoxLayout.PAGE_AXIS);
+        south.setLayout(southLayout);
+        south.add(new LipidLabel(source));
+        if (!source.isDenovoStructureCandidates()) south.add(new ExpansiveSearchLabel(source));
+        north.add(south, BorderLayout.SOUTH);
         return north;
     }
 
