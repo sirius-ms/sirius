@@ -1,6 +1,7 @@
 package de.unijena.bioinf.ms.persistence.storage;
 
 import com.google.common.collect.Streams;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
@@ -16,11 +17,11 @@ import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.JSONReader;
+import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts;
-import de.unijena.bioinf.ms.persistence.model.sirius.FTreeResult;
-import de.unijena.bioinf.ms.persistence.model.sirius.Parameters;
+import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -29,6 +30,7 @@ import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.storage.blob.Compressible;
+import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.dizitart.no2.exceptions.UniqueConstraintException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -361,6 +363,198 @@ public class SiriusProjectDatabaseImplTest {
             assertEquals(1, db.getStorage().remove(project1), "Delete project config");
             assertTrue(db.getStorage().getByPrimaryKey(project1.getParametersId(), project1.getClass()).isEmpty(), "check if deleted project not exists");
             assertEquals(1, db.getStorage().countAll(Parameters.class));
+        });
+    }
+
+    @Test
+    public void crudSpectraMatchTest() {
+        //prepare
+        SpectraMatch match1 = SpectraMatch.builder()
+                .alignedFeatureId(10)
+                .candidateInChiKey("MYWUZJCMWCOHBA")
+                .dbName("SpecLib-9000")
+                .dbId("42")
+                .similarity(SpectralSimilarity.builder().similarity(.9).sharedPeaks(23).build())
+                .smiles("C[C@@H](CC1=CC=CC=C1)NC")
+                .molecularFormula(MolecularFormula.parseOrThrow("C10H15N"))
+                .adduct(PrecursorIonType.fromString("[M+H]+"))
+                .exactMass(149.23)
+                .querySpectrumIndex(0)
+                .rank(1)
+                .build();
+
+        withDb(db -> {
+            //insert
+            assertEquals(1, db.getStorage().insert(match1), "Failed to Insert match. Affected entries wrong");
+            assertTrue(db.getStorage().getByPrimaryKey(match1.getUuid(), match1.getClass()).isPresent(), "Inserted match does not exist!");
+            assertEquals(match1.getSimilarity(), db.getStorage().getByPrimaryKey(match1.getUuid(), match1.getClass()).get().getSimilarity());
+            assertEquals(match1.getAdduct(), db.getStorage().getByPrimaryKey(match1.getUuid(), match1.getClass()).get().getAdduct());
+            assertEquals(match1.getMolecularFormula(), db.getStorage().getByPrimaryKey(match1.getUuid(), match1.getClass()).get().getMolecularFormula());
+            {
+                //fail duplicate entry
+                RuntimeException thrown = assertThrowsExactly(RuntimeException.class, () -> db.getStorage().insert(match1));
+                assertInstanceOf(UniqueConstraintException.class, thrown.getCause());
+            }
+
+            //delete entry
+            assertEquals(1, db.getStorage().remove(match1), "Delete match failed.");
+            assertTrue(db.getStorage().getByPrimaryKey(match1.getUuid(), match1.getClass()).isEmpty(), "Match still exists after delete");
+            assertEquals(0, db.getStorage().countAll(SpectraMatch.class));
+        });
+    }
+
+    @Test
+    public void crudCsiMatchTest() {
+        //prepare
+        CsiStructureMatch match1 = CsiStructureMatch.builder()
+                .formulaId(1)
+                .alignedFeatureId(10)
+                .candidateInChiKey("BQJCRHHNABKAKU")
+                .csiScore(-20.008d)
+                .tanimotoSimilarity(0.97)
+                .mcesDistToTopHit(1.5d)
+                .build();
+
+        withDb(db -> {
+            //insert
+            assertEquals(1, db.getStorage().insert(match1), "Failed to Insert match. Affected entries wrong");
+            assertTrue(db.getStorage().getByPrimaryKey(match1.getCandidateInChiKey(), match1.getClass()).isPresent(), "Inserted match does not exist!");
+            assertEquals(0.97d, db.getStorage().getByPrimaryKey(match1.getCandidateInChiKey(), match1.getClass()).map(CsiStructureMatch::getTanimotoSimilarity).orElse(null));
+            assertEquals(1.5d, db.getStorage().getByPrimaryKey(match1.getCandidateInChiKey(), match1.getClass()).map(CsiStructureMatch::getMcesDistToTopHit).orElse(null));
+            assertEquals(-20.008d, db.getStorage().getByPrimaryKey(match1.getCandidateInChiKey(), match1.getClass()).map(CsiStructureMatch::getCsiScore).orElse(null));
+
+            {
+                //fail duplicate entry
+                RuntimeException thrown = assertThrowsExactly(RuntimeException.class, () -> db.getStorage().insert(match1));
+                assertInstanceOf(UniqueConstraintException.class, thrown.getCause());
+            }
+            {
+                //fail with null key
+                assertThrowsExactly(IOException.class, () -> db.getStorage().insert(DenovoStructureMatch.builder()));
+            }
+            //delete entry
+            assertEquals(1, db.getStorage().remove(match1), "Delete match failed.");
+            assertTrue(db.getStorage().getByPrimaryKey(match1.getCandidateInChiKey(), match1.getClass()).isEmpty(), "Match still exists after delete");
+            assertEquals(0, db.getStorage().countAll(CsiStructureMatch.class));
+        });
+    }
+
+    @Test
+    public void crudDeNovoMatchTest() {
+        //prepare
+        DenovoStructureMatch match1 = DenovoStructureMatch.builder()
+                .formulaId(1)
+                .alignedFeatureId(10)
+                .candidateInChiKey("BQJCRHHNABKAKU")
+                .csiScore(-20.008d)
+                .tanimotoSimilarity(0.97)
+                .modelScore(9000d)
+                .build();
+
+        withDb(db -> {
+            //insert
+            assertEquals(1, db.getStorage().insert(match1), "Failed to Insert match. Affected entries wrong");
+            assertTrue(db.getStorage().getByPrimaryKey(match1.getCandidateInChiKey(), match1.getClass()).isPresent(), "Inserted match does not exist!");
+            assertEquals(0.97d, db.getStorage().getByPrimaryKey(match1.getCandidateInChiKey(), match1.getClass()).map(DenovoStructureMatch::getTanimotoSimilarity).orElse(null));
+            assertEquals(9000d, db.getStorage().getByPrimaryKey(match1.getCandidateInChiKey(), match1.getClass()).map(DenovoStructureMatch::getModelScore).orElse(null));
+            assertEquals(-20.008d, db.getStorage().getByPrimaryKey(match1.getCandidateInChiKey(), match1.getClass()).map(DenovoStructureMatch::getCsiScore).orElse(null));
+
+            {
+                //fail duplicate entry
+                RuntimeException thrown = assertThrowsExactly(RuntimeException.class, () -> db.getStorage().insert(match1));
+                assertInstanceOf(UniqueConstraintException.class, thrown.getCause());
+            }
+            {
+                //fail with null key
+                assertThrowsExactly(IOException.class, () -> db.getStorage().insert(DenovoStructureMatch.builder()));
+            }
+            //delete entry
+            assertEquals(1, db.getStorage().remove(match1), "Delete match failed.");
+            assertTrue(db.getStorage().getByPrimaryKey(match1.getCandidateInChiKey(), match1.getClass()).isEmpty(), "Match still exists after delete");
+            assertEquals(0, db.getStorage().countAll(DenovoStructureMatch.class));
+        });
+    }
+
+    @Test
+    public void crudCsiStructureSearchResultTest() {
+        CsiStructureSearchResult result = CsiStructureSearchResult.builder()
+                .confidenceApprox(.9)
+                .confidenceExact(.81)
+                .alignedFeatureId(10)
+                .expansiveSearchConfidenceMode(ExpansiveSearchConfidenceMode.Mode.APPROXIMATE)
+                .specifiedDatabases(List.of("HMDB", "COCONUT"))
+                .expandedDatabases(List.of("PUBCHEM"))
+                .matches(List.of(CsiStructureMatch.builder().build()))
+                .build();
+
+        withDb(db -> {
+            //insert
+            assertEquals(1, db.getStorage().insert(result), "Failed to Insert result. Affected entries wrong");
+            assertTrue(db.getStorage().getByPrimaryKey(result.getAlignedFeatureId(), result.getClass()).isPresent(), "Inserted result does not exist!");
+            assertEquals(.9, db.getStorage().getByPrimaryKey(result.getAlignedFeatureId(), result.getClass()).map(CsiStructureSearchResult::getConfidenceApprox).orElse(null));
+            assertEquals(.81, db.getStorage().getByPrimaryKey(result.getAlignedFeatureId(), result.getClass()).map(CsiStructureSearchResult::getConfidenceExact).orElse(null));
+            assertEquals(10, db.getStorage().getByPrimaryKey(result.getAlignedFeatureId(), result.getClass()).map(CsiStructureSearchResult::getAlignedFeatureId).orElse(null));
+            assertNull(db.getStorage().getByPrimaryKey(result.getAlignedFeatureId(), result.getClass()).get().getMatches(), "Match should not have been serialized");
+
+            {
+                //fail duplicate entry
+                RuntimeException thrown = assertThrowsExactly(RuntimeException.class, () -> db.getStorage().insert(result));
+                assertInstanceOf(UniqueConstraintException.class, thrown.getCause());
+            }
+            {
+                //fail with null key
+                assertThrowsExactly(IOException.class, () -> db.getStorage().insert(CsiStructureSearchResult.builder()));
+            }
+            //delete entry
+            assertEquals(1, db.getStorage().remove(result), "Delete match failed.");
+            assertTrue(db.getStorage().getByPrimaryKey(result.getAlignedFeatureId(), result.getClass()).isEmpty(), "Match still exists after delete");
+            assertEquals(0, db.getStorage().countAll(CsiStructureSearchResult.class));
+        });
+    }
+
+    @Test
+    public void csiStructureSearchResultMatchJoinTest() {
+        //prepare
+        CsiStructureMatch match1 = CsiStructureMatch.builder().formulaId(1).alignedFeatureId(10)
+                .candidateInChiKey("BQJCRHHNABKAKU").csiScore(-20.008d).tanimotoSimilarity(0.97).mcesDistToTopHit(0d)
+                .build();
+        CsiStructureMatch match2 = CsiStructureMatch.builder().formulaId(1).alignedFeatureId(10)
+                .candidateInChiKey("ZPUCINDJVBIVPJ").csiScore(-297.5d).tanimotoSimilarity(0.68).mcesDistToTopHit(Double.NaN)
+                .build();
+        CsiStructureMatch noMatch1 = CsiStructureMatch.builder().formulaId(1).alignedFeatureId(99)
+                .candidateInChiKey("MYWUZJCMWCOHBA").csiScore(-297.5d).tanimotoSimilarity(0.68).mcesDistToTopHit(Double.NaN)
+                .build();
+
+        CsiStructureSearchResult result = CsiStructureSearchResult.builder().confidenceApprox(.9).confidenceExact(.81)
+                .alignedFeatureId(10).expansiveSearchConfidenceMode(ExpansiveSearchConfidenceMode.Mode.APPROXIMATE)
+                .specifiedDatabases(List.of("HMDB", "COCONUT")).expandedDatabases(List.of("PUBCHEM"))
+                .matches(List.of(match1, match2))
+                .build();
+
+        withDb(db -> {
+            //insert result without matches
+            assertEquals(1, db.getStorage().insert(result), "Failed to Insert result. Affected entries wrong");
+            assertTrue(db.getStorage().getByPrimaryKey(result.getAlignedFeatureId(), result.getClass()).isPresent(), "Inserted result does not exist!");
+            assertNull(db.getStorage().getByPrimaryKey(result.getAlignedFeatureId(), result.getClass()).get().getMatches(), "Match should not have been serialized");
+
+            //insert matches
+            assertEquals(3, db.getStorage().insertAll(List.of(match1, match2, noMatch1)), "Failed to Insert matches. (Preparation)");
+
+            // finde result with matches.
+            {
+                Optional<CsiStructureSearchResult> r = db.findCsiStructureSearchResult(result.getAlignedFeatureId(), true);
+                assertTrue(r.isPresent(), "Inserted result does not exist!");
+                assertNotNull(r.get().getMatches(), "Match should has not been extracted");
+                assertEquals(result.getMatches().size(), r.get().getMatches().size(), "Unexpected number of joined matches!");
+            }
+            //delete match
+            {
+                assertEquals(1, db.getStorage().remove(match1), "Delete match failed.");
+                assertEquals(2, db.getStorage().countAll(CsiStructureMatch.class));
+                Optional<CsiStructureSearchResult> r = db.findCsiStructureSearchResult(result.getAlignedFeatureId(), true);
+                assertNotNull(r.get().getMatches(), "Match should has not been extracted");
+                assertEquals(1, r.get().getMatches().size(), "Unexpected number of joined matches!");
+            }
         });
     }
 

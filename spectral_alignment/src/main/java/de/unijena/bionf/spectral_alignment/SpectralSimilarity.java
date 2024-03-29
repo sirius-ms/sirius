@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -20,8 +20,13 @@
 
 package de.unijena.bionf.spectral_alignment;
 
+import lombok.Builder;
+import lombok.extern.jackson.Jacksonized;
+
 import java.util.Objects;
 
+@Builder
+@Jacksonized
 public class SpectralSimilarity {
     public final double similarity;
     public final int sharedPeaks;

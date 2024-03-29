@@ -72,7 +72,7 @@ public class CEFUtils {
                     rt = new RetentionTime(max);
             } else if (min < middle && middle < max) {
                 rt = new RetentionTime(min, max, middle);
-            } else if (Double.isNaN(min) || Double.isNaN(max)) {
+            } else if (Double.isNaN(min) || Double.isNaN(max) || min >= max) {
                 rt = new RetentionTime(middle);
             }else {
                 rt = new RetentionTime(min, max);

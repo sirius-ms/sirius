@@ -40,54 +40,78 @@ import java.util.Optional;
 public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> extends NetworkingProjectDocumentDatabase<Storage> {
     String SIRIUS_PROJECT_SUFFIX = ".sirius";
     String FP_DATA_COLLECTION = "FP_DATA";
+
     static Metadata buildMetadata() throws IOException {
         return buildMetadata(Metadata.build());
     }
+
     //todo merge msNovelist candidate with normal candidates so they can be stored together
-      //todo update links of existing candidates with msnovelist flag!
+    //todo update links of existing candidates with msnovelist flag!
     //todo import data from MsExperiment
     //todo provide feature as MsExperiment for computation
     static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
         NetworkingProjectDocumentDatabase.buildMetadata(sourceMetadata)
                 .addCollection(FP_DATA_COLLECTION, Index.unique("type", "charge"))
+
                 .addRepository(Parameters.class, Index.unique("alignedFeatureId", "type"))
+
                 .addRepository(FTreeResult.class,
                         Index.unique("formulaId"),
                         Index.nonUnique("alignedFeatureId")) //todo needed? //if we want to search for a formulaId the alignedFeatureId is implicitly known.
+
                 .addRepository(CsiPrediction.class,
                         Index.unique("formulaId"),
                         Index.nonUnique("alignedFeatureId"))  //todo needed? //if we want to search for a formulaId the alignedFeatureId is implicitly known.
                 .addDeserializer(CsiPrediction.class,
                         new CsiPredictionDeserializer())
+
                 .addRepository(CanopusPrediction.class,
                         Index.unique("formulaId"),
                         Index.nonUnique("alignedFeatureId"))  //todo needed? //if we want to search for a formulaId the alignedFeatureId is implicitly known.
                 .addDeserializer(CanopusPrediction.class,
                         new CanopusPredictionDeserializer())
-                .addRepository(CsiStructureSearchResult.class,"alignedFeatureId")
+
+                .addRepository(CsiStructureSearchResult.class, "alignedFeatureId")
+
                 .addRepository(CsiStructureMatch.class,
                         Index.nonUnique("formulaId"),
                         Index.nonUnique("alignedFeatureId"))
+
                 .addRepository(DenovoStructureMatch.class,
                         Index.nonUnique("formulaId"),
                         Index.nonUnique("alignedFeatureId"))
+
                 .addRepository(SpectraMatch.class, "uuid",
                         Index.nonUnique("candidateInChiKey"),
                         Index.nonUnique("alignedFeatureId"))
+
                 .addRepository(FingerprintCandidate.class)
                 .addSerialization(FingerprintCandidate.class,
                         new FingerprintCandidate.Serializer(),
                         new JSONReader.FingerprintCandidateDeserializer(null)) //will be added later because it has to be read from project
+
                 .addSerialization(ProbabilityFingerprint.class,
                         new ProbabilityFingerprint.Serializer(),
                         new ProbabilityFingerprint.Deserializer()) // version needs to be added later
-
         ;
 
         return sourceMetadata;
     }
 
     void insertFingerprintData(StandardFingerprintData<?> fpData, int charge);
+
     void insertFingerprintData(FingerIdData fpData, int charge);
+
     <T extends FingerprintData<?>> Optional<T> findFingerprintData(Class<T> dataClazz, int charge);
+
+    default Optional<CsiStructureSearchResult> findCsiStructureSearchResult(long alignedFeatureId, boolean includeStructureMatches) {
+        try {
+            Optional<CsiStructureSearchResult> result = getStorage().getByPrimaryKey(alignedFeatureId, CsiStructureSearchResult.class);
+            if (includeStructureMatches && result.isPresent())
+                getStorage().fetchAllChildren(result.get(), "alignedFeatureId", "matches", CsiStructureMatch.class);
+            return result;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
