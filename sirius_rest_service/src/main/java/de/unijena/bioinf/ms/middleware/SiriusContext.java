@@ -30,12 +30,13 @@ import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
 import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
-import de.unijena.bioinf.ms.middleware.service.compute.ProjectSpaceComputeService;
+import de.unijena.bioinf.ms.middleware.service.compute.ComputeServiceImpl;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbServiceImpl;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.events.SseEventService;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
+import de.unijena.bioinf.ms.middleware.service.gui.GuiServiceImpl;
 import de.unijena.bioinf.ms.middleware.service.info.ConnectionChecker;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
@@ -62,8 +63,8 @@ public class SiriusContext{
 
     @Bean
     @DependsOn({"webAPI", "jobManager", "projectsProvider"})
-    public ComputeService<?> computeService(EventService<?> eventService, InstanceBufferFactory<?> instanceBufferFactory, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory) {
-        return new ProjectSpaceComputeService<?>(eventService, instanceBufferFactory, projectSpaceManagerFactory);
+    public ComputeService computeService(EventService<?> eventService, InstanceBufferFactory<?> instanceBufferFactory, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory) {
+        return new ComputeServiceImpl(eventService, instanceBufferFactory, projectSpaceManagerFactory);
     }
     @Bean(destroyMethod = "shutdown")
     public GuiService guiService(EventService<?> eventService, ApplicationContext applicationContext){
