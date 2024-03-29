@@ -175,14 +175,14 @@ public class AnnotationUtils {
         final boolean mixedStructures = ConsensusAnnotationsCSI.Criterion.CONFIDENCE_STRUCTURE == type;
         //todo use approx confidence if available
         AlignedFeature topConf = features.stream()
-                .min(Comparator.comparing(f -> f.getTopAnnotations().getStructureAnnotation().getConfidenceExactMatch()))
+                .min(Comparator.comparing(f -> f.getTopAnnotations().getConfidenceExactMatch()))
                 .orElseThrow(() -> new IllegalStateException("No Structure Candidate Found!"));
 
-        Double topConfExact = topConf.getTopAnnotations().getStructureAnnotation().getConfidenceExactMatch();
+        Double topConfExact = topConf.getTopAnnotations().getConfidenceExactMatch();
         Double topConfApprox = mixedStructures
-                ? topConf.getTopAnnotations().getStructureAnnotation().getConfidenceApproxMatch()
+                ? topConf.getTopAnnotations().getConfidenceApproxMatch()
                 : features.stream()
-                .map(f -> f.getTopAnnotations().getStructureAnnotation().getConfidenceExactMatch())
+                .map(f -> f.getTopAnnotations().getConfidenceExactMatch())
                 .min(Double::compareTo)
                 .orElse(null);
 
