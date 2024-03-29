@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.service.compute;
 
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobStateEvent;
 import de.unijena.bioinf.ms.backgroundruns.BackgroundRuns;
 import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
@@ -44,23 +45,27 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @Slf4j
-public class ProjectSpaceComputeService<P extends Project> extends AbstractComputeService<P> {
+public class ComputeServiceImpl implements ComputeService {
 
     private final ConcurrentHashMap<String, BackgroundRuns> backgroundRuns = new ConcurrentHashMap<>();
     private final InstanceBufferFactory<?> instanceBufferFactory;
     private final ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory;
+    protected final EventService<?> eventService;
 
-    public ProjectSpaceComputeService(EventService<?> eventService, InstanceBufferFactory<?> instanceBufferFactory, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory) {
-        super(eventService);
+
+    public ComputeServiceImpl(EventService<?> eventService, InstanceBufferFactory<?> instanceBufferFactory, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory) {
+        this.eventService = eventService;
         this.instanceBufferFactory = instanceBufferFactory;
         this.projectSpaceManagerFactory = projectSpaceManagerFactory;
 
     }
 
-    private BackgroundRuns backgroundRuns(P project) {
+    private BackgroundRuns backgroundRuns(Project<?> project) {
         return backgroundRuns.computeIfAbsent(project.getProjectId(), p -> {
             BackgroundRuns br = new BackgroundRuns(project.getProjectSpaceManager(), instanceBufferFactory, projectSpaceManagerFactory);
             br.addUnfinishedRunsListener(evt -> {
@@ -79,7 +84,7 @@ public class ProjectSpaceComputeService<P extends Project> extends AbstractCompu
         });
     }
 
-    private void removeBackgroundRuns(P project) {
+    private void removeBackgroundRuns(Project<?> project) {
         BackgroundRuns br = backgroundRuns.remove(project.getProjectId());
         if (br != null)
             br.cancelAllRuns();
@@ -93,7 +98,7 @@ public class ProjectSpaceComputeService<P extends Project> extends AbstractCompu
 
     @Nullable
     private List<Instance> extractCompoundIds(@NotNull AbstractSubmission jobSubmission,
-                                              @NotNull P project) {
+                                              @NotNull Project<?> project) {
         List<Instance> compounds = null;
 
         if (jobSubmission.getCompoundIds() == null || jobSubmission.getCompoundIds().isEmpty()) {
@@ -124,8 +129,59 @@ public class ProjectSpaceComputeService<P extends Project> extends AbstractCompu
         return compounds;
     }
 
+    protected Job extractJobId(BackgroundRuns.BackgroundRunJob runJob, @NotNull EnumSet<Job.OptField> optFields) {
+        Job id = new Job();
+        id.setId(String.valueOf(runJob.getRunId()));
+        if (optFields.contains(Job.OptField.command))
+            id.setCommand(runJob.getCommand());
+        if (optFields.contains(Job.OptField.progress))
+            id.setProgress(extractProgress(runJob));
+        if (optFields.contains(Job.OptField.affectedIds)){
+            id.setAffectedAlignedFeatureIds(extractEffectedAlignedFeatures(runJob));
+            id.setAffectedCompoundIds(extractCompoundIds(runJob));
+        }
+
+        return id;
+    }
+
+    private List<String> extractEffectedAlignedFeatures(BackgroundRuns.BackgroundRunJob runJob) {
+        return runJob.getInstancesStr().map(Instance::getId).collect(Collectors.toList());
+    }
+
+    private List<String> extractCompoundIds(BackgroundRuns.BackgroundRunJob runJob) {
+        return runJob.getInstancesStr()
+                .map(Instance::getCompoundId)
+                .filter(Optional::isPresent)
+                .flatMap(Optional::stream)
+                .distinct().collect(Collectors.toList());
+    }
+
+    private JobProgress extractProgress(BackgroundRuns.BackgroundRunJob runJob) {
+        JobProgress p = new JobProgress();
+        p.setState(runJob.getState());
+
+        JobProgressEvent evt = runJob.currentProgress();
+        if (evt == null)
+            evt = new JobProgressEvent(runJob);
+        p.setIndeterminate(!evt.isDetermined());
+        p.setCurrentProgress(evt.getProgress());
+        p.setMaxProgress(evt.getMaxValue());
+        p.setMessage(evt.getMessage());
+        if (runJob.isUnSuccessfulFinished()) {
+            try { //collect error message from exception
+                runJob.awaitResult();
+            } catch (ExecutionException e) {
+                if (e.getCause() != null)
+                    p.setErrorMessage(e.getCause().getMessage());
+                else
+                    p.setErrorMessage(e.getMessage());
+            }
+        }
+        return p;
+    }
+
     @Override
-    public Job createAndSubmitJob(@NotNull P psmI, JobSubmission jobSubmission,
+    public Job createAndSubmitJob(@NotNull Project<?> psmI, JobSubmission jobSubmission,
                                   @NotNull EnumSet<Job.OptField> optFields) {
         Iterable<Instance> instances = extractCompoundIds(jobSubmission, psmI);
         if (instances == null)
@@ -143,7 +199,7 @@ public class ProjectSpaceComputeService<P extends Project> extends AbstractCompu
     }
 
     @Override
-    public Job createAndSubmitJob(@NotNull P project, List<String> commandList,
+    public Job createAndSubmitJob(@NotNull Project<?> project, List<String> commandList,
                                   @Nullable Iterable<String> alignedFeatureIds,
                                   @NotNull EnumSet<Job.OptField> optFields) {
         try {
@@ -166,7 +222,7 @@ public class ProjectSpaceComputeService<P extends Project> extends AbstractCompu
     }
     //TODO implement new lcms workflow
     @Override
-    public Job createAndSubmitMsDataImportJob(@NotNull P project, ImportMultipartFilesSubmission importSubmission,
+    public Job createAndSubmitMsDataImportJob(@NotNull Project<?> project, ImportMultipartFilesSubmission importSubmission,
                                               @NotNull EnumSet<Job.OptField> optFields) {
         BackgroundRuns.BackgroundRunJob run = backgroundRuns(project)
                 .runImportMsData(importSubmission.asPathInputResource(), importSubmission.isIgnoreFormulas(), importSubmission.isAllowMs1OnlyData());
@@ -175,7 +231,7 @@ public class ProjectSpaceComputeService<P extends Project> extends AbstractCompu
     }
 
     @Override
-    public Job createAndSubmitPeakListImportJob(@NotNull P project, ImportMultipartFilesSubmission importSubmission,
+    public Job createAndSubmitPeakListImportJob(@NotNull Project<?> project, ImportMultipartFilesSubmission importSubmission,
                                                 @NotNull EnumSet<Job.OptField> optFields) {
         BackgroundRuns.BackgroundRunJob run = backgroundRuns(project)
                 .runImportPeakData(importSubmission.asInputResource(), importSubmission.isIgnoreFormulas(), importSubmission.isAllowMs1OnlyData());
@@ -184,7 +240,7 @@ public class ProjectSpaceComputeService<P extends Project> extends AbstractCompu
     }
 
     @Override
-    public Job createAndSubmitCommandJob(@NotNull P project, CommandSubmission commandSubmission,
+    public Job createAndSubmitCommandJob(@NotNull Project<?> project, CommandSubmission commandSubmission,
                                          @NotNull EnumSet<Job.OptField> optFields) {
         BackgroundRuns br = backgroundRuns(project);
         Iterable<? extends Instance> instances = extractCompoundIds(commandSubmission, project);
@@ -201,7 +257,7 @@ public class ProjectSpaceComputeService<P extends Project> extends AbstractCompu
     }
 
     @Override
-    public Job deleteJob(@NotNull P project, String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<Job.OptField> optFields) {
+    public Job deleteJob(@NotNull Project<?> project, String jobId, boolean cancelIfRunning, boolean awaitDeletion, @NotNull EnumSet<Job.OptField> optFields) {
         BackgroundRuns.BackgroundRunJob j = findJob(project, jobId).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NO_CONTENT, "Job with ID '" + jobId + " not found! Hint: It is either already finished and has been auto removed (if enabled) or the ID never existed. Doing nothing!"));
 
@@ -237,7 +293,7 @@ public class ProjectSpaceComputeService<P extends Project> extends AbstractCompu
     }
 
     @Override
-    public List<Job> deleteJobs(@NotNull P project, boolean cancelIfRunning, boolean awaitDeletion, boolean closeProject, @NotNull EnumSet<Job.OptField> optFields) {
+    public List<Job> deleteJobs(@NotNull Project<?> project, boolean cancelIfRunning, boolean awaitDeletion, boolean closeProject, @NotNull EnumSet<Job.OptField> optFields) {
         List<Job> jobs = getJobs(project, Pageable.unpaged(), EnumSet.noneOf(Job.OptField.class))
                 .stream().map(j -> deleteJob(project, j.getId(), cancelIfRunning, awaitDeletion, optFields)).toList();
         if (closeProject)
@@ -246,11 +302,11 @@ public class ProjectSpaceComputeService<P extends Project> extends AbstractCompu
         return jobs;
     }
 
-    public Optional<BackgroundRuns.BackgroundRunJob> findJob(@NotNull P project, String jobId) {
+    public Optional<BackgroundRuns.BackgroundRunJob> findJob(@NotNull Project<?> project, String jobId) {
         int intId = Integer.parseInt(jobId);
         return Optional.ofNullable(backgroundRuns(project).getRunById(intId));
     }
-    public BackgroundRuns.BackgroundRunJob getJob(@NotNull P project, String jobId) {
+    public BackgroundRuns.BackgroundRunJob getJob(@NotNull Project<?> project, String jobId) {
         try {
             return findJob(project, jobId).orElseThrow(
                     () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Job with ID '" + jobId + " does not Exist! Hint: It is either already finished and has been auto removed (if enabled) or the ID never existed."));
@@ -260,12 +316,12 @@ public class ProjectSpaceComputeService<P extends Project> extends AbstractCompu
     }
 
     @Override
-    public Job getJob(@NotNull P project, String jobId, @NotNull EnumSet<Job.OptField> optFields) {
+    public Job getJob(@NotNull Project<?> project, String jobId, @NotNull EnumSet<Job.OptField> optFields) {
         return extractJobId(getJob(project, jobId), optFields);
     }
 
     @Override
-    public Page<Job> getJobs(@NotNull P project, @NotNull Pageable pageable, @NotNull EnumSet<Job.OptField> optFields) {
+    public Page<Job> getJobs(@NotNull Project<?> project, @NotNull Pageable pageable, @NotNull EnumSet<Job.OptField> optFields) {
         if (pageable.isUnpaged())
             return new PageImpl<>(backgroundRuns(project).getRunsStr()
                     .map(j -> extractJobId(j, optFields)).toList());
@@ -278,14 +334,14 @@ public class ProjectSpaceComputeService<P extends Project> extends AbstractCompu
     }
 
     @Override
-    public boolean hasJobs(@NotNull P project, boolean includeFinished) {
+    public boolean hasJobs(@NotNull Project<?> project, boolean includeFinished) {
         if (includeFinished)
             return !backgroundRuns(project).getRunningRuns().isEmpty();
         return backgroundRuns(project).getRunsStr().findAny().isPresent();
     }
 
     @Override
-    public JJob<?> getJJob(@NotNull P project, String jobId) {
+    public JJob<?> getJJob(@NotNull Project<?> project, String jobId) {
         return backgroundRuns(project).getRunById(Integer.parseInt(jobId));
     }
 

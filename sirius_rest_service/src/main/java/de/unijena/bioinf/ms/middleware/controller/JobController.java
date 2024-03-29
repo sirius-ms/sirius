@@ -60,10 +60,10 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 public class JobController {
     public final static String DEFAULT_PARAMETERS = "DEFAULT";
     private final ComputeService computeService;
-    private final ProjectsProvider projectsProvider;
+    private final ProjectsProvider<?> projectsProvider;
     private final GlobalConfig globalConfig;
 
-    public JobController(ComputeService<?> computeService, ProjectsProvider<?> projectsProvider, GlobalConfig globalConfig) {
+    public JobController(ComputeService computeService, ProjectsProvider<?> projectsProvider, GlobalConfig globalConfig) {
         this.computeService = computeService;
         this.projectsProvider = projectsProvider;
         this.globalConfig = globalConfig;
@@ -177,7 +177,7 @@ public class JobController {
     public Job startCommand(@PathVariable String projectId, @Valid @RequestBody CommandSubmission commandSubmission,
                             @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) {
-        Project p = projectsProvider.getProjectOrThrow(projectId);
+        Project<?> p = projectsProvider.getProjectOrThrow(projectId);
         return computeService.createAndSubmitCommandJob(p, commandSubmission, removeNone(optFields));
     }
 

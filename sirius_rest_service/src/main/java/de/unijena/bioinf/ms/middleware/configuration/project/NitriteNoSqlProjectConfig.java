@@ -20,8 +20,8 @@
 
 package de.unijena.bioinf.ms.middleware.configuration.project;
 
-import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
+import de.unijena.bioinf.ms.middleware.service.projects.NitriteProjectSpaceManagerFactory;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectProviderImpl;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
@@ -38,7 +38,7 @@ public class NitriteNoSqlProjectConfig {
 
     @Bean
     public ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory() {
-        return SiriusMiddlewareApplication.getPsf();
+        return new NitriteProjectSpaceManagerFactory();
     }
 
     @Bean
