@@ -43,6 +43,9 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     Path location();
 
+    //force to write data to disk
+    void flush();
+
     //region CRUD operations
 
     <T> int insert(T object) throws IOException;
