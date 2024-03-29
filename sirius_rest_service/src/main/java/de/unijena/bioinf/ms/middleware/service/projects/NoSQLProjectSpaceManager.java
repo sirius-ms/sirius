@@ -53,16 +53,20 @@ public class NoSQLProjectSpaceManager implements ProjectSpaceManager {
     }
 
 
+    @SneakyThrows
     @Override
     public @NotNull Instance importInstanceWithUniqueId(Ms2Experiment inputExperiment) {
-        // TODO
-        return null;
+        AlignedFeatures alignedFeature = getProject().importMs2ExperimentAsAlignedFeature(inputExperiment);
+        return null;//todo create AlignedFeatures based instance;
     }
 
+
+
+    @SneakyThrows
     @Override
     public @NotNull Optional<Instance> findInstance(String id) {
-        // TODO
-        return Optional.empty();
+        return getProject().getStorage().getByPrimaryKey(Long.parseLong(id), AlignedFeatures.class)
+                .map(af -> null/*new Instance()*/); //todo create AlignedFeatures based instance;
     }
 
     @Override
