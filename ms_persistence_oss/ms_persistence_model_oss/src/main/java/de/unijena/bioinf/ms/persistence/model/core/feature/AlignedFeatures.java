@@ -70,20 +70,26 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
         return Optional.ofNullable(isotopicFeatures);
     }
 
+
+    public static AlignedFeatures singleton(Feature feature) {
+        return singleton(feature, (MSData) null);
+    }
     public static AlignedFeatures singleton(Feature feature, @Nullable IsotopePattern isotopePattern) {
-        AlignedFeatures al = AlignedFeatures.builder()
+        // TODO add also MS/MS spectra (and merged spectrum?)
+        MSData msData1 = isotopePattern != null ? MSData.builder().isotopePattern(isotopePattern).build() : null;
+        return singleton(feature, msData1);
+    }
+    public static AlignedFeatures singleton(Feature feature, @Nullable MSData msData) {
+        return AlignedFeatures.builder()
                 .features(List.of(feature))
                 .averageMass(feature.averageMass)
                 .apexMass(feature.apexMass)
                 .apexIntensity(feature.apexIntensity)
                 .snr(feature.snr)
                 .retentionTime(feature.retentionTime)
+                .msData(msData)
                 .build();
-        if (isotopePattern != null) {
-            // TODO add also MS/MS spectra (and merged spectrum?)
-            al.setMsData(MSData.builder().isotopePattern(isotopePattern).build());
-        }
-        return al;
     }
+
 
 }

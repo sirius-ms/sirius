@@ -6,12 +6,14 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.StandardFingerprintData;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.CloseableIterator;
+import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DBLink;
@@ -43,6 +45,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -558,6 +561,24 @@ public class SiriusProjectDatabaseImplTest {
         });
     }
 
+    //todo write test for experiment import
+    @ParameterizedTest
+    @ValueSource(strings = {"/peaklists/Bicuculline_M+?.ms", "/peaklists/ForTox_TestMix_AMSMS_MFE-MS2Extr.cef", "/peaklists/laudanosine.mgf"})
+    public void importFeaturesFromMs2ExperimentTest(String inputFile) {
+        withDb(db -> {
+            try (InputStream in = Objects.requireNonNull(SiriusProjectDatabaseImplTest.class.getResourceAsStream(inputFile))) {
+                CloseableIterator<Ms2Experiment> it = new MsExperimentParser().getParser(inputFile).parseIterator(in, URI.create(inputFile));
+                while (it.hasNext()) {
+                    Ms2Experiment exp =  it.next();
+                    AlignedFeatures feature = db.importMs2ExperimentAsAlignedFeature(exp);
+                    assertNotNull(feature);
+                    assertTrue(db.getStorage().getByPrimaryKey(feature.getAlignedFeatureId(), AlignedFeatures.class).isPresent());
+                    //todo fix spectrum msms deserialization
+                }
+            }
+        });
+
+    }
 
     public static void main(String[] args) throws IOException {
 

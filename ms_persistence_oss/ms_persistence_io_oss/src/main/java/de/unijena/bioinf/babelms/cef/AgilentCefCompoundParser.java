@@ -212,9 +212,7 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
         parseRT(ms).ifPresent(f::setRetentionTime);
 
         featureFromCompound(compound, f);
-
-        AlignedFeatures al = AlignedFeatures.singleton(f, null);
-        return List.of(al);
+        return List.of( AlignedFeatures.singleton(f));
     }
 
     private List<AlignedFeatures> fromRawCompound(Compound compound) {
@@ -240,8 +238,7 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
 
         featureFromCompound(compound, f);
 
-        AlignedFeatures al = AlignedFeatures.singleton(f, null);
-        return List.of(al);
+        return List.of(AlignedFeatures.singleton(f));
     }
 
     private IsotopePattern featureFromCompound(Compound compound, Feature feature) {

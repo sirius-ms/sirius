@@ -45,12 +45,12 @@ public abstract class AbstractFeature {
     /**
      * m/z of the apex
      */
-    protected double apexMass;
+    protected Double apexMass;
 
     /**
      * intensity of the apex
      */
-    protected double apexIntensity;
+    protected Double apexIntensity;
 
     /**
      * average m/z
@@ -70,7 +70,7 @@ public abstract class AbstractFeature {
     /**
      * signal-to-noise ratio at the apex
      */
-    protected double snr;
+    protected Double snr;
 
     /**
      * Trace segment that defines this feature

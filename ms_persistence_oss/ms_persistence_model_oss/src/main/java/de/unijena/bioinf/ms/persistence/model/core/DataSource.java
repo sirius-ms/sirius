@@ -31,11 +31,31 @@ import lombok.*;
 public class DataSource {
 
     public enum Format {
-        JENA_MS, MASCOT_MGF, MZXML, MZML, AGILENT_CEF, NIST_MSP, MASSBANK, JSON
+        UNKNOWN, JENA_MS, MASCOT_MGF, MZXML, MZML, AGILENT_CEF, NIST_MSP, MS_FINDER_MAT, MASSBANK, JSON
     }
 
     private String source;
 
     private Format format;
+
+
+    public static DataSource fromPath(String path) {
+        String ext = path.substring(path.lastIndexOf('.') + 1).toLowerCase();
+
+        Format format = switch (ext) {
+            case "mzml", "mzxml" -> Format.MZML;
+            case "ms" -> Format.JENA_MS;
+            case "mfg" -> Format.MASCOT_MGF;
+            case "cef" -> Format.AGILENT_CEF;
+            case "msp" -> Format.NIST_MSP;
+            case "mat" -> Format.MS_FINDER_MAT;
+            case "txt", "mblib", "mb" -> Format.MASSBANK;
+            case "json" -> Format.JSON;
+            default -> Format.UNKNOWN;
+        };
+
+        return DataSource.builder().source(path).format(format).build();
+
+    }
 
 }
