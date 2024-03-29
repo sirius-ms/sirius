@@ -44,7 +44,7 @@ public class MiddlewareAppOptions<I extends Instance> implements StandaloneTool<
     @Setter
     private ProjectsProvider<?> projectsProvider;
     @Setter
-    private GuiService<?> guiService;
+    private GuiService guiService;
 
     @CommandLine.Option(names = {"--port", "-p"}, description = "Specify the port on which the SIRIUS REST Service should run (Default: 8080).", defaultValue = "8080")
     private void setPort(int port) {
