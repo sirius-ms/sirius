@@ -57,21 +57,9 @@ public class SiriusContext{
     }
 
     @Bean
-    public ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory() {
-        return SiriusMiddlewareApplication.getPsf();
-    }
-
-    @Bean
     @DependsOn({"webAPI", "jobManager", "projectsProvider"})
     public ComputeService<?> computeService(EventService<?> eventService, InstanceBufferFactory<?> instanceBufferFactory, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory) {
         return new ProjectSpaceComputeService<NoSQLProjectImpl>(eventService, instanceBufferFactory, projectSpaceManagerFactory);
-    }
-
-    @Bean
-    @DependsOn({"jobManager"})
-    @SuppressWarnings("unchecked")
-    public ProjectsProvider<?> projectsProvider(EventService<?> eventService, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory) {
-        return new NoSQLProjectProviderImpl((ProjectSpaceManagerFactory<NoSQLProjectSpaceManager>) projectSpaceManagerFactory, eventService);
     }
 
     @Bean(destroyMethod = "shutdown")
