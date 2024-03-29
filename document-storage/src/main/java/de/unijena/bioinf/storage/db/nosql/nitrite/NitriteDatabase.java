@@ -52,6 +52,7 @@ import org.dizitart.no2.index.IndexDescriptor;
 import org.dizitart.no2.index.IndexOptions;
 import org.dizitart.no2.mvstore.MVStoreModule;
 import org.dizitart.no2.repository.ObjectRepository;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -98,8 +99,6 @@ public class NitriteDatabase implements Database<Document> {
     private final ReentrantReadWriteLock.ReadLock stateReadLock = stateLock.readLock();
 
     // STATE
-    private boolean isClosed = false;
-
     public NitriteDatabase(Path file, Metadata meta) throws IOException {
         this(file, meta, true, 64);
     }
@@ -274,10 +273,22 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
+    public void flush() {
+        stateWriteLock.lock();
+        try { //flush should work like close an not throw an exception if the database is closed?
+            if (!this.db.isClosed())
+                this.db.commit();
+            else
+                LoggerFactory.getLogger(getClass()).warn("Nitrite database is closed! Cannot commit any changes!");
+        } finally {
+            stateWriteLock.unlock();
+        }
+    }
+
+    @Override
     public void close() {
         stateWriteLock.lock();
         try {
-            this.isClosed = true;
             if (!this.db.isClosed())
                 this.db.close();
         } finally {
@@ -287,7 +298,7 @@ public class NitriteDatabase implements Database<Document> {
 
     private <T> T callIfOpen(Callable<T> callable) throws IOException {
         stateReadLock.lock();
-        if (this.isClosed) {
+        if (this.db.isClosed()) {
             throw new IOException("Nitrite database is closed!");
         }
         try {
