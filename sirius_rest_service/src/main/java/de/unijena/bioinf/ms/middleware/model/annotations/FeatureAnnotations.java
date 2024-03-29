@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -49,4 +50,23 @@ public class FeatureAnnotations {
      */
     @Schema(nullable = true)
     protected CompoundClasses compoundClassAnnotation; // CANOPUS
+
+    /**
+     * Confidence Score that represents the confidence whether the top hit is correct.
+     */
+    @Schema(nullable = true)
+    protected Double confidenceExactMatch;
+    /**
+     * Confidence Score that represents the confidence whether the top hit or a very similar hit (estimated by MCES distance) is correct.
+     */
+    @Schema(nullable = true)
+    protected Double confidenceApproxMatch;
+
+    /**
+     * Result that shows if structure annotation was expanded by using PubChem as fallback and if so, which confidence mode was used (as per input paramter)
+     *
+     */
+    @Schema(enumAsRef = true,nullable = true)
+    protected ExpansiveSearchConfidenceMode.Mode expansiveSearchState;
 }
+
