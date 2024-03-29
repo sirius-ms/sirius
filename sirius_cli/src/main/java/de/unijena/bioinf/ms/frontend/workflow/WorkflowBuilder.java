@@ -81,8 +81,6 @@ import java.util.stream.StreamSupport;
  */
 
 public class WorkflowBuilder{
-
-    private final InstanceBufferFactory<?> bufferFactory;
     //root
     private CommandLine.Model.CommandSpec rootSpec;
 
@@ -126,24 +124,24 @@ public class WorkflowBuilder{
 
     boolean closeProject = true;
 
-    public WorkflowBuilder(@NotNull CLIRootOptions rootOptions, @NotNull InstanceBufferFactory<?> bufferFactory) throws IOException {
-        this(rootOptions, rootOptions.getDefaultConfigOptions(), bufferFactory, rootOptions.getSpaceManagerFactory());
+    public WorkflowBuilder(@NotNull CLIRootOptions rootOptions) throws IOException {
+        this(rootOptions, rootOptions.getDefaultConfigOptions(), rootOptions.getSpaceManagerFactory());
     }
 
-    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, @NotNull InstanceBufferFactory<?> bufferFactory, @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory, boolean closeProject) throws IOException {
-        this(rootOptions, configOptionLoader,bufferFactory,spaceManagerFactory);
+    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory, boolean closeProject) throws IOException {
+        this(rootOptions, configOptionLoader, spaceManagerFactory);
         this.closeProject = closeProject;
     }
-    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, @NotNull InstanceBufferFactory<?> bufferFactory, @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory) throws IOException {
-        this(rootOptions, configOptionLoader, bufferFactory, spaceManagerFactory, List.of());
+
+    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory) throws IOException {
+        this(rootOptions, configOptionLoader, spaceManagerFactory, List.of());
     }
 
-    public WorkflowBuilder(@NotNull CLIRootOptions rootOptions, @NotNull InstanceBufferFactory<?> bufferFactory, @NotNull List<StandaloneTool<?>> additionalTools) {
-        this(rootOptions, rootOptions.getDefaultConfigOptions(), bufferFactory, rootOptions.getSpaceManagerFactory(), additionalTools);
+    public WorkflowBuilder(@NotNull CLIRootOptions rootOptions, @NotNull List<StandaloneTool<?>> additionalTools) {
+        this(rootOptions, rootOptions.getDefaultConfigOptions(), rootOptions.getSpaceManagerFactory(), additionalTools);
     }
 
-    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, @NotNull InstanceBufferFactory<?> bufferFactory, @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory, @NotNull List<StandaloneTool<?>> additionalTools) {
-        this.bufferFactory = bufferFactory;
+    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory, @NotNull List<StandaloneTool<?>> additionalTools) {
         this.rootOptions = rootOptions;
         this.spaceManagerFactory = spaceManagerFactory;
         this.configOptionLoader = configOptionLoader;
@@ -255,12 +253,18 @@ public class WorkflowBuilder{
         return parentSpec;
     }
 
-    public ParseResultHandler makeParseResultHandler() {
-        return new ParseResultHandler();
+    public ParseResultHandler makeParseResultHandler(@NotNull InstanceBufferFactory<?> bufferFactory) {
+        return new ParseResultHandler(bufferFactory);
     }
 
 
     public class ParseResultHandler extends CommandLine.AbstractParseResultHandler<Workflow> {
+        private final InstanceBufferFactory<?> bufferFactory;
+
+        public ParseResultHandler(InstanceBufferFactory<?> bufferFactory) {
+            this.bufferFactory = bufferFactory;
+        }
+
         @Override
         protected Workflow handle(CommandLine.ParseResult parseResult) throws CommandLine.ExecutionException {
             //here we create the workflow that we will execute later

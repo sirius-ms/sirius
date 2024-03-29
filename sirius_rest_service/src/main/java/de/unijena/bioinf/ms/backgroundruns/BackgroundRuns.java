@@ -208,10 +208,10 @@ public final class BackgroundRuns {
     private Workflow makeWorkflow(
             List<String> command, ComputeRootOption rootOptions) throws IOException {
         final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(PropertyManager.DEFAULTS.newIndependentInstance(ConfigType.BATCH_COMPUTE.name()));
-        final WorkflowBuilder wfBuilder = new WorkflowBuilder(rootOptions, configOptionLoader, bufferfactory, projectSpaceManagerFactory, false);
+        final WorkflowBuilder wfBuilder = new WorkflowBuilder(rootOptions, configOptionLoader, projectSpaceManagerFactory, false);
         final Run computation = new Run(wfBuilder);
         computation.parseArgs(command.toArray(String[]::new));
-        return computation.makeWorkflow();
+        return computation.makeWorkflow(bufferfactory);
     }
 
 

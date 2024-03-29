@@ -9,7 +9,6 @@ import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoade
 import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressVisualizer;
 import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressbarDefaultCalculator;
 import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressbarDefaultVisualizer;
-import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -120,7 +119,7 @@ public class AutoCompletionScript implements StandaloneTool<Workflow> {
     public Integer call() throws IOException, UnknownOSException, InvalidParameterException {
         System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
         FingerIDProperties.sirius_guiVersion();
-        WorkflowBuilder builder = new WorkflowBuilder(new CLIRootOptions(new DefaultParameterConfigLoader(PropertyManager.DEFAULTS), new SiriusProjectSpaceManagerFactory()), new SimpleInstanceBuffer.Factory());
+        WorkflowBuilder builder = new WorkflowBuilder(new CLIRootOptions(new DefaultParameterConfigLoader(PropertyManager.DEFAULTS), new SiriusProjectSpaceManagerFactory()));
         builder.initRootSpec();
         if((install.toInstall() || this.uninstall)&& this.OS == null) this.OS = detectOS();
         if (install.toInstall() || this.uninstall) System.out.println("Detected OS as " + OS);
