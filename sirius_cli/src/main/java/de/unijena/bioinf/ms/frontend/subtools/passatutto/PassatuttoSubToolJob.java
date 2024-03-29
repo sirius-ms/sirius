@@ -23,14 +23,13 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.jjobs.JobSubmitter;
-import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.passatutto.Passatutto;
+import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 
@@ -76,11 +75,6 @@ public class PassatuttoSubToolJob extends InstanceJob {
 
         //write Passatutto results
         inst.updateFormulaResult(best, Decoy.class);
-    }
-
-    @Override
-    protected Class<? extends DataAnnotation>[] formulaResultComponentsToClear() {
-        return new Class[]{Decoy.class};
     }
 
     @Override

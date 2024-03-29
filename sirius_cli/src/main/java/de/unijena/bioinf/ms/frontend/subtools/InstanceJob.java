@@ -23,7 +23,6 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobSubmitter;
-import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.IncompatibleFingerprintDataException;
 import de.unijena.bioinf.projectspace.Instance;
 import org.jetbrains.annotations.NotNull;
@@ -90,12 +89,6 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
     @Override
     protected void cleanup() {
         super.cleanup();
-        final Class<? extends DataAnnotation>[] ca = compoundComponentsToClear();
-        if (input != null) {
-            if (ca != null && ca.length > 0) input.clearCompoundCache(ca);
-            final Class<? extends DataAnnotation>[] ra = formulaResultComponentsToClear();
-            if (ra != null && ra.length > 0) input.clearFormulaResultsCache(ra);
-        }
     }
 
     @Override
@@ -124,13 +117,6 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
         return false;
     }
 
-    protected Class<? extends DataAnnotation>[] compoundComponentsToClear() {
-        return null;
-    }
-
-    protected Class<? extends DataAnnotation>[] formulaResultComponentsToClear() {
-        return null;
-    }
 
     protected abstract void computeAndAnnotateResult(final @NotNull Instance expRes) throws Exception;
 

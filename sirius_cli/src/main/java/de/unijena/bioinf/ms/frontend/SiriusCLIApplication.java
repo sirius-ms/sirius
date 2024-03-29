@@ -28,7 +28,6 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.WorkFlowSupplier;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -74,8 +73,7 @@ public class SiriusCLIApplication {
             configureShutDownHook(shutdownWebservice());
             measureTime("Start Run method");
             run(args, () -> new WorkflowBuilder(
-                    new CLIRootOptions(new DefaultParameterConfigLoader(), new SiriusProjectSpaceManagerFactory()),
-                    new SimpleInstanceBuffer.Factory(), injectTools));
+                    new CLIRootOptions(new DefaultParameterConfigLoader(), new SiriusProjectSpaceManagerFactory()), injectTools));
         } finally {
             System.exit(0);
         }

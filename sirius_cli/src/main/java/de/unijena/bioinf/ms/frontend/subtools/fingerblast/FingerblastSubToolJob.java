@@ -31,7 +31,6 @@ import de.unijena.bioinf.fingerid.CSIPredictor;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.FingerblastJJob;
 import de.unijena.bioinf.fingerid.FingerprintResult;
-import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
@@ -39,7 +38,6 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.jjobs.Partition;
-import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
@@ -62,8 +60,6 @@ import java.util.stream.Collectors;
  * good example for how to create such a job
  */
 public class FingerblastSubToolJob extends InstanceJob {
-
-    public static final List<Class<? extends DataAnnotation>> formulaResultComponentsToClear = new ArrayList<>(List.of(FTree.class, FBCandidates.class, FBCandidateFingerprints.class));
 
     public FingerblastSubToolJob(JobSubmitter submitter) {
         super(submitter);
@@ -172,12 +168,6 @@ public class FingerblastSubToolJob extends InstanceJob {
         updateProgress(97);
 
     }
-
-    @Override
-    protected Class<? extends DataAnnotation>[] formulaResultComponentsToClear() {
-        return formulaResultComponentsToClear.toArray(Class[]::new);
-    }
-
 
     @Override
     public String getToolName() {
