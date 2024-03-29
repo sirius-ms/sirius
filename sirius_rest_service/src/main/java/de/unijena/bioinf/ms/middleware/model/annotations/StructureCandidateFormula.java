@@ -102,14 +102,7 @@ public class StructureCandidateFormula extends StructureCandidateScored {
         sSum.setCsiScore(can.getScore());
         sSum.setTanimotoSimilarity(can.getCandidate().getTanimoto());
         sSum.setMcesDistToTopHit(can.getCandidate().getMcesToTopHit());
-        if (confidenceScoreProvider != null) {
-            confidenceScoreProvider.getAnnotation(ConfidenceScore.class)
-                    .map(ConfidenceScore::score)
-                    .ifPresent(sSum::setConfidenceExactMatch);
-            confidenceScoreProvider.getAnnotation(ConfidenceScoreApproximate.class)
-                    .map(ConfidenceScoreApproximate::score)
-                    .ifPresent(sSum::setConfidenceApproxMatch);
-        }
+
 
 
         //Structure information

@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundClasses;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidate;
+import de.unijena.bioinf.ms.nightsky.sdk.model.Mode;
 import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateScored;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -32,7 +33,10 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonPropertyOrder({
   FeatureAnnotations.JSON_PROPERTY_FORMULA_ANNOTATION,
   FeatureAnnotations.JSON_PROPERTY_STRUCTURE_ANNOTATION,
-  FeatureAnnotations.JSON_PROPERTY_COMPOUND_CLASS_ANNOTATION
+  FeatureAnnotations.JSON_PROPERTY_COMPOUND_CLASS_ANNOTATION,
+  FeatureAnnotations.JSON_PROPERTY_CONFIDENCE_EXACT_MATCH,
+  FeatureAnnotations.JSON_PROPERTY_CONFIDENCE_APPROX_MATCH,
+  FeatureAnnotations.JSON_PROPERTY_EXPANSIVE_SEARCH_STATE
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class FeatureAnnotations {
@@ -44,6 +48,15 @@ public class FeatureAnnotations {
 
   public static final String JSON_PROPERTY_COMPOUND_CLASS_ANNOTATION = "compoundClassAnnotation";
   private CompoundClasses compoundClassAnnotation;
+
+  public static final String JSON_PROPERTY_CONFIDENCE_EXACT_MATCH = "confidenceExactMatch";
+  private Double confidenceExactMatch;
+
+  public static final String JSON_PROPERTY_CONFIDENCE_APPROX_MATCH = "confidenceApproxMatch";
+  private Double confidenceApproxMatch;
+
+  public static final String JSON_PROPERTY_EXPANSIVE_SEARCH_STATE = "expansiveSearchState";
+  private Mode expansiveSearchState;
 
   public FeatureAnnotations() {
   }
@@ -125,6 +138,84 @@ public class FeatureAnnotations {
     this.compoundClassAnnotation = compoundClassAnnotation;
   }
 
+
+  public FeatureAnnotations confidenceExactMatch(Double confidenceExactMatch) {
+    
+    this.confidenceExactMatch = confidenceExactMatch;
+    return this;
+  }
+
+   /**
+   * Confidence Score that represents the confidence whether the top hit is correct.
+   * @return confidenceExactMatch
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_CONFIDENCE_EXACT_MATCH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getConfidenceExactMatch() {
+    return confidenceExactMatch;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_CONFIDENCE_EXACT_MATCH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setConfidenceExactMatch(Double confidenceExactMatch) {
+    this.confidenceExactMatch = confidenceExactMatch;
+  }
+
+
+  public FeatureAnnotations confidenceApproxMatch(Double confidenceApproxMatch) {
+    
+    this.confidenceApproxMatch = confidenceApproxMatch;
+    return this;
+  }
+
+   /**
+   * Confidence Score that represents the confidence whether the top hit or a very similar hit (estimated by MCES distance) is correct.
+   * @return confidenceApproxMatch
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_CONFIDENCE_APPROX_MATCH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getConfidenceApproxMatch() {
+    return confidenceApproxMatch;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_CONFIDENCE_APPROX_MATCH)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setConfidenceApproxMatch(Double confidenceApproxMatch) {
+    this.confidenceApproxMatch = confidenceApproxMatch;
+  }
+
+
+  public FeatureAnnotations expansiveSearchState(Mode expansiveSearchState) {
+    
+    this.expansiveSearchState = expansiveSearchState;
+    return this;
+  }
+
+   /**
+   * Get expansiveSearchState
+   * @return expansiveSearchState
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_EXPANSIVE_SEARCH_STATE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Mode getExpansiveSearchState() {
+    return expansiveSearchState;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_EXPANSIVE_SEARCH_STATE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setExpansiveSearchState(Mode expansiveSearchState) {
+    this.expansiveSearchState = expansiveSearchState;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -136,12 +227,15 @@ public class FeatureAnnotations {
     FeatureAnnotations featureAnnotations = (FeatureAnnotations) o;
     return Objects.equals(this.formulaAnnotation, featureAnnotations.formulaAnnotation) &&
         Objects.equals(this.structureAnnotation, featureAnnotations.structureAnnotation) &&
-        Objects.equals(this.compoundClassAnnotation, featureAnnotations.compoundClassAnnotation);
+        Objects.equals(this.compoundClassAnnotation, featureAnnotations.compoundClassAnnotation) &&
+        Objects.equals(this.confidenceExactMatch, featureAnnotations.confidenceExactMatch) &&
+        Objects.equals(this.confidenceApproxMatch, featureAnnotations.confidenceApproxMatch) &&
+        Objects.equals(this.expansiveSearchState, featureAnnotations.expansiveSearchState);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(formulaAnnotation, structureAnnotation, compoundClassAnnotation);
+    return Objects.hash(formulaAnnotation, structureAnnotation, compoundClassAnnotation, confidenceExactMatch, confidenceApproxMatch, expansiveSearchState);
   }
 
   @Override
@@ -151,6 +245,9 @@ public class FeatureAnnotations {
     sb.append("    formulaAnnotation: ").append(toIndentedString(formulaAnnotation)).append("\n");
     sb.append("    structureAnnotation: ").append(toIndentedString(structureAnnotation)).append("\n");
     sb.append("    compoundClassAnnotation: ").append(toIndentedString(compoundClassAnnotation)).append("\n");
+    sb.append("    confidenceExactMatch: ").append(toIndentedString(confidenceExactMatch)).append("\n");
+    sb.append("    confidenceApproxMatch: ").append(toIndentedString(confidenceApproxMatch)).append("\n");
+    sb.append("    expansiveSearchState: ").append(toIndentedString(expansiveSearchState)).append("\n");
     sb.append("}");
     return sb.toString();
   }
