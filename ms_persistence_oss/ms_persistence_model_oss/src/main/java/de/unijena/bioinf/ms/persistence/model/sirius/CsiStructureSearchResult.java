@@ -37,9 +37,10 @@ import java.util.stream.Stream;
 @Getter
 @Setter
 public class CsiStructureSearchResult extends StructureSearchResult<CsiStructureMatch> {
+    //ID: alignedFeatureId is the pk
     private Double confidenceExact;
     private Double confidenceApprox;
-    private ExpansiveSearchConfidenceMode expansiveSearchConfidenceMode;
+    private ExpansiveSearchConfidenceMode.Mode expansiveSearchConfidenceMode;
 
     private List<String> specifiedDatabases;
     //usually just pubchem or empty

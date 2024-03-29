@@ -36,7 +36,7 @@ import static de.unijena.bioinf.storage.db.nosql.utils.ExtFieldUtils.getAllField
 import static de.unijena.bioinf.storage.db.nosql.utils.ExtFieldUtils.getAllFieldValue;
 
 public interface Database<DocType> extends Closeable, AutoCloseable {
-
+    //todo do we want to change from IO to Runtimeexceptions for better lamda compatibility
     enum SortOrder {
         ASCENDING, DESCENDING
     }
@@ -161,22 +161,22 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
                     if (field.getType() == List.class) {
                         collection = new ArrayList<>(targetChildren);
                     } else if (field.getType() == BlockingDeque.class) {
-                        collection = new LinkedBlockingDeque<>();
+                        collection = new LinkedBlockingDeque<>(targetChildren);
                     } else if (field.getType() == BlockingQueue.class) {
-                        collection = new LinkedBlockingQueue<>();
+                        collection = new LinkedBlockingQueue<>(targetChildren);
                     } else if (field.getType() == Deque.class || field.getType() == Queue.class) {
-                        collection = new ArrayDeque<>();
+                        collection = new ArrayDeque<>(targetChildren);
                     } else if (field.getType() == Set.class) {
-                        collection = new HashSet<>();
+                        collection = new HashSet<>(targetChildren);
                     } else if (field.getType() == SortedSet.class) {
-                        collection = new TreeSet<>();
+                        collection = new TreeSet<>(targetChildren);
                     } else if (field.getType() == TransferQueue.class) {
-                        collection = new LinkedTransferQueue<>();
+                        collection = new LinkedTransferQueue<>(targetChildren);
                     } else {
                         collection = (Collection<C>) field.getType().getDeclaredConstructor().newInstance();
+                        collection.addAll(targetChildren);
                     }
                 }
-                collection.addAll(targetChildren);
                 field.set(parent, collection);
             }
             return parent;
