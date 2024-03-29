@@ -42,7 +42,10 @@ import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.elgordo.LipidSpecies;
+import de.unijena.bioinf.fingerid.ConfidenceScore;
+import de.unijena.bioinf.fingerid.ConfidenceScoreApproximate;
 import de.unijena.bioinf.fingerid.FingerprintResult;
+import de.unijena.bioinf.fingerid.StructureSearchResult;
 import de.unijena.bioinf.fingerid.blast.*;
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
@@ -874,7 +877,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     public static FeatureAnnotations extractTopAnnotations(Instance inst) {
         return inst.loadTopFormulaResult(List.of(TopCSIScore.class, SiriusScore.class)).map(FormulaResult::getId).flatMap(frid -> {
             frid.setAnnotation(FBCandidateNumber.class, new FBCandidateNumber(1));
-            return inst.loadFormulaResult(frid, FormulaScoring.class, FTree.class, FBCandidatesTopK.class, CanopusResult.class)
+            return inst.loadFormulaResult(frid, FormulaScoring.class, FTree.class, FBCandidatesTopK.class, CanopusResult.class, StructureSearchResult.class)
                     .map(topHit -> {
                         final FeatureAnnotations cSum = new FeatureAnnotations();
 //
@@ -890,6 +893,13 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
 
                         topHit.getAnnotation(CanopusResult.class).map(CompoundClasses::of).
                                 ifPresent(cSum::setCompoundClassAnnotation);
+
+                        // Add list specific results: confidences, expansive search state
+
+                        topHit.getAnnotation(FormulaScoring.class).get().getAnnotation(ConfidenceScore.class).ifPresent(c -> cSum.setConfidenceExactMatch(c.score()));
+                        topHit.getAnnotation(FormulaScoring.class).get().getAnnotation(ConfidenceScoreApproximate.class).ifPresent(c -> cSum.setConfidenceApproxMatch(c.score()));
+                        topHit.getAnnotation(StructureSearchResult.class).ifPresent(c -> cSum.setExpansiveSearchState(c.getExpansiveSearchConfidenceMode()));
+
                         return cSum;
 
                     });

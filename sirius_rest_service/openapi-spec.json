@@ -5623,8 +5623,7 @@
             "format": "double"
           },
           "adduct": {
-            "type": "string",
-            "deprecated": true
+            "type": "string"
           },
           "rtStartSeconds": {
             "type": "number",
