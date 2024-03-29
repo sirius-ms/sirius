@@ -41,7 +41,6 @@ public interface ProjectSpaceManager extends IterableWithSize<Instance> {
     @NotNull Optional<Instance> findInstance(String id);
 
     void writeFingerIdData(@NotNull FingerIdData pos, @NotNull FingerIdData neg);
-    void deleteFingerIdData();
 
     @NotNull Optional<FingerIdData> getFingerIdData(int charge);
     default boolean hasFingerIdData(int charge){
@@ -49,7 +48,7 @@ public interface ProjectSpaceManager extends IterableWithSize<Instance> {
     }
 
     void writeCanopusData(@NotNull CanopusCfData cfPos, @NotNull CanopusCfData cfNeg, @NotNull CanopusNpcData npcPos, @NotNull CanopusNpcData npcNeg);
-    void deleteCanopusData();
+    void deleteFingerprintData();
 
     @NotNull Optional<CanopusCfData> getCanopusCfData(int charge);
     default boolean hasCanopusCfData(int charge){

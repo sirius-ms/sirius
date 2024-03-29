@@ -24,7 +24,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
-import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
+import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
@@ -36,14 +36,12 @@ import de.unijena.bioinf.storage.db.nosql.Filter;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Predicate;
 
 public class NoSQLProjectSpaceManager implements ProjectSpaceManager {
 
@@ -69,37 +67,38 @@ public class NoSQLProjectSpaceManager implements ProjectSpaceManager {
 
     @Override
     public void writeFingerIdData(@NotNull FingerIdData pos, @NotNull FingerIdData neg) {
-
-    }
-
-    @Override
-    public void deleteFingerIdData() {
-
+        getProject().insertFingerprintData(pos, 1);
+        getProject().insertFingerprintData(neg, -1);
     }
 
     @Override
     public @NotNull Optional<FingerIdData> getFingerIdData(int charge) {
-        return Optional.empty();
+        return getProject().findFingerprintData(FingerIdData.class, charge);
     }
 
     @Override
-    public void writeCanopusData(@NotNull CanopusCfData cfPos, @NotNull CanopusCfData cfNeg, @NotNull CanopusNpcData npcPos, @NotNull CanopusNpcData npcNeg) {
-
+    public void writeCanopusData(@NotNull CanopusCfData cfPos, @NotNull CanopusCfData cfNeg,
+                                 @NotNull CanopusNpcData npcPos, @NotNull CanopusNpcData npcNeg) {
+        getProject().insertFingerprintData(cfPos, 1);
+        getProject().insertFingerprintData(cfNeg, -1);
+        getProject().insertFingerprintData(npcPos, 1);
+        getProject().insertFingerprintData(npcNeg, -1);
     }
 
     @Override
-    public void deleteCanopusData() {
-
+    @SneakyThrows
+    public void deleteFingerprintData() {
+        getProject().getStorage().removeAll(SiriusProjectDocumentDatabase.FP_DATA_COLLECTION, (Filter) null);
     }
 
     @Override
     public @NotNull Optional<CanopusCfData> getCanopusCfData(int charge) {
-        return Optional.empty();
+        return getProject().findFingerprintData(CanopusCfData.class, charge);
     }
 
     @Override
     public @NotNull Optional<CanopusNpcData> getCanopusNpcData(int charge) {
-        return Optional.empty();
+        return getProject().findFingerprintData(CanopusNpcData.class, charge);
     }
 
     @Override
@@ -133,6 +132,7 @@ public class NoSQLProjectSpaceManager implements ProjectSpaceManager {
 
     @Override
     public boolean checkAndFixDataFiles(NetUtils.InterruptionCheck interrupted) throws TimeoutException, InterruptedException {
+        //todo remove all fingerprint data related results and de fingerprint data itself
         return false;
     }
 
