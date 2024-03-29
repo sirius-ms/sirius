@@ -162,9 +162,7 @@ public class AlignedFeature {
    /**
    * Get adduct
    * @return adduct
-   * @deprecated
   **/
-  @Deprecated
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_ADDUCT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)

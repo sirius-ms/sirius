@@ -69,8 +69,7 @@ public class StructureSearchStrategy extends JPanel {
 
 
     private JCheckboxListPanel<SearchableDatabase> createDatabasePanel() {
-        DBSelectionList innerList = DBSelectionList.fromSearchableDatabases(gui.getSiriusClient());
-        JCheckboxListPanel<SearchableDatabase> dbList = new JCheckboxListPanel<>(innerList, "Search DBs");
+        DBSelectionListPanel dbList = DBSelectionListPanel.newInstance("Search DBs", gui.getSiriusClient());
         GuiUtils.assignParameterToolTip(dbList, "StructureSearchDB");
         return dbList;
     }
