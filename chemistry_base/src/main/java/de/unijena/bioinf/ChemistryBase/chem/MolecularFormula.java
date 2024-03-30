@@ -21,13 +21,16 @@
 
 package de.unijena.bioinf.ChemistryBase.chem;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
+import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-import java.io.Serializable;
 import java.nio.ShortBuffer;
 import java.util.*;
 import java.util.function.Consumer;
@@ -44,6 +47,8 @@ import java.util.function.Consumer;
  * elements and their amount.
  * @author Kai Dührkop
  */
+@JsonSerialize(using = ToStringSerializer.class)
+@JsonDeserialize(using = SimpleSerializers.MolecularFormulaDeserializer.class)
 public abstract class MolecularFormula implements Cloneable, Iterable<Element>, Comparable<MolecularFormula> {
 
     private static MolecularFormula Hydrogen;

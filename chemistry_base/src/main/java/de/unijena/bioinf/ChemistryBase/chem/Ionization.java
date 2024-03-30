@@ -21,6 +21,7 @@
 
 package de.unijena.bioinf.ChemistryBase.chem;
 
+import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 
 /**
@@ -105,5 +106,18 @@ public abstract class Ionization implements Comparable<Ionization>, DataAnnotati
     @Override
     public int compareTo(Ionization o) {
         return Double.compare(getMass(), o.getMass());
+    }
+
+    public static Ionization fromString(String value) {
+        PrecursorIonType precursorIonType;
+        try {
+            precursorIonType = PeriodicTable.getInstance().ionByName(value);
+        } catch (UnknownElementException e) {
+            throw new IllegalArgumentException("Unknown ion mode '" + value + "'!", e);
+        }
+
+        if (precursorIonType==null || !precursorIonType.hasNeitherAdductNorInsource())
+            throw new IllegalArgumentException("Unknown ion mode '" + value + "'!");
+        return precursorIonType.getIonization();
     }
 }
