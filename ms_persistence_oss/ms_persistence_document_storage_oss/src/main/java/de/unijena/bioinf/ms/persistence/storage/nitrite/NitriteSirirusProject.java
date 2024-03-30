@@ -48,10 +48,13 @@ import java.util.function.Function;
 public class NitriteSirirusProject extends SiriusProjectDatabaseImpl<NitriteDatabase> {
 
     public NitriteSirirusProject(@NotNull Path location) throws IOException {
-        this(location, SiriusProjectDocumentDatabase.buildMetadata());
+        this(location, SiriusProjectDocumentDatabase.buildMetadata(), NitriteDatabase.MVStoreCompression.DEFLATE); //highest compression rate
     }
-    private NitriteSirirusProject(@NotNull Path location, @NotNull final Metadata metadata) throws IOException {
-        super(new NitriteDatabase(location, metadata));
+    private NitriteSirirusProject(@NotNull Path location, @NotNull final Metadata metadata, NitriteDatabase.MVStoreCompression compression) throws IOException {
+        this(location, metadata, compression, 256, 65536); //64Kib
+    }
+    private NitriteSirirusProject(@NotNull Path location, @NotNull final Metadata metadata, NitriteDatabase.MVStoreCompression compression, int cacheSizeMiB, int commitBufferByte) throws IOException {
+        super(new NitriteDatabase(location, metadata, compression, cacheSizeMiB, commitBufferByte));
 
 
         Optional<FingerIdData> csiPos = findFingerprintData(FingerIdData.class, 1);

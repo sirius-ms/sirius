@@ -21,9 +21,15 @@
 
 package de.unijena.bioinf.ChemistryBase.ms;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
-import de.unijena.bioinf.ms.annotations.SpectrumAnnotation;
+import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
+import lombok.Builder;
+import lombok.extern.jackson.Jacksonized;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
@@ -32,12 +38,17 @@ import java.util.Iterator;
  * Mutable spectrum with header information about MS/MS.
  * Allows shallow copy which do not copy all peak data and, thus,
  */
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE, isGetterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE)
+@Builder
+@Jacksonized
 public class MutableMs2Spectrum implements Ms2Spectrum<Peak>, MutableSpectrum<Peak> {
 
     public static class Header implements Cloneable {
         private double precursorMz = 0d;
         private CollisionEnergy collisionEnergy = null;
         private double totalIoncount = 0d;
+        @JsonSerialize(using = ToStringSerializer.class)
+        @JsonDeserialize(using = SimpleSerializers.IonizationTypeDeserializer.class)
         private Ionization ionization = null;
         private int msLevel = 0;
         private int scanNumber = -1; // an arbitrary ID that is unique within the experiment object

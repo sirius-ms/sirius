@@ -70,6 +70,8 @@ import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 
 public class NitriteDatabase implements Database<Document> {
+    public enum MVStoreCompression{NONE, LZF, DEFLATE}
+
     protected Path file;
 
     // NITRITE
@@ -100,19 +102,19 @@ public class NitriteDatabase implements Database<Document> {
 
     // STATE
     public NitriteDatabase(Path file, Metadata meta) throws IOException {
-        this(file, meta, true, 64);
+        this(file, meta, MVStoreCompression.LZF, 64, 8192);
     }
 
-    public NitriteDatabase(Path file, Metadata meta, boolean compress, int cacheSizeMiB) throws IOException {
+    public NitriteDatabase(Path file, Metadata meta, MVStoreCompression compression, int cacheSizeMiB, int commitBufferByte) throws IOException {
         this.file = file;
-        this.db = initDB(file, meta, compress, cacheSizeMiB);
+        this.db = initDB(file, meta, compression, cacheSizeMiB,commitBufferByte);
         this.initCollections(meta);
         this.initRepositories(meta);
         this.initOptionalFields(meta);
         this.nitriteMapper = this.db.getConfig().nitriteMapper();
     }
 
-    private Nitrite initDB(Path file, Metadata meta, boolean compress, int cacheSizeMiB) {
+    private Nitrite initDB(Path file, Metadata meta, MVStoreCompression compress, int cacheSizeMiB, int commitBufferByte) {
         SimpleModule module = new SimpleModule("sirius-nitrite", Version.unknownVersion());
         for (Map.Entry<Class<?>, JsonSerializer<?>> entry : meta.serializers.entrySet()) {
             addSerializer(module, entry.getKey(), entry.getValue());
@@ -121,8 +123,9 @@ public class NitriteDatabase implements Database<Document> {
             addDeserializer(module, entry.getKey(), entry.getValue());
         }
         NitriteModule storeModule = MVStoreModule.withConfig().filePath(file.toFile())
-                .compress(compress)
-                .autoCommitBufferSize(8192) //8kib for 2048 and lower there is a weired bug in Nitrite + MvStore where the db crashed during close operation in 2% of the cases.
+                .compress(compress == MVStoreCompression.LZF)
+                .compressHigh(compress == MVStoreCompression.DEFLATE)
+                .autoCommitBufferSize(commitBufferByte) //8kib for 2048 and lower there is a weired bug in Nitrite + MvStore where the db crashed during close operation in 2% of the cases.
                 .cacheSize(cacheSizeMiB)
                 .build();
 //        NitriteModule storeModule = RocksDBModule.withConfig().filePath(file.toFile()).build();

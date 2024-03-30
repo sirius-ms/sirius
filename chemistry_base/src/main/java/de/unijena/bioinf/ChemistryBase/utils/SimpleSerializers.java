@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
@@ -53,6 +54,13 @@ public class SimpleSerializers {
             return getObject(p.getText());
         }
 
+    }
+
+    public static final class IonizationTypeDeserializer extends FromStringDeserializer<Ionization> {
+        @Override
+        public Ionization getObject(String text) {
+            return Ionization.fromString(text);
+        }
     }
 
     public static final class PrecursorIonTypeDeserializer extends FromStringDeserializer<PrecursorIonType> {

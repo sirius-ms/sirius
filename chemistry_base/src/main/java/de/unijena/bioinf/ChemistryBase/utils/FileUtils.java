@@ -812,7 +812,7 @@ public class FileUtils {
 
     public static Path createTmpProjectSpaceLocation(@Nullable String ext, @NotNull FileSystem fs) {
         String tmpDir = System.getProperty("java.io.tmpdir");
-        return fs.getPath(tmpDir).resolve("sirius-tmp-project-" + TsidCreator.getTsid() + (ext == null || ext.isBlank() ? "": ("." + ext)));
+        return fs.getPath(tmpDir).resolve("sirius-tmp-project-" + TsidCreator.getTsid() + (ext == null || ext.isBlank() ? "": (ext.startsWith(".") ? ext : ("." + ext))));
     }
 
     public static Path newTempFile(@NotNull String directory, @NotNull String prefix, @NotNull String suffix) {

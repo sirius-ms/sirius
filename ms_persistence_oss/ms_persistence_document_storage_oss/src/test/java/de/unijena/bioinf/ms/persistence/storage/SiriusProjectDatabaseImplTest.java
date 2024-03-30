@@ -3,6 +3,7 @@ package de.unijena.bioinf.ms.persistence.storage;
 import com.google.common.collect.Streams;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.StandardFingerprintData;
@@ -561,23 +562,76 @@ public class SiriusProjectDatabaseImplTest {
         });
     }
 
-    //todo write test for experiment import
+    private static Stream<Arguments> peakListData() {
+        return Stream.of(
+                Arguments.of("/peaklists/Bicuculline_M+?.ms", 1, true, false),
+                Arguments.of("/peaklists/ForTox_TestMix_AMSMS_MFE-MS2Extr.cef", 1, true, true),
+                Arguments.of("/peaklists/laudanosine.mgf", 4, true, false),
+                Arguments.of("/peaklists/ForTox_TestMix_TMSMS_multi_msms.cef", 3, true, true)
+        );
+    }
+
     @ParameterizedTest
-    @ValueSource(strings = {"/peaklists/Bicuculline_M+?.ms", "/peaklists/ForTox_TestMix_AMSMS_MFE-MS2Extr.cef", "/peaklists/laudanosine.mgf"})
-    public void importFeaturesFromMs2ExperimentTest(String inputFile) {
+    @MethodSource("peakListData")
+    public void importFeaturesFromMs2ExperimentTest(String inputFile, int expectedMsMs, boolean ms1, boolean rt) {
         withDb(db -> {
             try (InputStream in = Objects.requireNonNull(SiriusProjectDatabaseImplTest.class.getResourceAsStream(inputFile))) {
                 CloseableIterator<Ms2Experiment> it = new MsExperimentParser().getParser(inputFile).parseIterator(in, URI.create(inputFile));
                 while (it.hasNext()) {
-                    Ms2Experiment exp =  it.next();
+                    Ms2Experiment exp = it.next();
+
                     AlignedFeatures feature = db.importMs2ExperimentAsAlignedFeature(exp);
-                    assertNotNull(feature);
-                    assertTrue(db.getStorage().getByPrimaryKey(feature.getAlignedFeatureId(), AlignedFeatures.class).isPresent());
-                    //todo fix spectrum msms deserialization
+                    {
+                        assertNotNull(feature);
+                        assertEquals(expectedMsMs, feature.getMSData().get().getMsnSpectra().size());
+                        assertEquals(ms1, feature.getMSData().get().getMergedMs1Spectrum() != null);
+                        assertEquals(ms1, feature.getMSData().get().getIsotopePattern() != null);
+                        assertTrue(Math.abs(exp.getIonMass() - feature.getAverageMass()) < .0001);
+                        assertEquals(exp.getPrecursorIonType(), feature.getIonType());
+                        if (rt)
+                            assertEquals(0, exp.getAnnotation(RetentionTime.class).get().compareTo(feature.getRetentionTime()));
+                        else
+                            assertNull(feature.getRetentionTime());
+                    }
+
+                    {
+                        assertTrue(db.getStorage().getByPrimaryKey(feature.getAlignedFeatureId(), AlignedFeatures.class).isPresent());
+                        AlignedFeatures extrFeature = db.getStorage().getByPrimaryKey(feature.getAlignedFeatureId(), AlignedFeatures.class).get();
+                        assertEquals(expectedMsMs, extrFeature.getMSData().get().getMsnSpectra().size());
+                        assertEquals(ms1, extrFeature.getMSData().get().getMergedMs1Spectrum() != null);
+                        assertEquals(ms1, extrFeature.getMSData().get().getIsotopePattern() != null);
+                        assertTrue(Math.abs(exp.getIonMass() - extrFeature.getAverageMass()) < .0001);
+                        assertEquals(exp.getPrecursorIonType(), extrFeature.getIonType());
+                        if (rt)
+                            assertEquals(0, exp.getAnnotation(RetentionTime.class).get().compareTo(extrFeature.getRetentionTime()));
+                        else
+                            assertNull(extrFeature.getRetentionTime());
+                    }
                 }
             }
         });
+    }
 
+    //    @Test
+//    ~12k features ~3G data for performance testing
+    public void importFeaturesFromManyMs2ExperimentTest() {
+        Path inputFile = Path.of("/home/fleisch/sirius-testing/demo/louis_OMZ_ETNP/OMZ_ETNP_SIRIUS_nobatch.mgf");
+        withDb(db -> {
+            try (InputStream in = Files.newInputStream(inputFile)) {
+                CloseableIterator<Ms2Experiment> it = new MsExperimentParser().getParser(inputFile).parseIterator(in, inputFile.toUri());
+                int i = 0;
+                while (it.hasNext()) {
+                    Ms2Experiment exp = it.next();
+                    AlignedFeatures feature = db.importMs2ExperimentAsAlignedFeature(exp);
+                    assertNotNull(feature);
+                    assertTrue(db.getStorage().getByPrimaryKey(feature.getAlignedFeatureId(), AlignedFeatures.class).isPresent());
+
+                    System.out.println("Imported Feature: " + i++);
+                }
+                long count = db.getStorage().countAll(AlignedFeatures.class);
+                System.out.println("Imported: " + count);
+            }
+        });
     }
 
     public static void main(String[] args) throws IOException {
