@@ -22,9 +22,11 @@ package de.unijena.bioinf.ms.backgroundruns;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
-import de.unijena.bioinf.jjobs.*;
+import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.jjobs.JobProgressEventListener;
+import de.unijena.bioinf.jjobs.JobProgressMerger;
+import de.unijena.bioinf.jjobs.ProgressSupport;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.projectspace.Instance;
@@ -33,13 +35,10 @@ import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -104,7 +103,7 @@ public class ImportMsFomResourceWorkflow implements Workflow, ProgressSupport {
         Path workingDir = null;
         try {
             if (!alignRuns) {
-                InstanceImporter.ImportInstancesJJob importerJJob = new InstanceImporter(psm, x -> true, x -> true)
+                InstanceImporter.ImportInstancesJJob importerJJob = new InstanceImporter(psm, x -> true)
                         .makeImportJJob(Collections.unmodifiableCollection(inputResources), true, allowMs1OnlyData);
                 importerJJob.addJobProgressListener(progressSupport);
                 importedCompounds = SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
