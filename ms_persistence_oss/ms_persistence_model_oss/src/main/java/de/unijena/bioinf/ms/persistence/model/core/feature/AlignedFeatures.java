@@ -87,6 +87,7 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
                 .apexIntensity(feature.apexIntensity)
                 .snr(feature.snr)
                 .retentionTime(feature.retentionTime)
+                .ionType(feature.getIonType())
                 .msData(msData)
                 .build();
     }
