@@ -64,14 +64,6 @@ public class Instance {
     }
 
     /**
-     * @return The ID (primary key) of this aligned feature (usaully alignedFeatureId) as long or some equivalent id.
-     */
-    @Deprecated
-    public Optional<Long> getLongId() {
-        return Optional.of(getCompoundContainerId().getCompoundIndex()).map(Integer::longValue);
-    }
-
-    /**
      * @return Optional Compound this Instance belongs to (adduct group)
      */
     public Optional<String> getCompoundId() {

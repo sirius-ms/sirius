@@ -72,12 +72,10 @@ public class SiriusProjectSpaceManager implements ProjectSpaceManager {
     private final SiriusProjectSpace space;
     private final Function<Ms2Experiment, String> nameFormatter;
     private final BiFunction<Integer, String, String> namingScheme;
-    protected final InstanceFactory<?> instFac;
 
 
-    public SiriusProjectSpaceManager(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<?> factory, @Nullable Function<Ms2Experiment, String> formatter) {
+    public SiriusProjectSpaceManager(@NotNull SiriusProjectSpace space, @Nullable Function<Ms2Experiment, String> formatter) {
         this.space = space;
-        this.instFac = factory;
         this.nameFormatter = space.getProjectSpaceProperty(FilenameFormatter.PSProperty.class)
                 .map(p -> (Function<Ms2Experiment, String>) new StandardMSFilenameFormatter(p.formatExpression))
                 .orElseGet(() -> {
@@ -99,14 +97,14 @@ public class SiriusProjectSpaceManager implements ProjectSpaceManager {
     public Instance importInstanceWithUniqueId(Ms2Experiment inputExperiment) {
         final String name = nameFormatter.apply(inputExperiment);
         final CompoundContainer container = getProjectSpaceImpl().newCompoundWithUniqueId(name, (idx) -> namingScheme.apply(idx, name), inputExperiment).orElseThrow(() -> new RuntimeException("Could not create an project space ID for the Instance"));
-        return instFac.create(container, this);
+        return new Instance(container, this);
     }
 
     @SafeVarargs
     private Instance newInstanceFromCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {
         try {
             CompoundContainer c = getProjectSpaceImpl().getCompound(id, components);
-            return instFac.create(c, this);
+            return new Instance(c, this);
         } catch (IOException e) {
             LoggerFactory.getLogger(getClass()).error("Could not create read Input Experiment from Project Space.");
             throw new RuntimeException("Could not create read Input Experiment from Project Space.", e);
@@ -233,7 +231,7 @@ public class SiriusProjectSpaceManager implements ProjectSpaceManager {
             public Instance next() {
                 final CompoundContainer c = compoundIt.next();
                 if (c == null) return null;
-                return instFac.create(c, SiriusProjectSpaceManager.this);
+                return new Instance(c, SiriusProjectSpaceManager.this);
             }
         };
     }
