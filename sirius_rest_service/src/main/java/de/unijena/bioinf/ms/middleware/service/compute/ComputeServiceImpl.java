@@ -30,7 +30,6 @@ import de.unijena.bioinf.ms.middleware.model.events.BackgroundComputationsStateE
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.Project;
-import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceImpl;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
@@ -114,16 +113,9 @@ public class ComputeServiceImpl implements ComputeService {
                     ? new HashSet<>(jobSubmission.getAlignedFeatureIds())
                     : Set.of();
 
-            if (project instanceof SiriusProjectSpaceImpl siriusProjectSpace) {
-                siriusProjectSpace.getProjectSpaceManager().filteredIterator(
-                        id -> id.getGroupId().map(cids::contains).orElse(false) || fids.contains(id.getDirectoryName()),
-                        null
-                ).forEachRemaining(compounds::add);
-            } else {
-                StreamSupport.stream(project.getProjectSpaceManager().spliterator(), false).filter(
-                        instance -> instance.getCompoundId().map(cids::contains).orElse(false) || fids.contains(instance.getId())
-                ).forEach(compounds::add);
-            }
+            StreamSupport.stream(project.getProjectSpaceManager().spliterator(), false).filter(
+                    instance -> instance.getCompoundId().map(cids::contains).orElse(false) || fids.contains(instance.getId())
+            ).forEach(compounds::add);
         }
 
         return compounds;
@@ -136,7 +128,7 @@ public class ComputeServiceImpl implements ComputeService {
             id.setCommand(runJob.getCommand());
         if (optFields.contains(Job.OptField.progress))
             id.setProgress(extractProgress(runJob));
-        if (optFields.contains(Job.OptField.affectedIds)){
+        if (optFields.contains(Job.OptField.affectedIds)) {
             id.setAffectedAlignedFeatureIds(extractEffectedAlignedFeatures(runJob));
             id.setAffectedCompoundIds(extractCompoundIds(runJob));
         }
@@ -220,6 +212,7 @@ public class ComputeServiceImpl implements ComputeService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot create Job Command!", e);
         }
     }
+
     //TODO implement new lcms workflow
     @Override
     public Job createAndSubmitMsDataImportJob(@NotNull Project<?> project, ImportMultipartFilesSubmission importSubmission,
@@ -306,6 +299,7 @@ public class ComputeServiceImpl implements ComputeService {
         int intId = Integer.parseInt(jobId);
         return Optional.ofNullable(backgroundRuns(project).getRunById(intId));
     }
+
     public BackgroundRuns.BackgroundRunJob getJob(@NotNull Project<?> project, String jobId) {
         try {
             return findJob(project, jobId).orElseThrow(
