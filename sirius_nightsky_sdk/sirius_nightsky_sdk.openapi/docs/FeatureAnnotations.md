@@ -11,6 +11,9 @@ Summary of the results of a feature (aligned over runs). Can be added to a Align
 |**formulaAnnotation** | [**FormulaCandidate**](FormulaCandidate.md) |  |  [optional] |
 |**structureAnnotation** | [**StructureCandidateScored**](StructureCandidateScored.md) |  |  [optional] |
 |**compoundClassAnnotation** | [**CompoundClasses**](CompoundClasses.md) |  |  [optional] |
+|**confidenceExactMatch** | **Double** | Confidence Score that represents the confidence whether the top hit is correct. |  [optional] |
+|**confidenceApproxMatch** | **Double** | Confidence Score that represents the confidence whether the top hit or a very similar hit (estimated by MCES distance) is correct. |  [optional] |
+|**expansiveSearchState** | **Mode** |  |  [optional] |
 
 
 

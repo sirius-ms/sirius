@@ -25,7 +25,6 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.jjobs.JobSubmitter;
-import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
@@ -121,11 +120,6 @@ public class CanopusSubToolJob extends InstanceJob {
     protected void cleanup() {
         super.cleanup();
         jobs = null;
-    }
-
-    @Override
-    protected Class<? extends DataAnnotation>[] formulaResultComponentsToClear() {
-        return new Class[]{CanopusResult.class};
     }
 
     @Override
