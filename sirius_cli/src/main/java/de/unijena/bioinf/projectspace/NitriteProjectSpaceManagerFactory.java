@@ -18,12 +18,11 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.service.projects;
+package de.unijena.bioinf.projectspace;
 
 import com.github.f4b6a3.tsid.TsidCreator;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
-import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.Nullable;
 

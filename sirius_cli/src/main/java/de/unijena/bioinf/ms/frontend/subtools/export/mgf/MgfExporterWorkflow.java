@@ -123,7 +123,7 @@ public class MgfExporterWorkflow implements Workflow {
     private String extractFid(Instance i) {
         return useFeatureId.get() && i.getProvidedFeatureId().map(StringUtils::isNumeric).orElse(false)
                 ? i.getProvidedFeatureId().get()
-                : i.getLongId().map(String::valueOf).orElseGet(i::getId);
+                : i.getId();
     }
 
     private void writeQuantifiactionTable(Iterable<? extends Instance> ps, Path path) throws IOException {

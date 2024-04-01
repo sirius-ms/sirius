@@ -107,19 +107,14 @@ public final class SiriusProjectSpaceManagerFactory implements ProjectSpaceManag
         this.creator = creator;
     }
 
-    public SiriusProjectSpaceManager create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<?> factory, @Nullable Function<Ms2Experiment, String> formatter) {
-        return new SiriusProjectSpaceManager(space, factory, formatter);
+    public SiriusProjectSpaceManager create(@NotNull SiriusProjectSpace space, @Nullable Function<Ms2Experiment, String> formatter) {
+        return new SiriusProjectSpaceManager(space, formatter);
     }
 
     public SiriusProjectSpaceManager create(SiriusProjectSpace space) {
         return create(space, null);
     }
-
-
-    public SiriusProjectSpaceManager create(@NotNull SiriusProjectSpace space, @Nullable Function<Ms2Experiment, String> formatter) {
-        return create(space, new InstanceFactory.Default(), formatter);
-    }
-
+    
     @Override
     public SiriusProjectSpaceManager createOrOpen(@Nullable Path projectLocation) throws IOException {
 
