@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
 import de.unijena.bioinf.ms.frontend.workflow.ToolChainWorkflow;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
+import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
@@ -206,11 +207,11 @@ public final class BackgroundRuns {
 
     private Workflow makeWorkflow(
             List<String> command, ComputeRootOption rootOptions) throws IOException {
-        final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(PropertyManager.DEFAULTS.newIndependentInstance("BATCH_COMPUTE"));
-        final WorkflowBuilder wfBuilder = new WorkflowBuilder(rootOptions, configOptionLoader, bufferfactory, projectSpaceManagerFactory, false);
+        final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(PropertyManager.DEFAULTS.newIndependentInstance(ConfigType.BATCH_COMPUTE.name()));
+        final WorkflowBuilder wfBuilder = new WorkflowBuilder(rootOptions, configOptionLoader, projectSpaceManagerFactory, false);
         final Run computation = new Run(wfBuilder);
         computation.parseArgs(command.toArray(String[]::new));
-        return computation.makeWorkflow();
+        return computation.makeWorkflow(bufferfactory);
     }
 
 

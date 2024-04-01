@@ -8,8 +8,6 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
-import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
-import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -95,9 +93,10 @@ public class FormulaSearchStrategy extends ConfigPanel {
     protected final SiriusGui gui;
     protected final List<InstanceBean> ecs;
     protected final boolean isMs2;
+    protected final boolean hasMs1AndIsSingleMode;
     protected final boolean isBatchDialog;
 
-    protected  JCheckboxListPanel<SearchableDatabase> searchDBList;
+    protected  DBSelectionListPanel searchDBList;
 
     /**
      * Map of strategy-specific UI components for showing/hiding when changing the strategy
@@ -116,6 +115,9 @@ public class FormulaSearchStrategy extends ConfigPanel {
         this.ecs = ecs;
         this.isMs2 = isMs2;
         this.isBatchDialog = isBatchDialog;
+
+        //in single mode: does compound has MS1 data?
+        this.hasMs1AndIsSingleMode = !isBatchDialog && !ecs.isEmpty() && (ecs.get(0).getMsData().getMergedMs1()!=null || !ecs.get(0).getMsData().getMs1Spectra().isEmpty());
 
         strategyComponents = new HashMap<>();
         strategyComponents.put(Strategy.DEFAULT, new ArrayList<>());
@@ -219,15 +221,12 @@ public class FormulaSearchStrategy extends ConfigPanel {
     }
 
     private void initDatabasePanel() {
-        searchDBList = new JCheckboxListPanel<>(DBSelectionList.fromSearchableDatabases(gui.getSiriusClient()), "Use DB formulas only");
+        searchDBList = DBSelectionListPanel.newInstance("Use DB formulas only", gui.getSiriusClient());
         GuiUtils.assignParameterToolTip(searchDBList.checkBoxList, "FormulaSearchDB");
 
-        PropertyManager.DEFAULTS.createInstanceWithDefaults(StructureSearchDB.class).searchDBs
-                .forEach(s -> searchDBList.checkBoxList.check(gui.getSiriusClient().databases().getDatabase(s.name(), false)));
+        searchDBList.selectDefaultDatabases();
 
         parameterBindings.put("FormulaSearchDB", () -> strategy == Strategy.DATABASE ? String.join(",", getFormulaSearchDBStrings()) : ",");
-        PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSearchDB.class).searchDBs
-                .forEach(s -> searchDBList.checkBoxList.check(gui.getSiriusClient().databases().getDatabase(s.name(), false)));
     }
 
     private JPanel createElementFilterPanel() {
@@ -251,10 +250,12 @@ public class FormulaSearchStrategy extends ConfigPanel {
         JButton buttonEdit = new JButton("…");  // Ellipsis symbol instead of ... because 1-char buttons don't get side insets
         buttonEdit.setToolTipText("Customize allowed elements and their quantities");
         buttonPanel.add(buttonEdit);
-        JButton buttonAutodetect = !isBatchDialog ? new JButton("Re-detect") : null;
+        JButton buttonAutodetect = !isBatchDialog ? new ElementDetectionButton(hasMs1AndIsSingleMode) : null;
         if (!isBatchDialog) {
-            buttonAutodetect.addActionListener(e ->
-                    detectElements(ecs.get(0), allAutoDetectableElements, enforcedTextBox));
+            if (hasMs1AndIsSingleMode) {
+                buttonAutodetect.addActionListener(e ->
+                        detectElements(ecs.get(0), allAutoDetectableElements, enforcedTextBox));
+            }
             buttonPanel.add(buttonAutodetect);
         }
 
@@ -298,11 +299,17 @@ public class FormulaSearchStrategy extends ConfigPanel {
         //reset element filter when switching strategies
         addStrategyChangeListener(strategy -> {
             if (!isBatchDialog) {
-                detectElements(ecs.get(0), allAutoDetectableElements, enforcedTextBox);
-                buttonAutodetect.setToolTipText("Elementdetection has already been performed once opened the compute dialog."
-                        + "Auto detectable element are: " + join(allAutoDetectableElements)
-                        + ".\nIf no elements can be detected the following fallback is used: "+formulaSettings.getFallbackAlphabet().toString(",")
-                        + ".\nAdditionally, the following default elements are always used: "+ getEnforedElements(formulaSettings, allAutoDetectableElements).toString(","));
+                if (hasMs1AndIsSingleMode) {
+                    detectElements(ecs.get(0), allAutoDetectableElements, enforcedTextBox);
+                    buttonAutodetect.setToolTipText("Element detection has already been performed once opened the compute dialog."
+                            + "Auto detectable element are: " + join(allAutoDetectableElements)
+                            + ".\nIf no elements can be detected the following fallback is used: "+formulaSettings.getFallbackAlphabet().toString(",")
+                            + ".\nAdditionally, the following default elements are always used: "+ getEnforedElements(formulaSettings, allAutoDetectableElements).toString(","));
+                } else {
+                    setDefaultElements(Collections.EMPTY_SET, enforcedTextBox);
+                }
+            } else {
+                setDefaultElements(allAutoDetectableElements, enforcedTextBox);
             }
         });
 
@@ -327,9 +334,13 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
     private FormulaConstraints getOrganicElementsWithoutAutodetectables(Set<Element> autodetectables) {
         FormulaConstraints constraints = FormulaSettings.ORGANIC_ELEMENT_FILTER_CHNOPSBBrClIF;
-        Set<Element> alphabetWithoutAutodetectable = new HashSet<>(constraints.getChemicalAlphabet().toSet());
-        alphabetWithoutAutodetectable.removeAll(autodetectables);
-        return constraints.intersection(alphabetWithoutAutodetectable.toArray(Element[]::new));
+        return removeElementsFromConstraints(constraints, autodetectables);
+    }
+
+    private FormulaConstraints removeElementsFromConstraints(FormulaConstraints constraints, Set<Element> remove) {
+        Set<Element> alphabetWithoutRemoved = new HashSet<>(constraints.getChemicalAlphabet().toSet());
+        alphabetWithoutRemoved.removeAll(remove);
+        return constraints.intersection(alphabetWithoutRemoved.toArray(Element[]::new));
     }
 
     private void addDefaultStrategyElementFilterSettings(TwoColumnPanel filterFields) {
@@ -427,6 +438,20 @@ public class FormulaSearchStrategy extends ConfigPanel {
         }
     }
 
+    /**
+     * set default elements.
+     * use special alphabet for bottom up and database
+     * if no MS1 data is available, fallback is used.
+     * @param autoDetectable
+     * @param formulaConstraintsTextBox
+     */
+    protected void setDefaultElements(Set<Element> autoDetectable, JTextField formulaConstraintsTextBox) {
+        FormulaSettings formulaSettings = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
+        FormulaConstraints constraints = getEnforedElements(formulaSettings, autoDetectable)
+                .getExtendedConstraints(removeElementsFromConstraints(formulaSettings.getFallbackAlphabet(), autoDetectable));
+        formulaConstraintsTextBox.setText(constraints.toString(","));
+    }
+
     protected FormulaConstraints getEnforedElements(FormulaSettings defaultFormulaSettings, Set<Element> autoDetectable) {
         return isBottomUpOrDatabaseStrategy() ? getOrganicElementsWithoutAutodetectables(autoDetectable) : defaultFormulaSettings.getEnforcedAlphabet();
     }
@@ -455,5 +480,24 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
     public Strategy getSelectedStrategy(){
         return strategy;
+    }
+
+    private class ElementDetectionButton extends JButton {
+        private final boolean isActivatable;
+
+        private ElementDetectionButton(boolean isActivatable) {
+            this.isActivatable = isActivatable;
+            setText("Re-detect");
+            if (!isActivatable){
+                super.setEnabled(false);
+                setToolTipText("Element detection requires MS1 spectrum with isotope pattern. " +
+                        "\nSuggesting default set of elements.");
+            }
+        }
+
+        @Override
+        public void setEnabled(boolean b) {
+            if (isActivatable) super.setEnabled(b);
+        }
     }
 }

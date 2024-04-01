@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.frontend.core;
 
+import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.auth.AuthService;
@@ -190,7 +191,7 @@ public abstract class ApplicationCore {
 
             //overite default profiles from modules with custom profile
             try {
-                PropertyManager.DEFAULTS.addNewConfig("CUSTOM_CONFIG", Files.newInputStream(customProfileFile));
+                PropertyManager.DEFAULTS.addNewConfig(ConfigType.CUSTOM.name(), Files.newInputStream(customProfileFile));
             } catch (IOException | ConfigurationException e) {
                 System.err.println("Could not load custom Configs");
                 e.printStackTrace();

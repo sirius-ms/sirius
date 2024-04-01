@@ -20,8 +20,11 @@
 package de.unijena.bioinf.ms.frontend;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
+import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -81,7 +84,10 @@ public class Run extends ApplicationCore {
     }
 
     public Workflow makeWorkflow(){
-        flow = builder.makeParseResultHandler().handleParseResult(result);
+        return makeWorkflow(new SimpleInstanceBuffer.Factory());
+    }
+    public Workflow makeWorkflow(@NotNull InstanceBufferFactory<?> bufferFactory){
+        flow = builder.makeParseResultHandler(bufferFactory).handleParseResult(result);
         return flow;
     }
 
