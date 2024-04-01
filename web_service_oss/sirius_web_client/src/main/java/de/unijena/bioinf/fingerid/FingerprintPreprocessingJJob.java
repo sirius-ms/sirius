@@ -29,7 +29,6 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Preprocessing JJob to filter and prepare IdentificationResults for Fingerprint prediction.
@@ -38,14 +37,13 @@ import java.util.stream.Collectors;
  * 2. Soft thresholding of Formula Candidates
  * 3. Expansion of Adducts
  *
+ * SINGLE THREADED: because multi threading might not have a big impact here
  * @param <S> Scoring type of Identification result
  */
-//todo currently single threaded because multi threading might not have a big impact here
 public class FingerprintPreprocessingJJob<S extends FormulaScore> extends BasicJJob<List<IdentificationResult<S>>> {
     // input data
     private Ms2Experiment experiment;
     private List<IdentificationResult<S>> idResult;
-    protected Map<IdentificationResult<S>, IdentificationResult<S>> addedIdentificationResults = Map.of(); //todo NewWorkflow: still necessary?
     private Set<MolecularFormula> enforcedFormulas;
 
     public FingerprintPreprocessingJJob() {
@@ -79,10 +77,6 @@ public class FingerprintPreprocessingJJob<S extends FormulaScore> extends BasicJ
     public void setExperiment(Ms2Experiment experiment) {
         notSubmittedOrThrow();
         this.experiment = experiment;
-    }
-
-    public Map<IdentificationResult<S>, IdentificationResult<S>> getAddedIdentificationResults() {
-        return addedIdentificationResults;
     }
 
     public Ms2Experiment getExperiment() {
@@ -136,8 +130,8 @@ public class FingerprintPreprocessingJJob<S extends FormulaScore> extends BasicJ
                 if (!enforcedFormulas.isEmpty()) {
                     //add results that must always be considered
                     Set<IdentificationResult<S>> resultsSet = new HashSet<>(filteredResults);
-                    idResult.stream().filter(r -> enforcedFormulas.contains(r.getMolecularFormula())).forEach(r -> resultsSet.add(r));
-                    filteredResults = resultsSet.stream().collect(Collectors.toCollection(ArrayList::new));
+                    idResult.stream().filter(r -> enforcedFormulas.contains(r.getMolecularFormula())).forEach(resultsSet::add);
+                    filteredResults = new ArrayList<>(resultsSet);
                 }
             } else {
                 filteredResults.addAll(idResult);
