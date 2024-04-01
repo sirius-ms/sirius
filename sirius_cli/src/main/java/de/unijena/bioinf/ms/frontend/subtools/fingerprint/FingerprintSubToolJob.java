@@ -109,28 +109,6 @@ public class FingerprintSubToolJob extends InstanceJob {
 
         // ############### Make results persistent ####################
         final Map<FTree, FormulaResult> formulaResultsMap = formulaResults.stream().collect(Collectors.toMap(r -> r.getCandidate().getAnnotationOrThrow(FTree.class), SScored::getCandidate));
-        Map<? extends IdentificationResult<?>, ? extends IdentificationResult<?>> addedResults = fpPreproJob.getAddedIdentificationResults();
-
-        updateProgress(80);
-        // add new id results to project-space.
-        addedResults.forEach((k, v) ->
-                inst.newFormulaResultWithUniqueId(k.getTree())
-                        .ifPresent(fr -> {
-                            //do not override but only set missing scores (may have different tree/SIRIUS score)
-                            FormulaScoring formulaScoring = fr.getAnnotationOrThrow(FormulaScoring.class);
-                            final Iterator<Map.Entry<Class<FormulaScore>, FormulaScore>> iter = formulaResultsMap.get(v.getTree()).getAnnotationOrThrow(FormulaScoring.class).annotationIterator();
-                            while (iter.hasNext()) {
-                                final Map.Entry<Class<FormulaScore>, FormulaScore> e = iter.next();
-                                if (!formulaScoring.hasAnnotation(e.getKey())){
-                                    formulaScoring.setAnnotation(e.getKey(), e.getValue());
-                                }
-                            }
-                            inst.updateFormulaResult(fr, FormulaScoring.class);
-
-                            formulaResultsMap.put(fr.getAnnotationOrThrow(FTree.class), fr);
-                        }));
-
-
         assert formulaResultsMap.size() >= result.size();
 
         updateProgress(90);
