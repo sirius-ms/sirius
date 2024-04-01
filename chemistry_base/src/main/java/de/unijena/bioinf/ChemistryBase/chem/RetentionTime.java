@@ -23,6 +23,7 @@ package de.unijena.bioinf.ChemistryBase.chem;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.google.common.collect.Range;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -98,6 +99,11 @@ public final class RetentionTime implements Ms2ExperimentAnnotation, Comparable<
     public double getEndTime() {
         if (!isInterval()) throw new RuntimeException("No retention time range given");
         return end;
+    }
+
+    public Range<Double> asRange() {
+        if (!isInterval()) throw new RuntimeException("No retention time range given");
+        return Range.closed(start, end);
     }
 
     public double getMiddleTime() {
