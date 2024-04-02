@@ -156,7 +156,7 @@ public class Sirius {
      * @param experiment input data
      * @return the top tree
      */
-    public List<IdentificationResult<SiriusScore>> identify(Ms2Experiment experiment) {
+    public List<IdentificationResult> identify(Ms2Experiment experiment) {
         return SiriusJobs.getGlobalJobManager().submitJob(makeIdentificationJob(experiment)).takeResult();
     }
 
@@ -171,7 +171,7 @@ public class Sirius {
         copy.setMolecularFormula(formula);
         Set<MolecularFormula> wh = Collections.singleton(formula);
         copy.setAnnotation(Whiteset.class, Whiteset.ofNeutralizedFormulas(wh, Sirius.class));
-        final List<IdentificationResult<SiriusScore>> irs = identify(copy);
+        final List<IdentificationResult> irs = identify(copy);
         if (irs.isEmpty()) return null;
         else return irs.get(0);
     }
@@ -623,7 +623,7 @@ public class Sirius {
         }
     }*/
 
-    public class SiriusIdentificationJob extends BasicMasterJJob<List<IdentificationResult<SiriusScore>>> {
+    public class SiriusIdentificationJob extends BasicMasterJJob<List<IdentificationResult>> {
         private final Ms2Experiment experiment;
 
         public SiriusIdentificationJob(Ms2Experiment experiment) {
@@ -632,7 +632,7 @@ public class Sirius {
         }
 
         @Override
-        protected List<IdentificationResult<SiriusScore>> compute() throws Exception {
+        protected List<IdentificationResult> compute() throws Exception {
             try {
                 final ProcessedInput input = preprocessForMs2Analysis(experiment);
                 if (experiment.getAnnotationOrDefault(IsotopeSettings.class).isEnabled())
@@ -642,7 +642,7 @@ public class Sirius {
                 submitSubJob(instance);
                 FasterTreeComputationInstance.FinalResult fr = instance.awaitResult();
 
-                List<IdentificationResult<SiriusScore>> r = createIdentificationResultsAndResolveAdducts(fr, instance);//postprocess results
+                List<IdentificationResult> r = createIdentificationResultsAndResolveAdducts(fr, instance);//postprocess results
                 return r;
             } catch (RuntimeException e) {
                 LoggerFactory.getLogger(Sirius.class).error("Error in instance " + experiment.getSourceString() + ": " + e.getMessage());
@@ -663,7 +663,7 @@ public class Sirius {
         /**
          * resolves adduct, current trees are still only based on ionizations without adducts
          */
-        private List<IdentificationResult<SiriusScore>> createIdentificationResultsAndResolveAdducts(FasterTreeComputationInstance.FinalResult fr, FasterTreeComputationInstance computationInstance) {
+        private List<IdentificationResult> createIdentificationResultsAndResolveAdducts(FasterTreeComputationInstance.FinalResult fr, FasterTreeComputationInstance computationInstance) {
             //clear scores for none MS/MS results
             if (experiment.getMs2Spectra().isEmpty()){
                 logWarn("Instance has no MS/MS data. Tree score will be unreliable. Setting TreeScore to 0");
@@ -671,8 +671,8 @@ public class Sirius {
                     ftree.setTreeWeight(new FTreeMetricsHelper(ftree).getIsotopeMs1Score());
             }
 
-            List<IdentificationResult<SiriusScore>> irs = fr.getResults().stream()
-                    .map(tree -> new IdentificationResult<>(tree, new SiriusScore(FTreeMetricsHelper.getSiriusScore(tree))))
+            List<IdentificationResult> irs = fr.getResults().stream()
+                    .map(tree -> new IdentificationResult(tree, new SiriusScore(FTreeMetricsHelper.getSiriusScore(tree))))
                     .sorted(Comparator.reverseOrder())
                     .collect(Collectors.toList());
 
@@ -686,13 +686,12 @@ public class Sirius {
         /**
          *     This resolve all trees based on the {@link PossibleAdducts}. For some formulas, not every adduct will be possible based on formula filters such as  RDBE.
          *     //todo is this the correct position to do that? The same should hold for Isotope pattern Analysis. do we have to do at 2 positions? We also support MS1 only
-         * @param possibleAdducts
          * @return
          */
-        private List<IdentificationResult<SiriusScore>> resolveAdductIfPossible(IdentificationResult<SiriusScore> identificationResult, ProcessedInput pinput) {
+        private List<IdentificationResult> resolveAdductIfPossible(IdentificationResult identificationResult, ProcessedInput pinput) {
             try {
                 FTree tree = identificationResult.getTree();
-                SiriusScore siriusScore = identificationResult.getScoreObject();
+                SiriusScore siriusScore = (SiriusScore) identificationResult.getScoreObject();
                 PrecursorIonType ionType = tree.getAnnotation(PrecursorIonType.class).orElseThrow();
                 final MolecularFormula measuredMF = tree.getRoot().getFormula();
 
@@ -700,11 +699,11 @@ public class Sirius {
                 final PossibleAdducts possibleAdducts = pinput.getAnnotationOrThrow(PossibleAdducts.class);
                 final Whiteset ws = pinput.getAnnotationOrThrow(Whiteset.class);
 
-                List<IdentificationResult<SiriusScore>> resolvedTrees = new ArrayList<>();
+                List<IdentificationResult> resolvedTrees = new ArrayList<>();
                 for (PrecursorIonType pa : possibleAdducts.getAdducts(ionType.getIonization())) {
                     boolean checkElementFilter = false;
                     if(isValidNeutralFormula(measuredMF, pa, ws, constraints, checkElementFilter)) {
-                        resolvedTrees.add(new IdentificationResult<>(new IonTreeUtils().treeToNeutralTree(tree, pa, true), siriusScore));
+                        resolvedTrees.add(new IdentificationResult(new IonTreeUtils().treeToNeutralTree(tree, pa, true), siriusScore));
                     }
                 }
                 if (resolvedTrees.size()==0) {

@@ -33,7 +33,6 @@ import de.unijena.bioinf.chemdb.annotations.SpectralSearchDB;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JobProgressMerger;
-import de.unijena.bioinf.projectspace.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bionf.spectral_alignment.*;
@@ -166,7 +165,7 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
 
     private void addAdductsAndFormulasFromHighScoringLibraryMatches(Ms2Experiment exp, SpectralSearchResult result, double minSimilarity, int minSharedPeaks) {
         final DetectedAdducts detAdds = exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new);
-        Set<PrecursorIonType> adducts = result.deriveDistinctAdductsSetWithThreshold(exp, minSimilarity, minSharedPeaks);
+        Set<PrecursorIonType> adducts = SpectralSearchResults.deriveDistinctAdductsSetWithThreshold(result.getResults(), exp.getIonMass(), minSimilarity, minSharedPeaks);
         if (adducts.isEmpty()) return;
 
         PossibleAdducts possibleAdducts = new PossibleAdducts(adducts);
@@ -174,7 +173,7 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
         detAdds.put(DetectedAdducts.Source.SPECTRAL_LIBRARY_SEARCH, possibleAdducts);
 
         //set high-scoring formulas
-        Set<MolecularFormula> formulas = result.deriveDistinctFormulaSetWithThreshold(exp, minSimilarity, minSharedPeaks);
+        Set<MolecularFormula> formulas = SpectralSearchResults.deriveDistinctFormulaSetWithThreshold(result.getResults(), exp.getIonMass(), minSimilarity, minSharedPeaks);
         if (formulas.isEmpty()) return;
 
         CandidateFormulas candidateFormulas = exp.computeAnnotationIfAbsent(CandidateFormulas.class);

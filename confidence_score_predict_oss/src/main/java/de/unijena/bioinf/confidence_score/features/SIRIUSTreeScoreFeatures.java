@@ -43,12 +43,12 @@ import java.util.List;
  */
 public class SIRIUSTreeScoreFeatures implements FeatureCreator {
 
-    List<IdentificationResult<SiriusScore>> idlist;
+    List<IdentificationResult> idlist;
     Ms2Experiment exp;
     int min_quartil=1;
     int max_quartil=99;
 
-    public SIRIUSTreeScoreFeatures(List<IdentificationResult<SiriusScore>> idlist, Ms2Experiment exp) {
+    public SIRIUSTreeScoreFeatures(List<IdentificationResult> idlist, Ms2Experiment exp) {
         this.idlist = idlist;
         this.exp = exp;
     }
