@@ -19,10 +19,7 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.spectra_search;
 
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
-import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.jjobs.JobSubmitter;
@@ -83,7 +80,8 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
 
     @Override
     protected void computeAndAnnotateResult(@NotNull Instance inst) throws Exception {
-        SpectralAlignmentJJob job = new SpectralAlignmentJJob(ApplicationCore.WEB_API, inst.getExperiment());
+        final Ms2Experiment exp = inst.getExperiment();
+        SpectralAlignmentJJob job = new SpectralAlignmentJJob(ApplicationCore.WEB_API, exp);
         job.addJobProgressListener(evt -> updateProgress(evt.getMinValue(), evt.getMaxValue(), evt.getProgress()));
         SpectralSearchResult result = submitSubJob(job).awaitResult();
 
@@ -96,20 +94,20 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
 
         checkForInterruption();
 
-        int print = inst.getExperiment().getAnnotationOrDefault(SpectralSearchLog.class).value;
+        int print = exp.getAnnotationOrDefault(SpectralSearchLog.class).value;
 
         if (print < 1)
             return;
 
-        Deviation peakDev = inst.getExperiment().getAnnotationOrDefault(MS1MassDeviation.class).allowedMassDeviation;
-        Deviation precursorDev = inst.getExperiment().getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation;
+        Deviation peakDev = exp.getAnnotationOrDefault(MS1MassDeviation.class).allowedMassDeviation;
+        Deviation precursorDev = exp.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation;
 
         StringBuilder builder = new StringBuilder("##########  BEGIN SPECTRUM SEARCH RESULTS  ##########");
         builder.append("\nPrecursor deviation: ").append(precursorDev);
         builder.append("\nPeak deviation: ").append(peakDev);
-        builder.append("\nExperiment: ").append(inst.getExperiment().getName());
+        builder.append("\nExperiment: ").append(exp.getName());
 
-        List<MutableMs2Spectrum> queries = inst.getExperiment().getMs2Spectra();
+        List<MutableMs2Spectrum> queries = exp.getMs2Spectra();
         Map<Integer, List<SpectralSearchResult.SearchResult>> resultMap = StreamSupport.stream(result.spliterator(), false).collect(Collectors.groupingBy(SpectralSearchResult.SearchResult::getQuerySpectrumIndex));
         for (Integer queryIndex : resultMap.keySet()) {
             MutableMs2Spectrum query = queries.get(queryIndex);

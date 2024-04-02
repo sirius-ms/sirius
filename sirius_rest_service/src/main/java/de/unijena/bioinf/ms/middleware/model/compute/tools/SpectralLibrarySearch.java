@@ -84,6 +84,7 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
                 .putIfNonNull("SpectralMatchingMassDeviation.allowedPeakDeviation", peakDeviationPpm, it -> it + " ppm")
                 .putIfNonNull("SpectralMatchingMassDeviation.allowedPrecursorDeviation", precursorDeviationPpm, it -> it + " ppm")
                 .putIfNonNull("SpectralAlignmentScorer", scoring)
+                .putIfNonNull("SpectralSearchLog", 0)
                 .toUnmodifiableMap();
     }
 

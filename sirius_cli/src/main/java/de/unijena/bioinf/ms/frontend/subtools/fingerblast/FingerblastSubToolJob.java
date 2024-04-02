@@ -31,7 +31,6 @@ import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.FingerblastJJob;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
-import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobSubmitter;
@@ -80,7 +79,7 @@ public class FingerblastSubToolJob extends InstanceJob {
         checkForInterruption();
 
         if (formulaResultsMap.isEmpty()) {
-            logInfo("Skipping instance \"" + inst.getExperiment().getName() + "\" because there are no trees computed.");
+            logInfo("Skipping instance \"" + inst.getName() + "\" because there are no trees computed.");
             return;
         }
 
@@ -95,9 +94,7 @@ public class FingerblastSubToolJob extends InstanceJob {
         checkForInterruption();
 
         final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor)
-                        ApplicationCore.WEB_API.getStructurePredictor(
-                                inst.getExperiment().getAnnotationOrThrow(PredictorTypeAnnotation.class)
-                                        .toPredictors(inst.getExperiment().getPrecursorIonType().getCharge()).iterator().next()),
+                        ApplicationCore.WEB_API.getStructurePredictor(inst.getIonType().getCharge()),
                 this::checkForInterruption);
 
         updateProgress(15);

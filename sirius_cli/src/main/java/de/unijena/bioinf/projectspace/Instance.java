@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -63,10 +64,15 @@ public interface Instance {
 
     double getIonMass();
 
+    PrecursorIonType getIonType();
+
     ProjectSpaceManager getProjectSpaceManager();
 
     //region load from projectSpace
     Ms2Experiment getExperiment();
+
+    boolean hasMs1();
+    boolean hasMsMs();
 
     LCMSPeakInformation getLCMSPeakInformation();
     List<FCandidate<?>> getFormulaCandidates();
@@ -115,11 +121,11 @@ public interface Instance {
     }
 
 
-    boolean saveSpectraSearchResult(SpectralSearchResult result);
+    void saveSpectraSearchResult(SpectralSearchResult result);
     boolean hasSpectraSearchResult();
     void deleteSpectraSearchResult();
 
-    boolean savePassatuttoResult(FCandidate<?> id, Decoy decoy);
+    void savePassatuttoResult(FCandidate<?> id, Decoy decoy);
     boolean hasPassatuttoResult();
     void deletePassatuttoResult();
 
@@ -136,7 +142,6 @@ public interface Instance {
     boolean hasFingerprintResult();
     void deleteFingerprintResult();
 
-    //TODO TEMP solution -> make better api method without FormulaResult but with Id
     void saveStructureSearchResult(@NotNull Map<FCandidate<?>, FingerIdResult> structureSearchResults);
     boolean hasStructureSearchResult();
     void deleteStructureSearchResult();

@@ -94,7 +94,7 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
             boolean headerWritten = false;
             List<Instance> filtered = new ArrayList<>();
             for (Instance inst : instances) {
-                final int pol = inst.getExperiment().getPrecursorIonType().getCharge();
+                final int pol = inst.getIonType().getCharge();
                 if (polarity == 0) {
                     polarity = pol;
                 }

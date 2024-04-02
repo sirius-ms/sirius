@@ -21,6 +21,7 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -101,6 +102,11 @@ public class SiriusProjectSpaceInstance implements Instance {
         return getCompoundContainerId().getIonMass().orElse(Double.NaN);
     }
 
+    @Override
+    public PrecursorIonType getIonType() {
+        return getCompoundContainerId().getIonType().orElse(PrecursorIonType.unknown(1));
+    }
+
     @Deprecated
     public final synchronized CompoundContainerId getCompoundContainerId() {
         return compoundCache.getId();
@@ -120,6 +126,16 @@ public class SiriusProjectSpaceInstance implements Instance {
     @Override
     public final Ms2Experiment getExperiment() {
         return loadCompoundContainer(Ms2Experiment.class).getAnnotationOrThrow(Ms2Experiment.class);
+    }
+
+    @Override
+    public boolean hasMs1() {
+        return getExperiment().getMergedMs1Spectrum() != null || (getExperiment().getMs1Spectra() != null &&  !getExperiment().getMs1Spectra().isEmpty());
+    }
+
+    @Override
+    public boolean hasMsMs() {
+        return getExperiment().getMs2Spectra() != null  &&  !getExperiment().getMs2Spectra().isEmpty();
     }
 
     @Override
@@ -186,18 +202,6 @@ public class SiriusProjectSpaceInstance implements Instance {
     public Optional<FCandidate<?>> getTopFTree() {
         return Optional.empty();
     }
-
-
-    //    @Override
-//    public List<SScored<Pair<FTree, Object>, FormulaScore>> getScoredFTrees() {
-//        return loadFormulaResults(FormulaScoring.class, FTree.class).stream()
-//                .map(s -> new SScored<>(Pair.of(s.getCandidate().getAnnotationOrThrow(FTree.class), (Object) s.getCandidate().getId()), (FormulaScore) s.getScoreObject()))
-//                .collect(Collectors.toList());
-//    }
-
-
-
-
 
     @SafeVarargs
     public final synchronized CompoundContainer loadCompoundContainer(Class<? extends DataAnnotation>... components) {
@@ -655,12 +659,11 @@ public class SiriusProjectSpaceInstance implements Instance {
     }
 
     @Override
-    public boolean savePassatuttoResult(FCandidate<?> fc, Decoy decoy) {
+    public void savePassatuttoResult(FCandidate<?> fc, Decoy decoy) {
         FormulaResult best = loadFormulaResult((FormulaResultId) fc.getId()).orElseThrow();
         best.setAnnotation(Decoy.class, decoy);
         //write Passatutto results
         updateFormulaResult(best, Decoy.class);
-        return false;
     }
 
     @Override
@@ -699,11 +702,10 @@ public class SiriusProjectSpaceInstance implements Instance {
     }
 
     @Override
-    public boolean saveSpectraSearchResult(SpectralSearchResult result) {
+    public void saveSpectraSearchResult(SpectralSearchResult result) {
         CompoundContainer container = loadCompoundContainer();
         container.annotate(result);
         updateCompound(container, SpectralSearchResult.class);
-        return false;
     }
 
     @Override
