@@ -21,6 +21,7 @@
 package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -35,6 +36,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Executing {@link WebJJob}s for a given set of
@@ -42,7 +44,6 @@ import java.util.stream.Collectors;
  * <p>
  * This Job is just a Scheduler do wrap all predictions jobs of a single experiment into one single job.
  */
-//todo can be easily be connected to preprocessing job if needed
 public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
     // structure Elucidator
     private final CSIPredictor predictor;
@@ -52,14 +53,6 @@ public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
     private Ms2Experiment experiment;
     private List<FingerIdResult> idResult;
     private Map<WebJJob<FingerprintJobInput, ?, FingerprintResult, ?>, FingerIdResult> predictionJobs = null;
-
-    public FingerprintJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI) {
-        this(predictor, webAPI, null);
-    }
-
-    public FingerprintJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable Ms2Experiment experiment) {
-        this(predictor, webAPI, experiment, null);
-    }
 
     public FingerprintJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable Ms2Experiment experiment, @Nullable List<FingerIdResult> preprocessed) {
         super(JobType.WEBSERVICE);
@@ -142,7 +135,10 @@ public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
         return super.identifier() + " | " + experiment.getName() + "@" + experiment.getIonMass() + "m/z";
     }
 
-    public static FingerprintJJob of(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable Ms2Experiment experiment, @NotNull List<? extends IdentificationResult<?>> formulaResults) {
-        return new FingerprintJJob(predictor, webAPI, experiment, formulaResults.stream().map(FingerIdResult::new).collect(Collectors.toList()));
+    public static FingerprintJJob of(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable Ms2Experiment experiment, @NotNull Stream<FTree> trees) {
+        return new FingerprintJJob(predictor, webAPI, experiment, trees.map(FingerIdResult::new).collect(Collectors.toList()));
+    }
+    public static FingerprintJJob of(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable Ms2Experiment experiment, @NotNull List<FTree> trees) {
+        return of(predictor, webAPI, experiment, trees.stream());
     }
 }

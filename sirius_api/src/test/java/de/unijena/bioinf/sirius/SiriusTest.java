@@ -223,7 +223,7 @@ public class SiriusTest {
         Sirius.SiriusIdentificationJob sijob = sirius.makeIdentificationJob(experiment);
         JobManager jobs = SiriusJobs.getGlobalJobManager();
         jobs.submitJob(sijob);
-        List<IdentificationResult<SiriusScore>> results = sijob.takeResult();
+        List<IdentificationResult> results = sijob.takeResult();
         final FTree top = results.get(0).getTree();
 
         assertEquals(PrecursorIonType.getPrecursorIonType("[M-H2O+H]+"), top.getAnnotationOrThrow(PrecursorIonType.class));
@@ -254,7 +254,7 @@ public class SiriusTest {
             Sirius.SiriusIdentificationJob sijob = sirius.makeIdentificationJob(experiment);
             JobManager jobs = SiriusJobs.getGlobalJobManager();
             jobs.submitJob(sijob);
-            List<IdentificationResult<SiriusScore>> results = sijob.takeResult();
+            List<IdentificationResult> results = sijob.takeResult();
             orig = results.get(0).getTree();
         }
         experiment.setPrecursorIonType(PrecursorIonType.getPrecursorIonType("[M+NH3+H]+"));
@@ -262,7 +262,7 @@ public class SiriusTest {
             Sirius.SiriusIdentificationJob sijob = sirius.makeIdentificationJob(experiment);
             JobManager jobs = SiriusJobs.getGlobalJobManager();
             jobs.submitJob(sijob);
-            List<IdentificationResult<SiriusScore>> results = sijob.takeResult();
+            List<IdentificationResult> results = sijob.takeResult();
             top = results.get(0).getTree();
         }
 
@@ -305,7 +305,7 @@ public class SiriusTest {
             Sirius.SiriusIdentificationJob sijob = sirius.makeIdentificationJob(experiment);
             JobManager jobs = SiriusJobs.getGlobalJobManager();
             jobs.submitJob(sijob);
-            List<IdentificationResult<SiriusScore>> results = sijob.takeResult();
+            List<IdentificationResult> results = sijob.takeResult();
             top = results.get(0).getTree();
         }
 
@@ -370,7 +370,7 @@ public class SiriusTest {
 
         exp.setAnnotation(IsotopeMs2Settings.class, new IsotopeMs2Settings(IsotopeMs2Settings.Strategy.SCORE));
 
-        IdentificationResult<?> result = sirius.compute(exp, MolecularFormula.parseOrThrow("C14H23ClN2O4S"));
+        IdentificationResult result = sirius.compute(exp, MolecularFormula.parseOrThrow("C14H23ClN2O4S"));
         final FragmentAnnotation<Ms2IsotopePattern> iso = result.getTree().getFragmentAnnotationOrNull(Ms2IsotopePattern.class);
         assertNotNull(iso);
         int peaksWithIsotopes = 0;

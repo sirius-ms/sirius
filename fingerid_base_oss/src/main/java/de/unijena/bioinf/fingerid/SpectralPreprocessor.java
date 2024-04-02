@@ -54,7 +54,7 @@ public class SpectralPreprocessor {
     }
 
 
-    public static InputFeatures preprocessFromSirius(Sirius sirius, IdentificationResult<?> result, Ms2Experiment experiment) {
+    public static InputFeatures preprocessFromSirius(Sirius sirius, IdentificationResult result, Ms2Experiment experiment) {
         return new SpectralPreprocessor(sirius).extractInputFeatures(result.getTree(), experiment);
     }
 

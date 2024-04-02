@@ -21,11 +21,11 @@
 package de.unijena.bioinf.canopus;
 
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
-import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 
 import java.util.Optional;
 
-public class CanopusResult implements DataAnnotation {
+public class CanopusResult implements ResultAnnotation {
     protected ProbabilityFingerprint canopusFingerprint;
 
     protected Optional<ProbabilityFingerprint> npcFingerprint;

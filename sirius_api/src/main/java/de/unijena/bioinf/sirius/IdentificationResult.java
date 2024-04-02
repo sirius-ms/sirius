@@ -31,35 +31,35 @@ import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
 
 //this is basically just a scored tree
-public final class IdentificationResult<S extends FormulaScore> extends SScored<FTree, S> implements Cloneable {
+public final class IdentificationResult extends SScored<FTree, FormulaScore> implements Cloneable {
 
-    public static <S extends FormulaScore> IdentificationResult<S> withPrecursorIonType(IdentificationResult<S> ir, PrecursorIonType ionType, boolean preserveOriginalTreeScore) {
+    public static IdentificationResult withPrecursorIonType(IdentificationResult ir, PrecursorIonType ionType, boolean preserveOriginalTreeScore) {
 
         PrecursorIonType adduct = ir.getTree().getAnnotationOrNull(PrecursorIonType.class);
         if (adduct==null || !adduct.equals(ionType)) {
             FTree newTree = new IonTreeUtils().treeToNeutralTree(ir.getCandidate(), ionType, preserveOriginalTreeScore);
-            S scoredObject = ir.getScoreObject();
-            S s;
+            FormulaScore scoredObject = ir.getScoreObject();
+            FormulaScore s;
             if (!preserveOriginalTreeScore){
                 if (scoredObject instanceof SiriusScore) {
-                    s = (S)new SiriusScore(FTreeMetricsHelper.getSiriusScore(newTree));
+                    s = new SiriusScore(FTreeMetricsHelper.getSiriusScore(newTree));
                 } else if (scoredObject instanceof TreeScore) {
-                    s = (S)new TreeScore(new FTreeMetricsHelper(newTree).getTreeScore());
+                    s = new TreeScore(new FTreeMetricsHelper(newTree).getTreeScore());
                 } else {
                     s = scoredObject;
                 }
             } else s = scoredObject;
-            return new IdentificationResult<>(newTree, s);
+            return new IdentificationResult(newTree, s);
         }
 
         else return ir;
     }
 
-    public IdentificationResult(IdentificationResult<S> ir) {
+    public IdentificationResult(IdentificationResult ir) {
         this(ir.getCandidate(), ir.getScoreObject());
     }
 
-    public IdentificationResult(FTree tree, S score) {
+    public IdentificationResult(FTree tree, FormulaScore score) {
         super(tree, score);
     }
 
@@ -98,16 +98,14 @@ public final class IdentificationResult<S extends FormulaScore> extends SScored<
 
     /**
      * true if a beautiful (bigger, better explaining spectrum) tree is available
-     *
-     * @return
      */
     @Deprecated
     public boolean isBeautiful() {
         return true;
     }
 
-    public IdentificationResult<S> clone() {
-        return new IdentificationResult<>(new FTree(getTree()), getScoreObject());
+    public IdentificationResult clone() {
+        return new IdentificationResult(new FTree(getTree()), getScoreObject());
     }
 
     public String toString() {
