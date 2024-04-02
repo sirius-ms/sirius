@@ -51,13 +51,13 @@ public class NoSQLInstance implements Instance {
         this.manager = manager;
     }
 
+    public long getLongId() {
+        return id;
+    }
+
     @Override
     public String getId() {
         return String.valueOf(getLongId());
-    }
-
-    public long getLongId() {
-        return id;
     }
 
     @Override
