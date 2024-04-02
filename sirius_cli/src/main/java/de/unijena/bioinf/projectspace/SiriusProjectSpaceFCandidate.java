@@ -43,7 +43,7 @@ public class SiriusProjectSpaceFCandidate extends FCandidate<FormulaResultId> {
 
     @Override
     public FormulaResultId getId() {
-        return null;
+        return fid;
     }
 
     @Override
