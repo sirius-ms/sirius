@@ -34,6 +34,7 @@ import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Index;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
+import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -115,32 +116,32 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
         return getStorage().findAllStr(Compound.class);
     }
 
-    default void fetchAdductFeatures(@NotNull final Compound compound) {
-        try {
-            getStorage().fetchAllChildren(compound, "compoundId", "adductFeatures", AlignedFeatures.class);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    @SneakyThrows
+    default Compound fetchAdductFeatures(@NotNull final Compound compound) {
+        getStorage().fetchAllChildren(compound, "compoundId", "adductFeatures", AlignedFeatures.class);
+        return compound;
     }
 
-    default void fetchCorrelatedIonPairs(@NotNull final Compound compound) {
-        try {
-            getStorage().fetchAllChildren(compound, "compoundId", "correlatedIonPairs", CorrelatedIonPair.class);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    @SneakyThrows
+    default Compound fetchCorrelatedIonPairs(@NotNull final Compound compound) {
+        getStorage().fetchAllChildren(compound, "compoundId", "correlatedIonPairs", CorrelatedIonPair.class);
+        return compound;
     }
 
     default Stream<AlignedFeatures> getAllAlignedFeatures() throws IOException {
         return getStorage().findAllStr(AlignedFeatures.class);
     }
 
-    default <A extends AbstractAlignedFeatures> void fetchFeatures(@NotNull final A alignedFeatures) {
-        try {
-            getStorage().fetchAllChildren(alignedFeatures, "alignedFeatureId", "features", Feature.class);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    @SneakyThrows
+    default <A extends AbstractAlignedFeatures> A fetchFeatures(@NotNull final A alignedFeatures) {
+        getStorage().fetchAllChildren(alignedFeatures, "alignedFeatureId", "features", Feature.class);
+        return alignedFeatures;
+    }
+
+    @SneakyThrows
+    default <A extends AbstractAlignedFeatures> A fetchMsData(@NotNull final A alignedFeatures) {
+        getStorage().fetchChild(alignedFeatures, "alignedFeatureId", "msData", MSData.class);
+        return alignedFeatures;
     }
 
     default void importCompounds(List<Compound> compounds) throws IOException {

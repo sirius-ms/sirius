@@ -588,6 +588,9 @@ public class SiriusProjectDatabaseImplTest {
                         assertEquals(ms1, feature.getMSData().get().getIsotopePattern() != null);
                         assertTrue(Math.abs(exp.getIonMass() - feature.getAverageMass()) < .0001);
                         assertEquals(exp.getPrecursorIonType(), feature.getIonType());
+                        assertEquals(exp.getName(), feature.getName());
+                        assertEquals(exp.getFeatureId(), feature.getExternalFeatureId());
+                        assertEquals(exp.getMolecularFormula(), feature.getMolecularFormula());
                         if (rt)
                             assertEquals(0, exp.getAnnotation(RetentionTime.class).get().compareTo(feature.getRetentionTime()));
                         else
@@ -597,41 +600,69 @@ public class SiriusProjectDatabaseImplTest {
                     {
                         assertTrue(db.getStorage().getByPrimaryKey(feature.getAlignedFeatureId(), AlignedFeatures.class).isPresent());
                         AlignedFeatures extrFeature = db.getStorage().getByPrimaryKey(feature.getAlignedFeatureId(), AlignedFeatures.class).get();
+                        assertTrue(extrFeature.getMSData().isEmpty()); // data is stored in separate collection
+                        // fetch ms data
+                        db.fetchMsData(extrFeature);
+                        assertTrue(extrFeature.getMSData().isPresent());
                         assertEquals(expectedMsMs, extrFeature.getMSData().get().getMsnSpectra().size());
                         assertEquals(ms1, extrFeature.getMSData().get().getMergedMs1Spectrum() != null);
                         assertEquals(ms1, extrFeature.getMSData().get().getIsotopePattern() != null);
+
                         assertTrue(Math.abs(exp.getIonMass() - extrFeature.getAverageMass()) < .0001);
                         assertEquals(exp.getPrecursorIonType(), extrFeature.getIonType());
+                        assertEquals(exp.getName(), extrFeature.getName());
+                        assertEquals(exp.getFeatureId(), extrFeature.getExternalFeatureId());
+                        assertEquals(exp.getMolecularFormula(), extrFeature.getMolecularFormula());
                         if (rt)
                             assertEquals(0, exp.getAnnotation(RetentionTime.class).get().compareTo(extrFeature.getRetentionTime()));
                         else
                             assertNull(extrFeature.getRetentionTime());
+                    }
+
+                    {
+                        assertTrue(db.findAlignedFeatureAsMsExperiment(feature.getAlignedFeatureId()).isPresent());
+                        Ms2Experiment extrExp = db.findAlignedFeatureAsMsExperiment(feature.getAlignedFeatureId()).get();
+                        assertEquals(expectedMsMs, extrExp.getMs2Spectra().size());
+                        assertEquals(ms1, extrExp.getMs1Spectra() != null && !extrExp.getMs1Spectra().isEmpty());
+                        assertTrue(Math.abs(exp.getIonMass() - extrExp.getIonMass()) < .0001);
+                        assertEquals(exp.getPrecursorIonType(), extrExp.getPrecursorIonType());
+                        assertEquals(exp.getName(), extrExp.getName());
+                        assertEquals(exp.getFeatureId(), extrExp.getFeatureId());
+                        assertEquals(exp.getMolecularFormula(), extrExp.getMolecularFormula());
+                        assertEquals(rt, extrExp.hasAnnotation(RetentionTime.class));
+                        if (rt)
+                            assertEquals(0, exp.getAnnotation(RetentionTime.class).get().compareTo(extrExp.getAnnotation(RetentionTime.class).get()));
                     }
                 }
             }
         });
     }
 
-    //    @Test
+//    @Test
 //    ~12k features ~3G data for performance testing
     public void importFeaturesFromManyMs2ExperimentTest() {
         Path inputFile = Path.of("/home/fleisch/sirius-testing/demo/louis_OMZ_ETNP/OMZ_ETNP_SIRIUS_nobatch.mgf");
-        withDb(db -> {
-            try (InputStream in = Files.newInputStream(inputFile)) {
-                CloseableIterator<Ms2Experiment> it = new MsExperimentParser().getParser(inputFile).parseIterator(in, inputFile.toUri());
-                int i = 0;
-                while (it.hasNext()) {
-                    Ms2Experiment exp = it.next();
-                    AlignedFeatures feature = db.importMs2ExperimentAsAlignedFeature(exp);
-                    assertNotNull(feature);
-                    assertTrue(db.getStorage().getByPrimaryKey(feature.getAlignedFeatureId(), AlignedFeatures.class).isPresent());
+        try {
+            Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
+            try (NitriteSirirusProject db = new NitriteSirirusProject(location)) {
+                try (InputStream in = Files.newInputStream(inputFile)) {
+                    CloseableIterator<Ms2Experiment> it = new MsExperimentParser().getParser(inputFile).parseIterator(in, inputFile.toUri());
+                    int i = 0;
+                    while (it.hasNext()) {
+                        Ms2Experiment exp = it.next();
+                        AlignedFeatures feature = db.importMs2ExperimentAsAlignedFeature(exp);
+                        assertNotNull(feature);
+                        assertTrue(db.getStorage().getByPrimaryKey(feature.getAlignedFeatureId(), AlignedFeatures.class).isPresent());
 
-                    System.out.println("Imported Feature: " + i++);
+                        System.out.println("Imported Feature: " + i++);
+                    }
+                    long count = db.getStorage().countAll(AlignedFeatures.class);
+                    System.out.println("Imported: " + count);
                 }
-                long count = db.getStorage().countAll(AlignedFeatures.class);
-                System.out.println("Imported: " + count);
             }
-        });
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static void main(String[] args) throws IOException {
