@@ -62,11 +62,12 @@ public class AddConfigsJob extends InstanceJob {
                     projectSpaceConfig.updateConfig(ConfigType.CLI.name(), ((CombinedConfiguration) computeConfig.getConfigs()).getConfiguration(ConfigType.CLI.name()));
                 }
                 baseConfig = projectSpaceConfig.newIndependentInstance(computeConfig, true);
+                //remove runtime configs from previous analyses
+                baseConfig.getConfigNames().stream().filter(s -> s.startsWith(ConfigType.RUNTIME.name())).forEach(baseConfig::removeConfig);
             }
         }
 
-        //remove runtime configs from previous analyses
-        baseConfig.getConfigNames().stream().filter(s -> s.startsWith(ConfigType.RUNTIME.name())).forEach(baseConfig::removeConfig);
+
 
         //input file configs are intended to be immutable, we still reload to ensure that it is on top position after CLI config
         {
