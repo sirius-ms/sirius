@@ -22,7 +22,6 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
@@ -32,6 +31,7 @@ import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,7 +93,6 @@ public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
         checkForInterruption();
 
         logDebug("Submitting CSI:FingerID fingerprint prediction jobs.");
-        final PredictorTypeAnnotation predictors = experiment.getAnnotationOrThrow(PredictorTypeAnnotation.class);
         predictionJobs = new LinkedHashMap<>(idResult.size());
 
         checkForInterruption();
@@ -103,7 +102,7 @@ public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
                 // prediction job: predict fingerprint
                 predictionJobs.put(webAPI.submitFingerprintJob(new FingerprintJobInput(
                         spectralPreprocessor.extractInputFeatures(fingeridInput.getSourceTree(), experiment),
-                        UserDefineablePredictorType.toPredictorTypes(experiment.getPrecursorIonType(), predictors.value)
+                        EnumSet.of(UserDefineablePredictorType.CSI_FINGERID.toPredictorType(experiment.getPrecursorIonType()))
                 )), new FingerIdResult(fingeridInput.getSourceTree()));
             }
         }
