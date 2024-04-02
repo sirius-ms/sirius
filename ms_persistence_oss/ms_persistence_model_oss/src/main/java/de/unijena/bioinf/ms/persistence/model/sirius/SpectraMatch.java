@@ -20,7 +20,7 @@
 
 package de.unijena.bioinf.ms.persistence.model.sirius;
 
-import de.unijena.bioinf.projectspace.SpectralSearchResult;
+import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;

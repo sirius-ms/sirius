@@ -42,7 +42,7 @@ public class FingerIdResult implements Annotated<ResultAnnotation> {
         return annotations;
     }
 
-    public FingerIdResult(IdentificationResult<?> formulaResult) {
+    public FingerIdResult(IdentificationResult formulaResult) {
         this(formulaResult.getTree());
     }
 

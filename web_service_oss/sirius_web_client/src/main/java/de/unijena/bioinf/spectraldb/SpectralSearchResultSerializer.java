@@ -18,11 +18,12 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.projectspace;
+package de.unijena.bioinf.spectraldb;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.projectspace.*;
 import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +35,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+@Deprecated
 public class SpectralSearchResultSerializer implements ComponentSerializer<CompoundContainerId, CompoundContainer, SpectralSearchResult> {
 
     @Override

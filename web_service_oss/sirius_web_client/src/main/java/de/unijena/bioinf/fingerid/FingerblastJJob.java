@@ -77,9 +77,6 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
 
     private StructureSearchResult structureSearchResult;
 
-
-    private List<CanopusResult> canopusResult;
-
     List<WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?>> covtreeJobs = new ArrayList<>();
 
     public FingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI) {
@@ -87,16 +84,15 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
     }
 
     public FingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable Ms2Experiment experiment) {
-        this(predictor, webAPI, experiment, null,null);
+        this(predictor, webAPI, experiment, null);
     }
 
-    public FingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable Ms2Experiment experiment, @Nullable List<FingerIdResult> idResult, @Nullable List<CanopusResult> canopusResult) {
+    public FingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable Ms2Experiment experiment, @Nullable List<FingerIdResult> idResult) {
         super(JobType.SCHEDULER);
         this.predictor = predictor;
         this.experiment = experiment;
         this.idResult = idResult;
         this.webAPI = webAPI;
-        this.canopusResult=canopusResult;
     }
 
     public void setInput(Ms2Experiment experiment, List<FingerIdResult> idResult) {
@@ -265,7 +261,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                 topHitFidResultRequested = idResult.get(i);
                 topHitFormulaRequested = searchDBJob.formula;
                 topHitScoringRequested = searchDBJob.bayesnetScoring;
-                topFormulaCanopusResultRequested = canopusResult.get(i);
+                topFormulaCanopusResultRequested = idResult.get(i).getAnnotationOrThrow(CanopusResult.class);
             }}
 
             if(allRestDbScoredCandidates!=null && !allRestDbScoredCandidates.isEmpty()) {
@@ -277,7 +273,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                     topHitFormulaAll = searchDBJob.formula;
                     topHitFidResultAll = idResult.get(i);
                     topHitScoringAll = searchDBJob.bayesnetScoring;
-                    topFormulaCanopusResultAll = canopusResult.get(i);
+                    topFormulaCanopusResultAll = idResult.get(i).getAnnotationOrThrow(CanopusResult.class);
                 }
             }
 
