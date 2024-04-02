@@ -19,8 +19,6 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.zodiac;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
@@ -42,11 +40,9 @@ import de.unijena.bioinf.GibbsSampling.properties.*;
 import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
-import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.FCandidate;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.quality_assessment.TreeQualityEvaluator;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -69,26 +65,24 @@ public class ZodiacSubToolJob extends DataSetJob {
     double forcedCandidatesPerIonizationRatio;
 
     public ZodiacSubToolJob(ZodiacOptions cliOptions, @NotNull JobSubmitter jobSubmitter) {
-        super(in -> in.loadCompoundContainer().hasResults() && !in.getExperiment().getMs2Spectra().isEmpty(),
-                jobSubmitter); //check whether the compound has formula results or not
+        super(jobSubmitter); //check whether the compound has formula results or not
         this.cliOptions = cliOptions;
     }
 
     @Override
+    protected boolean isInstanceValid(Instance instance) {
+        return instance.hasSiriusResult();
+    }
+
+    @Override
     public boolean isAlreadyComputed(@NotNull Instance inst) {
-        try {
-            return inst.loadCompoundContainer().hasResults() && inst.loadFormulaResults(FormulaScoring.class).stream().anyMatch(res -> res.getCandidate().getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class));
-        } catch (Exception e) {
-            //only debug output, since the same instance will fail again below in computeAndAnnotateResult
-            logDebug("Error while reading molecular formula scores for "+inst.getId()+". Error: "+e.getMessage());
-            return false;
-        }
+        return inst.hasZodiacResult();
     }
 
     @Override
     protected void computeAndAnnotateResult(@NotNull List<Instance> instances) throws Exception {
         logInfo("START ZODIAC JOB");
-        final Map<Ms2Experiment, List<FormulaResult>> input = instances.stream()
+        /*final Map<Ms2Experiment, List<FormulaResult>> input = instances.stream()
                 .distinct().collect(Collectors.toMap(
                         Instance::getExperiment, in -> {
                             try {
@@ -101,23 +95,38 @@ public class ZodiacSubToolJob extends DataSetJob {
 
         //remove instances from input which don't have a single FTree
         instances = instances.stream().filter(i -> !input.get(i.getExperiment()).isEmpty()).collect(Collectors.toList());
-        input.keySet().retainAll(instances.stream().map(Instance::getExperiment).collect(Collectors.toList()));
+        input.keySet().retainAll(instances.stream().map(Instance::getExperiment).collect(Collectors.toList()));*/
 
 
-//        if (instances.stream().anyMatch(it -> isRecompute(it) || (input.containsKey(it.getExperiment()) && !input.get(it.getExperiment()).get(0).getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class)))) {
+//        Map<Ms2Experiment, List<FTree>> ms2ExperimentToTreeCandidates = input.keySet().stream().collect(Collectors.toMap(k -> k, k -> input.get(k).stream().map(r -> r.getAnnotationOrThrow(FTree.class)).collect(Collectors.toList())));
+
+        Map<Ms2Experiment, List<FTree>> ms2ExperimentToTreeCandidates = new HashMap<>();
+        Map<FTree, FCandidate<?>> treeToId = new HashMap<>();
+        {
+            for (Instance instance : instances) {
+                List<FCandidate<?>> inputData = instance.getFTrees().stream()
+                        .filter(fc -> fc.hasAnnotation(FTree.class)).toList();
+                if (!inputData.isEmpty()) {
+                    ms2ExperimentToTreeCandidates.put(instance.getExperiment(), inputData.stream().map(sc -> sc.getAnnotationOrThrow(FTree.class)).collect(Collectors.toList()));
+                    inputData.forEach(p -> treeToId.put(p.getAnnotationOrThrow(FTree.class), p));
+                }
+            }
+        }
+        Ms2Experiment settings = instances.get(0).getExperiment();
+        //TODO CHEEEEEECK REOMPUTE
+//        if (instances.stream().anyMatch(it -> isRecompute(it) || (treeToId.containsKey(it.getExperiment()) && !input.get(it.getExperiment()).get(0).getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class)))) {
 //            System.out.println("I am ZODIAC and run " + instances.size() + " instances: ");
 
-        Map<Ms2Experiment, List<FTree>> ms2ExperimentToTreeCandidates = input.keySet().stream().collect(Collectors.toMap(k -> k, k -> input.get(k).stream().map(r -> r.getAnnotationOrThrow(FTree.class)).collect(Collectors.toList())));
-        Ms2Experiment settings = instances.get(0).getExperiment();
 
         // TODO: we might want to do that for SIRIUS
         checkForInterruption();
-        updateProgress(Math.round(.02 * maxProgress), "Use caching of formulas.");
 
+        updateProgress(Math.round(.02 * maxProgress), "Use caching of formulas.");
         {
             HashMap<MolecularFormula, MolecularFormula> formulaMap = new HashMap<>();
+
             for (List<FTree> trees : ms2ExperimentToTreeCandidates.values()) {
-                for (FTree tree : trees) {
+                trees.forEach(tree -> {
                     for (Fragment f : tree) {
                         formulaMap.putIfAbsent(f.getFormula(), f.getFormula());
                         f.setFormula(formulaMap.get(f.getFormula()), f.getIonization());
@@ -126,11 +135,12 @@ public class ZodiacSubToolJob extends DataSetJob {
                         formulaMap.putIfAbsent(l.getFormula(), l.getFormula());
                         l.setFormula(formulaMap.get(l.getFormula()));
                     }
-                }
+                });
             }
         }
-//        logInfo();
+
         checkForInterruption();
+
         updateProgress(Math.round(.03 * maxProgress), "Caching done.");
 
         maxCandidatesAt300 = settings.getAnnotationOrThrow(ZodiacNumberOfConsideredCandidatesAt300Mz.class).value;
@@ -139,6 +149,7 @@ public class ZodiacSubToolJob extends DataSetJob {
 
         //annotate compound quality at limit number of candidates
         logInfo("TREES LOADED.");
+
         TreeQualityEvaluator treeQualityEvaluator = new TreeQualityEvaluator(0.8, 5);
         for (Map.Entry<Ms2Experiment, List<FTree>> ms2ExperimentListEntry : ms2ExperimentToTreeCandidates.entrySet()) {
             checkForInterruption();
@@ -174,7 +185,9 @@ public class ZodiacSubToolJob extends DataSetJob {
         ZodiacEdgeFilterThresholds edgeFilterThresholds = settings.getAnnotationOrThrow(ZodiacEdgeFilterThresholds.class);
         ZodiacRunInTwoSteps zodiacRunInTwoSteps = settings.getAnnotationOrThrow(ZodiacRunInTwoSteps.class);
         ZodiacClusterCompounds clusterEnabled = settings.getAnnotationOrThrow(ZodiacClusterCompounds.class);
+
         logInfo("Cluster enabled? " + clusterEnabled.value);
+
         //node scoring
         NodeScorer[] nodeScorers;
         List<LibraryHit> anchors = null;
@@ -183,7 +196,7 @@ public class ZodiacSubToolJob extends DataSetJob {
             logInfo("use library hits as anchors.");
             ZodiacLibraryScoring zodiacLibraryScoring = settings.getAnnotationOrThrow(ZodiacLibraryScoring.class);
 
-            anchors = parseAnchors(new ArrayList<>(input.keySet()));
+            anchors = parseAnchors(new ArrayList<>(ms2ExperimentToTreeCandidates.keySet()));
 
             Reaction[] reactions = ZodiacUtils.parseReactions(1);
             Set<MolecularFormula> netSingleReactionDiffs = new HashSet<>();
@@ -218,6 +231,7 @@ public class ZodiacSubToolJob extends DataSetJob {
         ScoreProbabilityDistributionEstimator<FragmentsCandidate> scoreProbabilityDistributionEstimator = new ScoreProbabilityDistributionEstimator<>(c, probabilityDistribution, edgeFilterThresholds.thresholdFilter);
 
         updateProgress(Math.round(.05 * maxProgress));
+
         checkForInterruption();
 
         Zodiac zodiac = new Zodiac(ms2ExperimentToTreeCandidates,
@@ -229,9 +243,11 @@ public class ZodiacSubToolJob extends DataSetJob {
         );
 
         checkForInterruption();
+
         //todo FINISH ZODIAC Progress
         //todo clustering disabled. Evaluate if it might help at any point?
         logInfo("RUN ZODIAC");
+
         final ZodiacResultsWithClusters clusterResults = submitSubJob(
                 zodiac.makeComputeJob(zodiacEpochs.iterations, zodiacEpochs.burnInPeriod, zodiacEpochs.numberOfMarkovChains))
                 .awaitResult();
@@ -242,24 +258,12 @@ public class ZodiacSubToolJob extends DataSetJob {
         updateProgress(Math.round(.9 * maxProgress));
 
         //add score and set new Ranking score
-        instances.forEach(inst -> {
+        instances.forEach(inst ->
+        {
             try {
-//                System.out.println(inst.getId());
-                final Map<FTree, ZodiacScore> sTress = scoreResults.get(inst.getExperiment());
-                final List<FormulaResult> formulaResults = input.get(inst.getExperiment());
-                if (formulaResults == null || sTress == null) {
-                    //this instance was not processed by ZODIAC
-                    return;
-                }
-                formulaResults.forEach(fr -> {
-                    FormulaScoring scoring = fr.getAnnotationOrThrow(FormulaScoring.class);
-                    scoring.setAnnotation(ZodiacScore.class,
-                            sTress.getOrDefault(fr.getAnnotationOrThrow(FTree.class), FormulaScore.NA(ZodiacScore.class))
-                    );
-
-                    inst.updateFormulaResult(fr, FormulaScoring.class);
-//                    System.out.println(fr.getId().getFormula().toString() + sTress.get(fr.getAnnotationOrThrow(FTree.class)));
-                });
+                final Map<FCandidate<?>, ZodiacScore> scoresByFormula = scoreResults.get(inst.getExperiment()).entrySet().stream()
+                        .collect(Collectors.toMap(e -> treeToId.get(e.getKey()), Map.Entry::getValue));
+                inst.saveZodiacResult(scoresByFormula);
             } catch (Throwable e) {
                 logError("Error when retrieving Zodiac Results for instance: " + inst.getId(), e);
             }
@@ -269,14 +273,16 @@ public class ZodiacSubToolJob extends DataSetJob {
         try { //ensure that summary does not crash job
             if (cliOptions.summaryFile != null)
                 ZodiacUtils.writeResultSummary(scoreResults, clusterResults.getResults(), cliOptions.summaryFile);
-        } catch (Exception e) {
+        } catch (
+                Exception e) {
             logError("Error when writing Deprecated ZodiacSummary", e);
         }
 
         try { //ensure that summary does not crash job
             if (cliOptions.bestMFSimilarityGraphFile != null)
                 ZodiacUtils.writeSimilarityGraphOfBestMF(clusterResults, cliOptions.bestMFSimilarityGraphFile);
-        } catch (Exception e) {
+        } catch (
+                Exception e) {
             logError("Error when writing ZODIAC graph", e);
         }
 //        }
@@ -290,7 +296,8 @@ public class ZodiacSubToolJob extends DataSetJob {
         return extractBestCandidates(trees, numCandidates, numCandidatesPerIonization);
     }
 
-    private List<FTree> extractBestCandidates(List<FTree> candidates, int numberOfResultsToKeep, int numberOfResultsToKeepPerIonization) {
+    private List<FTree> extractBestCandidates(List<FTree> candidates, int numberOfResultsToKeep,
+                                              int numberOfResultsToKeepPerIonization) {
         List<FTree> sortedCandidates;
         if (isSorted(candidates)) sortedCandidates = candidates;
         else {

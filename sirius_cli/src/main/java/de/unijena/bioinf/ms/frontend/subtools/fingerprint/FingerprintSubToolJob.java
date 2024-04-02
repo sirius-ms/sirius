@@ -30,13 +30,19 @@ import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
-import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.FCandidate;
+import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.ProjectSpaceManagers;
 import de.unijena.bioinf.rest.NetUtils;
-import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.spectraldb.InjectSpectralLibraryMatchFormulas;
+import de.unijena.bioinf.spectraldb.SpectralSearchResult;
+import de.unijena.bioinf.spectraldb.SpectralSearchResults;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -51,19 +57,27 @@ public class FingerprintSubToolJob extends InstanceJob {
 
     @Override
     public boolean isAlreadyComputed(@NotNull Instance inst) {
-        return inst.loadCompoundContainer().hasResults() && inst.loadFormulaResults(FingerprintResult.class).stream().map(SScored::getCandidate).anyMatch(c -> c.hasAnnotation(FingerprintResult.class));
+        return inst.hasFingerprintResult();
     }
 
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
-        List<? extends SScored<FormulaResult, ? extends FormulaScore>> formulaResults =
-                inst.loadFormulaResults(FormulaScoring.class, FTree.class, FingerprintResult.class);
+        List<FCandidate<?>> inputData = inst.getFTrees();
+
+        List<SScored<FTree,FormulaScore>> formulaResults = inputData.stream()
+                .filter(f -> f.hasAnnotation(FTree.class))
+                .map(FCandidate::asScoredFtree).toList();
+
+        Map<FTree, FCandidate<?>> treeToId = inputData.stream()
+                .filter(f -> f.hasAnnotation(FTree.class))
+                .collect(Collectors.toMap(f -> f.getAnnotationOrThrow(FTree.class), f -> f));
+
 
         Set<MolecularFormula> enforcedFormulas = extractEnforcedFormulasFromSpectralLibrarySearch(inst);
 
         checkForInterruption();
 
-        if (formulaResults == null || formulaResults.isEmpty()) {
+        if (formulaResults.isEmpty()) {
             logInfo("Skipping instance \"" + inst.getExperiment().getName() + "\" because there are no trees computed.");
             return;
         }
@@ -84,22 +98,17 @@ public class FingerprintSubToolJob extends InstanceJob {
         checkForInterruption();
 
         updateProgress(20);
-        // expand IDResult list with adducts
-        final FingerprintPreprocessingJJob<?> fpPreproJob = new FingerprintPreprocessingJJob<>(inst.getExperiment(),
-                formulaResults.stream().map(res ->
-                        //todo handle zodiac score
-                        new IdentificationResult<>(res.getCandidate().getAnnotationOrThrow(FTree.class),
-                                res.getScoreObject())).collect(Collectors.toList()), enforcedFormulas);
-
+        //apply soft thresholding to het ist of fomrula to compute
+        final FingerprintPreprocessingJJob fpPreproJob = new FingerprintPreprocessingJJob(inst.getExperiment(), formulaResults, enforcedFormulas);
 
         // do computation and await results
-        List<? extends IdentificationResult<?>> filteredResults = submitSubJob(fpPreproJob).awaitResult();
+        @NotNull List<SScored<FTree, FormulaScore>> filteredResults = submitSubJob(fpPreproJob).awaitResult();
 
         updateProgress(30);
         checkForInterruption();
 
         // prediction jobs: predict fingerprints via webservice
-        final FingerprintJJob fpPredictJob = submitSubJob(FingerprintJJob.of(csi, ApplicationCore.WEB_API, inst.getExperiment(), filteredResults));
+        final FingerprintJJob fpPredictJob = submitSubJob(FingerprintJJob.of(csi, ApplicationCore.WEB_API, inst.getExperiment(), filteredResults.stream().map(SScored::getCandidate)));
 
         updateProgress(35);
         List<FingerIdResult> result = fpPredictJob.awaitResult();
@@ -108,34 +117,26 @@ public class FingerprintSubToolJob extends InstanceJob {
         checkForInterruption();
 
         // ############### Make results persistent ####################
-        final Map<FTree, FormulaResult> formulaResultsMap = formulaResults.stream().collect(Collectors.toMap(r -> r.getCandidate().getAnnotationOrThrow(FTree.class), SScored::getCandidate));
-        assert formulaResultsMap.size() >= result.size();
+        Map<FCandidate<?>, FingerprintResult> resultMap = result.stream().filter(fidr -> fidr.hasAnnotation(FingerprintResult.class))
+                .collect(Collectors.toMap(fidr -> treeToId.get(fidr.getSourceTree()), fidr -> fidr.getAnnotationOrThrow(FingerprintResult.class)));
 
         updateProgress(90);
         checkForInterruption();
 
         //annotate FingerIdResults to FormulaResult
-        for (FingerIdResult res : result) {
-            final FormulaResult formRes = formulaResultsMap.get(res.getSourceTree());
-            assert res.getSourceTree() == formRes.getAnnotationOrThrow(FTree.class);
-
-            // annotate results
-            formRes.setAnnotation(FingerprintResult.class, res.getAnnotationOrThrow(FingerprintResult.class));
-            inst.updateFormulaResult(formRes, FingerprintResult.class);
-        }
-        inst.updateCompoundID();
+        inst.saveFingerprintResult(resultMap);
         updateProgress(97);
     }
 
     private Set<MolecularFormula> extractEnforcedFormulasFromSpectralLibrarySearch(Instance inst) {
         InjectSpectralLibraryMatchFormulas injectionSettings = inst.getExperiment().getAnnotationOrDefault(InjectSpectralLibraryMatchFormulas.class);
-        if (!injectionSettings.isAlwaysPredict()) return Collections.EMPTY_SET;
-        CompoundContainer container = inst.loadCompoundContainer(SpectralSearchResult.class);
-        if (container.hasAnnotation(SpectralSearchResult.class)) {
-            SpectralSearchResult results = container.getAnnotation(SpectralSearchResult.class).get();
-            return results.deriveDistinctFormulaSetWithThreshold(inst.getExperiment(), injectionSettings.getMinScoreToInject(), injectionSettings.getMinPeakMatchesToInject());
-        }
-        return Collections.EMPTY_SET;
+        if (!injectionSettings.isAlwaysPredict()) return Set.of();
+
+        List<SpectralSearchResult.SearchResult> matches = inst.getSpectraMatches();
+        if (matches != null && !matches.isEmpty())
+            return SpectralSearchResults.deriveDistinctFormulaSetWithThreshold(matches, inst.getIonMass(), injectionSettings.getMinScoreToInject(), injectionSettings.getMinPeakMatchesToInject());
+
+        return Set.of();
     }
 
     @Override

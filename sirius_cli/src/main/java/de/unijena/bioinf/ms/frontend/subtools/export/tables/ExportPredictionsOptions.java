@@ -25,14 +25,13 @@ import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.projectspace.FormulaResult;
+import de.unijena.bioinf.projectspace.FCandidate;
 import de.unijena.bioinf.projectspace.Instance;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -78,7 +77,6 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
         private final PredictionsOptions options;
         private final Iterable<? extends Instance> instances;
 
-        Class[] components;
         MaskedFingerprintVersion[] versions;
 
         public ExportPredictionJJob(PredictionsOptions options, int polarity, Iterable<? extends Instance> inputInstances, IOFunctions.IOSupplier<BufferedWriter> outputProvider) {
@@ -87,12 +85,6 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
             this.polarity = polarity;
             this.instances = inputInstances;
             this.outputProvider = outputProvider;
-
-
-            ArrayList<Class<? extends DataAnnotation>> comps = new ArrayList<>();
-            if (options.classyfire || options.npc) comps.add(CanopusResult.class);
-            if (options.fingerprints || options.pubchem || options.maccs) comps.add(FingerprintResult.class);
-            this.components = comps.toArray(Class[]::new);
             this.versions = new MaskedFingerprintVersion[X.values().length];
         }
 
@@ -135,7 +127,6 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
                         LoggerFactory.getLogger(getClass()).warn("Invalid instance '" + inst + "'. Skipping this instance!", e);
                     } finally {
                         inst.clearCompoundCache();
-                        inst.clearFormulaResultsCache();
                     }
                     updateProgress(0, filtered.size(), ++progress, message);
                 }
@@ -163,30 +154,30 @@ public class ExportPredictionsOptions implements StandaloneTool<ExportPrediction
         }
 
         private void write(BufferedWriter writer, Instance inst) throws IOException {
-            Optional<FormulaResult> fid = inst.loadTopFormulaResult(components);
+            Optional<FCandidate<?>> fid = inst.getTopPredictions();
+//            Optional<FormulaResult> fid = inst.loadTopFormulaResult(components);
             if (fid.isPresent()) {
-                final FormulaResult formulaResult = fid.get();
                 writer.write(inst.getId());
                 writer.write('\t');
                 writer.write(inst.getName());
                 writer.write('\t');
-                writer.write(formulaResult.getId().getMolecularFormula().toString());
+                writer.write(fid.get().getMolecularFormula().toString());
                 writer.write('\t');
-                writer.write(formulaResult.getId().getIonType().toString());
+                writer.write(fid.get().getAdduct().toString());
                 if (options.classyfire) {
-                    write(writer, versions[X.CLASSYFIRE.ordinal()], formulaResult.getAnnotation(CanopusResult.class).map(CanopusResult::getCanopusFingerprint));
+                    write(writer, versions[X.CLASSYFIRE.ordinal()], fid.flatMap(f -> f.getAnnotation(CanopusResult.class)).map(CanopusResult::getCanopusFingerprint));
                 }
                 if (options.npc) {
-                    write(writer, versions[X.NPC.ordinal()], formulaResult.getAnnotation(CanopusResult.class).flatMap(CanopusResult::getNpcFingerprint));
+                    write(writer, versions[X.NPC.ordinal()], fid.flatMap(f -> f.getAnnotation(CanopusResult.class)).flatMap(CanopusResult::getNpcFingerprint));
                 }
                 if (options.fingerprints) {
-                    write(writer, versions[X.FP.ordinal()], formulaResult.getAnnotation(FingerprintResult.class).map(x -> x.fingerprint));
+                    write(writer, versions[X.FP.ordinal()], fid.flatMap(f -> f.getAnnotation(FingerprintResult.class)).map(x -> x.fingerprint));
                 }
                 if (options.pubchem) {
-                    write(writer, versions[X.PUBCHEM.ordinal()], formulaResult.getAnnotation(FingerprintResult.class).map(x -> versions[X.PUBCHEM.ordinal()].mask(x.fingerprint)));
+                    write(writer, versions[X.PUBCHEM.ordinal()], fid.flatMap(f -> f.getAnnotation(FingerprintResult.class)).map(x -> versions[X.PUBCHEM.ordinal()].mask(x.fingerprint)));
                 }
                 if (options.maccs) {
-                    write(writer, versions[X.MACCS.ordinal()], formulaResult.getAnnotation(FingerprintResult.class).map(x -> versions[X.MACCS.ordinal()].mask(x.fingerprint)));
+                    write(writer, versions[X.MACCS.ordinal()], fid.flatMap(f -> f.getAnnotation(FingerprintResult.class)).map(x -> versions[X.MACCS.ordinal()].mask(x.fingerprint)));
                 }
 
                 writer.newLine();

@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.frontend.subtools.PreprocessingTool;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import de.unijena.bioinf.projectspace.SiriusProjectSpaceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,7 @@ public class LcmsAlignOptions implements PreprocessingTool<LcmsAlignSubToolJob> 
 
     @Override
     public LcmsAlignSubToolJob makePreprocessingJob(@Nullable InputFilesOptions input, @NotNull OutputOptions outputProject, @NotNull ProjectSpaceManagerFactory<?> projectFactory, @Nullable ParameterConfig config) {
-        return new LcmsAlignSubToolJob(input, () -> projectFactory.createOrOpen(outputProject.getOutputProjectLocation()), this);
+        return new LcmsAlignSubToolJob(input, () -> (SiriusProjectSpaceManager) projectFactory.createOrOpen(outputProject.getOutputProjectLocation()), this);
     }
 
     protected Optional<LCMSWorkflow> workflow = Optional.empty();

@@ -36,7 +36,7 @@ import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
-import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.NoSQLInstance;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
@@ -106,7 +106,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     @Override
-    public @NotNull Instance loadInstance(String alignedFeatureId) {
+    public @NotNull NoSQLInstance loadInstance(String alignedFeatureId) {
         return projectSpaceManager.findInstance(alignedFeatureId).orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Instance with ID " + alignedFeatureId + " not found in project + " + getProjectId() + ".")
         );

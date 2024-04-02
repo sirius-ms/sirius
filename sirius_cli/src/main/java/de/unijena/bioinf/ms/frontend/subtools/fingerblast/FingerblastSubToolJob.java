@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.fingerblast;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.Tanimoto;
@@ -31,7 +30,6 @@ import de.unijena.bioinf.fingerid.CSIPredictor;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.FingerblastJJob;
 import de.unijena.bioinf.fingerid.FingerprintResult;
-import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -41,8 +39,7 @@ import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
-import de.unijena.bioinf.projectspace.FormulaResult;
-import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.FCandidate;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagers;
 import de.unijena.bioinf.rest.NetUtils;
@@ -68,17 +65,21 @@ public class FingerblastSubToolJob extends InstanceJob {
 
     @Override
     public boolean isAlreadyComputed(@NotNull Instance inst) {
-        return inst.loadCompoundContainer().hasResults() && inst.loadFormulaResults(FBCandidates.class).stream().map(SScored::getCandidate).anyMatch(c -> c.hasAnnotation(FBCandidates.class));
+        return inst.hasStructureSearchResult();
     }
 
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
-        List<? extends SScored<FormulaResult, ? extends FormulaScore>> formulaResults =
-                inst.loadFormulaResults(FormulaScoring.class, FTree.class, FingerprintResult.class, FBCandidates.class, CanopusResult.class);
+        List<FCandidate<?>> inputData = inst.getFingerblastInput();
+        final Map<FCandidate<?>, FingerIdResult> formulaResultsMap = inputData.stream()
+                .filter(c -> c.hasAnnotation(CanopusResult.class))
+                .filter(c -> c.hasAnnotation(FingerprintResult.class))
+                .filter(c -> c.hasAnnotation(FTree.class))
+                .collect(Collectors.toMap(c -> c, FCandidate::asFingerIdResult, (k, v) -> v,  LinkedHashMap::new));
 
         checkForInterruption();
 
-        if (formulaResults == null || formulaResults.isEmpty()) {
+        if (formulaResultsMap.isEmpty()) {
             logInfo("Skipping instance \"" + inst.getExperiment().getName() + "\" because there are no trees computed.");
             return;
         }
@@ -102,23 +103,9 @@ public class FingerblastSubToolJob extends InstanceJob {
         updateProgress(15);
         checkForInterruption();
 
-        final Map<FormulaResult, FingerIdResult> formulaResultsMap = formulaResults.stream().map(SScored::getCandidate)
-                .filter(res -> res.hasAnnotation(FingerprintResult.class))
-                .filter(res -> res.hasAnnotation(CanopusResult.class))
-                .collect(Collectors.toMap(res -> res, res -> {
-                    FingerIdResult idr = new FingerIdResult(res.getAnnotationOrThrow(FTree.class));
-                    idr.setAnnotation(FingerprintResult.class, res.getAnnotationOrThrow(FingerprintResult.class));
-                    return idr;
-                }, (k, v) -> v,  LinkedHashMap::new));
-
-
-        final Map<FormulaResult, CanopusResult> formulaCanopusResultsMap = formulaResultsMap.keySet().stream()
-                .collect(Collectors.toMap(res -> res, res -> res.getAnnotationOrThrow(CanopusResult.class),
-                        (k, v) -> v,  LinkedHashMap::new));
-
         updateProgress(20);
         {
-            final FingerblastJJob job = new FingerblastJJob(csi, ApplicationCore.WEB_API, inst.getExperiment(), new ArrayList<>(formulaResultsMap.values()), new ArrayList<>(formulaCanopusResultsMap.values()));
+            final FingerblastJJob job = new FingerblastJJob(csi, ApplicationCore.WEB_API, inst.getExperiment(), new ArrayList<>(formulaResultsMap.values()));
 
             checkForInterruption();
             // do computation and await results -> objects are already in formulaResultsMap
@@ -164,7 +151,7 @@ public class FingerblastSubToolJob extends InstanceJob {
 
 
         //annotate FingerIdResults to FormulaResult
-        inst.saveStructureSearchResults(formulaResultsMap);
+        inst.saveStructureSearchResult(formulaResultsMap);
         updateProgress(97);
 
     }

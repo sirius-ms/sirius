@@ -29,16 +29,13 @@ import de.unijena.bioinf.rest.NetUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 public interface ProjectSpaceManager extends IterableWithSize<Instance> {
     @NotNull Instance importInstanceWithUniqueId(Ms2Experiment inputExperiment);
 
-    //    @NotNull Instance importInstanceWithUniqueId(AlignedFeatures inputExperiment);
-
-    @NotNull Optional<Instance> findInstance(String id);
+    @NotNull Optional<? extends Instance> findInstance(Object id);
 
     void writeFingerIdData(@NotNull FingerIdData pos, @NotNull FingerIdData neg);
 
@@ -59,10 +56,6 @@ public interface ProjectSpaceManager extends IterableWithSize<Instance> {
     default boolean hasCanopusNpcData(int charge){
         return getCanopusNpcData(charge).isPresent();
     }
-
-    @NotNull
-    @Override
-    Iterator<Instance> iterator();
 
     int countFeatures();
 

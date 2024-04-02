@@ -51,9 +51,9 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
     @Override
     public synchronized void handleFinishedRequiredJob(JJob required) {
         final Object r = required.result();
-        if (r instanceof Instance)
+        if (r instanceof Instance inst)
             if (input == null || input.equals(r))
-                input = (Instance) r;
+                input = inst;
     }
 
 
@@ -69,18 +69,18 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
 
         checkForInterruption();
         if (!hasResults || isRecompute(input)) {
-            if (hasResults){
+            if (hasResults) {
                 invalidateResults(input);
             }
             updateProgress(2, "Invalidate existing Results and Recompute!");
             progressInfo("Start computation...");
-            setRecompute(input,true); // enable recompute so that following tools will recompute if results exist.
+            setRecompute(input, true); // enable recompute so that following tools will recompute if results exist.
             checkForInterruption();
             computeAndAnnotateResult(input);
             checkForInterruption();
-            updateProgress(JobProgressEvent.DEFAULT_MAX- 1, "DONE!");
+            updateProgress(JobProgressEvent.DEFAULT_MAX - 1, "DONE!");
         } else {
-            updateProgress(JobProgressEvent.DEFAULT_MAX- 1, "Skipping Job because results already Exist and recompute not requested.");
+            updateProgress(JobProgressEvent.DEFAULT_MAX - 1, "Skipping Job because results already Exist and recompute not requested.");
         }
 
         return input;
@@ -103,6 +103,7 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
 
     /**
      * Check if the input is valid for computation. May be overwritten by implementations for additional checks.
+     *
      * @return false if input data is fine and true if data should be skipped gently. IllegalArgumentException is thrown
      * if the input check needs to cause job failure
      */
@@ -110,7 +111,7 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
         if (input == null)
             throw new IllegalArgumentException("No Input available! Maybe a previous job could not provide the needed results due to failure.");
         if (needsMs2())
-            if (input.getExperiment().getMs2Spectra().isEmpty()){
+            if (input.getExperiment().getMs2Spectra().isEmpty()) {
                 logInfo("Input contains no non empty MS/MS spectrum but MS/MS data is mandatory for this job. Skipping Instance!");
                 return true;
             }
@@ -142,9 +143,12 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
         if (!checkFingerprintCompatibility())
             throw new IncompatibleFingerprintDataException();
     }
+
     protected boolean checkFingerprintCompatibility() throws TimeoutException, InterruptedException {
         return input.getProjectSpaceManager().checkAndFixDataFiles(this::checkForInterruption);
     }
 
-    protected boolean needsMs2(){return true;};
+    protected boolean needsMs2() {
+        return true;
+    }
 }

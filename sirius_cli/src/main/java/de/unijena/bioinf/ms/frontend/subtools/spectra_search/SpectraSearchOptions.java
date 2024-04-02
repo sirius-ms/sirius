@@ -26,9 +26,7 @@ import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
-import de.unijena.bioinf.projectspace.CompoundContainer;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.SpectralSearchResult;
 import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
 import picocli.CommandLine;
 
@@ -72,12 +70,7 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
 
     @Override
     public Consumer<Instance> getInvalidator() {
-        return instance -> {
-            CompoundContainer container = instance.loadCompoundContainer(SpectralSearchResult.class);
-            if (container.hasAnnotation(SpectralSearchResult.class)) {
-                container.removeAnnotation(SpectralSearchResult.class);
-            }
-        };
+        return Instance::deleteSpectraSearchResult;
     }
 
     @Override

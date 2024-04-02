@@ -17,7 +17,6 @@
  */
 package de.unijena.bioinf.ms.frontend.subtools.sirius;
 
-import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
@@ -238,11 +237,7 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
 
     @Override
     public Consumer<Instance> getInvalidator() {
-        return inst -> {
-            inst.deleteFormulaResults(); //this step creates the results, so we have to delete them before recompute
-            inst.getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> it.remove(DetectedAdducts.Source.MS1_PREPROCESSOR.name()));
-            inst.saveDetectedAdducts(inst.getExperiment().getAnnotationOrNull(DetectedAdducts.class));
-        };
+        return Instance::deleteSiriusResult;
     }
 
     @Override

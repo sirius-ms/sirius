@@ -29,10 +29,9 @@ import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
-import de.unijena.bioinf.projectspace.CompoundContainer;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.SpectralAlignmentJJob;
+import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.jetbrains.annotations.NotNull;
@@ -78,36 +77,39 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
     }
 
     @Override
-    protected void computeAndAnnotateResult(@NotNull Instance expRes) throws Exception {
-        SpectralAlignmentJJob job = new SpectralAlignmentJJob(ApplicationCore.WEB_API, expRes.getExperiment());
+    public boolean isAlreadyComputed(@NotNull Instance inst) {
+        return inst.hasSpectraSearchResult();
+    }
+
+    @Override
+    protected void computeAndAnnotateResult(@NotNull Instance inst) throws Exception {
+        SpectralAlignmentJJob job = new SpectralAlignmentJJob(ApplicationCore.WEB_API, inst.getExperiment());
         job.addJobProgressListener(evt -> updateProgress(evt.getMinValue(), evt.getMaxValue(), evt.getProgress()));
         SpectralSearchResult result = submitSubJob(job).awaitResult();
 
-        CompoundContainer container = expRes.loadCompoundContainer(SpectralSearchResult.class);
-        if (container.hasAnnotation(SpectralSearchResult.class)) {
-            container.removeAnnotation(SpectralSearchResult.class);
-        }
+        checkForInterruption();
 
         if (result == null)
             return;
 
-        container.addAnnotation(SpectralSearchResult.class, result);
-        expRes.updateCompound(container, SpectralSearchResult.class);
+        inst.saveSpectraSearchResult(result);
 
-        int print = expRes.getExperiment().getAnnotationOrDefault(SpectralSearchLog.class).value;
+        checkForInterruption();
+
+        int print = inst.getExperiment().getAnnotationOrDefault(SpectralSearchLog.class).value;
 
         if (print < 1)
             return;
 
-        Deviation peakDev = expRes.getExperiment().getAnnotationOrDefault(MS1MassDeviation.class).allowedMassDeviation;
-        Deviation precursorDev = expRes.getExperiment().getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation;
+        Deviation peakDev = inst.getExperiment().getAnnotationOrDefault(MS1MassDeviation.class).allowedMassDeviation;
+        Deviation precursorDev = inst.getExperiment().getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation;
 
         StringBuilder builder = new StringBuilder("##########  BEGIN SPECTRUM SEARCH RESULTS  ##########");
         builder.append("\nPrecursor deviation: ").append(precursorDev);
         builder.append("\nPeak deviation: ").append(peakDev);
-        builder.append("\nExperiment: ").append(expRes.getExperiment().getName());
+        builder.append("\nExperiment: ").append(inst.getExperiment().getName());
 
-        List<MutableMs2Spectrum> queries = expRes.getExperiment().getMs2Spectra();
+        List<MutableMs2Spectrum> queries = inst.getExperiment().getMs2Spectra();
         Map<Integer, List<SpectralSearchResult.SearchResult>> resultMap = StreamSupport.stream(result.spliterator(), false).collect(Collectors.groupingBy(SpectralSearchResult.SearchResult::getQuerySpectrumIndex));
         for (Integer queryIndex : resultMap.keySet()) {
             MutableMs2Spectrum query = queries.get(queryIndex);
@@ -146,11 +148,6 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
         builder.append("\n#######################  END  #######################\n");
         logger.info(builder.toString());
 
-    }
-
-    @Override
-    public boolean isAlreadyComputed(@NotNull Instance inst) {
-        return inst.loadCompoundContainer(SpectralSearchResult.class).hasAnnotation(SpectralSearchResult.class);
     }
 
     @Override

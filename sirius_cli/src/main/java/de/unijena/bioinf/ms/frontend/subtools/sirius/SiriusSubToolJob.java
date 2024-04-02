@@ -25,7 +25,6 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.CandidateFormulas;
-import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
 import de.unijena.bioinf.fingerid.FormulaWhiteListJob;
 import de.unijena.bioinf.jjobs.JobSubmitter;
@@ -37,7 +36,6 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Ms1Preprocessor;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.Sirius;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +54,7 @@ public class SiriusSubToolJob extends InstanceJob {
 
     @Override
     public boolean isAlreadyComputed(@NotNull Instance inst) {
-        return inst.loadCompoundContainer().hasResults();
+        return inst.hasSiriusResult();
     }
 
     @Override
@@ -89,18 +87,17 @@ public class SiriusSubToolJob extends InstanceJob {
         updateProgress(5);
         checkForInterruption();
         //todo improve progress with progress merger
-        final Sirius sirius = ApplicationCore.SIRIUS_PROVIDER.sirius(inst.loadCompoundContainer(FinalConfig.class)
-                .getAnnotationOrThrow(FinalConfig.class).config.getConfigValue("AlgorithmProfile"));
+        final Sirius sirius = ApplicationCore.SIRIUS_PROVIDER.sirius(Optional.ofNullable(inst.loadProjectConfig())
+                .map(c -> c.getConfigValue("AlgorithmProfile")).orElse(null));
 
         Sirius.SiriusIdentificationJob idjob = sirius.makeIdentificationJob(exp);
         idjob.addJobProgressListener(evt -> updateProgress(evt.getMinValue() + 5, evt.getMaxValue() + 10, evt.getProgress() + 5));
-        List<IdentificationResult<SiriusScore>> results = submitSubJob(idjob).awaitResult();
+        List<IdentificationResult> results = submitSubJob(idjob).awaitResult();
 
         checkForInterruption();
 
         //write results to project space
-        for (IdentificationResult<SiriusScore> result : results)
-            inst.newFormulaResultWithUniqueId(result.getTree());
+        inst.saveSiriusResult(results.stream().map(IdentificationResult::getTree).toList());
 
         updateProgress(currentProgress().getProgress() + 3);
         checkForInterruption();

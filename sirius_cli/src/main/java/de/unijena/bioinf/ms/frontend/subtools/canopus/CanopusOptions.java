@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.canopus;
 
-import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
@@ -57,7 +56,7 @@ public class CanopusOptions implements ToolChainOptions<CanopusSubToolJob, Insta
 
     @Override
     public Consumer<Instance> getInvalidator() {
-        return inst -> inst.deleteFromFormulaResults(CanopusResult.class);
+        return Instance::deleteCanopusResult;
     }
 
     @Override

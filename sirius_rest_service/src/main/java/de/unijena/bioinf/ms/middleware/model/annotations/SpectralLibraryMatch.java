@@ -21,7 +21,7 @@
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
-import de.unijena.bioinf.projectspace.SpectralSearchResult;
+import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
