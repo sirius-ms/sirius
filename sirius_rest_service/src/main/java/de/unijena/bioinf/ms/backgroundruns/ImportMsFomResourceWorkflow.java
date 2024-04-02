@@ -32,14 +32,13 @@ import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.InstanceImporter;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.SiriusProjectSpaceManager;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -109,15 +108,20 @@ public class ImportMsFomResourceWorkflow implements Workflow, ProgressSupport {
                 importedCompounds = SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
             } else {
                 //create working dir in same fs as input data. allows e.g. for in-memory fs for working dir.
-                workingDir = FileUtils.newTempFile("lcms-align-working-dir_", "", inputResources.iterator().next().getResource().getFileSystem());
-                LcmsAlignSubToolJob importerJJob = new LcmsAlignSubToolJob(
-                        workingDir,
-                        inputResources.stream().map(PathInputResource::getResource).collect(Collectors.toList()),
-                        () -> psm, null, null);
+                if (psm instanceof SiriusProjectSpaceManager spsm) {
+                    workingDir = FileUtils.newTempFile("lcms-align-working-dir_", "", inputResources.iterator().next().getResource().getFileSystem());
+                    LcmsAlignSubToolJob importerJJob = new LcmsAlignSubToolJob(
+                            workingDir,
+                            inputResources.stream().map(PathInputResource::getResource).collect(Collectors.toList()),
+                            () -> spsm, null, null);
 
-                SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
-                importerJJob.addJobProgressListener(progressSupport);
-                importedCompounds = importerJJob.getImportedCompounds();
+                    SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
+                    importerJJob.addJobProgressListener(progressSupport);
+                    importedCompounds = new ArrayList<>(importerJJob.getImportedCompounds());
+                }else {
+                    //todo  call new preprocessing!!!
+                    importedCompounds = List.of();
+                }
             }
         } catch (ExecutionException e) {
             throw new RuntimeException(e);

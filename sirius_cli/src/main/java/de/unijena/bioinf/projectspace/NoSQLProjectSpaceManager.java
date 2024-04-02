@@ -53,7 +53,7 @@ public class NoSQLProjectSpaceManager implements ProjectSpaceManager {
 
     @SneakyThrows
     @Override
-    public @NotNull Instance importInstanceWithUniqueId(Ms2Experiment inputExperiment) {
+    public @NotNull NoSQLInstance importInstanceWithUniqueId(Ms2Experiment inputExperiment) {
         AlignedFeatures alignedFeature = getProject().importMs2ExperimentAsAlignedFeature(inputExperiment);
         return null;//todo create AlignedFeatures based instance;
     }
@@ -62,8 +62,18 @@ public class NoSQLProjectSpaceManager implements ProjectSpaceManager {
 
     @SneakyThrows
     @Override
-    public @NotNull Optional<Instance> findInstance(String id) {
-        return getProject().getStorage().getByPrimaryKey(Long.parseLong(id), AlignedFeatures.class)
+    public @NotNull Optional<NoSQLInstance> findInstance(Object id) {
+        if (id instanceof Number numId)
+            return findInstance(numId.longValue());
+        else if (id instanceof String strId){
+            return findInstance(Long.valueOf(strId));
+        }
+        throw new IllegalArgumentException("Id must be a long value or a String that represents a long value!");
+    }
+
+    @SneakyThrows
+    public @NotNull Optional<NoSQLInstance> findInstance(long id) {
+        return getProject().getStorage().getByPrimaryKey(id, AlignedFeatures.class)
                 .map(af -> null/*new Instance()*/); //todo create AlignedFeatures based instance;
     }
 

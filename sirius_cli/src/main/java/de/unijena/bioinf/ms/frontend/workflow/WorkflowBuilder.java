@@ -28,7 +28,6 @@ import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.frontend.subtools.decomp.DecompOptions;
 import de.unijena.bioinf.ms.frontend.subtools.export.mgf.MgfExporterOptions;
 import de.unijena.bioinf.ms.frontend.subtools.export.tables.ExportPredictionsOptions;
-import de.unijena.bioinf.ms.frontend.subtools.export.trees.FTreeExporterOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprinter.FingerprinterOptions;
@@ -107,8 +106,6 @@ public class WorkflowBuilder{
     public final SummaryOptions summaryOptions;
     public final ExportPredictionsOptions exportPredictions;
     public final MgfExporterOptions mgfExporterOptions;
-    public final FTreeExporterOptions ftreeExporterOptions;
-
     public final UpdateFingerprintOptions updateFingerprintOptions;
     public final AutoCompletionScript autocompleteOptions;
 
@@ -162,7 +159,6 @@ public class WorkflowBuilder{
         similarityMatrixOptions = new SimilarityMatrixOptions(spaceManagerFactory);
         decompOptions = new DecompOptions();
         mgfExporterOptions = new MgfExporterOptions();
-        ftreeExporterOptions = new FTreeExporterOptions();
         summaryOptions = new SummaryOptions();
         exportPredictions = new ExportPredictionsOptions();
         loginOptions = new LoginOptions();
@@ -196,7 +192,7 @@ public class WorkflowBuilder{
 
     protected Object[] standaloneTools() {
         return Streams.concat(
-                Stream.of(customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, ftreeExporterOptions, exportPredictions, fingerprinterOptions, updateFingerprintOptions),
+                Stream.of(customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, exportPredictions, fingerprinterOptions, updateFingerprintOptions),
                 additionalTools.stream(), Stream.of(loginOptions, settingsOptions, autocompleteOptions)
         ).toArray(Object[]::new);
 

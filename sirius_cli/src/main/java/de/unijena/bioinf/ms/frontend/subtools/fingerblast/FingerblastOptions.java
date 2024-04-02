@@ -83,7 +83,7 @@ public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJo
 
     @Override
     public Consumer<Instance> getInvalidator() {
-        return Instance::deleteStructureSearchResults;
+        return Instance::deleteStructureSearchResult;
     }
 
     @Override

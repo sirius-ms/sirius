@@ -49,39 +49,6 @@ class InstanceImportIteratorMS2Exp implements Iterator<Instance> {
         if (ms2ExperimentIterator.hasNext()) {
             final Ms2Experiment input = ms2ExperimentIterator.next();
             @NotNull Instance inst = spaceManager.importInstanceWithUniqueId(input); //this writers
-
-            // TODO: hacky solution
-            // store LC/MS data into project space
-            // might change in future. Its important that the trace is written after
-            // importing from mzml/mzxml
-            if (input != null) {
-                LCMSPeakInformation lcmsInfo = input.getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
-                if (lcmsInfo.isEmpty()) {
-                    // check if there are quantification information
-                    // grab them and remove them
-                    final Quantification quant = input.getAnnotationOrNull(Quantification.class);
-                    if (quant != null) {
-                        lcmsInfo = new LCMSPeakInformation(quant.asQuantificationTable());
-                        input.removeAnnotation(Quantification.class);
-                    }
-                }
-                if (!lcmsInfo.isEmpty()) {
-                    // store this information into the compound container instead
-                    final CompoundContainer compoundContainer = inst.loadCompoundContainer(LCMSPeakInformation.class);
-                    final Optional<LCMSPeakInformation> annotation = compoundContainer.getAnnotation(LCMSPeakInformation.class);
-                    if (annotation.orElseGet(LCMSPeakInformation::empty).isEmpty()) {
-                        compoundContainer.setAnnotation(LCMSPeakInformation.class, lcmsInfo);
-                        inst.updateCompound(compoundContainer, LCMSPeakInformation.class);
-                    }
-                }
-                // remove annotation from experiment
-                {
-                    final Ms2Experiment exp = inst.getExperiment();
-                    exp.removeAnnotation(LCMSPeakInformation.class);
-                    exp.removeAnnotation(Quantification.class);
-                    inst.updateExperiment();
-                }
-            }
             next = inst;
             return true;
         }

@@ -102,7 +102,6 @@ public class MgfExporterWorkflow implements Workflow {
                         LoggerFactory.getLogger(getClass()).warn("Invalid instance '" + inst + "'. Skipping this instance!", e);
                     } finally {
                         inst.clearCompoundCache();
-                        inst.clearFormulaResultsCache();
                     }
                 }
             }
@@ -177,8 +176,7 @@ public class MgfExporterWorkflow implements Workflow {
     }
 
     private Optional<QuantificationTable> getQuantificationTable(Instance i, Ms2Experiment experiment) {
-        LCMSPeakInformation lcms = i.loadCompoundContainer(LCMSPeakInformation.class)
-                .getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
+        LCMSPeakInformation lcms = i.getLCMSPeakInformation();
         if (lcms.isEmpty()) {
             lcms = experiment.getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
         }

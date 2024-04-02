@@ -29,7 +29,7 @@ import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.SiriusProjectSpaceInstance;
 import lombok.Getter;
 import lombok.Setter;
 import picocli.CommandLine;
@@ -40,7 +40,7 @@ import java.util.EnumSet;
 import java.util.Optional;
 
 @CommandLine.Command(name = "asService", aliases = {"rest", "REST"}, description = "EXPERIMENTAL/UNSTABLE: Starts SIRIUS as a background (REST) service that can be requested via a REST-API", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
-public class MiddlewareAppOptions<I extends Instance> implements StandaloneTool<MiddlewareAppOptions<I>.Flow> {
+public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implements StandaloneTool<MiddlewareAppOptions<I>.Flow> {
     @Setter
     private ProjectsProvider<?> projectsProvider;
     @Setter
