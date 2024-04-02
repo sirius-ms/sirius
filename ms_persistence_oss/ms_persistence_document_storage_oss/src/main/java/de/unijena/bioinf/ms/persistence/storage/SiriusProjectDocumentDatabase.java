@@ -23,15 +23,20 @@ package de.unijena.bioinf.ms.persistence.storage;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintData;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.StandardFingerprintData;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.babelms.ms.InputFileConfig;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.JSONReader;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CanopusPredictionDeserializer;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CsiPredictionDeserializer;
+import de.unijena.bioinf.ms.properties.ConfigType;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.storage.db.nosql.Database;
+import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.Index;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
 import lombok.SneakyThrows;
@@ -116,9 +121,42 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
         return result;
     }
 
+    @SneakyThrows
+    default Optional<Ms2Experiment> findAlignedFeatureAsMsExperiment(long alignedFeatureId) {
+        AlignedFeatures feature = getStorage().getByPrimaryKey(alignedFeatureId, AlignedFeatures.class)
+                .map(this::fetchMsData).orElse(null);
+
+        if (feature == null || feature.getMSData().isEmpty())
+            return Optional.empty();
+
+        ParameterConfig config = getConfig(feature.getAlignedFeatureId(), ConfigType.INPUT)
+                .map(Parameters::getConfig)
+                .orElse(PropertyManager.DEFAULTS);
+
+        return Optional.of(StorageUtils.toMs2Experiment(feature, config));
+    }
+
+    @SneakyThrows
+    default Optional<Parameters> getConfig(long alignedFeatureId, @NotNull ConfigType type) {
+        return getStorage().findStr(
+                Filter.and(
+                        Filter.where("alignedFeatureId").eq(alignedFeatureId),
+                        Filter.where("type").eq(type.name())),
+                Parameters.class
+        ).findFirst();
+    }
+
+    @SneakyThrows
     default AlignedFeatures importMs2ExperimentAsAlignedFeature(Ms2Experiment exp) throws IOException {
         AlignedFeatures alignedFeature = StorageUtils.fromMs2Experiment(exp);
         importAlignedFeatures(List.of(alignedFeature));
+        //add configs that might have been read from input file to project space
+        Parameters config = exp.getAnnotation(InputFileConfig.class).map(InputFileConfig::config)
+                .map(c -> Parameters.of(c, ConfigType.INPUT)).orElse(null);
+        if (config != null) {
+            config.setAlignedFeatureId(alignedFeature.getAlignedFeatureId());
+            getStorage().insert(config);
+        }
         return alignedFeature;
     }
 

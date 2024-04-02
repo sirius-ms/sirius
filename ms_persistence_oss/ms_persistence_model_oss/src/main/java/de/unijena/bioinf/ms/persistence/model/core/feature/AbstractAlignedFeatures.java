@@ -44,6 +44,8 @@ public abstract class AbstractAlignedFeatures extends AbstractFeature {
         return Optional.ofNullable(features);
     }
 
+    @JsonIgnore
+    @ToString.Exclude
     protected MSData msData;
 
     public Optional<MSData> getMSData() {
