@@ -21,23 +21,49 @@
 package de.unijena.bioinf.ms.persistence.storage;
 
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
-import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
-import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.persistence.model.core.DataSource;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.sirius.Ms2Preprocessor;
+import org.jetbrains.annotations.NotNull;
 
+import java.net.URI;
 import java.util.Arrays;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class StorageUtils {
+    public static Ms2Experiment toMs2Experiment(@NotNull AlignedFeatures feature, @NotNull ParameterConfig config){
+        MSData spectra = feature.getMSData().orElseThrow();
+
+        MutableMs2Experiment exp = new MutableMs2Experiment();
+        exp.addAnnotationsFrom(config, Ms2ExperimentAnnotation.class);
+        exp.setMs2Spectra(spectra.getMsnSpectra());
+        exp.setMs1Spectra(Stream.of(spectra.getIsotopePattern(), spectra.getMergedMs1Spectrum())
+                .filter(Objects::nonNull).collect(Collectors.toList()));
+        exp.setName(feature.getName()); //todo not stored do we want this?
+        exp.setFeatureId(feature.getExternalFeatureId());//todo not stored do we want this?
+        exp.setPrecursorIonType(feature.getIonType());
+        exp.setIonMass(feature.getAverageMass());
+        exp.setMolecularFormula(feature.getMolecularFormula()); //todo not stored do we need this?
+        feature.getDataSource().ifPresent(s -> {
+           if (s.getFormat() == DataSource.Format.JENA_MS)
+                exp.setSource(new MsFileSource(URI.create(s.getSource())));
+           else
+               exp.setSource(new SpectrumFileSource(URI.create(s.getSource())));
+        });
+        exp.setAnnotation(RetentionTime.class, feature.getRetentionTime());
+        return exp;
+    }
     public static AlignedFeatures fromMs2Experiment(Ms2Experiment exp){
         SimpleSpectrum mergedMs1 = exp.getMergedMs1Spectrum() != null
                 ? (SimpleSpectrum) exp.getMergedMs1Spectrum()
@@ -75,6 +101,11 @@ public class StorageUtils {
 //                .apexMass()
 //                .snr()
                 .build();
-        return AlignedFeatures.singleton(feature, msData);
+
+        AlignedFeatures alignedFeature = AlignedFeatures.singleton(feature, msData);
+        alignedFeature.setName(exp.getName());
+        alignedFeature.setExternalFeatureId(exp.getFeatureId());
+        alignedFeature.setMolecularFormula(exp.getMolecularFormula());
+        return alignedFeature;
     }
 }

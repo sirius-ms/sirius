@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.persistence.model.core.feature;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
@@ -48,7 +49,6 @@ import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.NONE;
 @ToString(callSuper = true)
 @JsonAutoDetect(fieldVisibility = ANY, getterVisibility = NONE, setterVisibility = NONE, isGetterVisibility = NONE)
 public class AlignedFeatures extends AbstractAlignedFeatures {
-
     @Id
     private long alignedFeatureId;
 
@@ -61,6 +61,21 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
      * Detected adducts with score and source information for this feature
      */
     private DetectedAdducts detectedAdducts;
+
+    /**
+     * Some human-readable name. Usually parsed from an inputfile, or specified by the user.
+     */
+    private String name;
+    /**
+     * A feature id given some external tool. Not used internally but needs to be stored to make it easier to map outputs back.
+     */
+    private String externalFeatureId;
+
+    /**
+     * Used to specify a Known molecular formula. If this formula is given, molecular formula id will only score this formula
+     */
+    private MolecularFormula molecularFormula;
+
 
     @JsonIgnore
     @ToString.Exclude

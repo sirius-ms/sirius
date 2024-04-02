@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 @SuperBuilder
-@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE, getterVisibility = JsonAutoDetect.Visibility.ANY, setterVisibility = JsonAutoDetect.Visibility.ANY)
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE, getterVisibility = JsonAutoDetect.Visibility.ANY, setterVisibility = JsonAutoDetect.Visibility.NONE)
 public class Parameters extends AlignedFeatureAnnotation {
     @Id
     @Getter
