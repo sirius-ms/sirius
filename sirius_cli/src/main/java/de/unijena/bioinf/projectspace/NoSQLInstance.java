@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -27,9 +28,12 @@ import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
+import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,22 +72,52 @@ public class NoSQLInstance implements Instance {
 
     @Override
     public String getName() {
-        return null;
+        return getAlignedFeatures().getDataSource().toString();
     }
 
     @Override
     public double getIonMass() {
-        return 0;
+        return getAlignedFeatures().getAverageMass();
+    }
+
+    @Override
+    public PrecursorIonType getIonType() {
+        return getAlignedFeatures().getIonType();
+    }
+
+    @SneakyThrows
+    public AlignedFeatures getAlignedFeatures(){
+        return manager.getProject().getStorage().getByPrimaryKey(id, AlignedFeatures.class)
+                .orElseThrow(() -> new IllegalStateException("Could not find feature data of this instance. This should not be possible. Project might have been externally modified."));
     }
 
     @Override
     public ProjectSpaceManager getProjectSpaceManager() {
-        return null;
+        return manager;
     }
 
     @Override
     public Ms2Experiment getExperiment() {
         return null;
+
+    }
+
+    @Override
+    public boolean hasMs1() {
+        return getMSData().map(ms -> ms.getMergedMs1Spectrum() != null || ms.getIsotopePattern() != null)
+                .orElse(false);
+    }
+
+    @Override
+    public boolean hasMsMs() {
+        return getMSData()
+                .map(ms -> ms.getMergedMSnSpectrum() != null || (ms.getMsnSpectra() != null && !ms.getMsnSpectra().isEmpty()))
+                .orElse(false);
+    }
+
+    @SneakyThrows
+    private Optional<MSData> getMSData(){
+        return manager.getProject().getStorage().getByPrimaryKey(id, MSData.class);
     }
 
     @Override
@@ -177,8 +211,7 @@ public class NoSQLInstance implements Instance {
     }
 
     @Override
-    public boolean saveSpectraSearchResult(SpectralSearchResult result) {
-        return false;
+    public void saveSpectraSearchResult(SpectralSearchResult result) {
     }
 
     @Override
@@ -192,8 +225,8 @@ public class NoSQLInstance implements Instance {
     }
 
     @Override
-    public boolean savePassatuttoResult(FCandidate<?> id, Decoy decoy) {
-        return false;
+    public void savePassatuttoResult(FCandidate<?> id, Decoy decoy) {
+
     }
 
     @Override

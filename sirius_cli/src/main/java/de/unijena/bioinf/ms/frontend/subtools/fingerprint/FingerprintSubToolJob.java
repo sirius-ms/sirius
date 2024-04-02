@@ -24,8 +24,6 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.fingerid.*;
-import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
-import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
@@ -39,7 +37,6 @@ import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.SpectralSearchResults;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -78,7 +75,7 @@ public class FingerprintSubToolJob extends InstanceJob {
         checkForInterruption();
 
         if (formulaResults.isEmpty()) {
-            logInfo("Skipping instance \"" + inst.getExperiment().getName() + "\" because there are no trees computed.");
+            logInfo("Skipping instance \"" + inst.getName() + "\" because there are no trees computed.");
             return;
         }
 
@@ -92,8 +89,8 @@ public class FingerprintSubToolJob extends InstanceJob {
         updateProgress(10);
         checkForInterruption();
 
-        final EnumSet<PredictorType> predictors = inst.getExperiment().getAnnotationOrThrow(PredictorTypeAnnotation.class).toPredictors(inst.getExperiment().getPrecursorIonType().getCharge());
-        final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor) ApplicationCore.WEB_API.getStructurePredictor(predictors.iterator().next()), this::checkForInterruption);
+        final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor) ApplicationCore.WEB_API.
+                getStructurePredictor(inst.getIonType().getCharge()), this::checkForInterruption);
 
         checkForInterruption();
 

@@ -27,7 +27,6 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.*;
-import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobSubmitter;
@@ -75,7 +74,7 @@ public class MsNovelistSubToolJob extends InstanceJob {
         checkForInterruption();
 
         if (formulaResultsMap.isEmpty()) {
-            logInfo("Skipping instance \"" + inst.getExperiment().getName() + "\" because there are no trees computed.");
+            logInfo("Skipping instance \"" + inst.getName() + "\" because there are no trees computed.");
             return;
         }
 
@@ -117,11 +116,10 @@ public class MsNovelistSubToolJob extends InstanceJob {
 
         updateProgress(40);
         checkForInterruption();
-
+        //needed to create bayes net scoring... better solution possible
+        //todo msnovelist does just need a scorer so no need for the predictor if the scring function is initialized manually in MSNovelist job
         final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor)
-                        ApplicationCore.WEB_API.getStructurePredictor(
-                                inst.getExperiment().getAnnotationOrThrow(PredictorTypeAnnotation.class)
-                                        .toPredictors(inst.getExperiment().getPrecursorIonType().getCharge()).iterator().next()),
+                        ApplicationCore.WEB_API.getStructurePredictor(inst.getIonType().getCharge()),
                 this::checkForInterruption);
 
         updateProgress(45);

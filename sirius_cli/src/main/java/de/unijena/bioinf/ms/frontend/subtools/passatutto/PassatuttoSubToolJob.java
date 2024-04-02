@@ -28,7 +28,6 @@ import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.passatutto.Passatutto;
 import de.unijena.bioinf.projectspace.FCandidate;
 import de.unijena.bioinf.projectspace.Instance;
-import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -49,14 +48,14 @@ public class PassatuttoSubToolJob extends InstanceJob {
         Optional<FCandidate<?>> best = inst.getTopFTree();
 
         if (best.map(f -> f.hasAnnotation(FTree.class)).orElse(false)) {
-            logInfo("Skipping instance \"" + inst.getExperiment().getName() + "\" because there are no trees computed. No fragmentation trees are computed yet. Run SIRIUS first and provide the correct molecular formula in the input files before calling Passatutto.");
+            logInfo("Skipping instance \"" + inst.getName() + "\" because there are no trees computed. No fragmentation trees are computed yet. Run SIRIUS first and provide the correct molecular formula in the input files before calling Passatutto.");
             return;
         }
 
         final FTree tree = best.flatMap(f -> f.getAnnotation(FTree.class)).orElseThrow();
 
         if (tree.getFragments().size() < 3){
-            logInfo("Skipping instance \"" + inst.getExperiment().getName() + "\" because tree contains less than 3 Fragments!");
+            logInfo("Skipping instance \"" + inst.getName() + "\" because tree contains less than 3 Fragments!");
             return;
         }
 
