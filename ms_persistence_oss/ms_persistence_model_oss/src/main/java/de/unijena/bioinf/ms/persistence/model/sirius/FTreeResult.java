@@ -38,4 +38,8 @@ public class FTreeResult extends FormulaAnnotationWithId {
     @JsonSerialize(using = FTreeSerializer.class)
     @JsonDeserialize(using = FTreeDeserializer.class)
     private FTree fTree;
+
+    public FTreeResult(FTree fTree) {
+        this.fTree = fTree;
+    }
 }

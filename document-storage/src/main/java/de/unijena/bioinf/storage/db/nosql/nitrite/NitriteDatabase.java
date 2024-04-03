@@ -868,6 +868,11 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
+    public <T> int removeByPrimaryKey(Object primaryKey, Class<T> clazz) throws IOException {
+        return removeAll(Filter.where(this.primaryKeyFields.get(clazz).getName()).eq(primaryKey), clazz);
+    }
+
+    @Override
     public int remove(String collectionName, Document document) throws IOException {
         return this.write(() -> {
             NitriteCollection collection = this.getCollection(collectionName);
