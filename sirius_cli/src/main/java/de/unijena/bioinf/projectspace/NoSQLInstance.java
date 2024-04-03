@@ -177,7 +177,7 @@ public class NoSQLInstance implements Instance {
 
     @SneakyThrows
     private Optional<MSData> getMSData() {
-        return project().getStorage().getByPrimaryKey(id, MSData.class);
+        return project().getStorage().findStr(Filter.where("alignedFeatureId").eq(id), MSData.class).findFirst();
     }
 
     @Override
