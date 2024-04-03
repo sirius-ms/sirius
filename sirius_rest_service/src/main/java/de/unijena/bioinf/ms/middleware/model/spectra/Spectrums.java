@@ -173,14 +173,18 @@ public class Spectrums {
                     Deviation dev = ftree.getMassError(f);
                     if (f.isRoot() && dev.equals(Deviation.NULL_DEVIATION))
                         dev = ftree.getMassErrorTo(f, spectrum.getPrecursorMz());
+
                     Deviation rdev = ftree.getRecalibratedMassError(f);
-                    if (f.isRoot() && dev.equals(Deviation.NULL_DEVIATION))
+                    if (f.isRoot() && rdev.equals(Deviation.NULL_DEVIATION))
                         rdev = ftree.getMassErrorTo(f, spectrum.getPrecursorMz());
 
-                    peakAnno.massDeviationMz(dev.getAbsolute())
-                            .massDeviationPpm(dev.getPpm())
-                            .recalibratedMassDeviationMz(rdev.getAbsolute())
-                            .recalibratedMassDeviationPpm(rdev.getPpm());
+
+                    if (!dev.equals(Deviation.NULL_DEVIATION))
+                        peakAnno.massDeviationMz(dev.getAbsolute())
+                                .massDeviationPpm(dev.getPpm());
+                    if (!rdev.equals(Deviation.NULL_DEVIATION))
+                        peakAnno.recalibratedMassDeviationMz(rdev.getAbsolute())
+                                .recalibratedMassDeviationPpm(rdev.getPpm());
                 }
 
                 // we only store incoming edges because references are ugly for serialization
