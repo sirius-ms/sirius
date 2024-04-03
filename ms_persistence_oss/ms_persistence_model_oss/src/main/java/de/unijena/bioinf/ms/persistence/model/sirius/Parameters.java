@@ -81,6 +81,12 @@ public class Parameters extends AlignedFeatureAnnotation {
         return of(configAnnotation.config(), type);
     }
 
+    public static Parameters of(ParameterConfig config, ConfigType type, long alignedFeatureId) {
+        Parameters parameters = of(config, type);
+        parameters.setAlignedFeatureId(alignedFeatureId);
+        return parameters;
+    }
+
     public static Parameters of(ParameterConfig config, ConfigType type) {
         return Parameters.builder()
                 .parameterConfig(config)
