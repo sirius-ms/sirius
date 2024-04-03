@@ -31,6 +31,7 @@ import de.unijena.bioinf.storage.db.nosql.nitrite.projection.InjectedDocumentStr
 import de.unijena.bioinf.storage.db.nosql.nitrite.projection.InjectedObjectStream;
 import de.unijena.bioinf.storage.db.nosql.nitrite.projection.OptFieldDocumentStream;
 import de.unijena.bioinf.storage.db.nosql.utils.PKSuppliers;
+import io.hypersistence.tsid.TSID;
 import lombok.Getter;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.ClassUtils;
@@ -38,6 +39,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.dizitart.no2.Nitrite;
 import org.dizitart.no2.collection.*;
+import org.dizitart.no2.collection.events.CollectionEventListener;
 import org.dizitart.no2.collection.events.EventType;
 import org.dizitart.no2.common.PersistentCollection;
 import org.dizitart.no2.common.RecordStream;
@@ -91,6 +93,8 @@ public class NitriteDatabase implements Database<Document> {
     private final Map<String, NitriteCollection> collections = Collections.synchronizedMap(new HashMap<>());
 
     private final Map<String, Set<String>> optionalCollectionFields = Collections.synchronizedMap(new HashMap<>());
+
+    private final Map<Long, CollectionEventListener> listeners = Collections.synchronizedMap(new HashMap<>());
 
     // LOCKS
     private final ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock();
@@ -893,57 +897,76 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
-    public <T> void onInsert(Class<T> clazz, Consumer<T> listener, String... withOptionalFields) throws IOException {
-        registerListener(EventType.Insert, clazz, listener, withOptionalFields);
+    public <T> long onInsert(Class<T> clazz, Consumer<T> listener, String... withOptionalFields) throws IOException {
+        return registerListener(EventType.Insert, clazz, listener, withOptionalFields);
     }
 
     @Override
-    public void onInsert(String collectionName, Consumer<Document> listener, String... withOptionalFields) throws IOException {
-        registerListener(EventType.Insert, collectionName, listener, withOptionalFields);
+    public long onInsert(String collectionName, Consumer<Document> listener, String... withOptionalFields) throws IOException {
+        return registerListener(EventType.Insert, collectionName, listener, withOptionalFields);
     }
 
     @Override
-    public <T> void onUpdate(Class<T> clazz, Consumer<T> listener, String... withOptionalFields) throws IOException {
-        registerListener(EventType.Update, clazz, listener, withOptionalFields);
+    public <T> long onUpdate(Class<T> clazz, Consumer<T> listener, String... withOptionalFields) throws IOException {
+        return registerListener(EventType.Update, clazz, listener, withOptionalFields);
     }
 
     @Override
-    public void onUpdate(String collectionName, Consumer<Document> listener, String... withOptionalFields) throws IOException {
-        registerListener(EventType.Update, collectionName, listener, withOptionalFields);
+    public long onUpdate(String collectionName, Consumer<Document> listener, String... withOptionalFields) throws IOException {
+        return registerListener(EventType.Update, collectionName, listener, withOptionalFields);
     }
 
     @Override
-    public <T> void onRemove(Class<T> clazz, Consumer<T> listener, String... withOptionalFields) throws IOException {
-        registerListener(EventType.Remove, clazz, listener, withOptionalFields);
+    public <T> long onRemove(Class<T> clazz, Consumer<T> listener, String... withOptionalFields) throws IOException {
+        return registerListener(EventType.Remove, clazz, listener, withOptionalFields);
     }
 
     @Override
-    public void onRemove(String collectionName, Consumer<Document> listener, String... withOptionalFields) throws IOException {
-        registerListener(EventType.Remove, collectionName, listener, withOptionalFields);
+    public long onRemove(String collectionName, Consumer<Document> listener, String... withOptionalFields) throws IOException {
+        return registerListener(EventType.Remove, collectionName, listener, withOptionalFields);
     }
 
-    private <T> void registerListener(EventType eventType, Class<T> clazz, Consumer<T> listener, String[] withOptionalFields) throws IOException {
-        getRepository(clazz).subscribe(eventInfo -> {
+    private <T> long registerListener(EventType eventType, Class<T> clazz, Consumer<T> listener, String[] withOptionalFields) throws IOException {
+        CollectionEventListener wrapper = eventInfo -> {
             if (eventInfo.getEventType().equals(eventType)) {
                 Document doc = (Document) eventInfo.getItem();
                 if (doc != null) {
                     listener.accept(maybeProject(clazz, doc, withOptionalFields));
                 }
             }
-        });
+        };
+        final long tsid = TSID.fast().toLong();
+        this.listeners.put(tsid, wrapper);
+        getRepository(clazz).subscribe(wrapper);
+        return tsid;
     }
 
-    private void registerListener(EventType eventType, String collectionName, Consumer<Document> listener, String[] withOptionalFields) throws IOException {
-        getCollection(collectionName).subscribe(eventInfo -> {
+    private long registerListener(EventType eventType, String collectionName, Consumer<Document> listener, String[] withOptionalFields) throws IOException {
+        CollectionEventListener wrapper = eventInfo -> {
             if (eventInfo.getEventType().equals(eventType)) {
                 Document doc = (Document) eventInfo.getItem();
                 if (doc != null) {
                     listener.accept(maybeProjectDocument(collectionName, doc, withOptionalFields));
                 }
             }
-        });
+        };
+        final long tsid = TSID.fast().toLong();
+        this.listeners.put(tsid, wrapper);
+        getCollection(collectionName).subscribe(wrapper);
+        return tsid;
     }
 
+    @Override
+    public void unsubscribe(Class<?> clazz, long listenerId) throws IOException {
+        getRepository(clazz).unsubscribe(this.listeners.get(listenerId));
+        this.listeners.remove(listenerId);
+    }
+
+    @Override
+    public void unsubscribe(String collectionName, long listenerId) throws IOException {
+        getCollection(collectionName).unsubscribe(this.listeners.get(listenerId));
+        this.listeners.remove(listenerId);
+    }
 
     @Override
     @SuppressWarnings("unchecked")
