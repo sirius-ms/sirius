@@ -113,11 +113,11 @@ public class SiriusProjectSpaceInstance implements Instance {
     }
 
     private SiriusProjectSpace projectSpace() {
-        return ((SiriusProjectSpaceManager) getProjectSpaceManager()).getProjectSpaceImpl();
+        return getProjectSpaceManager().getProjectSpaceImpl();
     }
 
     @Override
-    public ProjectSpaceManager getProjectSpaceManager() {
+    public SiriusProjectSpaceManager getProjectSpaceManager() {
         return spaceManager;
     }
 

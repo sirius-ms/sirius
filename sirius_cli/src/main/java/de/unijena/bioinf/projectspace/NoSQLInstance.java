@@ -37,18 +37,53 @@ import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class NoSQLInstance implements Instance {
+
+    private enum State {
+        OKAY, COMPUTING, REMOVED
+    }
 
     private final NoSQLProjectSpaceManager manager;
     private final long id;
 
+    private AlignedFeatures alignedFeatures;
+
+    private AtomicReference<State> state = new AtomicReference<>(State.OKAY);
+
+    @SneakyThrows
     public NoSQLInstance(long id, NoSQLProjectSpaceManager manager) {
         this.id = id;
         this.manager = manager;
+        this.alignedFeatures = manager.getProject().getStorage().getByPrimaryKey(id, AlignedFeatures.class)
+                .orElseThrow(() -> new IllegalStateException("Could not find feature data of this instance. This should not be possible. Project might have been externally modified."));
+        initListeners();
+    }
+
+    @SneakyThrows
+    public NoSQLInstance(AlignedFeatures alignedFeatures, NoSQLProjectSpaceManager manager) {
+        this.id = alignedFeatures.getAlignedFeatureId();
+        this.manager = manager;
+        this.alignedFeatures = alignedFeatures;
+        initListeners();
+    }
+
+    private void initListeners() throws IOException {
+        manager.getProject().getStorage().onUpdate(AlignedFeatures.class, (changed) -> {
+            if (changed.getAlignedFeatureId() == id) {
+                this.alignedFeatures = changed;
+            }
+        });
+        manager.getProject().getStorage().onRemove(AlignedFeatures.class, (changed) -> {
+            if (changed.getAlignedFeatureId() == id) {
+                state.set(State.REMOVED);
+            }
+        });
     }
 
     public long getLongId() {
@@ -62,12 +97,12 @@ public class NoSQLInstance implements Instance {
 
     @Override
     public Optional<String> getCompoundId() {
-        return Optional.empty();
+        return Optional.ofNullable(alignedFeatures.getCompoundId()).map(String::valueOf);
     }
 
     @Override
     public Optional<String> getProvidedFeatureId() {
-        return Optional.empty();
+        return Optional.ofNullable(alignedFeatures.getExternalFeatureId());
     }
 
     @Override
@@ -85,14 +120,15 @@ public class NoSQLInstance implements Instance {
         return getAlignedFeatures().getIonType();
     }
 
-    @SneakyThrows
-    public AlignedFeatures getAlignedFeatures(){
-        return manager.getProject().getStorage().getByPrimaryKey(id, AlignedFeatures.class)
-                .orElseThrow(() -> new IllegalStateException("Could not find feature data of this instance. This should not be possible. Project might have been externally modified."));
+    public AlignedFeatures getAlignedFeatures() {
+        if (state.get() == State.REMOVED) {
+            throw new IllegalStateException("Instance has been removed.");
+        }
+        return alignedFeatures;
     }
 
     @Override
-    public ProjectSpaceManager getProjectSpaceManager() {
+    public NoSQLProjectSpaceManager getProjectSpaceManager() {
         return manager;
     }
 
@@ -192,12 +228,12 @@ public class NoSQLInstance implements Instance {
 
     @Override
     public void setComputing(boolean computing) {
-
+        state.updateAndGet((s) -> (s == State.REMOVED) ? State.REMOVED : ((computing) ? State.COMPUTING : State.OKAY));
     }
 
     @Override
     public boolean isComputing() {
-        return false;
+        return state.get() == State.COMPUTING;
     }
 
     @Override

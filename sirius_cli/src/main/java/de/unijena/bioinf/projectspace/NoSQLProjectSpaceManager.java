@@ -41,9 +41,9 @@ import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
+@Getter
 public class NoSQLProjectSpaceManager implements ProjectSpaceManager {
 
-    @Getter
     private final SiriusProjectDatabaseImpl<? extends Database<?>> project;
 
     public NoSQLProjectSpaceManager(SiriusProjectDatabaseImpl<? extends Database<?>> project) {
@@ -55,7 +55,7 @@ public class NoSQLProjectSpaceManager implements ProjectSpaceManager {
     @Override
     public @NotNull NoSQLInstance importInstanceWithUniqueId(Ms2Experiment inputExperiment) {
         AlignedFeatures alignedFeature = getProject().importMs2ExperimentAsAlignedFeature(inputExperiment);
-        return null;//todo create AlignedFeatures based instance;
+        return new NoSQLInstance(alignedFeature, this);
     }
 
 
@@ -73,8 +73,9 @@ public class NoSQLProjectSpaceManager implements ProjectSpaceManager {
 
     @SneakyThrows
     public @NotNull Optional<NoSQLInstance> findInstance(long id) {
+        final NoSQLProjectSpaceManager psm = this;
         return getProject().getStorage().getByPrimaryKey(id, AlignedFeatures.class)
-                .map(af -> null/*new Instance()*/); //todo create AlignedFeatures based instance;
+                .map(af -> new NoSQLInstance(af, psm));
     }
 
     @Override
@@ -113,10 +114,11 @@ public class NoSQLProjectSpaceManager implements ProjectSpaceManager {
         return getProject().findFingerprintData(CanopusNpcData.class, charge);
     }
 
+    @SneakyThrows
     @Override
     public @NotNull Iterator<Instance> iterator() {
-        // TODO
-        return null;
+        final NoSQLProjectSpaceManager psm = this;
+        return getProject().getAllAlignedFeatures().map(af -> (Instance) new NoSQLInstance(af, psm)).iterator();
     }
 
     @SneakyThrows
