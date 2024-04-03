@@ -26,7 +26,7 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.Instance;
 import org.apache.commons.configuration2.CombinedConfiguration;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import java.util.Optional;
 
 public class AddConfigsJob extends InstanceJob {
     private final ParameterConfig computeConfig;
@@ -54,9 +54,10 @@ public class AddConfigsJob extends InstanceJob {
         {
             //override defaults
             // CLI_CONFIG might already exist from previous runs and needs to be updated.
-            @Nullable ParameterConfig projectSpaceConfig = inst.loadProjectConfig();
+            Optional<ParameterConfig> projectSpaceConfigOpt = inst.loadProjectConfig();
             checkForInterruption();
-            if (projectSpaceConfig != null){
+            if (projectSpaceConfigOpt.isPresent()){
+                ParameterConfig projectSpaceConfig = projectSpaceConfigOpt.get();
                 if (!computeConfig.getLocalConfigName().equals(ConfigType.CLI.name()) && computeConfig.containsConfiguration(ConfigType.CLI.name())) {
                     projectSpaceConfig = projectSpaceConfig.newIndependentInstance(ConfigType.CLI.name());
                     projectSpaceConfig.updateConfig(ConfigType.CLI.name(), ((CombinedConfiguration) computeConfig.getConfigs()).getConfiguration(ConfigType.CLI.name()));
@@ -71,11 +72,11 @@ public class AddConfigsJob extends InstanceJob {
 
         //input file configs are intended to be immutable, we still reload to ensure that it is on top position after CLI config
         {
-            @Nullable final ParameterConfig msConf = inst.loadInputFileConfig();
+            final Optional<ParameterConfig> msConf = inst.loadInputFileConfig();
             checkForInterruption();
-            if (msConf != null) {
-                baseConfig.removeConfig(msConf.getLocalConfigName());
-                baseConfig = baseConfig.newIndependentInstance(msConf, false);
+            if (msConf.isPresent()) {
+                baseConfig.removeConfig(msConf.get().getLocalConfigName());
+                baseConfig = baseConfig.newIndependentInstance(msConf.get(), false);
             }
         }
         checkForInterruption();

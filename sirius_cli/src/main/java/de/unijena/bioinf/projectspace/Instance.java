@@ -32,7 +32,6 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -52,7 +51,7 @@ public interface Instance {
     /**
      * @return FeatureId provided from some external preprocessing tool
      */
-    Optional<String> getProvidedFeatureId();
+    Optional<String> getExternalFeatureId();
 
     /**
      * @return Display name of this feature
@@ -90,12 +89,11 @@ public interface Instance {
     Optional<FCandidate<?>> getTopFTree();
 
 
-    @Nullable ParameterConfig loadInputFileConfig();
-
-    @Nullable ParameterConfig loadProjectConfig();
+    Optional<ParameterConfig> loadInputFileConfig();
+    Optional<ParameterConfig> loadProjectConfig();
 
     void updateConfig(@NotNull ParameterConfig config);
-    //endregion
+
 
     //region state
     void clearCompoundCache();

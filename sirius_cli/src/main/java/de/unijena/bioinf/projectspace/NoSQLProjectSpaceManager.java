@@ -73,9 +73,8 @@ public class NoSQLProjectSpaceManager implements ProjectSpaceManager {
 
     @SneakyThrows
     public @NotNull Optional<NoSQLInstance> findInstance(long id) {
-        final NoSQLProjectSpaceManager psm = this;
         return getProject().getStorage().getByPrimaryKey(id, AlignedFeatures.class)
-                .map(af -> new NoSQLInstance(af, psm));
+                .map(af -> new NoSQLInstance(af, this));
     }
 
     @Override
@@ -117,8 +116,7 @@ public class NoSQLProjectSpaceManager implements ProjectSpaceManager {
     @SneakyThrows
     @Override
     public @NotNull Iterator<Instance> iterator() {
-        final NoSQLProjectSpaceManager psm = this;
-        return getProject().getAllAlignedFeatures().map(af -> (Instance) new NoSQLInstance(af, psm)).iterator();
+        return getProject().getAllAlignedFeatures().map(af -> (Instance) new NoSQLInstance(af, this)).iterator();
     }
 
     @SneakyThrows

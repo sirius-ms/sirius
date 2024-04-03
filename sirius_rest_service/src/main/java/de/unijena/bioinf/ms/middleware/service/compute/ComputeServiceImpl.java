@@ -104,7 +104,7 @@ public class ComputeServiceImpl implements ComputeService {
             if (jobSubmission.getAlignedFeatureIds() != null && !jobSubmission.getAlignedFeatureIds().isEmpty()) {
                 compounds = new ArrayList<>();
                 for (String cid : jobSubmission.getAlignedFeatureIds())
-                    compounds.add(project.loadInstance(cid));
+                    compounds.add(loadInstance(project, cid));
             }
         } else {
             compounds = new ArrayList<>();
@@ -134,6 +134,12 @@ public class ComputeServiceImpl implements ComputeService {
         }
 
         return id;
+    }
+
+    private static Instance loadInstance(Project<?> project, String alignedFeatureId){
+        return project.getProjectSpaceManager().findInstance(alignedFeatureId).orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Instance with ID " + alignedFeatureId + " not found in project + " + project.getProjectId() + ".")
+        );
     }
 
     private List<String> extractEffectedAlignedFeatures(BackgroundRuns.BackgroundRunJob runJob) {
@@ -199,7 +205,7 @@ public class ComputeServiceImpl implements ComputeService {
             BackgroundRuns.BackgroundRunJob run;
             if (alignedFeatureIds != null) {
                 List<Instance> instances = new ArrayList<>();
-                alignedFeatureIds.forEach(id -> instances.add(project.loadInstance(id)));
+                alignedFeatureIds.forEach(id -> instances.add(loadInstance(project, id)));
                 run = backgroundRuns(project).runCommand(commandList, instances);
             } else {
                 run = backgroundRuns(project).runCommand(commandList, project.getProjectSpaceManager());

@@ -87,7 +87,7 @@ public class SiriusSubToolJob extends InstanceJob {
         updateProgress(5);
         checkForInterruption();
         //todo improve progress with progress merger
-        final Sirius sirius = ApplicationCore.SIRIUS_PROVIDER.sirius(Optional.ofNullable(inst.loadProjectConfig())
+        final Sirius sirius = ApplicationCore.SIRIUS_PROVIDER.sirius(inst.loadProjectConfig()
                 .map(c -> c.getConfigValue("AlgorithmProfile")).orElse(null));
 
         Sirius.SiriusIdentificationJob idjob = sirius.makeIdentificationJob(exp);
