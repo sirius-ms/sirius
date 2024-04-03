@@ -22,10 +22,12 @@ package de.unijena.bioinf.ms.persistence.model.sirius;
 
 import jakarta.persistence.Id;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
+@NoArgsConstructor
 public abstract class FormulaAnnotationWithId extends FormulaAnnotation {
     @Id
     @Getter

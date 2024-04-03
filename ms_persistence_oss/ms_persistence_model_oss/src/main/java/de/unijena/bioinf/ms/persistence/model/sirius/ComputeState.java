@@ -20,26 +20,14 @@
 
 package de.unijena.bioinf.ms.persistence.model.sirius;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.babelms.json.FTreeDeserializer;
-import de.unijena.bioinf.babelms.json.FTreeSerializer;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.jackson.Jacksonized;
 
+@Getter
 @SuperBuilder
 @Jacksonized
-@Getter
-@Setter
-public class FTreeResult extends FormulaAnnotationWithId {
-    @JsonSerialize(using = FTreeSerializer.class)
-    @JsonDeserialize(using = FTreeDeserializer.class)
-    private FTree fTree;
-
-    public FTreeResult(FTree fTree) {
-        this.fTree = fTree;
-    }
+public class ComputeState extends AlignedFeatureAnnotation {
+    //this is just a boolean flag. if it exists it is true.
+    // can be extended with fields if more information is needed.
 }

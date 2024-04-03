@@ -230,6 +230,8 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     <T> int remove(T object) throws IOException;
 
+    <T> int removeByPrimaryKey(Object primaryKey, Class<T> clazz) throws IOException;
+
     <T> int removeAll(Iterable<T> objects) throws IOException;
 
     <T> int removeAll(Filter filter, Class<T> clazz) throws IOException;

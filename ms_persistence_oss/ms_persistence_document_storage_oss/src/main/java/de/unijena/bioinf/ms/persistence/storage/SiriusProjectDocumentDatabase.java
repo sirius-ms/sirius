@@ -43,8 +43,7 @@ import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> extends NetworkingProjectDocumentDatabase<Storage> {
@@ -64,6 +63,7 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
                 .addCollection(FP_DATA_COLLECTION, Index.unique("type", "charge"))
 
                 .addRepository(Parameters.class, Index.unique("alignedFeatureId", "type"))
+                .addRepository(ComputeState.class, "alignedFeatureId")
 
                 .addRepository(FTreeResult.class,
                         Index.unique("formulaId"),
@@ -138,6 +138,14 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     }
 
     @SneakyThrows
+    default int upsertConfig(long alignedFeatureId, @NotNull ConfigType type, ParameterConfig config) {
+        getStorage().removeAll(Filter.and(
+                Filter.where("alignedFeatureId").eq(alignedFeatureId),
+                Filter.where("type").eq(type.name())), Parameters.class);
+        return getStorage().insert(Parameters.of(config, type, alignedFeatureId));
+    }
+
+    @SneakyThrows
     default Optional<Parameters> getConfig(long alignedFeatureId, @NotNull ConfigType type) {
         return getStorage().findStr(
                 Filter.and(
@@ -145,6 +153,27 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
                         Filter.where("type").eq(type.name())),
                 Parameters.class
         ).findFirst();
+    }
+
+    @SneakyThrows
+    default void setFeaturesComputing(Collection<Long> alignedFeatureIds, boolean computing) {
+        if (computing)
+            getStorage().upsert(alignedFeatureIds.stream().map(afid -> ComputeState.builder().alignedFeatureId(afid).build()));
+        else
+            getStorage().removeAll(Filter.where("alignedFeaturesId").in(alignedFeatureIds.toArray(Long[]::new)), ComputeState.class);
+    }
+
+    @SneakyThrows
+    default void setFeatureComputing(long alignedFeatureId, boolean computing) {
+        if (computing)
+            getStorage().upsert(ComputeState.builder().alignedFeatureId(alignedFeatureId).build());
+        else
+            getStorage().removeByPrimaryKey(alignedFeatureId, ComputeState.class);
+    }
+
+    @SneakyThrows
+    default boolean isFeatureComputing(long alignedFeatureId) {
+        return getStorage().count(Filter.where("alignedFeatureId").eq(alignedFeatureId), ComputeState.class) > 0;
     }
 
     @SneakyThrows
@@ -175,5 +204,25 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     @SneakyThrows
     default <T> Stream<T> findByFormulaIdStr(long formulaId, Class<T> clzz) {
         return getStorage().findStr(Filter.where("formulaId").eq(formulaId), clzz);
+    }
+
+    @SneakyThrows
+    default <T> long countByFeatureIdStr(long alignedFeatureId, Class<T> clzz) {
+        return getStorage().count(Filter.where("alignedFeatureId").eq(alignedFeatureId), clzz);
+    }
+
+    @SneakyThrows
+    default <T> long countByFormulaIdStr(long formulaId, Class<T> clzz) {
+        return getStorage().count(Filter.where("formulaId").eq(formulaId), clzz);
+    }
+
+    @SneakyThrows
+    default <T> long deleteAllByFeatureIdStr(long alignedFeatureId, Class<T> clzz) {
+        return this.getStorage().removeAll(Filter.where("alignedFeatureId").eq(alignedFeatureId), clzz);
+    }
+
+    @SneakyThrows
+    default <T> long deleteAllByFormulaIdStr(long formulaId, Class<T> clzz) {
+        return this.getStorage().removeAll(Filter.where("formulaId").eq(formulaId), clzz);
     }
 }
