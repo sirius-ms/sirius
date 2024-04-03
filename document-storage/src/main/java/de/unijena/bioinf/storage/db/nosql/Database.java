@@ -345,17 +345,21 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     // region event support
 
-    <T> void onInsert(Class<T> clazz, Consumer<T> listener, String... withOptionalFields) throws IOException;
+    <T> long onInsert(Class<T> clazz, Consumer<T> listener, String... withOptionalFields) throws IOException;
 
-    void onInsert(String collectionName, Consumer<DocType> listener, String... withOptionalFields) throws IOException;
+    long onInsert(String collectionName, Consumer<DocType> listener, String... withOptionalFields) throws IOException;
 
-    <T> void onUpdate(Class<T> clazz, Consumer<T> listener, String... withOptionalFields) throws IOException;
+    <T> long onUpdate(Class<T> clazz, Consumer<T> listener, String... withOptionalFields) throws IOException;
 
-    void onUpdate(String collectionName, Consumer<DocType> listener, String... withOptionalFields) throws IOException;
+    long onUpdate(String collectionName, Consumer<DocType> listener, String... withOptionalFields) throws IOException;
 
-    <T> void onRemove(Class<T> clazz, Consumer<T> listener, String... withOptionalFields) throws IOException;
+    <T> long onRemove(Class<T> clazz, Consumer<T> listener, String... withOptionalFields) throws IOException;
 
-    void onRemove(String collectionName, Consumer<DocType> listener, String... withOptionalFields) throws IOException;
+    long onRemove(String collectionName, Consumer<DocType> listener, String... withOptionalFields) throws IOException;
+
+    void unsubscribe(Class<?> clazz, long listenerId) throws IOException;
+
+    void unsubscribe(String collectionName, long listenerId) throws IOException;
 
     // endregion
 
