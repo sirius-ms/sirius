@@ -159,8 +159,7 @@ public class NoSQLInstance implements Instance {
 
     @Override
     public Ms2Experiment getExperiment() {
-        return null;
-
+        return project().fetchMsDataAndConfigsAsMsExperiment(getAlignedFeatures()).orElseThrow();
     }
 
     @Override
