@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.persistence.storage;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -27,22 +28,27 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.persistence.model.core.DataSource;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
+import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.sirius.Ms2Preprocessor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.*;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
+@Slf4j
 public class StorageUtils {
-    public static Ms2Experiment toMs2Experiment(@NotNull AlignedFeatures feature, @NotNull ParameterConfig config){
+    public static Ms2Experiment toMs2Experiment(@NotNull AlignedFeatures feature, @NotNull ParameterConfig config) {
         MSData spectra = feature.getMSData().orElseThrow();
 
         MutableMs2Experiment exp = new MutableMs2Experiment();
@@ -56,15 +62,17 @@ public class StorageUtils {
         exp.setIonMass(feature.getAverageMass());
         exp.setMolecularFormula(feature.getMolecularFormula()); //todo not stored do we need this?
         feature.getDataSource().ifPresent(s -> {
-           if (s.getFormat() == DataSource.Format.JENA_MS)
+            if (s.getFormat() == DataSource.Format.JENA_MS)
                 exp.setSource(new MsFileSource(URI.create(s.getSource())));
-           else
-               exp.setSource(new SpectrumFileSource(URI.create(s.getSource())));
+            else
+                exp.setSource(new SpectrumFileSource(URI.create(s.getSource())));
         });
         exp.setAnnotation(RetentionTime.class, feature.getRetentionTime());
+        exp.setAnnotation(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.class, toMs2ExpAnnotation(feature.getDetectedAdducts()));
         return exp;
     }
-    public static AlignedFeatures fromMs2Experiment(Ms2Experiment exp){
+
+    public static AlignedFeatures fromMs2Experiment(Ms2Experiment exp) {
         SimpleSpectrum mergedMs1 = exp.getMergedMs1Spectrum() != null
                 ? (SimpleSpectrum) exp.getMergedMs1Spectrum()
                 : Spectrums.mergeSpectra(exp.getMs1Spectra());
@@ -106,6 +114,24 @@ public class StorageUtils {
         alignedFeature.setName(exp.getName());
         alignedFeature.setExternalFeatureId(exp.getFeatureId());
         alignedFeature.setMolecularFormula(exp.getMolecularFormula());
+
+        //todo how do we want to handle detected adducts without losing scores?
+        if (exp.hasAnnotation(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.class))
+            log.warn("Experiment '" + exp.getName() + "' contains Detected adducts that which will not preserved during import!");
+
         return alignedFeature;
+    }
+
+    public static de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts toMs2ExpAnnotation(@Nullable DetectedAdducts adducts) {
+        if (adducts == null)
+            return null;
+        de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts dA = new de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts();
+
+        Map<de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source, List<PrecursorIonType>> adductsBySource =
+                adducts.asMap().values().stream().flatMap(Collection::stream).collect(Collectors.groupingBy(
+                        d -> d.getSource(), Collectors.mapping(it -> it.getAdduct(), Collectors.toList())));
+
+        adductsBySource.forEach((s, v) -> dA.put(s, new PossibleAdducts(v.toArray(PrecursorIonType[]::new))));
+        return dA;
     }
 }

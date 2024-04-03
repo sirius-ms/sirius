@@ -55,7 +55,7 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
     /**
      * ID of the compound this aligned feature belongs to
      */
-    private long compoundId;
+    private Long compoundId;
 
     /**
      * Detected adducts with score and source information for this feature

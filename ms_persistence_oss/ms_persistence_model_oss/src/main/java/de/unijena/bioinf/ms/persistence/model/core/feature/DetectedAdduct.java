@@ -34,14 +34,11 @@ import org.jetbrains.annotations.NotNull;
 @EqualsAndHashCode
 public class DetectedAdduct implements Comparable<DetectedAdduct> {
 
-    @Getter
     private final PrecursorIonType adduct;
 
-    @Getter
     @EqualsAndHashCode.Exclude
     private Double score;
 
-    @Getter
     private DetectedAdducts.Source source;
 
     @Override
