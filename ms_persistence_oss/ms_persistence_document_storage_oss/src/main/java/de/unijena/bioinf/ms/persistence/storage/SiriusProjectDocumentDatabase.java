@@ -41,6 +41,7 @@ import de.unijena.bioinf.storage.db.nosql.Index;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
@@ -123,10 +124,7 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     }
 
     @SneakyThrows
-    default Optional<Ms2Experiment> findAlignedFeatureAsMsExperiment(long alignedFeatureId) {
-        AlignedFeatures feature = getStorage().getByPrimaryKey(alignedFeatureId, AlignedFeatures.class)
-                .map(this::fetchMsData).orElse(null);
-
+    default Optional<Ms2Experiment> fetchMsDataAndConfigsAsMsExperiment(@Nullable AlignedFeatures feature) {
         if (feature == null || feature.getMSData().isEmpty())
             return Optional.empty();
 
@@ -135,6 +133,12 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
                 .orElse(PropertyManager.DEFAULTS);
 
         return Optional.of(StorageUtils.toMs2Experiment(feature, config));
+    }
+    @SneakyThrows
+    default Optional<Ms2Experiment> findAlignedFeatureAsMsExperiment(long alignedFeatureId) {
+        AlignedFeatures feature = getStorage().getByPrimaryKey(alignedFeatureId, AlignedFeatures.class)
+                .map(this::fetchMsData).orElse(null);
+        return fetchMsDataAndConfigsAsMsExperiment(feature);
     }
 
     @SneakyThrows
