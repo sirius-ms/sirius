@@ -80,7 +80,7 @@ public class SiriusProjectSpaceInstance implements Instance {
      * @return FeatureId provided from some external preprocessing tool
      */
     @Override
-    public Optional<String> getProvidedFeatureId() {
+    public Optional<String> getExternalFeatureId() {
         return getCompoundContainerId().getFeatureId();
     }
 
@@ -113,11 +113,11 @@ public class SiriusProjectSpaceInstance implements Instance {
     }
 
     private SiriusProjectSpace projectSpace() {
-        return getProjectSpaceManager().getProjectSpaceImpl();
+        return ((SiriusProjectSpaceManager) getProjectSpaceManager()).getProjectSpaceImpl();
     }
 
     @Override
-    public SiriusProjectSpaceManager getProjectSpaceManager() {
+    public ProjectSpaceManager getProjectSpaceManager() {
         return spaceManager;
     }
 
@@ -346,17 +346,15 @@ public class SiriusProjectSpaceInstance implements Instance {
     }
 
     @Override
-    @Nullable
-    public final synchronized ParameterConfig loadInputFileConfig() {
+    public final synchronized Optional<ParameterConfig> loadInputFileConfig() {
         return getExperiment().getAnnotation(InputFileConfig.class)
-                .map(ConfigAnnotation::config).orElse(null);
+                .map(ConfigAnnotation::config);
     }
 
     @Override
-    @Nullable
-    public final synchronized ParameterConfig loadProjectConfig() {
+    public final synchronized Optional<ParameterConfig> loadProjectConfig() {
         return loadCompoundContainer(ProjectSpaceConfig.class).getAnnotation(ProjectSpaceConfig.class)
-                .map(ConfigAnnotation::config).orElse(null);
+                .map(ConfigAnnotation::config);
     }
 
     @Override
@@ -641,6 +639,7 @@ public class SiriusProjectSpaceInstance implements Instance {
     @Override
     public synchronized void deleteSiriusResult() {
         deleteFormulaResults(); //this step creates the results, so we have to delete them before recompute
+        //todo detected Adducts should be moved to separate subtool
         getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> it.remove(DetectedAdducts.Source.MS1_PREPROCESSOR.name()));
         saveDetectedAdducts(getExperiment().getAnnotationOrNull(DetectedAdducts.class));
     }

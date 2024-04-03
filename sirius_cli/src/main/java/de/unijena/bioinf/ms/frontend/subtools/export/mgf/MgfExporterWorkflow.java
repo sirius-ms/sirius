@@ -80,7 +80,7 @@ public class MgfExporterWorkflow implements Workflow {
                 ps.forEach(i -> {
                     size.incrementAndGet();
                     if (useFeatureId.get())
-                        i.getProvidedFeatureId().ifPresentOrElse(ids::add, (() -> useFeatureId.set(false)));
+                        i.getExternalFeatureId().ifPresentOrElse(ids::add, (() -> useFeatureId.set(false)));
                 });
 
                 useFeatureId.set(ids.size() >= size.get());
@@ -120,8 +120,8 @@ public class MgfExporterWorkflow implements Workflow {
     }
 
     private String extractFid(Instance i) {
-        return useFeatureId.get() && i.getProvidedFeatureId().map(StringUtils::isNumeric).orElse(false)
-                ? i.getProvidedFeatureId().get()
+        return useFeatureId.get() && i.getExternalFeatureId().map(StringUtils::isNumeric).orElse(false)
+                ? i.getExternalFeatureId().get()
                 : i.getId();
     }
 

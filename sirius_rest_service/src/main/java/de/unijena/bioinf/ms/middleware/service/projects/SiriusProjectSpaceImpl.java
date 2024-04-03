@@ -585,10 +585,10 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     protected static Ms2Experiment loadExperiment(SiriusProjectSpaceInstance instance) {
         return instance.loadCompoundContainer(Ms2Experiment.class).getAnnotation(Ms2Experiment.class)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
-                        "Could not find spectra data for '" + instance.getProvidedFeatureId().orElseGet(instance::getId) + "'!"));
+                        "Could not find spectra data for '" + instance.getExternalFeatureId().orElseGet(instance::getId) + "'!"));
     }
 
-    public SiriusProjectSpaceInstance loadInstance(String alignedFeatureId) {
+    private SiriusProjectSpaceInstance loadInstance(String alignedFeatureId) {
         try {
             return projectSpaceManager.getInstanceFromCompound(parseCID(alignedFeatureId));
         } catch (RuntimeException e) {
