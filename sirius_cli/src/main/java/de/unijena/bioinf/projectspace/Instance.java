@@ -95,8 +95,9 @@ public interface Instance {
     @Nullable ParameterConfig loadProjectConfig();
 
     void updateConfig(@NotNull ParameterConfig config);
+    //endregion
 
-    //region clear cache
+    //region state
     void clearCompoundCache();
 
     default void enableComputing() {
@@ -107,10 +108,10 @@ public interface Instance {
         setComputing(false);
     }
 
-
     void setComputing(boolean computing);
 
     boolean isComputing();
+    //endregion
 
     void saveDetectedAdducts(DetectedAdducts detectedAdducts);
 
