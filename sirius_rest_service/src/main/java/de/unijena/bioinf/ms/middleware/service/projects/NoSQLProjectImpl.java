@@ -28,13 +28,13 @@ import de.unijena.bioinf.ms.middleware.model.annotations.StructureCandidateFormu
 import de.unijena.bioinf.ms.middleware.model.annotations.StructureCandidateScored;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
-import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
-import de.unijena.bioinf.ms.middleware.model.features.AlignedFeatureQuality;
-import de.unijena.bioinf.ms.middleware.model.features.AnnotatedMsMsData;
-import de.unijena.bioinf.ms.middleware.model.features.FeatureImport;
+import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
+import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
+import de.unijena.bioinf.ms.persistence.model.sirius.SpectraMatch;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.storage.db.nosql.Database;
@@ -51,6 +51,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
 
 public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
@@ -67,6 +68,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     private final Map<Class<?>, AtomicLong> totalCounts = Collections.synchronizedMap(new HashMap<>());
 
+    private final Map<Class<?>, Map<Long, AtomicLong>> totalCountByFeature = Collections.synchronizedMap(new HashMap<>());
+
     @SneakyThrows
     public NoSQLProjectImpl(@NotNull String projectId, @NotNull NoSQLProjectSpaceManager projectSpaceManager) {
         this.projectId = projectId;
@@ -74,24 +77,28 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         this.database = projectSpaceManager.getProject();
         this.storage = database.getStorage();
 
-        this.totalCounts.put(
-                de.unijena.bioinf.ms.persistence.model.core.Compound.class,
-                new AtomicLong(this.storage.countAll(de.unijena.bioinf.ms.persistence.model.core.Compound.class))
-        );
-        this.totalCounts.put(AlignedFeatures.class, new AtomicLong(this.storage.countAll(AlignedFeatures.class)));
+        initCounter(de.unijena.bioinf.ms.persistence.model.core.Compound.class);
+        initCounter(AlignedFeatures.class);
 
-        this.storage.onInsert(de.unijena.bioinf.ms.persistence.model.core.Compound.class,
-                c -> totalCounts.get(de.unijena.bioinf.ms.persistence.model.core.Compound.class).getAndIncrement()
-        );
-        this.storage.onRemove(de.unijena.bioinf.ms.persistence.model.core.Compound.class,
-                c -> totalCounts.get(de.unijena.bioinf.ms.persistence.model.core.Compound.class).getAndDecrement()
-        );
-        this.storage.onInsert(AlignedFeatures.class,
-                c -> totalCounts.get(AlignedFeatures.class).getAndIncrement()
-        );
-        this.storage.onRemove(AlignedFeatures.class,
-                c -> totalCounts.get(AlignedFeatures.class).getAndDecrement()
-        );
+        initCounterByFeature(SpectraMatch.class, SpectraMatch::getAlignedFeatureId);
+    }
+
+    @SneakyThrows
+    private void initCounter(Class<?> clazz) {
+        this.totalCounts.put(clazz, new AtomicLong(this.storage.countAll(clazz)));
+        this.storage.onInsert(clazz, c -> totalCounts.get(clazz).getAndIncrement());
+        this.storage.onRemove(clazz, c -> totalCounts.get(clazz).getAndDecrement());
+    }
+
+    @SneakyThrows
+    private <T> void initCounterByFeature(Class<T> clazz, Function<T, Long> featureIdGetter) {
+        Map<Long, AtomicLong> counts = Collections.synchronizedMap(new HashMap<>());
+        for (AlignedFeatures af : this.storage.findAll(AlignedFeatures.class)) {
+            counts.put(af.getAlignedFeatureId(), new AtomicLong(this.storage.count(Filter.where("alignedFeatureId").eq(af.getAlignedFeatureId()), clazz)));
+        }
+        this.totalCountByFeature.put(clazz, counts);
+        this.storage.onInsert(clazz, c -> this.totalCountByFeature.get(clazz).get(featureIdGetter.apply(c)).getAndIncrement());
+        this.storage.onRemove(clazz, c -> this.totalCountByFeature.get(clazz).get(featureIdGetter.apply(c)).getAndDecrement());
     }
 
     @Override
@@ -126,8 +133,42 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .build();
     }
 
-    private AlignedFeature toMiddleWareAlignedFeature(AlignedFeatures features) {
-        return new AlignedFeature();
+    private MsData toMiddlewareMSData(MSData data) {
+        return MsData.builder()
+                .mergedMs1(new BasicSpectrum(data.getMergedMs1Spectrum()))
+                .mergedMs2(new BasicSpectrum(data.getMergedMSnSpectrum().getPeaks()))
+                // TODO ms1 spectra
+                .ms2Spectra(data.getMsnSpectra().stream().map(BasicSpectrum::new).toList())
+                .build();
+    }
+
+    private AlignedFeature toMiddleWareAlignedFeature(AlignedFeatures features, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+        AlignedFeature af = new AlignedFeature();
+        af.setAlignedFeatureId(String.valueOf(features.getAlignedFeatureId()));
+        af.setName(features.getName());
+        af.setAdduct(features.getDetectedAdducts().getBestAdduct().toString());
+        af.setIonMass(features.getAverageMass());
+
+        database.fetchMsData(features);
+        if (optFields.contains(AlignedFeature.OptField.msData)) {
+            features.getMSData().ifPresent(data -> af.setMsData(toMiddlewareMSData(data)));
+        }
+        // TODO top annotations, top annotations de novo
+        return af;
+    }
+
+    private SpectraMatch toDatabaseSpectralMatch(SpectralLibraryMatch match) {
+        return SpectraMatch.builder().build();
+    }
+
+    private SpectralLibraryMatch toMiddlewareSpectralMatch(SpectraMatch match) {
+        // TODO
+        return SpectralLibraryMatch.builder().build();
+    }
+
+    private FormulaCandidate toMiddleWareFCandidate(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate candidate) {
+        // TODO
+        return FormulaCandidate.builder().build();
     }
 
     @SneakyThrows
@@ -191,8 +232,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         List<AlignedFeature> features = storage
                 .findAllStr(AlignedFeatures.class, (int) pageable.getOffset(), pageable.getPageSize())
-                .map(this::toMiddleWareAlignedFeature).toList();
-        long total = totalCounts.get(de.unijena.bioinf.ms.persistence.model.core.Compound.class).get();
+                .map(af -> toMiddleWareAlignedFeature(af, optFields)).toList();
+        long total = totalCounts.get(AlignedFeatures.class).get();
 
         return new PageImpl<>(features, pageable, total);
     }
@@ -212,14 +253,28 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     }
 
+    @SneakyThrows
     @Override
     public Page<SpectralLibraryMatch> findLibraryMatchesByFeatureId(String alignedFeatureId, Pageable pageable) {
-        return null;
+        long longId = Long.parseLong(alignedFeatureId);
+        List<SpectralLibraryMatch> results = storage.findStr(
+                Filter.where("alignedFeatureId").eq(longId), SpectraMatch.class, (int) pageable.getOffset(), pageable.getPageSize(), "similarity.similarity", Database.SortOrder.DESCENDING
+        ).map(this::toMiddlewareSpectralMatch).toList();
+        long total = totalCountByFeature.get(SpectraMatch.class).getOrDefault(longId, new AtomicLong(0)).get();
+
+        return new PageImpl<>(results, pageable, total);
     }
 
+    @SneakyThrows
     @Override
     public Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
-        return null;
+        long longId = Long.parseLong(alignedFeatureId);
+        List<FormulaCandidate> results = storage.findStr(
+                Filter.where("alignedFeatureId").eq(longId), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, (int) pageable.getOffset(), pageable.getPageSize(), "siriusScore", Database.SortOrder.DESCENDING
+        ).map(this::toMiddleWareFCandidate).toList();
+        long total = totalCountByFeature.get(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class).getOrDefault(longId, new AtomicLong(0)).get();
+
+        return new PageImpl<>(results, pageable, total);
     }
 
     @Override
