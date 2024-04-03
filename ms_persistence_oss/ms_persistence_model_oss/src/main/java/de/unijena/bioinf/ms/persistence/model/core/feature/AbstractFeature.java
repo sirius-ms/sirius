@@ -40,7 +40,7 @@ public abstract class AbstractFeature {
     /**
      * ID of the run this feature belongs to
      */
-    protected long runId;
+    protected Long runId;
 
     /**
      * m/z of the apex

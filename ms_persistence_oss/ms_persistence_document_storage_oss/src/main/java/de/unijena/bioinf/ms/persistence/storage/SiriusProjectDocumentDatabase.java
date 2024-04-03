@@ -45,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> extends NetworkingProjectDocumentDatabase<Storage> {
     String SIRIUS_PROJECT_SUFFIX = ".sirius";
@@ -164,5 +165,15 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
         List<AlignedFeatures> alignedFeatures = ms2Experiments.stream().map(StorageUtils::fromMs2Experiment).toList();
         importAlignedFeatures(alignedFeatures);
         return alignedFeatures;
+    }
+
+    @SneakyThrows
+    default <T> Stream<T> findByFeatureIdStr(long alignedFeatureId, Class<T> clzz) {
+        return getStorage().findStr(Filter.where("alignedFeatureId").eq(alignedFeatureId), clzz);
+    }
+
+    @SneakyThrows
+    default <T> Stream<T> findByFormulaIdStr(long formulaId, Class<T> clzz) {
+        return getStorage().findStr(Filter.where("formulaId").eq(formulaId), clzz);
     }
 }
