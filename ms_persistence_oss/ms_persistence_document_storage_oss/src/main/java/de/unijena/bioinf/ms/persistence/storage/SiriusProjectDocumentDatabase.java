@@ -39,12 +39,14 @@ import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.Index;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> extends NetworkingProjectDocumentDatabase<Storage> {
@@ -64,7 +66,6 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
                 .addCollection(FP_DATA_COLLECTION, Index.unique("type", "charge"))
 
                 .addRepository(Parameters.class, Index.unique("alignedFeatureId", "type"))
-                .addRepository(ComputeState.class, "alignedFeatureId")
 
                 .addRepository(FTreeResult.class,
                         Index.unique("formulaId"),
@@ -124,8 +125,13 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     }
 
     @SneakyThrows
-    default Optional<Ms2Experiment> fetchMsDataAndConfigsAsMsExperiment(@Nullable AlignedFeatures feature) {
-        if (feature == null || feature.getMSData().isEmpty())
+    default Optional<Ms2Experiment> fetchMsDataAndConfigsAsMsExperiment(@Nullable final AlignedFeatures feature) {
+        if (feature == null)
+            return Optional.empty();
+
+        fetchMsData(feature);
+
+        if (feature.getMSData().isEmpty())
             return Optional.empty();
 
         ParameterConfig config = getConfig(feature.getAlignedFeatureId(), ConfigType.INPUT)
@@ -134,11 +140,11 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
         return Optional.of(StorageUtils.toMs2Experiment(feature, config));
     }
+
     @SneakyThrows
     default Optional<Ms2Experiment> findAlignedFeatureAsMsExperiment(long alignedFeatureId) {
-        AlignedFeatures feature = getStorage().getByPrimaryKey(alignedFeatureId, AlignedFeatures.class)
-                .map(this::fetchMsData).orElse(null);
-        return fetchMsDataAndConfigsAsMsExperiment(feature);
+        return getStorage().getByPrimaryKey(alignedFeatureId, AlignedFeatures.class)
+                .flatMap(this::fetchMsDataAndConfigsAsMsExperiment);
     }
 
     @SneakyThrows
@@ -157,27 +163,6 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
                         Filter.where("type").eq(type.name())),
                 Parameters.class
         ).findFirst();
-    }
-
-    @SneakyThrows
-    default void setFeaturesComputing(Collection<Long> alignedFeatureIds, boolean computing) {
-        if (computing)
-            getStorage().upsert(alignedFeatureIds.stream().map(afid -> ComputeState.builder().alignedFeatureId(afid).build()));
-        else
-            getStorage().removeAll(Filter.where("alignedFeaturesId").in(alignedFeatureIds.toArray(Long[]::new)), ComputeState.class);
-    }
-
-    @SneakyThrows
-    default void setFeatureComputing(long alignedFeatureId, boolean computing) {
-        if (computing)
-            getStorage().upsert(ComputeState.builder().alignedFeatureId(alignedFeatureId).build());
-        else
-            getStorage().removeByPrimaryKey(alignedFeatureId, ComputeState.class);
-    }
-
-    @SneakyThrows
-    default boolean isFeatureComputing(long alignedFeatureId) {
-        return getStorage().count(Filter.where("alignedFeatureId").eq(alignedFeatureId), ComputeState.class) > 0;
     }
 
     @SneakyThrows
@@ -211,22 +196,37 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     }
 
     @SneakyThrows
-    default <T> long countByFeatureIdStr(long alignedFeatureId, Class<T> clzz) {
+    default <T> long countByFeatureId(long alignedFeatureId, Class<T> clzz) {
         return getStorage().count(Filter.where("alignedFeatureId").eq(alignedFeatureId), clzz);
     }
 
     @SneakyThrows
-    default <T> long countByFormulaIdStr(long formulaId, Class<T> clzz) {
+    default <T> long countByFormulaId(long formulaId, Class<T> clzz) {
         return getStorage().count(Filter.where("formulaId").eq(formulaId), clzz);
     }
 
     @SneakyThrows
-    default <T> long deleteAllByFeatureIdStr(long alignedFeatureId, Class<T> clzz) {
+    default <T> long deleteAllByFeatureId(long alignedFeatureId, Class<T> clzz) {
         return this.getStorage().removeAll(Filter.where("alignedFeatureId").eq(alignedFeatureId), clzz);
     }
 
     @SneakyThrows
-    default <T> long deleteAllByFormulaIdStr(long formulaId, Class<T> clzz) {
+    default <T> long deleteAllByFormulaId(long formulaId, Class<T> clzz) {
         return this.getStorage().removeAll(Filter.where("formulaId").eq(formulaId), clzz);
     }
+
+    //region compute
+    default void setFeaturesComputing(boolean computing, long... alignedFeatureIds) {
+        setFeaturesComputing(computing, new LongArrayList(alignedFeatureIds));
+    }
+
+    void setFeaturesComputing(boolean computing, Collection<Long> alignedFeatureIds);
+
+    void setFeatureComputing(boolean computing, long alignedFeatureId);
+
+    boolean isFeatureComputing(long alignedFeatureId);
+
+    boolean onCompute(Consumer<ComputeStateEvent> listener);
+    boolean unsubscribe(Consumer<ComputeStateEvent> listener);
+    //end region
 }

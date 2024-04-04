@@ -37,7 +37,7 @@ public final class FastUtilJson {
     public static class LongSetDeserializer extends LongCollectionDeserializer<LongSet> {
         @Override
         protected LongSet newInstance() {
-            return new LongArraySet();
+            return new LongOpenHashSet();
         }
     }
 
@@ -78,7 +78,7 @@ public final class FastUtilJson {
     public static class DoubleSetDeserializer extends DoubleCollectionDeserializer<DoubleSet> {
         @Override
         protected DoubleSet newInstance() {
-            return new DoubleArraySet();
+            return new DoubleOpenHashSet();
         }
     }
 
@@ -117,7 +117,7 @@ public final class FastUtilJson {
     public static class IntSetDeserializer extends IntCollectionDeserializer<IntSet> {
         @Override
         protected IntSet newInstance() {
-            return new IntArraySet();
+            return new IntOpenHashSet();
         }
     }
 

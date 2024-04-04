@@ -28,12 +28,13 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.ms.annotations.Annotated;
+import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 import de.unijena.bioinf.sirius.IdentificationResult;
 
 import java.util.List;
 
-public class FingerIdResult implements Annotated<ResultAnnotation> {
+public class FingerIdResult implements Annotated<ResultAnnotation>, DataAnnotation {
     protected final Annotations<ResultAnnotation> annotations;
     public final FTree sourceTree;
 
