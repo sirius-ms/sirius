@@ -30,7 +30,6 @@ import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.projectspace.FCandidate;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.ProjectSpaceManagers;
 import de.unijena.bioinf.rest.NetUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,7 +70,7 @@ public class CanopusSubToolJob extends InstanceJob {
         updateProgress(10);
         checkForInterruption();
 
-        NetUtils.tryAndWait(() -> ProjectSpaceManagers.writeCanopusDataIfMissing(inst.getProjectSpaceManager(), ApplicationCore.WEB_API), this::checkForInterruption);
+        NetUtils.tryAndWait(() -> inst.getProjectSpaceManager().writeCanopusDataIfMissing(ApplicationCore.WEB_API), this::checkForInterruption);
 
         updateProgress(20);
         checkForInterruption();

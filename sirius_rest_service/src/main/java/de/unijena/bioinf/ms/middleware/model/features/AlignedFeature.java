@@ -48,6 +48,7 @@ public class AlignedFeature {
 
     // additional attributes
     protected Double ionMass;
+    //todo maybe rename to iontype because its the input parameter?
     protected String adduct;
 
     @Schema(nullable = true)

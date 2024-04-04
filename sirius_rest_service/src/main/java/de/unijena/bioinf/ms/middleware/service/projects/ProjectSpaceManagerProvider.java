@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.service.projects;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
 import de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEventImpl;
@@ -118,7 +119,7 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
         if (optFields.contains(ProjectInfo.OptField.sizeInformation))
             b.numOfBytes(psm.sizeInBytes()).numOfFeatures(psm.countFeatures()).numOfCompounds(psm.countCompounds());
         if (optFields.contains(ProjectInfo.OptField.compatibilityInfo))
-            b.compatible(ProjectSpaceManagers.isCompatibleWithBackendDataLazy(psm));
+            b.compatible(psm.isCompatibleWithBackendDataUnchecked(ApplicationCore.WEB_API));
 
         return b.build();
     }

@@ -32,6 +32,7 @@ import java.util.function.Function;
 public interface ToolChainJob<T> extends ProgressJJob<T> {
 
     default boolean isRecompute(final @NotNull Instance inst) {
+        //todo fix recompute so that it works with nosql instances
         return inst.getExperiment().getAnnotation(RecomputeResults.class, () -> RecomputeResults.FALSE).value;
     }
 
