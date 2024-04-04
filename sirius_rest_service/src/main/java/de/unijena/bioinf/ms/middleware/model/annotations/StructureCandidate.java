@@ -32,7 +32,7 @@ import java.util.List;
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties({ "molecularFormula", "adduct", "csiScore", "tanimotoSimilarity", "confidenceExactMatch", "confidenceApproxMatch", "fingerprint"})
+@JsonIgnoreProperties(value = { "molecularFormula", "adduct", "csiScore", "tanimotoSimilarity", "confidenceExactMatch", "confidenceApproxMatch", "fingerprint"}, ignoreUnknown = true)
 public class StructureCandidate {
 
     protected String inchiKey;
