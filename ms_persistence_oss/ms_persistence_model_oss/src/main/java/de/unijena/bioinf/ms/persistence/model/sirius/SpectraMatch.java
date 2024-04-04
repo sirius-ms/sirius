@@ -22,15 +22,15 @@ package de.unijena.bioinf.ms.persistence.model.sirius;
 
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
 
 
 @SuperBuilder
 @Getter
 @Setter
-@Jacksonized
+@NoArgsConstructor
 public class SpectraMatch extends SpectralSearchResult.SearchResult {
 
     protected long alignedFeatureId;

@@ -422,10 +422,10 @@ public class SiriusProjectDatabaseImplTest {
         withDb(db -> {
             //insert
             assertEquals(1, db.getStorage().insert(match1), "Failed to Insert match. Affected entries wrong");
-            assertTrue(db.getStorage().getByPrimaryKey(match1.getCandidateInChiKey(), match1.getClass()).isPresent(), "Inserted match does not exist!");
-            assertEquals(0.97d, db.getStorage().getByPrimaryKey(match1.getCandidateInChiKey(), match1.getClass()).map(CsiStructureMatch::getTanimotoSimilarity).orElse(null));
-            assertEquals(1.5d, db.getStorage().getByPrimaryKey(match1.getCandidateInChiKey(), match1.getClass()).map(CsiStructureMatch::getMcesDistToTopHit).orElse(null));
-            assertEquals(-20.008d, db.getStorage().getByPrimaryKey(match1.getCandidateInChiKey(), match1.getClass()).map(CsiStructureMatch::getCsiScore).orElse(null));
+            assertTrue(db.getStorage().getByPrimaryKey(match1.getId(), match1.getClass()).isPresent(), "Inserted match does not exist!");
+            assertEquals(0.97d, db.getStorage().getByPrimaryKey(match1.getId(), match1.getClass()).map(CsiStructureMatch::getTanimotoSimilarity).orElse(null));
+            assertEquals(1.5d, db.getStorage().getByPrimaryKey(match1.getId(), match1.getClass()).map(CsiStructureMatch::getMcesDistToTopHit).orElse(null));
+            assertEquals(-20.008d, db.getStorage().getByPrimaryKey(match1.getId(), match1.getClass()).map(CsiStructureMatch::getCsiScore).orElse(null));
 
             {
                 //fail duplicate entry
@@ -438,7 +438,7 @@ public class SiriusProjectDatabaseImplTest {
             }
             //delete entry
             assertEquals(1, db.getStorage().remove(match1), "Delete match failed.");
-            assertTrue(db.getStorage().getByPrimaryKey(match1.getCandidateInChiKey(), match1.getClass()).isEmpty(), "Match still exists after delete");
+            assertTrue(db.getStorage().getByPrimaryKey(match1.getId(), match1.getClass()).isEmpty(), "Match still exists after delete");
             assertEquals(0, db.getStorage().countAll(CsiStructureMatch.class));
         });
     }
@@ -458,10 +458,10 @@ public class SiriusProjectDatabaseImplTest {
         withDb(db -> {
             //insert
             assertEquals(1, db.getStorage().insert(match1), "Failed to Insert match. Affected entries wrong");
-            assertTrue(db.getStorage().getByPrimaryKey(match1.getCandidateInChiKey(), match1.getClass()).isPresent(), "Inserted match does not exist!");
-            assertEquals(0.97d, db.getStorage().getByPrimaryKey(match1.getCandidateInChiKey(), match1.getClass()).map(DenovoStructureMatch::getTanimotoSimilarity).orElse(null));
-            assertEquals(9000d, db.getStorage().getByPrimaryKey(match1.getCandidateInChiKey(), match1.getClass()).map(DenovoStructureMatch::getModelScore).orElse(null));
-            assertEquals(-20.008d, db.getStorage().getByPrimaryKey(match1.getCandidateInChiKey(), match1.getClass()).map(DenovoStructureMatch::getCsiScore).orElse(null));
+            assertTrue(db.getStorage().getByPrimaryKey(match1.getId(), match1.getClass()).isPresent(), "Inserted match does not exist!");
+            assertEquals(0.97d, db.getStorage().getByPrimaryKey(match1.getId(), match1.getClass()).map(DenovoStructureMatch::getTanimotoSimilarity).orElse(null));
+            assertEquals(9000d, db.getStorage().getByPrimaryKey(match1.getId(), match1.getClass()).map(DenovoStructureMatch::getModelScore).orElse(null));
+            assertEquals(-20.008d, db.getStorage().getByPrimaryKey(match1.getId(), match1.getClass()).map(DenovoStructureMatch::getCsiScore).orElse(null));
 
             {
                 //fail duplicate entry
@@ -474,7 +474,7 @@ public class SiriusProjectDatabaseImplTest {
             }
             //delete entry
             assertEquals(1, db.getStorage().remove(match1), "Delete match failed.");
-            assertTrue(db.getStorage().getByPrimaryKey(match1.getCandidateInChiKey(), match1.getClass()).isEmpty(), "Match still exists after delete");
+            assertTrue(db.getStorage().getByPrimaryKey(match1.getId(), match1.getClass()).isEmpty(), "Match still exists after delete");
             assertEquals(0, db.getStorage().countAll(DenovoStructureMatch.class));
         });
     }

@@ -180,11 +180,8 @@ public class JSONReader extends CompoundReader {
             JsonToken jsonToken = p.nextToken();
             ArrayList<DBLink> links = new ArrayList<>();
 
-            while (true) {
-                if (jsonToken.isStructEnd()) break;
-
+            while (!jsonToken.isStructEnd()) {
                 // expect field name
-
                 final String fieldName = p.currentName();
                 switch (fieldName) {
                     case "inchi":

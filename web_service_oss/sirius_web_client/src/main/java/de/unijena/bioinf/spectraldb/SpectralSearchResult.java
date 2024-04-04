@@ -65,7 +65,7 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
     @SuperBuilder
     @Getter
     @Setter
-    @Jacksonized
+    @NoArgsConstructor
     public static class SearchResult {
         @Builder.Default
         private int rank = -1;
