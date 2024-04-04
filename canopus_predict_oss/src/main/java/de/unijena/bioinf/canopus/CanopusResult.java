@@ -26,28 +26,24 @@ import de.unijena.bioinf.ms.annotations.ResultAnnotation;
 import java.util.Optional;
 
 public class CanopusResult implements ResultAnnotation {
-    protected ProbabilityFingerprint canopusFingerprint;
+    private final ProbabilityFingerprint canopusFingerprint;
 
-    protected Optional<ProbabilityFingerprint> npcFingerprint;
+    private final ProbabilityFingerprint npcFingerprint;
 
     public ProbabilityFingerprint getCanopusFingerprint() {
         return canopusFingerprint;
     }
 
     public Optional<ProbabilityFingerprint> getNpcFingerprint() {
-        return npcFingerprint;
+        return Optional.ofNullable(npcFingerprint);
     }
 
     public CanopusResult(ProbabilityFingerprint canopusFingerprint) {
-        this(canopusFingerprint, Optional.empty());
+        this(canopusFingerprint, null);
     }
 
     public CanopusResult(ProbabilityFingerprint canopusFingerprint, ProbabilityFingerprint npcFingerprint) {
-        this(canopusFingerprint, Optional.of(npcFingerprint));
-    }
-
-    public CanopusResult(ProbabilityFingerprint canopusFingerprint, Optional<ProbabilityFingerprint> optNpcFingerprint) {
         this.canopusFingerprint = canopusFingerprint;
-        this.npcFingerprint = optNpcFingerprint;
+        this.npcFingerprint = npcFingerprint;
     }
 }

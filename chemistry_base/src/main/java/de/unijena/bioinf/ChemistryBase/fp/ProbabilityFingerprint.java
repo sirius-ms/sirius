@@ -21,8 +21,6 @@
 package de.unijena.bioinf.ChemistryBase.fp;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.google.common.base.Joiner;
@@ -574,15 +572,6 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
         @Override
         public void serialize(ProbabilityFingerprint value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
             gen.writeArray(value.fingerprint, 0, value.fingerprint.length);
-        }
-    }
-
-    //ATTENTION: fingerprint version might depend on charge of the predicted fp and therefore need different fp versions
-    public static class Deserializer extends FpDeserializer<ProbabilityFingerprint> {
-        @Override
-        public ProbabilityFingerprint deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
-            double[] probs = p.readValueAs(double[].class);
-            return new ProbabilityFingerprint(version, probs);
         }
     }
     //endregion

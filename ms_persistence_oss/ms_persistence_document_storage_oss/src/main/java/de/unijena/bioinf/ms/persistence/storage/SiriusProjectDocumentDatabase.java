@@ -21,7 +21,6 @@
 package de.unijena.bioinf.ms.persistence.storage;
 
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintData;
-import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.StandardFingerprintData;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.ms.InputFileConfig;
@@ -45,7 +44,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -67,6 +68,8 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
                 .addRepository(Parameters.class, Index.unique("alignedFeatureId", "type"))
 
+                .addRepository(FormulaCandidate.class, Index.nonUnique("molecularFormula", "adduct"))
+
                 .addRepository(FTreeResult.class,
                         Index.unique("formulaId"),
                         Index.nonUnique("alignedFeatureId")) //todo needed? //if we want to search for a formulaId the alignedFeatureId is implicitly known.
@@ -86,10 +89,12 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
                 .addRepository(CsiStructureSearchResult.class, "alignedFeatureId")
 
                 .addRepository(CsiStructureMatch.class,
+                        Index.nonUnique("candidateInChiKey"),
                         Index.nonUnique("formulaId"),
                         Index.nonUnique("alignedFeatureId"))
 
                 .addRepository(DenovoStructureMatch.class,
+                        Index.nonUnique("candidateInChiKey"),
                         Index.nonUnique("formulaId"),
                         Index.nonUnique("alignedFeatureId"))
 
@@ -101,10 +106,6 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
                 .addSerialization(FingerprintCandidate.class,
                         new FingerprintCandidate.Serializer(),
                         new JSONReader.FingerprintCandidateDeserializer(null)) //will be added later because it has to be read from project
-
-                .addSerialization(ProbabilityFingerprint.class,
-                        new ProbabilityFingerprint.Serializer(),
-                        new ProbabilityFingerprint.Deserializer()) // version needs to be added later
         ;
 
         return sourceMetadata;
@@ -227,6 +228,7 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     boolean isFeatureComputing(long alignedFeatureId);
 
     boolean onCompute(Consumer<ComputeStateEvent> listener);
+
     boolean unsubscribe(Consumer<ComputeStateEvent> listener);
     //end region
 }

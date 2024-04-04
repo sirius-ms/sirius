@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.ms.persistence.model.sirius.serializers;
 
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -59,28 +58,36 @@ public class CsiPredictionDeserializer extends JsonDeserializer<CsiPrediction> {
 
 
     @Override
-    public CsiPrediction deserialize(JsonParser p, DeserializationContext ctxt) throws IOException, JacksonException {
+    public CsiPrediction deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
         CsiPrediction pfp = CsiPrediction.builder().build();
         double[] probs = null;
 
-        JsonToken jsonToken = p.nextToken();
-        while (!jsonToken.isStructEnd()) {
-            final String fieldName = p.currentName();
-            switch (fieldName) {
+        for (JsonToken jsonToken = p.nextToken(); jsonToken != null && !jsonToken.isStructEnd(); jsonToken = p.nextToken()) {
+            if (jsonToken != JsonToken.FIELD_NAME)
+                continue;
+            switch (p.currentName()) {
                 case "alignedFeatureId":
+                    p.nextToken();
                     pfp.setAlignedFeatureId(p.getLongValue());
+                    break;
                 case "formulaId":
+                    p.nextToken();
                     pfp.setFormulaId(p.getLongValue());
+                    break;
                 case "id":
+                    p.nextToken();
                     pfp.setId(p.getLongValue());
+                    break;
                 case "charge":
+                    p.nextToken();
                     pfp.setCharge(p.getIntValue());
+                    break;
                 case "fingerprint":
+                    p.nextToken();
                     probs = p.readValueAs(double[].class);
                     break;
                 default:
                     p.nextToken();
-                    break;
             }
         }
 
