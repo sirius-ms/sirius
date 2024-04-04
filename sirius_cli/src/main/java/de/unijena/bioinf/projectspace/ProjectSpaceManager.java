@@ -26,7 +26,9 @@ import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.rest.NetUtils;
+import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -88,4 +90,21 @@ public interface ProjectSpaceManager extends IterableWithSize<Instance> {
     String getLocation();
 
     void flush() throws IOException;
+
+
+    void writeFingerIdDataIfMissing(WebAPI<?> api) throws IOException;
+
+    void writeCanopusDataIfMissing(WebAPI<?> api) throws IOException;
+
+    boolean isCompatibleWithBackendData(@NotNull WebAPI<?> api) throws InterruptedException, TimeoutException;
+
+    default Boolean isCompatibleWithBackendDataUnchecked(@NotNull WebAPI<?> api) {
+        try {
+            return isCompatibleWithBackendData(api);
+        } catch (InterruptedException | TimeoutException e) {
+            LoggerFactory.getLogger(InstanceImporter.class).warn("Could finish compatibility check due to an error! Could not check for outdated fingerprint data. Error: " + e.getMessage());
+            return null;
+        }
+    }
+
 }

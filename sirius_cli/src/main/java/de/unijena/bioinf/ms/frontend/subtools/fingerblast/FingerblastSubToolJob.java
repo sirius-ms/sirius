@@ -40,7 +40,6 @@ import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.FCandidate;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.ProjectSpaceManagers;
 import de.unijena.bioinf.rest.NetUtils;
 import org.apache.commons.math3.util.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -86,7 +85,7 @@ public class FingerblastSubToolJob extends InstanceJob {
         checkForInterruption();
 
         // add CSIClientData to PS if it is not already there
-        NetUtils.tryAndWait(() -> ProjectSpaceManagers.writeFingerIdDataIfMissing(inst.getProjectSpaceManager(), ApplicationCore.WEB_API), this::checkForInterruption);
+        NetUtils.tryAndWait(() -> inst.getProjectSpaceManager().writeFingerIdDataIfMissing(ApplicationCore.WEB_API), this::checkForInterruption);
 
         updateProgress(10);
         checkForInterruption();

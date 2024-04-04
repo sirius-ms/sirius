@@ -42,7 +42,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 @Getter
-public class NoSQLProjectSpaceManager implements ProjectSpaceManager {
+public class NoSQLProjectSpaceManager extends AbstractProjectSpaceManager {
 
     private final SiriusProjectDatabaseImpl<? extends Database<?>> project;
 
@@ -145,7 +145,7 @@ public class NoSQLProjectSpaceManager implements ProjectSpaceManager {
     @Override
     public boolean checkAndFixDataFiles(NetUtils.InterruptionCheck interrupted) throws TimeoutException, InterruptedException {
         //todo remove all fingerprint data related results and de fingerprint data itself
-        return false;
+        return true;
     }
 
     @Override

@@ -27,7 +27,7 @@ import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.jjobs.ProgressSupport;
-import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJob;
+import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJobSiriusPs;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.InstanceImporter;
@@ -110,7 +110,7 @@ public class ImportMsFomResourceWorkflow implements Workflow, ProgressSupport {
                 //create working dir in same fs as input data. allows e.g. for in-memory fs for working dir.
                 if (psm instanceof SiriusProjectSpaceManager spsm) {
                     workingDir = FileUtils.newTempFile("lcms-align-working-dir_", "", inputResources.iterator().next().getResource().getFileSystem());
-                    LcmsAlignSubToolJob importerJJob = new LcmsAlignSubToolJob(
+                    LcmsAlignSubToolJobSiriusPs importerJJob = new LcmsAlignSubToolJobSiriusPs(
                             workingDir,
                             inputResources.stream().map(PathInputResource::getResource).collect(Collectors.toList()),
                             () -> spsm, null, null);

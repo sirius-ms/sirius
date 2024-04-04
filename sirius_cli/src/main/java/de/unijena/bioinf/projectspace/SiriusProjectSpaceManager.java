@@ -70,7 +70,7 @@ import java.util.stream.Collectors;
  * e.g. iteration on Instance level.
  * maybe some type of caching?
  */
-public class SiriusProjectSpaceManager implements ProjectSpaceManager {
+public class SiriusProjectSpaceManager extends AbstractProjectSpaceManager {
     private final SiriusProjectSpace space;
     private final Function<Ms2Experiment, String> nameFormatter;
     private final BiFunction<Integer, String, String> namingScheme;
