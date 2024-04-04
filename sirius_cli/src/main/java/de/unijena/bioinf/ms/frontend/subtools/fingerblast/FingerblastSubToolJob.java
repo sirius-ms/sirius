@@ -46,9 +46,7 @@ import org.apache.commons.math3.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -69,17 +67,17 @@ public class FingerblastSubToolJob extends InstanceJob {
 
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
-        List<FCandidate<?>> inputData = inst.getFingerblastInput();
-        final Map<FCandidate<?>, FingerIdResult> formulaResultsMap = inputData.stream()
+        List<FCandidate<?>> inputData = inst.getFingerblastInput().stream()
                 .filter(c -> c.hasAnnotation(CanopusResult.class))
                 .filter(c -> c.hasAnnotation(FingerprintResult.class))
                 .filter(c -> c.hasAnnotation(FTree.class))
-                .collect(Collectors.toMap(c -> c, FCandidate::asFingerIdResult, (k, v) -> v,  LinkedHashMap::new));
+                .peek(c -> c.annotate(c.asFingerIdResult())) //maps fingerid result back to fcandidate
+                .toList();
 
         checkForInterruption();
 
-        if (formulaResultsMap.isEmpty()) {
-            logInfo("Skipping instance \"" + inst.getName() + "\" because there are no trees computed.");
+        if (inputData.isEmpty()) {
+            logInfo("Skipping instance \"" + inst.getName() + "\" because there is not formula candidate for which ot all inputs are available (Trees, Fingerprint, Compound classes).");
             return;
         }
 
@@ -102,7 +100,8 @@ public class FingerblastSubToolJob extends InstanceJob {
 
         updateProgress(20);
         {
-            final FingerblastJJob job = new FingerblastJJob(csi, ApplicationCore.WEB_API, inst.getExperiment(), new ArrayList<>(formulaResultsMap.values()));
+            final FingerblastJJob job = new FingerblastJJob(csi, ApplicationCore.WEB_API, inst.getExperiment(),
+                    inputData.stream().map(fc -> fc.getAnnotationOrThrow(FingerIdResult.class)).toList());
 
             checkForInterruption();
             // do computation and await results -> objects are already in formulaResultsMap
@@ -116,12 +115,15 @@ public class FingerblastSubToolJob extends InstanceJob {
             //calculate and annotate tanimoto scores
             List<Pair<ProbabilityFingerprint, FingerprintCandidate>> tanimotoJobs = new ArrayList<>();
             updateProgress(55);
-            formulaResultsMap.values().stream().filter(it -> it.hasAnnotation(FingerprintResult.class) && it.hasAnnotation(FingerblastResult.class)).forEach(it -> {
-                final ProbabilityFingerprint fp = it.getPredictedFingerprint();
-                it.getFingerprintCandidates().stream().map(SScored::getCandidate).forEach(candidate ->
-                        tanimotoJobs.add(Pair.create(fp, candidate))
-                );
-            });
+            inputData.stream()
+                    .map(fc -> fc.getAnnotationOrThrow(FingerIdResult.class))
+                    .filter(it -> it.hasAnnotation(FingerprintResult.class) && it.hasAnnotation(FingerblastResult.class))
+                    .forEach(it -> {
+                        final ProbabilityFingerprint fp = it.getPredictedFingerprint();
+                        it.getFingerprintCandidates().stream().map(SScored::getCandidate).forEach(candidate ->
+                                tanimotoJobs.add(Pair.create(fp, candidate))
+                        );
+                    });
 
             updateProgress(60);
             checkForInterruption();
@@ -148,7 +150,7 @@ public class FingerblastSubToolJob extends InstanceJob {
 
 
         //annotate FingerIdResults to FormulaResult
-        inst.saveStructureSearchResult(formulaResultsMap);
+        inst.saveStructureSearchResult(inputData);
         updateProgress(97);
 
     }

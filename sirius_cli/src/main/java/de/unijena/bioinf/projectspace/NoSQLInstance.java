@@ -29,10 +29,14 @@ import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerIdResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
+import de.unijena.bioinf.fingerid.MsNovelistFingerblastResult;
+import de.unijena.bioinf.fingerid.StructureSearchResult;
+import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
+import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
 import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.passatutto.Decoy;
@@ -46,28 +50,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
 public class NoSQLInstance implements Instance {
-
-    private enum State {
-        OKAY, COMPUTING, REMOVED
-    }
-
     private final NoSQLProjectSpaceManager manager;
     private final long id;
-
     private AlignedFeatures alignedFeatures;
-
-    private AtomicReference<State> state = new AtomicReference<>(State.OKAY);
-
-    private long updateListenerId;
-    private long removeListenerId;
+    private final ReentrantReadWriteLock alignedFeaturesLock = new ReentrantReadWriteLock();
 
     @SneakyThrows
     public NoSQLInstance(long id, NoSQLProjectSpaceManager manager) {
@@ -75,7 +68,6 @@ public class NoSQLInstance implements Instance {
         this.manager = manager;
         this.alignedFeatures = manager.getProject().getStorage().getByPrimaryKey(id, AlignedFeatures.class)
                 .orElseThrow(() -> new IllegalStateException("Could not find feature data of this instance. This should not be possible. Project might have been externally modified."));
-        initListeners();
     }
 
     @SneakyThrows
@@ -83,24 +75,7 @@ public class NoSQLInstance implements Instance {
         this.id = alignedFeatures.getAlignedFeatureId();
         this.manager = manager;
         this.alignedFeatures = alignedFeatures;
-        initListeners();
     }
-
-    private void initListeners() throws IOException {
-        // we need to reference the listeners, if not we can not remove them wen the Instance is not used anymore
-        // which will result in a memory leak
-        updateListenerId = manager.getProject().getStorage().onUpdate(AlignedFeatures.class, (changed) -> {
-            if (changed.getAlignedFeatureId() == id) {
-                this.alignedFeatures = changed;
-            }
-        });
-        removeListenerId = manager.getProject().getStorage().onRemove(AlignedFeatures.class, (changed) -> {
-            if (changed.getAlignedFeatureId() == id) {
-                state.set(State.REMOVED);
-            }
-        });
-    }
-
 
     @Override
     public ProjectSpaceManager getProjectSpaceManager() {
@@ -151,11 +126,24 @@ public class NoSQLInstance implements Instance {
         return getAlignedFeatures().getIonType();
     }
 
-    public AlignedFeatures getAlignedFeatures() {
-        if (state.get() == State.REMOVED) {
-            throw new IllegalStateException("Instance has been removed.");
+    private void setAlignedFeatures(AlignedFeatures features) {
+        alignedFeaturesLock.writeLock().lock();
+        try {
+            alignedFeatures = features;
+        } finally {
+            alignedFeaturesLock.writeLock().unlock();
         }
-        return alignedFeatures;
+    }
+
+    public AlignedFeatures getAlignedFeatures() {
+        alignedFeaturesLock.readLock().lock();
+        try {
+            if (alignedFeatures == null)
+                throw new IllegalStateException("This instance (" + id + ") has already be cleared.");
+            return alignedFeatures;
+        } finally {
+            alignedFeaturesLock.readLock().unlock();
+        }
     }
 
     @Override
@@ -285,42 +273,50 @@ public class NoSQLInstance implements Instance {
 
     @Override
     public void clearCompoundCache() {
-        //todo this is not the perfect place for cleaning this listeners
-        // discuss whether they are needed and if yes implement a proper cleanup mechanism
-        try {
-            project().getStorage().unsubscribe(AlignedFeatures.class, updateListenerId);
-            project().getStorage().unsubscribe(AlignedFeatures.class, removeListenerId);
-        } catch (IOException e) {
-            log.error("Error when removing listeners from project database. This might cause a memory leak!", e);
-        }
+        setAlignedFeatures(null);
     }
 
     @Override
     public void setComputing(boolean computing) {
-        state.updateAndGet((s) -> (s == State.REMOVED) ? State.REMOVED : ((computing) ? State.COMPUTING : State.OKAY));
-        //todo I think we need a global compute state managemen.
-        // It does not need to be persistent though -> discuss
-
-        //project().setFeatureComputing(id, computing);
+        project().setFeatureComputing(computing, id);
     }
 
     @Override
     public boolean isComputing() {
-        return state.get() == State.COMPUTING;
-        //todo I think we need a global compute state managemen.
-        // It does not need to be persistent though -> discuss
-
-        //return project().isFeatureComputing(id);
+        return project().isFeatureComputing(id);
     }
 
     @Override
-    public void saveDetectedAdducts(DetectedAdducts detectedAdducts) {
-
+    public boolean hasDetectedAdducts() {
+        return getAlignedFeatures().getDetectedAdducts() != null;
     }
 
     @Override
-    public Optional<DetectedAdducts> getDetectedAdducts() {
-        return Optional.empty();
+    public void saveDetectedAdductsAnnotation(DetectedAdducts detectedAdducts) {
+        de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts adducts = StorageUtils.fromMs2ExpAnnotation(detectedAdducts);
+        saveDetectedAdducts(adducts);
+    }
+
+    @SneakyThrows
+    @Override
+    public void saveDetectedAdducts(de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts detectedAdducts) {
+        alignedFeaturesLock.writeLock().lock();
+        try {
+            alignedFeatures.setDetectedAdducts(detectedAdducts);
+            project().getStorage().upsert(alignedFeatures);
+        } finally {
+            alignedFeaturesLock.writeLock().unlock();
+        }
+    }
+
+    @Override
+    public DetectedAdducts getDetectedAdductsAnnotation() {
+        return StorageUtils.toMs2ExpAnnotation(getDetectedAdducts());
+    }
+
+    @Override
+    public de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts getDetectedAdducts() {
+        return getAlignedFeatures().getDetectedAdducts();
     }
 
     @Override
@@ -330,28 +326,28 @@ public class NoSQLInstance implements Instance {
 
     @Override
     public boolean hasSpectraSearchResult() {
-        return project().countByFeatureIdStr(id, SpectraMatch.class) > 0;
+        return project().countByFeatureId(id, SpectraMatch.class) > 0;
     }
 
     @Override
     public void deleteSpectraSearchResult() {
-        project().deleteAllByFeatureIdStr(id, SpectraMatch.class);
+        project().deleteAllByFeatureId(id, SpectraMatch.class);
     }
 
     @Override
     public void savePassatuttoResult(FCandidate<?> id, Decoy decoy) {
-        //todo
+        //todo IMPLEMENT OR REMOVE TOOL
     }
 
     @Override
     public boolean hasPassatuttoResult() {
-        //todo
+        //todo IMPLEMENT OR REMOVE TOOL
         return false;
     }
 
     @Override
     public void deletePassatuttoResult() {
-
+        //todo IMPLEMENT OR REMOVE TOOL
     }
 
     @Override
@@ -391,24 +387,26 @@ public class NoSQLInstance implements Instance {
 
     @Override
     public boolean hasSiriusResult() {
-        return project().countByFeatureIdStr(id, FormulaCandidate.class) > 0;
+        return project().countByFeatureId(id, FormulaCandidate.class) > 0;
     }
 
     @Override
     public void deleteSiriusResult() {
-        project().deleteAllByFeatureIdStr(id, FormulaCandidate.class);
-        project().deleteAllByFeatureIdStr(id, FTreeResult.class);
+        project().deleteAllByFeatureId(id, FormulaCandidate.class);
+        project().deleteAllByFeatureId(id, FTreeResult.class);
         //todo handle detected adducts.
     }
 
     @SneakyThrows
     @Override
-    public void saveZodiacResult(Map<FCandidate<?>, ZodiacScore> zodiacScores) {
-        List<FormulaCandidate> candidates = zodiacScores.entrySet().stream().map(e -> {
-            FormulaCandidate c = ((NoSqlFCandidate) e.getKey()).getFormulaCandidate();
-            c.setZodiacScore(e.getValue().score());
-            return c;
-        }).toList();
+    public void saveZodiacResult(List<FCandidate<?>> zodiacScores) {
+        List<FormulaCandidate> candidates = zodiacScores.stream().
+                filter(fc -> fc.hasAnnotation(ZodiacScore.class))
+                .map(fc -> {
+                    FormulaCandidate c = ((NoSqlFCandidate) fc).getFormulaCandidate();
+                    c.setZodiacScore(fc.getAnnotationOrThrow(ZodiacScore.class).score());
+                    return c;
+                }).toList();
         project().getStorage().upsertAll(candidates);
     }
 
@@ -424,63 +422,149 @@ public class NoSQLInstance implements Instance {
                 project().findByFeatureIdStr(id, FormulaCandidate.class).peek(fc -> fc.setZodiacScore(null)).toList());
     }
 
+    @SneakyThrows
     @Override
-    public void saveFingerprintResult(@NotNull Map<FCandidate<?>, FingerprintResult> fingerprintResultsByFormula) {
+    public void saveFingerprintResult(@NotNull List<FCandidate<?>> fingerprintResults) {
+        List<CsiPrediction> fps = fingerprintResults.stream()
+                .filter(fc -> fc.hasAnnotation(FingerprintResult.class))
+                .map(fc -> {
+                    @NotNull FingerprintResult fpResult = fc.getAnnotationOrThrow(FingerprintResult.class);
+                    return CsiPrediction.builder()
+                            .formulaId((long) fc.getId())
+                            .alignedFeatureId(id)
+                            .fingerprint(fpResult.fingerprint)
+                            .build();
+                }).collect(Collectors.toList());
 
+        project().getStorage().upsertAll(fps);
     }
 
     @Override
     public boolean hasFingerprintResult() {
-        return false;
+        return project().countByFeatureId(id, CsiPrediction.class) > 0;
     }
 
     @Override
     public void deleteFingerprintResult() {
-
+        project().deleteAllByFeatureId(id, CsiPrediction.class);
     }
 
     @Override
-    public void saveStructureSearchResult(@NotNull Map<FCandidate<?>, FingerIdResult> structureSearchResults) {
+    public void saveStructureSearchResult(@NotNull List<FCandidate<?>> structureSearchResults) {
+        //todo move entitiy creation to database package
+        try {
+            List<CsiStructureMatch> cpm = structureSearchResults.stream()
+                    .filter(fc -> fc.hasAnnotation(FingerIdResult.class))
+                    .flatMap(fc -> {
+                        final FingerIdResult idResult = fc.getAnnotationOrThrow(FingerIdResult.class);
+                        return idResult.getAnnotation(FingerblastResult.class).map(csiRes ->
+                                csiRes.getCandidates().getResults().stream()
+                                        .map(c -> CsiStructureMatch.builder()
+                                                .alignedFeatureId(id)
+                                                .formulaId((long) fc.getId())
+                                                .csiScore(c.getScore())
+                                                .tanimotoSimilarity(c.getCandidate().getTanimoto())
+                                                .mcesDistToTopHit(c.getCandidate().getMcesToTopHit())
+                                                .candidateInChiKey(c.getCandidate().getInchiKey2D())
+                                                .build())
+                        ).orElse(Stream.empty());
+                    }).collect(Collectors.toList());
 
+            project().getStorage().upsertAll(cpm);
+
+            List<CsiStructureSearchResult> cssr = structureSearchResults.stream()
+                    .filter(fc -> fc.hasAnnotation(FingerIdResult.class))
+                    .flatMap(fc -> {
+                        final FingerIdResult idResult = fc.getAnnotationOrThrow(FingerIdResult.class);
+                        return idResult.getAnnotation(StructureSearchResult.class).map(searchResult ->
+                                CsiStructureSearchResult.builder()
+                                        .alignedFeatureId(id)
+                                        .confidenceApprox(searchResult.getConfidencScoreApproximate())
+                                        .confidenceExact(searchResult.getConfidenceScore())
+//                                        .expandedDatabases() //todo add databases to algo result
+//                                        .specifiedDatabases() //todo add databases to algo result
+                                        .expansiveSearchConfidenceMode(searchResult.getExpansiveSearchConfidenceMode())
+                                        .build()
+                        ).stream();
+                    }).collect(Collectors.toList());
+
+            project().getStorage().upsertAll(cssr);
+        } catch (IOException e) {
+            deleteStructureSearchResult();
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public boolean hasStructureSearchResult() {
-        return false;
+        return project().countByFeatureId(id, CsiStructureSearchResult.class) > 0;
     }
 
     @Override
     public void deleteStructureSearchResult() {
+        project().deleteAllByFeatureId(id, CsiStructureSearchResult.class);
+        project().deleteAllByFeatureId(id, CsiStructureMatch.class);
 
     }
 
+    @SneakyThrows
     @Override
     public void saveCanopusResult(@NotNull List<FCandidate<?>> canopusResults) {
+        List<CanopusPrediction> cps = canopusResults.stream()
+                .filter(fc -> fc.hasAnnotation(CanopusResult.class))
+                .map(fc -> {
+                    @NotNull CanopusResult canopusResult = fc.getAnnotationOrThrow(CanopusResult.class);
+                    return CanopusPrediction.builder()
+                            .formulaId((long) fc.getId())
+                            .alignedFeatureId(id)
+                            .cfFingerprint(canopusResult.getCanopusFingerprint())
+                            .npcFingerprint(canopusResult.getNpcFingerprint().orElse(null))
+                            .build();
+                }).collect(Collectors.toList());
 
+        project().getStorage().upsertAll(cps);
     }
 
     @Override
     public boolean hasCanopusResult() {
-        return false;
+        return project().countByFeatureId(id, CanopusPrediction.class) > 0;
     }
 
     @Override
     public void deleteCanopusResult() {
-
+        project().deleteAllByFeatureId(id, CanopusPrediction.class);
     }
 
+    @SneakyThrows
     @Override
-    public void saveMsNovelistResult(@NotNull Map<FCandidate<?>, FingerIdResult> CanopusResultsByFormula) {
+    public void saveMsNovelistResult(@NotNull List<FCandidate<?>> msNovelistResults) {
+        List<DenovoStructureMatch> cps = msNovelistResults.stream()
+                .filter(fc -> fc.hasAnnotation(FingerIdResult.class))
+                .flatMap(fc -> {
+                    final FingerIdResult idResult = fc.getAnnotationOrThrow(FingerIdResult.class);
+                    return idResult.getAnnotation(MsNovelistFingerblastResult.class).map(deNovoResult ->
+                            deNovoResult.getCandidates().getResults().stream()
+                                    .map(c -> DenovoStructureMatch.builder()
+                                            .alignedFeatureId(id)
+                                            .formulaId((long) fc.getId())
+                                            .csiScore(c.getScore())
+                                            .tanimotoSimilarity(c.getCandidate().getTanimoto())
+                                            .modelScore(c.getCandidate().getRnnScore())
+                                            .candidateInChiKey(c.getCandidate().getInchiKey2D())
+                                            .build())
+                    ).orElse(Stream.empty());
+                }).collect(Collectors.toList());
 
+        project().getStorage().upsertAll(cps);
     }
 
     @Override
     public boolean hasMsNovelistResult() {
-        return false;
+        return project().countByFeatureId(id, DenovoStructureMatch.class) > 0;
     }
 
     @Override
     public void deleteMsNovelistResult() {
-
+        project().deleteAllByFeatureId(id, DenovoStructureMatch.class);
     }
 }

@@ -103,7 +103,7 @@ public class SiriusSubToolJob extends InstanceJob {
         checkForInterruption();
 
         //make possible adducts persistent without rewriting whole experiment
-        exp.getAnnotation(DetectedAdducts.class).ifPresent(inst::saveDetectedAdducts);
+        exp.getAnnotation(DetectedAdducts.class).ifPresent(inst::saveDetectedAdductsAnnotation);
         updateProgress(currentProgress().getProgress() + 2);
     }
 
