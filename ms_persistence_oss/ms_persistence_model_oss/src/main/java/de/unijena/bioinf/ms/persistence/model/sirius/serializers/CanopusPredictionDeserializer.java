@@ -29,7 +29,6 @@ import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ms.persistence.model.sirius.CanopusPrediction;
-import de.unijena.bioinf.ms.persistence.model.sirius.CsiPrediction;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
@@ -74,34 +73,43 @@ public class CanopusPredictionDeserializer extends JsonDeserializer<CanopusPredi
         double[] cfProbs = null;
         double[] npcProbs = null;
 
-        JsonToken jsonToken = p.nextToken();
-        while (!jsonToken.isStructEnd()) {
-            final String fieldName = p.currentName();
-            switch (fieldName) {
+        for (JsonToken jsonToken = p.nextToken(); jsonToken != null && !jsonToken.isStructEnd(); jsonToken = p.nextToken()) {
+            if (jsonToken != JsonToken.FIELD_NAME)
+                continue;
+            switch (p.currentName()) {
                 case "alignedFeatureId":
+                    p.nextToken();
                     pfp.setAlignedFeatureId(p.getLongValue());
+                    break;
                 case "formulaId":
+                    p.nextToken();
                     pfp.setFormulaId(p.getLongValue());
+                    break;
                 case "id":
+                    p.nextToken();
                     pfp.setId(p.getLongValue());
+                    break;
                 case "charge":
+                    p.nextToken();
                     pfp.setCharge(p.getIntValue());
+                    break;
                 case "cfFingerprint":
+                    p.nextToken();
                     cfProbs = p.readValueAs(double[].class);
                     break;
                 case "npcFingerprint":
+                    p.nextToken();
                     npcProbs = p.readValueAs(double[].class);
                     break;
                 default:
                     p.nextToken();
-                    break;
             }
         }
 
         if (cfProbs != null)
             pfp.setCfFingerprint(new ProbabilityFingerprint(cfByCharge(pfp.getCharge()), cfProbs));
         if (npcProbs != null)
-            pfp.setCfFingerprint(new ProbabilityFingerprint(npcByCharge(pfp.getCharge()), npcProbs));
+            pfp.setNpcFingerprint(new ProbabilityFingerprint(npcByCharge(pfp.getCharge()), npcProbs));
         return pfp;
     }
 }

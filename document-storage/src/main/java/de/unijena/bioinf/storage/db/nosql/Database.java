@@ -216,6 +216,8 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         return parent;
     }
 
+    <T> boolean containsPrimaryKey(Object primaryKey, Class<T> clazz) throws IOException;
+
     <T> long count(Filter filter, Class<T> clazz) throws IOException;
 
     <T> long count(Filter filter, Class<T> clazz, int offset, int pageSize) throws IOException;
@@ -364,5 +366,26 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
     void unsubscribe(String collectionName, long listenerId) throws IOException;
 
     // endregion
+
+    //region transaction locks
+
+    /**
+     * Allow to perform multiple db action in a transaction without releasing the read lock.
+     * Be careful read lock cannot be upgrade to write lock, so do never call a write operation
+     * inside the read callable
+     * @param transaction the READ operations to be performed as a transaction
+     * @return the result produced by the transaction
+     */
+    <T> T read(Callable<T> transaction) throws IOException;
+
+    /**
+     * Allow to perform multiple db action in a transaction without releasing the write lock.
+     * The write lock can be used for read operations too (reentrant ist supported).
+     * So this method can be used for transactions that combine read and write operations.
+     * @param transaction the READ operations to be performed as a transaction
+     * @return the result produced by the transaction
+     */
+    <T> T write(Callable<T> transaction) throws IOException;
+    //endregion
 
 }
