@@ -39,13 +39,12 @@ import de.unijena.bioinf.sirius.Ms2Preprocessor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.util.*;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 @Slf4j
 public class StorageUtils {
     public static Ms2Experiment toMs2Experiment(@NotNull AlignedFeatures feature, @NotNull ParameterConfig config) {
@@ -120,6 +119,18 @@ public class StorageUtils {
             log.warn("Experiment '" + exp.getName() + "' contains Detected adducts that which will not preserved during import!");
 
         return alignedFeature;
+    }
+
+    public static DetectedAdducts fromMs2ExpAnnotation(@Nullable de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts adducts) {
+        if (adducts == null)
+            return null;
+        List<DetectedAdduct> featureAdducts = adducts.entrySet().stream().flatMap(e -> e.getValue().getAdducts().stream()
+                        .map(p -> DetectedAdduct.builder().adduct(p).source(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.valueOf(e.getKey())).build()))
+                .toList();
+
+        DetectedAdducts featureDetectedAdducts = new DetectedAdducts();
+        featureDetectedAdducts.add(featureAdducts);
+        return featureDetectedAdducts;
     }
 
     public static de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts toMs2ExpAnnotation(@Nullable DetectedAdducts adducts) {
