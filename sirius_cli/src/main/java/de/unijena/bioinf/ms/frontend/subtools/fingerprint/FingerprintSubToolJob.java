@@ -61,7 +61,7 @@ public class FingerprintSubToolJob extends InstanceJob {
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         List<FCandidate<?>> inputData = inst.getFTrees();
 
-        List<SScored<FTree,FormulaScore>> formulaResults = inputData.stream()
+        List<SScored<FTree, FormulaScore>> formulaResults = inputData.stream()
                 .filter(f -> f.hasAnnotation(FTree.class))
                 .map(FCandidate::asScoredFtree).toList();
 
@@ -114,14 +114,14 @@ public class FingerprintSubToolJob extends InstanceJob {
         checkForInterruption();
 
         // ############### Make results persistent ####################
-        Map<FCandidate<?>, FingerprintResult> resultMap = result.stream().filter(fidr -> fidr.hasAnnotation(FingerprintResult.class))
-                .collect(Collectors.toMap(fidr -> treeToId.get(fidr.getSourceTree()), fidr -> fidr.getAnnotationOrThrow(FingerprintResult.class)));
+        result.stream().filter(fidr -> fidr.hasAnnotation(FingerprintResult.class))
+                .forEach(fidr -> treeToId.get(fidr.getSourceTree()).annotate(fidr.getAnnotationOrThrow(FingerprintResult.class)));
 
         updateProgress(90);
         checkForInterruption();
 
         //annotate FingerIdResults to FormulaResult
-        inst.saveFingerprintResult(resultMap);
+        inst.saveFingerprintResult(inputData);
         updateProgress(97);
     }
 

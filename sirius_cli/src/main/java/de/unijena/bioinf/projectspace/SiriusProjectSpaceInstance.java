@@ -37,6 +37,7 @@ import de.unijena.bioinf.fingerid.blast.*;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
@@ -130,12 +131,12 @@ public class SiriusProjectSpaceInstance implements Instance {
 
     @Override
     public boolean hasMs1() {
-        return getExperiment().getMergedMs1Spectrum() != null || (getExperiment().getMs1Spectra() != null &&  !getExperiment().getMs1Spectra().isEmpty());
+        return getExperiment().getMergedMs1Spectrum() != null || (getExperiment().getMs1Spectra() != null && !getExperiment().getMs1Spectra().isEmpty());
     }
 
     @Override
     public boolean hasMsMs() {
-        return getExperiment().getMs2Spectra() != null  &&  !getExperiment().getMs2Spectra().isEmpty();
+        return getExperiment().getMs2Spectra() != null && !getExperiment().getMs2Spectra().isEmpty();
     }
 
     @Override
@@ -498,39 +499,54 @@ public class SiriusProjectSpaceInstance implements Instance {
     }
 
     @Override
-    public synchronized void saveDetectedAdducts(DetectedAdducts detectedAdducts) {
+    public synchronized void saveDetectedAdductsAnnotation(DetectedAdducts detectedAdducts) {
         getCompoundContainerId().setDetectedAdducts(detectedAdducts);
         updateCompoundID();
     }
 
     @Override
-    public synchronized Optional<DetectedAdducts> getDetectedAdducts() {
-        return getCompoundContainerId().getDetectedAdducts();
+    public boolean hasDetectedAdducts() {
+        return getCompoundContainerId().getDetectedAdducts().isPresent();
     }
 
-    //TODO TEMP solution -> make better api method without FormulaResult but with Id
     @Override
-    public synchronized void saveStructureSearchResult(@NotNull Map<FCandidate<?>, FingerIdResult> structureSearchResults) {
-        for (Map.Entry<FCandidate<?>, FingerIdResult> entry : structureSearchResults.entrySet()) {
-            final FormulaResult formRes = loadFormulaResult((FormulaResultId) entry.getKey().getId()).orElseThrow();
-            final FingerIdResult structRes = entry.getValue();
-            assert structRes.sourceTree == formRes.getAnnotationOrThrow(FTree.class);
+    public void saveDetectedAdducts(de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts detectedAdducts) {
+        saveDetectedAdductsAnnotation(StorageUtils.toMs2ExpAnnotation(detectedAdducts));
+    }
 
-            // annotate results
-            formRes.setAnnotation(FBCandidates.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getCandidates).orElse(null));
-            formRes.setAnnotation(FBCandidateFingerprints.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getCandidateFingerprints).orElse(null));
-            formRes.setAnnotation(StructureSearchResult.class, structRes.getAnnotation(StructureSearchResult.class).orElse(null));
-            // add scores
-            formRes.getAnnotationOrThrow(FormulaScoring.class)
-                    .setAnnotation(TopCSIScore.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getTopHitScore).orElse(null));
-            formRes.getAnnotationOrThrow(FormulaScoring.class)
-                    .setAnnotation(ConfidenceScore.class, structRes.getAnnotation(ConfidenceResult.class).map(x -> x.score).orElse(null));
-            formRes.getAnnotationOrThrow(FormulaScoring.class)
-                    .setAnnotation(ConfidenceScoreApproximate.class, structRes.getAnnotation(ConfidenceResult.class).map(x -> x.scoreApproximate).orElse(null));
+    @Override
+    public DetectedAdducts getDetectedAdductsAnnotation() {
+        return getCompoundContainerId().getDetectedAdducts().orElse(null);
+    }
 
-            // write results
-            updateFormulaResult(formRes,
-                    FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class, StructureSearchResult.class);
+    @Override
+    public de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts getDetectedAdducts() {
+        return StorageUtils.fromMs2ExpAnnotation(getDetectedAdductsAnnotation());
+    }
+
+    @Override
+    public synchronized void saveStructureSearchResult(@NotNull List<FCandidate<?>> structureSearchResultsPerFormula) {
+        for (FCandidate<?> fc : structureSearchResultsPerFormula) {
+            if (fc.hasAnnotation(FingerIdResult.class)) {
+                final FormulaResult formRes = loadFormulaResult((FormulaResultId) fc.getId()).orElseThrow();
+                final FingerIdResult structRes = fc.getAnnotationOrThrow(FingerIdResult.class);
+
+                // annotate results
+                formRes.setAnnotation(FBCandidates.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getCandidates).orElse(null));
+                formRes.setAnnotation(FBCandidateFingerprints.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getCandidateFingerprints).orElse(null));
+                formRes.setAnnotation(StructureSearchResult.class, structRes.getAnnotation(StructureSearchResult.class).orElse(null));
+                // add scores
+                formRes.getAnnotationOrThrow(FormulaScoring.class)
+                        .setAnnotation(TopCSIScore.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getTopHitScore).orElse(null));
+                formRes.getAnnotationOrThrow(FormulaScoring.class)
+                        .setAnnotation(ConfidenceScore.class, structRes.getAnnotation(ConfidenceResult.class).map(x -> x.score).orElse(null));
+                formRes.getAnnotationOrThrow(FormulaScoring.class)
+                        .setAnnotation(ConfidenceScoreApproximate.class, structRes.getAnnotation(ConfidenceResult.class).map(x -> x.scoreApproximate).orElse(null));
+
+                // write results
+                updateFormulaResult(formRes,
+                        FormulaScoring.class, FBCandidates.class, FBCandidateFingerprints.class, StructureSearchResult.class);
+            }
         }
 
 
@@ -548,7 +564,7 @@ public class SiriusProjectSpaceInstance implements Instance {
     }
 
     @Override
-    public boolean hasStructureSearchResult() {
+    public synchronized boolean hasStructureSearchResult() {
         return loadCompoundContainer().hasResults() && loadFormulaResults(FBCandidates.class).stream().map(SScored::getCandidate).anyMatch(c -> c.hasAnnotation(FBCandidates.class));
     }
 
@@ -569,7 +585,7 @@ public class SiriusProjectSpaceInstance implements Instance {
 
 
     @Override
-    public boolean hasCanopusResult() {
+    public synchronized boolean hasCanopusResult() {
         return loadCompoundContainer().hasResults() && loadFormulaResults(CanopusResult.class).stream().anyMatch((it -> it.getCandidate().hasAnnotation(CanopusResult.class)));
     }
 
@@ -580,7 +596,7 @@ public class SiriusProjectSpaceInstance implements Instance {
 
 
     @Override
-    public boolean hasMsNovelistResult() {
+    public synchronized boolean hasMsNovelistResult() {
         return loadCompoundContainer().hasResults() && loadFormulaResults(MsNovelistFBCandidates.class).stream().map(SScored::getCandidate).anyMatch(c -> c.hasAnnotation(MsNovelistFBCandidates.class));
     }
 
@@ -596,20 +612,19 @@ public class SiriusProjectSpaceInstance implements Instance {
 
 
     @Override
-    public void saveFingerprintResult(@NotNull Map<FCandidate<?>, FingerprintResult> fingerprintResultsByFormula) {
-        fingerprintResultsByFormula.forEach((fc, res) -> {
-                    // annotate results
-                    FormulaResult formRes = loadFormulaResult((FormulaResultId) fc.getId()).orElseThrow();
-                    formRes.setAnnotation(FingerprintResult.class, res);
-                    updateFormulaResult(formRes, FingerprintResult.class);
-                }
-        );
-
-//        updateCompoundID(); //todo not needed anymore?
+    public synchronized void saveFingerprintResult(@NotNull List<FCandidate<?>> fingerprintResultsPerFormula) {
+        fingerprintResultsPerFormula.forEach(fc -> {
+            // annotate results
+            if (fc.hasAnnotation(FingerprintResult.class)) {
+                FormulaResult formRes = loadFormulaResult((FormulaResultId) fc.getId()).orElseThrow();
+                formRes.setAnnotation(FingerprintResult.class, fc.getAnnotationOrThrow(FingerprintResult.class));
+                updateFormulaResult(formRes, FingerprintResult.class);
+            }
+        });
     }
 
     @Override
-    public boolean hasFingerprintResult() {
+    public synchronized boolean hasFingerprintResult() {
         return loadCompoundContainer().hasResults() && loadFormulaResults(FingerprintResult.class).stream().map(SScored::getCandidate).anyMatch(c -> c.hasAnnotation(FingerprintResult.class));
     }
 
@@ -627,12 +642,12 @@ public class SiriusProjectSpaceInstance implements Instance {
 
 
     @Override
-    public void saveSiriusResult(List<FTree> treesSortedByScore) {
+    public synchronized void saveSiriusResult(List<FTree> treesSortedByScore) {
         treesSortedByScore.forEach(this::newFormulaResultWithUniqueId);
     }
 
     @Override
-    public boolean hasSiriusResult() {
+    public synchronized boolean hasSiriusResult() {
         return loadCompoundContainer().hasResults();
     }
 
@@ -641,11 +656,11 @@ public class SiriusProjectSpaceInstance implements Instance {
         deleteFormulaResults(); //this step creates the results, so we have to delete them before recompute
         //todo detected Adducts should be moved to separate subtool
         getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> it.remove(DetectedAdducts.Source.MS1_PREPROCESSOR.name()));
-        saveDetectedAdducts(getExperiment().getAnnotationOrNull(DetectedAdducts.class));
+        saveDetectedAdductsAnnotation(getExperiment().getAnnotationOrNull(DetectedAdducts.class));
     }
 
     @Override
-    public boolean hasSpectraSearchResult() {
+    public synchronized boolean hasSpectraSearchResult() {
         return loadCompoundContainer(SpectralSearchResult.class).hasAnnotation(SpectralSearchResult.class);
     }
 
@@ -658,7 +673,7 @@ public class SiriusProjectSpaceInstance implements Instance {
     }
 
     @Override
-    public void savePassatuttoResult(FCandidate<?> fc, Decoy decoy) {
+    public synchronized void savePassatuttoResult(FCandidate<?> fc, Decoy decoy) {
         FormulaResult best = loadFormulaResult((FormulaResultId) fc.getId()).orElseThrow();
         best.setAnnotation(Decoy.class, decoy);
         //write Passatutto results
@@ -666,7 +681,7 @@ public class SiriusProjectSpaceInstance implements Instance {
     }
 
     @Override
-    public boolean hasPassatuttoResult() {
+    public synchronized boolean hasPassatuttoResult() {
         return loadCompoundContainer().hasResults() && loadFormulaResults(Decoy.class).stream().anyMatch(it -> it.getCandidate().hasAnnotation(Decoy.class));
     }
 
@@ -677,17 +692,19 @@ public class SiriusProjectSpaceInstance implements Instance {
 
 
     @Override
-    public void saveZodiacResult(Map<FCandidate<?>, ZodiacScore> zodiacScores) {
-        zodiacScores.forEach((fc, score) -> {
-            FormulaResult fr = loadFormulaResult((FormulaResultId) fc.getId(), FormulaScoring.class).orElseThrow();
-            FormulaScoring scoring = fr.getAnnotationOrThrow(FormulaScoring.class);
-            scoring.setAnnotation(ZodiacScore.class, score);
-            updateFormulaResult(fr, FormulaScoring.class);
+    public synchronized void saveZodiacResult(List<FCandidate<?>> zodiacScores) {
+        zodiacScores.forEach((fc) -> {
+            if (fc.hasAnnotation(ZodiacScore.class)) {
+                FormulaResult fr = loadFormulaResult((FormulaResultId) fc.getId(), FormulaScoring.class).orElseThrow();
+                FormulaScoring scoring = fr.getAnnotationOrThrow(FormulaScoring.class);
+                scoring.setAnnotation(ZodiacScore.class, fc.getAnnotationOrThrow(ZodiacScore.class));
+                updateFormulaResult(fr, FormulaScoring.class);
+            }
         });
     }
 
     @Override
-    public boolean hasZodiacResult() {
+    public synchronized boolean hasZodiacResult() {
         return loadCompoundContainer().hasResults() && loadFormulaResults(FormulaScoring.class).stream().anyMatch(res -> res.getCandidate().getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class));
     }
 
@@ -701,44 +718,47 @@ public class SiriusProjectSpaceInstance implements Instance {
     }
 
     @Override
-    public void saveSpectraSearchResult(SpectralSearchResult result) {
+    public synchronized void saveSpectraSearchResult(SpectralSearchResult result) {
         CompoundContainer container = loadCompoundContainer();
         container.annotate(result);
         updateCompound(container, SpectralSearchResult.class);
     }
 
     @Override
-    public LCMSPeakInformation getLCMSPeakInformation() {
+    public synchronized LCMSPeakInformation getLCMSPeakInformation() {
         return loadCompoundContainer(LCMSPeakInformation.class)
                 .getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
     }
 
 
     @Override
-    public void saveMsNovelistResult(@NotNull Map<FCandidate<?>, FingerIdResult> resultsByFormula) {
-        for (Map.Entry<FCandidate<?>, FingerIdResult> e : resultsByFormula.entrySet()) {
-            final FormulaResult formRes = loadFormulaResult((FormulaResultId) e.getKey().getId()).orElseThrow();
-            final FingerIdResult idResult = e.getValue();
-            // annotation check: only FingerIdResults that hold valid MSNovelist results are annotated in
-            // MsNovelistFingerblastJJob
-            if (idResult.hasAnnotation(MsNovelistFingerblastResult.class)) {
-                // annotate result to FormulaResult
-                formRes.setAnnotation(MsNovelistFBCandidates.class,
-                        idResult.getAnnotation(MsNovelistFingerblastResult.class)
-                                .map(MsNovelistFingerblastResult::getCandidates).orElse(null));
-                formRes.setAnnotation(MsNovelistFBCandidateFingerprints.class, idResult.getAnnotation(MsNovelistFingerblastResult.class)
-                        .map(MsNovelistFingerblastResult::getCandidateFingerprints).orElse(null));
-                formRes.getAnnotationOrThrow(FormulaScoring.class)
-                        .setAnnotation(TopMsNovelistScore.class, idResult.getAnnotation(MsNovelistFingerblastResult.class)
-                                .map(MsNovelistFingerblastResult::getTopHitScore).orElse(null));
-                // write results to project space
-                updateFormulaResult(formRes, FormulaScoring.class, MsNovelistFBCandidates.class, MsNovelistFBCandidateFingerprints.class);
+    public synchronized void saveMsNovelistResult(@NotNull List<FCandidate<?>> resultsByFormula) {
+        for (FCandidate<?> fc : resultsByFormula) {
+            //todo refactor
+            if (fc.hasAnnotation(FingerIdResult.class)) {
+                final FormulaResult formRes = loadFormulaResult((FormulaResultId) fc.getId()).orElseThrow();
+                final FingerIdResult idResult = fc.getAnnotationOrThrow(FingerIdResult.class);
+                // annotation check: only FingerIdResults that hold valid MSNovelist results are annotated in
+                // MsNovelistFingerblastJJob
+                if (idResult.hasAnnotation(MsNovelistFingerblastResult.class)) {
+                    // annotate result to FormulaResult
+                    formRes.setAnnotation(MsNovelistFBCandidates.class,
+                            idResult.getAnnotation(MsNovelistFingerblastResult.class)
+                                    .map(MsNovelistFingerblastResult::getCandidates).orElse(null));
+                    formRes.setAnnotation(MsNovelistFBCandidateFingerprints.class, idResult.getAnnotation(MsNovelistFingerblastResult.class)
+                            .map(MsNovelistFingerblastResult::getCandidateFingerprints).orElse(null));
+                    formRes.getAnnotationOrThrow(FormulaScoring.class)
+                            .setAnnotation(TopMsNovelistScore.class, idResult.getAnnotation(MsNovelistFingerblastResult.class)
+                                    .map(MsNovelistFingerblastResult::getTopHitScore).orElse(null));
+                    // write results to project space
+                    updateFormulaResult(formRes, FormulaScoring.class, MsNovelistFBCandidates.class, MsNovelistFBCandidateFingerprints.class);
+                }
             }
         }
     }
 
     @Override
-    public void saveCanopusResult(@NotNull List<FCandidate<?>> canopusResults) {
+    public synchronized void saveCanopusResult(@NotNull List<FCandidate<?>> canopusResults) {
         canopusResults.forEach(fc -> {
             FormulaResult fres = loadFormulaResult((FormulaResultId) fc.getId()).orElseThrow();
             fc.getAnnotation(CanopusResult.class).ifPresent(fres::annotate);

@@ -25,16 +25,12 @@ import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
-import de.unijena.bioinf.GibbsSampling.ZodiacScore;
-import de.unijena.bioinf.fingerid.FingerIdResult;
-import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 public interface Instance {
@@ -111,12 +107,16 @@ public interface Instance {
     boolean isComputing();
     //endregion
 
-    void saveDetectedAdducts(DetectedAdducts detectedAdducts);
-
-    Optional<DetectedAdducts> getDetectedAdducts();
+    boolean hasDetectedAdducts();
+    @Deprecated
+    void saveDetectedAdductsAnnotation(DetectedAdducts detectedAdducts);
+    void saveDetectedAdducts(de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts detectedAdducts);
+    @Deprecated
+    DetectedAdducts getDetectedAdductsAnnotation();
+    de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts getDetectedAdducts();
 
     default void deleteDetectedAdducts(){
-        saveDetectedAdducts(null);
+        saveDetectedAdducts((de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts) null);
     }
 
 
@@ -133,23 +133,23 @@ public interface Instance {
     boolean hasSiriusResult();
     void deleteSiriusResult();
 
-    void saveZodiacResult(Map<FCandidate<?>, ZodiacScore> zodiacScores);
+    void saveZodiacResult(List<FCandidate<?>> zodiacScores);
     boolean hasZodiacResult();
     void deleteZodiacResult();
 
-    void saveFingerprintResult(@NotNull Map<FCandidate<?>, FingerprintResult> fingerprintResultsByFormula);
+    void saveFingerprintResult(@NotNull List<FCandidate<?>> fingerprintResultsPerFormula);
     boolean hasFingerprintResult();
     void deleteFingerprintResult();
 
-    void saveStructureSearchResult(@NotNull Map<FCandidate<?>, FingerIdResult> structureSearchResults);
+    void saveStructureSearchResult(@NotNull List<FCandidate<?>> structureSearchResultsPerFormula);
     boolean hasStructureSearchResult();
     void deleteStructureSearchResult();
 
-    void saveCanopusResult(@NotNull List<FCandidate<?>> canopusResults);
+    void saveCanopusResult(@NotNull List<FCandidate<?>> canopusResultsPerFormula);
     boolean hasCanopusResult();
     void deleteCanopusResult();
 
-    void saveMsNovelistResult(@NotNull Map<FCandidate<?>, FingerIdResult> CanopusResultsByFormula);
+    void saveMsNovelistResult(@NotNull List<FCandidate<?>> msNovelistResultsPerFormula);
     boolean hasMsNovelistResult();
     void deleteMsNovelistResult();
 }

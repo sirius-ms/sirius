@@ -82,36 +82,27 @@ public class ZodiacSubToolJob extends DataSetJob {
     @Override
     protected void computeAndAnnotateResult(@NotNull List<Instance> instances) throws Exception {
         logInfo("START ZODIAC JOB");
-        /*final Map<Ms2Experiment, List<FormulaResult>> input = instances.stream()
-                .distinct().collect(Collectors.toMap(
-                        Instance::getExperiment, in -> {
-                            try {
-                                return in.loadFormulaResults(List.of(SiriusScore.class), FormulaScoring.class, FTree.class).stream().map(SScored::getCandidate).collect(Collectors.toList());
-                            } catch (Exception e) {
-                                logWarn("Error while reading molecular formula scores for "+in.getId()+". Exclude it from ZODIAC computation. Error: "+e.getMessage());
-                                return Collections.emptyList(); //empty lists are filtered below.
-                            }}
-                ));
 
-        //remove instances from input which don't have a single FTree
-        instances = instances.stream().filter(i -> !input.get(i.getExperiment()).isEmpty()).collect(Collectors.toList());
-        input.keySet().retainAll(instances.stream().map(Instance::getExperiment).collect(Collectors.toList()));*/
-
-
-//        Map<Ms2Experiment, List<FTree>> ms2ExperimentToTreeCandidates = input.keySet().stream().collect(Collectors.toMap(k -> k, k -> input.get(k).stream().map(r -> r.getAnnotationOrThrow(FTree.class)).collect(Collectors.toList())));
-
-        Map<Ms2Experiment, List<FTree>> ms2ExperimentToTreeCandidates = new HashMap<>();
-        Map<FTree, FCandidate<?>> treeToId = new HashMap<>();
+        //this is the zodiac input
+        final Map<Ms2Experiment, List<FTree>> ms2ExperimentToTreeCandidates = new HashMap<>(instances.size());
+        //this is to know which zodiac result belongs to which instance
+        final Map<Ms2Experiment, Instance> ms2ExperimentToInstance = new HashMap<>(instances.size());
+        //this is to identify which formula results belongs to the score
+        final Map<FTree, FCandidate<?>> treeToId = new HashMap<>();
         {
             for (Instance instance : instances) {
                 List<FCandidate<?>> inputData = instance.getFTrees().stream()
                         .filter(fc -> fc.hasAnnotation(FTree.class)).toList();
                 if (!inputData.isEmpty()) {
-                    ms2ExperimentToTreeCandidates.put(instance.getExperiment(), inputData.stream().map(sc -> sc.getAnnotationOrThrow(FTree.class)).collect(Collectors.toList()));
+                    Ms2Experiment exp = instance.getExperiment();
+                    ms2ExperimentToInstance.put(exp, instance);
+                    ms2ExperimentToTreeCandidates.put(exp, inputData.stream().map(sc -> sc.getAnnotationOrThrow(FTree.class)).collect(Collectors.toList()));
                     inputData.forEach(p -> treeToId.put(p.getAnnotationOrThrow(FTree.class), p));
                 }
             }
         }
+
+
         Ms2Experiment settings = instances.get(0).getExperiment();
         //TODO CHEEEEEECK REOMPUTE
 //        if (instances.stream().anyMatch(it -> isRecompute(it) || (treeToId.containsKey(it.getExperiment()) && !input.get(it.getExperiment()).get(0).getAnnotationOrThrow(FormulaScoring.class).hasAnnotation(ZodiacScore.class)))) {
@@ -258,14 +249,15 @@ public class ZodiacSubToolJob extends DataSetJob {
         updateProgress(Math.round(.9 * maxProgress));
 
         //add score and set new Ranking score
-        instances.forEach(inst ->
-        {
+        scoreResults.forEach((exp, map) -> {
             try {
-                final Map<FCandidate<?>, ZodiacScore> scoresByFormula = scoreResults.get(inst.getExperiment()).entrySet().stream()
-                        .collect(Collectors.toMap(e -> treeToId.get(e.getKey()), Map.Entry::getValue));
-                inst.saveZodiacResult(scoresByFormula);
+                List<FCandidate<?>> toWrite = map.entrySet().stream()
+                        .peek(e -> treeToId.get(e.getKey()).annotate(e.getValue()))
+                        .map(e -> treeToId.get(e.getKey())).collect(Collectors.toList());
+
+                ms2ExperimentToInstance.get(exp).saveZodiacResult(toWrite);
             } catch (Throwable e) {
-                logError("Error when retrieving Zodiac Results for instance: " + inst.getId(), e);
+                logError("Error when retrieving Zodiac Results for instance: " + exp.getName(), e);
             }
         });
 
@@ -285,7 +277,6 @@ public class ZodiacSubToolJob extends DataSetJob {
                 Exception e) {
             logError("Error when writing ZODIAC graph", e);
         }
-//        }
     }
 
     private List<FTree> applyMaxCandidateThreshold(Ms2Experiment experiment, List<FTree> trees) {

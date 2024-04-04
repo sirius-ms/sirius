@@ -65,16 +65,16 @@ public class MsNovelistSubToolJob extends InstanceJob {
 
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
-        List<FCandidate<?>> inputData = inst.getMsNovelistInput();
-        final Map<FCandidate<?>, FingerIdResult> formulaResultsMap = inputData.stream()
+        final List<FCandidate<?>> inputData = inst.getMsNovelistInput().stream()
                 .filter(c -> c.hasAnnotation(FingerprintResult.class))
                 .filter(c -> c.hasAnnotation(FTree.class))
-                .collect(Collectors.toMap(c -> c, FCandidate::asFingerIdResult, (k, v) -> v,  LinkedHashMap::new));
+                .peek(c -> c.annotate(c.asFingerIdResult()))
+                .toList();
 
         checkForInterruption();
 
-        if (formulaResultsMap.isEmpty()) {
-            logInfo("Skipping instance \"" + inst.getName() + "\" because there are no trees computed.");
+        if (inputData.isEmpty()) {
+            logInfo("Skipping instance \"" + inst.getName() + "\" because there are no formula candidates with tree and fingerprint data.");
             return;
         }
 
@@ -99,7 +99,7 @@ public class MsNovelistSubToolJob extends InstanceJob {
 
         // submit prediction jobs; order of prediction from worker(s) will not matter as we use map
         Map<FCandidate<?>, WebJJob<MsNovelistJobInput, ?, MsNovelistJobOutput, ?>> msnJobs =
-                formulaResultsMap.keySet().stream().collect(Collectors.toMap(ir -> ir,
+                inputData.stream().collect(Collectors.toMap(ir -> ir,
                         ir -> buildAndSubmitRemote(ir, specHash)
                 ));
 
@@ -108,11 +108,10 @@ public class MsNovelistSubToolJob extends InstanceJob {
 
         // collect predictions; order of prediction from worker(s) does not matter as we used map
         Map<FCandidate<?>, MsNovelistJobOutput> msnJobResults =
-                msnJobs.entrySet().stream().collect(
-                        Collectors.toMap(
+                msnJobs.entrySet().stream().collect(Collectors.toMap(
                                 Map.Entry::getKey,
                                 entry -> entry.getValue().takeResult()
-                        ));
+                ));
 
         updateProgress(40);
         checkForInterruption();
@@ -128,11 +127,11 @@ public class MsNovelistSubToolJob extends InstanceJob {
         // build scoring jobs
         // order of completion will not matter as we annotate results directly in MsNovelistFingerblastJJob
         List<MsNovelistFingerblastJJob> jobList = new ArrayList<>(Collections.emptyList());
-        for (FCandidate<?> formRes : msnJobResults.keySet().stream().toList()) {
+        for (FCandidate<?> formRes : msnJobResults.keySet()) {
             final MsNovelistFingerblastJJob job = new MsNovelistFingerblastJJob(
                     csi,
                     ApplicationCore.WEB_API,
-                    formulaResultsMap.get(formRes),
+                    formRes.getAnnotationOrThrow(FingerIdResult.class),
                     msnJobResults.get(formRes).getCandidates());
 
             checkForInterruption();
@@ -150,7 +149,7 @@ public class MsNovelistSubToolJob extends InstanceJob {
         {
             //calculate and annotate tanimoto scores
             List<Pair<ProbabilityFingerprint, FingerprintCandidate>> tanimotoJobs = new ArrayList<>();
-            formulaResultsMap.values().stream()
+            inputData.stream().map(fc -> fc.getAnnotationOrThrow(FingerIdResult.class))
                     .filter(it -> it.hasAnnotation(FingerprintResult.class) && it.hasAnnotation(MsNovelistFingerblastResult.class))
                     .forEach(it -> {
                         final ProbabilityFingerprint fp = it.getPredictedFingerprint();
@@ -179,7 +178,7 @@ public class MsNovelistSubToolJob extends InstanceJob {
             checkForInterruption();
         }
 
-        inst.saveMsNovelistResult(formulaResultsMap);
+        inst.saveMsNovelistResult(inputData);
 
 
         updateProgress(97);
