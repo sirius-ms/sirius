@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -229,7 +228,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .ionMass(features.getAverageMass());
 
         if (features.getDetectedAdducts() != null)
-                builder.adduct(features.getDetectedAdducts().getBestAdduct().map(PrecursorIonType::toString).orElse(null));
+                builder.adduct(features.getIonType().toString()); //is called adduct but refers to iontype (input setting) -> maybe rename
 
         RetentionTime rt = features.getRetentionTime();
         if (rt != null) {
