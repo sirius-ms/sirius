@@ -18,16 +18,15 @@
  *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.model.sirius;
+package de.unijena.bioinf.ms.persistence.storage;
 
+import it.unimi.dsi.fastutil.longs.LongSet;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
 
+@Builder
 @Getter
-@SuperBuilder
-@Jacksonized
-public class ComputeState extends AlignedFeatureAnnotation {
-    //this is just a boolean flag. if it exists it is true.
-    // can be extended with fields if more information is needed.
+public class ComputeStateEvent {
+    private final LongSet affectedFeatureIds;
+    private final boolean newComputeState;
 }
