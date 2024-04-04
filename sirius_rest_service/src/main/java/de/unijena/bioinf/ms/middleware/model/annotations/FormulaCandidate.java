@@ -21,7 +21,9 @@
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -79,6 +81,7 @@ public class FormulaCandidate {
     @Schema(nullable = true)
     protected Double totalExplainedIntensity;
     @Schema(nullable = true)
+    @JsonDeserialize(using = SimpleSerializers.DeviationDeserializer.class)
     protected Deviation medianMassDeviation;
 
     /**

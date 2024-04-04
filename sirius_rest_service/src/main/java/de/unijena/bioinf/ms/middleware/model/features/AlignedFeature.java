@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.model.features;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ms.middleware.model.annotations.FeatureAnnotations;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
  */
 @Getter
 @Setter
+@Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AlignedFeature {
     @Schema(enumAsRef = true, name = "AlignedFeatureOptField", nullable = true)
