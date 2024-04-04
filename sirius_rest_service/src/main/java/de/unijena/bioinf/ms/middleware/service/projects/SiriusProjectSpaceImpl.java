@@ -756,7 +756,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     public static AlignedFeature asAlignedFeature(CompoundContainerId cid) {
-        final AlignedFeature id = new AlignedFeature();
+        final AlignedFeature id = AlignedFeature.builder().build();
         id.setAlignedFeatureId(cid.getDirectoryName());
         id.setName(cid.getCompoundName());
         id.setIonMass(cid.getIonMass().orElse(0d));

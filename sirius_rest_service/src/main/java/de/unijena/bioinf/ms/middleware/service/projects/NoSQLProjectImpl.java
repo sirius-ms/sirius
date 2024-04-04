@@ -20,6 +20,10 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
@@ -41,17 +45,20 @@ import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
@@ -65,7 +72,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @Getter
     private final Database<?> storage;
-
     private final Map<Class<?>, AtomicLong> totalCounts = Collections.synchronizedMap(new HashMap<>());
 
     private final Map<Class<?>, Map<Long, AtomicLong>> totalCountByFeature = Collections.synchronizedMap(new HashMap<>());
@@ -111,72 +117,164 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return projectSpaceManager;
     }
 
-    private Compound toMiddlewareCompound(de.unijena.bioinf.ms.persistence.model.core.Compound compound) {
-        // TODO opt fields
-        database.fetchAdductFeatures(compound);
-        // TODO translate
-        return Compound.builder()
-                .build();
-    }
+    private Pair<String, Database.SortOrder> sort(Sort sort, Pair<String, Database.SortOrder> defaults, Function<String, String> translator) {
+        if (sort == null)
+            return defaults;
 
-    private de.unijena.bioinf.ms.persistence.model.core.Compound toDatabaseCompound(CompoundImport compound) {
-        // TODO translate
-        return de.unijena.bioinf.ms.persistence.model.core.Compound.builder()
-                .name(compound.getName())
-//                .adductFeatures()
-                .build();
-    }
+        if (sort == Sort.unsorted())
+            return defaults;
 
-    private AlignedFeatures toDatabaseAlignedFeatures(FeatureImport feature) {
-        return AlignedFeatures.builder()
+        Optional<Sort.Order> order = sort.stream().findFirst();
+        if (order.isEmpty())
+            return defaults;
 
-                .build();
-    }
-
-    private MsData toMiddlewareMSData(MSData data) {
-        return MsData.builder()
-                .mergedMs1(new BasicSpectrum(data.getMergedMs1Spectrum()))
-                .mergedMs2(new BasicSpectrum(data.getMergedMSnSpectrum().getPeaks()))
-                // TODO ms1 spectra
-                .ms2Spectra(data.getMsnSpectra().stream().map(BasicSpectrum::new).toList())
-                .build();
-    }
-
-    private AlignedFeature toMiddleWareAlignedFeature(AlignedFeatures features, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
-        AlignedFeature af = new AlignedFeature();
-        af.setAlignedFeatureId(String.valueOf(features.getAlignedFeatureId()));
-        af.setName(features.getName());
-        af.setAdduct(features.getDetectedAdducts().getBestAdduct().toString());
-        af.setIonMass(features.getAverageMass());
-
-        database.fetchMsData(features);
-        if (optFields.contains(AlignedFeature.OptField.msData)) {
-            features.getMSData().ifPresent(data -> af.setMsData(toMiddlewareMSData(data)));
+        String property = order.get().getProperty();
+        if (property.isEmpty() || property.isBlank()) {
+            return defaults;
         }
-        // TODO top annotations, top annotations de novo
-        return af;
+
+        Database.SortOrder so = order.get().getDirection().isAscending() ? Database.SortOrder.ASCENDING :Database.SortOrder.DESCENDING;
+        return Pair.of(translator.apply(property), so);
     }
 
-    private SpectraMatch toDatabaseSpectralMatch(SpectralLibraryMatch match) {
-        return SpectraMatch.builder().build();
+    private Pair<String, Database.SortOrder> sortCompound(Sort sort) {
+        return sort(sort, Pair.of("name", Database.SortOrder.ASCENDING), s -> switch (s) {
+            case "rtStartSeconds" -> "rt.start";
+            case "rtEndSeconds" -> "rt.end";
+            default -> s;
+        });
     }
 
-    private SpectralLibraryMatch toMiddlewareSpectralMatch(SpectraMatch match) {
-        // TODO
-        return SpectralLibraryMatch.builder().build();
+    private Pair<String, Database.SortOrder> sortFeature(Sort sort) {
+        return sort(sort, Pair.of("name", Database.SortOrder.ASCENDING), s -> switch (s) {
+            case "rtStartSeconds" -> "retentionTime.start";
+            case "rtEndSeconds" -> "retentionTime.end";
+            case "ionMass" -> "averageMass";
+            default -> s;
+        });
     }
 
-    private FormulaCandidate toMiddleWareFCandidate(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate candidate) {
-        // TODO
-        return FormulaCandidate.builder().build();
+    private Compound convertCompound(de.unijena.bioinf.ms.persistence.model.core.Compound compound) {
+        Compound.CompoundBuilder builder = Compound.builder()
+                .compoundId(String.valueOf(compound.getCompoundId()))
+                .name(compound.getName())
+                .neutralMass(compound.getNeutralMass());
+
+        RetentionTime rt = compound.getRt();
+        if (rt != null) {
+            if (Double.isFinite(rt.getStartTime()) && Double.isFinite(rt.getEndTime())) {
+                builder.rtStartSeconds(rt.getStartTime());
+                builder.rtEndSeconds(rt.getEndTime());
+            } else {
+                builder.rtStartSeconds(rt.getMiddleTime());
+                builder.rtEndSeconds(rt.getMiddleTime());
+            }
+        }
+
+        compound.getAdductFeatures().ifPresent(features -> builder.features(features.stream().map(this::convertFeature).toList()));
+
+        return builder.build();
+    }
+
+    private de.unijena.bioinf.ms.persistence.model.core.Compound convertCompound(CompoundImport compoundImport) {
+        List<AlignedFeatures> features = compoundImport.getFeatures().stream().map(this::convertFeature).toList();
+
+        de.unijena.bioinf.ms.persistence.model.core.Compound.CompoundBuilder builder = de.unijena.bioinf.ms.persistence.model.core.Compound.builder()
+                .name(compoundImport.getName())
+                .adductFeatures(features);
+
+        List<RetentionTime> rts = features.stream().map(AlignedFeatures::getRetentionTime).filter(Objects::nonNull).toList();
+        double start = rts.stream().mapToDouble(RetentionTime::getStartTime).min().orElse(Double.NaN);
+        double end = rts.stream().mapToDouble(RetentionTime::getEndTime).min().orElse(Double.NaN);
+
+        if (Double.isFinite(start) && Double.isFinite(end)) {
+            builder.rt(new RetentionTime(start, end));
+        }
+
+        features.stream().mapToDouble(AlignedFeatures::getAverageMass).average().ifPresent(builder::neutralMass);
+
+        return builder.build();
+    }
+
+    private AlignedFeatures convertFeature(FeatureImport featureImport) {
+
+        AlignedFeatures.AlignedFeaturesBuilder<?, ?> builder = AlignedFeatures.builder()
+                .name(featureImport.getName())
+                .externalFeatureId(featureImport.getFeatureId())
+                .averageMass(featureImport.getIonMass());
+
+        if (featureImport.getMergedMs1() != null || featureImport.getMs2Spectra() != null) {
+            MSData.MSDataBuilder msDataBuilder = MSData.builder();
+
+            if (featureImport.getMergedMs1() != null)
+                msDataBuilder.mergedMs1Spectrum(new SimpleSpectrum(featureImport.getMergedMs1().getMasses(), featureImport.getMergedMs1().getIntensities()));
+
+            if (featureImport.getMs2Spectra() != null)
+                msDataBuilder.msnSpectra(featureImport.getMs2Spectra().stream().map(s -> new MutableMs2Spectrum(s, s.getPrecursorMz(), s.getCollisionEnergy(), s.getMsLevel(), s.getScanNumber())).toList());
+
+            builder.msData(msDataBuilder.build());
+        }
+
+        if (featureImport.getRtStartSeconds() != null && featureImport.getRtEndSeconds() != null) {
+            builder.retentionTime(new RetentionTime(featureImport.getRtStartSeconds(), featureImport.getRtEndSeconds()));
+        }
+        // TODO detected adducts
+        return builder.build();
+    }
+
+    private AlignedFeature convertFeature(AlignedFeatures features) {
+        AlignedFeature.AlignedFeatureBuilder builder = AlignedFeature.builder()
+                .alignedFeatureId(String.valueOf(features.getAlignedFeatureId()))
+                .name(features.getName())
+                .ionMass(features.getAverageMass());
+
+        if (features.getDetectedAdducts() != null)
+                builder.adduct(features.getDetectedAdducts().getBestAdduct().map(PrecursorIonType::toString).orElse(null));
+
+        RetentionTime rt = features.getRetentionTime();
+        if (rt != null) {
+            if (Double.isFinite(rt.getStartTime()) && Double.isFinite(rt.getEndTime())) {
+                builder.rtStartSeconds(rt.getStartTime());
+                builder.rtEndSeconds(rt.getEndTime());
+            } else {
+                builder.rtStartSeconds(rt.getMiddleTime());
+                builder.rtEndSeconds(rt.getMiddleTime());
+            }
+        }
+
+        features.getMSData().map(this::convertMSData).ifPresent(builder::msData);
+
+        return builder.build();
+    }
+
+    private MsData convertMSData(MSData msData) {
+        return MsData.builder()
+                .mergedMs1(new BasicSpectrum(msData.getMergedMs1Spectrum()))
+                .mergedMs2(new BasicSpectrum(msData.getMergedMSnSpectrum().getPeaks()))
+                // TODO ms1 spectra
+                .ms2Spectra(msData.getMsnSpectra().stream().map(BasicSpectrum::new).toList())
+                .build();
     }
 
     @SneakyThrows
     @Override
     public Page<Compound> findCompounds(Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
-        List<Compound> compounds = storage
-                .findAllStr(de.unijena.bioinf.ms.persistence.model.core.Compound.class, (int) pageable.getOffset(), pageable.getPageSize())
-                .map(this::toMiddlewareCompound).toList();
+        Pair<String, Database.SortOrder> sort = sortCompound(pageable.getSort());
+        Stream<de.unijena.bioinf.ms.persistence.model.core.Compound> stream;
+        if (pageable.isPaged()) {
+            stream = storage.findAllStr(de.unijena.bioinf.ms.persistence.model.core.Compound.class, (int) pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
+        } else {
+            stream = storage.findAllStr(de.unijena.bioinf.ms.persistence.model.core.Compound.class, sort.getLeft(), sort.getRight());
+        }
+        stream = stream.peek(database::fetchAdductFeatures);
+
+        if (optFeatureFields.contains(AlignedFeature.OptField.msData)) {
+            stream = stream.peek(c -> c.getAdductFeatures().ifPresent(features -> features.forEach(database::fetchMsData)));
+        }
+
+        List<Compound> compounds = stream.map(this::convertCompound).toList();
+
+        // TODO annotations
         long total = totalCounts.get(de.unijena.bioinf.ms.persistence.model.core.Compound.class).get();
 
         return new PageImpl<>(compounds, pageable, total);
@@ -185,9 +283,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
-        List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream().map(this::toDatabaseCompound).toList();
+        List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream().map(this::convertCompound).toList();
         database.importCompounds(dbc);
-        return dbc.stream().map(this::toMiddlewareCompound).toList();
+        // TODO test if all ids are correctly set!
+        return dbc.stream().map(this::convertCompound).toList();
     }
 
     @Override
@@ -206,7 +305,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public Compound findCompoundById(String compoundId, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
         long id = Long.parseLong(compoundId);
         return storage.getByPrimaryKey(id, de.unijena.bioinf.ms.persistence.model.core.Compound.class)
-                .map(this::toMiddlewareCompound)
+                .map(c -> {
+                    database.fetchAdductFeatures(c);
+                    if (optFeatureFields.contains(AlignedFeature.OptField.msData)) {
+                        c.getAdductFeatures().ifPresent(features -> features.forEach(database::fetchMsData));
+                    }
+                    return convertCompound(c);
+                })
+                // TODO annotations
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no compound '" + compoundId + "' in project " + projectId + "."));
     }
 
@@ -215,6 +321,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public void deleteCompoundById(String compoundId) {
         long id = Long.parseLong(compoundId);
         storage.removeAll(Filter.where("compoundId").eq(id), de.unijena.bioinf.ms.persistence.model.core.Compound.class);
+        // TODO cascade delete?
     }
 
     @Override
@@ -230,9 +337,20 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
-        List<AlignedFeature> features = storage
-                .findAllStr(AlignedFeatures.class, (int) pageable.getOffset(), pageable.getPageSize())
-                .map(af -> toMiddleWareAlignedFeature(af, optFields)).toList();
+        Pair<String, Database.SortOrder> sort = sortFeature(pageable.getSort());
+        Stream<AlignedFeatures> stream;
+        if (pageable.isPaged()) {
+            stream = storage.findAllStr(AlignedFeatures.class, (int) pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
+        } else {
+            stream = storage.findAllStr(AlignedFeatures.class, sort.getLeft(), sort.getRight());
+        }
+
+        if (optFields.contains(AlignedFeature.OptField.msData)) {
+            stream = stream.peek(database::fetchMsData);
+        }
+
+        List<AlignedFeature> features = stream.map(this::convertFeature).toList();
+        // TODO annotations
         long total = totalCounts.get(AlignedFeatures.class).get();
 
         return new PageImpl<>(features, pageable, total);
@@ -256,25 +374,28 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public Page<SpectralLibraryMatch> findLibraryMatchesByFeatureId(String alignedFeatureId, Pageable pageable) {
-        long longId = Long.parseLong(alignedFeatureId);
-        List<SpectralLibraryMatch> results = storage.findStr(
-                Filter.where("alignedFeatureId").eq(longId), SpectraMatch.class, (int) pageable.getOffset(), pageable.getPageSize(), "similarity.similarity", Database.SortOrder.DESCENDING
-        ).map(this::toMiddlewareSpectralMatch).toList();
-        long total = totalCountByFeature.get(SpectraMatch.class).getOrDefault(longId, new AtomicLong(0)).get();
-
-        return new PageImpl<>(results, pageable, total);
+//        long longId = Long.parseLong(alignedFeatureId);
+//        Pair<String, Database.SortOrder> sort = SortConverter.convert(pageable.getSort(), SpectraMatch.class);
+//        List<SpectralLibraryMatch> results = storage.findStr(
+//                Filter.where("alignedFeatureId").eq(longId), SpectraMatch.class, (int) pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight()
+//        ).map(s -> typeConverter.convert(s, SpectralLibraryMatch.class)).toList();
+//        long total = totalCountByFeature.get(SpectraMatch.class).getOrDefault(longId, new AtomicLong(0)).get();
+//
+//        return new PageImpl<>(results, pageable, total);
+        return null;
     }
 
     @SneakyThrows
     @Override
     public Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
-        long longId = Long.parseLong(alignedFeatureId);
-        List<FormulaCandidate> results = storage.findStr(
-                Filter.where("alignedFeatureId").eq(longId), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, (int) pageable.getOffset(), pageable.getPageSize(), "siriusScore", Database.SortOrder.DESCENDING
-        ).map(this::toMiddleWareFCandidate).toList();
-        long total = totalCountByFeature.get(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class).getOrDefault(longId, new AtomicLong(0)).get();
-
-        return new PageImpl<>(results, pageable, total);
+//        long longId = Long.parseLong(alignedFeatureId);
+//        List<FormulaCandidate> results = storage.findStr(
+//                Filter.where("alignedFeatureId").eq(longId), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, (int) pageable.getOffset(), pageable.getPageSize(), "siriusScore", Database.SortOrder.DESCENDING
+//        ).map(this::toMiddleWareFCandidate).toList();
+//        long total = totalCountByFeature.get(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class).getOrDefault(longId, new AtomicLong(0)).get();
+//
+//        return new PageImpl<>(results, pageable, total);
+        return null;
     }
 
     @Override
