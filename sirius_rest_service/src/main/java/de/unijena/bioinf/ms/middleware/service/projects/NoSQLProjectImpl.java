@@ -20,9 +20,12 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
@@ -37,11 +40,14 @@ import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.sirius.SpectraMatch;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleList;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
@@ -202,22 +208,56 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .externalFeatureId(featureImport.getFeatureId())
                 .averageMass(featureImport.getIonMass());
 
-        if (featureImport.getMergedMs1() != null || featureImport.getMs2Spectra() != null) {
-            MSData.MSDataBuilder msDataBuilder = MSData.builder();
+        MSData.MSDataBuilder msDataBuilder = MSData.builder();
 
-            if (featureImport.getMergedMs1() != null)
-                msDataBuilder.mergedMs1Spectrum(new SimpleSpectrum(featureImport.getMergedMs1().getMasses(), featureImport.getMergedMs1().getIntensities()));
-
-            if (featureImport.getMs2Spectra() != null)
-                msDataBuilder.msnSpectra(featureImport.getMs2Spectra().stream().map(s -> new MutableMs2Spectrum(s, s.getPrecursorMz(), s.getCollisionEnergy(), s.getMsLevel(), s.getScanNumber())).toList());
-
-            builder.msData(msDataBuilder.build());
+        if (featureImport.getMergedMs1() != null) {
+            msDataBuilder.mergedMs1Spectrum(new SimpleSpectrum(featureImport.getMergedMs1().getMasses(), featureImport.getMergedMs1().getIntensities()));
         }
+
+        if (featureImport.getMs2Spectra() != null && !featureImport.getMs2Spectra().isEmpty()) {
+            List<MutableMs2Spectrum> msnSpectra = new ArrayList<>();
+            List<CollisionEnergy> ce = new ArrayList<>();
+            DoubleList pmz = new DoubleArrayList();
+            for (int i = 0; i < featureImport.getMs2Spectra().size(); i++) {
+                BasicSpectrum spectrum = featureImport.getMs2Spectra().get(i);
+                MutableMs2Spectrum mutableMs2 = new MutableMs2Spectrum(spectrum);
+                mutableMs2.setMsLevel(spectrum.getMsLevel());
+                if (spectrum.getScanNumber() != null) {
+                    mutableMs2.setScanNumber(spectrum.getScanNumber());
+                }
+                if (spectrum.getCollisionEnergy() != null) {
+                    mutableMs2.setCollisionEnergy(spectrum.getCollisionEnergy());
+                    ce.add(spectrum.getCollisionEnergy());
+                }
+                if (spectrum.getPrecursorMz() != null) {
+                    mutableMs2.setPrecursorMz(spectrum.getPrecursorMz());
+                    pmz.add(spectrum.getPrecursorMz());
+                }
+                msnSpectra.add(mutableMs2);
+                msDataBuilder.msnSpectra(msnSpectra);
+
+                if (featureImport.getMs2Spectra().size() == 1) {
+                    MergedMSnSpectrum mergedMSnSpectrum = MergedMSnSpectrum.of(new SimpleSpectrum(featureImport.getMs2Spectra().get(0)), ce.toArray(CollisionEnergy[]::new), null, pmz.toDoubleArray());
+                    msDataBuilder.mergedMSnSpectrum(mergedMSnSpectrum);
+                } else {
+                    throw new UnsupportedOperationException("MS2 merging not yet implemented!");
+                    // TODO merge MS2 peaks
+                    // MergedMSnSpectrum mergedMSnSpectrum = MergedMSnSpectrum.of(new SimpleSpectrum(), ce.toArray(CollisionEnergy[]::new), null, pmz.toDoubleArray());
+                    // msDataBuilder.mergedMSnSpectrum(mergedMSnSpectrum);
+                }
+            }
+        }
+
+        builder.msData(msDataBuilder.build());
+
 
         if (featureImport.getRtStartSeconds() != null && featureImport.getRtEndSeconds() != null) {
             builder.retentionTime(new RetentionTime(featureImport.getRtStartSeconds(), featureImport.getRtEndSeconds()));
         }
-        // TODO detected adducts
+
+        if (featureImport.getAdduct() != null) {
+            builder.ionType(PrecursorIonType.fromString(featureImport.getAdduct()));
+        }
         return builder.build();
     }
 
@@ -227,7 +267,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .name(features.getName())
                 .ionMass(features.getAverageMass());
 
-        if (features.getDetectedAdducts() != null)
+        if (features.getIonType() != null)
                 builder.adduct(features.getIonType().toString()); //is called adduct but refers to iontype (input setting) -> maybe rename
 
         RetentionTime rt = features.getRetentionTime();
@@ -247,12 +287,29 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     private MsData convertMSData(MSData msData) {
-        return MsData.builder()
-                .mergedMs1(new BasicSpectrum(msData.getMergedMs1Spectrum()))
-                .mergedMs2(new BasicSpectrum(msData.getMergedMSnSpectrum().getPeaks()))
-                // TODO ms1 spectra
-                .ms2Spectra(msData.getMsnSpectra().stream().map(BasicSpectrum::new).toList())
-                .build();
+        MsData.MsDataBuilder builder = MsData.builder();
+
+        if (msData.getMergedMs1Spectrum() != null)
+            builder.mergedMs1(new BasicSpectrum(msData.getMergedMs1Spectrum()));
+        if (msData.getMergedMSnSpectrum() != null) {
+            MergedMSnSpectrum mergedMSn = msData.getMergedMSnSpectrum();
+            BasicSpectrum ms2 = new BasicSpectrum(mergedMSn.getPeaks());
+            ms2.setCollisionEnergy(mergedMSn.getMergedCollisionEnergy());
+            ms2.setPrecursorMz(mergedMSn.getMergedPrecursorMz());
+            builder.mergedMs2(ms2);
+        }
+        if (msData.getMsnSpectra() != null) {
+            builder.ms2Spectra(msData.getMsnSpectra().stream().map(mutableMs2 -> {
+                BasicSpectrum ms2 = new BasicSpectrum(mutableMs2);
+                ms2.setCollisionEnergy(mutableMs2.getCollisionEnergy() != null ? mutableMs2.getCollisionEnergy() : CollisionEnergy.none());
+                ms2.setMsLevel(mutableMs2.getMsLevel() > 0 ? mutableMs2.getMsLevel() : 2);
+                ms2.setPrecursorMz(mutableMs2.getPrecursorMz() > 0 ? mutableMs2.getPrecursorMz() : mutableMs2.getMzAt(Spectrums.getIndexOfPeakWithMaximalIntensity(mutableMs2)));
+                ms2.setScanNumber(mutableMs2.getScanNumber());
+                return ms2;
+            }).toList());
+        }
+
+        return builder.build();
     }
 
     @SneakyThrows
@@ -284,7 +341,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
         List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream().map(this::convertCompound).toList();
         database.importCompounds(dbc);
-        // TODO test if all ids are correctly set!
         return dbc.stream().map(this::convertCompound).toList();
     }
 
