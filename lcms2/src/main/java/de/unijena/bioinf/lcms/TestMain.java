@@ -18,7 +18,7 @@ import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.storage.db.nosql.Database;
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import de.unijena.bioinf.storage.db.nosql.Filter;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -26,9 +26,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.logging.LogManager;
+import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
 
@@ -143,9 +143,6 @@ public class TestMain {
                     }
                     System.out.println("merged sample with " + hasIsotopes + " / " + (hasIsotopes + hasNoIsotopes) + " isotope features");
                 }
-                DoubleArrayList avgAl = new DoubleArrayList();
-                System.out.println("AVERAGE = " + avgAl.doubleStream().sum() / avgAl.size());
-                System.out.println("Good Traces = " + avgAl.doubleStream().filter(x -> x >= 5).sum());
 //            processing.exportFeaturesToFiles(merged, bac);
 
                 // TODO check intensity normalization in aligned features
@@ -171,18 +168,46 @@ public class TestMain {
                                 Feature                 SNR: %f
                                 AlignedIsotopicFeatures SNR: %f
                                 AlignedFeatures         SNR: %f
+                                Features with MS2          : %d
                                 """,
                         store.countAll(LCMSRun.class), store.countAll(Scan.class), store.countAll(MSMSScan.class),
                         store.countAll(SourceTrace.class), store.countAll(de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace.class),
                         store.countAll(Feature.class), store.countAll(AlignedIsotopicFeatures.class), store.countAll(AlignedFeatures.class),
                         store.findAllStr(Feature.class).mapToDouble(Feature::getSnr).average().orElse(Double.NaN),
                         store.findAllStr(AlignedIsotopicFeatures.class).mapToDouble(AlignedIsotopicFeatures::getSnr).average().orElse(Double.NaN),
-                        store.findAllStr(AlignedFeatures.class).mapToDouble(AlignedFeatures::getSnr).average().orElse(Double.NaN)
+                        store.findAllStr(AlignedFeatures.class).mapToDouble(AlignedFeatures::getSnr).average().orElse(Double.NaN),
+
+                        (int)(store.findAllStr(AlignedFeatures.class).filter(x->x.getMSData().isPresent() && x.getMSData().get().getMergedMSnSpectrum()!=null).count())
                 );
 
+                // simplify
+                HashMap<Long,Integer> runIds = new HashMap<>();
+
+                int count=0;
+                for (AlignedFeatures f : store.findAllStr(AlignedFeatures.class, "averageMass", Database.SortOrder.ASCENDING).filter(x->x.getMSData().isPresent() && x.getMSData().get().getMergedMSnSpectrum()!=null).toList())  {
+                    f.setFeatures(store.findStr(Filter.where("alignedFeatureId").eq(f.getAlignedFeatureId()), Feature.class).toList());
+                    System.out.println(f.getAverageMass() + " m/z \t" + f.getRetentionTime().getRetentionTimeInSeconds()/60d + " minutes\t" + f.getFeatures().get().size() + " aligned features [" +
+                            f.getFeatures().get().stream().map(x->(simpl(runIds, x.getRunId()))).sorted().map(Object::toString).collect(Collectors.joining(", ")) + "]");
+                    ++count;
+                }
+                /*
+
+                AdductManager manager = new AdductManager();
+                manager.addAdducts(Set.of(PrecursorIonType.getPrecursorIonType("[M+H]+"), PrecursorIonType.getPrecursorIonType("[M+Na]+"),
+                        PrecursorIonType.getPrecursorIonType("[M+K]+"),  PrecursorIonType.getPrecursorIonType("[M+NH3+H]+")));
+                manager.addLoss(MolecularFormula.parseOrThrow("H2O"));
+
+                AdductNetwork network = new AdductNetwork(new ProjectSpaceTraceProvider(ps),  store.findAllStr(AlignedFeatures.class).toArray(AlignedFeatures[]::new), manager);
+                */
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    private static synchronized int simpl(HashMap<Long,Integer> map, long key) {
+        if (map.containsKey(key)) return map.get(key);
+        else map.put(key, map.size());
+        return map.get(key);
     }
 }

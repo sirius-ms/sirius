@@ -43,6 +43,7 @@ public class MergeTracesWithoutGapFilling {
             final ProcessedSample sample = alignment.getSamples()[k];
             final ScanPointInterpolator mapper = sample.getScanPointInterpolator();
             sample.active();
+
             final SampleStats sampleStats = sample.getStorage().getStatistics();
             {
                 for (int i=0; i < mergedNoiseLevelPerScan.length; ++i) {
@@ -106,6 +107,13 @@ public class MergeTracesWithoutGapFilling {
         T = merged.getStorage().getMergeStorage().addTrace(T);
         mergedTrace.getTraceIds().add(T.getUid());
         mergedTrace.getSampleIds().add(sample.getUid());
+
+        /////
+        if (T.apexIntensity()<=0 || !Double.isFinite(T.mz(T.apex()))) {
+            System.err.println("something goes wrong.");
+        }
+        ////
+
         // mergin trace
         ScanPointInterpolator mapper = sample.getScanPointInterpolator();
         final int newStartId = mapper.lowerIndex(T.startId());
@@ -119,6 +127,12 @@ public class MergeTracesWithoutGapFilling {
                 mergedTrace.getInts()[k - mergedTrace.getStartId()] += normInt;
             }
         }
+
+        /////
+        if (Arrays.stream(mergedTrace.getInts()).max().getAsDouble() <= 0) {
+            System.out.println("weird...");
+        }
+        ////
 
         // add ms2 data
         addMs2(mergedTrace, sample, traces);
@@ -185,6 +199,13 @@ public class MergeTracesWithoutGapFilling {
                         sample.getMapping(), startId, endId, mz, intensities
                 );
                 T = merged.getStorage().getMergeStorage().addTrace(T);
+
+                /////
+                if (T.apexIntensity()<=0 || !Double.isFinite(T.mz(T.apex()))) {
+                    System.err.println("something goes wrong.");
+                }
+                ////
+
 
                 // get corresponding merged trace
                 MergedTrace isotopeMergedTrace;
