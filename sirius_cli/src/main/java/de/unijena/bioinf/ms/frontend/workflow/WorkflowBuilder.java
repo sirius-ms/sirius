@@ -79,7 +79,7 @@ import java.util.stream.StreamSupport;
  * On the other hand I do not think it is performance critical.
  */
 
-public class WorkflowBuilder{
+public class WorkflowBuilder {
     //root
     private CommandLine.Model.CommandSpec rootSpec;
 
@@ -374,16 +374,20 @@ public class WorkflowBuilder{
 
     private static class ClosingProjectPostprocessor extends PostprocessingJob<Void> {
 
-        private Stream<? extends Instance> instanceStream;
+        private Iterable<? extends Instance> instances;
 
         @Override
         public void setInput(Iterable<? extends Instance> instances, ParameterConfig config) {
-            this.instanceStream = StreamSupport.stream(instances.spliterator(), false);
+            this.instances = instances;
         }
 
         @Override
         protected Void compute() {
-            instanceStream.map(Instance::getProjectSpaceManager).distinct().forEach(ps -> {
+            Set<ProjectSpaceManager> managersToClose = new HashSet<>();
+            instances.forEach(i -> managersToClose.add(i.getProjectSpaceManager()));
+            instances = null;
+
+            managersToClose.forEach(ps -> {
                 try {
                     ps.close();
                 } catch (IOException e) {
@@ -395,7 +399,7 @@ public class WorkflowBuilder{
 
         @Override
         protected void cleanup() {
-            instanceStream = null;
+            instances = null;
             super.cleanup();
         }
     }
