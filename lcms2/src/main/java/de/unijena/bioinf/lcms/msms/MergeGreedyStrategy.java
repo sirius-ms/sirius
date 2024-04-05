@@ -31,7 +31,7 @@ public class MergeGreedyStrategy implements Ms2MergeStrategy{
         }
     }
 
-    private MergedSpectrum merge(ArrayList<MsMsQuerySpectrum> msMsQuerySpectrums) {
+    public static MergedSpectrum merge(List<MsMsQuerySpectrum> msMsQuerySpectrums) {
         final Deviation dev = new Deviation(6);
         final CosineQueryUtils ut = new CosineQueryUtils(new IntensityWeightedSpectralAlignment(new Deviation(10)));
         // start with the MsMs with highest score, then merge in everything that has good cosine

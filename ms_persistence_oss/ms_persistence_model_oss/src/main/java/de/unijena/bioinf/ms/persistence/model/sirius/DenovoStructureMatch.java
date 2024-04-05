@@ -21,14 +21,14 @@
 package de.unijena.bioinf.ms.persistence.model.sirius;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
 
 @SuperBuilder
-@Jacksonized
 @Getter
 @Setter
+@NoArgsConstructor
 public class DenovoStructureMatch extends StructureMatch {
     /**
      * Score produced but the model that generated this structure

@@ -28,16 +28,16 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import jakarta.persistence.Id;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @Getter
 @Setter
 @SuperBuilder
-@Jacksonized
+@NoArgsConstructor
 public class FormulaCandidate extends AlignedFeatureAnnotation {
     /**
      * Unique identifier of this formula candidate

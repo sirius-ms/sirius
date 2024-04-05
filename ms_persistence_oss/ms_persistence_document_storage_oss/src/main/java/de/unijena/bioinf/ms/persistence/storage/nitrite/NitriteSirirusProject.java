@@ -46,7 +46,8 @@ import java.util.function.Function;
 
 
 public class NitriteSirirusProject extends SiriusProjectDatabaseImpl<NitriteDatabase> {
-
+    //this is just needed to update json serializers with fingerprint data if it arrives
+    private final Metadata metadata;
     public NitriteSirirusProject(@NotNull Path location) throws IOException {
         this(location, SiriusProjectDocumentDatabase.buildMetadata(), NitriteDatabase.MVStoreCompression.DEFLATE); //highest compression rate
     }
@@ -55,30 +56,36 @@ public class NitriteSirirusProject extends SiriusProjectDatabaseImpl<NitriteData
     }
     private NitriteSirirusProject(@NotNull Path location, @NotNull final Metadata metadata, NitriteDatabase.MVStoreCompression compression, int cacheSizeMiB, int commitBufferByte) throws IOException {
         super(new NitriteDatabase(location, metadata, compression, cacheSizeMiB, commitBufferByte));
+        this.metadata = metadata;
+        updateSerializers();
+    }
+
+    private void updateSerializers() {
+        synchronized (metadata) {
+            Optional<FingerIdData> csiPos = findFingerprintData(FingerIdData.class, 1);
+            Optional<FingerIdData> csiNeg = findFingerprintData(FingerIdData.class, -1);
+
+            Optional<CanopusCfData> cfPos = findFingerprintData(CanopusCfData.class, 1);
+            Optional<CanopusCfData> cfNeg = findFingerprintData(CanopusCfData.class, -1);
+
+            Optional<CanopusNpcData> npcPos = findFingerprintData(CanopusNpcData.class, 1);
+            Optional<CanopusNpcData> npcNeg = findFingerprintData(CanopusNpcData.class, -1);
+
+            csiPos.ifPresent(data ->
+                    ((JSONReader.FingerprintCandidateDeserializer) metadata.deserializers.get(FingerprintCandidate.class))
+                            .setVersion(data.getBaseFingerprintVersion()));
+
+            ((CsiPredictionDeserializer) metadata.deserializers.get(CsiPrediction.class)).setVersions(
+                    csiPos.map(FingerprintData::getFingerprintVersion).orElse(null),
+                    csiNeg.map(FingerprintData::getFingerprintVersion).orElse(null));
 
 
-        Optional<FingerIdData> csiPos = findFingerprintData(FingerIdData.class, 1);
-        Optional<FingerIdData> csiNeg = findFingerprintData(FingerIdData.class, -1);
-
-        Optional<CanopusCfData> cfPos = findFingerprintData(CanopusCfData.class, 1);
-        Optional<CanopusCfData> cfNeg = findFingerprintData(CanopusCfData.class, -1);
-
-        Optional<CanopusNpcData> npcPos = findFingerprintData(CanopusNpcData.class, 1);
-        Optional<CanopusNpcData> npcNeg = findFingerprintData(CanopusNpcData.class, -1);
-
-        csiPos.ifPresent(data ->
-                ((JSONReader.FingerprintCandidateDeserializer) metadata.deserializers.get(FingerprintCandidate.class))
-                        .setVersion(data.getBaseFingerprintVersion()));
-
-        ((CsiPredictionDeserializer) metadata.deserializers.get(CsiPrediction.class)).setVersions(
-                csiPos.map(FingerprintData::getFingerprintVersion).orElse(null),
-                csiNeg.map(FingerprintData::getFingerprintVersion).orElse(null));
-
-        ((CanopusPredictionDeserializer) metadata.deserializers.get(CanopusPrediction.class)).setVersions(
-                cfPos.map(FingerprintData::getFingerprintVersion).orElse(null),
-                cfNeg.map(FingerprintData::getFingerprintVersion).orElse(null),
-                npcPos.map(FingerprintData::getFingerprintVersion).orElse(null),
-                npcNeg.map(FingerprintData::getFingerprintVersion).orElse(null));
+            ((CanopusPredictionDeserializer) metadata.deserializers.get(CanopusPrediction.class)).setVersions(
+                    cfPos.map(FingerprintData::getFingerprintVersion).orElse(null),
+                    cfNeg.map(FingerprintData::getFingerprintVersion).orElse(null),
+                    npcPos.map(FingerprintData::getFingerprintVersion).orElse(null),
+                    npcNeg.map(FingerprintData::getFingerprintVersion).orElse(null));
+        }
     }
 
     private <T extends FingerprintData<?>> Optional<T> findFpData(@NotNull Class<T> clzz, int charge, @NotNull Function<Document, T> expander) throws IOException {
@@ -103,6 +110,7 @@ public class NitriteSirirusProject extends SiriusProjectDatabaseImpl<NitriteData
         // wie should provide a project update method that takes care of deleting/updating the related data.
         try {
             getStorage().insert(FP_DATA_COLLECTION, FpDataDocs.toDoc(fpData, charge));
+            updateSerializers();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -113,6 +121,7 @@ public class NitriteSirirusProject extends SiriusProjectDatabaseImpl<NitriteData
     public void insertFingerprintData(FingerIdData fpData, int charge) {
         try {
             getStorage().upsert(FP_DATA_COLLECTION, FpDataDocs.toDoc(fpData, charge));
+            updateSerializers();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
