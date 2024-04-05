@@ -50,11 +50,13 @@ public class StorageUtils {
     public static Ms2Experiment toMs2Experiment(@NotNull AlignedFeatures feature, @NotNull ParameterConfig config) {
         MSData spectra = feature.getMSData().orElseThrow();
 
+        //should we copy or not?
         MutableMs2Experiment exp = new MutableMs2Experiment();
         exp.addAnnotationsFrom(config, Ms2ExperimentAnnotation.class);
-        exp.setMs2Spectra(spectra.getMsnSpectra());
+        exp.setMs2Spectra(spectra.getMsnSpectra() != null ? Collections.unmodifiableList(spectra.getMsnSpectra()) : List.of());
         exp.setMs1Spectra(Stream.of(spectra.getIsotopePattern(), spectra.getMergedMs1Spectrum())
                 .filter(Objects::nonNull).collect(Collectors.toList()));
+        exp.setMergedMs1Spectrum(spectra.getMergedMs1Spectrum());
         exp.setName(feature.getName()); //todo not stored do we want this?
         exp.setFeatureId(feature.getExternalFeatureId());//todo not stored do we want this?
         exp.setPrecursorIonType(feature.getIonType());
