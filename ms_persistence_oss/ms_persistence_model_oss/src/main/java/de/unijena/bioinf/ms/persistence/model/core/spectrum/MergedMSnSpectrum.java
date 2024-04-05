@@ -23,7 +23,10 @@ package de.unijena.bioinf.ms.persistence.model.core.spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import lombok.*;
+
+import java.util.Arrays;
 
 @Getter
 @Setter
@@ -32,6 +35,12 @@ import lombok.*;
 @AllArgsConstructor
 public class MergedMSnSpectrum {
 
+    private CollisionEnergy mergedCollisionEnergy;
+
+    private IsolationWindow mergedIsolationWindow;
+
+    private double mergedPrecursorMz;
+
     private CollisionEnergy[] collisionEnergies;
 
     private IsolationWindow[] isolationWindows;
@@ -39,5 +48,35 @@ public class MergedMSnSpectrum {
     private double[] percursorMzs;
 
     private SimpleSpectrum peaks;
+
+    public static MergedMSnSpectrum of(SimpleSpectrum mergedSpectrum, CollisionEnergy[] energies, IsolationWindow[] windows, double[] precursorMzs) {
+        CollisionEnergy mergedEnergy = CollisionEnergy.mergeAll(energies);
+        IsolationWindow mergedWindow = IsolationWindow.fromOffsets(
+                Arrays.stream(windows).mapToDouble(IsolationWindow::getLeftOffset).min().orElseThrow(),
+                Arrays.stream(windows).mapToDouble(IsolationWindow::getRightOffset).max().orElseThrow()
+        );
+        double minPmz = Arrays.stream(precursorMzs).min().orElse(0d);
+        double maxPmz = Arrays.stream(precursorMzs).max().orElse(Double.POSITIVE_INFINITY);
+        double mergedPmz = 0d;
+        double mergedPmzI = 0d;
+        for (int i = 0; i < mergedSpectrum.size(); i++) {
+            double mz = mergedSpectrum.getMzAt(i);
+            double intensity = mergedSpectrum.getIntensityAt(i);
+            if (mz >= minPmz && mz <= maxPmz && intensity > mergedPmzI) {
+                mergedPmz = mz;
+                mergedPmzI = intensity;
+            }
+        }
+
+        return MergedMSnSpectrum.builder()
+                .collisionEnergies(energies)
+                .isolationWindows(windows)
+                .percursorMzs(precursorMzs)
+                .mergedCollisionEnergy(mergedEnergy)
+                .mergedIsolationWindow(mergedWindow)
+                .mergedPrecursorMz(mergedPmz)
+                .peaks(mergedSpectrum)
+                .build();
+    }
 
 }
