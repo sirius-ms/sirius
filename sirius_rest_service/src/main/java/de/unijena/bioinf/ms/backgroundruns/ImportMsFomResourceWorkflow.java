@@ -27,18 +27,19 @@ import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.jjobs.ProgressSupport;
+import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJobNoSql;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJobSiriusPs;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
-import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.InstanceImporter;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.projectspace.SiriusProjectSpaceManager;
+import de.unijena.bioinf.projectspace.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -114,13 +115,18 @@ public class ImportMsFomResourceWorkflow implements Workflow, ProgressSupport {
                             workingDir,
                             inputResources.stream().map(PathInputResource::getResource).collect(Collectors.toList()),
                             () -> spsm, null, null);
-
+                    SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
+                    importerJJob.addJobProgressListener(progressSupport);
+                    importedCompounds = new ArrayList<>(importerJJob.getImportedCompounds());
+                } else if (psm instanceof NoSQLProjectSpaceManager spsm) {
+                    LcmsAlignSubToolJobNoSql importerJJob = new LcmsAlignSubToolJobNoSql(
+                            inputResources.stream().map(PathInputResource::getResource).collect(Collectors.toList()),
+                            () -> spsm);
                     SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
                     importerJJob.addJobProgressListener(progressSupport);
                     importedCompounds = new ArrayList<>(importerJJob.getImportedCompounds());
                 }else {
-                    //todo  call new preprocessing!!!
-                    importedCompounds = List.of();
+                    throw new IllegalArgumentException("Unknown project space implementation. Cannot import!");
                 }
             }
         } catch (ExecutionException e) {

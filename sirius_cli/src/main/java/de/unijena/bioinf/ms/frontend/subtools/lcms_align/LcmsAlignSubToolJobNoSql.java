@@ -43,6 +43,7 @@ import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import lombok.Getter;
 import org.apache.commons.io.function.IOSupplier;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,6 +54,8 @@ import java.util.stream.Collectors;
 
 public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManager> {
     List<Path> inputFiles;
+
+    @Getter
     protected final List<NoSQLInstance> importedCompounds = new ArrayList<>();
     private final IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier;
     private NoSQLProjectSpaceManager space;

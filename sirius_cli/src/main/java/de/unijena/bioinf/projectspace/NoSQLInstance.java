@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.projectspace;
 
+import com.googlecode.concurentlocks.ReentrantReadWriteUpdateLock;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
@@ -54,7 +55,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -63,14 +63,12 @@ public class NoSQLInstance implements Instance {
     private final NoSQLProjectSpaceManager manager;
     private final long id;
     private AlignedFeatures alignedFeatures;
-    private final ReentrantReadWriteLock alignedFeaturesLock = new ReentrantReadWriteLock();
+    private final ReentrantReadWriteUpdateLock alignedFeaturesLock = new ReentrantReadWriteUpdateLock();
 
     @SneakyThrows
     public NoSQLInstance(long id, NoSQLProjectSpaceManager manager) {
         this.id = id;
         this.manager = manager;
-        this.alignedFeatures = manager.getProject().getStorage().getByPrimaryKey(id, AlignedFeatures.class)
-                .orElseThrow(() -> new IllegalStateException("Could not find feature data of this instance. This should not be possible. Project might have been externally modified."));
     }
 
     @SneakyThrows
@@ -129,23 +127,23 @@ public class NoSQLInstance implements Instance {
         return getAlignedFeatures().getIonType();
     }
 
-    private void setAlignedFeatures(AlignedFeatures features) {
-        alignedFeaturesLock.writeLock().lock();
-        try {
-            alignedFeatures = features;
-        } finally {
-            alignedFeaturesLock.writeLock().unlock();
-        }
-    }
-
+    @SneakyThrows
     public AlignedFeatures getAlignedFeatures() {
-        alignedFeaturesLock.readLock().lock();
+        alignedFeaturesLock.updateLock().lock();
         try {
-            if (alignedFeatures == null)
-                throw new IllegalStateException("This instance (" + id + ") has already be cleared.");
+            if (alignedFeatures == null) {
+                alignedFeaturesLock.writeLock().lock();
+                try {
+                    if (alignedFeatures == null)
+                        alignedFeatures = manager.getProject().getStorage().getByPrimaryKey(id, AlignedFeatures.class)
+                                .orElseThrow(() -> new IllegalStateException("Could not find feature data of this instance. This should not be possible. Project might have been externally modified."));
+                } finally {
+                    alignedFeaturesLock.writeLock().unlock();
+                }
+            }
             return alignedFeatures;
         } finally {
-            alignedFeaturesLock.readLock().unlock();
+            alignedFeaturesLock.updateLock().unlock();
         }
     }
 
@@ -276,7 +274,12 @@ public class NoSQLInstance implements Instance {
 
     @Override
     public void clearCompoundCache() {
-        setAlignedFeatures(null);
+        alignedFeaturesLock.writeLock().lock();
+        try {
+            alignedFeatures = null;
+        } finally {
+            alignedFeaturesLock.writeLock().unlock();
+        }
     }
 
     @Override
