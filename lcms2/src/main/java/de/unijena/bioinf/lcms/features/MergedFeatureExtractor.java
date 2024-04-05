@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.merge.MergedTrace;
 import de.unijena.bioinf.lcms.msms.Ms2MergeStrategy;
 import de.unijena.bioinf.lcms.trace.ContiguousTrace;
@@ -18,6 +19,8 @@ import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -105,27 +108,22 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
         }
         {
             ms2MergeStrategy.assignMs2(mergedSample, mergedTrace, traceSegments, uid2sample, (mergedTrace1, segment, index, mergedSpectrum, spectra) -> {
-                CollisionEnergy[] ce = new CollisionEnergy[spectra.size()];
-                IsolationWindow[] iw = new IsolationWindow[spectra.size()];
-                double[] pmz = new double[spectra.size()];
+                List<CollisionEnergy> ce = new ArrayList<>();
+                List<IsolationWindow> iw = new ArrayList<>();
+                DoubleList pmz = new DoubleArrayList();
                 for (int i = 0; i < spectra.size(); i++) {
                     if (spectra.get(i).getHeader().getEnergy().isPresent()) {
-                        ce[i] = spectra.get(i).getHeader().getEnergy().get();
+                        ce.add(spectra.get(i).getHeader().getEnergy().get());
                     }
                     if (spectra.get(i).getHeader().getIsolationWindow().isPresent()) {
-                        iw[i] = spectra.get(i).getHeader().getIsolationWindow().get();
+                        iw.add(spectra.get(i).getHeader().getIsolationWindow().get());
                     }
-                    pmz[i] = spectra.get(i).getHeader().getPrecursorMz();
+                    pmz.add(spectra.get(i).getHeader().getPrecursorMz());
                 }
+                MergedMSnSpectrum mergedMSnSpectrum = MergedMSnSpectrum.of(new SimpleSpectrum(mergedSpectrum), ce.toArray(CollisionEnergy[]::new), iw.toArray(IsolationWindow[]::new), pmz.toDoubleArray());
 
                 msData[index] = MSData.builder()
-                        .mergedMSnSpectrum(MergedMSnSpectrum.builder()
-                                .collisionEnergies(ce)
-                                .isolationWindows(iw)
-                                .percursorMzs(pmz)
-                                .peaks(new SimpleSpectrum(mergedSpectrum))
-                                .build())
-                        // TODO MS level
+                        .mergedMSnSpectrum(mergedMSnSpectrum)
                         .msnSpectra(spectra.stream().map(s -> new MutableMs2Spectrum(s.getFilteredSpectrum(), s.getHeader().getPrecursorMz(), s.getHeader().getEnergy().get(), 2)).toList())
                         .build();
             });
@@ -141,8 +139,9 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
             alignedFeatures.setRunId(mergedSample.getRun().getRunId());
             alignedFeatures = buildFeature(mergedTrace.getUid(), mTrace, traceSegments[i], stats, trace2trace, alignedFeatures);
 
-            // TODO handle MS/MS spectra
             if (msData[i] != null) {
+                final int o = mTrace.startId();
+                msData[i].setMergedMs1Spectrum(Spectrums.subspectrum(new SimpleSpectrum(mergedTrace.getMz(), mergedTrace.getInts()), traceSegments[i].leftEdge - o, traceSegments[i].rightEdge - o));
                 alignedFeatures.setMsData(msData[i]);
             }
 
