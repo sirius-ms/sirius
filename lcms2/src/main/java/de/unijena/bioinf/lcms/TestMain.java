@@ -173,9 +173,9 @@ public class TestMain {
                         store.countAll(LCMSRun.class), store.countAll(Scan.class), store.countAll(MSMSScan.class),
                         store.countAll(SourceTrace.class), store.countAll(de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace.class),
                         store.countAll(Feature.class), store.countAll(AlignedIsotopicFeatures.class), store.countAll(AlignedFeatures.class),
-                        store.findAllStr(Feature.class).mapToDouble(Feature::getSnr).average().orElse(Double.NaN),
-                        store.findAllStr(AlignedIsotopicFeatures.class).mapToDouble(AlignedIsotopicFeatures::getSnr).average().orElse(Double.NaN),
-                        store.findAllStr(AlignedFeatures.class).mapToDouble(AlignedFeatures::getSnr).average().orElse(Double.NaN),
+                        store.findAllStr(Feature.class).map(Feature::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
+                        store.findAllStr(AlignedIsotopicFeatures.class).map(AlignedIsotopicFeatures::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
+                        store.findAllStr(AlignedFeatures.class).map(AlignedFeatures::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
 
                         (int)(store.findAllStr(AlignedFeatures.class).filter(x->x.getMSData().isPresent() && x.getMSData().get().getMergedMSnSpectrum()!=null).count())
                 );
