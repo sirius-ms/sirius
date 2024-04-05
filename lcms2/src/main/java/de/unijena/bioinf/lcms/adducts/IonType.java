@@ -16,4 +16,9 @@ public class IonType implements KnownAdductType {
     public Optional<PrecursorIonType> toPrecursorIonType() {
         return Optional.of(ionType);
     }
+
+    @Override
+    public String toString() {
+        return ionType.toString();
+    }
 }

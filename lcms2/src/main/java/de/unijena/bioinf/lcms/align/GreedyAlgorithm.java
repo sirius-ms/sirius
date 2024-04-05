@@ -16,11 +16,15 @@ public class GreedyAlgorithm implements AlignmentAlgorithm{
         eachLeft:
         for (int l=0; l < left.length; ++l) {
             final MoI L = left[l];
+            eachR:
             for (int r = rinit; r < right.length; ++r) {
                 final MoI R = right[r];
                 final double mzDelta = L.getMz() - R.getMz();
-                if (mzDelta<-maxAllowedMzDiff) rinit=r;
-                if (mzDelta>maxAllowedMzDiff) continue eachLeft;
+                if (mzDelta>maxAllowedMzDiff) {
+                    rinit=r;
+                    continue eachR;
+                }
+                if (mzDelta<-maxAllowedMzDiff) continue eachLeft;
                 if (Math.abs(L.getRetentionTime()-R.getRetentionTime())<maxAllowedRtDiff) {
                     final double score = scorer.score(stats, L, R);
                     possibleAlignments.add(new PossibleAlignment(l,r,(float)score));
