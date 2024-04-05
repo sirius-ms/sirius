@@ -22,11 +22,15 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.InChISMILESUtils;
+import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
@@ -129,6 +133,21 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
 
         checkForInterruption();
 
+        final FormulaJob formulaJobs = new FormulaJob(
+                idResult.getMolecularFormula(),
+                predictor.database,
+                CustomDataSources.getSources(),
+                idResult.getPrecursorIonType(),
+                true);
+
+        checkForInterruption();
+
+        //no error handling since this info is optional
+        WebWithCustomDatabase.CandidateResult candidateResult = submitJob(formulaJobs).getResult();
+        Map<String, FingerprintCandidate> dbCandidates = candidateResult == null ? Map.of() : candidateResult.getCombCandidatesStr().collect(Collectors.toMap(CompoundCandidate::getInchiKey2D, c -> c));
+
+        checkForInterruption();
+
         // create and submit jobs for transformation and fingerprinting
         final Collection<BasicJJob<List<Pair<FingerprintCandidate, MsNovelistCandidate>>>> candidateJobs =
                 new ArrayList<>(Partition.ofSize(candidates, SiriusJobs.getCPUThreads()).stream()
@@ -137,16 +156,20 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
                             protected List<Pair<FingerprintCandidate, MsNovelistCandidate>> compute() {
                                 List<Pair<FingerprintCandidate, MsNovelistCandidate>> result = new ArrayList<>(l.size());
                                 l.forEach(candidate -> {
-                                    IAtomContainer molecule = perceiveAromaticityOnSMILES(
-                                            candidate.getSmiles(), hydrogenAdder, aromaticity);
-                                    if (Objects.isNull(molecule)) return;
+                                    InChI inchi = InChISMILESUtils.getInchiFromSmilesOrThrow(candidate.getSmiles(), false);
+                                    FingerprintCandidate fingerprintCandidate = dbCandidates.get(inchi.key2D());
 
-                                    FingerprintCandidate fingerprintCandidate = new FingerprintCandidate(
-                                            InChISMILESUtils.getInchiFromSmilesOrThrow(candidate.getSmiles(), false),
-                                            Objects.requireNonNull(fpMask.mask(fixedFingerprinter.computeFingerprint(molecule)))
-                                    );
-                                    fingerprintCandidate.setSmiles(candidate.getSmiles());
+                                    if (fingerprintCandidate == null) {
+                                        IAtomContainer molecule = perceiveAromaticityOnSMILES(
+                                                candidate.getSmiles(), hydrogenAdder, aromaticity);
+                                        if (Objects.isNull(molecule)) return;
 
+                                        fingerprintCandidate = new FingerprintCandidate(
+                                                inchi,
+                                                Objects.requireNonNull(fpMask.mask(fixedFingerprinter.computeFingerprint(molecule)))
+                                        );
+                                        fingerprintCandidate.setSmiles(candidate.getSmiles());
+                                    }
                                     result.add(Pair.of(fingerprintCandidate, candidate));
                                 });
                                 return result;
