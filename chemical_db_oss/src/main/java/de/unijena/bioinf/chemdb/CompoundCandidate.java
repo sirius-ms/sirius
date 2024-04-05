@@ -246,22 +246,24 @@ public class CompoundCandidate {
             gen.writeNumberField("xlogp", value.xlogp);
             gen.writeStringField("smiles", value.smiles);
             gen.writeNumberField("bitset", value.bitset);
-            gen.writeObjectFieldStart("links");
-            final Set<String> set = new HashSet<>(3);
-            for (int k = 0; k < value.links.size(); ++k) {
-                final DBLink link = value.links.get(k);
-                if (set.add(link.name)) {
-                    gen.writeArrayFieldStart(link.name);
-                    gen.writeString(link.id);
-                    for (int j = k + 1; j < value.links.size(); ++j) {
-                        if (value.links.get(j).name.equals(link.name)) {
-                            gen.writeString(value.links.get(j).id);
+            if (value.links != null) {
+                gen.writeObjectFieldStart("links");
+                final Set<String> set = new HashSet<>(3);
+                for (int k = 0; k < value.links.size(); ++k) {
+                    final DBLink link = value.links.get(k);
+                    if (set.add(link.name)) {
+                        gen.writeArrayFieldStart(link.name);
+                        gen.writeString(link.id);
+                        for (int j = k + 1; j < value.links.size(); ++j) {
+                            if (value.links.get(j).name.equals(link.name)) {
+                                gen.writeString(value.links.get(j).id);
+                            }
                         }
+                        gen.writeEndArray();
                     }
-                    gen.writeEndArray();
                 }
+                gen.writeEndObject();
             }
-            gen.writeEndObject();
             if (value.pubmedIDs != null && value.pubmedIDs.getNumberOfPubmedIDs() > 0) {
                 gen.writeArrayFieldStart("pubmedIDs");
                 for (int id : value.pubmedIDs.getCopyOfPubmedIDs()) {

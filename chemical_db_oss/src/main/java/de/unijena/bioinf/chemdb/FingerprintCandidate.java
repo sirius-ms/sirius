@@ -27,9 +27,13 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.fp.FPIter;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.io.IOException;
 
+@Setter
+@Getter
 @JsonSerialize(using = FingerprintCandidate.Serializer.class)
 public class FingerprintCandidate extends CompoundCandidate {
 
@@ -43,14 +47,6 @@ public class FingerprintCandidate extends CompoundCandidate {
     public FingerprintCandidate(InChI inchi, Fingerprint fingerprint) {
         super(inchi);
         this.fingerprint = fingerprint;
-    }
-
-    public Fingerprint getFingerprint() {
-        return fingerprint;
-    }
-
-    public void setFingerprint(Fingerprint fp) {
-        this.fingerprint = fp;
     }
 
     public CompoundCandidate toCompoundCandidate(){

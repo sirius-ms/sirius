@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.persistence.model.sirius;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
@@ -30,6 +31,7 @@ import java.util.List;
 @SuperBuilder
 @Getter
 @Setter
+@NoArgsConstructor
 public abstract class StructureSearchResult<Match extends StructureMatch> extends AlignedFeatureAnnotation {
     // foreign field -> get via featureId
     @JsonIgnore

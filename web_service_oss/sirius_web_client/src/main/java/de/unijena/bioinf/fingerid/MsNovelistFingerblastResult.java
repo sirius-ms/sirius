@@ -37,6 +37,10 @@ public class MsNovelistFingerblastResult extends AbstractFingerblastResult<TopMs
         this.rnnScores = rnnScores;
     }
 
+    public double getRnnScore(int i){
+        return rnnScores[i];
+    }
+
     public MsNovelistFBCandidateFingerprints getCandidateFingerprints(){
         return new MsNovelistFBCandidateFingerprints(
                 results.stream().map(SScored::getCandidate).map(FingerprintCandidate::getFingerprint)

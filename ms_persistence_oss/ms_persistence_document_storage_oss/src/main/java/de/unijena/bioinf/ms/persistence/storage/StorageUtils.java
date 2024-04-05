@@ -90,12 +90,13 @@ public class StorageUtils {
                 .isolationWindows(null)
                 .build();
 
-        MSData msData = MSData.builder()
-                .isotopePattern(new IsotopePattern(isotopePattern, IsotopePattern.Type.MERGED_APEX))
+        MSData.MSDataBuilder builder = MSData.builder()
+                .isotopePattern(isotopePattern != null ? new IsotopePattern(isotopePattern, IsotopePattern.Type.MERGED_APEX) : null)
                 .mergedMs1Spectrum(mergedMs1)
                 .mergedMSnSpectrum(mergedMsn)
-                .msnSpectra(exp.getMs2Spectra())
-                .build();
+                .msnSpectra(exp.getMs2Spectra());
+
+        MSData msData = builder.build();
 
         Feature feature = Feature.builder()
                 .dataSource(DataSource.fromPath(exp.getSourceString()))

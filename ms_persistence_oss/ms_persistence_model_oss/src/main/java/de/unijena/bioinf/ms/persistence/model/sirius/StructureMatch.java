@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.persistence.model.sirius;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -32,8 +31,7 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @NoArgsConstructor
-public abstract class StructureMatch extends FormulaAnnotation {
-    @Id
+public abstract class StructureMatch extends FormulaAnnotationWithId {
     protected String candidateInChiKey; //can also be used to
 
     protected Double csiScore;
