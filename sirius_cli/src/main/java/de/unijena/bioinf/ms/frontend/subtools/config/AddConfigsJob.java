@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.frontend.subtools.config;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ms.annotations.RecomputeResults;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -85,6 +86,7 @@ public class AddConfigsJob extends InstanceJob {
         //name cannot be based on the ID because people might rename their compounds
         baseConfig = baseConfig.newIndependentInstance(ConfigType.RUNTIME.name(), true);
         inst.updateConfig(baseConfig);
+        inst.setRecompute(baseConfig.createInstanceWithDefaults(RecomputeResults.class).value());
     }
 
     @Override

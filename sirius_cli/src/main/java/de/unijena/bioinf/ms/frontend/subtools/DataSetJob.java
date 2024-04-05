@@ -54,9 +54,8 @@ public abstract class DataSetJob extends ToolChainJobImpl<Iterable<Instance>> im
         maxProgress = inputInstances.size() * 101L + 1;
         updateProgress(0L, maxProgress, Math.round(.25 * inputInstances.size()), "Invalidate existing Results and Recompute!");
 
-        //todo maybe make decidable if any or all match
         final boolean hasResults = inputInstances.stream().anyMatch(this::isAlreadyComputed);
-        final boolean recompute = inputInstances.stream().anyMatch(this::isRecompute);
+        final boolean recompute = inputInstances.stream().anyMatch(Instance::isRecompute);
 
         updateProgress(Math.round(.5 * inputInstances.size()), "Invalidate existing Results and Recompute!");
 
@@ -75,7 +74,7 @@ public abstract class DataSetJob extends ToolChainJobImpl<Iterable<Instance>> im
             updateProgress(Math.round(.9 * inputInstances.size()), "Invalidate existing Results and Recompute!");
 
             progressInfo( "Start computation...");
-            inputInstances.forEach(this::enableRecompute); // enable recompute so that following tools will recompute if results exist.
+            inputInstances.forEach(Instance::enableRecompute); // enable recompute so that following tools will recompute if results exist.
             updateProgress(inputInstances.size());
             computeAndAnnotateResult(inputInstances);
             updateProgress(maxProgress - 1, "DONE!");

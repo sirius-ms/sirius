@@ -55,6 +55,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -64,6 +65,8 @@ public class NoSQLInstance implements Instance {
     private final long id;
     private AlignedFeatures alignedFeatures;
     private final ReentrantReadWriteUpdateLock alignedFeaturesLock = new ReentrantReadWriteUpdateLock();
+
+    private final AtomicBoolean recompute = new AtomicBoolean(false);
 
     @SneakyThrows
     public NoSQLInstance(long id, NoSQLProjectSpaceManager manager) {
@@ -282,6 +285,7 @@ public class NoSQLInstance implements Instance {
         }
     }
 
+    //region state
     @Override
     public void setComputing(boolean computing) {
         project().setFeatureComputing(computing, id);
@@ -291,6 +295,18 @@ public class NoSQLInstance implements Instance {
     public boolean isComputing() {
         return project().isFeatureComputing(id);
     }
+
+    @Override
+    public boolean isRecompute() {
+        return recompute.get();
+    }
+
+    @Override
+    public void setRecompute(boolean recompute) {
+        this.recompute.set(recompute);
+    }
+
+    //endregion
 
     @Override
     public boolean hasDetectedAdducts() {
