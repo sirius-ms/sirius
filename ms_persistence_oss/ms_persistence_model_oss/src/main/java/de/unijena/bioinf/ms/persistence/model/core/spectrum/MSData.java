@@ -37,6 +37,9 @@ public class MSData {
     @Id
     private long msDataId;
 
+    /**
+     * ID of the aligned feature that own this ms data. Can be the id of an AlignedIsotopicFeatures or an AlignedFeature
+     */
     private long alignedFeatureId;
 
     /**
