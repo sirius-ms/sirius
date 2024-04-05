@@ -97,6 +97,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         initCounter(AlignedFeatures.class);
 
         initCounterByFeature(SpectraMatch.class, SpectraMatch::getAlignedFeatureId);
+        initCounterByFeature(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate::getAlignedFeatureId);
     }
 
     @SneakyThrows
@@ -527,30 +528,33 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return new PageImpl<>(candidates, pageable, total);
     }
 
+    @SneakyThrows
     @Override
     public FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignedFeatureId, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
-        // TODO
-        return null;
+        long longFId = Long.parseLong(formulaId);
+        long longAFId = Long.parseLong(alignedFeatureId);
+        return storage.findStr(Filter.and(Filter.where("alignedFeatureId").eq(longAFId), Filter.where("formulaId").eq(longFId)), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
+                .map(this::convertFormulaCandidate).findFirst().orElse(null);
     }
 
     @Override
     public Page<StructureCandidateScored> findStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
-        return null;
+        return new PageImpl<>(List.of());
     }
 
     @Override
     public Page<StructureCandidateScored> findDeNovoStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
-        return null;
+        return new PageImpl<>(List.of());
     }
 
     @Override
     public Page<StructureCandidateFormula> findStructureCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
-        return null;
+        return new PageImpl<>(List.of());
     }
 
     @Override
     public Page<StructureCandidateFormula> findDeNovoStructureCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
-        return null;
+        return new PageImpl<>(List.of());
     }
 
     @Override
