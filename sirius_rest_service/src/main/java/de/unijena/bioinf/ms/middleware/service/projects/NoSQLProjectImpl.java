@@ -172,6 +172,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         });
     }
 
+    private Pair<String, Database.SortOrder> sortFormulaCandidate(Sort sort) {
+        return sort(sort, Pair.of("siriusScore", Database.SortOrder.DESCENDING), Function.identity());
+    }
+
     private Compound convertCompound(de.unijena.bioinf.ms.persistence.model.core.Compound compound) {
         Compound.CompoundBuilder builder = Compound.builder()
                 .compoundId(String.valueOf(compound.getCompoundId()))
@@ -352,6 +356,21 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return builder.build();
     }
 
+    private FormulaCandidate convertFormulaCandidate(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate candidate) {
+        FormulaCandidate.FormulaCandidateBuilder builder = FormulaCandidate.builder()
+                .formulaId(String.valueOf(candidate.getFormulaId()))
+                .molecularFormula(candidate.getMolecularFormula().toString())
+                .adduct(candidate.getAdduct().toString())
+                .siriusScore(candidate.getSiriusScore())
+                .isotopeScore(candidate.getIsotopeScore())
+                .treeScore(candidate.getTreeScore())
+                .zodiacScore(candidate.getZodiacScore());
+
+        // TODO FormulaCandidate has a lot more fields!
+
+        return builder.build();
+    }
+
     @SneakyThrows
     @Override
     public Page<Compound> findCompounds(Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
@@ -501,18 +520,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
-//        long longId = Long.parseLong(alignedFeatureId);
-//        List<FormulaCandidate> results = storage.findStr(
-//                Filter.where("alignedFeatureId").eq(longId), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, (int) pageable.getOffset(), pageable.getPageSize(), "siriusScore", Database.SortOrder.DESCENDING
-//        ).map(this::toMiddleWareFCandidate).toList();
-//        long total = totalCountByFeature.get(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class).getOrDefault(longId, new AtomicLong(0)).get();
-//
-//        return new PageImpl<>(results, pageable, total);
-        return null;
+        long longId = Long.parseLong(alignedFeatureId);
+        List<FormulaCandidate> candidates = database.findByFeatureIdStr(longId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class).map(this::convertFormulaCandidate).toList();
+        long total = totalCountByFeature.get(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class).getOrDefault(longId, new AtomicLong(0)).get();
+
+        return new PageImpl<>(candidates, pageable, total);
     }
 
     @Override
     public FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignedFeatureId, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
+        // TODO
         return null;
     }
 
