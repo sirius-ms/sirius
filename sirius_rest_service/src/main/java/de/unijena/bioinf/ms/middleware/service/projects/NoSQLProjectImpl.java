@@ -28,6 +28,10 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
+import de.unijena.bioinf.lcms.msms.MergeGreedyStrategy;
+import de.unijena.bioinf.lcms.msms.MergedSpectrum;
+import de.unijena.bioinf.lcms.msms.MsMsQuerySpectrum;
+import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
 import de.unijena.bioinf.ms.middleware.model.annotations.SpectralLibraryMatch;
 import de.unijena.bioinf.ms.middleware.model.annotations.StructureCandidateFormula;
@@ -46,6 +50,7 @@ import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
+import io.hypersistence.tsid.TSID;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import lombok.Getter;
@@ -159,6 +164,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         });
     }
 
+    private Pair<String, Database.SortOrder> sortMatch(Sort sort) {
+        return sort(sort, Pair.of("similarity.similarity", Database.SortOrder.DESCENDING), s -> switch (s) {
+            case "similarity" -> "similarity.similarity";
+            case "sharedPeaks" -> "similarity.sharedPeaks";
+            default -> s;
+        });
+    }
+
     private Compound convertCompound(de.unijena.bioinf.ms.persistence.model.core.Compound compound) {
         Compound.CompoundBuilder builder = Compound.builder()
                 .compoundId(String.valueOf(compound.getCompoundId()))
@@ -211,39 +224,42 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         MSData.MSDataBuilder msDataBuilder = MSData.builder();
 
         if (featureImport.getMergedMs1() != null) {
-            msDataBuilder.mergedMs1Spectrum(new SimpleSpectrum(featureImport.getMergedMs1().getMasses(), featureImport.getMergedMs1().getIntensities()));
-        }
+            SimpleSpectrum mergedMs1 = new SimpleSpectrum(featureImport.getMergedMs1().getMasses(), featureImport.getMergedMs1().getIntensities());
+            msDataBuilder.mergedMs1Spectrum(mergedMs1);
 
-        if (featureImport.getMs2Spectra() != null && !featureImport.getMs2Spectra().isEmpty()) {
-            List<MutableMs2Spectrum> msnSpectra = new ArrayList<>();
-            List<CollisionEnergy> ce = new ArrayList<>();
-            DoubleList pmz = new DoubleArrayList();
-            for (int i = 0; i < featureImport.getMs2Spectra().size(); i++) {
-                BasicSpectrum spectrum = featureImport.getMs2Spectra().get(i);
-                MutableMs2Spectrum mutableMs2 = new MutableMs2Spectrum(spectrum);
-                mutableMs2.setMsLevel(spectrum.getMsLevel());
-                if (spectrum.getScanNumber() != null) {
-                    mutableMs2.setScanNumber(spectrum.getScanNumber());
-                }
-                if (spectrum.getCollisionEnergy() != null) {
-                    mutableMs2.setCollisionEnergy(spectrum.getCollisionEnergy());
-                    ce.add(spectrum.getCollisionEnergy());
-                }
-                if (spectrum.getPrecursorMz() != null) {
-                    mutableMs2.setPrecursorMz(spectrum.getPrecursorMz());
-                    pmz.add(spectrum.getPrecursorMz());
-                }
-                msnSpectra.add(mutableMs2);
-                msDataBuilder.msnSpectra(msnSpectra);
+            if (featureImport.getMs2Spectra() != null && !featureImport.getMs2Spectra().isEmpty()) {
+                List<MutableMs2Spectrum> msnSpectra = new ArrayList<>();
+                List<CollisionEnergy> ce = new ArrayList<>();
+                DoubleList pmz = new DoubleArrayList();
+                for (int i = 0; i < featureImport.getMs2Spectra().size(); i++) {
+                    BasicSpectrum spectrum = featureImport.getMs2Spectra().get(i);
+                    MutableMs2Spectrum mutableMs2 = new MutableMs2Spectrum(spectrum);
+                    mutableMs2.setMsLevel(spectrum.getMsLevel());
+                    if (spectrum.getScanNumber() != null) {
+                        mutableMs2.setScanNumber(spectrum.getScanNumber());
+                    }
+                    if (spectrum.getCollisionEnergy() != null) {
+                        mutableMs2.setCollisionEnergy(spectrum.getCollisionEnergy());
+                        ce.add(spectrum.getCollisionEnergy());
+                    }
+                    if (spectrum.getPrecursorMz() != null) {
+                        mutableMs2.setPrecursorMz(spectrum.getPrecursorMz());
+                        pmz.add(spectrum.getPrecursorMz());
+                    }
+                    msnSpectra.add(mutableMs2);
+                    msDataBuilder.msnSpectra(msnSpectra);
 
-                if (featureImport.getMs2Spectra().size() == 1) {
-                    MergedMSnSpectrum mergedMSnSpectrum = MergedMSnSpectrum.of(new SimpleSpectrum(featureImport.getMs2Spectra().get(0)), ce.toArray(CollisionEnergy[]::new), null, pmz.toDoubleArray());
-                    msDataBuilder.mergedMSnSpectrum(mergedMSnSpectrum);
-                } else {
-                    throw new UnsupportedOperationException("MS2 merging not yet implemented!");
-                    // TODO merge MS2 peaks
-                    // MergedMSnSpectrum mergedMSnSpectrum = MergedMSnSpectrum.of(new SimpleSpectrum(), ce.toArray(CollisionEnergy[]::new), null, pmz.toDoubleArray());
-                    // msDataBuilder.mergedMSnSpectrum(mergedMSnSpectrum);
+                    if (featureImport.getMs2Spectra().size() == 1) {
+                        MergedMSnSpectrum mergedMSnSpectrum = MergedMSnSpectrum.of(new SimpleSpectrum(featureImport.getMs2Spectra().get(0)), ce.toArray(CollisionEnergy[]::new), null, pmz.toDoubleArray());
+                        msDataBuilder.mergedMSnSpectrum(mergedMSnSpectrum);
+                    } else {
+                        List<MsMsQuerySpectrum> queries = featureImport.getMs2Spectra().stream().map(s -> new MsMsQuerySpectrum(
+                                new Ms2SpectrumHeader("", 0, true, s.getCollisionEnergy(), null, 0, s.getPrecursorMz(), s.getPrecursorMz(), 0d), 0, new SimpleSpectrum(s), mergedMs1)
+                        ).toList();
+                        MergedSpectrum mergedMS2 = MergeGreedyStrategy.merge(queries);
+                        MergedMSnSpectrum mergedMSnSpectrum = MergedMSnSpectrum.of(new SimpleSpectrum(mergedMS2), ce.toArray(CollisionEnergy[]::new), null, pmz.toDoubleArray());
+                        msDataBuilder.mergedMSnSpectrum(mergedMSnSpectrum);
+                    }
                 }
             }
         }
@@ -312,6 +328,30 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return builder.build();
     }
 
+    private SpectralLibraryMatch convertMatch(SpectraMatch match) {
+        SpectralLibraryMatch.SpectralLibraryMatchBuilder builder = SpectralLibraryMatch.builder();
+        if (match.getSimilarity() != null) {
+            builder.similarity(match.getSimilarity().similarity);
+            builder.sharedPeaks(match.getSimilarity().sharedPeaks);
+        }
+        builder.querySpectrumIndex(match.getQuerySpectrumIndex())
+                .dbName(match.getDbName())
+                .dbId(match.getDbId())
+                .uuid(match.getUuid())
+                .splash(match.getSplash())
+                .exactMass(Double.toString(match.getExactMass()))
+                .smiles(match.getSmiles())
+                .candidateInChiKey(match.getCandidateInChiKey());
+
+        if (match.getMolecularFormula() != null) {
+            builder.molecularFormula(match.getMolecularFormula().toString());
+        }
+        if (match.getAdduct() != null) {
+            builder.adduct(match.getAdduct().toString());
+        }
+        return builder.build();
+    }
+
     @SneakyThrows
     @Override
     public Page<Compound> findCompounds(Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
@@ -352,6 +392,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @Override
     public ImportResult importMsRunData(Collection<PathInputResource> inputResources, boolean alignRuns, boolean allowMs1OnlyData) {
+        // TODO
         return null;
     }
 
@@ -376,16 +417,18 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public void deleteCompoundById(String compoundId) {
         long id = Long.parseLong(compoundId);
         storage.removeAll(Filter.where("compoundId").eq(id), de.unijena.bioinf.ms.persistence.model.core.Compound.class);
-        // TODO cascade delete?
+        // TODO cascade delete? -> should be done in database
     }
 
     @Override
     public Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable, @NotNull EnumSet<AlignedFeatureQuality.OptField> optFields) {
+        // TODO
         return null;
     }
 
     @Override
     public AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId, @NotNull EnumSet<AlignedFeatureQuality.OptField> optFields) {
+        // TODO
         return null;
     }
 
@@ -413,31 +456,46 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @Override
     public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
-        return null;
+        // TODO get a meaningful compound name?
+        CompoundImport ci = CompoundImport.builder().name(TSID.fast().toString()).features(features).build();
+        Compound compound = addCompounds(List.of(ci), EnumSet.of(Compound.OptField.none), optFields).stream().findFirst().orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Compound could not be imported to " + projectId + ".")
+        );
+        return compound.getFeatures();
     }
 
+    @SneakyThrows
     @Override
     public AlignedFeature findAlignedFeaturesById(String alignedFeatureId, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
-        return null;
+        long id = Long.parseLong(alignedFeatureId);
+        return storage.getByPrimaryKey(id, AlignedFeatures.class)
+                .map(a -> {
+                    if (optFields.contains(AlignedFeature.OptField.msData)) {
+                        database.fetchMsData(a);
+                    }
+                    return convertFeature(a);
+                }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no aligned feature '" + alignedFeatureId + "' in project " + projectId + "."));
     }
 
+    @SneakyThrows
     @Override
     public void deleteAlignedFeaturesById(String alignedFeatureId) {
-
+        long id = Long.parseLong(alignedFeatureId);
+        storage.removeAll(Filter.where("alignedFeatureId").eq(id), AlignedFeatures.class);
+        // TODO cascade delete? -> should be done in database
     }
 
     @SneakyThrows
     @Override
     public Page<SpectralLibraryMatch> findLibraryMatchesByFeatureId(String alignedFeatureId, Pageable pageable) {
-//        long longId = Long.parseLong(alignedFeatureId);
-//        Pair<String, Database.SortOrder> sort = SortConverter.convert(pageable.getSort(), SpectraMatch.class);
-//        List<SpectralLibraryMatch> results = storage.findStr(
-//                Filter.where("alignedFeatureId").eq(longId), SpectraMatch.class, (int) pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight()
-//        ).map(s -> typeConverter.convert(s, SpectralLibraryMatch.class)).toList();
-//        long total = totalCountByFeature.get(SpectraMatch.class).getOrDefault(longId, new AtomicLong(0)).get();
-//
-//        return new PageImpl<>(results, pageable, total);
-        return null;
+        long longId = Long.parseLong(alignedFeatureId);
+        Pair<String, Database.SortOrder> sort = sortMatch(pageable.getSort());
+        List<SpectralLibraryMatch> results = storage.findStr(
+                Filter.where("alignedFeatureId").eq(longId), SpectraMatch.class, (int) pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight()
+        ).map(this::convertMatch).toList();
+        long total = totalCountByFeature.get(SpectraMatch.class).getOrDefault(longId, new AtomicLong(0)).get();
+
+        return new PageImpl<>(results, pageable, total);
     }
 
     @SneakyThrows

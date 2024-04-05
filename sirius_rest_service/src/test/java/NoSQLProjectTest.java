@@ -50,8 +50,8 @@ public class NoSQLProjectTest {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
             NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm);
 
-            BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2}, new double[]{1, 2}, 1d);
-            BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2}, new double[]{1, 2}, 1d);
+            BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
+            BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
 
             ms2.setCollisionEnergy(CollisionEnergy.fromString("20eV"));
             ms2.setMsLevel(2);
@@ -68,7 +68,7 @@ public class NoSQLProjectTest {
                             .rtEndSeconds(12d)
                             .mergedMs1(ms1)
                             .ms1Spectra(List.of(ms1))
-                            .ms2Spectra(List.of(ms2))
+                            .ms2Spectra(List.of(ms2, ms2))
                             .build())
             ).build());
 
@@ -97,12 +97,12 @@ public class NoSQLProjectTest {
             Assert.assertNotNull(d2);
 
             Assert.assertTrue(EqualsBuilder.reflectionEquals(d1.getMergedMs1(), d2.getMergedMs1()));
-            // TODO test merged MS2
-//            Assert.assertTrue(EqualsBuilder.reflectionEquals(d1.getMergedMs2(), d2.getMergedMs2()));
-            Assert.assertEquals(1, d1.getMs2Spectra().size());
-            Assert.assertEquals(1, d2.getMs2Spectra().size());
+            Assert.assertTrue(EqualsBuilder.reflectionEquals(d1.getMergedMs2(), d2.getMergedMs2()));
+            Assert.assertEquals(2, d1.getMs2Spectra().size());
+            Assert.assertEquals(2, d2.getMs2Spectra().size());
 
             Assert.assertTrue(EqualsBuilder.reflectionEquals(d1.getMs2Spectra().get(0), d2.getMs2Spectra().get(0)));
+            Assert.assertTrue(EqualsBuilder.reflectionEquals(d1.getMs2Spectra().get(1), d2.getMs2Spectra().get(1)));
 
         }
     }
