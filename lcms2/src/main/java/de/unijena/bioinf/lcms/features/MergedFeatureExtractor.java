@@ -1,5 +1,6 @@
 package de.unijena.bioinf.lcms.features;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
@@ -102,32 +103,33 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
         }
 
         final Int2ObjectOpenHashMap<ProcessedSample> uid2sample = new Int2ObjectOpenHashMap<>();
-        MSData[] msData = new MSData[traceSegments.length];
-        for (ProcessedSample sample : samplesInTrace) {
-            uid2sample.put(sample.getUid(), sample);
-        }
-        {
-            ms2MergeStrategy.assignMs2(mergedSample, mergedTrace, traceSegments, uid2sample, (mergedTrace1, segment, index, mergedSpectrum, spectra) -> {
-                List<CollisionEnergy> ce = new ArrayList<>();
-                List<IsolationWindow> iw = new ArrayList<>();
-                DoubleList pmz = new DoubleArrayList();
-                for (int i = 0; i < spectra.size(); i++) {
-                    if (spectra.get(i).getHeader().getEnergy().isPresent()) {
-                        ce.add(spectra.get(i).getHeader().getEnergy().get());
-                    }
-                    if (spectra.get(i).getHeader().getIsolationWindow().isPresent()) {
-                        iw.add(spectra.get(i).getHeader().getIsolationWindow().get());
-                    }
-                    pmz.add(spectra.get(i).getHeader().getPrecursorMz());
-                }
-                MergedMSnSpectrum mergedMSnSpectrum = MergedMSnSpectrum.of(new SimpleSpectrum(mergedSpectrum), ce.toArray(CollisionEnergy[]::new), iw.toArray(IsolationWindow[]::new), pmz.toDoubleArray());
+        final MSData[] msData = new MSData[traceSegments.length];
+        for (int i = 0; i < msData.length; i++)
+            msData[i] = MSData.builder().build();
 
-                msData[index] = MSData.builder()
-                        .mergedMSnSpectrum(mergedMSnSpectrum)
-                        .msnSpectra(spectra.stream().map(s -> new MutableMs2Spectrum(s.getFilteredSpectrum(), s.getHeader().getPrecursorMz(), s.getHeader().getEnergy().get(), 2)).toList())
-                        .build();
-            });
-        }
+        for (ProcessedSample sample : samplesInTrace)
+            uid2sample.put(sample.getUid(), sample);
+
+        ms2MergeStrategy.assignMs2(mergedSample, mergedTrace, traceSegments, uid2sample, (mergedTrace1, segment, index, mergedSpectrum, spectra) -> {
+            List<CollisionEnergy> ce = new ArrayList<>();
+            List<IsolationWindow> iw = new ArrayList<>();
+            DoubleList pmz = new DoubleArrayList();
+            for (int i = 0; i < spectra.size(); i++) {
+                if (spectra.get(i).getHeader().getEnergy().isPresent()) {
+                    ce.add(spectra.get(i).getHeader().getEnergy().get());
+                }
+                if (spectra.get(i).getHeader().getIsolationWindow().isPresent()) {
+                    iw.add(spectra.get(i).getHeader().getIsolationWindow().get());
+                }
+                pmz.add(spectra.get(i).getHeader().getPrecursorMz());
+            }
+
+            MergedMSnSpectrum mergedMSnSpectrum = MergedMSnSpectrum.of(new SimpleSpectrum(mergedSpectrum), ce.toArray(CollisionEnergy[]::new), iw.toArray(IsolationWindow[]::new), pmz.toDoubleArray());
+
+            msData[index].setMergedMSnSpectrum(mergedMSnSpectrum);
+            msData[index].setMsnSpectra(spectra.stream().map(s -> new MutableMs2Spectrum(s.getFilteredSpectrum(), s.getHeader().getPrecursorMz(), s.getHeader().getEnergy().get(), 2)).toList());
+        });
+
 
         F[] featureArr = featureArraySupplier.apply(traceSegments.length);
 
@@ -137,13 +139,14 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
 
             F alignedFeatures = featureSupplier.get();
             alignedFeatures.setRunId(mergedSample.getRun().getRunId());
-            alignedFeatures = buildFeature(mergedTrace.getUid(), mTrace, traceSegments[i], stats, trace2trace, alignedFeatures);
+            alignedFeatures.setIonType(PrecursorIonType.unknown(mergedSample.getPolarity()));
 
-            if (msData[i] != null) {
-                final int o = mTrace.startId();
-                msData[i].setMergedMs1Spectrum(Spectrums.subspectrum(new SimpleSpectrum(mergedTrace.getMz(), mergedTrace.getInts()), traceSegments[i].leftEdge - o, traceSegments[i].rightEdge - o));
+            buildFeature(mergedTrace.getUid(), mTrace, traceSegments[i], stats, trace2trace, alignedFeatures);
+
+            final int o = mTrace.startId();
+            msData[i].setMergedMs1Spectrum(Spectrums.subspectrum(new SimpleSpectrum(mergedTrace.getMz(), mergedTrace.getInts()), traceSegments[i].leftEdge - o, traceSegments[i].rightEdge - o));
+            if (msData[i].getMergedMs1Spectrum() != null || msData[i].getMergedMSnSpectrum() != null || msData[i].getIsotopePattern() != null)
                 alignedFeatures.setMsData(msData[i]);
-            }
 
             List<Feature> childFeatures = new ArrayList<>();
             for (int k=0; k < individualSegments.length; ++k) {
@@ -171,7 +174,7 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
             TraceSegment segment,
             SampleStats stats,
             Int2LongMap trace2trace,
-            F feature
+            final F feature
     ) {
         final int o = mTrace.startId();
 

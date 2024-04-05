@@ -36,6 +36,7 @@ import de.unijena.bioinf.storage.db.nosql.Index;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -176,6 +177,8 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
             importOptionals(f.getIsotopicFeatures(), f.getAlignedFeatureId(), this::importAlignedIsotopicFeatures);
             if (f.getMSData().isPresent()) {
                 importMSData(f.getMSData().get(), f.getAlignedFeatureId());
+            } else {
+                LoggerFactory.getLogger(getClass()).warn("Importing AlignedFeatures without MSData! Feature: " + f.getName() + "| RT: " + f.getRetentionTime() + "| M/Z: " + f.getAverageMass());
             }
         }
     }
@@ -189,6 +192,8 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
             importOptionals(f.getFeatures(), f.getAlignedIsotopeFeatureId(), this::importFeatures);
             if (f.getMSData().isPresent()) {
                 importMSData(f.getMSData().get(), f.getAlignedIsotopeFeatureId());
+            } else {
+                LoggerFactory.getLogger(getClass()).warn("Importing AlignedIsotopicFeatures without MSData! RT: " + f.getRetentionTime() + "| M/Z: " + f.getAverageMass());
             }
         }
     }
