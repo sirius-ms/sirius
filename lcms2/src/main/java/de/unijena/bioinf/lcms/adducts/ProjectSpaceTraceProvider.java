@@ -33,7 +33,7 @@ public class ProjectSpaceTraceProvider implements TraceProvider {
         return feature.getTraceRef().map(id-> {
             Iterator<MergedTrace> iter = null;
             try {
-                iter = storage.getStorage().find(Filter.where("mergedTraceId").eq(id), MergedTrace.class).iterator();
+                iter = storage.getStorage().find(Filter.where("mergedTraceId").eq(id.getTraceId()), MergedTrace.class).iterator();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -72,8 +72,13 @@ public class ProjectSpaceTraceProvider implements TraceProvider {
         return map;
     }
 
-    private List<Feature> getFeatures(AlignedFeatures feature) {
-        if (feature.getFeatures().isEmpty()) return Collections.emptyList();
-        else return feature.getFeatures().get();
+    private List<Feature> getFeatures(AlignedFeatures feature)  {
+        if (feature.getFeatures().isEmpty()) {
+            try {
+                return storage.getStorage().findStr(Filter.where("alignedFeatureId").eq(feature.getAlignedFeatureId()), Feature.class).toList();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else return feature.getFeatures().get();
     }
 }

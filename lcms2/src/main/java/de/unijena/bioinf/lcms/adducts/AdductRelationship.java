@@ -15,4 +15,9 @@ public class AdductRelationship implements KnownMassDelta{
     public boolean isCompatible(KnownAdductType left, KnownAdductType right) {
         return left.equals(this.left) && right.equals(this.right);
     }
+
+    @Override
+    public String toString() {
+        return "AdductRelationship{" + left.toString() + " --> " + right.toString() + "}";
+    }
 }
