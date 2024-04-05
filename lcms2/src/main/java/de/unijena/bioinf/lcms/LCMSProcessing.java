@@ -179,7 +179,6 @@ public class LCMSProcessing {
 
         Int2LongMap trace2trace = new Int2LongOpenHashMap();
         for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
-            trace.finishMerging();
             ProcessedSample[] samplesInTrace = new ProcessedSample[trace.getSampleIds().size()];
             for (int i = 0; i < trace.getSampleIds().size(); ++i) {
                 samplesInTrace[i] = idx2sample.get(trace.getSampleIds().getInt(i));
