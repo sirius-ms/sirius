@@ -281,7 +281,6 @@ public class NoSQLInstance implements Instance {
             alignedFeatures = null;
         } finally {
             alignedFeaturesLock.writeLock().unlock();
-            System.out.println("===> Disposed Feature: " + id);
         }
     }
 
@@ -608,9 +607,13 @@ public class NoSQLInstance implements Instance {
             for (FingerprintCandidate c : candidates)
                 if (!project().getStorage().containsPrimaryKey(c.getInchiKey2D(), FingerprintCandidate.class))
                     toInsert.add(c);
+            long mapped = candidates.stream().filter(c -> c.getLinks() != null && !c.getLinks().isEmpty()).count();
 
+            System.out.println(mapped + " of " +  candidates.size() + " MsNovelist candidates have been mapped to db hits.");
             return project().getStorage().insertAll(toInsert);
         });
+
+
 
         System.out.println("Inserted: " + inserted + " of " + candidates.size() + "DeNovo candidates.");
     }
