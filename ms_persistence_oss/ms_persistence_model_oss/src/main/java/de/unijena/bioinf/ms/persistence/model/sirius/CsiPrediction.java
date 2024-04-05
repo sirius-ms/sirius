@@ -23,14 +23,14 @@ package de.unijena.bioinf.ms.persistence.model.sirius;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
 
 @SuperBuilder
-@Jacksonized
 @Getter
 @Setter
+@NoArgsConstructor
 public class CsiPrediction extends FormulaAnnotationWithId {
     private int charge;
     @JsonSerialize(using = ProbabilityFingerprint.Serializer.class)

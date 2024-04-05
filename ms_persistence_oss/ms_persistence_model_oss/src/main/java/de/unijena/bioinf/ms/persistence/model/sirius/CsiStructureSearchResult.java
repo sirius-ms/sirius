@@ -23,9 +23,9 @@ package de.unijena.bioinf.ms.persistence.model.sirius;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
 
 import java.util.Collection;
 import java.util.List;
@@ -33,9 +33,9 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 @SuperBuilder
-@Jacksonized
 @Getter
 @Setter
+@NoArgsConstructor
 public class CsiStructureSearchResult extends StructureSearchResult<CsiStructureMatch> {
     //ID: alignedFeatureId is the pk
     private Double confidenceExact;

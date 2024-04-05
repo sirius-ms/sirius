@@ -319,7 +319,7 @@ public class NitriteDatabase implements Database<Document> {
         }
     }
 
-    private <T> T read(Callable<T> callable) throws IOException {
+    public  <T> T read(Callable<T> callable) throws IOException {
         return this.callIfOpen(() -> {
             readLock.lock();
             try {
@@ -330,7 +330,7 @@ public class NitriteDatabase implements Database<Document> {
         });
     }
 
-    private <T> T write(Callable<T> callable) throws IOException {
+    public <T> T write(Callable<T> callable) throws IOException {
         return this.callIfOpen(() -> {
             writeLock.lock();
             try {
@@ -781,6 +781,11 @@ public class NitriteDatabase implements Database<Document> {
                 targetField);
     }
 
+
+    @Override
+    public <T> boolean containsPrimaryKey(Object primaryKey, Class<T> clazz) throws IOException {
+        return count(Filter.where(this.primaryKeyFields.get(clazz).getName()).eq(primaryKey), clazz) > 0;
+    }
     @Override
     public <T> long count(Filter filter, Class<T> clazz) throws IOException {
         return this.read(() -> {

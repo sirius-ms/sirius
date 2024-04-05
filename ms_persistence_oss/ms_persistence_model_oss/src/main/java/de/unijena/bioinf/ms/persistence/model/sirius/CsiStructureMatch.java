@@ -30,5 +30,6 @@ import lombok.experimental.SuperBuilder;
 @Setter
 @NoArgsConstructor
 public class CsiStructureMatch extends StructureMatch {
+
     protected Double mcesDistToTopHit;
 }
