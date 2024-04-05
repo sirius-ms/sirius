@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.ms.InputFileConfig;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.JSONReader;
+import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CanopusPredictionDeserializer;
@@ -169,7 +170,14 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     @SneakyThrows
     default AlignedFeatures importMs2ExperimentAsAlignedFeature(Ms2Experiment exp) throws IOException {
         AlignedFeatures alignedFeature = StorageUtils.fromMs2Experiment(exp);
-        importAlignedFeatures(List.of(alignedFeature));
+        Compound compound = Compound.builder()
+                .name(alignedFeature.getName())
+                .rt(alignedFeature.getRetentionTime())
+                .neutralMass(alignedFeature.getIonType().subtractIonAndAdduct(alignedFeature.getAverageMass()))
+                .rt(alignedFeature.getRetentionTime())
+                .adductFeatures(List.of(alignedFeature))
+                .build();
+        importCompounds(List.of(compound));
         //add configs that might have been read from input file to project space
         Parameters config = exp.getAnnotation(InputFileConfig.class).map(InputFileConfig::config)
                 .map(c -> Parameters.of(c, ConfigType.INPUT)).orElse(null);
@@ -182,7 +190,16 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
     default List<AlignedFeatures> importMs2ExperimentsAsAlignedFeatures(List<Ms2Experiment> ms2Experiments) throws IOException {
         List<AlignedFeatures> alignedFeatures = ms2Experiments.stream().map(StorageUtils::fromMs2Experiment).toList();
-        importAlignedFeatures(alignedFeatures);
+        List<Compound> compounds = alignedFeatures.stream().map(
+                alignedFeature -> Compound.builder()
+                        .name(alignedFeature.getName())
+                        .rt(alignedFeature.getRetentionTime())
+                        .neutralMass(alignedFeature.getIonType().subtractIonAndAdduct(alignedFeature.getAverageMass()))
+                        .rt(alignedFeature.getRetentionTime())
+                        .adductFeatures(List.of(alignedFeature))
+                        .build()
+        ).toList();
+        importCompounds(compounds);
         return alignedFeatures;
     }
 
