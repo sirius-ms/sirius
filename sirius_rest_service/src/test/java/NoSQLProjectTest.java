@@ -18,18 +18,21 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
+import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.FeatureImport;
+import de.unijena.bioinf.ms.middleware.model.features.MsData;
+import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.junit.Assert;
 import org.junit.Test;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.io.IOException;
@@ -47,17 +50,59 @@ public class NoSQLProjectTest {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
             NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm);
 
+            BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2}, new double[]{1, 2}, 1d);
+            BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2}, new double[]{1, 2}, 1d);
+
+            ms2.setCollisionEnergy(CollisionEnergy.fromString("20eV"));
+            ms2.setMsLevel(2);
+            ms2.setPrecursorMz(42d);
+            ms2.setScanNumber(5);
+
             List<CompoundImport> imports = List.of(CompoundImport.builder().name("foo").features(
-                    List.of(FeatureImport.builder().name("foo").ionMass(42d).build())
-                    // TODO add more properties and msdata
+                    List.of(FeatureImport.builder()
+                            .name("foo")
+                            .featureId("testFID")
+                            .ionMass(42d)
+                            .adduct("M+H+")
+                            .rtStartSeconds(6d)
+                            .rtEndSeconds(12d)
+                            .mergedMs1(ms1)
+                            .ms1Spectra(List.of(ms1))
+                            .ms2Spectra(List.of(ms2))
+                            .build())
             ).build());
 
             List<Compound> compounds = project.addCompounds(imports, EnumSet.of(Compound.OptField.none), EnumSet.of(AlignedFeature.OptField.msData));
+            List<Compound> compounds2 = project.findCompounds(Pageable.unpaged(), EnumSet.of(Compound.OptField.none), EnumSet.of(AlignedFeature.OptField.msData)).getContent();
 
-            Page<Compound> compounds2 = project.findCompounds(Pageable.unpaged(), EnumSet.of(Compound.OptField.none), EnumSet.of(AlignedFeature.OptField.msData));
+            Assert.assertEquals(1, compounds.size());
+            Assert.assertEquals(1, compounds2.size());
 
-            System.out.println(compounds);
-            System.out.println(compounds2);
+            Compound c1 = compounds.get(0);
+            Compound c2 = compounds2.get(0);
+
+            Assert.assertEquals(1, c1.getFeatures().size());
+            Assert.assertEquals(1, c2.getFeatures().size());
+
+            AlignedFeature f1 = c1.getFeatures().get(0);
+            AlignedFeature f2 = c2.getFeatures().get(0);
+
+            Assert.assertTrue(EqualsBuilder.reflectionEquals(c1, c2, "features"));
+            Assert.assertTrue(EqualsBuilder.reflectionEquals(f1, f2, "msData"));
+
+            MsData d1 = f1.getMsData();
+            MsData d2 = f2.getMsData();
+
+            Assert.assertNotNull(d1);
+            Assert.assertNotNull(d2);
+
+            Assert.assertTrue(EqualsBuilder.reflectionEquals(d1.getMergedMs1(), d2.getMergedMs1()));
+            // TODO test merged MS2
+//            Assert.assertTrue(EqualsBuilder.reflectionEquals(d1.getMergedMs2(), d2.getMergedMs2()));
+            Assert.assertEquals(1, d1.getMs2Spectra().size());
+            Assert.assertEquals(1, d2.getMs2Spectra().size());
+
+            Assert.assertTrue(EqualsBuilder.reflectionEquals(d1.getMs2Spectra().get(0), d2.getMs2Spectra().get(0)));
 
         }
     }
