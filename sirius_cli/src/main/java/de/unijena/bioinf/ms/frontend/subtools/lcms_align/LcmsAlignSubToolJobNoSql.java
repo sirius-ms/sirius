@@ -50,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManager> {
@@ -153,9 +154,9 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                 store.countAll(LCMSRun.class), store.countAll(Scan.class), store.countAll(MSMSScan.class),
                 store.countAll(SourceTrace.class), store.countAll(de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace.class),
                 store.countAll(de.unijena.bioinf.ms.persistence.model.core.feature.Feature.class), store.countAll(AlignedIsotopicFeatures.class), store.countAll(AlignedFeatures.class),
-                store.findAllStr(de.unijena.bioinf.ms.persistence.model.core.feature.Feature.class).mapToDouble(Feature::getSnr).average().orElse(Double.NaN),
-                store.findAllStr(AlignedIsotopicFeatures.class).mapToDouble(AlignedIsotopicFeatures::getSnr).average().orElse(Double.NaN),
-                store.findAllStr(AlignedFeatures.class).mapToDouble(AlignedFeatures::getSnr).average().orElse(Double.NaN)
+                store.findAllStr(de.unijena.bioinf.ms.persistence.model.core.feature.Feature.class).map(Feature::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
+                store.findAllStr(AlignedIsotopicFeatures.class).map(AlignedIsotopicFeatures::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
+                store.findAllStr(AlignedFeatures.class).map(AlignedFeatures::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN)
         );
 
         return space;

@@ -76,8 +76,7 @@ public class NoSQLInstance implements Instance {
 
     @SneakyThrows
     public NoSQLInstance(AlignedFeatures alignedFeatures, NoSQLProjectSpaceManager manager) {
-        this.id = alignedFeatures.getAlignedFeatureId();
-        this.manager = manager;
+        this(alignedFeatures.getAlignedFeatureId(), manager);
         this.alignedFeatures = alignedFeatures;
     }
 
@@ -282,6 +281,7 @@ public class NoSQLInstance implements Instance {
             alignedFeatures = null;
         } finally {
             alignedFeaturesLock.writeLock().unlock();
+            System.out.println("===> Disposed Feature: " + id);
         }
     }
 

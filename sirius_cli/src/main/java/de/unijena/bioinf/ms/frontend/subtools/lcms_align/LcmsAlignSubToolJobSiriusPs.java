@@ -80,7 +80,7 @@ public class LcmsAlignSubToolJobSiriusPs extends PreprocessingJob<ProjectSpaceMa
 
 
     public LcmsAlignSubToolJobSiriusPs(InputFilesOptions input, @NotNull IOSupplier<SiriusProjectSpaceManager> projectSupplier, LcmsAlignOptions options) {
-        this(getWorkingDirectory(input), input.msInput.msParserfiles.keySet().stream().sorted().collect(Collectors.toList()), projectSupplier, options.getWorkflow().orElse(null), options.statistics.toPath());
+        this(getWorkingDirectory(input), input.msInput.msParserfiles.keySet().stream().sorted().collect(Collectors.toList()), projectSupplier, options.getWorkflow().orElse(null), options.statistics != null ? options.statistics.toPath() : null);
     }
 
     public LcmsAlignSubToolJobSiriusPs(@NotNull Path workingDir, @NotNull List<Path> inputFiles, @NotNull IOSupplier<SiriusProjectSpaceManager> projectSupplier, @Nullable LCMSWorkflow workflow, @Nullable Path statistics) {
