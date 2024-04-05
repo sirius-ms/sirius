@@ -44,6 +44,11 @@ public class MergeMvStorage implements MergeStorage{
     @Override
     public ContiguousTrace addTrace(ContiguousTrace contiguousTrace) {
         ContiguousTrace tr = contiguousTrace.withUID(traceCounter.getAndIncrement());
+        /////
+        if (contiguousTrace.apexIntensity()<=0 || !Double.isFinite(contiguousTrace.mz(contiguousTrace.apex()))) {
+            System.err.println("something goes wrong.");
+        }
+        ////
         underlyingTraces.put(tr.getUid(), tr);
         return tr;
     }
