@@ -47,6 +47,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 public class SiriusProjectSpaceInstance implements Instance {
@@ -55,6 +56,9 @@ public class SiriusProjectSpaceInstance implements Instance {
     private CompoundContainer compoundCache;
 
     protected Map<FormulaResultId, FormulaResult> formulaResultCache = new HashMap<>();
+
+    private final AtomicBoolean recompute = new AtomicBoolean(false);
+
 
     protected SiriusProjectSpaceInstance(@NotNull CompoundContainer compoundContainer, @NotNull SiriusProjectSpaceManager spaceManager) {
         this.compoundCache = compoundContainer;
@@ -488,6 +492,8 @@ public class SiriusProjectSpaceInstance implements Instance {
     }
 
     //endregion
+
+    //region state
     @Override
     public synchronized void setComputing(boolean computing) {
         projectSpace().setFlags(CompoundContainerId.Flag.COMPUTING, computing, getCompoundContainerId());
@@ -497,6 +503,17 @@ public class SiriusProjectSpaceInstance implements Instance {
     public synchronized boolean isComputing() {
         return projectSpace().flag(getCompoundContainerId(), CompoundContainerId.Flag.COMPUTING);
     }
+
+    @Override
+    public boolean isRecompute() {
+        return recompute.get();
+    }
+
+    @Override
+    public void setRecompute(boolean recompute) {
+        this.recompute.set(recompute);
+    }
+    //endregion
 
     @Override
     public synchronized void saveDetectedAdductsAnnotation(DetectedAdducts detectedAdducts) {

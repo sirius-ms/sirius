@@ -68,13 +68,13 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
         updateProgress(1);
 
         checkForInterruption();
-        if (!hasResults || isRecompute(input)) {
+        if (!hasResults || input.isRecompute()) {
             if (hasResults) {
                 invalidateResults(input);
             }
             updateProgress(2, "Invalidate existing Results and Recompute!");
             progressInfo("Start computation...");
-            setRecompute(input, true); // enable recompute so that following tools will recompute if results exist.
+            input.setRecompute(true); // enable recompute so that following tools will recompute if results exist.
             checkForInterruption();
             computeAndAnnotateResult(input);
             checkForInterruption();
@@ -82,7 +82,6 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
         } else {
             updateProgress(JobProgressEvent.DEFAULT_MAX - 1, "Skipping Job because results already Exist and recompute not requested.");
         }
-
         return input;
     }
 

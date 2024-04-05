@@ -63,7 +63,6 @@ public interface Instance {
 
     ProjectSpaceManager getProjectSpaceManager();
 
-    //region load from projectSpace
     Ms2Experiment getExperiment();
 
     boolean hasMs1();
@@ -93,20 +92,26 @@ public interface Instance {
 
     //region state
     void clearCompoundCache();
-
     default void enableComputing() {
         setComputing(true);
     }
-
     default void disableComputing() {
         setComputing(false);
     }
-
+    boolean isComputing();
     void setComputing(boolean computing);
 
-    boolean isComputing();
+    boolean isRecompute();
+    default void enableRecompute() {
+        setRecompute(true);
+    }
+    default void disableRecompute() {
+        setRecompute(false);
+    }
+    void setRecompute(boolean recompute);
     //endregion
 
+    //region adduct detection
     boolean hasDetectedAdducts();
     @Deprecated
     void saveDetectedAdductsAnnotation(DetectedAdducts detectedAdducts);
@@ -118,7 +123,7 @@ public interface Instance {
     default void deleteDetectedAdducts(){
         saveDetectedAdducts((de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts) null);
     }
-
+    //endregion
 
     void saveSpectraSearchResult(SpectralSearchResult result);
     boolean hasSpectraSearchResult();
