@@ -23,8 +23,8 @@ package de.unijena.bioinf.ms.persistence.model.core.spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import lombok.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -49,12 +49,9 @@ public class MergedMSnSpectrum {
 
     private SimpleSpectrum peaks;
 
-    public static MergedMSnSpectrum of(SimpleSpectrum mergedSpectrum, CollisionEnergy[] energies, IsolationWindow[] windows, double[] precursorMzs) {
+    public static MergedMSnSpectrum of(SimpleSpectrum mergedSpectrum, CollisionEnergy[] energies, @Nullable IsolationWindow[] windows, double[] precursorMzs) {
         CollisionEnergy mergedEnergy = CollisionEnergy.mergeAll(energies);
-        IsolationWindow mergedWindow = IsolationWindow.fromOffsets(
-                Arrays.stream(windows).mapToDouble(IsolationWindow::getLeftOffset).min().orElseThrow(),
-                Arrays.stream(windows).mapToDouble(IsolationWindow::getRightOffset).max().orElseThrow()
-        );
+
         double minPmz = Arrays.stream(precursorMzs).min().orElse(0d);
         double maxPmz = Arrays.stream(precursorMzs).max().orElse(Double.POSITIVE_INFINITY);
         double mergedPmz = 0d;
@@ -68,15 +65,24 @@ public class MergedMSnSpectrum {
             }
         }
 
-        return MergedMSnSpectrum.builder()
+        MergedMSnSpectrum.MergedMSnSpectrumBuilder builder = MergedMSnSpectrum.builder()
                 .collisionEnergies(energies)
                 .isolationWindows(windows)
                 .percursorMzs(precursorMzs)
                 .mergedCollisionEnergy(mergedEnergy)
-                .mergedIsolationWindow(mergedWindow)
                 .mergedPrecursorMz(mergedPmz)
-                .peaks(mergedSpectrum)
-                .build();
+                .peaks(mergedSpectrum);
+
+        if (windows != null && windows.length > 0) {
+            IsolationWindow mergedWindow = IsolationWindow.fromOffsets(
+                    Arrays.stream(windows).mapToDouble(IsolationWindow::getLeftOffset).min().orElseThrow(),
+                    Arrays.stream(windows).mapToDouble(IsolationWindow::getRightOffset).max().orElseThrow()
+            );
+            builder.mergedIsolationWindow(mergedWindow);
+        }
+
+
+        return builder.build();
     }
 
 }
