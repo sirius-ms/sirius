@@ -7,18 +7,15 @@ import java.util.List;
 
 public class AdductNode {
 
+    protected final int index;
+
     protected final AlignedFeatures features;
     protected final List<AdductEdge> edges;
 
-    public AdductNode(AlignedFeatures features) {
+    public AdductNode(AlignedFeatures features, int index) {
         this.features = features;
         this.edges = new ArrayList<>();
-    }
-
-    protected void addEdge(AdductNode target, KnownMassDelta[] knownMassDeltas) {
-        AdductEdge edge = new AdductEdge(this, target, knownMassDeltas);
-        this.edges.add(edge);
-        target.edges.add(edge);
+        this.index = index;
     }
 
     public List<AdductNode> getNeighbours() {
