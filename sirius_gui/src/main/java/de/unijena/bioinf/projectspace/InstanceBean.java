@@ -249,17 +249,17 @@ public class InstanceBean implements SiriusPCS {
     }
 
     public Optional<FormulaCandidate> getFormulaAnnotation() {
-        return Optional.ofNullable(getSourceFeature().getTopAnnotations().getFormulaAnnotation());
+        return Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getFormulaAnnotation);
     }
 
     public Optional<StructureCandidateScored> getStructureAnnotation() {
-        return Optional.ofNullable(getSourceFeature().getTopAnnotations().getStructureAnnotation());
+        return Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getStructureAnnotation);
     }
 
     public Optional<Double> getConfidenceScore(ConfidenceDisplayMode viewMode) {
         return viewMode == ConfidenceDisplayMode.APPROXIMATE ?
-                Optional.ofNullable(getSourceFeature().getTopAnnotations().getConfidenceApproxMatch()) :
-                Optional.ofNullable(getSourceFeature().getTopAnnotations().getConfidenceExactMatch());
+                Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getConfidenceApproxMatch) :
+                Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getConfidenceExactMatch);
     }
 
     public List<FormulaResultBean> getFormulaCandidates() {
