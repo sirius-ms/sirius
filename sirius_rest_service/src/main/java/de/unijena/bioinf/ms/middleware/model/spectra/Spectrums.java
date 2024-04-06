@@ -35,6 +35,7 @@ import de.unijena.bioinf.IsotopePatternAnalysis.generation.FastIsotopePatternGen
 import de.unijena.bioinf.fragmenter.*;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.middleware.model.annotations.IsotopePatternAnnotation;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.sirius.Ms2Preprocessor;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
@@ -52,7 +53,7 @@ import java.util.stream.StreamSupport;
 public class Spectrums {
     private static <S extends AbstractSpectrum<?>> S decorateMsMs(S spectrum, @NotNull Ms2Spectrum<Peak> sourceSpectrum) {
         spectrum.setPrecursorMz(sourceSpectrum.getPrecursorMz());
-        if (sourceSpectrum.getCollisionEnergy() != null && sourceSpectrum.getCollisionEnergy() != CollisionEnergy.none() && sourceSpectrum.getCollisionEnergy().equals(CollisionEnergy.none())) {
+        if (sourceSpectrum.getCollisionEnergy() != null && sourceSpectrum.getCollisionEnergy() != CollisionEnergy.none() && !sourceSpectrum.getCollisionEnergy().equals(CollisionEnergy.none())) {
             spectrum.setCollisionEnergy(new CollisionEnergy(sourceSpectrum.getCollisionEnergy()));
             spectrum.setName("MS2 " + sourceSpectrum.getCollisionEnergy().toString());
         } else {
@@ -62,6 +63,14 @@ public class Spectrums {
         spectrum.setMsLevel(2);
         spectrum.setScanNumber(((MutableMs2Spectrum) sourceSpectrum).getScanNumber());
 
+        return spectrum;
+    }
+
+    public static BasicSpectrum createMergedMsMs(@NotNull MergedMSnSpectrum sourceSpectrum) {
+        BasicSpectrum spectrum = new BasicSpectrum(sourceSpectrum.getPeaks());
+        spectrum.setPrecursorMz(sourceSpectrum.getMergedPrecursorMz());
+        spectrum.setMsLevel(2);
+        spectrum.setName("MS2 merged");
         return spectrum;
     }
 
