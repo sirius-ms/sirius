@@ -21,6 +21,29 @@ public class ScanPointInterpolator {
         for (int k=0; k < left.length(); ++k) timeLeft[k] = left.getRetentionTimeAt(k);
         fill(timeLeft, timeRight, left2right);
         fill(timeRight, timeLeft, right2left);
+
+        // we have to fix the ends of the mapping
+        fix(left2right, right2left);
+        fix(right2left, left2right);
+
+    }
+
+    private void fix(float[] a, float[] b) {
+        if (Double.isFinite(a[0])) {
+            double correspondingEntry = b[(int)a[0]];
+            double entryAfterwards = b[(int)Math.ceil(a[0])];
+            if (Double.isInfinite(correspondingEntry)) {
+                b[(int)a[0]] = (float)Math.floor(entryAfterwards);
+            }
+        }
+        if (Double.isFinite(a[a.length-1])) {
+            final int ci = (int)Math.ceil(a[a.length-1]);
+            double correspondingEntry = b[ci];
+            double entryBefore = b[(int)(Math.floor(a[a.length-1]))];;
+            if (Double.isInfinite(correspondingEntry)) {
+                b[ci] = (float)Math.min(a.length-1, Math.ceil(entryBefore));
+            }
+        }
     }
 
     private void fill(double[] timeLeft, double[] timeRight, float[]left2right) {
@@ -90,7 +113,13 @@ public class ScanPointInterpolator {
         if (!Float.isFinite(tg)) return 0f;
         int targetLeft = (int)tg;
         int targetRight = (int)Math.ceil(tg);
-        float intensityLeft = (targetLeft < t.startId() || targetLeft > t.endId()) ? 0 : t.intensity(targetLeft);
+        float intensityLeft;
+        if (targetLeft > t.endId()) {
+            // accumulate intensities
+            intensityLeft = t.intensity(t.startId());
+            for (int i=t.startId()+1; i < t.endId(); ++i) intensityLeft += t.intensity(i);
+            return intensityLeft;
+        } else intensityLeft = (targetLeft < t.startId() || targetLeft > t.endId()) ? 0f : t.intensity(targetLeft);
         float intensityRight = (targetRight < t.startId() || targetRight > t.endId()) ? 0 : t.intensity(targetRight);
         if (targetLeft==targetRight) return intensityLeft;
         double alpha = tg-targetLeft;

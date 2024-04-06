@@ -1,5 +1,6 @@
 package de.unijena.bioinf.lcms.merge;
 
+import de.unijena.bioinf.lcms.ScanPointMapping;
 import de.unijena.bioinf.lcms.trace.ContiguousTrace;
 import de.unijena.bioinf.lcms.trace.TraceRectangleMap;
 
@@ -13,7 +14,7 @@ public interface MergeStorage extends Iterable<MergedTrace> {
 
     MergedTrace getMerged(int uid);
 
-    ContiguousTrace getTrace(int uid);
+    ContiguousTrace getTrace(ScanPointMapping mapping, int uid);
 
     void removeMerged(int uid);
 
