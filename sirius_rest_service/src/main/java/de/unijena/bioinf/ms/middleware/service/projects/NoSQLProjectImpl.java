@@ -23,16 +23,20 @@ package de.unijena.bioinf.ms.middleware.service.projects;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
+import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.lcms.msms.MergeGreedyStrategy;
 import de.unijena.bioinf.lcms.msms.MergedSpectrum;
 import de.unijena.bioinf.lcms.msms.MsMsQuerySpectrum;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
+import de.unijena.bioinf.ms.middleware.model.annotations.CanopusPrediction;
+import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
@@ -44,9 +48,7 @@ import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
-import de.unijena.bioinf.ms.persistence.model.sirius.CsiPrediction;
-import de.unijena.bioinf.ms.persistence.model.sirius.FTreeResult;
-import de.unijena.bioinf.ms.persistence.model.sirius.SpectraMatch;
+import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
@@ -365,7 +367,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             FormulaCandidate.OptField.statistics
     );
 
-    private FormulaCandidate convertFormulaCandidate(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate candidate, EnumSet<FormulaCandidate.OptField> optFields) {
+    private FormulaCandidate convertFormulaCandidate(@Nullable MSData msData, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate candidate, EnumSet<FormulaCandidate.OptField> optFields) {
         final long fid = candidate.getFormulaId();
         FormulaCandidate.FormulaCandidateBuilder builder = FormulaCandidate.builder()
                 .formulaId(String.valueOf(fid))
@@ -381,11 +383,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 ? project().findByFormulaIdStr(fid, FTreeResult.class).findFirst().map(FTreeResult::getFTree).orElse(null)
                 : null;
 
-        final MSData msData = Stream.of(FormulaCandidate.OptField.annotatedSpectrum, FormulaCandidate.OptField.isotopePattern).anyMatch(optFields::contains)
-                ? project().findByFeatureIdStr(candidate.getAlignedFeatureId(), MSData.class).findFirst().orElse(null)
-                : null;
-
-
         if (ftree != null) {
             if (optFields.contains(FormulaCandidate.OptField.statistics)) {
                 FTreeMetricsHelper scores = new FTreeMetricsHelper(ftree);
@@ -398,15 +395,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 builder.fragmentationTree(FragmentationTree.fromFtree(ftree));
             if (optFields.contains(FormulaCandidate.OptField.lipidAnnotation))
                 builder.lipidAnnotation(Projects.asLipidAnnotation(ftree));
-            if (msData != null) {
-                if (optFields.contains(FormulaCandidate.OptField.annotatedSpectrum))
-                    //todo create real annotated spectrum
-                    builder.annotatedSpectrum(new AnnotatedSpectrum(msData.getMergedMSnSpectrum().getPeaks()));
-//                        builder.annotatedSpectrum(createMergedMsMsWithAnnotations(msData.getMsnSpectra(), ftree, null));
-                if (optFields.contains(FormulaCandidate.OptField.isotopePattern)) {
-                    SimpleSpectrum isotopePattern = msData.getIsotopePattern();
-                    builder.isotopePatternAnnotation(Spectrums.createIsotopePatternAnnotation(isotopePattern, ftree));
-                }
+            if (optFields.contains(FormulaCandidate.OptField.annotatedSpectrum))
+                //todo this is not efficient an loads spectra a second time as well as the whole experiment. we need no change spectra annotation code to improve this.
+                builder.annotatedSpectrum(findAnnotatedMsMsSpectrum(-1, null, candidate.getFormulaId(), candidate.getAlignedFeatureId()));
+            if (msData != null && optFields.contains(FormulaCandidate.OptField.isotopePattern)) {
+                SimpleSpectrum isotopePattern = msData.getIsotopePattern();
+                builder.isotopePatternAnnotation(Spectrums.createIsotopePatternAnnotation(isotopePattern, ftree));
             }
         }
 
@@ -576,10 +570,15 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
-        long longId = Long.parseLong(alignedFeatureId);
-        List<FormulaCandidate> candidates = project().findByFeatureIdStr(longId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class).
-                map(fc -> convertFormulaCandidate(fc, optFields)).toList();
-        long total = totalCountByFeature.get(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class).getOrDefault(longId, new AtomicLong(0)).get();
+        long longAFId = Long.parseLong(alignedFeatureId);
+
+        //load ms data only once per formula candidate
+        final MSData msData = Stream.of(/*FormulaCandidate.OptField.annotatedSpectrum,*/ FormulaCandidate.OptField.isotopePattern).anyMatch(optFields::contains)
+                ? project().findByFeatureIdStr(longAFId, MSData.class).findFirst().orElse(null) : null;
+
+        List<FormulaCandidate> candidates = project().findByFeatureIdStr(longAFId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class).
+                map(fc -> convertFormulaCandidate(msData, fc, optFields)).toList();
+        long total = totalCountByFeature.get(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class).getOrDefault(longAFId, new AtomicLong(0)).get();
 
         return new PageImpl<>(candidates, pageable, total);
     }
@@ -587,12 +586,17 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignedFeatureId, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
-        long longFId = Long.parseLong(formulaId); //they should be unique, but we can use the aligned feature id as sanity check
+        long longFId = Long.parseLong(formulaId);
+        long longAFId = Long.parseLong(alignedFeatureId);
+
+        final MSData msData = Stream.of(/*FormulaCandidate.OptField.annotatedSpectrum,*/ FormulaCandidate.OptField.isotopePattern).anyMatch(optFields::contains)
+                ? project().findByFeatureIdStr(longAFId, MSData.class).findFirst().orElse(null) : null;
+
         return project().findByFormulaIdStr(longFId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
                 .peek(fc -> {
-                    if (fc.getAlignedFeatureId() != Long.parseLong(alignedFeatureId))
+                    if (fc.getAlignedFeatureId() != longAFId)
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formula candidate exists but FormulaID does not belong to the requested FeatureID. Are you using the correct Ids?");
-                }).map(fc -> convertFormulaCandidate(fc, optFields)).findFirst().orElse(null);
+                }).map(fc -> convertFormulaCandidate(msData, fc, optFields)).findFirst().orElse(null);
     }
 
     @Override
@@ -625,14 +629,51 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return null;
     }
 
-    @Override
-    public AnnotatedSpectrum findAnnotatedSpectrumByStructureId(int specIndex, @Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId) {
-        return null;
-    }
 
     @Override
+    public AnnotatedSpectrum findAnnotatedSpectrumByStructureId(int specIndex, @Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId) {
+        long longFId = Long.parseLong(formulaId);
+        long longAFId = Long.parseLong(alignedFeatureId);
+        return findAnnotatedMsMsSpectrum(specIndex, inchiKey, longFId,longAFId);
+    }
+
+    @SneakyThrows
+    private AnnotatedSpectrum findAnnotatedMsMsSpectrum(int specIndex, @Nullable String inchiKey, long formulaId, long alignedFeatureId) {
+        //todo we want to do this without ms2 experiment
+        Ms2Experiment exp = project().findAlignedFeatureAsMsExperiment(alignedFeatureId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Could not load ms data needed to create annotated spectrum for id: " + alignedFeatureId));
+
+        FTree ftree = project().findByFormulaIdStr(formulaId, FTreeResult.class).findFirst().map(FTreeResult::getFTree)
+                .orElse(null);
+
+        String smiles = storage().getByPrimaryKey(inchiKey, CsiStructureMatch.class)
+                .map(StructureMatch::getCandidate).map(CompoundCandidate::getSmiles)
+                .orElse(null);
+
+        if (specIndex < 0)
+            return Spectrums.createMergedMsMsWithAnnotations(exp, ftree, smiles);
+        else
+            return Spectrums.createMsMsWithAnnotations(exp.getMs2Spectra().get(specIndex), ftree, smiles);
+    }
+
+    @SneakyThrows
+    @Override
     public AnnotatedMsMsData findAnnotatedMsMsDataByStructureId(@Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId) {
-        return null;
+        long longFId = Long.parseLong(formulaId);
+        long longAFId = Long.parseLong(alignedFeatureId);
+
+        //todo we want to do this without ms2 experiment
+        Ms2Experiment exp = project().findAlignedFeatureAsMsExperiment(longAFId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Could not load ms data needed to create annotated spectrum for id: " + alignedFeatureId));
+
+        FTree ftree = project().findByFormulaIdStr(longFId, FTreeResult.class).findFirst().map(FTreeResult::getFTree)
+                .orElse(null);
+
+        String smiles = storage().getByPrimaryKey(inchiKey, CsiStructureMatch.class)
+                .map(StructureMatch::getCandidate).map(CompoundCandidate::getSmiles)
+                .orElse(null);
+
+        return AnnotatedMsMsData.of(exp, ftree, smiles);
     }
 
     @SneakyThrows
