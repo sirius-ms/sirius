@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.ms.backgroundruns;
 
+import com.googlecode.concurentlocks.ReadWriteUpdateLock;
+import com.googlecode.concurentlocks.ReentrantReadWriteUpdateLock;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
@@ -35,6 +37,8 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,13 +46,11 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -56,7 +58,9 @@ import java.util.stream.StreamSupport;
  * Manage and execute command line (toolchain) runs in the background as if you would have started it via the CLI.
  * Can be used to run the CLI tools from a GUI or a high level API
  * It runs the tool through the command line parser and performs the CLI parameter validation.
+ * It also handles the "compute lock" to ensure that a feature is only part of on background computation.
  */
+@Slf4j
 public final class BackgroundRuns {
     private static final AtomicBoolean AUTOREMOVE = new AtomicBoolean(PropertyManager.getBoolean("de.unijena.bioinf.sirius.BackgroundRuns.autoremove", true));
 
@@ -65,51 +69,95 @@ public final class BackgroundRuns {
     public static final String ACTIVE_RUNS_PROPERTY = "ACTIVE_RUNS";
     public static final String UNFINISHED_RUNS_PROPERTY = "UNFINISHED_RUNS";
 
-    private final ConcurrentHashMap<Integer, BackgroundRunJob> finishedRuns = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<Integer, BackgroundRunJob> runningRuns = new ConcurrentHashMap<>();
+    // these datastructures have to be modified with compute state lock
+    private final ReadWriteUpdateLock computeStateLock = new ReentrantReadWriteUpdateLock();
+    private final Map<Integer, BackgroundRunJob> finishedRuns = new HashMap<>();
+    private final Map<Integer, BackgroundRunJob> runningRuns = new HashMap<>();
+    private final Set<String> computingInstances = new HashSet<>();
+    //compute state lock end
 
     private final ProjectSpaceManager psm;
     private final InstanceBufferFactory<?> bufferfactory;
     private final ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory;
 
-    //
+    //todo it would be nice to get rid of the ProjectSpaceManagerFactory here. this is just because WorkflowsBuilder in BackgroundRuns needs them for the preprocessing job. Allowing for a WorkflowsBuilder wit empty preprocessing would solve this.
     public BackgroundRuns(ProjectSpaceManager psm, InstanceBufferFactory<?> bufferFactory, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory) {
         this.psm = psm;
         this.bufferfactory = bufferFactory;
         this.projectSpaceManagerFactory = projectSpaceManagerFactory;
     }
 
+    // region locking helper
+    private <T> T withReadLock(Supplier<T> supplier) {
+        computeStateLock.readLock().lock();
+        try {
+            return supplier.get();
+        } finally {
+            computeStateLock.readLock().unlock();
+        }
+    }
+
+    private <T> T withWriteLock(Supplier<T> supplier) {
+        computeStateLock.writeLock().lock();
+        try {
+            return supplier.get();
+        } finally {
+            computeStateLock.writeLock().unlock();
+        }
+    }
+
+    private void withReadLock(Runnable runnable) {
+        computeStateLock.readLock().lock();
+        try {
+            runnable.run();
+        } finally {
+            computeStateLock.readLock().unlock();
+        }
+    }
+
+    private void withWriteLock(Runnable runnable) {
+        computeStateLock.writeLock().lock();
+        try {
+            runnable.run();
+        } finally {
+            computeStateLock.writeLock().unlock();
+        }
+
+    }
+    //endregion
+
+    public boolean isInstanceComputing(String alignedFeatureId) {
+        return withReadLock(() -> computingInstances.contains(alignedFeatureId));
+    }
 
     public Collection<BackgroundRunJob> getRunningRuns() {
-        return Collections.unmodifiableCollection(runningRuns.values());
+        return withReadLock(() -> Collections.unmodifiableCollection(runningRuns.values()));
     }
 
     public Collection<BackgroundRunJob> getFinishedRuns() {
-        return Collections.unmodifiableCollection(finishedRuns.values());
+        return withReadLock(() -> Collections.unmodifiableCollection(finishedRuns.values()));
     }
 
     public List<BackgroundRunJob> getRuns() {
-        return getRunsStr().toList();
-    }
-
-    public Stream<BackgroundRunJob> getRunsStr() {
-        return Stream.concat(runningRuns.values().stream(), finishedRuns.values().stream());
+        return withReadLock(() -> Stream.concat(runningRuns.values().stream(), finishedRuns.values().stream()).toList());
     }
 
     @Nullable
     public BackgroundRunJob getRunById(int runId) {
-        BackgroundRunJob run = runningRuns.get(runId);
-        if (run != null)
-            return run;
-        return finishedRuns.get(runId);
+        return withReadLock(() -> {
+            BackgroundRunJob run = runningRuns.get(runId);
+            if (run != null)
+                return run;
+            return finishedRuns.get(runId);
+        });
     }
 
     public boolean hasActiveComputations() {
-        return !runningRuns.isEmpty();
+        return withReadLock(() -> !runningRuns.isEmpty());
     }
 
     public boolean hasActiveRunningComputations() {
-        return hasActiveComputations() && runningRuns.values().stream().anyMatch(j -> !j.isFinished());
+        return withReadLock(() -> !runningRuns.isEmpty() && runningRuns.values().stream().anyMatch(j -> !j.isFinished()));
     }
 
     private void addRun(@NotNull BackgroundRunJob job) {
@@ -120,18 +168,23 @@ public final class BackgroundRuns {
     }
 
     public BackgroundRunJob removeFinishedRun(int jobId) {
-        final BackgroundRunJob job = finishedRuns.get(jobId);
-        if (job == null)
-            return null;
+        computeStateLock.updateLock().lock();
+        try {
+            final BackgroundRunJob job = finishedRuns.get(jobId);
+            if (job == null)
+                return null;
 
-        if (!job.isFinished())
-            throw new IllegalArgumentException("Job with ID '" + jobId + "' is still Running! Only finished jobs can be removed.");
+            if (!job.isFinished())
+                throw new IllegalArgumentException("Job with ID '" + jobId + "' is still Running! Only finished jobs can be removed.");
 
-        withPropertyChangesEvent(job, (j) -> {
-            finishedRuns.remove(j.getRunId());
-            return ChangeEventType.DELETION;
-        });
-        return job;
+            withPropertyChangesEvent(job, (j) -> {
+                finishedRuns.remove(j.getRunId());
+                return ChangeEventType.DELETION;
+            });
+            return job;
+        } finally {
+            computeStateLock.updateLock().unlock();
+        }
     }
 
     private void removeAndFinishRun(@NotNull BackgroundRunJob job, boolean autoremove) {
@@ -147,11 +200,18 @@ public final class BackgroundRuns {
     }
 
     private void withPropertyChangesEvent(@NotNull BackgroundRunJob job, @NotNull Function<BackgroundRunJob, ChangeEventType> changeToApply) {
-        synchronized (runningRuns) {
+        computeStateLock.updateLock().lock();
+        try {
             int oldSize = runningRuns.size() + finishedRuns.size();
             int oldRunning = runningRuns.size();
 
-            ChangeEventType evtType = changeToApply.apply(job);
+            computeStateLock.writeLock().lock();
+            ChangeEventType evtType;
+            try {
+                evtType = changeToApply.apply(job);
+            } finally {
+                computeStateLock.writeLock().unlock();
+            }
 
             int newSize = runningRuns.size() + finishedRuns.size();
 
@@ -160,12 +220,17 @@ public final class BackgroundRuns {
 
             PCS.firePropertyChange(new ChangeEvent(UNFINISHED_RUNS_PROPERTY, oldSize, newSize,
                     oldRunning, runningRuns.size(), List.of(job), evtType, this));
+        } finally {
+            computeStateLock.updateLock().unlock();
         }
     }
 
     public void cancelAllRuns() {
-        //iterator needed to prevent current modification exception
-        runningRuns.values().iterator().forEachRemaining(JJob::cancel);
+        withReadLock(() -> {
+            //iterator needed to prevent current modification exception
+            runningRuns.values().iterator().forEachRemaining(JJob::cancel);
+        });
+
     }
 
     private final PropertyChangeSupport PCS = new PropertyChangeSupport(this);
@@ -189,19 +254,20 @@ public final class BackgroundRuns {
 
 
     public BackgroundRunJob runCommand(List<String> command, @NotNull Iterable<Instance> instances) throws IOException {
-        return SiriusJobs.getGlobalJobManager().submitJob(makeBackgroundRun(command, instances));
+        return submitRunAndLockInstances(makeBackgroundRun(command, instances));
     }
 
     public BackgroundRunJob runImportMsData(Collection<PathInputResource> inputResources, boolean allowMs1OnlyData, boolean alignRuns
-    ){
+    ) {
         Workflow computation = new ImportMsFomResourceWorkflow(psm, inputResources, allowMs1OnlyData, alignRuns, true);
-        return SiriusJobs.getGlobalJobManager().submitJob(
+        return submitRunAndLockInstances(
                 new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null));
     }
+
     public BackgroundRunJob runImportPeakData(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData
     ) {
         Workflow computation = new ImportPeaksFomResourceWorkflow(psm, inputResources, ignoreFormulas, allowMs1OnlyData, true);
-        return SiriusJobs.getGlobalJobManager().submitJob(
+        return submitRunAndLockInstances(
                 new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null));
     }
 
@@ -214,9 +280,30 @@ public final class BackgroundRuns {
         return computation.makeWorkflow(bufferfactory);
     }
 
+    private BackgroundRunJob submitRunAndLockInstances(final BackgroundRunJob runToSubmit) {
+        return withWriteLock(() -> {
+            log.info("Locking Instances for Computation...");
+            Iterable<? extends Instance> instances = null;
+            try {
+                instances = runToSubmit.getInstances();
+                if (instances != null)
+                    instances.forEach(i -> computingInstances.add(i.getId()));
+                log.info("...All instances locked!");
+                return SiriusJobs.getGlobalJobManager().submitJob(runToSubmit);
+            } catch (Exception e) {
+                // just in case something goes wrong during submission, then  we do not want to have locked instances
+                if (instances != null)
+                    instances.forEach(i -> computingInstances.add(i.getId()));
+                throw e;
+            }
+        });
+
+    }
 
     public class BackgroundRunJob extends BasicJJob<Boolean> {
+        @Getter
         protected final int runId;
+        @Getter
         protected final String command;
 
         @NotNull
@@ -225,14 +312,12 @@ public final class BackgroundRuns {
         @Nullable
         private Iterable<? extends Instance> instances;
 
-        @Deprecated(forRemoval = true) //todo needed until GUI works with rest API
         private BackgroundRunJob(@NotNull Workflow computation, @Nullable Iterable<? extends Instance> instances, int runId, String command) {
             super(JobType.SCHEDULER);
             this.runId = runId;
             this.command = command;
             this.computation = computation;
             this.instances = instances;
-
         }
 
 
@@ -246,12 +331,16 @@ public final class BackgroundRuns {
         protected Boolean compute() throws Exception {
             try {
                 checkForInterruption();
-                logInfo("Locking Instances for Computation...");
-                if (instances != null)
-                    instances.forEach(Instance::enableComputing);
-                logInfo("All instances locked!");
+
+                if (instances != null) { //just a sanity check to notice if something with the went wrong before.
+                    withReadLock(() -> instances.forEach(i -> {
+                        if(!computingInstances.contains(i.getId()))
+                            System.out.println("WARNING: Unlocked instance is are part of computation: " + i.getId());
+                    }));
+                }
 
                 checkForInterruption();
+
                 if (computation instanceof ProgressSupport)
                     ((ProgressSupport) computation).addJobProgressListener(this::updateProgress);
                 else if (computation instanceof PropertyChangeOrator) //add JobProgressEventListener that only triggers if this is a progress event.
@@ -260,6 +349,7 @@ public final class BackgroundRuns {
                     ((PropertyChangeSupport) computation).addPropertyChangeListener((JobProgressEventListener) this::updateProgress);
 
                 checkForInterruption();
+
                 logInfo("Start Computation...");
                 computation.run();
                 logInfo("Computation DONE!");
@@ -272,19 +362,11 @@ public final class BackgroundRuns {
         }
 
         @Override
-        public void cancel(boolean mayInterruptIfRunning) {
-            if (computation != null)
-                computation.cancel();
-            super.cancel(mayInterruptIfRunning);
-        }
-
-
-        @Override
         protected void cleanup() {
             try {
                 if (instances != null) {
                     logInfo("Unlocking Instances after Computation...");
-                    instances.forEach(Instance::disableComputing);
+                    withWriteLock(() -> instances.forEach(i -> computingInstances.remove(i.getId())));
                     logInfo("All Instances unlocked!");
                 } else if (computation instanceof ToolChainWorkflow) {
                     logInfo("Collecting imported compounds...");
@@ -307,13 +389,11 @@ public final class BackgroundRuns {
 
         }
 
-
-        public int getRunId() {
-            return runId;
-        }
-
-        public String getCommand() {
-            return command;
+        @Override
+        public void cancel(boolean mayInterruptIfRunning) {
+            if (computation != null)
+                computation.cancel();
+            super.cancel(mayInterruptIfRunning);
         }
 
         public @Nullable Iterable<? extends Instance> getInstances() {

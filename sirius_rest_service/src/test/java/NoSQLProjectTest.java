@@ -48,7 +48,7 @@ public class NoSQLProjectTest {
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a,b) -> false);
 
             BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
             BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);

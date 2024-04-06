@@ -67,6 +67,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -86,12 +87,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     private final Map<Class<?>, Map<Long, AtomicLong>> totalCountByFeature = Collections.synchronizedMap(new HashMap<>());
 
+    private @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider;
     @SneakyThrows
-    public NoSQLProjectImpl(@NotNull String projectId, @NotNull NoSQLProjectSpaceManager projectSpaceManager) {
+    public NoSQLProjectImpl(@NotNull String projectId, @NotNull NoSQLProjectSpaceManager projectSpaceManager, @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider) {
         this.projectId = projectId;
         this.projectSpaceManager = projectSpaceManager;
         this.database = projectSpaceManager.getProject();
         this.storage = database.getStorage();
+        this.computeStateProvider = computeStateProvider;
 
         initCounter(de.unijena.bioinf.ms.persistence.model.core.Compound.class);
         initCounter(AlignedFeatures.class);
@@ -283,10 +286,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     private AlignedFeature convertFeature(AlignedFeatures features) {
+        final String fid = String.valueOf(features.getAlignedFeatureId());
         AlignedFeature.AlignedFeatureBuilder builder = AlignedFeature.builder()
-                .alignedFeatureId(String.valueOf(features.getAlignedFeatureId()))
+                .alignedFeatureId(fid)
                 .name(features.getName())
-                .ionMass(features.getAverageMass());
+                .ionMass(features.getAverageMass())
+                .computing(computeStateProvider.apply(this, fid));
 
         if (features.getIonType() != null)
                 builder.adduct(features.getIonType().toString()); //is called adduct but refers to iontype (input setting) -> maybe rename

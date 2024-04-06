@@ -286,16 +286,6 @@ public class NoSQLInstance implements Instance {
 
     //region state
     @Override
-    public void setComputing(boolean computing) {
-        project().setFeatureComputing(computing, id);
-    }
-
-    @Override
-    public boolean isComputing() {
-        return project().isFeatureComputing(id);
-    }
-
-    @Override
     public boolean isRecompute() {
         return recompute.get();
     }

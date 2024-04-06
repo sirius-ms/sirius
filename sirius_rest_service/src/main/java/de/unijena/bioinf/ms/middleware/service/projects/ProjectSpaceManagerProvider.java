@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEventImpl;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
+import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.projectspace.*;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +53,6 @@ import static de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent.Ty
 import static de.unijena.bioinf.projectspace.ProjectSpaceIO.*;
 
 public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManager, P extends Project> implements ProjectsProvider<P> {
-    //todo extract methods to abstract implementation where possible
     private final ProjectSpaceManagerFactory<PSM> projectSpaceManagerFactory;
 
     private final HashMap<String, PSM> projectSpaces = new HashMap<>();
@@ -60,10 +60,12 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
     protected final ReadWriteLock projectSpaceLock = new ReentrantReadWriteLock();
 
     protected final EventService<?> eventService;
+    protected final ComputeService computeService;
 
-    public ProjectSpaceManagerProvider(ProjectSpaceManagerFactory<PSM> projectSpaceManagerFactory, EventService<?> eventService) {
+    public ProjectSpaceManagerProvider(@NotNull ProjectSpaceManagerFactory<PSM> projectSpaceManagerFactory, @NotNull EventService<?> eventService, @NotNull ComputeService computeService) {
         this.projectSpaceManagerFactory = projectSpaceManagerFactory;
         this.eventService = eventService;
+        this.computeService = computeService;
     }
 
 

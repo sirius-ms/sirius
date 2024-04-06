@@ -55,7 +55,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * This class is used to create a toolchain workflow to be executed
@@ -121,16 +120,16 @@ public class WorkflowBuilder {
 
     boolean closeProject = true;
 
-    public WorkflowBuilder(@NotNull CLIRootOptions rootOptions) throws IOException {
+    public WorkflowBuilder(@NotNull CLIRootOptions rootOptions) {
         this(rootOptions, rootOptions.getDefaultConfigOptions(), rootOptions.getSpaceManagerFactory());
     }
 
-    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory, boolean closeProject) throws IOException {
+    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory, boolean closeProject) {
         this(rootOptions, configOptionLoader, spaceManagerFactory);
         this.closeProject = closeProject;
     }
 
-    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory) throws IOException {
+    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory) {
         this(rootOptions, configOptionLoader, spaceManagerFactory, List.of());
     }
 

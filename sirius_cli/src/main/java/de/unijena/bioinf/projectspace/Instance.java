@@ -92,15 +92,6 @@ public interface Instance {
 
     //region state
     void clearCompoundCache();
-    default void enableComputing() {
-        setComputing(true);
-    }
-    default void disableComputing() {
-        setComputing(false);
-    }
-    boolean isComputing();
-    void setComputing(boolean computing);
-
     boolean isRecompute();
     default void enableRecompute() {
         setRecompute(true);
