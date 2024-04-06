@@ -202,6 +202,16 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     }
 
     @SneakyThrows
+    default <T> Stream<T> findByFeatureIdStr(long alignedFeatureId, Class<T> clzz, String sortField, Database.SortOrder sortOrder) {
+        return getStorage().findStr(Filter.where("alignedFeatureId").eq(alignedFeatureId), clzz, sortField, sortOrder);
+    }
+
+    @SneakyThrows
+    default <T> Stream<T> findByFeatureIdStr(long alignedFeatureId, Class<T> clzz, int offset, int pageSize, String sortField, Database.SortOrder sortOrder) {
+        return getStorage().findStr(Filter.where("alignedFeatureId").eq(alignedFeatureId), clzz, offset, pageSize, sortField, sortOrder);
+    }
+
+    @SneakyThrows
     default <T> Stream<T> findByFormulaIdStr(long formulaId, Class<T> clzz) {
         return getStorage().findStr(Filter.where("formulaId").eq(formulaId), clzz);
     }
