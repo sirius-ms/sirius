@@ -388,4 +388,6 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
     <T> T write(Callable<T> transaction) throws IOException;
     //endregion
 
+    Set<Class<?>> getAllRegisteredClasses();
+
 }

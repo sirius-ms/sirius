@@ -21,6 +21,7 @@ import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.JSONReader;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
+import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts;
@@ -35,6 +36,7 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.storage.blob.Compressible;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.dizitart.no2.exceptions.UniqueConstraintException;
+import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -632,6 +634,28 @@ public class SiriusProjectDatabaseImplTest {
                         assertEquals(rt, extrExp.hasAnnotation(RetentionTime.class));
                         if (rt)
                             assertEquals(0, exp.getAnnotation(RetentionTime.class).get().compareTo(extrExp.getAnnotation(RetentionTime.class).get()));
+                    }
+                }
+            }
+        });
+    }
+
+    @ParameterizedTest
+    @MethodSource("peakListData")
+    public void cascadeDeleteTest(String inputFile, int expectedMsMs, boolean ms1, boolean rt) {
+        withDb(db -> {
+            try (InputStream in = Objects.requireNonNull(SiriusProjectDatabaseImplTest.class.getResourceAsStream(inputFile))) {
+                CloseableIterator<Ms2Experiment> it = new MsExperimentParser().getParser(inputFile).parseIterator(in, URI.create(inputFile));
+                while (it.hasNext()) {
+                    Ms2Experiment exp = it.next();
+
+                    AlignedFeatures feature = db.importMs2ExperimentAsAlignedFeature(exp);
+
+                    Compound compound = db.getStorage().getByPrimaryKey(feature.getCompoundId(), Compound.class).orElseThrow();
+
+                    assertTrue(db.cascadeDeleteCompound(compound.getCompoundId()) > 0);
+                    for (Class<?> clazz : db.getStorage().getAllRegisteredClasses()) {
+                        assertEquals(0, db.getStorage().countAll(clazz));
                     }
                 }
             }
