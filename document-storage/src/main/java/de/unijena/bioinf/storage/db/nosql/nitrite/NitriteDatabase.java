@@ -341,6 +341,11 @@ public class NitriteDatabase implements Database<Document> {
         });
     }
 
+    @Override
+    public Set<Class<?>> getAllRegisteredClasses() {
+        return this.repositories.keySet();
+    }
+
     @SuppressWarnings("unchecked")
     private <T> ObjectRepository<T> getRepository(Class<T> clazz) throws IOException {
         if (!this.repositories.containsKey(clazz)) {

@@ -225,4 +225,9 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     default <T> long deleteAllByFormulaId(long formulaId, Class<T> clzz) {
         return this.getStorage().removeAll(Filter.where("formulaId").eq(formulaId), clzz);
     }
+
+    long cascadeDeleteCompound(long compoundId) throws IOException;
+
+    long cascadeDeleteAlignedFeatures(long alignedFeatureId) throws IOException;
+
 }
