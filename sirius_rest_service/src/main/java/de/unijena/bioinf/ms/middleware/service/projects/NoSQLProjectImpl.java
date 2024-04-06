@@ -557,27 +557,35 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public Page<SpectralLibraryMatch> findLibraryMatchesByFeatureId(String alignedFeatureId, Pageable pageable) {
         long longId = Long.parseLong(alignedFeatureId);
         Pair<String, Database.SortOrder> sort = sortMatch(pageable.getSort());
-        // TODO pageable.unpaged has no offset/page size
-        // TODO db method needs offset + sort
-        List<SpectralLibraryMatch> results = storage().findStr(
-                Filter.where("alignedFeatureId").eq(longId), SpectraMatch.class, (int) pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight()
-        ).map(this::convertMatch).toList();
+        List<SpectralLibraryMatch> matches;
+        if (pageable.isPaged()) {
+            matches = project().findByFeatureIdStr(longId, SpectraMatch.class, (int) pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight()).map(this::convertMatch).toList();
+        } else {
+            matches = project().findByFeatureIdStr(longId, SpectraMatch.class, sort.getLeft(), sort.getRight()).map(this::convertMatch).toList();
+        }
         long total = totalCountByFeature.get(SpectraMatch.class).getOrDefault(longId, new AtomicLong(0)).get();
 
-        return new PageImpl<>(results, pageable, total);
+        return new PageImpl<>(matches, pageable, total);
     }
 
     @SneakyThrows
     @Override
     public Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
         long longAFId = Long.parseLong(alignedFeatureId);
+        Pair<String, Database.SortOrder> sort = sortFormulaCandidate(pageable.getSort());
 
         //load ms data only once per formula candidate
         final MSData msData = Stream.of(/*FormulaCandidate.OptField.annotatedSpectrum,*/ FormulaCandidate.OptField.isotopePattern).anyMatch(optFields::contains)
                 ? project().findByFeatureIdStr(longAFId, MSData.class).findFirst().orElse(null) : null;
 
-        List<FormulaCandidate> candidates = project().findByFeatureIdStr(longAFId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class).
-                map(fc -> convertFormulaCandidate(msData, fc, optFields)).toList();
+        List<FormulaCandidate> candidates;
+        if (pageable.isPaged()) {
+            candidates = project().findByFeatureIdStr(longAFId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, (int) pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight())
+                    .map(fc -> convertFormulaCandidate(msData, fc, optFields)).toList();
+        } else {
+            candidates = project().findByFeatureIdStr(longAFId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, sort.getLeft(), sort.getRight())
+                    .map(fc -> convertFormulaCandidate(msData, fc, optFields)).toList();
+        }
         long total = totalCountByFeature.get(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class).getOrDefault(longAFId, new AtomicLong(0)).get();
 
         return new PageImpl<>(candidates, pageable, total);
@@ -628,7 +636,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public StructureCandidateScored findStructureCandidateById(@NotNull String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
         return null;
     }
-
 
     @Override
     public AnnotatedSpectrum findAnnotatedSpectrumByStructureId(int specIndex, @Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId) {
