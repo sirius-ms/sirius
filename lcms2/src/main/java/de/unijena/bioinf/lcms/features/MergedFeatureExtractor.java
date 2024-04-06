@@ -99,7 +99,7 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
         for (int k=0; k < individualSegments.length; ++k) {
             ProcessedSample sample = samplesInTrace[k];
             assert sample.getUid() == mergedTrace.getSampleIds().getInt(k);
-            individualSegments[k] = assignSegmentsToIndividualTrace(sample, traceSegments, mergedSample.getStorage().getMergeStorage().getTrace(mergedTrace.getTraceIds().getInt(k)) );
+            individualSegments[k] = assignSegmentsToIndividualTrace(sample, traceSegments, mergedSample.getStorage().getMergeStorage().getTrace(sample.getMapping(), mergedTrace.getTraceIds().getInt(k)) );
         }
 
         final Int2ObjectOpenHashMap<ProcessedSample> uid2sample = new Int2ObjectOpenHashMap<>();
@@ -155,7 +155,9 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
                     continue;
 
                 int childTraceId = mergedTrace.getTraceIds().getInt(k);
-                Feature feature = buildFeature(childTraceId, mergedSample.getStorage().getMergeStorage().getTrace(childTraceId), individualSegments[k][i], stats, trace2trace, Feature.builder().runId(samplesInTrace[k].getRun().getRunId()).build());
+                int childSampleId = mergedTrace.getSampleIds().getInt(k);
+                ProcessedSample sample = uid2sample.get(childSampleId);
+                Feature feature = buildFeature(childTraceId, mergedSample.getStorage().getMergeStorage().getTrace(sample.getMapping(), childTraceId), individualSegments[k][i], stats, trace2trace, Feature.builder().runId(samplesInTrace[k].getRun().getRunId()).build());
                 childFeatures.add(feature);
             }
             if (childFeatures.isEmpty())
@@ -240,7 +242,7 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
                 buf.append("\"" + samplesInTrace[s].getUid() + "\": [");
                 xs.clear();
                 final ProcessedSample S = samplesInTrace[s];
-                final Trace t = mergedSample.getStorage().getMergeStorage().getTrace(alignedFeature.getTraceIds().getInt(s));
+                final Trace t = mergedSample.getStorage().getMergeStorage().getTrace(samplesInTrace[s].getMapping(), alignedFeature.getTraceIds().getInt(s));
                 for (int k=mergedTrace.startId(); k <= mergedTrace.endId(); ++k) {
                     xs.add(String.valueOf(S.getScanPointInterpolator().interpolateIntensity(t, k)));
                 }

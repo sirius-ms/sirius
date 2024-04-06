@@ -49,7 +49,7 @@ public class TraceExtractor implements TraceExtractionStrategy {
             public IntObjectPair<AbstractTrace> next() {
                 if (traceIndex > -1) {
                     final ProcessedSample S = samplesInTrace[traceIndex];
-                    final ContiguousTrace t = mergedSample.getStorage().getMergeStorage().getTrace(alignedFeature.getTraceIds().getInt(traceIndex));
+                    final ContiguousTrace t = mergedSample.getStorage().getMergeStorage().getTrace(S.getMapping(), alignedFeature.getTraceIds().getInt(traceIndex));
                     DoubleList ints = new DoubleArrayList();
                     for (int s = mergedTrace.startId(); s <= mergedTrace.endId(); ++s) {
                         ints.add(S.getScanPointInterpolator().interpolateIntensity(t, s));

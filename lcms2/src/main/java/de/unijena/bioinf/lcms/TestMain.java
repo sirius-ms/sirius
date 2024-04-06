@@ -1,8 +1,13 @@
 package de.unijena.bioinf.lcms;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.lcms.adducts.AdductManager;
+import de.unijena.bioinf.lcms.adducts.AdductNetwork;
+import de.unijena.bioinf.lcms.adducts.ProjectSpaceTraceProvider;
 import de.unijena.bioinf.lcms.align.AlignmentBackbone;
 import de.unijena.bioinf.lcms.align.MoI;
 import de.unijena.bioinf.lcms.merge.MergedTrace;
@@ -15,6 +20,7 @@ import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.storage.db.nosql.Database;
@@ -165,32 +171,30 @@ public class TestMain {
                                 # AlignedIsotopicFeatures: %d
                                 # AlignedFeatures:         %d
                                 
-                                Feature                 SNR: %f
-                                AlignedIsotopicFeatures SNR: %f
-                                AlignedFeatures         SNR: %f
+                                Features with MS1          : %d
                                 Features with MS2          : %d
+                                Features with MS1&MS2      : %d
                                 """,
                         store.countAll(LCMSRun.class), store.countAll(Scan.class), store.countAll(MSMSScan.class),
                         store.countAll(SourceTrace.class), store.countAll(de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace.class),
                         store.countAll(Feature.class), store.countAll(AlignedIsotopicFeatures.class), store.countAll(AlignedFeatures.class),
-                        store.findAllStr(Feature.class).map(Feature::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
-                        store.findAllStr(AlignedIsotopicFeatures.class).map(AlignedIsotopicFeatures::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
-                        store.findAllStr(AlignedFeatures.class).map(AlignedFeatures::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
 
-                        (int)(store.findAllStr(AlignedFeatures.class).filter(x->x.getMSData().isPresent() && x.getMSData().get().getMergedMSnSpectrum()!=null).count())
+                        (int)(store.findAllStr(MSData.class).filter(x->x.getIsotopePattern()!=null && x.getIsotopePattern().size()>=2).count()),
+                        (int)(store.findAllStr(MSData.class).filter(x->x.getMergedMSnSpectrum()!=null).count()),
+                        (int)(store.findAllStr(MSData.class).filter(x->x.getMergedMSnSpectrum()!=null && x.getIsotopePattern()!=null && x.getIsotopePattern().size()>=2).count())
                 );
 
                 // simplify
                 HashMap<Long,Integer> runIds = new HashMap<>();
 
                 int count=0;
-                for (AlignedFeatures f : store.findAllStr(AlignedFeatures.class, "averageMass", Database.SortOrder.ASCENDING).filter(x->x.getMSData().isPresent() && x.getMSData().get().getMergedMSnSpectrum()!=null).toList())  {
+                for (AlignedFeatures f : store.findAllStr(AlignedFeatures.class, "averageMass", Database.SortOrder.ASCENDING).toList())  {
                     f.setFeatures(store.findStr(Filter.where("alignedFeatureId").eq(f.getAlignedFeatureId()), Feature.class).toList());
                     System.out.println(f.getAverageMass() + " m/z \t" + f.getRetentionTime().getRetentionTimeInSeconds()/60d + " minutes\t" + f.getFeatures().get().size() + " aligned features [" +
                             f.getFeatures().get().stream().map(x->(simpl(runIds, x.getRunId()))).sorted().map(Object::toString).collect(Collectors.joining(", ")) + "]");
                     ++count;
                 }
-                /*
+
 
                 AdductManager manager = new AdductManager();
                 manager.addAdducts(Set.of(PrecursorIonType.getPrecursorIonType("[M+H]+"), PrecursorIonType.getPrecursorIonType("[M+Na]+"),
@@ -198,7 +202,7 @@ public class TestMain {
                 manager.addLoss(MolecularFormula.parseOrThrow("H2O"));
 
                 AdductNetwork network = new AdductNetwork(new ProjectSpaceTraceProvider(ps),  store.findAllStr(AlignedFeatures.class).toArray(AlignedFeatures[]::new), manager);
-                */
+
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
