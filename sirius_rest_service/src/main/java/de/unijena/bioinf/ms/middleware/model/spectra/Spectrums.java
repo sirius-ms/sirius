@@ -20,15 +20,21 @@
 
 package de.unijena.bioinf.ms.middleware.model.spectra;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Ms2IsotopePattern;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.IsotopePatternAnalysis.IsotopePattern;
+import de.unijena.bioinf.IsotopePatternAnalysis.generation.FastIsotopePatternGenerator;
 import de.unijena.bioinf.fragmenter.*;
 import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.ms.middleware.model.annotations.IsotopePatternAnnotation;
 import de.unijena.bioinf.sirius.Ms2Preprocessor;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
@@ -128,6 +134,12 @@ public class Spectrums {
         return makeMsMsWithAnnotations(spectrum, ftree, ftree, candidateSmiles);
 
     }
+
+    public static AnnotatedSpectrum createMergedMsMsWithAnnotations(@NotNull List<? extends Ms2Spectrum<?>> msmsSpectra, @Nullable FTree ftree, @Nullable String candidateSmiles) {
+        //todo create fake experiment to annotate spectrum
+        return null;
+    }
+
 
     public static List<AnnotatedSpectrum> createMsMsWithAnnotations(@NotNull Ms2Experiment exp, @Nullable FTree ftree, @Nullable String candidateSmiles) {
         if (exp.getMs2Spectra() == null)
@@ -302,6 +314,65 @@ public class Spectrums {
 
         return annotatedFormulas;
     }
+
+
+    //region isotope pattern
+    @NotNull
+    public static IsotopePatternAnnotation createIsotopePatternAnnotation(@NotNull SimpleSpectrum isotopePattern, @Nullable FTree tree) {
+        IsotopePatternAnnotation it = new IsotopePatternAnnotation();
+        it.setIsotopePattern(new BasicSpectrum(isotopePattern));
+        if (tree != null)
+            it.setSimulatedPattern(simulateIsotopePattern(tree, isotopePattern));
+        return it;
+    }
+
+    @NotNull
+    public static IsotopePatternAnnotation createIsotopePatternAnnotation(@NotNull Ms2Experiment exp, @Nullable FTree tree) {
+        IsotopePatternAnnotation it = new IsotopePatternAnnotation();
+        it.setIsotopePattern(extractIsotopePattern(exp, tree));
+        if (tree != null && it.getIsotopePattern() != null)
+            it.setSimulatedPattern(simulateIsotopePattern(tree, it.getIsotopePattern()));
+        return it;
+    }
+
+    @JsonIgnore
+    private static BasicSpectrum simulateIsotopePattern(@NotNull FTree tree, Spectrum<?> isotopePattern) {
+        PrecursorIonType ionType = tree.getAnnotation(PrecursorIonType.class).orElseThrow();
+        final MolecularFormula formula = tree.getRoot().getFormula().subtract(ionType.getInSourceFragmentation()).add(ionType.getAdduct());
+        final FastIsotopePatternGenerator gen = new FastIsotopePatternGenerator(Normalization.Max);
+        gen.setMinimalProbabilityThreshold(Math.min(0.005, de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getMinimalIntensity(isotopePattern)));
+        gen.setMaximalNumberOfPeaks(Math.max(4, isotopePattern.size()));
+        BasicSpectrum simulatedPattern = new BasicSpectrum(gen.simulatePattern(formula,
+                tree.getAnnotation(PrecursorIonType.class).orElseThrow().getIonization()));
+        simulatedPattern.setName("Simulated Isotope Pattern");
+
+        return simulatedPattern;
+
+    }
+
+    @JsonIgnore
+    private static BasicSpectrum extractIsotopePattern(@NotNull Ms2Experiment exp, @Nullable FTree tree) {
+        final IsotopePattern pattern = tree != null ? tree.getAnnotationOrNull(IsotopePattern.class) : null;
+        final String name = "MS1 Isotope Pattern";
+        BasicSpectrum isotopePattern = null;
+        if (pattern != null) {
+            isotopePattern = new BasicSpectrum(pattern.getPattern());
+            isotopePattern.setName(name);
+        } else {
+            BasicSpectrum ms = Spectrums.createMergedMs1(exp);
+            if (ms != null) {
+                isotopePattern = new BasicSpectrum(de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.extractIsotopePattern(
+                        ms,
+                        exp.getAnnotationOrDefault(MS1MassDeviation.class),
+                        exp.getIonMass(),
+                        exp.getPrecursorIonType().getCharge(),
+                        true));
+                isotopePattern.setName(name);
+            }
+        }
+        return isotopePattern;
+    }
+    //endregion
 
 
 }

@@ -24,18 +24,17 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
+import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.lcms.msms.MergeGreedyStrategy;
 import de.unijena.bioinf.lcms.msms.MergedSpectrum;
 import de.unijena.bioinf.lcms.msms.MsMsQuerySpectrum;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
-import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
-import de.unijena.bioinf.ms.middleware.model.annotations.SpectralLibraryMatch;
-import de.unijena.bioinf.ms.middleware.model.annotations.StructureCandidateFormula;
-import de.unijena.bioinf.ms.middleware.model.annotations.StructureCandidateScored;
+import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.features.*;
@@ -45,15 +44,20 @@ import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
+import de.unijena.bioinf.ms.persistence.model.sirius.CsiPrediction;
+import de.unijena.bioinf.ms.persistence.model.sirius.FTreeResult;
 import de.unijena.bioinf.ms.persistence.model.sirius.SpectraMatch;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
+import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import io.hypersistence.tsid.TSID;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
-import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -65,11 +69,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.StringWriter;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
+
+import static de.unijena.bioinf.ms.middleware.model.spectra.Spectrums.createIsotopePatternAnnotation;
 
 public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
@@ -79,21 +86,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @NotNull
     private final NoSQLProjectSpaceManager projectSpaceManager;
 
-    private final SiriusProjectDocumentDatabase<? extends Database<?>> database;
-
-    @Getter
-    private final Database<?> storage;
     private final Map<Class<?>, AtomicLong> totalCounts = Collections.synchronizedMap(new HashMap<>());
 
     private final Map<Class<?>, Map<Long, AtomicLong>> totalCountByFeature = Collections.synchronizedMap(new HashMap<>());
 
     private @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider;
+
     @SneakyThrows
     public NoSQLProjectImpl(@NotNull String projectId, @NotNull NoSQLProjectSpaceManager projectSpaceManager, @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider) {
         this.projectId = projectId;
         this.projectSpaceManager = projectSpaceManager;
-        this.database = projectSpaceManager.getProject();
-        this.storage = database.getStorage();
         this.computeStateProvider = computeStateProvider;
 
         initCounter(de.unijena.bioinf.ms.persistence.model.core.Compound.class);
@@ -103,22 +105,32 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         initCounterByFeature(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate::getAlignedFeatureId);
     }
 
+    //using private methods instead of references for easier refactoring or changes.
+    // compiler will inline the method call since projectmanager is final.
+    private Database<?> storage() {
+        return projectSpaceManager.getProject().getStorage();
+    }
+
+    private SiriusProjectDocumentDatabase<? extends Database<?>> project() {
+        return projectSpaceManager.getProject();
+    }
+
     @SneakyThrows
     private void initCounter(Class<?> clazz) {
-        this.totalCounts.put(clazz, new AtomicLong(this.storage.countAll(clazz)));
-        this.storage.onInsert(clazz, c -> totalCounts.get(clazz).getAndIncrement());
-        this.storage.onRemove(clazz, c -> totalCounts.get(clazz).getAndDecrement());
+        this.totalCounts.put(clazz, new AtomicLong(storage().countAll(clazz)));
+        storage().onInsert(clazz, c -> totalCounts.get(clazz).getAndIncrement());
+        storage().onRemove(clazz, c -> totalCounts.get(clazz).getAndDecrement());
     }
 
     @SneakyThrows
     private <T> void initCounterByFeature(Class<T> clazz, Function<T, Long> featureIdGetter) {
         Map<Long, AtomicLong> counts = Collections.synchronizedMap(new HashMap<>());
-        for (AlignedFeatures af : this.storage.findAll(AlignedFeatures.class)) {
-            counts.put(af.getAlignedFeatureId(), new AtomicLong(this.storage.count(Filter.where("alignedFeatureId").eq(af.getAlignedFeatureId()), clazz)));
+        for (AlignedFeatures af : this.storage().findAll(AlignedFeatures.class)) {
+            counts.put(af.getAlignedFeatureId(), new AtomicLong(this.storage().count(Filter.where("alignedFeatureId").eq(af.getAlignedFeatureId()), clazz)));
         }
         this.totalCountByFeature.put(clazz, counts);
-        this.storage.onInsert(clazz, c -> this.totalCountByFeature.get(clazz).get(featureIdGetter.apply(c)).getAndIncrement());
-        this.storage.onRemove(clazz, c -> this.totalCountByFeature.get(clazz).get(featureIdGetter.apply(c)).getAndDecrement());
+        this.storage().onInsert(clazz, c -> this.totalCountByFeature.get(clazz).get(featureIdGetter.apply(c)).getAndIncrement());
+        this.storage().onRemove(clazz, c -> this.totalCountByFeature.get(clazz).get(featureIdGetter.apply(c)).getAndDecrement());
     }
 
     @Override
@@ -147,7 +159,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             return defaults;
         }
 
-        Database.SortOrder so = order.get().getDirection().isAscending() ? Database.SortOrder.ASCENDING :Database.SortOrder.DESCENDING;
+        Database.SortOrder so = order.get().getDirection().isAscending() ? Database.SortOrder.ASCENDING : Database.SortOrder.DESCENDING;
         return Pair.of(translator.apply(property), so);
     }
 
@@ -294,7 +306,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .computing(computeStateProvider.apply(this, fid));
 
         if (features.getIonType() != null)
-                builder.adduct(features.getIonType().toString()); //is called adduct but refers to iontype (input setting) -> maybe rename
+            builder.adduct(features.getIonType().toString()); //is called adduct but refers to iontype (input setting) -> maybe rename
 
         RetentionTime rt = features.getRetentionTime();
         if (rt != null) {
@@ -362,9 +374,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return builder.build();
     }
 
-    private FormulaCandidate convertFormulaCandidate(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate candidate) {
+
+    private static final EnumSet<FormulaCandidate.OptField> needTree = EnumSet.of(
+            FormulaCandidate.OptField.fragmentationTree, FormulaCandidate.OptField.annotatedSpectrum,
+            FormulaCandidate.OptField.isotopePattern, FormulaCandidate.OptField.lipidAnnotation
+    );
+
+    private FormulaCandidate convertFormulaCandidate(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate candidate, EnumSet<FormulaCandidate.OptField> optFields) {
+        final long fid = candidate.getFormulaId();
         FormulaCandidate.FormulaCandidateBuilder builder = FormulaCandidate.builder()
-                .formulaId(String.valueOf(candidate.getFormulaId()))
+                .formulaId(String.valueOf(fid))
                 .molecularFormula(candidate.getMolecularFormula().toString())
                 .adduct(candidate.getAdduct().toString())
                 .siriusScore(candidate.getSiriusScore())
@@ -372,9 +391,59 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .treeScore(candidate.getTreeScore())
                 .zodiacScore(candidate.getZodiacScore());
 
-        // TODO FormulaCandidate has a lot more fields!
 
+//        final FTree ftree = optFields.stream().anyMatch(needTree::contains)
+//                ? project().findByFormulaIdStr(fid, FTreeResult.class).findFirst().map(FTreeResult::getFTree).orElse(null)
+//                : null;
+        //todo we need the scores in the gui without the tree -> do we want to store stats separately from the tree?
+        final FTree ftree = project().findByFormulaIdStr(fid, FTreeResult.class).findFirst().map(FTreeResult::getFTree).orElse(null);
+
+
+        final MSData msData = Stream.of(FormulaCandidate.OptField.annotatedSpectrum, FormulaCandidate.OptField.isotopePattern).anyMatch(optFields::contains)
+                ? project().findByFeatureIdStr(candidate.getAlignedFeatureId(), MSData.class).findFirst().orElse(null)
+                : null;
+
+
+        if (ftree != null) {
+            FTreeMetricsHelper scores = new FTreeMetricsHelper(ftree);
+            builder.numOfExplainablePeaks(scores.getNumberOfExplainablePeaks())
+                    .numOfExplainedPeaks(scores.getNumOfExplainedPeaks())
+                    .totalExplainedIntensity(scores.getExplainedIntensityRatio())
+                    .medianMassDeviation(scores.getMedianMassDeviation());
+
+            if (optFields.contains(FormulaCandidate.OptField.fragmentationTree))
+                builder.fragmentationTree(FragmentationTree.fromFtree(ftree));
+            if (optFields.contains(FormulaCandidate.OptField.lipidAnnotation))
+                builder.lipidAnnotation(Projects.asLipidAnnotation(ftree));
+            if (msData != null) {
+                if (optFields.contains(FormulaCandidate.OptField.annotatedSpectrum))
+                    //todo create real annotated spectrum
+                    builder.annotatedSpectrum(new AnnotatedSpectrum(msData.getMergedMSnSpectrum().getPeaks()));
+//                        builder.annotatedSpectrum(createMergedMsMsWithAnnotations(msData.getMsnSpectra(), ftree, null));
+                if (optFields.contains(FormulaCandidate.OptField.isotopePattern)) {
+                    SimpleSpectrum isotopePattern = msData.getIsotopePattern();
+                    builder.isotopePatternAnnotation(createIsotopePatternAnnotation(isotopePattern, ftree));
+                }
+            }
+        }
+
+
+        if (optFields.contains(FormulaCandidate.OptField.predictedFingerprint))
+            project().findByFormulaIdStr(fid, CsiPrediction.class).findFirst()
+                    .map(fpp -> fpp.getFingerprint().toProbabilityArray()).ifPresent(builder::predictedFingerprint);
+
+
+        if (optFields.contains(FormulaCandidate.OptField.canopusPredictions)) {
+            project().findByFormulaIdStr(fid, de.unijena.bioinf.ms.persistence.model.sirius.CanopusPrediction.class)
+                    .findFirst().ifPresent(cr -> {
+                        if (optFields.contains(FormulaCandidate.OptField.canopusPredictions))
+                            builder.canopusPrediction(CanopusPrediction.of(cr.getNpcFingerprint(), cr.getCfFingerprint()));
+                        if (optFields.contains(FormulaCandidate.OptField.compoundClasses))
+                            builder.compoundClasses(CompoundClasses.of(cr.getNpcFingerprint(), cr.getCfFingerprint()));
+                    });
+        }
         return builder.build();
+
     }
 
     @SneakyThrows
@@ -383,14 +452,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         Pair<String, Database.SortOrder> sort = sortCompound(pageable.getSort());
         Stream<de.unijena.bioinf.ms.persistence.model.core.Compound> stream;
         if (pageable.isPaged()) {
-            stream = storage.findAllStr(de.unijena.bioinf.ms.persistence.model.core.Compound.class, (int) pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
+            stream = storage().findAllStr(de.unijena.bioinf.ms.persistence.model.core.Compound.class, (int) pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
         } else {
-            stream = storage.findAllStr(de.unijena.bioinf.ms.persistence.model.core.Compound.class, sort.getLeft(), sort.getRight());
+            stream = storage().findAllStr(de.unijena.bioinf.ms.persistence.model.core.Compound.class, sort.getLeft(), sort.getRight());
         }
-        stream = stream.peek(database::fetchAdductFeatures);
+        stream = stream.peek(project()::fetchAdductFeatures);
 
         if (optFeatureFields.contains(AlignedFeature.OptField.msData)) {
-            stream = stream.peek(c -> c.getAdductFeatures().ifPresent(features -> features.forEach(database::fetchMsData)));
+            stream = stream.peek(c -> c.getAdductFeatures().ifPresent(features -> features.forEach(project()::fetchMsData)));
         }
 
         List<Compound> compounds = stream.map(this::convertCompound).toList();
@@ -405,7 +474,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
         List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream().map(this::convertCompound).toList();
-        database.importCompounds(dbc);
+        project().importCompounds(dbc);
         return dbc.stream().map(this::convertCompound).toList();
     }
 
@@ -425,11 +494,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public Compound findCompoundById(String compoundId, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
         long id = Long.parseLong(compoundId);
-        return storage.getByPrimaryKey(id, de.unijena.bioinf.ms.persistence.model.core.Compound.class)
+        return storage().getByPrimaryKey(id, de.unijena.bioinf.ms.persistence.model.core.Compound.class)
                 .map(c -> {
-                    database.fetchAdductFeatures(c);
+                    project().fetchAdductFeatures(c);
                     if (optFeatureFields.contains(AlignedFeature.OptField.msData)) {
-                        c.getAdductFeatures().ifPresent(features -> features.forEach(database::fetchMsData));
+                        c.getAdductFeatures().ifPresent(features -> features.forEach(project()::fetchMsData));
                     }
                     return convertCompound(c);
                 })
@@ -441,19 +510,19 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public void deleteCompoundById(String compoundId) {
         long id = Long.parseLong(compoundId);
-        storage.removeAll(Filter.where("compoundId").eq(id), de.unijena.bioinf.ms.persistence.model.core.Compound.class);
+        storage().removeAll(Filter.where("compoundId").eq(id), de.unijena.bioinf.ms.persistence.model.core.Compound.class);
         // TODO cascade delete? -> should be done in database
     }
 
     @Override
     public Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable, @NotNull EnumSet<AlignedFeatureQuality.OptField> optFields) {
-        // TODO
+        // TODO POST 6.0?
         return null;
     }
 
     @Override
     public AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId, @NotNull EnumSet<AlignedFeatureQuality.OptField> optFields) {
-        // TODO
+        // TODO POST 6.0?
         return null;
     }
 
@@ -463,13 +532,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         Pair<String, Database.SortOrder> sort = sortFeature(pageable.getSort());
         Stream<AlignedFeatures> stream;
         if (pageable.isPaged()) {
-            stream = storage.findAllStr(AlignedFeatures.class, (int) pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
+            stream = storage().findAllStr(AlignedFeatures.class, (int) pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
         } else {
-            stream = storage.findAllStr(AlignedFeatures.class, sort.getLeft(), sort.getRight());
+            stream = storage().findAllStr(AlignedFeatures.class, sort.getLeft(), sort.getRight());
         }
 
         if (optFields.contains(AlignedFeature.OptField.msData)) {
-            stream = stream.peek(database::fetchMsData);
+            stream = stream.peek(project()::fetchMsData);
         }
 
         List<AlignedFeature> features = stream.map(this::convertFeature).toList();
@@ -493,10 +562,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public AlignedFeature findAlignedFeaturesById(String alignedFeatureId, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         long id = Long.parseLong(alignedFeatureId);
-        return storage.getByPrimaryKey(id, AlignedFeatures.class)
+        return storage().getByPrimaryKey(id, AlignedFeatures.class)
                 .map(a -> {
                     if (optFields.contains(AlignedFeature.OptField.msData)) {
-                        database.fetchMsData(a);
+                        project().fetchMsData(a);
                     }
                     return convertFeature(a);
                 }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no aligned feature '" + alignedFeatureId + "' in project " + projectId + "."));
@@ -506,7 +575,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public void deleteAlignedFeaturesById(String alignedFeatureId) {
         long id = Long.parseLong(alignedFeatureId);
-        storage.removeAll(Filter.where("alignedFeatureId").eq(id), AlignedFeatures.class);
+        storage().removeAll(Filter.where("alignedFeatureId").eq(id), AlignedFeatures.class);
         // TODO cascade delete? -> should be done in database
     }
 
@@ -515,7 +584,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public Page<SpectralLibraryMatch> findLibraryMatchesByFeatureId(String alignedFeatureId, Pageable pageable) {
         long longId = Long.parseLong(alignedFeatureId);
         Pair<String, Database.SortOrder> sort = sortMatch(pageable.getSort());
-        List<SpectralLibraryMatch> results = storage.findStr(
+        List<SpectralLibraryMatch> results = storage().findStr(
                 Filter.where("alignedFeatureId").eq(longId), SpectraMatch.class, (int) pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight()
         ).map(this::convertMatch).toList();
         long total = totalCountByFeature.get(SpectraMatch.class).getOrDefault(longId, new AtomicLong(0)).get();
@@ -527,7 +596,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
         long longId = Long.parseLong(alignedFeatureId);
-        List<FormulaCandidate> candidates = database.findByFeatureIdStr(longId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class).map(this::convertFormulaCandidate).toList();
+        List<FormulaCandidate> candidates = project().findByFeatureIdStr(longId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class).
+                map(fc -> convertFormulaCandidate(fc, optFields)).toList();
         long total = totalCountByFeature.get(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class).getOrDefault(longId, new AtomicLong(0)).get();
 
         return new PageImpl<>(candidates, pageable, total);
@@ -536,30 +606,32 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public FormulaCandidate findFormulaCandidateByFeatureIdAndId(String formulaId, String alignedFeatureId, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
-        long longFId = Long.parseLong(formulaId);
-        long longAFId = Long.parseLong(alignedFeatureId);
-        return storage.findStr(Filter.and(Filter.where("alignedFeatureId").eq(longAFId), Filter.where("formulaId").eq(longFId)), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
-                .map(this::convertFormulaCandidate).findFirst().orElse(null);
+        long longFId = Long.parseLong(formulaId); //they should be unique, but we can use the aligned feature id as sanity check
+        return project().findByFormulaIdStr(longFId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
+                .peek(fc -> {
+                    if (fc.getAlignedFeatureId() != Long.parseLong(alignedFeatureId))
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formula candidate exists but FormulaID does not belong to the requested FeatureID. Are you using the correct Ids?");
+                }).map(fc -> convertFormulaCandidate(fc, optFields)).findFirst().orElse(null);
     }
 
     @Override
     public Page<StructureCandidateScored> findStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
-        return new PageImpl<>(List.of());
+        return Page.empty(pageable);
     }
 
     @Override
     public Page<StructureCandidateScored> findDeNovoStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
-        return new PageImpl<>(List.of());
+        return Page.empty(pageable);
     }
 
     @Override
     public Page<StructureCandidateFormula> findStructureCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
-        return new PageImpl<>(List.of());
+        return Page.empty(pageable);
     }
 
     @Override
     public Page<StructureCandidateFormula> findDeNovoStructureCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
-        return new PageImpl<>(List.of());
+        return Page.empty(pageable);
     }
 
     @Override
@@ -582,23 +654,48 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return null;
     }
 
+    @SneakyThrows
     @Override
     public String getFingerIdDataCSV(int charge) {
-        return null;
+        Optional<FingerIdData> dataOpt = projectSpaceManager.getProject().findFingerprintData(FingerIdData.class, charge);
+        if (dataOpt.isEmpty())
+            return null;
+        StringWriter writer = new StringWriter();
+        FingerIdData.write(writer, dataOpt.get()); //sneaky throws because it's a string writer and no real io.
+        return writer.toString();
     }
 
+    @SneakyThrows
     @Override
     public String getCanopusClassyFireDataCSV(int charge) {
-        return null;
+        Optional<CanopusCfData> dataOpt = projectSpaceManager.getProject().findFingerprintData(CanopusCfData.class, charge);
+        if (dataOpt.isEmpty())
+            return null;
+        StringWriter writer = new StringWriter();
+        CanopusCfData.write(writer, dataOpt.get()); //sneaky throws because it's a string writer and no real io.
+        return writer.toString();
     }
 
+    @SneakyThrows
     @Override
     public String getCanopusNpcDataCSV(int charge) {
-        return null;
+        Optional<CanopusNpcData> dataOpt = projectSpaceManager.getProject().findFingerprintData(CanopusNpcData.class, charge);
+        if (dataOpt.isEmpty())
+            return null;
+        StringWriter writer = new StringWriter();
+        CanopusNpcData.write(writer, dataOpt.get()); //sneaky throws because it's a string writer and no real io.
+        return writer.toString();
     }
 
+    @SneakyThrows
     @Override
     public String findSiriusFtreeJsonById(String formulaId, String alignedFeatureId) {
-        return null;
+        long formId = Long.parseLong(formulaId);
+        return project().findByFormulaIdStr(formId, FTreeResult.class).findFirst()
+                .map(ftreeRes -> {
+                    if (ftreeRes.getAlignedFeatureId() == Long.parseLong(alignedFeatureId))
+                        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tree exists but FormulaID does not belong to the requested FeatureID. Are you using the correct Ids?");
+                    return new FTJsonWriter().treeToJsonString(ftreeRes.getFTree());
+                }).orElse(null);
     }
 }

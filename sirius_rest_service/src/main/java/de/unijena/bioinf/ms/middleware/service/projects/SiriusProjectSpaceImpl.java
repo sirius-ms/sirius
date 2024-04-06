@@ -41,7 +41,6 @@ import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
-import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.ConfidenceScoreApproximate;
 import de.unijena.bioinf.fingerid.FingerprintResult;
@@ -737,7 +736,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
         if (optFields.contains(FormulaCandidate.OptField.isotopePattern))
             candidate.isotopePatternAnnotation(asIsotopePatternAnnotation(inst, res.getAnnotation(FTree.class).orElse(null)));
         if (optFields.contains(FormulaCandidate.OptField.lipidAnnotation))
-            res.getAnnotation(FTree.class).map(SiriusProjectSpaceImpl::asLipidAnnotation).ifPresent(candidate::lipidAnnotation);
+            res.getAnnotation(FTree.class).map(Projects::asLipidAnnotation).ifPresent(candidate::lipidAnnotation);
         if (optFields.contains(FormulaCandidate.OptField.predictedFingerprint))
             res.getAnnotation(FingerprintResult.class).map(fpResult -> fpResult.fingerprint.toProbabilityArray())
                     .ifPresent(candidate::predictedFingerprint);
@@ -746,17 +745,6 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
         if (optFields.contains(FormulaCandidate.OptField.compoundClasses))
             res.getAnnotation(CanopusResult.class).map(CompoundClasses::of).ifPresent(candidate::compoundClasses);
         return candidate;
-    }
-
-    private static LipidAnnotation asLipidAnnotation(FTree fTree) {
-        return fTree.getAnnotation(LipidSpecies.class).map(ls -> LipidAnnotation.builder()
-                .lipidSpecies(ls.toString())
-                .lipidMapsId(ls.getLipidClass().getLipidMapsId())
-                .lipidClassName(ls.getLipidClass().longName())
-                .chainsUnknown(ls.chainsUnknown())
-                .hypotheticalStructure(ls.generateHypotheticalStructure().orElse(null))
-                .build()
-        ).orElse(LipidAnnotation.builder().build());
     }
 
     public AlignedFeature asAlignedFeature(CompoundContainerId cid) {
@@ -846,7 +834,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     public static IsotopePatternAnnotation asIsotopePatternAnnotation(SiriusProjectSpaceInstance instance, FTree ftree) {
-        return IsotopePatternAnnotation.create(loadExperiment(instance), ftree);
+        return Spectrums.createIsotopePatternAnnotation(loadExperiment(instance), ftree);
     }
 
     public static AnnotatedSpectrum asAnnotatedSpectrum(int specIndex, SiriusProjectSpaceInstance instance, FTree ftree, String structureSmiles) {
