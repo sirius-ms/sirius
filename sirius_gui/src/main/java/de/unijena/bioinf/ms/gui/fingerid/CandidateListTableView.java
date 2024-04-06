@@ -51,7 +51,7 @@ public class CandidateListTableView extends CandidateListView {
                 if (!getSource().getElementListSelectionModel().isSelectionEmpty())
                     filteredSelectionModel.setSelectionInterval(getSource().getElementListSelectionModel().getMinSelectionIndex(), getSource().getElementListSelectionModel().getMaxSelectionIndex());
             } catch (Exception e) {
-                LoggerFactory.getLogger(getClass()).warn("Error when resetting selection for elementList");
+                LoggerFactory.getLogger(getClass()).warn("Error when resetting selection for elementList", e);
             } finally {
                 filteredSelectionModel.setValueIsAdjusting(false);
             }

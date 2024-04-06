@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.middleware.service.projects;
 import de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEventImpl;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
+import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
@@ -43,8 +44,8 @@ import static de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent.Ty
 @Slf4j
 public class NoSQLProjectProviderImpl extends ProjectSpaceManagerProvider<NoSQLProjectSpaceManager, NoSQLProjectImpl> {
 
-    public NoSQLProjectProviderImpl(ProjectSpaceManagerFactory<NoSQLProjectSpaceManager> projectSpaceManagerFactory, EventService<?> eventService) {
-        super(projectSpaceManagerFactory, eventService);
+    public NoSQLProjectProviderImpl(@NotNull ProjectSpaceManagerFactory<NoSQLProjectSpaceManager> projectSpaceManagerFactory, @NotNull EventService<?> eventService, @NotNull ComputeService computeService) {
+        super(projectSpaceManagerFactory, eventService, computeService);
     }
 
     @Override
@@ -109,7 +110,7 @@ public class NoSQLProjectProviderImpl extends ProjectSpaceManagerProvider<NoSQLP
 
     @Override
     public Optional<NoSQLProjectImpl> getProject(String projectId) {
-        return getProjectSpaceManager(projectId).map(psm -> new NoSQLProjectImpl(projectId, psm));
+        return getProjectSpaceManager(projectId).map(psm -> new NoSQLProjectImpl(projectId, psm, computeService::isInstanceComputing));
     }
 
 //    private final HashMap<String, SiriusProjectDatabaseImpl<? extends Database<?>>> projects;

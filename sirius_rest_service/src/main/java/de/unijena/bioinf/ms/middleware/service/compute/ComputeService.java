@@ -61,4 +61,6 @@ public interface ComputeService extends DisposableBean {
     boolean hasJobs(@NotNull Project<?> psm, boolean includeFinished);
 
     JJob<?> getJJob(@NotNull Project<?> psm, String jobId);
+
+    boolean isInstanceComputing(@NotNull Project<?> psm, String alignedFeatureId);
 }

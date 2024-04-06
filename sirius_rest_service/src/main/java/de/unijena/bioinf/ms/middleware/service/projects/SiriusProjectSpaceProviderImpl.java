@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.middleware.service.projects;
 
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
+import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.projectspace.*;
 import org.jetbrains.annotations.NotNull;
@@ -33,12 +34,12 @@ import static de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent.Ty
 
 public class SiriusProjectSpaceProviderImpl extends ProjectSpaceManagerProvider<SiriusProjectSpaceManager, SiriusProjectSpaceImpl> {
 
-    public SiriusProjectSpaceProviderImpl(ProjectSpaceManagerFactory<SiriusProjectSpaceManager> projectSpaceManagerFactory, EventService<?> eventService) {
-        super(projectSpaceManagerFactory, eventService);
+    public SiriusProjectSpaceProviderImpl(@NotNull ProjectSpaceManagerFactory<SiriusProjectSpaceManager> projectSpaceManagerFactory, @NotNull EventService<?> eventService, @NotNull ComputeService computeService) {
+        super(projectSpaceManagerFactory, eventService, computeService);
     }
 
     public Optional<SiriusProjectSpaceImpl> getProject(String projectId) {
-        return getProjectSpaceManager(projectId).map(ps -> new SiriusProjectSpaceImpl(projectId, ps));
+        return getProjectSpaceManager(projectId).map(ps -> new SiriusProjectSpaceImpl(projectId, ps, computeService::isInstanceComputing));
     }
 
     @Override

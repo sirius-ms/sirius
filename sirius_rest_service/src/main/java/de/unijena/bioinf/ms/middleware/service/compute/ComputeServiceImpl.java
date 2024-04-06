@@ -57,11 +57,17 @@ public class ComputeServiceImpl implements ComputeService {
     protected final EventService<?> eventService;
 
 
+    //todo it would be nice to get rid of the ProjectSpaceManagerFactory here. this is just because WorkflowsBuilder in BackgroundRuns needs them for the preprocessing job. Allowing for a WorkflowsBuilder wit empty preprocessing would solve this.
     public ComputeServiceImpl(EventService<?> eventService, InstanceBufferFactory<?> instanceBufferFactory, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory) {
         this.eventService = eventService;
         this.instanceBufferFactory = instanceBufferFactory;
         this.projectSpaceManagerFactory = projectSpaceManagerFactory;
 
+    }
+
+    @Override
+    public boolean isInstanceComputing(@NotNull Project<?> psm, String alignedFeatureId) {
+        return backgroundRuns(psm).isInstanceComputing(alignedFeatureId);
     }
 
     private BackgroundRuns backgroundRuns(Project<?> project) {
@@ -219,7 +225,6 @@ public class ComputeServiceImpl implements ComputeService {
         }
     }
 
-    //TODO implement new lcms workflow
     @Override
     public Job createAndSubmitMsDataImportJob(@NotNull Project<?> project, ImportMultipartFilesSubmission importSubmission,
                                               @NotNull EnumSet<Job.OptField> optFields) {
@@ -242,11 +247,11 @@ public class ComputeServiceImpl implements ComputeService {
     public Job createAndSubmitCommandJob(@NotNull Project<?> project, CommandSubmission commandSubmission,
                                          @NotNull EnumSet<Job.OptField> optFields) {
         BackgroundRuns br = backgroundRuns(project);
-        Iterable<? extends Instance> instances = extractCompoundIds(commandSubmission, project);
+        Iterable<Instance> instances = extractCompoundIds(commandSubmission, project);
         if (instances == null)
             instances = project.getProjectSpaceManager();
         try {
-            BackgroundRuns.BackgroundRunJob run = br.runCommand(commandSubmission.getCommand(), (Iterable<Instance>) instances);
+            BackgroundRuns.BackgroundRunJob run = br.runCommand(commandSubmission.getCommand(), instances);
             registerServerEventListener(run, project.getProjectId());
             return extractJobId(run, optFields);
         } catch (Exception e) {
@@ -323,11 +328,11 @@ public class ComputeServiceImpl implements ComputeService {
     @Override
     public Page<Job> getJobs(@NotNull Project<?> project, @NotNull Pageable pageable, @NotNull EnumSet<Job.OptField> optFields) {
         if (pageable.isUnpaged())
-            return new PageImpl<>(backgroundRuns(project).getRunsStr()
+            return new PageImpl<>(backgroundRuns(project).getRuns().stream()
                     .map(j -> extractJobId(j, optFields)).toList());
 
-        long size = backgroundRuns(project).getRunsStr().count();
-        return new PageImpl<>(backgroundRuns(project).getRunsStr()
+        long size = backgroundRuns(project).getRuns().size();
+        return new PageImpl<>(backgroundRuns(project).getRuns().stream()
                 .skip(pageable.getOffset()).limit(pageable.getPageSize())
                 .map(j -> extractJobId(j, optFields))
                 .toList(), pageable, size);
@@ -337,7 +342,7 @@ public class ComputeServiceImpl implements ComputeService {
     public boolean hasJobs(@NotNull Project<?> project, boolean includeFinished) {
         if (includeFinished)
             return !backgroundRuns(project).getRunningRuns().isEmpty();
-        return backgroundRuns(project).getRunsStr().findAny().isPresent();
+        return backgroundRuns(project).getRuns().stream().findAny().isPresent();
     }
 
     @Override

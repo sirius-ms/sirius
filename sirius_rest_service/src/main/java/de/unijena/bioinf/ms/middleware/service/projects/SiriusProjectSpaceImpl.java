@@ -88,6 +88,7 @@ import java.io.Writer;
 import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -100,9 +101,12 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     @NotNull
     private final String projectId;
 
-    public SiriusProjectSpaceImpl(@NotNull String projectId, @NotNull SiriusProjectSpaceManager projectSpaceManager) {
+    private final @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider;
+
+    public SiriusProjectSpaceImpl(@NotNull String projectId, @NotNull SiriusProjectSpaceManager projectSpaceManager, @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider) {
         this.projectSpaceManager = projectSpaceManager;
         this.projectId = projectId;
+        this.computeStateProvider = computeStateProvider;
     }
 
     @NotNull
@@ -755,12 +759,14 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
         ).orElse(LipidAnnotation.builder().build());
     }
 
-    public static AlignedFeature asAlignedFeature(CompoundContainerId cid) {
-        final AlignedFeature id = AlignedFeature.builder().build();
-        id.setAlignedFeatureId(cid.getDirectoryName());
-        id.setName(cid.getCompoundName());
-        id.setIonMass(cid.getIonMass().orElse(0d));
-        id.setComputing(cid.hasFlag(CompoundContainerId.Flag.COMPUTING));
+    public AlignedFeature asAlignedFeature(CompoundContainerId cid) {
+        final AlignedFeature id = AlignedFeature.builder()
+                .alignedFeatureId(cid.getDirectoryName())
+                .name(cid.getCompoundName())
+                .ionMass(cid.getIonMass().orElse(0d))
+                .computing(computeStateProvider.apply(this, cid.getDirectoryName()))
+                .build();
+
         cid.getIonType().map(PrecursorIonType::toString).ifPresent(id::setAdduct);
         cid.getRt().ifPresent(rt -> {
             if (rt.isInterval()) {

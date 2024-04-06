@@ -495,16 +495,6 @@ public class SiriusProjectSpaceInstance implements Instance {
 
     //region state
     @Override
-    public synchronized void setComputing(boolean computing) {
-        projectSpace().setFlags(CompoundContainerId.Flag.COMPUTING, computing, getCompoundContainerId());
-    }
-
-    @Override
-    public synchronized boolean isComputing() {
-        return projectSpace().flag(getCompoundContainerId(), CompoundContainerId.Flag.COMPUTING);
-    }
-
-    @Override
     public boolean isRecompute() {
         return recompute.get();
     }
