@@ -125,7 +125,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     private <T> void initCounterByFeature(Class<T> clazz, Function<T, Long> featureIdGetter) {
         Map<Long, AtomicLong> counts = Collections.synchronizedMap(new HashMap<>());
         for (AlignedFeatures af : this.storage().findAll(AlignedFeatures.class)) {
-            counts.put(af.getAlignedFeatureId(), new AtomicLong(this.storage().count(Filter.where("alignedFeatureId").eq(af.getAlignedFeatureId()), clazz)));
+            counts.put(af.getAlignedFeatureId(), new AtomicLong(this.project().countByFeatureId(af.getAlignedFeatureId(), clazz)));
         }
         this.totalCountByFeature.put(clazz, counts);
         this.storage().onInsert(clazz, c -> this.totalCountByFeature.get(clazz).get(featureIdGetter.apply(c)).getAndIncrement());
@@ -463,13 +463,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @Override
     public ImportResult importPreprocessedData(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData) {
-        // TODO
+        // TODO POST pre-release? why do we actually need the imports without a background job?
         return null;
     }
 
     @Override
     public ImportResult importMsRunData(Collection<PathInputResource> inputResources, boolean alignRuns, boolean allowMs1OnlyData) {
-        // TODO
+        // TODO POST pre-release? why do we actually need the imports without a background job?
         return null;
     }
 
@@ -492,9 +492,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public void deleteCompoundById(String compoundId) {
-        long id = Long.parseLong(compoundId);
-        storage().removeAll(Filter.where("compoundId").eq(id), de.unijena.bioinf.ms.persistence.model.core.Compound.class);
-        // TODO cascade delete? -> should be done in database
+        project().cascadeDeleteCompound(Long.parseLong(compoundId));
     }
 
     @Override
@@ -557,9 +555,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public void deleteAlignedFeaturesById(String alignedFeatureId) {
-        long id = Long.parseLong(alignedFeatureId);
-        storage().removeAll(Filter.where("alignedFeatureId").eq(id), AlignedFeatures.class);
-        // TODO cascade delete? -> should be done in database
+        project().cascadeDeleteAlignedFeatures(Long.parseLong(alignedFeatureId));
     }
 
     @SneakyThrows
@@ -567,6 +563,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public Page<SpectralLibraryMatch> findLibraryMatchesByFeatureId(String alignedFeatureId, Pageable pageable) {
         long longId = Long.parseLong(alignedFeatureId);
         Pair<String, Database.SortOrder> sort = sortMatch(pageable.getSort());
+        // TODO pageable.unpaged has no offset/page size
+        // TODO db method needs offset + sort
         List<SpectralLibraryMatch> results = storage().findStr(
                 Filter.where("alignedFeatureId").eq(longId), SpectraMatch.class, (int) pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight()
         ).map(this::convertMatch).toList();
