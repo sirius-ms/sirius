@@ -26,7 +26,6 @@ import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
@@ -41,6 +40,7 @@ import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
+import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
@@ -76,7 +76,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import static de.unijena.bioinf.ms.middleware.model.spectra.Spectrums.createIsotopePatternAnnotation;
 
 public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
@@ -326,27 +325,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     private MsData convertMSData(MSData msData) {
         MsData.MsDataBuilder builder = MsData.builder();
-
         if (msData.getMergedMs1Spectrum() != null)
-            builder.mergedMs1(new BasicSpectrum(msData.getMergedMs1Spectrum()));
-        if (msData.getMergedMSnSpectrum() != null) {
-            MergedMSnSpectrum mergedMSn = msData.getMergedMSnSpectrum();
-            BasicSpectrum ms2 = new BasicSpectrum(mergedMSn.getPeaks());
-            ms2.setCollisionEnergy(mergedMSn.getMergedCollisionEnergy());
-            ms2.setPrecursorMz(mergedMSn.getMergedPrecursorMz());
-            builder.mergedMs2(ms2);
-        }
-        if (msData.getMsnSpectra() != null) {
-            builder.ms2Spectra(msData.getMsnSpectra().stream().map(mutableMs2 -> {
-                BasicSpectrum ms2 = new BasicSpectrum(mutableMs2);
-                ms2.setCollisionEnergy(mutableMs2.getCollisionEnergy() != null ? mutableMs2.getCollisionEnergy() : CollisionEnergy.none());
-                ms2.setMsLevel(mutableMs2.getMsLevel() > 0 ? mutableMs2.getMsLevel() : 2);
-                ms2.setPrecursorMz(mutableMs2.getPrecursorMz() > 0 ? mutableMs2.getPrecursorMz() : mutableMs2.getMzAt(Spectrums.getIndexOfPeakWithMaximalIntensity(mutableMs2)));
-                ms2.setScanNumber(mutableMs2.getScanNumber());
-                return ms2;
-            }).toList());
-        }
-
+            builder.mergedMs1(Spectrums.createMs1(msData.getMergedMs1Spectrum()));
+        if (msData.getMergedMSnSpectrum() != null)
+            builder.mergedMs2(Spectrums.createMergedMsMs(msData.getMergedMSnSpectrum()));
+        if (msData.getMsnSpectra() != null)
+            builder.ms2Spectra(msData.getMsnSpectra().stream().map(Spectrums::createMsMs).toList());
         return builder.build();
     }
 
@@ -377,7 +361,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     private static final EnumSet<FormulaCandidate.OptField> needTree = EnumSet.of(
             FormulaCandidate.OptField.fragmentationTree, FormulaCandidate.OptField.annotatedSpectrum,
-            FormulaCandidate.OptField.isotopePattern, FormulaCandidate.OptField.lipidAnnotation
+            FormulaCandidate.OptField.isotopePattern, FormulaCandidate.OptField.lipidAnnotation,
+            FormulaCandidate.OptField.statistics
     );
 
     private FormulaCandidate convertFormulaCandidate(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate candidate, EnumSet<FormulaCandidate.OptField> optFields) {
@@ -391,13 +376,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .treeScore(candidate.getTreeScore())
                 .zodiacScore(candidate.getZodiacScore());
 
-
-//        final FTree ftree = optFields.stream().anyMatch(needTree::contains)
-//                ? project().findByFormulaIdStr(fid, FTreeResult.class).findFirst().map(FTreeResult::getFTree).orElse(null)
-//                : null;
-        //todo we need the scores in the gui without the tree -> do we want to store stats separately from the tree?
-        final FTree ftree = project().findByFormulaIdStr(fid, FTreeResult.class).findFirst().map(FTreeResult::getFTree).orElse(null);
-
+        //todo post 6.0: we need the scores in the gui without the tree -> do we want to store stats separately from the tree?
+        final FTree ftree = optFields.stream().anyMatch(needTree::contains)
+                ? project().findByFormulaIdStr(fid, FTreeResult.class).findFirst().map(FTreeResult::getFTree).orElse(null)
+                : null;
 
         final MSData msData = Stream.of(FormulaCandidate.OptField.annotatedSpectrum, FormulaCandidate.OptField.isotopePattern).anyMatch(optFields::contains)
                 ? project().findByFeatureIdStr(candidate.getAlignedFeatureId(), MSData.class).findFirst().orElse(null)
@@ -405,12 +387,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
 
         if (ftree != null) {
-            FTreeMetricsHelper scores = new FTreeMetricsHelper(ftree);
-            builder.numOfExplainablePeaks(scores.getNumberOfExplainablePeaks())
-                    .numOfExplainedPeaks(scores.getNumOfExplainedPeaks())
-                    .totalExplainedIntensity(scores.getExplainedIntensityRatio())
-                    .medianMassDeviation(scores.getMedianMassDeviation());
-
+            if (optFields.contains(FormulaCandidate.OptField.statistics)) {
+                FTreeMetricsHelper scores = new FTreeMetricsHelper(ftree);
+                builder.numOfExplainablePeaks(scores.getNumberOfExplainablePeaks())
+                        .numOfExplainedPeaks(scores.getNumOfExplainedPeaks())
+                        .totalExplainedIntensity(scores.getExplainedIntensityRatio())
+                        .medianMassDeviation(scores.getMedianMassDeviation());
+            }
             if (optFields.contains(FormulaCandidate.OptField.fragmentationTree))
                 builder.fragmentationTree(FragmentationTree.fromFtree(ftree));
             if (optFields.contains(FormulaCandidate.OptField.lipidAnnotation))
@@ -422,7 +405,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 //                        builder.annotatedSpectrum(createMergedMsMsWithAnnotations(msData.getMsnSpectra(), ftree, null));
                 if (optFields.contains(FormulaCandidate.OptField.isotopePattern)) {
                     SimpleSpectrum isotopePattern = msData.getIsotopePattern();
-                    builder.isotopePatternAnnotation(createIsotopePatternAnnotation(isotopePattern, ftree));
+                    builder.isotopePatternAnnotation(Spectrums.createIsotopePatternAnnotation(isotopePattern, ftree));
                 }
             }
         }

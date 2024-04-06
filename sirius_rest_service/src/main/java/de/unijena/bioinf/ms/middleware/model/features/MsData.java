@@ -28,7 +28,6 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * The MsData wraps all spectral input data belonging to a feature.
