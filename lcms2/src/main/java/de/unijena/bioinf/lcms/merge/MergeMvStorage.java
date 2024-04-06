@@ -1,9 +1,7 @@
 package de.unijena.bioinf.lcms.merge;
 
-import de.unijena.bioinf.lcms.trace.ContigousTraceDatatype;
-import de.unijena.bioinf.lcms.trace.ContiguousTrace;
-import de.unijena.bioinf.lcms.trace.TraceRectangleMap;
-import de.unijena.bioinf.lcms.trace.TraceRectangleMapByRVMap;
+import de.unijena.bioinf.lcms.ScanPointMapping;
+import de.unijena.bioinf.lcms.trace.*;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
 import org.jetbrains.annotations.NotNull;
@@ -59,8 +57,8 @@ public class MergeMvStorage implements MergeStorage{
     }
 
     @Override
-    public ContiguousTrace getTrace(int uid) {
-        return underlyingTraces.get(uid);
+    public ContiguousTrace getTrace(ScanPointMapping mapping, int uid) {
+        return underlyingTraces.get(uid).withMapping(mapping);
     }
 
     @Override

@@ -147,7 +147,7 @@ public class ContiguousTrace implements Trace, Serializable {
         return uid;
     }
 
-    ContiguousTrace withMapping(ScanPointMapping mp) {
+    public ContiguousTrace withMapping(ScanPointMapping mp) {
         if (mapping==mp) return this;
         return new ContiguousTrace(mp, uid, startId, endId, apexId, averageMz, minMz, maxMz, mz, intensity, segments);
     }
