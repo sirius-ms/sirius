@@ -20,12 +20,14 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEventImpl;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
@@ -104,7 +106,64 @@ public class NoSQLProjectProviderImpl extends ProjectSpaceManagerProvider<NoSQLP
                 createEvent(id, features.getCompoundId(), features.getAlignedFeatureId(), FEATURE_DELETED)
         ));
 
-        // TODO result listeners
+        // formula and FTree
+        project.getStorage().onInsert(FTreeResult.class, (FTreeResult result) -> eventService.sendEvent(
+                createEvent(id, -1, result.getAlignedFeatureId(), RESULT_CREATED)
+        ));
+        project.getStorage().onUpdate(FTreeResult.class, (FTreeResult result) -> eventService.sendEvent(
+                createEvent(id, -1, result.getAlignedFeatureId(), RESULT_UPDATED)
+        ));
+        project.getStorage().onRemove(FTreeResult.class, (FTreeResult result) -> eventService.sendEvent(
+                createEvent(id, -1, result.getAlignedFeatureId(), RESULT_DELETED)
+        ));
+
+        //fingerprint
+        project.getStorage().onInsert(CsiPrediction.class, (CsiPrediction result) -> eventService.sendEvent(
+                createEvent(id, -1, result.getAlignedFeatureId(), RESULT_CREATED)
+        ));
+        project.getStorage().onUpdate(CsiPrediction.class, (CsiPrediction result) -> eventService.sendEvent(
+                createEvent(id, -1, result.getAlignedFeatureId(), RESULT_UPDATED)
+        ));
+        project.getStorage().onRemove(CsiPrediction.class, (CsiPrediction result) -> eventService.sendEvent(
+                createEvent(id, -1, result.getAlignedFeatureId(), RESULT_DELETED)
+        ));
+
+        //canopus fingerprints
+        project.getStorage().onInsert(FormulaCandidate.class, (FormulaCandidate candidate) -> eventService.sendEvent(
+                createEvent(id, -1, candidate.getAlignedFeatureId(), RESULT_CREATED)
+        ));
+        project.getStorage().onUpdate(FormulaCandidate.class, (FormulaCandidate candidate) -> eventService.sendEvent(
+                createEvent(id, -1, candidate.getAlignedFeatureId(), RESULT_UPDATED)
+        ));
+        project.getStorage().onRemove(FormulaCandidate.class, (FormulaCandidate candidate) -> eventService.sendEvent(
+                createEvent(id, -1, candidate.getAlignedFeatureId(), RESULT_DELETED)
+        ));
+
+        //structure db search
+        project.getStorage().onInsert(CsiStructureSearchResult.class, (CsiStructureSearchResult result) -> eventService.sendEvent(
+                createEvent(id, -1, result.getAlignedFeatureId(), RESULT_CREATED)
+        ));
+        project.getStorage().onUpdate(CsiStructureSearchResult.class, (CsiStructureSearchResult result) -> eventService.sendEvent(
+                createEvent(id, -1, result.getAlignedFeatureId(), RESULT_UPDATED)
+        ));
+        project.getStorage().onRemove(CsiStructureSearchResult.class, (CsiStructureSearchResult result) -> eventService.sendEvent(
+                createEvent(id, -1, result.getAlignedFeatureId(), RESULT_DELETED)
+        ));
+
+        //msnovelist //todo this is weird because if might trigger per candide. Need better solution
+//        project.getStorage().onInsert(DenovoStructureMatch.class, (DenovoStructureMatch result) -> eventService.sendEvent(
+//                createEvent(id, -1, result.getAlignedFeatureId(), RESULT_CREATED)
+//        ));
+//        project.getStorage().onUpdate(DenovoStructureMatch.class, (DenovoStructureMatch result) -> eventService.sendEvent(
+//                createEvent(id, -1, result.getAlignedFeatureId(), RESULT_UPDATED)
+//        ));
+//        project.getStorage().onRemove(DenovoStructureMatch.class, (DenovoStructureMatch result) -> eventService.sendEvent(
+//                createEvent(id, -1, result.getAlignedFeatureId(), RESULT_DELETED)
+//        ));
+
+
+
+
 
     }
 

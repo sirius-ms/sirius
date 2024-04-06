@@ -676,7 +676,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         long formId = Long.parseLong(formulaId);
         return project().findByFormulaIdStr(formId, FTreeResult.class).findFirst()
                 .map(ftreeRes -> {
-                    if (ftreeRes.getAlignedFeatureId() == Long.parseLong(alignedFeatureId))
+                    if (ftreeRes.getAlignedFeatureId() != Long.parseLong(alignedFeatureId))
                         throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Tree exists but FormulaID does not belong to the requested FeatureID. Are you using the correct Ids?");
                     return new FTJsonWriter().treeToJsonString(ftreeRes.getFTree());
                 }).orElse(null);
