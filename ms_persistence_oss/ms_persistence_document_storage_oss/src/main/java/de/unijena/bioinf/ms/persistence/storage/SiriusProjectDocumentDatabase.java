@@ -39,16 +39,13 @@ import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.Index;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> extends NetworkingProjectDocumentDatabase<Storage> {
@@ -59,10 +56,6 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
         return buildMetadata(Metadata.build());
     }
 
-    //todo merge msNovelist candidate with normal candidates so they can be stored together
-    //todo update links of existing candidates with msnovelist flag!
-    //todo import data from MsExperiment
-    //todo provide feature as MsExperiment for computation
     static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
         NetworkingProjectDocumentDatabase.buildMetadata(sourceMetadata)
                 .addCollection(FP_DATA_COLLECTION, Index.unique("type", "charge"))
@@ -232,20 +225,4 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     default <T> long deleteAllByFormulaId(long formulaId, Class<T> clzz) {
         return this.getStorage().removeAll(Filter.where("formulaId").eq(formulaId), clzz);
     }
-
-    //region compute
-    default void setFeaturesComputing(boolean computing, long... alignedFeatureIds) {
-        setFeaturesComputing(computing, new LongArrayList(alignedFeatureIds));
-    }
-
-    void setFeaturesComputing(boolean computing, Collection<Long> alignedFeatureIds);
-
-    void setFeatureComputing(boolean computing, long alignedFeatureId);
-
-    boolean isFeatureComputing(long alignedFeatureId);
-
-    boolean onCompute(Consumer<ComputeStateEvent> listener);
-
-    boolean unsubscribe(Consumer<ComputeStateEvent> listener);
-    //end region
 }
