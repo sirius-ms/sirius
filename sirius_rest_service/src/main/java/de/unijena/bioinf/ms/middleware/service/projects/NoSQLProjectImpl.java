@@ -293,7 +293,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         RetentionTime rt = features.getRetentionTime();
         if (rt != null) {
-            if (Double.isFinite(rt.getStartTime()) && Double.isFinite(rt.getEndTime())) {
+            if (rt.isInterval() && Double.isFinite(rt.getStartTime()) && Double.isFinite(rt.getEndTime())) {
                 builder.rtStartSeconds(rt.getStartTime());
                 builder.rtEndSeconds(rt.getEndTime());
             } else {
