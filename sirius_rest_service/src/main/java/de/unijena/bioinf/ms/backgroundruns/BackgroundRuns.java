@@ -259,7 +259,7 @@ public final class BackgroundRuns {
 
     public BackgroundRunJob runImportMsData(Collection<PathInputResource> inputResources, boolean allowMs1OnlyData, boolean alignRuns
     ) {
-        Workflow computation = new ImportMsFomResourceWorkflow(psm, inputResources, allowMs1OnlyData, alignRuns, true);
+        Workflow computation = new ImportMsFromResourceWorkflow(psm, inputResources, allowMs1OnlyData, alignRuns, true);
         return submitRunAndLockInstances(
                 new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null));
     }
