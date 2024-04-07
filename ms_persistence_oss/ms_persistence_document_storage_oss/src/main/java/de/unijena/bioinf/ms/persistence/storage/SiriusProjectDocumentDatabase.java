@@ -83,9 +83,9 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
                 .addRepository(DenovoStructureMatch.class,
                         Index.unique("alignedFeatureId", "formulaId", "candidateInChiKey"))
 
-                .addRepository(SpectraMatch.class, "uuid",
-                        Index.nonUnique("candidateInChiKey"),
-                        Index.nonUnique("alignedFeatureId"))
+                .addRepository(SpectraMatch.class,
+                        Index.nonUnique("searchResult.candidateInChiKey"),
+                        Index.nonUnique("searchResult.alignedFeatureId"))
 
                 .addRepository(FingerprintCandidate.class) //pk inchiKey
                 .setOptionalFields(FingerprintCandidate.class, "fingerprint")

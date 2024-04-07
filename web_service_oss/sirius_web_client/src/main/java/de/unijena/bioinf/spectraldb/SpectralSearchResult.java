@@ -32,14 +32,10 @@ import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import lombok.extern.jackson.Jacksonized;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Builder
 @NoArgsConstructor
@@ -66,6 +62,7 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
     @Getter
     @Setter
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class SearchResult {
         @Builder.Default
         private int rank = -1;
@@ -78,6 +75,9 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
 
         private String dbId;
 
+        /**
+         * This is the uuid of the corresponding reference spectrum
+         */
         private long uuid;
 
         private String splash;
@@ -92,6 +92,9 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
         private double exactMass;
         private String smiles;
 
+        /**
+         * This in the inchikey of the corresponding structure candidate
+         */
         private String candidateInChiKey;
     }
 }

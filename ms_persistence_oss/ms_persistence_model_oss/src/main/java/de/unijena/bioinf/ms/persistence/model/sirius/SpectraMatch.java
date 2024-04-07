@@ -20,10 +20,13 @@
 
 package de.unijena.bioinf.ms.persistence.model.sirius;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
+import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.Delegate;
 import lombok.experimental.SuperBuilder;
 
 
@@ -31,7 +34,10 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @NoArgsConstructor
-public class SpectraMatch extends SpectralSearchResult.SearchResult {
-
-    protected long alignedFeatureId;
+@JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE, setterVisibility = JsonAutoDetect.Visibility.NONE, isGetterVisibility = JsonAutoDetect.Visibility.NONE)
+public class SpectraMatch extends AlignedFeatureAnnotation {
+    @Id
+    protected long specMatchId;
+    @Delegate
+    protected SpectralSearchResult.SearchResult searchResult;
 }
