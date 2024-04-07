@@ -23,6 +23,7 @@ package de.unijena.bioinf.lcms.projectspace;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
@@ -76,6 +77,11 @@ public class ProjectSpaceImporter implements ImportStrategy {
     @Override
     public void importAlignedFeature(AlignedFeatures alignedFeatures) throws IOException {
         store.importAlignedFeatures(List.of(alignedFeatures));
+    }
+
+    @Override
+    public void importRetentionTimeAxis(RetentionTimeAxis axis) throws IOException {
+        store.getStorage().insert(axis);
     }
 
 }

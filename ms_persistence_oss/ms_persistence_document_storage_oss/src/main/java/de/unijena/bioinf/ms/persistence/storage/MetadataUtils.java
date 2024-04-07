@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.utils.FastUtilJson;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.doubles.DoubleSet;
+import it.unimi.dsi.fastutil.floats.FloatList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.longs.LongList;
@@ -48,6 +49,10 @@ public class MetadataUtils {
                         DoubleList.class,
                         new FastUtilJson.DoubleCollectionSerializer<>(),
                         new FastUtilJson.DoubleListDeserializer())
+                 .addSerialization(
+                         FloatList.class,
+                         new FastUtilJson.FloatCollectionSerializer<>(),
+                         new FastUtilJson.FloatListDeserializer())
                 .addSerialization(
                         DoubleSet.class,
                         new FastUtilJson.DoubleCollectionSerializer<>(),

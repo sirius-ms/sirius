@@ -75,4 +75,9 @@ public class MergeMvStorage implements MergeStorage{
     public int getFreeIsotopeMergeUid() {
         return -(mergeCounter.incrementAndGet());
     }
+
+    @Override
+    public int numberOfMergedTraces() {
+        return mergedTraces.size();
+    }
 }

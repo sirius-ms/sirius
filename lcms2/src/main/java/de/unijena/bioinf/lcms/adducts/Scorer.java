@@ -92,10 +92,10 @@ public class Scorer {
         final int n = Math.max(refLeft.getEnd()-refLeft.getStart(), refRight.getEnd()-refRight.getStart());
         DoubleArrayList xs = new DoubleArrayList(n), ys = new DoubleArrayList(n);
         for (int i= Math.min(offsetL,offsetR); i <= Math.max(refLeft.getEnd(),refRight.getEnd()); ++i) {
-            if (i >= offsetL && i <= refLeft.getEnd()) xs.add(left.getIntensities().getDouble(i));
+            if (i >= offsetL && i <= refLeft.getEnd()) xs.add(left.getIntensities().getFloat(i));
             else xs.add(0d);
 
-            if (i >= offsetR && i <= refRight.getEnd()) ys.add(right.getIntensities().getDouble(i));
+            if (i >= offsetR && i <= refRight.getEnd()) ys.add(right.getIntensities().getFloat(i));
             else ys.add(0d);
         }
         return Statistics.pearson(xs.toDoubleArray(), ys.toDoubleArray());

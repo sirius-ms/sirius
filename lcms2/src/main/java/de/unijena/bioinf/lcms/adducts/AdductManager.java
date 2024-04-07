@@ -46,6 +46,7 @@ public class AdductManager {
         }
         for (MolecularFormula loss : losses) {
             massDeltas.put(loss.getMass(), new LossRelationship(loss));
+            massDeltas.put(-loss.getMass(), new LossRelationship(loss.negate()));
         }
     }
 
