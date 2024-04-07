@@ -52,6 +52,8 @@ public interface ProjectsProvider<P extends Project> extends DisposableBean {
 
     ProjectInfo openProject(@NotNull String projectId, @Nullable String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException;
 
+    ProjectInfo createTempProject(@NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException;
+
     default ProjectInfo createProject(String projectIdSuggestion, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
         return createProject(projectIdSuggestion, null, optFields);
     }

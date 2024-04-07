@@ -298,7 +298,7 @@ public class InstanceBean implements SiriusPCS {
     public PageStructureCandidateFormula getDeNovoStructureCandidatesPage(int pageNum, int pageSize) {
         return withIds((pid, fid) -> getClient().features()
                 .getDeNovoStructureCandidatesPaged(pid, fid, pageNum, pageSize, null,
-                        List.of(StructureCandidateOptField.FINGERPRINT)));
+                        List.of(StructureCandidateOptField.DBLINKS, StructureCandidateOptField.FINGERPRINT)));
     }
 
     @Nullable

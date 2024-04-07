@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.ImportAction;
+import de.unijena.bioinf.ms.gui.actions.ProjectOpenAction;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -55,6 +56,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
+
+import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
 
 public class MainFrame extends JFrame implements DropTargetListener {
 
@@ -243,6 +246,14 @@ public class MainFrame extends JFrame implements DropTargetListener {
         inputF.msInput = Jobs.runInBackgroundAndLoad(this, "Analyzing Dropped Files...", false,
                 InstanceImporter.makeExpandFilesJJob(files)).getResult();
 
+        List<Path> projectFiles = inputF.msInput.unknownFiles.keySet().stream().filter(p -> p.toString().endsWith(SIRIUS_PROJECT_SUFFIX)).toList();
+        inputF.msInput.unknownFiles.clear();
+        if (!projectFiles.isEmpty()){
+            Boolean replaceCurrent = projectFiles.size() == 1 ? null : false;
+            ProjectOpenAction opener = (ProjectOpenAction) SiriusActions.LOAD_WS.getInstance(gui);
+            projectFiles.forEach(f -> opener.openProject(f, replaceCurrent));
+
+        }
         if (!inputF.msInput.isEmpty())
             importDragAndDropFiles(inputF); //does not support importing projects
     }
