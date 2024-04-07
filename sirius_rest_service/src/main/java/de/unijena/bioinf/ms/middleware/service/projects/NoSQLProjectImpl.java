@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
@@ -27,10 +28,9 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.babelms.inputresource.InputResource;
-import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
+import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.lcms.msms.MergeGreedyStrategy;
 import de.unijena.bioinf.lcms.msms.MergedSpectrum;
 import de.unijena.bioinf.lcms.msms.MsMsQuerySpectrum;
@@ -41,10 +41,10 @@ import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.features.*;
-import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
+import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
@@ -75,11 +75,12 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
 public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
-
+    private static  final AtomicLong ATOMIC_ZERO = new AtomicLong(0);
     @NotNull
     private final String projectId;
 
@@ -103,6 +104,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         initCounterByFeature(SpectraMatch.class, SpectraMatch::getAlignedFeatureId);
         initCounterByFeature(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate::getAlignedFeatureId);
+        initCounterByFeature(CsiStructureMatch.class, CsiStructureMatch::getAlignedFeatureId);
+        initCounterByFeature(DenovoStructureMatch.class, DenovoStructureMatch::getAlignedFeatureId);
     }
 
     //using private methods instead of references for easier refactoring or changes.
@@ -117,20 +120,25 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     private void initCounter(Class<?> clazz) {
-        this.totalCounts.put(clazz, new AtomicLong(storage().countAll(clazz)));
-        storage().onInsert(clazz, c -> totalCounts.get(clazz).getAndIncrement());
-        storage().onRemove(clazz, c -> totalCounts.get(clazz).getAndDecrement());
+        storage().read(() -> { // transaction to ensure that we do not miss anything before listener is registered
+            this.totalCounts.put(clazz, new AtomicLong(storage().countAll(clazz)));
+            storage().onInsert(clazz, c -> totalCounts.get(clazz).getAndIncrement());
+            storage().onRemove(clazz, c -> totalCounts.get(clazz).getAndDecrement());
+        });
+
     }
 
     @SneakyThrows
     private <T> void initCounterByFeature(Class<T> clazz, Function<T, Long> featureIdGetter) {
-        Map<Long, AtomicLong> counts = Collections.synchronizedMap(new HashMap<>());
-        for (AlignedFeatures af : this.storage().findAll(AlignedFeatures.class)) {
-            counts.put(af.getAlignedFeatureId(), new AtomicLong(this.project().countByFeatureId(af.getAlignedFeatureId(), clazz)));
-        }
-        this.totalCountByFeature.put(clazz, counts);
-        this.storage().onInsert(clazz, c -> this.totalCountByFeature.get(clazz).get(featureIdGetter.apply(c)).getAndIncrement());
-        this.storage().onRemove(clazz, c -> this.totalCountByFeature.get(clazz).get(featureIdGetter.apply(c)).getAndDecrement());
+        storage().read(() -> { // transaction to ensure that we do not miss anything before listener is registered
+            Map<Long, AtomicLong> counts = Collections.synchronizedMap(new HashMap<>());
+            for (AlignedFeatures af : this.storage().findAll(AlignedFeatures.class)) {
+                counts.put(af.getAlignedFeatureId(), new AtomicLong(this.project().countByFeatureId(af.getAlignedFeatureId(), clazz)));
+            }
+            this.totalCountByFeature.put(clazz, counts);
+            this.storage().onInsert(clazz, c -> this.totalCountByFeature.get(clazz).get(featureIdGetter.apply(c)).getAndIncrement());
+            this.storage().onRemove(clazz, c -> this.totalCountByFeature.get(clazz).get(featureIdGetter.apply(c)).getAndDecrement());
+        });
     }
 
     @Override
@@ -190,6 +198,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     private Pair<String, Database.SortOrder> sortFormulaCandidate(Sort sort) {
         return sort(sort, Pair.of("siriusScore", Database.SortOrder.DESCENDING), Function.identity());
+    }
+
+    private Pair<String, Database.SortOrder> sortStructureMatch(Sort sort) {
+        return sort(sort, Pair.of("csiScore", Database.SortOrder.DESCENDING), Function.identity());
     }
 
     private Compound convertCompound(de.unijena.bioinf.ms.persistence.model.core.Compound compound) {
@@ -335,31 +347,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return builder.build();
     }
 
-    private SpectralLibraryMatch convertMatch(SpectraMatch match) {
-        SpectralLibraryMatch.SpectralLibraryMatchBuilder builder = SpectralLibraryMatch.builder();
-        if (match.getSimilarity() != null) {
-            builder.similarity(match.getSimilarity().similarity);
-            builder.sharedPeaks(match.getSimilarity().sharedPeaks);
-        }
-        builder.querySpectrumIndex(match.getQuerySpectrumIndex())
-                .dbName(match.getDbName())
-                .dbId(match.getDbId())
-                .uuid(match.getUuid())
-                .splash(match.getSplash())
-                .exactMass(Double.toString(match.getExactMass()))
-                .smiles(match.getSmiles())
-                .candidateInChiKey(match.getCandidateInChiKey());
-
-        if (match.getMolecularFormula() != null) {
-            builder.molecularFormula(match.getMolecularFormula().toString());
-        }
-        if (match.getAdduct() != null) {
-            builder.adduct(match.getAdduct().toString());
-        }
-        return builder.build();
-    }
-
-
     private static final EnumSet<FormulaCandidate.OptField> needTree = EnumSet.of(
             FormulaCandidate.OptField.fragmentationTree, FormulaCandidate.OptField.annotatedSpectrum,
             FormulaCandidate.OptField.isotopePattern, FormulaCandidate.OptField.lipidAnnotation,
@@ -393,7 +380,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             if (optFields.contains(FormulaCandidate.OptField.fragmentationTree))
                 builder.fragmentationTree(FragmentationTree.fromFtree(ftree));
             if (optFields.contains(FormulaCandidate.OptField.lipidAnnotation))
-                builder.lipidAnnotation(Projects.asLipidAnnotation(ftree));
+                builder.lipidAnnotation(AnnotationUtils.asLipidAnnotation(ftree));
             if (optFields.contains(FormulaCandidate.OptField.annotatedSpectrum))
                 //todo this is not efficient an loads spectra a second time as well as the whole experiment. we need no change spectra annotation code to improve this.
                 builder.annotatedSpectrum(findAnnotatedMsMsSpectrum(-1, null, candidate.getFormulaId(), candidate.getAlignedFeatureId()));
@@ -428,7 +415,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         Pair<String, Database.SortOrder> sort = sortCompound(pageable.getSort());
         Stream<de.unijena.bioinf.ms.persistence.model.core.Compound> stream;
         if (pageable.isPaged()) {
-            stream = storage().findAllStr(de.unijena.bioinf.ms.persistence.model.core.Compound.class, (int) pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
+            stream = storage().findAllStr(de.unijena.bioinf.ms.persistence.model.core.Compound.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
         } else {
             stream = storage().findAllStr(de.unijena.bioinf.ms.persistence.model.core.Compound.class, sort.getLeft(), sort.getRight());
         }
@@ -452,18 +439,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream().map(this::convertCompound).toList();
         project().importCompounds(dbc);
         return dbc.stream().map(this::convertCompound).toList();
-    }
-
-    @Override
-    public ImportResult importPreprocessedData(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData) {
-        // TODO POST pre-release? why do we actually need the imports without a background job?
-        return null;
-    }
-
-    @Override
-    public ImportResult importMsRunData(Collection<PathInputResource> inputResources, boolean alignRuns, boolean allowMs1OnlyData) {
-        // TODO POST pre-release? why do we actually need the imports without a background job?
-        return null;
     }
 
     @SneakyThrows
@@ -506,7 +481,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         Pair<String, Database.SortOrder> sort = sortFeature(pageable.getSort());
         Stream<AlignedFeatures> stream;
         if (pageable.isPaged()) {
-            stream = storage().findAllStr(AlignedFeatures.class, (int) pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
+            stream = storage().findAllStr(AlignedFeatures.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
         } else {
             stream = storage().findAllStr(AlignedFeatures.class, sort.getLeft(), sort.getRight());
         }
@@ -558,11 +533,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         Pair<String, Database.SortOrder> sort = sortMatch(pageable.getSort());
         List<SpectralLibraryMatch> matches;
         if (pageable.isPaged()) {
-            matches = project().findByFeatureIdStr(longId, SpectraMatch.class, (int) pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight()).map(this::convertMatch).toList();
+            matches = project().findByFeatureIdStr(longId, SpectraMatch.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight()).map(SpectralLibraryMatch::of).toList();
         } else {
-            matches = project().findByFeatureIdStr(longId, SpectraMatch.class, sort.getLeft(), sort.getRight()).map(this::convertMatch).toList();
+            matches = project().findByFeatureIdStr(longId, SpectraMatch.class, sort.getLeft(), sort.getRight()).map(SpectralLibraryMatch::of).toList();
         }
-        long total = totalCountByFeature.get(SpectraMatch.class).getOrDefault(longId, new AtomicLong(0)).get();
+        long total = totalCountByFeature.get(SpectraMatch.class).getOrDefault(longId, ATOMIC_ZERO).get();
 
         return new PageImpl<>(matches, pageable, total);
     }
@@ -579,13 +554,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         List<FormulaCandidate> candidates;
         if (pageable.isPaged()) {
-            candidates = project().findByFeatureIdStr(longAFId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, (int) pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight())
+            candidates = project().findByFeatureIdStr(longAFId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight())
                     .map(fc -> convertFormulaCandidate(msData, fc, optFields)).toList();
         } else {
             candidates = project().findByFeatureIdStr(longAFId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, sort.getLeft(), sort.getRight())
                     .map(fc -> convertFormulaCandidate(msData, fc, optFields)).toList();
         }
-        long total = totalCountByFeature.get(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class).getOrDefault(longAFId, new AtomicLong(0)).get();
+        long total = totalCountByFeature.get(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class).getOrDefault(longAFId, ATOMIC_ZERO).get();
 
         return new PageImpl<>(candidates, pageable, total);
     }
@@ -608,39 +583,127 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @Override
     public Page<StructureCandidateScored> findStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
-        return Page.empty(pageable);
+        return findStructureCandidatesByFeatureIdAndFormulaId(CsiStructureMatch.class, formulaId, alignedFeatureId, pageable, optFields);
     }
 
     @Override
     public Page<StructureCandidateScored> findDeNovoStructureCandidatesByFeatureIdAndFormulaId(String formulaId, String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
-        return Page.empty(pageable);
+        return findStructureCandidatesByFeatureIdAndFormulaId(DenovoStructureMatch.class, formulaId, alignedFeatureId, pageable, optFields);
     }
+
+    private  <T extends StructureMatch> Page<StructureCandidateScored> findStructureCandidatesByFeatureIdAndFormulaId(Class<T> clzz, String formulaId, String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
+        long longAFId = Long.parseLong(alignedFeatureId);
+        long longFId = Long.parseLong(formulaId);
+        Pair<String, Database.SortOrder> sort = sortStructureMatch(pageable.getSort());
+        List<StructureCandidateScored> candidates = project().findByFeatureIdAndFormulaIdStr(longAFId, longFId, clzz, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight())
+                .map(s -> convertStructureMatch(s, optFields)).map(s -> (StructureCandidateScored)s).toList();
+
+        long total = totalCountByFeature.get(clzz).getOrDefault(longAFId, ATOMIC_ZERO).get();
+
+        return new PageImpl<>(candidates, pageable, total);
+    }
+
 
     @Override
     public Page<StructureCandidateFormula> findStructureCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
-        return Page.empty(pageable);
+        return findStructureCandidatesByFeatureId(CsiStructureMatch.class, alignedFeatureId, pageable, optFields);
     }
 
     @Override
     public Page<StructureCandidateFormula> findDeNovoStructureCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
-        return Page.empty(pageable);
+        return findStructureCandidatesByFeatureId(DenovoStructureMatch.class, alignedFeatureId, pageable, optFields);
     }
 
-    @Override
+    private  <T extends StructureMatch> Page<StructureCandidateFormula> findStructureCandidatesByFeatureId(Class<T> clzz, String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
+        long longAFId = Long.parseLong(alignedFeatureId);
+        Pair<String, Database.SortOrder> sort = sortStructureMatch(pageable.getSort());
+
+        Map<Long, List<T>> fidToCandidates = project().findByFeatureIdStr(longAFId, clzz, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight()).collect(Collectors.groupingBy(StructureMatch::getFormulaId, Collectors.toList()));
+        List<StructureCandidateFormula> candidates = new ArrayList<>();
+        fidToCandidates.forEach((k,v) ->
+                project().findByFormulaIdStr(k, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
+                        .findFirst().ifPresent(fc ->
+                                v.forEach(sm -> candidates.add(convertStructureMatch(fc.getMolecularFormula(), fc.getAdduct(), sm, optFields)))));
+
+        long total = totalCountByFeature.get(DenovoStructureMatch.class).getOrDefault(longAFId, ATOMIC_ZERO).get();
+
+        return new PageImpl<>(candidates, pageable, total);
+    }
+
+
+        @Override
     public StructureCandidateScored findTopStructureCandidateByFeatureId(String alignedFeatureId, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
-        return null;
+        long longAFId = Long.parseLong(alignedFeatureId);
+        Pair<String, Database.SortOrder> sort = sortStructureMatch(Sort.by(Sort.Direction.DESC, "csiScore"));
+        return project().findByFeatureIdStr(longAFId, CsiStructureMatch.class, sort.getLeft(), sort.getRight())
+                .findFirst().map(s -> convertStructureMatch(s, optFields)).orElse(null);
     }
 
     @Override
     public StructureCandidateScored findStructureCandidateById(@NotNull String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
-        return null;
+        long longAFId = Long.parseLong(alignedFeatureId);
+        long longFId = Long.parseLong(formulaId);
+        CsiStructureMatch match = project().findByFeatureIdAndFormulaIdAndInChIStr(longAFId, longFId, inchiKey, CsiStructureMatch.class)
+                .findFirst().orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Structure Candidate with InChIKey: " + inchiKey + "| formulaId: " + formulaId + "| alignedFeatureId: " + alignedFeatureId + " could not be found!"));
+        return convertStructureMatch(match, optFields);
+    }
+
+    private StructureCandidateFormula convertStructureMatch(MolecularFormula molecularFormula, PrecursorIonType adduct, StructureMatch match, EnumSet<StructureCandidateScored.OptField> optFields) {
+        StructureCandidateFormula sSum = convertStructureMatch(match, optFields);
+        if (molecularFormula != null)
+            sSum.setMolecularFormula(molecularFormula.toString());
+        if (adduct != null)
+            sSum.setAdduct(adduct.toString());
+        return sSum;
+    }
+
+    private StructureCandidateFormula convertStructureMatch(StructureMatch match, EnumSet<StructureCandidateScored.OptField> optFields) {
+        final StructureCandidateFormula sSum = new StructureCandidateFormula();
+        //FP
+        if (match.getCandidate() == null)
+            project().fetchFingerprintCandidate(match, optFields.contains(StructureCandidateScored.OptField.fingerprint));
+        sSum.setFingerprint(AnnotationUtils.asBinaryFingerprint(match.getCandidate().getFingerprint()));
+
+        sSum.setFormulaId(String.valueOf(match.getFormulaId()));
+        // scores
+        sSum.setCsiScore(match.getCsiScore());
+        sSum.setTanimotoSimilarity(match.getTanimotoSimilarity());
+
+        if (match instanceof CsiStructureMatch csi)
+            sSum.setMcesDistToTopHit(csi.getMcesDistToTopHit());
+//        else if (match instanceof DenovoStructureMatch mn)
+        //todo do we want to add dnn score for denovo?
+
+
+        //Structure information
+        //check for "null" strings since the database might not be perfectly curated
+        final String n = match.getCandidate().getName();
+        if (n != null && !n.isEmpty() && !n.equals("null"))
+            sSum.setStructureName(n);
+
+        sSum.setSmiles(match.getCandidate().getSmiles());
+        sSum.setInchiKey(match.getCandidateInChiKey());
+        sSum.setXlogP(match.getCandidate().getXlogp());
+
+        //meta data
+        if (optFields.contains(StructureCandidateScored.OptField.dbLinks))
+            sSum.setDbLinks(match.getCandidate().getLinks());
+
+        // spectral library matches
+        if (optFields.contains(StructureCandidateScored.OptField.libraryMatches)) {
+            List<SpectralLibraryMatch> libraryMatches = project().findByInChIStr(sSum.getInchiKey(), SpectraMatch.class)
+                    .map(SpectralLibraryMatch::of).toList();
+            sSum.setSpectralLibraryMatches(libraryMatches);
+        }
+
+        return sSum;
     }
 
     @Override
     public AnnotatedSpectrum findAnnotatedSpectrumByStructureId(int specIndex, @Nullable String inchiKey, @NotNull String formulaId, @NotNull String alignedFeatureId) {
         long longFId = Long.parseLong(formulaId);
         long longAFId = Long.parseLong(alignedFeatureId);
-        return findAnnotatedMsMsSpectrum(specIndex, inchiKey, longFId,longAFId);
+        return findAnnotatedMsMsSpectrum(specIndex, inchiKey, longFId, longAFId);
     }
 
     @SneakyThrows
@@ -652,8 +715,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         FTree ftree = project().findByFormulaIdStr(formulaId, FTreeResult.class).findFirst().map(FTreeResult::getFTree)
                 .orElse(null);
 
-        String smiles = storage().getByPrimaryKey(inchiKey, CsiStructureMatch.class)
-                .map(StructureMatch::getCandidate).map(CompoundCandidate::getSmiles)
+        //todo we retrieve the complete candidate just for the smile. Maybe add smiles to match?
+        String smiles = storage().getByPrimaryKey(inchiKey, FingerprintCandidate.class)
+                .map(CompoundCandidate::getSmiles)
                 .orElse(null);
 
         if (specIndex < 0)
@@ -675,8 +739,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         FTree ftree = project().findByFormulaIdStr(longFId, FTreeResult.class).findFirst().map(FTreeResult::getFTree)
                 .orElse(null);
 
-        String smiles = storage().getByPrimaryKey(inchiKey, CsiStructureMatch.class)
-                .map(StructureMatch::getCandidate).map(CompoundCandidate::getSmiles)
+        //todo we retrieve the complete candidate just for the smile. Maybe add smiles to match?
+        String smiles = storage().getByPrimaryKey(inchiKey, FingerprintCandidate.class)
+                .map(CompoundCandidate::getSmiles)
                 .orElse(null);
 
         return AnnotatedMsMsData.of(exp, ftree, smiles);

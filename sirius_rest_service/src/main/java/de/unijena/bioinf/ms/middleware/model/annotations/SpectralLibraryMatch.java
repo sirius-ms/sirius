@@ -72,17 +72,27 @@ public class SpectralLibraryMatch {
     private BasicSpectrum referenceSpectrum;
 
     public static SpectralLibraryMatch of(@NotNull SpectralSearchResult.SearchResult result){
-        return SpectralLibraryMatch.builder()
-                .similarity(result.getSimilarity().similarity)
-                .sharedPeaks(result.getSimilarity().sharedPeaks)
+        SpectralLibraryMatch.SpectralLibraryMatchBuilder builder = SpectralLibraryMatch.builder();
+        if (result.getSimilarity() != null) {
+            builder.similarity(result.getSimilarity().similarity);
+            builder.sharedPeaks(result.getSimilarity().sharedPeaks);
+        }
+        builder.querySpectrumIndex(result.getQuerySpectrumIndex())
                 .dbName(result.getDbName())
                 .dbId(result.getDbId())
                 .uuid(result.getUuid())
                 .splash(result.getSplash())
+                .exactMass(Double.toString(result.getExactMass()))
                 .smiles(result.getSmiles())
-                .candidateInChiKey(result.getCandidateInChiKey())
-                .querySpectrumIndex(result.getQuerySpectrumIndex())
-                .build();
+                .candidateInChiKey(result.getCandidateInChiKey());
+
+        if (result.getMolecularFormula() != null) {
+            builder.molecularFormula(result.getMolecularFormula().toString());
+        }
+        if (result.getAdduct() != null) {
+            builder.adduct(result.getAdduct().toString());
+        }
+        return builder.build();
     }
     public static List<SpectralLibraryMatch> of(@NotNull SpectralSearchResult result){
         return of(result, null);

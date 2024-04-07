@@ -22,6 +22,8 @@ package de.unijena.bioinf.ms.middleware.service.projects;
 
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
+import de.unijena.bioinf.ms.backgroundruns.ImportMsFromResourceWorkflow;
+import de.unijena.bioinf.ms.backgroundruns.ImportPeaksFomResourceWorkflow;
 import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
 import de.unijena.bioinf.ms.middleware.model.annotations.SpectralLibraryMatch;
 import de.unijena.bioinf.ms.middleware.model.annotations.StructureCandidateFormula;
@@ -34,6 +36,7 @@ import de.unijena.bioinf.ms.middleware.model.features.AnnotatedMsMsData;
 import de.unijena.bioinf.ms.middleware.model.features.FeatureImport;
 import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
+import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +46,8 @@ import org.springframework.data.domain.Pageable;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.toEnumSet;
 
@@ -61,8 +66,37 @@ public interface Project<PSM extends ProjectSpaceManager> {
                                 @NotNull EnumSet<Compound.OptField> optFields,
                                 @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures);
 
-    ImportResult importPreprocessedData(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData);
-    ImportResult importMsRunData(Collection<PathInputResource> inputResources, boolean alignRuns, boolean allowMs1OnlyData);
+    default ImportResult importPreprocessedData(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData) {
+        ImportPeaksFomResourceWorkflow importTask = new ImportPeaksFomResourceWorkflow(getProjectSpaceManager(), inputResources, ignoreFormulas, allowMs1OnlyData, true);
+
+        importTask.run();
+
+        return ImportResult.builder()
+                .affectedAlignedFeatureIds(importTask.getImportedInstancesStr()
+                        .map(Instance::getId)
+                        .collect(Collectors.toList()))
+                .affectedCompoundIds(importTask.getImportedInstancesStr()
+                        .map(Instance::getCompoundId)
+                        .filter(Optional::isPresent)
+                        .flatMap(Optional::stream)
+                        .distinct().collect(Collectors.toList()))
+                .build();
+    }
+
+    default ImportResult importMsRunData(Collection<PathInputResource> inputResources, boolean alignRuns, boolean allowMs1OnlyData) {
+        ImportMsFromResourceWorkflow importTask = new ImportMsFromResourceWorkflow(getProjectSpaceManager(), inputResources, allowMs1OnlyData, alignRuns, true);
+
+        importTask.run();
+        return ImportResult.builder()
+                .affectedAlignedFeatureIds(importTask.getImportedInstancesStr()
+                        .map(Instance::getId)
+                        .collect(Collectors.toList()))
+                .affectedCompoundIds(importTask.getImportedInstancesStr()
+                        .map(Instance::getCompoundId)
+                        .filter(Optional::isPresent).flatMap(Optional::stream)
+                        .distinct().collect(Collectors.toList()))
+                .build();
+    }
 
     default Page<Compound> findCompounds(Pageable pageable, Compound.OptField... optFields) {
         return findCompounds(pageable, toEnumSet(Compound.OptField.class, optFields),
