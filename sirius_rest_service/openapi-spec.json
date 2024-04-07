@@ -6019,6 +6019,21 @@
           },
           "compoundClassAnnotation": {
             "$ref": "#/components/schemas/CompoundClasses"
+          },
+          "confidenceExactMatch": {
+            "type": "number",
+            "description": "Confidence Score that represents the confidence whether the top hit is correct.",
+            "format": "double",
+            "nullable": true
+          },
+          "confidenceApproxMatch": {
+            "type": "number",
+            "description": "Confidence Score that represents the confidence whether the top hit or a very similar hit (estimated by MCES distance) is correct.",
+            "format": "double",
+            "nullable": true
+          },
+          "expansiveSearchState": {
+            "$ref": "#/components/schemas/Mode"
           }
         },
         "description": "Summary of the results of a feature (aligned over runs). Can be added to a AlignedFeature.\n The different annotation fields within this summary object are null if the corresponding\n feature does not contain the represented results. If fields are non-null\n the corresponding result has been computed but might still be empty.",
@@ -6581,18 +6596,6 @@
             "format": "double",
             "nullable": true
           },
-          "confidenceExactMatch": {
-            "type": "number",
-            "description": "Confidence Score that represents the confidence whether the top hit is correct.",
-            "format": "double",
-            "nullable": true
-          },
-          "confidenceApproxMatch": {
-            "type": "number",
-            "description": "Confidence Score that represents the confidence whether the top hit or a very similar hit (estimated by MCES distance) is correct.",
-            "format": "double",
-            "nullable": true
-          },
           "mcesDistToTopHit": {
             "type": "number",
             "description": "Maximum Common Edge Subgraph (MCES) distance to the top scoring hit (CSI:FingerID) in a candidate list.",
@@ -6986,18 +6989,6 @@
           "tanimotoSimilarity": {
             "type": "number",
             "description": "Tanimoto similarly of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID",
-            "format": "double",
-            "nullable": true
-          },
-          "confidenceExactMatch": {
-            "type": "number",
-            "description": "Confidence Score that represents the confidence whether the top hit is correct.",
-            "format": "double",
-            "nullable": true
-          },
-          "confidenceApproxMatch": {
-            "type": "number",
-            "description": "Confidence Score that represents the confidence whether the top hit or a very similar hit (estimated by MCES distance) is correct.",
             "format": "double",
             "nullable": true
           },

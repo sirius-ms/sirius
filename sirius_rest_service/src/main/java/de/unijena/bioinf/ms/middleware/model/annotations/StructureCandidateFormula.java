@@ -29,7 +29,6 @@ import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.projectspace.FormulaResultId;
-import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import lombok.Getter;
 import lombok.Setter;
@@ -55,36 +54,34 @@ public class StructureCandidateFormula extends StructureCandidateScored {
      */
     protected String formulaId;
 
-    public static StructureCandidateFormula of(Scored<? extends CompoundCandidate> can, FormulaScoring scorings,
+    public static StructureCandidateFormula of(Scored<? extends CompoundCandidate> can,
                                                EnumSet<OptField> optFields,
                                                FormulaResultId fid
     ) {
-        return of(can, null, null, scorings, optFields, fid.getMolecularFormula(), fid.getIonType(), fid.fileName());
+        return of(can, null, null, optFields, fid.getMolecularFormula(), fid.getIonType(), fid.fileName());
     }
 
-    public static StructureCandidateFormula of(Scored<? extends CompoundCandidate> can, FormulaScoring scorings,
+    public static StructureCandidateFormula of(Scored<? extends CompoundCandidate> can,
                                                EnumSet<OptField> optFields,
                                                MolecularFormula formula,
                                                PrecursorIonType adduct,
                                                String fomulaId
     ) {
-        return of(can, null, null, scorings, optFields, formula, adduct, fomulaId);
+        return of(can, null, null, optFields, formula, adduct, fomulaId);
     }
 
     public static StructureCandidateFormula of(Scored<? extends CompoundCandidate> can,
                                                @Nullable Fingerprint fp,
                                                @Nullable SpectralSearchResult libraryMatches,
-                                               @Nullable FormulaScoring confidenceScoreProvider,
                                                EnumSet<OptField> optFields,
                                                FormulaResultId fid
     ) {
-        return of(can, fp, libraryMatches, confidenceScoreProvider, optFields, fid.getMolecularFormula(), fid.getIonType(), fid.fileName());
+        return of(can, fp, libraryMatches, optFields, fid.getMolecularFormula(), fid.getIonType(), fid.fileName());
     }
 
     public static StructureCandidateFormula of(Scored<? extends CompoundCandidate> can,
                                                @Nullable Fingerprint fp,
                                                @Nullable SpectralSearchResult libraryMatches,
-                                               @Nullable FormulaScoring confidenceScoreProvider,
                                                EnumSet<OptField> optFields,
                                                MolecularFormula formula,
                                                PrecursorIonType adduct,
