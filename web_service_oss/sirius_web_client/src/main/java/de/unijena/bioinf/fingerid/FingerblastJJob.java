@@ -156,7 +156,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                                 .orElse(TagStructuresByElGordo.TRUE).value ? DataSource.LIPID.flag : 0)
         ).collect(Collectors.toList());
 
-        submitSubJobsInBatches(formulaJobs, PropertyManager.getNumberOfThreads());
+        submitSubJobsInBatches(formulaJobs, jobManager.getCPUThreads());
 
         checkForInterruption();
 
@@ -405,7 +405,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
         try {
             //Start and finish MCES job for requested DBs here, since Epi and conf are dependent on the mces-condensed list
             final MCESJJob mcesJJobRequested = new MCESJJob(confScoreApproxDist, requestedMergedCandidates);
-            submitSubJob(mcesJJobRequested);
+            submitJob(mcesJJobRequested);
             int mcesIndexRequested = mcesJJobRequested.awaitResult();
 
 
@@ -424,7 +424,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
             //epi Job for <exact, requested>
             final SubstructureAnnotationJJob epiJJobExactRequested = new SubstructureAnnotationJJob(requestedMergedCandidates.size() >= 5 ? 5 : requestedMergedCandidates.size() >= 2 ? 2 : requestedMergedCandidates.size() >= 1 ? 1 : 0);
             epiJJobExactRequested.setInput(fTreeCandidatesMap);
-            submitSubJob(epiJJobExactRequested);
+            submitJob(epiJJobExactRequested);
 
             //epi job for <approximate, requested>. Remove candidate from ftreeCandidatesMap that are within MCES distance of approximate mode
             final SubstructureAnnotationJJob epiJJobApproximateRequested = new SubstructureAnnotationJJob(requestedMergedCandidatesMCESCondensed.size() >= 5 ? 5 : requestedMergedCandidatesMCESCondensed.size() >= 2 ? 2 : requestedMergedCandidatesMCESCondensed.size() >= 1 ? 1 : 0);
@@ -434,7 +434,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                 fTreeCandidatesMapMCESCondensedRequested.put(t, new FBCandidates(filteredCandidates));
             }
             epiJJobApproximateRequested.setInput(fTreeCandidatesMapMCESCondensedRequested);
-            submitSubJob(epiJJobApproximateRequested);
+            submitJob(epiJJobApproximateRequested);
 
             //canopus job for requested
 
@@ -457,7 +457,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
             confidenceJJobRequested.addRequiredJob(canopusJob);
 
 
-            return submitSubJob(confidenceJJobRequested);
+            return submitJob(confidenceJJobRequested);
         }catch (ExecutionException | UnknownElementException | IOException e){
             e.printStackTrace();
             logError("Couldn't compute confidence Job");
