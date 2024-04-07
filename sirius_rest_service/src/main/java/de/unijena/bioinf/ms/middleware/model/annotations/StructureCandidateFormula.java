@@ -39,7 +39,7 @@ import java.util.EnumSet;
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties({})
+@JsonIgnoreProperties(value = {}, ignoreUnknown = true)
 public class StructureCandidateFormula extends StructureCandidateScored {
     /**
      * Molecular formula of this candidate
@@ -108,7 +108,9 @@ public class StructureCandidateFormula extends StructureCandidateScored {
 
         sSum.setSmiles(can.getCandidate().getSmiles());
         sSum.setInchiKey(can.getCandidate().getInchiKey2D());
-        sSum.setXlogP(can.getCandidate().getXlogp());
+
+        double xlogP = can.getCandidate().getXlogp();
+        sSum.setXlogP(Double.isNaN(xlogP) || Double.isInfinite(xlogP) ? null : xlogP);
 
         //meta data
         if (optFields.contains(OptField.dbLinks))
