@@ -26,6 +26,7 @@ import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.ints.IntObjectPair;
 
 import java.util.Iterator;
@@ -50,7 +51,7 @@ public class TraceExtractor implements TraceExtractionStrategy {
                 if (traceIndex > -1) {
                     final ProcessedSample S = samplesInTrace[traceIndex];
                     final ContiguousTrace t = mergedSample.getStorage().getMergeStorage().getTrace(S.getMapping(), alignedFeature.getTraceIds().getInt(traceIndex));
-                    DoubleList ints = new DoubleArrayList();
+                    FloatArrayList ints = new FloatArrayList();
                     for (int s = mergedTrace.startId(); s <= mergedTrace.endId(); ++s) {
                         ints.add(S.getScanPointInterpolator().interpolateIntensity(t, s));
                     }
@@ -59,25 +60,27 @@ public class TraceExtractor implements TraceExtractionStrategy {
                     traceIndex++;
                     return IntObjectPair.of(
                             traceUid,
-                            SourceTrace.builder().intensities(ints).runId(S.getRun().getRunId()).build()
+                            new SourceTrace(S.getRun().getRunId(), ints, t.startId)
                     );
                 } else if (traceIndex == -1) {
                     DoubleList rts = new DoubleArrayList();
                     DoubleList mzs = new DoubleArrayList();
-                    DoubleList ints = new DoubleArrayList();
-                    DoubleList noise = new DoubleArrayList();
+                    FloatArrayList ints = new FloatArrayList();
+                    float maxNoise = 0f;
                     for (int k = mergedTrace.startId(); k <= mergedTrace.endId(); k++) {
                         rts.add(mergedTrace.retentionTime(k));
                         mzs.add(mergedTrace.mz(k));
                         ints.add(mergedTrace.intensity(k));
-                        noise.add(stats.noiseLevel(k));
+                        maxNoise = Math.max(maxNoise , stats.noiseLevel(k));
                     }
 
                     traceIndex++;
 
                     return IntObjectPair.of(
                             alignedFeature.getUid(),
-                            de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace.builder().runId(mergedSample.getRun().getRunId()).rts(rts).mzs(mzs).intensities(ints).noise(noise).build()
+                            new de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace(
+                                    mergedSample.getRun().getRunId(),
+                                    ints.toFloatArray(), mergedTrace.startId(), mzs.toDoubleArray())
                     );
                 }
                 return null;

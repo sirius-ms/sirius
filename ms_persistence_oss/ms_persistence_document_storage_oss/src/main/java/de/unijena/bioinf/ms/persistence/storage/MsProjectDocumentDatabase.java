@@ -26,6 +26,7 @@ import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
@@ -81,25 +82,32 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                 .addRepository(MSData.class)
 
                 .addRepository(Feature.class,
-                        Index.nonUnique("alignedFeatureId"),
+                        Index.nonUnique("alignedFeatureId")
+                        /*
                         Index.nonUnique("averageMass"),
                         Index.nonUnique("apexMass"),
                         Index.nonUnique("retentionTime.start"),
                         Index.nonUnique("retentionTime.end"))
+                         */
+                )
 
                 .addRepository(AlignedFeatures.class,
                         Index.nonUnique("compoundId"),
                         Index.nonUnique("averageMass"),
-                        Index.nonUnique("apexMass"),
-                        Index.nonUnique("retentionTime.start"),
-                        Index.nonUnique("retentionTime.end"))
+                        Index.nonUnique("retentionTime.middle")
+                        //Index.nonUnique("apexMass"),
+                        //Index.nonUnique("retentionTime.start"),
+                        //Index.nonUnique("retentionTime.end")
+                )
 
                 .addRepository(AlignedIsotopicFeatures.class,
                         Index.nonUnique("compoundId"),
                         Index.nonUnique("averageMass"),
-                        Index.nonUnique("apexMass"),
-                        Index.nonUnique("retentionTime.start"),
-                        Index.nonUnique("retentionTime.end"))
+                        Index.nonUnique("retentionTime.middle")
+                        //Index.nonUnique("apexMass"),
+                        //Index.nonUnique("retentionTime.start"),
+                        //Index.nonUnique("retentionTime.end")
+                )
 
                 .addRepository(CorrelatedIonPair.class,
                         Index.nonUnique("alignedFeatureId1"),
@@ -109,8 +117,9 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                 .addRepository(Compound.class,
                         Index.nonUnique("name"),
                         Index.nonUnique("neutralMass"),
-                        Index.nonUnique("rt.start"),
-                        Index.nonUnique("rt.end"));
+                        Index.nonUnique("rt.middle"))
+
+                .addRepository(RetentionTimeAxis.class, Index.unique("runId"));
     }
 
     default Stream<Compound> getAllCompounds() throws IOException {

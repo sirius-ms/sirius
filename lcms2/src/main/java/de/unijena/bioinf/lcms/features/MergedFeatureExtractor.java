@@ -47,6 +47,7 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
             return Collections.emptyIterator();
 
         Arrays.sort(traceSegments, Comparator.comparingDouble(a -> a.apex));
+        System.out.println(traceSegments.length);
         double[][] intervals = new double[traceSegments.length][2];
         for (int i = 0; i < traceSegments.length; i++) {
             intervals[i][0] = mTrace.retentionTime(traceSegments[i].leftEdge);
@@ -196,7 +197,7 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
             throw new RuntimeException(String.format("Unknown trace with uid %d", traceUid));
         }
 
-        feature.setTraceRef(new TraceRef(trace2trace.get(traceUid), segment.leftEdge - o, segment.apex - o, segment.rightEdge -o));
+        feature.setTraceRef(new TraceRef(trace2trace.get(traceUid), o, segment.leftEdge - o, segment.apex - o, segment.rightEdge -o));
 
         return feature;
     }

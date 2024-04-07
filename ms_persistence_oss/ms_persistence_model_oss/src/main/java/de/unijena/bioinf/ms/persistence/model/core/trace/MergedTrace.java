@@ -20,18 +20,34 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.trace;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
+import it.unimi.dsi.fastutil.floats.FloatList;
 import jakarta.persistence.Id;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import it.unimi.dsi.fastutil.floats.FloatList;
+
+import java.util.Arrays;
 
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@SuperBuilder
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 public class MergedTrace extends AbstractTrace {
+
+    public MergedTrace(long runId, float[] intensities, int scanIndexOffset, double[] masses) {
+        super(runId, new FloatArrayList(intensities), scanIndexOffset);
+        this.averageMz = Arrays.stream(masses).average().orElse(0d);
+        this.mzDeviationsFromMean = new FloatArrayList(masses.length);
+        for (double mz : masses) mzDeviationsFromMean.add((float)(mz - averageMz));
+    }
+    public MergedTrace(long runId, float[] intensities, int scanIndexOffset, double meanMz, float[] deviationsFromMean) {
+        super(runId, new FloatArrayList(intensities), scanIndexOffset);
+        this.mzDeviationsFromMean = new FloatArrayList(deviationsFromMean);
+        this.averageMz = meanMz;
+    }
 
     /**
      * ID of this trace.
@@ -40,20 +56,17 @@ public class MergedTrace extends AbstractTrace {
     long mergedTraceId;
 
     /**
-     * mz of all peaks ordered by RT
+     * deviations from average mass in float
      */
-    DoubleList mzs;
+    FloatList mzDeviationsFromMean;
 
     /**
-     * RTs of all scans in ascending order
+     * Computes the array of exact mass values
      */
-    DoubleList rts;
+    @JsonIgnore
+    public double[] getMassTrace() {
+        return mzDeviationsFromMean.doubleStream().map(x->x+averageMz).toArray();
+    }
 
-    /**
-     * estimated local noise level
-     */
-    DoubleList noise;
-
-    // TODO the merged trace should probably hold all the source trace objects!
-
+    double averageMz;
 }

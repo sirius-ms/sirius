@@ -19,4 +19,6 @@ public interface MergeStorage extends Iterable<MergedTrace> {
     void removeMerged(int uid);
 
     public int getFreeIsotopeMergeUid();
+
+    int numberOfMergedTraces();
 }
