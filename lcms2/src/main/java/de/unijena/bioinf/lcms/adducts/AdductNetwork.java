@@ -87,20 +87,31 @@ public class AdductNetwork {
         }
         FloatArrayList sizes = new FloatArrayList();
         for (List<AdductNode> subg : subgraphs) {
-            System.out.println("--------------------------");
             Set<AdductEdge> edges = new HashSet<>();
             for (AdductNode n : subg) edges.addAll(n.edges);
-            sizes.add(edges.size());
+            int adductEdges=0;
             for (AdductEdge e : edges) {
                 if (Double.isFinite(e.ratioScore)) {
-                    System.out.printf("%.3f (%d sec) ---> %.3f (%d sec) || ratio=%.3f, corr=%.3f %s\n", e.left.getMass(), (int) e.left.getRetentionTime(),
-                            e.right.getMass(), (int) e.right.getRetentionTime(), e.ratioScore, e.correlationScore, Arrays.stream(e.explanations).map(Object::toString).collect(Collectors.joining(", ")));
+                    if (Arrays.stream(e.explanations).anyMatch(x->x instanceof AdductRelationship)) {
+                        ++adductEdges;
+                    }
+                }
+            }
+            if (adductEdges>0) {
+                System.out.println("--------------------------");
+                sizes.add(edges.size());
+                for (AdductEdge e : edges) {
+                    if (Double.isFinite(e.ratioScore)) {
+                        System.out.printf("%.3f (%d sec) ---> %.3f (%d sec) || ratio=%.3f, corr=%.3f %s\n", e.left.getMass(), (int) e.left.getRetentionTime(),
+                                e.right.getMass(), (int) e.right.getRetentionTime(), e.ratioScore, e.correlationScore, Arrays.stream(e.explanations).map(Object::toString).collect(Collectors.joining(", ")));
+                    }
                 }
             }
         }
+
         System.out.println("average network size: " + sizes.doubleStream().average().getAsDouble());
         System.out.println("--------------------------");
-        System.out.printf("%d subnetworks and %d singletons out of %d total features.\n", subgraphs.size(),
+        System.out.printf("%d subnetworks and %d singletons out of %d total features.\n", sizes.size(),
                 singletons.size(), rtOrderedNodes.length);
 
     }

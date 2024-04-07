@@ -33,22 +33,30 @@ public class TraceRef {
     private long traceId;
 
     /**
-     * Start index of the segment
+     * the index offset of the trace(!). This information is also contained in the trace itself, but
+     * having this index here allows for fetching retention time information and so on without looking up the trace
+     * itself
+     */
+    private int scanIndexOffsetOfTrace;
+
+    /**
+     * Start index of the segment relative to the trace
      */
     private int start;
 
     /**
-     * Apex index of the segment
+     * Apex index of the segment relative to the trace
      */
     private int apex;
 
     /**
-     * End index of the segment
+     * End index of the segment relative to the trace
      */
     private int end;
 
-    public TraceRef(long traceId, int start, int apex, int end) {
+    public TraceRef(long traceId, int scanIndexOffsetOfTrace, int start, int apex, int end) {
         this.traceId = traceId;
+        this.scanIndexOffsetOfTrace = scanIndexOffsetOfTrace;
         if (start < 0)
             throw new IllegalArgumentException(String.format("start must be >= 0 (was %d)", start));
         if (apex < 0)

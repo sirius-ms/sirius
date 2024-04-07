@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import it.unimi.dsi.fastutil.ints.*;
@@ -147,6 +148,7 @@ public class LCMSProcessing {
         sample.setNormalizer(normalizationStrategy.computeNormalization(sample));
         extractMoIsForAlignment(sample);
         collectStatisticsBeforeAlignment(sample);
+        importScanPointMapping(sample, sample.getRun().getRunId());
         return sample;
     }
 
@@ -192,7 +194,13 @@ public class LCMSProcessing {
 
         importStrategy.importMergedRun(mergedRun);
 
+        importScanPointMapping(merged, mergedRun.getRunId());
+
         Int2LongMap trace2trace = new Int2LongOpenHashMap();
+        System.out.println("#Step 1: Import traces");
+        int N = merged.getStorage().getMergeStorage().numberOfMergedTraces();
+        System.out.println("There are " + N + " merged traces to import.");
+        int count=0;
         for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
             ProcessedSample[] samplesInTrace = new ProcessedSample[trace.getSampleIds().size()];
             for (int i = 0; i < trace.getSampleIds().size(); ++i) {
@@ -210,14 +218,26 @@ public class LCMSProcessing {
                     trace2trace.put(pair.leftInt(), ((SourceTrace) atrace).getSourceTraceId());
                 }
             }
+            System.out.println(++count + " / " + N + " merged traces imported.");
         }
-
+        System.out.println("#Step 2: Import Aligned Features");
+        count=0;
         for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
             Iterator<AlignedFeatures> fiter = mergedFeatureExtractionStrategy.extractFeatures(merged, trace, ms2MergeStrategy, isotopePatternExtractionStrategy, trace2trace, idx2sample);
             while (fiter.hasNext()) {
                 importStrategy.importAlignedFeature(fiter.next());
             }
+            System.out.println(++count + " / " + N + " aligned features imported.");
         }
+    }
+
+    protected void importScanPointMapping(ProcessedSample sample, long sampleId) throws IOException {
+        RetentionTimeAxis axis = RetentionTimeAxis.builder()
+                .runId(sampleId)
+                .scanNumbers(sample.getMapping().scanids)
+                .retentionTimes(sample.getMapping().retentionTimes)
+                .noiseLevelPerScan(sample.getStorage().getStatistics().getNoiseLevelPerScan()).build();
+        importStrategy.importRetentionTimeAxis(axis);
     }
 
     public void exportFeaturesToFiles(ProcessedSample merged, AlignmentBackbone backbone) {

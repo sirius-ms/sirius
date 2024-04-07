@@ -27,7 +27,11 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
 import it.unimi.dsi.fastutil.doubles.*;
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
+import it.unimi.dsi.fastutil.floats.FloatCollection;
+import it.unimi.dsi.fastutil.floats.FloatList;
 import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.longs.*;
 
@@ -96,6 +100,20 @@ public final class FastUtilJson {
         }
     }
 
+    public static class FloatListDeserializer extends FloatCollectionDeserializer<FloatList> {
+        @Override
+        protected FloatList newInstance() {
+            return new FloatArrayList();
+        }
+    }
+
+    public static class FloatCollectionSerializer<C extends FloatCollection> extends JsonSerializer<C> {
+        @Override
+        public void serialize(C value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+            gen.writeArray(MatrixUtils.float2double(value.toFloatArray()), 0, value.size());
+        }
+    }
+
     public abstract static class DoubleCollectionDeserializer<C extends DoubleCollection> extends JsonDeserializer<C> {
         @Override
         public C deserialize(JsonParser parser, DeserializationContext ctxt) throws IOException {
@@ -104,6 +122,24 @@ public final class FastUtilJson {
                 parser.nextToken();
                 while (parser.currentToken() != JsonToken.END_ARRAY) {
                     set.add(parser.getDoubleValue());
+                    parser.nextToken();
+                }
+                return set;
+            }
+            throw new IOException("Expected LongSet in arrays format but no Array token found!");
+        }
+
+        protected abstract C newInstance();
+    }
+
+    public abstract static class FloatCollectionDeserializer<C extends FloatCollection> extends JsonDeserializer<C> {
+        @Override
+        public C deserialize(JsonParser parser, DeserializationContext ctxt) throws IOException {
+            C set = newInstance(); //todo to I have to start call nextToken first?
+            if (parser.currentToken() == JsonToken.START_ARRAY) {
+                parser.nextToken();
+                while (parser.currentToken() != JsonToken.END_ARRAY) {
+                    set.add(parser.getFloatValue());
                     parser.nextToken();
                 }
                 return set;

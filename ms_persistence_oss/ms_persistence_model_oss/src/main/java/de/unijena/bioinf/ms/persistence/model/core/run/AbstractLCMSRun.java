@@ -20,9 +20,12 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.run;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.Id;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+
+import java.util.Optional;
 
 @Getter
 @Setter
@@ -42,6 +45,10 @@ public class AbstractLCMSRun {
      * Informative, human-readable name of this run. Defaults to file name.
      */
     private String name;
+
+    @JsonIgnore
+    @ToString.Exclude
+    private Optional<RetentionTimeAxis> retentionTimeAxis;
 
 
 }

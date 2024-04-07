@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.trace;
 
+import it.unimi.dsi.fastutil.floats.FloatList;
 import jakarta.persistence.Id;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -27,10 +28,12 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
-@SuperBuilder
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 public class SourceTrace extends AbstractTrace {
+
+    public SourceTrace(long runId, FloatList intensities, int scanIndexOffset) {
+        super(runId, intensities, scanIndexOffset);
+    }
 
     @Id
     @ToString.Include
