@@ -21,6 +21,7 @@
 package de.unijena.bioinf.lcms.io;
 
 import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.lcms.LCMSStorageFactory;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
@@ -30,14 +31,14 @@ import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 
 public class MzXMLParser implements LCMSParser {
 
     @Override
     public ProcessedSample parse(
-            File file,
+            URI input,
             LCMSStorageFactory storageFactory,
             IOThrowingConsumer<LCMSRun> runConsumer,
             IOThrowingConsumer<LCMSRun> runUpdateConsumer,
@@ -46,14 +47,15 @@ public class MzXMLParser implements LCMSParser {
             LCMSRun run
     ) throws IOException {
         try {
-            run.setSourceReference(new MsDataSourceReference(file.toURI(), file.getName(), null, null));
+            String name = FileUtils.getFileName(input);
+            run.setSourceReference(new MsDataSourceReference(input, name, null, null));
             runConsumer.consume(run);
             MzXMLSaxParser saxParser = new MzXMLSaxParser(
-                    file.getName(),
+                    name,
                     storageFactory.createNewStorage(),
                     run, scanConsumer, msmsScanConsumer
             );
-            SAXParserFactory.newInstance().newSAXParser().parse(file, saxParser);
+            SAXParserFactory.newInstance().newSAXParser().parse(name, saxParser);
             runUpdateConsumer.consume(run);
             return saxParser.getProcessedSample();
         } catch (SAXException | ParserConfigurationException e) {
