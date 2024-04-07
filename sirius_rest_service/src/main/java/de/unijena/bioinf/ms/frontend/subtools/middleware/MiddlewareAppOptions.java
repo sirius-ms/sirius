@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.middleware;
 
-import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.frontend.subtools.OutputOptions;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
@@ -86,13 +85,17 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
             //do the project importing from the commandline
             Optional<Path> location = Optional.ofNullable(output).map(OutputOptions::getOutputProjectLocation);
             if (location.isPresent() || MiddlewareAppOptions.this.isStartGui()) {
-                Path p = location.orElse(FileUtils.createTmpProjectSpaceLocation(null)); //todo should be part of project provider to be implementation independent
                 try {
-                    //open default project if given
-                    ProjectInfo startPs = projectsProvider.createProject(
-                                    p.getFileName().toString(),
-                                    p.toAbsolutePath().toString(),
-                                    EnumSet.noneOf(ProjectInfo.OptField.class), false);
+                    final ProjectInfo startPs;
+                    if (location.isEmpty()) {
+                        //open default project if given
+                        startPs = projectsProvider.createTempProject(EnumSet.noneOf(ProjectInfo.OptField.class));
+                    } else {
+                        startPs = projectsProvider.createProject(
+                                location.get().getFileName().toString(),
+                                location.get().toAbsolutePath().toString(),
+                                EnumSet.noneOf(ProjectInfo.OptField.class), false);
+                    }
 
                     if (isStartGui())
                         guiService.createGuiInstance(startPs.getProjectId());

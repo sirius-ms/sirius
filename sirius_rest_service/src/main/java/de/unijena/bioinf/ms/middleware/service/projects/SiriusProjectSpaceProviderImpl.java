@@ -20,14 +20,20 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
+import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
-import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.ProjectSpaceIO;
+import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import de.unijena.bioinf.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.projectspace.SiriusProjectSpaceManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.EnumSet;
 import java.util.Optional;
 
 import static de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent.Type.*;
@@ -36,6 +42,13 @@ public class SiriusProjectSpaceProviderImpl extends ProjectSpaceManagerProvider<
 
     public SiriusProjectSpaceProviderImpl(@NotNull ProjectSpaceManagerFactory<SiriusProjectSpaceManager> projectSpaceManagerFactory, @NotNull EventService<?> eventService, @NotNull ComputeService computeService) {
         super(projectSpaceManagerFactory, eventService, computeService);
+    }
+
+    @Override
+    public ProjectInfo createTempProject(@NotNull EnumSet<ProjectInfo.OptField> optFields) {
+        Path p = FileUtils.createTmpProjectSpaceLocation(null);
+        String projectId = p.getFileName().toString();
+        return createProject(projectId, p.toAbsolutePath().toString(), optFields, true);
     }
 
     public Optional<SiriusProjectSpaceImpl> getProject(String projectId) {

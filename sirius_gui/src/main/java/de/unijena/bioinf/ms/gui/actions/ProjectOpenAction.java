@@ -50,7 +50,7 @@ import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentData
 public class ProjectOpenAction extends AbstractGuiAction {
     public static final String DONT_ASK_NEW_WINDOW_OPEN_KEY = "de.unijena.bioinf.sirius.dragdrop.newWindowOpen.dontAskAgain";
 
-
+    //todo: should be a singelton action
 
 
     public ProjectOpenAction(SiriusGui gui) {
@@ -99,11 +99,18 @@ public class ProjectOpenAction extends AbstractGuiAction {
         }
     }
 
-    public void openProject(@NotNull String projectID, @NotNull Path projectPath) {
+    public synchronized void openProject (@NotNull Path projectPath, @Nullable Boolean closeCurrent){
+        String projectID = projectPath.getFileName().toString();
+        if (projectID.endsWith(SIRIUS_PROJECT_SUFFIX))
+            projectID = projectID.substring(0, projectID.length() - SIRIUS_PROJECT_SUFFIX.length());
+        openProject(projectID, projectPath, closeCurrent);
+    }
+
+    public synchronized void openProject(@NotNull String projectID, @NotNull Path projectPath) {
         openProject(projectID, projectPath, null);
     }
 
-    public void openProject(@NotNull String projectID, @NotNull Path projectPath, @Nullable Boolean closeCurrent) {
+    public synchronized void openProject(@NotNull String projectID, @NotNull Path projectPath, @Nullable Boolean closeCurrent) {
         try {
             String pid = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Opening Project...", () -> {
                         ProjectInfo project =gui.getSiriusClient().projects().getProjectSpaces().stream()
@@ -126,11 +133,11 @@ public class ProjectOpenAction extends AbstractGuiAction {
 
     }
 
-    public void openProjectByID(String projectId) {
+    public synchronized void openProjectByID(String projectId) {
         openProjectByID(projectId, null);
     }
 
-    public void openProjectByID(@NotNull String projectId, @Nullable Boolean closeCurrent) {
+    public synchronized void openProjectByID(@NotNull String projectId, @Nullable Boolean closeCurrent) {
         final boolean close =
                 Objects.requireNonNullElseGet(closeCurrent, () -> new QuestionDialog(
                         gui.getMainFrame(), "Open Project", openNewWindowQuestion(), dontAskKey()).isAbort());
