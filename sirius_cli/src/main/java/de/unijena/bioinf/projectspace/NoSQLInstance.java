@@ -189,7 +189,8 @@ public class NoSQLInstance implements Instance {
     @Override
     @SneakyThrows
     public List<SpectralSearchResult.SearchResult> getSpectraMatches() {
-        return project().findByFeatureIdStr(id, SpectraMatch.class).collect(Collectors.toList());
+        return project().findByFeatureIdStr(id, SpectraMatch.class).map(SpectraMatch::getSearchResult)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -330,9 +331,14 @@ public class NoSQLInstance implements Instance {
         return getAlignedFeatures().getDetectedAdducts();
     }
 
+    @SneakyThrows
     @Override
     public void saveSpectraSearchResult(SpectralSearchResult result) {
-        //todo
+        List<SpectraMatch> matches = result.getResults().stream()
+                .map(s -> SpectraMatch.builder().alignedFeatureId(id).searchResult(s).build())
+                .collect(Collectors.toList());
+
+        project().getStorage().insertAll(matches);
     }
 
     @Override

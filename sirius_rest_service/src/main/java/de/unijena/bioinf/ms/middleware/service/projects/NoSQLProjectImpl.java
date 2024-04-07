@@ -221,13 +221,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             }
         }
 
-        compound.getAdductFeatures().ifPresent(features -> builder.features(features.stream().map(this::convertFeature).toList()));
+        compound.getAdductFeatures().ifPresent(features -> builder.features(features.stream().map(this::convertToApiFeature).toList()));
 
         return builder.build();
     }
 
     private de.unijena.bioinf.ms.persistence.model.core.Compound convertCompound(CompoundImport compoundImport) {
-        List<AlignedFeatures> features = compoundImport.getFeatures().stream().map(this::convertFeature).toList();
+        List<AlignedFeatures> features = compoundImport.getFeatures().stream().map(this::convertToProjectFeature).toList();
 
         de.unijena.bioinf.ms.persistence.model.core.Compound.CompoundBuilder builder = de.unijena.bioinf.ms.persistence.model.core.Compound.builder()
                 .name(compoundImport.getName())
@@ -246,7 +246,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return builder.build();
     }
 
-    private AlignedFeatures convertFeature(FeatureImport featureImport) {
+    private AlignedFeatures convertToProjectFeature(FeatureImport featureImport) {
 
         AlignedFeatures.AlignedFeaturesBuilder<?, ?> builder = AlignedFeatures.builder()
                 .name(featureImport.getName())
@@ -309,7 +309,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return builder.build();
     }
 
-    private AlignedFeature convertFeature(AlignedFeatures features) {
+    private AlignedFeature convertToApiFeature(AlignedFeatures features) {
+        return convertToApiFeature(features, EnumSet.noneOf(AlignedFeature.OptField.class));
+    }
+
+    private AlignedFeature convertToApiFeature(AlignedFeatures features, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         final String fid = String.valueOf(features.getAlignedFeatureId());
         AlignedFeature.AlignedFeatureBuilder builder = AlignedFeature.builder()
                 .alignedFeatureId(fid)
@@ -332,6 +336,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         }
 
         features.getMSData().map(this::convertMSData).ifPresent(builder::msData);
+
+//
+//            if (optFields.contains(AlignedFeature.OptField.topAnnotations))
+//                alignedFeature.setTopAnnotations(extractTopAnnotations(instance));
+//            if (optFields.contains(AlignedFeature.OptField.topAnnotationsDeNovo))
+//                alignedFeature.setTopAnnotationsDeNovo(extractTopDeNovoAnnotations(instance));
+//
 
         return builder.build();
     }
@@ -490,7 +501,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             stream = stream.peek(project()::fetchMsData);
         }
 
-        List<AlignedFeature> features = stream.map(this::convertFeature).toList();
+        List<AlignedFeature> features = stream.map(this::convertToApiFeature).toList();
         // TODO annotations
         long total = totalCounts.get(AlignedFeatures.class).get();
 
@@ -516,7 +527,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     if (optFields.contains(AlignedFeature.OptField.msData)) {
                         project().fetchMsData(a);
                     }
-                    return convertFeature(a);
+                    return convertToApiFeature(a);
                 }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no aligned feature '" + alignedFeatureId + "' in project " + projectId + "."));
     }
 
@@ -533,12 +544,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         Pair<String, Database.SortOrder> sort = sortMatch(pageable.getSort());
         List<SpectralLibraryMatch> matches;
         if (pageable.isPaged()) {
-            matches = project().findByFeatureIdStr(longId, SpectraMatch.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight()).map(SpectralLibraryMatch::of).toList();
+            matches = project().findByFeatureIdStr(longId, SpectraMatch.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight())
+                    .map(SpectraMatch::getSearchResult).map(SpectralLibraryMatch::of).toList();
         } else {
-            matches = project().findByFeatureIdStr(longId, SpectraMatch.class, sort.getLeft(), sort.getRight()).map(SpectralLibraryMatch::of).toList();
+            matches = project().findByFeatureIdStr(longId, SpectraMatch.class, sort.getLeft(), sort.getRight())
+                    .map(SpectraMatch::getSearchResult).map(SpectralLibraryMatch::of).toList();
         }
         long total = totalCountByFeature.get(SpectraMatch.class).getOrDefault(longId, ATOMIC_ZERO).get();
-
         return new PageImpl<>(matches, pageable, total);
     }
 
@@ -620,7 +632,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         Map<Long, List<T>> fidToCandidates = project().findByFeatureIdStr(longAFId, clzz, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight()).collect(Collectors.groupingBy(StructureMatch::getFormulaId, Collectors.toList()));
         List<StructureCandidateFormula> candidates = new ArrayList<>();
-        fidToCandidates.forEach((k,v) ->
+        fidToCandidates.forEach((k,v) -> //todo should we change our data model so that we do not have to request formula candidates to add adduct
                 project().findByFormulaIdStr(k, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
                         .findFirst().ifPresent(fc ->
                                 v.forEach(sm -> candidates.add(convertStructureMatch(fc.getMolecularFormula(), fc.getAdduct(), sm, optFields)))));
@@ -692,7 +704,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         // spectral library matches
         if (optFields.contains(StructureCandidateScored.OptField.libraryMatches)) {
             List<SpectralLibraryMatch> libraryMatches = project().findByInChIStr(sSum.getInchiKey(), SpectraMatch.class)
-                    .map(SpectralLibraryMatch::of).toList();
+                    .map(SpectraMatch::getSearchResult).map(SpectralLibraryMatch::of).toList();
             sSum.setSpectralLibraryMatches(libraryMatches);
         }
 
