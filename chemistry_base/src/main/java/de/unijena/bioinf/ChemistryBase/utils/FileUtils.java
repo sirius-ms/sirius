@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.FileSystem;
 import java.nio.file.*;
@@ -54,6 +55,14 @@ public class FileUtils {
     }
 
 
+    public static String getFileName(URI path){
+        if (path == null)
+            return null;
+        return getFileName(path.getPath());
+    }
+    public static String getFileName(String path){
+        return path.replaceAll("\\\\","/").substring(path.lastIndexOf("/") + 1);
+    }
     public static long getFolderSizeOrThrow(Path startPath) {
         try {
             return getFolderSize(startPath);

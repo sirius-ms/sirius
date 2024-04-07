@@ -41,6 +41,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -110,19 +111,33 @@ public class LCMSProcessing {
         return processSample(file, false, LCMSRun.Type.SAMPLE, Chromatography.LC);
     }
 
-    /**
-     * parses an MZML file and stores the processed sample. Note: we should add possibility to parse from input
-     * stream later
-     */
+    public ProcessedSample processSample(URI input) throws IOException {
+        return processSample(input, false, LCMSRun.Type.SAMPLE, Chromatography.LC);
+    }
+
+
     public ProcessedSample processSample(
             File file,
             boolean saveRawScans,
             LCMSRun.Type runType,
             Chromatography chromatography
     ) throws IOException {
+        return processSample(file.toURI(), saveRawScans, runType, chromatography);
+    }
+
+    /**
+     * parses an MZML file and stores the processed sample. Note: we should add possibility to parse from input
+     * stream later
+     */
+    public ProcessedSample processSample(
+            URI input,
+            boolean saveRawScans,
+            LCMSRun.Type runType,
+            Chromatography chromatography
+    ) throws IOException {
         // parse file and extract spectra
         ProcessedSample sample = LCMSImporter.importToProject(
-                file, storageFactory, importStrategy, saveRawScans, runType, chromatography);
+                input, storageFactory, importStrategy, saveRawScans, runType, chromatography);
         sample.setUid(this.samples.size());
         this.samples.add(sample);
         sample.active();
