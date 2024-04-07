@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
+import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.storage.blob.Compressible;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.dizitart.no2.exceptions.UniqueConstraintException;
@@ -376,25 +377,28 @@ public class SiriusProjectDatabaseImplTest {
         //prepare
         SpectraMatch match1 = SpectraMatch.builder()
                 .alignedFeatureId(10)
-                .candidateInChiKey("MYWUZJCMWCOHBA")
-                .dbName("SpecLib-9000")
-                .dbId("42")
-                .similarity(SpectralSimilarity.builder().similarity(.9).sharedPeaks(23).build())
-                .smiles("C[C@@H](CC1=CC=CC=C1)NC")
-                .molecularFormula(MolecularFormula.parseOrThrow("C10H15N"))
-                .adduct(PrecursorIonType.fromString("[M+H]+"))
-                .exactMass(149.23)
-                .querySpectrumIndex(0)
-                .rank(1)
+                .searchResult(SpectralSearchResult.SearchResult.builder()
+                        .candidateInChiKey("MYWUZJCMWCOHBA")
+                        .dbName("SpecLib-9000")
+                        .dbId("42")
+                        .similarity(SpectralSimilarity.builder().similarity(.9).sharedPeaks(23).build())
+                        .smiles("C[C@@H](CC1=CC=CC=C1)NC")
+                        .molecularFormula(MolecularFormula.parseOrThrow("C10H15N"))
+                        .adduct(PrecursorIonType.fromString("[M+H]+"))
+                        .exactMass(149.23)
+                        .querySpectrumIndex(0)
+                        .rank(1)
+                        .build())
                 .build();
+
 
         withDb(db -> {
             //insert
             assertEquals(1, db.getStorage().insert(match1), "Failed to Insert match. Affected entries wrong");
-            assertTrue(db.getStorage().getByPrimaryKey(match1.getUuid(), match1.getClass()).isPresent(), "Inserted match does not exist!");
-            assertEquals(match1.getSimilarity(), db.getStorage().getByPrimaryKey(match1.getUuid(), match1.getClass()).get().getSimilarity());
-            assertEquals(match1.getAdduct(), db.getStorage().getByPrimaryKey(match1.getUuid(), match1.getClass()).get().getAdduct());
-            assertEquals(match1.getMolecularFormula(), db.getStorage().getByPrimaryKey(match1.getUuid(), match1.getClass()).get().getMolecularFormula());
+            assertTrue(db.getStorage().getByPrimaryKey(match1.getSpecMatchId(), match1.getClass()).isPresent(), "Inserted match does not exist!");
+            assertEquals(match1.getSimilarity(), db.getStorage().getByPrimaryKey(match1.getSpecMatchId(), match1.getClass()).get().getSimilarity());
+            assertEquals(match1.getAdduct(), db.getStorage().getByPrimaryKey(match1.getSpecMatchId(), match1.getClass()).get().getAdduct());
+            assertEquals(match1.getMolecularFormula(), db.getStorage().getByPrimaryKey(match1.getSpecMatchId(), match1.getClass()).get().getMolecularFormula());
             {
                 //fail duplicate entry
                 RuntimeException thrown = assertThrowsExactly(RuntimeException.class, () -> db.getStorage().insert(match1));
@@ -403,7 +407,7 @@ public class SiriusProjectDatabaseImplTest {
 
             //delete entry
             assertEquals(1, db.getStorage().remove(match1), "Delete match failed.");
-            assertTrue(db.getStorage().getByPrimaryKey(match1.getUuid(), match1.getClass()).isEmpty(), "Match still exists after delete");
+            assertTrue(db.getStorage().getByPrimaryKey(match1.getSpecMatchId(), match1.getClass()).isEmpty(), "Match still exists after delete");
             assertEquals(0, db.getStorage().countAll(SpectraMatch.class));
         });
     }
