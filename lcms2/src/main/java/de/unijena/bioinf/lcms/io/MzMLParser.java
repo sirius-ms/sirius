@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.lcms.LCMSStorageFactory;
 import de.unijena.bioinf.lcms.ScanPointMapping;
 import de.unijena.bioinf.lcms.spectrum.Ms1SpectrumHeader;
@@ -33,8 +34,8 @@ import de.unijena.bioinf.lcms.trace.LCMSStorage;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.ms.persistence.model.core.run.Fragmentation;
 import de.unijena.bioinf.ms.persistence.model.core.run.Ionization;
-import de.unijena.bioinf.ms.persistence.model.core.run.MassAnalyzer;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.run.MassAnalyzer;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
@@ -46,7 +47,6 @@ import uk.ac.ebi.jmzml.model.mzml.*;
 import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
 
 import javax.annotation.Nullable;
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
@@ -57,7 +57,7 @@ public class MzMLParser implements LCMSParser {
 
     @Override
     public ProcessedSample parse(
-            File file,
+            URI input,
             LCMSStorageFactory storageFactory,
             LCMSParser.IOThrowingConsumer<LCMSRun> runConsumer,
             LCMSParser.IOThrowingConsumer<LCMSRun> runUpdateConsumer,
@@ -65,11 +65,12 @@ public class MzMLParser implements LCMSParser {
             @Nullable LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
             LCMSRun run
     ) throws IOException {
-        return parse(file, storageFactory, new MzMLUnmarshaller(file), runConsumer, runUpdateConsumer, scanConsumer, msmsScanConsumer, run);
+        return parse(input, storageFactory, new MzMLUnmarshaller(input.toURL()), runConsumer, runUpdateConsumer, scanConsumer, msmsScanConsumer, run);
     }
 
+
     private ProcessedSample parse(
-            File file,
+            URI input,
             LCMSStorageFactory storageFactory,
             MzMLUnmarshaller um,
             LCMSParser.IOThrowingConsumer<LCMSRun> runConsumer,
@@ -88,13 +89,13 @@ public class MzMLParser implements LCMSParser {
                 Map<String, String> runAtts = um.getSingleElementAttributes("/run");
                 final String runId = runAtts.get("id");
                 // get source location oO
-                URI s = file.toURI();
-                URI parent = s.getPath().endsWith("/") ? s.resolve("..") : s.resolve(".");
-                String fileName = parent.relativize(s).toString();
+
+                URI parent = input.getPath().endsWith("/") ? input.resolve("..") : input.resolve(".");
+                String fileName = parent.relativize(input).toString();
                 reference = new MsDataSourceReference(parent, fileName, runId, mzMlId);
             }
 
-            run.setName(mzMlId != null && !mzMlId.isBlank() ? mzMlId : file.getName());
+            run.setName(mzMlId != null && !mzMlId.isBlank() ? mzMlId : FileUtils.getFileName(input));
             run.setSourceReference(reference);
 
             final DoubleArrayList retentionTimes = new DoubleArrayList();
@@ -350,7 +351,7 @@ public class MzMLParser implements LCMSParser {
             }
 
             if (scanids.isEmpty()) {
-                throw new RuntimeException("No spectra imported from " + file);
+                throw new RuntimeException("No spectra imported from " + input);
             }
 
             if (fragmentation != null) {

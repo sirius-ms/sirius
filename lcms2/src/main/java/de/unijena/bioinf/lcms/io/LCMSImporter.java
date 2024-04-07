@@ -26,13 +26,13 @@ import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 
-import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 
 public class LCMSImporter {
 
     public static ProcessedSample importToProject(
-            File source,
+            URI source,
             LCMSStorageFactory storageFactory,
             ImportStrategy importStrategy,
             boolean saveRawScans,
@@ -40,9 +40,9 @@ public class LCMSImporter {
             Chromatography chromatography
     ) throws IOException {
         LCMSParser parser;
-        if (source.getName().toLowerCase().endsWith(".mzml")) {
+        if (source.getPath().toLowerCase().endsWith(".mzml")) {
             parser = new MzMLParser();
-        } else if (source.getName().toLowerCase().endsWith(".mzxml")) {
+        } else if (source.getPath().toLowerCase().endsWith(".mzxml")) {
             parser = new MzXMLParser();
         } else {
             throw new IOException("Illegal file extension. Only .mzml and .mzxml are supported");

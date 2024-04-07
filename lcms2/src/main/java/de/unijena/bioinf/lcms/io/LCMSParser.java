@@ -22,12 +22,12 @@ package de.unijena.bioinf.lcms.io;
 
 import de.unijena.bioinf.lcms.LCMSStorageFactory;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
-import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 
-import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 
 public interface LCMSParser {
 
@@ -42,11 +42,11 @@ public interface LCMSParser {
      * Parse an LC/GC-MS file. The consumers need to handle to actual object storing and are required
      * to assign the object IDs.
      *
-     * @param file Input file.
+     * @param input Input location.
      * @param run  Initial {@link LCMSRun} isntance with default values for {@code Run.runType} and {@code Run.chromatography}.
      */
     ProcessedSample parse(
-            File file,
+            URI input,
             LCMSStorageFactory storageFactory,
             LCMSParser.IOThrowingConsumer<LCMSRun> runConsumer,
             LCMSParser.IOThrowingConsumer<LCMSRun> runUpdateConsumer,
