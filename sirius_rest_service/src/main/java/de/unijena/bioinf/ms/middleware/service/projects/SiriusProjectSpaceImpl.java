@@ -48,7 +48,7 @@ import de.unijena.bioinf.fingerid.StructureSearchResult;
 import de.unijena.bioinf.fingerid.blast.*;
 import de.unijena.bioinf.lcms.LCMSCompoundSummary;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
-import de.unijena.bioinf.ms.backgroundruns.ImportMsFomResourceWorkflow;
+import de.unijena.bioinf.ms.backgroundruns.ImportMsFromResourceWorkflow;
 import de.unijena.bioinf.ms.backgroundruns.ImportPeaksFomResourceWorkflow;
 import de.unijena.bioinf.ms.middleware.controller.AlignedFeatureController;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
@@ -140,7 +140,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
 
     @Override
     public ImportResult importMsRunData(Collection<PathInputResource> inputResources, boolean alignRuns, boolean allowMs1OnlyData) {
-        ImportMsFomResourceWorkflow importTask = new ImportMsFomResourceWorkflow(getProjectSpaceManager(), inputResources, allowMs1OnlyData, alignRuns, true);
+        ImportMsFromResourceWorkflow importTask = new ImportMsFromResourceWorkflow(getProjectSpaceManager(), inputResources, allowMs1OnlyData, alignRuns, true);
 
         importTask.run();
         return ImportResult.builder()

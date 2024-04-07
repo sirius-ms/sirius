@@ -205,7 +205,7 @@ public class InstanceBean implements SiriusPCS {
     }
 
     public String getGUIName() {
-        if (!getFeatureId().equalsIgnoreCase(getName()) && !getFeatureId().toLowerCase().endsWith(getName().toLowerCase()))
+        if (getName() != null && !getFeatureId().equalsIgnoreCase(getName()) && !getFeatureId().toLowerCase().endsWith(getName().toLowerCase()))
             return getName() + " (" + getFeatureId() + ")";
         return getFeatureId();
     }

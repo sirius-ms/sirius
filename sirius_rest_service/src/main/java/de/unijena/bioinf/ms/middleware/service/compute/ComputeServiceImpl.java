@@ -229,7 +229,7 @@ public class ComputeServiceImpl implements ComputeService {
     public Job createAndSubmitMsDataImportJob(@NotNull Project<?> project, ImportMultipartFilesSubmission importSubmission,
                                               @NotNull EnumSet<Job.OptField> optFields) {
         BackgroundRuns.BackgroundRunJob run = backgroundRuns(project)
-                .runImportMsData(importSubmission.asPathInputResource(), importSubmission.isIgnoreFormulas(), importSubmission.isAllowMs1OnlyData());
+                .runImportMsData(importSubmission.asPathInputResource(), importSubmission.isAllowMs1OnlyData(), importSubmission.isAlignLCMSRuns());
         registerServerEventListener(run, project.getProjectId());
         return extractJobId(run, optFields);
     }

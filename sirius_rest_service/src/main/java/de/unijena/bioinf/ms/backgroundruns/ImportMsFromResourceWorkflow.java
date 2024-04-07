@@ -46,7 +46,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 @Slf4j
-public class ImportMsFomResourceWorkflow implements Workflow, ProgressSupport {
+public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
     protected final JobProgressMerger progressSupport = new JobProgressMerger(this);
     private final boolean alignRuns;
     private final boolean allowMs1OnlyData;
@@ -65,7 +65,7 @@ public class ImportMsFomResourceWorkflow implements Workflow, ProgressSupport {
 
     private final Collection<PathInputResource> inputResources;
 
-    public ImportMsFomResourceWorkflow(ProjectSpaceManager psm, Collection<PathInputResource> inputResources, boolean allowMs1OnlyData, boolean alignRuns, boolean clearInput) {
+    public ImportMsFromResourceWorkflow(ProjectSpaceManager psm, Collection<PathInputResource> inputResources, boolean allowMs1OnlyData, boolean alignRuns, boolean clearInput) {
         this.psm = psm;
         this.inputResources = inputResources;
         this.alignRuns = alignRuns;
