@@ -73,7 +73,7 @@ public class NitriteSirirusProject extends SiriusProjectDatabaseImpl<NitriteData
 
             csiPos.ifPresent(data ->
                     ((JSONReader.FingerprintCandidateDeserializer) metadata.deserializers.get(FingerprintCandidate.class))
-                            .setVersion(data.getBaseFingerprintVersion()));
+                            .setVersion(data.getFingerprintVersion()));
 
             ((CsiPredictionDeserializer) metadata.deserializers.get(CsiPrediction.class)).setVersions(
                     csiPos.map(FingerprintData::getFingerprintVersion).orElse(null),

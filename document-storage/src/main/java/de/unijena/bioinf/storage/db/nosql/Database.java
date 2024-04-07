@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.storage.db.nosql;
 
+import org.apache.commons.io.function.IORunnable;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -82,35 +84,35 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     <T> Iterable<T> find(Filter filter, Class<T> clazz, String... withOptionalFields) throws IOException;
 
-    <T> Iterable<T> find(Filter filter, Class<T> clazz, int offset, int pageSize, String... withOptionalFields) throws IOException;
+    <T> Iterable<T> find(Filter filter, Class<T> clazz, long offset, int pageSize, String... withOptionalFields) throws IOException;
 
     <T> Iterable<T> find(Filter filter, Class<T> clazz, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException;
 
-    <T> Iterable<T> find(Filter filter, Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException;
+    <T> Iterable<T> find(Filter filter, Class<T> clazz, long offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException;
 
     Iterable<DocType> find(String collectionName, Filter filter, String... withOptionalFields) throws IOException;
 
-    Iterable<DocType> find(String collectionName, Filter filter, int offset, int pageSize, String... withOptionalFields) throws IOException;
+    Iterable<DocType> find(String collectionName, Filter filter, long offset, int pageSize, String... withOptionalFields) throws IOException;
 
     Iterable<DocType> find(String collectionName, Filter filter, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException;
 
-    Iterable<DocType> find(String collectionName, Filter filter, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException;
+    Iterable<DocType> find(String collectionName, Filter filter, long offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException;
 
     <T> Iterable<T> findAll(Class<T> clazz, String... withOptionalFields) throws IOException;
 
-    <T> Iterable<T> findAll(Class<T> clazz, int offset, int pageSize, String... withOptionalFields) throws IOException;
+    <T> Iterable<T> findAll(Class<T> clazz, long offset, int pageSize, String... withOptionalFields) throws IOException;
 
     <T> Iterable<T> findAll(Class<T> clazz, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException;
 
-    <T> Iterable<T> findAll(Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException;
+    <T> Iterable<T> findAll(Class<T> clazz, long offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException;
 
     Iterable<DocType> findAll(String collectionName, String... withOptionalFields) throws IOException;
 
-    Iterable<DocType> findAll(String collectionName, int offset, int pageSize, String... withOptionalFields) throws IOException;
+    Iterable<DocType> findAll(String collectionName, long offset, int pageSize, String... withOptionalFields) throws IOException;
 
     Iterable<DocType> findAll(String collectionName, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException;
 
-    Iterable<DocType> findAll(String collectionName, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException;
+    Iterable<DocType> findAll(String collectionName, long offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException;
 
     <T> T injectOptionalFields(T object, String... optionalFields) throws IOException;
 
@@ -220,13 +222,13 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
 
     <T> long count(Filter filter, Class<T> clazz) throws IOException;
 
-    <T> long count(Filter filter, Class<T> clazz, int offset, int pageSize) throws IOException;
+    <T> long count(Filter filter, Class<T> clazz, long offset, int pageSize) throws IOException;
 
     <T> long countAll(Class<T> clazz) throws IOException;
 
     long count(String collectionName, Filter filter) throws IOException;
 
-    long count(String collectionName, Filter filter, int offset, int pageSize) throws IOException;
+    long count(String collectionName, Filter filter, long offset, int pageSize) throws IOException;
 
     long countAll(String collectionName) throws IOException;
 
@@ -254,7 +256,7 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         return StreamSupport.stream(find(filter, clazz, withOptionalFields).spliterator(), false);
     }
 
-    default <T> Stream<T> findStr(Filter filter, Class<T> clazz, int offset, int pageSize, String... withOptionalFields) throws IOException {
+    default <T> Stream<T> findStr(Filter filter, Class<T> clazz, long offset, int pageSize, String... withOptionalFields) throws IOException {
         return StreamSupport.stream(find(filter, clazz, offset, pageSize, withOptionalFields).spliterator(), false);
     }
 
@@ -262,7 +264,7 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         return StreamSupport.stream(find(filter, clazz, sortField, sortOrder, withOptionalFields).spliterator(), false);
     }
 
-    default <T> Stream<T> findStr(Filter filter, Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
+    default <T> Stream<T> findStr(Filter filter, Class<T> clazz, long offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
         return StreamSupport.stream(find(filter, clazz, offset, pageSize, sortField, sortOrder, withOptionalFields).spliterator(), false);
     }
 
@@ -270,7 +272,7 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         return StreamSupport.stream(find(collectionName, filter, withOptionalFields).spliterator(), false);
     }
 
-    default Stream<DocType> findStr(String collectionName, Filter filter, int offset, int pageSize, String... withOptionalFields) throws IOException {
+    default Stream<DocType> findStr(String collectionName, Filter filter, long offset, int pageSize, String... withOptionalFields) throws IOException {
         return StreamSupport.stream(find(collectionName, filter, offset, pageSize, withOptionalFields).spliterator(), false);
     }
 
@@ -278,7 +280,7 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         return StreamSupport.stream(find(collectionName, filter, sortField, sortOrder, withOptionalFields).spliterator(), false);
     }
 
-    default Stream<DocType> findStr(String collectionName, Filter filter, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
+    default Stream<DocType> findStr(String collectionName, Filter filter, long offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
         return StreamSupport.stream(find(collectionName, filter, offset, pageSize, sortField, sortOrder, withOptionalFields).spliterator(), false);
     }
 
@@ -286,7 +288,7 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         return StreamSupport.stream(findAll(clazz, withOptionalFields).spliterator(), false);
     }
 
-    default <T> Stream<T> findAllStr(Class<T> clazz, int offset, int pageSize, String... withOptionalFields) throws IOException {
+    default <T> Stream<T> findAllStr(Class<T> clazz, long offset, int pageSize, String... withOptionalFields) throws IOException {
         return StreamSupport.stream(findAll(clazz, offset, pageSize, withOptionalFields).spliterator(), false);
     }
 
@@ -294,7 +296,7 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         return StreamSupport.stream(findAll(clazz, sortField, sortOrder, withOptionalFields).spliterator(), false);
     }
 
-    default <T> Stream<T> findAllStr(Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
+    default <T> Stream<T> findAllStr(Class<T> clazz, long offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
         return StreamSupport.stream(findAll(clazz, offset, pageSize, sortField, sortOrder, withOptionalFields).spliterator(), false);
     }
 
@@ -302,7 +304,7 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         return StreamSupport.stream(findAll(collectionName, withOptionalFields).spliterator(), false);
     }
 
-    default Stream<DocType> findAllStr(String collectionName, int offset, int pageSize, String... withOptionalFields) throws IOException {
+    default Stream<DocType> findAllStr(String collectionName, long offset, int pageSize, String... withOptionalFields) throws IOException {
         return StreamSupport.stream(findAll(collectionName, offset, pageSize, withOptionalFields).spliterator(), false);
     }
 
@@ -310,7 +312,7 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
         return StreamSupport.stream(findAll(collectionName, sortField, sortOrder, withOptionalFields).spliterator(), false);
     }
 
-    default Stream<DocType> findAllStr(String collectionName, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
+    default Stream<DocType> findAllStr(String collectionName, long offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
         return StreamSupport.stream(findAll(collectionName, offset, pageSize, sortField, sortOrder, withOptionalFields).spliterator(), false);
     }
 
@@ -386,6 +388,20 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
      * @return the result produced by the transaction
      */
     <T> T write(Callable<T> transaction) throws IOException;
+
+    default void read(IORunnable transaction) throws IOException{
+        read(() -> {
+            transaction.run();
+            return null;
+        });
+    }
+
+    default void write(IORunnable transaction) throws IOException{
+        write(() -> {
+            transaction.run();
+            return null;
+        });
+    }
     //endregion
 
     Set<Class<?>> getAllRegisteredClasses();

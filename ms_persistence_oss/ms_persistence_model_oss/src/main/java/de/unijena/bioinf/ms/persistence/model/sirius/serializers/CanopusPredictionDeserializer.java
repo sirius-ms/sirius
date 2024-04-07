@@ -85,10 +85,6 @@ public class CanopusPredictionDeserializer extends JsonDeserializer<CanopusPredi
                     p.nextToken();
                     pfp.setFormulaId(p.getLongValue());
                     break;
-                case "id":
-                    p.nextToken();
-                    pfp.setId(p.getLongValue());
-                    break;
                 case "charge":
                     p.nextToken();
                     pfp.setCharge(p.getIntValue());

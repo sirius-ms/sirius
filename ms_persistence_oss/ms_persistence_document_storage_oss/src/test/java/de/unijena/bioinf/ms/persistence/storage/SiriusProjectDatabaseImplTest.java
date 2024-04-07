@@ -36,7 +36,6 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.storage.blob.Compressible;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.dizitart.no2.exceptions.UniqueConstraintException;
-import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -198,7 +197,7 @@ public class SiriusProjectDatabaseImplTest {
 
             {   // insert and get
                 db.getStorage().insert(source);
-                Optional<FTreeResult> ftree = db.getStorage().getByPrimaryKey(source.getId(), FTreeResult.class);
+                Optional<FTreeResult> ftree = db.getStorage().getByPrimaryKey(source.getFormulaId(), FTreeResult.class);
                 assertTrue(ftree.isPresent());
                 assertEquals(ftrees[0].getTreeWeight(), ftree.map(FTreeResult::getFTree).map(FTree::getTreeWeight).get());
                 assertEquals(ftrees[0].numberOfEdges(), ftree.map(FTreeResult::getFTree).map(FTree::numberOfEdges).get());
@@ -211,7 +210,7 @@ public class SiriusProjectDatabaseImplTest {
                 source.setFTree(ftrees[1]);
                 source.setFormulaId(22);
                 db.getStorage().upsert(source);
-                Optional<FTreeResult> ftree = db.getStorage().getByPrimaryKey(source.getId(), FTreeResult.class);
+                Optional<FTreeResult> ftree = db.getStorage().getByPrimaryKey(source.getFormulaId(), FTreeResult.class);
                 assertTrue(ftree.isPresent());
                 assertEquals(ftrees[1].getTreeWeight(), ftree.map(FTreeResult::getFTree).map(FTree::getTreeWeight).orElse(null));
                 assertEquals(ftrees[1].numberOfEdges(), ftree.map(FTreeResult::getFTree).map(FTree::numberOfEdges).orElse(null));
@@ -222,7 +221,7 @@ public class SiriusProjectDatabaseImplTest {
 
             {   //modify and update
                 db.getStorage().remove(source);
-                Optional<FTreeResult> ftree = db.getStorage().getByPrimaryKey(source.getId(), FTreeResult.class);
+                Optional<FTreeResult> ftree = db.getStorage().getByPrimaryKey(source.getFormulaId(), FTreeResult.class);
                 assertTrue(ftree.isEmpty());
             }
         });
@@ -251,7 +250,7 @@ public class SiriusProjectDatabaseImplTest {
                 db.getStorage().insertAll(inputCompounds);
                 assertEquals(db.getStorage().countAll(FingerprintCandidate.class), inputCompounds.size());
                 for (FingerprintCandidate source : inputCompounds) {
-                    Optional<FingerprintCandidate> compound = db.getStorage().getByPrimaryKey(source.getInchiKey2D(), FingerprintCandidate.class);
+                    Optional<FingerprintCandidate> compound = db.getStorage().getByPrimaryKey(source.getInchiKey2D(), FingerprintCandidate.class, "fingerprint");
                     assertTrue(compound.isPresent());
                     assertArrayEquals(source.getFingerprint().toIndizesArray(), compound.map(FingerprintCandidate::getFingerprint).map(Fingerprint::toIndizesArray).orElse(null));
 
@@ -274,7 +273,7 @@ public class SiriusProjectDatabaseImplTest {
                 DBLink testLink = new DBLink("TEST_DB", "0815");
                 source.mergeDBLinks(List.of(testLink));
                 db.getStorage().upsert(source);
-                Optional<FingerprintCandidate> compound = db.getStorage().getByPrimaryKey(source.getInchiKey2D(), FingerprintCandidate.class);
+                Optional<FingerprintCandidate> compound = db.getStorage().getByPrimaryKey(source.getInchiKey2D(), FingerprintCandidate.class, "fingerprint");
                 assertTrue(compound.isPresent());
                 //test for changes
                 assertEquals(source.getName(), compound.map(FingerprintCandidate::getName).orElse(null));
@@ -662,7 +661,7 @@ public class SiriusProjectDatabaseImplTest {
         });
     }
 
-//    @Test
+    @Test
 //    ~12k features ~3G data for performance testing
     public void importFeaturesFromManyMs2ExperimentTest() {
         Path inputFile = Path.of("/home/fleisch/sirius-testing/demo/louis_OMZ_ETNP/OMZ_ETNP_SIRIUS_nobatch.mgf");

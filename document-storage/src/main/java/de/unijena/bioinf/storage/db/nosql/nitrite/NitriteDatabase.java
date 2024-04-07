@@ -612,7 +612,7 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
-    public <T> Iterable<T> find(Filter filter, Class<T> clazz, int offset, int pageSize, String... withOptionalFields) throws IOException {
+    public <T> Iterable<T> find(Filter filter, Class<T> clazz, long offset, int pageSize, String... withOptionalFields) throws IOException {
         return this.read(() -> maybeProject(clazz, filter, FindOptions.skipBy(offset).limit(pageSize), withOptionalFields));
     }
 
@@ -622,7 +622,7 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
-    public <T> Iterable<T> find(Filter filter, Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
+    public <T> Iterable<T> find(Filter filter, Class<T> clazz, long offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
         return this.read(() -> maybeProject(clazz, filter, FindOptions.orderBy(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.common.SortOrder.Ascending : org.dizitart.no2.common.SortOrder.Descending).skip(offset).limit(pageSize), withOptionalFields));
     }
 
@@ -632,7 +632,7 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
-    public Iterable<Document> find(String collectionName, Filter filter, int offset, int pageSize, String... withOptionalFields) throws IOException {
+    public Iterable<Document> find(String collectionName, Filter filter, long offset, int pageSize, String... withOptionalFields) throws IOException {
         return this.read(() -> maybeProjectDocuments(collectionName, filter, FindOptions.skipBy(offset).limit(pageSize), withOptionalFields));
     }
 
@@ -642,7 +642,7 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
-    public Iterable<Document> find(String collectionName, Filter filter, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
+    public Iterable<Document> find(String collectionName, Filter filter, long offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
         return this.read(() -> maybeProjectDocuments(collectionName, filter, FindOptions.orderBy(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.common.SortOrder.Ascending : org.dizitart.no2.common.SortOrder.Descending).skip(offset).limit(pageSize), withOptionalFields));
     }
 
@@ -652,7 +652,7 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
-    public <T> Iterable<T> findAll(Class<T> clazz, int offset, int pageSize, String... withOptionalFields) throws IOException {
+    public <T> Iterable<T> findAll(Class<T> clazz, long offset, int pageSize, String... withOptionalFields) throws IOException {
         return this.read(() -> maybeProject(clazz, null, FindOptions.skipBy(offset).limit(pageSize), withOptionalFields));
     }
 
@@ -662,7 +662,7 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
-    public <T> Iterable<T> findAll(Class<T> clazz, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
+    public <T> Iterable<T> findAll(Class<T> clazz, long offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
         return this.read(() -> maybeProject(clazz, null, FindOptions.orderBy(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.common.SortOrder.Ascending : org.dizitart.no2.common.SortOrder.Descending).skip(offset).limit(pageSize), withOptionalFields));
     }
 
@@ -672,7 +672,7 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
-    public Iterable<Document> findAll(String collectionName, int offset, int pageSize, String... withOptionalFields) throws IOException {
+    public Iterable<Document> findAll(String collectionName, long offset, int pageSize, String... withOptionalFields) throws IOException {
         return this.read(() -> maybeProjectDocuments(collectionName, null, FindOptions.skipBy(offset).limit(pageSize), withOptionalFields));
     }
 
@@ -682,7 +682,7 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
-    public Iterable<Document> findAll(String collectionName, int offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
+    public Iterable<Document> findAll(String collectionName, long offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
         return this.read(() -> maybeProjectDocuments(collectionName, null, FindOptions.orderBy(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.common.SortOrder.Ascending : org.dizitart.no2.common.SortOrder.Descending).skip(offset).limit(pageSize), withOptionalFields));
     }
 
@@ -801,7 +801,7 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
-    public <T> long count(Filter filter, Class<T> clazz, int offset, int pageSize) throws IOException {
+    public <T> long count(Filter filter, Class<T> clazz, long offset, int pageSize) throws IOException {
         return this.read(() -> {
             ObjectRepository<T> repo = this.getRepository(clazz);
             NitriteFilter f = getFilter(filter);
@@ -827,7 +827,7 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
-    public long count(String collectionName, Filter filter, int offset, int pageSize) throws IOException {
+    public long count(String collectionName, Filter filter, long offset, int pageSize) throws IOException {
         return this.read(() -> {
             NitriteCollection collection = this.getCollection(collectionName);
             NitriteFilter f = getFilter(filter);
