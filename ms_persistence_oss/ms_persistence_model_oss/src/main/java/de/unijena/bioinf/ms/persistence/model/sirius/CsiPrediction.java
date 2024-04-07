@@ -31,7 +31,7 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @NoArgsConstructor
-public class CsiPrediction extends FormulaAnnotationWithId {
+public class CsiPrediction extends FormulaAnnotation {
     private int charge;
     @JsonSerialize(using = ProbabilityFingerprint.Serializer.class)
     private ProbabilityFingerprint fingerprint;

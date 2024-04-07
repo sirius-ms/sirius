@@ -62,41 +62,33 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
                 .addRepository(Parameters.class, Index.unique("alignedFeatureId", "type"))
 
-                .addRepository(FormulaCandidate.class, Index.nonUnique("molecularFormula", "adduct"))
+                .addRepository(FormulaCandidate.class
+//                        , Index.nonUnique("molecularFormula", "adduct") // reinstert if we really need this search feature.
+                )
+                .addRepository(FTreeResult.class, "formulaId", Index.nonUnique("alignedFeatureId"))
 
-                .addRepository(FTreeResult.class,
-                        Index.unique("formulaId"),
-                        Index.nonUnique("alignedFeatureId")) //todo needed? //if we want to search for a formulaId the alignedFeatureId is implicitly known.
-
-                .addRepository(CsiPrediction.class,
-                        Index.unique("formulaId"),
-                        Index.nonUnique("alignedFeatureId"))  //todo needed? //if we want to search for a formulaId the alignedFeatureId is implicitly known.
+                .addRepository(CsiPrediction.class, "formulaId", Index.nonUnique("alignedFeatureId"))
                 .addDeserializer(CsiPrediction.class,
                         new CsiPredictionDeserializer())
 
-                .addRepository(CanopusPrediction.class,
-                        Index.unique("formulaId"),
-                        Index.nonUnique("alignedFeatureId"))  //todo needed? //if we want to search for a formulaId the alignedFeatureId is implicitly known.
+                .addRepository(CanopusPrediction.class, "formulaId", Index.nonUnique("alignedFeatureId"))
                 .addDeserializer(CanopusPrediction.class,
                         new CanopusPredictionDeserializer())
 
                 .addRepository(CsiStructureSearchResult.class, "alignedFeatureId")
 
                 .addRepository(CsiStructureMatch.class,
-                        Index.nonUnique("candidateInChiKey"),
-                        Index.nonUnique("formulaId"),
-                        Index.nonUnique("alignedFeatureId"))
+                        Index.unique("alignedFeatureId", "formulaId", "candidateInChiKey"))
 
                 .addRepository(DenovoStructureMatch.class,
-                        Index.nonUnique("candidateInChiKey"),
-                        Index.nonUnique("formulaId"),
-                        Index.nonUnique("alignedFeatureId"))
+                        Index.unique("alignedFeatureId", "formulaId", "candidateInChiKey"))
 
                 .addRepository(SpectraMatch.class, "uuid",
                         Index.nonUnique("candidateInChiKey"),
                         Index.nonUnique("alignedFeatureId"))
 
-                .addRepository(FingerprintCandidate.class)
+                .addRepository(FingerprintCandidate.class) //pk inchiKey
+                .setOptionalFields(FingerprintCandidate.class, "fingerprint")
                 .addSerialization(FingerprintCandidate.class,
                         new FingerprintCandidate.Serializer(),
                         new JSONReader.FingerprintCandidateDeserializer(null)) //will be added later because it has to be read from project
@@ -140,6 +132,16 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     default Optional<Ms2Experiment> findAlignedFeatureAsMsExperiment(long alignedFeatureId) {
         return getStorage().getByPrimaryKey(alignedFeatureId, AlignedFeatures.class)
                 .flatMap(this::fetchMsDataAndConfigsAsMsExperiment);
+    }
+
+    default <A extends StructureMatch> A fetchFingerprintCandidate(@NotNull final A structureMatch) {
+        return fetchFingerprintCandidate(structureMatch, true);
+    }
+    @SneakyThrows
+    default <A extends StructureMatch> A fetchFingerprintCandidate(@NotNull final A structureMatch, boolean includeFingerprint) {
+        String[] opts = includeFingerprint ? new String[]{"fingerprint"} : new String[0];
+        getStorage().fetchChild(structureMatch, "candidateInChiKey", "inchikey", "candidate", FingerprintCandidate.class, opts);
+        return structureMatch;
     }
 
     @SneakyThrows
@@ -197,23 +199,51 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     }
 
     @SneakyThrows
-    default <T> Stream<T> findByFeatureIdStr(long alignedFeatureId, Class<T> clzz) {
-        return getStorage().findStr(Filter.where("alignedFeatureId").eq(alignedFeatureId), clzz);
+    default <T> Stream<T> findByFeatureIdStr(long alignedFeatureId, Class<T> clzz, String... optFields) {
+        return getStorage().findStr(Filter.where("alignedFeatureId").eq(alignedFeatureId), clzz, optFields);
     }
 
     @SneakyThrows
-    default <T> Stream<T> findByFeatureIdStr(long alignedFeatureId, Class<T> clzz, String sortField, Database.SortOrder sortOrder) {
-        return getStorage().findStr(Filter.where("alignedFeatureId").eq(alignedFeatureId), clzz, sortField, sortOrder);
+    default <T> Stream<T> findByFeatureIdStr(long alignedFeatureId, Class<T> clzz, String sortField, Database.SortOrder sortOrder, String... optFields) {
+        return getStorage().findStr(Filter.where("alignedFeatureId").eq(alignedFeatureId), clzz, sortField, sortOrder, optFields);
     }
 
     @SneakyThrows
-    default <T> Stream<T> findByFeatureIdStr(long alignedFeatureId, Class<T> clzz, int offset, int pageSize, String sortField, Database.SortOrder sortOrder) {
-        return getStorage().findStr(Filter.where("alignedFeatureId").eq(alignedFeatureId), clzz, offset, pageSize, sortField, sortOrder);
+    default <T> Stream<T> findByFeatureIdStr(long alignedFeatureId, Class<T> clzz, long offset, int pageSize, String sortField, Database.SortOrder sortOrder, String... optFields) {
+        return getStorage().findStr(Filter.where("alignedFeatureId").eq(alignedFeatureId), clzz, offset, pageSize, sortField, sortOrder, optFields);
     }
 
     @SneakyThrows
     default <T> Stream<T> findByFormulaIdStr(long formulaId, Class<T> clzz) {
         return getStorage().findStr(Filter.where("formulaId").eq(formulaId), clzz);
+    }
+
+    @SneakyThrows
+    default <T> Stream<T> findByInChIStr(@NotNull String candidateInChiKey, Class<T> clzz, String... optFields) {
+        return getStorage().findStr(Filter.where("candidateInChiKey").eq(candidateInChiKey), clzz, optFields);
+    }
+
+    @SneakyThrows
+    default <T> Stream<T> findByFeatureIdAndFormulaIdStr(long alignedFeatureId, long formulaId, Class<T> clzz, long offset, int pageSize, String sortField, Database.SortOrder sortOrder, String... optFields) {
+        return getStorage().findStr(Filter.and(
+                Filter.where("alignedFeatureId").eq(alignedFeatureId),
+                Filter.where("formulaId").eq(formulaId)), clzz, offset, pageSize, sortField, sortOrder, optFields);
+    }
+    @SneakyThrows
+    default <T> Stream<T> findByFeatureIdAndFormulaIdStr(long alignedFeatureId, long formulaId, Class<T> clzz, String... optFields) {
+        return getStorage().findStr(Filter.and(
+                Filter.where("alignedFeatureId").eq(alignedFeatureId),
+                Filter.where("formulaId").eq(formulaId)), clzz, optFields);
+    }
+
+    @SneakyThrows
+    default <T> Stream<T> findByFeatureIdAndFormulaIdAndInChIStr(long alignedFeatureId, long formulaId, @Nullable String candidateInChiKey, Class<T> clzz, String... optFields) {
+        if (candidateInChiKey == null)
+            return findByFeatureIdAndFormulaIdStr(alignedFeatureId, formulaId, clzz);
+        return getStorage().findStr(Filter.and(
+                Filter.where("alignedFeatureId").eq(alignedFeatureId),
+                Filter.where("formulaId").eq(formulaId),
+                Filter.where("candidateInChiKey").eq(candidateInChiKey)), clzz, optFields);
     }
 
     @SneakyThrows

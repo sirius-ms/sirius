@@ -34,7 +34,7 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @NoArgsConstructor
-public class FTreeResult extends FormulaAnnotationWithId {
+public class FTreeResult extends FormulaAnnotation {
     @JsonSerialize(using = FTreeSerializer.class)
     @JsonDeserialize(using = FTreeDeserializer.class)
     private FTree fTree;

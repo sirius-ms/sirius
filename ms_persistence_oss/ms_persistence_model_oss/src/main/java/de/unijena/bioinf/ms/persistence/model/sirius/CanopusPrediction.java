@@ -31,7 +31,7 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @NoArgsConstructor
-public class CanopusPrediction extends FormulaAnnotationWithId {
+public class CanopusPrediction extends FormulaAnnotation {
     private int charge;
     @JsonSerialize(using = ProbabilityFingerprint.Serializer.class)
     private ProbabilityFingerprint cfFingerprint;
