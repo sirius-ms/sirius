@@ -46,6 +46,7 @@ public class IsotopeDetectionByCorrelation implements IsotopeDetectionStrategy{
                 final double mz = p.getMzAt(i);
                 if (Math.abs(mz-spectrum.getMzAt(peakIdx))<1e-3) {
                     iso[i]=true;
+                    traceIdsAll[i] = trace.getUid();
                     continue;
                 }
                 int isotopePeakIdx = Spectrums.mostIntensivePeakWithin(spectrum, mz, smallDev);

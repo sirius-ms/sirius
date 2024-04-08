@@ -113,13 +113,7 @@ public class ScanPointInterpolator {
         if (!Float.isFinite(tg)) return 0f;
         int targetLeft = (int)tg;
         int targetRight = (int)Math.ceil(tg);
-        float intensityLeft;
-        if (targetLeft > t.endId()) {
-            // accumulate intensities
-            intensityLeft = t.intensity(t.startId());
-            for (int i=t.startId()+1; i < t.endId(); ++i) intensityLeft += t.intensity(i);
-            return intensityLeft;
-        } else intensityLeft = (targetLeft < t.startId() || targetLeft > t.endId()) ? 0f : t.intensity(targetLeft);
+        float intensityLeft = (targetLeft < t.startId() || targetLeft > t.endId()) ? 0f : t.intensity(targetLeft);
         float intensityRight = (targetRight < t.startId() || targetRight > t.endId()) ? 0 : t.intensity(targetRight);
         if (targetLeft==targetRight) return intensityLeft;
         double alpha = tg-targetLeft;
