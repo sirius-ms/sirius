@@ -218,16 +218,73 @@ public class LCMSProcessing {
                     trace2trace.put(pair.leftInt(), ((SourceTrace) atrace).getSourceTraceId());
                 }
             }
-            System.out.println(++count + " / " + N + " merged traces imported.");
+            //System.out.println(++count + " / " + N + " merged traces imported.");
         }
         System.out.println("#Step 2: Import Aligned Features");
         count=0;
-        for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
-            Iterator<AlignedFeatures> fiter = mergedFeatureExtractionStrategy.extractFeatures(merged, trace, ms2MergeStrategy, isotopePatternExtractionStrategy, trace2trace, idx2sample);
-            while (fiter.hasNext()) {
-                importStrategy.importAlignedFeature(fiter.next());
+
+        try (final PrintStream OUT = new PrintStream("/home/kaidu/lcms2.json")) {
+            OUT.println("[");
+            for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
+                Iterator<AlignedFeatures> fiter = mergedFeatureExtractionStrategy.extractFeatures(merged, trace, ms2MergeStrategy, isotopePatternExtractionStrategy, trace2trace, idx2sample);
+                List<AlignedFeatures> fs = new ArrayList<>();
+                while (fiter.hasNext()) {
+                    AlignedFeatures feature = fiter.next();
+                    fs.add(feature);
+                    importStrategy.importAlignedFeature(feature);
+                }
+                if (fs.size() >= 20 || (fs.size()>=1 && Math.random()>=0.97)) {
+                    // dump this weird trace
+                    OUT.print("{\"mergedTrace\": [[");
+                    {
+                        Trace tr = trace.toTrace(merged);
+                        for (int k = tr.startId(); k <= tr.endId(); ++k) {
+                            OUT.print(tr.intensity(k));
+                            if (k < tr.endId()) OUT.print(", ");
+                        }
+                        OUT.print("],[");
+                        for (int k = tr.startId(); k <= tr.endId(); ++k) {
+                            OUT.print(merged.getMapping().getRetentionTimeAt(k));
+                            if (k < tr.endId()) OUT.print(", ");
+                        }
+                        OUT.print("]");
+                    }
+                    OUT.println("],\n\"traces\": [");
+                    for (int J=0; J < trace.getTraceIds().size(); ++J) {
+                        ProcessedSample sample = idx2sample.get(trace.getSampleIds().getInt(J));
+                        ContiguousTrace tr = merged.getStorage().getMergeStorage().getTrace(sample.getMapping(), trace.getTraceIds().getInt(J));
+                        OUT.print("\n[[");
+                        for (int k=tr.startId(); k <= tr.endId(); ++k) {
+                            OUT.print(tr.intensity(k));
+                            if (k < tr.endId()) OUT.print(", ");
+                        }
+                        OUT.print("],[");
+                        for (int k=tr.startId(); k <= tr.endId(); ++k) {
+                            OUT.print(sample.getRtRecalibration().value(sample.getMapping().getRetentionTimeAt(k)));
+                            if (k < tr.endId()) OUT.print(", ");
+                        }
+                        OUT.print("]]");
+                        if (J < trace.getTraceIds().size()-1) OUT.print(",");
+                    }
+
+                    OUT.println("],\n\"features\": [");
+                    for (int jj = 0; jj < fs.size(); ++jj) {
+                        final AlignedFeatures feature = fs.get(jj);
+                        OUT.print("[");
+                        OUT.print(feature.getTraceRef().get().getStart());
+                        OUT.print(", ");
+                        OUT.print(feature.getTraceRef().get().getApex());
+                        OUT.print(", ");
+                        OUT.print(feature.getTraceRef().get().getEnd());
+                        OUT.print("]");;
+                        if (jj < fs.size()-1) OUT.print(", ");
+                    }
+                    OUT.print("]},");
+                    OUT.flush();
+                }
+                //System.out.println(++count + " / " + N + " aligned features imported.");
             }
-            System.out.println(++count + " / " + N + " aligned features imported.");
+            OUT.println("]");
         }
     }
 

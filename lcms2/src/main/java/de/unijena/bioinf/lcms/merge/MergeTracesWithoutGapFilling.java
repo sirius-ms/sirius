@@ -63,8 +63,10 @@ public class MergeTracesWithoutGapFilling {
             jobs.clear();
             sample.inactive();
         }
+        System.out.println("Average number of Alignmments in backbone: "  + alignment.getStatistics().getAverageNumberOfAlignments());
+        System.out.println("Median number of Alignmments in backbone: " + alignment.getStatistics().getMedianNumberOfAlignments());
         for (int k=0; k < mergedNoiseLevelPerScan.length; ++k) {
-            mergedNoiseLevelPerScan[k] /= alignment.getSamples().length;
+            mergedNoiseLevelPerScan[k] /= alignment.getStatistics().getAverageNumberOfAlignments();
         }
         for (MergedTrace t : mergeStorage) {
             if (t.getSampleIds().size()==0) {
@@ -166,7 +168,10 @@ public class MergeTracesWithoutGapFilling {
                 if (m.getIsotopes()==null) continue;
                 int K = m.getIsotopes().getForNominalMass(t.averagedMz(), isotopePeak);
                 if (K<0) continue;
-                isotopeTraces.add(sample.getStorage().getTraceStorage().getContigousTrace(m.getIsotopes().traceIds[K]));
+                ContiguousTrace tid = sample.getStorage().getTraceStorage().getContigousTrace(m.getIsotopes().traceIds[K]);
+                if (tid.getUid() != m.getTraceId()) {
+                    isotopeTraces.add(tid);
+                }
                 /*
                 TraceStorage traceStorage = sample.getStorage().getTraceStorage();
                 double minMz = IsotopePattern.getMinimumMzFor(m.getMz(), isotopePeak, 1)-5e-4;

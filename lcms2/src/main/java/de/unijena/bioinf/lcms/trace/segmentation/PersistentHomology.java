@@ -36,10 +36,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.IntStream;
 
 /**
@@ -164,7 +161,8 @@ public class PersistentHomology implements TraceSegmentationStrategy {
         }
     }
 
-    private static List<Segment> computePersistentHomology(Trace trace, Filter filter, double intensityThreshold, double trim) {
+    private static List<Segment> computePersistentHomology(Trace trace, Filter filter, double intensityThreshold, double persistenceThreshold, double trim) {
+        if (trace.apexIntensity() < intensityThreshold) return Collections.emptyList();
         final TraceIntensityArray seq = new TraceIntensityArray(trace, filter);
         List<Segment> peaks = new ArrayList<>();
         int[] idx2Peak = new int[seq.size()];
@@ -243,12 +241,21 @@ public class PersistentHomology implements TraceSegmentationStrategy {
             ) {
                 merged.add(current);
             } else {
-                last.setRight(current.getRight());
+
+                // merge last with current
+                if (seq.get(last.born) >= seq.get(current.born)) {
+                    last.setRight(current.getRight());
+                } else {
+                    merged.remove(merged.size()-1);
+                    current.setLeft(last.getLeft());
+                    merged.add(current);
+                }
             }
         }
-
         // sort peaks by persistence
         merged.sort((a, b) -> Double.compare(getPersistence(b, seq), getPersistence(a, seq)));
+        // delete all peaks which have a persistence lower the threshold
+        if (persistenceThreshold > 0) merged.removeIf(x->getPersistence(x, seq)<persistenceThreshold);
         return merged;
     }
 
@@ -263,7 +270,8 @@ public class PersistentHomology implements TraceSegmentationStrategy {
     @Override
     public List<TraceSegment> detectSegments(SampleStats stats, Trace trace) {
         final int offset=trace.startId();
-        return computePersistentHomology(trace, filter, stats.noiseLevel(trace.apex()), 3d).stream().map(seg->
+        float intensityThreshold = stats.noiseLevel(trace.apex());
+        return computePersistentHomology(trace, filter, intensityThreshold, intensityThreshold/2d, 3d).stream().map(seg->
                 TraceSegment.createSegmentFor(trace, seg.left+offset, seg.right+offset)
         ).toList();
     }
@@ -272,4 +280,5 @@ public class PersistentHomology implements TraceSegmentationStrategy {
     public int[] detectMaxima(SampleStats stats, Trace trace) {
         return TraceSegmentationStrategy.super.detectMaxima(stats, trace);
     }
+
 }
