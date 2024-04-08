@@ -62,7 +62,7 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
                 .addRepository(Parameters.class, Index.unique("alignedFeatureId", "type"))
 
-                .addRepository(FormulaCandidate.class
+                .addRepository(FormulaCandidate.class, Index.nonUnique("siriusScore") //for fast sorted pages //todo zodiac score
 //                        , Index.nonUnique("molecularFormula", "adduct") // reinstert if we really need this search feature.
                 )
                 .addRepository(FTreeResult.class, "formulaId", Index.nonUnique("alignedFeatureId"))
@@ -78,10 +78,12 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
                 .addRepository(CsiStructureSearchResult.class, "alignedFeatureId")
 
                 .addRepository(CsiStructureMatch.class,
-                        Index.unique("alignedFeatureId", "formulaId", "candidateInChiKey"))
+                        Index.unique("alignedFeatureId", "formulaId", "candidateInChiKey"),
+                        Index.nonUnique("csiScore")) //for fast sorted pages
 
                 .addRepository(DenovoStructureMatch.class,
-                        Index.unique("alignedFeatureId", "formulaId", "candidateInChiKey"))
+                        Index.unique("alignedFeatureId", "formulaId", "candidateInChiKey"),
+                        Index.nonUnique("csiScore")) //for fast sorted pages
 
                 .addRepository(SpectraMatch.class,
                         Index.nonUnique("searchResult.candidateInChiKey"),
