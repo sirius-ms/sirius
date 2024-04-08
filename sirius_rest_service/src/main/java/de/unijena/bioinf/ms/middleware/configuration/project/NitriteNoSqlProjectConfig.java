@@ -22,10 +22,10 @@ package de.unijena.bioinf.ms.middleware.configuration.project;
 
 import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
-import de.unijena.bioinf.projectspace.NitriteProjectSpaceManagerFactory;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectProviderImpl;
-import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
+import de.unijena.bioinf.projectspace.NitriteProjectSpaceManagerFactory;
+import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
