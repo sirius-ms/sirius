@@ -47,7 +47,7 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
             return Collections.emptyIterator();
 
         Arrays.sort(traceSegments, Comparator.comparingDouble(a -> a.apex));
-        System.out.println(traceSegments.length);
+
         double[][] intervals = new double[traceSegments.length][2];
         for (int i = 0; i < traceSegments.length; i++) {
             intervals[i][0] = mTrace.retentionTime(traceSegments[i].leftEdge);

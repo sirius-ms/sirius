@@ -13,8 +13,11 @@ import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.traceextractor.MassOfInterestConfidenceEstimatorStrategy;
 import de.unijena.bioinf.recal.MzRecalibration;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import org.apache.commons.math3.analysis.interpolation.LoessInterpolator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
@@ -75,6 +78,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
         }
         // all mois that are aligned with at least 10% of the samples are part of the backbone
         final long[] backboneMois;
+        ShortArrayList sizes = new ShortArrayList();
         {
             final LongArrayList backboneMoisList = new LongArrayList();
             final int minSamples = Math.max(2, (int) Math.ceil(samples.size() * 0.1));
@@ -83,6 +87,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
                     if (((AlignedMoI) m).getAligned().length >= minSamples) {
                         storage.addMoI(((AlignedMoI) m).finishMerging());
                         backboneMoisList.add(m.getUid());
+                        sizes.add((short)Math.min(Short.MAX_VALUE, ((AlignedMoI) m).getAligned().length));
                     }
                 }
             }
@@ -108,6 +113,11 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
         todo.forEach(JJob::takeResult);
         todo.clear();
         stats.setExpectedRetentionTimeDeviation(Statistics.robustAverage(rtErrors));
+        stats.averageNumberOfAlignments = (float)sizes.intStream().average().orElse(0d);
+        stats.medianNumberOfAlignments = sizes.isEmpty() ? 0f : (float)sizes.intStream().sorted().toArray()[sizes.size()/2];
+
+        System.out.println("Stage 1: average alignment error is " + stats.getExpectedRetentionTimeDeviation());
+
         return AlignmentBackbone.builder().scanPointMapping(backboneMapping).samples(samples.toArray(ProcessedSample[]::new)).statistics(stats).build();
     }
 
@@ -129,11 +139,25 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
     TODO: we have to ensure that one outlier sample with huge step size does not destroy the backbone
      */
     private ScanPointMapping createBackboneMapping(AlignmentStatistics stats) {
-        final double[] rts = new double[stats.maxMappingLen+1];
-        final int[] scanpoints = new int[stats.maxMappingLen+1];
+
+        // decide for step size
+        // should be at least 5% percentile of all step sizes of all samples
+        stats.stepSizes.sort(null);
+        double stepSize = stats.stepSizes.getFloat((int)(stats.stepSizes.size()*0.1));
+        // decide for length such that everything fits into the scale
+        double minRt = stats.minRt;
+        double maxRt = stats.maxRt;
+        int len = (int)Math.ceil((maxRt-minRt)/stepSize);
+        // also check 10% of the largest scale lengths
+        stats.mappingLengths.sort(null);
+        int len2 = stats.mappingLengths.getInt((int)(stats.mappingLengths.size()*0.95));
+        // decide for the larger length
+        final int length = Math.max(len, len2)+1;
+        final double[] rts = new double[length];
+        final int[] scanpoints = new int[length];
         rts[0] = stats.minRt;
         rts[rts.length-1] = stats.maxRt;
-        final double stepSize = (stats.maxRt-stats.minRt)/rts.length;
+        stepSize = (stats.maxRt-stats.minRt)/rts.length;
         for (int k=1; k < rts.length-1; ++k) {
             rts[k] = rts[k-1]+stepSize;
         }
@@ -151,7 +175,8 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
         stats.minMz = Double.POSITIVE_INFINITY;
         stats.maxMz = Double.NEGATIVE_INFINITY;
         double mzabs=0d, mzrel=0d;
-        stats.maxMappingLen = 0;
+        stats.mappingLengths = new IntArrayList();
+        stats.stepSizes = new FloatArrayList();
         for (ProcessedSample sample : samples) {
             final TraceStats st = sample.getTraceStats();
             final ScanPointMapping M = sample.getMapping();
@@ -159,9 +184,15 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
             stats.maxRt = Math.max(stats.maxRt, M.getRetentionTimeAt(M.length()-1));
             stats.minMz = Math.min(stats.minMz, st.getMinMz());
             stats.maxMz = Math.max(stats.maxMz, st.getMaxMz());
-            stats.maxMappingLen = Math.max(M.length(), stats.maxMappingLen);
+            stats.mappingLengths.add(M.length());
             mzabs += st.getAverageDeviationWithinFwhm().getAbsolute();
             mzrel += st.getAverageDeviationWithinFwhm().getPpm();
+            FloatArrayList stepSizes = new FloatArrayList();
+            for (int k=1; k < M.length(); ++k) {
+                stepSizes.add((float)(M.getRetentionTimeAt(k)-M.getRetentionTimeAt(k-1)));
+            }
+            stepSizes.sort(null);
+            stats.stepSizes.add(stepSizes.getFloat((int)(stepSizes.size()*0.1)));
         }
         mzabs /= samples.size();
         mzrel /= samples.size();
@@ -300,6 +331,8 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
         stats.setExpectedRetentionTimeDeviation(Statistics.robustAverage(rtErrors.toDoubleArray()));
         stats.setExpectedMassDeviationBetweenSamples(new Deviation(Statistics.robustAverage(ppmErrors.toDoubleArray()),Statistics.robustAverage(mzErrors.toDoubleArray())));
         cleanupOldMoIs(merge, samples, samples.size(), samples.size());
+
+        System.out.println("Stage 2: average alignment error is " + stats.getExpectedRetentionTimeDeviation());
         return AlignmentBackbone.builder().statistics(stats).samples(samples.toArray(ProcessedSample[]::new)).build();
     }
 

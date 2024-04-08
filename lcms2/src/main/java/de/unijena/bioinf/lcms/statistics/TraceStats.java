@@ -24,6 +24,7 @@ public class TraceStats {
         int count=0, smallc=0, largec=0; int best=0;
         final ScanPointMapping M = sample.getMapping();
         for (ContiguousTrace trace : sample.getStorage().getTraceStorage()) {
+            if (trace.getSegments().length==0) continue;
             minMz = Math.min(trace.averagedMz(), minMz);
             maxMz = Math.max(trace.averagedMz(), maxMz);
             double a = 0; int c=0;
@@ -53,7 +54,16 @@ public class TraceStats {
                 ++good;
             }
         }
+        double ppm, abs;
+        if (largec < 50) {
+            ppm = 5;
+        } else ppm = relDev/largec;
+        if (smallc < 50) {
+            abs = ppm*1e-6*200;
+        } else abs = absDev/smallc;
+        Deviation dev = new Deviation(ppm, abs);
+        System.out.println(dev);
         return TraceStats.builder().minMz(minMz).maxMz(maxMz).averagePeakWidth(peakWidth/count).numberOfHighQualityTraces(good).
-                averageDeviationWithinFwhm(new Deviation(relDev/largec, absDev/smallc)).build();
+                averageDeviationWithinFwhm(dev).build();
     }
 }

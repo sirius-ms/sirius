@@ -183,7 +183,7 @@ public class TestMain {
                         (int)(store.findAllStr(MSData.class).filter(x->x.getMergedMSnSpectrum()!=null).count()),
                         (int)(store.findAllStr(MSData.class).filter(x->x.getMergedMSnSpectrum()!=null && x.getIsotopePattern()!=null && x.getIsotopePattern().size()>=2).count())
                 );
-
+                /*
                 // simplify
                 HashMap<Long,Integer> runIds = new HashMap<>();
 
@@ -202,7 +202,7 @@ public class TestMain {
                 manager.addLoss(MolecularFormula.parseOrThrow("H2O"));
 
                 AdductNetwork network = new AdductNetwork(new ProjectSpaceTraceProvider(ps),  store.findAllStr(AlignedFeatures.class).toArray(AlignedFeatures[]::new), manager);
-
+                */
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
