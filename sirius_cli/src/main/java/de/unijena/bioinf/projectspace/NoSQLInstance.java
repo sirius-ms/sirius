@@ -424,7 +424,8 @@ public class NoSQLInstance implements Instance {
                     c.setZodiacScore(fc.getAnnotationOrThrow(ZodiacScore.class).score());
                     return c;
                 }).toList();
-        project().getStorage().insertAll(candidates);
+        project().getStorage().upsertAll(candidates);
+        //todo do we need to resort?
     }
 
     @Override
@@ -519,7 +520,7 @@ public class NoSQLInstance implements Instance {
                     if (!project().getStorage().containsPrimaryKey(c.getInchiKey2D(), FingerprintCandidate.class))
                         toInsert.add(c);
 
-                return project().getStorage().insertAll(toInsert);
+                return project().getStorage().upsertAll(toInsert); //todo should be insert, workaround to prevent duplicate key error.
             });
 
             System.out.println("Inserted: " + inserted + " of " + candidates.size() + "CSI candidates.");
@@ -606,7 +607,7 @@ public class NoSQLInstance implements Instance {
             long mapped = candidates.stream().filter(c -> c.getLinks() != null && !c.getLinks().isEmpty()).count();
 
             System.out.println(mapped + " of " +  candidates.size() + " MsNovelist candidates have been mapped to db hits.");
-            return project().getStorage().insertAll(toInsert);
+            return project().getStorage().upsertAll(toInsert); //todo should be insert, workaround to prevent duplicate key error.
         });
 
 

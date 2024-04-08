@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
-import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
@@ -94,7 +93,8 @@ public class AlignedFeatureController {
             @PathVariable String projectId,
             @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
     ) {
-        return getAlignedFeaturesPaged(projectId, globalConfig.unpaged(), optFields).stream().toList();
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(null, removeNone(optFields))
+                .getContent();
     }
 
 
