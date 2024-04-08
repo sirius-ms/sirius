@@ -665,7 +665,7 @@ public class SiriusProjectDatabaseImplTest {
         });
     }
 
-    @Test
+//    @Test
 //    ~12k features ~3G data for performance testing
     public void importFeaturesFromManyMs2ExperimentTest() {
         Path inputFile = Path.of("/home/fleisch/sirius-testing/demo/louis_OMZ_ETNP/OMZ_ETNP_SIRIUS_nobatch.mgf");
