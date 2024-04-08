@@ -281,14 +281,14 @@ public class NitriteDatabase implements Database<Document> {
 
     @Override
     public void flush() {
-        stateWriteLock.lock();
+        stateReadLock.lock();
         try { //flush should work like close an not throw an exception if the database is closed?
             if (!this.db.isClosed())
                 this.db.commit();
             else
                 LoggerFactory.getLogger(getClass()).warn("Nitrite database is closed! Cannot commit any changes!");
         } finally {
-            stateWriteLock.unlock();
+            stateReadLock.unlock();
         }
     }
 
