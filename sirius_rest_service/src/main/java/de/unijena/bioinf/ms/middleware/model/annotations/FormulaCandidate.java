@@ -34,6 +34,7 @@ import lombok.*;
  * such as fragmentation trees and simulated isotope pattern.
  */
 @Getter
+@Setter
 @AllArgsConstructor
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -89,7 +90,7 @@ public class FormulaCandidate {
      * If NULL result is not available
      */
     @Schema(nullable = true)
-    protected Double topCSIScore;
+    protected Double topCSIScore; //todo maybe remove because we cannot efficiently sort and the value is available via top structure annotation??
 
     /**
      * The fragmentation tree that belongs to this molecular formula candidate (produces the treeScore).
