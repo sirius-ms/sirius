@@ -205,7 +205,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return sort(sort, Pair.of("csiScore", Database.SortOrder.DESCENDING), Function.identity());
     }
 
-    private Compound convertCompound(de.unijena.bioinf.ms.persistence.model.core.Compound compound) {
+    private Compound convertCompound(de.unijena.bioinf.ms.persistence.model.core.Compound compound,
+                                     @NotNull EnumSet<Compound.OptField> optFields,
+                                     @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
         Compound.CompoundBuilder builder = Compound.builder()
                 .compoundId(String.valueOf(compound.getCompoundId()))
                 .name(compound.getName())
@@ -222,7 +224,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             }
         }
 
-        compound.getAdductFeatures().ifPresent(features -> builder.features(features.stream().map(this::convertToApiFeature).toList()));
+        compound.getAdductFeatures().ifPresent(features -> builder.features(features.stream()
+                .map(f -> convertToApiFeature(f, optFeatureFields) ).toList()));
 
         return builder.build();
     }
@@ -310,10 +313,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return builder.build();
     }
 
-    private AlignedFeature convertToApiFeature(AlignedFeatures features) {
-        return convertToApiFeature(features, EnumSet.noneOf(AlignedFeature.OptField.class));
-    }
-
     private AlignedFeature convertToApiFeature(AlignedFeatures features, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         final String fid = String.valueOf(features.getAlignedFeatureId());
         AlignedFeature.AlignedFeatureBuilder builder = AlignedFeature.builder()
@@ -338,9 +337,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         features.getMSData().map(this::convertMSData).ifPresent(builder::msData);
 
-//
-//            if (optFields.contains(AlignedFeature.OptField.topAnnotations))
-//                alignedFeature.setTopAnnotations(extractTopAnnotations(instance));
+
+            if (optFields.contains(AlignedFeature.OptField.topAnnotations))
+                builder.topAnnotations(extractTopAnnotations(features.getAlignedFeatureId()));
 //            if (optFields.contains(AlignedFeature.OptField.topAnnotationsDeNovo))
 //                alignedFeature.setTopAnnotationsDeNovo(extractTopDeNovoAnnotations(instance));
 //
@@ -348,30 +347,45 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return builder.build();
     }
 
-//    private FeatureAnnotations makeTopAnnotations(long longAFIf){
-//        final FeatureAnnotations cSum = new FeatureAnnotations();
-////
-//        //add formula summary
-//        cSum.setFormulaAnnotation(asFormulaCandidate(topHit).build());
-//        project().findByFeatureIdStr()
-//        // fingerid result
-//        topHit.getAnnotation(FBCandidatesTopK.class).map(FBCandidatesTopK::getResults)
-//                .filter(l -> !l.isEmpty()).map(r -> r.get(0)).map(s ->
-//                        StructureCandidateFormula.of(s,
-//                                EnumSet.of(StructureCandidateScored.OptField.dbLinks, StructureCandidateScored.OptField.libraryMatches), topHit.getId()))
-//                .ifPresent(cSum::setStructureAnnotation);
-//
-//        topHit.getAnnotation(CanopusResult.class).map(CompoundClasses::of).
-//                ifPresent(cSum::setCompoundClassAnnotation);
-//
-//        // Add list specific results: confidences, expansive search state
-//
-//        topHit.getAnnotation(FormulaScoring.class).get().getAnnotation(ConfidenceScore.class).ifPresent(c -> cSum.setConfidenceExactMatch(c.score()));
-//        topHit.getAnnotation(FormulaScoring.class).get().getAnnotation(ConfidenceScoreApproximate.class).ifPresent(c -> cSum.setConfidenceApproxMatch(c.score()));
-//        topHit.getAnnotation(StructureSearchResult.class).ifPresent(c -> cSum.setExpansiveSearchState(c.getExpansiveSearchConfidenceMode()));
-//
-//        return cSum;
-//    }
+    private FeatureAnnotations extractTopAnnotations(long longAFIf) {
+        final FeatureAnnotations cSum = new FeatureAnnotations();
+
+        StructureMatch csiMatch = project().findByFeatureIdStr(longAFIf, CsiStructureMatch.class)
+                .findFirst().orElse(null);
+
+
+        de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate formulaCandidate;
+        if (csiMatch != null) {
+            formulaCandidate = project().findByFormulaIdStr(csiMatch.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
+                    .findFirst().orElseThrow();
+
+            //set Structure match
+            cSum.setStructureAnnotation(convertStructureMatch(csiMatch, EnumSet.of(StructureCandidateScored.OptField.dbLinks, StructureCandidateScored.OptField.libraryMatches)));
+
+            project().findByFeatureIdStr(longAFIf, CsiStructureSearchResult.class)
+                    .findFirst().ifPresent(it -> {
+                        cSum.setConfidenceExactMatch(it.getConfidenceExact());
+                        cSum.setConfidenceApproxMatch(it.getConfidenceApprox());
+                        cSum.setExpansiveSearchState(it.getExpansiveSearchConfidenceMode());
+                        //todo add searched database and expanded databases
+                    });
+        } else {
+            Pair<String, Database.SortOrder> formSort = sortFormulaCandidate(null); //null == default
+            formulaCandidate = project().findByFeatureIdStr(longAFIf, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, formSort.getLeft(), formSort.getRight())
+                    .findFirst().orElse(null); //todo should we call a page of size one instead?
+        }
+
+        //get Canopus result. either for
+        if (formulaCandidate != null) {
+            cSum.setFormulaAnnotation(convertFormulaCandidate(formulaCandidate));
+            if (csiMatch != null)
+                cSum.getFormulaAnnotation().setTopCSIScore(csiMatch.getCsiScore());
+            project().findByFormulaIdStr(formulaCandidate.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.CanopusPrediction.class)
+                    .findFirst().map(cc -> CompoundClasses.of(cc.getNpcFingerprint(), cc.getCfFingerprint()))
+                    .ifPresent(cSum::setCompoundClassAnnotation);
+        }
+        return cSum;
+    }
 
     private MsData convertMSData(MSData msData) {
         MsData.MsDataBuilder builder = MsData.builder();
@@ -390,6 +404,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             FormulaCandidate.OptField.statistics
     );
 
+    private FormulaCandidate convertFormulaCandidate(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate candidate) {
+        return convertFormulaCandidate(null, candidate,  EnumSet.noneOf(FormulaCandidate.OptField.class));
+    }
     private FormulaCandidate convertFormulaCandidate(@Nullable MSData msData, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate candidate, EnumSet<FormulaCandidate.OptField> optFields) {
         final long fid = candidate.getFormulaId();
         FormulaCandidate.FormulaCandidateBuilder builder = FormulaCandidate.builder()
@@ -450,7 +467,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public Page<Compound> findCompounds(Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
+    public Page<Compound> findCompounds(Pageable pageable,
+                                        @NotNull EnumSet<Compound.OptField> optFields,
+                                        @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
         Pair<String, Database.SortOrder> sort = sortCompound(pageable.getSort());
         Stream<de.unijena.bioinf.ms.persistence.model.core.Compound> stream;
         if (pageable.isPaged()) {
@@ -464,7 +483,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             stream = stream.peek(c -> c.getAdductFeatures().ifPresent(features -> features.forEach(project()::fetchMsData)));
         }
 
-        List<Compound> compounds = stream.map(this::convertCompound).toList();
+        List<Compound> compounds = stream.map(c -> convertCompound(c, optFields, optFeatureFields)).toList();
 
         // TODO annotations
         long total = totalCounts.get(de.unijena.bioinf.ms.persistence.model.core.Compound.class).get();
@@ -477,7 +496,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
         List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream().map(this::convertCompound).toList();
         project().importCompounds(dbc);
-        return dbc.stream().map(this::convertCompound).toList();
+        return dbc.stream().map(c -> convertCompound(c, optFields, optFieldsFeatures)).toList();
     }
 
     @SneakyThrows
@@ -490,7 +509,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     if (optFeatureFields.contains(AlignedFeature.OptField.msData)) {
                         c.getAdductFeatures().ifPresent(features -> features.forEach(project()::fetchMsData));
                     }
-                    return convertCompound(c);
+                    return convertCompound(c, optFields, optFeatureFields);
                 })
                 // TODO annotations
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no compound '" + compoundId + "' in project " + projectId + "."));
@@ -525,12 +544,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             stream = storage().findAllStr(AlignedFeatures.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
         }
 
-        if (optFields.contains(AlignedFeature.OptField.msData)) {
+        if (optFields.contains(AlignedFeature.OptField.msData))
             stream = stream.peek(project()::fetchMsData);
-        }
 
-        List<AlignedFeature> features = stream.map(this::convertToApiFeature).toList();
-        // TODO annotations
+
+        List<AlignedFeature> features = stream.map(alf -> convertToApiFeature(alf, optFields)).toList();
+
         long total = totalCounts.get(AlignedFeatures.class).get();
 
         return new PageImpl<>(features, pageable, total);
@@ -559,7 +578,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     if (optFields.contains(AlignedFeature.OptField.msData)) {
                         project().fetchMsData(a);
                     }
-                    return convertToApiFeature(a);
+                    return convertToApiFeature(a, optFields);
                 }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no aligned feature '" + alignedFeatureId + "' in project " + projectId + "."));
     }
 
@@ -710,7 +729,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         //FP
         if (match.getCandidate() == null)
             project().fetchFingerprintCandidate(match, optFields.contains(StructureCandidateScored.OptField.fingerprint));
-        sSum.setFingerprint(AnnotationUtils.asBinaryFingerprint(match.getCandidate().getFingerprint()));
+
+        if (optFields.contains(StructureCandidateScored.OptField.fingerprint))
+            sSum.setFingerprint(AnnotationUtils.asBinaryFingerprint(match.getCandidate().getFingerprint()));
 
         sSum.setFormulaId(String.valueOf(match.getFormulaId()));
         // scores
