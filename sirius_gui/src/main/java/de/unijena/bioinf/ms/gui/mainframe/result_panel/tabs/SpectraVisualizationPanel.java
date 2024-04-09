@@ -322,7 +322,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                                         .getIsotopePatternAnnotationWithResponseSpec(pid, fid, formulaCandidateId)
                                         .bodyToMono(IsotopePatternAnnotation.class).onErrorComplete().block());
                                 checkForInterruption();
-                                if (inChIKey2d != null)
+                                if (inChIKey2d != null) //todo has performance issues -> it should run as cancellable job in the here in the frontend and not behind the API.
                                     annotatedMsMsData = instance.withIds((pid, fid) -> instance.getClient().features()
                                             .getStructureAnnotatedMsDataWithResponseSpec(pid, fid, formulaCandidateId, inChIKey2d)
                                             .bodyToMono(AnnotatedMsMsData.class).onErrorComplete().block());
