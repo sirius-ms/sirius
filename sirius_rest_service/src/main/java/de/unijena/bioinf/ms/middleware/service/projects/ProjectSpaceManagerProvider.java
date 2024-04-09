@@ -52,10 +52,10 @@ import java.util.stream.Collectors;
 import static de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent.Type.PROJECT_OPENED;
 import static de.unijena.bioinf.projectspace.ProjectSpaceIO.*;
 
-public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManager, P extends Project> implements ProjectsProvider<P> {
+public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManager, P extends Project<PSM>> implements ProjectsProvider<P> {
     private final ProjectSpaceManagerFactory<PSM> projectSpaceManagerFactory;
 
-    private final HashMap<String, PSM> projectSpaces = new HashMap<>();
+    private final HashMap<String, P> projectSpaces = new HashMap<>();
 
     protected final ReadWriteLock projectSpaceLock = new ReentrantReadWriteLock();
 
@@ -72,19 +72,15 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
     public List<ProjectInfo> listAllProjectSpaces() {
         projectSpaceLock.readLock().lock();
         try {
-            return projectSpaces.entrySet().stream().map(x -> ProjectInfo.of(x.getKey(), x.getValue().getLocation())).collect(Collectors.toList());
+            return projectSpaces.entrySet().stream().map(x -> ProjectInfo.of(x.getKey(), x.getValue()
+                    .getProjectSpaceManager().getLocation())).collect(Collectors.toList());
         } finally {
             projectSpaceLock.readLock().unlock();
         }
     }
 
     protected Optional<PSM> getProjectSpaceManager(String projectId) {
-        projectSpaceLock.readLock().lock();
-        try {
-            return Optional.ofNullable(projectSpaces.get(projectId));
-        } finally {
-            projectSpaceLock.readLock().unlock();
-        }
+        return getProject(projectId).map(Project::getProjectSpaceManager);
     }
 
     @Override
@@ -168,9 +164,21 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
     private ProjectInfo createOrOpen(String projectId, Path location, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
         PSM psm = projectSpaceManagerFactory.createOrOpen(location);
         registerEventListeners(projectId, psm);
-        projectSpaces.put(projectId, psm);
+        projectSpaces.put(projectId, createProject(projectId, psm));
         eventService.sendEvent(ServerEvents.newProjectEvent(projectId, PROJECT_OPENED));
         return createProjectInfo(projectId, psm, optFields);
+    }
+
+    protected abstract P createProject(String projectId, PSM managerToWrap);
+
+    @Override
+    public Optional<P> getProject(String projectId) {
+        projectSpaceLock.readLock().lock();
+        try {
+            return Optional.ofNullable(projectSpaces.get(projectId));
+        } finally {
+            projectSpaceLock.readLock().unlock();
+        }
     }
 
     @Override
@@ -181,7 +189,7 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
     public void closeProjectSpace(String projectId) throws IOException {
         projectSpaceLock.writeLock().lock();
         try {
-            final ProjectSpaceManager space = projectSpaces.get(projectId);
+            final ProjectSpaceManager space = projectSpaces.get(projectId).getProjectSpaceManager();
             if (space == null) {
                 throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Project space with name '" + projectId + "' not found!");
             }
@@ -218,10 +226,10 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
             LoggerFactory.getLogger(SiriusMiddlewareApplication.class).info("Closing Projects...'");
             projectSpaces.values().forEach(ps -> {
                 try {
-                    ps.close();
-                    LoggerFactory.getLogger(SiriusMiddlewareApplication.class).info("Project: '" + ps.getLocation() + "' successfully closed.");
+                    ps.getProjectSpaceManager().close();
+                    LoggerFactory.getLogger(SiriusMiddlewareApplication.class).info("Project: '" + ps.getProjectSpaceManager().getLocation() + "' successfully closed.");
                 } catch (IOException e) {
-                    LoggerFactory.getLogger(getClass()).error("Error when closing Project-Space '" + ps.getLocation() + "'. Data might be corrupted.");
+                    LoggerFactory.getLogger(getClass()).error("Error when closing Project-Space '" + ps.getProjectSpaceManager().getLocation() + "'. Data might be corrupted.");
                 }
             });
             projectSpaces.clear();

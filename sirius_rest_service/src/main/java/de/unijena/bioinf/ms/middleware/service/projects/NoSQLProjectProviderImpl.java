@@ -183,11 +183,11 @@ public class NoSQLProjectProviderImpl extends ProjectSpaceManagerProvider<NoSQLP
     }
 
     @Override
-    public Optional<NoSQLProjectImpl> getProject(String projectId) {
-        return getProjectSpaceManager(projectId).map(psm -> new NoSQLProjectImpl(projectId, psm, computeService::isInstanceComputing));
+    protected NoSQLProjectImpl createProject(String projectId, NoSQLProjectSpaceManager psm) {
+        return new NoSQLProjectImpl(projectId, psm, computeService::isInstanceComputing);
     }
 
-//    private final HashMap<String, SiriusProjectDatabaseImpl<? extends Database<?>>> projects;
+    //    private final HashMap<String, SiriusProjectDatabaseImpl<? extends Database<?>>> projects;
 //
 //    private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 //
