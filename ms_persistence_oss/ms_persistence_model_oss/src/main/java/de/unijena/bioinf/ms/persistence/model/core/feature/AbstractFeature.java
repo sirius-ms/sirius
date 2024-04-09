@@ -38,6 +38,11 @@ import java.util.Optional;
 public abstract class AbstractFeature {
 
     /**
+     * charge determines the polarity as well as the number of charges
+     */
+    protected byte charge;
+
+    /**
      * ID of the run this feature belongs to
      */
     protected Long runId;
