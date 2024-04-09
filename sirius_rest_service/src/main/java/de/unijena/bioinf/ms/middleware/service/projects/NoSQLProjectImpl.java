@@ -516,7 +516,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         Stream<AlignedFeatures> stream;
-        if (pageable == null || (pageable.isUnpaged() && pageable.getSort().isUnsorted())) {
+        if (pageable.isUnpaged() && pageable.getSort().isUnsorted()) {
             stream = storage().findAllStr(AlignedFeatures.class);
         } else {
             Pair<String, Database.SortOrder> sort = sortFeature(pageable.getSort());
@@ -662,7 +662,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         Long2ObjectMap<de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate> fidToFC = new Long2ObjectOpenHashMap<>();
 
-        List<StructureCandidateFormula> candidates = project().findByFeatureIdStr(longAFId, clzz, pageable.getOffset(), pageable.getPageSize(), null, null)
+        List<StructureCandidateFormula> candidates = project().findByFeatureIdStr(longAFId, clzz, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight())
                 .map(candidate -> {
                     de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate fc = fidToFC
                             .computeIfAbsent(candidate.getFormulaId(), k -> project()
