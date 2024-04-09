@@ -160,6 +160,43 @@ public class TestMain {
                     System.out.printf("\nMerged Run: %s\n\n", run.getName());
                 }
 
+                int numberOfFeatures=0, numberOfFeaturesWith2Iso=0, numberOfFeaturesWith3Iso=0, numberOfMultipleChargedFeatures=0;
+                for (AlignedFeatures features : store.findAllStr(AlignedFeatures.class).toList()) {
+                    ++numberOfFeatures;
+                    List<MSData> msdata = store.findStr(Filter.where("alignedFeatureId").eq(features.getAlignedFeatureId()), MSData.class).toList();
+                    if (msdata.size()>0) features.setMsData(msdata.get(0));
+                    List<de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace> list = store.findStr(Filter.where("mergedTraceId").eq(features.getTraceRef().get().
+                                    getTraceId()),
+                            de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace.class).toList();
+                    de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace mono = list.get(0);
+                    features.setIsotopicFeatures(store.findStr(Filter.where("alignedFeatureId").eq(features.getAlignedFeatureId()), AlignedIsotopicFeatures.class,
+                            "averageMass", Database.SortOrder.ASCENDING).toList());
+                    final ArrayList<de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace> traces = new ArrayList<>();
+                    traces.add(mono);
+                    for (int k=0; k < features.getIsotopicFeatures().get().size(); ++k) {
+                        AlignedIsotopicFeatures alignedIsotopicFeatures = features.getIsotopicFeatures().get().get(k);
+                        de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace iso = store.findStr(Filter.where("mergedTraceId").eq(alignedIsotopicFeatures.getTraceRef().get().getTraceId()),
+                                de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace.class).toList().get(0);
+                        traces.add(iso);
+                    }
+
+                    if (features.getIsotopicFeatures().get().size()>1){
+                        ++numberOfFeaturesWith2Iso;
+                    }
+                    if (features.getIsotopicFeatures().get().size()>2){
+                        ++numberOfFeaturesWith3Iso;
+                    }
+                    if (features.getCharge()>1){
+                        ++numberOfMultipleChargedFeatures;
+                    }
+                }
+                System.out.printf(Locale.US,
+                        "# Features: \t%d\n# Multicharged: \t%d\n# 2-Iso: \t%d\n# 3-Iso: \t%d\n",
+                        numberOfFeatures,numberOfMultipleChargedFeatures,numberOfFeaturesWith2Iso,numberOfFeaturesWith3Iso
+                        );
+
+
+
                 System.out.printf(
                         """
                                 # Run:                     %d

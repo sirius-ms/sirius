@@ -22,9 +22,9 @@ import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
-import it.unimi.dsi.fastutil.ints.Int2LongMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2LongMap;
 
 import java.util.*;
 import java.util.function.IntFunction;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
 
     @Override
-    public Iterator<AlignedFeatures> extractFeatures(ProcessedSample mergedSample, MergedTrace mergedTrace, Ms2MergeStrategy ms2MergeStrategy, IsotopePatternExtractionStrategy isotopePatternExtractionStrategy, Int2LongMap trace2trace, Int2ObjectMap<ProcessedSample> idx2sample) {
+    public Iterator<AlignedFeatures> extractFeatures(ProcessedSample mergedSample, MergedTrace mergedTrace, Ms2MergeStrategy ms2MergeStrategy, IsotopePatternExtractionStrategy isotopePatternExtractionStrategy, Long2LongMap trace2trace, Long2LongMap sourceTrace2trace, Int2ObjectMap<ProcessedSample> idx2sample) {
         ProcessedSample[] samplesInTrace = new ProcessedSample[mergedTrace.getSampleIds().size()];
         for (int i = 0; i < mergedTrace.getSampleIds().size(); ++i) {
             samplesInTrace[i] = idx2sample.get(mergedTrace.getSampleIds().getInt(i));
@@ -54,10 +54,11 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
             intervals[i][1] = mTrace.retentionTime(traceSegments[i].rightEdge);
         }
 
-        AlignedFeatures[] monoisotopic = extractAlignedFeatures(traceSegments, mergedSample, samplesInTrace, mergedTrace, ms2MergeStrategy, trace2trace, AlignedFeatures::new, AlignedFeatures[]::new);
+        AlignedFeatures[] monoisotopic = extractAlignedFeatures(traceSegments, mergedSample, samplesInTrace, mergedTrace, ms2MergeStrategy, trace2trace, sourceTrace2trace, AlignedFeatures::new, AlignedFeatures[]::new);
 
         if (!mergedTrace.getIsotopeUids().isEmpty()) {
             AlignedIsotopicFeatures[][] isotopicFeatures = new AlignedIsotopicFeatures[monoisotopic.length][mergedTrace.getIsotopeUids().size()];
+
             for (int j = 0; j < mergedTrace.getIsotopeUids().size(); j++) {
                 MergedTrace isoTrace = mergedSample.getStorage().getMergeStorage().getMerged(mergedTrace.getIsotopeUids().getInt(j));
                 ProcessedSample[] isoSamplesInTrace = new ProcessedSample[isoTrace.getSampleIds().size()];
@@ -66,7 +67,7 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
                 }
 
                 TraceSegment[] isoTraceSegments = assignIntervalstoTrace(mergedSample, isoTrace, intervals);
-                AlignedIsotopicFeatures[] isoFeatures = extractAlignedFeatures(isoTraceSegments, mergedSample, isoSamplesInTrace, isoTrace, ms2MergeStrategy, trace2trace, AlignedIsotopicFeatures::new, AlignedIsotopicFeatures[]::new);
+                AlignedIsotopicFeatures[] isoFeatures = extractAlignedFeatures(isoTraceSegments, mergedSample, isoSamplesInTrace, isoTrace, ms2MergeStrategy, trace2trace, sourceTrace2trace, AlignedIsotopicFeatures::new, AlignedIsotopicFeatures[]::new);
                 for (int i = 0; i < monoisotopic.length; i++) {
                     isotopicFeatures[i][j] = isoFeatures[i];
                 }
@@ -86,11 +87,47 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
                 monoisotopic[i].getMSData().ifPresent(data -> data.setIsotopePattern(isotopePattern));
             }
         }
+        for (AlignedFeatures f : monoisotopic) {
+            if (f!=null) detectChargeState(f, mergedSample);
+        }
         return Arrays.stream(monoisotopic).filter(Objects::nonNull).iterator();
     }
 
+    private void detectChargeState(AlignedFeatures features, ProcessedSample sample) {
+        // a priori we assume single charge
+        int polarity = sample.getPolarity()>0 ? 1 : -1;
+
+        // do we have isotopes?
+        final int[] counter = new int[4];
+
+        if (features.getIsotopicFeatures().isPresent()) {
+            List<AlignedIsotopicFeatures> iso = features.getIsotopicFeatures().get();
+            for (int k = 0; k < iso.size(); ++k) {
+                for (int ch = 1; ch < counter.length; ++ch) {
+                    final double min = de.unijena.bioinf.lcms.isotopes.IsotopePattern.getMinimumMzFor(features.getAverageMass(), k + 1, ch);
+                    final double max = de.unijena.bioinf.lcms.isotopes.IsotopePattern.getMaximumMzFor(features.getAverageMass(), k + 1, ch);
+                    if (iso.get(k).getAverageMass() >= min && iso.get(k).getAverageMass() <= max) {
+                        counter[ch] += (4 - ch);
+                        break;
+                    }
+                }
+            }
+        }
+        // TODO: use other detection methods such as MS/MS
+        int bestExplanation = Arrays.stream(counter).max().orElse(0);
+        for (int j=1; j < counter.length; ++j) {
+            if (counter[j]>=bestExplanation) {
+                features.setCharge((byte)(j*polarity));
+                for (Feature f : features.getFeatures().get()) {
+                    f.setCharge((byte)(j*polarity));
+                }
+                return;
+            }
+        }
+    }
+
     private <F extends AbstractAlignedFeatures> F[] extractAlignedFeatures(
-            TraceSegment[] traceSegments, ProcessedSample mergedSample, ProcessedSample[] samplesInTrace, MergedTrace mergedTrace, Ms2MergeStrategy ms2MergeStrategy, Int2LongMap trace2trace, Supplier<F> featureSupplier, IntFunction<F[]> featureArraySupplier
+            TraceSegment[] traceSegments, ProcessedSample mergedSample, ProcessedSample[] samplesInTrace, MergedTrace mergedTrace, Ms2MergeStrategy ms2MergeStrategy, Long2LongMap trace2trace, Long2LongMap sourceTrace2trace, Supplier<F> featureSupplier, IntFunction<F[]> featureArraySupplier
     ) {
         Trace mTrace = mergedTrace.toTrace(mergedSample);
         final SampleStats stats = mergedSample.getStorage().getStatistics();
@@ -158,7 +195,7 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
                 int childTraceId = mergedTrace.getTraceIds().getInt(k);
                 int childSampleId = mergedTrace.getSampleIds().getInt(k);
                 ProcessedSample sample = uid2sample.get(childSampleId);
-                Feature feature = buildFeature(childTraceId, mergedSample.getStorage().getMergeStorage().getTrace(sample.getMapping(), childTraceId), individualSegments[k][i], stats, trace2trace, Feature.builder().runId(samplesInTrace[k].getRun().getRunId()).build());
+                Feature feature = buildFeature(childTraceId, mergedSample.getStorage().getMergeStorage().getTrace(sample.getMapping(), childTraceId), individualSegments[k][i], stats, sourceTrace2trace, Feature.builder().runId(samplesInTrace[k].getRun().getRunId()).build());
                 childFeatures.add(feature);
             }
             if (childFeatures.isEmpty())
@@ -176,7 +213,7 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
             Trace mTrace,
             TraceSegment segment,
             SampleStats stats,
-            Int2LongMap trace2trace,
+            Long2LongMap trace2trace,
             final F feature
     ) {
         final int o = mTrace.startId();
@@ -198,6 +235,9 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
         }
 
         feature.setTraceRef(new TraceRef(trace2trace.get(traceUid), o, segment.leftEdge - o, segment.apex - o, segment.rightEdge -o));
+
+
+
 
         return feature;
     }

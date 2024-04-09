@@ -32,7 +32,10 @@ import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
+import de.unijena.bioinf.storage.db.nosql.Filter;
 import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.longs.Long2LongMap;
+import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.text.similarity.LongestCommonSubsequence;
@@ -196,7 +199,8 @@ public class LCMSProcessing {
 
         importScanPointMapping(merged, mergedRun.getRunId());
 
-        Int2LongMap trace2trace = new Int2LongOpenHashMap();
+        Long2LongMap mergedTrace2trace = new Long2LongOpenHashMap();
+        Long2LongMap sourceTrace2trace = new Long2LongOpenHashMap();
         System.out.println("#Step 1: Import traces");
         int N = merged.getStorage().getMergeStorage().numberOfMergedTraces();
         System.out.println("There are " + N + " merged traces to import.");
@@ -213,9 +217,9 @@ public class LCMSProcessing {
                 AbstractTrace atrace = pair.right();
                 importStrategy.importTrace(atrace);
                 if (atrace instanceof de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace) {
-                    trace2trace.put(pair.leftInt(), ((de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace) atrace).getMergedTraceId());
+                    mergedTrace2trace.put(pair.leftInt(), ((de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace) atrace).getMergedTraceId());
                 } else if (atrace instanceof SourceTrace) {
-                    trace2trace.put(pair.leftInt(), ((SourceTrace) atrace).getSourceTraceId());
+                    sourceTrace2trace.put(pair.leftInt(), ((SourceTrace) atrace).getSourceTraceId());
                 }
             }
             //System.out.println(++count + " / " + N + " merged traces imported.");
@@ -226,7 +230,7 @@ public class LCMSProcessing {
         try (final PrintStream OUT = new PrintStream("/home/kaidu/lcms2.json")) {
             OUT.println("[");
             for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
-                Iterator<AlignedFeatures> fiter = mergedFeatureExtractionStrategy.extractFeatures(merged, trace, ms2MergeStrategy, isotopePatternExtractionStrategy, trace2trace, idx2sample);
+                Iterator<AlignedFeatures> fiter = mergedFeatureExtractionStrategy.extractFeatures(merged, trace, ms2MergeStrategy, isotopePatternExtractionStrategy, mergedTrace2trace, sourceTrace2trace, idx2sample);
                 List<AlignedFeatures> fs = new ArrayList<>();
                 while (fiter.hasNext()) {
                     AlignedFeatures feature = fiter.next();
