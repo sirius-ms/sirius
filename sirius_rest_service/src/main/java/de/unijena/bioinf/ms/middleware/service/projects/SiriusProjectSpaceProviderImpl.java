@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
-import java.util.Optional;
 
 import static de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent.Type.*;
 
@@ -51,8 +50,9 @@ public class SiriusProjectSpaceProviderImpl extends ProjectSpaceManagerProvider<
         return createProject(projectId, p.toAbsolutePath().toString(), optFields, true);
     }
 
-    public Optional<SiriusProjectSpaceImpl> getProject(String projectId) {
-        return getProjectSpaceManager(projectId).map(ps -> new SiriusProjectSpaceImpl(projectId, ps, computeService::isInstanceComputing));
+    @Override
+    protected SiriusProjectSpaceImpl createProject(String projectId, SiriusProjectSpaceManager managerToWrap) {
+        return new SiriusProjectSpaceImpl(projectId, managerToWrap, computeService::isInstanceComputing);
     }
 
     @Override
