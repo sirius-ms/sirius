@@ -225,7 +225,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         }
 
         compound.getAdductFeatures().ifPresent(features -> builder.features(features.stream()
-                .map(f -> convertToApiFeature(f, optFeatureFields) ).toList()));
+                .map(f -> convertToApiFeature(f, optFeatureFields)).toList()));
 
         return builder.build();
     }
@@ -337,38 +337,44 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         features.getMSData().map(this::convertMSData).ifPresent(builder::msData);
 
-
-            if (optFields.contains(AlignedFeature.OptField.topAnnotations))
-                builder.topAnnotations(extractTopAnnotations(features.getAlignedFeatureId()));
-//            if (optFields.contains(AlignedFeature.OptField.topAnnotationsDeNovo))
-//                alignedFeature.setTopAnnotationsDeNovo(extractTopDeNovoAnnotations(instance));
-//
+        if (optFields.contains(AlignedFeature.OptField.topAnnotations))
+            builder.topAnnotations(extractTopCsiNovoAnnotations(features.getAlignedFeatureId()));
+        if (optFields.contains(AlignedFeature.OptField.topAnnotationsDeNovo))
+            builder.topAnnotationsDeNovo(extractTopDeNovoAnnotations(features.getAlignedFeatureId()));
 
         return builder.build();
     }
 
-    private FeatureAnnotations extractTopAnnotations(long longAFIf) {
+    private FeatureAnnotations extractTopCsiNovoAnnotations(long longAFIf) {
+            return extractTopAnnotations(longAFIf, CsiStructureMatch.class);
+    }
+    private FeatureAnnotations extractTopDeNovoAnnotations(long longAFIf) {
+        return extractTopAnnotations(longAFIf, DenovoStructureMatch.class);
+
+    }
+    private FeatureAnnotations extractTopAnnotations(long longAFIf, Class<? extends StructureMatch> clzz) {
         final FeatureAnnotations cSum = new FeatureAnnotations();
 
-        StructureMatch csiMatch = project().findByFeatureIdStr(longAFIf, CsiStructureMatch.class)
+        StructureMatch structureMatch = project().findByFeatureIdStr(longAFIf, clzz)
                 .findFirst().orElse(null);
 
 
         de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate formulaCandidate;
-        if (csiMatch != null) {
-            formulaCandidate = project().findByFormulaIdStr(csiMatch.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
+        if (structureMatch != null) {
+            formulaCandidate = project().findByFormulaIdStr(structureMatch.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class)
                     .findFirst().orElseThrow();
 
             //set Structure match
-            cSum.setStructureAnnotation(convertStructureMatch(csiMatch, EnumSet.of(StructureCandidateScored.OptField.dbLinks, StructureCandidateScored.OptField.libraryMatches)));
+            cSum.setStructureAnnotation(convertStructureMatch(structureMatch, EnumSet.of(StructureCandidateScored.OptField.dbLinks, StructureCandidateScored.OptField.libraryMatches)));
 
-            project().findByFeatureIdStr(longAFIf, CsiStructureSearchResult.class)
-                    .findFirst().ifPresent(it -> {
-                        cSum.setConfidenceExactMatch(it.getConfidenceExact());
-                        cSum.setConfidenceApproxMatch(it.getConfidenceApprox());
-                        cSum.setExpansiveSearchState(it.getExpansiveSearchConfidenceMode());
-                        //todo add searched database and expanded databases
-                    });
+            if (structureMatch instanceof CsiStructureMatch) //csi only but not denovo
+                project().findByFeatureIdStr(longAFIf, CsiStructureSearchResult.class)
+                        .findFirst().ifPresent(it -> {
+                            cSum.setConfidenceExactMatch(it.getConfidenceExact());
+                            cSum.setConfidenceApproxMatch(it.getConfidenceApprox());
+                            cSum.setExpansiveSearchState(it.getExpansiveSearchConfidenceMode());
+                            //todo add searched database and expanded databases
+                        });
         } else {
             Pair<String, Database.SortOrder> formSort = sortFormulaCandidate(null); //null == default
             formulaCandidate = project().findByFeatureIdStr(longAFIf, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, formSort.getLeft(), formSort.getRight())
@@ -378,8 +384,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         //get Canopus result. either for
         if (formulaCandidate != null) {
             cSum.setFormulaAnnotation(convertFormulaCandidate(formulaCandidate));
-            if (csiMatch != null)
-                cSum.getFormulaAnnotation().setTopCSIScore(csiMatch.getCsiScore());
+            if (structureMatch != null)
+                cSum.getFormulaAnnotation().setTopCSIScore(structureMatch.getCsiScore());
             project().findByFormulaIdStr(formulaCandidate.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.CanopusPrediction.class)
                     .findFirst().map(cc -> CompoundClasses.of(cc.getNpcFingerprint(), cc.getCfFingerprint()))
                     .ifPresent(cSum::setCompoundClassAnnotation);
@@ -405,8 +411,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     );
 
     private FormulaCandidate convertFormulaCandidate(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate candidate) {
-        return convertFormulaCandidate(null, candidate,  EnumSet.noneOf(FormulaCandidate.OptField.class));
+        return convertFormulaCandidate(null, candidate, EnumSet.noneOf(FormulaCandidate.OptField.class));
     }
+
     private FormulaCandidate convertFormulaCandidate(@Nullable MSData msData, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate candidate, EnumSet<FormulaCandidate.OptField> optFields) {
         final long fid = candidate.getFormulaId();
         FormulaCandidate.FormulaCandidateBuilder builder = FormulaCandidate.builder()
