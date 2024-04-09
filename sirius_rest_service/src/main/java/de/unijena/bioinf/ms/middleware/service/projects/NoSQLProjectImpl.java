@@ -423,7 +423,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 builder.annotatedSpectrum(findAnnotatedMsMsSpectrum(-1, null, candidate.getFormulaId(), candidate.getAlignedFeatureId()));
             if (msData != null && optFields.contains(FormulaCandidate.OptField.isotopePattern)) {
                 SimpleSpectrum isotopePattern = msData.getIsotopePattern();
-                builder.isotopePatternAnnotation(Spectrums.createIsotopePatternAnnotation(isotopePattern, ftree));
+                if (isotopePattern != null) {
+                    builder.isotopePatternAnnotation(Spectrums.createIsotopePatternAnnotation(isotopePattern, ftree));
+                }
             }
         }
 
