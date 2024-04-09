@@ -34,7 +34,7 @@ import java.util.List;
 
 public class ProjectSpaceImporter implements ImportStrategy {
 
-    private SiriusProjectDocumentDatabase<?> store;
+    public SiriusProjectDocumentDatabase<?> store;
 
     public ProjectSpaceImporter() {
         // TODO how to get currently open project space?
