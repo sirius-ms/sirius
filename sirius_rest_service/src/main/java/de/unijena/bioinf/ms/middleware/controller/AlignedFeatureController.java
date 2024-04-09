@@ -93,7 +93,7 @@ public class AlignedFeatureController {
             @PathVariable String projectId,
             @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(null, removeNone(optFields))
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(Pageable.unpaged(), removeNone(optFields))
                 .getContent();
     }
 
