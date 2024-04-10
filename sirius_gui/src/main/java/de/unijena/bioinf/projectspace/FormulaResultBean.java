@@ -22,6 +22,8 @@ package de.unijena.bioinf.projectspace;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
@@ -35,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -287,6 +290,17 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
 
         return this.ftreeJson;
     }
+
+    public synchronized Optional<FTree> getFTree() {
+        return getFTreeJson().map(s -> {
+            try {
+                return new FTJsonReader().treeFromJsonString(s, null);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
 
     public synchronized Optional<IsotopePatternAnnotation> getIsotopePatterAnnotation() {
         if (this.isotopePatterAnnotation == null)
