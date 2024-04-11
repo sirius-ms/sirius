@@ -30,8 +30,11 @@ import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import de.unijena.bioinf.projectspace.SiriusProjectSpace;
 import de.unijena.bioinf.projectspace.SiriusProjectSpaceManager;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.EnumSet;
 
@@ -41,6 +44,13 @@ public class SiriusProjectSpaceProviderImpl extends ProjectSpaceManagerProvider<
 
     public SiriusProjectSpaceProviderImpl(@NotNull ProjectSpaceManagerFactory<SiriusProjectSpaceManager> projectSpaceManagerFactory, @NotNull EventService<?> eventService, @NotNull ComputeService computeService) {
         super(projectSpaceManagerFactory, eventService, computeService);
+    }
+
+    @Override
+    protected void validateExistingLocation(Path location) throws IOException {
+        if (!(Files.isDirectory(location) && FileUtils.listAndClose(location, s -> s.findAny().isEmpty())))
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Location '" + location.toAbsolutePath() +
+                    "' already exists and is not an empty directory. Cannot create new project space here.");
     }
 
     @Override

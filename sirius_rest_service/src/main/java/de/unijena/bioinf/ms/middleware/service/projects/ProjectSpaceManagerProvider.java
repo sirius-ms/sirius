@@ -149,17 +149,22 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
             try {
                 Path location = path != null && !path.isBlank() ? Path.of(path) : defaultProjectDir().resolve(projectId);
 
-                if (!failIfExists)
-                    if (Files.exists(location) && !(Files.isDirectory(location) && FileUtils.listAndClose(location, s -> s.findAny().isEmpty())))
+                if (Files.exists(location)) {
+                    if (failIfExists) {
                         throw new ResponseStatusException(HttpStatus.CONFLICT, "Location '" + location.toAbsolutePath() +
-                                "' already exists and is not an empty directory. Cannot create new project space here.");
-
+                                "' already exists. Cannot create new project space here.");
+                    } else {
+                        validateExistingLocation(location);
+                    }
+                }
                 return createOrOpen(projectId, location, optFields);
             } catch (IOException e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when accessing file system to create project.", e);
             }
         });
     }
+
+    protected abstract void validateExistingLocation(Path location) throws IOException;
 
     private ProjectInfo createOrOpen(String projectId, Path location, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
         PSM psm = projectSpaceManagerFactory.createOrOpen(location);
