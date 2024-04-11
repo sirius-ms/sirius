@@ -994,10 +994,17 @@ class MirrorPlot extends Base {
                 .call(d3.axisBottom(this.x));
         }
         // Y axis 1
-        this.y1 = d3.scaleLinear().domain([0, 1]).range([this.h / 2, this.margin_h])
+
+        var ints1 = self.spectrum1.peaks.map((p) => p.intensity);
+        var ints2 = self.spectrum2.peaks.map((p) => p.intensity);
+        var m1 = Math.max.apply(Math, ints1);
+        var m2 = Math.max.apply(Math, ints1);
+        var maxInt = Math.max(m1, m2) || 1.0;
+
+        this.y1 = d3.scaleLinear().domain([0, maxInt]).range([this.h / 2, this.margin_h]).nice();
         this.svg.append("g").attr("id", "yAxis1").call(d3.axisLeft(this.y1));
         // Y axis 2
-        this.y2 = d3.scaleLinear().domain([0, 1]).range([this.h / 2, this.h - this.margin_h])
+        this.y2 = d3.scaleLinear().domain([0, maxInt]).range([this.h / 2, this.h - this.margin_h]).nice();
         this.svg.append("g").attr("id", "yAxis2").call(d3.axisLeft(this.y2));
         this.svg.selectAll(".label").attr("visibility", "visible");
         // legends: 2 spectrum names
