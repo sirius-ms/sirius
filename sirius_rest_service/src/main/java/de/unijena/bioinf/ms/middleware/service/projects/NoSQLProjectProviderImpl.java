@@ -39,6 +39,8 @@ import de.unijena.bioinf.storage.db.nosql.Database;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -54,6 +56,14 @@ public class NoSQLProjectProviderImpl extends ProjectSpaceManagerProvider<NoSQLP
 
     public NoSQLProjectProviderImpl(@NotNull ProjectSpaceManagerFactory<NoSQLProjectSpaceManager> projectSpaceManagerFactory, @NotNull EventService<?> eventService, @NotNull ComputeService computeService) {
         super(projectSpaceManagerFactory, eventService, computeService);
+    }
+
+    @Override
+    protected void validateExistingLocation(Path location) throws IOException {
+        if (!Files.isRegularFile(location)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Location '" + location.toAbsolutePath() +
+                    "' is not a sirius project space. Cannot open project space.");
+        }
     }
 
     @Override
