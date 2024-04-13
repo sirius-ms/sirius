@@ -44,8 +44,8 @@ class NoSqlStructureSummaryWriter implements AutoCloseable {
     final static String HEADER =
             "structurePerIdRank\t" +
             "formulaRank\t" +
-            "#adducts\t" +
-            "#predictedFPs\t" +
+//            "#adducts\t" +
+//            "#predictedFPs\t" +
             "ConfidenceScoreExact\t" +
             "ConfidenceScoreApproximate\t" +
             "CSI:FingerIDScore\t" +
@@ -111,7 +111,7 @@ class NoSqlStructureSummaryWriter implements AutoCloseable {
         writeSep();
         w.write(match.getCandidate().getInchi().in2D);
         writeSep();
-        w.write(match.getCandidate().getName());
+        w.write(Objects.requireNonNullElse(match.getCandidate().getName(), ""));
         writeSep();
         w.write(match.getCandidate().getSmiles());
         writeSep();
@@ -134,7 +134,7 @@ class NoSqlStructureSummaryWriter implements AutoCloseable {
         writeSep();
         w.write(String.format(LONG_FORMAT, f.getAlignedFeatureId()));
         writeSep();
-        w.write(f.getExternalFeatureId());
+        w.write(Objects.requireNonNullElse(f.getExternalFeatureId(),""));
         w.newLine();
     }
 
