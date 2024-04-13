@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> extends NetworkingProjectDocumentDatabase<Storage> {
     String SIRIUS_PROJECT_SUFFIX = ".sirius";
@@ -62,7 +63,7 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
                 .addRepository(Parameters.class, Index.unique("alignedFeatureId", "type"))
 
-                .addRepository(FormulaCandidate.class, Index.nonUnique("siriusScore") //for fast sorted pages //todo zodiac score
+                .addRepository(FormulaCandidate.class, Index.nonUnique("formulaRank") //for fast sorted pages
 //                        , Index.nonUnique("molecularFormula", "adduct") // reinstert if we really need this search feature.
                 )
                 .addRepository(FTreeResult.class, "formulaId", Index.nonUnique("alignedFeatureId"))
@@ -79,11 +80,11 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
                 .addRepository(CsiStructureMatch.class,
                         Index.unique("alignedFeatureId", "formulaId", "candidateInChiKey"),
-                        Index.nonUnique("csiScore")) //for fast sorted pages
+                        Index.nonUnique("structureRank")) //for fast sorted pages
 
                 .addRepository(DenovoStructureMatch.class,
                         Index.unique("alignedFeatureId", "formulaId", "candidateInChiKey"),
-                        Index.nonUnique("csiScore")) //for fast sorted pages
+                        Index.nonUnique("structureRank")) //for fast sorted pages
 
                 .addRepository(SpectraMatch.class,
                         Index.nonUnique("searchResult.candidateInChiKey"),
@@ -139,6 +140,7 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     default <A extends StructureMatch> A fetchFingerprintCandidate(@NotNull final A structureMatch) {
         return fetchFingerprintCandidate(structureMatch, true);
     }
+
     @SneakyThrows
     default <A extends StructureMatch> A fetchFingerprintCandidate(@NotNull final A structureMatch, boolean includeFingerprint) {
         String[] opts = includeFingerprint ? new String[]{"fingerprint"} : new String[0];
@@ -200,49 +202,83 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
         return alignedFeatures;
     }
 
-    @SneakyThrows
+
     default <T> Stream<T> findByFeatureIdStr(long alignedFeatureId, Class<T> clzz, String... optFields) {
-        return getStorage().findStr(Filter.where("alignedFeatureId").eq(alignedFeatureId), clzz, optFields);
+        return stream(findByFeatureId(alignedFeatureId, clzz, optFields));
     }
 
     @SneakyThrows
+    default <T> Iterable<T> findByFeatureId(long alignedFeatureId, Class<T> clzz, String... optFields) {
+        return getStorage().find(Filter.where("alignedFeatureId").eq(alignedFeatureId), clzz, optFields);
+    }
+
     default <T> Stream<T> findByFeatureIdStr(long alignedFeatureId, Class<T> clzz, String sortField, Database.SortOrder sortOrder, String... optFields) {
-        return getStorage().findStr(Filter.where("alignedFeatureId").eq(alignedFeatureId), clzz, sortField, sortOrder, optFields);
+        return stream(findByFeatureId(alignedFeatureId, clzz, sortField, sortOrder, optFields));
     }
 
     @SneakyThrows
+    default <T> Iterable<T> findByFeatureId(long alignedFeatureId, Class<T> clzz, String sortField, Database.SortOrder sortOrder, String... optFields) {
+        return getStorage().find(Filter.where("alignedFeatureId").eq(alignedFeatureId), clzz, sortField, sortOrder, optFields);
+    }
+
     default <T> Stream<T> findByFeatureIdStr(long alignedFeatureId, Class<T> clzz, long offset, int pageSize, String sortField, Database.SortOrder sortOrder, String... optFields) {
-        return getStorage().findStr(Filter.where("alignedFeatureId").eq(alignedFeatureId), clzz, offset, pageSize, sortField, sortOrder, optFields);
+        return stream(findByFeatureId(alignedFeatureId, clzz, offset, pageSize, sortField, sortOrder, optFields));
     }
 
     @SneakyThrows
+    default <T> Iterable<T> findByFeatureId(long alignedFeatureId, Class<T> clzz, long offset, int pageSize, String sortField, Database.SortOrder sortOrder, String... optFields) {
+        return getStorage().find(Filter.where("alignedFeatureId").eq(alignedFeatureId), clzz, offset, pageSize, sortField, sortOrder, optFields);
+    }
+
     default <T> Stream<T> findByFormulaIdStr(long formulaId, Class<T> clzz) {
-        return getStorage().findStr(Filter.where("formulaId").eq(formulaId), clzz);
+        return stream(findByFormulaId(formulaId, clzz));
     }
 
     @SneakyThrows
+    default <T> Iterable<T> findByFormulaId(long formulaId, Class<T> clzz) {
+        return getStorage().find(Filter.where("formulaId").eq(formulaId), clzz);
+    }
+
     default <T> Stream<T> findByInChIStr(@NotNull String candidateInChiKey, Class<T> clzz, String... optFields) {
-        return getStorage().findStr(Filter.where("candidateInChiKey").eq(candidateInChiKey), clzz, optFields);
+        return stream(findByInChI(candidateInChiKey, clzz, optFields));
     }
 
     @SneakyThrows
+    default <T> Iterable<T> findByInChI(@NotNull String candidateInChiKey, Class<T> clzz, String... optFields) {
+        return getStorage().find(Filter.where("candidateInChiKey").eq(candidateInChiKey), clzz, optFields);
+    }
+
     default <T> Stream<T> findByFeatureIdAndFormulaIdStr(long alignedFeatureId, long formulaId, Class<T> clzz, long offset, int pageSize, String sortField, Database.SortOrder sortOrder, String... optFields) {
-        return getStorage().findStr(Filter.and(
+        return stream(findByFeatureIdAndFormulaId(alignedFeatureId, formulaId, clzz, offset, pageSize, sortField, sortOrder, optFields));
+    }
+
+    @SneakyThrows
+    default <T> Iterable<T> findByFeatureIdAndFormulaId(long alignedFeatureId, long formulaId, Class<T> clzz, long offset, int pageSize, String sortField, Database.SortOrder sortOrder, String... optFields) {
+        return getStorage().find(Filter.and(
                 Filter.where("alignedFeatureId").eq(alignedFeatureId),
                 Filter.where("formulaId").eq(formulaId)), clzz, offset, pageSize, sortField, sortOrder, optFields);
     }
-    @SneakyThrows
+
     default <T> Stream<T> findByFeatureIdAndFormulaIdStr(long alignedFeatureId, long formulaId, Class<T> clzz, String... optFields) {
-        return getStorage().findStr(Filter.and(
+        return stream(findByFeatureIdAndFormulaId(alignedFeatureId, formulaId, clzz, optFields));
+    }
+
+    @SneakyThrows
+    default <T> Iterable<T> findByFeatureIdAndFormulaId(long alignedFeatureId, long formulaId, Class<T> clzz, String... optFields) {
+        return getStorage().find(Filter.and(
                 Filter.where("alignedFeatureId").eq(alignedFeatureId),
                 Filter.where("formulaId").eq(formulaId)), clzz, optFields);
     }
 
-    @SneakyThrows
     default <T> Stream<T> findByFeatureIdAndFormulaIdAndInChIStr(long alignedFeatureId, long formulaId, @Nullable String candidateInChiKey, Class<T> clzz, String... optFields) {
+        return stream(findByFeatureIdAndFormulaIdAndInChI(alignedFeatureId, formulaId, candidateInChiKey, clzz, optFields));
+    }
+
+    @SneakyThrows
+    default <T> Iterable<T> findByFeatureIdAndFormulaIdAndInChI(long alignedFeatureId, long formulaId, @Nullable String candidateInChiKey, Class<T> clzz, String... optFields) {
         if (candidateInChiKey == null)
-            return findByFeatureIdAndFormulaIdStr(alignedFeatureId, formulaId, clzz);
-        return getStorage().findStr(Filter.and(
+            return findByFeatureIdAndFormulaId(alignedFeatureId, formulaId, clzz);
+        return getStorage().find(Filter.and(
                 Filter.where("alignedFeatureId").eq(alignedFeatureId),
                 Filter.where("formulaId").eq(formulaId),
                 Filter.where("candidateInChiKey").eq(candidateInChiKey)), clzz, optFields);

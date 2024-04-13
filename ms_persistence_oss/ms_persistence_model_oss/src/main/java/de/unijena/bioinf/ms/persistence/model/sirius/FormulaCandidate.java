@@ -60,6 +60,12 @@ public class FormulaCandidate extends AlignedFeatureAnnotation {
     protected PrecursorIonType adduct;
 
     /**
+     * Rank of this FormulaCandidates among all other FormulaCandidates of the corresponding AlignedFeature.
+     * This ranking is created on the zodiacScore (if available) or alternatively on the siriusScore.
+     */
+    @Nullable
+    protected Integer formulaRank;
+    /**
      * Sirius Score (isotope + tree score) of the formula candidate.
      * If NULL result is not available
      */

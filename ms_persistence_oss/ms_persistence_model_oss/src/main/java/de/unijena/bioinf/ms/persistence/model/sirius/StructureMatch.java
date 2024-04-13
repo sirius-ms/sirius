@@ -34,6 +34,12 @@ import lombok.experimental.SuperBuilder;
 public abstract class StructureMatch extends FormulaAnnotationWithId {
     protected String candidateInChiKey; //can also be used to
 
+    /**
+     * Rank of this StructureMatch among all other StructureMatches of the corresponding AlignedFeature.
+     * This ranking is created on the zodiacScore (if available) or alternatively on the siriusScore.
+     */
+    protected Integer structureRank;
+
     protected Double csiScore;
 
     protected Double tanimotoSimilarity;
