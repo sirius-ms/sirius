@@ -47,7 +47,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> extends NetworkingProjectDocumentDatabase<Storage> {
     String SIRIUS_PROJECT_SUFFIX = ".sirius";
@@ -63,7 +62,9 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
                 .addRepository(Parameters.class, Index.unique("alignedFeatureId", "type"))
 
-                .addRepository(FormulaCandidate.class, Index.nonUnique("formulaRank") //for fast sorted pages
+                .addRepository(FormulaCandidate.class,
+                        Index.nonUnique("alignedFeatureId"),
+                        Index.nonUnique("formulaRank") //for fast sorted pages
 //                        , Index.nonUnique("molecularFormula", "adduct") // reinstert if we really need this search feature.
                 )
                 .addRepository(FTreeResult.class, "formulaId", Index.nonUnique("alignedFeatureId"))
