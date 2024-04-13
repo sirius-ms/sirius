@@ -1,10 +1,12 @@
 package de.unijena.bioinf.storage.db.nosql;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import javax.validation.constraints.NotNull;
 
 @Getter
+@EqualsAndHashCode
 public class Index {
 
     private final String[] fields;
