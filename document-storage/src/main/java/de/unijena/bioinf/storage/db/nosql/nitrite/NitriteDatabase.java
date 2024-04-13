@@ -264,10 +264,13 @@ public class NitriteDatabase implements Database<Document> {
         }
 
         for (IndexDescriptor index : toDrop) {
+            System.out.println("Attention! Dropping index: " + Arrays.toString(index.getFields().getFieldNames().toArray(new String[0])));
+
             repository.dropIndex(index.getFields().getFieldNames().toArray(String[]::new));
         }
 
         for (Index index : toBuild) {
+            System.out.println("Attention! Rebuilding index: " + Arrays.toString(index.getFields()));
             switch (index.getType()) {
                 case UNIQUE ->
                         repository.createIndex(IndexOptions.indexOptions(org.dizitart.no2.index.IndexType.UNIQUE), index.getFields());

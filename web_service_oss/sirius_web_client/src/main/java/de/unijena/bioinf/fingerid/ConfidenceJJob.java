@@ -60,7 +60,7 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
 
     protected CanopusResult canopusResultRequested;
 
-    protected Supplier<CanopusResult> canopusResultTopHit;
+    protected CanopusResult canopusResultTopHit;
 
     protected ParameterStore parameterStoreRequested;
 
@@ -99,7 +99,14 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
     //OUTPUT
     // ConfidenceResult -> Annotate to
 
-    public ConfidenceJJob(@NotNull CSIPredictor predictor, Ms2Experiment experiment, ArrayList<Scored<FingerprintCandidate>> allMergedCandidates, ArrayList<Scored<FingerprintCandidate>> requestedMergedCandidates,ArrayList<Scored<FingerprintCandidate>> requestedMergedCandidatesMCESCondensed,StructureSearchDB searchDB, ParameterStore parameterStore,CanopusResult canopusResult, int mcesIndex) {
+    public ConfidenceJJob(@NotNull CSIPredictor predictor,
+                          Ms2Experiment experiment,
+                          ArrayList<Scored<FingerprintCandidate>> allMergedCandidates,
+                          ArrayList<Scored<FingerprintCandidate>> requestedMergedCandidates,
+                          ArrayList<Scored<FingerprintCandidate>> requestedMergedCandidatesMCESCondensed,
+                          StructureSearchDB searchDB,
+                          ParameterStore parameterStore,
+                          CanopusResult canopusResult, CanopusResult canopusResultTopHit, int mcesIndex) {
         super(JobType.CPU);
         this.confidenceScorer = predictor.getConfidenceScorer();
         this.csiScoring = new ScoringMethodFactory.CSIFingerIdScoringMethod(predictor.performances);
@@ -111,6 +118,7 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
         this.requestedMergedCandidates=requestedMergedCandidates;
         this.requestedMergedCandidatesMCESCondensed=requestedMergedCandidatesMCESCondensed;
         this.mcesIndex=mcesIndex;
+        this.canopusResultTopHit = canopusResultTopHit;
 
     }
 
@@ -132,7 +140,7 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
         this.epiApprox = epiApprox;
     }
 
-    public void setCanopusResultTopHit(Supplier<CanopusResult> canopusResultTopHit) {
+    public void setCanopusResultTopHit(CanopusResult canopusResultTopHit) {
         this.canopusResultTopHit = canopusResultTopHit;
     }
 
@@ -156,7 +164,7 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
             final double score = confidenceScorer.computeConfidence(experiment,
                     allMergedCandidates,
                     requestedMergedCandidates,parameterStoreRequested
-                    , structureSearchDBIsPubChem,fTreesExact,epiTreesExact,originalMappingsExact,canopusResultRequested,canopusResultTopHit.get());
+                    , structureSearchDBIsPubChem,fTreesExact,epiTreesExact,originalMappingsExact,canopusResultRequested,canopusResultTopHit);
 
 
             //compute approximate confidence
@@ -165,7 +173,7 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
             final double scoreApproximate = confidenceScorer.computeConfidence(experiment,
                     allMergedCandidates,
                     requestedMergedCandidatesMCESCondensed,parameterStoreRequested
-                    , structureSearchDBIsPubChem,fTreesApprox,epiTreesApprox,originalMappingsApprox,canopusResultRequested,canopusResultTopHit.get());
+                    , structureSearchDBIsPubChem,fTreesApprox,epiTreesApprox,originalMappingsApprox,canopusResultRequested,canopusResultTopHit);
 
 
             checkForInterruption();
