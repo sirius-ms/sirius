@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
 
@@ -120,6 +121,10 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                         Index.nonUnique("rt.middle"))
 
                 .addRepository(RetentionTimeAxis.class, Index.unique("runId"));
+    }
+
+    default <T> Stream<T> stream(Iterable<T> iterable){
+        return StreamSupport.stream(iterable.spliterator(), false);
     }
 
     default Stream<Compound> getAllCompounds() throws IOException {
