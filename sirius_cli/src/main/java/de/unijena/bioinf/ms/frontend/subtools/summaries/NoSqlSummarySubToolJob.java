@@ -24,11 +24,13 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
-import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.ms.frontend.subtools.PostprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
-import de.unijena.bioinf.ms.persistence.model.sirius.*;
+import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureMatch;
+import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureSearchResult;
+import de.unijena.bioinf.ms.persistence.model.sirius.FTreeResult;
+import de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.NoSQLInstance;
@@ -43,8 +45,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.List;
-import java.util.Optional;
 
 public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> {
     private static final Logger LOG = LoggerFactory.getLogger(NoSqlSummarySubToolJob.class);
@@ -176,8 +176,8 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> {
                             int rank = 1;
                             FormulaCandidate lastFc = null;
                             for (CsiStructureMatch sc : project.getProject().findByFeatureId(f.getAlignedFeatureId(), CsiStructureMatch.class, "structureRank", Database.SortOrder.ASCENDING)) {
+                                project.getProject().fetchFingerprintCandidate(sc, false);
                                 boolean nothingWritten = true;
-
                                 FormulaCandidate fc = (lastFc != null && lastFc.getFormulaId() == sc.getFormulaId())
                                         ? lastFc : project.getProject().findByFormulaIdStr(sc.getFormulaId(), FormulaCandidate.class).findFirst().orElseThrow();
 
@@ -204,7 +204,6 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> {
                         }
                     }
                     updateProgress(maxProgress, instanceCounter++, "Finished Feature: " + f.getExternalFeatureId());
-                    System.out.println("Finished Feature: " + f.getExternalFeatureId());
                 }
                 w.stop();
                 LOG.info("Project-Space summaries successfully written in: " + w);

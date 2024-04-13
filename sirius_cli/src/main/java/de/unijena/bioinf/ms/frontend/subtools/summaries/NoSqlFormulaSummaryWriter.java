@@ -29,6 +29,7 @@ import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Objects;
 
 class NoSqlFormulaSummaryWriter implements AutoCloseable {
     final static String DOUBLE_FORMAT = "%.3f";
@@ -116,7 +117,7 @@ class NoSqlFormulaSummaryWriter implements AutoCloseable {
         writeSep();
         w.write(String.format(LONG_FORMAT, fc.getAlignedFeatureId()));
         writeSep();
-        w.write(f.getExternalFeatureId());
+        w.write(Objects.requireNonNullElse(f.getExternalFeatureId(), ""));
         w.newLine();
     }
 
