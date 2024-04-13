@@ -27,10 +27,7 @@ import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ms.frontend.subtools.PostprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
-import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureMatch;
-import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureSearchResult;
-import de.unijena.bioinf.ms.persistence.model.sirius.FTreeResult;
-import de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate;
+import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.NoSQLInstance;
@@ -98,7 +95,7 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> {
         }
 
         try {
-            int maxProgress = Utils.withTimeR("Counting Feature took: ", w -> project.countFeatures());
+            int maxProgress =project.countFeatures();
             //use all experiments in workspace to create summaries
             LOG.info("Writing summary files...");
             StopWatch w = new StopWatch();
@@ -115,11 +112,15 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> {
                     NoSqlFormulaSummaryWriter formulaTopK = options.topK > 1
                             ? initFormulaSummaryWriter("formula_identifications_top-" + options.topK + ".tsv") : null;
                     NoSqlStructureSummaryWriter structureTopHit = options.topHitSummary
-                            ? initStructureSummaryWriter("compound_identifications.tsv") : null;
+                            ? initStructureSummaryWriter("structure_identifications.tsv") : null;
                     NoSqlStructureSummaryWriter structureAll = options.fullSummary
-                            ? initStructureSummaryWriter("compound_identifications_all.tsv") : null;
+                            ? initStructureSummaryWriter("structure_identifications_all.tsv") : null;
                     NoSqlStructureSummaryWriter structureTopK = options.topK > 1
-                            ? initStructureSummaryWriter("compound_identifications_top-" + options.topK + ".tsv") : null;
+                            ? initStructureSummaryWriter("structure_identifications_top-" + options.topK + ".tsv") : null;
+                    NoSqlCanopusSummaryWriter canopusFormula = options.topHitSummary
+                            ? initCanopusSummaryWriter("canopus_formula_summary.tsv") : null;
+                    NoSqlCanopusSummaryWriter canopusStructure = options.topHitSummary
+                            ? initCanopusSummaryWriter("canopus_structure_summary.tsv") : null;
 
             ) {
                 //we load all data on demand from project db without manual caching or re-usage.
@@ -145,6 +146,12 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> {
 
                             if (formulaTopHit != null && first) {
                                 formulaTopHit.writeFormulaCandidate(f, fc, ftree);
+                                nothingWritten = false;
+                            }
+                            if (canopusFormula != null && first) {
+                                CanopusPrediction cp = project.getProject().findByFormulaIdStr(fc.getFormulaId(), CanopusPrediction.class).findFirst().orElse(null);
+                                if (cp != null)
+                                    canopusFormula.writeCanopusPredictions(f, fc, cp);
                                 nothingWritten = false;
                             }
                             if (formulaTopHitAdducts != null && (first || currentPrecursorFormula.equals(lastPrecursorFormula))) {
@@ -185,6 +192,12 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> {
                                     structureTopHit.writeStructureCandidate(f, fc, sc, ssr);
                                     nothingWritten = false;
                                 }
+                                if (canopusStructure != null && first) {
+                                    CanopusPrediction cp = project.getProject().findByFormulaIdStr(fc.getFormulaId(), CanopusPrediction.class).findFirst().orElse(null);
+                                    if (cp != null)
+                                        canopusStructure.writeCanopusPredictions(f, fc, cp);
+                                    nothingWritten = false;
+                                }
                                 if (formulaTopK != null && rank <= options.getTopK()) {
                                     structureTopK.writeStructureCandidate(f, fc, sc, ssr);
                                     nothingWritten = false;
@@ -220,6 +233,13 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> {
                 Files.newBufferedWriter(options.location.resolve(filename), StandardCharsets.UTF_8));
         formulaSummaryWriter.writeHeader();
         return formulaSummaryWriter;
+    }
+
+    NoSqlCanopusSummaryWriter initCanopusSummaryWriter(String filename) throws IOException {
+        NoSqlCanopusSummaryWriter canopusSummaryWriter = new NoSqlCanopusSummaryWriter(
+                Files.newBufferedWriter(options.location.resolve(filename), StandardCharsets.UTF_8));
+        canopusSummaryWriter.writeHeader();
+        return canopusSummaryWriter;
     }
 
     NoSqlStructureSummaryWriter initStructureSummaryWriter(String filename) throws IOException {
