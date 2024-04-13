@@ -68,7 +68,9 @@ public class Metadata {
     ) throws IOException {
         Field pkField = findAndValidatePrimaryKeyField(clazz);
         this.pkFields.put(clazz, pkField);
-        this.repoIndices.put(clazz, indices);
+        Set<Index> ind = new LinkedHashSet<>(List.of(indices));
+        ind.add(new Index(IndexType.UNIQUE, pkField.getName()));
+        this.repoIndices.put(clazz, ind.toArray(Index[]::new));
         return this;
     }
 
@@ -79,7 +81,9 @@ public class Metadata {
     ) throws IOException {
         Field pkField = findAndValidatePrimaryKeyFieldByName(clazz, pkFieldName);
         this.pkFields.put(clazz, pkField);
-        this.repoIndices.put(clazz, indices);
+        Set<Index> ind = new LinkedHashSet<>(List.of(indices));
+        ind.add(new Index(IndexType.UNIQUE, pkFieldName));
+        this.repoIndices.put(clazz, ind.toArray(Index[]::new));
         return this;
     }
 

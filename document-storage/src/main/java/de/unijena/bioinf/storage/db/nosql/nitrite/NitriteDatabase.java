@@ -33,6 +33,7 @@ import de.unijena.bioinf.storage.db.nosql.nitrite.projection.OptFieldDocumentStr
 import de.unijena.bioinf.storage.db.nosql.utils.PKSuppliers;
 import io.hypersistence.tsid.TSID;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -71,6 +72,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.StreamSupport;
 
+@Slf4j
 public class NitriteDatabase implements Database<Document> {
     public enum MVStoreCompression{NONE, LZF, DEFLATE}
 
@@ -264,13 +266,12 @@ public class NitriteDatabase implements Database<Document> {
         }
 
         for (IndexDescriptor index : toDrop) {
-            System.out.println("Attention! Dropping index: " + Arrays.toString(index.getFields().getFieldNames().toArray(new String[0])));
-
+            log.info("Dropping index: {}", Arrays.toString(index.getFields().getFieldNames().toArray(new String[0])));
             repository.dropIndex(index.getFields().getFieldNames().toArray(String[]::new));
         }
 
         for (Index index : toBuild) {
-            System.out.println("Attention! Rebuilding index: " + Arrays.toString(index.getFields()));
+            log.info("(Re)building index: {}", Arrays.toString(index.getFields()));
             switch (index.getType()) {
                 case UNIQUE ->
                         repository.createIndex(IndexOptions.indexOptions(org.dizitart.no2.index.IndexType.UNIQUE), index.getFields());
