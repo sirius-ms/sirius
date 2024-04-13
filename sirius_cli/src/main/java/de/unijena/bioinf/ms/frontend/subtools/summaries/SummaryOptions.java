@@ -20,39 +20,37 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ms.frontend.subtools.*;
 import de.unijena.bioinf.ms.frontend.subtools.export.tables.PredictionsOptions;
+import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
 
 @CommandLine.Command(name = "write-summaries", aliases = {"W"}, description = "<STANDALONE, POSTPROCESSING> Write Summary files from a given project-space into the given project-space or a custom location.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
-public class SummaryOptions implements PostprocessingTool<SummarySubToolJob>, StandaloneTool<SummarySubToolJob> {
+public class SummaryOptions implements PostprocessingTool<SiriusProjectSpaceSummarySubToolJob>, StandaloneTool<Workflow> {
 
     //specify negated  name since default is true ->  special picocli behavior
     //https://picocli.info/#_negatable_options
+    @Getter
     @CommandLine.Option(names = {"--no-top-hit-summary"}, description = "Write project wide summary files with all Top Hits.", defaultValue = "true", negatable = true)
     protected boolean topHitSummary;
 
-    public boolean isTopHitSummary() {
-        return topHitSummary;
-    }
-
+    @Getter
     @CommandLine.Option(names = {"--top-hit-adduct-summary"}, description = "Write project wide summary files with all Top Hits and their adducts", defaultValue = "false", negatable = true)
     protected boolean topHitWithAdductsSummary;
 
-    public boolean isTopHitWithAdductsSummary() {
-        return topHitWithAdductsSummary;
-    }
-
+    @Getter
     @CommandLine.Option(names = {"--full-summary"}, description = {"Write project wide summary files with ALL Hits. ", "(Use with care! Might create large files and consume large amounts of memory for large projects.)"}, defaultValue = "false", negatable = true)
     protected boolean fullSummary;
 
-    public boolean isFullSummary() {
-        return fullSummary;
-    }
+    @Getter
+    @CommandLine.Option(names = {"--top-k-summary"}, description = {"Write project wide summary files with top k hits . ", "(Use with care! Using large 'k' might create large files and consume large amounts of memory for large projects.)"})
+    protected int topK = -1;
 
     @CommandLine.Option(names = {"--output", "-o"}, description = "Specify location (outside the project) for writing summary files. Per default summaries are written to the project-space")
     Path location;
@@ -72,12 +70,17 @@ public class SummaryOptions implements PostprocessingTool<SummarySubToolJob>, St
     }
 
     @Override
-    public SummarySubToolJob makePostprocessingJob() {
-        return new SummarySubToolJob(this);
+    public SiriusProjectSpaceSummarySubToolJob makePostprocessingJob() {
+        return new SiriusProjectSpaceSummarySubToolJob(this);
     }
 
     @Override
-    public SummarySubToolJob makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
-        return new SummarySubToolJob(this);
+    public Workflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
+        return () -> {
+//            SiriusProjectSpaceSummarySubToolJob job = new SiriusProjectSpaceSummarySubToolJob(rootOptions.makeDefaultPreprocessingJob(), SummaryOptions.this);
+            NoSqlSummarySubToolJob job = new NoSqlSummarySubToolJob(rootOptions.makeDefaultPreprocessingJob(), SummaryOptions.this);
+            job.setStandalone(true);
+            SiriusJobs.getGlobalJobManager().submitJob(job).takeResult();
+        };
     }
 }

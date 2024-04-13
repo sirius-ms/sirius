@@ -198,11 +198,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     private Pair<String, Database.SortOrder> sortFormulaCandidate(Sort sort) {
-        return sort(sort, Pair.of("siriusScore", Database.SortOrder.DESCENDING), Function.identity());
+        return sort(sort, Pair.of("formulaRank", Database.SortOrder.ASCENDING), Function.identity());
     }
 
     private Pair<String, Database.SortOrder> sortStructureMatch(Sort sort) {
-        return sort(sort, Pair.of("csiScore", Database.SortOrder.DESCENDING), Function.identity());
+        return sort(sort, Pair.of("structureRank", Database.SortOrder.ASCENDING), Function.identity());
     }
 
     private Compound convertCompound(de.unijena.bioinf.ms.persistence.model.core.Compound compound,
