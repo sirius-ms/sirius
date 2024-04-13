@@ -27,13 +27,14 @@ import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.traceextractor.*;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
-import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
-import de.unijena.bioinf.storage.db.nosql.Filter;
-import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntObjectPair;
 import it.unimi.dsi.fastutil.longs.Long2LongMap;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import lombok.Getter;
@@ -204,7 +205,7 @@ public class LCMSProcessing {
         System.out.println("#Step 1: Import traces");
         int N = merged.getStorage().getMergeStorage().numberOfMergedTraces();
         System.out.println("There are " + N + " merged traces to import.");
-        int count=0;
+//        int count = 0;
         for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
             ProcessedSample[] samplesInTrace = new ProcessedSample[trace.getSampleIds().size()];
             for (int i = 0; i < trace.getSampleIds().size(); ++i) {
@@ -225,9 +226,9 @@ public class LCMSProcessing {
             //System.out.println(++count + " / " + N + " merged traces imported.");
         }
         System.out.println("#Step 2: Import Aligned Features");
-        count=0;
+//        count = 0;
 
-        try (final PrintStream OUT = new PrintStream("/home/kaidu/lcms2.json")) {
+        /*try (final PrintStream OUT = new PrintStream("/tmp/lcms2_" + TSID.fast() + ".json")) {
             OUT.println("[");
             for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
                 Iterator<AlignedFeatures> fiter = mergedFeatureExtractionStrategy.extractFeatures(merged, trace, ms2MergeStrategy, isotopePatternExtractionStrategy, mergedTrace2trace, sourceTrace2trace, idx2sample);
@@ -289,6 +290,12 @@ public class LCMSProcessing {
                 //System.out.println(++count + " / " + N + " aligned features imported.");
             }
             OUT.println("]");
+        }*/
+
+        for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
+            Iterator<AlignedFeatures> fiter = mergedFeatureExtractionStrategy.extractFeatures(merged, trace, ms2MergeStrategy, isotopePatternExtractionStrategy, mergedTrace2trace, sourceTrace2trace, idx2sample);
+            while (fiter.hasNext())
+                importStrategy.importAlignedFeature(fiter.next());
         }
     }
 
@@ -302,9 +309,9 @@ public class LCMSProcessing {
     }
 
     public void exportFeaturesToFiles(ProcessedSample merged, AlignmentBackbone backbone) {
-        int J=0;
+        int J = 0;
         final HashMap<Integer, ProcessedSample> idx2sample = new HashMap<>();
-        for (ProcessedSample s : backbone.getSamples()) idx2sample.put(s.getUid(),s);
+        for (ProcessedSample s : backbone.getSamples()) idx2sample.put(s.getUid(), s);
 
         try {
             Path p = Path.of(System.getProperty("lcms.logdir"), "data.js");
@@ -318,8 +325,8 @@ public class LCMSProcessing {
                         samplesInTrace[i] = idx2sample.get(trace.getSampleIds().getInt(i));
                     }
                     String line = ((MergedFeatureExtractor) mergedFeatureExtractionStrategy).extractFeaturesToString(merged, samplesInTrace, trace, ms2MergeStrategy);
-                    if (line !=null) {
-                        out.println("\"" + trace.getUid() + "\": " +  line + ",");
+                    if (line != null) {
+                        out.println("\"" + trace.getUid() + "\": " + line + ",");
                     }
                 }
                 out.println("\n};");
@@ -333,8 +340,9 @@ public class LCMSProcessing {
 
     private void collectStatistics(ProcessedSample sample) {
         // collect statistics
-        final StatisticsCollectionStrategy.Calculation calc = statisticsCollector.collectStatistics();;
-        for (int idx=0, n=sample.getMapping().length(); idx < n; ++idx) {
+        final StatisticsCollectionStrategy.Calculation calc = statisticsCollector.collectStatistics();
+        ;
+        for (int idx = 0, n = sample.getMapping().length(); idx < n; ++idx) {
             calc.processMs1(sample.getStorage().getSpectrumStorage().ms1SpectrumHeader(idx), sample.getStorage().getSpectrumStorage().getSpectrum(idx));
         }
         sample.getStorage().setStatistics(calc.done());
@@ -368,21 +376,21 @@ public class LCMSProcessing {
         NormalizationStrategy.Normalizer normalizer = sample.getNormalizer();
         for (ContiguousTrace trace : sample.getStorage().getTraceStorage()) {
             // calculate rect
-            double minMz=trace.averagedMz(), maxMz = trace.averagedMz();
+            double minMz = trace.averagedMz(), maxMz = trace.averagedMz();
             for (TraceSegment segment : trace.getSegments()) {
                 minMz = Math.min(trace.mz(segment.apex), minMz);
                 maxMz = Math.max(trace.mz(segment.apex), maxMz);
             }
             for (TraceSegment segment : trace.getSegments()) {
                 Rect rect = trace.rectWithRts();
-                rect.minMz = (float)minMz;
-                rect.maxMz = (float)maxMz;
+                rect.minMz = (float) minMz;
+                rect.maxMz = (float) maxMz;
                 MoI moi = new MoI(rect, segment.apex, sample.getMapping().getRetentionTimeAt(segment.apex),
-                        (float)normalizer.normalize(trace.intensity(segment.apex)), sample.getUid());
+                        (float) normalizer.normalize(trace.intensity(segment.apex)), sample.getUid());
 
                 detectIsotopesForMoI(sample, trace, segment, moi);
 
-                moi.setConfidence(confidenceEstimatorStrategy.estimateConfidence(sample,trace,moi, null));
+                moi.setConfidence(confidenceEstimatorStrategy.estimateConfidence(sample, trace, moi, null));
                 if (moi.getConfidence() >= 0) {
                     //System.out.println(moi + " intensity = " + moi.getIntensity() + ", isotopes = " + (moi.getIsotopes()==null ? 0 : moi.getIsotopes().isotopeIntensities.length) + ", confidence = "+ moi.getConfidence());
                     alignmentStorage.addMoI(moi);
