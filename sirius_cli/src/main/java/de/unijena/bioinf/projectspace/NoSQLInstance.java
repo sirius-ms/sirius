@@ -53,9 +53,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -370,24 +372,33 @@ public class NoSQLInstance implements Instance {
     @Override
     public void saveSiriusResult(List<FTree> treesSortedByScore) {
         try {
-            List<Pair<FormulaCandidate, FTreeResult>> formulaResults = treesSortedByScore.stream().map(tree -> {
-                PrecursorIonType adduct = tree.getAnnotationOrThrow(PrecursorIonType.class);
-                FTreeMetricsHelper scores = new FTreeMetricsHelper(tree);
-                FormulaCandidate fc = FormulaCandidate.builder()
-                        .alignedFeatureId(id)
-                        .adduct(adduct)
-                        .molecularFormula(
-                                tree.getRoot().getFormula()
-                                        .add(adduct.getAdduct())
-                                        .subtract(adduct.getInSourceFragmentation()))
-                        .siriusScore(scores.getSiriusScore())
-                        .isotopeScore(scores.getIsotopeMs1Score())
-                        .treeScore(scores.getTreeScore())
-                        .build();
+            Comparator<Pair<FormulaCandidate, FTreeResult>> comp = Comparator.comparing(p -> p.first().getSiriusScore());
+            final AtomicInteger rank = new AtomicInteger(1);
 
-                FTreeResult treeResult = FTreeResult.builder().fTree(tree).alignedFeatureId(id).build();
-                return Pair.of(fc, treeResult);
-            }).toList();
+            final List<Pair<FormulaCandidate, FTreeResult>> formulaResults = treesSortedByScore.stream()
+                    .map(tree -> {
+                        PrecursorIonType adduct = tree.getAnnotationOrThrow(PrecursorIonType.class);
+                        FTreeMetricsHelper scores = new FTreeMetricsHelper(tree);
+                        FormulaCandidate fc = FormulaCandidate.builder()
+                                .alignedFeatureId(id)
+                                .adduct(adduct)
+                                .molecularFormula(
+                                        tree.getRoot().getFormula()
+                                                .add(adduct.getAdduct())
+                                                .subtract(adduct.getInSourceFragmentation()))
+                                .siriusScore(scores.getSiriusScore())
+                                .isotopeScore(scores.getIsotopeMs1Score())
+                                .treeScore(scores.getTreeScore())
+                                .build();
+
+                        FTreeResult treeResult = FTreeResult.builder().fTree(tree).alignedFeatureId(id).build();
+                        return Pair.of(fc, treeResult);
+                    })
+                    .sorted(comp.reversed()) //sort descending by siriusScore
+                    .peek(m -> m.first().setFormulaRank(rank.getAndIncrement())) //add rank to sorted candidates
+                    .toList();
+
+
             //store candidates and create formula ids
             project().getStorage().insertAll(formulaResults.stream()
                     .map(Pair::first).toList());
@@ -417,15 +428,23 @@ public class NoSQLInstance implements Instance {
     @SneakyThrows
     @Override
     public void saveZodiacResult(List<FCandidate<?>> zodiacScores) {
+        Comparator<FormulaCandidate> comp = Comparator.comparing(FormulaCandidate::getZodiacScore);
+        comp = comp.thenComparing(FormulaCandidate::getSiriusScore);
+        final AtomicInteger rank = new AtomicInteger(1);
+
         List<FormulaCandidate> candidates = zodiacScores.stream().
                 filter(fc -> fc.hasAnnotation(ZodiacScore.class))
                 .map(fc -> {
                     FormulaCandidate c = ((NoSqlFCandidate) fc).getFormulaCandidate();
                     c.setZodiacScore(fc.getAnnotationOrThrow(ZodiacScore.class).score());
                     return c;
-                }).toList();
+                })
+                .sorted(comp.reversed())
+                .peek(fc -> fc.setFormulaRank(rank.getAndIncrement()))
+                .toList();
+
         project().getStorage().upsertAll(candidates);
-        //todo do we need to resort?
+
     }
 
     @Override
@@ -491,39 +510,41 @@ public class NoSQLInstance implements Instance {
             project().getStorage().insertAll(searchResults);
 
 
-            List<CsiStructureMatch> matches = new ArrayList<>();
-            List<FingerprintCandidate> candidates = new ArrayList<>();
-
-            structureSearchResults.stream()
+            List<CsiStructureMatch> matches = structureSearchResults.stream()
                     .filter(fc -> fc.hasAnnotation(FingerIdResult.class))
-                    .forEach(fc -> fc.getAnnotationOrThrow(FingerIdResult.class).getAnnotation(FingerblastResult.class)
-                            .ifPresent(csiRes -> csiRes.getResults()
-                                    .forEach(c -> {
-                                        matches.add(CsiStructureMatch.builder()
-                                                .alignedFeatureId(id)
-                                                .formulaId((long) fc.getId())
-                                                .csiScore(c.getScore())
-                                                .tanimotoSimilarity(c.getCandidate().getTanimoto())
-                                                .mcesDistToTopHit(c.getCandidate().getMcesToTopHit())
-                                                .candidateInChiKey(c.getCandidate().getInchiKey2D())
-                                                .build());
-                                        candidates.add(c.getCandidate());
-                                    })
-                            ));
+                    .flatMap(fc -> fc.getAnnotationOrThrow(FingerIdResult.class).getAnnotation(FingerblastResult.class)
+                            .map(csiRes -> csiRes.getResults().stream().map(c -> CsiStructureMatch.builder()
+                                    .alignedFeatureId(id)
+                                    .formulaId((long) fc.getId())
+                                    .csiScore(c.getScore())
+                                    .tanimotoSimilarity(c.getCandidate().getTanimoto())
+                                    .mcesDistToTopHit(c.getCandidate().getMcesToTopHit())
+                                    .candidateInChiKey(c.getCandidate().getInchiKey2D())
+                                    .candidate(c.getCandidate())
+                                    .build())
+                            ).orElseGet(Stream::empty))
+                    .sorted(Comparator.comparing(StructureMatch::getCsiScore).reversed())
+                    .collect(Collectors.toList());
 
+            //adding ranks
+            final AtomicInteger rank = new AtomicInteger(1);
+            matches.forEach(m -> m.setStructureRank(rank.getAndIncrement()));
+            //insert matches
             project().getStorage().insertAll(matches);
 
             // write only fingerprint candidates that do not yet exist in a transaction
             int inserted = project().getStorage().write(() -> {
-                List<FingerprintCandidate> toInsert = new ArrayList<>(candidates.size());
-                for (FingerprintCandidate c : candidates)
+                List<FingerprintCandidate> toInsert = new ArrayList<>(matches.size());
+                for (CsiStructureMatch m : matches) {
+                    FingerprintCandidate c = m.getCandidate();
                     if (!project().getStorage().containsPrimaryKey(c.getInchiKey2D(), FingerprintCandidate.class))
                         toInsert.add(c);
-
+                }
+                //insert all candidates that do not exist
                 return project().getStorage().upsertAll(toInsert); //todo should be insert, workaround to prevent duplicate key error.
             });
 
-            System.out.println("Inserted: " + inserted + " of " + candidates.size() + "CSI candidates.");
+            System.out.println("Inserted: " + inserted + " of " + matches.size() + "CSI candidates.");
 
         } catch (IOException e) {
             deleteStructureSearchResult();
@@ -574,45 +595,51 @@ public class NoSQLInstance implements Instance {
     @SneakyThrows
     @Override
     public void saveMsNovelistResult(@NotNull List<FCandidate<?>> msNovelistResults) {
-        List<DenovoStructureMatch> matches = new ArrayList<>();
-        List<FingerprintCandidate> candidates = new ArrayList<>();
-
-        msNovelistResults.stream()
+        List<DenovoStructureMatch> matches = msNovelistResults.stream()
                 .filter(fc -> fc.hasAnnotation(FingerIdResult.class))
-                .forEach(fc -> fc.getAnnotationOrThrow(FingerIdResult.class).getAnnotation(MsNovelistFingerblastResult.class)
-                        .ifPresent(msnRes -> {
+                .flatMap(fc -> fc.getAnnotationOrThrow(FingerIdResult.class).getAnnotation(MsNovelistFingerblastResult.class)
+                        .map(msnRes -> {
                                     int i = 0;
+                                    List<DenovoStructureMatch> m = new ArrayList<>(msnRes.getResults().size());
                                     for (Scored<FingerprintCandidate> c : msnRes.getResults()) {
-                                        matches.add(DenovoStructureMatch.builder()
+                                        m.add(DenovoStructureMatch.builder()
                                                 .alignedFeatureId(id)
                                                 .formulaId((long) fc.getId())
                                                 .csiScore(c.getScore())
                                                 .tanimotoSimilarity(c.getCandidate().getTanimoto())
                                                 .modelScore(msnRes.getRnnScore(i++))
                                                 .candidateInChiKey(c.getCandidate().getInchiKey2D())
+                                                .candidate(c.getCandidate())
                                                 .build());
-                                        candidates.add(c.getCandidate());
                                     }
+                                    return m.stream();
                                 }
-                        ));
+                        ).orElseGet(Stream::empty))
+                .sorted(Comparator.comparing(StructureMatch::getCsiScore).reversed())
+                .collect(Collectors.toList());
 
+        //adding ranks
+        final AtomicInteger rank = new AtomicInteger(1);
+        matches.forEach(m -> m.setStructureRank(rank.getAndIncrement()));
+        //insert matches
         project().getStorage().insertAll(matches);
 
         // write only fingerprint candidates that do not yet exist in a transaction
         int inserted = project().getStorage().write(() -> {
-            List<FingerprintCandidate> toInsert = new ArrayList<>(candidates.size());
-            for (FingerprintCandidate c : candidates)
+            List<FingerprintCandidate> toInsert = new ArrayList<>(matches.size());
+            for (DenovoStructureMatch m : matches) {
+                FingerprintCandidate c = m.getCandidate();
                 if (!project().getStorage().containsPrimaryKey(c.getInchiKey2D(), FingerprintCandidate.class))
                     toInsert.add(c);
-            long mapped = candidates.stream().filter(c -> c.getLinks() != null && !c.getLinks().isEmpty()).count();
+            }
+            long mapped = matches.stream().map(StructureMatch::getCandidate).filter(c -> c.getLinks() != null && !c.getLinks().isEmpty()).count();
 
-            System.out.println(mapped + " of " +  candidates.size() + " MsNovelist candidates have been mapped to db hits.");
+            System.out.println(mapped + " of " + matches.size() + " MsNovelist candidates have been mapped to db hits.");
             return project().getStorage().upsertAll(toInsert); //todo should be insert, workaround to prevent duplicate key error.
         });
 
 
-
-        System.out.println("Inserted: " + inserted + " of " + candidates.size() + "DeNovo candidates.");
+        System.out.println("Inserted: " + inserted + " of " + matches.size() + "DeNovo candidates.");
     }
 
     @Override
