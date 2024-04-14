@@ -64,20 +64,20 @@ public class BatchComputeDialog extends JDialog {
 
 
     // main parts
-    private final Box mainPanel;
-    private final JCheckBox recomputeBox;
+    private  Box mainPanel;
+    private  JCheckBox recomputeBox;
 
     // tool configurations
-    private final ActFormulaIDConfigPanel formulaIDConfigPanel; //Sirius configs
-    private final ActZodiacConfigPanel zodiacConfigs; //Zodiac configs
-    private final ActFingerprintAndCanopusConfigPanel fingerprintAndCanopusConfigPanel; //Combines CSI:FingerID predict and CANOPUS configs
-    private final ActFingerblastConfigPanel csiSearchConfigs; //CSI:FingerID search configs
-    private final ActMSNovelistConfigPanel msNovelistConfigs; //MsNovelist configs
+    private ActFormulaIDConfigPanel formulaIDConfigPanel; //Sirius configs
+    private ActZodiacConfigPanel zodiacConfigs; //Zodiac configs
+    private ActFingerprintAndCanopusConfigPanel fingerprintAndCanopusConfigPanel; //Combines CSI:FingerID predict and CANOPUS configs
+    private ActFingerblastConfigPanel csiSearchConfigs; //CSI:FingerID search configs
+    private ActMSNovelistConfigPanel msNovelistConfigs; //MsNovelist configs
 
     // compounds on which the configured Run will be executed
     private final List<InstanceBean> compoundsToProcess;
 
-    protected final JButton toggleAdvancedMode;
+    protected JButton toggleAdvancedMode;
     protected boolean isAdvancedView = false;
 
     private final SiriusGui gui;
@@ -85,140 +85,140 @@ public class BatchComputeDialog extends JDialog {
     public BatchComputeDialog(SiriusGui gui, List<InstanceBean> compoundsToProcess) {
         super(gui.getMainFrame(), "Compute", true);
         this.gui = gui;
-
         this.compoundsToProcess = compoundsToProcess;
+        Jobs.runInBackgroundAndLoad(this, "Initializing Compute Dialog...", () -> {
+            setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+            setLayout(new BorderLayout());
 
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-        setLayout(new BorderLayout());
+            mainPanel = Box.createVerticalBox();
+            mainPanel.setBorder(BorderFactory.createEmptyBorder());
+            final JScrollPane mainSP = new JScrollPane(mainPanel);
+            mainSP.setBorder(BorderFactory.createEtchedBorder());
+            mainSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+            mainSP.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+            mainSP.getVerticalScrollBar().setUnitIncrement(16);
+            add(mainSP, BorderLayout.CENTER);
 
-        mainPanel = Box.createVerticalBox();
-        mainPanel.setBorder(BorderFactory.createEmptyBorder());
-        final JScrollPane mainSP = new JScrollPane(mainPanel);
-        mainSP.setBorder(BorderFactory.createEtchedBorder());
-        mainSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        mainSP.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        mainSP.getVerticalScrollBar().setUnitIncrement(16);
-        add(mainSP, BorderLayout.CENTER);
+            {
+                boolean ms2 = compoundsToProcess.stream().anyMatch(inst -> !inst.getMsData().getMs2Spectra().isEmpty());
 
+                // make subtool config panels
+                formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, this, compoundsToProcess, ms2, isAdvancedView);
+                addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
 
-        {
-            boolean ms2 = compoundsToProcess.stream().anyMatch(inst -> !inst.getMsData().getMs2Spectra().isEmpty());
+                zodiacConfigs = new ActZodiacConfigPanel(gui, isAdvancedView);
+                fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui);
+                csiSearchConfigs = new ActFingerblastConfigPanel(gui, formulaIDConfigPanel.content);
+                msNovelistConfigs = new ActMSNovelistConfigPanel(gui);
 
-            // make subtool config panels
-            formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, this, compoundsToProcess, ms2, isAdvancedView);
-            addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
+                if (compoundsToProcess.size() > 1 && ms2) {
+                    zodiacConfigs.addEnableChangeListener((s, enabled) -> {
+                        if (enabled) {
+                            if (!PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_Z_COMP, false)) {
+                                if (new QuestionDialog(mf(), "Low number of Compounds",
+                                        GuiUtils.formatToolTip("Please note that ZODIAC is meant to improve molecular formula annotations on complete LC-MS/MS datasets. Using a low number of compounds may not result in improvements.", "", "Do you wish to continue anyways?"),
+                                        DO_NOT_SHOW_AGAIN_KEY_Z_COMP).isAbort()) {
+                                    zodiacConfigs.activationButton.setSelected(false);
+                                    return;
+                                }
+                            }
 
-            zodiacConfigs = new ActZodiacConfigPanel(gui, isAdvancedView);
-            fingerprintAndCanopusConfigPanel = new ActFingerprintAndCanopusConfigPanel(gui);
-            csiSearchConfigs = new ActFingerblastConfigPanel(gui, formulaIDConfigPanel.content);
-            msNovelistConfigs = new ActMSNovelistConfigPanel(gui);
-
-            if (compoundsToProcess.size() > 1 && ms2) {
-                zodiacConfigs.addEnableChangeListener((s, enabled) -> {
-                    if (enabled) {
-                        if (!PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_Z_COMP, false)) {
-                            if (new QuestionDialog(mf(), "Low number of Compounds",
-                                    GuiUtils.formatToolTip("Please note that ZODIAC is meant to improve molecular formula annotations on complete LC-MS/MS datasets. Using a low number of compounds may not result in improvements.", "", "Do you wish to continue anyways?"),
-                                    DO_NOT_SHOW_AGAIN_KEY_Z_COMP).isAbort()) {
-                                zodiacConfigs.activationButton.setSelected(false);
-                                return;
+                            if ((compoundsToProcess.size() > 2000 && (Runtime.getRuntime().maxMemory() / 1024 / 1024 / 1024) < 8)
+                                    && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_Z_MEM, false)) {
+                                if (new QuestionDialog(mf(), "High Memory Consumption",
+                                        GuiUtils.formatToolTip("Your ZODIAC analysis contains `" + compoundsToProcess.size() + "` compounds and may therefore consume more system memory than available.", "", "Do you wish to continue anyways?"),
+                                        DO_NOT_SHOW_AGAIN_KEY_Z_MEM).isAbort()) {
+                                    zodiacConfigs.activationButton.setSelected(false);
+                                }
                             }
                         }
 
-                        if ((compoundsToProcess.size() > 2000 && (Runtime.getRuntime().maxMemory() / 1024 / 1024 / 1024) < 8)
-                                && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_Z_MEM, false)) {
-                            if (new QuestionDialog(mf(), "High Memory Consumption",
-                                    GuiUtils.formatToolTip("Your ZODIAC analysis contains `" + compoundsToProcess.size() + "` compounds and may therefore consume more system memory than available.", "", "Do you wish to continue anyways?"),
-                                    DO_NOT_SHOW_AGAIN_KEY_Z_MEM).isAbort()) {
-                                zodiacConfigs.activationButton.setSelected(false);
-                            }
-                        }
-                    }
 
-
-                });
-                addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
-            }
-
-            if (ms2) {
-                addConfigPanel("Predict properties: CSI:FingerID - Fingerprint Prediction & CANOPUS - Compound Class Prediction", fingerprintAndCanopusConfigPanel);
-                JPanel searchRow =  addConfigPanel("CSI:FingerID - Structure Database Search", csiSearchConfigs);
-                addConfigPanelToRow("MSNovelist - De Novo Structure Generation", msNovelistConfigs, searchRow);
-            }
-        }
-        // make south panel with Recompute/Compute/Abort
-        {
-            JPanel southPanel = new JPanel();
-            southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.LINE_AXIS));
-
-            JPanel lsouthPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
-            recomputeBox = new JCheckBox("Recompute already computed tasks?", false);
-            recomputeBox.setToolTipText("If checked, all selected compounds will be computed. Already computed analysis steps will be recomputed.");
-            lsouthPanel.add(recomputeBox);
-
-            //checkConnectionToUrl by default when just one experiment is selected
-            if (compoundsToProcess.size() == 1) recomputeBox.setSelected(true);
-
-            JPanel csouthPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
-            final String SHOW_ADVANCED = "Show advanced settings";
-            final String HIDE_ADVANCED = "Hide advanced settings";
-            toggleAdvancedMode = new JButton(SHOW_ADVANCED);
-            isAdvancedView = false;
-            toggleAdvancedMode.addActionListener(e -> {
-                isAdvancedView = !isAdvancedView;
-                if (isAdvancedView) {
-                    toggleAdvancedMode.setText(HIDE_ADVANCED);
-                } else {
-                    toggleAdvancedMode.setText(SHOW_ADVANCED);
+                    });
+                    addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
                 }
 
-                formulaIDConfigPanel.content.setDisplayAdvancedParameters(isAdvancedView);
-                zodiacConfigs.content.setDisplayAdvancedParameters(isAdvancedView);
-            });
-            csouthPanel.add(toggleAdvancedMode);
+                if (ms2) {
+                    addConfigPanel("Predict properties: CSI:FingerID - Fingerprint Prediction & CANOPUS - Compound Class Prediction", fingerprintAndCanopusConfigPanel);
+                    JPanel searchRow = addConfigPanel("CSI:FingerID - Structure Database Search", csiSearchConfigs);
+                    addConfigPanelToRow("MSNovelist - De Novo Structure Generation", msNovelistConfigs, searchRow);
+                }
+            }
+            // make south panel with Recompute/Compute/Abort
+            {
+                JPanel southPanel = new JPanel();
+                southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.LINE_AXIS));
 
-            JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
-            JButton compute = new JButton("Compute");
-            compute.addActionListener(e -> startComputing());
-            JButton abort = new JButton("Cancel");
-            abort.addActionListener(e -> dispose());
-            JButton showCommand = new JButton("Show Command");
-            showCommand.addActionListener(e -> {
-                final String commandString = String.join(" ", makeCommand(new ArrayList<>()));
-                if (warnNoMethodIsSelected()) return;
-                new InfoDialog(gui.getMainFrame(), "Command", GuiUtils.formatToolTip(commandString), null) {
-                    @Override
-                    protected void decorateButtonPanel(JPanel boxedButtonPanel) {
-                        JButton copyCommand = new JButton("Copy Command");
-                        copyCommand.setToolTipText("Copy command to clipboard.");
-                        copyCommand.addActionListener(evt -> {
-                            StringSelection stringSelection = new StringSelection(commandString);
-                            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-                            clipboard.setContents(stringSelection, null);
-                        });
-                        Arrays.stream(boxedButtonPanel.getComponents()).forEach(boxedButtonPanel::remove);
-                        boxedButtonPanel.add(copyCommand);
-                        super.decorateButtonPanel(boxedButtonPanel);
+                JPanel lsouthPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 5));
+                recomputeBox = new JCheckBox("Recompute already computed tasks?", false);
+                recomputeBox.setToolTipText("If checked, all selected compounds will be computed. Already computed analysis steps will be recomputed.");
+                lsouthPanel.add(recomputeBox);
+
+                //checkConnectionToUrl by default when just one experiment is selected
+                if (compoundsToProcess.size() == 1) recomputeBox.setSelected(true);
+
+                JPanel csouthPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
+                final String SHOW_ADVANCED = "Show advanced settings";
+                final String HIDE_ADVANCED = "Hide advanced settings";
+                toggleAdvancedMode = new JButton(SHOW_ADVANCED);
+                isAdvancedView = false;
+                toggleAdvancedMode.addActionListener(e -> {
+                    isAdvancedView = !isAdvancedView;
+                    if (isAdvancedView) {
+                        toggleAdvancedMode.setText(HIDE_ADVANCED);
+                    } else {
+                        toggleAdvancedMode.setText(SHOW_ADVANCED);
                     }
-                };
-            });
 
-            rsouthPanel.add(showCommand);
-            rsouthPanel.add(compute);
-            rsouthPanel.add(abort);
+                    formulaIDConfigPanel.content.setDisplayAdvancedParameters(isAdvancedView);
+                    zodiacConfigs.content.setDisplayAdvancedParameters(isAdvancedView);
+                });
+                csouthPanel.add(toggleAdvancedMode);
 
-            southPanel.add(lsouthPanel);
-            southPanel.add(csouthPanel);
-            southPanel.add(rsouthPanel);
+                JPanel rsouthPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 5, 5));
+                JButton compute = new JButton("Compute");
+                compute.addActionListener(e -> startComputing());
+                JButton abort = new JButton("Cancel");
+                abort.addActionListener(e -> dispose());
+                JButton showCommand = new JButton("Show Command");
+                showCommand.addActionListener(e -> {
+                    final String commandString = String.join(" ", makeCommand(new ArrayList<>()));
+                    if (warnNoMethodIsSelected()) return;
+                    new InfoDialog(gui.getMainFrame(), "Command", GuiUtils.formatToolTip(commandString), null) {
+                        @Override
+                        protected void decorateButtonPanel(JPanel boxedButtonPanel) {
+                            JButton copyCommand = new JButton("Copy Command");
+                            copyCommand.setToolTipText("Copy command to clipboard.");
+                            copyCommand.addActionListener(evt -> {
+                                StringSelection stringSelection = new StringSelection(commandString);
+                                Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+                                clipboard.setContents(stringSelection, null);
+                            });
+                            Arrays.stream(boxedButtonPanel.getComponents()).forEach(boxedButtonPanel::remove);
+                            boxedButtonPanel.add(copyCommand);
+                            super.decorateButtonPanel(boxedButtonPanel);
+                        }
+                    };
+                });
 
-            this.add(southPanel, BorderLayout.SOUTH);
-        }
+                rsouthPanel.add(showCommand);
+                rsouthPanel.add(compute);
+                rsouthPanel.add(abort);
 
-        //finalize panel build
-        setMaximumSize(GuiUtils.getEffectiveScreenSize(getGraphicsConfiguration()));
-        if (getMaximumSize().width < getPreferredSize().width)
-            mainSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        configureActions();
+                southPanel.add(lsouthPanel);
+                southPanel.add(csouthPanel);
+                southPanel.add(rsouthPanel);
+
+                this.add(southPanel, BorderLayout.SOUTH);
+            }
+
+            //finalize panel build
+            setMaximumSize(GuiUtils.getEffectiveScreenSize(getGraphicsConfiguration()));
+            if (getMaximumSize().width < getPreferredSize().width)
+                mainSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            configureActions();
+        });
+
         pack();
         setLocationRelativeTo(getParent());
         setVisible(true);
