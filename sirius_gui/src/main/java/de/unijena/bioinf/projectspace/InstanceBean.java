@@ -380,6 +380,14 @@ public class InstanceBean implements SiriusPCS {
         throw new UnsupportedOperationException("Implement modification features in nightsky api");
     }
 
+    synchronized boolean changeComputeStateOfCache(boolean computeState) {
+        if (sourceFeature != null){
+            sourceFeature.setComputing(computeState);
+            return true;
+        }
+        return false;
+    }
+
     public class Setter {
         private List<Consumer<MutableMs2Experiment>> mods = new ArrayList<>();
 
