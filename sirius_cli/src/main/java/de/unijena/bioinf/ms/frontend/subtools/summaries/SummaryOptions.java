@@ -20,8 +20,10 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ms.frontend.subtools.*;
+import de.unijena.bioinf.ms.frontend.subtools.PostprocessingTool;
+import de.unijena.bioinf.ms.frontend.subtools.Provide;
+import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
+import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.subtools.export.tables.PredictionsOptions;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -76,11 +78,6 @@ public class SummaryOptions implements PostprocessingTool<SiriusProjectSpaceSumm
 
     @Override
     public Workflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
-        return () -> {
-//            SiriusProjectSpaceSummarySubToolJob job = new SiriusProjectSpaceSummarySubToolJob(rootOptions.makeDefaultPreprocessingJob(), SummaryOptions.this);
-            NoSqlSummarySubToolJob job = new NoSqlSummarySubToolJob(rootOptions.makeDefaultPreprocessingJob(), SummaryOptions.this);
-            job.setStandalone(true);
-            SiriusJobs.getGlobalJobManager().submitJob(job).takeResult();
-        };
+        return new NoSqlSummarySubToolJob(rootOptions.makeDefaultPreprocessingJob(), SummaryOptions.this);
     }
 }

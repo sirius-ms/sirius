@@ -23,28 +23,27 @@ package de.unijena.bioinf.ms.frontend.subtools.summaries;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.ms.frontend.subtools.PostprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
+import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.NoSQLInstance;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
-import de.unijena.bioinf.projectspace.SiriusProjectSpaceInstance;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
-public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> {
-    private static final Logger LOG = LoggerFactory.getLogger(NoSqlSummarySubToolJob.class);
+public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implements Workflow {
     private final SummaryOptions options;
 
     private @Nullable PreprocessingJob<?> preprocessingJob;
@@ -83,21 +82,21 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> {
             return null;
 
         final NoSQLProjectSpaceManager project;
-        if (instances instanceof NoSQLProjectSpaceManager) {
-            project = (NoSQLProjectSpaceManager) instances;
+        if (instances instanceof NoSQLProjectSpaceManager ps) {
+            project = ps;
         } else {
             Instance inst = instances.iterator().next();
-            if (inst instanceof SiriusProjectSpaceInstance)
-                project = (NoSQLProjectSpaceManager) inst.getProjectSpaceManager();
+            if (inst.getProjectSpaceManager() instanceof NoSQLProjectSpaceManager ps)
+                project = ps;
             else {
                 throw new IllegalArgumentException("This summary job only supports the SIRIUS projectSpace!");
             }
         }
 
         try {
-            int maxProgress =project.countFeatures();
+            int maxProgress = (int) Math.ceil(project.countFeatures() * 1.01d);
             //use all experiments in workspace to create summaries
-            LOG.info("Writing summary files...");
+            logInfo("Writing summary files...");
             StopWatch w = new StopWatch();
             w.start();
 
@@ -128,6 +127,7 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> {
                 //However, without caching we ensure that the memory consumption is always the same no matter how large the dataset or the results are.
                 int instanceCounter = 1;
                 for (Instance inst : project) {
+                    updateProgress(maxProgress, instanceCounter++, "Writing Feature '" + inst.getExternalFeatureId().orElseGet(inst::getName) + "'...");
                     AlignedFeatures f = ((NoSQLInstance) inst).getAlignedFeatures();
 
                     { //formula summary
@@ -216,10 +216,9 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> {
                             }
                         }
                     }
-                    updateProgress(maxProgress, instanceCounter++, "Finished Feature: " + f.getExternalFeatureId());
                 }
                 w.stop();
-                LOG.info("Project-Space summaries successfully written in: " + w);
+                updateProgress(maxProgress, maxProgress, "Summaries written in: " + w);
                 return true;
             }
         } finally {
@@ -229,24 +228,30 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> {
     }
 
     NoSqlFormulaSummaryWriter initFormulaSummaryWriter(String filename) throws IOException {
-        NoSqlFormulaSummaryWriter formulaSummaryWriter = new NoSqlFormulaSummaryWriter(
-                Files.newBufferedWriter(options.location.resolve(filename), StandardCharsets.UTF_8));
+        NoSqlFormulaSummaryWriter formulaSummaryWriter = new NoSqlFormulaSummaryWriter(makeFileWriter(filename));
         formulaSummaryWriter.writeHeader();
         return formulaSummaryWriter;
     }
 
     NoSqlCanopusSummaryWriter initCanopusSummaryWriter(String filename) throws IOException {
-        NoSqlCanopusSummaryWriter canopusSummaryWriter = new NoSqlCanopusSummaryWriter(
-                Files.newBufferedWriter(options.location.resolve(filename), StandardCharsets.UTF_8));
+        NoSqlCanopusSummaryWriter canopusSummaryWriter = new NoSqlCanopusSummaryWriter(makeFileWriter(filename));
         canopusSummaryWriter.writeHeader();
         return canopusSummaryWriter;
     }
 
     NoSqlStructureSummaryWriter initStructureSummaryWriter(String filename) throws IOException {
-        NoSqlStructureSummaryWriter structureSummaryWriter = new NoSqlStructureSummaryWriter(
-                Files.newBufferedWriter(options.location.resolve(filename), StandardCharsets.UTF_8));
+        NoSqlStructureSummaryWriter structureSummaryWriter = new NoSqlStructureSummaryWriter(makeFileWriter(filename));
         structureSummaryWriter.writeHeader();
         return structureSummaryWriter;
+    }
+
+    private BufferedWriter makeFileWriter(String filename) throws IOException {
+            OutputStream out = Files.newOutputStream(options.location.resolve(filename)); //todo some compression support
+//            OutputStream out = options.compress
+//                    ? new ZipOutputStream(Files.newOutputStream(options.location.resolve(filename + ".zip")))
+//                    : Files.newOutputStream(options.location.resolve(filename));
+
+        return new BufferedWriter(new OutputStreamWriter(out, StandardCharsets.UTF_8));
     }
 
 
@@ -260,5 +265,11 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> {
         instances = null;
         preprocessingJob = null;
         super.cleanup();
+    }
+
+    @Override
+    public void run() {
+        setStandalone(true);
+        SiriusJobs.getGlobalJobManager().submitJob(this).takeResult();
     }
 }
