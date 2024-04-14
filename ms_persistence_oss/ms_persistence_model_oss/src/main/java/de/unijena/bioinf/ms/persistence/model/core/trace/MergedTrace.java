@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.persistence.model.core.trace;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.floats.FloatList;
@@ -39,14 +40,16 @@ public class MergedTrace extends AbstractTrace {
 
     public MergedTrace(long runId, float[] intensities, int scanIndexOffset, double[] masses) {
         super(runId, new FloatArrayList(intensities), scanIndexOffset);
-        this.averageMz = Arrays.stream(masses).average().orElse(0d);
-        this.mzDeviationsFromMean = new FloatArrayList(masses.length);
-        for (double mz : masses) mzDeviationsFromMean.add((float)(mz - averageMz));
-    }
-    public MergedTrace(long runId, float[] intensities, int scanIndexOffset, double meanMz, float[] deviationsFromMean) {
-        super(runId, new FloatArrayList(intensities), scanIndexOffset);
-        this.mzDeviationsFromMean = new FloatArrayList(deviationsFromMean);
-        this.averageMz = meanMz;
+        double avgmz = 0d;
+        double intsum=0d;
+        for (int k=0; k < masses.length; ++k) {
+            if (Double.isFinite(intensities[k]) && intensities[k]>0) {
+                avgmz += masses[k] * intensities[k];
+                intsum += intensities[k];
+            }
+        }
+        this.averageMz = avgmz/intsum;
+        this.mz = new DoubleArrayList(masses);
     }
 
     /**
@@ -58,15 +61,7 @@ public class MergedTrace extends AbstractTrace {
     /**
      * deviations from average mass in float
      */
-    FloatList mzDeviationsFromMean;
-
-    /**
-     * Computes the array of exact mass values
-     */
-    @JsonIgnore
-    public double[] getMassTrace() {
-        return mzDeviationsFromMean.doubleStream().map(x->x+averageMz).toArray();
-    }
+    DoubleList mz;
 
     double averageMz;
 }
