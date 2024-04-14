@@ -42,7 +42,9 @@ public class ChangeAdductAction extends AbstractGuiAction {
         super("Change adduct", gui);
         putValue(Action.SMALL_ICON, Icons.LIST_EDIT_16);
         putValue(Action.SHORT_DESCRIPTION, "Change adduct type of selected compounds");
-        setEnabled(SiriusActions.notComputingOrEmptySelected(this.mainFrame.getCompoundListSelectionModel()));
+        setEnabled(false);
+        //todo re-enable when implemented in api
+        /*setEnabled(SiriusActions.notComputingOrEmptySelected(this.mainFrame.getCompoundListSelectionModel()));
 
         this.mainFrame.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
@@ -53,7 +55,7 @@ public class ChangeAdductAction extends AbstractGuiAction {
             public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
                 setEnabled(SiriusActions.notComputingOrEmptySelected(selection));
             }
-        });
+        });*/
     }
 
     @Override

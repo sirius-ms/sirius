@@ -35,6 +35,11 @@ public class StructureCandidateScored extends StructureCandidate {
     public enum OptField {none, fingerprint, dbLinks, libraryMatches}
 
     /**
+     * the overall rank of this candidate among all candidates of this feature
+     */
+    protected Integer rank;
+
+    /**
      * CSI:FingerID score of the fingerprint of this compound to the predicted fingerprint of CSI:FingerID
      * This is the score used for ranking structure candidates
      */

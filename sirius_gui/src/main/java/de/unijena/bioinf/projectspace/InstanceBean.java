@@ -211,9 +211,9 @@ public class InstanceBean implements SiriusPCS {
     }
 
     public PrecursorIonType getIonType() {
-        if (getSourceFeature().getAdduct() == null)
+        if (getSourceFeature().getIonType() == null)
             return null;
-        return PrecursorIonType.fromString(getSourceFeature().getAdduct());
+        return PrecursorIonType.fromString(getSourceFeature().getIonType());
     }
 
     public double getIonMass() {

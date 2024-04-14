@@ -55,8 +55,7 @@ public class FormulaCandidate {
      */
     protected String adduct;
 
-
-    //Additional Fields
+    protected Integer rank;
     /**
      * Sirius Score (isotope + tree score) of the formula candidate.
      * If NULL result is not available
@@ -74,6 +73,7 @@ public class FormulaCandidate {
     @Schema(nullable = true)
     protected Double zodiacScore;
 
+    //Additional Fields
     @Schema(nullable = true)
     protected Integer numOfExplainedPeaks;
     @Schema(nullable = true)
@@ -84,13 +84,6 @@ public class FormulaCandidate {
     @Schema(nullable = true)
     @JsonDeserialize(using = SimpleSerializers.DeviationDeserializer.class)
     protected Deviation medianMassDeviation;
-
-    /**
-     * CSI:FingerID Score of the highest scoring structure candidate (top hit) of this formula candidate.
-     * If NULL result is not available
-     */
-    @Schema(nullable = true)
-    protected Double topCSIScore; //todo maybe remove because we cannot efficiently sort and the value is available via top structure annotation??
 
     /**
      * The fragmentation tree that belongs to this molecular formula candidate (produces the treeScore).

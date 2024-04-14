@@ -332,7 +332,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .computing(computeStateProvider.apply(this, fid));
 
         if (features.getIonType() != null)
-            builder.adduct(features.getIonType().toString()); //is called adduct but refers to iontype (input setting) -> maybe rename
+            builder.ionType(features.getIonType().toString()); //is called adduct but refers to iontype (input setting) -> maybe rename
 
         RetentionTime rt = features.getRetentionTime();
         if (rt != null) {
@@ -396,8 +396,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         //get Canopus result. either for
         if (formulaCandidate != null) {
             cSum.setFormulaAnnotation(convertFormulaCandidate(formulaCandidate));
-            if (structureMatch != null)
-                cSum.getFormulaAnnotation().setTopCSIScore(structureMatch.getCsiScore());
+//            if (structureMatch != null)
+//                cSum.getFormulaAnnotation().setTopCSIScore(structureMatch.getCsiScore());
             project().findByFormulaIdStr(formulaCandidate.getFormulaId(), de.unijena.bioinf.ms.persistence.model.sirius.CanopusPrediction.class)
                     .findFirst().map(cc -> CompoundClasses.of(cc.getNpcFingerprint(), cc.getCfFingerprint()))
                     .ifPresent(cSum::setCompoundClassAnnotation);
@@ -432,6 +432,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .formulaId(String.valueOf(fid))
                 .molecularFormula(candidate.getMolecularFormula().toString())
                 .adduct(candidate.getAdduct().toString())
+                .rank(candidate.getFormulaRank())
                 .siriusScore(candidate.getSiriusScore())
                 .isotopeScore(candidate.getIsotopeScore())
                 .treeScore(candidate.getTreeScore())
@@ -753,6 +754,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             sSum.setFingerprint(AnnotationUtils.asBinaryFingerprint(match.getCandidate().getFingerprint()));
 
         sSum.setFormulaId(String.valueOf(match.getFormulaId()));
+        sSum.setRank(match.getStructureRank());
         // scores
         sSum.setCsiScore(match.getCsiScore());
         sSum.setTanimotoSimilarity(match.getTanimotoSimilarity());

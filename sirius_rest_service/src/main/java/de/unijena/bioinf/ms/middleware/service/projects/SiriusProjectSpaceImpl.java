@@ -711,7 +711,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
                 .computing(computeStateProvider.apply(this, cid.getDirectoryName()))
                 .build();
 
-        cid.getIonType().map(PrecursorIonType::toString).ifPresent(id::setAdduct);
+        cid.getIonType().map(PrecursorIonType::toString).ifPresent(id::setIonType);
         cid.getRt().ifPresent(rt -> {
             if (rt.isInterval()) {
                 id.setRtStartSeconds(rt.getStartTime());
@@ -743,8 +743,8 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
                     ifPresent(tscore -> frs.treeScore(tscore.score()));
             scorings.getAnnotation(ZodiacScore.class).
                     ifPresent(zscore -> frs.zodiacScore(zscore.score()));
-            scorings.getAnnotation(TopCSIScore.class).
-                    ifPresent(csiScore -> frs.topCSIScore(csiScore.score()));
+//            scorings.getAnnotation(TopCSIScore.class).
+//                    ifPresent(csiScore -> frs.topCSIScore(csiScore.score()));
         }
 
         return frs;

@@ -210,6 +210,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         setSize(new Dimension((int) (screen.width * .7), (int) (screen.height * .7)));
         setLocationRelativeTo(null); //init mainframe
         setVisible(true);
+        toFront();
     }
 
 
