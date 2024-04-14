@@ -51,7 +51,6 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
     public final DoubleListStats treeScoreStats = new DoubleListStats();
     public final DoubleListStats explainedPeaks = new DoubleListStats();
     public final DoubleListStats explainedIntensity = new DoubleListStats();
-    public final DoubleListStats csiScoreStats = new DoubleListStats();
 
     public FormulaList(final CompoundList compoundList) {
         super(FormulaResultBean.class);
@@ -149,7 +148,6 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                 double[] sscores = new double[candidates.size()];
                 double[] iScores = new double[candidates.size()];
                 double[] tScores = new double[candidates.size()];
-                double[] csiScores = new double[candidates.size()];
                 int i = 0;
 
 
@@ -158,7 +156,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                     sscores[i] = fc.getSiriusScore().orElse(Double.NEGATIVE_INFINITY);
                     iScores[i] = fc.getIsotopeScore().orElse(Double.NEGATIVE_INFINITY);
                     tScores[i] = fc.getTreeScore().orElse(Double.NEGATIVE_INFINITY);
-                    csiScores[i++] = fc.getTopCSIScore().orElse(Double.NEGATIVE_INFINITY);
+                    i++;
                 }
                 refillElements(candidates);
 
@@ -166,7 +164,6 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                 this.siriusScoreStats.update(sscores);
                 this.isotopeScoreStats.update(iScores);
                 this.treeScoreStats.update(tScores);
-                this.csiScoreStats.update(csiScores);
 
                 this.explainedIntensity.setMinScoreValue(0).setMaxScoreValue(1)
                         .setScoreSum(this.explainedIntensity.getMax());
@@ -186,8 +183,6 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
                 siriusScoreStats.update(new double[0]);
                 isotopeScoreStats.update(new double[0]);
                 treeScoreStats.update(new double[0]);
-                csiScoreStats.update(new double[0]);
-
             }
         });
     }

@@ -193,14 +193,13 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     }
 
     @NotNull
-    public String getPrecursorFormula() {
-        return getPrecursorFormulaObj().toString();
+    public String getMeasuredNeutralFormula() {
+        return getMeasuredNeutralFormulaObj().toString();
     }
 
     @NotNull
-    public MolecularFormula getPrecursorFormulaObj() {
-        @NotNull PrecursorIonType ionType = getAdductObj();
-        return getMolecularFormulaObj().add(ionType.getAdduct()).subtract(ionType.getInSourceFragmentation());
+    public MolecularFormula getMeasuredNeutralFormulaObj() {
+        return getAdductObj().neutralMoleculeToMeasuredNeutralMolecule(getMolecularFormulaObj());
     }
 
     @NotNull
@@ -233,6 +232,10 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     }
 
 
+    public Optional<Integer> getRank() {
+        return Optional.ofNullable(getFormulaCandidate().getRank());
+    }
+
     public Optional<Double> getSiriusScore() {
         return Optional.ofNullable(getFormulaCandidate().getSiriusScore());
     }
@@ -263,10 +266,6 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
 
     public Optional<Deviation> getMedianMassDeviation() {
         return Optional.ofNullable(getFormulaCandidate().getMedianMassDeviation());
-    }
-
-    public Optional<Double> getTopCSIScore() {
-        return Optional.ofNullable(getFormulaCandidate().getTopCSIScore());
     }
 
     public synchronized Optional<FragmentationTree> getFragmentationTree() {

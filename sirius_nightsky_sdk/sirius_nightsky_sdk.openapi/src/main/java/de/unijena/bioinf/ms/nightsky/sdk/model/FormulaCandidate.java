@@ -40,6 +40,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FormulaCandidate.JSON_PROPERTY_FORMULA_ID,
   FormulaCandidate.JSON_PROPERTY_MOLECULAR_FORMULA,
   FormulaCandidate.JSON_PROPERTY_ADDUCT,
+  FormulaCandidate.JSON_PROPERTY_RANK,
   FormulaCandidate.JSON_PROPERTY_SIRIUS_SCORE,
   FormulaCandidate.JSON_PROPERTY_ISOTOPE_SCORE,
   FormulaCandidate.JSON_PROPERTY_TREE_SCORE,
@@ -48,7 +49,6 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FormulaCandidate.JSON_PROPERTY_NUM_OF_EXPLAINABLE_PEAKS,
   FormulaCandidate.JSON_PROPERTY_TOTAL_EXPLAINED_INTENSITY,
   FormulaCandidate.JSON_PROPERTY_MEDIAN_MASS_DEVIATION,
-  FormulaCandidate.JSON_PROPERTY_TOP_C_S_I_SCORE,
   FormulaCandidate.JSON_PROPERTY_FRAGMENTATION_TREE,
   FormulaCandidate.JSON_PROPERTY_ANNOTATED_SPECTRUM,
   FormulaCandidate.JSON_PROPERTY_ISOTOPE_PATTERN_ANNOTATION,
@@ -67,6 +67,9 @@ public class FormulaCandidate {
 
   public static final String JSON_PROPERTY_ADDUCT = "adduct";
   private String adduct;
+
+  public static final String JSON_PROPERTY_RANK = "rank";
+  private Integer rank;
 
   public static final String JSON_PROPERTY_SIRIUS_SCORE = "siriusScore";
   private Double siriusScore;
@@ -91,9 +94,6 @@ public class FormulaCandidate {
 
   public static final String JSON_PROPERTY_MEDIAN_MASS_DEVIATION = "medianMassDeviation";
   private Deviation medianMassDeviation;
-
-  public static final String JSON_PROPERTY_TOP_C_S_I_SCORE = "topCSIScore";
-  private Double topCSIScore;
 
   public static final String JSON_PROPERTY_FRAGMENTATION_TREE = "fragmentationTree";
   private FragmentationTree fragmentationTree;
@@ -194,6 +194,32 @@ public class FormulaCandidate {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAdduct(String adduct) {
     this.adduct = adduct;
+  }
+
+
+  public FormulaCandidate rank(Integer rank) {
+    
+    this.rank = rank;
+    return this;
+  }
+
+   /**
+   * Get rank
+   * @return rank
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_RANK)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Integer getRank() {
+    return rank;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_RANK)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setRank(Integer rank) {
+    this.rank = rank;
   }
 
 
@@ -405,32 +431,6 @@ public class FormulaCandidate {
   }
 
 
-  public FormulaCandidate topCSIScore(Double topCSIScore) {
-    
-    this.topCSIScore = topCSIScore;
-    return this;
-  }
-
-   /**
-   * CSI:FingerID Score of the highest scoring structure candidate (top hit) of this formula candidate.  If NULL result is not available
-   * @return topCSIScore
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_TOP_C_S_I_SCORE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Double getTopCSIScore() {
-    return topCSIScore;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_TOP_C_S_I_SCORE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTopCSIScore(Double topCSIScore) {
-    this.topCSIScore = topCSIScore;
-  }
-
-
   public FormulaCandidate fragmentationTree(FragmentationTree fragmentationTree) {
     
     this.fragmentationTree = fragmentationTree;
@@ -632,6 +632,7 @@ public class FormulaCandidate {
     return Objects.equals(this.formulaId, formulaCandidate.formulaId) &&
         Objects.equals(this.molecularFormula, formulaCandidate.molecularFormula) &&
         Objects.equals(this.adduct, formulaCandidate.adduct) &&
+        Objects.equals(this.rank, formulaCandidate.rank) &&
         Objects.equals(this.siriusScore, formulaCandidate.siriusScore) &&
         Objects.equals(this.isotopeScore, formulaCandidate.isotopeScore) &&
         Objects.equals(this.treeScore, formulaCandidate.treeScore) &&
@@ -640,7 +641,6 @@ public class FormulaCandidate {
         Objects.equals(this.numOfExplainablePeaks, formulaCandidate.numOfExplainablePeaks) &&
         Objects.equals(this.totalExplainedIntensity, formulaCandidate.totalExplainedIntensity) &&
         Objects.equals(this.medianMassDeviation, formulaCandidate.medianMassDeviation) &&
-        Objects.equals(this.topCSIScore, formulaCandidate.topCSIScore) &&
         Objects.equals(this.fragmentationTree, formulaCandidate.fragmentationTree) &&
         Objects.equals(this.annotatedSpectrum, formulaCandidate.annotatedSpectrum) &&
         Objects.equals(this.isotopePatternAnnotation, formulaCandidate.isotopePatternAnnotation) &&
@@ -652,7 +652,7 @@ public class FormulaCandidate {
 
   @Override
   public int hashCode() {
-    return Objects.hash(formulaId, molecularFormula, adduct, siriusScore, isotopeScore, treeScore, zodiacScore, numOfExplainedPeaks, numOfExplainablePeaks, totalExplainedIntensity, medianMassDeviation, topCSIScore, fragmentationTree, annotatedSpectrum, isotopePatternAnnotation, lipidAnnotation, predictedFingerprint, compoundClasses, canopusPrediction);
+    return Objects.hash(formulaId, molecularFormula, adduct, rank, siriusScore, isotopeScore, treeScore, zodiacScore, numOfExplainedPeaks, numOfExplainablePeaks, totalExplainedIntensity, medianMassDeviation, fragmentationTree, annotatedSpectrum, isotopePatternAnnotation, lipidAnnotation, predictedFingerprint, compoundClasses, canopusPrediction);
   }
 
   @Override
@@ -662,6 +662,7 @@ public class FormulaCandidate {
     sb.append("    formulaId: ").append(toIndentedString(formulaId)).append("\n");
     sb.append("    molecularFormula: ").append(toIndentedString(molecularFormula)).append("\n");
     sb.append("    adduct: ").append(toIndentedString(adduct)).append("\n");
+    sb.append("    rank: ").append(toIndentedString(rank)).append("\n");
     sb.append("    siriusScore: ").append(toIndentedString(siriusScore)).append("\n");
     sb.append("    isotopeScore: ").append(toIndentedString(isotopeScore)).append("\n");
     sb.append("    treeScore: ").append(toIndentedString(treeScore)).append("\n");
@@ -670,7 +671,6 @@ public class FormulaCandidate {
     sb.append("    numOfExplainablePeaks: ").append(toIndentedString(numOfExplainablePeaks)).append("\n");
     sb.append("    totalExplainedIntensity: ").append(toIndentedString(totalExplainedIntensity)).append("\n");
     sb.append("    medianMassDeviation: ").append(toIndentedString(medianMassDeviation)).append("\n");
-    sb.append("    topCSIScore: ").append(toIndentedString(topCSIScore)).append("\n");
     sb.append("    fragmentationTree: ").append(toIndentedString(fragmentationTree)).append("\n");
     sb.append("    annotatedSpectrum: ").append(toIndentedString(annotatedSpectrum)).append("\n");
     sb.append("    isotopePatternAnnotation: ").append(toIndentedString(isotopePatternAnnotation)).append("\n");

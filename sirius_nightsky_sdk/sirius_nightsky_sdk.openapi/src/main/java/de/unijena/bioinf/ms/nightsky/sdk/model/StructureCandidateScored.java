@@ -39,6 +39,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StructureCandidateScored.JSON_PROPERTY_XLOG_P,
   StructureCandidateScored.JSON_PROPERTY_DB_LINKS,
   StructureCandidateScored.JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES,
+  StructureCandidateScored.JSON_PROPERTY_RANK,
   StructureCandidateScored.JSON_PROPERTY_CSI_SCORE,
   StructureCandidateScored.JSON_PROPERTY_TANIMOTO_SIMILARITY,
   StructureCandidateScored.JSON_PROPERTY_MCES_DIST_TO_TOP_HIT,
@@ -63,6 +64,9 @@ public class StructureCandidateScored {
 
   public static final String JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES = "spectralLibraryMatches";
   private List<SpectralLibraryMatch> spectralLibraryMatches;
+
+  public static final String JSON_PROPERTY_RANK = "rank";
+  private Integer rank;
 
   public static final String JSON_PROPERTY_CSI_SCORE = "csiScore";
   private Double csiScore;
@@ -251,6 +255,32 @@ public class StructureCandidateScored {
   }
 
 
+  public StructureCandidateScored rank(Integer rank) {
+    
+    this.rank = rank;
+    return this;
+  }
+
+   /**
+   * the overall rank of this candidate among all candidates of this feature
+   * @return rank
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_RANK)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Integer getRank() {
+    return rank;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_RANK)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setRank(Integer rank) {
+    this.rank = rank;
+  }
+
+
   public StructureCandidateScored csiScore(Double csiScore) {
     
     this.csiScore = csiScore;
@@ -369,6 +399,7 @@ public class StructureCandidateScored {
         Objects.equals(this.xlogP, structureCandidateScored.xlogP) &&
         Objects.equals(this.dbLinks, structureCandidateScored.dbLinks) &&
         Objects.equals(this.spectralLibraryMatches, structureCandidateScored.spectralLibraryMatches) &&
+        Objects.equals(this.rank, structureCandidateScored.rank) &&
         Objects.equals(this.csiScore, structureCandidateScored.csiScore) &&
         Objects.equals(this.tanimotoSimilarity, structureCandidateScored.tanimotoSimilarity) &&
         Objects.equals(this.mcesDistToTopHit, structureCandidateScored.mcesDistToTopHit) &&
@@ -377,7 +408,7 @@ public class StructureCandidateScored {
 
   @Override
   public int hashCode() {
-    return Objects.hash(inchiKey, smiles, structureName, xlogP, dbLinks, spectralLibraryMatches, csiScore, tanimotoSimilarity, mcesDistToTopHit, fingerprint);
+    return Objects.hash(inchiKey, smiles, structureName, xlogP, dbLinks, spectralLibraryMatches, rank, csiScore, tanimotoSimilarity, mcesDistToTopHit, fingerprint);
   }
 
   @Override
@@ -390,6 +421,7 @@ public class StructureCandidateScored {
     sb.append("    xlogP: ").append(toIndentedString(xlogP)).append("\n");
     sb.append("    dbLinks: ").append(toIndentedString(dbLinks)).append("\n");
     sb.append("    spectralLibraryMatches: ").append(toIndentedString(spectralLibraryMatches)).append("\n");
+    sb.append("    rank: ").append(toIndentedString(rank)).append("\n");
     sb.append("    csiScore: ").append(toIndentedString(csiScore)).append("\n");
     sb.append("    tanimotoSimilarity: ").append(toIndentedString(tanimotoSimilarity)).append("\n");
     sb.append("    mcesDistToTopHit: ").append(toIndentedString(mcesDistToTopHit)).append("\n");

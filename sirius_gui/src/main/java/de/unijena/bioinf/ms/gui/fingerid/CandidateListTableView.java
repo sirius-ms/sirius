@@ -66,8 +66,8 @@ public class CandidateListTableView extends CandidateListView {
 
         table.getTableHeader().setDefaultRenderer(new CandidateListTableHeaderRenderer());
 
-        table.getColumnModel().getColumn(4).setCellRenderer(new ListStatBarTableCellRenderer<>(tf.highlightColumnIndex(), source.csiScoreStats, false, false, null));
-        table.getColumnModel().getColumn(5).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f, 1f, true));
+        table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer<>(tf.highlightColumnIndex(), source.csiScoreStats, false, false, null));
+        table.getColumnModel().getColumn(6).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f, 1f, true));
         //todo nightsky: add pubmed link feature!
 //        LinkedSiriusTableCellRenderer linkRenderer = new LinkedSiriusTableCellRenderer(defaultRenderer, (LinkedSiriusTableCellRenderer.LinkCreator<PubmedLinks>) s -> s == null ? null : s.getPubmedLink());
 //        linkRenderer.registerToTable(table, 6);

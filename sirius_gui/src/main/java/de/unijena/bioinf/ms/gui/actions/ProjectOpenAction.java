@@ -99,7 +99,7 @@ public class ProjectOpenAction extends AbstractGuiAction {
         }
     }
 
-    public synchronized void openProject (@NotNull Path projectPath, @Nullable Boolean closeCurrent){
+    public synchronized void openProject(@NotNull Path projectPath, @Nullable Boolean closeCurrent) {
         String projectID = projectPath.getFileName().toString();
         if (projectID.endsWith(SIRIUS_PROJECT_SUFFIX))
             projectID = projectID.substring(0, projectID.length() - SIRIUS_PROJECT_SUFFIX.length());
@@ -113,7 +113,7 @@ public class ProjectOpenAction extends AbstractGuiAction {
     public synchronized void openProject(@NotNull String projectID, @NotNull Path projectPath, @Nullable Boolean closeCurrent) {
         try {
             String pid = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Opening Project...", () -> {
-                        ProjectInfo project =gui.getSiriusClient().projects().getProjectSpaces().stream()
+                        ProjectInfo project = gui.getSiriusClient().projects().getProjectSpaces().stream()
                                 .filter(p -> p.getLocation() != null && projectPath.equals(Path.of(p.getLocation()))).findFirst().orElse(null);
 
                         if (project == null) {
@@ -146,14 +146,18 @@ public class ProjectOpenAction extends AbstractGuiAction {
             gui.getSiriusClient().gui().openGui(projectId);
             if (close)
                 gui.close();
-        });
+
+
+        }).getResult();
+        if (!close) // it would be better to bring the new gui to front via the API
+            Jobs.runEDTLater(() -> gui.getMainFrame().toBack());
     }
 
-    protected String dontAskKey(){
+    protected String dontAskKey() {
         return DONT_ASK_NEW_WINDOW_OPEN_KEY;
     }
 
-    protected String openNewWindowQuestion(){
+    protected String openNewWindowQuestion() {
         return "<html><body>Do you wish to open the Project in an additional Window? <br> Otherwise, the current one will be replaced. </body></html>";
     }
 
