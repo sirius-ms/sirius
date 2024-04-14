@@ -543,8 +543,7 @@ public class NoSQLInstance implements Instance {
                 //insert all candidates that do not exist
                 return project().getStorage().upsertAll(toInsert); //todo should be insert, workaround to prevent duplicate key error.
             });
-
-            System.out.println("Inserted: " + inserted + " of " + matches.size() + "CSI candidates.");
+            log.debug("Inserted: {} of {} CSI candidates.", inserted, matches.size());
 
         } catch (IOException e) {
             deleteStructureSearchResult();
@@ -632,14 +631,10 @@ public class NoSQLInstance implements Instance {
                 if (!project().getStorage().containsPrimaryKey(c.getInchiKey2D(), FingerprintCandidate.class))
                     toInsert.add(c);
             }
-            long mapped = matches.stream().map(StructureMatch::getCandidate).filter(c -> c.getLinks() != null && !c.getLinks().isEmpty()).count();
-
-            System.out.println(mapped + " of " + matches.size() + " MsNovelist candidates have been mapped to db hits.");
             return project().getStorage().upsertAll(toInsert); //todo should be insert, workaround to prevent duplicate key error.
         });
 
-
-        System.out.println("Inserted: " + inserted + " of " + matches.size() + "DeNovo candidates.");
+        log.debug("Inserted: {} of {} DeNovo candidates.", inserted, matches.size());
     }
 
     @Override
