@@ -269,11 +269,10 @@ public class ComputeServiceImpl implements ComputeService {
             backgroundRuns(project).removeFinishedRun(j.getRunId());
         } else {
             if (cancelIfRunning)
-                j.cancel();
+                j.cancel(false);
+
             if (awaitDeletion) {
                 j.getResult(); //use state-lock to ensure that state is update when deleting cancelled job.
-//                j.withStateLockDo(() ->  BackgroundRuns.removeRun(j.getRunId()));
-//                j.setState(cancelIfRunning ? JJob.JobState.CANCELED : JJob.JobState.DONE);
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
