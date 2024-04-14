@@ -21,6 +21,7 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
+import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOptions;
@@ -64,8 +65,8 @@ public class BatchComputeDialog extends JDialog {
 
 
     // main parts
-    private  Box mainPanel;
-    private  JCheckBox recomputeBox;
+    private Box mainPanel;
+    private JCheckBox recomputeBox;
 
     // tool configurations
     private ActFormulaIDConfigPanel formulaIDConfigPanel; //Sirius configs
@@ -331,6 +332,13 @@ public class BatchComputeDialog extends JDialog {
             @Override
             protected Boolean compute() throws InterruptedException, InvocationTargetException {
                 updateProgress(0, 100, 0, "Configuring Computation...");
+                //prevent many instance updates caused by multi selection
+                Jobs.runEDTAndWait(() -> {
+                    DefaultEventSelectionModel<InstanceBean> sm = gui.getMainFrame().getCompoundList().getCompoundListSelectionModel();
+                    sm.setSelectionInterval(sm.getMinSelectionIndex(), sm.getMinSelectionIndex());
+                    gui.getMainFrame().ensureCompoundIsVisible(sm.getMinSelectionIndex());
+                });
+
                 checkForInterruption();
                 List<InstanceBean> finalComps = compoundsToProcess;
 

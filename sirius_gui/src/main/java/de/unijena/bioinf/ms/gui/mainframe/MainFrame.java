@@ -35,7 +35,7 @@ import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.logging.LogDialog;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
-import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListView;
+import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundListView;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListPanel;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
@@ -70,6 +70,11 @@ public class MainFrame extends JFrame implements DropTargetListener {
     //Logging Panel
     private final LogDialog log;
     private final SiriusGui gui;
+    private CompoundListView compoundListView;
+
+    public void ensureCompoundIsVisible(int index){
+        compoundListView.ensureIndexIsVisible(index);
+    }
 
     public SiriusGui getGui() {
         return gui;
@@ -191,12 +196,13 @@ public class MainFrame extends JFrame implements DropTargetListener {
         add(mainPanel, BorderLayout.CENTER);
 
         //build left sidepane
-        FilterableCompoundListPanel experimentListPanel = new FilterableCompoundListPanel(new ExperimentListView(gui, compoundList));
-        experimentListPanel.setPreferredSize(new Dimension(228, (int) experimentListPanel.getPreferredSize().getHeight()));
+        compoundListView = new CompoundListView(gui, compoundList);
+        FilterableCompoundListPanel compoundListPanel = new FilterableCompoundListPanel(compoundListView);
+        compoundListPanel.setPreferredSize(new Dimension(228, (int) compoundListPanel.getPreferredSize().getHeight()));
         mainPanel.setDividerLocation(232);
 
         //BUILD the MainFrame (GUI)
-        mainPanel.setLeftComponent(experimentListPanel);
+        mainPanel.setLeftComponent(compoundListPanel);
         mainPanel.setRightComponent(resultPanelContainer);
         add(toolbar, BorderLayout.NORTH);
 
