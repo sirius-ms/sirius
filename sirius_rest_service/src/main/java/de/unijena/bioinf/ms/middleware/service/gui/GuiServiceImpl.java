@@ -97,8 +97,6 @@ public class GuiServiceImpl implements GuiService {
                 }
             });
         }
-        if (guiParameters != null)
-            eventService.sendEvent(ServerEvents.newGuiEvent(guiParameters, projectId));
     }
 
     @Override
@@ -121,7 +119,8 @@ public class GuiServiceImpl implements GuiService {
     public void applyToGuiInstance(@NotNull String projectId, @NotNull GuiParameters guiParameters) {
         SiriusGui gui = siriusGuiInstances.get(projectId);
         if (gui != null) {
-            eventService.sendEvent(ServerEvents.newGuiEvent(guiParameters, projectId));
+            //todo change gui instance.
+            System.out.println("Modifying gui instance not supported");
         } else {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No running SIRIUS GUI instance found for project id: " + projectId);
         }
