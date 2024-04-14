@@ -42,9 +42,9 @@ public class ServerEvents {
         );
     }
 
-    public static ServerEventImpl<GuiParameters> newGuiEvent(@NotNull GuiParameters guiParameters, @NotNull String projectId) {
-        return new ServerEventImpl<>(guiParameters, projectId, ServerEvent.Type.GUI_STATE);
-    }
+//    public static ServerEventImpl<GuiParameters> newGuiEvent(@NotNull GuiParameters guiParameters, @NotNull String projectId) {
+//        return new ServerEventImpl<>(guiParameters, projectId, ServerEvent.Type.GUI_STATE);
+//    }
 
     public static ServerEventImpl<BackgroundComputationsStateEvent> newComputeStateEvent(@NotNull BackgroundComputationsStateEvent evt, @NotNull String projectId) {
         return new ServerEventImpl<>(evt, projectId, ServerEvent.Type.BACKGROUND_COMPUTATIONS_STATE);
