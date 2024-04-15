@@ -38,10 +38,8 @@ import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bionf.spectral_alignment.*;
 import org.apache.commons.lang3.tuple.Pair;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -53,7 +51,9 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
 
     private CosineQueryUtils queryUtils;
     private Deviation precursorDev;
+    private Deviation peakDev;
 
+    final private Map<SpectralMatchMasterJJob, List<Ms2ReferenceSpectrum>> referencesPerJob = new HashMap<>();
     public SpectralAlignmentJJob(WebAPI<?> api, Ms2Experiment experiment) {
         super(JobType.SCHEDULER);
         this.experiment = experiment;
@@ -62,7 +62,7 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
 
     @Override
     protected SpectralSearchResult compute() throws Exception {
-        Deviation peakDev = experiment.getAnnotationOrDefault(SpectralMatchingMassDeviation.class).allowedPeakDeviation;
+        peakDev = experiment.getAnnotationOrDefault(SpectralMatchingMassDeviation.class).allowedPeakDeviation;
         precursorDev = experiment.getAnnotationOrDefault(SpectralMatchingMassDeviation.class).allowedPrecursorDeviation;
 
         List<Ms2Spectrum<Peak>> queries = experiment.getMs2Spectra();
@@ -111,10 +111,13 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
     }
 
     public List<CosineQuerySpectrum> getCosineQueries(CosineQueryUtils utils, List<Ms2Spectrum<Peak>> queries) {
-        return Streams.mapWithIndex(queries.stream(), (q, index) ->
-                utils.createQueryWithoutLoss(
-                        new IndexedQuerySpectrumWrapper(Spectrums.getNormalizedSpectrum(q, Normalization.Sum), (int) index),
-                        q.getPrecursorMz())).toList();
+        return Streams.mapWithIndex(queries.stream(), (q, index) -> {
+            CosineQuerySpectrum qs = utils.createQueryWithIntensityTransformation(
+                    Spectrums.mergePeaksWithinSpectrum(q, peakDev, true, false),
+                    q.getPrecursorMz(), true);
+            qs.setIndex((int) index);
+            return qs;
+        }).toList();
     }
 
     public List<SpectralMatchMasterJJob> getAlignmentJJobs(CosineQueryUtils utils, List<CosineQuerySpectrum> queries, Collection<CustomDataSources.Source> searchDbs, WebWithCustomDatabase db) {
@@ -122,12 +125,18 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
             try {
                 List<Ms2ReferenceSpectrum> references = db.lookupSpectra(query.getPrecursorMz(), precursorDev, true, searchDbs);
 
-                List<Pair<CosineQuerySpectrum, CosineQuerySpectrum>> pairs = references.stream()
-                        .peek(r -> r.setSpectrum(Spectrums.getNormalizedSpectrum(r.getSpectrum(), Normalization.Sum)))
-                        .map(r -> Pair.of(query, utils.createQueryWithoutLoss(new Ms2ReferenceSpectrumWrapper(r), r.getPrecursorMz())))
-                        .toList();
+                AtomicInteger idx = new AtomicInteger(0);
+                List<Pair<CosineQuerySpectrum, CosineQuerySpectrum>> pairs = Streams.mapWithIndex(references.stream(), (r, index) -> {
+                    CosineQuerySpectrum q = utils.createQueryWithIntensityTransformation(
+                            Spectrums.mergePeaksWithinSpectrum(r.getSpectrum(), peakDev, true, false), r.getPrecursorMz(), true);
+                    r.setSpectrum(null);
+                    q.setIndex(idx.getAndIncrement());
+                    return Pair.of(query, q);
+                }).toList();
 
-                return new SpectralMatchMasterJJob(utils, pairs);
+                SpectralMatchMasterJJob j = new SpectralMatchMasterJJob(utils, pairs);
+                referencesPerJob.put(j, references);
+                return j;
             } catch (ChemicalDatabaseException e) {
                 throw new RuntimeException(e);
             }
@@ -143,12 +152,14 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
         }
 
         List<Pair<CosineQuerySpectrum, CosineQuerySpectrum>> input = job.getQueries();
-        int queryIndex = ((IndexedQuerySpectrumWrapper) input.get(0).getLeft().getSpectrum()).getQueryIndex();
+        int queryIndex = input.get(0).getLeft().getIndex();
 
         return IntStream.range(0, similarities.size())
                 .filter(i -> similarities.get(i).sharedPeaks > 0)
                 .mapToObj(i -> {
-                    Ms2ReferenceSpectrum reference = ((Ms2ReferenceSpectrumWrapper) input.get(i).getRight().getSpectrum()).getMs2ReferenceSpectrum();
+                    if (similarities.get(i).similarity > 1)
+                        System.out.println("OVER 100%  " + similarities.get(i).similarity);
+                    Ms2ReferenceSpectrum reference = referencesPerJob.get(job).get(input.get(i).getRight().getIndex());
                     return SpectralSearchResult.SearchResult.builder()
                             .dbName(reference.getLibraryName())
                             .dbId(reference.getLibraryId())

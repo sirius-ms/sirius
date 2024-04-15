@@ -36,12 +36,12 @@ import static org.junit.Assert.*;
 public class SpectralMatchingTest {
 
     private final CosineQueryUtils utils = new CosineQueryUtils(new ModifiedCosine(new Deviation(10)));
-    private final CosineQuerySpectrum s1 = utils.createQueryWithoutLoss(new SimpleSpectrum(new double[]{1d}, new double[]{1d}), 1d);
-    private final CosineQuerySpectrum s2 = utils.createQueryWithoutLoss(new SimpleSpectrum(new double[]{1d, 2d}, new double[]{0.5d, 1d}), 3d);
-    private final CosineQuerySpectrum s3 = utils.createQueryWithoutLoss(new SimpleSpectrum(new double[]{1.001d, 2d}, new double[]{3d, 2d}), 2d);
-    private final CosineQuerySpectrum s4 = utils.createQueryWithoutLoss(new SimpleSpectrum(new double[]{1.002d, 2.003d}, new double[]{1.7d, 2.1d}), 2d);
-    private final CosineQuerySpectrum s5 = utils.createQueryWithoutLoss(new SimpleSpectrum(new double[]{1.003d, 2.002d}, new double[]{1.5d, 1.6d}), 2d);
-    private final CosineQuerySpectrum s6 = utils.createQueryWithoutLoss(new SimpleSpectrum(new double[]{.999d, 2.001d}, new double[]{1d, 1.2d}), 2d);
+    private final CosineQuerySpectrum s1 = utils.createQueryWithIntensityTransformation(new SimpleSpectrum(new double[]{1d}, new double[]{1d}), 1d, true);
+    private final CosineQuerySpectrum s2 = utils.createQueryWithIntensityTransformation(new SimpleSpectrum(new double[]{1d, 2d}, new double[]{0.5d, 1d}), 3d, true);
+    private final CosineQuerySpectrum s3 = utils.createQueryWithIntensityTransformation(new SimpleSpectrum(new double[]{1.001d, 2d}, new double[]{3d, 2d}), 2d, true);
+    private final CosineQuerySpectrum s4 = utils.createQueryWithIntensityTransformation(new SimpleSpectrum(new double[]{1.002d, 2.003d}, new double[]{1.7d, 2.1d}), 2d, true);
+    private final CosineQuerySpectrum s5 = utils.createQueryWithIntensityTransformation(new SimpleSpectrum(new double[]{1.003d, 2.002d}, new double[]{1.5d, 1.6d}), 2d, true);
+    private final CosineQuerySpectrum s6 = utils.createQueryWithIntensityTransformation(new SimpleSpectrum(new double[]{.999d, 2.001d}, new double[]{1d, 1.2d}), 2d, true);
 
 
     @Test

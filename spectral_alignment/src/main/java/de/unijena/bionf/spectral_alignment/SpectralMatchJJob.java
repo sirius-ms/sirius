@@ -35,7 +35,7 @@ public class SpectralMatchJJob extends BasicJJob<SpectralSimilarity> {
 
     @Override
     protected SpectralSimilarity compute() throws Exception {
-        return queryUtils.cosineProduct(left, right);
+        return queryUtils.cosineProductWithLosses(left, right);
     }
 
     @Override
