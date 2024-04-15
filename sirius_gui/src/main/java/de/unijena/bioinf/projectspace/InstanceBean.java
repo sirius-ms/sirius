@@ -335,7 +335,7 @@ public class InstanceBean implements SiriusPCS {
 
     public SpectralMatchingResult getSpectralSearchResults() {
         if (spectralMatchingResult == null) {
-            spectralMatchingResult = getSpectralSearchResults(100);
+            spectralMatchingResult = getSpectralSearchResults(10);
         }
         return spectralMatchingResult;
     }
@@ -352,7 +352,7 @@ public class InstanceBean implements SiriusPCS {
     protected PageSpectralLibraryMatch getSpectralSearchResultsPage(int pageNum, int pageSize) {
         return withIds((pid, fid) -> getClient().features()
                 .getSpectralLibraryMatchesPagedWithResponseSpec(pid, fid, pageNum, pageSize, null,
-                        List.of(/*SpectralLibraryMatchOptField.REFERENCESPECTRUM*/)).bodyToMono(PageSpectralLibraryMatch.class).onErrorComplete().block());
+                        List.of(SpectralLibraryMatchOptField.REFERENCESPECTRUM)).bodyToMono(PageSpectralLibraryMatch.class).onErrorComplete().block());
     }
 
     public MutableMs2Experiment asMs2Experiment() {
