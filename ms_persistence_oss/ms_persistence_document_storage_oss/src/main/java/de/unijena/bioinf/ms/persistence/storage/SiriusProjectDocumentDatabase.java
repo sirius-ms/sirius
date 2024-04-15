@@ -88,8 +88,9 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
                         Index.nonUnique("structureRank")) //for fast sorted pages
 
                 .addRepository(SpectraMatch.class,
+                        Index.nonUnique("searchResult.rank"), //sort index
                         Index.nonUnique("searchResult.candidateInChiKey"),
-                        Index.nonUnique("searchResult.alignedFeatureId"))
+                        Index.nonUnique("alignedFeatureId"))
 
                 .addRepository(FingerprintCandidate.class) //pk inchiKey
                 .setOptionalFields(FingerprintCandidate.class, "fingerprint")

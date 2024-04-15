@@ -25,7 +25,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.CandidateFormulas;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.chemdb.annotations.SpectralAlignmentScorer;
@@ -113,7 +113,7 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
     public List<CosineQuerySpectrum> getCosineQueries(CosineQueryUtils utils, List<Ms2Spectrum<Peak>> queries) {
         return Streams.mapWithIndex(queries.stream(), (q, index) ->
                 utils.createQueryWithoutLoss(
-                        new IndexedQuerySpectrumWrapper(new SimpleSpectrum(q), (int) index),
+                        new IndexedQuerySpectrumWrapper(Spectrums.getNormalizedSpectrum(q, Normalization.Sum), (int) index),
                         q.getPrecursorMz())).toList();
     }
 
@@ -122,8 +122,10 @@ public class SpectralAlignmentJJob extends BasicMasterJJob<SpectralSearchResult>
             try {
                 List<Ms2ReferenceSpectrum> references = db.lookupSpectra(query.getPrecursorMz(), precursorDev, true, searchDbs);
 
-                List<Pair<CosineQuerySpectrum, CosineQuerySpectrum>> pairs = references.stream().map(r ->
-                        Pair.of(query, utils.createQueryWithoutLoss(new Ms2ReferenceSpectrumWrapper(r), r.getPrecursorMz()))).toList();
+                List<Pair<CosineQuerySpectrum, CosineQuerySpectrum>> pairs = references.stream()
+                        .peek(r -> r.setSpectrum(Spectrums.getNormalizedSpectrum(r.getSpectrum(), Normalization.Sum)))
+                        .map(r -> Pair.of(query, utils.createQueryWithoutLoss(new Ms2ReferenceSpectrumWrapper(r), r.getPrecursorMz())))
+                        .toList();
 
                 return new SpectralMatchMasterJJob(utils, pairs);
             } catch (ChemicalDatabaseException e) {
