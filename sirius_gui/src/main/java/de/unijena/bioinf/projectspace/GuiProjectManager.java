@@ -68,7 +68,7 @@ public class GuiProjectManager implements Closeable {
     private PropertyChangeListener computeListener;
     private PropertyChangeListenerEDT confidenceModeListender;
 
-    public GuiProjectManager(@NotNull String projectId, @NotNull NightSkyClient siriusClient,  @NotNull GuiProperties properties) {
+    public GuiProjectManager(@NotNull String projectId, @NotNull NightSkyClient siriusClient, @NotNull GuiProperties properties) {
         this.properties = properties;
         this.projectId = projectId;
         this.siriusClient = siriusClient;
@@ -102,15 +102,13 @@ public class GuiProjectManager implements Closeable {
         siriusClient.addEventListener(projectListener, projectId, DataEventType.PROJECT);
 
         computeListener = evt -> DataObjectEvents.toDataObjectEventData(evt.getNewValue(), BackgroundComputationsStateEvent.class).ifPresent(computeEvent -> {
-            Set<String> ids = computeEvent.getAffectedJobs().stream()
-                    .map(Job::getAffectedAlignedFeatureIds)
-                    .filter(Objects::nonNull)
-                    .flatMap(List::stream)
-                    .collect(Collectors.toSet());
+            Map<String, Boolean> idsToComputeState = computeEvent.getAffectedJobs().stream().filter(j -> j.getAffectedAlignedFeatureIds() != null)
+                    .flatMap(j -> j.getAffectedAlignedFeatureIds().stream().map(id -> Pair.of(id, j.getProgress().getState().ordinal() <= JobProgress.StateEnum.RUNNING.ordinal())))
+                    .collect(Collectors.toMap(Pair::key, Pair::value));
 
             Set<InstanceBean> change = INSTANCE_LIST.stream()
-                    .filter(i -> ids.contains(i.getFeatureId()))
-                    .peek(InstanceBean::clearCache)
+                    .filter(i -> idsToComputeState.containsKey(i.getFeatureId()))
+                    .peek(inst -> inst.changeComputeStateOfCache(idsToComputeState.get(inst.getFeatureId())))
                     .collect(Collectors.toSet());
             Jobs.runEDTLater(() -> SiriusGlazedLists.multiUpdate(INSTANCE_LIST, change));
         });

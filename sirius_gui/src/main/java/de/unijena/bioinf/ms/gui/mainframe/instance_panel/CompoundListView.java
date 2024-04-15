@@ -33,13 +33,13 @@ import java.awt.event.MouseListener;
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ExperimentListView extends JScrollPane {
+public class CompoundListView extends JScrollPane {
 
     final CompoundList sourceList;
     final JListDropImage<InstanceBean> compoundListView;
     final JPopupMenu expPopMenu;
 
-    public ExperimentListView(SiriusGui gui, CompoundList sourceList) {
+    public CompoundListView(SiriusGui gui, CompoundList sourceList) {
         super(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         this.sourceList = sourceList;
         //todo move texfield and filter funktion here
@@ -48,7 +48,6 @@ public class ExperimentListView extends JScrollPane {
         compoundListView.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         compoundListView.setCellRenderer(new CompoundCellRenderer(gui));
         expPopMenu = new CompoundContextMenu(gui);
-
         compoundListView.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -110,6 +109,10 @@ public class ExperimentListView extends JScrollPane {
 
         SiriusActions.DELETE_EXP.getInstance(gui, true);
         SiriusActions.COMPUTE.getInstance(gui, true);
+    }
+
+    public void ensureIndexIsVisible(int index) {
+        compoundListView.ensureIndexIsVisible(index);
     }
 
     public JPopupMenu getExpPopMenu() {

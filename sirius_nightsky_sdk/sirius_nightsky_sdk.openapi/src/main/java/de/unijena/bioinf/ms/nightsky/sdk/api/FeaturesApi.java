@@ -2120,6 +2120,104 @@ public class FeaturesApi {
      * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param matchId The matchId parameter
+     * @param optFields The optFields parameter
+     * @return SpectralLibraryMatch
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getSpectralLibraryMatchRequestCreation(String projectId, String alignedFeatureId, String matchId, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getSpectralLibraryMatch", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'alignedFeatureId' is set
+        if (alignedFeatureId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getSpectralLibraryMatch", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'matchId' is set
+        if (matchId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'matchId' when calling getSpectralLibraryMatch", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("alignedFeatureId", alignedFeatureId);
+        pathParams.put("matchId", matchId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<SpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<SpectralLibraryMatch>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/{matchId}", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param matchId The matchId parameter
+     * @param optFields The optFields parameter
+     * @return SpectralLibraryMatch
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public SpectralLibraryMatch getSpectralLibraryMatch(String projectId, String alignedFeatureId, String matchId, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<SpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<SpectralLibraryMatch>() {};
+        return getSpectralLibraryMatchRequestCreation(projectId, alignedFeatureId, matchId, optFields).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param matchId The matchId parameter
+     * @param optFields The optFields parameter
+     * @return ResponseEntity&lt;SpectralLibraryMatch&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<SpectralLibraryMatch> getSpectralLibraryMatchWithHttpInfo(String projectId, String alignedFeatureId, String matchId, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<SpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<SpectralLibraryMatch>() {};
+        return getSpectralLibraryMatchRequestCreation(projectId, alignedFeatureId, matchId, optFields).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param matchId The matchId parameter
+     * @param optFields The optFields parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getSpectralLibraryMatchWithResponseSpec(String projectId, String alignedFeatureId, String matchId, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+        return getSpectralLibraryMatchRequestCreation(projectId, alignedFeatureId, matchId, optFields);
+    }
+    /**
+     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     * List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param optFields The optFields parameter
      * @return List&lt;SpectralLibraryMatch&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API

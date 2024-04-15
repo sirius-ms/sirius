@@ -22,24 +22,23 @@ package de.unijena.bioinf.ms.backgroundruns;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
-import de.unijena.bioinf.jjobs.*;
-import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJob;
+import de.unijena.bioinf.jjobs.JobProgressEvent;
+import de.unijena.bioinf.jjobs.JobProgressEventListener;
+import de.unijena.bioinf.jjobs.JobProgressMerger;
+import de.unijena.bioinf.jjobs.ProgressSupport;
+import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJobNoSql;
+import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJobSiriusPs;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
-import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.InstanceImporter;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.*;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
-import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -47,7 +46,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 @Slf4j
-public class ImportMsFomResourceWorkflow implements Workflow, ProgressSupport {
+public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
     protected final JobProgressMerger progressSupport = new JobProgressMerger(this);
     private final boolean alignRuns;
     private final boolean allowMs1OnlyData;
@@ -66,7 +65,7 @@ public class ImportMsFomResourceWorkflow implements Workflow, ProgressSupport {
 
     private final Collection<PathInputResource> inputResources;
 
-    public ImportMsFomResourceWorkflow(ProjectSpaceManager psm, Collection<PathInputResource> inputResources, boolean allowMs1OnlyData, boolean alignRuns, boolean clearInput) {
+    public ImportMsFromResourceWorkflow(ProjectSpaceManager psm, Collection<PathInputResource> inputResources, boolean allowMs1OnlyData, boolean alignRuns, boolean clearInput) {
         this.psm = psm;
         this.inputResources = inputResources;
         this.alignRuns = alignRuns;
@@ -104,21 +103,31 @@ public class ImportMsFomResourceWorkflow implements Workflow, ProgressSupport {
         Path workingDir = null;
         try {
             if (!alignRuns) {
-                InstanceImporter.ImportInstancesJJob importerJJob = new InstanceImporter(psm, x -> true, x -> true)
+                InstanceImporter.ImportInstancesJJob importerJJob = new InstanceImporter(psm, x -> true)
                         .makeImportJJob(Collections.unmodifiableCollection(inputResources), true, allowMs1OnlyData);
                 importerJJob.addJobProgressListener(progressSupport);
                 importedCompounds = SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
             } else {
                 //create working dir in same fs as input data. allows e.g. for in-memory fs for working dir.
-                workingDir = FileUtils.newTempFile("lcms-align-working-dir_", "", inputResources.iterator().next().getResource().getFileSystem());
-                LcmsAlignSubToolJob importerJJob = new LcmsAlignSubToolJob(
-                        workingDir,
-                        inputResources.stream().map(PathInputResource::getResource).collect(Collectors.toList()),
-                        () -> psm, null, null);
-
-                SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
-                importerJJob.addJobProgressListener(progressSupport);
-                importedCompounds = importerJJob.getImportedCompounds();
+                if (psm instanceof SiriusProjectSpaceManager spsm) {
+                    workingDir = FileUtils.newTempFile("lcms-align-working-dir_", "", inputResources.iterator().next().getResource().getFileSystem());
+                    LcmsAlignSubToolJobSiriusPs importerJJob = new LcmsAlignSubToolJobSiriusPs(
+                            workingDir,
+                            inputResources.stream().map(PathInputResource::getResource).collect(Collectors.toList()),
+                            () -> spsm, null, null);
+                    SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
+                    importerJJob.addJobProgressListener(progressSupport);
+                    importedCompounds = new ArrayList<>(importerJJob.getImportedCompounds());
+                } else if (psm instanceof NoSQLProjectSpaceManager spsm) {
+                    LcmsAlignSubToolJobNoSql importerJJob = new LcmsAlignSubToolJobNoSql(
+                            inputResources.stream().map(PathInputResource::getResource).collect(Collectors.toList()),
+                            () -> spsm);
+                    SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
+                    importerJJob.addJobProgressListener(progressSupport);
+                    importedCompounds = new ArrayList<>(importerJJob.getImportedCompounds());
+                }else {
+                    throw new IllegalArgumentException("Unknown project space implementation. Cannot import!");
+                }
             }
         } catch (ExecutionException e) {
             throw new RuntimeException(e);

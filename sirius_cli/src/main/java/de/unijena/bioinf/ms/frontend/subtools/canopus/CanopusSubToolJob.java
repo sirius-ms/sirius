@@ -19,8 +19,6 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.canopus;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.fingerid.FingerprintResult;
@@ -30,10 +28,8 @@ import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.webapi.WebJJob;
-import de.unijena.bioinf.projectspace.FormulaResult;
-import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.FCandidate;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.ProjectSpaceManagers;
 import de.unijena.bioinf.rest.NetUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +39,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class CanopusSubToolJob extends InstanceJob {
-    private Map<FormulaResult, WebJJob<CanopusJobInput, ?, CanopusResult, ?>> jobs;
+    private Map<FCandidate<?>, WebJJob<CanopusJobInput, ?, CanopusResult, ?>> jobs;
     public CanopusSubToolJob(JobSubmitter submitter) {
         super(submitter);
         asWEBSERVICE();
@@ -51,21 +47,20 @@ public class CanopusSubToolJob extends InstanceJob {
 
     @Override
     public boolean isAlreadyComputed(@NotNull Instance inst) {
-        return inst.loadCompoundContainer().hasResults() && inst.loadFormulaResults(CanopusResult.class).stream().anyMatch((it -> it.getCandidate().hasAnnotation(CanopusResult.class)));
+        return inst.hasCanopusResult();
     }
 
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
-        List<? extends SScored<FormulaResult, ? extends FormulaScore>> input = inst.loadFormulaResults(FormulaScoring.class, FingerprintResult.class, CanopusResult.class);
+        List<FCandidate<?>> inputData = inst.getCanopusInput().stream()
+                .filter(c -> c.hasAnnotation(FingerprintResult.class))
+                .toList();
 
         checkForInterruption();
 
-        // create input
-        List<FormulaResult> res = input.stream().map(SScored::getCandidate)
-                .filter(ir -> ir.hasAnnotation(FingerprintResult.class)).toList();
 
         // check for valid input
-        if (res.isEmpty()) {
+        if (inputData.isEmpty()) {
             logInfo("Skipping because there are no formula results available");
             return;
         }
@@ -75,7 +70,7 @@ public class CanopusSubToolJob extends InstanceJob {
         updateProgress(10);
         checkForInterruption();
 
-        NetUtils.tryAndWait(() -> ProjectSpaceManagers.writeCanopusDataIfMissing(inst.getProjectSpaceManager(), ApplicationCore.WEB_API), this::checkForInterruption);
+        NetUtils.tryAndWait(() -> inst.getProjectSpaceManager().writeCanopusDataIfMissing(ApplicationCore.WEB_API), this::checkForInterruption);
 
         updateProgress(20);
         checkForInterruption();
@@ -84,7 +79,7 @@ public class CanopusSubToolJob extends InstanceJob {
         updateProgress(25);
 
         // submit canopus jobs for Identification results that contain CSI:FingerID results
-        jobs = res.stream().collect(Collectors.toMap(r -> r, ir -> buildAndSubmitRemote(ir, specHash)));
+        jobs = inputData.stream().collect(Collectors.toMap(r -> r, ir -> buildAndSubmitRemote(ir, specHash)));
         updateProgress(30);
 
 
@@ -93,15 +88,14 @@ public class CanopusSubToolJob extends InstanceJob {
         updateProgress(80);
 
         // write canopus results
-        for (FormulaResult r : res)
-            inst.updateFormulaResult(r, CanopusResult.class);
+        inst.saveCanopusResult(inputData);
         updateProgress(97);
     }
 
-    private WebJJob<CanopusJobInput, ?, CanopusResult, ?> buildAndSubmitRemote(@NotNull final FormulaResult ir, int specHash)  {
+    private WebJJob<CanopusJobInput, ?, CanopusResult, ?> buildAndSubmitRemote(@NotNull final FCandidate<?> ir, int specHash)  {
         try {
             return ApplicationCore.WEB_API.submitCanopusJob(
-                    ir.getId().getMolecularFormula(), ir.getId().getIonType().getCharge(),
+                    ir.getMolecularFormula(), ir.getAdduct().getCharge(),
                     ir.getAnnotationOrThrow(FingerprintResult.class).fingerprint, specHash
             );
         } catch (IOException e) {

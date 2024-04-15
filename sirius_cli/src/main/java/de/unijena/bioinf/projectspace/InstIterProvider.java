@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.function.Predicate;
 
 public interface InstIterProvider extends Iterator<Ms2Experiment> {
     /**
@@ -46,9 +45,5 @@ public interface InstIterProvider extends Iterator<Ms2Experiment> {
     }
     default InstanceImportIteratorMS2Exp asInstanceIterator(ProjectSpaceManager projectSpace) {
         return new InstanceImportIteratorMS2Exp(this, projectSpace);
-    }
-
-    default InstanceImportIteratorMS2Exp asInstanceIterator(ProjectSpaceManager projectSpace, Predicate<CompoundContainer> compoundFilter) {
-        return new InstanceImportIteratorMS2Exp(this, projectSpace, compoundFilter);
     }
 }

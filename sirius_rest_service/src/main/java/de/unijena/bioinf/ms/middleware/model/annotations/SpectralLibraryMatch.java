@@ -21,7 +21,8 @@
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
-import de.unijena.bioinf.projectspace.SpectralSearchResult;
+import de.unijena.bioinf.ms.persistence.model.sirius.SpectraMatch;
+import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -39,6 +40,10 @@ public class SpectralLibraryMatch {
 
     @Schema(enumAsRef = true, name = "SpectralLibraryMatchOptField", nullable = true)
     public enum OptField {none, referenceSpectrum}
+
+    public final String specMatchId;
+
+    public final Integer rank;
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     public final Double similarity;
@@ -71,27 +76,45 @@ public class SpectralLibraryMatch {
     @Setter
     private BasicSpectrum referenceSpectrum;
 
-    public static SpectralLibraryMatch of(@NotNull SpectralSearchResult.SearchResult result){
-        return SpectralLibraryMatch.builder()
-                .similarity(result.getSimilarity().similarity)
-                .sharedPeaks(result.getSimilarity().sharedPeaks)
+    public static SpectralLibraryMatch of(@NotNull SpectraMatch match){
+        return of(match.getSearchResult(), String.valueOf(match.getSpecMatchId()));
+    }
+    public static SpectralLibraryMatch of(@NotNull SpectralSearchResult.SearchResult result, String id){
+        SpectralLibraryMatch.SpectralLibraryMatchBuilder builder = SpectralLibraryMatch.builder();
+        if (result.getSimilarity() != null) {
+            builder.similarity(result.getSimilarity().similarity);
+            builder.sharedPeaks(result.getSimilarity().sharedPeaks);
+        }
+
+        builder.rank(result.getRank())
+                .specMatchId(id)
+                .querySpectrumIndex(result.getQuerySpectrumIndex())
                 .dbName(result.getDbName())
                 .dbId(result.getDbId())
                 .uuid(result.getUuid())
                 .splash(result.getSplash())
+                .exactMass(Double.toString(result.getExactMass()))
                 .smiles(result.getSmiles())
-                .candidateInChiKey(result.getCandidateInChiKey())
-                .querySpectrumIndex(result.getQuerySpectrumIndex())
-                .build();
+                .candidateInChiKey(result.getCandidateInChiKey());
+
+        if (result.getMolecularFormula() != null) {
+            builder.molecularFormula(result.getMolecularFormula().toString());
+        }
+        if (result.getAdduct() != null) {
+            builder.adduct(result.getAdduct().toString());
+        }
+        return builder.build();
     }
+    @Deprecated
     public static List<SpectralLibraryMatch> of(@NotNull SpectralSearchResult result){
         return of(result, null);
     }
 
+    @Deprecated
     public static List<SpectralLibraryMatch> of(@NotNull SpectralSearchResult result, @Nullable String candidateInChiKey){
         return result.getResults().stream()
                 .filter(s -> candidateInChiKey == null || candidateInChiKey.equals(s.getCandidateInChiKey()))
-                .map(SpectralLibraryMatch::of)
+                .map(m-> SpectralLibraryMatch.of(m, null))
                 .toList();
     }
 }

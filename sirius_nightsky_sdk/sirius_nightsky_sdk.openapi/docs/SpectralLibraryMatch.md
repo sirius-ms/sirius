@@ -7,6 +7,8 @@
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
+|**specMatchId** | **String** |  |  [optional] |
+|**rank** | **Integer** |  |  [optional] |
 |**similarity** | **Double** |  |  |
 |**sharedPeaks** | **Integer** |  |  [optional] |
 |**querySpectrumIndex** | **Integer** |  |  |

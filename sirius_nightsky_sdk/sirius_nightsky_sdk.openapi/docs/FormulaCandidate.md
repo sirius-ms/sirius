@@ -11,6 +11,7 @@ Molecular formula candidate that holds a unique identifier (molecular formula + 
 |**formulaId** | **String** | Unique identifier of this formula candidate |  [optional] |
 |**molecularFormula** | **String** | molecular formula of this formula candidate |  [optional] |
 |**adduct** | **String** | Adduct of this formula candidate |  [optional] |
+|**rank** | **Integer** |  |  [optional] |
 |**siriusScore** | **Double** | Sirius Score (isotope + tree score) of the formula candidate.  If NULL result is not available |  [optional] |
 |**isotopeScore** | **Double** |  |  [optional] |
 |**treeScore** | **Double** |  |  [optional] |
@@ -19,7 +20,6 @@ Molecular formula candidate that holds a unique identifier (molecular formula + 
 |**numOfExplainablePeaks** | **Integer** |  |  [optional] |
 |**totalExplainedIntensity** | **Double** |  |  [optional] |
 |**medianMassDeviation** | [**Deviation**](Deviation.md) |  |  [optional] |
-|**topCSIScore** | **Double** | CSI:FingerID Score of the highest scoring structure candidate (top hit) of this formula candidate.  If NULL result is not available |  [optional] |
 |**fragmentationTree** | [**FragmentationTree**](FragmentationTree.md) |  |  [optional] |
 |**annotatedSpectrum** | [**AnnotatedSpectrum**](AnnotatedSpectrum.md) |  |  [optional] |
 |**isotopePatternAnnotation** | [**IsotopePatternAnnotation**](IsotopePatternAnnotation.md) |  |  [optional] |

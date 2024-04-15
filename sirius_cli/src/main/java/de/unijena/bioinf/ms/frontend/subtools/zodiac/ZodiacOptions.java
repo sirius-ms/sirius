@@ -19,8 +19,6 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.zodiac;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
-import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
@@ -28,7 +26,6 @@ import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
-import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -167,13 +164,7 @@ public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSet
 
     @Override
     public Consumer<Instance> getInvalidator() {
-        return inst -> {
-            inst.loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate)
-                    .forEach(it -> it.getAnnotation(FormulaScoring.class).ifPresent(z -> {
-                        if (z.removeAnnotation(ZodiacScore.class) != null)
-                            inst.updateFormulaResult(it, FormulaScoring.class); //update only if there was something to remove
-                    }));
-        };
+        return Instance::deleteZodiacResult;
     }
 
     @Override

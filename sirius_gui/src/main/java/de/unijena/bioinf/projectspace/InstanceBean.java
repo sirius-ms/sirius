@@ -183,17 +183,20 @@ public class InstanceBean implements SiriusPCS {
 
     @NotNull
     public AlignedFeature getSourceFeature(@Nullable List<AlignedFeatureOptField> optFields) {
-        //we always load top annotations because it contains mandatory information for the SIRIUS GUI
-        List<AlignedFeatureOptField> of = (optFields != null && !optFields.isEmpty() && !optFields.equals(List.of(AlignedFeatureOptField.NONE))
-                ? Stream.concat(optFields.stream(), Stream.of(AlignedFeatureOptField.TOPANNOTATIONS)).distinct().toList()
-                : List.of(AlignedFeatureOptField.TOPANNOTATIONS));
+        synchronized (this) {
+            //we always load top annotations because it contains mandatory information for the SIRIUS GUI
+            List<AlignedFeatureOptField> of = (optFields != null && !optFields.isEmpty() && !optFields.equals(List.of(AlignedFeatureOptField.NONE))
+                    ? Stream.concat(optFields.stream(), Stream.of(AlignedFeatureOptField.TOPANNOTATIONS)).distinct().toList()
+                    : List.of(AlignedFeatureOptField.TOPANNOTATIONS));
 
-        // we update every time here since we do not know which optional fields are already loaded.
-        if (sourceFeature == null || !of.equals(List.of(AlignedFeatureOptField.TOPANNOTATIONS)))
-            sourceFeature = withIds((pid, fid) ->
-                    getClient().features().getAlignedFeature(pid, fid, of));
+            // we update every time here since we do not know which optional fields are already loaded.
+            if (sourceFeature == null || !of.equals(List.of(AlignedFeatureOptField.TOPANNOTATIONS)))
+                sourceFeature = withIds((pid, fid) ->
+                        getClient().features().getAlignedFeature(pid, fid, of));
 
-        return sourceFeature;
+            return sourceFeature;
+        }
+
     }
 
     public String getFeatureId() {
@@ -205,15 +208,15 @@ public class InstanceBean implements SiriusPCS {
     }
 
     public String getGUIName() {
-        if (!getFeatureId().equalsIgnoreCase(getName()) && !getFeatureId().toLowerCase().endsWith(getName().toLowerCase()))
+        if (getName() != null && !getFeatureId().equalsIgnoreCase(getName()) && !getFeatureId().toLowerCase().endsWith(getName().toLowerCase()))
             return getName() + " (" + getFeatureId() + ")";
         return getFeatureId();
     }
 
     public PrecursorIonType getIonType() {
-        if (getSourceFeature().getAdduct() == null)
+        if (getSourceFeature().getIonType() == null)
             return null;
-        return PrecursorIonType.fromString(getSourceFeature().getAdduct());
+        return PrecursorIonType.fromString(getSourceFeature().getIonType());
     }
 
     public double getIonMass() {
@@ -249,17 +252,17 @@ public class InstanceBean implements SiriusPCS {
     }
 
     public Optional<FormulaCandidate> getFormulaAnnotation() {
-        return Optional.ofNullable(getSourceFeature().getTopAnnotations().getFormulaAnnotation());
+        return Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getFormulaAnnotation);
     }
 
     public Optional<StructureCandidateScored> getStructureAnnotation() {
-        return Optional.ofNullable(getSourceFeature().getTopAnnotations().getStructureAnnotation());
+        return Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getStructureAnnotation);
     }
 
     public Optional<Double> getConfidenceScore(ConfidenceDisplayMode viewMode) {
         return viewMode == ConfidenceDisplayMode.APPROXIMATE ?
-                Optional.ofNullable(getSourceFeature().getTopAnnotations().getConfidenceApproxMatch()) :
-                Optional.ofNullable(getSourceFeature().getTopAnnotations().getConfidenceExactMatch());
+                Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getConfidenceApproxMatch) :
+                Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getConfidenceExactMatch);
     }
 
     public List<FormulaResultBean> getFormulaCandidates() {
@@ -298,7 +301,7 @@ public class InstanceBean implements SiriusPCS {
     public PageStructureCandidateFormula getDeNovoStructureCandidatesPage(int pageNum, int pageSize) {
         return withIds((pid, fid) -> getClient().features()
                 .getDeNovoStructureCandidatesPaged(pid, fid, pageNum, pageSize, null,
-                        List.of(StructureCandidateOptField.FINGERPRINT)));
+                        List.of(StructureCandidateOptField.DBLINKS, StructureCandidateOptField.FINGERPRINT)));
     }
 
     @Nullable
@@ -332,7 +335,7 @@ public class InstanceBean implements SiriusPCS {
 
     public SpectralMatchingResult getSpectralSearchResults() {
         if (spectralMatchingResult == null) {
-            spectralMatchingResult = getSpectralSearchResults(100);
+            spectralMatchingResult = getSpectralSearchResults(10);
         }
         return spectralMatchingResult;
     }
@@ -378,6 +381,14 @@ public class InstanceBean implements SiriusPCS {
 
     public Setter set() {
         throw new UnsupportedOperationException("Implement modification features in nightsky api");
+    }
+
+    synchronized boolean changeComputeStateOfCache(boolean computeState) {
+        if (sourceFeature != null){
+            sourceFeature.setComputing(computeState);
+            return true;
+        }
+        return false;
     }
 
     public class Setter {

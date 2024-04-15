@@ -71,6 +71,17 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
     }
 
     public static void main(String[] args) {
+        System.setProperty("de.unijena.bioinf.sirius.springSupport", "true");
+        measureTime("Init Swing Job Manager");
+        // The spring app classloader seems not to be correctly inherited to sub thread
+        // So we need to ensure that the apache.configuration2 libs gets access otherwise.
+        // SwingJobManager is needed to show loading screens in GUI
+        SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(
+                cpuThreads,
+                Math.min(PropertyManager.getNumberOfThreads(), 4),
+                Thread.currentThread().getContextClassLoader()
+        ));
+
         //start gui as default if no command is given
         if (args == null || args.length == 0)
             args = new String[]{"rest", "-s", "--gui"};
@@ -85,18 +96,8 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
         )) {
 
             try {
-                System.setProperty("de.unijena.bioinf.sirius.springSupport", "true");
                 System.setProperty(APP_TYPE_PROPERTY_KEY, "SERVICE");
 
-                measureTime("Init Swing Job Manager");
-                // The spring app classloader seems not to be correctly inherited to sub thread
-                // So we need to ensure that the apache.configuration2 libs gets access otherwise.
-                // SwingJobManager is needed to show loading screens in GUI
-                SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(
-                        cpuThreads,
-                        Math.min(PropertyManager.getNumberOfThreads(), 4),
-                        Thread.currentThread().getContextClassLoader()
-                ));
 
                 ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
                 PropertyManager.setProperty("de.unijena.bioinf.sirius.BackgroundRuns.autoremove", "false");

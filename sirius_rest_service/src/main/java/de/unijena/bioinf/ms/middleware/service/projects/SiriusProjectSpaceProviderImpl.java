@@ -20,25 +20,49 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
+import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
+import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
-import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.ProjectSpaceIO;
+import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import de.unijena.bioinf.projectspace.SiriusProjectSpace;
+import de.unijena.bioinf.projectspace.SiriusProjectSpaceManager;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
+import java.util.EnumSet;
 
 import static de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent.Type.*;
 
 public class SiriusProjectSpaceProviderImpl extends ProjectSpaceManagerProvider<SiriusProjectSpaceManager, SiriusProjectSpaceImpl> {
 
-    public SiriusProjectSpaceProviderImpl(ProjectSpaceManagerFactory<SiriusProjectSpaceManager> projectSpaceManagerFactory, EventService<?> eventService) {
-        super(projectSpaceManagerFactory, eventService);
+    public SiriusProjectSpaceProviderImpl(@NotNull ProjectSpaceManagerFactory<SiriusProjectSpaceManager> projectSpaceManagerFactory, @NotNull EventService<?> eventService, @NotNull ComputeService computeService) {
+        super(projectSpaceManagerFactory, eventService, computeService);
     }
 
-    public Optional<SiriusProjectSpaceImpl> getProject(String projectId) {
-        return getProjectSpaceManager(projectId).map(ps -> new SiriusProjectSpaceImpl(projectId, ps));
+    @Override
+    protected void validateExistingLocation(Path location) throws IOException {
+        if (!(Files.isDirectory(location) && FileUtils.listAndClose(location, s -> s.findAny().isEmpty())))
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Location '" + location.toAbsolutePath() +
+                    "' already exists and is not an empty directory. Cannot create new project space here.");
+    }
+
+    @Override
+    public ProjectInfo createTempProject(@NotNull EnumSet<ProjectInfo.OptField> optFields) {
+        Path p = FileUtils.createTmpProjectSpaceLocation(null);
+        String projectId = p.getFileName().toString();
+        return createProject(projectId, p.toAbsolutePath().toString(), optFields, true);
+    }
+
+    @Override
+    protected SiriusProjectSpaceImpl createProject(String projectId, SiriusProjectSpaceManager managerToWrap) {
+        return new SiriusProjectSpaceImpl(projectId, managerToWrap, computeService::isInstanceComputing);
     }
 
     @Override

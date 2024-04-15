@@ -23,6 +23,8 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintData;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.Quantification;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
@@ -68,16 +70,14 @@ import java.util.stream.Collectors;
  * e.g. iteration on Instance level.
  * maybe some type of caching?
  */
-public class SiriusProjectSpaceManager implements ProjectSpaceManager {
+public class SiriusProjectSpaceManager extends AbstractProjectSpaceManager {
     private final SiriusProjectSpace space;
     private final Function<Ms2Experiment, String> nameFormatter;
     private final BiFunction<Integer, String, String> namingScheme;
-    protected final InstanceFactory<?> instFac;
 
 
-    public SiriusProjectSpaceManager(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<?> factory, @Nullable Function<Ms2Experiment, String> formatter) {
+    public SiriusProjectSpaceManager(@NotNull SiriusProjectSpace space, @Nullable Function<Ms2Experiment, String> formatter) {
         this.space = space;
-        this.instFac = factory;
         this.nameFormatter = space.getProjectSpaceProperty(FilenameFormatter.PSProperty.class)
                 .map(p -> (Function<Ms2Experiment, String>) new StandardMSFilenameFormatter(p.formatExpression))
                 .orElseGet(() -> {
@@ -96,29 +96,68 @@ public class SiriusProjectSpaceManager implements ProjectSpaceManager {
 
     @Override
     @NotNull
-    public Instance importInstanceWithUniqueId(Ms2Experiment inputExperiment) {
+    public SiriusProjectSpaceInstance importInstanceWithUniqueId(Ms2Experiment inputExperiment) {
+        return importInstanceWithUniqueId(inputExperiment, true);
+    }
+    public SiriusProjectSpaceInstance importInstanceWithUniqueId(Ms2Experiment inputExperiment, boolean importLcMsInfo) {
         final String name = nameFormatter.apply(inputExperiment);
         final CompoundContainer container = getProjectSpaceImpl().newCompoundWithUniqueId(name, (idx) -> namingScheme.apply(idx, name), inputExperiment).orElseThrow(() -> new RuntimeException("Could not create an project space ID for the Instance"));
-        return instFac.create(container, this);
+
+        final SiriusProjectSpaceInstance inst = new SiriusProjectSpaceInstance(container, this);
+        {
+            // store LC/MS data into project space
+            // might change in future. Its important that the trace is written after
+            // importing from mzml/mzxml
+            if (importLcMsInfo && inputExperiment != null) {
+                LCMSPeakInformation lcmsInfo = inputExperiment.getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
+                if (lcmsInfo.isEmpty()) {
+                    // check if there are quantification information
+                    // grab them and remove them
+                    final Quantification quant = inputExperiment.getAnnotationOrNull(Quantification.class);
+                    if (quant != null) {
+                        lcmsInfo = new LCMSPeakInformation(quant.asQuantificationTable());
+                        inputExperiment.removeAnnotation(Quantification.class);
+                    }
+                }
+
+                if (!lcmsInfo.isEmpty()) {
+                    // store this information into the compound container instead
+                    final CompoundContainer compoundContainer = inst.loadCompoundContainer(LCMSPeakInformation.class);
+                    final Optional<LCMSPeakInformation> annotation = compoundContainer.getAnnotation(LCMSPeakInformation.class);
+                    if (annotation.orElseGet(LCMSPeakInformation::empty).isEmpty()) {
+                        compoundContainer.setAnnotation(LCMSPeakInformation.class, lcmsInfo);
+                        inst.updateCompound(compoundContainer, LCMSPeakInformation.class);
+                    }
+                }
+                // remove annotation from experiment
+                {
+                    inputExperiment.removeAnnotation(LCMSPeakInformation.class);
+                    inputExperiment.removeAnnotation(Quantification.class);
+                    inst.updateExperiment();
+                }
+            }
+        }
+
+        return inst;
     }
 
     @SafeVarargs
-    private Instance newInstanceFromCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {
+    private SiriusProjectSpaceInstance newInstanceFromCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {
         try {
             CompoundContainer c = getProjectSpaceImpl().getCompound(id, components);
-            return instFac.create(c, this);
+            return new SiriusProjectSpaceInstance(c, this);
         } catch (IOException e) {
             LoggerFactory.getLogger(getClass()).error("Could not create read Input Experiment from Project Space.");
             throw new RuntimeException("Could not create read Input Experiment from Project Space.", e);
         }
     }
 
-    private static final ReferenceMap<CompoundContainerId, Instance> instanceCache = new ReferenceMap<>(AbstractReferenceMap.ReferenceStrength.HARD, AbstractReferenceMap.ReferenceStrength.WEAK, true);
+    private static final ReferenceMap<CompoundContainerId, SiriusProjectSpaceInstance> instanceCache = new ReferenceMap<>(AbstractReferenceMap.ReferenceStrength.HARD, AbstractReferenceMap.ReferenceStrength.WEAK, true);
 
     @SafeVarargs
     @Deprecated
-    public final Instance getInstanceFromCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {
-        Instance instance;
+    public final SiriusProjectSpaceInstance getInstanceFromCompound(CompoundContainerId id, Class<? extends DataAnnotation>... components) {
+        SiriusProjectSpaceInstance instance;
         synchronized (instanceCache) {
             instance = instanceCache.computeIfAbsent(id, i -> newInstanceFromCompound(id));
         }
@@ -127,12 +166,19 @@ public class SiriusProjectSpaceManager implements ProjectSpaceManager {
     }
 
     @Override
-    public final @NotNull Optional<Instance> findInstance(String id) {
+    public final @NotNull Optional<SiriusProjectSpaceInstance> findInstance(Object id) {
+        if (id instanceof String strId)
+            return findInstance(strId);
+        return findInstance(id.toString());
+
+    }
+
+    public final @NotNull Optional<SiriusProjectSpaceInstance> findInstance(String id) {
         return getProjectSpaceImpl().findCompound(id).map(this::getInstanceFromCompound);
     }
 
-    private List<Instance> getInstancesFromCompounds(Collection<CompoundContainerId> ids, Class<? extends DataAnnotation>... components) {
-        List<Instance> instances;
+    private List<SiriusProjectSpaceInstance> getInstancesFromCompounds(Collection<CompoundContainerId> ids, Class<? extends DataAnnotation>... components) {
+        List<SiriusProjectSpaceInstance> instances;
         synchronized (instanceCache) {
             instances = ids.stream().map(id -> instanceCache.computeIfAbsent(id, i -> newInstanceFromCompound(id)))
                     .collect(Collectors.toList());
@@ -153,12 +199,8 @@ public class SiriusProjectSpaceManager implements ProjectSpaceManager {
     }
 
     @Override
-    public void deleteFingerIdData() {
+    public void deleteFingerprintData() {
         deleteProjectSpaceProperty(FingerIdDataProperty.class);
-    }
-
-    @Override
-    public void deleteCanopusData() {
         deleteProjectSpaceProperty(CanopusCfDataProperty.class);
         deleteProjectSpaceProperty(CanopusNpcDataProperty.class);
     }
@@ -237,7 +279,7 @@ public class SiriusProjectSpaceManager implements ProjectSpaceManager {
             public Instance next() {
                 final CompoundContainer c = compoundIt.next();
                 if (c == null) return null;
-                return instFac.create(c, SiriusProjectSpaceManager.this);
+                return new SiriusProjectSpaceInstance(c, SiriusProjectSpaceManager.this);
             }
         };
     }

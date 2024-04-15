@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.msnovelist;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.Tanimoto;
@@ -28,42 +27,30 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.fingerid.*;
-import de.unijena.bioinf.fingerid.blast.MsNovelistFBCandidateFingerprints;
-import de.unijena.bioinf.fingerid.blast.MsNovelistFBCandidates;
-import de.unijena.bioinf.fingerid.blast.TopMsNovelistScore;
-import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.jjobs.Partition;
-import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.ms.rest.model.msnovelist.MsNovelistJobInput;
 import de.unijena.bioinf.ms.rest.model.msnovelist.MsNovelistJobOutput;
 import de.unijena.bioinf.ms.webapi.WebJJob;
-import de.unijena.bioinf.projectspace.FormulaResult;
-import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.FCandidate;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.ProjectSpaceManagers;
 import de.unijena.bioinf.rest.NetUtils;
-import org.apache.commons.math3.util.Pair;
+import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
  * Subtooljob for Novelist candidate prediction
  */
 public class MsNovelistSubToolJob extends InstanceJob {
-
-    public static final List<Class<? extends DataAnnotation>> formulaResultComponentsToClear = List.of(MsNovelistFBCandidates.class, MsNovelistFBCandidateFingerprints.class);
 
     public MsNovelistSubToolJob(JobSubmitter submitter) {
         super(submitter);
@@ -72,18 +59,21 @@ public class MsNovelistSubToolJob extends InstanceJob {
 
     @Override
     public boolean isAlreadyComputed(@NotNull Instance inst) {
-        return inst.loadCompoundContainer().hasResults() && inst.loadFormulaResults(MsNovelistFBCandidates.class).stream().map(SScored::getCandidate).anyMatch(c -> c.hasAnnotation(MsNovelistFBCandidates.class));
+        return inst.hasMsNovelistResult();
     }
 
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
-        List<? extends SScored<FormulaResult, ? extends FormulaScore>> formulaResults =
-                inst.loadFormulaResults(FormulaScoring.class, FTree.class, FingerprintResult.class);
+        final List<FCandidate<?>> inputData = inst.getMsNovelistInput().stream()
+                .filter(c -> c.hasAnnotation(FingerprintResult.class))
+                .filter(c -> c.hasAnnotation(FTree.class))
+                .peek(c -> c.annotate(c.asFingerIdResult()))
+                .toList();
 
         checkForInterruption();
 
-        if (formulaResults == null || formulaResults.isEmpty()) {
-            logInfo("Skipping instance \"" + inst.getExperiment().getName() + "\" because there are no trees computed.");
+        if (inputData.isEmpty()) {
+            logInfo("Skipping instance \"" + inst.getName() + "\" because there are no formula candidates with tree and fingerprint data.");
             return;
         }
 
@@ -92,7 +82,7 @@ public class MsNovelistSubToolJob extends InstanceJob {
         checkForInterruption();
 
         // add CSIClientData to PS if it is not already there
-        NetUtils.tryAndWait(() -> ProjectSpaceManagers.writeFingerIdDataIfMissing(inst.getProjectSpaceManager(), ApplicationCore.WEB_API), this::checkForInterruption);
+        NetUtils.tryAndWait(() -> inst.getProjectSpaceManager().writeFingerIdDataIfMissing(ApplicationCore.WEB_API), this::checkForInterruption);
 
         updateProgress(10);
         checkForInterruption();
@@ -102,20 +92,13 @@ public class MsNovelistSubToolJob extends InstanceJob {
         updateProgress(15);
         checkForInterruption();
 
-        final Map<FormulaResult, FingerIdResult> formulaResultsMap = formulaResults.stream().map(SScored::getCandidate)
-                .filter(res -> res.hasAnnotation(FingerprintResult.class))
-                .collect(Collectors.toMap(res -> res, res -> {
-                    FingerIdResult idr = new FingerIdResult(res.getAnnotationOrThrow(FTree.class));
-                    idr.setAnnotation(FingerprintResult.class, res.getAnnotationOrThrow(FingerprintResult.class));
-                    return idr;
-                }));
 
         updateProgress(20);
         checkForInterruption();
 
         // submit prediction jobs; order of prediction from worker(s) will not matter as we use map
-        Map<FormulaResult, WebJJob<MsNovelistJobInput, ?, MsNovelistJobOutput, ?>> msnJobs =
-                formulaResultsMap.keySet().stream().collect(Collectors.toMap(ir -> ir,
+        Map<FCandidate<?>, WebJJob<MsNovelistJobInput, ?, MsNovelistJobOutput, ?>> msnJobs =
+                inputData.stream().collect(Collectors.toMap(ir -> ir,
                         ir -> buildAndSubmitRemote(ir, specHash)
                 ));
 
@@ -123,20 +106,18 @@ public class MsNovelistSubToolJob extends InstanceJob {
         checkForInterruption();
 
         // collect predictions; order of prediction from worker(s) does not matter as we used map
-        Map<FormulaResult, MsNovelistJobOutput> msnJobResults =
-                msnJobs.entrySet().stream().collect(
-                        Collectors.toMap(
+        Map<FCandidate<?>, MsNovelistJobOutput> msnJobResults =
+                msnJobs.entrySet().stream().collect(Collectors.toMap(
                                 Map.Entry::getKey,
                                 entry -> entry.getValue().takeResult()
-                        ));
+                ));
 
         updateProgress(40);
         checkForInterruption();
-
+        //needed to create bayes net scoring... better solution possible
+        //todo msnovelist does just need a scorer so no need for the predictor if the scring function is initialized manually in MSNovelist job
         final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor)
-                        ApplicationCore.WEB_API.getStructurePredictor(
-                                inst.getExperiment().getAnnotationOrThrow(PredictorTypeAnnotation.class)
-                                        .toPredictors(inst.getExperiment().getPrecursorIonType().getCharge()).iterator().next()),
+                        ApplicationCore.WEB_API.getStructurePredictor(inst.getIonType().getCharge()),
                 this::checkForInterruption);
 
         updateProgress(45);
@@ -145,11 +126,11 @@ public class MsNovelistSubToolJob extends InstanceJob {
         // build scoring jobs
         // order of completion will not matter as we annotate results directly in MsNovelistFingerblastJJob
         List<MsNovelistFingerblastJJob> jobList = new ArrayList<>(Collections.emptyList());
-        for (FormulaResult formRes : msnJobResults.keySet().stream().toList()) {
+        for (FCandidate<?> formRes : msnJobResults.keySet()) {
             final MsNovelistFingerblastJJob job = new MsNovelistFingerblastJJob(
                     csi,
                     ApplicationCore.WEB_API,
-                    formulaResultsMap.get(formRes),
+                    formRes.getAnnotationOrThrow(FingerIdResult.class),
                     msnJobResults.get(formRes).getCandidates());
 
             checkForInterruption();
@@ -167,12 +148,12 @@ public class MsNovelistSubToolJob extends InstanceJob {
         {
             //calculate and annotate tanimoto scores
             List<Pair<ProbabilityFingerprint, FingerprintCandidate>> tanimotoJobs = new ArrayList<>();
-            formulaResultsMap.values().stream()
+            inputData.stream().map(fc -> fc.getAnnotationOrThrow(FingerIdResult.class))
                     .filter(it -> it.hasAnnotation(FingerprintResult.class) && it.hasAnnotation(MsNovelistFingerblastResult.class))
                     .forEach(it -> {
                         final ProbabilityFingerprint fp = it.getPredictedFingerprint();
                         it.getMsNovelistFingerprintCandidates().stream().map(SScored::getCandidate)
-                                .forEach(candidate -> tanimotoJobs.add(Pair.create(fp, candidate)));
+                                .forEach(candidate -> tanimotoJobs.add(Pair.of(fp, candidate)));
                     });
 
             updateProgress(75);
@@ -182,8 +163,8 @@ public class MsNovelistSubToolJob extends InstanceJob {
                     .stream().map(l -> new BasicJJob<Void>(JobType.CPU) {
                         @Override
                         protected Void compute() {
-                            l.forEach(p -> p.getSecond().setTanimoto(
-                                    Tanimoto.nonProbabilisticTanimoto(p.getSecond().getFingerprint(), p.getFirst())));
+                            l.forEach(p -> p.second().setTanimoto(
+                                    Tanimoto.nonProbabilisticTanimoto(p.second().getFingerprint(), p.first())));
                             return null;
                         }
                     }).collect(Collectors.toList());
@@ -196,33 +177,16 @@ public class MsNovelistSubToolJob extends InstanceJob {
             checkForInterruption();
         }
 
-        for (final FormulaResult formRes : formulaResultsMap.keySet()) {
+        inst.saveMsNovelistResult(inputData);
 
-            final FingerIdResult idResult = formulaResultsMap.get(formRes);
-            // annotation check: only FingerIdResults that hold valid MSNovelist results are annotated in
-            // MsNovelistFingerblastJJob
-            if (idResult.hasAnnotation(MsNovelistFingerblastResult.class)) {
-                // annotate result to FormulaResult
-                formRes.setAnnotation(MsNovelistFBCandidates.class,
-                        idResult.getAnnotation(MsNovelistFingerblastResult.class)
-                                .map(MsNovelistFingerblastResult::getCandidates).orElse(null));
-                formRes.setAnnotation(MsNovelistFBCandidateFingerprints.class, idResult.getAnnotation(MsNovelistFingerblastResult.class)
-                        .map(MsNovelistFingerblastResult::getCandidateFingerprints).orElse(null));
-                formRes.getAnnotationOrThrow(FormulaScoring.class)
-                        .setAnnotation(TopMsNovelistScore.class, idResult.getAnnotation(MsNovelistFingerblastResult.class)
-                                .map(MsNovelistFingerblastResult::getTopHitScore).orElse(null));
-                // write results to project space
-                inst.updateFormulaResult(formRes, FormulaScoring.class, MsNovelistFBCandidates.class, MsNovelistFBCandidateFingerprints.class);
-            }
-        }
 
         updateProgress(97);
     }
 
-    private WebJJob<MsNovelistJobInput, ?, MsNovelistJobOutput, ?> buildAndSubmitRemote(@NotNull final FormulaResult ir, int specHash) {
+    private WebJJob<MsNovelistJobInput, ?, MsNovelistJobOutput, ?> buildAndSubmitRemote(@NotNull final FCandidate<?> ir, int specHash) {
         try {
             return ApplicationCore.WEB_API.submitMsNovelistJob(
-                    ir.getId().getMolecularFormula(), ir.getId().getIonType().getCharge(),
+                    ir.getMolecularFormula(), ir.getAdduct().getCharge(),
                     ir.getAnnotationOrThrow(FingerprintResult.class).fingerprint, specHash
             );
         } catch (IOException e) {

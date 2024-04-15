@@ -80,7 +80,7 @@ public class MgfExporterWorkflow implements Workflow {
                 ps.forEach(i -> {
                     size.incrementAndGet();
                     if (useFeatureId.get())
-                        i.getProvidedFeatureId().ifPresentOrElse(ids::add, (() -> useFeatureId.set(false)));
+                        i.getExternalFeatureId().ifPresentOrElse(ids::add, (() -> useFeatureId.set(false)));
                 });
 
                 useFeatureId.set(ids.size() >= size.get());
@@ -102,7 +102,6 @@ public class MgfExporterWorkflow implements Workflow {
                         LoggerFactory.getLogger(getClass()).warn("Invalid instance '" + inst + "'. Skipping this instance!", e);
                     } finally {
                         inst.clearCompoundCache();
-                        inst.clearFormulaResultsCache();
                     }
                 }
             }
@@ -121,9 +120,9 @@ public class MgfExporterWorkflow implements Workflow {
     }
 
     private String extractFid(Instance i) {
-        return useFeatureId.get() && i.getProvidedFeatureId().map(StringUtils::isNumeric).orElse(false)
-                ? i.getProvidedFeatureId().get()
-                : i.getLongId().map(String::valueOf).orElseGet(i::getId);
+        return useFeatureId.get() && i.getExternalFeatureId().map(StringUtils::isNumeric).orElse(false)
+                ? i.getExternalFeatureId().get()
+                : i.getId();
     }
 
     private void writeQuantifiactionTable(Iterable<? extends Instance> ps, Path path) throws IOException {
@@ -177,8 +176,7 @@ public class MgfExporterWorkflow implements Workflow {
     }
 
     private Optional<QuantificationTable> getQuantificationTable(Instance i, Ms2Experiment experiment) {
-        LCMSPeakInformation lcms = i.loadCompoundContainer(LCMSPeakInformation.class)
-                .getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
+        LCMSPeakInformation lcms = i.getLCMSPeakInformation();
         if (lcms.isEmpty()) {
             lcms = experiment.getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
         }

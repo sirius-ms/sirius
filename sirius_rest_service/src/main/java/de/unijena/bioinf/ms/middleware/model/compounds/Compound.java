@@ -24,9 +24,7 @@ import de.unijena.bioinf.ms.middleware.model.annotations.ConsensusAnnotationsCSI
 import de.unijena.bioinf.ms.middleware.model.annotations.ConsensusAnnotationsDeNovo;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -34,6 +32,8 @@ import java.util.List;
 @Getter
 @Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class Compound {
     @Schema(enumAsRef = true, name = "CompoundOptField", nullable = true)
     public enum OptField {none, consensusAnnotations, consensusAnnotationsDeNovo, customAnnotations}

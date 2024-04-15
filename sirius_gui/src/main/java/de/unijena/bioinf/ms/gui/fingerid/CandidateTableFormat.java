@@ -33,7 +33,7 @@ public class CandidateTableFormat extends SiriusTableFormat<FingerprintCandidate
     }
 
     protected static String[] columns = new String[]{
-//            "Rank",
+            "Rank",
             "Name",
             "SMILES",
             "Molecular Formula",
@@ -63,7 +63,7 @@ public class CandidateTableFormat extends SiriusTableFormat<FingerprintCandidate
 
     public Object getColumnValue(FingerprintCandidateBean result, int column) {
         int col = 0;
-//        if (column == col++) return result.rank; //todo nightsky: add rank?
+        if (column == col++) return result.getCandidate().getRank();
         if (column == col++) return result.getName() != null ? result.getName() : "";
         if (column == col++) return result.getCandidate().getSmiles();
         if (column == col++) return result.getMolecularFormula();

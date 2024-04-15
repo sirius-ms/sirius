@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.gui.fingerid;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.nightsky.sdk.model.FeatureAnnotations;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Mode;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
@@ -30,6 +31,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 public class ExpansiveSearchLabel extends JLabel implements ActiveElementChangedListener<FingerprintCandidateBean, InstanceBean> {
 
@@ -49,7 +51,7 @@ public class ExpansiveSearchLabel extends JLabel implements ActiveElementChanged
         setText(null);
         setVisible(false);
         if (elementsParent != null) {
-            Mode mode = elementsParent.getSourceFeature(Collections.emptyList()).getTopAnnotations().getExpansiveSearchState();
+            Mode mode = Optional.ofNullable(elementsParent.getSourceFeature(Collections.emptyList()).getTopAnnotations()).map(FeatureAnnotations::getExpansiveSearchState).orElse(null);
             if ((mode == Mode.EXACT) || (mode == Mode.APPROXIMATE)){
                 setText("<html>" +
                         "More confident molecular structure hits from <b>PubChem</b> were added by expansive search in <b>" + mode.getValue().toLowerCase() + "</b> confidence mode." +
