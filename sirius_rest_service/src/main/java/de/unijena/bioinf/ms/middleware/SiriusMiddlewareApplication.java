@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.Workspace;
+import de.unijena.bioinf.ms.frontend.splash.Splash;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.middleware.MiddlewareAppOptions;
@@ -52,17 +53,20 @@ import org.springframework.boot.web.context.WebServerPortFileWriter;
 import org.springframework.context.ApplicationContext;
 import picocli.CommandLine;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Properties;
 
 @SpringBootApplication
 @OpenAPIDefinition
 @Slf4j
 public class SiriusMiddlewareApplication extends SiriusCLIApplication implements CommandLineRunner, DisposableBean {
     private static MiddlewareAppOptions<?> middlewareOpts;
-    private static CLIRootOptions rootOptions ;
+    private static CLIRootOptions rootOptions;
 
     private final ApplicationContext appContext;
 
@@ -94,17 +98,39 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                         .anyMatch(cmd -> cmd.equalsIgnoreCase(it))
                         || it.equalsIgnoreCase("-h") || it.equalsIgnoreCase("--help") // just to get Middleware help.
         )) {
-
             try {
+
                 System.setProperty(APP_TYPE_PROPERTY_KEY, "SERVICE");
 
 
                 ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
                 PropertyManager.setProperty("de.unijena.bioinf.sirius.BackgroundRuns.autoremove", "false");
 
+
+                Splash splashScreen = null;
+                if (Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("--gui"))) {
+                    Path propsFile = Workspace.siriusPropsFile;
+                    //override VM defaults from OS
+                    if (!System.getProperties().containsKey("sun.java2d.uiScale"))
+                        System.setProperty("sun.java2d.uiScale", "1");
+                    //override with stored value if available
+                    if (Files.exists(propsFile)) {
+                        Properties props = new Properties();
+                        try (BufferedReader r = Files.newBufferedReader(propsFile)) {
+                            props.load(r);
+                            if (props.containsKey("sun.java2d.uiScale"))
+                                System.setProperty("sun.java2d.uiScale", props.getProperty("sun.java2d.uiScale"));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    splashScreen = new Splash(true);
+                }
+
+
                 //parse args before spring app starts so we can manipulate app behaviour via command line
                 //Init without space factory, will be added later when spring is running.
-                middlewareOpts = new MiddlewareAppOptions<>();
+                middlewareOpts = new MiddlewareAppOptions<>(splashScreen);
                 rootOptions = new CLIRootOptions(new DefaultParameterConfigLoader(), null);
                 measureTime("init Run");
                 RUN = new Run(new WorkflowBuilder(rootOptions, List.of(middlewareOpts)));
