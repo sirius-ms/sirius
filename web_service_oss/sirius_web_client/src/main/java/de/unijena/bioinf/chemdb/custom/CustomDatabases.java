@@ -65,8 +65,6 @@ public class CustomDatabases {
                 try {
                     NoSQLCustomDatabase<?, ?> db = new NoSQLCustomDatabase<>(new ChemicalNitriteDatabase(Path.of(location), version));
                     NOSQL_LIBRARIES.put(location, db);
-                    db.readSettings();
-                    CustomDataSources.addCustomSourceIfAbsent(db.name(), db.displayName(), db.storageLocation());
                 } catch (Exception e) {
                     throw new IOException(e);
                 }
@@ -186,10 +184,9 @@ public class CustomDatabases {
             db = getNoSQLibrary(location, version);
         } else {
             db = new BlobCustomDatabase<>(CompressibleBlobStorage.of(BlobStorages.openDefault(PROPERTY_PREFIX, location)), version);
-            db.readSettings();
-            CustomDataSources.addCustomSourceIfAbsent(db.name(), db.displayName(), db.storageLocation());
         }
-
+        if (CustomDataSources.addCustomSourceIfAbsent(db.name(), db.displayName(), db.storageLocation()) != null)
+            db.readSettings(); //only read if db was newly opened.
         return db;
     }
 
