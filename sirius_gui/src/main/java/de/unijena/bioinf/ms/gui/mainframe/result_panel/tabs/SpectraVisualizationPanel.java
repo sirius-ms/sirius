@@ -173,6 +173,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 
     private void drawSpectra() {
         try {
+            browser.clear();
             String mode = (String) modesBox.getSelectedItem();
             if (mode == null)
                 return;

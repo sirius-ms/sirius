@@ -183,17 +183,20 @@ public class InstanceBean implements SiriusPCS {
 
     @NotNull
     public AlignedFeature getSourceFeature(@Nullable List<AlignedFeatureOptField> optFields) {
-        //we always load top annotations because it contains mandatory information for the SIRIUS GUI
-        List<AlignedFeatureOptField> of = (optFields != null && !optFields.isEmpty() && !optFields.equals(List.of(AlignedFeatureOptField.NONE))
-                ? Stream.concat(optFields.stream(), Stream.of(AlignedFeatureOptField.TOPANNOTATIONS)).distinct().toList()
-                : List.of(AlignedFeatureOptField.TOPANNOTATIONS));
+        synchronized (this) {
+            //we always load top annotations because it contains mandatory information for the SIRIUS GUI
+            List<AlignedFeatureOptField> of = (optFields != null && !optFields.isEmpty() && !optFields.equals(List.of(AlignedFeatureOptField.NONE))
+                    ? Stream.concat(optFields.stream(), Stream.of(AlignedFeatureOptField.TOPANNOTATIONS)).distinct().toList()
+                    : List.of(AlignedFeatureOptField.TOPANNOTATIONS));
 
-        // we update every time here since we do not know which optional fields are already loaded.
-        if (sourceFeature == null || !of.equals(List.of(AlignedFeatureOptField.TOPANNOTATIONS)))
-            sourceFeature = withIds((pid, fid) ->
-                    getClient().features().getAlignedFeature(pid, fid, of));
+            // we update every time here since we do not know which optional fields are already loaded.
+            if (sourceFeature == null || !of.equals(List.of(AlignedFeatureOptField.TOPANNOTATIONS)))
+                sourceFeature = withIds((pid, fid) ->
+                        getClient().features().getAlignedFeature(pid, fid, of));
 
-        return sourceFeature;
+            return sourceFeature;
+        }
+
     }
 
     public String getFeatureId() {
@@ -349,7 +352,7 @@ public class InstanceBean implements SiriusPCS {
     protected PageSpectralLibraryMatch getSpectralSearchResultsPage(int pageNum, int pageSize) {
         return withIds((pid, fid) -> getClient().features()
                 .getSpectralLibraryMatchesPagedWithResponseSpec(pid, fid, pageNum, pageSize, null,
-                        List.of(SpectralLibraryMatchOptField.REFERENCESPECTRUM)).bodyToMono(PageSpectralLibraryMatch.class).onErrorComplete().block());
+                        List.of(/*SpectralLibraryMatchOptField.REFERENCESPECTRUM*/)).bodyToMono(PageSpectralLibraryMatch.class).onErrorComplete().block());
     }
 
     public MutableMs2Experiment asMs2Experiment() {

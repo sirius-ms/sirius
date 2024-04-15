@@ -28,6 +28,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * SpectralLibraryMatch
  */
 @JsonPropertyOrder({
+  SpectralLibraryMatch.JSON_PROPERTY_SPEC_MATCH_ID,
+  SpectralLibraryMatch.JSON_PROPERTY_RANK,
   SpectralLibraryMatch.JSON_PROPERTY_SIMILARITY,
   SpectralLibraryMatch.JSON_PROPERTY_SHARED_PEAKS,
   SpectralLibraryMatch.JSON_PROPERTY_QUERY_SPECTRUM_INDEX,
@@ -44,6 +46,12 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class SpectralLibraryMatch {
+  public static final String JSON_PROPERTY_SPEC_MATCH_ID = "specMatchId";
+  private String specMatchId;
+
+  public static final String JSON_PROPERTY_RANK = "rank";
+  private Integer rank;
+
   public static final String JSON_PROPERTY_SIMILARITY = "similarity";
   private Double similarity;
 
@@ -85,6 +93,58 @@ public class SpectralLibraryMatch {
 
   public SpectralLibraryMatch() {
   }
+
+  public SpectralLibraryMatch specMatchId(String specMatchId) {
+    
+    this.specMatchId = specMatchId;
+    return this;
+  }
+
+   /**
+   * Get specMatchId
+   * @return specMatchId
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_SPEC_MATCH_ID)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getSpecMatchId() {
+    return specMatchId;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SPEC_MATCH_ID)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setSpecMatchId(String specMatchId) {
+    this.specMatchId = specMatchId;
+  }
+
+
+  public SpectralLibraryMatch rank(Integer rank) {
+    
+    this.rank = rank;
+    return this;
+  }
+
+   /**
+   * Get rank
+   * @return rank
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_RANK)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Integer getRank() {
+    return rank;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_RANK)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setRank(Integer rank) {
+    this.rank = rank;
+  }
+
 
   public SpectralLibraryMatch similarity(Double similarity) {
     
@@ -432,7 +492,9 @@ public class SpectralLibraryMatch {
       return false;
     }
     SpectralLibraryMatch spectralLibraryMatch = (SpectralLibraryMatch) o;
-    return Objects.equals(this.similarity, spectralLibraryMatch.similarity) &&
+    return Objects.equals(this.specMatchId, spectralLibraryMatch.specMatchId) &&
+        Objects.equals(this.rank, spectralLibraryMatch.rank) &&
+        Objects.equals(this.similarity, spectralLibraryMatch.similarity) &&
         Objects.equals(this.sharedPeaks, spectralLibraryMatch.sharedPeaks) &&
         Objects.equals(this.querySpectrumIndex, spectralLibraryMatch.querySpectrumIndex) &&
         Objects.equals(this.dbName, spectralLibraryMatch.dbName) &&
@@ -449,13 +511,15 @@ public class SpectralLibraryMatch {
 
   @Override
   public int hashCode() {
-    return Objects.hash(similarity, sharedPeaks, querySpectrumIndex, dbName, dbId, uuid, splash, molecularFormula, adduct, exactMass, smiles, candidateInChiKey, referenceSpectrum);
+    return Objects.hash(specMatchId, rank, similarity, sharedPeaks, querySpectrumIndex, dbName, dbId, uuid, splash, molecularFormula, adduct, exactMass, smiles, candidateInChiKey, referenceSpectrum);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class SpectralLibraryMatch {\n");
+    sb.append("    specMatchId: ").append(toIndentedString(specMatchId)).append("\n");
+    sb.append("    rank: ").append(toIndentedString(rank)).append("\n");
     sb.append("    similarity: ").append(toIndentedString(similarity)).append("\n");
     sb.append("    sharedPeaks: ").append(toIndentedString(sharedPeaks)).append("\n");
     sb.append("    querySpectrumIndex: ").append(toIndentedString(querySpectrumIndex)).append("\n");

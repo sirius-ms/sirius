@@ -2531,6 +2531,68 @@
         }
       }
     },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/{matchId}": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "List of spectral library matches for the given \u0027alignedFeatureId\u0027.",
+        "description": "List of spectral library matches for the given \u0027alignedFeatureId\u0027.",
+        "operationId": "getSpectralLibraryMatch",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "feature (aligned over runs) the structure candidates belong to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "matchId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/SpectralLibraryMatchOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Spectral library matches of this feature (aligned over runs).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpectralLibraryMatch"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/page": {
       "get": {
         "tags": [
@@ -6421,6 +6483,13 @@
         ],
         "type": "object",
         "properties": {
+          "specMatchId": {
+            "type": "string"
+          },
+          "rank": {
+            "type": "integer",
+            "format": "int32"
+          },
           "similarity": {
             "type": "number",
             "format": "double"

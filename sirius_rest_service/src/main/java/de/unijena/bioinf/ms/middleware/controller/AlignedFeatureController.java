@@ -265,6 +265,38 @@ public class AlignedFeatureController {
     }
 
     /**
+     * List of spectral library matches for the given 'alignedFeatureId'.
+     *
+     * @param projectId        project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @return Spectral library matches of this feature (aligned over runs).
+     */
+    @GetMapping(value = "/{alignedFeatureId}/spectral-library-matches/{matchId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public SpectralLibraryMatch getSpectralLibraryMatch(
+            @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String matchId,
+            @RequestParam(defaultValue = "") EnumSet<SpectralLibraryMatch.OptField> optFields
+    ) {
+        SpectralLibraryMatch match = projectsProvider.getProjectOrThrow(projectId)
+                .findLibraryMatchesByFeatureIdAndMatchId(alignedFeatureId, matchId);
+
+
+        if (optFields.contains(SpectralLibraryMatch.OptField.referenceSpectrum))
+           CustomDataSources.getSourceFromNameOpt(match.getDbName()).ifPresentOrElse(
+                    db -> {
+                        try {
+                            Ms2ReferenceSpectrum spec = chemDbService.db().getReferenceSpectrum(db, match.getUuid(), true);
+                            match.setReferenceSpectrum(Spectrums.createMs2ReferenceSpectrum(spec));
+
+
+                        } catch (ChemicalDatabaseException e) {
+                            LoggerFactory.getLogger(getClass()).error("Could not load Spectrum: " + match.getUuid(), e);
+                        }
+                    }, () -> LoggerFactory.getLogger(getClass()).warn("Could not load Spectrum! Custom database not available: " + match.getDbName())
+            );
+        return match;
+    }
+
+    /**
      * Mass Spec data (input data) for the given 'alignedFeatureId' .
      *
      * @param projectId        project-space to read from.
