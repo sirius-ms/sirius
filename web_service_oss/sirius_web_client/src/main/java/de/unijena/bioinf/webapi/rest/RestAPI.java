@@ -36,6 +36,7 @@ import de.unijena.bioinf.auth.LoginException;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.FilteredChemicalDB;
 import de.unijena.bioinf.chemdb.RESTDatabase;
+import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.confidence_score.svm.TrainedSVM;
 import de.unijena.bioinf.fingerid.CanopusWebResultConverter;
 import de.unijena.bioinf.fingerid.CovtreeWebResultConverter;
@@ -88,6 +89,9 @@ import java.net.URI;
 import java.util.*;
 import java.util.function.Supplier;
 
+import static de.unijena.bioinf.chemdb.custom.CustomDataSources.getWebDatabaseCacheDirectory;
+import static de.unijena.bioinf.chemdb.custom.CustomDataSources.getWebDatabaseCacheStorage;
+
 /**
  * Frontend WebAPI class, that represents the client to our backend rest api
  */
@@ -107,6 +111,8 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
     private final CanopusClient canopusClient;
 
     private Subscription activeSubscription;
+
+    private WebWithCustomDatabase chemDb;
 
     public RestAPI(@Nullable AuthService authService, @NotNull AccountClient accountClient, @NotNull InfoClient infoClient, JobsClient jobsClient, @NotNull ChemDBClient chemDBClient, @NotNull FingerIdClient fingerIdClient, @NotNull CanopusClient canopusClient) {
         super(authService);
@@ -148,17 +154,18 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
     }
 
     @Override
-    public void changeActiveSubscription(@Nullable Subscription activeSubscription) {
+    public synchronized void changeActiveSubscription(@Nullable Subscription activeSubscription) {
         this.activeSubscription = activeSubscription;
         changeHost(this.activeSubscription != null ? () -> URI.create(this.activeSubscription.getServiceUrl()) : () -> null);
     }
 
-    public Subscription getActiveSubscription() {
+    public synchronized Subscription getActiveSubscription() {
         return activeSubscription;
     }
 
     @Override
-    public void changeHost(Supplier<URI> hostSupplier) {
+    public synchronized void changeHost(Supplier<URI> hostSupplier) {
+        chemDb = null;
         this.serverInfoClient.setServerUrl(hostSupplier);
         this.jobsClient.setServerUrl(hostSupplier);
         this.chemDBClient.setServerUrl(hostSupplier);
@@ -183,6 +190,13 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
     @NotNull
     public VersionsInfo getVersionInfo(boolean updateInfo) throws IOException {
         return ProxyManager.applyClient((c) -> serverInfoClient.getVersionInfo(c, updateInfo));
+    }
+
+    @Override
+    public synchronized WebWithCustomDatabase getChemDB() throws IOException {
+        if (chemDb == null)
+            chemDb =  new WebWithCustomDatabase(this, getWebDatabaseCacheDirectory(), getWebDatabaseCacheStorage(), getCDKChemDBFingerprintVersion());
+        return chemDb;
     }
 
     @Override

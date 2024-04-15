@@ -65,6 +65,8 @@ public class CustomDatabases {
                 try {
                     NoSQLCustomDatabase<?, ?> db = new NoSQLCustomDatabase<>(new ChemicalNitriteDatabase(Path.of(location), version));
                     NOSQL_LIBRARIES.put(location, db);
+                    db.readSettings();
+                    CustomDataSources.addCustomSourceIfAbsent(db.name(), db.displayName(), db.storageLocation());
                 } catch (Exception e) {
                     throw new IOException(e);
                 }
@@ -109,8 +111,12 @@ public class CustomDatabases {
 
     @NotNull
     public static CustomDatabase getCustomDatabaseByPathOrThrow(@NotNull Path dbDir, CdkFingerprintVersion version) {
+        return getCustomDatabaseByPathOrThrow(dbDir, true, version);
+    }
+    @NotNull
+    public static CustomDatabase getCustomDatabaseByPathOrThrow(@NotNull Path dbDir, boolean up2date, CdkFingerprintVersion version) {
         try {
-            return open(dbDir.toAbsolutePath().toString(), true, version);
+            return open(dbDir.toAbsolutePath().toString(), up2date, version);
         } catch (IOException e) {
             throw new RuntimeException("Could not load DB from path: " + dbDir, e);
         }
@@ -119,6 +125,9 @@ public class CustomDatabases {
     @NotNull
     public static CustomDatabase getCustomDatabaseBySource(@NotNull CustomDataSources.CustomSource db, CdkFingerprintVersion version) {
         return getCustomDatabaseByPathOrThrow(Path.of(db.location()), version);
+    }
+    public static CustomDatabase getCustomDatabaseBySource(@NotNull CustomDataSources.CustomSource db, boolean up2date, CdkFingerprintVersion version) {
+        return getCustomDatabaseByPathOrThrow(Path.of(db.location()), up2date, version);
     }
 
     @NotNull
@@ -177,9 +186,10 @@ public class CustomDatabases {
             db = getNoSQLibrary(location, version);
         } else {
             db = new BlobCustomDatabase<>(CompressibleBlobStorage.of(BlobStorages.openDefault(PROPERTY_PREFIX, location)), version);
+            db.readSettings();
+            CustomDataSources.addCustomSourceIfAbsent(db.name(), db.displayName(), db.storageLocation());
         }
-        db.readSettings();
-        CustomDataSources.addCustomSourceIfAbsent(db.name(), db.displayName(), db.storageLocation());
+
         return db;
     }
 

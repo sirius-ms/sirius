@@ -310,7 +310,7 @@ public class Zodiac {
 
     // TODO: Kaidu: PLEASE change this. It is soo annoying to do these kind of workarounds.
     private String getUniqueExperimentId(Ms2Experiment experiment) {
-        return experiment.getSource().toString() + "_" + experiment.getName() + "_" + Objects.hashCode(experiment);
+        return experiment.getName() + "_" + Objects.hashCode(experiment); //hash code should be unique. name just for readability
     }
 
     private Map<MolecularFormula, FTree> createIdentificationResultMap(List<FTree> result) {

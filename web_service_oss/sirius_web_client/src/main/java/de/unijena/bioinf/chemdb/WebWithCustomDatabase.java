@@ -22,6 +22,7 @@ package de.unijena.bioinf.chemdb;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.chemdb.custom.CustomDatabase;
@@ -60,11 +61,13 @@ public class WebWithCustomDatabase {
     protected BlobStorage restCache;
 
     protected final WebAPI<?> api;
+    protected final CdkFingerprintVersion fp; //todo this is ugly, we should remove this from teh database creation
 
-    public WebWithCustomDatabase(WebAPI<?> api, Path dir, BlobStorage dbCache) {
+    public WebWithCustomDatabase(WebAPI<?> api, Path dir, BlobStorage dbCache, CdkFingerprintVersion fp) {
         this.api = api;
         this.directory = dir;
         this.restCache = dbCache;
+        this.fp = fp;
     }
 
     public void checkCache() throws IOException {
@@ -177,17 +180,22 @@ public class WebWithCustomDatabase {
         return lookupSpectra(precursorMz, deviation, false, dbs);
     }
 
-    public List<Ms2ReferenceSpectrum> lookupSpectra(double precursorMz, Deviation deviation, boolean withData, Collection<CustomDataSources.Source> dbs) throws ChemicalDatabaseException {
-        //todo spectlib: add remote db support
+    public Stream<Ms2ReferenceSpectrum> lookupSpectraStr(double precursorMz, Deviation deviation, Collection<CustomDataSources.Source> dbs) throws ChemicalDatabaseException {
+        return lookupSpectraStr(precursorMz, deviation, false, dbs);
+    }
+
+    public Stream<Ms2ReferenceSpectrum> lookupSpectraStr(double precursorMz, Deviation deviation, boolean withData, Collection<CustomDataSources.Source> dbs) throws ChemicalDatabaseException {
         return extractReqCustomSpectraDBs(dbs).stream().flatMap(speclib -> {
             try {
                 return StreamSupport.stream(speclib.lookupSpectra(precursorMz, deviation, withData).spliterator(), false);
             } catch (ChemicalDatabaseException e) {
                 throw new RuntimeException(e);
             }
-
-        }).toList();
-
+        });
+    }
+    public List<Ms2ReferenceSpectrum> lookupSpectra(double precursorMz, Deviation deviation, boolean withData, Collection<CustomDataSources.Source> dbs) throws ChemicalDatabaseException {
+        //todo spectlib: add remote db support
+        return lookupSpectraStr(precursorMz, deviation, withData, dbs).toList();
     }
 
     public List<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d, Collection<CustomDataSources.Source> dbs) throws ChemicalDatabaseException {
@@ -264,11 +272,7 @@ public class WebWithCustomDatabase {
     private CustomDatabase asCustomDB(CustomDataSources.Source db) {
         if (db.noCustomSource())
             throw new IllegalArgumentException("Requested DB is not a custom DB!");
-        try {
-            return CustomDatabases.getCustomDatabaseBySource((CustomDataSources.CustomSource) db, api.getCDKChemDBFingerprintVersion());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return CustomDatabases.getCustomDatabaseBySource((CustomDataSources.CustomSource) db, false, fp);
     }
 
 

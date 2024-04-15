@@ -30,9 +30,11 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrumDelegate;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
-import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
-import de.unijena.bionf.spectral_alignment.*;
+import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
+import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
+import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
+import de.unijena.bionf.spectral_alignment.SpectralMatchMasterJJob;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Rule;
 import org.junit.Test;
@@ -44,8 +46,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
 
 public class SpectralAlignmentJJobTest {
 
@@ -91,10 +91,9 @@ public class SpectralAlignmentJJobTest {
         assertNotEquals(cq1, cq2);
         assertNotEquals(r1, r2);
 
-        WebWithCustomDatabase mockDb = mock(WebWithCustomDatabase.class);
-        when(mockDb.lookupSpectra(anyDouble(), any(), anyBoolean(), any())).thenReturn(Arrays.asList(r1, r2));
+        final List<Ms2ReferenceSpectrum> references = Arrays.asList(r1, r2);
 
-        List<SpectralMatchMasterJJob> jobs = job.getAlignmentJJobs(utils, Arrays.asList(cq1, cq2), List.of(), mockDb);
+        List<SpectralMatchMasterJJob> jobs = job.getAlignmentJJobs(utils, Arrays.asList(cq1, cq2), references);
 
         SpectralMatchMasterJJob j1 = jobs.get(0);
         SpectralMatchMasterJJob j2 = jobs.get(1);
@@ -144,13 +143,15 @@ public class SpectralAlignmentJJobTest {
                 .libraryName(libraryName)
                 .uuid(UUID)
                 .build();
+        List<Ms2ReferenceSpectrum> refs = List.of(reference);
         CosineQuerySpectrum cosineReference = utils.createQueryWithoutLoss(new Ms2ReferenceSpectrumWrapper(reference), 3);
+        cosineReference.setIndex(0);
 
         SpectralMatchMasterJJob matchJob = new SpectralMatchMasterJJob(utils, Arrays.asList(Pair.of(cosineQuery, cosineEmptyReference), Pair.of(cosineQuery, cosineReference)));
         matchJob.setClearInput(false);
         SiriusJobs.getGlobalJobManager().submitJob(matchJob);
 
-        List<SpectralSearchResult.SearchResult> results = job.extractResults(matchJob).toList();
+        List<SpectralSearchResult.SearchResult> results = job.extractResults(matchJob, refs).toList();
 
         assertEquals(1, results.size());
         SpectralSearchResult.SearchResult result = results.get(0);
