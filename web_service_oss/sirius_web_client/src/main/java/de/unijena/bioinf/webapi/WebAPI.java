@@ -151,9 +151,7 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
     //endregion
 
     //region ChemDB
-    default WebWithCustomDatabase getChemDB() {
-        return new WebWithCustomDatabase(this, getWebDatabaseCacheDirectory(), getWebDatabaseCacheStorage());
-    }
+    WebWithCustomDatabase getChemDB() throws IOException;
 
     void consumeStructureDB(long filter, @Nullable BlobStorage cache, IOFunctions.IOConsumer<D> doWithClient) throws IOException;
 
