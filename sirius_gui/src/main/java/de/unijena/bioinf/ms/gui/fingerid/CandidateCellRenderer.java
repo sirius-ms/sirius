@@ -57,7 +57,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             nameFont = tempFont.deriveFont(13f);
             propertyFont = tempFont.deriveFont(16f);
             matchFont = tempFont.deriveFont(18f);
-            rankFont = tempFont.deriveFont(32f);
+            rankFont = tempFont.deriveFont(20f);
         } else {
             nameFont = propertyFont = matchFont = rankFont = Font.getFont(Font.SANS_SERIF);
         }
@@ -77,7 +77,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
 
     private final DoubleListStats stats;
 
-    private final JLabel nameLabel;
+    private final JLabel nameLabel, rankLabel;
 
     protected final CandidateListDetailView candidateJList; //todo remove me to make conversion complete
     private final SiriusGui gui;
@@ -86,14 +86,24 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         this.candidateJList = candidateJList;
         this.stats = stats;
         this.gui = gui;
-        this.structDistanceThreshold=structDistanceThreshold;
+        this.structDistanceThreshold = structDistanceThreshold;
         setLayout(new BorderLayout());
+
+        JPanel north = new JPanel(new BorderLayout());
+        north.setOpaque(false);
+        north.setBorder(new EmptyBorder(1, 1, 1, 1));
 
         nameLabel = new JLabel("");
         nameLabel.setFont(nameFont);
+        rankLabel = new JLabel("");
+        rankLabel.setFont(rankFont);
+
+        north.add(nameLabel, BorderLayout.WEST);
+        north.add(rankLabel, BorderLayout.EAST);
+
         image = new CompoundStructureImage();
         descriptionPanel = new DescriptionPanel();
-        add(nameLabel, BorderLayout.NORTH);
+        add(north, BorderLayout.NORTH);
         add(image, BorderLayout.WEST);
         add(descriptionPanel, BorderLayout.CENTER);
 
@@ -102,20 +112,25 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
     @Override
     public Component getListCellRendererComponent(JList<? extends FingerprintCandidateBean> list, FingerprintCandidateBean value, int index, boolean isSelected, boolean cellHasFocus) {
         if ((value.getName() != null) && (!"null".equalsIgnoreCase(value.getName()))) {
-           nameLabel.setText(value.getName());
-        }else {
+            nameLabel.setText(value.getName());
+        } else {
             nameLabel.setText("");
         }
-        image.molecule = value;
-        if(value != null){
-            if(gui.getProperties().isConfidenceViewMode(ConfidenceDisplayMode.EXACT) || value.getCandidate().getMcesDistToTopHit() == null){
-                image.backgroundColor = value.getScore()>= stats.getMax() ? Colors.LIST_LIGHT_GREEN : (index % 2 == 0 ? EVEN : ODD);
-            }
-            else {
-                if(value.getCandidate().getMcesDistToTopHit()!=null)
-                    image.backgroundColor = value.getCandidate().getMcesDistToTopHit() <= this.structDistanceThreshold ? Colors.LIST_LIGHT_GREEN : (index % 2 == 0 ? EVEN : ODD);
-            }
+
+        if (value.getCandidate().getRank() != null) {
+            rankLabel.setText(value.getCandidate().getRank().toString());
+        } else {
+            rankLabel.setText("");
         }
+
+        image.molecule = value;
+        if (gui.getProperties().isConfidenceViewMode(ConfidenceDisplayMode.EXACT) || value.getCandidate().getMcesDistToTopHit() == null) {
+            image.backgroundColor = value.getScore() >= stats.getMax() ? Colors.LIST_LIGHT_GREEN : (index % 2 == 0 ? EVEN : ODD);
+        } else {
+            if (value.getCandidate().getMcesDistToTopHit() != null)
+                image.backgroundColor = value.getCandidate().getMcesDistToTopHit() <= this.structDistanceThreshold ? Colors.LIST_LIGHT_GREEN : (index % 2 == 0 ? EVEN : ODD);
+        }
+
         setOpaque(true);
         setBackground(image.backgroundColor);
         descriptionPanel.setCompound(value);

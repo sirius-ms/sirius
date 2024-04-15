@@ -32,7 +32,7 @@ import java.util.function.Function;
  * @author Markus Fleischauer
  */
 public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean> {
-    private static final int COL_COUNT = 12;
+    private static final int COL_COUNT = 13;
 
     protected SiriusResultTableFormat(Function<FormulaResultBean,Boolean> isBest) {
         super(isBest);
@@ -51,19 +51,20 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
     @Override
     public String getColumnName(int column) {
         return switch (column) {
-            case 0 -> "Precursor Molecular Formula";
-            case 1 -> "Molecular Formula";
-            case 2 -> "Adduct";
-            case 3 -> "Zodiac Score";
-            case 4 -> "Sirius Score";
-            case 5 -> "Isotope Score";
-            case 6 -> "Tree Score";
-            case 7 -> "Explained Peaks";
-            case 8 -> "Total Explained Intensity";
-            case 9 -> "Median Mass Error (ppm)";
-            case 10 -> "Median Absolute Mass Error (ppm)";
-            case 11 -> "Lipid Class";
-            case 12 -> "Best";
+            case 0 -> "Rank";
+            case 1 -> "Tree Formula";
+            case 2 -> "Molecular Formula";
+            case 3 -> "Adduct";
+            case 4 -> "Zodiac Score";
+            case 5 -> "Sirius Score";
+            case 6 -> "Isotope Score";
+            case 7 -> "Tree Score";
+            case 8 -> "Explained Peaks";
+            case 9 -> "Total Explained Intensity";
+            case 10 -> "Median Mass Error (ppm)";
+            case 11 -> "Median Absolute Mass Error (ppm)";
+            case 12 -> "Lipid Class";
+            case 13 -> "Best";
             default -> throw new IllegalStateException();
         };
     }
@@ -71,19 +72,20 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
     @Override
     public Object getColumnValue(FormulaResultBean result, int column) {
         return switch (column) {
-            case 0 -> result.getPrecursorFormula();
-            case 1 -> result.getMolecularFormula();
-            case 2 -> result.getAdduct();
-            case 3 -> result.getZodiacScore().orElse(Double.NaN);
-            case 4 -> result.getSiriusScore().orElse(Double.NaN);
-            case 5 -> result.getIsotopeScore().orElse(Double.NaN);
-            case 6 -> result.getTreeScore().orElse(Double.NaN);
-            case 7 -> result.getNumOfExplainedPeaks().stream().mapToDouble(v -> (double) v).findFirst().orElse(Double.NaN);
-            case 8 -> result.getTotalExplainedIntensity().orElse(Double.NaN);
-            case 9 -> result.getMedianMassDeviation().map(Deviation::getPpm).orElse(Double.NaN);
-            case 10 -> result.getMedianMassDeviation().map(Deviation::getAbsolute).map(d -> d * 1000d).orElse(Double.NaN);
-            case 11 -> result.getLipidAnnotation().map(LipidAnnotation::getLipidSpecies).orElse(""); //N/A or better empty?
-            case 12 -> isBest.apply(result);
+            case 0 -> result.getRank().orElse(null);
+            case 1 -> result.getMeasuredNeutralFormula();
+            case 2 -> result.getMolecularFormula();
+            case 3 -> result.getAdduct();
+            case 4 -> result.getZodiacScore().orElse(Double.NaN);
+            case 5 -> result.getSiriusScore().orElse(Double.NaN);
+            case 6 -> result.getIsotopeScore().orElse(Double.NaN);
+            case 7 -> result.getTreeScore().orElse(Double.NaN);
+            case 8 -> result.getNumOfExplainedPeaks().stream().mapToDouble(v -> (double) v).findFirst().orElse(Double.NaN);
+            case 9 -> result.getTotalExplainedIntensity().orElse(Double.NaN);
+            case 10 -> result.getMedianMassDeviation().map(Deviation::getPpm).orElse(Double.NaN);
+            case 11 -> result.getMedianMassDeviation().map(Deviation::getAbsolute).map(d -> d * 1000d).orElse(Double.NaN);
+            case 12 -> result.getLipidAnnotation().map(LipidAnnotation::getLipidSpecies).orElse(""); //N/A or better empty?
+            case 13 -> isBest.apply(result);
             default -> throw new IllegalStateException();
         };
     }

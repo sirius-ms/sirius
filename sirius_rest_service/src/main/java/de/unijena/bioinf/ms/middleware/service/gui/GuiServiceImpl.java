@@ -79,11 +79,15 @@ public class GuiServiceImpl implements GuiService {
                 public void windowClosing(WindowEvent e) {
                     boolean closeSirius = false;
                     synchronized (siriusGuiInstances) {
-                        SiriusGui gui = siriusGuiInstances.remove(projectId);
-                        if (gui != null) {
-                            if (siriusGuiInstances.size() == 0)
+                        if (siriusGuiInstances.containsKey(projectId)) {
+                            if (siriusGuiInstances.size() == 1){
                                 closeSirius = new QuestionDialog(gui.getMainFrame(), "You are about to close the last SIRIUS GUI Window. Do you wish to shutdown SIRIUS?").isSuccess();
-                            gui.shutdown();
+                                if (closeSirius){ //todo me might want yes, no and cancel instead. cancel closes GUI window but keeps service running
+                                    siriusGuiInstances.remove(projectId).shutdown();
+                                }
+                            }else {
+                                siriusGuiInstances.remove(projectId).shutdown();
+                            }
                         }
                     }
                     if (closeSirius){
@@ -93,8 +97,6 @@ public class GuiServiceImpl implements GuiService {
                 }
             });
         }
-        if (guiParameters != null)
-            eventService.sendEvent(ServerEvents.newGuiEvent(guiParameters, projectId));
     }
 
     @Override
@@ -117,7 +119,8 @@ public class GuiServiceImpl implements GuiService {
     public void applyToGuiInstance(@NotNull String projectId, @NotNull GuiParameters guiParameters) {
         SiriusGui gui = siriusGuiInstances.get(projectId);
         if (gui != null) {
-            eventService.sendEvent(ServerEvents.newGuiEvent(guiParameters, projectId));
+            //todo change gui instance.
+            System.out.println("Modifying gui instance not supported");
         } else {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No running SIRIUS GUI instance found for project id: " + projectId);
         }

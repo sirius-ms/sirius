@@ -254,10 +254,8 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
         @Override
         protected String compute() {
             //cleanup is not really needed for CLI but for everything on top that might keep instances alive.
-            if (invalidate) {//todo we should change our project space model so that spectra are independent from config stuff
-                instance.clearFormulaResultsCache();
+            if (invalidate)
                 instance.clearCompoundCache();
-            }
 
             return instance.getId();
         }

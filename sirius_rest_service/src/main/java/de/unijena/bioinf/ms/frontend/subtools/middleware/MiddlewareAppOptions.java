@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.middleware;
 
-import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.frontend.subtools.OutputOptions;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
@@ -29,7 +28,7 @@ import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.SiriusProjectSpaceInstance;
 import lombok.Getter;
 import lombok.Setter;
 import picocli.CommandLine;
@@ -39,8 +38,10 @@ import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.Optional;
 
+import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
+
 @CommandLine.Command(name = "asService", aliases = {"rest", "REST"}, description = "EXPERIMENTAL/UNSTABLE: Starts SIRIUS as a background (REST) service that can be requested via a REST-API", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
-public class MiddlewareAppOptions<I extends Instance> implements StandaloneTool<MiddlewareAppOptions<I>.Flow> {
+public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implements StandaloneTool<MiddlewareAppOptions<I>.Flow> {
     @Setter
     private ProjectsProvider<?> projectsProvider;
     @Setter
@@ -86,13 +87,21 @@ public class MiddlewareAppOptions<I extends Instance> implements StandaloneTool<
             //do the project importing from the commandline
             Optional<Path> location = Optional.ofNullable(output).map(OutputOptions::getOutputProjectLocation);
             if (location.isPresent() || MiddlewareAppOptions.this.isStartGui()) {
-                Path p = location.orElse(FileUtils.createTmpProjectSpaceLocation(null)); //todo should be part of project provider to be implementation independent
                 try {
-                    //open default project if given
-                    ProjectInfo startPs = projectsProvider.createProject(
-                                    p.getFileName().toString(),
-                                    p.toAbsolutePath().toString(),
-                                    EnumSet.noneOf(ProjectInfo.OptField.class), false);
+                    final ProjectInfo startPs;
+                    if (location.isEmpty()) {
+                        //open default project if given
+                        startPs = projectsProvider.createTempProject(EnumSet.noneOf(ProjectInfo.OptField.class));
+                    } else {
+                        String psid = location.get().getFileName().toString();
+                        if (psid.endsWith(SIRIUS_PROJECT_SUFFIX)) {
+                            psid = psid.substring(0, psid.length() - SIRIUS_PROJECT_SUFFIX.length());
+                        }
+                        startPs = projectsProvider.createProject(
+                                psid,
+                                location.get().toAbsolutePath().toString(),
+                                EnumSet.noneOf(ProjectInfo.OptField.class), false);
+                    }
 
                     if (isStartGui())
                         guiService.createGuiInstance(startPs.getProjectId());

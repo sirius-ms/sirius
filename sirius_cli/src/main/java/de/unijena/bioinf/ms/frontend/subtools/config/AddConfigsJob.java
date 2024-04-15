@@ -20,13 +20,14 @@
 package de.unijena.bioinf.ms.frontend.subtools.config;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ms.annotations.RecomputeResults;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.Instance;
 import org.apache.commons.configuration2.CombinedConfiguration;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import java.util.Optional;
 
 public class AddConfigsJob extends InstanceJob {
     private final ParameterConfig computeConfig;
@@ -54,27 +55,29 @@ public class AddConfigsJob extends InstanceJob {
         {
             //override defaults
             // CLI_CONFIG might already exist from previous runs and needs to be updated.
-            @Nullable ParameterConfig projectSpaceConfig = inst.loadProjectConfig();
+            Optional<ParameterConfig> projectSpaceConfigOpt = inst.loadProjectConfig();
             checkForInterruption();
-            if (projectSpaceConfig != null){
+            if (projectSpaceConfigOpt.isPresent()){
+                ParameterConfig projectSpaceConfig = projectSpaceConfigOpt.get();
                 if (!computeConfig.getLocalConfigName().equals(ConfigType.CLI.name()) && computeConfig.containsConfiguration(ConfigType.CLI.name())) {
                     projectSpaceConfig = projectSpaceConfig.newIndependentInstance(ConfigType.CLI.name());
                     projectSpaceConfig.updateConfig(ConfigType.CLI.name(), ((CombinedConfiguration) computeConfig.getConfigs()).getConfiguration(ConfigType.CLI.name()));
                 }
                 baseConfig = projectSpaceConfig.newIndependentInstance(computeConfig, true);
+                //remove runtime configs from previous analyses
+                baseConfig.getConfigNames().stream().filter(s -> s.startsWith(ConfigType.RUNTIME.name())).forEach(baseConfig::removeConfig);
             }
         }
 
-        //remove runtime configs from previous analyses
-        baseConfig.getConfigNames().stream().filter(s -> s.startsWith(ConfigType.RUNTIME.name())).forEach(baseConfig::removeConfig);
+
 
         //input file configs are intended to be immutable, we still reload to ensure that it is on top position after CLI config
         {
-            @Nullable final ParameterConfig msConf = inst.loadInputFileConfig();
+            final Optional<ParameterConfig> msConf = inst.loadInputFileConfig();
             checkForInterruption();
-            if (msConf != null) {
-                baseConfig.removeConfig(msConf.getLocalConfigName());
-                baseConfig = baseConfig.newIndependentInstance(msConf, false);
+            if (msConf.isPresent()) {
+                baseConfig.removeConfig(msConf.get().getLocalConfigName());
+                baseConfig = baseConfig.newIndependentInstance(msConf.get(), false);
             }
         }
         checkForInterruption();
@@ -83,6 +86,7 @@ public class AddConfigsJob extends InstanceJob {
         //name cannot be based on the ID because people might rename their compounds
         baseConfig = baseConfig.newIndependentInstance(ConfigType.RUNTIME.name(), true);
         inst.updateConfig(baseConfig);
+        inst.setRecompute(baseConfig.createInstanceWithDefaults(RecomputeResults.class).value());
     }
 
     @Override

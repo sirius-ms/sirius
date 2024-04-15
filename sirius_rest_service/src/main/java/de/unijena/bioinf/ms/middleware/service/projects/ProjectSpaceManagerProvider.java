@@ -21,11 +21,13 @@
 package de.unijena.bioinf.ms.middleware.service.projects;
 
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
 import de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEventImpl;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
+import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.projectspace.*;
 import org.jetbrains.annotations.NotNull;
@@ -50,38 +52,35 @@ import java.util.stream.Collectors;
 import static de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent.Type.PROJECT_OPENED;
 import static de.unijena.bioinf.projectspace.ProjectSpaceIO.*;
 
-public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManager, P extends Project> implements ProjectsProvider<P> {
-    //todo extract methods to abstract implementation where possible
+public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManager, P extends Project<PSM>> implements ProjectsProvider<P> {
     private final ProjectSpaceManagerFactory<PSM> projectSpaceManagerFactory;
 
-    private final HashMap<String, PSM> projectSpaces = new HashMap<>();
+    private final HashMap<String, P> projectSpaces = new HashMap<>();
 
     protected final ReadWriteLock projectSpaceLock = new ReentrantReadWriteLock();
 
     protected final EventService<?> eventService;
+    protected final ComputeService computeService;
 
-    public ProjectSpaceManagerProvider(ProjectSpaceManagerFactory<PSM> projectSpaceManagerFactory, EventService<?> eventService) {
+    public ProjectSpaceManagerProvider(@NotNull ProjectSpaceManagerFactory<PSM> projectSpaceManagerFactory, @NotNull EventService<?> eventService, @NotNull ComputeService computeService) {
         this.projectSpaceManagerFactory = projectSpaceManagerFactory;
         this.eventService = eventService;
+        this.computeService = computeService;
     }
 
 
     public List<ProjectInfo> listAllProjectSpaces() {
         projectSpaceLock.readLock().lock();
         try {
-            return projectSpaces.entrySet().stream().map(x -> ProjectInfo.of(x.getKey(), x.getValue().getLocation())).collect(Collectors.toList());
+            return projectSpaces.entrySet().stream().map(x -> ProjectInfo.of(x.getKey(), x.getValue()
+                    .getProjectSpaceManager().getLocation())).collect(Collectors.toList());
         } finally {
             projectSpaceLock.readLock().unlock();
         }
     }
 
     protected Optional<PSM> getProjectSpaceManager(String projectId) {
-        projectSpaceLock.readLock().lock();
-        try {
-            return Optional.ofNullable(projectSpaces.get(projectId));
-        } finally {
-            projectSpaceLock.readLock().unlock();
-        }
+        return getProject(projectId).map(Project::getProjectSpaceManager);
     }
 
     @Override
@@ -118,7 +117,7 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
         if (optFields.contains(ProjectInfo.OptField.sizeInformation))
             b.numOfBytes(psm.sizeInBytes()).numOfFeatures(psm.countFeatures()).numOfCompounds(psm.countCompounds());
         if (optFields.contains(ProjectInfo.OptField.compatibilityInfo))
-            b.compatible(ProjectSpaceManagers.isCompatibleWithBackendDataLazy(psm));
+            b.compatible(psm.isCompatibleWithBackendDataUnchecked(ApplicationCore.WEB_API));
 
         return b.build();
     }
@@ -150,11 +149,14 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
             try {
                 Path location = path != null && !path.isBlank() ? Path.of(path) : defaultProjectDir().resolve(projectId);
 
-                if (!failIfExists)
-                    if (Files.exists(location) && !(Files.isDirectory(location) && FileUtils.listAndClose(location, s -> s.findAny().isEmpty())))
+                if (Files.exists(location)) {
+                    if (failIfExists) {
                         throw new ResponseStatusException(HttpStatus.CONFLICT, "Location '" + location.toAbsolutePath() +
-                                "' already exists and is not an empty directory. Cannot create new project space here.");
-
+                                "' already exists. Cannot create new project space here.");
+                    } else {
+                        validateExistingLocation(location);
+                    }
+                }
                 return createOrOpen(projectId, location, optFields);
             } catch (IOException e) {
                 throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when accessing file system to create project.", e);
@@ -162,12 +164,26 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
         });
     }
 
+    protected abstract void validateExistingLocation(Path location) throws IOException;
+
     private ProjectInfo createOrOpen(String projectId, Path location, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
         PSM psm = projectSpaceManagerFactory.createOrOpen(location);
         registerEventListeners(projectId, psm);
-        projectSpaces.put(projectId, psm);
+        projectSpaces.put(projectId, createProject(projectId, psm));
         eventService.sendEvent(ServerEvents.newProjectEvent(projectId, PROJECT_OPENED));
         return createProjectInfo(projectId, psm, optFields);
+    }
+
+    protected abstract P createProject(String projectId, PSM managerToWrap);
+
+    @Override
+    public Optional<P> getProject(String projectId) {
+        projectSpaceLock.readLock().lock();
+        try {
+            return Optional.ofNullable(projectSpaces.get(projectId));
+        } finally {
+            projectSpaceLock.readLock().unlock();
+        }
     }
 
     @Override
@@ -178,7 +194,7 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
     public void closeProjectSpace(String projectId) throws IOException {
         projectSpaceLock.writeLock().lock();
         try {
-            final ProjectSpaceManager space = projectSpaces.get(projectId);
+            final ProjectSpaceManager space = projectSpaces.get(projectId).getProjectSpaceManager();
             if (space == null) {
                 throw new ResponseStatusException(HttpStatus.NO_CONTENT, "Project space with name '" + projectId + "' not found!");
             }
@@ -215,10 +231,10 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
             LoggerFactory.getLogger(SiriusMiddlewareApplication.class).info("Closing Projects...'");
             projectSpaces.values().forEach(ps -> {
                 try {
-                    ps.close();
-                    LoggerFactory.getLogger(SiriusMiddlewareApplication.class).info("Project: '" + ps.getLocation() + "' successfully closed.");
+                    ps.getProjectSpaceManager().close();
+                    LoggerFactory.getLogger(SiriusMiddlewareApplication.class).info("Project: '" + ps.getProjectSpaceManager().getLocation() + "' successfully closed.");
                 } catch (IOException e) {
-                    LoggerFactory.getLogger(getClass()).error("Error when closing Project-Space '" + ps.getLocation() + "'. Data might be corrupted.");
+                    LoggerFactory.getLogger(getClass()).error("Error when closing Project-Space '" + ps.getProjectSpaceManager().getLocation() + "'. Data might be corrupted.");
                 }
             });
             projectSpaces.clear();

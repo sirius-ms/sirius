@@ -19,16 +19,11 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.msnovelist;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
-import de.unijena.bioinf.fingerid.blast.MsNovelistFBCandidateFingerprints;
-import de.unijena.bioinf.fingerid.blast.MsNovelistFBCandidates;
-import de.unijena.bioinf.fingerid.blast.TopMsNovelistScore;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -66,14 +61,7 @@ public class MsNovelistOptions implements ToolChainOptions<MsNovelistSubToolJob,
 
     @Override
     public Consumer<Instance> getInvalidator() {
-        return inst -> {
-            inst.deleteFromFormulaResults(MsNovelistFBCandidates.class, MsNovelistFBCandidateFingerprints.class);
-            inst.loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate)
-                    .forEach(it -> it.getAnnotation(FormulaScoring.class).ifPresent(z -> {
-                        if (z.removeAnnotation(TopMsNovelistScore.class) != null)
-                            inst.updateFormulaResult(it, FormulaScoring.class); //update only if there was something to remove
-                    }));
-        };
+        return Instance::deleteMsNovelistResult;
     }
 
     @Override

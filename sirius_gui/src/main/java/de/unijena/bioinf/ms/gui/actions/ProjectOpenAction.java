@@ -26,23 +26,23 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
-import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
-import de.unijena.bioinf.ms.gui.io.filefilter.ProjectDirectoryFilter;
+import de.unijena.bioinf.ms.gui.io.filefilter.NoSQLProjectFileFilter;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectInfo;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectInfoOptField;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.ProjectSpaceIO;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ExecutionException;
+
+import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
 
 /**
  * @author Markus Fleischauer
@@ -50,13 +50,13 @@ import java.util.concurrent.ExecutionException;
 public class ProjectOpenAction extends AbstractGuiAction {
     public static final String DONT_ASK_NEW_WINDOW_OPEN_KEY = "de.unijena.bioinf.sirius.dragdrop.newWindowOpen.dontAskAgain";
 
-
+    //todo: should be a singelton action
 
 
     public ProjectOpenAction(SiriusGui gui) {
         this("Open", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.FOLDER_OPEN_32);
-        putValue(Action.SHORT_DESCRIPTION, "Open previously saved project (directory or .sirius). This closes the current Project.");
+        putValue(Action.SHORT_DESCRIPTION, "Open a previously saved project.");
     }
 
     protected ProjectOpenAction(String name, SiriusGui gui) {
@@ -67,45 +67,64 @@ public class ProjectOpenAction extends AbstractGuiAction {
     public void actionPerformed(ActionEvent e) {
         JFileChooser jfc = new JFileChooser();
         jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.DEFAULT_LOAD_DIALOG_PATH));
-        jfc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        jfc.setFileSelectionMode(JFileChooser.FILES_ONLY);
         jfc.setAcceptAllFileFilterUsed(false);
-        jfc.addChoosableFileFilter(new ProjectArchivedFilter());
-        jfc.addChoosableFileFilter(new ProjectDirectoryFilter());
+        jfc.addChoosableFileFilter(new NoSQLProjectFileFilter());
 
-        while (true) {
-            int state = jfc.showOpenDialog(mainFrame);
-            if (state == JFileChooser.CANCEL_OPTION || state == JFileChooser.ERROR_OPTION)
-                break;
+        int state = jfc.showOpenDialog(mainFrame);
 
-            final File selFile = jfc.getSelectedFile();
-            if (ProjectSpaceIO.isZipProjectSpace(selFile.toPath()) || ProjectSpaceIO.isExistingProjectspaceDirectory(selFile.toPath())) {
-                openProject(selFile.toPath());
-                break;
+        if (state == JFileChooser.APPROVE_OPTION) {
+            final Path selFile = jfc.getSelectedFile().toPath();
+            if (Files.exists(selFile) && Files.isRegularFile(selFile)) {
+                String projectID = selFile.getFileName().toString();
+                if (!projectID.endsWith(SIRIUS_PROJECT_SUFFIX)) {
+                    new WarningDialog(mainFrame, "'" + selFile.toAbsolutePath() + "' has no valid file suffix: \".sirius\" !");
+                } else {
+                    projectID = projectID.substring(0, projectID.length() - SIRIUS_PROJECT_SUFFIX.length());
+                    if (ProjectCreateAction.PROJECT_ID_VALIDATOR.matcher(projectID).matches()) {
+                        Path parentDir = selFile.getParent();
+                        if (Files.exists(parentDir) && Files.isDirectory(parentDir)) {
+                            Jobs.runInBackground(() ->
+                                    SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(SiriusProperties.DEFAULT_LOAD_DIALOG_PATH, parentDir.toAbsolutePath().toString())
+                            );
+                        }
+                        openProject(projectID, selFile);
+                    } else {
+                        new WarningDialog(mainFrame, "'" + selFile.toAbsolutePath() + "' has no valid file name: \"([a-zA-Z0-9_-]+).sirius\".");
+                    }
+                }
             } else {
-                new WarningDialog(mainFrame, "'" + selFile.getAbsolutePath() + "' does not contain valid SIRIUS project.");
+                new WarningDialog(mainFrame, "'" + selFile.toAbsolutePath() + "' is no valid SIRIUS project.");
             }
         }
     }
 
-    public void openProject(@NotNull Path projectPath) {
-        openProject(projectPath, null);
+    public synchronized void openProject(@NotNull Path projectPath, @Nullable Boolean closeCurrent) {
+        String projectID = projectPath.getFileName().toString();
+        if (projectID.endsWith(SIRIUS_PROJECT_SUFFIX))
+            projectID = projectID.substring(0, projectID.length() - SIRIUS_PROJECT_SUFFIX.length());
+        openProject(projectID, projectPath, closeCurrent);
     }
 
-    public void openProject(@NotNull Path projectPath, @Nullable Boolean closeCurrent) {
+    public synchronized void openProject(@NotNull String projectID, @NotNull Path projectPath) {
+        openProject(projectID, projectPath, null);
+    }
+
+    public synchronized void openProject(@NotNull String projectID, @NotNull Path projectPath, @Nullable Boolean closeCurrent) {
         try {
             String pid = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Opening Project...", () -> {
-                        ProjectInfo project =gui.getSiriusClient().projects().getProjectSpaces().stream()
-                                .filter(p -> projectPath.equals(Path.of(p.getLocation()))).findFirst().orElse(null);
+                        ProjectInfo project = gui.getSiriusClient().projects().getProjectSpaces().stream()
+                                .filter(p -> p.getLocation() != null && projectPath.equals(Path.of(p.getLocation()))).findFirst().orElse(null);
 
-                        if (project == null)
-                            project = gui.getSiriusClient().projects().openProjectSpace(projectPath.getFileName()
-                                    .toString(), projectPath.toAbsolutePath().toString(), List.of(ProjectInfoOptField.NONE));
+                        if (project == null) {
+                            project = gui.getSiriusClient().projects().openProjectSpace(projectID, projectPath.toAbsolutePath().toString(), List.of(ProjectInfoOptField.NONE));
+                        }
                         return project.getProjectId();
                     }
 
             ).awaitResult();
 
-            openProject(pid, closeCurrent);
+            openProjectByID(pid, closeCurrent);
         } catch (ExecutionException e) {
             LoggerFactory.getLogger(getClass()).error("Error when opening project!", e);
             Jobs.runEDTLater(() -> new StacktraceDialog(gui.getMainFrame(), "Error when opening project!", e));
@@ -114,11 +133,11 @@ public class ProjectOpenAction extends AbstractGuiAction {
 
     }
 
-    public void openProject(String projectId) {
-        openProject(projectId, null);
+    public synchronized void openProjectByID(String projectId) {
+        openProjectByID(projectId, null);
     }
 
-    public void openProject(@NotNull String projectId, @Nullable Boolean closeCurrent) {
+    public synchronized void openProjectByID(@NotNull String projectId, @Nullable Boolean closeCurrent) {
         final boolean close =
                 Objects.requireNonNullElseGet(closeCurrent, () -> new QuestionDialog(
                         gui.getMainFrame(), "Open Project", openNewWindowQuestion(), dontAskKey()).isAbort());
@@ -127,14 +146,18 @@ public class ProjectOpenAction extends AbstractGuiAction {
             gui.getSiriusClient().gui().openGui(projectId);
             if (close)
                 gui.close();
-        });
+
+
+        }).getResult();
+        if (!close) // it would be better to bring the new gui to front via the API
+            Jobs.runEDTLater(() -> gui.getMainFrame().toBack());
     }
 
-    protected String dontAskKey(){
+    protected String dontAskKey() {
         return DONT_ASK_NEW_WINDOW_OPEN_KEY;
     }
 
-    protected String openNewWindowQuestion(){
+    protected String openNewWindowQuestion() {
         return "<html><body>Do you wish to open the Project in an additional Window? <br> Otherwise, the current one will be replaced. </body></html>";
     }
 

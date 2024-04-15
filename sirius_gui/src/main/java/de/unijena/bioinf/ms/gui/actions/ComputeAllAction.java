@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.util.List;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
@@ -73,7 +73,7 @@ public class ComputeAllAction extends AbstractGuiAction {
                 LoggerFactory.getLogger(getClass()).warn("Not instances to compute! Closing Compute Dialog...");
                 return;
             }
-            new BatchComputeDialog(gui, List.copyOf(mainFrame.getCompounds()));
+            new BatchComputeDialog(gui, Collections.unmodifiableList(mainFrame.getCompounds()));
         }
     }
 

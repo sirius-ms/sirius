@@ -67,7 +67,7 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
         }
     }
 
-    public FilterableCompoundListPanel(ExperimentListView view) {
+    public FilterableCompoundListPanel(CompoundListView view) {
         super(new BorderLayout());
         center.add("content", view);
         JPanel lp = loadingPanel();

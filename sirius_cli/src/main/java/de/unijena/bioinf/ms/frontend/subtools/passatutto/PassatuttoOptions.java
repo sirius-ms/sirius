@@ -24,7 +24,6 @@ import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
-import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.projectspace.Instance;
 import picocli.CommandLine;
 
@@ -50,7 +49,7 @@ public class PassatuttoOptions implements ToolChainOptions<PassatuttoSubToolJob,
 
     @Override
     public Consumer<Instance> getInvalidator() {
-        return inst -> inst.deleteFromFormulaResults(Decoy.class);
+        return Instance::deletePassatuttoResult;
     }
 
     @Override

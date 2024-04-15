@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
-import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
@@ -94,7 +93,8 @@ public class AlignedFeatureController {
             @PathVariable String projectId,
             @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
     ) {
-        return getAlignedFeaturesPaged(projectId, globalConfig.unpaged(), optFields).stream().toList();
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeatures(Pageable.unpaged(), removeNone(optFields))
+                .getContent();
     }
 
 
@@ -262,6 +262,38 @@ public class AlignedFeatureController {
             @RequestParam(defaultValue = "") EnumSet<SpectralLibraryMatch.OptField> optFields
     ) {
         return getSpectralLibraryMatchesPaged(projectId, alignedFeatureId, globalConfig.unpaged(), optFields).stream().toList();
+    }
+
+    /**
+     * List of spectral library matches for the given 'alignedFeatureId'.
+     *
+     * @param projectId        project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @return Spectral library matches of this feature (aligned over runs).
+     */
+    @GetMapping(value = "/{alignedFeatureId}/spectral-library-matches/{matchId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public SpectralLibraryMatch getSpectralLibraryMatch(
+            @PathVariable String projectId, @PathVariable String alignedFeatureId, @PathVariable String matchId,
+            @RequestParam(defaultValue = "") EnumSet<SpectralLibraryMatch.OptField> optFields
+    ) {
+        SpectralLibraryMatch match = projectsProvider.getProjectOrThrow(projectId)
+                .findLibraryMatchesByFeatureIdAndMatchId(alignedFeatureId, matchId);
+
+
+        if (optFields.contains(SpectralLibraryMatch.OptField.referenceSpectrum))
+           CustomDataSources.getSourceFromNameOpt(match.getDbName()).ifPresentOrElse(
+                    db -> {
+                        try {
+                            Ms2ReferenceSpectrum spec = chemDbService.db().getReferenceSpectrum(db, match.getUuid(), true);
+                            match.setReferenceSpectrum(Spectrums.createMs2ReferenceSpectrum(spec));
+
+
+                        } catch (ChemicalDatabaseException e) {
+                            LoggerFactory.getLogger(getClass()).error("Could not load Spectrum: " + match.getUuid(), e);
+                        }
+                    }, () -> LoggerFactory.getLogger(getClass()).warn("Could not load Spectrum! Custom database not available: " + match.getDbName())
+            );
+        return match;
     }
 
     /**

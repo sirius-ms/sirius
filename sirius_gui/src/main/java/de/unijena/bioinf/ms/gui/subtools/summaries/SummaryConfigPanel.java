@@ -22,25 +22,31 @@ public class SummaryConfigPanel extends SubToolConfigPanel<SummaryOptions> {
         paras.add(makeGenericOptionCheckBox("Top Hits", "top-hit-summary", true) );
         paras.add(makeGenericOptionCheckBox("Top Hits with Adducts", "top-hit-adduct-summary"));
         paras.add(makeGenericOptionCheckBox("All Hits", "full-summary"));
+        paras.addNamed("Top k Hits",
+                makeGenericOptionSpinner("top-k-summary", 0d, 0d, 100d, 1d, (v) -> String.valueOf(v.getNumber().intValue())),
+                "Writes summaries containing the top k candidates. File will not be written if k <= 0.",
+                1
+        );
+        //todo add more summary options if ready
 
-        paras.add(new JXTitledSeparator("Include prediction table"));
-        paras.add(makeGenericOptionCheckBox("CANOPUS ClassyFire predictions", "classyfire"));
-        paras.add(makeGenericOptionCheckBox("CANOPUS NPC predictions", "npc"));
-        paras.add(makeGenericOptionCheckBox("CSI:FingerID PubChem Fingerprints", "pubchem"));
-        paras.add(makeGenericOptionCheckBox("CSI:FingerID MACCS Fingerprints", "maccs"));
-        JSpinner digitSpinner = makeGenericOptionSpinner("digits",
-                getOptionDefaultByName("digits").map(Integer::parseInt).orElse(-1),
-                -1, 20, 1,
-                (v) -> String.valueOf(v.getNumber().intValue()));
-        paras.addNamed("Precision", digitSpinner);
+//        paras.add(new JXTitledSeparator("Include prediction table"));
+//        paras.add(makeGenericOptionCheckBox("CANOPUS ClassyFire predictions", "classyfire"));
+//        paras.add(makeGenericOptionCheckBox("CANOPUS NPC predictions", "npc"));
+//        paras.add(makeGenericOptionCheckBox("CSI:FingerID PubChem Fingerprints", "pubchem"));
+//        paras.add(makeGenericOptionCheckBox("CSI:FingerID MACCS Fingerprints", "maccs"));
+//        JSpinner digitSpinner = makeGenericOptionSpinner("digits",
+//                getOptionDefaultByName("digits").map(Integer::parseInt).orElse(-1),
+//                -1, 20, 1,
+//                (v) -> String.valueOf(v.getNumber().intValue()));
+//        paras.addNamed("Precision", digitSpinner);
 
 
-        paras.add(new JXTitledSeparator("Summary Output Location"));
-        paras.add(makeGenericOptionCheckBox("Zip Compression", "compress"));
+        paras.add(new JXTitledSeparator("Summary Output Location"), 5, false);
+//        paras.add(makeGenericOptionCheckBox("Zip Compression", "compress"));
         FileChooserPanel summaryLocation = new FileChooserPanel(
                 outputLocation, "",
                 JFileChooser.FILES_AND_DIRECTORIES,JFileChooser.SAVE_DIALOG);
-        summaryLocation.field.setPlaceholder("Writes to project-space if empty");
+        summaryLocation.field.setPlaceholder("Must be a directory or must not exist");
         parameterBindings.put("output", summaryLocation::getFilePath);
         getOptionDescriptionByName("output").ifPresent(it -> summaryLocation.setToolTipText(GuiUtils.formatToolTip(it)));
         summaryLocation.field.setPreferredSize(new Dimension(300, summaryLocation.field.getPreferredSize().height));

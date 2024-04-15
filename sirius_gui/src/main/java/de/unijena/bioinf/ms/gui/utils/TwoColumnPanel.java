@@ -88,6 +88,9 @@ public class TwoColumnPanel extends JPanel {
         addNamed(name, rightComp, null);
     }
     public void addNamed(String name, Component rightComp, String toolTip) {
+        addNamed(name, rightComp, toolTip, 0);
+    }
+    public void addNamed(String name, Component rightComp, String toolTip, int gap) {
         JLabel l = new JLabel(name);
         if (toolTip != null && ! toolTip.isBlank()) {
             l.setToolTipText(toolTip);
@@ -95,11 +98,10 @@ public class TwoColumnPanel extends JPanel {
                 ((JComponent)rightComp).setToolTipText(toolTip);
         }
 
-        add(l, rightComp);
+        add(l, rightComp, gap, false);
     }
 
     public void add(Component leftComp, Component rightComp) {
-
         add(leftComp, rightComp, 0, false);
     }
 
