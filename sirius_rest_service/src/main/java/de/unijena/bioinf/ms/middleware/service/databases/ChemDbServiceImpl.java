@@ -35,6 +35,7 @@ import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabaseParamet
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabases;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.webapi.WebAPI;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +60,8 @@ import static de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions.w
 @Slf4j
 public class ChemDbServiceImpl implements ChemDbService {
     private final WebAPI<?> webAPI;
+    private CdkFingerprintVersion version;
+
 
     public ChemDbServiceImpl(WebAPI<?> webAPI) {
         this.webAPI = webAPI;
@@ -74,16 +77,16 @@ public class ChemDbServiceImpl implements ChemDbService {
         }
     }
 
-    private CdkFingerprintVersion version() {
-        try {
-            return webAPI.getCDKChemDBFingerprintVersion();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    @SneakyThrows
+    private synchronized CdkFingerprintVersion version() {
+        if (version == null)
+            version = webAPI.getCDKChemDBFingerprintVersion();
+        return version;
     }
 
+    @SneakyThrows
     @Override
-    public WebWithCustomDatabase db() {
+    public synchronized WebWithCustomDatabase db() {
         return webAPI.getChemDB();
     }
 
@@ -95,7 +98,7 @@ public class ChemDbServiceImpl implements ChemDbService {
         Map<Boolean, List<InputResource<?>>> split = inputResources.stream()
                 .collect(Collectors.partitioningBy(p -> MsExperimentParser.isSupportedFileName(p.getFilename())));
 
-        SiriusJobs.runInBackground(db.importToDatabaseJob(split.get(true), split.get(false),null, webAPI, bufferSize))
+        SiriusJobs.runInBackground(db.importToDatabaseJob(split.get(true), split.get(false), null, webAPI, bufferSize))
                 .takeResult();
 
         return SearchableDatabases.of(db);
@@ -105,10 +108,10 @@ public class ChemDbServiceImpl implements ChemDbService {
     @Override
     public SearchableDatabase findById(@NotNull String databaseId, boolean includeStats) {
         return CustomDataSources.getSourceFromNameOpt(databaseId).map(s -> s.isCustomSource() && includeStats
-                    ? CustomDatabases.getCustomDatabaseByName(s.name(), version())
+                        ? CustomDatabases.getCustomDatabaseByName(s.name(), version())
                         .map(SearchableDatabases::of)
                         .orElse(SearchableDatabases.of(s))
-                    : SearchableDatabases.of(s))
+                        : SearchableDatabases.of(s))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Database with id '" + databaseId + "' does not exist."));
     }
 
@@ -150,7 +153,7 @@ public class ChemDbServiceImpl implements ChemDbService {
                     .schemaVersion(VersionsInfo.CUSTOM_DATABASE_SCHEMA)
                     .statistics(new CustomDatabaseSettings.Statistics());
 
-            if (dbParameters != null){
+            if (dbParameters != null) {
                 configBuilder.displayName(dbParameters.getDisplayName())
                         .matchRtOfReferenceSpectra(Optional.ofNullable(dbParameters.getMatchRtOfReferenceSpectra())
                                 .orElse(false));
