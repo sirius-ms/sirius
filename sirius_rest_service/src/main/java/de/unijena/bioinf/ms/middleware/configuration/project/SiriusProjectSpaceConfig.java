@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.configuration.project;
 
+import de.unijena.bioinf.ms.middleware.service.compute.ComputeService;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.middleware.service.projects.SiriusProjectSpaceProviderImpl;
@@ -44,8 +45,8 @@ public class SiriusProjectSpaceConfig {
 
     @Bean
     @DependsOn({"jobManager"})
-    public ProjectsProvider<?> projectsProvider(EventService<?> eventService, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory) {
-        return new SiriusProjectSpaceProviderImpl((ProjectSpaceManagerFactory<SiriusProjectSpaceManager>) projectSpaceManagerFactory, eventService);
+    public ProjectsProvider<?> projectsProvider(ComputeService computeService, EventService<?> eventService, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory) {
+        return new SiriusProjectSpaceProviderImpl((ProjectSpaceManagerFactory<SiriusProjectSpaceManager>) projectSpaceManagerFactory, eventService, computeService);
     }
 
 }

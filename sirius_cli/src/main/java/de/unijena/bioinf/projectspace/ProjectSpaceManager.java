@@ -26,22 +26,20 @@ import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.rest.NetUtils;
+import de.unijena.bioinf.webapi.WebAPI;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 public interface ProjectSpaceManager extends IterableWithSize<Instance> {
     @NotNull Instance importInstanceWithUniqueId(Ms2Experiment inputExperiment);
 
-    //    @NotNull Instance importInstanceWithUniqueId(AlignedFeatures inputExperiment);
-
-    @NotNull Optional<Instance> findInstance(String id);
+    @NotNull Optional<? extends Instance> findInstance(Object id);
 
     void writeFingerIdData(@NotNull FingerIdData pos, @NotNull FingerIdData neg);
-    void deleteFingerIdData();
 
     @NotNull Optional<FingerIdData> getFingerIdData(int charge);
     default boolean hasFingerIdData(int charge){
@@ -49,7 +47,7 @@ public interface ProjectSpaceManager extends IterableWithSize<Instance> {
     }
 
     void writeCanopusData(@NotNull CanopusCfData cfPos, @NotNull CanopusCfData cfNeg, @NotNull CanopusNpcData npcPos, @NotNull CanopusNpcData npcNeg);
-    void deleteCanopusData();
+    void deleteFingerprintData();
 
     @NotNull Optional<CanopusCfData> getCanopusCfData(int charge);
     default boolean hasCanopusCfData(int charge){
@@ -60,10 +58,6 @@ public interface ProjectSpaceManager extends IterableWithSize<Instance> {
     default boolean hasCanopusNpcData(int charge){
         return getCanopusNpcData(charge).isPresent();
     }
-
-    @NotNull
-    @Override
-    Iterator<Instance> iterator();
 
     int countFeatures();
 
@@ -96,4 +90,21 @@ public interface ProjectSpaceManager extends IterableWithSize<Instance> {
     String getLocation();
 
     void flush() throws IOException;
+
+
+    void writeFingerIdDataIfMissing(WebAPI<?> api) throws IOException;
+
+    void writeCanopusDataIfMissing(WebAPI<?> api) throws IOException;
+
+    boolean isCompatibleWithBackendData(@NotNull WebAPI<?> api) throws InterruptedException, TimeoutException;
+
+    default Boolean isCompatibleWithBackendDataUnchecked(@NotNull WebAPI<?> api) {
+        try {
+            return isCompatibleWithBackendData(api);
+        } catch (InterruptedException | TimeoutException e) {
+            LoggerFactory.getLogger(InstanceImporter.class).warn("Could finish compatibility check due to an error! Could not check for outdated fingerprint data. Error: " + e.getMessage());
+            return null;
+        }
+    }
+
 }

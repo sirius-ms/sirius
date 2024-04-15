@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.ms.utils.WrapperSpectrum;
+import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.fragmenter.MolecularGraph;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
@@ -172,6 +173,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 
     private void drawSpectra() {
         try {
+            browser.clear();
             String mode = (String) modesBox.getSelectedItem();
             if (mode == null)
                 return;
@@ -296,7 +298,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
     private final Lock backgroundLoaderLock = new ReentrantLock();
 
 
-    public void resultsChanged(InstanceBean instance, @Nullable String formulaCandidateId, @Nullable String inChIKey2d) {
+    public void resultsChanged(InstanceBean instance, @Nullable String formulaCandidateId, @Nullable String smiles) {
         try {
             backgroundLoaderLock.lock();
             final JJob<Boolean> old = backgroundLoader;
@@ -305,32 +307,34 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                 protected Boolean compute() throws Exception {
                     //cancel running job if not finished to not waist resources for fetching data that is not longer needed.
                     if (old != null) {
-                        old.cancel(false);
+                        old.cancel(true);
                         old.getResult(); //await cancellation so that nothing strange can happen.
                     }
                     clearData();
+
                     checkForInterruption();
                     //todo check if data is unchanged and prevent re-rendering
                     if (instance != null) {
                         final MsData msData = instance.getMsData();
                         if (msData != null) {
-                            checkForInterruption();
                             final IsotopePatternAnnotation isotopePatternAnnotation;
                             final AnnotatedMsMsData annotatedMsMsData;
+                            checkForInterruption();
                             if (formulaCandidateId != null) {
                                 isotopePatternAnnotation = instance.withIds((pid, fid) -> instance.getClient().features()
                                         .getIsotopePatternAnnotationWithResponseSpec(pid, fid, formulaCandidateId)
                                         .bodyToMono(IsotopePatternAnnotation.class).onErrorComplete().block());
                                 checkForInterruption();
-                                if (inChIKey2d != null)
-                                    annotatedMsMsData = instance.withIds((pid, fid) -> instance.getClient().features()
-                                            .getStructureAnnotatedMsDataWithResponseSpec(pid, fid, formulaCandidateId, inChIKey2d)
-                                            .bodyToMono(AnnotatedMsMsData.class).onErrorComplete().block());
+//
 
-                                else
-                                    annotatedMsMsData = instance.withIds((pid, fid) -> instance.getClient().features()
-                                            .getFormulaAnnotatedMsMsDataWithResponseSpec(pid, fid, formulaCandidateId)
-                                            .bodyToMono(AnnotatedMsMsData.class).onErrorComplete().block());
+                                String ftreeJson = instance.withIds((pid, fid) -> instance.getClient().features()
+                                        .getSiriusFragTreeWithResponseSpec(pid, fid, formulaCandidateId)
+                                        .bodyToMono(String.class).onErrorComplete().block());
+
+                                checkForInterruption();
+                                annotatedMsMsData = ftreeJson == null ? null :
+                                        submitSubJob(new SpectrumAnnotationJJob(new FTJsonReader().treeFromJsonString(ftreeJson, null), msData, smiles))
+                                                .awaitResult();
                             } else {
                                 isotopePatternAnnotation = null;
                                 annotatedMsMsData = null;
@@ -398,6 +402,11 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                         }
                     }
                     return true;
+                }
+
+                @Override
+                public void cancel(boolean mayInterruptIfRunning) {
+                    super.cancel(mayInterruptIfRunning);
                 }
             });
         } finally {

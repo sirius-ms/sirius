@@ -52,10 +52,10 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 @Slf4j
 public class ProjectController {
     private final ComputeService computeService;
-    private final ProjectsProvider projectsProvider;
+    private final ProjectsProvider<?> projectsProvider;
 
     @Autowired
-    public ProjectController(ComputeService<?> computeService, ProjectsProvider<?> projectsProvider) {
+    public ProjectController(ComputeService computeService, ProjectsProvider<?> projectsProvider) {
         this.computeService = computeService;
         this.projectsProvider = projectsProvider;
     }
@@ -116,7 +116,7 @@ public class ProjectController {
      */
     @DeleteMapping(value = "/{projectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public void closeProjectSpace(@PathVariable String projectId) throws Throwable {
-        Project ps = (Project) projectsProvider.getProject(projectId)
+        Project<?> ps = projectsProvider.getProject(projectId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NO_CONTENT,
                         "Project space with identifier '" + projectId + "' not found!"));
         computeService.deleteJobs(ps, true, true, true, EnumSet.noneOf(Job.OptField.class));
@@ -139,7 +139,7 @@ public class ProjectController {
                                     @RequestParam(defaultValue = "true") boolean allowMs1Only,
                                     @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) {
-        Project p = projectsProvider.getProjectOrThrow(projectId);
+        Project<?> p = projectsProvider.getProjectOrThrow(projectId);
         try {
             ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
             sub.setInputFiles(List.of(inputFiles));
@@ -188,7 +188,7 @@ public class ProjectController {
                                            @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) {
 
-        Project p = projectsProvider.getProjectOrThrow(projectId);
+        Project<?> p = projectsProvider.getProjectOrThrow(projectId);
         ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
         sub.setInputFiles(List.of(inputFiles));
         sub.setIgnoreFormulas(ignoreFormulas);

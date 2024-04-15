@@ -21,7 +21,9 @@
 package de.unijena.bioinf.ms.middleware.model.annotations;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -32,6 +34,7 @@ import lombok.*;
  * such as fragmentation trees and simulated isotope pattern.
  */
 @Getter
+@Setter
 @AllArgsConstructor
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -52,8 +55,7 @@ public class FormulaCandidate {
      */
     protected String adduct;
 
-
-    //Additional Fields
+    protected Integer rank;
     /**
      * Sirius Score (isotope + tree score) of the formula candidate.
      * If NULL result is not available
@@ -71,6 +73,7 @@ public class FormulaCandidate {
     @Schema(nullable = true)
     protected Double zodiacScore;
 
+    //Additional Fields
     @Schema(nullable = true)
     protected Integer numOfExplainedPeaks;
     @Schema(nullable = true)
@@ -79,14 +82,8 @@ public class FormulaCandidate {
     @Schema(nullable = true)
     protected Double totalExplainedIntensity;
     @Schema(nullable = true)
+    @JsonDeserialize(using = SimpleSerializers.DeviationDeserializer.class)
     protected Deviation medianMassDeviation;
-
-    /**
-     * CSI:FingerID Score of the highest scoring structure candidate (top hit) of this formula candidate.
-     * If NULL result is not available
-     */
-    @Schema(nullable = true)
-    protected Double topCSIScore;
 
     /**
      * The fragmentation tree that belongs to this molecular formula candidate (produces the treeScore).

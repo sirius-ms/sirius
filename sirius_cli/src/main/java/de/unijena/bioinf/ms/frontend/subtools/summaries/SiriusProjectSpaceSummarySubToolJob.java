@@ -28,7 +28,6 @@ import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.ms.frontend.subtools.PostprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.export.tables.ExportPredictionsOptions;
-import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.projectspace.summaries.PredictionsSummarizer;
@@ -44,20 +43,21 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Workflow {
+@Deprecated
+public class SiriusProjectSpaceSummarySubToolJob extends PostprocessingJob<Boolean> {
     //todo reimplement project independent!
-    private static final Logger LOG = LoggerFactory.getLogger(SummarySubToolJob.class);
+    private static final Logger LOG = LoggerFactory.getLogger(SiriusProjectSpaceSummarySubToolJob.class);
     private final SummaryOptions options;
 
     private @Nullable PreprocessingJob<?> preprocessingJob;
     private Iterable<? extends Instance> instances;
 
-    public SummarySubToolJob(@Nullable PreprocessingJob<?> preprocessingJob, SummaryOptions options) {
+    public SiriusProjectSpaceSummarySubToolJob(@Nullable PreprocessingJob<?> preprocessingJob, SummaryOptions options) {
         this.preprocessingJob = preprocessingJob;
         this.options = options;
     }
 
-    public SummarySubToolJob(SummaryOptions options) {
+    public SiriusProjectSpaceSummarySubToolJob(SummaryOptions options) {
         this(null, options);
     }
 
@@ -78,32 +78,36 @@ public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Wor
 
     @Override
     protected Boolean compute() throws Exception {
-       if (instances == null)
-           instances = SiriusJobs.getGlobalJobManager().submitJob(preprocessingJob).awaitResult();
+        if (instances == null)
+            instances = SiriusJobs.getGlobalJobManager().submitJob(preprocessingJob).awaitResult();
 
-       if (!instances.iterator().hasNext())
-           return null;
+        if (!instances.iterator().hasNext())
+            return null;
 
-       SiriusProjectSpaceManager project = null;
+        SiriusProjectSpaceManager project = null;
         try {
-
-            if (instances instanceof ProjectSpaceManager)
+            if (instances instanceof SiriusProjectSpaceManager) {
                 project = (SiriusProjectSpaceManager) instances;
-            else
-                project = (SiriusProjectSpaceManager)  instances.iterator().next().getProjectSpaceManager();
-
+            } else {
+                Instance inst = instances.iterator().next();
+                if (inst instanceof SiriusProjectSpaceInstance)
+                    project = (SiriusProjectSpaceManager) inst.getProjectSpaceManager();
+                else
+                    throw new IllegalArgumentException("This summary job only supports the SIRIUS projectSpace!");
+            }
 
 
             //use all experiments in workspace to create summaries
             LOG.info("Writing summary files...");
-            StopWatch w = new StopWatch(); w.start();
+            StopWatch w = new StopWatch();
+            w.start();
             final JobProgressEventListener listener = this::updateProgress;
 
 
             List<CompoundContainerId> ids = null;
             if (!instances.equals(project)) {
                 List<CompoundContainerId> idsTMP = new ArrayList<>(project.size());
-                instances.forEach(i -> idsTMP.add(i.getCompoundContainerId()));
+                instances.forEach(i -> idsTMP.add(((SiriusProjectSpaceInstance)i).getCompoundContainerId()));
                 ids = idsTMP;
             }
 
@@ -142,7 +146,7 @@ public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Wor
                     BasicJJob negJob;
                     if (writeIntoProjectSpace) {
                         negJob = project.getProjectSpaceImpl()
-                        .makeSummarizerJob(options.location, options.compress, ids, new PredictionsSummarizer(listener, instances, -1, SummaryLocations.PREDICTIONS_NEG, options.predictionsOptions));
+                                .makeSummarizerJob(options.location, options.compress, ids, new PredictionsSummarizer(listener, instances, -1, SummaryLocations.PREDICTIONS_NEG, options.predictionsOptions));
                     } else {
                         negJob = new ExportPredictionsOptions.ExportPredictionJJob(
                                 options.predictionsOptions, -1, instances,
@@ -151,7 +155,7 @@ public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Wor
                     negJob.addJobProgressListener(listener);
                     SiriusJobs.getGlobalJobManager().submitJob(negJob).awaitResult();
                     negJob.removePropertyChangeListener(listener);
-                }finally {
+                } finally {
                     //close and write zip file
                     if (!writeIntoProjectSpace && !root.getFileSystem().equals(FileSystems.getDefault()))
                         root.getFileSystem().close();
@@ -169,19 +173,13 @@ public class SummarySubToolJob extends PostprocessingJob<Boolean> implements Wor
     }
 
     @Override
-    public void run() {
-        setStandalone(true);
-        SiriusJobs.getGlobalJobManager().submitJob(this).takeResult();
-    }
-
-    @Override
     public void cancel() {
         cancel(true);
     }
 
     @Override
     protected void cleanup() {
-        instances =  null;
+        instances = null;
         preprocessingJob = null;
         super.cleanup();
     }

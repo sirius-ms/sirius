@@ -98,7 +98,7 @@ public class ImportPeaksFomResourceWorkflow implements Workflow, ProgressSupport
 
     @Override
     public void run() {
-        InstanceImporter.ImportInstancesJJob importerJJob = new InstanceImporter(psm, x -> true, x -> true)
+        InstanceImporter.ImportInstancesJJob importerJJob = new InstanceImporter(psm, x -> true)
                 .makeImportJJob(inputResources, ignoreFormulas, allowMs1OnlyData);
         importerJJob.addJobProgressListener(progressSupport);
 

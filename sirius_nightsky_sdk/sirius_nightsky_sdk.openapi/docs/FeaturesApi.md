@@ -26,6 +26,7 @@ All URIs are relative to *http://localhost:8080*
 | [**getLipidAnnotation**](FeaturesApi.md#getLipidAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation | Returns Lipid annotation (ElGordo) for the given formula result identifier. |
 | [**getMsData**](FeaturesApi.md#getMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/ms-data | Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; . |
 | [**getSiriusFragTree**](FeaturesApi.md#getSiriusFragTree) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree | Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format. |
+| [**getSpectralLibraryMatch**](FeaturesApi.md#getSpectralLibraryMatch) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/{matchId} | List of spectral library matches for the given &#39;alignedFeatureId&#39;. |
 | [**getSpectralLibraryMatches**](FeaturesApi.md#getSpectralLibraryMatches) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches | List of spectral library matches for the given &#39;alignedFeatureId&#39;. |
 | [**getSpectralLibraryMatchesPaged**](FeaturesApi.md#getSpectralLibraryMatchesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/page | Page of spectral library matches for the given &#39;alignedFeatureId&#39;. |
 | [**getStructureAnnotatedMsData**](FeaturesApi.md#getStructureAnnotatedMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-msmsdata | Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey. |
@@ -1598,6 +1599,78 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | Fragmentation Tree in internal format.  &lt;p&gt;  NOTE: This endpoint is likely to be removed in future versions of the API. |  -  |
+
+
+## getSpectralLibraryMatch
+
+> SpectralLibraryMatch getSpectralLibraryMatch(projectId, alignedFeatureId, matchId, optFields)
+
+List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+
+List of spectral library matches for the given &#39;alignedFeatureId&#39;.
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.FeaturesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8080");
+
+        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the structure candidates belong to.
+        String matchId = "matchId_example"; // String | 
+        List<SpectralLibraryMatchOptField> optFields = Arrays.asList(); // List<SpectralLibraryMatchOptField> | 
+        try {
+            SpectralLibraryMatch result = apiInstance.getSpectralLibraryMatch(projectId, alignedFeatureId, matchId, optFields);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling FeaturesApi#getSpectralLibraryMatch");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **alignedFeatureId** | **String**| feature (aligned over runs) the structure candidates belong to. | |
+| **matchId** | **String**|  | |
+| **optFields** | [**List&lt;SpectralLibraryMatchOptField&gt;**](SpectralLibraryMatchOptField.md)|  | [optional] |
+
+### Return type
+
+[**SpectralLibraryMatch**](SpectralLibraryMatch.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Spectral library matches of this feature (aligned over runs). |  -  |
 
 
 ## getSpectralLibraryMatches

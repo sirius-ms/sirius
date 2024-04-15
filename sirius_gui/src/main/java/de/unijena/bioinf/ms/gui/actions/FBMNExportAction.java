@@ -40,7 +40,9 @@ public class FBMNExportAction extends AbstractGuiAction {
         super("FBMN Export", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.FBMN_32);
         putValue(Action.SHORT_DESCRIPTION, "Export project for GNPS Feature Based Molecular Networking.");
-        initListeners();
+        //todo re-enable if if implemented
+        setEnabled(false);
+//        initListeners();
     }
 
     protected void initListeners() {

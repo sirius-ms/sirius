@@ -90,7 +90,7 @@ public class Zodiac extends Tool<ZodiacOptions> {
 
                 .putIfNonNullObj("ZodiacEpochs.iterations", gibbsSamplerParameters, it -> it.iterations)
                 .putIfNonNullObj("ZodiacEpochs.burnInPeriod", gibbsSamplerParameters, it -> it.burnInPeriod)
-                .putIfNonNull("ZodiacEpochs.numberOfMarkovChains", gibbsSamplerParameters.numberOfMarkovChains)
+                .putIfNonNullObj("ZodiacEpochs.numberOfMarkovChains", gibbsSamplerParameters, it -> it.numberOfMarkovChains)
 
                 .putIfNonNullObj("ZodiacEdgeFilterThresholds.thresholdFilter", edgeFilterThresholds, it -> it.thresholdFilter)
                 .putIfNonNullObj("ZodiacEdgeFilterThresholds.minLocalConnections", edgeFilterThresholds, it -> it.minLocalConnections)

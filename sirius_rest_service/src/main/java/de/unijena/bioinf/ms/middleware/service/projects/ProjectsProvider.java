@@ -52,6 +52,8 @@ public interface ProjectsProvider<P extends Project> extends DisposableBean {
 
     ProjectInfo openProject(@NotNull String projectId, @Nullable String pathToProject, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException;
 
+    ProjectInfo createTempProject(@NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException;
+
     default ProjectInfo createProject(String projectIdSuggestion, @NotNull EnumSet<ProjectInfo.OptField> optFields) throws IOException {
         return createProject(projectIdSuggestion, null, optFields);
     }
@@ -80,6 +82,7 @@ public interface ProjectsProvider<P extends Project> extends DisposableBean {
         if (!containsProject(nameSuggestion))
             return nameSuggestion;
         int app = 2;
+        nameSuggestion = nameSuggestion.replaceAll("_[0-9]+$", "");
         while (true) {
             final String n = nameSuggestion + "_" + app++;
             if (!containsProject(n))
@@ -87,10 +90,10 @@ public interface ProjectsProvider<P extends Project> extends DisposableBean {
         }
     }
 
-    Pattern projectIdValidator = Pattern.compile("[a-zA-Z0-9_-]*", Pattern.CASE_INSENSITIVE);
+    Pattern projectIdValidator = Pattern.compile("[a-zA-Z0-9_-]+", Pattern.CASE_INSENSITIVE);
     default String validateId(String projectId){
         if (!projectIdValidator.matcher(projectId).matches())
-            throw new IllegalArgumentException("Illegal ProjectId. ProjectId must only contain [a-zA-Z0-9_-]!");
+            throw new IllegalArgumentException("Illegal ProjectId. ProjectId must only contain [a-zA-Z0-9_-]+!");
         return projectId;
     }
 }

@@ -19,24 +19,18 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
-import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
-import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
-import de.unijena.bioinf.ms.gui.io.filefilter.ProjectDirectoryFilter;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectInfoOptField;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
@@ -62,64 +56,30 @@ public class ProjectSaveAction extends ProjectOpenAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        saveAs();
+        ProjectCreateAction.openDialog(mainFrame, "Save", this::copyProject);
     }
 
-    public void saveAs() {
-        JFileChooser jfc = new JFileChooser();
-        jfc.setCurrentDirectory(PropertyManager.getFile(SiriusProperties.DEFAULT_SAVE_DIR_PATH));
-        jfc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-        jfc.setAcceptAllFileFilterUsed(false);
-        jfc.addChoosableFileFilter(new ProjectDirectoryFilter());
-
-        while (true) {
-            final int state = jfc.showDialog(mainFrame, "Save");
-            if (state == JFileChooser.CANCEL_OPTION || state == JFileChooser.ERROR_OPTION)
-                break;
-            File selFile = jfc.getSelectedFile();
-
-            if (jfc.getFileFilter() instanceof ProjectArchivedFilter)
-                if (!selFile.getName().endsWith(".sirius"))
-                    selFile = new File(selFile.getParentFile(), selFile.getName() + ".sirius");
-
-            if (!selFile.exists() || selFile.isDirectory() && Objects.requireNonNull(selFile.list()).length == 0) {
-                SiriusProperties.
-                        setAndStoreInBackground(SiriusProperties.DEFAULT_SAVE_DIR_PATH, selFile.getParentFile().getAbsolutePath());
-                try {
-                    copyProject(selFile.toPath());
-                } catch (Exception e2) {
-                    new StacktraceDialog(mainFrame, e2.getMessage(), e2);
-                }
-                break;
-            } else {
-                new WarningDialog(mainFrame, "'" + selFile.getAbsolutePath() + "' does not contain valid SIRIUS project.");
-            }
-        }
-
-
+    public void copyProject(@NotNull String projectId, @NotNull Path projectPath) {
+        copyProject(projectId, projectPath, null);
     }
 
-    public void copyProject(@NotNull Path projectPath) {
-        copyProject(projectPath, null);
-    }
-
-    public void copyProject(@NotNull Path projectPath, @Nullable Boolean closeCurrent) {
+    public void copyProject(@NotNull String projectId, @NotNull Path projectPath, @Nullable Boolean closeCurrent) {
         try {
             String nuPid = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Copying Project...", () ->
                     gui.applySiriusClient((c, pid) -> c.projects().copyProjectSpace(
-                            pid, projectPath.toAbsolutePath().toString(), projectPath.getFileName().toString(),
+                            pid, projectPath.toAbsolutePath().toString(), projectId,
                             List.of(ProjectInfoOptField.NONE)
                     ).getProjectId())
             ).awaitResult();
 
-            openProject(nuPid, closeCurrent);
+            openProjectByID(nuPid, closeCurrent);
         } catch (ExecutionException e) {
             LoggerFactory.getLogger(getClass()).error("Error when creating new project!", e);
             Jobs.runEDTLater(() -> new StacktraceDialog(gui.getMainFrame(), "Error when creating new project!", e));
         }
     }
 
-    public void openProject(@NotNull String projectId, @Nullable Boolean closeCurrent) {
+    public void openProjectByID(@NotNull String projectId, @Nullable Boolean closeCurrent) {
         final boolean close =
                 Objects.requireNonNullElseGet(closeCurrent, () -> new QuestionDialog(
                         gui.getMainFrame(), "Open Project", openNewWindowQuestion(), dontAskKey()).isSuccess());

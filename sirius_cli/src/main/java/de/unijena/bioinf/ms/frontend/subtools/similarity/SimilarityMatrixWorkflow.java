@@ -48,12 +48,7 @@ import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.config.AddConfigsJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
-import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.ProjectSpaceIO;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
-import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
+import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
@@ -100,7 +95,7 @@ public class SimilarityMatrixWorkflow implements Workflow {
     @Override
     public void run() {
         System.out.println("Fixed model 2.");
-        List<Instance> xs = new ArrayList<>();
+        /*List<Instance> xs = new ArrayList<>();
 
         try {
             ps = SiriusJobs.getGlobalJobManager().submitJob(ppj).awaitResult();
@@ -124,10 +119,10 @@ public class SimilarityMatrixWorkflow implements Workflow {
                 tanimotoCanopus(xs);
         } catch (ExecutionException e) {
             LoggerFactory.getLogger(this.getClass()).error("Error when parsing project space");
-        }
+        }*/
     }
 
-    private void tanimoto(List<Instance> xs) {
+    /*private void tanimoto(List<Instance> xs) {
         final JobManager jobManager = SiriusJobs.getGlobalJobManager();
         xs.removeIf(x -> x.loadTopFormulaResult(rankSores, FingerprintResult.class).filter(y -> y.hasAnnotation(FingerprintResult.class)).isEmpty());
 
@@ -136,7 +131,7 @@ public class SimilarityMatrixWorkflow implements Workflow {
             return;
         }
         final ArrayList<ProbabilityFingerprint> fingerprintValues = new ArrayList<>();
-        for (Instance x : xs) {
+        for (SiriusProjectSpaceInstance x : xs) {
             fingerprintValues.add(x.loadTopFormulaResult(rankSores, FingerprintResult.class)
                     .map(it -> it.getAnnotationOrThrow(FingerprintResult.class).fingerprint).orElseThrow());
         }
@@ -162,7 +157,7 @@ public class SimilarityMatrixWorkflow implements Workflow {
             return;
         }
         final ArrayList<ProbabilityFingerprint> fingerprintValues = new ArrayList<>();
-        for (Instance x : xs) {
+        for (SiriusProjectSpaceInstance x : xs) {
             fingerprintValues.add(x.loadTopFormulaResult(rankSores, CanopusResult.class)
                     .map(it -> it.getAnnotationOrThrow(CanopusResult.class).getCanopusFingerprint()).orElseThrow());
         }
@@ -453,5 +448,5 @@ public class SimilarityMatrixWorkflow implements Workflow {
     }
     private static double unsmooth(double val) {
         return unsmooth(val, 0.01);
-    }
+    }*/
 }

@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.ImportAction;
+import de.unijena.bioinf.ms.gui.actions.ProjectOpenAction;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -34,7 +35,7 @@ import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.logging.LogDialog;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
-import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListView;
+import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundListView;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListPanel;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
@@ -56,6 +57,8 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
+import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
+
 public class MainFrame extends JFrame implements DropTargetListener {
 
     public static final CookieManager cookieGuard = new CookieManager();
@@ -67,6 +70,11 @@ public class MainFrame extends JFrame implements DropTargetListener {
     //Logging Panel
     private final LogDialog log;
     private final SiriusGui gui;
+    private CompoundListView compoundListView;
+
+    public void ensureCompoundIsVisible(int index){
+        compoundListView.ensureIndexIsVisible(index);
+    }
 
     public SiriusGui getGui() {
         return gui;
@@ -188,12 +196,13 @@ public class MainFrame extends JFrame implements DropTargetListener {
         add(mainPanel, BorderLayout.CENTER);
 
         //build left sidepane
-        FilterableCompoundListPanel experimentListPanel = new FilterableCompoundListPanel(new ExperimentListView(gui, compoundList));
-        experimentListPanel.setPreferredSize(new Dimension(228, (int) experimentListPanel.getPreferredSize().getHeight()));
+        compoundListView = new CompoundListView(gui, compoundList);
+        FilterableCompoundListPanel compoundListPanel = new FilterableCompoundListPanel(compoundListView);
+        compoundListPanel.setPreferredSize(new Dimension(228, (int) compoundListPanel.getPreferredSize().getHeight()));
         mainPanel.setDividerLocation(232);
 
         //BUILD the MainFrame (GUI)
-        mainPanel.setLeftComponent(experimentListPanel);
+        mainPanel.setLeftComponent(compoundListPanel);
         mainPanel.setRightComponent(resultPanelContainer);
         add(toolbar, BorderLayout.NORTH);
 
@@ -201,6 +210,7 @@ public class MainFrame extends JFrame implements DropTargetListener {
         setSize(new Dimension((int) (screen.width * .7), (int) (screen.height * .7)));
         setLocationRelativeTo(null); //init mainframe
         setVisible(true);
+        toFront();
     }
 
 
@@ -243,6 +253,14 @@ public class MainFrame extends JFrame implements DropTargetListener {
         inputF.msInput = Jobs.runInBackgroundAndLoad(this, "Analyzing Dropped Files...", false,
                 InstanceImporter.makeExpandFilesJJob(files)).getResult();
 
+        List<Path> projectFiles = inputF.msInput.unknownFiles.keySet().stream().filter(p -> p.toString().endsWith(SIRIUS_PROJECT_SUFFIX)).toList();
+        inputF.msInput.unknownFiles.clear();
+        if (!projectFiles.isEmpty()){
+            Boolean replaceCurrent = projectFiles.size() == 1 ? null : false;
+            ProjectOpenAction opener = (ProjectOpenAction) SiriusActions.LOAD_WS.getInstance(gui);
+            projectFiles.forEach(f -> opener.openProject(f, replaceCurrent));
+
+        }
         if (!inputF.msInput.isEmpty())
             importDragAndDropFiles(inputF); //does not support importing projects
     }

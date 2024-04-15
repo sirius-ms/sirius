@@ -27,23 +27,49 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * SortObject
  */
 @JsonPropertyOrder({
+  SortObject.JSON_PROPERTY_EMPTY,
   SortObject.JSON_PROPERTY_SORTED,
-  SortObject.JSON_PROPERTY_UNSORTED,
-  SortObject.JSON_PROPERTY_EMPTY
+  SortObject.JSON_PROPERTY_UNSORTED
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class SortObject {
+  public static final String JSON_PROPERTY_EMPTY = "empty";
+  private Boolean empty;
+
   public static final String JSON_PROPERTY_SORTED = "sorted";
   private Boolean sorted;
 
   public static final String JSON_PROPERTY_UNSORTED = "unsorted";
   private Boolean unsorted;
 
-  public static final String JSON_PROPERTY_EMPTY = "empty";
-  private Boolean empty;
-
   public SortObject() {
   }
+
+  public SortObject empty(Boolean empty) {
+    
+    this.empty = empty;
+    return this;
+  }
+
+   /**
+   * Get empty
+   * @return empty
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_EMPTY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isEmpty() {
+    return empty;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_EMPTY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setEmpty(Boolean empty) {
+    this.empty = empty;
+  }
+
 
   public SortObject sorted(Boolean sorted) {
     
@@ -96,32 +122,6 @@ public class SortObject {
     this.unsorted = unsorted;
   }
 
-
-  public SortObject empty(Boolean empty) {
-    
-    this.empty = empty;
-    return this;
-  }
-
-   /**
-   * Get empty
-   * @return empty
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_EMPTY)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Boolean isEmpty() {
-    return empty;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_EMPTY)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setEmpty(Boolean empty) {
-    this.empty = empty;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -131,23 +131,23 @@ public class SortObject {
       return false;
     }
     SortObject sortObject = (SortObject) o;
-    return Objects.equals(this.sorted, sortObject.sorted) &&
-        Objects.equals(this.unsorted, sortObject.unsorted) &&
-        Objects.equals(this.empty, sortObject.empty);
+    return Objects.equals(this.empty, sortObject.empty) &&
+        Objects.equals(this.sorted, sortObject.sorted) &&
+        Objects.equals(this.unsorted, sortObject.unsorted);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sorted, unsorted, empty);
+    return Objects.hash(empty, sorted, unsorted);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class SortObject {\n");
+    sb.append("    empty: ").append(toIndentedString(empty)).append("\n");
     sb.append("    sorted: ").append(toIndentedString(sorted)).append("\n");
     sb.append("    unsorted: ").append(toIndentedString(unsorted)).append("\n");
-    sb.append("    empty: ").append(toIndentedString(empty)).append("\n");
     sb.append("}");
     return sb.toString();
   }

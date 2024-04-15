@@ -41,6 +41,8 @@ import de.unijena.bioinf.projectspace.fingerid.*;
 import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
+import de.unijena.bioinf.spectraldb.SpectralSearchResult;
+import de.unijena.bioinf.spectraldb.SpectralSearchResultSerializer;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,19 +109,14 @@ public final class SiriusProjectSpaceManagerFactory implements ProjectSpaceManag
         this.creator = creator;
     }
 
-    public SiriusProjectSpaceManager create(@NotNull SiriusProjectSpace space, @NotNull InstanceFactory<?> factory, @Nullable Function<Ms2Experiment, String> formatter) {
-        return new SiriusProjectSpaceManager(space, factory, formatter);
+    public SiriusProjectSpaceManager create(@NotNull SiriusProjectSpace space, @Nullable Function<Ms2Experiment, String> formatter) {
+        return new SiriusProjectSpaceManager(space, formatter);
     }
 
     public SiriusProjectSpaceManager create(SiriusProjectSpace space) {
         return create(space, null);
     }
-
-
-    public SiriusProjectSpaceManager create(@NotNull SiriusProjectSpace space, @Nullable Function<Ms2Experiment, String> formatter) {
-        return create(space, new InstanceFactory.Default(), formatter);
-    }
-
+    
     @Override
     public SiriusProjectSpaceManager createOrOpen(@Nullable Path projectLocation) throws IOException {
 

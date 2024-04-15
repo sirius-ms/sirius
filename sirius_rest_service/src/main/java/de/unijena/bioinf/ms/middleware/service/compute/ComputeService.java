@@ -32,33 +32,35 @@ import org.springframework.data.domain.Pageable;
 import java.util.EnumSet;
 import java.util.List;
 
-public interface ComputeService<P extends Project> extends DisposableBean {
+public interface ComputeService extends DisposableBean {
 
-    Job createAndSubmitJob(@NotNull P psm, JobSubmission jobSubmission, @NotNull EnumSet<Job.OptField> optFields);
+    Job createAndSubmitJob(@NotNull Project<?> psm, JobSubmission jobSubmission, @NotNull EnumSet<Job.OptField> optFields);
 
-    Job createAndSubmitJob(@NotNull P psm, List<String> commandList, @Nullable Iterable<String> alignedFeatureIds,
+    Job createAndSubmitJob(@NotNull Project<?> psm, List<String> commandList, @Nullable Iterable<String> alignedFeatureIds,
                            @NotNull EnumSet<Job.OptField> optFields);
 
-    Job createAndSubmitMsDataImportJob(@NotNull P psm, ImportMultipartFilesSubmission importSubmission,
+    Job createAndSubmitMsDataImportJob(@NotNull Project<?> psm, ImportMultipartFilesSubmission importSubmission,
                                        @NotNull EnumSet<Job.OptField> optFields);
 
-    Job createAndSubmitPeakListImportJob(@NotNull P psm, ImportMultipartFilesSubmission importSubmission,
+    Job createAndSubmitPeakListImportJob(@NotNull Project<?> psm, ImportMultipartFilesSubmission importSubmission,
                                          @NotNull EnumSet<Job.OptField> optFields);
 
-    Job createAndSubmitCommandJob(@NotNull P psm, CommandSubmission commandSubmission,
+    Job createAndSubmitCommandJob(@NotNull Project<?> psm, CommandSubmission commandSubmission,
                                   @NotNull EnumSet<Job.OptField> optFields);
 
-    Job deleteJob(@NotNull P psm, String jobId, boolean cancelIfRunning, boolean awaitDeletion,
+    Job deleteJob(@NotNull Project<?> psm, String jobId, boolean cancelIfRunning, boolean awaitDeletion,
                   @NotNull EnumSet<Job.OptField> optFields);
 
-    List<Job> deleteJobs(@NotNull P psm, boolean cancelIfRunning, boolean awaitDeletion, boolean closeProject,
+    List<Job> deleteJobs(@NotNull Project<?> psm, boolean cancelIfRunning, boolean awaitDeletion, boolean closeProject,
                          @NotNull EnumSet<Job.OptField> optFields);
 
-    Job getJob(@NotNull P psm, String jobId, @NotNull EnumSet<Job.OptField> optFields);
+    Job getJob(@NotNull Project<?> psm, String jobId, @NotNull EnumSet<Job.OptField> optFields);
 
-    Page<Job> getJobs(@NotNull P psm, @NotNull Pageable pageable, @NotNull EnumSet<Job.OptField> optFields);
+    Page<Job> getJobs(@NotNull Project<?> psm, @NotNull Pageable pageable, @NotNull EnumSet<Job.OptField> optFields);
 
-    boolean hasJobs(@NotNull P psm, boolean includeFinished);
+    boolean hasJobs(@NotNull Project<?> psm, boolean includeFinished);
 
-    JJob<?> getJJob(@NotNull P psm, String jobId);
+    JJob<?> getJJob(@NotNull Project<?> psm, String jobId);
+
+    boolean isInstanceComputing(@NotNull Project<?> psm, String alignedFeatureId);
 }

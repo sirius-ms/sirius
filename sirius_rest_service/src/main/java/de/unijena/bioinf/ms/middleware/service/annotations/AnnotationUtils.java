@@ -21,6 +21,8 @@
 package de.unijena.bioinf.ms.middleware.service.annotations;
 
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
+import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import lombok.extern.slf4j.Slf4j;
@@ -209,5 +211,16 @@ public class AnnotationUtils {
 
         fp.setBitsSet(relativeIdx);
         return fp;
+    }
+
+    public static LipidAnnotation asLipidAnnotation(FTree fTree) {
+        return fTree.getAnnotation(LipidSpecies.class).map(ls -> LipidAnnotation.builder()
+                .lipidSpecies(ls.toString())
+                .lipidMapsId(ls.getLipidClass().getLipidMapsId())
+                .lipidClassName(ls.getLipidClass().longName())
+                .chainsUnknown(ls.chainsUnknown())
+                .hypotheticalStructure(ls.generateHypotheticalStructure().orElse(null))
+                .build()
+        ).orElse(LipidAnnotation.builder().build());
     }
 }
