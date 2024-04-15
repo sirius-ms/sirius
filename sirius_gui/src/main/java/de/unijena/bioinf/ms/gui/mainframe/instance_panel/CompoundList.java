@@ -61,6 +61,9 @@ public class CompoundList {
     final private MatcherEditorWithOptionalInvert<InstanceBean> compoundListMatchEditor;
 
     private final Queue<ExperimentListChangeListener> listeners = new ConcurrentLinkedQueue<>();
+
+    private final Color defaultOpenFilterPanelButtonColor;
+
     @Getter
     private @NotNull SiriusGui gui;
     public CompoundList(@NotNull SiriusGui gui) {
@@ -90,6 +93,7 @@ public class CompoundList {
 
         //filter dialog
         openFilterPanelButton = new JButton("...");
+        defaultOpenFilterPanelButtonColor = openFilterPanelButton.getBackground();
         openFilterPanelButton.addActionListener(e -> {
             new CompoundFilterOptionsDialog(gui, searchField, compoundFilterModel, this);
             colorByActiveFilter(openFilterPanelButton, compoundFilterModel);
@@ -114,7 +118,7 @@ public class CompoundList {
         } else if (compoundFilterModel.isActive()){
             openFilterPanelButton.setBackground(new Color(49, 153, 187));
         }else {
-            openFilterPanelButton.setBackground(Color.LIGHT_GRAY);
+            openFilterPanelButton.setBackground(defaultOpenFilterPanelButtonColor);
         }
     }
 
