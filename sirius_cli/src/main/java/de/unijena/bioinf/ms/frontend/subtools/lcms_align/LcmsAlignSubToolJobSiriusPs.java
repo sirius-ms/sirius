@@ -68,22 +68,22 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
+public class LcmsAlignSubToolJobSiriusPs extends PreprocessingJob<ProjectSpaceManager> {
     List<Path> inputFiles;
     Path workingDir;
 
     protected final @Nullable LCMSWorkflow workflow;
     protected final @Nullable Path statistics;
-    protected final List<Instance> importedCompounds = new ArrayList<>();
-    private final IOSupplier<? extends ProjectSpaceManager> projectSupplier;
-    private ProjectSpaceManager space;
+    protected final List<SiriusProjectSpaceInstance> importedCompounds = new ArrayList<>();
+    private final IOSupplier<SiriusProjectSpaceManager> projectSupplier;
+    private SiriusProjectSpaceManager space;
 
 
-    public LcmsAlignSubToolJob(InputFilesOptions input, @NotNull IOSupplier<? extends ProjectSpaceManager> projectSupplier, LcmsAlignOptions options) {
-        this(getWorkingDirectory(input), input.msInput.msParserfiles.keySet().stream().sorted().collect(Collectors.toList()), projectSupplier, options.getWorkflow().orElse(null), options.statistics.toPath());
+    public LcmsAlignSubToolJobSiriusPs(InputFilesOptions input, @NotNull IOSupplier<SiriusProjectSpaceManager> projectSupplier, LcmsAlignOptions options) {
+        this(getWorkingDirectory(input), input.msInput.msParserfiles.keySet().stream().sorted().collect(Collectors.toList()), projectSupplier, options.getWorkflow().orElse(null), options.statistics != null ? options.statistics.toPath() : null);
     }
 
-    public LcmsAlignSubToolJob(@NotNull Path workingDir, @NotNull List<Path> inputFiles, @NotNull IOSupplier<? extends ProjectSpaceManager> projectSupplier, @Nullable LCMSWorkflow workflow, @Nullable Path statistics) {
+    public LcmsAlignSubToolJobSiriusPs(@NotNull Path workingDir, @NotNull List<Path> inputFiles, @NotNull IOSupplier<SiriusProjectSpaceManager> projectSupplier, @Nullable LCMSWorkflow workflow, @Nullable Path statistics) {
         super();
         this.workingDir = workingDir;
         this.inputFiles = inputFiles;
@@ -93,17 +93,16 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
     }
 
     @Override
-    protected ProjectSpaceManager compute() throws Exception {
+    protected SiriusProjectSpaceManager compute() throws Exception {
         importedCompounds.clear();
         space = projectSupplier.get();
         final LCMSProccessingInstance i = new LCMSProccessingInstance();
         if (statistics != null) i.trackStatistics();
 
-
         if (workflow != null) {
             return computeWorkflow(i, workflow);
         } else {
-            LoggerFactory.getLogger(LcmsAlignSubToolJob.class).info("No workflow specified. Use 'default' workflow: mixed-mode with alignment.");
+            LoggerFactory.getLogger(LcmsAlignSubToolJobSiriusPs.class).info("No workflow specified. Use 'default' workflow: mixed-mode with alignment.");
             return computeMixedWorkflow(i, inputFiles, true);
         }
     }
@@ -117,7 +116,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         } else return new File(".").toPath();
     }
 
-    private ProjectSpaceManager computeWorkflow(LCMSProccessingInstance i, LCMSWorkflow lcmsWorkflow) throws IOException {
+    private SiriusProjectSpaceManager computeWorkflow(LCMSProccessingInstance i, LCMSWorkflow lcmsWorkflow) throws IOException {
         if (lcmsWorkflow instanceof PooledMs2Workflow) {
             return computePooledWorkflow(i, (PooledMs2Workflow) lcmsWorkflow);
         } else if (lcmsWorkflow instanceof MixedWorkflow) {
@@ -127,12 +126,12 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         } else throw new IllegalArgumentException("Unknown workflow: " + lcmsWorkflow.getClass().getName());
     }
 
-    private ProjectSpaceManager computeMixedWorkflow(LCMSProccessingInstance i, MixedWorkflow lcmsWorkflow) throws IOException {
+    private SiriusProjectSpaceManager computeMixedWorkflow(LCMSProccessingInstance i, MixedWorkflow lcmsWorkflow) throws IOException {
         final List<Path> files = Arrays.stream(lcmsWorkflow.getFiles()).map(x -> workingDir.resolve(x)).collect(Collectors.toList());
         return computeMixedWorkflow(i, files, lcmsWorkflow.isAlign());
     }
 
-    private ProjectSpaceManager computeMixedWorkflow(LCMSProccessingInstance i, List<Path> files, boolean align) throws IOException {
+    private SiriusProjectSpaceManager computeMixedWorkflow(LCMSProccessingInstance i, List<Path> files, boolean align) throws IOException {
         final ArrayList<BasicJJob<?>> jobs = new ArrayList<>();
         updateProgress(0, files.size(), 0, "Parse LC/MS runs");
         AtomicInteger counter = new AtomicInteger(0);
@@ -149,7 +148,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
                         storage.backOnDisc();
                         storage.dropBuffer();
                         final int c = counter.incrementAndGet();
-                        LcmsAlignSubToolJob.this.updateProgress(0, files.size(), c, "Parse LC/MS runs");
+                        LcmsAlignSubToolJobSiriusPs.this.updateProgress(0, files.size(), c, "Parse LC/MS runs");
                         if (!align) {
                             Iterator<FragmentedIon> ions = Iterators.filter(sample.ions.iterator(), i -> i != null && Math.abs(i.getChargeState()) <= 1 && i.getMsMsQuality().betterThan(Quality.BAD));
                             while (ions.hasNext()) {
@@ -164,7 +163,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
                             }
                         }
                     } catch (Throwable e) {
-                        LoggerFactory.getLogger(LcmsAlignSubToolJob.class).error("Error while parsing file '" + f + "': " + e.getMessage());
+                        LoggerFactory.getLogger(LcmsAlignSubToolJobSiriusPs.class).error("Error while parsing file '" + f + "': " + e.getMessage());
                         if (!(e instanceof InvalidInputData)) {
                             //stacktrace for unexpected errors
                             e.printStackTrace();
@@ -182,7 +181,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
             i.getMs2Storage().dropBuffer();
 
             if (i.getSamples().size() == 0) {
-                LoggerFactory.getLogger(LcmsAlignSubToolJob.class).error("No input data available to be aligned.");
+                LoggerFactory.getLogger(LcmsAlignSubToolJobSiriusPs.class).error("No input data available to be aligned.");
                 return space;
             }
 
@@ -196,7 +195,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         return space;
     }
 
-    private ProjectSpaceManager computePooledWorkflow(LCMSProccessingInstance instance, PooledMs2Workflow lcmsWorkflow) {
+    private SiriusProjectSpaceManager computePooledWorkflow(LCMSProccessingInstance instance, PooledMs2Workflow lcmsWorkflow) {
         // read all files
         final JobManager jm = SiriusJobs.getGlobalJobManager();
         final ProcessedSample[] ms2Samples = Arrays.stream(lcmsWorkflow.getPooledMs2())
@@ -213,7 +212,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
                 .toList().stream()
                 .map(JJob::takeResult).toArray(ProcessedSample[]::new);
         if (ms1Samples.length > 1) {
-            LoggerFactory.getLogger(LcmsAlignSubToolJob.class).warn("Multiple pooled MS1 samples are not supported yet. We will just process the first one.");
+            LoggerFactory.getLogger(LcmsAlignSubToolJobSiriusPs.class).warn("Multiple pooled MS1 samples are not supported yet. We will just process the first one.");
         }
         // now merge ms2 into ms1
         final Ms1Ms2Pairing ms1Ms2Pairing = new Ms1Ms2Pairing(ms1Samples[0], ms2Samples);
@@ -232,7 +231,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
     }
 
 
-    private ProjectSpaceManager computeRemappingWorkflow(LCMSProccessingInstance lcmsInstance, RemappingWorkflow lcmsWorkflow) {
+    private SiriusProjectSpaceManager computeRemappingWorkflow(LCMSProccessingInstance lcmsInstance, RemappingWorkflow lcmsWorkflow) {
         // read all files
         final JobManager jm = SiriusJobs.getGlobalJobManager();
         final ProcessedSample[] ms1Samples = Arrays.stream(lcmsWorkflow.getFiles())
@@ -244,7 +243,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         final List<LCMSPeakInformation> peaks = new ArrayList<>();
         final List<String> ids = new ArrayList<>();
         space.forEach(inst -> {
-            final CompoundContainer next = inst.loadCompoundContainer(LCMSPeakInformation.class, Ms2Experiment.class);
+            final CompoundContainer next = ((SiriusProjectSpaceInstance)inst).loadCompoundContainer(LCMSPeakInformation.class, Ms2Experiment.class);
             if (next.getAnnotation(Ms2Experiment.class).isPresent() && next.getAnnotation(LCMSPeakInformation.class).isPresent()) {
                 exps.add(next.getAnnotation(Ms2Experiment.class).get());
                 peaks.add(next.getAnnotation(LCMSPeakInformation.class).get());
@@ -265,17 +264,17 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
         return space;
     }
 
-    private void importCompound(ProjectSpaceManager space, MutableMs2Experiment experiment) {
+    private void importCompound(SiriusProjectSpaceManager space, MutableMs2Experiment experiment) {
         if (isInvalidExp(experiment)) {
             LoggerFactory.getLogger(getClass()).warn("Skipping invalid experiment '" + experiment.getName() + "'.");
             return;
         }
 
-        final Instance compound = space.importInstanceWithUniqueId(experiment);
+        final SiriusProjectSpaceInstance compound = space.importInstanceWithUniqueId(experiment, false);
         importedCompounds.add(compound);
     }
 
-    private ProjectSpaceManager importIntoProjectSpace(LCMSProccessingInstance i, Cluster alignment, MultipleSources sourcelocation) {
+    private SiriusProjectSpaceManager importIntoProjectSpace(LCMSProccessingInstance i, Cluster alignment, MultipleSources sourcelocation) {
         final ConsensusFeature[] consensusFeatures = i.makeConsensusFeatures(alignment);
         logInfo(consensusFeatures.length + "Feature left after merging.");
 
@@ -327,7 +326,7 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
             // kaidu: this is super slow, so we just ignore the filename
             experiment.setAnnotation(SpectrumFileSource.class, new SpectrumFileSource(sourcelocation.value));
 
-            final Instance instance = space.importInstanceWithUniqueId(experiment);
+            final SiriusProjectSpaceInstance instance = space.importInstanceWithUniqueId(experiment, false);
             importedCompounds.add(instance);
             final CompoundContainer compoundContainer = instance.loadCompoundContainer(LCMSPeakInformation.class);
             compoundContainer.setAnnotation(LCMSPeakInformation.class, lcmsPeakInformation);
@@ -400,14 +399,14 @@ public class LcmsAlignSubToolJob extends PreprocessingJob<ProjectSpaceManager> {
                     storage.dropBuffer();
                     return pr;
                 } catch (IOException | InvalidInputData e) {
-                    LoggerFactory.getLogger(LcmsAlignSubToolJob.class).error(e.getMessage(), e);
+                    LoggerFactory.getLogger(LcmsAlignSubToolJobSiriusPs.class).error(e.getMessage(), e);
                     throw new RuntimeException("Stop processing");
                 }
             }
         };
     }
 
-    public List<Instance> getImportedCompounds() {
+    public List<SiriusProjectSpaceInstance> getImportedCompounds() {
         return importedCompounds;
     }
 

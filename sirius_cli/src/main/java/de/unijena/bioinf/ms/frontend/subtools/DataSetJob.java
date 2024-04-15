@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public abstract class DataSetJob extends ToolChainJobImpl<Iterable<Instance>> implements ToolChainJob<Iterable<Instance>> {
@@ -41,15 +40,12 @@ public abstract class DataSetJob extends ToolChainJobImpl<Iterable<Instance>> im
 
     protected long maxProgress = 100;
 
-    private final Predicate<Instance> inputValidator;
-
-    public DataSetJob(@NotNull Predicate<Instance> inputValidator, @NotNull JobSubmitter submitter) {
-        this(inputValidator, submitter, ReqJobFailBehaviour.WARN);
+    public DataSetJob(@NotNull JobSubmitter submitter) {
+        this(submitter, ReqJobFailBehaviour.WARN);
     }
 
-    public DataSetJob(@NotNull Predicate<Instance> inputValidator, @NotNull JobSubmitter submitter, @NotNull ReqJobFailBehaviour failBehaviour) {
+    public DataSetJob(@NotNull JobSubmitter submitter, @NotNull ReqJobFailBehaviour failBehaviour) {
         super(submitter, failBehaviour);
-        this.inputValidator = inputValidator;
     }
 
     @Override
@@ -58,9 +54,8 @@ public abstract class DataSetJob extends ToolChainJobImpl<Iterable<Instance>> im
         maxProgress = inputInstances.size() * 101L + 1;
         updateProgress(0L, maxProgress, Math.round(.25 * inputInstances.size()), "Invalidate existing Results and Recompute!");
 
-        //todo maybe make decidable if any or all match
         final boolean hasResults = inputInstances.stream().anyMatch(this::isAlreadyComputed);
-        final boolean recompute = inputInstances.stream().anyMatch(this::isRecompute);
+        final boolean recompute = inputInstances.stream().anyMatch(Instance::isRecompute);
 
         updateProgress(Math.round(.5 * inputInstances.size()), "Invalidate existing Results and Recompute!");
 
@@ -79,7 +74,7 @@ public abstract class DataSetJob extends ToolChainJobImpl<Iterable<Instance>> im
             updateProgress(Math.round(.9 * inputInstances.size()), "Invalidate existing Results and Recompute!");
 
             progressInfo( "Start computation...");
-            inputInstances.forEach(this::enableRecompute); // enable recompute so that following tools will recompute if results exist.
+            inputInstances.forEach(Instance::enableRecompute); // enable recompute so that following tools will recompute if results exist.
             updateProgress(inputInstances.size());
             computeAndAnnotateResult(inputInstances);
             updateProgress(maxProgress - 1, "DONE!");
@@ -92,7 +87,7 @@ public abstract class DataSetJob extends ToolChainJobImpl<Iterable<Instance>> im
 
     protected void checkInputs() {
         {
-            final Map<Boolean, List<Instance>> splitted = inputInstances.stream().collect(Collectors.partitioningBy(inputValidator));
+            final Map<Boolean, List<Instance>> splitted = inputInstances.stream().collect(Collectors.partitioningBy(this::isInstanceValid));
             inputInstances = splitted.get(true);
             failedInstances = splitted.get(false);
         }
@@ -133,6 +128,7 @@ public abstract class DataSetJob extends ToolChainJobImpl<Iterable<Instance>> im
         }
     }
 
+    protected abstract boolean isInstanceValid(Instance instance);
 
     protected abstract void computeAndAnnotateResult(final @NotNull List<Instance> expRes) throws Exception;
 

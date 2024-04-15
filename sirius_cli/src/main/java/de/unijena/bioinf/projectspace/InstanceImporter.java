@@ -19,37 +19,21 @@
 
 package de.unijena.bioinf.projectspace;
 
-import de.unijena.bioinf.ChemistryBase.fp.FingerprintData;
-import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
-import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.jjobs.JobProgressMerger;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
-import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
-import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
-import de.unijena.bioinf.projectspace.canopus.CanopusCfDataProperty;
-import de.unijena.bioinf.projectspace.canopus.CanopusLocations;
-import de.unijena.bioinf.projectspace.canopus.CanopusNpcDataProperty;
-import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
-import de.unijena.bioinf.projectspace.fingerid.FingerIdLocations;
-import de.unijena.bioinf.projectspace.summaries.SummaryLocations;
-import de.unijena.bioinf.rest.NetUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -65,12 +49,10 @@ public class InstanceImporter {
     protected static final Logger LOG = LoggerFactory.getLogger(InstanceImporter.class);
     private final ProjectSpaceManager importTarget;
     private final Predicate<Ms2Experiment> expFilter;
-    private final Predicate<CompoundContainerId> cidFilter;
 
-    public InstanceImporter(ProjectSpaceManager importTarget, Predicate<Ms2Experiment> expFilter, Predicate<CompoundContainerId> cidFilter) {
+    public InstanceImporter(ProjectSpaceManager importTarget, Predicate<Ms2Experiment> expFilter) {
         this.importTarget = importTarget;
         this.expFilter = expFilter;
-        this.cidFilter = cidFilter;
     }
 
     public ImportInstancesJJob makeImportJJob(@Nullable Collection<InputResource<?>> msInput, boolean ignoreFormulas, boolean allowMs1Only) {
@@ -151,7 +133,7 @@ public class InstanceImporter {
             if (csvInputs == null || csvInputs.isEmpty())
                 return List.of();
 
-            final InstanceImportIteratorMS2Exp it = new CsvMS2ExpIterator(csvInputs, expFilter, prog).asInstanceIterator(importTarget, (c) -> cidFilter.test(c.getId()));
+            final InstanceImportIteratorMS2Exp it = new CsvMS2ExpIterator(csvInputs, expFilter, prog).asInstanceIterator(importTarget);
             final List<Instance> ll = new ArrayList<>();
 
             // no progress
@@ -166,7 +148,7 @@ public class InstanceImporter {
                 return List.of();
 
             try (final MS2ExpInputIterator iit = new MS2ExpInputIterator(files, expFilter, ignoreFormulas, allowMs1Only, prog)) {
-                InstanceImportIteratorMS2Exp it = iit.asInstanceIterator(importTarget, (c) -> cidFilter.test(c.getId()));
+                InstanceImportIteratorMS2Exp it = iit.asInstanceIterator(importTarget);
                 final List<Instance> ll = new ArrayList<>();
 
                 if (prog.isDone())

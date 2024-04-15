@@ -41,7 +41,9 @@ dependencies {
     api group: "de.unijena.bioinf.ms", name: "sirius_web_client", version: "$fingeridVersion"
     api group: "de.unijena.bioinf.ms", name: "fingerid_project_space_oss", version: "$fingeridVersion"
     api group: "de.unijena.bioinf.ms", name: "document-storage", version: "$siriusVersion"
-//    api group: "de.unijena.bioinf.ms", name: "ms_persistence_model_oss", version: "$siriusVersion"
+    api group: "de.unijena.bioinf.ms", name: "ms_persistence_model_oss", version: "$siriusVersion"
+    api group: "de.unijena.bioinf.ms", name: "ms_persistence_document_storage_oss", version: "$siriusVersion"
+    api group: "de.unijena.bioinf.ms", name: "lcms2", version: "$siriusVersion"
 
     api group: "de.unijena.bioinf.ms", name: "FTAlignmentTool", version: "$siriusVersion"
 

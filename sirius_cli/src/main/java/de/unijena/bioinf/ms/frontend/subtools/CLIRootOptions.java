@@ -182,7 +182,7 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
                 InputFilesOptions input = getInput();
                 if (space != null) {
                     if (input != null)
-                        SiriusJobs.getGlobalJobManager().submitJob(new InstanceImporter(space, (exp) -> exp.getIonMass() < maxMz, (c) -> c.getIonMass().map(m -> m < maxMz).orElse(true)).makeImportJJob(input)).awaitResult();
+                        SiriusJobs.getGlobalJobManager().submitJob(new InstanceImporter(space, (exp) -> exp.getIonMass() < maxMz).makeImportJJob(input)).awaitResult();
                     if (space.size() < 1)
                         logInfo("No Input has been imported to Project-Space. Starting application without input data.");
                     return space;

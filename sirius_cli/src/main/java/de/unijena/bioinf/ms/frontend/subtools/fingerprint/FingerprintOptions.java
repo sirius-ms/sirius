@@ -19,26 +19,18 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.fingerprint;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
-import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
-import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.projectspace.FormulaResult;
 import de.unijena.bioinf.ms.frontend.subtools.msnovelist.MsNovelistOptions;
-import de.unijena.bioinf.projectspace.FormulaResultId;
 import de.unijena.bioinf.projectspace.Instance;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 import java.util.List;
-import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  * This is for CSI:FingerID (fingerprint prediction) specific parameters.
@@ -71,16 +63,7 @@ public class FingerprintOptions implements ToolChainOptions<FingerprintSubToolJo
 
     @Override
     public Consumer<Instance> getInvalidator() {
-        return inst -> {
-            final Set<FormulaResultId> toRemove = inst.loadFormulaResults(FTree.class).stream().map(SScored::getCandidate)
-                    .filter(res -> !res.hasAnnotation(FTree.class) ||
-                            res.getAnnotationOrThrow(FTree.class).getAnnotation(IonTreeUtils.ExpandedAdduct.class)
-                                    .orElse(IonTreeUtils.ExpandedAdduct.RAW) == IonTreeUtils.ExpandedAdduct.EXPANDED) //remove if tree is missing
-                    .map(FormulaResult::getId).collect(Collectors.toSet());
-
-            inst.deleteFormulaResults(toRemove); //delete expanded results
-            inst.deleteFromFormulaResults(FingerprintResult.class); // remove Fingerprints from remaining
-        };
+        return Instance::deleteFingerprintResult;
     }
 
     @Override

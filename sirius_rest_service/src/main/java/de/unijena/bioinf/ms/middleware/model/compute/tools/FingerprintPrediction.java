@@ -80,7 +80,7 @@ public class FingerprintPrediction extends Tool<FingerprintOptions> {
     public static FingerprintPrediction.FingerprintPredictionBuilder<?,?> builderWithDefaults(){
         return FingerprintPrediction.builder()
                 .enabled(true)
-                .alwaysPredictHighRefMatches(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaResultThreshold.class).useThreshold())
-                .useScoreThreshold(PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectSpectralLibraryMatchFormulas.class).isAlwaysPredict());
+                .useScoreThreshold(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaResultThreshold.class).useThreshold())
+                .alwaysPredictHighRefMatches(PropertyManager.DEFAULTS.createInstanceWithDefaults(InjectSpectralLibraryMatchFormulas.class).isAlwaysPredict());
     }
 }

@@ -28,7 +28,6 @@ import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.frontend.subtools.decomp.DecompOptions;
 import de.unijena.bioinf.ms.frontend.subtools.export.mgf.MgfExporterOptions;
 import de.unijena.bioinf.ms.frontend.subtools.export.tables.ExportPredictionsOptions;
-import de.unijena.bioinf.ms.frontend.subtools.export.trees.FTreeExporterOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprinter.FingerprinterOptions;
@@ -56,7 +55,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * This class is used to create a toolchain workflow to be executed
@@ -80,7 +78,7 @@ import java.util.stream.StreamSupport;
  * On the other hand I do not think it is performance critical.
  */
 
-public class WorkflowBuilder{
+public class WorkflowBuilder {
     //root
     private CommandLine.Model.CommandSpec rootSpec;
 
@@ -107,8 +105,6 @@ public class WorkflowBuilder{
     public final SummaryOptions summaryOptions;
     public final ExportPredictionsOptions exportPredictions;
     public final MgfExporterOptions mgfExporterOptions;
-    public final FTreeExporterOptions ftreeExporterOptions;
-
     public final UpdateFingerprintOptions updateFingerprintOptions;
     public final AutoCompletionScript autocompleteOptions;
 
@@ -124,16 +120,16 @@ public class WorkflowBuilder{
 
     boolean closeProject = true;
 
-    public WorkflowBuilder(@NotNull CLIRootOptions rootOptions) throws IOException {
+    public WorkflowBuilder(@NotNull CLIRootOptions rootOptions) {
         this(rootOptions, rootOptions.getDefaultConfigOptions(), rootOptions.getSpaceManagerFactory());
     }
 
-    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory, boolean closeProject) throws IOException {
+    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory, boolean closeProject) {
         this(rootOptions, configOptionLoader, spaceManagerFactory);
         this.closeProject = closeProject;
     }
 
-    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory) throws IOException {
+    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory) {
         this(rootOptions, configOptionLoader, spaceManagerFactory, List.of());
     }
 
@@ -162,7 +158,6 @@ public class WorkflowBuilder{
         similarityMatrixOptions = new SimilarityMatrixOptions(spaceManagerFactory);
         decompOptions = new DecompOptions();
         mgfExporterOptions = new MgfExporterOptions();
-        ftreeExporterOptions = new FTreeExporterOptions();
         summaryOptions = new SummaryOptions();
         exportPredictions = new ExportPredictionsOptions();
         loginOptions = new LoginOptions();
@@ -196,7 +191,7 @@ public class WorkflowBuilder{
 
     protected Object[] standaloneTools() {
         return Streams.concat(
-                Stream.of(customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, ftreeExporterOptions, exportPredictions, fingerprinterOptions, updateFingerprintOptions),
+                Stream.of(customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, exportPredictions, fingerprinterOptions, updateFingerprintOptions),
                 additionalTools.stream(), Stream.of(loginOptions, settingsOptions, autocompleteOptions)
         ).toArray(Object[]::new);
 
@@ -378,16 +373,20 @@ public class WorkflowBuilder{
 
     private static class ClosingProjectPostprocessor extends PostprocessingJob<Void> {
 
-        private Stream<? extends Instance> instanceStream;
+        private Iterable<? extends Instance> instances;
 
         @Override
         public void setInput(Iterable<? extends Instance> instances, ParameterConfig config) {
-            this.instanceStream = StreamSupport.stream(instances.spliterator(), false);
+            this.instances = instances;
         }
 
         @Override
         protected Void compute() {
-            instanceStream.map(Instance::getProjectSpaceManager).distinct().forEach(ps -> {
+            Set<ProjectSpaceManager> managersToClose = new HashSet<>();
+            instances.forEach(i -> managersToClose.add(i.getProjectSpaceManager()));
+            instances = null;
+
+            managersToClose.forEach(ps -> {
                 try {
                     ps.close();
                 } catch (IOException e) {
@@ -399,7 +398,7 @@ public class WorkflowBuilder{
 
         @Override
         protected void cleanup() {
-            instanceStream = null;
+            instances = null;
             super.cleanup();
         }
     }

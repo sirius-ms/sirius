@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
+import de.unijena.bioinf.chemdb.custom.CustomDatabases;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
@@ -279,7 +280,7 @@ public class DatabaseDialog extends JDialog {
 
         @Override
         public boolean accept(File f) {
-            return f.isDirectory() || f.getName().endsWith(".db");
+            return f.isDirectory() || f.getName().endsWith(CustomDatabases.CUSTOM_DB_SUFFIX);
         }
 
         @Override
