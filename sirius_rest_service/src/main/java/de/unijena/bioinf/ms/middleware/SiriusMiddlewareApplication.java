@@ -98,6 +98,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
             try {
                 System.setProperty(APP_TYPE_PROPERTY_KEY, "SERVICE");
 
+
                 ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
                 PropertyManager.setProperty("de.unijena.bioinf.sirius.BackgroundRuns.autoremove", "false");
 
