@@ -193,13 +193,13 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
     }
 
     @NotNull
-    public String getMeasuredNeutralFormula() {
-        return getMeasuredNeutralFormulaObj().toString();
+    public String getPrecursorFormulaWithCharge() {
+        return getPrecursorFormula() + (getAdductObj().isPositive() ? "+" : "-");
     }
 
     @NotNull
-    public MolecularFormula getMeasuredNeutralFormulaObj() {
-        return getAdductObj().neutralMoleculeToMeasuredNeutralMolecule(getMolecularFormulaObj());
+    public MolecularFormula getPrecursorFormula() {
+        return getAdductObj().neutralMoleculeToPrecursorIon(getMolecularFormulaObj());
     }
 
     @NotNull

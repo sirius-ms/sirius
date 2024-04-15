@@ -176,7 +176,7 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
         @NotNull FormulaConstraints constraints = filter.constraints;
         return item.getFormulaAnnotationAsBean().map(fc ->
                 (filter.matchFormula && constraints.isSatisfied(fc.getMolecularFormulaObj(), fc.getAdductObj().getIonization()))
-                        || (filter.matchPrecursorFormula && constraints.isSatisfied(fc.getMeasuredNeutralFormulaObj(), fc.getAdductObj().getIonization()))
+                        || (filter.matchPrecursorFormula && constraints.isSatisfied(fc.getAdductObj().neutralMoleculeToMeasuredNeutralMolecule(fc.getMolecularFormulaObj()), fc.getAdductObj().getIonization()))
         ).orElse(false);
     }
 }
