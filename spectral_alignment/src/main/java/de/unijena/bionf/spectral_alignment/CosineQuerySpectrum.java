@@ -26,12 +26,15 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 
 @Getter
 public class CosineQuerySpectrum implements Spectrum<Peak> {
+    @Setter
+    int index;
     final OrderedSpectrum<Peak> spectrum;
     final SimpleSpectrum inverseSpectrum;
     final double selfSimilarity;

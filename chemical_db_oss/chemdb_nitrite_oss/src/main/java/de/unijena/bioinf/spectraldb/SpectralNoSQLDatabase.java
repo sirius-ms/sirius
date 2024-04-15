@@ -117,7 +117,7 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
     }
 
     @Override
-    public Iterable<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d, boolean withData) throws ChemicalDatabaseException{
+    public Iterable<Ms2ReferenceSpectrum> lookupSpectra(String inchiKey2d, boolean withData) throws ChemicalDatabaseException {
         return lookupSpectraBy("candidateInChiKey", inchiKey2d, withData);
     }
 

@@ -50,7 +50,7 @@ public class CosineQueryUtils {
     }
 
     public CosineQuerySpectrum createQueryWithIntensityTransformation(Spectrum<Peak> spectrum, double precursorMz, boolean transformSqrtIntensity){
-        return createQuery(spectrum, precursorMz, false, transformSqrtIntensity);
+        return createQuery(spectrum, precursorMz, transformSqrtIntensity, false);
     }
 
     /**
