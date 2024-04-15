@@ -25,11 +25,13 @@ import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchSubtoo
 import de.unijena.bioinf.ms.nightsky.sdk.model.BasicSpectrum;
 import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatch;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatchOptField;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Optional;
 
 @Getter
@@ -41,12 +43,13 @@ class SpectralMatchBean implements SiriusPCS, Comparable<SpectralMatchBean> {
 
     private String queryName;
 
-    private int rank;
+    private InstanceBean instance = null;
 
     public SpectralMatchBean(SpectralLibraryMatch match, InstanceBean instance) {
         this.match = match;
         try {
             if (instance != null) {
+                this.instance = instance;
                 BasicSpectrum query = instance.getMsData().getMs2Spectra().get(match.getQuerySpectrumIndex());
                 this.queryName = SpectraSearchSubtoolJob.getQueryName(
                         query.getMsLevel(),
@@ -60,8 +63,16 @@ class SpectralMatchBean implements SiriusPCS, Comparable<SpectralMatchBean> {
         }
     }
 
-    public Optional<BasicSpectrum> getReference() {
-        return Optional.ofNullable(getMatch().getReferenceSpectrum());
+    public synchronized Optional<BasicSpectrum> getReference() {
+        BasicSpectrum spec = getMatch().getReferenceSpectrum();
+        if (spec != null)
+            return Optional.of(spec);
+        if (instance == null)
+            return Optional.empty();
+        SpectralLibraryMatch tmpMatch = instance.withIds((pid, fid) -> instance.getClient().features()
+                .getSpectralLibraryMatch(pid, fid, getMatch().getSpecMatchId(), List.of(SpectralLibraryMatchOptField.REFERENCESPECTRUM)));
+        getMatch().setReferenceSpectrum(tmpMatch.getReferenceSpectrum());
+        return Optional.of(getMatch().getReferenceSpectrum());
     }
 
     @Override
@@ -76,5 +87,9 @@ class SpectralMatchBean implements SiriusPCS, Comparable<SpectralMatchBean> {
 
     public DBLink getDBLink() {
         return new DBLink().name(getMatch().getDbName()).id(getMatch().getDbId());
+    }
+
+    public int getRank() {
+        return Optional.ofNullable(getMatch().getRank()).orElse(0);
     }
 }

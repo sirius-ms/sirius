@@ -200,8 +200,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     private Pair<String, Database.SortOrder> sortMatch(Sort sort) {
-        return sort(sort, Pair.of("similarity.similarity", Database.SortOrder.DESCENDING), s -> switch (s) {
-            case "similarity" -> "similarity.similarity";
+        return sort(sort, Pair.of("searchResult.rank", Database.SortOrder.ASCENDING), s -> switch (s) {
+            case "rank" -> "searchResult.rank";
+            case "similarity" -> "searchResult.similarity.similarity";
             case "sharedPeaks" -> "similarity.sharedPeaks";
             default -> s;
         });
@@ -616,13 +617,21 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         List<SpectralLibraryMatch> matches;
         if (pageable.isPaged()) {
             matches = project().findByFeatureIdStr(longId, SpectraMatch.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight())
-                    .map(SpectraMatch::getSearchResult).map(SpectralLibraryMatch::of).toList();
+                    .map(SpectralLibraryMatch::of).toList();
         } else {
             matches = project().findByFeatureIdStr(longId, SpectraMatch.class, sort.getLeft(), sort.getRight())
-                    .map(SpectraMatch::getSearchResult).map(SpectralLibraryMatch::of).toList();
+                    .map(SpectralLibraryMatch::of).toList();
         }
         long total = getCountByFeature(SpectraMatch.class, longId);
         return new PageImpl<>(matches, pageable, total);
+    }
+
+    @SneakyThrows
+    @Override
+    public SpectralLibraryMatch findLibraryMatchesByFeatureIdAndMatchId(String alignedFeatureId, String matchId) {
+        long specMatchId = Long.parseLong(matchId);
+        return storage().getByPrimaryKey(specMatchId, SpectraMatch.class).map(SpectralLibraryMatch::of)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not Spectral match with ID '" + matchId + "' Exists."));
     }
 
     @SneakyThrows
@@ -782,7 +791,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         // spectral library matches
         if (optFields.contains(StructureCandidateScored.OptField.libraryMatches)) {
             List<SpectralLibraryMatch> libraryMatches = project().findByInChIStr(sSum.getInchiKey(), SpectraMatch.class)
-                    .map(SpectraMatch::getSearchResult).map(SpectralLibraryMatch::of).toList();
+                    .map(SpectralLibraryMatch::of).toList();
             sSum.setSpectralLibraryMatches(libraryMatches);
         }
 

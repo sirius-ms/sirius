@@ -90,10 +90,13 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
 
         filteredSelectionModel.addListSelectionListener(e -> {
             try {
+                parentPanel.showMatch(null, null);
 
                 backgroundLoaderLock.lock();
-                final EventList<SpectralMatchBean> selected = filteredSelectionModel.getSelected();
-                if (selected.isEmpty())
+                final SpectralMatchBean matchBean = filteredSelectionModel.getSelected().stream()
+                        .findFirst().orElse(null);
+
+                if (matchBean == null)
                     return;
                 final JJob<Boolean> old = backgroundLoader;
                 backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<>() {
@@ -106,7 +109,6 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
                         }
                         checkForInterruption();
 
-                        final SpectralMatchBean matchBean = selected.get(0);
                         Pair<BasicSpectrum, BasicSpectrum> data = getSource().readDataByFunction(ec -> {
                             if (ec == null)
                                 return null;

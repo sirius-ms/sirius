@@ -103,6 +103,11 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
         this.computeStateProvider = computeStateProvider;
     }
 
+    @Override
+    public SpectralLibraryMatch findLibraryMatchesByFeatureIdAndMatchId(String alignedFeatureId, String matchId) {
+        throw new UnsupportedOperationException("Finde by matchId not supported by the project");
+    }
+
     @NotNull
     @Override
     public String getProjectId() {
@@ -258,7 +263,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
                 searchresult.getResults().stream()
                         .skip(pageable.getOffset())
                         .limit(pageable.getPageSize())
-                        .map(SpectralLibraryMatch::of)
+                        .map(it  -> SpectralLibraryMatch.of(it, null))
                         .toList(),
                 pageable,
                 searchresult.getResults().size()
