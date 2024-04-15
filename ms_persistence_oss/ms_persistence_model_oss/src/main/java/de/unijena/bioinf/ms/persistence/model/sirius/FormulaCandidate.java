@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.persistence.model.sirius;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
@@ -81,4 +82,14 @@ public class FormulaCandidate extends AlignedFeatureAnnotation {
      */
     @Nullable
     protected Double zodiacScore;
+
+    @JsonIgnore
+    public MolecularFormula getPrecursorFormula() {
+        return adduct.neutralMoleculeToPrecursorIon(molecularFormula);
+    }
+
+    @JsonIgnore
+    public String getPrecursorFormulaWithCharge() {
+        return getPrecursorFormula().toString() + (adduct.isPositive() ? "+":"-");
+    }
 }
