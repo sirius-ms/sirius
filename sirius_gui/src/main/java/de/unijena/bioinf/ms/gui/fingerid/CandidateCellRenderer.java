@@ -36,6 +36,7 @@ import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
 import java.awt.geom.Rectangle2D;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * @author Markus Fleischauer
@@ -68,10 +69,11 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         ));
     }
 
+    private final Function<FingerprintCandidateBean, Boolean> isBest;
+
     private CompoundStructureImage image;
     private DescriptionPanel descriptionPanel;
 
-    private double structDistanceThreshold;
 
     private FingerprintCandidateBean currentCandidate;
 
@@ -82,11 +84,11 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
     protected final CandidateListDetailView candidateJList; //todo remove me to make conversion complete
     private final SiriusGui gui;
 
-    public CandidateCellRenderer(DoubleListStats stats, CandidateListDetailView candidateJList, SiriusGui gui, double structDistanceThreshold) {
+    public CandidateCellRenderer(DoubleListStats stats, CandidateListDetailView candidateJList, SiriusGui gui, Function<FingerprintCandidateBean, Boolean> isBest) {
         this.candidateJList = candidateJList;
         this.stats = stats;
         this.gui = gui;
-        this.structDistanceThreshold = structDistanceThreshold;
+        this.isBest = isBest;
         setLayout(new BorderLayout());
 
         JPanel north = new JPanel(new BorderLayout());
@@ -128,7 +130,7 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
             image.backgroundColor = value.getScore() >= stats.getMax() ? Colors.LIST_LIGHT_GREEN : (index % 2 == 0 ? EVEN : ODD);
         } else {
             if (value.getCandidate().getMcesDistToTopHit() != null)
-                image.backgroundColor = value.getCandidate().getMcesDistToTopHit() <= this.structDistanceThreshold ? Colors.LIST_LIGHT_GREEN : (index % 2 == 0 ? EVEN : ODD);
+                image.backgroundColor = isBest.apply(value) ? Colors.LIST_LIGHT_GREEN : (index % 2 == 0 ? EVEN : ODD);
         }
 
         setOpaque(true);

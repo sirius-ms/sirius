@@ -526,6 +526,8 @@ public class NoSQLInstance implements Instance {
             //adding ranks
             final AtomicInteger rank = new AtomicInteger(1);
             matches.forEach(m -> m.setStructureRank(rank.getAndIncrement()));
+            if (!matches.isEmpty())
+                matches.get(0).setMcesDistToTopHit(0d); //it seems that top hit zero is sometimes overwritten during expansive search.
             //insert matches
             project().getStorage().insertAll(matches);
 
