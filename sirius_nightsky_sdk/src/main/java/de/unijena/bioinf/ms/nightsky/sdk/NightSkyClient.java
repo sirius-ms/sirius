@@ -175,15 +175,15 @@ public class NightSkyClient implements AutoCloseable {
         sseConnection = eventStream
                 .subscribe(
                         event -> {
-                            LOG.info("Time: {} - data[{}]", LocalTime.now(), event.data());
+//                            LOG.info("Time: {} - data[{}]", LocalTime.now(), event.data());
                             sseBroadcast.onNext(event);
                         },
                         error -> {
-                            LOG.error("Error receiving SSE: {}", error);
+                            LOG.error("Error receiving SSE", error);
                             sseBroadcast.onError(error);
                         },
                         () -> {
-                            LOG.info("Completed!!!");
+                            LOG.warn("Completed!");
                             sseBroadcast.onComplete();
                         });
     }

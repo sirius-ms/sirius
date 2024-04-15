@@ -90,7 +90,7 @@ public class FluxToFlowBroadcast implements Closeable {
     public synchronized void onNext(@NotNull ServerSentEvent<String> sse) {
         final String[] evtSplit = Optional.ofNullable(sse.event()).map(s -> s.split("[.]")).filter(a -> a.length > 1).orElse(null);
         if (evtSplit == null || !DataObjectEvents.isKnownObjectDataType(evtSplit[1])){
-            LoggerFactory.getLogger(getClass()).warn("Skipping unknown sse event! " + Arrays.toString(evtSplit));
+            LoggerFactory.getLogger(getClass()).warn("Skipping unknown sse event! {}", Arrays.toString(evtSplit));
             return;
         }
 
