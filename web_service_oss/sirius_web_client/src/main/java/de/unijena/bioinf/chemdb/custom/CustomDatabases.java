@@ -185,8 +185,9 @@ public class CustomDatabases {
         } else {
             db = new BlobCustomDatabase<>(CompressibleBlobStorage.of(BlobStorages.openDefault(PROPERTY_PREFIX, location)), version);
         }
-        if (CustomDataSources.addCustomSourceIfAbsent(db.name(), db.displayName(), db.storageLocation()) != null)
-            db.readSettings(); //only read if db was newly opened.
+
+        db.getSettings(); //readsSetting only if not exists...
+        CustomDataSources.addCustomSourceIfAbsent(db.name(), db.displayName(), db.storageLocation());
         return db;
     }
 
