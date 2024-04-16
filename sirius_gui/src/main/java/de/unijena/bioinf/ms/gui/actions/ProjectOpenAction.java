@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -110,15 +111,18 @@ public class ProjectOpenAction extends AbstractGuiAction {
         openProject(projectID, projectPath, null);
     }
 
-    public synchronized void openProject(@NotNull String projectID, @NotNull Path projectPath, @Nullable Boolean closeCurrent) {
+    public synchronized void openProject(@NotNull String projectId, @NotNull Path projectPath, @Nullable Boolean closeCurrent) {
         try {
+            String pidInput = FileUtils.sanitizeFilename(projectId);
+            if (!pidInput.equals(projectId))
+                LoggerFactory.getLogger(getClass()).warn("Changed pid from '{}' to '{};, to respect name restrictions", projectId, pidInput);
             String pid = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Opening Project...", () -> {
                         ProjectInfo project = gui.getSiriusClient().projects().getProjectSpaces().stream()
                                 .filter(p -> p.getLocation() != null && projectPath.equals(Path.of(p.getLocation()))).findFirst().orElse(null);
 
-                        if (project == null) {
-                            project = gui.getSiriusClient().projects().openProjectSpace(projectID, projectPath.toAbsolutePath().toString(), List.of(ProjectInfoOptField.NONE));
-                        }
+                        if (project == null)
+                            project = gui.getSiriusClient().projects().openProjectSpace(pidInput, projectPath.toAbsolutePath().toString(), List.of(ProjectInfoOptField.NONE));
+
                         return project.getProjectId();
                     }
 
