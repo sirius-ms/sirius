@@ -59,7 +59,6 @@ import de.unijena.bioinf.storage.db.nosql.Database;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectMaps;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
@@ -73,10 +72,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
-import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -89,11 +86,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @NotNull
     private final NoSQLProjectSpaceManager projectSpaceManager;
 
-
-    private final Map<Class<?>, Function<?, Long>> featureGetters = Collections.synchronizedMap(new HashMap<>());
-    private final Map<Class<?>, AtomicLong> totalCounts = Collections.synchronizedMap(new HashMap<>());
-    private final Map<Class<?>, Long2ObjectMap<AtomicLong>> totalCountByFeature = Collections.synchronizedMap(new HashMap<>());
-
     private final @NotNull BiFunction<Project<?>, String, Boolean> computeStateProvider;
 
     @SneakyThrows
@@ -101,13 +93,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         this.projectId = projectId;
         this.projectSpaceManager = projectSpaceManager;
         this.computeStateProvider = computeStateProvider;
-
-        initCounter(de.unijena.bioinf.ms.persistence.model.core.Compound.class);
-        initCounter(AlignedFeatures.class);
-        initCounterByFeature(SpectraMatch.class, SpectraMatch::getAlignedFeatureId);
-        initCounterByFeature(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate::getAlignedFeatureId);
-        initCounterByFeature(CsiStructureMatch.class, CsiStructureMatch::getAlignedFeatureId);
-        initCounterByFeature(DenovoStructureMatch.class, DenovoStructureMatch::getAlignedFeatureId);
     }
 
     //using private methods instead of references for easier refactoring or changes.
@@ -118,38 +103,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     private SiriusProjectDocumentDatabase<? extends Database<?>> project() {
         return projectSpaceManager.getProject();
-    }
-
-    @SneakyThrows
-    private void initCounter(Class<?> clazz) {
-        storage().read(() -> { // transaction to ensure that we do not miss anything before listener is registered
-            this.totalCounts.put(clazz, new AtomicLong(storage().countAll(clazz)));
-            storage().onInsert(clazz, c -> totalCounts.get(clazz).getAndIncrement());
-            storage().onRemove(clazz, c -> totalCounts.get(clazz).getAndDecrement());
-        });
-
-    }
-
-    @SneakyThrows
-    private <T> void initCounterByFeature(Class<T> clazz, Function<T, Long> featureIdGetter) {
-        //use lazy counting for features to improve project start time
-        featureGetters.put(clazz, featureIdGetter);
-    }
-
-
-    @SneakyThrows
-    private <T> long getCountByFeature(Class<T> clazz, long featureId) {
-        return storage().read(() -> this.totalCountByFeature.computeIfAbsent(clazz, clz -> Long2ObjectMaps.synchronize(new Long2ObjectOpenHashMap<>()))
-                .computeIfAbsent(featureId, fid -> {
-                    try {
-                        AtomicLong count = new AtomicLong(this.project().countByFeatureId(featureId, clazz));
-                        this.storage().onInsert(clazz, c -> this.totalCountByFeature.get(clazz).get(((Function<T, Long>) featureGetters.get(clazz)).apply(c)).getAndIncrement());
-                        this.storage().onRemove(clazz, c -> this.totalCountByFeature.get(clazz).get(((Function<T, Long>) featureGetters.get(clazz)).apply(c)).getAndDecrement());
-                        return count;
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                }).get());
     }
 
     @Override
@@ -507,7 +460,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         List<Compound> compounds = stream.map(c -> convertCompound(c, optFields, optFeatureFields)).toList();
 
         // TODO annotations
-        long total = totalCounts.get(de.unijena.bioinf.ms.persistence.model.core.Compound.class).get();
+        long total =  storage().countAll(de.unijena.bioinf.ms.persistence.model.core.Compound.class);
 
         return new PageImpl<>(compounds, pageable, total);
     }
@@ -571,7 +524,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         List<AlignedFeature> features = stream.map(alf -> convertToApiFeature(alf, optFields)).toList();
 
-        long total = totalCounts.get(AlignedFeatures.class).get();
+        long total = storage().countAll(AlignedFeatures.class);
 
         return new PageImpl<>(features, pageable, total);
     }
@@ -609,6 +562,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         project().cascadeDeleteAlignedFeatures(Long.parseLong(alignedFeatureId));
     }
 
+    @Override
+    @SneakyThrows
+    public void deleteAlignedFeaturesByIds(List<String> alignedFeatureIds) {
+        project().cascadeDeleteAlignedFeatures(alignedFeatureIds.stream().map(Long::parseLong).sorted().toList());
+    }
+
     @SneakyThrows
     @Override
     public Page<SpectralLibraryMatch> findLibraryMatchesByFeatureId(String alignedFeatureId, Pageable pageable) {
@@ -622,7 +581,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             matches = project().findByFeatureIdStr(longId, SpectraMatch.class, sort.getLeft(), sort.getRight())
                     .map(SpectralLibraryMatch::of).toList();
         }
-        long total = getCountByFeature(SpectraMatch.class, longId);
+        long total = project().countByFeatureId(longId, SpectraMatch.class);
         return new PageImpl<>(matches, pageable, total);
     }
 
@@ -652,7 +611,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             candidates = project().findByFeatureIdStr(longAFId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, sort.getLeft(), sort.getRight())
                     .map(fc -> convertFormulaCandidate(msData, fc, optFields)).toList();
         }
-        long total = getCountByFeature(de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, longAFId);
+        long total = project().countByFeatureId(longAFId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class);
 
         return new PageImpl<>(candidates, pageable, total);
     }
@@ -690,7 +649,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         List<StructureCandidateScored> candidates = project().findByFeatureIdAndFormulaIdStr(longAFId, longFId, clzz, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight())
                 .map(s -> convertStructureMatch(s, optFields)).map(s -> (StructureCandidateScored) s).toList();
 
-        long total = getCountByFeature(clzz, longFId);
+        long total = project().countByFeatureId(longFId, clzz);
 
         return new PageImpl<>(candidates, pageable, total);
     }
@@ -721,8 +680,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     return convertStructureMatch(fc.getMolecularFormula(), fc.getAdduct(), candidate, optFields);
                 }).toList();
 
-        long total = getCountByFeature(clzz, longAFId);
-
+        long total = project().countByFeatureId(longAFId, clzz);
         return new PageImpl<>(candidates, pageable, total);
     }
 

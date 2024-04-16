@@ -97,6 +97,15 @@ public class AlignedFeatureController {
                 .getContent();
     }
 
+    /**
+     * Delete feature (aligned over runs) with the given identifier from the specified project-space.
+     *
+     * @param projectId        project-space to delete from.
+     */
+    @PutMapping(value = "/delete")
+    public void deleteAlignedFeatures(@PathVariable String projectId, @RequestBody List<String> alignedFeatureIds) {
+        projectsProvider.getProjectOrThrow(projectId).deleteAlignedFeaturesByIds(alignedFeatureIds);
+    }
 
     /**
      * Import (aligned) features into the project. Features must not exist in the project.

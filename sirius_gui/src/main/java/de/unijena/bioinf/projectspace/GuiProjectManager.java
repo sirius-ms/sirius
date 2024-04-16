@@ -64,9 +64,9 @@ public class GuiProjectManager implements Closeable {
     private CanopusNpcData canopusNpcDataPos;
     private CanopusNpcData canopusNpcDataNeg;
 
-    private PropertyChangeListener projectListener;
-    private PropertyChangeListener computeListener;
-    private PropertyChangeListenerEDT confidenceModeListender;
+    private final PropertyChangeListener projectListener;
+    private final PropertyChangeListener computeListener;
+    private final PropertyChangeListenerEDT confidenceModeListender;
 
     public GuiProjectManager(@NotNull String projectId, @NotNull NightSkyClient siriusClient, @NotNull GuiProperties properties) {
         this.properties = properties;
@@ -99,7 +99,7 @@ public class GuiProjectManager implements Closeable {
                                 pcs.firePropertyChange("project.updateInstance." + pce.getFeaturedId(), null, pce);
                     }
                 });
-        siriusClient.addEventListener(projectListener, projectId, DataEventType.PROJECT);
+        enableProjectListener();
 
         computeListener = evt -> DataObjectEvents.toDataObjectEventData(evt.getNewValue(), BackgroundComputationsStateEvent.class).ifPresent(computeEvent -> {
             Map<String, Boolean> idsToComputeState = computeEvent.getAffectedJobs().stream().filter(j -> j.getAffectedAlignedFeatureIds() != null)
@@ -113,6 +113,18 @@ public class GuiProjectManager implements Closeable {
             Jobs.runEDTLater(() -> SiriusGlazedLists.multiUpdate(INSTANCE_LIST, change));
         });
         siriusClient.addEventListener(computeListener, projectId, DataEventType.BACKGROUND_COMPUTATIONS_STATE);
+    }
+
+    public void disbableProjectListener(){
+        synchronized (projectListener) {
+            siriusClient.removeEventListener(projectListener);
+        }
+    }
+
+    public void enableProjectListener(){
+        synchronized (projectListener) {
+            siriusClient.addEventListener(projectListener, projectId, DataEventType.PROJECT);
+        }
     }
 
     private final ArrayBlockingQueue<ProjectChangeEvent> events = new ArrayBlockingQueue<>(1000);
@@ -176,12 +188,9 @@ public class GuiProjectManager implements Closeable {
 
     @Override
     public void close() {
-        siriusClient.removeEventListener(projectListener);
-        projectListener = null;
+        disbableProjectListener();
         siriusClient.removeEventListener(computeListener);
-        computeListener = null;
         properties.removePropertyChangeListener(confidenceModeListender);
-        confidenceModeListender = null;
     }
 
     public FingerIdData getFingerIdData(int charge) {

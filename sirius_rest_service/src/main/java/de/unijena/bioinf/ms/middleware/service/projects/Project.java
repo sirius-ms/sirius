@@ -146,6 +146,7 @@ public interface Project<PSM extends ProjectSpaceManager> {
     }
 
     void deleteAlignedFeaturesById(String alignedFeatureId);
+    void deleteAlignedFeaturesByIds(List<String> alignedFeatureId);
 
     Page<SpectralLibraryMatch> findLibraryMatchesByFeatureId(String alignedFeatureId, Pageable pageable);
 
