@@ -60,8 +60,8 @@ class NoSqlStructureSummaryWriter implements AutoCloseable {
             "ionMass\t" +
             "retentionTimeInSeconds\t" +
             "formulaId\t" +
-            "featureId\t" +
-            "providedFeatureId";
+            "alignedFeatureId\t" +
+            "featureId"; //todo rename to 'providedFeatureId'
     final BufferedWriter w;
 
     NoSqlStructureSummaryWriter(BufferedWriter writer) {
