@@ -56,7 +56,7 @@ class NoSqlFormulaSummaryWriter implements AutoCloseable {
             "retentionTimeInSeconds\t" +
             "formulaId\t" +
             "alignedFeatureId\t" +
-            "providedFeatureId";
+            "featureId"; //todo rename to 'providedFeatureId'
 
     private final BufferedWriter w;
 
