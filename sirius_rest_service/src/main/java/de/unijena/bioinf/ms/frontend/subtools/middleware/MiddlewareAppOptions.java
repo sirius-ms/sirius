@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.middleware;
 
+import de.unijena.bioinf.ms.frontend.splash.Splash;
 import de.unijena.bioinf.ms.frontend.subtools.OutputOptions;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
@@ -46,6 +47,12 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
     private ProjectsProvider<?> projectsProvider;
     @Setter
     private GuiService guiService;
+
+    private Splash splash;
+
+    public MiddlewareAppOptions(Splash splashScreen) {
+        this.splash = splashScreen;
+    }
 
     @CommandLine.Option(names = {"--port", "-p"}, description = "Specify the port on which the SIRIUS REST Service should run (Default: 8080).", defaultValue = "8080")
     private void setPort(int port) {
@@ -105,6 +112,11 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
 
                     if (isStartGui())
                         guiService.createGuiInstance(startPs.getProjectId());
+
+                    if (splash != null) {
+                        splash.setVisible(false);
+                        splash.dispose();
+                    }
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

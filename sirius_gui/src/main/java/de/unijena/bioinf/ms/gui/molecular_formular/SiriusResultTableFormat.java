@@ -32,62 +32,61 @@ import java.util.function.Function;
  * @author Markus Fleischauer
  */
 public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean> {
-    private static final int COL_COUNT = 13;
-
-    protected SiriusResultTableFormat(Function<FormulaResultBean,Boolean> isBest) {
+    protected SiriusResultTableFormat(Function<FormulaResultBean, Boolean> isBest) {
         super(isBest);
     }
 
     @Override
     public int highlightColumnIndex() {
-        return COL_COUNT;
+        return getColumnCount();
     }
 
     @Override
     public int getColumnCount() {
-        return COL_COUNT;
+        return columns.length - 1;
     }
+
+    protected static String[] columns = new String[]{
+            "Rank",
+//            "Precursor Formula",
+            "Molecular Formula",
+            "Adduct",
+            "Zodiac Score",
+            "Sirius Score",
+            "Isotope Score",
+            "Tree Score",
+            "Explained Peaks",
+            "Total Explained Intensity",
+            "Median Mass Error (ppm)",
+            "Median Absolute Mass Error (ppm)",
+            "Lipid Class",
+            "Best",
+    };
 
     @Override
     public String getColumnName(int column) {
-        return switch (column) {
-            case 0 -> "Rank";
-            case 1 -> "Tree Formula";
-            case 2 -> "Molecular Formula";
-            case 3 -> "Adduct";
-            case 4 -> "Zodiac Score";
-            case 5 -> "Sirius Score";
-            case 6 -> "Isotope Score";
-            case 7 -> "Tree Score";
-            case 8 -> "Explained Peaks";
-            case 9 -> "Total Explained Intensity";
-            case 10 -> "Median Mass Error (ppm)";
-            case 11 -> "Median Absolute Mass Error (ppm)";
-            case 12 -> "Lipid Class";
-            case 13 -> "Best";
-            default -> throw new IllegalStateException();
-        };
+        return columns[column];
     }
 
     @Override
     public Object getColumnValue(FormulaResultBean result, int column) {
-        return switch (column) {
-            case 0 -> result.getRank().orElse(null);
-            case 1 -> result.getMeasuredNeutralFormula();
-            case 2 -> result.getMolecularFormula();
-            case 3 -> result.getAdduct();
-            case 4 -> result.getZodiacScore().orElse(Double.NaN);
-            case 5 -> result.getSiriusScore().orElse(Double.NaN);
-            case 6 -> result.getIsotopeScore().orElse(Double.NaN);
-            case 7 -> result.getTreeScore().orElse(Double.NaN);
-            case 8 -> result.getNumOfExplainedPeaks().stream().mapToDouble(v -> (double) v).findFirst().orElse(Double.NaN);
-            case 9 -> result.getTotalExplainedIntensity().orElse(Double.NaN);
-            case 10 -> result.getMedianMassDeviation().map(Deviation::getPpm).orElse(Double.NaN);
-            case 11 -> result.getMedianMassDeviation().map(Deviation::getAbsolute).map(d -> d * 1000d).orElse(Double.NaN);
-            case 12 -> result.getLipidAnnotation().map(LipidAnnotation::getLipidSpecies).orElse(""); //N/A or better empty?
-            case 13 -> isBest.apply(result);
-            default -> throw new IllegalStateException();
-        };
+        int col = 0;
+        if (column == col++) return result.getRank().orElse(null);
+//        else if (column == col++) result.getPrecursorFormula();
+        else if (column == col++) return result.getMolecularFormula();
+        else if (column == col++) return result.getAdduct();
+        else if (column == col++) return result.getZodiacScore().orElse(Double.NaN);
+        else if (column == col++) return result.getSiriusScore().orElse(Double.NaN);
+        else if (column == col++) return result.getIsotopeScore().orElse(Double.NaN);
+        else if (column == col++) return result.getTreeScore().orElse(Double.NaN);
+        else if (column == col++) return result.getNumOfExplainedPeaks().stream().mapToDouble(v -> (double) v).findFirst().orElse(Double.NaN);
+        else if (column == col++) return result.getTotalExplainedIntensity().orElse(Double.NaN);
+        else if (column == col++) return result.getMedianMassDeviation().map(Deviation::getPpm).orElse(Double.NaN);
+        else if (column == col++) return result.getMedianMassDeviation().map(Deviation::getAbsolute).map(d -> d * 1000d).orElse(Double.NaN);
+        else if (column == col++) return result.getLipidAnnotation().map(LipidAnnotation::getLipidSpecies).orElse(""); //N/A or better empty?
+        else if (column == col++) return isBest.apply(result);
+
+        throw new IllegalStateException();
     }
 }
 

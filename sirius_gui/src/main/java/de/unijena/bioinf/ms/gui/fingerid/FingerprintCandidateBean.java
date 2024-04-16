@@ -130,7 +130,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
                         .filter(Objects::nonNull).distinct().toList();
 
                 if (entry.getKey().equals(DataSource.LIPID.name()))
-                    labels.add(new DatabaseLabel(entry.getKey(), "Lipid - " + entry.getValue().iterator().next(), cleaned.toArray(String[]::new)));
+                    labels.add(new DatabaseLabel(entry.getKey(), entry.getValue().iterator().next().getId(), cleaned.toArray(String[]::new)));
                 else
                     labels.add(new DatabaseLabel(entry.getKey(), CustomDataSources.getSourceFromNameOpt(entry.getKey()).map(CustomDataSources.Source::displayName).orElse(null), cleaned.toArray(String[]::new)));
             }

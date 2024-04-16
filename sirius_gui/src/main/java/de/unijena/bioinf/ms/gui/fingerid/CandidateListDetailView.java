@@ -31,7 +31,6 @@ import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.elgordo.LipidClass;
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
@@ -44,7 +43,6 @@ import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
-import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.rest.ProxyManager;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -77,8 +75,6 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     protected StructureSearcher structureSearcher;
     protected Thread structureSearcherThread;
 
-    protected double structDistanceThreshold = 2.0; //TODO: This should probably become a parameter in the future
-
     protected JMenuItem CopyInchiKey, CopyInchi, OpenInBrowser1, OpenInBrowser2, highlight, annotateSpectrum;
     protected JPopupMenu popupMenu;
 
@@ -108,7 +104,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
         this.resultPanel = resultPanel;
 
         ToolTipManager.sharedInstance().registerComponent(candidateList);
-        candidateList.setCellRenderer(new CandidateCellRenderer(sourceList.csiScoreStats, this, gui,structDistanceThreshold));
+        candidateList.setCellRenderer(new CandidateCellRenderer(sourceList.csiScoreStats, this, gui, getSource().getBestFunc()));
         candidateList.setFixedCellHeight(-1);
         candidateList.setPrototypeCellValue(FingerprintCandidateBean.PROTOTYPE);
         final JScrollPane scrollPane = new JScrollPane(candidateList, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
