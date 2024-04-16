@@ -30,6 +30,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Objects;
+import java.util.Optional;
 
 class NoSqlFormulaSummaryWriter implements AutoCloseable {
     final static String DOUBLE_FORMAT = "%.3f";
@@ -38,7 +39,6 @@ class NoSqlFormulaSummaryWriter implements AutoCloseable {
             "molecularFormula\t" +
             "adduct\t" +
             "precursorFormula\t" +
-            "neutralizedPrecursorFormula(treeFormula)\t" +
             "SiriusScore\t" +
             "TreeScore\t" +
             "IsotopeScore\t" +
@@ -51,11 +51,12 @@ class NoSqlFormulaSummaryWriter implements AutoCloseable {
             "massErrorPrecursor(ppm)\t" +
 
             "lipidClass\t" +
+            // metadata for mapping
             "ionMass\t" +
             "retentionTimeInSeconds\t" +
             "formulaId\t" +
             "alignedFeatureId\t" +
-            "providedFeatureId";
+            "featureId"; //todo rename to 'providedFeatureId'
 
     private final BufferedWriter w;
 
@@ -84,9 +85,7 @@ class NoSqlFormulaSummaryWriter implements AutoCloseable {
         writeSep();
         w.write(fc.getAdduct().toString());
         writeSep();
-        w.write(fc.getAdduct().neutralMoleculeToPrecursorIon(fc.getMolecularFormula()).toString());
-        writeSep();
-        w.write(fc.getAdduct().neutralMoleculeToMeasuredNeutralMolecule(fc.getMolecularFormula()).toString());
+        w.write(fc.getPrecursorFormulaWithCharge());
         writeSep();
         w.write(String.format(DOUBLE_FORMAT, fc.getSiriusScore()));
         writeSep();
@@ -111,7 +110,7 @@ class NoSqlFormulaSummaryWriter implements AutoCloseable {
 
         w.write(String.format(DOUBLE_FORMAT, f.getAverageMass()));
         writeSep();
-        w.write(String.format("%.0f", f.getRetentionTime().getMiddleTime()));
+        w.write(Optional.ofNullable(f.getRetentionTime()).map(rt -> String.format("%.0f", rt.getMiddleTime())).orElse(""));
         writeSep();
         w.write(String.format(LONG_FORMAT, fc.getFormulaId()));
         writeSep();

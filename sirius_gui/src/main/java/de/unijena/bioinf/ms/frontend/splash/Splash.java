@@ -3,7 +3,7 @@ package de.unijena.bioinf.ms.frontend.splash;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.jjobs.ProgressJJob;
-import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,20 +26,22 @@ public class Splash extends JWindow implements JobProgressEventListener {
     private final JProgressBar progressBar;
     protected ProgressJJob<?> source;
 
-    public Splash() {
+    public Splash(boolean indeterminate) {
         UIDefaults overrides = new UIDefaults();
-        overrides.put("ProgressBar[Enabled].foregroundPainter", new MyPainter(new Color(155, 166, 219)));
+//        overrides.put("ProgressBar[Enabled].foregroundPainter", new MyPainter(new Color(155, 166, 219)));
+        overrides.put("ProgressBar[Enabled].foregroundPainter", new MyPainter(new Color(212, 20, 90)));
 
         progressBar = new JProgressBar(min, max);
         progressBar.putClientProperty("Nimbus.Overrides", overrides);
         progressBar.putClientProperty("Nimbus.Overrides.InheritDefaults", false);
         progressBar.setStringPainted(true);
         progressBar.setString("Starting SIRIUS...");
+        progressBar.setIndeterminate(indeterminate);
 
         JPanel contentPane = new JPanel();
         this.setContentPane(contentPane);
         contentPane.setLayout(new BorderLayout());
-        ImageIcon icon = Icons.SPLASH;
+        ImageIcon icon = new ImageIcon(MainFrame.class.getResource("/icons/sirius_splash_scribble.gif"));
         this.setSize(icon.getIconWidth(), icon.getIconHeight());
         contentPane.add(new JLabel(icon, JLabel.CENTER), BorderLayout.CENTER);
         contentPane.add(progressBar, BorderLayout.SOUTH);

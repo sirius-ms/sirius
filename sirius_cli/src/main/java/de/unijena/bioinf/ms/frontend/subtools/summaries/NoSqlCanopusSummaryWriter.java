@@ -59,9 +59,12 @@ class NoSqlCanopusSummaryWriter implements AutoCloseable {
                     "ClassyFire#superclass\t" +
                     "ClassyFire#superclass probability\t" +
                     "ClassyFire#all classifications\t" +
+                    // metadata for mapping
+                    "ionMass\t" +
+                    "retentionTimeInSeconds\t" +
                     "formulaId\t" +
                     "alignedFeatureId\t" +
-                    "providedFeatureId";
+                    "featureId"; //todo rename to 'providedFeatureId'
 
     private final BufferedWriter w;
 
@@ -86,9 +89,13 @@ class NoSqlCanopusSummaryWriter implements AutoCloseable {
         writeSep();
         w.write(fc.getAdduct().toString());
         writeSep();
-        w.write(fc.getAdduct().neutralMoleculeToPrecursorIon(fc.getMolecularFormula()).toString());
+        w.write(fc.getPrecursorFormulaWithCharge());
         writeSep();
         writeCanopus(cp);
+        writeSep();
+        w.write(String.format(DOUBLE_FORMAT, f.getAverageMass()));
+        writeSep();
+        w.write(Optional.ofNullable(f.getRetentionTime()).map(rt -> String.format("%.0f", rt.getMiddleTime())).orElse(""));
         writeSep();
         w.write(String.format(LONG_FORMAT, fc.getFormulaId()));
         writeSep();

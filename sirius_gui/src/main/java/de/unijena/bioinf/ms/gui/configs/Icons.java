@@ -39,9 +39,6 @@ import java.io.IOException;
 public abstract class Icons {
     //ICONS
 
-
-    public static final ImageIcon SPLASH = new ImageIcon(MainFrame.class.getResource("/icons/sirius_splash.gif"));
-
     public static final ImageIcon FILTER_LOADER = new ImageIcon(MainFrame.class.getResource("/icons/loaders/filterLoader.gif"));
     public static final ImageIcon FILTER_LOADER_60 = new ImageIcon(MainFrame.class.getResource("/icons/loaders/filterLoader_60.gif"));
     public static final ImageIcon FILTER_LOADER_120 = new ImageIcon(MainFrame.class.getResource("/icons/loaders/filterLoader_120.gif"));

@@ -32,20 +32,14 @@ import de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 class NoSqlStructureSummaryWriter implements AutoCloseable {
     final static String DOUBLE_FORMAT = "%.3f";
     final static String LONG_FORMAT = "%d";
-    final static String HEADER =
-            "structurePerIdRank\t" +
+    final static String HEADER = "structurePerIdRank\t" +
             "formulaRank\t" +
-//            "#adducts\t" +
-//            "#predictedFPs\t" +
             "ConfidenceScoreExact\t" +
             "ConfidenceScoreApproximate\t" +
             "CSI:FingerIDScore\t" +
@@ -53,6 +47,7 @@ class NoSqlStructureSummaryWriter implements AutoCloseable {
             "SiriusScore\t" +
             "molecularFormula\t" +
             "adduct\t" +
+            "precursorFormula\t" +
             "InChIkey2D\t" +
             "InChI\t" +
             "name\t" +
@@ -61,11 +56,12 @@ class NoSqlStructureSummaryWriter implements AutoCloseable {
             "pubchemids\t" +
             "links\t" +
             "dbflags\t" +
+            // metadata for mapping
             "ionMass\t" +
             "retentionTimeInSeconds\t" +
             "formulaId\t" +
-            "featureId\t" +
-            "providedFeatureId";
+            "alignedFeatureId\t" +
+            "featureId"; //todo rename to 'providedFeatureId'
     final BufferedWriter w;
 
     NoSqlStructureSummaryWriter(BufferedWriter writer) {
@@ -87,11 +83,6 @@ class NoSqlStructureSummaryWriter implements AutoCloseable {
         w.write(String.valueOf(fc.getFormulaRank()));
         writeSep();
 
-//        w.write("ADDUCTS");
-//        writeSep();
-//        w.write("FPS");
-//        writeSep();
-
         w.write(String.valueOf(searchResult.getConfidenceExact()));
         writeSep();
         w.write(String.valueOf(searchResult.getConfidenceApprox()));
@@ -105,6 +96,8 @@ class NoSqlStructureSummaryWriter implements AutoCloseable {
         w.write(fc.getMolecularFormula().toString());
         writeSep();
         w.write(fc.getAdduct().toString());
+        writeSep();
+        w.write(fc.getPrecursorFormulaWithCharge());
         writeSep();
 
         w.write(match.getCandidateInChiKey());
@@ -127,14 +120,14 @@ class NoSqlStructureSummaryWriter implements AutoCloseable {
         writeSep();
         w.write(String.format(DOUBLE_FORMAT, f.getAverageMass()));
         writeSep();
-        w.write(String.format("%.0f", f.getRetentionTime().getMiddleTime()));
+        w.write(Optional.ofNullable(f.getRetentionTime()).map(rt -> String.format("%.0f", rt.getMiddleTime())).orElse(""));
         writeSep();
 
         w.write(String.format(LONG_FORMAT, fc.getFormulaId()));
         writeSep();
         w.write(String.format(LONG_FORMAT, f.getAlignedFeatureId()));
         writeSep();
-        w.write(Objects.requireNonNullElse(f.getExternalFeatureId(),""));
+        w.write(Objects.requireNonNullElse(f.getExternalFeatureId(), ""));
         w.newLine();
     }
 
