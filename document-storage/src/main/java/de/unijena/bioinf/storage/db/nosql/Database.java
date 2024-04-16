@@ -38,6 +38,10 @@ import static de.unijena.bioinf.storage.db.nosql.utils.ExtFieldUtils.getAllField
 import static de.unijena.bioinf.storage.db.nosql.utils.ExtFieldUtils.getAllFieldValue;
 
 public interface Database<DocType> extends Closeable, AutoCloseable {
+    void disableIndices(Class<?> clazz, Index... keep);
+
+    void enableIndices(Class<?> clazz);
+
     //todo do we want to change from IO to Runtimeexceptions for better lamda compatibility
     enum SortOrder {
         ASCENDING, DESCENDING
@@ -239,6 +243,9 @@ public interface Database<DocType> extends Closeable, AutoCloseable {
     <T> int removeAll(Iterable<T> objects) throws IOException;
 
     <T> int removeAll(Filter filter, Class<T> clazz) throws IOException;
+
+    <T> boolean removeOne(Filter filter, Class<T> clazz) throws IOException;
+
 
     int remove(String collectionName, DocType document) throws IOException;
 

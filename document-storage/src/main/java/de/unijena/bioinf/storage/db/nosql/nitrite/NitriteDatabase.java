@@ -74,6 +74,8 @@ import java.util.stream.StreamSupport;
 
 @Slf4j
 public class NitriteDatabase implements Database<Document> {
+    private final Metadata meta;
+
     public enum MVStoreCompression{NONE, LZF, DEFLATE}
 
     protected Path file;
@@ -113,6 +115,7 @@ public class NitriteDatabase implements Database<Document> {
 
     public NitriteDatabase(Path file, Metadata meta, MVStoreCompression compression, int cacheSizeMiB, int commitBufferByte) throws IOException {
         this.file = file;
+        this.meta = meta;
         this.db = initDB(file, meta, compression, cacheSizeMiB,commitBufferByte);
         this.initCollections(meta);
         this.initRepositories(meta);
@@ -156,6 +159,49 @@ public class NitriteDatabase implements Database<Document> {
             initIndex(meta.repoIndices.get(clazz), repository);
             initPrimaryKey(clazz, meta.pkFields.get(clazz), meta.pkSuppliers.get(clazz), repository);
         }
+    }
+
+    /**
+     * Allows to clear a repository by dropping and recreating it
+     */
+    public void clearRepository(Class<?> clazz, boolean rebuildIndex) throws IOException {
+        stateWriteLock.lock();
+        try {
+            this.db.getRepository(clazz).drop();
+            ObjectRepository<?> repository = this.db.getRepository(clazz);
+            this.repositories.put(clazz, repository);
+            initPrimaryKey(clazz, meta.pkFields.get(clazz), meta.pkSuppliers.get(clazz), repository);
+            if (rebuildIndex) {
+                initIndex(meta.repoIndices.get(clazz), repository);
+            }
+        } finally {
+            stateWriteLock.unlock();
+        }
+    }
+
+    @Override
+    public void disableIndices(Class<?> clazz, Index... keep) {
+        HashSet<Index> kp = new HashSet<>(Arrays.asList(keep));
+        stateWriteLock.lock();
+        try {
+            String pkField = meta.pkFields.get(clazz).getName();
+            Index[] pkIndexToKeep = Arrays.stream(meta.repoIndices.get(clazz))
+                    .filter(i -> kp.contains(i) || i.getFields()[0].equals(pkField)).toArray(Index[]::new);
+            initIndex(pkIndexToKeep, this.db.getRepository(clazz));
+        } finally {
+            stateWriteLock.unlock();
+        }
+    }
+
+    @Override
+    public void enableIndices(Class<?> clazz) {
+        stateWriteLock.lock();
+        try {
+            initIndex(meta.repoIndices.get(clazz), this.db.getRepository(clazz));
+        } finally {
+            stateWriteLock.unlock();
+        }
+
     }
 
     @SuppressWarnings("unchecked")
@@ -878,6 +924,15 @@ public class NitriteDatabase implements Database<Document> {
             ObjectRepository<T> repo = this.getRepository(clazz);
             NitriteFilter f = getFilter(filter);
             return repo.remove(f).getAffectedCount();
+        });
+    }
+
+    @Override
+    public <T> boolean removeOne(Filter filter, Class<T> clazz) throws IOException {
+        return this.write(() -> {
+            ObjectRepository<T> repo = this.getRepository(clazz);
+            NitriteFilter f = getFilter(filter);
+            return repo.remove(f, true).getAffectedCount() > 0;
         });
     }
 
