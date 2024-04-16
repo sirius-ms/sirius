@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
 import de.unijena.bioinf.webapi.WebAPI;
+import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -91,7 +92,11 @@ public abstract class CustomDatabase implements SearchableDatabase {
         writeSettings(settings);
     }
 
-    public CustomDatabaseSettings getSettings() {
+    @SneakyThrows
+    public synchronized CustomDatabaseSettings getSettings() {
+        if (settings == null) {
+            readSettings();
+        }
         return settings;
     }
 
