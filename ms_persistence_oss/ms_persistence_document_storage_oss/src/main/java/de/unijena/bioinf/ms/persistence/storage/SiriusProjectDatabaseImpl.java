@@ -27,6 +27,7 @@ import org.apache.commons.lang3.reflect.FieldUtils;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -83,4 +84,25 @@ public abstract class SiriusProjectDatabaseImpl<Storage extends Database<?>> imp
         });
     }
 
+
+    @Override
+    public long cascadeDeleteAlignedFeatures(List<Long> alignedFeatureIds) throws IOException {
+        if (alignedFeatureIds.isEmpty())
+            return 0;
+        if (alignedFeatureIds.size() == 1)
+            return cascadeDeleteAlignedFeatures(alignedFeatureIds.get(0));
+
+        return this.getStorage().write(() -> {
+            long count = 0;
+            for (Class<?> clazz : getRelatedToAF()) {
+                try {
+                    count += getStorage().removeAll(Filter.where("alignedFeatureId").in(alignedFeatureIds.toArray(Long[]::new)), clazz);
+                } finally {
+                    getStorage().flush();
+                    System.gc();
+                }
+            }
+            return count;
+        });
+    }
 }
