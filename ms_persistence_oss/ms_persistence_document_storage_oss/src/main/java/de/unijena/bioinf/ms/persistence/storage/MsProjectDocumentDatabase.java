@@ -80,7 +80,8 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
 
                 .addRepository(SourceTrace.class)
 
-                .addRepository(MSData.class)
+                .addRepository(MSData.class,
+                        Index.nonUnique("alignedFeatureId"))
 
                 .addRepository(Feature.class,
                         Index.nonUnique("alignedFeatureId")
@@ -102,9 +103,10 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                 )
 
                 .addRepository(AlignedIsotopicFeatures.class,
-                        Index.nonUnique("compoundId"),
-                        Index.nonUnique("averageMass"),
-                        Index.nonUnique("retentionTime.middle")
+                        Index.nonUnique("alignedFeatureId")
+                        //Index.nonUnique("compoundId"),
+                        //Index.nonUnique("averageMass"),
+                        //Index.nonUnique("retentionTime.middle")
                         //Index.nonUnique("apexMass"),
                         //Index.nonUnique("retentionTime.start"),
                         //Index.nonUnique("retentionTime.end")
@@ -113,7 +115,8 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                 .addRepository(CorrelatedIonPair.class,
                         Index.nonUnique("alignedFeatureId1"),
                         Index.nonUnique("alignedFeatureId2"),
-                        Index.nonUnique("type"))
+                        Index.nonUnique("type")
+                )
 
                 .addRepository(Compound.class,
                         Index.nonUnique("name"),
