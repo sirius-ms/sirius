@@ -171,8 +171,8 @@ public class MainFrame extends JFrame implements DropTargetListener {
         // create models for views
         compoundList = new CompoundList(gui);
         formulaList = new FormulaList(compoundList);
-        structureList = new StructureList(compoundList, InstanceBean::getStructureCandidates, false);
-        deNovoStructureList = new StructureList(compoundList, InstanceBean::getDeNovoStructureCandidates, true);
+        structureList = new StructureList(compoundList, (inst, k) -> inst.getStructureCandidates(k, true), false);
+        deNovoStructureList = new StructureList(compoundList, (inst, k) -> inst.getDeNovoStructureCandidates(k,true), true);
         spectralMatchList = new SpectralMatchList(compoundList);
 
 

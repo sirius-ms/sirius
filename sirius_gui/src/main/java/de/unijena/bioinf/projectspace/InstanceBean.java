@@ -274,34 +274,34 @@ public class InstanceBean implements SiriusPCS {
 
     }
 
-    public List<FingerprintCandidateBean> getStructureCandidates(int topK) {
-        return toFingerprintCandidateBeans(getStructureCandidatesPage(topK));
+    public List<FingerprintCandidateBean> getStructureCandidates(int topK, boolean fp) {
+        return toFingerprintCandidateBeans(getStructureCandidatesPage(topK, fp));
     }
 
-    public PageStructureCandidateFormula getStructureCandidatesPage(int topK) {
-        return getStructureCandidatesPage(0, topK);
+    public PageStructureCandidateFormula getStructureCandidatesPage(int topK, boolean fp) {
+        return getStructureCandidatesPage(0, topK, fp);
     }
 
-    public PageStructureCandidateFormula getStructureCandidatesPage(int pageNum, int pageSize) {
+    public PageStructureCandidateFormula getStructureCandidatesPage(int pageNum, int pageSize, boolean fp) {
         return withIds((pid, fid) -> getClient().features()
                 .getStructureCandidatesPaged(pid, fid, pageNum, pageSize, null,
-                        List.of(StructureCandidateOptField.DBLINKS, StructureCandidateOptField.FINGERPRINT)));
+                        fp ? List.of(StructureCandidateOptField.DBLINKS, StructureCandidateOptField.FINGERPRINT): List.of(StructureCandidateOptField.DBLINKS)));
     }
 
 
-    public List<FingerprintCandidateBean> getDeNovoStructureCandidates(int topK) {
-        return toFingerprintCandidateBeans(getDeNovoStructureCandidatesPage(topK));
+    public List<FingerprintCandidateBean> getDeNovoStructureCandidates(int topK, boolean fp) {
+        return toFingerprintCandidateBeans(getDeNovoStructureCandidatesPage(topK,fp));
     }
 
 
-    public PageStructureCandidateFormula getDeNovoStructureCandidatesPage(int topK) {
-        return getDeNovoStructureCandidatesPage(0, topK);
+    public PageStructureCandidateFormula getDeNovoStructureCandidatesPage(int topK, boolean fp) {
+        return getDeNovoStructureCandidatesPage(0, topK, fp);
     }
 
-    public PageStructureCandidateFormula getDeNovoStructureCandidatesPage(int pageNum, int pageSize) {
+    public PageStructureCandidateFormula getDeNovoStructureCandidatesPage(int pageNum, int pageSize, boolean fp) {
         return withIds((pid, fid) -> getClient().features()
                 .getDeNovoStructureCandidatesPaged(pid, fid, pageNum, pageSize, null,
-                        List.of(StructureCandidateOptField.DBLINKS, StructureCandidateOptField.FINGERPRINT)));
+                        fp ? List.of(StructureCandidateOptField.DBLINKS, StructureCandidateOptField.FINGERPRINT): List.of(StructureCandidateOptField.DBLINKS)));
     }
 
     @Nullable
