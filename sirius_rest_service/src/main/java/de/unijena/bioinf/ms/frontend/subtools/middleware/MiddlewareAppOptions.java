@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.middleware;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ms.frontend.splash.Splash;
 import de.unijena.bioinf.ms.frontend.subtools.OutputOptions;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
@@ -101,9 +102,10 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
                         startPs = projectsProvider.createTempProject(EnumSet.noneOf(ProjectInfo.OptField.class));
                     } else {
                         String psid = location.get().getFileName().toString();
-                        if (psid.endsWith(SIRIUS_PROJECT_SUFFIX)) {
+                        if (psid.endsWith(SIRIUS_PROJECT_SUFFIX))
                             psid = psid.substring(0, psid.length() - SIRIUS_PROJECT_SUFFIX.length());
-                        }
+                        psid = FileUtils.sanitizeFilename(psid);
+
                         startPs = projectsProvider.createProject(
                                 psid,
                                 location.get().toAbsolutePath().toString(),

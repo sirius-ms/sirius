@@ -57,6 +57,7 @@ public class SiriusProjectSpaceProviderImpl extends ProjectSpaceManagerProvider<
     public ProjectInfo createTempProject(@NotNull EnumSet<ProjectInfo.OptField> optFields) {
         Path p = FileUtils.createTmpProjectSpaceLocation(null);
         String projectId = p.getFileName().toString();
+        projectId = FileUtils.sanitizeFilename(projectId);
         return createProject(projectId, p.toAbsolutePath().toString(), optFields, true);
     }
 

@@ -57,7 +57,6 @@ import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentData
 public class ProjectCreateAction extends ProjectOpenAction {
 
 
-
     public static final String DONT_ASK_NEW_WINDOW_CREATE_KEY = "de.unijena.bioinf.sirius.dragdrop.newWindowCreate.dontAskAgain";
 
     public static final Pattern PROJECT_ID_VALIDATOR = Pattern.compile("[a-zA-Z0-9_-]+", Pattern.CASE_INSENSITIVE);
@@ -71,7 +70,7 @@ public class ProjectCreateAction extends ProjectOpenAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        openDialog(mainFrame,"Create", this::createProject);
+        openDialog(mainFrame, "Create", this::createProject);
     }
 
     public static void openDialog(MainFrame mainFrame, String buttonText, BiConsumer<String, Path> onSuccess) {
@@ -134,7 +133,7 @@ public class ProjectCreateAction extends ProjectOpenAction {
                 } else if (!PROJECT_ID_VALIDATOR.matcher(name).matches()) {
                     error = "Project name must be valid: \"([a-zA-Z0-9_-]+).sirius\"";
                     SwingUtilities.invokeLater(() -> cButton.setEnabled(false));
-                } else if(jfc.getCurrentDirectory() != null && Files.exists(jfc.getCurrentDirectory().toPath().resolve(name + SIRIUS_PROJECT_SUFFIX))) {
+                } else if (jfc.getCurrentDirectory() != null && Files.exists(jfc.getCurrentDirectory().toPath().resolve(name + SIRIUS_PROJECT_SUFFIX))) {
                     error = "Project already exists";
                     SwingUtilities.invokeLater(() -> cButton.setEnabled(false));
                 } else {
@@ -162,11 +161,8 @@ public class ProjectCreateAction extends ProjectOpenAction {
         jfc.addPropertyChangeListener(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY, (e) -> {
             if (e.getNewValue() instanceof File file) {
                 final Path f = file.toPath();
-                if (Files.isDirectory(f)) {
-                    SwingUtilities.invokeLater(() -> jfc.setCurrentDirectory(f.toFile()));
-                } else {
+                if (Files.isRegularFile(f))
                     SwingUtilities.invokeLater(() -> projectNameField.setText(ensureUniqueProjectId(f)));
-                }
             }
         });
 
@@ -183,7 +179,7 @@ public class ProjectCreateAction extends ProjectOpenAction {
 
             if (Files.exists(selDir) && Files.isDirectory(selDir)) {
                 Jobs.runInBackground(() ->
-                        SiriusProperties.SIRIUS_PROPERTIES_FILE(). setAndStoreProperty(SiriusProperties.DEFAULT_SAVE_DIR_PATH, selDir.toAbsolutePath().toString())
+                        SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(SiriusProperties.DEFAULT_SAVE_DIR_PATH, selDir.toAbsolutePath().toString())
                 );
 
                 if (PROJECT_ID_VALIDATOR.matcher(projectName).matches())
