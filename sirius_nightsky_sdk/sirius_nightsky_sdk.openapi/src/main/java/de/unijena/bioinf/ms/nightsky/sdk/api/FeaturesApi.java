@@ -237,6 +237,85 @@ public class FeaturesApi {
         return deleteAlignedFeatureRequestCreation(projectId, alignedFeatureId);
     }
     /**
+     * Delete feature (aligned over runs) with the given identifier from the specified project-space.
+     * Delete feature (aligned over runs) with the given identifier from the specified project-space.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param requestBody The requestBody parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec deleteAlignedFeaturesRequestCreation(String projectId, List<String> requestBody) throws WebClientResponseException {
+        Object postBody = requestBody;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling deleteAlignedFeatures", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'requestBody' is set
+        if (requestBody == null) {
+            throw new WebClientResponseException("Missing the required parameter 'requestBody' when calling deleteAlignedFeatures", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { 
+            "application/json"
+        };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/delete", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Delete feature (aligned over runs) with the given identifier from the specified project-space.
+     * Delete feature (aligned over runs) with the given identifier from the specified project-space.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param requestBody The requestBody parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public void deleteAlignedFeatures(String projectId, List<String> requestBody) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        deleteAlignedFeaturesRequestCreation(projectId, requestBody).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Delete feature (aligned over runs) with the given identifier from the specified project-space.
+     * Delete feature (aligned over runs) with the given identifier from the specified project-space.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param requestBody The requestBody parameter
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Void> deleteAlignedFeaturesWithHttpInfo(String projectId, List<String> requestBody) throws WebClientResponseException {
+        ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
+        return deleteAlignedFeaturesRequestCreation(projectId, requestBody).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Delete feature (aligned over runs) with the given identifier from the specified project-space.
+     * Delete feature (aligned over runs) with the given identifier from the specified project-space.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to delete from.
+     * @param requestBody The requestBody parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec deleteAlignedFeaturesWithResponseSpec(String projectId, List<String> requestBody) throws WebClientResponseException {
+        return deleteAlignedFeaturesRequestCreation(projectId, requestBody);
+    }
+    /**
      * Get feature (aligned over runs) with the given identifier from the specified project-space.
      * Get feature (aligned over runs) with the given identifier from the specified project-space.
      * <p><b>200</b> - AlignedFeature with additional annotations and MS/MS data (if specified).

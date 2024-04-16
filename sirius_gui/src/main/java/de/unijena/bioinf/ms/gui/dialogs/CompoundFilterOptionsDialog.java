@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.gui.dialogs;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.DeleteExperimentAction;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
@@ -45,6 +46,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -347,7 +349,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         CompoundFilterModel tmpModel = new CompoundFilterModel();
         applyToModel(tmpModel);
         CompoundFilterMatcher matcher = new CompoundFilterMatcher(gui.getProperties(), tmpModel);
-
+        boolean inverted = invertFilter.isSelected();
         // reset global filter and close
         resetFilter();
         saveChanges();
@@ -357,13 +359,26 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         gui.getMainFrame().getCompoundList().getCompoundListSelectionModel().clearSelection();
 
         // collect instances to delete
-        List<InstanceBean> toDelete = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Collecting Instances...", () -> invertFilter.isSelected()
-                ? compoundList.getCompoundList().stream().filter(matcher::matches).collect(Collectors.toList())
-                : compoundList.getCompoundList().stream().filter(i -> !matcher.matches(i)).collect(Collectors.toList())
+        List<InstanceBean> toDelete = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Filtering...", new TinyBackgroundJJob<List<InstanceBean>>() {
+                    @Override
+                    protected List<InstanceBean> compute() {
+                        final int max = compoundList.getCompoundList().size();
+                        AtomicInteger progress = new AtomicInteger(0);
+                        if (inverted) {
+                            return compoundList.getCompoundList().stream()
+                                    .peek(i -> updateProgress(max, progress.getAndIncrement(), i.getGUIName()))
+                                    .filter(matcher::matches).collect(Collectors.toList());
+                        } else {
+                            return compoundList.getCompoundList().stream()
+                                    .peek(i -> updateProgress(max, progress.getAndIncrement(), i.getGUIName()))
+                                    .filter(i -> !matcher.matches(i)).collect(Collectors.toList());
+                        }
+                    }
+                }
         ).getResult();
 
         //delete instances
-        ((DeleteExperimentAction)SiriusActions.DELETE_EXP.getInstance(gui)).deleteCompounds(toDelete);
+        ((DeleteExperimentAction) SiriusActions.DELETE_EXP.getInstance(gui)).deleteCompounds(toDelete);
     }
 
     /**
@@ -418,14 +433,16 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         return getDoubleValue(maxConfidenceSpinner);
     }
 
-    public int getMinIsotopePeaks() {return getIntValue(minIsotopeSpinner);}
+    public int getMinIsotopePeaks() {
+        return getIntValue(minIsotopeSpinner);
+    }
 
 
     public double getDoubleValue(JSpinner spinner) {
         return ((SpinnerNumberModel) spinner.getModel()).getNumber().doubleValue();
     }
 
-    public int getIntValue(JSpinner spinner){
+    public int getIntValue(JSpinner spinner) {
         return ((SpinnerNumberModel) spinner.getModel()).getNumber().intValue();
     }
 

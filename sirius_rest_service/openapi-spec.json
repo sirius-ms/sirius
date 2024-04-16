@@ -293,6 +293,45 @@
         "deprecated": true
       }
     },
+    "/api/projects/{projectId}/aligned-features/delete": {
+      "put": {
+        "tags": [
+          "Features"
+        ],
+        "summary": "Delete feature (aligned over runs) with the given identifier from the specified project-space.",
+        "description": "Delete feature (aligned over runs) with the given identifier from the specified project-space.",
+        "operationId": "deleteAlignedFeatures",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to delete from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/databases/{databaseId}": {
       "get": {
         "tags": [

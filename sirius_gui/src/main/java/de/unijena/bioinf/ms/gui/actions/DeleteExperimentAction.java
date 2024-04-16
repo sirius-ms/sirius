@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -36,7 +37,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -68,7 +68,7 @@ public class DeleteExperimentAction extends AbstractGuiAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (!PropertyManager.getBoolean(NEVER_ASK_AGAIN_KEY, false)) {
-            CloseDialogNoSaveReturnValue diag = new CloseDialogNoSaveReturnValue(mainFrame, "When removing the selected compound(s) you will loose all computed identification results?", NEVER_ASK_AGAIN_KEY);
+            CloseDialogNoSaveReturnValue diag = new CloseDialogNoSaveReturnValue(mainFrame, "When removing the selected feature(s) you will loose all computed results?", NEVER_ASK_AGAIN_KEY);
             CloseDialogReturnValue val = diag.getReturnValue();
             if (val == CloseDialogReturnValue.abort) return;
         }
@@ -82,26 +82,40 @@ public class DeleteExperimentAction extends AbstractGuiAction {
         //clear selection to prevent EventList from going crazy.
         mainFrame.getCompoundList().getCompoundListSelectionModel().clearSelection();
 
-        Jobs.runInBackgroundAndLoad(mainFrame, "Deleting Compounds...", false, new TinyBackgroundJJob<Boolean>() {
+        Jobs.runInBackgroundAndLoad(mainFrame, "Deleting Data...", false, new TinyBackgroundJJob<Boolean>() {
             @Override
             protected Boolean compute() {
                 synchronized (this) {
-                    final AtomicInteger pro = new AtomicInteger(0);
-                    updateProgress(0, toRemove.size(), pro.get(), "Deleting...");
+                    final int max = toRemove.size() + 2;
+                    Utils.withTime("Deleting took: ", w -> {
+                    updateProgress(0, max, 0);
+                        List<InstanceBean> removed = new ArrayList<>();
+//                        gui.getProjectManager().disbableProjectListener();
+                        try {
+                            gui.acceptSiriusClient((client, pid) ->
+                                toRemove.forEach(feature -> {
+                                    try {
+                                        updateProgress(0, max, removed.size(),"Removing '" + feature.getGUIName() + "'...");
+                                        if (!feature.isComputing()) {
+                                            client.features().deleteAlignedFeature(pid, feature.getFeatureId());
+                                            removed.add(feature);
+                                        } else {
+                                            LoggerFactory.getLogger(getClass()).warn("Cannot delete '" + feature.getFeatureId() + "' because it is currently computing. Skipping!");
+                                        }
+                                    } catch (Exception e) {
+                                        LoggerFactory.getLogger(getClass()).error("Could not delete: " + feature.getFeatureId(), e);
+                                    }
+                                }));
 
-                    gui.acceptSiriusClient((client, pid) ->
-                            toRemove.forEach(feature -> {
-                                try {
-                                    if (!feature.isComputing())
-                                        client.features().deleteAlignedFeature(pid, feature.getFeatureId());
-                                    else
-                                        LoggerFactory.getLogger(getClass()).warn("Cannot delete compound '" + feature.getFeatureId() + "' because it is currently computing. Skipping!");
-                                } catch (Exception e) {
-                                    LoggerFactory.getLogger(getClass()).error("Could not delete Compound: " + feature.getFeatureId(), e);
-                                } finally {
-                                    updateProgress(0, toRemove.size(), pro.incrementAndGet(), "Deleting...");
-                                }
-                            }));
+                        } finally {
+//                            updateProgress(0, toRemove.size(), removed.size() + 1,"Cleaning up...");
+//                            gui.getProjectManager().INSTANCE_LIST.removeAll(removed);
+//                            gui.getProjectManager().enableProjectListener();
+                            updateProgress(0, toRemove.size(), removed.size() + 2,"DONE!");
+
+                        }
+                    });
+
                     return true;
                 }
             }
