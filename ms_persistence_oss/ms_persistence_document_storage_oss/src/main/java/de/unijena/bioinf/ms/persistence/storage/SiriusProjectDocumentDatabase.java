@@ -310,4 +310,6 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
     long cascadeDeleteAlignedFeatures(long alignedFeatureId) throws IOException;
 
+    long cascadeDeleteAlignedFeatures(List<Long> alignedFeatureIds) throws IOException;
+
 }
