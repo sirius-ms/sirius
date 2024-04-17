@@ -58,6 +58,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -263,18 +264,19 @@ public class NoSQLInstance implements Instance {
 
     @Override
     public Optional<ParameterConfig> loadInputFileConfig() {
-        return project().getConfig(id, ConfigType.INPUT).map(Parameters::getConfig);
+        return project().getConfig(id, ConfigType.INPUT_FILE).map(Parameters::newParameterConfig);
     }
 
     @Override
     public Optional<ParameterConfig> loadProjectConfig() {
-        return project().getConfig(id, ConfigType.PROJECT).map(Parameters::getConfig);
+        return project().getConfig(id, ConfigType.PROJECT).map(Parameters::newParameterConfig);
 
     }
 
     @Override
-    public void updateConfig(@NotNull ParameterConfig config) {
-        project().upsertConfig(id, ConfigType.PROJECT, config);
+    public void updateProjectConfig(@NotNull ParameterConfig config) {
+        //write full config stack to be used as base config when rerunning computations
+        project().upsertConfig(id, ConfigType.PROJECT, config, false);
     }
 
     @Override
@@ -333,6 +335,11 @@ public class NoSQLInstance implements Instance {
         return getAlignedFeatures().getDetectedAdducts();
     }
 
+    @NotNull
+    public ComputedSubtools getComputedSubtools() {
+        return project().findByFeatureIdStr(id, ComputedSubtools.class).findFirst().orElseGet(() -> ComputedSubtools.builder().alignedFeatureId(id).build());
+    }
+
     @SneakyThrows
     @Override
     public void saveSpectraSearchResult(SpectralSearchResult result) {
@@ -340,17 +347,25 @@ public class NoSQLInstance implements Instance {
                 .map(s -> SpectraMatch.builder().alignedFeatureId(id).searchResult(s).build())
                 .collect(Collectors.toList());
 
-        project().getStorage().insertAll(matches);
+        project().getStorage().write(() -> {
+            project().getStorage().insertAll(matches);
+            upsertComputedSubtools(cs -> cs.setLibrarySearch(true));
+        });
+
     }
 
     @Override
     public boolean hasSpectraSearchResult() {
-        return project().countByFeatureId(id, SpectraMatch.class) > 0;
+        return getComputedSubtools().isLibrarySearch();
     }
 
+    @SneakyThrows
     @Override
     public void deleteSpectraSearchResult() {
-        project().deleteAllByFeatureId(id, SpectraMatch.class);
+        project().getStorage().write(() -> {
+            project().deleteAllByFeatureId(id, SpectraMatch.class);
+            upsertComputedSubtools(c -> c.setLibrarySearch(false));
+        });
     }
 
     @Override
@@ -403,6 +418,8 @@ public class NoSQLInstance implements Instance {
             project().getStorage().insertAll(formulaResults.stream()
                     .peek(p -> p.second().setFormulaId(p.first().getFormulaId()))
                     .map(Pair::second).toList());
+            //set as computed
+            upsertComputedSubtools(cs -> cs.setFormulaSearch(true));
         } catch (IOException e) {
             deleteSiriusResult(); //try deleting all results in case of io error so that project stays consistent
             throw new RuntimeException(e);
@@ -412,13 +429,19 @@ public class NoSQLInstance implements Instance {
 
     @Override
     public boolean hasSiriusResult() {
-        return project().countByFeatureId(id, FormulaCandidate.class) > 0;
+        return getComputedSubtools().isFormulaSearch();
+//        return project().countByFeatureId(id, FormulaCandidate.class) > 0;
     }
 
+    @SneakyThrows
     @Override
     public void deleteSiriusResult() {
-        project().deleteAllByFeatureId(id, FormulaCandidate.class);
-        project().deleteAllByFeatureId(id, FTreeResult.class);
+        project().getStorage().write(() -> {
+            project().deleteAllByFeatureId(id, FormulaCandidate.class);
+            project().deleteAllByFeatureId(id, FTreeResult.class);
+            upsertComputedSubtools(cs -> cs.setFormulaSearch(false));
+        });
+
         //todo handle detected adducts.
     }
 
@@ -440,20 +463,28 @@ public class NoSQLInstance implements Instance {
                 .peek(fc -> fc.setFormulaRank(rank.getAndIncrement()))
                 .toList();
 
-        project().getStorage().upsertAll(candidates);
+
+        project().getStorage().write(() -> {
+            project().getStorage().upsertAll(candidates);
+            upsertComputedSubtools(cs -> cs.setZodiac(true));
+        });
 
     }
 
     @Override
     public boolean hasZodiacResult() {
-        return getTopFormulaCandidate().map(FCandidate::getZodiacScore).isPresent();
+        return getComputedSubtools().isZodiac();
+//        return getTopFormulaCandidate().map(FCandidate::getZodiacScore).isPresent();
     }
 
     @SneakyThrows
     @Override
     public void deleteZodiacResult() {
-        project().getStorage().insertAll(
-                project().findByFeatureIdStr(id, FormulaCandidate.class).peek(fc -> fc.setZodiacScore(null)).toList());
+        project().getStorage().write(() -> {
+            project().getStorage().insertAll(project().findByFeatureIdStr(id, FormulaCandidate.class).peek(fc -> fc.setZodiacScore(null)).toList());
+            upsertComputedSubtools(cs -> cs.setZodiac(false));
+        });
+
     }
 
     @SneakyThrows
@@ -470,17 +501,26 @@ public class NoSQLInstance implements Instance {
                             .build();
                 }).collect(Collectors.toList());
 
-        project().getStorage().insertAll(fps);
+
+        project().getStorage().write(() -> {
+            project().getStorage().insertAll(fps);
+            upsertComputedSubtools(cs -> cs.setFingerprint(true));
+        });
     }
 
     @Override
     public boolean hasFingerprintResult() {
-        return project().countByFeatureId(id, CsiPrediction.class) > 0;
+        return getComputedSubtools().isFingerprint();
+//        return project().countByFeatureId(id, CsiPrediction.class) > 0;
     }
 
+    @SneakyThrows
     @Override
     public void deleteFingerprintResult() {
-        project().deleteAllByFeatureId(id, CsiPrediction.class);
+        project().getStorage().write(() -> {
+            project().deleteAllByFeatureId(id, CsiPrediction.class);
+            upsertComputedSubtools(cs -> cs.setFingerprint(false));
+        });
     }
 
     @Override
@@ -542,9 +582,10 @@ public class NoSQLInstance implements Instance {
                 //insert all candidates that do not exist
                 return project().getStorage().upsertAll(toInsert); //todo should be insert, workaround to prevent duplicate key error.
             });
+            upsertComputedSubtools(cs -> cs.setStructureSearch(true));
             log.debug("Inserted: {} of {} CSI candidates.", inserted, matches.size());
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             deleteStructureSearchResult();
             throw new RuntimeException(e);
         }
@@ -552,13 +593,19 @@ public class NoSQLInstance implements Instance {
 
     @Override
     public boolean hasStructureSearchResult() {
-        return project().countByFeatureId(id, CsiStructureSearchResult.class) > 0;
+        return getComputedSubtools().isStructureSearch();
+//        return project().countByFeatureId(id, CsiStructureSearchResult.class) > 0;
     }
 
+    @SneakyThrows
     @Override
     public void deleteStructureSearchResult() {
-        project().deleteAllByFeatureId(id, CsiStructureSearchResult.class);
-        project().deleteAllByFeatureId(id, CsiStructureMatch.class);
+        project().getStorage().write(() -> {
+            project().deleteAllByFeatureId(id, CsiStructureSearchResult.class);
+            project().deleteAllByFeatureId(id, CsiStructureMatch.class);
+            upsertComputedSubtools(cs -> cs.setStructureSearch(false));
+        });
+
 
     }
 
@@ -577,72 +624,99 @@ public class NoSQLInstance implements Instance {
                             .build();
                 }).collect(Collectors.toList());
 
-        project().getStorage().insertAll(cps);
+        project().getStorage().write(() -> {
+            project().getStorage().insertAll(cps);
+            upsertComputedSubtools(cs -> cs.setCanopus(true));
+        });
     }
 
     @Override
     public boolean hasCanopusResult() {
-        return project().countByFeatureId(id, CanopusPrediction.class) > 0;
+        return getComputedSubtools().isCanopus();
+//        return project().countByFeatureId(id, CanopusPrediction.class) > 0;
     }
 
+    @SneakyThrows
     @Override
     public void deleteCanopusResult() {
-        project().deleteAllByFeatureId(id, CanopusPrediction.class);
+        project().getStorage().write(() -> {
+            project().deleteAllByFeatureId(id, CanopusPrediction.class);
+            upsertComputedSubtools(cs -> cs.setCanopus(false));
+        });
+
     }
 
     @SneakyThrows
     @Override
     public void saveMsNovelistResult(@NotNull List<FCandidate<?>> msNovelistResults) {
-        List<DenovoStructureMatch> matches = msNovelistResults.stream()
-                .filter(fc -> fc.hasAnnotation(FingerIdResult.class))
-                .flatMap(fc -> fc.getAnnotationOrThrow(FingerIdResult.class).getAnnotation(MsNovelistFingerblastResult.class)
-                        .map(msnRes -> {
-                                    int i = 0;
-                                    List<DenovoStructureMatch> m = new ArrayList<>(msnRes.getResults().size());
-                                    for (Scored<FingerprintCandidate> c : msnRes.getResults()) {
-                                        m.add(DenovoStructureMatch.builder()
-                                                .alignedFeatureId(id)
-                                                .formulaId((long) fc.getId())
-                                                .csiScore(c.getScore())
-                                                .tanimotoSimilarity(c.getCandidate().getTanimoto())
-                                                .modelScore(msnRes.getRnnScore(i++))
-                                                .candidateInChiKey(c.getCandidate().getInchiKey2D())
-                                                .candidate(c.getCandidate())
-                                                .build());
+        try {
+            List<DenovoStructureMatch> matches = msNovelistResults.stream()
+                    .filter(fc -> fc.hasAnnotation(FingerIdResult.class))
+                    .flatMap(fc -> fc.getAnnotationOrThrow(FingerIdResult.class).getAnnotation(MsNovelistFingerblastResult.class)
+                            .map(msnRes -> {
+                                        int i = 0;
+                                        List<DenovoStructureMatch> m = new ArrayList<>(msnRes.getResults().size());
+                                        for (Scored<FingerprintCandidate> c : msnRes.getResults()) {
+                                            m.add(DenovoStructureMatch.builder()
+                                                    .alignedFeatureId(id)
+                                                    .formulaId((long) fc.getId())
+                                                    .csiScore(c.getScore())
+                                                    .tanimotoSimilarity(c.getCandidate().getTanimoto())
+                                                    .modelScore(msnRes.getRnnScore(i++))
+                                                    .candidateInChiKey(c.getCandidate().getInchiKey2D())
+                                                    .candidate(c.getCandidate())
+                                                    .build());
+                                        }
+                                        return m.stream();
                                     }
-                                    return m.stream();
-                                }
-                        ).orElseGet(Stream::empty))
-                .sorted(Comparator.comparing(StructureMatch::getCsiScore).reversed())
-                .collect(Collectors.toList());
+                            ).orElseGet(Stream::empty))
+                    .sorted(Comparator.comparing(StructureMatch::getCsiScore).reversed())
+                    .collect(Collectors.toList());
 
-        //adding ranks
-        final AtomicInteger rank = new AtomicInteger(1);
-        matches.forEach(m -> m.setStructureRank(rank.getAndIncrement()));
-        //insert matches
-        project().getStorage().insertAll(matches);
+            //adding ranks
+            final AtomicInteger rank = new AtomicInteger(1);
+            matches.forEach(m -> m.setStructureRank(rank.getAndIncrement()));
+            //insert matches
+            project().getStorage().insertAll(matches);
 
-        // write only fingerprint candidates that do not yet exist in a transaction
-        int inserted = project().getStorage().write(() -> {
-            List<FingerprintCandidate> toInsert = new ArrayList<>(matches.size());
-            for (DenovoStructureMatch m : matches) {
-                FingerprintCandidate c = m.getCandidate();
-                if (!project().getStorage().containsPrimaryKey(c.getInchiKey2D(), FingerprintCandidate.class))
-                    toInsert.add(c);
-            }
-            return project().getStorage().upsertAll(toInsert); //todo should be insert, workaround to prevent duplicate key error.
-        });
-
-        log.debug("Inserted: {} of {} DeNovo candidates.", inserted, matches.size());
+            // write only fingerprint candidates that do not yet exist in a transaction
+            int inserted = project().getStorage().write(() -> {
+                List<FingerprintCandidate> toInsert = new ArrayList<>(matches.size());
+                for (DenovoStructureMatch m : matches) {
+                    FingerprintCandidate c = m.getCandidate();
+                    if (!project().getStorage().containsPrimaryKey(c.getInchiKey2D(), FingerprintCandidate.class))
+                        toInsert.add(c);
+                }
+                return project().getStorage().upsertAll(toInsert); //todo should be insert, workaround to prevent duplicate key error.
+            });
+            upsertComputedSubtools(cs -> cs.setDeNovoSearch(true));
+            log.debug("Inserted: {} of {} DeNovo candidates.", inserted, matches.size());
+        } catch (Exception e) {
+            deleteMsNovelistResult();
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public boolean hasMsNovelistResult() {
-        return project().countByFeatureId(id, DenovoStructureMatch.class) > 0;
+        return getComputedSubtools().isDeNovoSearch();
+//        return project().countByFeatureId(id, DenovoStructureMatch.class) > 0;
     }
 
+    @SneakyThrows
     @Override
     public void deleteMsNovelistResult() {
-        project().deleteAllByFeatureId(id, DenovoStructureMatch.class);
+        project().getStorage().write(() -> {
+            project().deleteAllByFeatureId(id, DenovoStructureMatch.class);
+            upsertComputedSubtools(cs -> cs.setDeNovoSearch(false));
+        });
     }
+
+    @SneakyThrows
+    private long upsertComputedSubtools(Consumer<ComputedSubtools> modifier) {
+        @NotNull ComputedSubtools it = getComputedSubtools();
+        modifier.accept(it);
+        return project().getStorage().upsert(it);
+    }
+
 }
