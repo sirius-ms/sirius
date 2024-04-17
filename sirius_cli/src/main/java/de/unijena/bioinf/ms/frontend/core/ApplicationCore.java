@@ -19,20 +19,20 @@
 
 package de.unijena.bioinf.ms.frontend.core;
 
-import de.unijena.bioinf.ms.properties.ConfigType;
-import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.bibtex.BibtexManager;
+import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.properties.SiriusConfigUtils;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
+import de.unijena.bioinf.rest.NetUtils;
+import de.unijena.bioinf.rest.ProxyManager;
 import de.unijena.bioinf.sirius.SiriusCachedFactory;
 import de.unijena.bioinf.sirius.SiriusFactory;
 import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.webapi.WebAPI;
-import de.unijena.bioinf.rest.ProxyManager;
 import de.unijena.bioinf.webapi.rest.RestAPI;
 import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.apache.commons.configuration2.ex.ConfigurationException;
@@ -51,9 +51,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
-import java.util.logging.Handler;
 import java.util.logging.LogManager;
-import java.util.logging.SimpleFormatter;
 
 import static de.unijena.bioinf.ms.frontend.SiriusCLIApplication.APP_TYPE_PROPERTY_KEY;
 import static de.unijena.bioinf.ms.frontend.core.Workspace.*;
@@ -155,18 +153,6 @@ public abstract class ApplicationCore {
                     logProps.store(out, "Auto generated in memory prop file");
                     ByteArrayInputStream in = new ByteArrayInputStream(out.toByteArray());
                     LogManager.getLogManager().readConfiguration(in);
-
-                    //add ErrorReporter LogManager if it exists
-                    try {
-                        final Class<?> handlerClss = ApplicationCore.class.getClassLoader().loadClass("de.unijena.bioinf.ms.gui.errorReport.ErrorReportHandler");
-                        Handler handler = (Handler) handlerClss.getConstructor().newInstance();
-                        handler.setLevel(java.util.logging.Level.CONFIG);
-                        handler.setFormatter(new SimpleFormatter());
-                        LogManager.getLogManager().getLogger("").addHandler(handler);
-                    } catch (ClassNotFoundException ignore) {
-                        //System.err.println("Skipping error report logger in CLI");
-                        //this is just to skip the error report logger if it is no available (e.g. CLI)
-                    }
                 } catch (IOException e) {
                     System.err.println("Could not read logging configuration.");
                     e.printStackTrace();
