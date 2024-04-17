@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.backgroundruns;
 
 import com.googlecode.concurentlocks.ReadWriteUpdateLock;
 import com.googlecode.concurentlocks.ReentrantReadWriteUpdateLock;
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.jjobs.*;
@@ -32,15 +31,16 @@ import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
 import de.unijena.bioinf.ms.frontend.workflow.ToolChainWorkflow;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import picocli.CommandLine;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -51,6 +51,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -78,13 +79,10 @@ public final class BackgroundRuns {
 
     private final ProjectSpaceManager psm;
     private final InstanceBufferFactory<?> bufferfactory;
-    private final ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory;
 
-    //todo it would be nice to get rid of the ProjectSpaceManagerFactory here. this is just because WorkflowsBuilder in BackgroundRuns needs them for the preprocessing job. Allowing for a WorkflowsBuilder wit empty preprocessing would solve this.
-    public BackgroundRuns(ProjectSpaceManager psm, InstanceBufferFactory<?> bufferFactory, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory) {
+    public BackgroundRuns(ProjectSpaceManager psm, InstanceBufferFactory<?> bufferFactory) {
         this.psm = psm;
         this.bufferfactory = bufferFactory;
-        this.projectSpaceManagerFactory = projectSpaceManagerFactory;
     }
 
     // region locking helper
@@ -247,12 +245,6 @@ public final class BackgroundRuns {
         PCS.removePropertyChangeListener(listener);
     }
 
-    public BackgroundRunJob makeBackgroundRun(List<String> command, @NotNull Iterable<Instance> instances) throws IOException {
-        Workflow computation = makeWorkflow(command, new ComputeRootOption(instances));
-        return new BackgroundRunJob(computation, instances, RUN_COUNTER.incrementAndGet(), String.join(" ", command));
-    }
-
-
     public BackgroundRunJob runCommand(List<String> command, @NotNull Iterable<Instance> instances) throws IOException {
         return submitRunAndLockInstances(makeBackgroundRun(command, instances));
     }
@@ -261,23 +253,30 @@ public final class BackgroundRuns {
     ) {
         Workflow computation = new ImportMsFromResourceWorkflow(psm, inputResources, allowMs1OnlyData, alignRuns, true);
         return submitRunAndLockInstances(
-                new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null));
+                new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "LC-MS Importer", "Preprocessing"));
     }
 
     public BackgroundRunJob runImportPeakData(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData
     ) {
         Workflow computation = new ImportPeaksFomResourceWorkflow(psm, inputResources, ignoreFormulas, allowMs1OnlyData, true);
         return submitRunAndLockInstances(
-                new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null));
+                new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Peak list Importer", "Import"));
     }
 
-    private Workflow makeWorkflow(
-            List<String> command, ComputeRootOption rootOptions) throws IOException {
+    private BackgroundRunJob makeBackgroundRun(List<String> command, @NotNull Iterable<Instance> instances) throws IOException {
         final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(PropertyManager.DEFAULTS.newIndependentInstance(ConfigType.BATCH_COMPUTE.name()));
-        final WorkflowBuilder wfBuilder = new WorkflowBuilder(rootOptions, configOptionLoader, projectSpaceManagerFactory, false);
+        final WorkflowBuilder wfBuilder = new WorkflowBuilder(new ComputeRootOption(instances), configOptionLoader, null, false);
         final Run computation = new Run(wfBuilder);
-        computation.parseArgs(command.toArray(String[]::new));
-        return computation.makeWorkflow(bufferfactory);
+        CommandLine.ParseResult pr = computation.parseArgs(command.toArray(String[]::new));
+
+        return new BackgroundRunJob(
+                computation.makeWorkflow(bufferfactory),
+                instances,
+                RUN_COUNTER.incrementAndGet(),
+                command.stream().collect(Collectors.joining(" ")),
+                pr.asCommandLineList().stream().map(CommandLine::getCommandName).collect(Collectors.joining(" > ")),
+                "Computation"
+        );
     }
 
     private BackgroundRunJob submitRunAndLockInstances(final BackgroundRunJob runToSubmit) {
@@ -289,7 +288,8 @@ public final class BackgroundRuns {
                 if (instances != null)
                     instances.forEach(i -> computingInstances.add(i.getId()));
                 log.info("...All instances locked!");
-                return SiriusJobs.getGlobalJobManager().submitJob(runToSubmit);
+                Jobs.submit(runToSubmit, runToSubmit::getName, psm::getName, runToSubmit::getDescription);
+                return runToSubmit;
             } catch (Exception e) {
                 // just in case something goes wrong during submission, then  we do not want to have locked instances
                 if (instances != null)
@@ -306,20 +306,30 @@ public final class BackgroundRuns {
         @Getter
         protected final String command;
 
+        @Getter
+        protected final String description;
+        protected final String prefix;
+
         @NotNull
         private Workflow computation;
 
         @Nullable
         private Iterable<? extends Instance> instances;
 
-        private BackgroundRunJob(@NotNull Workflow computation, @Nullable Iterable<? extends Instance> instances, int runId, String command) {
+        private BackgroundRunJob(@NotNull Workflow computation, @Nullable Iterable<? extends Instance> instances, int runId, String command, @Nullable String description, String prefix) {
             super(JobType.SCHEDULER);
             this.runId = runId;
             this.command = command;
             this.computation = computation;
             this.instances = instances;
+            this.description = description;
+            this.prefix = (prefix == null || prefix.isBlank()) ? "BackgroundJob" : prefix;
         }
 
+
+        public String getName() {
+            return prefix + "-" + runId;
+        }
 
         @Override
         public void registerJobManager(JobManager manager) {

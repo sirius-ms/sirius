@@ -59,17 +59,30 @@ public class ComputeAllAction extends AbstractGuiAction {
                 computationCanceled();
             }
         }, pid, DataEventType.BACKGROUND_COMPUTATIONS_STATE));
+        checkState();
+    }
 
-        gui.acceptSiriusClient((client, pid) -> client.jobs().hasJobs(pid, false));
+    private void checkState() {
+        gui.acceptSiriusClient((client, pid) -> {
+            if (client.jobs().hasJobs(pid, false))
+                computationStarted();
+            else
+                computationCanceled();
+        });
+
+
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         if (isActive.get()) {
-            Jobs.runInBackgroundAndLoad(mainFrame, "Canceling Jobs...", () ->
-                    gui.acceptSiriusClient((c, pid) -> c.jobs().deleteJobs(pid, true, true)));
+            Jobs.runInBackgroundAndLoad(mainFrame, "Canceling Jobs...", () -> {
+                gui.acceptSiriusClient((c, pid) -> c.jobs().deleteJobs(pid, true, true));
+                checkState();
+            });
+
         } else {
-            if (mainFrame.getCompounds().isEmpty()){
+            if (mainFrame.getCompounds().isEmpty()) {
                 LoggerFactory.getLogger(getClass()).warn("Not instances to compute! Closing Compute Dialog...");
                 return;
             }
