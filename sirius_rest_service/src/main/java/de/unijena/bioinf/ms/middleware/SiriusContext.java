@@ -63,8 +63,8 @@ public class SiriusContext{
 
     @Bean
     @DependsOn({"webAPI", "jobManager"})
-    public ComputeService computeService(EventService<?> eventService, InstanceBufferFactory<?> instanceBufferFactory, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory) {
-        return new ComputeServiceImpl(eventService, instanceBufferFactory, projectSpaceManagerFactory);
+    public ComputeService computeService(EventService<?> eventService, InstanceBufferFactory<?> instanceBufferFactory) {
+        return new ComputeServiceImpl(eventService, instanceBufferFactory);
     }
     @Bean(destroyMethod = "shutdown")
     public GuiService guiService(EventService<?> eventService, ApplicationContext applicationContext){

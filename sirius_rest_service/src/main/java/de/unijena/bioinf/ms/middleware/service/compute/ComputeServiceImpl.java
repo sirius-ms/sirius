@@ -53,16 +53,12 @@ public class ComputeServiceImpl implements ComputeService {
 
     private final ConcurrentHashMap<String, BackgroundRuns> backgroundRuns = new ConcurrentHashMap<>();
     private final InstanceBufferFactory<?> instanceBufferFactory;
-    private final ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory;
     protected final EventService<?> eventService;
 
 
-    //todo it would be nice to get rid of the ProjectSpaceManagerFactory here. this is just because WorkflowsBuilder in BackgroundRuns needs them for the preprocessing job. Allowing for a WorkflowsBuilder wit empty preprocessing would solve this.
-    public ComputeServiceImpl(EventService<?> eventService, InstanceBufferFactory<?> instanceBufferFactory, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> projectSpaceManagerFactory) {
+    public ComputeServiceImpl(EventService<?> eventService, InstanceBufferFactory<?> instanceBufferFactory) {
         this.eventService = eventService;
         this.instanceBufferFactory = instanceBufferFactory;
-        this.projectSpaceManagerFactory = projectSpaceManagerFactory;
-
     }
 
     @Override
@@ -72,7 +68,7 @@ public class ComputeServiceImpl implements ComputeService {
 
     private BackgroundRuns backgroundRuns(Project<?> project) {
         return backgroundRuns.computeIfAbsent(project.getProjectId(), p -> {
-            BackgroundRuns br = new BackgroundRuns(project.getProjectSpaceManager(), instanceBufferFactory, projectSpaceManagerFactory);
+            BackgroundRuns br = new BackgroundRuns(project.getProjectSpaceManager(), instanceBufferFactory);
             br.addUnfinishedRunsListener(evt -> {
                 if (evt instanceof BackgroundRuns.ChangeEvent e) {
                     eventService.sendEvent(ServerEvents.newComputeStateEvent(

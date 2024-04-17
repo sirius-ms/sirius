@@ -124,7 +124,7 @@ public class ImportAction extends AbstractGuiAction {
                             List.of(JobOptField.PROGRESS),
                             input.msInput.msParserfiles.keySet().stream().map(Path::toFile).toList()
                     );
-                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Auto-Importing supported Files...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
+                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Importing...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
                 });
             }
 

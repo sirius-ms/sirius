@@ -54,9 +54,6 @@ public interface Instance {
      */
     String getName();
 
-    @Override
-    String toString();
-
     double getIonMass();
 
     PrecursorIonType getIonType();

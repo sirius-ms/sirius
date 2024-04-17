@@ -116,7 +116,7 @@ public class WorkflowBuilder {
 
     protected final @NotNull List<StandaloneTool<?>> additionalTools;
 
-    protected final @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory;
+    protected final ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory;
 
     boolean closeProject = true;
 
@@ -124,12 +124,12 @@ public class WorkflowBuilder {
         this(rootOptions, rootOptions.getDefaultConfigOptions(), rootOptions.getSpaceManagerFactory());
     }
 
-    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory, boolean closeProject) {
+    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory, boolean closeProject) {
         this(rootOptions, configOptionLoader, spaceManagerFactory);
         this.closeProject = closeProject;
     }
 
-    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory) {
+    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory) {
         this(rootOptions, configOptionLoader, spaceManagerFactory, List.of());
     }
 
@@ -137,7 +137,7 @@ public class WorkflowBuilder {
         this(rootOptions, rootOptions.getDefaultConfigOptions(), rootOptions.getSpaceManagerFactory(), additionalTools);
     }
 
-    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, @NotNull ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory, @NotNull List<StandaloneTool<?>> additionalTools) {
+    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory, @NotNull List<StandaloneTool<?>> additionalTools) {
         this.rootOptions = rootOptions;
         this.spaceManagerFactory = spaceManagerFactory;
         this.configOptionLoader = configOptionLoader;
@@ -279,11 +279,16 @@ public class WorkflowBuilder {
                 if (parseResult.commandSpec().commandLine().getCommand() instanceof DefaultParameterConfigLoader.ConfigOptions)
                     parseResult = parseResult.subcommand();
                 if (parseResult.commandSpec().commandLine().getCommand() instanceof StandaloneTool)
-                    return ((StandaloneTool<?>) parseResult.commandSpec().commandLine().getCommand()).makeWorkflow(rootOptions, configOptionLoader.config);
-                if (parseResult.commandSpec().commandLine().getCommand() instanceof PreprocessingTool)
-                    preproJob = ((PreprocessingTool<?>) parseResult.commandSpec().commandLine().getCommand()).makePreprocessingJob(rootOptions.getInput(), rootOptions.getOutput(), spaceManagerFactory, configOptionLoader.config);
-                else
+                    return ((StandaloneTool<?>) parseResult.commandSpec().commandLine().getCommand())
+                            .makeWorkflow(rootOptions, configOptionLoader.config);
+                if (parseResult.commandSpec().commandLine().getCommand() instanceof PreprocessingTool) {
+                    if (spaceManagerFactory == null)
+                        throw new IllegalStateException("Preprocessing tool requires a ProjectSpaceManagerFactory!");
+                    preproJob = ((PreprocessingTool<?>) parseResult.commandSpec().commandLine().getCommand())
+                            .makePreprocessingJob(rootOptions.getInput(), rootOptions.getOutput(), spaceManagerFactory, configOptionLoader.config);
+                } else {
                     execute(parseResult.commandSpec().commandLine(), toolchain, toolchainOptions);
+                }
             } else {
                 return () -> LoggerFactory.getLogger(getClass()).warn("No execution steps have been Specified!");
             }
