@@ -37,7 +37,6 @@ import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -105,12 +104,11 @@ public class ProxyManager {
                 decorateWithDefaultSettings(new OkHttpClient.Builder())
         );
 
-        if (strategy.equals(ProxyStrategy.SIRIUS)) {
+        if (strategy.equals(ProxyStrategy.SIRIUS))
             decorateWithProxySettings(clientBuilder);
-            LoggerFactory.getLogger(ProxyStrategy.class).debug("Using Proxy Type " + ProxyStrategy.SIRIUS);
-        } else {
-            LoggerFactory.getLogger(ProxyStrategy.class).debug("Using Proxy Type " + ProxyStrategy.NONE);
-        }
+
+        LoggerFactory.getLogger(ProxyStrategy.class).debug("Using Proxy Type {}", strategy);
+
         return clientBuilder;
     }
 
@@ -501,25 +499,25 @@ public class ProxyManager {
     private static final AtomicLong lastCall = new AtomicLong(System.currentTimeMillis());
 
     private static void checkTimeAndWait(String clientID) {
-            if (requestPauseMillis <= 0)
-                return;
-            if (!POOL_CLIENT_ID.equals(clientID))
-                return;
+        if (requestPauseMillis <= 0)
+            return;
+        if (!POOL_CLIENT_ID.equals(clientID))
+            return;
 
-            while (true) {
-                long wait;
-                synchronized (lastCall) {
-                    wait = (lastCall.get() + requestPauseMillis) - System.currentTimeMillis();
-                    if (wait <= 0) {
-                        lastCall.set(System.currentTimeMillis());
-                        break;
-                    }
-                }
-                try {
-                    Thread.sleep(wait);
-                } catch (InterruptedException ignored) {
+        while (true) {
+            long wait;
+            synchronized (lastCall) {
+                wait = (lastCall.get() + requestPauseMillis) - System.currentTimeMillis();
+                if (wait <= 0) {
+                    lastCall.set(System.currentTimeMillis());
+                    break;
                 }
             }
+            try {
+                Thread.sleep(wait);
+            } catch (InterruptedException ignored) {
+            }
+        }
 
     }
 }
