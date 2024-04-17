@@ -62,6 +62,8 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
                 .addRepository(Parameters.class, Index.unique("alignedFeatureId", "type"))
 
+                .addRepository(ComputedSubtools.class, "alignedFeatureId")
+
                 .addRepository(FormulaCandidate.class,
                         Index.nonUnique("alignedFeatureId"),
                         Index.nonUnique("formulaRank") //for fast sorted pages
@@ -126,8 +128,8 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
         if (feature.getMSData().isEmpty())
             return Optional.empty();
 
-        ParameterConfig config = getConfig(feature.getAlignedFeatureId(), ConfigType.INPUT)
-                .map(Parameters::getConfig)
+        ParameterConfig config = getConfig(feature.getAlignedFeatureId(), ConfigType.PROJECT)
+                .map(Parameters::newParameterConfig)
                 .orElse(PropertyManager.DEFAULTS);
 
         return Optional.of(StorageUtils.toMs2Experiment(feature, config));
@@ -152,10 +154,15 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
 
     @SneakyThrows
     default int upsertConfig(long alignedFeatureId, @NotNull ConfigType type, ParameterConfig config) {
+        return upsertConfig(alignedFeatureId, type, config, true);
+    }
+
+    @SneakyThrows
+    default int upsertConfig(long alignedFeatureId, @NotNull ConfigType type, ParameterConfig config, boolean modificationOnly) {
         getStorage().removeAll(Filter.and(
                 Filter.where("alignedFeatureId").eq(alignedFeatureId),
                 Filter.where("type").eq(type.name())), Parameters.class);
-        return getStorage().insert(Parameters.of(config, type, alignedFeatureId));
+        return getStorage().insert(Parameters.of(config, type, alignedFeatureId, modificationOnly));
     }
 
     @SneakyThrows
@@ -181,7 +188,7 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
         importCompounds(List.of(compound));
         //add configs that might have been read from input file to project space
         Parameters config = exp.getAnnotation(InputFileConfig.class).map(InputFileConfig::config)
-                .map(c -> Parameters.of(c, ConfigType.INPUT)).orElse(null);
+                .map(c -> Parameters.of(c, ConfigType.INPUT_FILE, true)).orElse(null);
         if (config != null) {
             config.setAlignedFeatureId(alignedFeature.getAlignedFeatureId());
             getStorage().insert(config);
