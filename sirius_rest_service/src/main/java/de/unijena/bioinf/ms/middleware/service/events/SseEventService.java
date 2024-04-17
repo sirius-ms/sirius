@@ -75,7 +75,7 @@ public class SseEventService implements EventService<SseEmitter> {
         typesToListenOn.forEach(type -> emitters.computeIfAbsent(type, t -> new CopyOnWriteArrayList<>()).add(emitter));
     }
 
-    public void sendEvent(ServerEvent<?> event) { //todo maybe we need some wait here to not spam events to fast...
+    public void sendEvent(ServerEvent<?> event) {
         if (eventRunner == null)
             eventRunner = (EventRunner) SiriusJobs.runInBackground(new EventRunner());
 //        System.out.println("Add Event to Queue: " + event); //todo remove debug
@@ -84,9 +84,7 @@ public class SseEventService implements EventService<SseEmitter> {
 
     @Override
     public void shutdown() {
-//        events.clear(); //todo do we want to clear event bevor shutdown for faster but less clean shutdown?
         eventRunner.shutdown();
-        emitters.values().stream().flatMap(Collection::stream).distinct().forEach(ResponseBodyEmitter::complete);
     }
 
     private class EventRunner extends TinyBackgroundJJob<Boolean> {
@@ -123,18 +121,24 @@ public class SseEventService implements EventService<SseEmitter> {
 //                        System.out.println(); //todo remove debug
 //                        System.out.println(); //todo remove debug
                     } catch (InterruptedException e) {
+                        System.out.println("DIRTY EARLY");
                         if (eventData == ServerEvents.EMPTY_EVENT())
                             return true;
                         checkForInterruption();
                     }
                 }
+                System.out.println("CLEAN");
+                // closing all connections to clients.
+                emitters.values().stream().flatMap(Collection::stream).distinct().forEach(ResponseBodyEmitter::complete);
                 return true;
             } catch (InterruptedException e) {
+                System.out.println("DIRTY");
                 return false;
             }
         }
 
         public synchronized void shutdown() {
+//        events.clear(); //do we want to clear event bevor shutdown for faster but less clean shutdown?
             events.add(ServerEvents.EMPTY_EVENT());
         }
     }
