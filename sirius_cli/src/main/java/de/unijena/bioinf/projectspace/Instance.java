@@ -87,7 +87,7 @@ public interface Instance {
     Optional<ParameterConfig> loadInputFileConfig();
     Optional<ParameterConfig> loadProjectConfig();
 
-    void updateConfig(@NotNull ParameterConfig config);
+    void updateProjectConfig(@NotNull ParameterConfig config);
 
 
     //region state

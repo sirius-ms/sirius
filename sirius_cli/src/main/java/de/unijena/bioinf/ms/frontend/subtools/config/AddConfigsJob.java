@@ -85,7 +85,8 @@ public class AddConfigsJob extends InstanceJob {
         //runtime modification layer,  that does not affect the other configs, needs to be cleared before further analyses starts
         //name cannot be based on the ID because people might rename their compounds
         baseConfig = baseConfig.newIndependentInstance(ConfigType.RUNTIME.name(), true);
-        inst.updateConfig(baseConfig);
+        //writes full config stack to be used as base config when rerunning computations
+        inst.updateProjectConfig(baseConfig);
         inst.setRecompute(baseConfig.createInstanceWithDefaults(RecomputeResults.class).value());
     }
 

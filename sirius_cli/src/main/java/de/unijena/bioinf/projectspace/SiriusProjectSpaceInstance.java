@@ -363,7 +363,7 @@ public class SiriusProjectSpaceInstance implements Instance {
     }
 
     @Override
-    public synchronized void updateConfig(@NotNull ParameterConfig config) {
+    public synchronized void updateProjectConfig(@NotNull ParameterConfig config) {
         loadCompoundContainer().setAnnotation(FinalConfig.class, new FinalConfig(config));
         //Update annotations of the Experiment with annotations in the newly created Config
         getExperiment().setAnnotationsFrom(config, Ms2ExperimentAnnotation.class);
