@@ -70,8 +70,16 @@ public final class ParameterConfig {
     }
 
     public Map<String, String> toMap(){
-        final Map<String, String> toWrite = new HashMap<>(config.size());
-        getConfigKeys().forEachRemaining(key -> toWrite.put(key, config.getString(key)));
+        return toMap(config);
+    }
+
+    public Map<String, String> toMap(@NotNull String layerToExport){
+        return toMap(config.getConfiguration(layerToExport));
+    }
+
+    private Map<String, String> toMap(Configuration configToExport){
+        final Map<String, String> toWrite = new HashMap<>(configToExport.size());
+        configToExport.getKeys().forEachRemaining(key -> toWrite.put(key, configToExport.getString(key)));
         return toWrite;
     }
 
@@ -106,7 +114,7 @@ public final class ParameterConfig {
         return newIndependentInstance(SiriusConfigUtils.makeConfigFromStream(streamToLoad), name, overrideExisting, Arrays.stream(exclusions).collect(Collectors.toSet()));
     }
 
-    private ParameterConfig newIndependentInstance(@NotNull final PropertiesConfiguration modifiableLayer, @NotNull final String name, boolean overrideExisting, @NotNull Set<String> excludeConfigs) {
+    public ParameterConfig newIndependentInstance(@NotNull final PropertiesConfiguration modifiableLayer, @NotNull final String name, boolean overrideExisting, @NotNull Set<String> excludeConfigs) {
         if (name.isEmpty())
             throw new IllegalArgumentException("Empty name is not Allowed here");
         if (excludeConfigs.remove(name))

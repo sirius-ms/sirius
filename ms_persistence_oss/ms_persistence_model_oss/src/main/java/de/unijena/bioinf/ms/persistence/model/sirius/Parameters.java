@@ -21,17 +21,22 @@
 package de.unijena.bioinf.ms.persistence.model.sirius;
 
 import com.fasterxml.jackson.annotation.*;
-import de.unijena.bioinf.ChemistryBase.ms.properties.ConfigAnnotation;
 import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.properties.SiriusConfigUtils;
 import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import org.apache.commons.configuration2.ImmutableConfiguration;
+import org.apache.commons.configuration2.PropertiesConfiguration;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 @SuperBuilder
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE, getterVisibility = JsonAutoDetect.Visibility.ANY, setterVisibility = JsonAutoDetect.Visibility.NONE)
@@ -45,7 +50,7 @@ public class Parameters extends AlignedFeatureAnnotation {
     @Setter
     private ConfigType type;
 
-    private ParameterConfig parameterConfig;
+    private PropertiesConfiguration configuration;
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
     private Parameters(@JsonProperty(value = "parametersId") long id,
@@ -56,40 +61,37 @@ public class Parameters extends AlignedFeatureAnnotation {
         this.parametersId = id;
         this.alignedFeatureId = alignedFeatureId;
         this.type = type == null ? ConfigType.UNKNOWN : type;
-        this.parameterConfig = PropertyManager.DEFAULTS.newIndependentInstance(parameters, this.type.name(), false, ConfigType.CLI.name());
+        this.configuration = SiriusConfigUtils.makeConfigFromMap(parameters);
     }
 
     @JsonInclude // getter just for serialization
     private Map<String, String> getParameters() {
-        if (parameterConfig == null)
-            return null;
-        return parameterConfig.toMap();
+        final Map<String, String> toWrite = new HashMap<>(configuration.size());
+        configuration.getKeys().forEachRemaining(key -> toWrite.put(key, configuration.getString(key)));
+        return toWrite;
     }
 
     @JsonIgnore
-    public ParameterConfig getConfig() {
-        return parameterConfig;
+    public ParameterConfig newParameterConfig() {
+        return PropertyManager.DEFAULTS.newIndependentInstance(configuration, this.type.name(), false, new HashSet<>(Set.of(ConfigType.CLI.name())));
     }
 
-    public static <T extends ConfigAnnotation> Parameters of(T configAnnotation, ConfigType type, long alignedFeatureId) {
-        Parameters parameters = of(configAnnotation, type);
+
+    @JsonIgnore
+    ImmutableConfiguration getConfiguration(){
+        return configuration;
+    }
+
+    public static Parameters of(ParameterConfig config, ConfigType type, long alignedFeatureId, boolean modificationOnly) {
+        Parameters parameters = of(config, type, modificationOnly);
         parameters.setAlignedFeatureId(alignedFeatureId);
         return parameters;
     }
 
-    public static <T extends ConfigAnnotation> Parameters of(T configAnnotation, ConfigType type) {
-        return of(configAnnotation.config(), type);
-    }
-
-    public static Parameters of(ParameterConfig config, ConfigType type, long alignedFeatureId) {
-        Parameters parameters = of(config, type);
-        parameters.setAlignedFeatureId(alignedFeatureId);
-        return parameters;
-    }
-
-    public static Parameters of(ParameterConfig config, ConfigType type) {
+    public static Parameters of(ParameterConfig config, ConfigType type, boolean modificationOnly) {
+        PropertiesConfiguration c = modificationOnly ? (PropertiesConfiguration) config.getModifiedConfigs() : SiriusConfigUtils.makeConfigFromMap(config.toMap());
         return Parameters.builder()
-                .parameterConfig(config)
+                .configuration(c)
                 .type(type)
                 .build();
     }
