@@ -337,11 +337,11 @@ public class SiriusProjectDatabaseImplTest {
         ParameterConfig projectConfig = PropertyManager.DEFAULTS.newIndependentInstance(ConfigType.PROJECT.name());
         ParameterConfig computeConfig = PropertyManager.DEFAULTS.newIndependentInstance(ConfigType.BATCH_COMPUTE.name());
 
-        Parameters project1 = Parameters.of(projectConfig, ConfigType.PROJECT);
+        Parameters project1 = Parameters.of(projectConfig, ConfigType.PROJECT, true);
         project1.setAlignedFeatureId(1);
-        Parameters project2 = Parameters.of(projectConfig, ConfigType.PROJECT);
+        Parameters project2 = Parameters.of(projectConfig, ConfigType.PROJECT, true);
         project2.setAlignedFeatureId(1);
-        Parameters input = Parameters.of(computeConfig, ConfigType.BATCH_COMPUTE);
+        Parameters input = Parameters.of(computeConfig, ConfigType.BATCH_COMPUTE, true);
         project2.setAlignedFeatureId(1);
 
         withDb(db -> {
@@ -349,9 +349,9 @@ public class SiriusProjectDatabaseImplTest {
             assertEquals(1, db.getStorage().insert(project1), "Insert project config");
             assertTrue(db.getStorage().getByPrimaryKey(project1.getParametersId(), project1.getClass()).isPresent(), "check if inserted config exists");
             assertEquals(
-                    Streams.stream(project1.getConfig().getConfigKeys()).collect(Collectors.toSet()),
+                    Streams.stream(project1.newParameterConfig().getConfigKeys()).collect(Collectors.toSet()),
                     db.getStorage().getByPrimaryKey(project1.getParametersId(), project1.getClass())
-                            .map(Parameters::getConfig).map(ParameterConfig::getConfigKeys).stream()
+                            .map(Parameters::newParameterConfig).map(ParameterConfig::getConfigKeys).stream()
                             .flatMap(Streams::stream).collect(Collectors.toSet()),
                     "Check if content has been preserved"
             );
