@@ -30,7 +30,6 @@ import de.unijena.bioinf.sse.DataEventType;
 import de.unijena.bioinf.sse.DataObjectEvent;
 import de.unijena.bioinf.sse.FluxToFlowBroadcast;
 import de.unijena.bioinf.sse.PropertyChangeSubscriber;
-import de.unijena.bioinf.ms.nightsky.sdk.api.ServerSentEventApi;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
@@ -38,10 +37,10 @@ import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -170,22 +169,24 @@ public class NightSkyClient implements AutoCloseable {
                 .bodyToFlux(new ParameterizedTypeReference<ServerSentEvent<String>>() {
                 })
                 .retry()
-                .repeat();
+                .repeat()
+                .doOnError(t -> LOG.error("Error in SSE Stream", t))
+                .onErrorResume(e -> Mono.empty());
+
         sseBroadcast = new FluxToFlowBroadcast(apiClient.getObjectMapper());
-        sseConnection = eventStream
-                .subscribe(
-                        event -> {
+        sseConnection = eventStream.subscribe(
+                event -> {
 //                            LOG.info("Time: {} - data[{}]", LocalTime.now(), event.data());
-                            sseBroadcast.onNext(event);
-                        },
-                        error -> {
-                            LOG.error("Error receiving SSE", error);
-                            sseBroadcast.onError(error);
-                        },
-                        () -> {
-                            LOG.warn("Completed!");
-                            sseBroadcast.onComplete();
-                        });
+                    sseBroadcast.onNext(event);
+                },
+                error -> {
+                    LOG.error("Error receiving SSE", error);
+                    sseBroadcast.onError(error);
+                },
+                () -> {
+                    LOG.warn("Completed!");
+                    sseBroadcast.onComplete();
+                });
     }
 
     public void addJobEventListener(Flow.Subscriber<DataObjectEvent<?>> listener, String jobId, String pid) {
@@ -249,6 +250,7 @@ public class NightSkyClient implements AutoCloseable {
     public ProjectsApi projects() {
         return projects;
     }
+
     public SearchableDatabasesApi databases() {
         return databases;
     }
@@ -257,7 +259,7 @@ public class NightSkyClient implements AutoCloseable {
         return infos;
     }
 
-    public void shutDownSirius(){
+    public void shutDownSirius() {
         new ActuatorApi(apiClient).shutdownWithResponseSpec().bodyToMono(String.class).blockOptional();
     }
 
@@ -277,8 +279,8 @@ public class NightSkyClient implements AutoCloseable {
     public Optional<NightSkyErrorResponse> unwrapErrorResponse(Throwable ex) {
         WebClientResponseException webEx = null;
 
-        while (ex != null){
-            if (ex instanceof WebClientResponseException){
+        while (ex != null) {
+            if (ex instanceof WebClientResponseException) {
                 webEx = (WebClientResponseException) ex;
                 break;
             }

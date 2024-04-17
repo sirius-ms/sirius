@@ -23,7 +23,6 @@ package de.unijena.bioinf.ms.middleware.service.gui;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.SiriusGuiFactory;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
-import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
 import de.unijena.bioinf.ms.middleware.model.gui.GuiInfo;
 import de.unijena.bioinf.ms.middleware.model.gui.GuiParameters;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
@@ -91,6 +90,7 @@ public class GuiServiceImpl implements GuiService {
                         }
                     }
                     if (closeSirius){
+                        shutdown(); //shutdown guis and clients before server shutdown is initiated starts
                         ((ConfigurableApplicationContext) applicationContext).close();
                         System.exit(0);
                     }
