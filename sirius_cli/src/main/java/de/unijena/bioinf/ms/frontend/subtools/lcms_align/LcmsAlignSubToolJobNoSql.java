@@ -59,7 +59,6 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     @Getter
     protected final List<NoSQLInstance> importedCompounds = new ArrayList<>();
     private final IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier;
-    private NoSQLProjectSpaceManager space;
 
 
     public LcmsAlignSubToolJobNoSql(InputFilesOptions input, @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier, LcmsAlignOptions options) {
@@ -75,7 +74,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     @Override
     protected NoSQLProjectSpaceManager compute() throws Exception {
         importedCompounds.clear();
-        space = projectSupplier.get();
+        NoSQLProjectSpaceManager space = projectSupplier.get();
         SiriusProjectDatabaseImpl<? extends Database<?>> ps = space.getProject();
         Database<?> store = space.getProject().getStorage();
 
@@ -146,11 +145,11 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                         # Feature:                 %d
                         # AlignedIsotopicFeatures: %d
                         # AlignedFeatures:         %d
-                                                        
+                                                       \s
                         Feature                 SNR: %f
                         AlignedIsotopicFeatures SNR: %f
                         AlignedFeatures         SNR: %f
-                        """,
+                       \s""",
                 store.countAll(LCMSRun.class), store.countAll(Scan.class), store.countAll(MSMSScan.class),
                 store.countAll(SourceTrace.class), store.countAll(de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace.class),
                 store.countAll(de.unijena.bioinf.ms.persistence.model.core.feature.Feature.class), store.countAll(AlignedIsotopicFeatures.class), store.countAll(AlignedFeatures.class),

@@ -42,7 +42,9 @@ import java.beans.PropertyChangeSupport;
 import java.io.Closeable;
 import java.io.StringReader;
 import java.util.*;
-import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.nightsky.sdk.model.ProjectChangeEvent.EventTypeEnum.FEATURE_CREATED;
@@ -92,11 +94,13 @@ public class GuiProjectManager implements Closeable {
         //fire events for data changes
         projectListener = evt -> DataObjectEvents.toDataObjectEventData(evt.getNewValue(), ProjectChangeEvent.class)
                 .ifPresent(pce -> {
-                    switch (pce.getEventType()) {
-                        case FEATURE_CREATED, FEATURE_DELETED -> addRemoveDebounced(pce);
+                    if (pce.getEventType() != null) {
+                        switch (pce.getEventType()) {
+                            case FEATURE_CREATED, FEATURE_DELETED -> addRemoveDebounced(pce);
 
-                        case FEATURE_UPDATED, RESULT_CREATED, RESULT_UPDATED, RESULT_DELETED ->
-                                pcs.firePropertyChange("project.updateInstance." + pce.getFeaturedId(), null, pce);
+                            case FEATURE_UPDATED, RESULT_CREATED, RESULT_UPDATED, RESULT_DELETED ->
+                                    pcs.firePropertyChange("project.updateInstance." + pce.getFeaturedId(), null, pce);
+                        }
                     }
                 });
         enableProjectListener();
@@ -115,7 +119,7 @@ public class GuiProjectManager implements Closeable {
         siriusClient.addEventListener(computeListener, projectId, DataEventType.BACKGROUND_COMPUTATIONS_STATE);
     }
 
-    public void disbableProjectListener(){
+    public void disableProjectListener(){
         synchronized (projectListener) {
             siriusClient.removeEventListener(projectListener);
         }
@@ -127,7 +131,7 @@ public class GuiProjectManager implements Closeable {
         }
     }
 
-    private final ArrayBlockingQueue<ProjectChangeEvent> events = new ArrayBlockingQueue<>(1000);
+    private final BlockingQueue<ProjectChangeEvent> events = new LinkedBlockingDeque<>();
     private JJob<Boolean> debounceExec;
 
     private void addRemoveDebounced(ProjectChangeEvent event) {
@@ -136,29 +140,34 @@ public class GuiProjectManager implements Closeable {
 
         if (debounceExec == null)
             debounceExec = DebouncedExecutionJJob.start((ExFunctions.Runnable) () -> {
-                List<Pair<InstanceBean, Boolean>> toProcess = new ArrayList<>();
+                List<ProjectChangeEvent> toProcess = new ArrayList<>();
 
                 ProjectChangeEvent evt = events.take();
-                while (evt != null) {
-                    processEvent(evt).ifPresent(toProcess::add);
-                    evt = events.poll();
-                }
-                SiriusGlazedLists.multiAddRemove(INSTANCE_LIST, innerList, toProcess);
-                toProcess.stream().filter(p -> !p.value()).map(Pair::key)
+                do {
+                    toProcess.add(evt);
+                } while ((evt = events.poll()) != null);
+
+                List<Pair<InstanceBean, Boolean>> pairs = processEvents(toProcess);
+                SiriusGlazedLists.multiAddRemove(INSTANCE_LIST, innerList, pairs);
+                pairs.stream().filter(p -> !p.value()).map(Pair::key)
                         .forEach(InstanceBean::unregisterProjectSpaceListener);
             });
         events.add(event);
     }
 
-    private Optional<Pair<InstanceBean, Boolean>> processEvent(ProjectChangeEvent evt) {
-        if (evt.getEventType() == FEATURE_CREATED) {
-            return Optional.of(Pair.of(new InstanceBean(getFeature(evt.getFeaturedId(), List.of(AlignedFeatureOptField.TOPANNOTATIONS)), GuiProjectManager.this), true));
-        }
-        if (evt.getEventType() == FEATURE_DELETED) {
-            return INSTANCE_LIST.stream().filter(inst -> inst.getFeatureId().equals(evt.getFeaturedId()))
-                    .findFirst().map(inst -> Pair.of(inst, false));
-        }
-        throw new IllegalArgumentException("Only FEATURE_CREATED and FEATURE_DELETED events can be debounced!");
+    private List<Pair<InstanceBean, Boolean>> processEvents(List<ProjectChangeEvent> toProcess) {
+        //collect existing
+        Map<String, InstanceBean> instances = INSTANCE_LIST.stream().collect(Collectors.toMap(InstanceBean::getFeatureId, Function.identity()));
+        //collect created
+        toProcess.stream().filter(evt -> evt.getEventType() == FEATURE_CREATED).map(ProjectChangeEvent::getFeaturedId).filter(Objects::nonNull)
+                .forEach(fid -> instances.put(fid, new InstanceBean(getFeature(fid, List.of(AlignedFeatureOptField.TOPANNOTATIONS)), GuiProjectManager.this)));
+        //todo getting features in bulk could improve speed
+        //map deletion by keeping event order
+        return toProcess.stream().filter(evt -> evt.getEventType() == FEATURE_CREATED || evt.getEventType() == FEATURE_DELETED)
+                .filter(evt -> evt.getFeaturedId() != null)
+                .map(evt -> Pair.of(instances.get(evt.getFeaturedId()),evt.getEventType() == FEATURE_CREATED))
+                .toList();
+
     }
 
     public NightSkyClient getClient() {
@@ -188,7 +197,7 @@ public class GuiProjectManager implements Closeable {
 
     @Override
     public void close() {
-        disbableProjectListener();
+        disableProjectListener();
         siriusClient.removeEventListener(computeListener);
         properties.removePropertyChangeListener(confidenceModeListender);
     }
