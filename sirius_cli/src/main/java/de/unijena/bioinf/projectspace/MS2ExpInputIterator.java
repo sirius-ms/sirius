@@ -128,30 +128,30 @@ public class MS2ExpInputIterator implements InstIterProvider, CloseableIterator<
                     MutableMs2Experiment experiment = Sirius.makeMutable(currentExperimentIterator.next());
 
                     if (experiment.getPrecursorIonType() == null) {
-                        LOG.warn("No ion or charge given for: " + experiment.getName() + " Try guessing charge from name.");
+                        LOG.warn("No ion or charge given for: {} Try guessing charge from name.", experiment.getName());
                         final String name = (Optional.ofNullable(experiment.getName()).orElse("") +
                                 "_" + Optional.ofNullable(experiment.getSourceString()).orElse("")).toLowerCase();
 
                         if ((name.contains("negative") || name.contains("neg")) && (!name.contains("positive") && !name.contains("pos"))) {
-                            LOG.info(experiment.getName() + ": Negative charge keyword found!");
+                            LOG.info("{}: Negative charge keyword found!", experiment.getName());
                             experiment.setPrecursorIonType(PrecursorIonType.unknownNegative());
                         } else {
-                            LOG.info(experiment.getName() + ": Falling back to positive");
+                            LOG.info("{}: Falling back to positive", experiment.getName());
                             experiment.setPrecursorIonType(PrecursorIonType.unknownPositive());
                         }
                     }
 
                     if (experiment.getMs1Spectra().removeIf(Spectrum::isEmpty))
-                        LoggerFactory.getLogger(getClass()).warn("Removed at lease one empty MS1 spectrum from '" + experiment.getName() + "'.");
+                        LoggerFactory.getLogger(getClass()).warn("Removed at least one empty MS1 spectrum from '{}'.", experiment.getName());
                     if (experiment.getMs2Spectra().removeIf(Spectrum::isEmpty))
-                        LoggerFactory.getLogger(getClass()).warn("Removed at lease one empty MS/MS spectrum from '" + experiment.getName() + "'.");
+                        LoggerFactory.getLogger(getClass()).warn("Removed at least one empty MS/MS spectrum from '{}'.", experiment.getName());
 
                     if (!allowMS1Only && experiment.getMs2Spectra().isEmpty()) {
-                        LOG.info("Skipping instance '" + experiment.getName() + "' because it does not contain any non Empty MS/MS.");
+                        LOG.info("Skipping instance '{}' because it does not contain any non Empty MS/MS.", experiment.getName());
                     } else if (!filter.test(experiment)) {
-                        LOG.info("Skipping instance '" + experiment.getName() + "' because it did not pass the filter setting.");
+                        LOG.info("Skipping instance '{}' because it did not pass the filter setting.", experiment.getName());
                     } else if (experiment.getMolecularFormula() != null && experiment.getMolecularFormula().numberOf("D") > 0) {
-                        LOG.warn("Deuterium Formula found in: " + experiment.getName() + " Instance will be Ignored.");
+                        LOG.warn("Deuterium Formula found in: {} Instance will be Ignored.", experiment.getName());
                     } else {
                         if (ignoreFormula) {
                             experiment.setMolecularFormula(null);

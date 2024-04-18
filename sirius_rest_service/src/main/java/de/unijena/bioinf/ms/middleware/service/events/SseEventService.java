@@ -121,18 +121,15 @@ public class SseEventService implements EventService<SseEmitter> {
 //                        System.out.println(); //todo remove debug
 //                        System.out.println(); //todo remove debug
                     } catch (InterruptedException e) {
-                        System.out.println("DIRTY EARLY");
                         if (eventData == ServerEvents.EMPTY_EVENT())
                             return true;
                         checkForInterruption();
                     }
                 }
-                System.out.println("CLEAN");
                 // closing all connections to clients.
                 emitters.values().stream().flatMap(Collection::stream).distinct().forEach(ResponseBodyEmitter::complete);
                 return true;
             } catch (InterruptedException e) {
-                System.out.println("DIRTY");
                 return false;
             }
         }
