@@ -32,8 +32,8 @@ public class ZodiacConfigPanel extends SubToolConfigPanelAdvancedParams<ZodiacOp
     private void createPanel() {
 
         final TwoColumnPanel general = new TwoColumnPanel();
-        general.addNamed("Considered candidates 300m/z", makeIntParameterSpinner("ZodiacNumberOfConsideredCandidatesAt300Mz", -1, 10000, 1));
-        general.addNamed("Considered candidates 800m/z", makeIntParameterSpinner("ZodiacNumberOfConsideredCandidatesAt800Mz", -1, 10000, 1));
+        general.addNamed("Considered candidates at 300m/z", makeIntParameterSpinner("ZodiacNumberOfConsideredCandidatesAt300Mz", -1, 10000, 1));
+        general.addNamed("Considered candidates at 800m/z", makeIntParameterSpinner("ZodiacNumberOfConsideredCandidatesAt800Mz", -1, 10000, 1));
         general.addNamed("Use  2-step approach", makeParameterCheckBox("ZodiacRunInTwoSteps"));
         TextHeaderBoxPanel generalPanel = new TextHeaderBoxPanel("General", general);
         addAdvancedComponent(generalPanel);
@@ -45,14 +45,5 @@ public class ZodiacConfigPanel extends SubToolConfigPanelAdvancedParams<ZodiacOp
         TextHeaderBoxPanel edgePanel = new TextHeaderBoxPanel("Edge Filters", edgeFilter);
         addAdvancedComponent(edgePanel);
         add(edgePanel);
-
-        //todo could be removed if no space. Nobody changes these.
-        final TwoColumnPanel gibbsSampling = new TwoColumnPanel();
-        gibbsSampling.addNamed("Iterations", makeIntParameterSpinner("ZodiacEpochs.iterations", 100, 9999999, 1));
-        gibbsSampling.addNamed("Burn-In", makeIntParameterSpinner("ZodiacEpochs.burnInPeriod", 0, 9999, 1));
-        gibbsSampling.addNamed("Separate Runs", makeIntParameterSpinner("ZodiacEpochs.numberOfMarkovChains", 1, 1000, 1));
-        TextHeaderBoxPanel gibbsPanel = new TextHeaderBoxPanel("Gibbs Sampling", gibbsSampling);
-        addAdvancedComponent(gibbsPanel);
-        add(gibbsPanel);
     }
 }
