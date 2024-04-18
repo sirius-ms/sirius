@@ -195,7 +195,7 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
             if (f.getMSData().isPresent()) {
                 importMSData(f.getMSData().get(), f.getAlignedFeatureId());
             } else {
-                LoggerFactory.getLogger(getClass()).warn("Importing AlignedFeatures without MSData! Feature: " + f.getName() + "| RT: " + f.getRetentionTime() + "| M/Z: " + f.getAverageMass());
+                LoggerFactory.getLogger(getClass()).warn("Importing AlignedFeatures without MSData! Feature: {}| RT: {}| M/Z: {}", f.getName(), f.getRetentionTime(), f.getAverageMass());
             }
         }
     }
@@ -210,7 +210,7 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
             if (f.getMSData().isPresent()) {
                 importMSData(f.getMSData().get(), f.getAlignedIsotopeFeatureId());
             } else {
-                LoggerFactory.getLogger(getClass()).warn("Importing AlignedIsotopicFeatures without MSData! RT: " + f.getRetentionTime() + "| M/Z: " + f.getAverageMass());
+                LoggerFactory.getLogger(getClass()).warn("Importing AlignedIsotopicFeatures without MSData! RT: {}| M/Z: {}", f.getRetentionTime(), f.getAverageMass());
             }
         }
     }
