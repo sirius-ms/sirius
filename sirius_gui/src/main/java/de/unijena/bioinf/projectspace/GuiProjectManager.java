@@ -105,27 +105,30 @@ public class GuiProjectManager implements Closeable {
                 });
         enableProjectListener();
 
-        computeListener = evt -> DataObjectEvents.toDataObjectEventData(evt.getNewValue(), BackgroundComputationsStateEvent.class).ifPresent(computeEvent -> {
-            Map<String, Boolean> idsToComputeState = computeEvent.getAffectedJobs().stream().filter(j -> j.getAffectedAlignedFeatureIds() != null)
-                    .flatMap(j -> j.getAffectedAlignedFeatureIds().stream().map(id -> Pair.of(id, j.getProgress().getState().ordinal() <= JobProgress.StateEnum.RUNNING.ordinal())))
-                    .collect(Collectors.toMap(Pair::key, Pair::value));
+        computeListener = evt ->
+                DataObjectEvents.toDataObjectEventData(evt.getNewValue(), BackgroundComputationsStateEvent.class)
+                .ifPresent(computeEvent -> {
+                    Map<String, Boolean> idsToComputeState = computeEvent.getAffectedJobs().stream()
+                            .filter(j -> j.getAffectedAlignedFeatureIds() != null)
+                            .flatMap(j -> j.getAffectedAlignedFeatureIds().stream().map(id -> Pair.of(id, j.getProgress().getState().ordinal() <= JobProgress.StateEnum.RUNNING.ordinal())))
+                            .collect(Collectors.toMap(Pair::key, Pair::value));
 
-            Set<InstanceBean> change = INSTANCE_LIST.stream()
-                    .filter(i -> idsToComputeState.containsKey(i.getFeatureId()))
-                    .peek(inst -> inst.changeComputeStateOfCache(idsToComputeState.get(inst.getFeatureId())))
-                    .collect(Collectors.toSet());
-            Jobs.runEDTLater(() -> SiriusGlazedLists.multiUpdate(INSTANCE_LIST, change));
-        });
+                    Set<InstanceBean> change = INSTANCE_LIST.stream()
+                            .filter(i -> idsToComputeState.containsKey(i.getFeatureId()))
+                            .peek(inst -> inst.changeComputeStateOfCache(idsToComputeState.get(inst.getFeatureId())))
+                            .collect(Collectors.toSet());
+                    Jobs.runEDTLater(() -> SiriusGlazedLists.multiUpdate(INSTANCE_LIST, change));
+                });
         siriusClient.addEventListener(computeListener, projectId, DataEventType.BACKGROUND_COMPUTATIONS_STATE);
     }
 
-    public void disableProjectListener(){
+    public void disableProjectListener() {
         synchronized (projectListener) {
             siriusClient.removeEventListener(projectListener);
         }
     }
 
-    public void enableProjectListener(){
+    public void enableProjectListener() {
         synchronized (projectListener) {
             siriusClient.addEventListener(projectListener, projectId, DataEventType.PROJECT);
         }
@@ -165,7 +168,7 @@ public class GuiProjectManager implements Closeable {
         //map deletion by keeping event order
         return toProcess.stream().filter(evt -> evt.getEventType() == FEATURE_CREATED || evt.getEventType() == FEATURE_DELETED)
                 .filter(evt -> evt.getFeaturedId() != null)
-                .map(evt -> Pair.of(instances.get(evt.getFeaturedId()),evt.getEventType() == FEATURE_CREATED))
+                .map(evt -> Pair.of(instances.get(evt.getFeaturedId()), evt.getEventType() == FEATURE_CREATED))
                 .toList();
 
     }

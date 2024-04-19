@@ -25,6 +25,7 @@ import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvent;
 import de.unijena.bioinf.ms.middleware.model.events.ServerEvents;
+import io.hypersistence.tsid.TSID;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -101,7 +102,6 @@ public class SseEventService implements EventService<SseEmitter> {
                             return true;
 //                        System.out.println("Retrieved event from Queue: " + eventData); //todo remove debug
                         for (SseEmitter emitter : emitters.getOrDefault(eventData.getEventType(), List.of())) {
-//                            System.out.println("Send event to Client: " + emitter.toString()); //todo remove debug
                             try {
                                 StringBuilder name = new StringBuilder()
                                         .append(eventData.getProjectId()).append(".")
@@ -112,7 +112,9 @@ public class SseEventService implements EventService<SseEmitter> {
 
                                 emitter.send(SseEmitter.event()
                                         .data(eventData, MediaType.APPLICATION_JSON)
-                                        .name(name.toString()));
+                                        .name(name.toString())
+                                        .id(TSID.fast().toString()));
+//                                System.out.println("Send event" + e.build().toString() + " to Client: " + emitter.toString()); //todo remove debug
                             } catch (IOException e) {
                                 logDebug("Error when sending event to client!", e);
                                 emitter.completeWithError(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()));

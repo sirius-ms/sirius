@@ -257,7 +257,7 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
 
     @Override
     public void cancel() {
-        cancel(true);
+        cancel(false);
     }
 
     @Override

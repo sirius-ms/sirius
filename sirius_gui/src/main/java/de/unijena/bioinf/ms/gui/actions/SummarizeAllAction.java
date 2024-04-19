@@ -69,7 +69,7 @@ public class SummarizeAllAction extends AbstractGuiAction {
                 .map(Path::of).map(Path::getParent).map(Path::normalize).map(Path::toString).orElse("");
 
 
-        ExecutionDialog<SummaryConfigPanel> d = new ExecutionDialog<>(gui, new SummaryConfigPanel(path), compounds, mainFrame, title, true);
+        ExecutionDialog<SummaryConfigPanel> d = new ExecutionDialog<>(gui, new SummaryConfigPanel(path), compounds, mainFrame, title, true, true);
         d.setIndeterminateProgress(false);
         d.start();
     }

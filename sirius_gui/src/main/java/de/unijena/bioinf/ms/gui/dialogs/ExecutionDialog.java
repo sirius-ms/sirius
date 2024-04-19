@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 
 
 public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
@@ -43,9 +44,12 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
 
     private final SiriusGui gui;
 
-    public ExecutionDialog(SiriusGui gui, @NotNull P configPanel, @Nullable List<InstanceBean> compounds, MainFrame owner, String title, boolean modal) {
+    protected final boolean executeInBackground;
+
+    public ExecutionDialog(SiriusGui gui, @NotNull P configPanel, @Nullable List<InstanceBean> compounds, MainFrame owner, String title, boolean modal, boolean executeInBackground) {
         super(owner, title, modal);
         this.gui = gui;
+        this.executeInBackground = executeInBackground;
         init(configPanel, compounds);
     }
 
@@ -57,7 +61,8 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
     protected P configPanel;
     protected boolean indeterminateProgress = true;
 
-    @Nullable List<InstanceBean> compounds = null;
+    @Nullable
+    List<InstanceBean> compounds = null;
 
     protected void init(@NotNull P configPanel, @Nullable List<InstanceBean> compounds) {
         this.configPanel = configPanel;
@@ -113,16 +118,25 @@ public class ExecutionDialog<P extends SubToolConfigPanel<?>> extends JDialog {
             if (compounds != null)
                 sub.alignedFeatureIds(compounds.stream().map(InstanceBean::getFeatureId).toList());
 
-            gui.applySiriusClient((c, pid) -> {
+            LoadingBackroundTask<Job> bt = gui.applySiriusClient((c, pid) -> {
                 Job j = c.jobs().startCommand(pid, sub, List.of(JobOptField.PROGRESS));
-                return LoadingBackroundTask.runInBackground(mf(),
-                        "Running '" + configPanel.toolCommand() + "'...", indeterminateProgress, null,
-                        new SseProgressJJob(gui.getSiriusClient(), pid, j)
-                );
-            }).awaitResult();
+                if (!executeInBackground)
+                    return LoadingBackroundTask.runInBackground(mf(),
+                            "Running '" + configPanel.toolCommand() + "'...", indeterminateProgress, null,
+                            new SseProgressJJob(gui.getSiriusClient(), pid, j)
+                    );
+                return null;
+            });
+
+            if (bt != null)
+                bt.awaitResult();
         } catch (Exception e) {
-            LoggerFactory.getLogger(getClass()).error("Error when running '" + configPanel.toolCommand() + "'.", e);
-            new ExceptionDialog(mf(), e.getMessage());
+            if (!(e.getCause() instanceof CancellationException)) {
+                //Handle error because it was not just cancellation.
+                LoggerFactory.getLogger(getClass()).error("Error when running '" + configPanel.toolCommand() + "'.", e);
+                new ExceptionDialog(mf(), e.getMessage());
+            }
+
         }
     }
 }
