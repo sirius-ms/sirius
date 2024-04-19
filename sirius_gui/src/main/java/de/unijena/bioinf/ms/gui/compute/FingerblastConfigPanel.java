@@ -108,6 +108,7 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
         SearchableDatabase pubChemDB = gui.getSiriusClient().databases().getDatabase(DataSource.PUBCHEM.name(), false);
         if (pubChemFallback.isSelected()) {
             dbList.setItemEnabled(pubChemDB, false);
+            dbList.uncheck(pubChemDB);
             dbList.setItemToolTip(pubChemDB, "PubChem will be used as fallback");
         } else {
             dbList.setItemEnabled(pubChemDB, true);
