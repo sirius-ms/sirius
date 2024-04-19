@@ -40,7 +40,6 @@ public class SseProgressJJob extends WaiterJJob<Job> {
     private final NightSkyClient siriusClient;
     private final String jobId;
     private final String projectId;
-    private Job wrappedJob = null;
 
     private Flow.Subscriber<DataObjectEvent<?>> subscriber;
 
@@ -66,29 +65,27 @@ public class SseProgressJJob extends WaiterJJob<Job> {
         subscriber = new Flow.Subscriber<>() {
             @Override
             public void onSubscribe(Flow.Subscription subscription) {
-                synchronized (SseProgressJJob.this) {
-                    wrappedJob = siriusClient.jobs().getJob(projectId, jobId, List.of(JobOptField.PROGRESS));
-                    update();
-                }
+                Job j = siriusClient.jobs().getJob(projectId, jobId, List.of(JobOptField.PROGRESS));
+                if (updateAndCheckIfDone(j))
+                    siriusClient.removeEventListener(this);
             }
 
             @Override
             public void onNext(DataObjectEvent<?> event) {
-                synchronized (SseProgressJJob.this) {
-                    wrappedJob = (Job) event.getData();
-                    update();
-                }
+                Job j = (Job) event.getData();
+                if (updateAndCheckIfDone(j))
+                    siriusClient.removeEventListener(this);
             }
 
             @Override
             public void onError(Throwable throwable) {
                 crash(throwable);
+                siriusClient.removeEventListener(this);
             }
 
             @Override
             public void onComplete() {
-                logWarn("Canceled Sse waiter job due to closed sse connection");
-                SseProgressJJob.super.cancel();
+                logWarn("Canceled Sse waiter job running but sse connection has been closed");
             }
         };
 
@@ -96,39 +93,38 @@ public class SseProgressJJob extends WaiterJJob<Job> {
     }
 
     @Override
-    public synchronized void cancel(boolean mayInterruptIfRunning) {
-        siriusClient.jobs().deleteJob(projectId, jobId, true, true);
-        super.cancel(mayInterruptIfRunning);
-        siriusClient.removeEventListener(subscriber);
+    public void cancel(boolean mayInterruptIfRunning) {
+        // should not be synchronized since it call blocking http req
+        // just initiate cancelling process in backend. But do not wait for it.
+        // Callback via sse event will finally stop the job and notify listeners about cancellation
+        siriusClient.jobs().deleteJob(projectId, jobId, true, false);
     }
 
     @Override
-    public synchronized void crash(@NotNull Throwable e) {
+    public void crash(@NotNull Throwable e) {
         super.crash(e);
-        siriusClient.removeEventListener(subscriber);
     }
 
     @Override
-    public synchronized void finish(@NotNull Job result) {
+    public void finish(@NotNull Job result) {
         super.finish(result);
-        siriusClient.removeEventListener(subscriber);
     }
 
-    private void update() {
+    private boolean updateAndCheckIfDone(Job wrappedJob) {
         if (wrappedJob == null) {
             crash(new IllegalStateException("Nighsky API Job with ID '" + projectId + "." + jobId + "' does not exist!"));
-            return;
+            return true;
         }
 
         JobProgress p = wrappedJob.getProgress();
 
         if (p == null) {
-            logWarn("Got Job update event without progress info. Cannot update jobs state. This is likely to be a bug!");
-            return;
+            crash(new IllegalStateException("Got Job update event without progress info. Cannot update jobs state. This is likely to be a bug! Stopping to prevent running forever: " + projectId + "." + jobId));
+            return true;
         }
 
         if (Optional.ofNullable(p.isIndeterminate())
-                .orElse(false) || p.getMaxProgress() == null || p.getCurrentProgress() == null){
+                .orElse(false) || p.getMaxProgress() == null || p.getCurrentProgress() == null) {
             updateProgress(0, 1, wrappedJob.getId() + "|" + p.getMessage());
         } else {
             updateProgress(p.getMaxProgress(), p.getCurrentProgress(), wrappedJob.getId() + "|" + p.getMessage());
@@ -136,12 +132,19 @@ public class SseProgressJJob extends WaiterJJob<Job> {
 
         if (p.getState() == JobProgress.StateEnum.FAILED) {
             crash(new Exception(p.getErrorMessage()));
-        } else if (p.getState() == JobProgress.StateEnum.CANCELED) {
-            super.cancel();
-        } else if (p.getState() == JobProgress.StateEnum.DONE) {
-            super.finish(wrappedJob);
-        } else {
-            setState(JobState.valueOf(p.getState().name()));
+            return true;
         }
+
+        if (p.getState() == JobProgress.StateEnum.CANCELED) {
+            super.cancel(true);
+            return true;
+        }
+
+        if (p.getState() == JobProgress.StateEnum.DONE) {
+            finish(wrappedJob);
+            return true;
+        }
+        setState(JobState.valueOf(p.getState().name()));
+        return false;
     }
 }

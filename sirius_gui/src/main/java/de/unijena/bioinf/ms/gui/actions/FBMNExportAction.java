@@ -76,7 +76,7 @@ public class FBMNExportAction extends AbstractGuiAction {
 
         new ExecutionDialog<>(gui,
                 new MgfExporterConfigPanel(p,n),
-                List.copyOf(mainFrame.getCompounds()), mainFrame,
-                "Export Project for GNPS FBMN", true).start();
+                List.copyOf(mainFrame.getCompounds()), mainFrame, //todo sublist of feature, fully in background?
+                "Export Project for GNPS FBMN", true, false).start();
     }
 }

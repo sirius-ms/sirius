@@ -38,6 +38,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.beans.PropertyChangeListener;
 import java.io.IOException;
@@ -45,6 +46,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Flow;
 
 import static de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient.*;
@@ -69,18 +71,25 @@ public class NightSkyClient implements AutoCloseable {
     protected final ProjectsApi projects;
 
     protected final SearchableDatabasesApi databases;
+    private final ExecutorService asyncExecutor;
 
     protected InfoApi infos;
     private EnumSet<DataEventType> sseEventsToListenOn = null;
     private Disposable sseConnection;
     private FluxToFlowBroadcast sseBroadcast;
 
+
     public NightSkyClient() {
-        this(8080, "http://localhost");
+        this(null);
     }
 
-    public NightSkyClient(int port, String baseUrl) {
+    public NightSkyClient(ExecutorService asyncCallsExecutor) {
+        this(8080, "http://localhost", asyncCallsExecutor);
+    }
+
+    public NightSkyClient(int port, String baseUrl, ExecutorService asyncExecutor) {
         this.basePath = baseUrl + ":" + port;
+        this.asyncExecutor = asyncExecutor;
         apiClient = new ApiClient(buildWebClientBuilder(createDefaultObjectMapper(createDefaultDateFormat()))
                 .codecs(codecs -> codecs
                         .defaultCodecs()
@@ -174,19 +183,21 @@ public class NightSkyClient implements AutoCloseable {
                 .onErrorResume(e -> Mono.empty());
 
         sseBroadcast = new FluxToFlowBroadcast(apiClient.getObjectMapper());
-        sseConnection = eventStream.subscribe(
-                event -> {
+        sseConnection = eventStream
+                .publishOn(asyncExecutor == null ? Schedulers.single() : Schedulers.fromExecutor(asyncExecutor))
+                .subscribe(
+                        event -> {
 //                            LOG.info("Time: {} - data[{}]", LocalTime.now(), event.data());
-                    sseBroadcast.onNext(event);
-                },
-                error -> {
-                    LOG.error("Error receiving SSE", error);
-                    sseBroadcast.onError(error);
-                },
-                () -> {
-                    LOG.warn("Completed!");
-                    sseBroadcast.onComplete();
-                });
+                            sseBroadcast.onNext(event);
+                        },
+                        error -> {
+                            LOG.error("Error receiving SSE", error);
+                            sseBroadcast.onError(error);
+                        },
+                        () -> {
+                            LOG.warn("Completed!");
+                            sseBroadcast.onComplete();
+                        });
     }
 
     public void addJobEventListener(Flow.Subscriber<DataObjectEvent<?>> listener, String jobId, String pid) {
