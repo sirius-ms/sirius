@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.babelms.ReportingInputStream;
 import de.unijena.bioinf.babelms.annotations.CompoundMetaData;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.InputResourceParsingIterator;
@@ -61,6 +62,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 public class CustomDatabaseImporter {
@@ -152,9 +154,11 @@ public class CustomDatabaseImporter {
         listeners.remove(listener);
     }
 
+
     public void importSpectraFromResources(List<InputResource<?>> spectrumFiles) throws IOException {
         throwIfShutdown();
-        Iterator<Ms2Experiment> iterator = new InputResourceParsingIterator(spectrumFiles, new SpectralDbMsExperimentParser());
+        InputResourceParsingIterator iterator = new InputResourceParsingIterator(spectrumFiles, new SpectralDbMsExperimentParser());
+        iterator.addBytesRaiseListener((read, readTotal) -> listeners.forEach(l -> l.bytesRead(read)));
         while (iterator.hasNext()) {
             Ms2Experiment experiment = iterator.next();
             List<Ms2ReferenceSpectrum> specs = SpectralUtils.ms2ExpToMs2Ref((MutableMs2Experiment) experiment);
@@ -260,6 +264,12 @@ public class CustomDatabaseImporter {
     }
 
     public void importStructuresFromSdf(InputStream stream) throws IOException {
+        ReportingInputStream rs = new ReportingInputStream(stream);
+        rs.addBytesRaiseListener((rb, rbTotal) -> listeners.forEach(l -> l.bytesRead(rb)));
+        importStructuresFromSdf(rs);
+    }
+
+    public void importStructuresFromSdf(ReportingInputStream stream) throws IOException {
         throwIfShutdown();
         try {
             IteratingSDFReader reader = new IteratingSDFReader(new BufferedReader(new InputStreamReader(stream)), SilentChemObjectBuilder.getInstance());
@@ -284,7 +294,8 @@ public class CustomDatabaseImporter {
     public void importStructuresFromResources(List<InputResource<?>> structureFiles) throws IOException {
         throwIfShutdown();
         for (InputResource<?> f : structureFiles) {
-            try (InputStream s = f.getInputStream()) {
+            try (ReportingInputStream s = f.getReportingInputStream()) {
+                s.addBytesRaiseListener((rb, rbTotal) -> listeners.forEach(l -> l.bytesRead(rb)));
                 if (f.getFileExt().equalsIgnoreCase("sdf")) {
                     importStructuresFromSdf(s);
                 } else {
@@ -298,17 +309,17 @@ public class CustomDatabaseImporter {
         throwIfShutdown();
         ReaderFactory factory = new ReaderFactory();
         ISimpleChemObjectReader reader;
+
         try (InputStream stream = new FileInputStream(file)) {
             reader = factory.createReader(stream);
         }
-        if (reader != null) {
-            try (InputStream stream = new FileInputStream(file)) {
+
+        try (ReportingInputStream stream = new ReportingInputStream(new FileInputStream(file))) {
+            stream.addBytesRaiseListener((rb, rbTotal) -> listeners.forEach(l -> l.bytesRead(rb)));
+            if (reader != null)
                 importStructuresFromSdf(stream);
-            }
-        } else {
-            try (FileInputStream s = new FileInputStream(file)) {
-                importStructuresFromSmileAndInChis(s);
-            }
+            else
+                importStructuresFromSmileAndInChis(stream);
         }
     }
 
@@ -632,5 +643,9 @@ public class CustomDatabaseImporter {
 
         // informs about imported molecule
         void newInChI(List<InChI> inchis);
+
+        default void bytesRead(int numOfBytes) {
+
+        }
     }
 }

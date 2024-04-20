@@ -163,11 +163,8 @@ public abstract class CustomDatabase implements SearchableDatabase {
     public static void importToDatabase(
             List<InputResource<?>> spectrumFiles,
             List<InputResource<?>> structureFiles,
-            @Nullable CustomDatabaseImporter.Listener listener,
             CustomDatabaseImporter importer
     ) throws IOException {
-        if (listener != null)
-            importer.addListener(listener);
 
         try {
             if (structureFiles != null && !structureFiles.isEmpty())
@@ -197,7 +194,9 @@ public abstract class CustomDatabase implements SearchableDatabase {
             @Override
             protected Boolean compute() throws Exception {
                 importer = new CustomDatabaseImporter((NoSQLCustomDatabase<?, ?>) CustomDatabase.this, api.getCDKChemDBFingerprintVersion(), api, bufferSize);
-                importToDatabase(spectrumFiles, structureFiles, listener, importer);
+                if (listener != null)
+                    importer.addListener(listener);
+                importToDatabase(spectrumFiles, structureFiles, importer);
                 return true;
             }
 

@@ -28,6 +28,7 @@ import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.storage.blob.BlobStorages;
 import de.unijena.bioinf.storage.blob.Compressible;
 import de.unijena.bioinf.storage.blob.CompressibleBlobStorage;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -45,6 +46,7 @@ import static de.unijena.bioinf.chemdb.custom.CustomDataSources.PROP_KEY;
 import static de.unijena.bioinf.chemdb.custom.CustomDataSources.getCustomDatabaseDirectory;
 import static de.unijena.bioinf.storage.blob.Compressible.TAG_COMPRESSION;
 
+@Slf4j
 public class CustomDatabases {
     private CustomDatabases() {}
 
@@ -82,10 +84,14 @@ public class CustomDatabases {
 
     @NotNull
     public static Optional<CustomDatabase> getCustomDatabaseByName(@NotNull String name, CdkFingerprintVersion version) {
-        @NotNull List<CustomDatabase> custom = getCustomDatabases(version);
-        for (CustomDatabase customDatabase : custom)
-            if (customDatabase.name().equalsIgnoreCase(name))
-                return Optional.of(customDatabase);
+        try {
+            @NotNull List<CustomDatabase> custom = getCustomDatabases(version);
+            for (CustomDatabase customDatabase : custom)
+                if (customDatabase.name().equalsIgnoreCase(name))
+                    return Optional.of(customDatabase);
+        } catch (Exception e) {
+            log.error("Error when loading custom database with name: {}", name, e);
+        }
         return Optional.empty();
     }
 
@@ -226,6 +232,9 @@ public class CustomDatabases {
         return db;
     }
 
+    public static boolean remove(String dbId) {
+        return CustomDataSources.removeCustomSource(dbId);
+    }
     public static void remove(CustomDatabase db, boolean delete) {
         if (delete) {
             try {
