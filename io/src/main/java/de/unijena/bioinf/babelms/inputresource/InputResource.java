@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.babelms.inputresource;
 
+import de.unijena.bioinf.babelms.ReportingInputStream;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +51,15 @@ public interface InputResource<Resource> {
      * @throws IOException in case of access errors (if the temporary store fails)
      */
     InputStream getInputStream() throws IOException;
+
+    default ReportingInputStream getReportingInputStream() throws IOException{
+        return new ReportingInputStream(getInputStream());
+    }
+
+    default ReportingInputStream getReportingInputStream(int reportingChunkInBytes) throws IOException{
+        return new ReportingInputStream(getInputStream(), reportingChunkInBytes);
+    }
+
 
     default BufferedReader getBufferedReader() throws IOException {
         return new BufferedReader(new InputStreamReader(getInputStream()));
