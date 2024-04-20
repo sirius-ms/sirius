@@ -217,10 +217,16 @@ public class ChemDbServiceImpl implements ChemDbService {
 
     @Override
     public void remove(String databaseId, boolean delete) {
-        CustomDatabases.getCustomDatabaseByName(databaseId, version()).ifPresent(db -> {
-            CustomDatabases.remove(db, delete);
+        try {
+            CustomDatabases.getCustomDatabaseByName(databaseId, version()).ifPresent(db -> {
+                CustomDatabases.remove(db, delete);
+            });
+        } catch (Exception e) {
+            log.error("Error when removing custom database: {}", databaseId, e);
+            CustomDatabases.remove(databaseId);
+        }finally {
             writeDBProperties();
-        });
+        }
     }
 
     @Override

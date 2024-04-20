@@ -48,7 +48,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -211,19 +210,33 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 List<Path> structureFiles = groups.get(false);
 
                 logInfo("Importing new structures to custom database '" + mode.importParas.location + "'...");
-                final AtomicLong lines = new AtomicLong(0);
-                for (Path f : structureFiles)
-                    lines.addAndGet(FileUtils.estimateNumOfLines(f));
-                lines.addAndGet(spectrumFiles.size());
 
-                final AtomicInteger count = new AtomicInteger(0);
+                final AtomicLong totalBytesToRead = new AtomicLong(0);
+                for (Path file : structureFiles)
+                    totalBytesToRead.addAndGet(Files.size(file));
+                for (Path file : spectrumFiles)
+                    totalBytesToRead.addAndGet(Files.size(file));
+
+
+                final AtomicLong bytesRead = new AtomicLong(0);
+                CustomDatabaseImporter.Listener listener = new CustomDatabaseImporter.Listener() {
+                    @Override
+                    public void bytesRead(int numOfBytes) {
+                        updateProgress(0, totalBytesToRead.get(), bytesRead.addAndGet(numOfBytes), "Reading File...");
+                    }
+
+                    @Override
+                    public void newInChI(List<InChI> inChIs) {
+                        progressInfo("Imported: " + inChIs.stream().map(InChI::key2D).collect(Collectors.joining(", ")));
+                    }
+                };
 
                 checkForInterruption();
 
                 dbjob = db.importToDatabaseJob(
                         spectrumFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
                         structureFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
-                        inChIs -> updateProgress(0, Math.max(lines.intValue(), count.incrementAndGet() + 1), count.get(), "Imported: " + inChIs.stream().map(InChI::key2D).collect(Collectors.joining(", "))),
+                        listener,
                         ApplicationCore.WEB_API, mode.importParas.writeBuffer
                 );
                 checkForInterruption();
