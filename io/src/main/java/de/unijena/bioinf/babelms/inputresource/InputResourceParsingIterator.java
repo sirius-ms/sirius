@@ -24,9 +24,14 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
+import de.unijena.bioinf.babelms.ReportingInputStream;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.util.*;
+import java.util.function.BiConsumer;
 
 public class InputResourceParsingIterator implements Iterator<Ms2Experiment> {
 
@@ -36,6 +41,12 @@ public class InputResourceParsingIterator implements Iterator<Ms2Experiment> {
     private final Map<String, GenericParser<Ms2Experiment>> parsers;
 
     private final Queue<Ms2Experiment> buffer = new ArrayDeque<>();
+
+    @Getter
+    private long bytesRead = 0;
+
+    List<BiConsumer<Integer, Long>> listeners = new ArrayList<>();
+
 
     public InputResourceParsingIterator(@NotNull Iterable<InputResource<?>> inputResources) {
         this(inputResources, new MsExperimentParser());
@@ -59,17 +70,30 @@ public class InputResourceParsingIterator implements Iterator<Ms2Experiment> {
                     if (!parsers.containsKey(ext))
                         parsers.put(ext, parser.getParserByExt(ext));
 
-                    try (CloseableIterator<Ms2Experiment> it = parsers.get(ext).parseIterator(next.getBufferedReader(), next.toUri())) {
-                        it.forEachRemaining(buffer::add); //todo maybe one by sone safes memory
+                    try (ReportingInputStream stream = next.getReportingInputStream()){
+                        stream.addBytesRaiseListener((chunkRead, totalBytesRead) -> {
+                            this.bytesRead += chunkRead;
+                            listeners.forEach(c -> c.accept(chunkRead, this.bytesRead));
+                        });
+                        try (CloseableIterator<Ms2Experiment> it = parsers.get(ext).parseIterator(new BufferedReader(new InputStreamReader(stream)), next.toUri())) {
+                            it.forEachRemaining(buffer::add); //todo maybe one by sone safes memory
+                        }
                     }
                     if (!buffer.isEmpty())
                         break;
                 } catch (Exception ignored) {
                 }
-
             }
         }
         return !buffer.isEmpty();
+    }
+
+    public synchronized void addBytesRaiseListener(BiConsumer<Integer, Long> listener) {
+        listeners.add(listener);
+    }
+
+    public synchronized void removeBytesRaiseListener(BiConsumer<Integer, Long> listener) {
+        listeners.remove(listener);
     }
 
     @Override
