@@ -308,6 +308,10 @@ public class PropertyManager {
         return getEnum(key, backupKey, defaultValue, defaultValue.getDeclaringClass());
     }
 
+    public static <E extends Enum<E>> E getEnum(@NotNull String key, @NotNull Class<E> cls) {
+        return getEnum(key, null, null, cls);
+    }
+
     public static <E extends Enum<E>> E getEnum(@NotNull String key, @Nullable String backupKey, @Nullable E defaultValue, @NotNull Class<E> cls) {
         String val = backupKey != null
                 ? PROPERTIES.getString(key, PROPERTIES.getString(backupKey, null))
