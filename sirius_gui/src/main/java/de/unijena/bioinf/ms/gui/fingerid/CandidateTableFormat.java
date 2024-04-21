@@ -71,7 +71,7 @@ public class CandidateTableFormat extends SiriusTableFormat<FingerprintCandidate
         if (column == col++) return result.getScore();
         if (column == col++) return result.getTanimotoScore();
 //        if (column == col++) return result.getPubmedIDs(); //todo nightsky: add pubmed ids
-        if (column == col++) return result.getXLogP();
+        if (column == col++) return result.getXLogPOpt().map(String::valueOf).orElse("");
         if (column == col++) return result.getInChiKey();
         if (column == col++) return result.getCandidate().getDbLinks().stream()
                 .filter(l -> DataSource.LIPID.name().equals(l.getName()))
