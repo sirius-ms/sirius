@@ -45,11 +45,7 @@ public class CheckConnectionAction extends AbstractGuiAction {
 
         this.gui.getConnectionMonitor().addConnectionStateListener(evt -> {
             ConnectionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
-            Jobs.runEDTLater(() -> {
-                setIcon(check);
-                if (!isConnected(check))
-                    ConnectionDialog.of(gui, check);
-            });
+            Jobs.runEDTLater(() -> setIcon(check));
         });
 
         Jobs.runInBackground(() -> setIcon(this.gui.getConnectionMonitor().checkConnection()));
