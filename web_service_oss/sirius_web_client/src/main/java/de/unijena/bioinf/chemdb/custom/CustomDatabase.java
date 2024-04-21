@@ -202,9 +202,9 @@ public abstract class CustomDatabase implements SearchableDatabase {
 
             @Override
             public void cancel(boolean mayInterruptIfRunning) {
+                super.cancel(mayInterruptIfRunning);
                 if (importer != null)
                     importer.cancel();
-                super.cancel(mayInterruptIfRunning);
             }
         }.asCPU();
     }
