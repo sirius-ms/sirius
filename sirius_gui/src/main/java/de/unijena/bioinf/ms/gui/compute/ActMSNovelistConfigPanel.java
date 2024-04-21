@@ -19,13 +19,11 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
-import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.frontend.subtools.msnovelist.MsNovelistOptions;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 
 public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConfigPanel<MsNovelistOptions>> {
 
@@ -42,10 +40,10 @@ public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConf
         //todo newWorkflow: maybe add citation dialog?
         String adviceKey = "de.unijena.bioinf.sirius.ui.advise.msnovelist";
 
-        if (enabled && !PropertyManager.getBoolean(adviceKey, false)) {
+        if (enabled) {
             if (new QuestionDialog(gui.getMainFrame(), "Do you require de novo structure generation?",
                     GuiUtils.formatToolTip("Please note that de novo structure elucidation from MS data remains challenging. For most applications, searching in a molecular structure database with CSI:FingerID shouldbe default.", "", "Do you wish to continue anyways?"),
-                    adviceKey).isAbort()) {
+                    adviceKey).isCancel()) {
                 super.setComponentsEnabled(false);
                 super.activationButton.setSelected(false);
                 return;

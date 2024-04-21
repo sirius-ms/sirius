@@ -106,7 +106,7 @@ public class ImportAction extends AbstractGuiAction {
         try {
             LoadingBackroundTask<Job> task;
             if (lcms) {
-                boolean align = input.msInput.msParserfiles.size() > 1 && new QuestionDialog(popupOwner, "<html><body> You inserted multiple LC-MS/MS Runs. <br> Do you want to Align them during import?</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
+                boolean align = input.msInput.msParserfiles.size() > 1 && new QuestionDialog(popupOwner, "<html><body> You inserted multiple LC-MS/MS Runs. <br> Do you want to Align them during import?</br></body></html>").isSuccess();
                 task = gui.applySiriusClient((c, pid) -> {
                     Job job = c.projects().importMsRunDataAsJob(pid,
                             align,

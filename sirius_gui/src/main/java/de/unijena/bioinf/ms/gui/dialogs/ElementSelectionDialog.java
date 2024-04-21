@@ -48,7 +48,7 @@ public class ElementSelectionDialog extends JDialog {
         super(owner, title, ModalityType.APPLICATION_MODAL);
         setLayout(new BorderLayout());
 
-        rv = ReturnValue.Abort;
+        rv = ReturnValue.Cancel;
 
         elementsPanel = new ElementsPanel(this, 4, possibleDetectable, enabledDetectable, constraints);
         add(elementsPanel, BorderLayout.CENTER);
@@ -67,7 +67,7 @@ public class ElementSelectionDialog extends JDialog {
 
         final JButton abort = new JButton("Cancel");
         abort.addActionListener(e -> {
-            rv = ReturnValue.Abort;
+            rv = ReturnValue.Cancel;
             dispose();
         });
 
@@ -92,7 +92,7 @@ public class ElementSelectionDialog extends JDialog {
     }
 
     public boolean isAbort() {
-        return rv.equals(ReturnValue.Abort);
+        return rv.equals(ReturnValue.Cancel);
     }
 
     public ElementsPanel getElementsPanel() {

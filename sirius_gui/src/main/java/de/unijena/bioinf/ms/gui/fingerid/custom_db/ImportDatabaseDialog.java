@@ -21,8 +21,8 @@
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
 import de.unijena.bioinf.jjobs.LoadingBackroundTask;
-import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.nightsky.sdk.jjobs.SseProgressJJob;
@@ -34,12 +34,15 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isLoggedIn;
 
 class ImportDatabaseDialog extends JDialog {
+    public static final String DO_NOT_SHOW_AGAIN_KEY_INCOMPLETE_IMPORTED_DB = "de.unijena.bioinf.sirius.importDatabaseDialog.keepIncompleteDb.dontAskAgain";
+
     private final DatabaseDialog databaseDialog;
     protected DatabaseImportConfigPanel configPanel;
 
@@ -69,10 +72,11 @@ class ImportDatabaseDialog extends JDialog {
 
     protected void runImportJob() {
         try {
-            TinyBackgroundJJob<Boolean> job = Jobs.runInBackground(() -> {
-                ConnectionCheck check = databaseDialog.getGui().getConnectionMonitor().checkConnection();
-                return isConnected(check) && isLoggedIn(check);
-            });
+            LoadingBackroundTask<Boolean> job = Jobs.runInBackgroundAndLoad(
+                    databaseDialog.gui.getMainFrame(), "Checking Server Connection...", () -> {
+                        ConnectionCheck check = databaseDialog.getGui().getConnectionMonitor().checkConnection();
+                        return isConnected(check) && isLoggedIn(check);
+                    });
             if (!job.getResult()) {
                 throw new ExecutionException(new Exception("Not connected or logged in!"));
             }
@@ -87,18 +91,36 @@ class ImportDatabaseDialog extends JDialog {
                         "Importing into '" + configPanel.getDbFilePath() + "'...", null,
                         new SseProgressJJob(databaseDialog.gui.getSiriusClient(), pid, j));
             }).awaitResult();
-
-            databaseDialog.whenCustomDbIsAdded(configPanel.getDbFilePath());
         } catch (ExecutionException ex) {
             LoggerFactory.getLogger(getClass()).error("Error during Custom DB import.", ex);
+            if (ex.getCause() instanceof CancellationException) {
+                if (new QuestionDialog(
+                        databaseDialog.gui.getMainFrame(),
+                        "Do you want to keep the incompletely importen database?",
+                        DO_NOT_SHOW_AGAIN_KEY_INCOMPLETE_IMPORTED_DB).isCancel()) {
 
-            if (ex.getCause() != null)
-                new StacktraceDialog(this, ex.getCause().getMessage(), ex.getCause());
-            else
-                new StacktraceDialog(this, "Unexpected error when importing custom DB!", ex);
+                    String dbId = databaseDialog.whenCustomDbIsAdded(configPanel.getDbFilePath()).map(SearchableDatabase::getDatabaseId)
+                            .orElse(null);
+                    if (dbId != null) {
+                        Jobs.runInBackgroundAndLoad(databaseDialog.gui.getMainFrame(),
+                                "Deleting database '" + dbId + "'...", () ->
+                                        databaseDialog.gui.acceptSiriusClient((c, pid) -> c.databases().removeDatabase(dbId, true))
+                        ).getResult();
+                    }
+                }
+            } else {
+                if (ex.getCause() != null)
+                    new StacktraceDialog(this, ex.getCause().getMessage(), ex.getCause());
+                else
+                    new StacktraceDialog(this, "Unexpected error when importing custom DB!", ex);
+            }
+
+
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB import.", e);
             new StacktraceDialog(databaseDialog.getGui().getMainFrame(), "Fatal Error during Custom DB import.", e);
+        } finally {
+            databaseDialog.whenCustomDbIsAdded(configPanel.getDbFilePath());
         }
     }
 }

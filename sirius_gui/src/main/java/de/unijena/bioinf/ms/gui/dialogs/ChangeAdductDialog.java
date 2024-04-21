@@ -71,7 +71,7 @@ public class ChangeAdductDialog extends Dialog {
 
         final JButton abort = new JButton("Cancel");
         abort.addActionListener(e -> {
-            rv = ReturnValue.Abort;
+            rv = ReturnValue.Cancel;
             dispose();
         });
 
@@ -88,7 +88,7 @@ public class ChangeAdductDialog extends Dialog {
 
 
     public Optional<PrecursorIonType> getSelectedAdduct(){
-        if (rv ==ReturnValue.Abort)
+        if (rv ==ReturnValue.Cancel)
             return Optional.empty();
         return adductSelector.getSelectedAdduct();
     }
