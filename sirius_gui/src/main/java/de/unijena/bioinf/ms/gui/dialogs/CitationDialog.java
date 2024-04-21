@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.dialogs;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,6 +43,8 @@ public class CitationDialog extends InfoDialog {
     public CitationDialog(Window owner, String propertyKey, Collection<String> bibtexKeys, Supplier<String> messageSupplier) {
         super(owner, "Please cite:", messageSupplier, propertyKey, false);
         this.bibtexKeys = new ArrayList<>(bibtexKeys);
+        if (propertyKey != null && PropertyManager.getBoolean(propertyKey, false))
+            return;
         setVisible(true);
     }
 

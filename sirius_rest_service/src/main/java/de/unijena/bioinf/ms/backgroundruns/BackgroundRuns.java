@@ -401,9 +401,9 @@ public final class BackgroundRuns {
 
         @Override
         public void cancel(boolean mayInterruptIfRunning) {
+            super.cancel(mayInterruptIfRunning);
             if (computation != null)
                 computation.cancel();
-            super.cancel(mayInterruptIfRunning);
         }
 
         public @Nullable Iterable<? extends Instance> getInstances() {

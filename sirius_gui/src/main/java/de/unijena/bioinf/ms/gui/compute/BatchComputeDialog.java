@@ -114,20 +114,18 @@ public class BatchComputeDialog extends JDialog {
                 if (compoundsToProcess.size() > 1 && ms2) {
                     zodiacConfigs.addEnableChangeListener((s, enabled) -> {
                         if (enabled) {
-                            if (!PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_Z_COMP, false)) {
-                                if (new QuestionDialog(mf(), "Low number of Compounds",
-                                        GuiUtils.formatToolTip("Please note that ZODIAC is meant to improve molecular formula annotations on complete LC-MS/MS datasets. Using a low number of compounds may not result in improvements.", "", "Do you wish to continue anyways?"),
-                                        DO_NOT_SHOW_AGAIN_KEY_Z_COMP).isAbort()) {
-                                    zodiacConfigs.activationButton.setSelected(false);
-                                    return;
-                                }
+                            if (new QuestionDialog(mf(), "Low number of Compounds",
+                                    GuiUtils.formatToolTip("Please note that ZODIAC is meant to improve molecular formula annotations on complete LC-MS/MS datasets. Using a low number of compounds may not result in improvements.", "", "Do you wish to continue anyways?"),
+                                    DO_NOT_SHOW_AGAIN_KEY_Z_COMP).isCancel()) {
+                                zodiacConfigs.activationButton.setSelected(false);
+                                return;
                             }
 
-                            if ((compoundsToProcess.size() > 2000 && (Runtime.getRuntime().maxMemory() / 1024 / 1024 / 1024) < 8)
-                                    && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_Z_MEM, false)) {
+
+                            if ((compoundsToProcess.size() > 2000 && (Runtime.getRuntime().maxMemory() / 1024 / 1024 / 1024) < 8)) {
                                 if (new QuestionDialog(mf(), "High Memory Consumption",
                                         GuiUtils.formatToolTip("Your ZODIAC analysis contains `" + compoundsToProcess.size() + "` compounds and may therefore consume more system memory than available.", "", "Do you wish to continue anyways?"),
-                                        DO_NOT_SHOW_AGAIN_KEY_Z_MEM).isAbort()) {
+                                        DO_NOT_SHOW_AGAIN_KEY_Z_MEM).isCancel()) {
                                     zodiacConfigs.activationButton.setSelected(false);
                                 }
                             }
@@ -294,7 +292,7 @@ public class BatchComputeDialog extends JDialog {
         if (warnNoMethodIsSelected()) return;
 
         if (this.recomputeBox.isSelected()) {
-            if (!PropertyManager.getBoolean(DONT_ASK_RECOMPUTE_KEY, false) && this.compoundsToProcess.size() > 1) {
+            if (this.compoundsToProcess.size() > 1) {
                 QuestionDialog questionDialog = new QuestionDialog(this, "Recompute?", "<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", DONT_ASK_RECOMPUTE_KEY);
                 this.recomputeBox.setSelected(questionDialog.isSuccess());
             }
@@ -341,7 +339,7 @@ public class BatchComputeDialog extends JDialog {
                     List<InstanceBean> lowMass = finalComps.stream().filter(i -> i.getIonMass() <= 850).collect(Collectors.toList());
                     int highMass = finalComps.size() - lowMass.size();
                     final AtomicBoolean success = new AtomicBoolean(false);
-                    if (highMass > 1 && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_S_MASS, false)) //do not ask for a single compound
+                    if (highMass > 1) //do not ask for a single compound
                         Jobs.runEDTAndWait(() -> success.set(new QuestionDialog(mf(), "High mass Compounds detected!",
                                 GuiUtils.formatToolTip("Your analysis contains '" + highMass + "' compounds with a mass higher than 850Da. Fragmentation tree computation may take very long (days) to finish. You might want to exclude compounds with mass >850Da and compute them on individual basis afterwards.", "", "Do you wish to exclude the high mass compounds?"),
                                 DO_NOT_SHOW_AGAIN_KEY_S_MASS).isSuccess()));

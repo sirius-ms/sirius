@@ -232,13 +232,17 @@ public class DatabaseDialog extends JDialog {
         dbList.setListData(customDatabases.toArray(SearchableDatabase[]::new));
     }
 
-    protected void whenCustomDbIsAdded(final String dbIdToSelect) {
+    protected Optional<SearchableDatabase> whenCustomDbIsAdded(final String dbIdToSelect) {
         loadDatabaseList();
         // try to scroll to the newly added Database.
-        customDatabases.stream().filter(db -> db.getDatabaseId().equals(dbIdToSelect)).findFirst().ifPresent(db -> {
+        Optional<SearchableDatabase> dbOpt =dbIdToSelect == null ? Optional.empty() : customDatabases.stream()
+                .filter(db -> dbIdToSelect.equals(db.getLocation())).findFirst();
+
+        dbOpt.ifPresent(db -> {
             dbList.setSelectedValue(db, true);
             dbList.requestFocusInWindow();
         });
+        return dbOpt;
     }
 
     protected static class DatabaseView extends JPanel {

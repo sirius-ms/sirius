@@ -103,12 +103,12 @@ public abstract class DoNotShowAgainDialog extends JDialog {
         setLocationRelativeTo(getParent());
     }
 
-
     protected void saveDoNotAskMeAgain() {
-        if (dontAsk != null && property != null && !property.isEmpty())
-            SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(property, String.valueOf(dontAsk.isSelected()));
+        if (dontAsk != null && property != null && !property.isBlank() && dontAsk.isSelected())
+            SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(property, getResult());
     }
 
+    protected abstract String getResult();
     protected abstract void decorateButtonPanel(JPanel boxedButtonPanel);
 
     protected abstract Icon makeDialogIcon();

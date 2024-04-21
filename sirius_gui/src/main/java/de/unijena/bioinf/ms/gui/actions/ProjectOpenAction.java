@@ -144,7 +144,7 @@ public class ProjectOpenAction extends AbstractGuiAction {
     public synchronized void openProjectByID(@NotNull String projectId, @Nullable Boolean closeCurrent) {
         final boolean close =
                 Objects.requireNonNullElseGet(closeCurrent, () -> new QuestionDialog(
-                        gui.getMainFrame(), "Open Project", openNewWindowQuestion(), dontAskKey()).isAbort());
+                        gui.getMainFrame(), "Open Project", openNewWindowQuestion(), dontAskKey()).isCancel());
 
         Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Loading Project Window...", () -> {
             gui.getSiriusClient().gui().openGui(projectId);
