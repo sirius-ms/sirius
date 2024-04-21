@@ -55,7 +55,6 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
 
@@ -243,15 +242,18 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         return Double.compare(o.getScore(), getScore()); //ATTENTION inverse
     }
 
-    public double getXLogP() {
+    @Nullable
+    public Double getXLogP() {
         return candidate.getXlogP();
     }
 
-    public OptionalDouble getXLogPOpt() {
-        double xLogP = getXLogP();
+    public Optional<Double> getXLogPOpt() {
+        @Nullable Double xLogP = getXLogP();
+        if (xLogP == null)
+            return Optional.empty();
         if (Double.isNaN(xLogP))
-            return OptionalDouble.empty();
-        return OptionalDouble.of(xLogP);
+            return Optional.empty();
+        return Optional.of(xLogP);
     }
 
     public boolean computeAtomCoordinates() {

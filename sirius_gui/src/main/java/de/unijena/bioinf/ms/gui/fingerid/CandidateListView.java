@@ -38,7 +38,7 @@ import java.awt.*;
 
 public class CandidateListView extends ActionListDetailView<FingerprintCandidateBean, InstanceBean, StructureList> {
 
-    private FilterRangeSlider<StructureList, FingerprintCandidateBean, InstanceBean> logPSlider;
+//    private FilterRangeSlider<StructureList, FingerprintCandidateBean, InstanceBean> logPSlider;
     private FilterRangeSlider<StructureList, FingerprintCandidateBean, InstanceBean> tanimotoSlider;
     private DBFilterPanel dbFilterPanel;
 
@@ -68,14 +68,14 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
         tb.setBorderPainted(false);
         tb.setLayout(new WrapLayout(FlowLayout.LEFT, 0, 0));
 
-        logPSlider = new FilterRangeSlider<>(source, source.logPStats);
+//        logPSlider = new FilterRangeSlider<>(source, source.logPStats);
         tanimotoSlider = new FilterRangeSlider<>(source, source.tanimotoStats, true);
 
         dbFilterPanel = new DBFilterPanel(source);
         dbFilterPanel.toggle();
 
-        tb.add(new NameFilterRangeSlider("XLogP:", logPSlider));
-        tb.addSeparator();
+//        tb.add(new NameFilterRangeSlider("XLogP:", logPSlider));
+//        tb.addSeparator();
         tb.add(new NameFilterRangeSlider("Similarity:", tanimotoSlider));
         tb.addSeparator();
 
@@ -106,8 +106,8 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
     protected EventList<MatcherEditor<FingerprintCandidateBean>> getSearchFieldMatchers() {
         return GlazedLists.eventListOf(
                 new CandidateStringMatcherEditor(searchField.textField)
-                ,new MinMaxMatcherEditor<>(logPSlider, (baseList, element) ->
-                        element.getXLogPOpt().ifPresentOrElse(baseList::add, () -> baseList.add(null)))
+//                ,new MinMaxMatcherEditor<>(logPSlider, (baseList, element) ->
+//                        element.getXLogPOpt().ifPresentOrElse(baseList::add, () -> baseList.add(null)))
                 ,new MinMaxMatcherEditor<>(tanimotoSlider, (baseList, element) ->
                         baseList.add(element.getTanimotoScore()))
                , new DatabaseFilterMatcherEditor(dbFilterPanel)
