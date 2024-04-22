@@ -62,7 +62,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 public class CustomDatabaseImporter {
@@ -70,7 +69,7 @@ public class CustomDatabaseImporter {
     private WriteableSpectralLibrary databaseAsSpecLib;
     private final String dbname;
 
-    Queue<Listener> listeners = new ConcurrentLinkedQueue<>();
+    private final Queue<Listener> listeners = new LinkedList<>();//new ConcurrentLinkedQueue<>();
 
     // molecule buffer:  used to bundle molecular formula requests
     private final List<Molecule> moleculeBuffer;
@@ -86,6 +85,10 @@ public class CustomDatabaseImporter {
     protected SmilesParser smilesParser;
     protected CdkFingerprintVersion fingerprintVersion;
     protected final WebAPI<?> api;
+
+    // a magic number of bytes that represent the number of bytes in the input that correspond to on compound.
+    //todo we should estimate this based on the file format instead.
+    private static final int BYTE_EQUIVALENTS = 52428;
 
     // todo make abstract and implement different versions for blob and document storage
     protected CustomDatabaseImporter(@NotNull NoSQLCustomDatabase<?, ?> database, CdkFingerprintVersion version, WebAPI<?> api, int bufferSize) {
@@ -147,18 +150,26 @@ public class CustomDatabaseImporter {
     }
 
     public void addListener(Listener listener) {
-        listeners.add(listener);
+        synchronized (listeners) {
+            listeners.add(listener);
+        }
     }
 
     public void removeListener(Listener listener) {
-        listeners.remove(listener);
+        synchronized (listeners) {
+            listeners.remove(listener);
+        }
     }
 
 
     public void importSpectraFromResources(List<InputResource<?>> spectrumFiles) throws IOException {
         throwIfShutdown();
         InputResourceParsingIterator iterator = new InputResourceParsingIterator(spectrumFiles, new SpectralDbMsExperimentParser());
-        iterator.addBytesRaiseListener((read, readTotal) -> listeners.forEach(l -> l.bytesRead(read)));
+        iterator.addBytesRaiseListener((read, readTotal) -> {
+            synchronized (listeners) {
+                listeners.forEach(l -> l.bytesRead(read));
+            }
+        });
         while (iterator.hasNext()) {
             Ms2Experiment experiment = iterator.next();
             List<Ms2ReferenceSpectrum> specs = SpectralUtils.ms2ExpToMs2Ref((MutableMs2Experiment) experiment);
@@ -265,7 +276,11 @@ public class CustomDatabaseImporter {
 
     public void importStructuresFromSdf(InputStream stream) throws IOException {
         ReportingInputStream rs = new ReportingInputStream(stream);
-        rs.addBytesRaiseListener((rb, rbTotal) -> listeners.forEach(l -> l.bytesRead(rb)));
+        rs.addBytesRaiseListener((rb, rbTotal) -> {
+            synchronized (listeners) {
+                listeners.forEach(l -> l.bytesRead(rb));
+            }
+        });
         importStructuresFromSdf(rs);
     }
 
@@ -295,7 +310,11 @@ public class CustomDatabaseImporter {
         throwIfShutdown();
         for (InputResource<?> f : structureFiles) {
             try (ReportingInputStream s = f.getReportingInputStream()) {
-                s.addBytesRaiseListener((rb, rbTotal) -> listeners.forEach(l -> l.bytesRead(rb)));
+                s.addBytesRaiseListener((rb, rbTotal) -> {
+                    synchronized (listeners) {
+                        listeners.forEach(l -> l.bytesRead(rb));
+                    }
+                });
                 if (f.getFileExt().equalsIgnoreCase("sdf")) {
                     importStructuresFromSdf(s);
                 } else {
@@ -315,7 +334,11 @@ public class CustomDatabaseImporter {
         }
 
         try (ReportingInputStream stream = new ReportingInputStream(new FileInputStream(file))) {
-            stream.addBytesRaiseListener((rb, rbTotal) -> listeners.forEach(l -> l.bytesRead(rb)));
+            stream.addBytesRaiseListener((rb, rbTotal) -> {
+                synchronized (listeners) {
+                    listeners.forEach(l -> l.bytesRead(rb));
+                }
+            });
             if (reader != null)
                 importStructuresFromSdf(stream);
             else
@@ -327,7 +350,7 @@ public class CustomDatabaseImporter {
     protected void addToSpectraBuffer(List<Ms2ReferenceSpectrum> spectra) throws ChemicalDatabaseException {
         synchronized (spectraBuffer) {
             spectraBuffer.addAll(spectra);
-            for (Listener l : listeners) l.newSpectraBufferSize(spectraBuffer.size());
+//            for (Listener l : listeners) l.newSpectra(spectraBuffer.size());
             if (spectraBuffer.size() > specBufferSize)
                 flushSpectraBuffer();
         }
@@ -355,7 +378,7 @@ public class CustomDatabaseImporter {
     protected void addMolecule(Molecule mol) {
         synchronized (moleculeBuffer) {
             moleculeBuffer.add(mol);
-            for (Listener l : listeners) l.newMoleculeBufferSize(moleculeBuffer.size());
+//            for (Listener l : listeners) l.newMolecules(moleculeBuffer.size());
         }
         if (moleculeBuffer.size() > molBufferSize)
             flushMoleculeBuffer();
@@ -421,7 +444,6 @@ public class CustomDatabaseImporter {
                     throw new RuntimeException("Databse import failed!", e);
                 } finally {
                     moleculeBuffer.clear();
-                    for (Listener l : listeners) l.newMoleculeBufferSize(0);
                 }
             }
         }
@@ -437,6 +459,7 @@ public class CustomDatabaseImporter {
                             .findFirst()
                             .orElse(null);
                     mergeCandidateLinksIfPresent(comp);
+                    notifyFingerprintCreation(comp);
                 }
             }
         }
@@ -467,6 +490,7 @@ public class CustomDatabaseImporter {
                             toAdd.candidate = FingerprintCandidateWrapper.of(formula, can);
                             mergeCandidateLinksIfPresent(toAdd);
                             CustomDatabase.logger.info(toAdd.candidate.getCandidate().getInchi().in2D + " downloaded");
+                            notifyFingerprintCreation(toAdd);
                         }
                     }
                 });
@@ -491,6 +515,7 @@ public class CustomDatabaseImporter {
                             fcalc = getFingerprintCalculator();
                             c.candidate = fcalc.computeNewCandidate(c.molecule);
                             //no link merging needed since newly created candidate contains all links
+                            notifyFingerprintCreation(c);
                         } finally {
                             if (fcalc != null)
                                 freeFingerprinter.offer(fcalc);
@@ -526,8 +551,11 @@ public class CustomDatabaseImporter {
         synchronized (database) {
             database.database.getStorage().upsertAll(candidates);
             List<InChI> inchis = candidates.stream().map(candidate -> candidate.getCandidate().getInchi()).toList();
-            for (Listener l : listeners)
-                l.newInChI(inchis);
+
+            synchronized (listeners) {
+                for (Listener l : listeners)
+                    l.newInChI(inchis);
+            }
         }
     }
 
@@ -632,13 +660,23 @@ public class CustomDatabaseImporter {
         }
     }
 
+
+    private void notifyFingerprintCreation(Comp comp){
+        synchronized (listeners) {
+            listeners.forEach(l -> l.newFingerprint(comp.molecule.getInchi(), BYTE_EQUIVALENTS));
+        }
+    }
+
+
     @FunctionalInterface
     public interface Listener {
         // informs about molecules that have to be parsed
-        default void newMoleculeBufferSize(int size) {
-        }
+//        default void newMolecules(int size) {
+//        }
+//        default void newSpectra(int size) {
+//        }
 
-        default void newSpectraBufferSize(int size) {
+        default void newFingerprint(InChI inChI, int byteEquivalent) {
         }
 
         // informs about imported molecule
