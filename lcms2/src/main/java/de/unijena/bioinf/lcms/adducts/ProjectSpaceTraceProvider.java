@@ -7,15 +7,13 @@ import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
 import de.unijena.bioinf.ms.persistence.storage.MsProjectDocumentDatabase;
 import de.unijena.bioinf.storage.db.nosql.Filter;
-import it.unimi.dsi.fastutil.ints.Int2DoubleMap;
-import it.unimi.dsi.fastutil.ints.Int2DoubleOpenHashMap;
+import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.longs.Long2DoubleMap;
 import it.unimi.dsi.fastutil.longs.Long2DoubleOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -30,7 +28,7 @@ public class ProjectSpaceTraceProvider implements TraceProvider {
 
     @Override
     public Optional<MergedTrace> getMergeTrace(AlignedFeatures feature) {
-        return feature.getTraceRef().map(id-> {
+        return feature.getTraceReference().map(id-> {
             Iterator<MergedTrace> iter = null;
             try {
                 iter = storage.getStorage().find(Filter.where("mergedTraceId").eq(id.getTraceId()), MergedTrace.class).iterator();
@@ -47,8 +45,8 @@ public class ProjectSpaceTraceProvider implements TraceProvider {
     public Long2ObjectMap<SourceTrace> getSourceTraces(AlignedFeatures features) {
         Long2ObjectOpenHashMap<SourceTrace> traces = new Long2ObjectOpenHashMap<>();
         for (Feature f : getFeatures(features)) {
-            if (f.getTraceRef().isPresent()) {
-                TraceRef traceRef = f.getTraceRef().get();
+            if (f.getTraceReference().isPresent()) {
+                TraceRef traceRef = f.getTraceReference().get();
                 Iterator<SourceTrace> iter = null;
                 try {
                     iter = storage.getStorage().find(Filter.where("sourceTraceId").eq(traceRef.getTraceId()), SourceTrace.class).iterator();
@@ -61,6 +59,26 @@ public class ProjectSpaceTraceProvider implements TraceProvider {
             }
         }
         return traces;
+    }
+
+    @Override
+    public Optional<Pair<TraceRef, SourceTrace>> getSourceTrace(AlignedFeatures features, long runId) {
+        Long2ObjectOpenHashMap<SourceTrace> traces = new Long2ObjectOpenHashMap<>();
+        for (Feature f : getFeatures(features)) {
+            if (f.getTraceReference().isPresent() && f.getRunId()==runId) {
+                TraceRef traceRef = f.getTraceReference().get();
+                Iterator<SourceTrace> iter = null;
+                try {
+                    iter = storage.getStorage().find(Filter.where("sourceTraceId").eq(traceRef.getTraceId()), SourceTrace.class).iterator();
+                    if (iter.hasNext()) {
+                        return Optional.of(Pair.of(traceRef, iter.next()));
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        return Optional.empty();
     }
 
     @Override

@@ -50,6 +50,7 @@ public class TraceExtractor implements TraceExtractionStrategy {
             public IntObjectPair<AbstractTrace> next() {
                 if (traceIndex > -1) {
                     final ProcessedSample S = samplesInTrace[traceIndex];
+                    final ContiguousTrace m =
                     final ContiguousTrace t = mergedSample.getStorage().getMergeStorage().getTrace(S.getMapping(), alignedFeature.getTraceIds().getInt(traceIndex));
                     FloatArrayList ints = new FloatArrayList();
                     for (int s = mergedTrace.startId(); s <= mergedTrace.endId(); ++s) {
