@@ -96,7 +96,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
     protected final boolean hasMs1AndIsSingleMode;
     protected final boolean isBatchDialog;
 
-    protected  DBSelectionListPanel searchDBList;
+    protected DBSelectionListPanel searchDBList;
 
     /**
      * Map of strategy-specific UI components for showing/hiding when changing the strategy
@@ -117,7 +117,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         this.isBatchDialog = isBatchDialog;
 
         //in single mode: does compound has MS1 data?
-        this.hasMs1AndIsSingleMode = !isBatchDialog && !ecs.isEmpty() && (ecs.get(0).getMsData().getMergedMs1()!=null || !ecs.get(0).getMsData().getMs1Spectra().isEmpty());
+        this.hasMs1AndIsSingleMode = !isBatchDialog && !ecs.isEmpty() && (ecs.get(0).getMsData().getMergedMs1() != null || !ecs.get(0).getMsData().getMs1Spectra().isEmpty());
 
         strategyComponents = new HashMap<>();
         strategyComponents.put(Strategy.DEFAULT, new ArrayList<>());
@@ -125,10 +125,11 @@ public class FormulaSearchStrategy extends ConfigPanel {
         strategyComponents.put(Strategy.DE_NOVO, new ArrayList<>());
         strategyComponents.put(Strategy.DATABASE, new ArrayList<>());
 
-        strategyBox =  GuiUtils.makeParameterComboBoxFromDescriptiveValues(Strategy.values());
+        strategyBox = GuiUtils.makeParameterComboBoxFromDescriptiveValues(Strategy.values());
 
         createPanel();
-        strategyBox.setSelectedItem(Strategy.DE_NOVO); strategyBox.setSelectedItem(Strategy.DEFAULT); //fire change to initialize fields
+        strategyBox.setSelectedItem(Strategy.DE_NOVO);
+        strategyBox.setSelectedItem(Strategy.DEFAULT); //fire change to initialize fields
     }
 
     public JCheckboxListPanel<SearchableDatabase> getSearchDBList() {
@@ -286,7 +287,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         //open element selection panel
         buttonEdit.addActionListener(e -> {
             FormulaConstraints currentConstraints = FormulaConstraints.fromString(enforcedTextBox.getText());
-            Set<Element> currentAuto = isBatchDialog? getAutodetectableElementsInBatchMode(selectedDetectableElementsTextBox, allAutoDetectableElements) : null;
+            Set<Element> currentAuto = isBatchDialog ? getAutodetectableElementsInBatchMode(selectedDetectableElementsTextBox, allAutoDetectableElements) : null;
             ElementSelectionDialog dialog = new ElementSelectionDialog(owner, "Filter Elements", isBatchDialog ? allAutoDetectableElements : null, currentAuto, currentConstraints);
             if (dialog.isSuccess()) {
                 enforcedTextBox.setText(dialog.getConstraints().toString(","));
@@ -303,8 +304,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
                     detectElements(ecs.get(0), allAutoDetectableElements, enforcedTextBox);
                     buttonAutodetect.setToolTipText("Element detection has already been performed once opened the compute dialog."
                             + "Auto detectable element are: " + join(allAutoDetectableElements)
-                            + ".\nIf no elements can be detected the following fallback is used: "+formulaSettings.getFallbackAlphabet().toString(",")
-                            + ".\nAdditionally, the following default elements are always used: "+ getEnforedElements(formulaSettings, allAutoDetectableElements).toString(","));
+                            + ".\nIf no elements can be detected the following fallback is used: " + formulaSettings.getFallbackAlphabet().toString(",")
+                            + ".\nAdditionally, the following default elements are always used: " + getEnforedElements(formulaSettings, allAutoDetectableElements).toString(","));
                 } else {
                     setDefaultElements(Collections.EMPTY_SET, enforcedTextBox);
                 }
@@ -349,7 +350,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         settingsElements.forEach(elementAlphabetStrategySelector::addItem);
         elementAlphabetStrategySelector.setSelectedItem(ElementAlphabetStrategy.DE_NOVO_ONLY);
         addStrategyChangeListener(strategy -> {
-            if (strategy==Strategy.DEFAULT) {
+            if (strategy == Strategy.DEFAULT) {
                 parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToBottomUp", () -> Boolean.toString(elementAlphabetStrategySelector.getSelectedItem() == ElementAlphabetStrategy.BOTH)); //only set for correct strategy, since bottom up is part of multiple strategies
             }
         });
@@ -376,7 +377,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
         parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates", () -> Boolean.toString(useElementFilter.isSelected()));
         addStrategyChangeListener(strategy -> {
-            if (strategy==Strategy.BOTTOM_UP) {
+            if (strategy == Strategy.BOTTOM_UP) {
                 parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToBottomUp", () -> Boolean.toString(useElementFilter.isSelected())); //only set for correct strategy, since bottom up is part of multiple strategies
             }
         });
@@ -412,6 +413,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
 
     /**
      * only used in single mode, not in batch mode
+     *
      * @param autoDetectable
      * @param formulaConstraintsTextBox
      */
@@ -420,21 +422,19 @@ public class FormulaSearchStrategy extends ConfigPanel {
         String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
         MsData msData = ec.getMsData();
         if (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null) {
-            Jobs.runInBackgroundAndLoad(owner, "Detecting Elements...", () -> {
-                final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
-                Ms2Experiment experiment = new MutableMs2Experiment(ec.asMs2Experiment(), false);
-                FormulaSettings formulaSettings = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
-                formulaSettings = formulaSettings.autoDetect(autoDetectable.toArray(Element[]::new)).enforce(getEnforedElements(formulaSettings, autoDetectable));
-                experiment.setAnnotation(FormulaSettings.class, formulaSettings);
-                ProcessedInput pi = pp.preprocess(experiment);
+            final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
+            Ms2Experiment experiment = new MutableMs2Experiment(ec.asMs2Experiment(), false);
+            FormulaSettings formulaSettings = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
+            formulaSettings = formulaSettings.autoDetect(autoDetectable.toArray(Element[]::new)).enforce(getEnforedElements(formulaSettings, autoDetectable));
+            experiment.setAnnotation(FormulaSettings.class, formulaSettings);
+            ProcessedInput pi = pp.preprocess(experiment);
 
-                pi.getAnnotation(FormulaConstraints.class).
-                        ifPresentOrElse(c -> {
-                                    formulaConstraintsTextBox.setText(c.toString(","));
-                                },
-                                () -> new ExceptionDialog(owner, notWorkingMessage)
-                        );
-            }).getResult();
+            pi.getAnnotation(FormulaConstraints.class).
+                    ifPresentOrElse(c -> {
+                                formulaConstraintsTextBox.setText(c.toString(","));
+                            },
+                            () -> new ExceptionDialog(owner, notWorkingMessage)
+                    );
         }
     }
 
@@ -442,6 +442,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
      * set default elements.
      * use special alphabet for bottom up and database
      * if no MS1 data is available, fallback is used.
+     *
      * @param autoDetectable
      * @param formulaConstraintsTextBox
      */
@@ -461,7 +462,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
             if (e.getStateChange() != ItemEvent.SELECTED) {
                 return;
             }
-            consumer.accept((Strategy)e.getItem());
+            consumer.accept((Strategy) e.getItem());
         });
     }
 
@@ -478,7 +479,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         return getFormulaSearchDBs().stream().map(SearchableDatabase::getDatabaseId).collect(Collectors.toList());
     }
 
-    public Strategy getSelectedStrategy(){
+    public Strategy getSelectedStrategy() {
         return strategy;
     }
 
@@ -488,7 +489,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         private ElementDetectionButton(boolean isActivatable) {
             this.isActivatable = isActivatable;
             setText("Re-detect");
-            if (!isActivatable){
+            if (!isActivatable) {
                 super.setEnabled(false);
                 setToolTipText("Element detection requires MS1 spectrum with isotope pattern. " +
                         "\nSuggesting default set of elements.");
