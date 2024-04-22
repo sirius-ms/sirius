@@ -20,9 +20,13 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.feature;
 
+import de.unijena.bioinf.ms.persistence.model.core.trace.RawTraceRef;
+import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
 import jakarta.persistence.Id;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+
+import java.util.Optional;
 
 @Getter
 @Setter
@@ -43,4 +47,16 @@ public class Feature extends AbstractFeature {
      */
     private long alignedFeatureId;
 
+    private RawTraceRef traceRef;
+
+    @Override
+    protected RawTraceRef getTraceRef() {
+        return traceRef;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Optional<RawTraceRef> getTraceReference() {
+        return Optional.of(getTraceRef());
+    }
 }

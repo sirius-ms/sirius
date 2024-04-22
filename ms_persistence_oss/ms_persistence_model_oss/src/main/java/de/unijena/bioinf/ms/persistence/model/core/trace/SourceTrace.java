@@ -20,10 +20,18 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.trace;
 
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.floats.FloatList;
 import jakarta.persistence.Id;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+
+/**
+ * A source trace is a trace belonging to a LCMS run that is projected onto a merged run.
+ * Thus, it contains two different intensity array:
+ * - intensities refers to the projected intensities relative to the merge run
+ * - rawIntensities refers to the original intensity values from the LCMS run
+ */
 
 @Getter
 @Setter
@@ -38,6 +46,10 @@ public class SourceTrace extends AbstractTrace {
     @Id
     @ToString.Include
     private long sourceTraceId;
+
+    FloatList rawIntensities;
+
+    int rawScanIndexOffset;
 
 
 }
