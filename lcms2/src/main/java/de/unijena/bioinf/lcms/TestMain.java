@@ -10,6 +10,7 @@ import de.unijena.bioinf.lcms.adducts.AdductNetwork;
 import de.unijena.bioinf.lcms.adducts.ProjectSpaceTraceProvider;
 import de.unijena.bioinf.lcms.align.AlignmentBackbone;
 import de.unijena.bioinf.lcms.align.MoI;
+import de.unijena.bioinf.lcms.features.MergedFeatureExtractor;
 import de.unijena.bioinf.lcms.merge.MergedTrace;
 import de.unijena.bioinf.lcms.projectspace.ProjectSpaceImporter;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
@@ -97,6 +98,7 @@ public class TestMain {
         Path storeLocation = Files.createTempFile("nitrite", SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(storeLocation)) {
             Database<?> store = ps.getStorage();
+            ((MergedFeatureExtractor)(processing.getMergedFeatureExtractionStrategy())).store = store;
             processing.setImportStrategy(new ProjectSpaceImporter(ps));
             {
                 if (ops.cores >= 1) {
@@ -137,6 +139,7 @@ public class TestMain {
                     System.out.println(job.takeResult().getUid() + " (" + ++count + " / " + jobs.size() + ")");
                 }
             }
+            double rtTolerance = 5;
             try {
                 AlignmentBackbone bac = processing.align();
                 ProcessedSample merged = processing.merge(bac);
@@ -148,6 +151,7 @@ public class TestMain {
                         } else ++hasNoIsotopes;
                     }
                     System.out.println("merged sample with " + hasIsotopes + " / " + (hasIsotopes + hasNoIsotopes) + " isotope features");
+                    rtTolerance = bac.getStatistics().getExpectedRetentionTimeDeviation();
                 }
 //            processing.exportFeaturesToFiles(merged, bac);
 
@@ -165,7 +169,7 @@ public class TestMain {
                     ++numberOfFeatures;
                     List<MSData> msdata = store.findStr(Filter.where("alignedFeatureId").eq(features.getAlignedFeatureId()), MSData.class).toList();
                     if (msdata.size()>0) features.setMsData(msdata.get(0));
-                    List<de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace> list = store.findStr(Filter.where("mergedTraceId").eq(features.getTraceRef().get().
+                    List<de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace> list = store.findStr(Filter.where("mergedTraceId").eq(features.getTraceReference().get().
                                     getTraceId()),
                             de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace.class).toList();
                     de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace mono = list.get(0);
@@ -175,7 +179,7 @@ public class TestMain {
                     traces.add(mono);
                     for (int k=0; k < features.getIsotopicFeatures().get().size(); ++k) {
                         AlignedIsotopicFeatures alignedIsotopicFeatures = features.getIsotopicFeatures().get().get(k);
-                        de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace iso = store.findStr(Filter.where("mergedTraceId").eq(alignedIsotopicFeatures.getTraceRef().get().getTraceId()),
+                        de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace iso = store.findStr(Filter.where("mergedTraceId").eq(alignedIsotopicFeatures.getTraceReference().get().getTraceId()),
                                 de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace.class).toList().get(0);
                         traces.add(iso);
                     }
@@ -220,7 +224,7 @@ public class TestMain {
                         (int)(store.findAllStr(MSData.class).filter(x->x.getMergedMSnSpectrum()!=null).count()),
                         (int)(store.findAllStr(MSData.class).filter(x->x.getMergedMSnSpectrum()!=null && x.getIsotopePattern()!=null && x.getIsotopePattern().size()>=2).count())
                 );
-                /*
+
                 // simplify
                 HashMap<Long,Integer> runIds = new HashMap<>();
 
@@ -235,11 +239,13 @@ public class TestMain {
 
                 AdductManager manager = new AdductManager();
                 manager.addAdducts(Set.of(PrecursorIonType.getPrecursorIonType("[M+H]+"), PrecursorIonType.getPrecursorIonType("[M+Na]+"),
-                        PrecursorIonType.getPrecursorIonType("[M+K]+"),  PrecursorIonType.getPrecursorIonType("[M+NH3+H]+")));
+                        PrecursorIonType.getPrecursorIonType("[M+K]+"),  PrecursorIonType.getPrecursorIonType("[M+NH3+H]+"),
+                        PrecursorIonType.fromString("[M + FA + H]+"),
+                        PrecursorIonType.fromString("[M + ACN + H]+")));
                 manager.addLoss(MolecularFormula.parseOrThrow("H2O"));
 
-                AdductNetwork network = new AdductNetwork(new ProjectSpaceTraceProvider(ps),  store.findAllStr(AlignedFeatures.class).toArray(AlignedFeatures[]::new), manager);
-                */
+                AdductNetwork network = new AdductNetwork(new ProjectSpaceTraceProvider(ps),  store.findAllStr(AlignedFeatures.class).toArray(AlignedFeatures[]::new), manager, rtTolerance/2);
+
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

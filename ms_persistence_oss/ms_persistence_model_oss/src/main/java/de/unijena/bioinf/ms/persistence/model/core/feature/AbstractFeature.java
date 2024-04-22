@@ -77,13 +77,10 @@ public abstract class AbstractFeature {
      */
     protected Double snr;
 
-    /**
-     * Trace segment that defines this feature
-     */
-    private TraceRef traceRef;
+    protected abstract TraceRef getTraceRef();
 
-    public Optional<TraceRef> getTraceRef() {
-        return Optional.ofNullable(traceRef);
+    public Optional<? extends TraceRef> getTraceReference() {
+        return Optional.ofNullable(getTraceRef());
     }
 
     /**
