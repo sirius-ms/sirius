@@ -569,7 +569,7 @@ public class SiriusProjectDatabaseImplTest {
 
     private static Stream<Arguments> peakListData() {
         return Stream.of(
-                Arguments.of("/peaklists/Bicuculline_M+?.ms", 1, true, false),
+                Arguments.of("/peaklists/Bicuculline_Unknown.ms", 1, true, false),
                 Arguments.of("/peaklists/ForTox_TestMix_AMSMS_MFE-MS2Extr.cef", 1, true, true),
                 Arguments.of("/peaklists/laudanosine.mgf", 4, true, false),
                 Arguments.of("/peaklists/ForTox_TestMix_TMSMS_multi_msms.cef", 3, true, true)
