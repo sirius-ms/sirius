@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.nightsky.sdk.model.BackgroundComputationsStateEvent;
@@ -61,6 +62,8 @@ public class ShowJobsDialogAction extends AbstractGuiAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        mainFrame.getJobDialog().setVisible(true);
+        if (e.getSource() instanceof JComponent c)
+            JobDialog.INSTANCE().setLocationRelativeTo(c.getRootPane());
+        JobDialog.INSTANCE().setVisible(true);
     }
 }

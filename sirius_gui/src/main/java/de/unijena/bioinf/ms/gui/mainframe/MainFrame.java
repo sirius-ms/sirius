@@ -27,13 +27,11 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.ImportAction;
 import de.unijena.bioinf.ms.gui.actions.ProjectOpenAction;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
-import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
-import de.unijena.bioinf.ms.gui.logging.LogDialog;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundListView;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListPanel;
@@ -54,7 +52,6 @@ import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
@@ -68,7 +65,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
     }
 
     //Logging Panel
-    private final LogDialog log;
     private final SiriusGui gui;
     private CompoundListView compoundListView;
 
@@ -78,10 +74,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     public SiriusGui getGui() {
         return gui;
-    }
-
-    public LogDialog getLogConsole() {
-        return log;
     }
 
     //left side panel
@@ -113,14 +105,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
         return resultsPanel;
     }
 
-
-    //job dialog
-    private JobDialog jobDialog;
-
-    public JobDialog getJobDialog() {
-        return jobDialog;
-    }
-
     //toolbar
     private SiriusToolbar toolbar;
 
@@ -145,8 +129,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         setLayout(new BorderLayout());
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
-
-        log = new LogDialog(null, false, Level.INFO); //todo property
 
         this.gui = gui;
     }
@@ -177,7 +159,6 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
 
         //CREATE VIEWS
-        jobDialog = JobDialog.INSTANCE();
         // results Panel
         resultsPanel = new ResultPanel(deNovoStructureList, structureList, formulaList, spectralMatchList, gui);
         JPanel resultPanelContainer = new JPanel(new BorderLayout());

@@ -86,6 +86,8 @@ public class BatchComputeDialog extends JDialog {
         super(gui.getMainFrame(), "Compute", true);
         this.gui = gui;
         this.compoundsToProcess = compoundsToProcess;
+        final boolean ms2 = compoundsToProcess.stream().anyMatch(inst -> !inst.getMsData().getMs2Spectra().isEmpty());
+        ActFormulaIDConfigPanel tmp = new ActFormulaIDConfigPanel(gui, this, compoundsToProcess, ms2, isAdvancedView); //needs to be created outside the loading job because it also starts background job that might cause a deadlock otherwise
         Jobs.runInBackgroundAndLoad(this, "Initializing Compute Dialog...", () -> {
             setDefaultCloseOperation(DISPOSE_ON_CLOSE);
             setLayout(new BorderLayout());
@@ -100,10 +102,8 @@ public class BatchComputeDialog extends JDialog {
             add(mainSP, BorderLayout.CENTER);
 
             {
-                boolean ms2 = compoundsToProcess.stream().anyMatch(inst -> !inst.getMsData().getMs2Spectra().isEmpty());
-
                 // make subtool config panels
-                formulaIDConfigPanel = new ActFormulaIDConfigPanel(gui, this, compoundsToProcess, ms2, isAdvancedView);
+                formulaIDConfigPanel = tmp;
                 addConfigPanel("SIRIUS - Molecular Formula Identification", formulaIDConfigPanel);
 
                 zodiacConfigs = new ActZodiacConfigPanel(gui, isAdvancedView);

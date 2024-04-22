@@ -139,8 +139,8 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
             ppmSpinner = makeParameterSpinner("MS2MassDeviation.allowedMassDeviation",
                     PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm(),
                     0.25, 50, 0.25, m -> m.getNumber().doubleValue() + "ppm");
-            parameterBindings.put("SpectralMatchingMassDeviation.allowedPeakDeviation", () -> ((SpinnerNumberModel)ppmSpinner.getModel()).getNumber().doubleValue() + "ppm");
-            parameterBindings.put("SpectralMatchingMassDeviation.allowedPrecursorDeviation", () -> ((SpinnerNumberModel)ppmSpinner.getModel()).getNumber().doubleValue() + "ppm");
+            parameterBindings.put("SpectralMatchingMassDeviation.allowedPeakDeviation", () -> ((SpinnerNumberModel) ppmSpinner.getModel()).getNumber().doubleValue() + "ppm");
+            parameterBindings.put("SpectralMatchingMassDeviation.allowedPrecursorDeviation", () -> ((SpinnerNumberModel) ppmSpinner.getModel()).getNumber().doubleValue() + "ppm");
 
             if (hasMs2) {
                 smallParameters.addNamed("MS2 mass accuracy (ppm)", ppmSpinner);
@@ -171,7 +171,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         center.add(adductList);
         parameterBindings.put("AdductSettings.fallback", () -> getSelectedAdducts().toString());
 
-        enforceAdducts =  new JToggleButton("enforce", false);
+        enforceAdducts = new JToggleButton("enforce", false);
         enforceAdducts.setToolTipText(GuiUtils.formatToolTip("Enforce the selected adducts instead of using them only as fallback only."));
         if (isBatchDialog()) {
             adductList.buttons.add(enforceAdducts);
@@ -238,8 +238,8 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
                 adducts.addAll(PeriodicTable.getInstance().getPositiveAdducts());
                 adductsEnabled.addAll(
                         Stream.concat(settings.getFallback().stream().filter(PrecursorIonType::isPositive),
-                                settings.getEnforced().stream().filter(PrecursorIonType::isPositive))
-                        .collect(Collectors.toSet()));
+                                        settings.getEnforced().stream().filter(PrecursorIonType::isPositive))
+                                .collect(Collectors.toSet()));
             }
 
             if (precursorIonTypes.contains(PrecursorIonType.unknownNegative())) {
@@ -247,7 +247,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
                 adductsEnabled.addAll(
                         Stream.concat(settings.getFallback().stream().filter(PrecursorIonType::isNegative),
                                         settings.getEnforced().stream().filter(PrecursorIonType::isNegative))
-                        .collect(Collectors.toSet()));
+                                .collect(Collectors.toSet()));
             }
             adducts.addAll(adductsEnabled);
         }
@@ -269,7 +269,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
 
     }
 
-    protected void detectPossibleAdducts(InstanceBean ec) {
+    private void detectPossibleAdducts(InstanceBean ec) {
         //todo is this the same detection as happening in batch mode?
         //todo Nightsky: do we want this in the frontend?
         String notWorkingMessage = "Adduct detection requires MS1 spectrum.";
