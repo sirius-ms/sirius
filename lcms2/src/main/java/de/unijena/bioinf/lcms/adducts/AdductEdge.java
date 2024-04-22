@@ -6,7 +6,7 @@ public class AdductEdge {
     protected final KnownMassDelta[] explanations;
 
     // scoring
-    protected float ratioScore, correlationScore, score;
+    protected float ratioScore, correlationScore, representativeCorrelationScore, score;
 
     public AdductEdge(AdductNode left, AdductNode right, KnownMassDelta[] explanations) {
         this.left = left;
