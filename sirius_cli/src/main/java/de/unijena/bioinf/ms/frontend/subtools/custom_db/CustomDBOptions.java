@@ -38,7 +38,6 @@ import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -47,7 +46,6 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -157,11 +155,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
         @Override
         public void run() {
-            try {
-                SiriusJobs.getGlobalJobManager().submitJob(this).awaitResult();
-            } catch (ExecutionException e) {
-                LoggerFactory.getLogger(CustomDatabaseImporter.class).error("error when storing custom db", e);
-            }
+            SiriusJobs.getGlobalJobManager().submitJob(this).takeResult();
         }
 
         @Override
@@ -217,17 +211,25 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 for (Path file : spectrumFiles)
                     totalBytesToRead.addAndGet(Files.size(file));
 
+                totalBytesToRead.set((long) Math.ceil(totalBytesToRead.get() * 1.6)); //just some preloading to do last inserts
+
 
                 final AtomicLong bytesRead = new AtomicLong(0);
                 CustomDatabaseImporter.Listener listener = new CustomDatabaseImporter.Listener() {
                     @Override
+                    public void newFingerprint(InChI inChI, int numOfBytes) {
+                        updateProgress(0, totalBytesToRead.addAndGet(numOfBytes), bytesRead.addAndGet(numOfBytes), "Added FP for " + inChI.key2D());
+                    }
+
+                    @Override
                     public void bytesRead(int numOfBytes) {
-                        updateProgress(0, totalBytesToRead.get(), bytesRead.addAndGet(numOfBytes), "Reading File...");
+                        updateProgress(0, totalBytesToRead.get(), bytesRead.addAndGet(numOfBytes), "Reading Data...");
                     }
 
                     @Override
                     public void newInChI(List<InChI> inChIs) {
-                        progressInfo("Imported: " + inChIs.stream().map(InChI::key2D).collect(Collectors.joining(", ")));
+                        progressInfo("Imported " + inChIs.size() + " Compounds.");
+//                        updateProgress(0, totalBytesToRead.addAndGet(inChIs.size()), bytesRead.addAndGet(inChIs.size()), "Imported: " + inChIs.stream().map(InChI::key2D).collect(Collectors.joining(", ")));
                     }
                 };
 
