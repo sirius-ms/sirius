@@ -255,7 +255,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         if (!isBatchDialog) {
             if (hasMs1AndIsSingleMode) {
                 buttonAutodetect.addActionListener(e ->
-                        detectElements(ecs.get(0), allAutoDetectableElements, enforcedTextBox));
+                        detectElementsAndLoad(ecs.get(0), allAutoDetectableElements, enforcedTextBox));
             }
             buttonPanel.add(buttonAutodetect);
         }
@@ -301,7 +301,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
         addStrategyChangeListener(strategy -> {
             if (!isBatchDialog) {
                 if (hasMs1AndIsSingleMode) {
-                    detectElements(ecs.get(0), allAutoDetectableElements, enforcedTextBox);
+                    detectElementsAndLoad(ecs.get(0), allAutoDetectableElements, enforcedTextBox);
                     buttonAutodetect.setToolTipText("Element detection has already been performed once opened the compute dialog."
                             + "Auto detectable element are: " + join(allAutoDetectableElements)
                             + ".\nIf no elements can be detected the following fallback is used: " + formulaSettings.getFallbackAlphabet().toString(",")
@@ -417,8 +417,13 @@ public class FormulaSearchStrategy extends ConfigPanel {
      * @param autoDetectable
      * @param formulaConstraintsTextBox
      */
-    protected void detectElements(InstanceBean ec, Set<Element> autoDetectable, JTextField formulaConstraintsTextBox) {
-        //todo nightsky: do we want todo that in the frontend?
+    private void detectElementsAndLoad(InstanceBean ec, Set<Element> autoDetectable, JTextField formulaConstraintsTextBox) {
+        Jobs.runInBackgroundAndLoad(owner, "Detecting Elements...", () -> {
+            detectElements(ec, autoDetectable, formulaConstraintsTextBox);
+        }).getResult();
+    }
+
+    private void detectElements(InstanceBean ec, Set<Element> autoDetectable, JTextField formulaConstraintsTextBox) {
         String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
         MsData msData = ec.getMsData();
         if (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null) {

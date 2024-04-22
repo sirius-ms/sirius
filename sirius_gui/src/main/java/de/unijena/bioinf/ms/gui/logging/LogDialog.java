@@ -31,8 +31,9 @@ public class LogDialog extends JDialog {
     private final LoggingPanel lPanel;
     private final TextAreaHandler handler;
 
-    public LogDialog(Frame owner, boolean modal, Level loglevel, Logger... loggers) {
-        super(owner, "Log", modal);
+    public LogDialog(boolean modal, Level loglevel, Logger... loggers) {
+        super((Frame) null, "Log", modal);
+        setLayout(new BorderLayout());
 
         JTextArea textArea = new JTextArea();
         this.handler = new TextAreaHandler(textArea, loglevel);
@@ -48,20 +49,7 @@ public class LogDialog extends JDialog {
 
 
         lPanel = new LoggingPanel(handler);
-        add(lPanel);
-
+        add(lPanel, BorderLayout.CENTER);
         pack();
-        setLocationRelativeTo(getParent());
-    }
-
-    @Override
-    public void setVisible(boolean b) {
-        if (b){
-            setLocationRelativeTo(getOwner());
-            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-            setPreferredSize(new Dimension(Math.min(screenSize.width, getOwner().getWidth()), Math.min(400, screenSize.height)));
-            pack();
-        }
-        super.setVisible(b);
     }
 }

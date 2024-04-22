@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -83,19 +84,31 @@ public enum SiriusActions {
 
     public final Class<? extends Action> actionClass;
 
-    public synchronized Action getInstance(@NotNull SiriusGui gui, final boolean createIfNull, final ActionMap map) {
+    SiriusActions(Class<? extends Action> action) {
+        this.actionClass = action;
+    }
+
+    public static final ActionMap SINGLETON_ACTIONS = new ActionMap();
+
+
+    private synchronized Action getInstance(@Nullable SiriusGui gui, final boolean createIfNull, final ActionMap map) {
         Action a = map.get(name());
         if (a == null && createIfNull) {
             try {
                 for (Constructor<?> constructor : actionClass.getDeclaredConstructors()) {
                     List<Class<?>> paras = List.of(constructor.getParameterTypes());
-                    if (paras.size() == 1 && paras.contains(SiriusGui.class)) {
-                        a = (Action) constructor.newInstance(gui);
-                        break;
-                    } else if (paras.size() == 1 && (paras.contains(MainFrame.class) || paras.contains(Frame.class))) {
-                        a = (Action) constructor.newInstance(gui.getMainFrame());
-                        break;
-                    } else if (paras.isEmpty()){
+                    if (gui != null) {
+                        if (paras.size() == 1 && paras.contains(SiriusGui.class)) {
+                            a = (Action) constructor.newInstance(gui);
+                            break;
+                        } else if (paras.size() == 1 && (paras.contains(MainFrame.class) || paras.contains(Frame.class))) {
+                            a = (Action) constructor.newInstance(gui.getMainFrame());
+                            break;
+                        } else if (paras.isEmpty()) {
+                            a = actionClass.getDeclaredConstructor().newInstance();
+                            break;
+                        }
+                    } else if (paras.isEmpty()) {
                         a = actionClass.getDeclaredConstructor().newInstance();
                         break;
                     }
@@ -116,19 +129,17 @@ public enum SiriusActions {
     }
 
 
-    public Action getInstance(@NotNull SiriusGui gui, final ActionMap map) {
+    private Action getInstance(@Nullable SiriusGui gui, final ActionMap map) {
         return getInstance(gui, false, map);
     }
+
     public Action getInstance(@NotNull SiriusGui gui) {
         return getInstance(gui, gui.getMainFrame().getGlobalActions());
     }
 
-
-    SiriusActions(Class<? extends Action> action) {
-        this.actionClass = action;
+    public Action getInstance(final boolean createIfNull) {
+        return getInstance(null, createIfNull, SINGLETON_ACTIONS);
     }
-
-
 
 
     public static boolean notComputingOrEmpty(Collection<InstanceBean> instance) {

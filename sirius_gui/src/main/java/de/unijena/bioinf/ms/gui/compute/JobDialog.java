@@ -34,7 +34,6 @@ import java.awt.event.MouseEvent;
 
 public class JobDialog extends JDialog {
     private static JobDialog INSTANCE = null;
-    protected JFrame owner;
 
     public synchronized static JobDialog INSTANCE() {
         if (INSTANCE == null)
@@ -47,8 +46,6 @@ public class JobDialog extends JDialog {
     }
     private JobDialog(JFrame owner) {
         super(owner, "Jobs (All Projects)", false);
-        this.owner = owner;
-
 
         JJobManagerPanel managerPanel = createJobManagerPanel();
 
