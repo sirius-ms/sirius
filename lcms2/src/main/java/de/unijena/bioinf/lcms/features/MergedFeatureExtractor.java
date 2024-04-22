@@ -19,19 +19,26 @@ import de.unijena.bioinf.ms.persistence.model.core.run.SampleStats;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
+import de.unijena.bioinf.ms.persistence.model.core.trace.RawTraceRef;
+import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
+import de.unijena.bioinf.storage.db.nosql.Database;
+import de.unijena.bioinf.storage.db.nosql.Filter;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2LongMap;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.function.IntFunction;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
+
+    public Database<?> store;
 
     @Override
     public Iterator<AlignedFeatures> extractFeatures(ProcessedSample mergedSample, MergedTrace mergedTrace, Ms2MergeStrategy ms2MergeStrategy, IsotopePatternExtractionStrategy isotopePatternExtractionStrategy, Long2LongMap trace2trace, Long2LongMap sourceTrace2trace, Int2ObjectMap<ProcessedSample> idx2sample) {
@@ -134,10 +141,12 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
 
         // segments for each individual trace
         TraceSegment[][] individualSegments = new TraceSegment[mergedTrace.getSampleIds().size()][];
+        ContiguousTrace[] individualTraces = new ContiguousTrace[mergedTrace.getSampleIds().size()];
         for (int k=0; k < individualSegments.length; ++k) {
             ProcessedSample sample = samplesInTrace[k];
             assert sample.getUid() == mergedTrace.getSampleIds().getInt(k);
-            individualSegments[k] = assignSegmentsToIndividualTrace(sample, traceSegments, mergedSample.getStorage().getMergeStorage().getTrace(sample.getMapping(), mergedTrace.getTraceIds().getInt(k)) );
+            individualTraces[k] = mergedSample.getStorage().getMergeStorage().getTrace(sample.getMapping(), mergedTrace.getTraceIds().getInt(k));
+            individualSegments[k] = assignSegmentsToIndividualTrace(sample, traceSegments, individualTraces[k]);
         }
 
         final Int2ObjectOpenHashMap<ProcessedSample> uid2sample = new Int2ObjectOpenHashMap<>();
@@ -171,6 +180,7 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
 
         F[] featureArr = featureArraySupplier.apply(traceSegments.length);
 
+        // i = feature within trace
         for (int i = 0; i < traceSegments.length; i++) {
             if (traceSegments[i] == null)
                 continue;
@@ -179,7 +189,7 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
             alignedFeatures.setRunId(mergedSample.getRun().getRunId());
             alignedFeatures.setIonType(PrecursorIonType.unknown(mergedSample.getPolarity()));
 
-            buildFeature(mergedTrace.getUid(), mTrace, traceSegments[i], stats, trace2trace, alignedFeatures);
+            buildAlignedFeatures(mergedTrace.getUid(), mTrace, traceSegments[i], stats, trace2trace, (AbstractAlignedFeatures) alignedFeatures);
 
             final int o = mTrace.startId();
             msData[i].setMergedMs1Spectrum(Spectrums.subspectrum(new SimpleSpectrum(mergedTrace.getMz(), mergedTrace.getInts()), traceSegments[i].leftEdge - o, traceSegments[i].rightEdge - o));
@@ -187,6 +197,7 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
                 alignedFeatures.setMsData(msData[i]);
 
             List<Feature> childFeatures = new ArrayList<>();
+            // k = sample
             for (int k=0; k < individualSegments.length; ++k) {
                 // FIXME invalid segments
                 if (individualSegments[k][i] == null || individualSegments[k][i].leftEdge >= individualSegments[k][i].rightEdge)
@@ -195,7 +206,7 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
                 int childTraceId = mergedTrace.getTraceIds().getInt(k);
                 int childSampleId = mergedTrace.getSampleIds().getInt(k);
                 ProcessedSample sample = uid2sample.get(childSampleId);
-                Feature feature = buildFeature(childTraceId, mergedSample.getStorage().getMergeStorage().getTrace(sample.getMapping(), childTraceId), individualSegments[k][i], stats, sourceTrace2trace, Feature.builder().runId(samplesInTrace[k].getRun().getRunId()).build());
+                Feature feature = buildFeature(childTraceId, mTrace, traceSegments[i],  individualTraces[k], individualSegments[k][i], stats, sourceTrace2trace, Feature.builder().runId(samplesInTrace[k].getRun().getRunId()).build());
                 childFeatures.add(feature);
             }
             if (childFeatures.isEmpty())
@@ -208,13 +219,13 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
         return featureArr;
     }
 
-    private <F extends AbstractFeature> F buildFeature (
+    private AbstractAlignedFeatures buildAlignedFeatures(
             int traceUid,
             Trace mTrace,
             TraceSegment segment,
             SampleStats stats,
             Long2LongMap trace2trace,
-            final F feature
+            final AbstractAlignedFeatures feature
     ) {
         final int o = mTrace.startId();
 
@@ -235,11 +246,47 @@ public class MergedFeatureExtractor implements MergedFeatureExtractionStrategy{
         }
 
         feature.setTraceRef(new TraceRef(trace2trace.get(traceUid), o, segment.leftEdge - o, segment.apex - o, segment.rightEdge -o));
+        return feature;
+    }
 
+    private Feature buildFeature(
+            int traceUid,
+            Trace mTrace,
+            TraceSegment segment,
+            Trace rawTrace,
+            TraceSegment rawSegment,
+            SampleStats stats,
+            Long2LongMap trace2trace,
+            final Feature feature
+    ) {
+        final int o = mTrace.startId();
+
+        RetentionTime rt = new RetentionTime(
+                mTrace.retentionTime(segment.leftEdge - o),
+                mTrace.retentionTime(segment.rightEdge - o),
+                mTrace.retentionTime(segment.apex - o)
+        );
+
+        feature.setRetentionTime(rt);
+        feature.setApexMass(mTrace.mz(segment.apex));
+        feature.setApexIntensity((double) mTrace.intensity(segment.apex));
+        feature.setAverageMass(mTrace.averagedMz());
+        feature.setSnr(((stats.noiseLevel(segment.apex) > 0) ? (double) (mTrace.intensity(segment.apex) / stats.noiseLevel(segment.apex)) : null));
+
+        if (!trace2trace.containsKey(traceUid)) {
+            throw new RuntimeException(String.format("Unknown trace with uid %d", traceUid));
+        }
+        final int ro = rawTrace.startId();
+
+        final RawTraceRef rawRef = new RawTraceRef(trace2trace.get(traceUid), o, segment.leftEdge - o, segment.apex - o, segment.rightEdge -o,
+                rawSegment.leftEdge - ro, rawSegment.apex - ro, rawSegment.rightEdge - ro, ro);
+
+        feature.setTraceRef(rawRef);
 
 
 
         return feature;
+
     }
 
     public String extractFeaturesToString(ProcessedSample mergedSample, ProcessedSample[] samplesInTrace, MergedTrace alignedFeature, Ms2MergeStrategy ms2MergeStrategy) {

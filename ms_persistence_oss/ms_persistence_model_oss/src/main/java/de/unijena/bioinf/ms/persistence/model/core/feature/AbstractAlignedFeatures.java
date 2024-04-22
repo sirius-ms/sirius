@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.persistence.model.core.feature;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
+import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -39,6 +40,13 @@ public abstract class AbstractAlignedFeatures extends AbstractFeature {
     @JsonIgnore
     @ToString.Exclude
     protected List<Feature> features;
+
+    private TraceRef traceRef;
+
+    @Override
+    public TraceRef getTraceRef() {
+        return traceRef;
+    }
 
     public Optional<List<Feature>> getFeatures() {
         return Optional.ofNullable(features);
