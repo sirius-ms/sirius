@@ -79,7 +79,10 @@ public class SseProgressJJob extends WaiterJJob<Job> {
 
             @Override
             public void onError(Throwable throwable) {
-                crash(throwable);
+                if (throwable instanceof Exception ex)
+                    crash(ex);
+                else
+                    crash(new RuntimeException(throwable));
                 siriusClient.removeEventListener(this);
             }
 
@@ -98,16 +101,6 @@ public class SseProgressJJob extends WaiterJJob<Job> {
         // just initiate cancelling process in backend. But do not wait for it.
         // Callback via sse event will finally stop the job and notify listeners about cancellation
         siriusClient.jobs().deleteJob(projectId, jobId, true, false);
-    }
-
-    @Override
-    public void crash(@NotNull Throwable e) {
-        super.crash(e);
-    }
-
-    @Override
-    public void finish(@NotNull Job result) {
-        super.finish(result);
     }
 
     private boolean updateAndCheckIfDone(Job wrappedJob) {
@@ -130,6 +123,8 @@ public class SseProgressJJob extends WaiterJJob<Job> {
             updateProgress(p.getMaxProgress(), p.getCurrentProgress(), wrappedJob.getId() + "|" + p.getMessage());
         }
 
+        setState(JobState.valueOf(p.getState().name()));
+
         if (p.getState() == JobProgress.StateEnum.FAILED) {
             crash(new Exception(p.getErrorMessage()));
             return true;
@@ -144,7 +139,6 @@ public class SseProgressJJob extends WaiterJJob<Job> {
             finish(wrappedJob);
             return true;
         }
-        setState(JobState.valueOf(p.getState().name()));
         return false;
     }
 }

@@ -91,34 +91,31 @@ class ImportDatabaseDialog extends JDialog {
                         "Importing into '" + configPanel.getDbFilePath() + "'...", null,
                         new SseProgressJJob(databaseDialog.gui.getSiriusClient(), pid, j));
             }).awaitResult();
-        } catch (ExecutionException ex) {
+        } catch (Exception ex) {
             LoggerFactory.getLogger(getClass()).error("Error during Custom DB import.", ex);
             if (ex.getCause() instanceof CancellationException) {
-                if (new QuestionDialog(
-                        databaseDialog.gui.getMainFrame(),
-                        "Do you want to keep the incompletely importen database?",
-                        DO_NOT_SHOW_AGAIN_KEY_INCOMPLETE_IMPORTED_DB).isCancel()) {
-
-                    String dbId = databaseDialog.whenCustomDbIsAdded(configPanel.getDbFilePath()).map(SearchableDatabase::getDatabaseId)
-                            .orElse(null);
-                    if (dbId != null) {
-                        Jobs.runInBackgroundAndLoad(databaseDialog.gui.getMainFrame(),
-                                "Deleting database '" + dbId + "'...", () ->
-                                        databaseDialog.gui.acceptSiriusClient((c, pid) -> c.databases().removeDatabase(dbId, true))
-                        ).getResult();
-                    }
-                }
-            } else {
+                //do nothing just canceled
+            } else if (ex instanceof ExecutionException) {
                 if (ex.getCause() != null)
                     new StacktraceDialog(this, ex.getCause().getMessage(), ex.getCause());
                 else
                     new StacktraceDialog(this, "Unexpected error when importing custom DB!", ex);
+            } else {
+                LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB import.", ex);
+                new StacktraceDialog(databaseDialog.getGui().getMainFrame(), "Fatal Error during Custom DB import.", ex);
             }
 
+            if (new QuestionDialog(
+                    databaseDialog.gui.getMainFrame(),
+                    "Do you want to keep the incompletely imported database?",
+                    DO_NOT_SHOW_AGAIN_KEY_INCOMPLETE_IMPORTED_DB).isCancel()) {
 
-        } catch (Exception e) {
-            LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB import.", e);
-            new StacktraceDialog(databaseDialog.getGui().getMainFrame(), "Fatal Error during Custom DB import.", e);
+                databaseDialog.whenCustomDbIsAdded(configPanel.getDbFilePath()).map(SearchableDatabase::getDatabaseId)
+                        .ifPresent(dbId -> Jobs.runInBackgroundAndLoad(databaseDialog.gui.getMainFrame(),
+                                "Deleting database '" + dbId + "'...", () ->
+                                        databaseDialog.gui.acceptSiriusClient((c, pid) -> c.databases().removeDatabase(dbId, true))
+                        ).getResult());
+            }
         } finally {
             databaseDialog.whenCustomDbIsAdded(configPanel.getDbFilePath());
         }

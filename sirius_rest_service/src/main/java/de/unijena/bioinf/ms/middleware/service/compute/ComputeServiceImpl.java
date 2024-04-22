@@ -42,7 +42,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -166,14 +165,9 @@ public class ComputeServiceImpl implements ComputeService {
         p.setMaxProgress(evt.getMaxValue());
         p.setMessage(evt.getMessage());
         if (runJob.isUnSuccessfulFinished()) {
-            try { //collect error message from exception
-                runJob.awaitResult();
-            } catch (ExecutionException e) {
-                if (e.getCause() != null)
-                    p.setErrorMessage(e.getCause().getMessage());
-                else
-                    p.setErrorMessage(e.getMessage());
-            }
+            Exception ex = runJob.getException();
+            if (ex != null)
+                p.setErrorMessage(ex.getMessage());
         }
         return p;
     }
