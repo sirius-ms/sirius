@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.gui.io.filefilter.NoSQLProjectFileFilter;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.ErrorReportingDocumentListener;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
+import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectInfoOptField;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
@@ -97,10 +98,10 @@ public class ProjectCreateAction extends ProjectOpenAction {
             chooserSouthComponent = (JPanel) ((BorderLayout) central.getLayout()).getLayoutComponent(jfc, BorderLayout.SOUTH);
         }
 
-        JPanel nameComponent = new JPanel();
-        nameComponent.setLayout(new BoxLayout(nameComponent, BoxLayout.LINE_AXIS));
-
+        PlaceholderTextField directoryNameField = new PlaceholderTextField("");
+        directoryNameField.setEditable(false);
         PlaceholderTextField projectNameField = new PlaceholderTextField("");
+
         JButton cButton = (JButton) ((JPanel) chooserSouthComponent.getComponent(3)).getComponent(0);
         cButton.setEnabled(false);
 
@@ -145,24 +146,23 @@ public class ProjectCreateAction extends ProjectOpenAction {
 
         });
 
-        JLabel folderLabel = (JLabel) ((JPanel) chooserSouthComponent.getComponent(0)).getComponent(0);
-        folderLabel.setText("Folder name:");
-        JLabel projectLabel = new JLabel("Project name:");
-        projectLabel.setPreferredSize(new Dimension(folderLabel.getPreferredSize().width, projectNameField.getPreferredSize().height));
-
-        nameComponent.add(projectLabel);
-        nameComponent.add(projectNameField);
+        TwoColumnPanel textComponent = new TwoColumnPanel();
+        textComponent.addNamed("Directory:", directoryNameField);
+        textComponent.addNamed("Project name:", projectNameField);
 
         chooserSouthComponent.remove(2);
         chooserSouthComponent.remove(1);
         chooserSouthComponent.remove(0);
-        chooserSouthComponent.add(nameComponent, 0);
+        chooserSouthComponent.add(textComponent, 0);
 
         jfc.addPropertyChangeListener(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY, (e) -> {
             if (e.getNewValue() instanceof File file) {
                 final Path f = file.toPath();
-                if (Files.isRegularFile(f))
+                if (Files.isDirectory(f)) {
+                    SwingUtilities.invokeLater(() -> directoryNameField.setText(f.toFile().getAbsolutePath()));
+                } else {
                     SwingUtilities.invokeLater(() -> projectNameField.setText(ensureUniqueProjectId(f)));
+                }
             }
         });
 
@@ -170,7 +170,7 @@ public class ProjectCreateAction extends ProjectOpenAction {
 
         int returnval = jfc.showDialog(mainFrame, buttonText);
         if (returnval == JFileChooser.APPROVE_OPTION) {
-            Path selDir = jfc.getCurrentDirectory().toPath();
+            Path selDir = Path.of(directoryNameField.getText());
             projectName = projectNameField.getText();
 
             if (projectName.endsWith(SIRIUS_PROJECT_SUFFIX)) {
