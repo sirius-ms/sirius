@@ -27,8 +27,8 @@ import java.awt.*;
 
 public class JCheckboxListPanel<E> extends TextHeaderBoxPanel {
     public final JCheckBoxList<E> checkBoxList;
-    private final JButton all = new JButton("all");
-    private final JButton none = new JButton("none");
+    protected final JButton all = new JButton("all");
+    protected final JButton none = new JButton("none");
     public final JPanel buttons;
 
     public JCheckboxListPanel(JCheckBoxList<E> sourceList, String headline, String tooltip) {

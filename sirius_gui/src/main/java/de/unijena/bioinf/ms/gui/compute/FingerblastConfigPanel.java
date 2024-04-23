@@ -53,8 +53,12 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
         this.gui = gui;
         this.syncSource = syncSource;
 
-        structureSearchStrategy = new StructureSearchStrategy(gui, syncSource != null ? syncSource.getFormulaSearchStrategy() : null);
+
         pubChemFallback = new JCheckBox();
+        pubChemFallback.setSelected(true);
+        pubChemFallback.setToolTipText("Search in the specified set of databases and use the PubChem database as fallback if no good hit is available");
+
+        structureSearchStrategy = new StructureSearchStrategy(gui, syncSource != null ? syncSource.getFormulaSearchStrategy() : null, () -> pubChemFallback.isSelected());
 
         parameterBindings.put("StructureSearchDB", () -> {
             List<SearchableDatabase> checkedDBs = structureSearchStrategy.getStructureSearchDBs();
@@ -63,9 +67,6 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
                     .filter(db -> !(db.equals(DataSource.PUBCHEM.name()) && pubChemFallback.isSelected()))
                     .collect(Collectors.joining(","));
         });
-
-        pubChemFallback.setSelected(true);
-        pubChemFallback.setToolTipText("Search in the specified set of databases and use the PubChem database as fallback if no good hit is available");
 
 
         //confidence score approximate mode settings

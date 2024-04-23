@@ -222,7 +222,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
     }
 
     private void initDatabasePanel() {
-        searchDBList = DBSelectionListPanel.newInstance("Use DB formulas only", gui.getSiriusClient());
+        searchDBList = DBSelectionListPanel.newInstance("Use DB formulas only", gui.getSiriusClient(), () -> Collections.emptyList());
         GuiUtils.assignParameterToolTip(searchDBList.checkBoxList, "FormulaSearchDB");
 
         searchDBList.selectDefaultDatabases();
