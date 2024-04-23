@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
+import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
@@ -61,17 +62,25 @@ public class DBSelectionList extends JCheckBoxList<SearchableDatabase> {
                 .stream()
                 .filter(SearchableDatabase::isSearchable)
                 .filter(s -> !exclude.contains(s))
-                .sorted(Comparator.comparing(SearchableDatabase::getDatabaseId))
+                .sorted(getDatabaseComparator(client))
                 .toList();
         return new DBSelectionList(descriptionKey, dbLsit);
     }
 
 
-@Override
-public boolean isSelectionEqual(JCheckBoxList<SearchableDatabase> other){
+    @Override
+    public boolean isSelectionEqual(JCheckBoxList<SearchableDatabase> other){
         Set<String> checked1 = this.getCheckedItems().stream().map(SearchableDatabase::getDatabaseId).collect(Collectors.toSet());
         Set<String> checked2 = other.getCheckedItems().stream().map(SearchableDatabase::getDatabaseId).collect(Collectors.toSet());
         return checked1.equals(checked2);
+    }
+
+    public static Comparator<SearchableDatabase> getDatabaseComparator(NightSkyClient client) {
+        SearchableDatabase pubchem = client.databases().getDatabase(DataSource.PUBCHEM.name(), false);
+        return Comparator
+                .comparing(SearchableDatabase::isCustomDb, Comparator.reverseOrder())
+                .thenComparing(p -> p.equals(pubchem), Comparator.reverseOrder())
+                .thenComparing(SearchableDatabase::getDisplayName);
     }
 
 }
