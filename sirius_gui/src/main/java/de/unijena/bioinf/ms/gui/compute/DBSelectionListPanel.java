@@ -14,13 +14,14 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Supplier;
 
 public class DBSelectionListPanel extends JCheckboxListPanel<SearchableDatabase> {
     private final NightSkyClient client;
     private final SearchableDatabase bioDB;
     private final JButton bioButton;
 
-    public DBSelectionListPanel(JCheckBoxList<SearchableDatabase> sourceList, String headline, NightSkyClient client) {
+    protected DBSelectionListPanel(JCheckBoxList<SearchableDatabase> sourceList, String headline, NightSkyClient client, Supplier<Collection<SearchableDatabase>> deactivatedDBs) {
         super(sourceList, headline);
         this.client = client;
         bioDB = client.databases().getDatabase(DataSource.BIO.name(), false);
@@ -31,11 +32,17 @@ public class DBSelectionListPanel extends JCheckboxListPanel<SearchableDatabase>
         bioButton.addActionListener(e -> {
             checkBoxList.uncheckAll();
             select(bioDB);});
+
+        Arrays.stream(all.getActionListeners()).forEach(l -> all.removeActionListener(l));
+        all.addActionListener(e -> {
+            checkBoxList.checkAll();
+            deactivatedDBs.get().stream().forEach(db -> checkBoxList.uncheck(db));
+        });
     }
 
-    public static DBSelectionListPanel newInstance(String headline, NightSkyClient client) {
+    public static DBSelectionListPanel newInstance(String headline, NightSkyClient client, Supplier<Collection<SearchableDatabase>> deactivatedDBs) {
         SearchableDatabase bioDB = client.databases().getDatabase(DataSource.BIO.name(), false);
-        return new DBSelectionListPanel(DBSelectionList.fromSearchableDatabases(client, Collections.singleton(bioDB)), headline, client);
+        return new DBSelectionListPanel(DBSelectionList.fromSearchableDatabases(client, Collections.singleton(bioDB)), headline, client, deactivatedDBs);
     }
 
     public void select(Collection<CustomDataSources.Source> databases){
