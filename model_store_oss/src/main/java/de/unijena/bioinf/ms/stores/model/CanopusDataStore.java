@@ -33,12 +33,13 @@ public interface CanopusDataStore extends CanopusClientDataStore {
      * @param type Positive or negative predictor type
      * @return canopus-fast.data in binary format
      */
-    @Deprecated(forRemoval = true)
     Optional<InputStream> getCanopusFastData(PredictorType type) throws IOException;
 
     /**
      * Get canopus-fast.data file for canopus
      * @return canopus-fast.data in binary format
      */
-    Optional<InputStream> getCanopusFastData() throws IOException;
+    default Optional<InputStream> getCanopusFastData() throws IOException {
+        return getCanopusFastData(PredictorType.CSI_FINGERID_POSITIVE);
+    }
 }

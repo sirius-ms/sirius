@@ -286,7 +286,7 @@ public class ProxyManager {
 
     public static Optional<ConnectionError> checkLicenseServer(OkHttpClient proxy) {
         String url = PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer", null, "https://gate.bright-giant.com/") +
-                PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer.version", null, "v1/")
+                PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer.version", null, "v3/")
                 + "/actuator/health";
         return checkConnectionToUrl(proxy, url)
                 .map(e -> e.withNewMessage(3, "Could not connect to the License Server: " + url,
