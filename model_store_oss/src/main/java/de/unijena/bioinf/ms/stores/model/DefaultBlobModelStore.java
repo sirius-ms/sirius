@@ -44,16 +44,16 @@ public class DefaultBlobModelStore<Storage extends BlobStorage> extends Abstract
     }
 
     @Override
-    public Optional<InputStream> getMsNovelistData() throws IOException {
-        return getResource(Path.of("msnovelist.data"));
+    public Optional<InputStream> getMsNovelistData(PredictorType type) throws IOException {
+        return getResource(Path.of("msnovelist-weights.hdf5"), type);
     }
 
-    @Override
-    public Optional<InputStream> getCanopusFastData() throws IOException {
-        return getResource(Path.of("canopus-fast.data"));
-    }
+    //todo insert if we have a real pos/neg model
+//    @Override
+//    public Optional<InputStream> getCanopusFastData() throws IOException {
+//        return getResource(Path.of("canopus-fast.data"));
+//    }
 
-    @Deprecated(forRemoval = true)
     @Override
     public Optional<InputStream> getCanopusFastData(PredictorType type) throws IOException {
         return getResource(Path.of("canopus-fast.data"), type);

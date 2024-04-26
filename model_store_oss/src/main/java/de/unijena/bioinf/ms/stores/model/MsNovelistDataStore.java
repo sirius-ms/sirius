@@ -20,15 +20,26 @@
 
 package de.unijena.bioinf.ms.stores.model;
 
+import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
-public interface MsNovelistDataStore extends CanopusClientDataStore {
+public interface MsNovelistDataStore {
 
     /**
      * Get model file for MsNovelist
-     * @return msnovelist.data in binary format
+     * @param type Positive or negative predictor type
+     * @return msnovelist-weights.hdf5 in hdf5 format
      */
-    Optional<InputStream> getMsNovelistData() throws IOException;
+    Optional<InputStream> getMsNovelistData(PredictorType type) throws IOException;
+
+    /**
+     * Get model file for MsNovelist
+     * @return msnovelist-weights.hdf5 in hdf5 format
+     */
+    default Optional<InputStream> getMsNovelistData() throws IOException {
+        return getMsNovelistData(PredictorType.CSI_FINGERID_POSITIVE);
+    }
 }
