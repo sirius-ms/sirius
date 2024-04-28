@@ -85,7 +85,8 @@ public class SseEventService implements EventService<SseEmitter> {
 
     @Override
     public void shutdown() {
-        eventRunner.shutdown();
+        if (eventRunner != null)
+            eventRunner.shutdown();
     }
 
     private class EventRunner extends TinyBackgroundJJob<Boolean> {
