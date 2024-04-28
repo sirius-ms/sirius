@@ -71,8 +71,10 @@ public final class SiriusGuiFactory {
 
     public void shutdowm() {
         try {
-            connectionMonitor.close();
-            nightSkyClient.close();
+            if (connectionMonitor != null)
+                connectionMonitor.close();
+            if (nightSkyClient != null)
+                nightSkyClient.close();
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).error("Error when closing NighSky client!", e);
         }
