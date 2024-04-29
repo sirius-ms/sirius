@@ -74,7 +74,8 @@ public enum DataSource {
 
     //everything with flags greater equal to 2**33 have to be added separately to bio dataSource flag
 
-    MASSBANK("MassBank", 68719476736L, null, null, "https://massbank.eu/MassBank/RecordDisplay?id=%s", null),
+    //todo we might want to have Massbank and MoNA integrated when providing the remote spectral library feature.
+//    MASSBANK("MassBank", 68719476736L, null, null, "https://massbank.eu/MassBank/RecordDisplay?id=%s", null),
     //////////////////////////////////////////
 
 
