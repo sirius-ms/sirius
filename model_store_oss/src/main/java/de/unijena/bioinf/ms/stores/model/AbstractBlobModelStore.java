@@ -64,9 +64,13 @@ public abstract class AbstractBlobModelStore<Storage extends BlobStorage> extend
         return Path.of(predictorType.isPositive() ? "pos" : "neg");
     }
 
+    public @Nullable InputStream getRawResource(@NotNull Path path, boolean autoExtHandling) throws IOException {
+        return blobStorage.reader(autoExtHandling ? addExt(path) : path);
+    }
+
     @Override
     public @Nullable InputStream getRawResource(@NotNull Path path) throws IOException {
-        return blobStorage.reader(addExt(path));
+        return getRawResource(path, true);
     }
 
     @Override
@@ -77,16 +81,29 @@ public abstract class AbstractBlobModelStore<Storage extends BlobStorage> extend
 
     @Override
     public @Nullable InputStream getRawResource(@NotNull Path path, @NotNull PredictorType predictorType) throws IOException {
-        return getRawResource(resolve(predictorType).resolve(path));
+        return getRawResource(path, predictorType, true);
+    }
+
+    public @Nullable InputStream getRawResource(@NotNull Path path, @NotNull PredictorType predictorType, boolean autoExtHandling) throws IOException {
+        return getRawResource(resolve(predictorType).resolve(path), autoExtHandling);
     }
 
     @Override
     public @Nullable InputStream getRawResource(@NotNull Path path, @NotNull PredictorType predictorType, @NotNull MolecularFormula formula) throws IOException {
-        return getRawResource(path, predictorType, formula, null);
+        return getRawResource(resolve(predictorType).resolve(path), predictorType, formula, true);
     }
 
+    public @Nullable InputStream getRawResource(@NotNull Path path, @NotNull PredictorType predictorType, @NotNull MolecularFormula formula, boolean autoExtHandling) throws IOException {
+        return getRawResource(path, predictorType, formula, null, autoExtHandling);
+    }
+
+
     public @Nullable InputStream getRawResource(@NotNull Path path, @NotNull PredictorType predictorType, @NotNull MolecularFormula formula, @Nullable String ext) throws IOException {
-        return getRawResource(resolve(predictorType).resolve(path).resolve(makeFormulaName(formula,ext)));
+        return getRawResource(path, predictorType, formula, ext, true);
+    }
+
+    public @Nullable InputStream getRawResource(@NotNull Path path, @NotNull PredictorType predictorType, @NotNull MolecularFormula formula, @Nullable String ext, boolean autoExtHandling) throws IOException {
+        return getRawResource(resolve(predictorType).resolve(path).resolve(makeFormulaName(formula,ext)), autoExtHandling);
     }
 
     @NotNull
