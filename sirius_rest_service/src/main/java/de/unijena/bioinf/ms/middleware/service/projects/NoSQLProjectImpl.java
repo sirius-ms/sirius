@@ -426,7 +426,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     .map(fpp -> fpp.getFingerprint().toProbabilityArray()).ifPresent(builder::predictedFingerprint);
 
 
-        if (optFields.contains(FormulaCandidate.OptField.canopusPredictions)) {
+        if (optFields.contains(FormulaCandidate.OptField.canopusPredictions) || optFields.contains(FormulaCandidate.OptField.compoundClasses)) {
             project().findByFormulaIdStr(fid, de.unijena.bioinf.ms.persistence.model.sirius.CanopusPrediction.class)
                     .findFirst().ifPresent(cr -> {
                         if (optFields.contains(FormulaCandidate.OptField.canopusPredictions))
