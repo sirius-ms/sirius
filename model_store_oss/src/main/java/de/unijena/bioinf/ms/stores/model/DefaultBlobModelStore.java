@@ -45,7 +45,7 @@ public class DefaultBlobModelStore<Storage extends BlobStorage> extends Abstract
 
     @Override
     public Optional<InputStream> getMsNovelistData(PredictorType type) throws IOException {
-        return getResource(Path.of("msnovelist-weights.hdf5"), type);
+        return Optional.ofNullable(getRawResource(Path.of("msnovelist-weights.hdf5"), type, false));
     }
 
     //todo insert if we have a real pos/neg model
