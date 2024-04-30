@@ -46,7 +46,7 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
         this.tableView = new SpectralMatchingTableView(matchList, this);
 
         JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableView, browser);
-        major.setDividerLocation(400);
+        major.setDividerLocation(250);
         add(major, BorderLayout.CENTER);
     }
 
@@ -61,12 +61,12 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
                 + "</html>";
     }
 
-    public void showMatch(BasicSpectrum query, BasicSpectrum reference) {
+    public void showMatch(BasicSpectrum query, BasicSpectrum reference, String svg) {
         try {
             if (reference == null || query == null)
                 this.browser.clear();
             else
-                this.browser.loadData(SpectraViewContainer.of(List.of(query, reference)), null, "normal", 5);
+                this.browser.loadData(SpectraViewContainer.of(List.of(query, reference)), svg, "normal", 5);
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).error("Error.", e);
         }
