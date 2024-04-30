@@ -278,7 +278,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                         .collect(Collectors.toCollection(ArrayList::new)));
     }
 
-    private String makeSVG(String smiles) {
+    public static String makeSVG(String smiles) {
         try {
             final MolecularGraph graph = new MolecularGraph(
                     new SmilesParser(SilentChemObjectBuilder.getInstance()).parseSmiles(smiles)
@@ -289,7 +289,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                     .withBackgroundColor(Colors.BACKGROUND)
                     .depict(graph.getMolecule()).toSvgStr();
         } catch (CDKException e) {
-            LoggerFactory.getLogger(getClass()).error("Error when creating Structure SVG from smiles!", e);
+            LoggerFactory.getLogger(SpectraVisualizationPanel.class).error("Error when creating Structure SVG from smiles!", e);
             return null;
         }
     }

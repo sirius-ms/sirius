@@ -30,6 +30,7 @@ import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SpectraVisualizationPanel;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SpectralMatchingPanel;
 import de.unijena.bioinf.ms.gui.table.*;
 import de.unijena.bioinf.ms.gui.utils.NameFilterRangeSlider;
@@ -90,7 +91,7 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
 
         filteredSelectionModel.addListSelectionListener(e -> {
             try {
-                parentPanel.showMatch(null, null);
+                parentPanel.showMatch(null, null, null);
 
                 backgroundLoaderLock.lock();
                 final SpectralMatchBean matchBean = filteredSelectionModel.getSelected().stream()
@@ -120,7 +121,7 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
                         if (data == null)
                             return false;
 
-                        parentPanel.showMatch(data.getLeft(), data.getRight());
+                        parentPanel.showMatch(data.getLeft(), data.getRight(), SpectraVisualizationPanel.makeSVG(matchBean.getMatch().getSmiles()));
                         return true;
                     }
                 });

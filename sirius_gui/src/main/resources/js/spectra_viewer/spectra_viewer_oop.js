@@ -729,7 +729,7 @@ class SpectrumPlot extends Base {
 }
 
 class MirrorPlot extends Base {
-    constructor(spectrum1, spectrum2, peakMatchesArr1, peakMatchesArr2, viewStyle, mzLabel) {
+    constructor(spectrum1, spectrum2, peakMatchesArr1, peakMatchesArr2, viewStyle, mzLabel, svg_str) {
         super();
         this.build();
         this.spectrum1 = spectrum1;
@@ -755,6 +755,7 @@ class MirrorPlot extends Base {
         this.y2;
         this.diffAra;
         this.mzLabelArea;
+        this.svg_str = svg_str;
     }
 
     static firstNChar(str, num) {
@@ -819,6 +820,30 @@ class MirrorPlot extends Base {
         };
         update_ruler(self, self.mzs1, "#ruler_1", duration);
         update_ruler(self, self.mzs2, "#ruler_2", duration);
+    }
+
+    static showStructure(self) {
+        self.strucArea.html("");
+        document.getElementById('str_border').innerHTML = self.svg_str;
+    }
+
+    initStructureView() {
+        var self = this;
+        this.strucArea = d3.select("#container")
+            .append('div')
+            .attr("id", "structureView")
+            .style("height", this.current.h + "px")
+            .style("width", this.w / 4 + "px")
+            .style("right", this.margin.outerRight + "px")
+            .append('div')
+            .attr("id", "str_border")
+            .style("height", this.w / 4 + "px")
+            .style("width", this.w / 4 + "px");
+        this.current.w = this.current.w / 4 * 3 - 15;
+        this.w = this.current.w - this.margin.left - this.margin.innerRight;
+        d3.select("#spectrumView").attr("width", this.current.w + "px");
+        d3.select("#xLabel").attr("x", this.w / 2);
+        this.svg.select("#clipArea").attr("width", this.w);
     }
 
     showMzLabel(k) {
@@ -952,6 +977,10 @@ class MirrorPlot extends Base {
 
     plot() {
         var self = this;
+        if (this.svg_str !== undefined) {
+            this.initStructureView();
+        }
+
         // initiation for difference and mass label
         if (this.viewStyle === 'difference') {
             this.new_h = this.h - this.margin.diff_vertical * 2;
@@ -1110,6 +1139,10 @@ class MirrorPlot extends Base {
         // difference and mz labels
         if (this.viewStyle === "difference") this.showDifference();
         if (this.mzLabel > 0) this.showMzLabel(this.mzLabel);
+        // structure view
+        if (this.svg_str !== undefined) {
+            MirrorPlot.showStructure(self);
+        }
         // mouse actions
         d3.select("#spectrumView").on("mousemove", function () {
             let currentY = d3.event.clientY;
@@ -1160,7 +1193,7 @@ class Main {
         } else {
             // MirrorPlot viewStyle: "simple"(+false), "normal"(+false), "difference without mzLabels"(+false), "difference with mzLabels"(+true)
             // current default style: "difference with mzLabels"(+true)
-            this.spectrumPlot = new MirrorPlot(this.data.spectra[0], this.data.spectra[1], this.data.peakMatches?.[0], this.data.peakMatches?.[1], this.mirrorStyle, this.showMz);
+            this.spectrumPlot = new MirrorPlot(this.data.spectra[0], this.data.spectra[1], this.data.peakMatches?.[0], this.data.peakMatches?.[1], this.mirrorStyle, this.showMz, this.svg_str);
         }
         window.addEventListener("resize", function () {
             self.spectrumPlot.build();
