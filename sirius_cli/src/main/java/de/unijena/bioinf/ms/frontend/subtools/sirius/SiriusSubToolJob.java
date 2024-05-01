@@ -20,11 +20,9 @@
 package de.unijena.bioinf.ms.frontend.subtools.sirius;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.CandidateFormulas;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
 import de.unijena.bioinf.fingerid.FormulaWhiteListJob;
 import de.unijena.bioinf.jjobs.JobSubmitter;
@@ -59,12 +57,27 @@ public class SiriusSubToolJob extends InstanceJob {
 
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
-        final Ms2Experiment exp = inst.getExperiment();
+        MutableMs2Experiment mut = inst.getExperiment().mutate();
         // set whiteSet or merge with whiteSet from db search if available
         CandidateFormulas wSet = null;
+        final Ms2Experiment exp;
 
         {
             checkForInterruption();
+
+            // If Ms1 only, IonMass is NaN here. That is getting fixed later in Ms2Validator, but we already need it for DB whitelists
+            if(mut.getMs2Spectra().isEmpty() && !mut.getMergedMs1Spectrum().isEmpty()){
+                final Spectrum<Peak> ms1 = mut.getMergedMs1Spectrum();
+                int index = Spectrums.getIndexOfPeakWithMaximalIntensity(ms1);
+                // move backward, maybe you are in the middle of an isotope pattern
+                while (index > 0) {
+                    if (Math.abs(ms1.getMzAt(index) - ms1.getMzAt(index - 1)) > 1.1d) break;
+                    --index;
+                }
+                mut.setIonMass(ms1.getMzAt(index));
+            }
+            exp= mut;
+
 
             // create WhiteSet from DB if necessary
             final Optional<FormulaSearchDB> searchDB = exp.getAnnotation(FormulaSearchDB.class);
