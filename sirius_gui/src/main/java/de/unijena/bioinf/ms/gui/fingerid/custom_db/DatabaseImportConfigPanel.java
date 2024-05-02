@@ -43,7 +43,7 @@ import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isLoggedIn;
 public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOptions> {
 
     private PlaceholderTextField dbDisplayNameField;
-    private PlaceholderTextField dbNameField;
+    private PlaceholderTextField dbFileNameField;
     private FileChooserPanel dbLocationField;
     private DefaultListModel<File> fileListModel;
 
@@ -128,28 +128,27 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
                 "This is the preferred name to be shown in the GUI. Maximum Length: 15 characters. " +
                 "If not given the filename will be used."));
         parameterBindings.put("displayName", dbDisplayNameField::getText);
-        dbNameField = new PlaceholderTextField("");
-        smalls.addNamed("Filename", dbNameField, GuiUtils.formatToolTip("Filename and unique identifier of the new custom database, should end in " + CUSTOM_DB_SUFFIX));
+        dbFileNameField = new PlaceholderTextField("");
+        smalls.addNamed("Filename", dbFileNameField, GuiUtils.formatToolTip("Filename and unique identifier of the new custom database, should end in " + CUSTOM_DB_SUFFIX));
 
-        String dbDirectory = db != null ? Path.of(db.getLocation()).getParent().toString()
-                : PropertyManager.getProperty(SiriusProperties.DEFAULT_SAVE_DIR_PATH, null, "");
+        Path dbFilePath = db != null && db.getLocation() != null ? Path.of(db.getLocation()) : null;
 
-        dbLocationField = new FileChooserPanel(dbDirectory, JFileChooser.DIRECTORIES_ONLY);
+        dbLocationField = new FileChooserPanel(dbFilePath != null ? dbFilePath.getParent().toString() : PropertyManager.getProperty(SiriusProperties.DEFAULT_SAVE_DIR_PATH, null, ""), JFileChooser.DIRECTORIES_ONLY);
         smalls.addNamed("Location", dbLocationField, "The directory where the custom database file will be stored.");
         parameterBindings.put("location", this::getDbFilePath);
-        validDbDirectory = !dbDirectory.isEmpty();
+        validDbDirectory = !dbLocationField.getFilePath().isEmpty();
 
         if (db != null) {
             dbDisplayNameField.setText(db.getDisplayName());
             dbDisplayNameField.setEnabled(false);
-            dbNameField.setText(db.getDatabaseId());
-            dbNameField.setEnabled(false);
+            dbFileNameField.setText(dbFilePath != null ? dbFilePath.getFileName().toString() : null);
+            dbFileNameField.setEnabled(false);
             dbLocationField.setEnabled(false);
             validDbName = true;
             validDbDisplayName = true;
         } else {
             dbDisplayNameField.setPlaceholder("My Database");
-            dbNameField.setPlaceholder("my_database" + CUSTOM_DB_SUFFIX);
+            dbFileNameField.setPlaceholder("my_database" + CUSTOM_DB_SUFFIX);
         }
 
         dbDisplayNameField.addFocusListener(new FocusAdapter() {
@@ -157,21 +156,21 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
             public void focusLost(FocusEvent e) {
                 String name = dbDisplayNameField.getText();
 
-                if (dbNameField.getText() == null || dbNameField.getText().isBlank()) {
+                if (dbFileNameField.getText() == null || dbFileNameField.getText().isBlank()) {
                     if (!name.isBlank()) {
                         name = FileUtils.sanitizeFilename(name).toLowerCase();
                         if (!name.endsWith(CUSTOM_DB_SUFFIX))
                             name = name + CUSTOM_DB_SUFFIX;
-                        dbNameField.setText(name);
+                        dbFileNameField.setText(name);
                     }
                 }
             }
         });
 
-        dbNameField.addFocusListener(new FocusAdapter() {
+        dbFileNameField.addFocusListener(new FocusAdapter() {
             @Override
             public void focusLost(FocusEvent e) {
-                String name = dbNameField.getText();
+                String name = dbFileNameField.getText();
 
                 if (name.isBlank()) {
                     String displayName = dbDisplayNameField.getText();
@@ -179,10 +178,10 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
                         name = FileUtils.sanitizeFilename(displayName).toLowerCase();
                         if (!name.endsWith(CUSTOM_DB_SUFFIX))
                             name = name + CUSTOM_DB_SUFFIX;
-                        dbNameField.setText(name);
+                        dbFileNameField.setText(name);
                     }
                 } else if (!name.endsWith(CUSTOM_DB_SUFFIX)) {
-                    dbNameField.setText(name + CUSTOM_DB_SUFFIX);
+                    dbFileNameField.setText(name + CUSTOM_DB_SUFFIX);
                 }
             }
         });
@@ -207,7 +206,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
             }
         });
 
-        dbNameField.setInputVerifier(new ErrorReportingDocumentListener(dbNameField) {
+        dbFileNameField.setInputVerifier(new ErrorReportingDocumentListener(dbFileNameField) {
             @Override
             public String getErrorMessage(JComponent input) {
                 String name = ((JTextField) input).getText();
@@ -358,7 +357,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
     }
 
     public String getDbFilePath() {
-        return Path.of(dbLocationField.getFilePath(), dbNameField.getText()).toString();
+        return Path.of(dbLocationField.getFilePath(), dbFileNameField.getText()).toString();
     }
 
     /**
