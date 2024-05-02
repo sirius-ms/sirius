@@ -21,10 +21,12 @@
 package de.unijena.bioinf.ms.gui.fingerid.custom_db;
 
 import de.unijena.bioinf.jjobs.LoadingBackroundTask;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.nightsky.sdk.jjobs.SseProgressJJob;
 import de.unijena.bioinf.ms.nightsky.sdk.model.*;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +44,12 @@ import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isLoggedIn;
 
 class ImportDatabaseDialog extends JDialog {
     public static final String DO_NOT_SHOW_AGAIN_KEY_INCOMPLETE_IMPORTED_DB = "de.unijena.bioinf.sirius.importDatabaseDialog.keepIncompleteDb.dontAskAgain";
+
+    public static final String DO_NOT_SHOW_AGAIN_KEY_CENTROIDED_WARNING = "de.unijena.bioinf.sirius.importDatabaseDialog.centroided.dontAskAgain";
+
+    private static final String CENTROIDED_QUESTION = "SIRIUS supports only centroided mass spectra!<br>" +
+            "Importing non-centroided spectra will negatively impact its performance.<br>" +
+            "Are you sure the spectra are centroided and wish to continue?";
 
     private final DatabaseDialog databaseDialog;
     protected DatabaseImportConfigPanel configPanel;
@@ -72,6 +80,21 @@ class ImportDatabaseDialog extends JDialog {
 
     protected void runImportJob() {
         try {
+            if (configPanel.hasSpectraFiles() && new QuestionDialog(
+                    databaseDialog.gui.getMainFrame(),
+                    CENTROIDED_QUESTION,
+                    DO_NOT_SHOW_AGAIN_KEY_CENTROIDED_WARNING
+            ) {
+                @Override
+                protected void saveDoNotAskMeAgain() {
+                    // always save success! (otherwise db import won't get started!)
+                    if (dontAsk != null && property != null && !property.isBlank() && dontAsk.isSelected())
+                        SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(property, ReturnValue.Success.name());
+                }
+            }.isCancel()) {
+                throw new CancellationException();
+            }
+
             LoadingBackroundTask<Boolean> job = Jobs.runInBackgroundAndLoad(
                     databaseDialog.gui.getMainFrame(), "Checking Server Connection...", () -> {
                         ConnectionCheck check = databaseDialog.getGui().getConnectionMonitor().checkConnection();
@@ -92,15 +115,13 @@ class ImportDatabaseDialog extends JDialog {
                         new SseProgressJJob(databaseDialog.gui.getSiriusClient(), pid, j));
             }).awaitResult();
         } catch (Exception ex) {
-            LoggerFactory.getLogger(getClass()).error("Error during Custom DB import.", ex);
-            if (ex.getCause() instanceof CancellationException) {
-                //do nothing just canceled
-            } else if (ex instanceof ExecutionException) {
+            if (ex instanceof ExecutionException) {
+                LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB import.", ex);
                 if (ex.getCause() != null)
                     new StacktraceDialog(this, ex.getCause().getMessage(), ex.getCause());
                 else
                     new StacktraceDialog(this, "Unexpected error when importing custom DB!", ex);
-            } else {
+            } else if (!(ex instanceof CancellationException) && !(ex.getCause() instanceof CancellationException)) {
                 LoggerFactory.getLogger(getClass()).error("Fatal Error during Custom DB import.", ex);
                 new StacktraceDialog(databaseDialog.getGui().getMainFrame(), "Fatal Error during Custom DB import.", ex);
             }
