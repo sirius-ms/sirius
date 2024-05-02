@@ -108,22 +108,24 @@ public class Ms2Validator extends Ms1Validator {
                 final Spectrum<Peak> ms1 = input.getMergedMs1Spectrum();
                 // maybe the ms2 spectra have a common precursor
                 boolean found = true;
-                double mz = input.getMs2Spectra().get(0).getPrecursorMz();
-                for (Ms2Spectrum s : input.getMs2Spectra()) {
-                    if (!validDouble(s.getPrecursorMz(), false) || s.getPrecursorMz() == 0) {
-                        found = false;
-                        break;
+                if (!input.getMs2Spectra().isEmpty()) {
+                    double mz = input.getMs2Spectra().get(0).getPrecursorMz();
+                    for (Ms2Spectrum s : input.getMs2Spectra()) {
+                        if (!validDouble(s.getPrecursorMz(), false) || s.getPrecursorMz() == 0) {
+                            found = false;
+                            break;
+                        }
+                        final double newMz = s.getPrecursorMz();
+                        if (Math.abs(mz - newMz) > 1e-3) {
+                            found = false;
+                            break;
+                        }
                     }
-                    final double newMz = s.getPrecursorMz();
-                    if (Math.abs(mz - newMz) > 1e-3) {
-                        found = false;
-                        break;
+                    if (found) {
+                        input.setIonMass(mz);
                     }
-                }
-                if (found) {
-                    input.setIonMass(mz);
                 } else {
-                    if (ms1 == null || ms1.size()==0) {
+                    if (ms1 == null || ms1.isEmpty()) {
                         // use the highest mass you find in the MS2 spectra with lowest collision energy as parent mass.
                         // (only if its intensity is higher than 10% and higher than peaks in its neighbourhood)
                         Ms2Spectrum spec = input.getMs2Spectra().get(0);
