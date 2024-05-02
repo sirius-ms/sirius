@@ -42,7 +42,9 @@ public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConf
 
         if (enabled) {
             if (new QuestionDialog(gui.getMainFrame(), "Do you require de novo structure generation?",
-                    GuiUtils.formatToolTip("Please note that de novo structure elucidation from MS data remains challenging. For most applications, searching in a molecular structure database with CSI:FingerID shouldbe default.", "", "Do you wish to continue anyways?"),
+                    GuiUtils.formatToolTip("Please note that de novo structure elucidation from MS data remains challenging. For most applications, searching in a molecular structure database with CSI:FingerID should be default.",
+                                                  "Additionally, please note that MSNovelist may increase overall running time considerably.",
+                                                  "", "Do you wish to continue anyways?"),
                     adviceKey).isCancel()) {
                 super.setComponentsEnabled(false);
                 super.activationButton.setSelected(false);
