@@ -367,4 +367,9 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
     public String getFiles() {
         return Arrays.stream(fileListModel.toArray()).map(f -> ((File) f).getAbsolutePath()).distinct().collect(Collectors.joining(","));
     }
+
+    public boolean hasSpectraFiles() {
+        return Arrays.stream(fileListModel.toArray()).anyMatch(f -> supportedSpectraFiles.accept((File) f));
+    }
+
 }
