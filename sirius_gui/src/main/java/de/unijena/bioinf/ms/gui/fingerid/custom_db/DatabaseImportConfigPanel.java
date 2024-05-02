@@ -132,11 +132,12 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
         smalls.addNamed("Filename", dbFileNameField, GuiUtils.formatToolTip("Filename and unique identifier of the new custom database, should end in " + CUSTOM_DB_SUFFIX));
 
         Path dbFilePath = db != null && db.getLocation() != null ? Path.of(db.getLocation()) : null;
+        String dbDirectory = dbFilePath != null ? dbFilePath.getParent().toString() : PropertyManager.getProperty(SiriusProperties.DEFAULT_SAVE_DIR_PATH, null, "");
 
-        dbLocationField = new FileChooserPanel(dbFilePath != null ? dbFilePath.getParent().toString() : PropertyManager.getProperty(SiriusProperties.DEFAULT_SAVE_DIR_PATH, null, ""), JFileChooser.DIRECTORIES_ONLY);
+        dbLocationField = new FileChooserPanel(dbDirectory, JFileChooser.DIRECTORIES_ONLY);
         smalls.addNamed("Location", dbLocationField, "The directory where the custom database file will be stored.");
         parameterBindings.put("location", this::getDbFilePath);
-        validDbDirectory = !dbLocationField.getFilePath().isEmpty();
+        validDbDirectory = !dbDirectory.isBlank();
 
         if (db != null) {
             dbDisplayNameField.setText(db.getDisplayName());
