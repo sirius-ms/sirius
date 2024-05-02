@@ -74,7 +74,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
     public static class Import {
         @Option(names = "--location", required = true,
                 description = {"Location of the custom database to import into.",
-                        "An absolute local path to a new database file file to be created (file name must end with .db)",
+                        "An absolute local path to a new database file file to be created (file name must end with .siriusdb)",
                         "If no input data is given (--input), the database will just be added to SIRIUS",
                         "The added db will also be available in the GUI."}, order = 201)
         private String location = null;
