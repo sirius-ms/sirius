@@ -31,9 +31,9 @@ public class SpectralMatchingResult {
     private List<SpectralLibraryMatch> libraryMatches;
     private final Map<String, List<SpectralLibraryMatch>> resultMap = new HashMap<>();
 
-    private static final int MIN_SHARED_PEAKS = PropertyManager.getInteger("de.unijena.bioinf.sirius.spectralAlignment.minPeaks", 3);
+    private static final int MIN_SHARED_PEAKS = PropertyManager.getInteger("de.unijena.bioinf.sirius.spectralAlignment.minPeaks", 1);
 
-    private static final double MIN_SIMILARITY = PropertyManager.getDouble("de.unijena.bioinf.sirius.spectralAlignment.minScore", 0.9);
+    private static final double MIN_SIMILARITY = PropertyManager.getDouble("de.unijena.bioinf.sirius.spectralAlignment.minScore", 0.2);
 
     public SpectralMatchingResult(List<SpectralLibraryMatch> libraryMatches) {
         for (SpectralLibraryMatch match : libraryMatches) {
