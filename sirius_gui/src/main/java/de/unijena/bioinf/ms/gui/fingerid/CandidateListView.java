@@ -39,7 +39,6 @@ import java.awt.*;
 public class CandidateListView extends ActionListDetailView<FingerprintCandidateBean, InstanceBean, StructureList> {
 
 //    private FilterRangeSlider<StructureList, FingerprintCandidateBean, InstanceBean> logPSlider;
-    private FilterRangeSlider<StructureList, FingerprintCandidateBean, InstanceBean> tanimotoSlider;
     private DBFilterPanel dbFilterPanel;
 
 
@@ -69,14 +68,12 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
         tb.setLayout(new WrapLayout(FlowLayout.LEFT, 0, 0));
 
 //        logPSlider = new FilterRangeSlider<>(source, source.logPStats);
-        tanimotoSlider = new FilterRangeSlider<>(source, source.tanimotoStats, true);
 
         dbFilterPanel = new DBFilterPanel(source);
         dbFilterPanel.toggle();
 
 //        tb.add(new NameFilterRangeSlider("XLogP:", logPSlider));
 //        tb.addSeparator();
-        tb.add(new NameFilterRangeSlider("Similarity:", tanimotoSlider));
         tb.addSeparator();
 
 
@@ -84,10 +81,10 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
         filter.addActionListener(e -> {
             if (dbFilterPanel.toggle()) {
                 filter.setIcon(Icons.FILTER_UP_24);
-                filter.setToolTipText("hide filter");
+                filter.setToolTipText("Hide source filters");
             } else {
                 filter.setIcon(Icons.FILTER_DOWN_24);
-                filter.setToolTipText("show filter");
+                filter.setToolTipText("Show source filters");
             }
         });
         tb.add(filter);
@@ -108,8 +105,6 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
                 new CandidateStringMatcherEditor(searchField.textField)
 //                ,new MinMaxMatcherEditor<>(logPSlider, (baseList, element) ->
 //                        element.getXLogPOpt().ifPresentOrElse(baseList::add, () -> baseList.add(null)))
-                ,new MinMaxMatcherEditor<>(tanimotoSlider, (baseList, element) ->
-                        baseList.add(element.getTanimotoScore()))
                , new DatabaseFilterMatcherEditor(dbFilterPanel)
         );
     }
