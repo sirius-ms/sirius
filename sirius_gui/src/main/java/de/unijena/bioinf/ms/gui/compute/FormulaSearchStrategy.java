@@ -124,8 +124,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
         strategyComponents.put(Strategy.BOTTOM_UP, new ArrayList<>());
         strategyComponents.put(Strategy.DE_NOVO, new ArrayList<>());
         strategyComponents.put(Strategy.DATABASE, new ArrayList<>());
+        strategyBox = isMs2 ? GuiUtils.makeParameterComboBoxFromDescriptiveValues(Strategy.values()) : GuiUtils.makeParameterComboBoxFromDescriptiveValues(new Strategy[]{Strategy.DE_NOVO,Strategy.DATABASE});
 
-        strategyBox = GuiUtils.makeParameterComboBoxFromDescriptiveValues(Strategy.values());
 
         createPanel();
         strategyBox.setSelectedItem(Strategy.DE_NOVO);

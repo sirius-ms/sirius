@@ -28,7 +28,7 @@ import java.util.function.Supplier;
 
 public class QuestionDialog extends DoNotShowAgainDialog {
 
-    private ReturnValue rv;
+    protected ReturnValue rv;
 
     public QuestionDialog(Window owner, String question) {
         this(owner, question, null);
