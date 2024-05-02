@@ -47,15 +47,15 @@ public class MolecularPropertyMatcherEditor extends AbstractMatcherEditor<Finger
 
     public static class MolecularPropertyMatcher implements Matcher<FingerprintCandidateBean> {
         boolean filterIsActiv;
-        int id;
+        int absoluteFPIndex;
 
         public MolecularPropertyMatcher(boolean buttonIsSelected, StructureSearcher structureSearcher) {
             if (structureSearcher != null) {
-                id = structureSearcher.highlight;
+                absoluteFPIndex = structureSearcher.highlight;
             } else {
-                id = 0;
+                absoluteFPIndex = 0;
             }
-            if (buttonIsSelected && id > 0) {
+            if (buttonIsSelected && absoluteFPIndex > 0) {
                 filterIsActiv = true;
             } else {
                 filterIsActiv = false;
@@ -65,7 +65,7 @@ public class MolecularPropertyMatcherEditor extends AbstractMatcherEditor<Finger
         @Override
         public boolean matches(FingerprintCandidateBean candidate) {
             if (filterIsActiv) {
-                return candidate.hasFingerprintIndex(id);
+                return candidate.hasFingerprintIndex(candidate.getPredictedFingerprint().getFingerprintVersion().getRelativeIndexOf(absoluteFPIndex));
             } else {
                 return true;
             }
