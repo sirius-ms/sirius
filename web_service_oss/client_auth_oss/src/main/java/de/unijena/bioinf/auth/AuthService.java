@@ -152,15 +152,15 @@ public class AuthService implements IOFunctions.IOConsumer<Request.Builder>, Clo
     }
 
     protected Token requestAccessTokenRefreshFlow() throws IOException, ExecutionException, InterruptedException {
-        return new Token((OpenIdOAuth2AccessToken) service.refreshAccessToken(refreshToken, "offline_access openid license:v3 license:full"));
+        return new Token((OpenIdOAuth2AccessToken) service.refreshAccessToken(refreshToken, "offline_access openid profile email license:v3 license:full"));
     }
 
     private Token requestAccessTokenRefreshFlow(@NotNull String refreshToken) throws IOException, ExecutionException, InterruptedException {
-        return new Token((OpenIdOAuth2AccessToken) service.refreshAccessToken(refreshToken, "offline_access openid license:v3 license:full"));
+        return new Token((OpenIdOAuth2AccessToken) service.refreshAccessToken(refreshToken, "offline_access openid profile email license:v3 license:full"));
     }
 
     protected Token requestAccessTokenPasswordFlow(String username, String password) throws IOException, ExecutionException, InterruptedException {
-        return new Token((OpenIdOAuth2AccessToken) service.getAccessTokenPasswordGrant(username, password, "offline_access openid license:v3 license:full")); // license:full request token and new refresh token
+        return new Token((OpenIdOAuth2AccessToken) service.getAccessTokenPasswordGrant(username, password, "offline_access openid profile email license:v3 license:full")); // license:full request token and new refresh token
     }
 
     /**
