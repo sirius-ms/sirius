@@ -30,23 +30,23 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 
 public class CosineQueryUtils {
-    private final AbstractSpectralAlignment spectralAlignmentMethod;
+    private final AbstractSpectralMatching spectralMatchingMethod;
 
     private static final Normalization NORMALIZATION = Normalization.Sum(100);
 
-    public CosineQueryUtils(AbstractSpectralAlignment spectralAlignmentMethod) {
-        this.spectralAlignmentMethod = spectralAlignmentMethod;
+    public CosineQueryUtils(AbstractSpectralMatching spectralMatchingMethod) {
+        this.spectralMatchingMethod = spectralMatchingMethod;
     }
 
     /**
      * create a query for cosine computation
      */
     public CosineQuerySpectrum createQuery(OrderedSpectrum<Peak> spectrum, double precursorMz){
-        return CosineQuerySpectrum.newInstance(spectrum, precursorMz, spectralAlignmentMethod);
+        return CosineQuerySpectrum.newInstance(spectrum, precursorMz, spectralMatchingMethod);
     }
 
     public CosineQuerySpectrum createQueryWithoutLoss(OrderedSpectrum<Peak> spectrum, double precursorMz){
-        return CosineQuerySpectrum.newInstanceWithoutLoss(spectrum, precursorMz, spectralAlignmentMethod);
+        return CosineQuerySpectrum.newInstanceWithoutLoss(spectrum, precursorMz, spectralMatchingMethod);
     }
 
     public CosineQuerySpectrum createQueryWithIntensityTransformation(Spectrum<Peak> spectrum, double precursorMz, boolean transformSqrtIntensity){
@@ -72,9 +72,9 @@ public class CosineQueryUtils {
         Spectrums.normalize(mutableSpectrum, NORMALIZATION);
 
         if (Spectrums.isMassOrderedSpectrum(mutableSpectrum)){
-            return CosineQuerySpectrum.newInstance(Spectrums.getAlreadyOrderedSpectrum(mutableSpectrum), precursorMz, spectralAlignmentMethod);
+            return CosineQuerySpectrum.newInstance(Spectrums.getAlreadyOrderedSpectrum(mutableSpectrum), precursorMz, spectralMatchingMethod);
         } else {
-            return CosineQuerySpectrum.newInstance(new SimpleSpectrum(mutableSpectrum), precursorMz, spectralAlignmentMethod);
+            return CosineQuerySpectrum.newInstance(new SimpleSpectrum(mutableSpectrum), precursorMz, spectralMatchingMethod);
         }
 
     }
@@ -97,9 +97,9 @@ public class CosineQueryUtils {
         Spectrums.normalize(mutableSpectrum, NORMALIZATION);
 
         if (Spectrums.isMassOrderedSpectrum(mutableSpectrum)){
-            return CosineQuerySpectrum.newInstance(Spectrums.getAlreadyOrderedSpectrum(mutableSpectrum), precursorMz, spectralAlignmentMethod);
+            return CosineQuerySpectrum.newInstance(Spectrums.getAlreadyOrderedSpectrum(mutableSpectrum), precursorMz, spectralMatchingMethod);
         } else {
-            return CosineQuerySpectrum.newInstance(new SimpleSpectrum(mutableSpectrum), precursorMz, spectralAlignmentMethod);
+            return CosineQuerySpectrum.newInstance(new SimpleSpectrum(mutableSpectrum), precursorMz, spectralMatchingMethod);
         }
 
     }
@@ -117,12 +117,12 @@ public class CosineQueryUtils {
     }
 
     public SpectralSimilarity cosineProduct(CosineQuerySpectrum query1, CosineQuerySpectrum query2) {
-        SpectralSimilarity similarity = spectralAlignmentMethod.score(query1.spectrum, query2.spectrum, query1.precursorMz, query2.precursorMz);
+        SpectralSimilarity similarity = spectralMatchingMethod.score(query1.spectrum, query2.spectrum, query1.precursorMz, query2.precursorMz);
         return new SpectralSimilarity(similarity.similarity /Math.sqrt(query1.selfSimilarity*query2.selfSimilarity), similarity.sharedPeaks);
     }
 
     public SpectralSimilarity cosineProductOfInverse(CosineQuerySpectrum query, CosineQuerySpectrum query2) {
-        SpectralSimilarity similarity = spectralAlignmentMethod.score(query.inverseSpectrum, query2.inverseSpectrum, query.precursorMz, query2.precursorMz);
+        SpectralSimilarity similarity = spectralMatchingMethod.score(query.inverseSpectrum, query2.inverseSpectrum, query.precursorMz, query2.precursorMz);
         return new SpectralSimilarity(similarity.similarity /(Math.sqrt(query.selfSimilarityLosses*query2.selfSimilarityLosses)), similarity.sharedPeaks);
     }
 

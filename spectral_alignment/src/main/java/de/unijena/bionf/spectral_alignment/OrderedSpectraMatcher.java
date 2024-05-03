@@ -34,8 +34,8 @@ public class OrderedSpectraMatcher {
     private final CosineQueryUtils queryUtils;
     private final CosineSpectraMatcher cosineMatcher;
 
-    public OrderedSpectraMatcher(SpectralAlignmentType alignmentType, Deviation maxPeakDeviation) {
-        if (alignmentType == SpectralAlignmentType.MODIFIED_COSINE) {
+    public OrderedSpectraMatcher(SpectralMatchingType alignmentType, Deviation maxPeakDeviation) {
+        if (alignmentType == SpectralMatchingType.MODIFIED_COSINE) {
             throw new IllegalArgumentException("Modified cosine scoring needs precursor mass, use CosineSpectraMatcher.");
         }
         queryUtils = new CosineQueryUtils(alignmentType.getScorer(maxPeakDeviation));
