@@ -33,7 +33,7 @@ import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
-import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
+import de.unijena.bionf.spectral_alignment.SpectralMatchingType;
 import de.unijena.bionf.spectral_alignment.SpectralMatchMasterJJob;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Rule;
@@ -47,14 +47,14 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-public class SpectralAlignmentJJobTest {
+public class SpectraMatchingJJobTest {
 
     @Rule public MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
 
     @Test
     public void testGetCosineQueries() {
-        SpectralAlignmentJJob job = new SpectralAlignmentJJob(null, null);
-        CosineQueryUtils utils = new CosineQueryUtils(SpectralAlignmentType.INTENSITY.getScorer(new Deviation(10)));
+        SpectraMatchingJJob job = new SpectraMatchingJJob(null, null);
+        CosineQueryUtils utils = new CosineQueryUtils(SpectralMatchingType.INTENSITY.getScorer(new Deviation(10)));
 
         Ms2Spectrum<Peak> q1 = new MutableMs2Spectrum(new SimpleSpectrum(new double[] {1d, 2d}, new double[] {1d, 2d}), 3, null, 0);
         Ms2Spectrum<Peak> q2 = new MutableMs2Spectrum(new SimpleSpectrum(new double[] {1d, 3d}, new double[] {1d, 2d}), 4, null, 0);
@@ -74,8 +74,8 @@ public class SpectralAlignmentJJobTest {
 
     @Test
     public void testGetJJobsForDb() throws ChemicalDatabaseException {
-        SpectralAlignmentJJob job = new SpectralAlignmentJJob(null, null);
-        CosineQueryUtils utils = new CosineQueryUtils(SpectralAlignmentType.INTENSITY.getScorer(new Deviation(10)));
+        SpectraMatchingJJob job = new SpectraMatchingJJob(null, null);
+        CosineQueryUtils utils = new CosineQueryUtils(SpectralMatchingType.INTENSITY.getScorer(new Deviation(10)));
 
         Ms2Spectrum<Peak> q1 = new MutableMs2Spectrum();
         Ms2Spectrum<Peak> q2 = new MutableMs2Spectrum();
@@ -118,8 +118,8 @@ public class SpectralAlignmentJJobTest {
 
     @Test
     public void testExtractResults() {
-        SpectralAlignmentJJob job = new SpectralAlignmentJJob(null, null);
-        CosineQueryUtils utils = new CosineQueryUtils(SpectralAlignmentType.INTENSITY.getScorer(new Deviation(10)));
+        SpectraMatchingJJob job = new SpectraMatchingJJob(null, null);
+        CosineQueryUtils utils = new CosineQueryUtils(SpectralMatchingType.INTENSITY.getScorer(new Deviation(10)));
 
         SimpleSpectrum query = new SimpleSpectrum(new double[] {1d}, new double[] {1d});
         int queryIndex = 5;
