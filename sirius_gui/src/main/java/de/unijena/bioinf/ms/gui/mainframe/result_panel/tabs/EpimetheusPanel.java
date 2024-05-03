@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.gui.fingerid.CandidateListTableView;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
+import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateFormula;
 
 import javax.swing.*;
@@ -44,11 +45,11 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
     }
 
     protected final StructureList structureList;
-    protected final CandidateListTableView candidateTable;
+    protected final EpimetheusPanelCandidateListTableView candidateTable;
     public EpimetheusPanel(final StructureList structureList) {
         super(new BorderLayout());
         this.structureList = structureList;
-        this.candidateTable = new CandidateListTableView(structureList);
+        this.candidateTable = new EpimetheusPanelCandidateListTableView(structureList);
         final SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel(SpectraVisualizationPanel.MS2_DISPLAY);
 
         candidateTable.getFilteredSelectionModel().addListSelectionListener(e -> {
@@ -70,5 +71,26 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
 
     public CandidateListTableView getCandidateTable() {
         return candidateTable;
+    }
+
+    protected class EpimetheusPanelCandidateListTableView extends CandidateListTableView {
+        ToolbarToggleButton showMSNovelist;
+
+        public EpimetheusPanelCandidateListTableView(StructureList list) {
+            super(list);
+        }
+
+        @Override
+        protected JToolBar getToolBar() {
+            JToolBar tb = super.getToolBar();
+
+            ToolbarToggleButton showMSNovelist = new ToolbarToggleButton("Include MSNovelist", null, "include MSNovelist structure candidates.");
+
+            tb.add(showMSNovelist);
+
+            showMSNovelist.addActionListener(e -> structureList.reloadData(loadAll.isSelected(), true, showMSNovelist.isSelected()));
+            showMSNovelist.setSelected(true);
+            return tb;
+        }
     }
 }

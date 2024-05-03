@@ -33,6 +33,8 @@ import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
@@ -45,6 +47,8 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
     public final DoubleListStats tanimotoStats;
 
     private final AtomicBoolean loadAll = new AtomicBoolean(false);
+    private final AtomicBoolean loadDatabaseHitsAtom = new AtomicBoolean(true);
+    private final AtomicBoolean loadDenovoAtom = new AtomicBoolean(true);
 
     private final CompoundList compoundList;
 
@@ -103,10 +107,10 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
     private final Lock backgroundLoaderLock = new ReentrantLock();
 
     private void changeData(final InstanceBean ec) {
-        changeData(ec, loadAll.get());
+        changeData(ec, loadAll.get(), loadDatabaseHitsAtom.get(), loadDenovoAtom.get());
     }
 
-    public void changeData(final InstanceBean ec, final boolean loadAllCandidates) {
+    public void changeData(final InstanceBean ec, final boolean loadAllCandidates, boolean loadDatabaseHits, boolean loadDenovo) {
         //may be io intense so run in background and execute ony ui updates from EDT to not block the UI too much
         try {
             backgroundLoaderLock.lock();
@@ -129,12 +133,15 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
                             logPStats.reset();
                             tanimotoStats.reset();
                             loadAll.set(loadAllCandidates);
+                            loadDatabaseHitsAtom.set(loadDatabaseHits);
+                            loadDenovoAtom.set(loadDenovo);
                     });
 
                     checkForInterruption();
 
                     if (ec != null) {
-                        final List<FingerprintCandidateBean> fpcChache = dataExtractor.apply(ec, loadAllCandidates ? Integer.MAX_VALUE : 100);
+                        final List<FingerprintCandidateBean> fpcChache = filterList(dataExtractor.apply(ec, loadAllCandidates ? Integer.MAX_VALUE : 100), loadDatabaseHits, loadDenovo); //todo only by convention dataExtractor will also provide database and denovo hits as expected.
+                        if (loadDatabaseHits && loadDenovo) recalculatedRanks(fpcChache);
                         //prepare stats for filters and views before setting data
                         fpcChache.forEach(fpc ->{
                             csiScoreStats.addValue(fpc.getCandidate().getCsiScore());
@@ -165,9 +172,35 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
         }
     }
 
-    protected void reloadData(boolean loadAll) {
-        if (loadAll != this.loadAll.get())
-            readDataByConsumer(d -> changeData(d, loadAll));
+    private List<FingerprintCandidateBean> filterList(List<FingerprintCandidateBean> fpcList, boolean loadDatabaseHits, boolean loadDenovo) {
+        List<FingerprintCandidateBean> filtered = new LinkedList<>();
+        for (FingerprintCandidateBean fpc : fpcList) {
+            boolean isDenovo = fpc.isDeNovo();
+            if ((isDenovo && loadDenovo) || (!isDenovo && loadDatabaseHits)){
+                filtered.add(fpc);
+            }
+        }
+        return filtered;
+    }
+
+    private void recalculatedRanks(List<FingerprintCandidateBean> fpcChache) {
+        fpcChache.sort(Comparator.comparingDouble((a) -> -a.getCandidate().getCsiScore()));
+        int rank = 0;
+        String lastKey = null;
+        for (int i = 0; i < fpcChache.size(); i++) {
+            FingerprintCandidateBean fc = fpcChache.get(i);
+            if (i>0 && fc.getCandidate().getInchiKey().equals(lastKey)) {
+                fc.getCandidate().setRank(rank);
+            } else {
+                fc.getCandidate().setRank(++rank);
+                lastKey = fc.getCandidate().getInchiKey();
+            }
+        }
+    }
+
+    public void reloadData(boolean loadAll, boolean loadDatabaseHits, boolean loadDenovo) {
+        if (loadAll != this.loadAll.get() || loadDatabaseHits != loadDatabaseHitsAtom.get() || loadDenovo != loadDenovoAtom.get() )
+            readDataByConsumer(d -> changeData(d, loadAll, loadDatabaseHits, loadDenovo));
     }
 
     protected Function<FingerprintCandidateBean, Boolean> getBestFunc() {

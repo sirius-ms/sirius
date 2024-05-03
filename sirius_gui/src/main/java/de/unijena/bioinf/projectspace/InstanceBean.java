@@ -275,7 +275,7 @@ public class InstanceBean implements SiriusPCS {
     }
 
     public List<FingerprintCandidateBean> getStructureCandidates(int topK, boolean fp) {
-        return toFingerprintCandidateBeans(getStructureCandidatesPage(topK, fp));
+        return toFingerprintCandidateBeans(getStructureCandidatesPage(topK, fp), false);
     }
 
     public PageStructureCandidateFormula getStructureCandidatesPage(int topK, boolean fp) {
@@ -290,7 +290,7 @@ public class InstanceBean implements SiriusPCS {
 
 
     public List<FingerprintCandidateBean> getDeNovoStructureCandidates(int topK, boolean fp) {
-        return toFingerprintCandidateBeans(getDeNovoStructureCandidatesPage(topK,fp));
+        return toFingerprintCandidateBeans(getDeNovoStructureCandidatesPage(topK,fp), true);
     }
 
 
@@ -305,7 +305,7 @@ public class InstanceBean implements SiriusPCS {
     }
 
     @Nullable
-    private List<FingerprintCandidateBean> toFingerprintCandidateBeans(PageStructureCandidateFormula page) {
+    private List<FingerprintCandidateBean> toFingerprintCandidateBeans(PageStructureCandidateFormula page, boolean isDeNovo) {
         if (page.getContent() == null)
             return null; //this does usually not happen?!
         if (page.getContent().isEmpty())
@@ -321,7 +321,7 @@ public class InstanceBean implements SiriusPCS {
                         fpVersion,
                         (List<Double>) withIds((pid, fid) -> getClient().features().getFingerprintPrediction(pid, fid, fcid))
                 )));
-        return page.getContent().stream().map(c -> new FingerprintCandidateBean(c, fps.get(c.getFormulaId()), getSpectralSearchResults())).toList();
+        return page.getContent().stream().map(c -> new FingerprintCandidateBean(c, isDeNovo, fps.get(c.getFormulaId()), getSpectralSearchResults())).toList();
     }
 
     public synchronized MsData getMsData() {

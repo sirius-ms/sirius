@@ -40,6 +40,7 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
 
 //    private FilterRangeSlider<StructureList, FingerprintCandidateBean, InstanceBean> logPSlider;
     private DBFilterPanel dbFilterPanel;
+    protected JToggleButton loadAll;
 
 
     public CandidateListView(StructureList source) {
@@ -90,8 +91,8 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
         tb.add(filter);
         tb.addSeparator();
 
-        final JToggleButton loadAll = new ToolbarToggleButton(Icons.LOAD_ALL_24, "Load all Candidates (Might be many!).");
-        loadAll.addActionListener(e -> source.reloadData(loadAll.isSelected()));
+        loadAll = new ToolbarToggleButton(Icons.LOAD_ALL_24, "Load all Candidates (Might be many!).");
+        loadAll.addActionListener(e -> source.reloadData(loadAll.isSelected(), true, false));
         tb.add(loadAll);
 
         filter.doClick();
