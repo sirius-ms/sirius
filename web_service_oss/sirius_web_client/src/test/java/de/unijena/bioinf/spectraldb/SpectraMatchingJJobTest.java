@@ -22,10 +22,7 @@ package de.unijena.bioinf.spectraldb;
 
 import com.github.f4b6a3.tsid.Tsid;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrumDelegate;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -42,6 +39,7 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -53,18 +51,21 @@ public class SpectraMatchingJJobTest {
 
     @Test
     public void testGetCosineQueries() {
+        Deviation dev = new Deviation(10);
         SpectraMatchingJJob job = new SpectraMatchingJJob(null, null);
         CosineQueryUtils utils = new CosineQueryUtils(SpectralMatchingType.INTENSITY.getScorer(new Deviation(10)));
 
-        Ms2Spectrum<Peak> q1 = new MutableMs2Spectrum(new SimpleSpectrum(new double[] {1d, 2d}, new double[] {1d, 2d}), 3, null, 0);
-        Ms2Spectrum<Peak> q2 = new MutableMs2Spectrum(new SimpleSpectrum(new double[] {1d, 3d}, new double[] {1d, 2d}), 4, null, 0);
+        Ms2Spectrum<Peak> q1 = new MutableMs2Spectrum(new SimpleSpectrum(new double[] {1d, 2d}, new double[] {1d, 2d}), 30, null, 0);
+        Ms2Spectrum<Peak> q2 = new MutableMs2Spectrum(new SimpleSpectrum(new double[] {1d, 3d}, new double[] {1d, 2d}), 40, null, 0);
 
-        List<CosineQuerySpectrum> cosineQueries = job.getCosineQueries(utils, Arrays.asList(q1, q2));
+        List<CosineQuerySpectrum> cosineQueries = new ArrayList<>();
+        cosineQueries.addAll(job.getCosineQueries(utils, dev,  q1.getPrecursorMz(), Arrays.asList(q1)));
+        cosineQueries.addAll(job.getCosineQueries(utils, dev,  q2.getPrecursorMz(), Arrays.asList(q2)));
         CosineQuerySpectrum cq1 = cosineQueries.get(0);
         CosineQuerySpectrum cq2 = cosineQueries.get(1);
 
         assertEquals(2, cosineQueries.size());
-        assertTrue(Spectrums.haveEqualPeaks(q1, cq1));
+        assertTrue(Spectrums.haveEqualPeaks(q1, cq1)); //todo this does not work because spectra are processed and normalized
         assertTrue(Spectrums.haveEqualPeaks(q2, cq2));
         assertEquals(q1.getPrecursorMz(), cq1.getPrecursorMz(), 1e-9);
         assertEquals(q2.getPrecursorMz(), cq2.getPrecursorMz(), 1e-9);
