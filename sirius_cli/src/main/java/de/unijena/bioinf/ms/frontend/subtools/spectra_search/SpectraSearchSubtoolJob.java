@@ -27,7 +27,7 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.spectraldb.SpectralAlignmentJJob;
+import de.unijena.bioinf.spectraldb.SpectraMatchingJJob;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
@@ -81,7 +81,7 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
     @Override
     protected void computeAndAnnotateResult(@NotNull Instance inst) throws Exception {
         final Ms2Experiment exp = inst.getExperiment();
-        SpectralAlignmentJJob job = new SpectralAlignmentJJob(ApplicationCore.WEB_API, exp);
+        SpectraMatchingJJob job = new SpectraMatchingJJob(ApplicationCore.WEB_API, exp);
         job.addJobProgressListener(evt -> updateProgress(evt.getMinValue(), evt.getMaxValue(), evt.getProgress()));
         SpectralSearchResult result = submitSubJob(job).awaitResult();
 
