@@ -44,6 +44,7 @@ public class CandidateTableFormat extends SiriusTableFormat<FingerprintCandidate
             "XLogP",
             "InChIKey",
             "Lipid Class",
+            "MSNovelist",
             "Best"
     };
 
@@ -76,6 +77,7 @@ public class CandidateTableFormat extends SiriusTableFormat<FingerprintCandidate
         if (column == col++) return result.getCandidate().getDbLinks().stream()
                 .filter(l -> DataSource.LIPID.name().equals(l.getName()))
                 .map(DBLink::getId).collect(Collectors.joining(","));
+        if (column == col++) return result.isDeNovo();
         if (column == col) return isBest.apply(result);
 
         throw new IllegalStateException();
