@@ -36,12 +36,12 @@ public class CosineSpectraMatcher {
 
     private final CosineQueryUtils queryUtils;
 
-    public CosineSpectraMatcher(SpectralAlignmentType alignmentType, Deviation maxPeakDeviation) {
+    public CosineSpectraMatcher(SpectralMatchingType alignmentType, Deviation maxPeakDeviation) {
         this(alignmentType.getScorer(maxPeakDeviation));
     }
 
-    public CosineSpectraMatcher(AbstractSpectralAlignment spectralAlignmentScorer) {
-        this(new CosineQueryUtils(spectralAlignmentScorer));
+    public CosineSpectraMatcher(AbstractSpectralMatching spectralMatching) {
+        this(new CosineQueryUtils(spectralMatching));
     }
 
     public CosineSpectraMatcher(CosineQueryUtils queryUtils) {

@@ -13,7 +13,7 @@ import java.util.BitSet;
  * This algorithm requires that there is at most one pair of peaks (u,v) where the m/z of u
  * and v are within the allowed mass tolerance.
  */
-public class ModifiedCosine extends AbstractSpectralAlignment {
+public class ModifiedCosine extends AbstractSpectralMatching {
 
     // assigns peak from left to right
     private int[] assignment;

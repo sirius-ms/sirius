@@ -28,7 +28,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.ms.annotations.ResultAnnotation;
-import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
+import de.unijena.bionf.spectral_alignment.SpectralMatchingType;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -48,7 +48,7 @@ public class SpectralSearchResult implements Iterable<SpectralSearchResult.Searc
 
     private Deviation peakDeviation;
 
-    private SpectralAlignmentType alignmentType;
+    private SpectralMatchingType alignmentType;
 
     private List<SearchResult> results;
 
