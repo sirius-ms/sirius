@@ -27,7 +27,7 @@ import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
+import de.unijena.bionf.spectral_alignment.SpectralMatchingType;
 import picocli.CommandLine;
 
 import java.util.List;
@@ -63,9 +63,9 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
         defaultConfigOptions.changeOption("SpectralSearchLog", value);
     }
 
-    @CommandLine.Option(names = "--scorer", descriptionKey = "SpectralAlignmentScorer", description = "Scoring function for alignment. Valid values: ${COMPLETION-CANDIDATES}.")
-    public void setScorer(SpectralAlignmentType alignmentType) throws Exception {
-        defaultConfigOptions.changeOption("SpectralAlignmentScorer", alignmentType.toString());
+    @CommandLine.Option(names = "--scorer", descriptionKey = "SpectralMatchingScorer", description = "Scoring function for alignment. Valid values: ${COMPLETION-CANDIDATES}.")
+    public void setScorer(SpectralMatchingType matchingType) throws Exception {
+        defaultConfigOptions.changeOption("SpectralMatchingScorer", matchingType.toString());
     }
 
     @Override

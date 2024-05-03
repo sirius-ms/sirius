@@ -13,18 +13,13 @@
 
 package de.unijena.bioinf.ms.nightsky.sdk.model;
 
-import java.util.Objects;
-import java.util.Arrays;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.annotation.JsonTypeName;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
- * Gets or Sets SpectralAlignmentType
+ * Gets or Sets SpectralMatchingType
  */
-public enum SpectralAlignmentType {
+public enum SpectralMatchingType {
   
   INTENSITY("INTENSITY"),
   
@@ -34,7 +29,7 @@ public enum SpectralAlignmentType {
 
   private String value;
 
-  SpectralAlignmentType(String value) {
+  SpectralMatchingType(String value) {
     this.value = value;
   }
 
@@ -49,8 +44,8 @@ public enum SpectralAlignmentType {
   }
 
   @JsonCreator
-  public static SpectralAlignmentType fromValue(String value) {
-    for (SpectralAlignmentType b : SpectralAlignmentType.values()) {
+  public static SpectralMatchingType fromValue(String value) {
+    for (SpectralMatchingType b : SpectralMatchingType.values()) {
       if (b.value.equals(value)) {
         return b;
       }

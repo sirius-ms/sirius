@@ -5363,7 +5363,7 @@
         "description": "User/developer friendly parameter subset for the Formula/SIRIUS tool\n Can use results from Spectral library search tool.",
         "nullable": true
       },
-      "SpectralAlignmentType": {
+      "SpectralMatchingType": {
         "type": "string",
         "nullable": true,
         "enum": [
@@ -5401,7 +5401,7 @@
             "nullable": true
           },
           "scoring": {
-            "$ref": "#/components/schemas/SpectralAlignmentType"
+            "$ref": "#/components/schemas/SpectralMatchingType"
           }
         },
         "description": "User/developer friendly parameter subset for the Spectral library search tool.",

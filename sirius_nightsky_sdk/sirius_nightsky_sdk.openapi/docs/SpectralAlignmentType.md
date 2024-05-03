@@ -1,6 +1,6 @@
 
 
-# SpectralAlignmentType
+# SpectralMatchingType
 
 ## Enum
 
