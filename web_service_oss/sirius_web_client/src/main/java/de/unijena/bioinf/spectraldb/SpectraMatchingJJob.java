@@ -69,7 +69,7 @@ public class SpectraMatchingJJob extends BasicMasterJJob<SpectralSearchResult> {
         SpectralMatchingType alignmentType = experiment.getAnnotationOrDefault(SpectralMatchingScorer.class).spectralMatchingType;
 
         queryUtils = new CosineQueryUtils(alignmentType.getScorer(peakDev));
-        List<CosineQuerySpectrum> cosineQueries = getCosineQueries(queryUtils, queries);
+        List<CosineQuerySpectrum> cosineQueries = getCosineQueries(queryUtils, peakDev, precursorMz, queries);
 
         List<SpectralMatchMasterJJob> jobs = new ArrayList<>();
 
@@ -109,7 +109,7 @@ public class SpectraMatchingJJob extends BasicMasterJJob<SpectralSearchResult> {
         return searchResults;
     }
 
-    public List<CosineQuerySpectrum> getCosineQueries(CosineQueryUtils utils, List<Ms2Spectrum<Peak>> queries) {
+    public static List<CosineQuerySpectrum> getCosineQueries(CosineQueryUtils utils, Deviation peakDev, double precursorMz, List<Ms2Spectrum<Peak>> queries) {
         return Streams.mapWithIndex(queries.stream(), (q, index) -> {
             CosineQuerySpectrum qs = utils.createQueryWithIntensityTransformation(
                     Spectrums.mergePeaksWithinSpectrum(Spectrums.getMassOrderedSpectrum(q), peakDev, true, false),
