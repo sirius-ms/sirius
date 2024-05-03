@@ -33,7 +33,7 @@ import picocli.CommandLine;
 import java.util.List;
 import java.util.function.Consumer;
 
-@CommandLine.Command(name = "spectra-search", aliases = {"spectral-search"}, description = "<STANDALONE> Computes the similarity between all compounds/features in the project-space (queries) one vs all compounds/features in the second project-space (library).",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+@CommandLine.Command(name = "spectra-search", aliases = {"spectral-search"}, description = "<STANDALONE> Computes the similarity between all compounds/features in the project-space (queries) one vs all spectra in the selected databases.",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubtoolJob, InstanceJob.Factory<SpectraSearchSubtoolJob>> {
 
     protected final DefaultParameterConfigLoader defaultConfigOptions;
@@ -43,7 +43,7 @@ public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubto
     }
 
     @CommandLine.Option(names = {"--database", "-d", "--db"}, descriptionKey = "SpectrumSearchDB" , paramLabel = DataSourceCandidates.PATAM_LABEL, completionCandidates = DataSourceCandidates.class,
-            description = {"Search spectra in the Union of the given databases. If no database is given, all database are used.", DataSourceCandidates.VALID_DATA_STRING})
+            description = {"Search spectra in the union of the given databases. If no database is given, all database are used.", DataSourceCandidates.VALID_DATA_STRING})
     public void setDatabase(DefaultParameter dbList) throws Exception {
         defaultConfigOptions.changeOption("SpectralSearchDB", dbList);
     }
