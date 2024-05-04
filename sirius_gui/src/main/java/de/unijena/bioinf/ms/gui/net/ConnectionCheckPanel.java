@@ -209,48 +209,48 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
             }
             switch (mainError) {
                 case INTERNET :
-                    addHTMLTextPanel(resultPanel, err + "<br><b> Could not establish an internet connection.</b><br>" +
+                    addHTMLTextPanel(resultPanel, err.getSiriusMessage() + "<br><b> Could not establish an internet connection.</b><br>" +
                             "Please check whether your computer is connected to the internet. " +
                             "All features depending on the SIRIUS web services won't work without internet connection.<br>" +
                             "If you use a proxy, please check the proxy settings." + addHtmlErrorText(err));
                     break;
                 case LOGIN_SERVER:
-                    addHTMLTextPanel(resultPanel, err + "<br>" +
+                    addHTMLTextPanel(resultPanel, err.getSiriusMessage() + "<br>" +
                             "Could not reach " + PropertyManager.getProperty("de.unijena.bioinf.sirius.security.authServer") + ". <br>" +
                             "Either our Authentication/Login server is temporary not available " +
                             "or it cannot be reached because of your network configuration.<br>" + addHtmlErrorText(err));
                     break;
                 case LICENSE_SERVER:
-                    addHTMLTextPanel(resultPanel, err + "<br>" +
+                    addHTMLTextPanel(resultPanel, err.getSiriusMessage() + "<br>" +
                             "Could not reach " + PropertyManager.getProperty("de.unijena.bioinf.sirius.web.licenseServer") + ". <br>" +
                             "Either our Licensing server is temporary not available, " +
                             "or it cannot be reached because of your network configuration.<br>" + addHtmlErrorText(err));
                     break;
                 case TOKEN:
-                addHTMLTextPanel(resultPanel, err +
+                addHTMLTextPanel(resultPanel, err.getSiriusMessage() +
                         "<br>Unexpected error when refreshing/validating your access_token. <br> <b>Please try to re-login:</b>"
                         + addHtmlErrorText(err));
                 resultPanel.add(new JButton(ActionUtils.deriveFrom(
                         evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
                         SiriusActions.SIGN_OUT.getInstance(gui, true))));
                 case LOGIN:
-                    addHTMLTextPanel(resultPanel, err + READ_MORE_LICENSING + addHtmlErrorText(err));
+                    addHTMLTextPanel(resultPanel, err.getSiriusMessage() + READ_MORE_LICENSING + addHtmlErrorText(err));
                     resultPanel.add(new JButton(ActionUtils.deriveFrom(
                             evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
                             SiriusActions.SIGN_IN.getInstance(gui, true))));
                     break;
                 case LICENSE:
-                    addHTMLTextPanel(resultPanel, err + READ_MORE_LICENSING + addHtmlErrorText(err));
+                    addHTMLTextPanel(resultPanel, err.getSiriusMessage() + READ_MORE_LICENSING + addHtmlErrorText(err));
                     break;
                 case TERMS:
-                    addHTMLTextPanel(resultPanel, err + "<br><b>" + toLinks(check.getLicenseInfo().getTerms()) +
+                    addHTMLTextPanel(resultPanel, err.getSiriusMessage() + "<br><b>" + toLinks(check.getLicenseInfo().getTerms()) +
                             " for the selected Webservice have not been accepted.</b><br> Click Accept to get Access:");
                     resultPanel.add(new JButton(ActionUtils.deriveFrom(
                             evt -> Optional.ofNullable(owner).ifPresent(JDialog::dispose),
                             SiriusActions.ACCEPT_TERMS.getInstance(gui, true))));
                     break;
                 case APP_SERVER:
-                    addHTMLTextPanel(resultPanel, err + "<br>" +
+                    addHTMLTextPanel(resultPanel, err.getSiriusMessage() + "<br>" +
                             "Could not connect to the SIRIUS web service (REST API). <br><br>" + "<b>Possible reasons:</b><br>" +
                             "<ol>" +
                             "<li>The SIRIUS web service is temporary not available.</li>" +
@@ -263,10 +263,10 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
 
                     break;
                 case WORKER:
-                    addHTMLTextPanel(resultPanel, err + WORKER_INFO_MISSING_MESSAGE + addHtmlErrorText(err));
+                    addHTMLTextPanel(resultPanel, err.getSiriusMessage() + WORKER_INFO_MISSING_MESSAGE + addHtmlErrorText(err));
                     break;
                 default:
-                    addHTMLTextPanel(resultPanel, err + "<br><b>An Unexpected Network Error has occurred! " +
+                    addHTMLTextPanel(resultPanel, err.getSiriusMessage() + "<br><b>An Unexpected Network Error has occurred! " +
                             "Please submit a bug report.</b>" + addHtmlErrorText(err));
             }
         }

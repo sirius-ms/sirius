@@ -278,16 +278,16 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                 licenseInfo.subscription = sub;
                 System.out.println("Licensed to: " + sub.getSubscriberName() + " (" + sub.getDescription() + ")");
                 System.out.println("Expires at: " + (sub.hasExpirationTime() ? sub.getExpirationDate().toString() : "NEVER"));
-                if (sub.getCountQueries()) {
+                if (sub.isCountQueries()) {
                     if (sub.hasCompoundLimit()) {
                         licenseInfo.consumables = api.getConsumables(false);
-                        System.out.println("Compounds Computed (Yearly): " +
+                        System.out.println("Features Computed (Yearly): " +
                                 licenseInfo.consumables()
                                         .map(SubscriptionConsumables::getCountedCompounds)
                                         .map(String::valueOf).orElse("?") + " of " + sub.getCompoundLimit());
                     } else {
                         licenseInfo.consumables = api.getConsumables(true);
-                        System.out.println("Compounds Computed (Monthly): " +
+                        System.out.println("Features Computed (Monthly): " +
                                 licenseInfo.consumables()
                                         .map(SubscriptionConsumables::getCountedCompounds)
                                         .map(String::valueOf).orElse("?"));
@@ -307,8 +307,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                 sub = Tokens.getActiveSubscription(subs, sid, null, false);
             if (sub == null) {
                 if (sid != null)
-                    LoggerFactory.getLogger(getClass()).debug("Could not find subscription with sid '"
-                            + sid + "'. Trying to find fallback");
+                    LoggerFactory.getLogger(getClass()).debug("Could not find subscription with sid '{}'. Trying to find fallback", sid);
                 sub = Tokens.getActiveSubscription(subs, Tokens.getDefaultSubscriptionID(token));
             }
             SiriusProperties.SIRIUS_PROPERTIES_FILE().setProperty(Tokens.ACTIVE_SUBSCRIPTION_KEY, sub.getSid());
@@ -316,9 +315,8 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
 
             //check connection
             Multimap<ConnectionError.Klass, ConnectionError> errors = ApplicationCore.WEB_API.checkConnection();
-            LoggerFactory.getLogger(getClass()).debug("Connection check after login returned errors: " +
-                    errors.values().stream().sorted(Comparator.comparing(ConnectionError::getSiriusErrorCode))
-                            .map(ConnectionError::toString).collect(Collectors.joining(",\n")));
+            LoggerFactory.getLogger(getClass()).debug("Connection check after login returned errors: {}", errors.values().stream().sorted(Comparator.comparing(ConnectionError::getSiriusErrorCode))
+                    .map(ConnectionError::toString).collect(Collectors.joining(",\n")));
 
             if (errors.containsKey(ConnectionError.Klass.TERMS)) {
                 List<Term> terms = Tokens.getActiveSubscriptionTerms(token);
