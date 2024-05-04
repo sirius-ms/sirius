@@ -21,20 +21,16 @@
 package de.unijena.bioinf.ms.rest.model.license;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.util.List;
 import java.util.Optional;
 
+@Setter
+@Getter
 public class SubscriptionData {
     private List<Subscription> subscriptions;
-
-    public List<Subscription> getSubscriptions() {
-        return subscriptions;
-    }
-
-    public void setSubscriptions(List<Subscription> subscriptions) {
-        this.subscriptions = subscriptions;
-    }
 
     @JsonIgnore
     public Optional<Subscription> findSubscriptionById(String sid) {

@@ -1,15 +1,26 @@
 package de.unijena.bioinf.ms.rest.model.license;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+import lombok.extern.jackson.Jacksonized;
 
 import java.sql.Date;
 
-/**
- * Outdated model For deserialization from backend rest service model only
- */
-@Deprecated
+@Getter
+@Setter
+@JsonIgnoreProperties(ignoreUnknown = true)
+@Builder
+@Jacksonized
+@ToString
 public class Subscription {
-
+    /**
+     * Unique identifier of this subscription
+     */
     private String sid;
 
     /**
@@ -19,153 +30,49 @@ public class Subscription {
      */
     private String subscriberId;
 
+    /**
+     * Optional name of the owner of this subscription
+     */
     private String subscriberName;
 
     private Date expirationDate;
+
     private Date startDate;
 
     private boolean countQueries;
 
+    /**
+     * Limit of instances (features) that can be computed with this subscription
+     */
     private Integer compoundLimit;
 
+    /**
+     * Hash is used to allow recomputing identical data without increasing counted instances (features). The recording time is the amount of time an instance is memorized.
+     */
     private Integer compoundHashRecordingTime;
 
+    /**
+     * Maximum number of queries (e.g. prediction) that can be performed for one instance before it is counted another time.
+     */
     private Integer maxQueriesPerCompound;
 
+    @Schema(nullable = true)
     private Integer maxUserAccounts;
 
     private String serviceUrl;
 
+    @Schema(nullable = true)
     private String description;
 
+    @Schema(nullable = true)
     private String name;
 
+    @Schema(nullable = true)
     private String tos;
 
+    @Schema(nullable = true)
     private String pp;
 
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getServiceUrl() {
-        return serviceUrl;
-    }
-
-    public void setServiceUrl(String serviceUrl) {
-        this.serviceUrl = serviceUrl;
-    }
-
-    public String getSid() {
-        return sid;
-    }
-
-    public void setSid(String sid) {
-        this.sid = sid;
-    }
-
-    public String getSubscriberId() {
-        return subscriberId;
-    }
-
-    public void setSubscriberId(String subscriberId) {
-        this.subscriberId = subscriberId;
-    }
-
-    public String getSubscriberName() {
-        return subscriberName;
-    }
-
-    public void setSubscriberName(String subscriberName) {
-        this.subscriberName = subscriberName;
-    }
-
-    public Date getStartDate() {
-        return startDate;
-    }
-
-    public void setStartDate(Date startDate) {
-        this.startDate = startDate;
-    }
-
-    public Date getExpirationDate() {
-        return expirationDate;
-    }
-
-    public void setExpirationDate(Date expirationDate) {
-        this.expirationDate = expirationDate;
-    }
-
-    public Boolean getCountQueries() {
-        return countQueries;
-    }
-
-    public void setCountQueries(Boolean countQueries) {
-        this.countQueries = countQueries;
-    }
-
-    public Integer getCompoundLimit() {
-        return compoundLimit;
-    }
-
-    public void setCompoundLimit(Integer compoundLimit) {
-        this.compoundLimit = compoundLimit;
-    }
-
-    public Integer getCompoundHashRecordingTime() {
-        return compoundHashRecordingTime;
-    }
-
-    public void setCompoundHashRecordingTime(Integer compoundHashRecordingTime) {
-        this.compoundHashRecordingTime = compoundHashRecordingTime;
-    }
-
-    public Integer getMaxQueriesPerCompound() {
-        return maxQueriesPerCompound;
-    }
-
-    public void setMaxQueriesPerCompound(Integer maxQueriesPerCompound) {
-        this.maxQueriesPerCompound = maxQueriesPerCompound;
-    }
-
-    public Integer getMaxUserAccounts() {
-        return maxUserAccounts;
-    }
-
-    public void setMaxUserAccounts(Integer maxUserAccounts) {
-        this.maxUserAccounts = maxUserAccounts;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getTos() {
-        return tos;
-    }
-
-    public void setTos(String tos) {
-        this.tos = tos;
-    }
-
-    public String getPp() {
-        return pp;
-    }
-
-    public void setPp(String pp) {
-        this.pp = pp;
-    }
-
-
-    // non json methods
     @JsonIgnore
     public boolean hasCompoundLimit() {
         Integer l = getCompoundLimit();
@@ -182,13 +89,5 @@ public class Subscription {
         if (!hasExpirationTime())
             return false;
         return getExpirationDate().getTime() < System.currentTimeMillis();
-    }
-
-    @JsonIgnore
-    public long getExpirationTime() {
-        Date d = getExpirationDate();
-        if (d == null)
-            return -1;
-        return d.getTime();
     }
 }
