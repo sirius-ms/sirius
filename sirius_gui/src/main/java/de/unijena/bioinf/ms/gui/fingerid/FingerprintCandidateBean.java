@@ -85,6 +85,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     private final ProbabilityFingerprint fp;
     @NotNull
     private final StructureCandidateFormula candidate;
+    private final boolean isDeNovo;
     private final SpectralMatchingResult spectralMatchingResult;
 
 
@@ -110,9 +111,10 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     protected ReentrantLock compoundLock = new ReentrantLock();
 
 
-    public FingerprintCandidateBean(@NotNull StructureCandidateFormula candidate, @NotNull ProbabilityFingerprint fp, SpectralMatchingResult spectralMatchingResult) {
+    public FingerprintCandidateBean(@NotNull StructureCandidateFormula candidate, boolean isDeNovo, @NotNull ProbabilityFingerprint fp, SpectralMatchingResult spectralMatchingResult) {
         this.fp = fp; //todo nightsky: ->  do we want to lazy load the fp instead?
         this.candidate = candidate;
+        this.isDeNovo = isDeNovo;
         this.spectralMatchingResult = spectralMatchingResult;
         this.relevantFps = null;
 
@@ -181,6 +183,13 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         return candidate.getCsiScore();
     }
 
+    /**
+     * is de novo candidate from MSNovelist
+     * @return
+     */
+    public boolean isDeNovo() {
+        return isDeNovo;
+    }
 
     public ArrayFingerprint getCandidateFingerprint() {
         FingerprintVersion version = getPredictedFingerprint().getFingerprintVersion();
@@ -410,7 +419,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         }
 
         private PrototypeCompoundCandidate() {
-            super(makeSourceCandidate(), null, null);
+            super(makeSourceCandidate(), false,null, null);
         }
 
 

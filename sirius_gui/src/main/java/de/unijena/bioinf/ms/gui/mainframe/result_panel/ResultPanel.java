@@ -65,7 +65,7 @@ public class ResultPanel extends JTabbedPane {
 
         structureAnnoTab = new EpimetheusPanel(combinedStructureList);
         structuresTab = new CandidateListDetailViewPanel(this, structureList, gui);
-        deNovoStructuresTab = new DeNovoStructureListDetailViewPanel(this, deNovoStructureList, gui);
+        deNovoStructuresTab = new DeNovoStructureListDetailViewPanel(this, combinedStructureList, gui);
         FingerprintPanel fpTabTmp;
         try {
             fpTabTmp = new FingerprintPanel(new FingerprintList(siriusResultElements, gui));
