@@ -86,7 +86,7 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
 
             ToolbarToggleButton showMSNovelist = new ToolbarToggleButton("Include MSNovelist", null, "include MSNovelist structure candidates.");
 
-            tb.add(showMSNovelist);
+            tb.add(showMSNovelist, 0);
 
             showMSNovelist.addActionListener(e -> structureList.reloadData(loadAll.isSelected(), true, showMSNovelist.isSelected()));
             showMSNovelist.setSelected(true);

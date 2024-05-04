@@ -155,9 +155,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
         // create models for views
         compoundList = new CompoundList(gui);
         formulaList = new FormulaList(compoundList);
-        structureList = new StructureList(compoundList, (inst, k) -> inst.getStructureCandidates(k, true), false); //todo do we still need the last paramter in the StructureList? Probably yes, since view can be without data in the beginning
-        deNovoStructureList = new StructureList(compoundList, (inst, k) -> inst.getDeNovoStructureCandidates(k,true), true);
-        combinedStructureList = new StructureList(compoundList, (inst, k) -> Stream.concat(inst.getStructureCandidates(k, true).stream(), inst.getDeNovoStructureCandidates(k,true).stream()).toList(), true);
+        structureList = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getStructureCandidates(k, true), false); //todo do we still need the last paramter in the StructureList? Probably yes, since view can be without data in the beginning
+        deNovoStructureList = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k,true, loadDatabaseHits, loadDenovo), true);
+        combinedStructureList = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
         spectralMatchList = new SpectralMatchList(compoundList);
 
 

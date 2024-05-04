@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.projectspace;
 
+import com.google.common.collect.Streams;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
@@ -30,6 +31,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.WrapperSpectrum;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
+import de.unijena.bioinf.ms.gui.fingerid.DatabaseLabel;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingResult;
@@ -41,10 +43,7 @@ import org.slf4j.LoggerFactory;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -274,8 +273,61 @@ public class InstanceBean implements SiriusPCS {
 
     }
 
+    /**
+     * retrieves database and de novo structure candidates and merges identical structures
+     * @param topK
+     * @param fp
+     * @return
+     */
+    public List<FingerprintCandidateBean> getBothStructureCandidates(int topK, boolean fp, boolean loadDatabaseHits, boolean loadDenovo) {
+        final List<FingerprintCandidateBean> database = !loadDatabaseHits ? Collections.emptyList() : toFingerprintCandidateBeans(getStructureCandidatesPage(topK, fp), true, false);
+        final List<FingerprintCandidateBean> deNovo = !loadDenovo ? Collections.emptyList() : toFingerprintCandidateBeans(getDeNovoStructureCandidatesPage(topK,fp), false, true);
+        final List<FingerprintCandidateBean> merged =  mergeIdenticalStructures(database, deNovo);
+        return addDeNovoDatabaseLabels(merged);
+    }
+
+    private List<FingerprintCandidateBean> mergeIdenticalStructures(List<FingerprintCandidateBean> database, List<FingerprintCandidateBean> deNovo) {
+        if (database.isEmpty()) return deNovo;
+        if (deNovo.isEmpty()) return database;
+
+        database = database.stream().sorted(Comparator.comparing(a-> a.getCandidate().getInchiKey())).toList();
+        deNovo = deNovo.stream().sorted(Comparator.comparing(a-> a.getCandidate().getInchiKey())).toList();
+
+        List<FingerprintCandidateBean> merged = new ArrayList<>();
+        int i = 0, j = 0;
+        while ((i < database.size()) && (j < deNovo.size())) {
+            FingerprintCandidateBean db = database.get(i);
+            FingerprintCandidateBean novo = deNovo.get(j);
+            if (db.getInChiKey().equals(novo.getInChiKey())) {
+                FingerprintCandidateBean mergedFC = db.withNewDatabaseAndDeNovoFlag(true, true);
+                merged.add(mergedFC);
+                ++i;
+                ++j;
+            } else if (db.getInChiKey().compareTo(novo.getInChiKey()) < 0) {
+                merged.add(db);
+                ++i;
+            } else {
+                merged.add(novo);
+                ++j;
+            }
+        }
+        while (i < database.size()){
+            merged.add(database.get(i++));
+        }
+        while (j < deNovo.size()){
+            merged.add(deNovo.get(j++));
+        }
+        //recalculate ranks
+        merged =  Streams.mapWithIndex(merged.stream().sorted(Comparator.comparing(a-> -a.getCandidate().getCsiScore())), (fpc, idx) -> {fpc.getCandidate().setRank((int)idx+1); return fpc;}).toList();
+        return merged;
+    }
+
+    private List<FingerprintCandidateBean> addDeNovoDatabaseLabels(List<FingerprintCandidateBean> merged) {
+        return merged.stream().map(fpc -> fpc.isDeNovo() ? fpc.withAdditionalLabelAtBeginning(new DatabaseLabel[]{new DatabaseLabel("De Novo", null)}) : fpc).toList();
+    }
+
     public List<FingerprintCandidateBean> getStructureCandidates(int topK, boolean fp) {
-        return toFingerprintCandidateBeans(getStructureCandidatesPage(topK, fp), false);
+        return toFingerprintCandidateBeans(getStructureCandidatesPage(topK, fp), true, false);
     }
 
     public PageStructureCandidateFormula getStructureCandidatesPage(int topK, boolean fp) {
@@ -290,7 +342,7 @@ public class InstanceBean implements SiriusPCS {
 
 
     public List<FingerprintCandidateBean> getDeNovoStructureCandidates(int topK, boolean fp) {
-        return toFingerprintCandidateBeans(getDeNovoStructureCandidatesPage(topK,fp), true);
+        return toFingerprintCandidateBeans(getDeNovoStructureCandidatesPage(topK,fp), false, true);
     }
 
 
@@ -305,7 +357,7 @@ public class InstanceBean implements SiriusPCS {
     }
 
     @Nullable
-    private List<FingerprintCandidateBean> toFingerprintCandidateBeans(PageStructureCandidateFormula page, boolean isDeNovo) {
+    private List<FingerprintCandidateBean> toFingerprintCandidateBeans(PageStructureCandidateFormula page, boolean isDatabase, boolean isDeNovo) {
         if (page.getContent() == null)
             return null; //this does usually not happen?!
         if (page.getContent().isEmpty())
@@ -321,7 +373,7 @@ public class InstanceBean implements SiriusPCS {
                         fpVersion,
                         (List<Double>) withIds((pid, fid) -> getClient().features().getFingerprintPrediction(pid, fid, fcid))
                 )));
-        return page.getContent().stream().map(c -> new FingerprintCandidateBean(c, isDeNovo, fps.get(c.getFormulaId()), getSpectralSearchResults())).toList();
+        return page.getContent().stream().map(c -> new FingerprintCandidateBean(c, isDatabase, isDeNovo, fps.get(c.getFormulaId()), getSpectralSearchResults())).toList();
     }
 
     public synchronized MsData getMsData() {
