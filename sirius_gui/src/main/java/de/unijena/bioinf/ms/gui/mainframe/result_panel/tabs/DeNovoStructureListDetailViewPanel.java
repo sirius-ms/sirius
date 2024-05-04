@@ -26,6 +26,7 @@ import de.unijena.bioinf.ms.gui.fingerid.CandidateListDetailView;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
+import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,7 +49,26 @@ public class DeNovoStructureListDetailViewPanel extends JPanel implements PanelD
 
     public DeNovoStructureListDetailViewPanel(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui) {
         super(new BorderLayout());
-        list = new CandidateListDetailView(resultPanel, sourceList, gui);
+        list = new DeNovoCandidateListDetailView(resultPanel, sourceList, gui);
         add(list, BorderLayout.CENTER);
+    }
+
+    protected class DeNovoCandidateListDetailView extends CandidateListDetailView {
+        public DeNovoCandidateListDetailView(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui) {
+            super(resultPanel, sourceList, gui);
+        }
+
+        @Override
+        protected JToolBar getToolBar() {
+            JToolBar tb = super.getToolBar();
+
+            ToolbarToggleButton showDatabaseHits = new ToolbarToggleButton("Include database hits", null, "include structure database candidates.");
+            tb.add(showDatabaseHits, 0);
+
+            showDatabaseHits.addActionListener(e -> source.reloadData(loadAll.isSelected(), showDatabaseHits.isSelected(), true));
+            showDatabaseHits.setSelected(true);
+
+            return tb;
+        }
     }
 }
