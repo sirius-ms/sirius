@@ -38,10 +38,10 @@ public class SpectralAlignmentTest {
     private static double precursorMzLeft, precursorMzRight;
 
     private final IntensityWeightedSpectralAlignment intensityScorer = new IntensityWeightedSpectralAlignment(new Deviation(10));
-    private final GaussianSpectralAlignment gaussianScorer = new GaussianSpectralAlignment(new Deviation(10));
+    private final GaussianSpectralMatching gaussianScorer = new GaussianSpectralMatching(new Deviation(10));
     private final ModifiedCosine modifiedCosineScorer = new ModifiedCosine(new Deviation(10));
 
-    private final AbstractSpectralAlignment[] scorers = {intensityScorer, gaussianScorer, modifiedCosineScorer};
+    private final AbstractSpectralMatching[] scorers = {intensityScorer, gaussianScorer, modifiedCosineScorer};
 
     @BeforeClass
     public static void setUp() {
@@ -91,7 +91,7 @@ public class SpectralAlignmentTest {
 
     @Test
     public void testGaussian() {
-        GaussianSpectralAlignment gaussianAlignment = new GaussianSpectralAlignment(new Deviation(10));
+        GaussianSpectralMatching gaussianAlignment = new GaussianSpectralMatching(new Deviation(10));
         SpectralSimilarity spectralSimilarity = gaussianAlignment.score(left, right);
 
         assertEquals(49735.919716217, spectralSimilarity.similarity, 1e-9);
@@ -109,7 +109,7 @@ public class SpectralAlignmentTest {
 
     @Test
     public void testEmptySpectra() {
-        for (AbstractSpectralAlignment scorer : scorers) {
+        for (AbstractSpectralMatching scorer : scorers) {
             SpectralSimilarity similarity = scorer.score(SimpleSpectrum.empty(), SimpleSpectrum.empty(), 0, 0);
             assertEquals(0, similarity.similarity, 1e-9);
             assertEquals(0, similarity.sharedPeaks);
@@ -118,7 +118,7 @@ public class SpectralAlignmentTest {
 
     @Test
     public void testNormalized() {
-        for (AbstractSpectralAlignment scorer : scorers) {
+        for (AbstractSpectralMatching scorer : scorers) {
             SpectralSimilarity similarity = normalized(scorer, left, right, precursorMzLeft, precursorMzRight);
             assertTrue(similarity.similarity >= 0);
             assertTrue(similarity.similarity <= 1);
@@ -133,14 +133,14 @@ public class SpectralAlignmentTest {
     }
 
     private void testSelfSimilarity(SimpleSpectrum spectrum, double precursorMz) {
-        for (AbstractSpectralAlignment scorer : scorers) {
+        for (AbstractSpectralMatching scorer : scorers) {
             SpectralSimilarity similarity = normalized(scorer, spectrum, spectrum, precursorMz, precursorMz);
             assertEquals(1, similarity.similarity, 1e-9);
             assertEquals(spectrum.size(), similarity.sharedPeaks);
         }
     }
 
-    private SpectralSimilarity normalized(AbstractSpectralAlignment scorer, SimpleSpectrum left, SimpleSpectrum right, double leftMz, double rightMz) {
+    private SpectralSimilarity normalized(AbstractSpectralMatching scorer, SimpleSpectrum left, SimpleSpectrum right, double leftMz, double rightMz) {
         CosineQueryUtils utils = new CosineQueryUtils(scorer);
         CosineQuerySpectrum leftQuery = utils.createQuery(left, leftMz);
         CosineQuerySpectrum rightQuery = utils.createQuery(right, rightMz);

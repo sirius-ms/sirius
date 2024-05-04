@@ -23,24 +23,24 @@ package de.unijena.bioinf.chemdb.annotations;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
-import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
+import de.unijena.bionf.spectral_alignment.SpectralMatchingType;
 import org.jetbrains.annotations.Nullable;
 
-public class SpectralAlignmentScorer implements Ms2ExperimentAnnotation {
+public class SpectralMatchingScorer implements Ms2ExperimentAnnotation {
 
-    public final SpectralAlignmentType spectralAlignmentType;
+    public final SpectralMatchingType spectralMatchingType;
 
-    public SpectralAlignmentScorer(SpectralAlignmentType spectralAlignmentType) {
-        this.spectralAlignmentType = spectralAlignmentType;
+    public SpectralMatchingScorer(SpectralMatchingType spectralMatchingType) {
+        this.spectralMatchingType = spectralMatchingType;
     }
 
     @DefaultInstanceProvider
-    public static SpectralAlignmentScorer fromString(@DefaultProperty @Nullable String value) {
-        return new SpectralAlignmentScorer(SpectralAlignmentType.valueOf(value));
+    public static SpectralMatchingScorer fromString(@DefaultProperty @Nullable String value) {
+        return new SpectralMatchingScorer(SpectralMatchingType.valueOf(value));
     }
 
     @Override
     public String toString() {
-        return spectralAlignmentType.toString();
+        return spectralMatchingType.toString();
     }
 }
