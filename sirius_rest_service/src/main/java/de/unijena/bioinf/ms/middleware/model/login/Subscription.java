@@ -124,7 +124,7 @@ public class Subscription {
                 .subscriberName(s.getSubscriberName())
                 .expirationDate(s.getExpirationDate())
                 .startDate(s.getStartDate())
-                .countQueries(s.getCountQueries())
+                .countQueries(s.hasCompoundLimit())
                 .instanceLimit(s.getCompoundLimit())
                 .instanceHashRecordingTime(s.getCompoundHashRecordingTime())
                 .maxQueriesPerInstance(s.getMaxQueriesPerCompound())
