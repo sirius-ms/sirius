@@ -4909,7 +4909,7 @@
           },
           "subscriberId": {
             "type": "string",
-            "description": "ID of the owner of the subscription.\n This can be the ID of any SubscriptionOwner (e.g.  Group or  User)\n depending on the level on which a subscription should be is valid."
+            "description": "ID of the owner of the subscription. This can be the ID of any SubscriptionOwner (e.g.  Group or  User) depending on the level on which a subscription should be is valid."
           },
           "subscriberName": {
             "type": "string",
@@ -4938,13 +4938,13 @@
           },
           "instanceHashRecordingTime": {
             "type": "integer",
-            "description": "Hash is used to allow recomputing identical data without increasing counted instances (features).\n The recording time is the amount of time an instance is memorized is",
+            "description": "Hash is used to allow recomputing identical data without increasing counted instances (features). The recording time is the amount of time an instance is memorized.",
             "format": "int32",
             "nullable": true
           },
           "maxQueriesPerInstance": {
             "type": "integer",
-            "description": "Maximum number of queries (e.g. prediction) that can be performed\n for one instance before it is counted another time.",
+            "description": "Maximum number of queries (e.g. prediction) that can be performed for one instance before it is counted another time.",
             "format": "int32",
             "nullable": true
           },
