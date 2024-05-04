@@ -52,7 +52,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
 
     private final CompoundList compoundList;
 
-    private final IOFunctions.BiIOFunction<InstanceBean, Integer, List<FingerprintCandidateBean>> dataExtractor; //todo allow user specifiable or pagination
+    private final IOFunctions.FourParaIOFunction<InstanceBean, Integer, Boolean, Boolean, List<FingerprintCandidateBean>> dataExtractor; //todo allow user specifiable or pagination
 
     /**
      * true if the extracted structre data are denovo structure (from MSNovelist).
@@ -60,7 +60,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
      */
     private final boolean isDenovoStructureCandidates;
 
-    public StructureList(final CompoundList compoundList, IOFunctions.BiIOFunction<InstanceBean, Integer, List<FingerprintCandidateBean>> dataExtractor, boolean isDenovoStructureCandidates) {
+    public StructureList(final CompoundList compoundList, IOFunctions.FourParaIOFunction<InstanceBean, Integer, Boolean, Boolean, List<FingerprintCandidateBean>> dataExtractor, boolean isDenovoStructureCandidates) {
         super(FingerprintCandidateBean.class);
         this.dataExtractor = dataExtractor;
         this.compoundList = compoundList;
@@ -140,8 +140,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
                     checkForInterruption();
 
                     if (ec != null) {
-                        final List<FingerprintCandidateBean> fpcChache = filterList(dataExtractor.apply(ec, loadAllCandidates ? Integer.MAX_VALUE : 100), loadDatabaseHits, loadDenovo); //todo only by convention dataExtractor will also provide database and denovo hits as expected.
-                        if (loadDatabaseHits && loadDenovo) recalculatedRanks(fpcChache);
+                        final List<FingerprintCandidateBean> fpcChache = dataExtractor.apply(ec, loadAllCandidates ? Integer.MAX_VALUE : 100, loadDatabaseHits, loadDenovo);
                         //prepare stats for filters and views before setting data
                         fpcChache.forEach(fpc ->{
                             csiScoreStats.addValue(fpc.getCandidate().getCsiScore());
@@ -172,31 +171,32 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
         }
     }
 
-    private List<FingerprintCandidateBean> filterList(List<FingerprintCandidateBean> fpcList, boolean loadDatabaseHits, boolean loadDenovo) {
-        List<FingerprintCandidateBean> filtered = new LinkedList<>();
-        for (FingerprintCandidateBean fpc : fpcList) {
-            boolean isDenovo = fpc.isDeNovo();
-            if ((isDenovo && loadDenovo) || (!isDenovo && loadDatabaseHits)){
-                filtered.add(fpc);
-            }
-        }
-        return filtered;
-    }
-
-    private void recalculatedRanks(List<FingerprintCandidateBean> fpcChache) {
-        fpcChache.sort(Comparator.comparingDouble((a) -> -a.getCandidate().getCsiScore()));
-        int rank = 0;
-        String lastKey = null;
-        for (int i = 0; i < fpcChache.size(); i++) {
-            FingerprintCandidateBean fc = fpcChache.get(i);
-            if (i>0 && fc.getCandidate().getInchiKey().equals(lastKey)) {
-                fc.getCandidate().setRank(rank);
-            } else {
-                fc.getCandidate().setRank(++rank);
-                lastKey = fc.getCandidate().getInchiKey();
-            }
-        }
-    }
+//    private List<FingerprintCandidateBean> filterList(List<FingerprintCandidateBean> fpcList, boolean loadDatabaseHits, boolean loadDenovo) {
+//        List<FingerprintCandidateBean> filtered = new LinkedList<>();
+//        for (FingerprintCandidateBean fpc : fpcList) {
+//            final boolean isDenovo = fpc.isDeNovo();
+//            final boolean isDatabase = fpc.isDatabase();
+//            if ((isDenovo && loadDenovo) || (isDatabase && loadDatabaseHits)){
+//                filtered.add(fpc);
+//            }
+//        }
+//        return filtered;
+//    }
+//
+//    private void recalculatedRanks(List<FingerprintCandidateBean> fpcChache) {
+//        fpcChache.sort(Comparator.comparingDouble((a) -> -a.getCandidate().getCsiScore()));
+//        int rank = 0;
+//        String lastKey = null;
+//        for (int i = 0; i < fpcChache.size(); i++) {
+//            FingerprintCandidateBean fc = fpcChache.get(i);
+//            if (i>0 && fc.getCandidate().getInchiKey().equals(lastKey)) {
+//                fc.getCandidate().setRank(rank);
+//            } else {
+//                fc.getCandidate().setRank(++rank);
+//                lastKey = fc.getCandidate().getInchiKey();
+//            }
+//        }
+//    }
 
     public void reloadData(boolean loadAll, boolean loadDatabaseHits, boolean loadDenovo) {
         if (loadAll != this.loadAll.get() || loadDatabaseHits != loadDatabaseHitsAtom.get() || loadDenovo != loadDenovoAtom.get() )

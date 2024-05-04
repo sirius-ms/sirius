@@ -36,6 +36,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatch;
 import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateFormula;
 import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import it.unimi.dsi.fastutil.shorts.ShortList;
+import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.DefaultChemObjectBuilder;
@@ -85,6 +86,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     private final ProbabilityFingerprint fp;
     @NotNull
     private final StructureCandidateFormula candidate;
+    private final boolean isDatabase; //both denovo and database can be true at the same time.
     private final boolean isDeNovo;
     private final SpectralMatchingResult spectralMatchingResult;
 
@@ -111,9 +113,10 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     protected ReentrantLock compoundLock = new ReentrantLock();
 
 
-    public FingerprintCandidateBean(@NotNull StructureCandidateFormula candidate, boolean isDeNovo, @NotNull ProbabilityFingerprint fp, SpectralMatchingResult spectralMatchingResult) {
+    public FingerprintCandidateBean(@NotNull StructureCandidateFormula candidate, boolean isDatabase, boolean isDeNovo, @NotNull ProbabilityFingerprint fp, SpectralMatchingResult spectralMatchingResult) {
         this.fp = fp; //todo nightsky: ->  do we want to lazy load the fp instead?
         this.candidate = candidate;
+        this.isDatabase = isDatabase;
         this.isDeNovo = isDeNovo;
         this.spectralMatchingResult = spectralMatchingResult;
         this.relevantFps = null;
@@ -154,6 +157,36 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         }
     }
 
+    protected FingerprintCandidateBean(@NotNull StructureCandidateFormula candidate, boolean isDatabase, boolean isDeNovo, @NotNull ProbabilityFingerprint fp, SpectralMatchingResult spectralMatchingResult, DatabaseLabel[] labels, DatabaseLabel bestRefMatchLabel, EmptyLabel moreRefMatchesLabel) {
+        this.fp = fp; //todo nightsky: ->  do we want to lazy load the fp instead?
+        this.candidate = candidate;
+        this.isDatabase = isDatabase;
+        this.isDeNovo = isDeNovo;
+        this.spectralMatchingResult = spectralMatchingResult;
+        this.relevantFps = null;
+        this.labels = labels;
+        this.bestRefMatchLabel = bestRefMatchLabel;
+        this.moreRefMatchesLabel = moreRefMatchesLabel;
+    }
+
+    /**
+     * creates new {@link FingerprintCandidateBean} with specified flags. Shallow copy of candidate and data only.
+     * @param isDatabase
+     * @param isDeNovo
+     * @return
+     */
+    public FingerprintCandidateBean withNewDatabaseAndDeNovoFlag(boolean isDatabase, boolean isDeNovo) {
+        return new FingerprintCandidateBean(candidate, isDatabase, isDeNovo, fp, spectralMatchingResult);
+    }
+
+    /**
+     * creates new {@link FingerprintCandidateBean} with specified labels. Shallow copy of candidate and data only.
+     * @return
+     */
+    public FingerprintCandidateBean withAdditionalLabelAtBeginning(DatabaseLabel[] labels) {
+        return new FingerprintCandidateBean(candidate, isDatabase, isDeNovo, fp, spectralMatchingResult, this.labels==null ? labels : ArrayUtils.addAll(labels, this.labels), bestRefMatchLabel, moreRefMatchesLabel);
+    }
+
     public void highlightInBackground() {
         CompoundMatchHighlighter h = new CompoundMatchHighlighter(this, getPredictedFingerprint());
         synchronized (this) {
@@ -189,6 +222,14 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
      */
     public boolean isDeNovo() {
         return isDeNovo;
+    }
+
+    /**
+     * is database candidate from CSI:FingerID
+     * @return
+     */
+    public boolean isDatabase() {
+        return isDatabase;
     }
 
     public ArrayFingerprint getCandidateFingerprint() {
@@ -419,7 +460,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         }
 
         private PrototypeCompoundCandidate() {
-            super(makeSourceCandidate(), false,null, null);
+            super(makeSourceCandidate(), false,false, null, null);
         }
 
 
