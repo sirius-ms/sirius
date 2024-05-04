@@ -43,6 +43,10 @@ public abstract class IOFunctions {
         R apply(A a, B b) throws IOException;
     }
 
+    public interface FourParaIOFunction<A, B, C, D, R> {
+        R apply(A a, B b, C c, D d) throws IOException;
+    }
+
     public interface IOConsumer<A> {
         void accept(A a) throws IOException;
     }
