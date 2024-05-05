@@ -311,6 +311,8 @@ public class CandidateCellRenderer extends JPanel implements ListCellRenderer<Fi
         }
 
         private static Color color(DatabaseLabel label) {
+            if ("De Novo".equals(label.sourceName))
+                return Colors.DB_DENOVO;
             CustomDataSources.Source s = CustomDataSources.getSourceFromName(label.sourceName);
             if (s == null) return Colors.DB_UNKNOWN;
             if (s.isCustomSource()) return Colors.DB_CUSTOM;

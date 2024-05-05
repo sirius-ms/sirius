@@ -52,7 +52,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
 
     private final CompoundList compoundList;
 
-    private final IOFunctions.FourParaIOFunction<InstanceBean, Integer, Boolean, Boolean, List<FingerprintCandidateBean>> dataExtractor; //todo allow user specifiable or pagination
+    private final IOFunctions.QuadIOFunction<InstanceBean, Integer, Boolean, Boolean, List<FingerprintCandidateBean>> dataExtractor; //todo allow user specifiable or pagination
 
     /**
      * true if the extracted structre data are denovo structure (from MSNovelist).
@@ -60,7 +60,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
      */
     private final boolean isDenovoStructureCandidates;
 
-    public StructureList(final CompoundList compoundList, IOFunctions.FourParaIOFunction<InstanceBean, Integer, Boolean, Boolean, List<FingerprintCandidateBean>> dataExtractor, boolean isDenovoStructureCandidates) {
+    public StructureList(final CompoundList compoundList, IOFunctions.QuadIOFunction<InstanceBean, Integer, Boolean, Boolean, List<FingerprintCandidateBean>> dataExtractor, boolean isDenovoStructureCandidates) {
         super(FingerprintCandidateBean.class);
         this.dataExtractor = dataExtractor;
         this.compoundList = compoundList;
