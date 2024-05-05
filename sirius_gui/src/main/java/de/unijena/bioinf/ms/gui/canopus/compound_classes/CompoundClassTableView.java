@@ -85,7 +85,7 @@ public class CompoundClassTableView extends ActionListDetailView<CompoundClassBe
     @Override
     protected EventList<MatcherEditor<CompoundClassBean>> getSearchFieldMatchers() {
         return GlazedLists.eventListOf(
-                new TextMatcher(searchField.textField)
+                new TextMatcher(searchField)
         );
     }
 

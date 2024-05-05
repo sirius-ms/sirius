@@ -74,9 +74,15 @@ public abstract class Icons {
     public static final Icon FOLDER_FILE_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-folder-file@0.5x.png"));
 
     public static final Icon DB_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-db@0.5x.png"));
+    public static final Icon DB_24 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-db-24px.png"));
     public static final Icon DB_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-db.png"));
 
+    public static final Icon DENOVO_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-denovo@0.5x.png"));
+    public static final Icon DENOVO_24 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-denovo-24px.png"));
+    public static final Icon DENOVO_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-denovo.png"));
+
     public static final Icon DB_LENS_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/db-lens@0.5x.png"));
+    public static final Icon DB_LENS_24 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/db-lens-24px.png"));
     public static final Icon DB_LENS_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/db-lens.png"));
 
     public static final Icon GEAR_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-gear@0.5x.png"));

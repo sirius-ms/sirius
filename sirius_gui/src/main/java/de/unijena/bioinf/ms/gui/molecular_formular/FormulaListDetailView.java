@@ -88,7 +88,7 @@ public class FormulaListDetailView extends ActionListDetailView<FormulaResultBea
 
     @Override
     protected EventList<MatcherEditor<FormulaResultBean>> getSearchFieldMatchers() {
-        return GlazedLists.eventListOf(new StringMatcherEditor<>(tableFormat, searchField.textField));
+        return GlazedLists.eventListOf(new StringMatcherEditor<>(tableFormat, searchField));
     }
 
     @Override

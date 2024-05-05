@@ -26,7 +26,7 @@ import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.gui.utils.SearchTextField;
+import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,7 +37,7 @@ import java.awt.*;
  */
 public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends ActionList<E, D>> extends ActionListView<T> {
 
-    protected final SearchTextField searchField;
+    protected final PlaceholderTextField searchField;
     protected final FilterList<E> filteredSource;
     protected final DefaultEventSelectionModel<E> filteredSelectionModel;
     protected final JToolBar toolBar;
@@ -46,6 +46,9 @@ public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends Act
     protected final CardLayout centerCard = new CardLayout();
     protected final JPanel centerCardPanel = new JPanel(centerCard);
 
+    protected final Component firstGap = Box.createGlue();
+    protected final Component secondGap = Box.createGlue();
+
     public ActionListDetailView(T source) {
         this(source, false);
     }
@@ -53,7 +56,12 @@ public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends Act
     public ActionListDetailView(T source, final boolean singleSelection) {
         super(source);
         setLayout(new BorderLayout());
-        searchField = new SearchTextField();
+        searchField = new PlaceholderTextField();
+        searchField.setPlaceholder("Type to search");
+        searchField.setPreferredSize(new Dimension(150, searchField.getPreferredSize().height));
+        searchField.setMaximumSize(new Dimension(150, searchField.getPreferredSize().height));
+        searchField.setToolTipText("Type text to perform a full text search on the data below.");
+
         this.toolBar = getToolBar();
         filteredSource = configureFiltering(source.elementList);
         filteredSelectionModel = new DefaultEventSelectionModel<>(filteredSource);
@@ -87,6 +95,17 @@ public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends Act
 
     protected abstract JToolBar getToolBar();
 
+    protected int getIndexOfFirstGap(JToolBar toolBar){
+        if (toolBar == null)
+            return -1;
+        return toolBar.getComponentIndex(firstGap);
+    }
+    protected int getIndexOfSecondGap(JToolBar toolBar){
+        if (toolBar == null)
+            return -1;
+        return toolBar.getComponentIndex(secondGap);
+    }
+
     protected abstract EventList<MatcherEditor<E>> getSearchFieldMatchers();
 
     public FilterList<E> getFilteredSource() {
@@ -107,8 +126,7 @@ public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends Act
         final JPanel north = new JPanel(new BorderLayout());
 
         if (toolBar != null) {
-            toolBar.addSeparator();
-            toolBar.add(searchField);
+            toolBar.add(searchField, getIndexOfSecondGap(toolBar));
             north.add(toolBar, BorderLayout.NORTH);
         } else {
             north.add(searchField, BorderLayout.NORTH);

@@ -22,10 +22,12 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.fingerid.CandidateListDetailView;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
+import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,7 +50,28 @@ public class DeNovoStructureListDetailViewPanel extends JPanel implements PanelD
 
     public DeNovoStructureListDetailViewPanel(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui) {
         super(new BorderLayout());
-        list = new CandidateListDetailView(resultPanel, sourceList, gui);
+        list = new DeNovoCandidateListDetailView(resultPanel, sourceList, gui);
         add(list, BorderLayout.CENTER);
+    }
+
+    protected class DeNovoCandidateListDetailView extends CandidateListDetailView {
+        public DeNovoCandidateListDetailView(ResultPanel resultPanel, StructureList sourceList, SiriusGui gui) {
+            super(resultPanel, sourceList, gui);
+        }
+
+        @Override
+        protected JToolBar getToolBar() {
+            JToolBar tb = super.getToolBar();
+            ToolbarToggleButton showDatabaseHits = new ToolbarToggleButton(null, Icons.DB_LENS_24, "Show CSI:FingerID structure database hits together with MsNovelist de novo structure candidates.");
+            showDatabaseHits.setSelected(true);
+            tb.add(showDatabaseHits, getIndexOfSecondGap(tb) + 1);
+
+            loadAll.removeActionListener(loadDataActionListener);
+            loadDataActionListener = e -> source.reloadData(loadAll.isSelected(), showDatabaseHits.isSelected(), true);
+            showDatabaseHits.addActionListener(loadDataActionListener);
+            loadAll.addActionListener(loadDataActionListener);
+
+            return tb;
+        }
     }
 }

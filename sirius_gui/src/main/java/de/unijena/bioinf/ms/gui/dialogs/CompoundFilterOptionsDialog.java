@@ -54,7 +54,7 @@ import java.util.stream.Collectors;
  */
 public class CompoundFilterOptionsDialog extends JDialog implements ActionListener {
 
-    final SearchTextField searchField;
+    final PlaceholderTextField searchField;
     final JTextField searchFieldDialogCopy;
     final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner, minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner, minIsotopeSpinner;
     public final JCheckboxListPanel<PrecursorIonType> adductOptions;
@@ -75,7 +75,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
     final SiriusGui gui;
 
-    public CompoundFilterOptionsDialog(SiriusGui gui, SearchTextField searchField, CompoundFilterModel filterModel, CompoundList compoundList) {
+    public CompoundFilterOptionsDialog(SiriusGui gui, PlaceholderTextField searchField, CompoundFilterModel filterModel, CompoundList compoundList) {
         super(gui.getMainFrame(), "Filter configuration", true);
         this.gui = gui;
         this.searchField = searchField;
@@ -89,7 +89,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
         smallParameters.add(new JXTitledSeparator("Filter criteria"));
 
-        searchFieldDialogCopy = new JTextField(searchField.textField.getText());
+        searchFieldDialogCopy = new JTextField(searchField.getText());
         smallParameters.addNamed("filter by text", searchFieldDialogCopy);
 
         minMzSpinner = makeSpinner(filterModel.getCurrentMinMz(), filterModel.getMinMz(), filterModel.getMaxMz(), 10);
@@ -327,8 +327,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     }
 
     private void saveTextFilter() {
-        searchField.textField.setText(searchFieldDialogCopy.getText());
-        searchField.textField.postActionEvent();
+        searchField.setText(searchFieldDialogCopy.getText());
+        searchField.postActionEvent();
     }
 
     @Override
