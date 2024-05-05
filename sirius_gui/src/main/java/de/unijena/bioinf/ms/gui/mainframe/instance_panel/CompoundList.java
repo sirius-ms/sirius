@@ -50,7 +50,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public class CompoundList {
 
-    final SearchTextField searchField;
+    final PlaceholderTextField searchField;
     final JButton openFilterPanelButton;
     final CompoundFilterModel compoundFilterModel;
     final ObservableElementList<InstanceBean> obsevableScource;
@@ -68,14 +68,17 @@ public class CompoundList {
     private @NotNull SiriusGui gui;
     public CompoundList(@NotNull SiriusGui gui) {
         this.gui = gui;
-        searchField = new SearchTextField("Hit enter to search...");
+        searchField = new PlaceholderTextField();
+        searchField.setPlaceholder("Type and hit enter to search");
+        searchField.setToolTipText("Type text to perform a full text search on the data below. Hit enter to start searching.");
+
         obsevableScource = new ObservableElementList<>(gui.getProjectManager().INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
         sortedSource = new SortedList<>(obsevableScource, Comparator.comparing(InstanceBean::getRTOrMissing));
 
         //filters
         BasicEventList<MatcherEditor<InstanceBean>> listOfFilters = new BasicEventList<>();
         //text filter
-        listOfFilters.add(new TextComponentMatcherEditor<>(searchField.textField, (baseList, element) -> {
+        listOfFilters.add(new TextComponentMatcherEditor<>(searchField, (baseList, element) -> {
             baseList.add(element.getGUIName());
             baseList.add(element.getIonType().toString());
             baseList.add(String.valueOf(element.getIonMass()));
@@ -138,8 +141,8 @@ public class CompoundList {
         //filtering consists of the text filter, the filter model and the possible inversion using the MatcherEditor
         compoundFilterModel.resetFilter();
         compoundListMatchEditor.setInverted(false);
-        searchField.textField.setText("");
-        searchField.textField.postActionEvent();
+        searchField.setText("");
+        searchField.postActionEvent();
         colorByActiveFilter(openFilterPanelButton, compoundFilterModel);
     }
 

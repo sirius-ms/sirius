@@ -40,8 +40,8 @@ import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.SmartFilterMatcherEdi
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import de.unijena.bioinf.ms.gui.table.ActionList;
+import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
-import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
 import de.unijena.bioinf.rest.ProxyManager;
 import okhttp3.Request;
@@ -50,7 +50,6 @@ import okhttp3.ResponseBody;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -82,7 +81,7 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     protected int selectedCompoundId;
 
     private ToolbarToggleButton filterByMolecularPropertyButton;
-    private JTextField smartFilterTextField;
+    private PlaceholderTextField smartFilterTextField;
     private MolecularPropertyMatcherEditor molecularPropertyMatcherEditor;
 
     private ResultPanel resultPanel;
@@ -146,16 +145,14 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
     protected JToolBar getToolBar() {
         JToolBar tb = super.getToolBar();
 
-        filterByMolecularPropertyButton = new ToolbarToggleButton(null, Icons.MolecularProperty_24, "filter by highlighted molecular property");
+        filterByMolecularPropertyButton = new ToolbarToggleButton(null, Icons.MolecularProperty_24, "Filter by selected molecular property (square)");
 
-        smartFilterTextField = new JTextField();
-        TwoColumnPanel smartsFilter = new TwoColumnPanel();
-        smartsFilter.setBorder(new EmptyBorder(0, 0, 0, 0));
-        smartFilterTextField.setPreferredSize(new Dimension(100, smartFilterTextField.getPreferredSize().height));
-        smartsFilter.add(new JLabel("SMARTS Filter"), smartFilterTextField);
+        smartFilterTextField = new PlaceholderTextField();
+        smartFilterTextField.setPlaceholder("SMARTS filter");
+        smartFilterTextField.setPreferredSize(new Dimension(115, smartFilterTextField.getPreferredSize().height));
 
         tb.add(filterByMolecularPropertyButton);
-        tb.add(smartsFilter);
+        tb.add(smartFilterTextField);
 
         return tb;
     }
