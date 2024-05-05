@@ -38,7 +38,7 @@ public class ExpansiveSearchLabel extends JLabel implements ActiveElementChanged
     public ExpansiveSearchLabel(StructureList source) {
         setBorder(BorderFactory.createEmptyBorder(3, GuiUtils.SMALL_GAP, 3, GuiUtils.SMALL_GAP));
         setForeground(Color.WHITE);
-        setBackground(Colors.DB_EXPANSIVE_SEARCH);
+        setBackground(Colors.EXPANSIVE_SEARCH_WARNING);
         setOpaque(true);
         setToolTipText(GuiUtils.formatToolTip(
                 "Search results were expnanded to the fallback database (PubChem) because the top molecular structure hit has a significantly higher confidence score than the hit in the specified database selection."));

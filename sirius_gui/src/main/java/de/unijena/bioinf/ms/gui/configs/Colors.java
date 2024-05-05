@@ -61,13 +61,15 @@ public abstract class Colors {
     public final static Color LIST_LIGHT_GREEN;
     public final static Color LIST_SELECTED_GREEN = new Color(49, 163, 84);
 
+    public final static Color EXPANSIVE_SEARCH_WARNING = new Color(212, 15, 87);
+
     public final static Color DB_LINKED = new Color(155, 166, 219);
     public final static Color DB_UNLINKED = Color.GRAY;
     public final static Color DB_CUSTOM = ICON_YELLOW;
     public final static Color DB_TRAINING = Color.BLACK;
-    public final static Color DB_UNKNOWN = new Color(178,34,34);
+    public final static Color DB_UNKNOWN = new Color(155, 122, 0);// new Color(178,34,34);
     public final static Color DB_ELGORDO = ICON_BLUE;
-    public final static Color DB_EXPANSIVE_SEARCH = new Color(212, 15, 87);
+    public final static Color DB_DENOVO = EXPANSIVE_SEARCH_WARNING;
 
     public final static Color CLASSIFIER_MAIN;
     public final static Color CLASSIFIER_OTHER;
