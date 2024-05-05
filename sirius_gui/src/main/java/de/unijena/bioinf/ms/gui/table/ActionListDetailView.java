@@ -46,6 +46,9 @@ public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends Act
     protected final CardLayout centerCard = new CardLayout();
     protected final JPanel centerCardPanel = new JPanel(centerCard);
 
+    protected final Component firstGap = Box.createGlue();
+    protected final Component secondGap = Box.createGlue();
+
     public ActionListDetailView(T source) {
         this(source, false);
     }
@@ -55,7 +58,8 @@ public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends Act
         setLayout(new BorderLayout());
         searchField = new PlaceholderTextField();
         searchField.setPlaceholder("Type to search");
-        searchField.setPreferredSize(new Dimension(115, searchField.getPreferredSize().height));
+        searchField.setPreferredSize(new Dimension(150, searchField.getPreferredSize().height));
+        searchField.setMaximumSize(new Dimension(150, searchField.getPreferredSize().height));
         searchField.setToolTipText("Type text to perform a full text search on the data below.");
 
         this.toolBar = getToolBar();
@@ -91,6 +95,17 @@ public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends Act
 
     protected abstract JToolBar getToolBar();
 
+    protected int getIndexOfFirstGap(JToolBar toolBar){
+        if (toolBar == null)
+            return -1;
+        return toolBar.getComponentIndex(firstGap);
+    }
+    protected int getIndexOfSecondGap(JToolBar toolBar){
+        if (toolBar == null)
+            return -1;
+        return toolBar.getComponentIndex(secondGap);
+    }
+
     protected abstract EventList<MatcherEditor<E>> getSearchFieldMatchers();
 
     public FilterList<E> getFilteredSource() {
@@ -111,8 +126,7 @@ public abstract class ActionListDetailView<E extends SiriusPCS, D, T extends Act
         final JPanel north = new JPanel(new BorderLayout());
 
         if (toolBar != null) {
-            toolBar.addSeparator();
-            toolBar.add(searchField);
+            toolBar.add(searchField, getIndexOfSecondGap(toolBar));
             north.add(toolBar, BorderLayout.NORTH);
         } else {
             north.add(searchField, BorderLayout.NORTH);

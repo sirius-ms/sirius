@@ -75,7 +75,6 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
     }
 
     protected class EpimetheusPanelCandidateListTableView extends CandidateListTableView {
-        JCheckBox showMSNovelist;
 
         public EpimetheusPanelCandidateListTableView(StructureList list) {
             super(list);
@@ -86,10 +85,12 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
             JToolBar tb = super.getToolBar();
             ToolbarToggleButton showMSNovelist = new ToolbarToggleButton(null, Icons.DENOVO_24, "Show MSNovelist de novo structure candidates together with CSI:FingerID structure database hits.");
             showMSNovelist.setSelected(true);
-            tb.add(showMSNovelist, 0);
+            tb.add(showMSNovelist, getIndexOfSecondGap(tb) + 1);
 
-            showMSNovelist.addActionListener(e -> structureList.reloadData(loadAll.isSelected(), true, showMSNovelist.isSelected()));
-            structureList.reloadData(loadAll.isSelected(), true, showMSNovelist.isSelected());
+            loadAll.removeActionListener(loadDataActionListener);
+            loadDataActionListener = e -> structureList.reloadData(loadAll.isSelected(), true, showMSNovelist.isSelected());
+            showMSNovelist.addActionListener(loadDataActionListener);
+            loadAll.addActionListener(loadDataActionListener);
 
             return tb;
         }
