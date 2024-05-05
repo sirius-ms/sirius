@@ -28,7 +28,7 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConfigPanel<MsNovelistOptions>> {
 
     public ActMSNovelistConfigPanel(SiriusGui gui) {
-        super(gui, "MSNovelist", Icons.DB_LENS_32, () -> { //todo newWorkflow: change icon
+        super(gui, "MSNovelist", Icons.DENOVO_32, () -> {
             SubToolConfigPanel<MsNovelistOptions> p = new SubToolConfigPanel<>(MsNovelistOptions.class) { //todo NewWorkflow: set correct options
             };
             return p;
@@ -37,7 +37,6 @@ public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConf
 
     @Override
     protected void setComponentsEnabled(boolean enabled) {
-        //todo newWorkflow: maybe add citation dialog?
         String adviceKey = "de.unijena.bioinf.sirius.ui.advise.msnovelist";
 
         if (enabled) {
