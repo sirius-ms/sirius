@@ -7,7 +7,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RecallSpectralAlignment extends AbstractSpectralAlignment{
+public class RecallSpectralAlignment extends AbstractSpectralMatching {
 
     public RecallSpectralAlignment(Deviation deviation){
         super(deviation);

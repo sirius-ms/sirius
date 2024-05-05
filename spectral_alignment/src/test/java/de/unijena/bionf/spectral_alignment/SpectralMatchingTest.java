@@ -90,14 +90,14 @@ public class SpectralMatchingTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testOrderedSpectraMatcherWithModifiedCosine() {
-        new OrderedSpectraMatcher(SpectralAlignmentType.MODIFIED_COSINE, new Deviation(10));
+        new OrderedSpectraMatcher(SpectralMatchingType.MODIFIED_COSINE, new Deviation(10));
     }
 
     @Test
     public void testOrderedSpectraMatcher() {
-        OrderedSpectraMatcher matcher = new OrderedSpectraMatcher(SpectralAlignmentType.INTENSITY, new Deviation(10));
+        OrderedSpectraMatcher matcher = new OrderedSpectraMatcher(SpectralMatchingType.INTENSITY, new Deviation(10));
 
-        CosineQueryUtils utilsIntensity = new CosineQueryUtils(SpectralAlignmentType.INTENSITY.getScorer(new Deviation(10)));
+        CosineQueryUtils utilsIntensity = new CosineQueryUtils(SpectralMatchingType.INTENSITY.getScorer(new Deviation(10)));
 
         List<OrderedSpectrum<Peak>> queries = Arrays.asList(s1.spectrum, s2.spectrum);
 
