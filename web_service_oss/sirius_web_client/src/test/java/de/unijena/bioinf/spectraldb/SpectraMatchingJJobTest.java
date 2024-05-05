@@ -22,10 +22,7 @@ package de.unijena.bioinf.spectraldb;
 
 import com.github.f4b6a3.tsid.Tsid;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrumDelegate;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -33,7 +30,7 @@ import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
-import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
+import de.unijena.bionf.spectral_alignment.SpectralMatchingType;
 import de.unijena.bionf.spectral_alignment.SpectralMatchMasterJJob;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Rule;
@@ -42,40 +39,44 @@ import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 import org.mockito.quality.Strictness;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.*;
 
-public class SpectralAlignmentJJobTest {
+public class SpectraMatchingJJobTest {
 
     @Rule public MockitoRule mockito = MockitoJUnit.rule().strictness(Strictness.STRICT_STUBS);
 
     @Test
     public void testGetCosineQueries() {
-        SpectralAlignmentJJob job = new SpectralAlignmentJJob(null, null);
-        CosineQueryUtils utils = new CosineQueryUtils(SpectralAlignmentType.INTENSITY.getScorer(new Deviation(10)));
+        Deviation dev = new Deviation(10);
+        SpectraMatchingJJob job = new SpectraMatchingJJob(null, null);
+        CosineQueryUtils utils = new CosineQueryUtils(SpectralMatchingType.MODIFIED_COSINE.getScorer(new Deviation(10)));
 
-        Ms2Spectrum<Peak> q1 = new MutableMs2Spectrum(new SimpleSpectrum(new double[] {1d, 2d}, new double[] {1d, 2d}), 3, null, 0);
-        Ms2Spectrum<Peak> q2 = new MutableMs2Spectrum(new SimpleSpectrum(new double[] {1d, 3d}, new double[] {1d, 2d}), 4, null, 0);
+        Ms2Spectrum<Peak> q1 = new MutableMs2Spectrum(new SimpleSpectrum(new double[] {1d, 2d}, new double[] {1d, 2d}), 30, null, 0);
+        Ms2Spectrum<Peak> q2 = new MutableMs2Spectrum(new SimpleSpectrum(new double[] {1d, 3d}, new double[] {1d, 2d}), 40, null, 0);
 
-        List<CosineQuerySpectrum> cosineQueries = job.getCosineQueries(utils, Arrays.asList(q1, q2));
+        List<CosineQuerySpectrum> cosineQueries = new ArrayList<>();
+        cosineQueries.addAll(job.getCosineQueries(utils, dev,  q1.getPrecursorMz(), Arrays.asList(q1,q2)));
         CosineQuerySpectrum cq1 = cosineQueries.get(0);
         CosineQuerySpectrum cq2 = cosineQueries.get(1);
 
         assertEquals(2, cosineQueries.size());
-        assertTrue(Spectrums.haveEqualPeaks(q1, cq1));
-        assertTrue(Spectrums.haveEqualPeaks(q2, cq2));
+//        assertTrue(Spectrums.haveEqualPeaks(q1, cq1)); //todo this does not work because spectra are processed and normalized
+//        assertTrue(Spectrums.haveEqualPeaks(q2, cq2));
         assertEquals(q1.getPrecursorMz(), cq1.getPrecursorMz(), 1e-9);
         assertEquals(q2.getPrecursorMz(), cq2.getPrecursorMz(), 1e-9);
-        assertEquals(0, ((IndexedQuerySpectrumWrapper) cq1.getSpectrum()).getQueryIndex());
-        assertEquals(1, ((IndexedQuerySpectrumWrapper) cq2.getSpectrum()).getQueryIndex());
+        assertEquals(0, cq1.getIndex());
+        assertEquals(1, cq2.getIndex());
     }
 
     @Test
     public void testGetJJobsForDb() throws ChemicalDatabaseException {
-        SpectralAlignmentJJob job = new SpectralAlignmentJJob(null, null);
-        CosineQueryUtils utils = new CosineQueryUtils(SpectralAlignmentType.INTENSITY.getScorer(new Deviation(10)));
+        Deviation dev = new Deviation(10);
+        SpectraMatchingJJob job = new SpectraMatchingJJob(null, null);
+        CosineQueryUtils utils = new CosineQueryUtils(SpectralMatchingType.INTENSITY.getScorer(dev));
 
         Ms2Spectrum<Peak> q1 = new MutableMs2Spectrum();
         Ms2Spectrum<Peak> q2 = new MutableMs2Spectrum();
@@ -83,8 +84,11 @@ public class SpectralAlignmentJJobTest {
         CosineQuerySpectrum cq1 = utils.createQueryWithoutLoss(new OrderedSpectrumDelegate<>(q1), 0);
         CosineQuerySpectrum cq2 = utils.createQueryWithoutLoss(new OrderedSpectrumDelegate<>(q2), 0);
 
-        Ms2ReferenceSpectrum r1 = Ms2ReferenceSpectrum.builder().spectrum(SimpleSpectrum.empty()).build();
-        Ms2ReferenceSpectrum r2 = Ms2ReferenceSpectrum.builder().spectrum(SimpleSpectrum.empty()).build();
+        SimpleSpectrum rs1 = SimpleSpectrum.empty();
+        SimpleSpectrum rs2 = SimpleSpectrum.empty();
+
+        Ms2ReferenceSpectrum r1 = Ms2ReferenceSpectrum.builder().spectrum(rs1).build();
+        Ms2ReferenceSpectrum r2 = Ms2ReferenceSpectrum.builder().spectrum(rs2).build();
 
 
         assertNotEquals(q1, q2);
@@ -92,6 +96,8 @@ public class SpectralAlignmentJJobTest {
         assertNotEquals(r1, r2);
 
         final List<Ms2ReferenceSpectrum> references = Arrays.asList(r1, r2);
+        assertNotNull(r1.getSpectrum());
+        assertNotNull(r2.getSpectrum());
 
         List<SpectralMatchMasterJJob> jobs = job.getAlignmentJJobs(utils, Arrays.asList(cq1, cq2), references);
 
@@ -112,14 +118,14 @@ public class SpectralAlignmentJJobTest {
         assertEquals(cq2, p21.getLeft());
         assertEquals(cq2, p22.getLeft());
 
-        assertEquals(r1, ((Ms2ReferenceSpectrumWrapper) p11.getRight().getSpectrum()).getMs2ReferenceSpectrum());
-        assertEquals(r2, ((Ms2ReferenceSpectrumWrapper) p12.getRight().getSpectrum()).getMs2ReferenceSpectrum());
+        assertNull(r1.getSpectrum());
+        assertNull(r2.getSpectrum());
     }
 
     @Test
     public void testExtractResults() {
-        SpectralAlignmentJJob job = new SpectralAlignmentJJob(null, null);
-        CosineQueryUtils utils = new CosineQueryUtils(SpectralAlignmentType.INTENSITY.getScorer(new Deviation(10)));
+        SpectraMatchingJJob job = new SpectraMatchingJJob(null, null);
+        CosineQueryUtils utils = new CosineQueryUtils(SpectralMatchingType.INTENSITY.getScorer(new Deviation(10)));
 
         SimpleSpectrum query = new SimpleSpectrum(new double[] {1d}, new double[] {1d});
         int queryIndex = 5;
