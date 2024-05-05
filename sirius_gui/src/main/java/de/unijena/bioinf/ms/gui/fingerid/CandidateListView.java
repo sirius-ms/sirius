@@ -79,10 +79,10 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
         filter.addActionListener(e -> {
             if (dbFilterPanel.toggle()) {
                 filter.setIcon(Icons.FILTER_UP_24);
-                filter.setToolTipText("Hide source filters");
+                filter.setToolTipText("Hide database filters");
             } else {
                 filter.setIcon(Icons.FILTER_DOWN_24);
-                filter.setToolTipText("Show source filters");
+                filter.setToolTipText("Show database filters");
             }
         });
         tb.add(filter);
@@ -100,7 +100,7 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
     @Override
     protected EventList<MatcherEditor<FingerprintCandidateBean>> getSearchFieldMatchers() {
         return GlazedLists.eventListOf(
-                new CandidateStringMatcherEditor(searchField.textField)
+                new CandidateStringMatcherEditor(searchField)
 //                ,new MinMaxMatcherEditor<>(logPSlider, (baseList, element) ->
 //                        element.getXLogPOpt().ifPresentOrElse(baseList::add, () -> baseList.add(null)))
                , new DatabaseFilterMatcherEditor(dbFilterPanel)

@@ -22,6 +22,7 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.fingerid.CandidateListDetailView;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
@@ -61,7 +62,8 @@ public class DeNovoStructureListDetailViewPanel extends JPanel implements PanelD
         @Override
         protected JToolBar getToolBar() {
             JToolBar tb = super.getToolBar();
-            JCheckBox showDatabaseHits = new JCheckBox("Include database structures", false);
+            ToolbarToggleButton showDatabaseHits = new ToolbarToggleButton(null, Icons.DB_24, "Show CSI:FingerID structure database hits together with MsNovelist de novo structure candidates.");
+            showDatabaseHits.setSelected(true);
             tb.add(showDatabaseHits, 0);
 
             showDatabaseHits.addActionListener(e -> source.reloadData(loadAll.isSelected(), showDatabaseHits.isSelected(), true));

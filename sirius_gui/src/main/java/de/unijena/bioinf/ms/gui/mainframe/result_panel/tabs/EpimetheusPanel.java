@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.fingerid.CandidateListTableView;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
@@ -38,7 +39,7 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
         return "<html>"
                 +"<b>EPIMETHEUS - Substructure annotations</b>"
                 +"<br>"
-                + "CSI:FingerID db search results Epimetheus with substructure annotations from combinatorial fragmentation for all molecular formulas that had been searched."
+                + "Structure search results annotated with substructures from combinatorial fragmentation for all molecular formulas that had been searched."
                 + "<br>"
                 + "For the selected candidate structure in the upper panel, the bottom panel shows the source spectrum annotated with substructures computed by combinatorial fragmentation (Epimetheus)."
                 + "</html>";
@@ -83,7 +84,8 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
         @Override
         protected JToolBar getToolBar() {
             JToolBar tb = super.getToolBar();
-            JCheckBox showMSNovelist = new JCheckBox("Include de novo structures", true);
+            ToolbarToggleButton showMSNovelist = new ToolbarToggleButton(null, Icons.DENOVO_24, "Show MSNovelist de novo structure candidates together with CSI:FingerID structure database hits.");
+            showMSNovelist.setSelected(true);
             tb.add(showMSNovelist, 0);
 
             showMSNovelist.addActionListener(e -> structureList.reloadData(loadAll.isSelected(), true, showMSNovelist.isSelected()));
