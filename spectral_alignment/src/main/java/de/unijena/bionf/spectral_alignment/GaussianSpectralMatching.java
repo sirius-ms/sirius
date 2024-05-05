@@ -29,9 +29,9 @@ import java.util.BitSet;
 /**
  * treat peaks as (unnormalized) Gaussians and score overlapping areas of PDFs. Each peak might score agains multiple peaks in the other spectrum.
  */
-public class GaussianSpectralAlignment extends AbstractSpectralAlignment {
+public class GaussianSpectralMatching extends AbstractSpectralMatching {
 
-    public GaussianSpectralAlignment(Deviation deviation) {
+    public GaussianSpectralMatching(Deviation deviation) {
         super(deviation);
     }
 

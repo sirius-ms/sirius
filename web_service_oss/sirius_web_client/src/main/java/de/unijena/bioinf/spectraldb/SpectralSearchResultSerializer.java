@@ -24,7 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.projectspace.*;
-import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
+import de.unijena.bionf.spectral_alignment.SpectralMatchingType;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,13 +48,13 @@ public class SpectralSearchResultSerializer implements ComponentSerializer<Compo
 
         AtomicReference<Deviation> precursorDev = new AtomicReference<>();
         AtomicReference<Deviation> peakDev = new AtomicReference<>();
-        AtomicReference<SpectralAlignmentType> alignmentType = new AtomicReference<>();
+        AtomicReference<SpectralMatchingType> alignmentType = new AtomicReference<>();
         AtomicInteger numOfResults = new AtomicInteger(0);
 
         reader.table(relPathParams, true, 0, 1, (row) -> {
             precursorDev.set(Deviation.fromString(row[0]));
             peakDev.set(Deviation.fromString(row[1]));
-            alignmentType.set(SpectralAlignmentType.valueOf(row[2]));
+            alignmentType.set(SpectralMatchingType.valueOf(row[2]));
             numOfResults.set(Integer.parseInt(row[3]));
         });
 
