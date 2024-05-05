@@ -43,6 +43,15 @@ public abstract class IOFunctions {
         R apply(A a, B b) throws IOException;
     }
 
+    public interface TriIOFunction<A, B, C, R> {
+        R apply(A a, B b, C c) throws IOException;
+    }
+
+    //Quad are already a bit too many parameters, we should not do more...
+    public interface QuadIOFunction<A, B, C, D, R> {
+        R apply(A a, B b, C c, D d) throws IOException;
+    }
+
     public interface IOConsumer<A> {
         void accept(A a) throws IOException;
     }
