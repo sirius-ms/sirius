@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralAlignmentType;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralMatchingType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -52,7 +52,7 @@ public class SpectralLibrarySearch {
   private Double precursorDeviationPpm;
 
   public static final String JSON_PROPERTY_SCORING = "scoring";
-  private SpectralAlignmentType scoring;
+  private SpectralMatchingType scoring;
 
   public SpectralLibrarySearch() {
   }
@@ -169,7 +169,7 @@ public class SpectralLibrarySearch {
   }
 
 
-  public SpectralLibrarySearch scoring(SpectralAlignmentType scoring) {
+  public SpectralLibrarySearch scoring(SpectralMatchingType scoring) {
     
     this.scoring = scoring;
     return this;
@@ -183,14 +183,14 @@ public class SpectralLibrarySearch {
   @JsonProperty(JSON_PROPERTY_SCORING)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public SpectralAlignmentType getScoring() {
+  public SpectralMatchingType getScoring() {
     return scoring;
   }
 
 
   @JsonProperty(JSON_PROPERTY_SCORING)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setScoring(SpectralAlignmentType scoring) {
+  public void setScoring(SpectralMatchingType scoring) {
     this.scoring = scoring;
   }
 
