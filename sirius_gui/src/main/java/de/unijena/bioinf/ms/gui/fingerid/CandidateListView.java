@@ -27,17 +27,19 @@ import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.CandidateStringMatche
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.DatabaseFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.table.ActionListDetailView;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
-import de.unijena.bioinf.ms.gui.utils.WrapLayout;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 
 public class CandidateListView extends ActionListDetailView<FingerprintCandidateBean, InstanceBean, StructureList> {
 
 //    private FilterRangeSlider<StructureList, FingerprintCandidateBean, InstanceBean> logPSlider;
     private DBFilterPanel dbFilterPanel;
     protected JToggleButton loadAll;
+    protected ActionListener loadDataActionListener;
+
 
 
     public CandidateListView(StructureList source) {
@@ -63,7 +65,8 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
         JToolBar tb = new JToolBar();
         tb.setFloatable(false);
         tb.setBorderPainted(false);
-        tb.setLayout(new WrapLayout(FlowLayout.LEFT, 0, 0));
+        tb.setRollover(true);
+//        tb.setLayout(new WrapLayout(FlowLayout.CENTER, 0, 0));
 
 //        logPSlider = new FilterRangeSlider<>(source, source.logPStats);
 
@@ -72,7 +75,7 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
 
 //        tb.add(new NameFilterRangeSlider("XLogP:", logPSlider));
 //        tb.addSeparator();
-        tb.addSeparator();
+//        tb.addSeparator();
 
 
         final JToggleButton filter = new ToolbarToggleButton(Icons.FILTER_DOWN_24, "show filter");
@@ -86,13 +89,16 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
             }
         });
         tb.add(filter);
-        tb.addSeparator();
+//        tb.addSeparator();
 
         loadAll = new ToolbarToggleButton(Icons.LOAD_ALL_24, "Load all Candidates (Might be many!).");
-        loadAll.addActionListener(e -> source.reloadData(loadAll.isSelected(), true, false));
+        loadDataActionListener = e -> source.reloadData(loadAll.isSelected(), true, false);
+        loadAll.addActionListener(loadDataActionListener);
+        tb.add(firstGap);
+        tb.add(secondGap);
         tb.add(loadAll);
 
-        filter.doClick();
+        filter.setSelected(false);
 
         return tb;
     }

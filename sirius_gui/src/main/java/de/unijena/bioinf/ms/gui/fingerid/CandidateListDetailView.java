@@ -149,10 +149,12 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
 
         smartFilterTextField = new PlaceholderTextField();
         smartFilterTextField.setPlaceholder("SMARTS filter");
+        smartFilterTextField.setToolTipText("Match SMARTS pattern to structure candidates. Hit enter to search. Valid SMARTS patterns are highlighted in green. Invalid SMARTS patterns are shown in red.");
         smartFilterTextField.setPreferredSize(new Dimension(115, smartFilterTextField.getPreferredSize().height));
+        smartFilterTextField.setMaximumSize(new Dimension(115, smartFilterTextField.getPreferredSize().height));
 
-        tb.add(filterByMolecularPropertyButton);
-        tb.add(smartFilterTextField);
+        tb.add(filterByMolecularPropertyButton, getIndexOfFirstGap(tb));
+        tb.add(smartFilterTextField, getIndexOfFirstGap(tb));
 
         return tb;
     }

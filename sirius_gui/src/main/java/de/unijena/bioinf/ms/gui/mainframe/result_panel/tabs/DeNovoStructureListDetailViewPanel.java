@@ -64,11 +64,13 @@ public class DeNovoStructureListDetailViewPanel extends JPanel implements PanelD
             JToolBar tb = super.getToolBar();
             ToolbarToggleButton showDatabaseHits = new ToolbarToggleButton(null, Icons.DB_LENS_24, "Show CSI:FingerID structure database hits together with MsNovelist de novo structure candidates.");
             showDatabaseHits.setSelected(true);
-            tb.add(showDatabaseHits, 0);
+            tb.add(showDatabaseHits, getIndexOfSecondGap(tb) + 1);
 
-            showDatabaseHits.addActionListener(e -> source.reloadData(loadAll.isSelected(), showDatabaseHits.isSelected(), true));
-            source.reloadData(loadAll.isSelected(), showDatabaseHits.isSelected(), true);
-            
+            loadAll.removeActionListener(loadDataActionListener);
+            loadDataActionListener = e -> source.reloadData(loadAll.isSelected(), showDatabaseHits.isSelected(), true);
+            showDatabaseHits.addActionListener(loadDataActionListener);
+            loadAll.addActionListener(loadDataActionListener);
+
             return tb;
         }
     }
