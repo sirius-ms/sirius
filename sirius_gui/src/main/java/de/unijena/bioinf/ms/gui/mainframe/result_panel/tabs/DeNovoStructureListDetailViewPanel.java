@@ -61,13 +61,12 @@ public class DeNovoStructureListDetailViewPanel extends JPanel implements PanelD
         @Override
         protected JToolBar getToolBar() {
             JToolBar tb = super.getToolBar();
-
-            ToolbarToggleButton showDatabaseHits = new ToolbarToggleButton("Include database hits", null, "include structure database candidates.");
+            JCheckBox showDatabaseHits = new JCheckBox("Include database structures", false);
             tb.add(showDatabaseHits, 0);
 
             showDatabaseHits.addActionListener(e -> source.reloadData(loadAll.isSelected(), showDatabaseHits.isSelected(), true));
-            showDatabaseHits.setSelected(true);
-
+            source.reloadData(loadAll.isSelected(), showDatabaseHits.isSelected(), true);
+            
             return tb;
         }
     }

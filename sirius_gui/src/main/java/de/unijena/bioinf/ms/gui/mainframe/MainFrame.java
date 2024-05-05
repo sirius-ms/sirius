@@ -53,7 +53,6 @@ import java.net.CookieManager;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
 
@@ -95,9 +94,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     // right side panel
     private FormulaList formulaList;
-    private StructureList structureList;
-    private StructureList deNovoStructureList;
-    private StructureList combinedStructureList;
+    private StructureList databaseStructureList;
+    private StructureList combinedStructureListSubstructureView;
+    private StructureList combinedStructureListDeNovoView;
     private SpectralMatchList spectralMatchList;
 
 
@@ -155,15 +154,15 @@ public class MainFrame extends JFrame implements DropTargetListener {
         // create models for views
         compoundList = new CompoundList(gui);
         formulaList = new FormulaList(compoundList);
-        structureList = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getStructureCandidates(k, true), false); //todo do we still need the last paramter in the StructureList? Probably yes, since view can be without data in the beginning
-        deNovoStructureList = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k,true, loadDatabaseHits, loadDenovo), true);
-        combinedStructureList = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
+        databaseStructureList = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getStructureCandidates(k, true), false);
+        combinedStructureListSubstructureView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
+        combinedStructureListDeNovoView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
         spectralMatchList = new SpectralMatchList(compoundList);
 
 
         //CREATE VIEWS
         // results Panel
-        resultsPanel = new ResultPanel(deNovoStructureList, structureList, combinedStructureList, formulaList, spectralMatchList, gui);
+        resultsPanel = new ResultPanel(databaseStructureList, combinedStructureListSubstructureView, combinedStructureListDeNovoView, formulaList, spectralMatchList, gui);
         JPanel resultPanelContainer = new JPanel(new BorderLayout());
         resultPanelContainer.setBorder(BorderFactory.createEmptyBorder());
         resultPanelContainer.add(resultsPanel, BorderLayout.CENTER);
