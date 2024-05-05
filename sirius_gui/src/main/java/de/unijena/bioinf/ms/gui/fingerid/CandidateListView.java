@@ -26,9 +26,6 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.CandidateStringMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.DatabaseFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.table.ActionListDetailView;
-import de.unijena.bioinf.ms.gui.table.FilterRangeSlider;
-import de.unijena.bioinf.ms.gui.table.MinMaxMatcherEditor;
-import de.unijena.bioinf.ms.gui.utils.NameFilterRangeSlider;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.WrapLayout;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -56,7 +53,7 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
         final BoxLayout southLayout = new BoxLayout(south, BoxLayout.PAGE_AXIS);
         south.setLayout(southLayout);
         south.add(new LipidLabel(source));
-        if (!source.isDenovoStructureCandidates()) south.add(new ExpansiveSearchLabel(source));
+        if (!source.hasDenovoStructureCandidates()) south.add(new ExpansiveSearchLabel(source));
         north.add(south, BorderLayout.SOUTH);
         return north;
     }

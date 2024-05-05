@@ -54,7 +54,7 @@ public class ResultPanel extends JTabbedPane {
     public final FingerprintPanel fpTab;
     public final CompoundClassPanel canopusTab;
 
-    public ResultPanel(final StructureList deNovoStructureList, final StructureList structureList, final StructureList combinedStructureList, final FormulaList siriusResultElements, final SpectralMatchList spectralMatchList, SiriusGui gui) {
+    public ResultPanel(final StructureList databaseStructureList, final StructureList combinedStructureListSubstructureView, final StructureList combinedStructureListDeNovoView, final FormulaList siriusResultElements, final SpectralMatchList spectralMatchList, SiriusGui gui) {
         super();
         this.setToolTipText("Results");
 
@@ -63,9 +63,9 @@ public class ResultPanel extends JTabbedPane {
 
 //        this.lcmsTab = new LCMSViewerPanel(siriusResultElements); //todo LCMS: reactivate if LCMS Data structures are done!
 
-        structureAnnoTab = new EpimetheusPanel(combinedStructureList);
-        structuresTab = new CandidateListDetailViewPanel(this, structureList, gui);
-        deNovoStructuresTab = new DeNovoStructureListDetailViewPanel(this, combinedStructureList, gui);
+        structureAnnoTab = new EpimetheusPanel(combinedStructureListSubstructureView);
+        structuresTab = new CandidateListDetailViewPanel(this, databaseStructureList, gui);
+        deNovoStructuresTab = new DeNovoStructureListDetailViewPanel(this, combinedStructureListDeNovoView, gui);
         FingerprintPanel fpTabTmp;
         try {
             fpTabTmp = new FingerprintPanel(new FingerprintList(siriusResultElements, gui));

@@ -33,8 +33,6 @@ import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
-import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
@@ -58,13 +56,13 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
      * true if the extracted structre data are denovo structure (from MSNovelist).
      * Required since InstanceBean has some information (expansive search) that is specific to the database structures)
      */
-    private final boolean isDenovoStructureCandidates;
+    private final boolean hasDenovoStructureCandidates;
 
-    public StructureList(final CompoundList compoundList, IOFunctions.FourParaIOFunction<InstanceBean, Integer, Boolean, Boolean, List<FingerprintCandidateBean>> dataExtractor, boolean isDenovoStructureCandidates) {
+    public StructureList(final CompoundList compoundList, IOFunctions.FourParaIOFunction<InstanceBean, Integer, Boolean, Boolean, List<FingerprintCandidateBean>> dataExtractor, boolean hasDenovoStructureCandidates) {
         super(FingerprintCandidateBean.class);
         this.dataExtractor = dataExtractor;
         this.compoundList = compoundList;
-        this.isDenovoStructureCandidates = isDenovoStructureCandidates;
+        this.hasDenovoStructureCandidates = hasDenovoStructureCandidates;
         elementListSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         csiScoreStats = new DoubleListStats();
         logPStats = new DoubleListStats();
@@ -214,7 +212,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
         };
     }
 
-    public boolean isDenovoStructureCandidates() {
-        return isDenovoStructureCandidates;
+    public boolean hasDenovoStructureCandidates() {
+        return hasDenovoStructureCandidates;
     }
 }
