@@ -273,7 +273,7 @@ Class | Method | HTTP request | Description
  - [SimplePeak](docs/SimplePeak.md)
  - [Sirius](docs/Sirius.md)
  - [SortObject](docs/SortObject.md)
- - [SpectralAlignmentType](docs/SpectralAlignmentType.md)
+ - [SpectralMatchingType](docs/SpectralMatchingType.md)
  - [SpectralLibraryMatch](docs/SpectralLibraryMatch.md)
  - [SpectralLibraryMatchOptField](docs/SpectralLibraryMatchOptField.md)
  - [SpectralLibrarySearch](docs/SpectralLibrarySearch.md)
