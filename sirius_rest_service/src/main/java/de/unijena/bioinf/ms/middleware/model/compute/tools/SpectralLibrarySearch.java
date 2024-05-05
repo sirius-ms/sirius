@@ -21,12 +21,12 @@
 package de.unijena.bioinf.ms.middleware.model.compute.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import de.unijena.bioinf.chemdb.annotations.SpectralAlignmentScorer;
+import de.unijena.bioinf.chemdb.annotations.SpectralMatchingScorer;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOptions;
 import de.unijena.bioinf.ms.middleware.model.compute.NullCheckMapBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.spectraldb.SpectralMatchingMassDeviation;
-import de.unijena.bionf.spectral_alignment.SpectralAlignmentType;
+import de.unijena.bionf.spectral_alignment.SpectralMatchingType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -71,7 +71,7 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
      * MODIFIED_COSINE:  This algorithm requires that there is at most one pair of peaks (u,v) where the m/z of u and v are within the allowed mass tolerance. To be used for analog search with different precursor masses.
      */
     @Schema(nullable = true, enumAsRef = true)
-    private SpectralAlignmentType scoring;
+    private SpectralMatchingType scoring;
 
     private SpectralLibrarySearch() {
         super(SpectraSearchOptions.class);
@@ -83,7 +83,7 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
                 .putIfNonNullObj("SpectralSearchDB", spectraSearchDBs, db -> String.join(",", db).toLowerCase(Locale.ROOT))
                 .putIfNonNull("SpectralMatchingMassDeviation.allowedPeakDeviation", peakDeviationPpm, it -> it + " ppm")
                 .putIfNonNull("SpectralMatchingMassDeviation.allowedPrecursorDeviation", precursorDeviationPpm, it -> it + " ppm")
-                .putIfNonNull("SpectralAlignmentScorer", scoring)
+                .putIfNonNull("SpectralMatchingScorer", scoring)
                 .putIfNonNull("SpectralSearchLog", 0)
                 .toUnmodifiableMap();
     }
@@ -99,7 +99,7 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
                         .allowedPeakDeviation.getPpm())
                 .precursorDeviationPpm(PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectralMatchingMassDeviation.class)
                         .allowedPrecursorDeviation.getPpm())
-                .scoring(PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectralAlignmentScorer.class)
-                        .spectralAlignmentType);
+                .scoring(PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectralMatchingScorer.class)
+                        .spectralMatchingType);
     }
 }
