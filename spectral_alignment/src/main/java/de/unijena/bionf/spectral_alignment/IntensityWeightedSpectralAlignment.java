@@ -32,7 +32,7 @@ import java.util.Set;
 /**
  * find best scoring alignment, intensity weighted. Each peak matches at most one peak in the other spectrum.
  */
-public class IntensityWeightedSpectralAlignment extends AbstractSpectralAlignment {
+public class IntensityWeightedSpectralAlignment extends AbstractSpectralMatching {
 
     public IntensityWeightedSpectralAlignment(Deviation deviation) {
         super(deviation);

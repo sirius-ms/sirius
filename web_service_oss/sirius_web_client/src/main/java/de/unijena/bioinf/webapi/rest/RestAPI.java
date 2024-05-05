@@ -273,6 +273,11 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
                                 + sub.getExpirationDate() + "'. Please renew your subscription or choose another non expired subscription if available." +
                                 "Please contact support.", ConnectionError.Klass.LICENSE));
 
+            java.sql.Date startDate = sub.getStartDate();
+            if (startDate != null && startDate.getTime() > System.currentTimeMillis())
+                return Optional.of(new ConnectionError(55,
+                        "Subscription not yet active. The given subscription starts at:'" + startDate + "'. Please wait until your subscription starts or contact support.", ConnectionError.Klass.LICENSE));
+
             @NotNull List<Term> terms = Tokens.getAcceptedTerms(token);
             String pp = sub.getPp();
             String tos = sub.getTos();
