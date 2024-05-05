@@ -94,8 +94,9 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     // right side panel
     private FormulaList formulaList;
-    private StructureList structureList;
-    private StructureList deNovoStructureList;
+    private StructureList databaseStructureList;
+    private StructureList combinedStructureListSubstructureView;
+    private StructureList combinedStructureListDeNovoView;
     private SpectralMatchList spectralMatchList;
 
 
@@ -153,14 +154,15 @@ public class MainFrame extends JFrame implements DropTargetListener {
         // create models for views
         compoundList = new CompoundList(gui);
         formulaList = new FormulaList(compoundList);
-        structureList = new StructureList(compoundList, (inst, k) -> inst.getStructureCandidates(k, true), false);
-        deNovoStructureList = new StructureList(compoundList, (inst, k) -> inst.getDeNovoStructureCandidates(k,true), true);
+        databaseStructureList = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getStructureCandidates(k, true), false);
+        combinedStructureListSubstructureView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
+        combinedStructureListDeNovoView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
         spectralMatchList = new SpectralMatchList(compoundList);
 
 
         //CREATE VIEWS
         // results Panel
-        resultsPanel = new ResultPanel(deNovoStructureList, structureList, formulaList, spectralMatchList, gui);
+        resultsPanel = new ResultPanel(databaseStructureList, combinedStructureListSubstructureView, combinedStructureListDeNovoView, formulaList, spectralMatchList, gui);
         JPanel resultPanelContainer = new JPanel(new BorderLayout());
         resultPanelContainer.setBorder(BorderFactory.createEmptyBorder());
         resultPanelContainer.add(resultsPanel, BorderLayout.CENTER);

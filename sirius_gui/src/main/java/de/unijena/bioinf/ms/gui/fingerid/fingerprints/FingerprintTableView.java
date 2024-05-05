@@ -120,7 +120,7 @@ public class FingerprintTableView extends ActionListDetailView<FingerIdPropertyB
     @Override
     protected EventList<MatcherEditor<FingerIdPropertyBean>> getSearchFieldMatchers() {
         return GlazedLists.eventListOf(
-                new TextMatcher(searchField.textField),
+                new TextMatcher(searchField),
                 new MinMaxMatcherEditor<>(probabilitySlider, (baseList, element) -> baseList.add(element.getProbability())),
                 new MinMaxMatcherEditor<>(atomSizeSlider, (baseList, element) -> baseList.add((double) element.getMatchSize()))
         );

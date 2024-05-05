@@ -45,22 +45,24 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
     public final DoubleListStats tanimotoStats;
 
     private final AtomicBoolean loadAll = new AtomicBoolean(false);
+    private final AtomicBoolean loadDatabaseHitsAtom = new AtomicBoolean(true);
+    private final AtomicBoolean loadDenovoAtom = new AtomicBoolean(true);
 
     private final CompoundList compoundList;
 
-    private final IOFunctions.BiIOFunction<InstanceBean, Integer, List<FingerprintCandidateBean>> dataExtractor; //todo allow user specifiable or pagination
+    private final IOFunctions.QuadIOFunction<InstanceBean, Integer, Boolean, Boolean, List<FingerprintCandidateBean>> dataExtractor; //todo allow user specifiable or pagination
 
     /**
      * true if the extracted structre data are denovo structure (from MSNovelist).
      * Required since InstanceBean has some information (expansive search) that is specific to the database structures)
      */
-    private final boolean isDenovoStructureCandidates;
+    private final boolean hasDenovoStructureCandidates;
 
-    public StructureList(final CompoundList compoundList, IOFunctions.BiIOFunction<InstanceBean, Integer, List<FingerprintCandidateBean>> dataExtractor, boolean isDenovoStructureCandidates) {
+    public StructureList(final CompoundList compoundList, IOFunctions.QuadIOFunction<InstanceBean, Integer, Boolean, Boolean, List<FingerprintCandidateBean>> dataExtractor, boolean hasDenovoStructureCandidates) {
         super(FingerprintCandidateBean.class);
         this.dataExtractor = dataExtractor;
         this.compoundList = compoundList;
-        this.isDenovoStructureCandidates = isDenovoStructureCandidates;
+        this.hasDenovoStructureCandidates = hasDenovoStructureCandidates;
         elementListSelectionModel.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         csiScoreStats = new DoubleListStats();
         logPStats = new DoubleListStats();
@@ -103,10 +105,10 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
     private final Lock backgroundLoaderLock = new ReentrantLock();
 
     private void changeData(final InstanceBean ec) {
-        changeData(ec, loadAll.get());
+        changeData(ec, loadAll.get(), loadDatabaseHitsAtom.get(), loadDenovoAtom.get());
     }
 
-    public void changeData(final InstanceBean ec, final boolean loadAllCandidates) {
+    public void changeData(final InstanceBean ec, final boolean loadAllCandidates, boolean loadDatabaseHits, boolean loadDenovo) {
         //may be io intense so run in background and execute ony ui updates from EDT to not block the UI too much
         try {
             backgroundLoaderLock.lock();
@@ -129,12 +131,14 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
                             logPStats.reset();
                             tanimotoStats.reset();
                             loadAll.set(loadAllCandidates);
+                            loadDatabaseHitsAtom.set(loadDatabaseHits);
+                            loadDenovoAtom.set(loadDenovo);
                     });
 
                     checkForInterruption();
 
                     if (ec != null) {
-                        final List<FingerprintCandidateBean> fpcChache = dataExtractor.apply(ec, loadAllCandidates ? Integer.MAX_VALUE : 100);
+                        final List<FingerprintCandidateBean> fpcChache = dataExtractor.apply(ec, loadAllCandidates ? Integer.MAX_VALUE : 100, loadDatabaseHits, loadDenovo);
                         //prepare stats for filters and views before setting data
                         fpcChache.forEach(fpc ->{
                             csiScoreStats.addValue(fpc.getCandidate().getCsiScore());
@@ -165,9 +169,36 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
         }
     }
 
-    protected void reloadData(boolean loadAll) {
-        if (loadAll != this.loadAll.get())
-            readDataByConsumer(d -> changeData(d, loadAll));
+//    private List<FingerprintCandidateBean> filterList(List<FingerprintCandidateBean> fpcList, boolean loadDatabaseHits, boolean loadDenovo) {
+//        List<FingerprintCandidateBean> filtered = new LinkedList<>();
+//        for (FingerprintCandidateBean fpc : fpcList) {
+//            final boolean isDenovo = fpc.isDeNovo();
+//            final boolean isDatabase = fpc.isDatabase();
+//            if ((isDenovo && loadDenovo) || (isDatabase && loadDatabaseHits)){
+//                filtered.add(fpc);
+//            }
+//        }
+//        return filtered;
+//    }
+//
+//    private void recalculatedRanks(List<FingerprintCandidateBean> fpcChache) {
+//        fpcChache.sort(Comparator.comparingDouble((a) -> -a.getCandidate().getCsiScore()));
+//        int rank = 0;
+//        String lastKey = null;
+//        for (int i = 0; i < fpcChache.size(); i++) {
+//            FingerprintCandidateBean fc = fpcChache.get(i);
+//            if (i>0 && fc.getCandidate().getInchiKey().equals(lastKey)) {
+//                fc.getCandidate().setRank(rank);
+//            } else {
+//                fc.getCandidate().setRank(++rank);
+//                lastKey = fc.getCandidate().getInchiKey();
+//            }
+//        }
+//    }
+
+    public void reloadData(boolean loadAll, boolean loadDatabaseHits, boolean loadDenovo) {
+        if (loadAll != this.loadAll.get() || loadDatabaseHits != loadDatabaseHitsAtom.get() || loadDenovo != loadDenovoAtom.get() )
+            readDataByConsumer(d -> changeData(d, loadAll, loadDatabaseHits, loadDenovo));
     }
 
     protected Function<FingerprintCandidateBean, Boolean> getBestFunc() {
@@ -181,7 +212,7 @@ public class StructureList extends ActionList<FingerprintCandidateBean, Instance
         };
     }
 
-    public boolean isDenovoStructureCandidates() {
-        return isDenovoStructureCandidates;
+    public boolean hasDenovoStructureCandidates() {
+        return hasDenovoStructureCandidates;
     }
 }

@@ -179,7 +179,7 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
     @Override
     protected EventList<MatcherEditor<SpectralMatchBean>> getSearchFieldMatchers() {
         return GlazedLists.eventListOf(
-                new TextComponentMatcherEditor<>(searchField.textField, (baseList, element) -> {
+                new TextComponentMatcherEditor<>(searchField, (baseList, element) -> {
                     baseList.add(element.getQueryName());
                     element.getReference().map(BasicSpectrum::getName).ifPresent(baseList::add);
                     element.getReference().map(BasicSpectrum::getCollisionEnergy).ifPresent(baseList::add);

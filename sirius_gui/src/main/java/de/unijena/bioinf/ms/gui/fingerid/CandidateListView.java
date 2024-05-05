@@ -26,20 +26,20 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.CandidateStringMatcherEditor;
 import de.unijena.bioinf.ms.gui.fingerid.candidate_filters.DatabaseFilterMatcherEditor;
 import de.unijena.bioinf.ms.gui.table.ActionListDetailView;
-import de.unijena.bioinf.ms.gui.table.FilterRangeSlider;
-import de.unijena.bioinf.ms.gui.table.MinMaxMatcherEditor;
-import de.unijena.bioinf.ms.gui.utils.NameFilterRangeSlider;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
-import de.unijena.bioinf.ms.gui.utils.WrapLayout;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 
 public class CandidateListView extends ActionListDetailView<FingerprintCandidateBean, InstanceBean, StructureList> {
 
 //    private FilterRangeSlider<StructureList, FingerprintCandidateBean, InstanceBean> logPSlider;
     private DBFilterPanel dbFilterPanel;
+    protected JToggleButton loadAll;
+    protected ActionListener loadDataActionListener;
+
 
 
     public CandidateListView(StructureList source) {
@@ -55,7 +55,7 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
         final BoxLayout southLayout = new BoxLayout(south, BoxLayout.PAGE_AXIS);
         south.setLayout(southLayout);
         south.add(new LipidLabel(source));
-        if (!source.isDenovoStructureCandidates()) south.add(new ExpansiveSearchLabel(source));
+        if (!source.hasDenovoStructureCandidates()) south.add(new ExpansiveSearchLabel(source));
         north.add(south, BorderLayout.SOUTH);
         return north;
     }
@@ -65,7 +65,8 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
         JToolBar tb = new JToolBar();
         tb.setFloatable(false);
         tb.setBorderPainted(false);
-        tb.setLayout(new WrapLayout(FlowLayout.LEFT, 0, 0));
+        tb.setRollover(true);
+//        tb.setLayout(new WrapLayout(FlowLayout.CENTER, 0, 0));
 
 //        logPSlider = new FilterRangeSlider<>(source, source.logPStats);
 
@@ -74,27 +75,30 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
 
 //        tb.add(new NameFilterRangeSlider("XLogP:", logPSlider));
 //        tb.addSeparator();
-        tb.addSeparator();
+//        tb.addSeparator();
 
 
         final JToggleButton filter = new ToolbarToggleButton(Icons.FILTER_DOWN_24, "show filter");
         filter.addActionListener(e -> {
             if (dbFilterPanel.toggle()) {
                 filter.setIcon(Icons.FILTER_UP_24);
-                filter.setToolTipText("Hide source filters");
+                filter.setToolTipText("Hide database filters");
             } else {
                 filter.setIcon(Icons.FILTER_DOWN_24);
-                filter.setToolTipText("Show source filters");
+                filter.setToolTipText("Show database filters");
             }
         });
         tb.add(filter);
-        tb.addSeparator();
+//        tb.addSeparator();
 
-        final JToggleButton loadAll = new ToolbarToggleButton(Icons.LOAD_ALL_24, "Load all Candidates (Might be many!).");
-        loadAll.addActionListener(e -> source.reloadData(loadAll.isSelected()));
+        loadAll = new ToolbarToggleButton(Icons.LOAD_ALL_24, "Load all Candidates (Might be many!).");
+        loadDataActionListener = e -> source.reloadData(loadAll.isSelected(), true, false);
+        loadAll.addActionListener(loadDataActionListener);
+        tb.add(firstGap);
+        tb.add(secondGap);
         tb.add(loadAll);
 
-        filter.doClick();
+        filter.setSelected(false);
 
         return tb;
     }
@@ -102,7 +106,7 @@ public class CandidateListView extends ActionListDetailView<FingerprintCandidate
     @Override
     protected EventList<MatcherEditor<FingerprintCandidateBean>> getSearchFieldMatchers() {
         return GlazedLists.eventListOf(
-                new CandidateStringMatcherEditor(searchField.textField)
+                new CandidateStringMatcherEditor(searchField)
 //                ,new MinMaxMatcherEditor<>(logPSlider, (baseList, element) ->
 //                        element.getXLogPOpt().ifPresentOrElse(baseList::add, () -> baseList.add(null)))
                , new DatabaseFilterMatcherEditor(dbFilterPanel)
