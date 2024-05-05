@@ -20,16 +20,17 @@
 
 package de.unijena.bionf.spectral_alignment;
 
-import org.junit.Test;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 
-import static org.junit.Assert.assertTrue;
+public enum SpectralMatchingType {
 
-public class SpectralAlignmentTypeTest {
+    INTENSITY, GAUSSIAN, MODIFIED_COSINE;
 
-    @Test
-    public void testGetScorer() {
-        assertTrue(SpectralAlignmentType.GAUSSIAN.getScorer(null) instanceof GaussianSpectralAlignment);
-        assertTrue(SpectralAlignmentType.INTENSITY.getScorer(null) instanceof IntensityWeightedSpectralAlignment);
-        assertTrue(SpectralAlignmentType.MODIFIED_COSINE.getScorer(null) instanceof ModifiedCosine);
+    public AbstractSpectralMatching getScorer(Deviation deviation) {
+        return switch (this) {
+            case INTENSITY -> new IntensityWeightedSpectralAlignment(deviation);
+            case GAUSSIAN -> new GaussianSpectralMatching(deviation);
+            case MODIFIED_COSINE -> new ModifiedCosine(deviation);
+        };
     }
 }
