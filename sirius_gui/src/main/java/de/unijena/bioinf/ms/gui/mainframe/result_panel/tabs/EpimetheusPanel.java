@@ -74,7 +74,7 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
     }
 
     protected class EpimetheusPanelCandidateListTableView extends CandidateListTableView {
-        ToolbarToggleButton showMSNovelist;
+        JCheckBox showMSNovelist;
 
         public EpimetheusPanelCandidateListTableView(StructureList list) {
             super(list);
@@ -83,13 +83,12 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
         @Override
         protected JToolBar getToolBar() {
             JToolBar tb = super.getToolBar();
-
-            ToolbarToggleButton showMSNovelist = new ToolbarToggleButton("Include MSNovelist", null, "include MSNovelist structure candidates.");
-
+            JCheckBox showMSNovelist = new JCheckBox("Include de novo structures", true);
             tb.add(showMSNovelist, 0);
 
             showMSNovelist.addActionListener(e -> structureList.reloadData(loadAll.isSelected(), true, showMSNovelist.isSelected()));
-            showMSNovelist.setSelected(true);
+            structureList.reloadData(loadAll.isSelected(), true, showMSNovelist.isSelected());
+
             return tb;
         }
     }
