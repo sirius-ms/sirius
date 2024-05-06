@@ -107,7 +107,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
         @Option(names = {"--input", "-i"}, split = ",", description = {
                 "Files or directories to import into the database.",
-                "Supported formats: .ms, .mgf, .msp, .mat, .txt (MassBank), .mb, .json (GNPS, MoNA).",
+                "Supported formats: .ms, .mgf, .msp, .mat, .mb, .json (GNPS, MoNA).",
                 "Structures without spectra can be passed as a tab-separated (.tsv) file with fields [SMILES, id (optional), name (optional)].",
                 "Directories will be recursively expanded."
         }, order = 220)
