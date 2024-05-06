@@ -56,9 +56,9 @@ public class ImportAction extends AbstractGuiAction {
         putValue(Action.SHORT_DESCRIPTION, "<html>" +
                 "<p>Import measurements of:</p>" +
                 "<ul style=\"list-style-type:none;\">" +
-                "  <li>- Multiple compounds (.ms, .mgf)</li>" +
+                "  <li>- Multiple compounds (e.g. .ms, .mgf)</li>" +
                 "  <li>- LC-MS/MS runs (.mzML, .mzXml)</li>" +
-                "  <li>- Projects (.sirius, directory)</li>" +
+                "  <li>- Projects (.sirius)</li>" +
                 "</ul>" +
                 "<p>into the current project-space. (Same as drag and drop)</p>" +
                 "</html>");
