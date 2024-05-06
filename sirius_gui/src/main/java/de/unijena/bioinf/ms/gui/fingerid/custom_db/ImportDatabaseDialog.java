@@ -43,7 +43,6 @@ import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isLoggedIn;
 
 class ImportDatabaseDialog extends JDialog {
-    public static final String DO_NOT_SHOW_AGAIN_KEY_INCOMPLETE_IMPORTED_DB = "de.unijena.bioinf.sirius.importDatabaseDialog.keepIncompleteDb.dontAskAgain";
 
     public static final String DO_NOT_SHOW_AGAIN_KEY_CENTROIDED_WARNING = "de.unijena.bioinf.sirius.importDatabaseDialog.centroided.dontAskAgain";
 
@@ -128,8 +127,7 @@ class ImportDatabaseDialog extends JDialog {
 
             if (new QuestionDialog(
                     databaseDialog.gui.getMainFrame(),
-                    "Do you want to keep the incompletely imported database?",
-                    DO_NOT_SHOW_AGAIN_KEY_INCOMPLETE_IMPORTED_DB).isCancel()) {
+                    "Do you want to keep the incompletely imported database?").isCancel()) {
 
                 databaseDialog.whenCustomDbIsAdded(configPanel.getDbFilePath()).map(SearchableDatabase::getDatabaseId)
                         .ifPresent(dbId -> Jobs.runInBackgroundAndLoad(databaseDialog.gui.getMainFrame(),
