@@ -36,7 +36,7 @@ import java.util.Optional;
 public class WebServiceInfoPanel extends JToolBar implements PropertyChangeListener {
     private static final String INF = Character.toString('\u221E');
     private final JLabel license;
-    private final JLabel consumedCompounds;
+    private final JLabel consumedQueries;
     //    private final JLabel connected = new JLabel("Connected: ?");
     private final JLabel pendingJobs;
 
@@ -48,14 +48,14 @@ public class WebServiceInfoPanel extends JToolBar implements PropertyChangeListe
 
         license = new JLabel("License: ?");
         license.setToolTipText("Web service license information.");
-        consumedCompounds = new JLabel("Compounds: 'UNLIMITED'");
-        consumedCompounds.setToolTipText(GuiUtils.formatToolTip("Consumed compounds in billing period. (If subscription is compound based)"));
+        consumedQueries = new JLabel("Queries: 'UNLIMITED'");
+        consumedQueries.setToolTipText(GuiUtils.formatToolTip("Quota Utilization. Consumed feature queries in billing period. (If subscription has a feature query quota/limit)"));
         pendingJobs = new JLabel("Jobs: ?");
         pendingJobs.setToolTipText("Number of pending jobs on web server.");
 
         add(license);
         add(Box.createGlue());
-        add(consumedCompounds);
+        add(consumedQueries);
         add(Box.createGlue());
         add(pendingJobs);
         monitor.addConnectionUpdateListener(this);
@@ -76,13 +76,13 @@ public class WebServiceInfoPanel extends JToolBar implements PropertyChangeListe
                         .map(SubscriptionConsumables::getCountedCompounds).orElse(-1);
 
                 final String current = consumed < 0 ? "N/A" : String.valueOf(consumed);
-                consumedCompounds.setText("<html>Compounds: <b>" + current + "/" + max + "</b> (per " + (hasLimit ? "Year" : "Month") + ")</html>");
+                consumedQueries.setText("<html>Quota: <b>" + current + "/" + max + "</b> (per " + (hasLimit ? "Year" : "Month") + ")</html>");
             } else {
-                consumedCompounds.setText("<html>Compounds: <b>UNLIMITED</b></html>");
+                consumedQueries.setText("<html>Quota: <b>UNLIMITED</b></html>");
             }
         } else {
             license.setText("License: '?'");
-            consumedCompounds.setText("Compounds: '?'");
+            consumedQueries.setText("Quota: '?'");
         }
 
         if (check.getWorkerInfo() != null) {
