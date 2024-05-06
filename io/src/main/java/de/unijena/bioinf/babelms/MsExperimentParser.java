@@ -45,6 +45,10 @@ import java.util.function.Consumer;
 public class MsExperimentParser {
 
     protected static final Map<String, Class<? extends Parser<Ms2Experiment>>> KNOWN_ENDINGS = addKnownEndings();
+
+    // there is no good solution without writing the endings here explicitly (otherwise DESCRIPTION can not be used in annotations)
+    public static final String DESCRIPTION = ".ms, .mgf, .mzxml, .mzml, .cef, .msp, .mat, .mb, .mblib, .json (GNPS, MoNA), .zip";
+
     /**
      * This postprocessor annotates Parameter configs to the {@link Ms2Experiment}. If {@link InputFileConfig} is given
      * this is preferred over the {@link PropertyManager#DEFAULTS} config.
