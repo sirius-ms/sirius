@@ -48,7 +48,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
     private DefaultListModel<File> fileListModel;
 
 
-    private FileFilter supportedStructureFiles = new FileNameExtensionFilter("Structure files (e.g. .tsv, .sdf)", "tsv", "csv", "sdf");
+    private FileFilter supportedStructureFiles = new FileNameExtensionFilter("Structure files (.tsv, .csv, .sdf)", "tsv", "csv", "sdf");
 
     private FileFilter supportedSpectraFiles = new FileFilter() {
         @Override
@@ -61,7 +61,7 @@ public class DatabaseImportConfigPanel extends SubToolConfigPanel<CustomDBOption
 
         @Override
         public String getDescription() {
-            return "Spectra files (e.g. .msp, .json, .mgf, mat, .ms)";
+            return "Spectra files (" + MsExperimentParser.DESCRIPTION.replace(".mzml, ", "").replace(".mzxml, ", "") + ")";
         }
     };
 
