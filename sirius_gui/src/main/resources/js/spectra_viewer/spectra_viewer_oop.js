@@ -243,7 +243,7 @@ class Base {
         self.xAxis.transition().duration(duration).call(d3.axisBottom(self.x));
     }
 
-    static panX(self, selection, xdomain_fix, duration, ...callbackUpdates) {
+    static panX(self, selection, xdomain_fix, duration, mouseUpDuration, mouseUpCallback, ...callbackUpdates) {
         if (d3.event.button === 0) {
             var div = selection;
             var w = d3.select(window)
@@ -281,7 +281,13 @@ class Base {
             };
 
             function mouseupPan() {
-                if (self.pan.mouseupCheck && self.pan.mousemoveCheck) w.on("mousedown", null).on("mousemove", null).on("mouseup", null);
+                if (self.pan.mouseupCheck && self.pan.mousemoveCheck) {
+                    w.on("mousedown", null).on("mousemove", null).on("mouseup", null);
+                    mouseUpCallback(self, mouseUpDuration);
+                    callbackUpdates.forEach(function (callback) {
+                        callback(self, mouseUpDuration);
+                    });
+                }
             };
         }
     }
@@ -624,7 +630,7 @@ class SpectrumPlot extends Base {
             .on("dblclick.zoom", null)
             .on("mousedown.zoom", function () {
                 var selection = d3.select(this);
-                Base.panX(self, selection, [0, self.domain_fix.xMax], 50, SpectrumPlot.update_y, SpectrumPlot.update_peaks);
+                Base.panX(self, selection, [0, self.domain_fix.xMax], 150, 750, SpectrumPlot.update_y, SpectrumPlot.update_peaks);
             });
         // zoom and pan (Y-axis)
         this.zoomAreaY = d3.select("#container")
@@ -1080,7 +1086,7 @@ class MirrorPlot extends Base {
             };
             tmp_pan = function () {
                 var selection = d3.select(this);
-                Base.panX(self, selection, [self.domain_fix.xMin, self.domain_fix.xMax], 150, MirrorPlot.update_y, MirrorPlot.update_peaksX, MirrorPlot.update_rulers, MirrorPlot.update_mzLabels, MirrorPlot.update_diffBands);
+                Base.panX(self, selection, [self.domain_fix.xMin, self.domain_fix.xMax], 150, 750, MirrorPlot.update_y, MirrorPlot.update_peaksX, MirrorPlot.update_rulers, MirrorPlot.update_mzLabels, MirrorPlot.update_diffBands);
             };
             tmp_brush = function () {
                 Base.brushendX(self, [self.x_default.min, self.x_default.max], 750, MirrorPlot.update_y, MirrorPlot.update_peaksX, MirrorPlot.update_rulers, MirrorPlot.update_mzLabels, MirrorPlot.update_diffBands);
@@ -1091,7 +1097,7 @@ class MirrorPlot extends Base {
             };
             tmp_pan = function () {
                 var selection = d3.select(this);
-                Base.panX(self, selection, [self.domain_fix.xMin, self.domain_fix.xMax], 150, MirrorPlot.update_y, MirrorPlot.update_peaksX, MirrorPlot.update_rulers, MirrorPlot.update_diffBands);
+                Base.panX(self, selection, [self.domain_fix.xMin, self.domain_fix.xMax], 150, 750, MirrorPlot.update_y, MirrorPlot.update_peaksX, MirrorPlot.update_rulers, MirrorPlot.update_diffBands);
             };
             tmp_brush = function () {
                 Base.brushendX(self, [self.x_default.min, self.x_default.max], 750, MirrorPlot.update_y, MirrorPlot.update_peaksX, MirrorPlot.update_rulers, MirrorPlot.update_diffBands);
@@ -1102,7 +1108,7 @@ class MirrorPlot extends Base {
             };
             tmp_pan = function () {
                 var selection = d3.select(this);
-                Base.panX(self, selection, [self.domain_fix.xMin, self.domain_fix.xMax], 150, MirrorPlot.update_y, MirrorPlot.update_peaksX, MirrorPlot.update_mzLabels);
+                Base.panX(self, selection, [self.domain_fix.xMin, self.domain_fix.xMax], 150, 750, MirrorPlot.update_y, MirrorPlot.update_peaksX, MirrorPlot.update_mzLabels);
             };
             tmp_brush = function () {
                 Base.brushendX(self, [self.x_default.min, self.x_default.max], 750, MirrorPlot.update_y, MirrorPlot.update_peaksX, MirrorPlot.update_mzLabels);
@@ -1113,7 +1119,7 @@ class MirrorPlot extends Base {
             };
             tmp_pan = function () {
                 var selection = d3.select(this);
-                Base.panX(self, selection, [self.domain_fix.xMin, self.domain_fix.xMax], 150, MirrorPlot.update_y, MirrorPlot.update_peaksX);
+                Base.panX(self, selection, [self.domain_fix.xMin, self.domain_fix.xMax], 150, 750, MirrorPlot.update_y, MirrorPlot.update_peaksX);
             };
             tmp_brush = function () {
                 Base.brushendX(self, [self.x_default.min, self.x_default.max], 750, MirrorPlot.update_y, MirrorPlot.update_peaksX);
