@@ -853,6 +853,7 @@ class MirrorPlot extends Base {
     static showStructure(self) {
         self.strucArea.html("");
         document.getElementById('str_border').innerHTML = self.svg_str;
+        self.strucArea.select('svg').style('height', '100%').style('width', '100%');
     }
 
     initStructureView() {
