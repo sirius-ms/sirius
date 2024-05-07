@@ -113,6 +113,7 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     }
 
     private boolean filterByPeakShape(InstanceBean item, CompoundFilterModel filterModel) {
+        //todo implement
         /*final CompoundContainer compoundContainer = item.loadCompoundContainer(LCMSPeakInformation.class);
         final Optional<LCMSPeakInformation> annotation = compoundContainer.getAnnotation(LCMSPeakInformation.class);
         if (annotation.isEmpty()) return false;
