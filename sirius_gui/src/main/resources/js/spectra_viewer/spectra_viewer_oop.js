@@ -211,11 +211,6 @@ class Base {
             self.x.domain([xdomain_fix[0], xdomain_fix[1]])
             self.domain_tmp.xMin = xdomain_fix[0];
             self.domain_tmp.xMax = xdomain_fix[1];
-//            if (self.y !== undefined) { //temporarily only reset in spectrumPlot
-//                self.y.domain([0, 1])
-//                self.domain_tmp.yMax = 1;
-//                self.yAxis.transition().duration(duration).call(d3.axisLeft(self.y));
-//            }
         } else {
             self.domain_tmp.xMin = self.x.invert(extent[0]);
             self.domain_tmp.xMax = self.x.invert(extent[1]);
@@ -615,13 +610,9 @@ class SpectrumPlot extends Base {
             .attr("transform", "translate(0," + this.h + ")")
             .call(d3.axisBottom(this.x));
         // Y axis
-//        if (this.domain_tmp.yMax === null) {
         const maxIntensity = d3.max(this.spectrum.peaks.map(d => d.intensity)) || 1.0;
         this.y = d3.scaleLinear().domain([0, maxIntensity]).range([this.h, 0]).nice();
         this.domain_tmp.yMax = maxIntensity;
-//        } else {
-//            this.y = d3.scaleLinear().domain([0, this.domain_tmp.yMax]).range([this.h, 0]).nice();
-//        }
         this.yAxis = this.svg.append("g").attr("id", "yAxis").call(d3.axisLeft(this.y));
         this.svg.selectAll(".label").attr("visibility", "visible");
         // zoom and pan (X-axis)
@@ -781,7 +772,7 @@ class MirrorPlot extends Base {
         const mI1 = d3.max(self.spectrum1.peaks.filter(d => self.domain_tmp.xMin <= d.mz && d.mz <= self.domain_tmp.xMax), (d) => d.intensity);
         const mI2 = d3.max(self.spectrum2.peaks.filter(d => self.domain_tmp.xMin <= d.mz && d.mz <= self.domain_tmp.xMax), (d) => d.intensity);
         const maxInt = d3.max([mI1, mI2]);
-        if (maxInt > 0) {
+        if (maxInt !== undefined && maxInt > 0) {
             self.y1.domain([0, maxInt]);
             self.y2.domain([0, maxInt]);
             self.yAxis1.transition().duration(duration).call(d3.axisLeft(self.y1));
@@ -1236,7 +1227,6 @@ class Main {
         });
         this.spectrumPlot.plot();
         this.svg_str = null;
-        //this.data = undefined;
     }
 
     loadJSONDataAndStructure(data_spectra, data_svg, mirrorStyle, showMz) {
