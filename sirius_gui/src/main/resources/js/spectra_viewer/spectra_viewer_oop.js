@@ -211,11 +211,11 @@ class Base {
             self.x.domain([xdomain_fix[0], xdomain_fix[1]])
             self.domain_tmp.xMin = xdomain_fix[0];
             self.domain_tmp.xMax = xdomain_fix[1];
-            if (self.y !== undefined) { //temporarily only reset in spectrumPlot
-                self.y.domain([0, 1])
-                self.domain_tmp.yMax = 1;
-                self.yAxis.transition().duration(duration).call(d3.axisLeft(self.y));
-            }
+//            if (self.y !== undefined) { //temporarily only reset in spectrumPlot
+//                self.y.domain([0, 1])
+//                self.domain_tmp.yMax = 1;
+//                self.yAxis.transition().duration(duration).call(d3.axisLeft(self.y));
+//            }
         } else {
             self.domain_tmp.xMin = self.x.invert(extent[0]);
             self.domain_tmp.xMax = self.x.invert(extent[1]);
@@ -347,6 +347,14 @@ class SpectrumPlot extends Base {
                     return hasFormula(peakData) ? "peak_2 peak" : "peak_1 peak";
                 }
             }
+        }
+    }
+
+    static update_y(self, duration) {
+        const maxInt = d3.max(self.spectrum.peaks.filter(d => self.domain_tmp.xMin <= d.mz && d.mz <= self.domain_tmp.xMax), (d) => d.intensity);
+        if (maxInt !== undefined && maxInt > 0) {
+            self.y.domain([0, maxInt]);
+            self.yAxis.transition().duration(duration).call(d3.axisLeft(self.y));
         }
     }
 
@@ -607,24 +615,25 @@ class SpectrumPlot extends Base {
             .attr("transform", "translate(0," + this.h + ")")
             .call(d3.axisBottom(this.x));
         // Y axis
-        if (this.domain_tmp.yMax === null) {
-            this.y = d3.scaleLinear().domain([0, 1]).range([this.h, 0]);
-            this.domain_tmp.yMax = 1;
-        } else {
-            this.y = d3.scaleLinear().domain([0, this.domain_tmp.yMax]).range([this.h, 0]);
-        }
+//        if (this.domain_tmp.yMax === null) {
+        const maxIntensity = d3.max(this.spectrum.peaks.map(d => d.intensity)) || 1.0;
+        this.y = d3.scaleLinear().domain([0, maxIntensity]).range([this.h, 0]).nice();
+        this.domain_tmp.yMax = maxIntensity;
+//        } else {
+//            this.y = d3.scaleLinear().domain([0, this.domain_tmp.yMax]).range([this.h, 0]).nice();
+//        }
         this.yAxis = this.svg.append("g").attr("id", "yAxis").call(d3.axisLeft(this.y));
         this.svg.selectAll(".label").attr("visibility", "visible");
         // zoom and pan (X-axis)
         this.zoomX = d3.zoom().extent([[0, 0], [this.w, this.h]])
             .on("zoom", function () {
-                Base.zoomedX(self, [0, self.domain_fix.xMax], 100, SpectrumPlot.update_peaks);
+                Base.zoomedX(self, [0, self.domain_fix.xMax], 100, SpectrumPlot.update_y, SpectrumPlot.update_peaks);
             });
         this.peakArea.select("#brushArea").call(this.zoomX)
             .on("dblclick.zoom", null)
             .on("mousedown.zoom", function () {
                 var selection = d3.select(this);
-                Base.panX(self, selection, [0, self.domain_fix.xMax], 50, SpectrumPlot.update_peaks);
+                Base.panX(self, selection, [0, self.domain_fix.xMax], 50, SpectrumPlot.update_y, SpectrumPlot.update_peaks);
             });
         // zoom and pan (Y-axis)
         this.zoomAreaY = d3.select("#container")
@@ -643,7 +652,7 @@ class SpectrumPlot extends Base {
         // brush (X-axis)
         this.brush = d3.brushX().extent([[0, 0], [this.w, this.h]]).filter(Base.rightClickOnly)
             .on("end", function () {
-                Base.brushendX(self, [self.domain_fix.xMin, self.domain_fix.xMax], 750, SpectrumPlot.update_peaks);
+                Base.brushendX(self, [self.domain_fix.xMin, self.domain_fix.xMax], 750, SpectrumPlot.update_y, SpectrumPlot.update_peaks);
             });
         this.peakArea.select("#brushArea").call(this.brush);
         // peaks
@@ -1006,7 +1015,7 @@ class MirrorPlot extends Base {
 
     plot() {
         var self = this;
-        if (this.svg_str !== undefined) {
+        if (this.svg_str !== null && this.svg_str !== undefined) {
             this.initStructureView();
         }
 
@@ -1163,7 +1172,7 @@ class MirrorPlot extends Base {
         if (this.viewStyle === "difference") this.showDifference();
         if (this.mzLabel > 0) this.showMzLabel(this.mzLabel);
         // structure view
-        if (this.svg_str !== undefined) {
+        if (this.svg_str !== null && this.svg_str !== undefined) {
             MirrorPlot.showStructure(self);
         }
         // mouse actions
