@@ -50,8 +50,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
-import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isWorkerWarning;
+import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.*;
 
 
 public class BatchComputeDialog extends JDialog {
@@ -440,7 +439,7 @@ public class BatchComputeDialog extends JDialog {
         sub.setConfigMap(new HashMap<>());
 
         if (formulaIDConfigPanel != null && formulaIDConfigPanel.isToolSelected()) {
-            if (checkResult == null)
+            if (checkResult == null || isConnected(checkResult) || isWarningOnly(checkResult))
                 sub.spectraSearchParams(new SpectralLibrarySearch().enabled(true));
             else
                 LoggerFactory.getLogger(getClass()).warn("Do not perform spectral matching due to missing server connection.");
