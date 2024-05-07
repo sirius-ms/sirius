@@ -38,13 +38,11 @@ import de.unijena.bioinf.ms.middleware.service.events.SseEventService;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiServiceImpl;
 import de.unijena.bioinf.ms.middleware.service.info.ConnectionChecker;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import de.unijena.bioinf.webapi.WebAPI;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
+import org.springframework.boot.web.context.WebServerApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
@@ -67,7 +65,7 @@ public class SiriusContext{
         return new ComputeServiceImpl(eventService, instanceBufferFactory);
     }
     @Bean(destroyMethod = "shutdown")
-    public GuiService guiService(EventService<?> eventService, ApplicationContext applicationContext){
+    public GuiService guiService(EventService<?> eventService, WebServerApplicationContext applicationContext){
         return new GuiServiceImpl(eventService, applicationContext);
     }
 

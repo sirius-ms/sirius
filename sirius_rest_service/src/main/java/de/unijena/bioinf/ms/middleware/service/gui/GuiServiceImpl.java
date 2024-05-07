@@ -28,7 +28,7 @@ import de.unijena.bioinf.ms.middleware.model.gui.GuiParameters;
 import de.unijena.bioinf.ms.middleware.service.events.EventService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.springframework.context.ApplicationContext;
+import org.springframework.boot.web.context.WebServerApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -44,14 +44,15 @@ public class GuiServiceImpl implements GuiService {
     protected final Map<String, SiriusGui> siriusGuiInstances = new ConcurrentHashMap<>();
 
     protected final EventService<?> eventService;
-    private final ApplicationContext applicationContext;
+    private final WebServerApplicationContext applicationContext;
 
-    private final SiriusGuiFactory guiFactory;
+    private SiriusGuiFactory guiFactory;
 
-    public GuiServiceImpl(EventService<?> eventService, ApplicationContext applicationContext) {
-        this(new SiriusGuiFactory(), eventService, applicationContext);
+    public GuiServiceImpl(EventService<?> eventService, WebServerApplicationContext applicationContext) {
+        this(null, eventService, applicationContext);
     }
-    public GuiServiceImpl(SiriusGuiFactory guiFactory, EventService<?> eventService, ApplicationContext applicationContext) {
+
+    public GuiServiceImpl(SiriusGuiFactory guiFactory, EventService<?> eventService, WebServerApplicationContext applicationContext) {
         this.eventService = eventService;
         this.applicationContext = applicationContext;
         this.guiFactory = guiFactory;
@@ -60,7 +61,7 @@ public class GuiServiceImpl implements GuiService {
     @Override
     public List<GuiInfo> findGui() {
         synchronized (siriusGuiInstances) {
-        return siriusGuiInstances.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(e -> GuiInfo.builder().projectId(e.getKey()).build()).toList();
+            return siriusGuiInstances.entrySet().stream().sorted(Map.Entry.comparingByKey()).map(e -> GuiInfo.builder().projectId(e.getKey()).build()).toList();
         }
     }
 
@@ -79,17 +80,17 @@ public class GuiServiceImpl implements GuiService {
                     boolean closeSirius = false;
                     synchronized (siriusGuiInstances) {
                         if (siriusGuiInstances.containsKey(projectId)) {
-                            if (siriusGuiInstances.size() == 1){
+                            if (siriusGuiInstances.size() == 1) {
                                 closeSirius = new QuestionDialog(gui.getMainFrame(), "You are about to close the last SIRIUS GUI Window. Do you wish to shutdown SIRIUS?").isSuccess();
-                                if (closeSirius){ //todo me might want yes, no and cancel instead. cancel closes GUI window but keeps service running
+                                if (closeSirius) { //todo me might want yes, no and cancel instead. cancel closes GUI window but keeps service running
                                     siriusGuiInstances.remove(projectId).shutdown();
                                 }
-                            }else {
+                            } else {
                                 siriusGuiInstances.remove(projectId).shutdown();
                             }
                         }
                     }
-                    if (closeSirius){
+                    if (closeSirius) {
                         shutdown(); //shutdown guis and clients before server shutdown is initiated starts
                         ((ConfigurableApplicationContext) applicationContext).close();
                         System.exit(0);
@@ -103,7 +104,7 @@ public class GuiServiceImpl implements GuiService {
     public boolean closeGuiInstance(@NotNull String projectId) {
         synchronized (siriusGuiInstances) {
             SiriusGui gui = siriusGuiInstances.remove(projectId);
-            if (gui != null){
+            if (gui != null) {
                 gui.shutdown();
                 return true;
             }
@@ -112,6 +113,9 @@ public class GuiServiceImpl implements GuiService {
     }
 
     protected SiriusGui makeGuiInstance(String projectId) {
+        if (guiFactory == null)
+            guiFactory = new SiriusGuiFactory(applicationContext.getWebServer().getPort());
+
         return guiFactory.newGui(projectId);
     }
 
@@ -128,7 +132,10 @@ public class GuiServiceImpl implements GuiService {
 
     @Override
     public void shutdown() {
-        siriusGuiInstances.forEach((k, v) -> v.shutdown());
-        guiFactory.shutdowm();
+        synchronized (siriusGuiInstances) {
+            siriusGuiInstances.forEach((k, v) -> v.shutdown());
+            if (guiFactory != null)
+                guiFactory.shutdowm();
+        }
     }
 }

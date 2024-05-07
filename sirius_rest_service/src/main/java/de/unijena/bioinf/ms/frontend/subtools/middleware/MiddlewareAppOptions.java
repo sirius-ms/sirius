@@ -55,7 +55,7 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
         this.splash = splashScreen;
     }
 
-    @CommandLine.Option(names = {"--port", "-p"}, description = "Specify the port on which the SIRIUS REST Service should run (Default: 8080).", defaultValue = "8080")
+    @CommandLine.Option(names = {"--port", "-p"}, description = "Specify the port on which the SIRIUS REST Service should run (Default: autodetect).")
     private void setPort(int port) {
         System.getProperties().setProperty("server.port", String.valueOf(port));
     }

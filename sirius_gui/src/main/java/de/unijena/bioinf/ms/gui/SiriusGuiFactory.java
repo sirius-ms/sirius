@@ -36,9 +36,8 @@ public final class SiriusGuiFactory {
     private volatile NightSkyClient nightSkyClient;
     private volatile ConnectionMonitor connectionMonitor;
 
-
-    public SiriusGuiFactory() {
-        this(null, null);
+    public SiriusGuiFactory(int port) {
+        this(new NightSkyClient(port), null);
     }
 
     public SiriusGuiFactory(NightSkyClient nightSkyClient, ConnectionMonitor connectionMonitor) {

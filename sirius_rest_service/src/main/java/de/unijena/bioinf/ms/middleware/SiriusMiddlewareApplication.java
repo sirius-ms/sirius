@@ -49,8 +49,10 @@ import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.ApplicationPidFileWriter;
+import org.springframework.boot.web.context.WebServerInitializedEvent;
 import org.springframework.boot.web.context.WebServerPortFileWriter;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationListener;
 import picocli.CommandLine;
 
 import java.io.BufferedReader;
@@ -150,8 +152,13 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
 
                 measureTime("Start Workflow");
                 SpringApplication app = appBuilder.application();
+                app.addListeners((ApplicationListener<WebServerInitializedEvent>) event ->{
+                        System.err.println("SIRIUS Service is running on port: " + event.getWebServer().getPort());
+                        System.err.println("SIRIUS Service started successfully!");
+                });
                 app.addListeners(new ApplicationPidFileWriter(Workspace.WORKSPACE.resolve("sirius.pid").toFile()));
                 app.addListeners(new WebServerPortFileWriter(Workspace.WORKSPACE.resolve("sirius.port").toFile()));
+
                 app.run(args);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -174,7 +181,6 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
 
         if (successfulParsed) {
             RUN.compute();
-            System.err.println("SIRIUS Service started successfully!");
         } else {
             System.exit(0);// Zero because this is the help message case
         }

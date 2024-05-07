@@ -87,6 +87,9 @@ public class NightSkyClient implements AutoCloseable {
         this(8080, "http://localhost", asyncCallsExecutor);
     }
 
+    public NightSkyClient(int port) {
+        this(port, "http://localhost", null);
+    }
     public NightSkyClient(int port, String baseUrl, ExecutorService asyncExecutor) {
         this.basePath = baseUrl + ":" + port;
         this.asyncExecutor = asyncExecutor;
