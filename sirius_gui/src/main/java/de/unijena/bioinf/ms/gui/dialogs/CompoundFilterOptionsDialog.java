@@ -64,7 +64,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     final CompoundFilterModel filterModel;
     final CompoundList compoundList;
 
-    JCheckBox[] peakShape;
+//    JCheckBox[] peakShape;
 
     final JComboBox<CompoundFilterModel.LipidFilter> lipidFilterBox;
     final PlaceholderTextField elementsField;
@@ -117,25 +117,26 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
 
         //peak shape filter
-        {
-            peakShape = new JCheckBox[]{
-                    new JCheckBox("Low"),
-                    new JCheckBox("Medium"),
-                    new JCheckBox("High"),
-            };
-            final JPanel group = new JPanel();
-            final BoxLayout groupLayout = new BoxLayout(group, BoxLayout.X_AXIS);
-            group.setLayout(groupLayout);
-            for (JCheckBox box : peakShape) {
-                group.add(Box.createHorizontalGlue());
-                group.add(box);
-            }
-            group.add(Box.createHorizontalGlue());
-            for (int i = 0; i < peakShape.length; ++i) {
-                peakShape[i].setSelected(filterModel.getPeakShapeQuality(i));
-            }
-            smallParameters.addNamed("Peak shape quality: ", group);
-        }
+        //todo enable if implemented
+//        {
+//            peakShape = new JCheckBox[]{
+//                    new JCheckBox("Low"),
+//                    new JCheckBox("Medium"),
+//                    new JCheckBox("High"),
+//            };
+//            final JPanel group = new JPanel();
+//            final BoxLayout groupLayout = new BoxLayout(group, BoxLayout.X_AXIS);
+//            group.setLayout(groupLayout);
+//            for (JCheckBox box : peakShape) {
+//                group.add(Box.createHorizontalGlue());
+//                group.add(box);
+//            }
+//            group.add(Box.createHorizontalGlue());
+//            for (int i = 0; i < peakShape.length; ++i) {
+//                peakShape[i].setSelected(filterModel.getPeakShapeQuality(i));
+//            }
+//            smallParameters.addNamed("Peak shape quality: ", group);
+//        }
 
         //isotope peak filter
 
@@ -306,9 +307,10 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         filterModel.setCurrentMinIsotopePeaks(getMinIsotopePeaks());
         filterModel.setAdducts(new HashSet<>(adductOptions.checkBoxList.getCheckedItems()));
 
-        for (int k = 0; k < peakShape.length; ++k) {
+        //todo enable if implemented
+        /*for (int k = 0; k < peakShape.length; ++k) {
             filterModel.setPeakShapeQuality(k, peakShape[k].isSelected());
-        }
+        }*/
 
         filterModel.setLipidFilter((CompoundFilterModel.LipidFilter) lipidFilterBox.getSelectedItem());
 
@@ -387,9 +389,10 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     private void resetFilter() {
         resetSpinnerValues();
         adductOptions.checkBoxList.uncheckAll();
-        for (int i = 0; i < peakShape.length; ++i) {
-            peakShape[i].setSelected(true);
-        }
+        //todo enable if implemented
+//        for (int i = 0; i < peakShape.length; ++i) {
+//            peakShape[i].setSelected(true);
+//        }
         lipidFilterBox.setSelectedItem(CompoundFilterModel.LipidFilter.KEEP_ALL_COMPOUNDS);
         elementsField.setText(null);
         searchDBList.checkBoxList.uncheckAll();
