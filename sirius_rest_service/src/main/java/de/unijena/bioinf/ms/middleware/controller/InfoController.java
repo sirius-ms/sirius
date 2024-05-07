@@ -53,7 +53,12 @@ public class InfoController {
     @RequestMapping(value = "/api/info", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public Info getInfo() {
-        String dbDate = Optional.ofNullable(siriusContext.webAPI().getChemDbDate()).orElse("M/A");
+        String dbDate = "N/A";
+        try {
+            dbDate = Optional.ofNullable(siriusContext.webAPI().getChemDbDate()).orElse("N/A");
+        } catch (Exception e) {
+            log.warn("Could not get chemDbDate because of: {}", e.getMessage());
+        }
         return Info.builder()
                 .chemDbVersion(dbDate)
                 .nightSkyApiVersion(siriusContext.getApiVersion())

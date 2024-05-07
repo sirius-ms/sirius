@@ -299,7 +299,7 @@ public class BatchComputeDialog extends JDialog {
         }
 
 
-        if (fingerprintAndCanopusConfigPanel.isToolSelected() || csiSearchConfigs.isToolSelected() || msNovelistConfigs.isToolSelected() && !PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS, false)) {
+        if (!PropertyManager.getBoolean(DO_NOT_SHOW_AGAIN_KEY_OUTDATED_PS, false)) {
             //CHECK Server connection
             if (checkResult == null)
                 checkResult = CheckConnectionAction.checkConnectionAndLoad(gui);
@@ -367,10 +367,6 @@ public class BatchComputeDialog extends JDialog {
                         updateProgress(0, 100, 1, "ILP solver check DONE!");
                     }
                 }
-                checkForInterruption();
-
-                //CHECK worker availability
-                checkConnection();
 
                 updateProgress(0, 100, 2, "Connection check DONE!");
                 checkForInterruption();
@@ -444,7 +440,10 @@ public class BatchComputeDialog extends JDialog {
         sub.setConfigMap(new HashMap<>());
 
         if (formulaIDConfigPanel != null && formulaIDConfigPanel.isToolSelected()) {
-            sub.spectraSearchParams(new SpectralLibrarySearch().enabled(true));
+            if (checkResult == null)
+                sub.spectraSearchParams(new SpectralLibrarySearch().enabled(true));
+            else
+                LoggerFactory.getLogger(getClass()).warn("Do not perform spectral matching due to missing server connection.");
             sub.setFormulaIdParams(new Sirius().enabled(true));
             sub.getConfigMap().putAll(formulaIDConfigPanel.asConfigMap());
         }
@@ -533,7 +532,7 @@ public class BatchComputeDialog extends JDialog {
                 "<b>Warning:</b> No connection to webservice available! <br>" +
                         "Online databases cannot be used for formula identification.<br> " +
                         "If online databases are selected, the default option <br>" +
-                        "(all molecular formulas) will be used instead.";
+                        "(all molecular formulas) will be used instead. Spectral library matching will also not be performed.";
 
         public WarnFormulaSourceDialog(Frame owner) {
             super(owner, FORMULA_SOURCE_WARNING_MESSAGE, DONT_ASK_KEY);
