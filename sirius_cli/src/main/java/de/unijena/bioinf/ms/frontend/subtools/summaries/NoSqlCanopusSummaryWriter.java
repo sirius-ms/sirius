@@ -48,16 +48,16 @@ class NoSqlCanopusSummaryWriter implements AutoCloseable {
                     "NPC#superclass Probability\t" +
                     "NPC#class\t" +
                     "NPC#class Probability\t" +
-                    "ClassyFire#most specific class\t" +
-                    "ClassyFire#most specific class Probability\t" +
-                    "ClassyFire#level 5\t" +
-                    "ClassyFire#level 5 Probability\t" +
-                    "ClassyFire#subclass\t" +
-                    "ClassyFire#subclass Probability\t" +
-                    "ClassyFire#class\t" +
-                    "ClassyFire#class Probability\t" +
                     "ClassyFire#superclass\t" +
                     "ClassyFire#superclass probability\t" +
+                    "ClassyFire#class\t" +
+                    "ClassyFire#class Probability\t" +
+                    "ClassyFire#subclass\t" +
+                    "ClassyFire#subclass Probability\t" +
+                    "ClassyFire#level 5\t" +
+                    "ClassyFire#level 5 Probability\t" +
+                    "ClassyFire#most specific class\t" +
+                    "ClassyFire#most specific class Probability\t" +
                     "ClassyFire#all classifications\t" +
                     // metadata for mapping
                     "ionMass\t" +
@@ -156,20 +156,28 @@ class NoSqlCanopusSummaryWriter implements AutoCloseable {
                     Stream.of(CLF.getPredictedLeafs(cfClassification, 0.5)).collect(Collectors.toSet());
             lineage.forEach(alternatives::remove);
 
-            ListIterator<ClassyfireProperty> lineageIterator = lineage.listIterator(lineage.size());
-            for (int i = 0; i < 5; i++) {
-                if (lineageIterator.hasPrevious()){
-                    ClassyfireProperty cfc = lineageIterator.previous();
-                    w.write(cfc.getName());
-                    writeSep();
-                    w.write(String.format(DOUBLE_FORMAT, cfClassification.getProbability(CLF.getIndexOfMolecularProperty(cfc))));
-                    writeSep();
-                }else {
-                    writeSep();
-                    writeSep();
-                }
+            if (!lineage.isEmpty()) {
+                Iterator<ClassyfireProperty> lineageIterator = lineage.iterator();
+                if (lineageIterator.hasNext())
+                    lineageIterator.next(); //skip organic compounds class
+                for (int i = 0; i < 4; i++) {
+                    if (lineageIterator.hasNext()){
+                        ClassyfireProperty cfc = lineageIterator.next();
+                        w.write(cfc.getName());
+                        writeSep();
+                        w.write(String.format(DOUBLE_FORMAT, cfClassification.getProbability(CLF.getIndexOfMolecularProperty(cfc))));
+                        writeSep();
+                    }else {
+                        writeSep();
+                        writeSep();
+                    }
 
+                }
             }
+            w.write(primaryClass.getName());
+            writeSep();
+            w.write(String.format(DOUBLE_FORMAT, cfClassification.getProbability(CLF.getIndexOfMolecularProperty(primaryClass))));
+            writeSep();
             w.write(Joiner.on("; ").join(cfClassification.asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator()));
         }
     }
