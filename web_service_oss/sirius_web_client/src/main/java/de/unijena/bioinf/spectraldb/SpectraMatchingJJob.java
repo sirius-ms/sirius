@@ -30,6 +30,7 @@ import de.unijena.bioinf.chemdb.annotations.SpectralMatchingScorer;
 import de.unijena.bioinf.chemdb.annotations.SpectralSearchDB;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JobProgressMerger;
+import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bionf.spectral_alignment.*;
@@ -75,7 +76,9 @@ public class SpectraMatchingJJob extends BasicMasterJJob<SpectralSearchResult> {
 
         JobProgressMerger progressMonitor = new JobProgressMerger(this.pcs);
 
-        final List<Ms2ReferenceSpectrum> references = api.getChemDB().lookupSpectra(precursorMz, precursorDev, true, experiment.getAnnotationOrDefault(SpectralSearchDB.class).searchDBs);
+
+        final List<Ms2ReferenceSpectrum> references = NetUtils.tryAndWait(() -> api.getChemDB()
+                .lookupSpectra(precursorMz, precursorDev, true, experiment.getAnnotationOrDefault(SpectralSearchDB.class).searchDBs), this::checkForInterruption);
 
         List<SpectralMatchMasterJJob> dbJobs = getAlignmentJJobs(queryUtils, cosineQueries, references);
 
