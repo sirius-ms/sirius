@@ -110,12 +110,21 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                             ? initFormulaSummaryWriter("formula_identifications_all.tsv") : null;
                     NoSqlFormulaSummaryWriter formulaTopK = options.topK > 1
                             ? initFormulaSummaryWriter("formula_identifications_top-" + options.topK + ".tsv") : null;
+
                     NoSqlStructureSummaryWriter structureTopHit = options.topHitSummary
                             ? initStructureSummaryWriter("structure_identifications.tsv") : null;
                     NoSqlStructureSummaryWriter structureAll = options.fullSummary
                             ? initStructureSummaryWriter("structure_identifications_all.tsv") : null;
                     NoSqlStructureSummaryWriter structureTopK = options.topK > 1
                             ? initStructureSummaryWriter("structure_identifications_top-" + options.topK + ".tsv") : null;
+
+                    NoSqlDeNovoSummaryWriter deNovoTopHit = options.topHitSummary
+                            ? initDeNovoSummaryWriter("denovo_structure_identifications.tsv") : null;
+                    NoSqlDeNovoSummaryWriter deNovoAll = options.fullSummary
+                            ? initDeNovoSummaryWriter("denovo_structure_identifications_all.tsv") : null;
+                    NoSqlDeNovoSummaryWriter deNovoTopK = options.topK > 1
+                            ? initDeNovoSummaryWriter("denovo_structure_identifications_top-" + options.topK + ".tsv") : null;
+
                     NoSqlCanopusSummaryWriter canopusFormula = options.topHitSummary
                             ? initCanopusSummaryWriter("canopus_formula_summary.tsv") : null;
                     NoSqlCanopusSummaryWriter canopusStructure = options.topHitSummary
@@ -216,6 +225,38 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                             }
                         }
                     }
+                    {// Denovo summary
+                        boolean first = true;
+                        int rank = 1;
+                        FormulaCandidate lastFc = null;
+                        for (DenovoStructureMatch sc : project.getProject().findByFeatureId(f.getAlignedFeatureId(), DenovoStructureMatch.class, "structureRank", Database.SortOrder.ASCENDING)) {
+                            project.getProject().fetchFingerprintCandidate(sc, false);
+                            boolean nothingWritten = true;
+                            FormulaCandidate fc = (lastFc != null && lastFc.getFormulaId() == sc.getFormulaId())
+                                    ? lastFc : project.getProject().findByFormulaIdStr(sc.getFormulaId(), FormulaCandidate.class).findFirst().orElseThrow();
+
+                            if (deNovoTopHit != null && first) {
+                                deNovoTopHit.writeStructureCandidate(f, fc, sc);
+                                nothingWritten = false;
+                            }
+
+                            if (formulaTopK != null && rank <= options.getTopK()) {
+                                deNovoTopK.writeStructureCandidate(f, fc, sc);
+                                nothingWritten = false;
+                            }
+                            if (deNovoAll != null) {
+                                deNovoAll.writeStructureCandidate(f, fc, sc);
+                                nothingWritten = false;
+                            }
+                            if (nothingWritten)
+                                break;
+
+                            //iterating
+                            lastFc = fc;
+                            rank++;
+                            first = false;
+                        }
+                    }
                 }
                 w.stop();
                 updateProgress(maxProgress, maxProgress, "Summaries written in: " + w);
@@ -245,8 +286,14 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
         return structureSummaryWriter;
     }
 
+    NoSqlDeNovoSummaryWriter initDeNovoSummaryWriter(String filename) throws IOException {
+        NoSqlDeNovoSummaryWriter denovoSummaryWriter = new NoSqlDeNovoSummaryWriter(makeFileWriter(filename));
+        denovoSummaryWriter.writeHeader();
+        return denovoSummaryWriter;
+    }
+
     private BufferedWriter makeFileWriter(String filename) throws IOException {
-            OutputStream out = Files.newOutputStream(options.location.resolve(filename)); //todo some compression support
+        OutputStream out = Files.newOutputStream(options.location.resolve(filename)); //todo some compression support
 //            OutputStream out = options.compress
 //                    ? new ZipOutputStream(Files.newOutputStream(options.location.resolve(filename + ".zip")))
 //                    : Files.newOutputStream(options.location.resolve(filename));
