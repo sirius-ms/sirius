@@ -877,6 +877,20 @@ class MirrorPlot extends Base {
         update_ruler(self, self.mzs2, "#ruler_2", duration);
     }
 
+    static zoomedY(self, minIntensity, duration, ...callbackUpdates) {
+        const scale_tmp_y = d3.event.transform.rescaleY(self.y1);
+        const newDomain = d3.axisBottom(scale_tmp_y).scale().domain();
+        self.domain_tmp.yMax = (newDomain[1] > 1) ? 1 : (newDomain[1] > minIntensity) ? newDomain[1] : minIntensity;
+        self.y1.domain([0, self.domain_tmp.yMax]);
+        self.y2.domain([0, self.domain_tmp.yMax]);
+        self.yAxis1.transition().duration(duration).call(d3.axisLeft(self.y1));
+        self.yAxis2.transition().duration(duration).call(d3.axisLeft(self.y2));
+        d3.select("#zoomAreaY").node().__zoom = d3.zoomIdentity;
+        callbackUpdates.forEach(function (callback) {
+            callback(self, duration);
+        });
+    }
+
     static showStructure(self) {
         self.strucArea.html("");
         document.getElementById('str_border').innerHTML = self.svg_str;
@@ -1085,6 +1099,19 @@ class MirrorPlot extends Base {
         // Y axis 2
         this.y2 = d3.scaleLinear().domain([0, maxInt]).range([this.h / 2, this.h - this.margin_h]).nice();
         this.yAxis2 = this.svg.append("g").attr("id", "yAxis2").call(d3.axisLeft(this.y2));
+        // Y axis zoom area
+        this.zoomAreaY = d3.select("#container")
+            .append("div")
+            .attr("id", "zoomAreaY")
+            .style("position", "absolute")
+            .style("left", 0 + "px")
+            .style("top", this.margin.top + "px")
+            .style("width", this.margin.left + "px")
+            .style("height", this.h + "px");
+        const minI1 = d3.min(this.spectrum1.peaks.map(d => d.intensity));
+        const minI2 = d3.min(this.spectrum2.peaks.map(d => d.intensity));
+        const minIntensity = d3.min([minI1, minI2]) || 0.1;
+
         this.svg.selectAll(".label").attr("visibility", "visible");
         // legends: 2 spectrum names
         this.svg.append("text")
@@ -1100,10 +1127,13 @@ class MirrorPlot extends Base {
             .attr("transform", "rotate(-90)");
         this.svg.select("#clipArea").attr("width", this.w - 20);
         // zoom, pan and brush
-        var tmp_zoom, tmp_pan, tmp_brush;
+        var tmp_zoom, tmp_zoom_y, tmp_pan, tmp_brush;
         if (this.viewStyle === "difference" && this.mzLabel > 0) {
             tmp_zoom = function () {
                 Base.zoomedX(self, [self.domain_fix.xMin, self.domain_fix.xMax], 250, MirrorPlot.update_y, MirrorPlot.update_peaksX, MirrorPlot.update_rulers, MirrorPlot.update_mzLabels, MirrorPlot.update_diffBands);
+            };
+            tmp_zoom_y =  function () {
+                MirrorPlot.zoomedY(self, minIntensity, 250, MirrorPlot.update_peaksX, MirrorPlot.update_rulers, MirrorPlot.update_mzLabels, MirrorPlot.update_diffBands);
             };
             tmp_pan = function () {
                 var selection = d3.select(this);
@@ -1116,6 +1146,9 @@ class MirrorPlot extends Base {
             tmp_zoom = function () {
                 Base.zoomedX(self, [self.domain_fix.xMin, self.domain_fix.xMax], 250, MirrorPlot.update_y, MirrorPlot.update_peaksX, MirrorPlot.update_rulers, MirrorPlot.update_diffBands);
             };
+            tmp_zoom_y =  function () {
+                MirrorPlot.zoomedY(self, minIntensity, 250, MirrorPlot.update_peaksX, MirrorPlot.update_rulers, MirrorPlot.update_diffBands);
+            };
             tmp_pan = function () {
                 var selection = d3.select(this);
                 Base.panX(self, selection, [self.domain_fix.xMin, self.domain_fix.xMax], 150, 750, MirrorPlot.update_y, MirrorPlot.update_peaksX, MirrorPlot.update_rulers, MirrorPlot.update_diffBands);
@@ -1127,6 +1160,9 @@ class MirrorPlot extends Base {
             tmp_zoom = function () {
                 Base.zoomedX(self, [self.domain_fix.xMin, self.domain_fix.xMax], 250, MirrorPlot.update_y, MirrorPlot.update_peaksX, MirrorPlot.update_mzLabels);
             };
+            tmp_zoom_y =  function () {
+                MirrorPlot.zoomedY(self, minIntensity, 250, MirrorPlot.update_peaksX, MirrorPlot.update_mzLabels);
+            };
             tmp_pan = function () {
                 var selection = d3.select(this);
                 Base.panX(self, selection, [self.domain_fix.xMin, self.domain_fix.xMax], 150, 750, MirrorPlot.update_y, MirrorPlot.update_peaksX, MirrorPlot.update_mzLabels);
@@ -1137,6 +1173,9 @@ class MirrorPlot extends Base {
         } else {
             tmp_zoom = function () {
                 Base.zoomedX(self, [self.domain_fix.xMin, self.domain_fix.xMax], 250, MirrorPlot.update_y, MirrorPlot.update_peaksX);
+            };
+            tmp_zoom_y =  function () {
+                MirrorPlot.zoomedY(self, minIntensity, 250, MirrorPlot.update_peaksX);
             };
             tmp_pan = function () {
                 var selection = d3.select(this);
@@ -1150,6 +1189,9 @@ class MirrorPlot extends Base {
         this.peakArea.select("#brushArea").call(this.zoomX).on("dblclick.zoom", null).on("mousedown.zoom", tmp_pan);
         this.brush = d3.brushX().extent([[0, 0], [this.w - 20, this.h]]).filter(Base.rightClickOnly).on("end", tmp_brush);
         this.peakArea.select("#brushArea").call(this.brush);
+        // Y zoom
+        this.zoomY = d3.zoom().on("zoom", tmp_zoom_y);
+        this.zoomAreaY.call(this.zoomY).on("dblclick.zoom", null);
         // Peaks 1
         this.peakArea.selectAll()
             .data(self.spectrum1.peaks)
