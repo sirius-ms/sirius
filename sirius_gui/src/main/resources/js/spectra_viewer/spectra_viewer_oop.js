@@ -817,8 +817,15 @@ class MirrorPlot extends Base {
     }
 
     static update_mzLabels(self, duration) {
-        self.mzLabelArea.selectAll(".mzLabel").transition().duration(duration).attr("x", function (d) {
+        self.mzLabelArea.selectAll(".mzLabel_1").transition().duration(duration).attr("x", function (d) {
             return self.x(d.mz);
+        }).attr("y", function (d) {
+            return self.y1(d.intensity) - 5;
+        });
+        self.mzLabelArea.selectAll(".mzLabel_2").transition().duration(duration).attr("x", function (d) {
+            return self.x(d.mz);
+        }).attr("y", function (d) {
+            return (self.y2(d.intensity) + 15 < self.h / 2 + 28) ? self.h / 2 + 28 : self.y2(d.intensity) + 15;
         });
     }
 
@@ -829,6 +836,10 @@ class MirrorPlot extends Base {
             })
             .attr("x2", function (d) {
                 return self.x(d.mz) + 6;
+            }).attr("y1", function (d) {
+                return self.y1(d.intensity)
+            }).attr("y2", function (d) {
+                return self.y1(d.intensity)
             });
     }
 
