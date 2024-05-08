@@ -1,10 +1,10 @@
 package de.unijena.bioinf.lcms;
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.lcms.align.*;
-import de.unijena.bioinf.lcms.features.IsotopePatternExtractionStrategy;
-import de.unijena.bioinf.lcms.features.MergedApexIsotopePatternExtractor;
-import de.unijena.bioinf.lcms.features.MergedFeatureExtractionStrategy;
-import de.unijena.bioinf.lcms.features.MergedFeatureExtractor;
+import de.unijena.bioinf.lcms.features.*;
 import de.unijena.bioinf.lcms.io.LCMSImporter;
 import de.unijena.bioinf.lcms.isotopes.IsotopeDetectionByCorrelation;
 import de.unijena.bioinf.lcms.isotopes.IsotopeDetectionStrategy;
@@ -15,8 +15,10 @@ import de.unijena.bioinf.lcms.msms.MergeGreedyStrategy;
 import de.unijena.bioinf.lcms.msms.MostIntensivePeakInIsolationWindowAssignmentStrategy;
 import de.unijena.bioinf.lcms.msms.Ms2MergeStrategy;
 import de.unijena.bioinf.lcms.msms.Ms2TraceStrategy;
-import de.unijena.bioinf.lcms.projectspace.ImportStrategy;
+import de.unijena.bioinf.lcms.projectspace.PickFeaturesAndImportToSirius;
 import de.unijena.bioinf.lcms.projectspace.ProjectSpaceImporter;
+import de.unijena.bioinf.lcms.projectspace.SiriusDatabaseAdapter;
+import de.unijena.bioinf.lcms.projectspace.SiriusProjectDocumentDbAdapter;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.statistics.*;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
@@ -43,12 +45,8 @@ import org.apache.commons.text.similarity.LongestCommonSubsequence;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 
 public class LCMSProcessing {
@@ -91,22 +89,27 @@ public class LCMSProcessing {
     @Getter @Setter private NormalizationStrategy normalizationStrategy = new AverageOfTop100TracesNormalization();
 
     @Getter @Setter private AlignmentStrategy alignmentStrategy = new GreedyTwoStageAlignmentStrategy();
-    @Getter @Setter private AlignmentAlgorithm alignmentAlgorithm = new GreedyAlgorithm();
-    @Getter @Setter private AlignmentScorer alignmentScorerBackbone  = new AlignmentScorer(1.5);
-    @Getter @Setter private AlignmentScorer alignmentScorerFull = new AlignmentScorer(4);
+    @Getter @Setter private AlignmentAlgorithm alignmentAlgorithm = new BeamSearchAlgorithm();
+    @Getter @Setter private AlignmentScorer alignmentScorerBackbone  = AlignmentScorer.expectSimilarIntensity();
+    @Getter @Setter private AlignmentScorer alignmentScorerFull = AlignmentScorer.intensityMayBeDifferent();
     @Getter @Setter private MergeTracesWithoutGapFilling mergeStrategy = new MergeTracesWithoutGapFilling();
 
-    @Getter @Setter private ImportStrategy importStrategy = new ProjectSpaceImporter();
+    @Getter @Setter private SiriusDatabaseAdapter siriusDatabaseAdapter;
 
-    @Getter @Setter private TraceExtractionStrategy traceExtractionStrategy = new TraceExtractor();
-
-    @Getter @Setter private MergedFeatureExtractionStrategy mergedFeatureExtractionStrategy = new MergedFeatureExtractor();
+    @Getter @Setter private ProjectSpaceImporter<?> importer = new PickFeaturesAndImportToSirius(
+            new SegmentMergedFeatures(), new MergedApexIsotopePatternExtractor(), new MergeGreedyStrategy()
+    );
 
     @Getter @Setter private Ms2MergeStrategy ms2MergeStrategy = new MergeGreedyStrategy();
 
     @Getter @Setter private IsotopePatternExtractionStrategy isotopePatternExtractionStrategy = new MergedApexIsotopePatternExtractor();
 
     protected List<ProcessedSample> samples = new ArrayList<>();
+    private HashMap<Integer, ProcessedSample> sampleByIdx = new HashMap<>();
+
+    public LCMSProcessing(SiriusDatabaseAdapter siriusDatabaseAdapter) {
+        this.siriusDatabaseAdapter = siriusDatabaseAdapter;
+    }
 
     /**
      * parses an MZML file and stores the processed sample. Note: we should add possibility to parse from input
@@ -142,9 +145,10 @@ public class LCMSProcessing {
     ) throws IOException {
         // parse file and extract spectra
         ProcessedSample sample = LCMSImporter.importToProject(
-                input, storageFactory, importStrategy, saveRawScans, runType, chromatography);
+                input, storageFactory, siriusDatabaseAdapter, saveRawScans, runType, chromatography);
         sample.setUid(this.samples.size());
         this.samples.add(sample);
+        this.sampleByIdx.put(sample.getUid(), sample);
         sample.active();
         collectStatistics(sample);
         extractTraces(sample);
@@ -166,10 +170,12 @@ public class LCMSProcessing {
                 samples.size() // TODO: better use sample idx 0?
         );
         samples.add(merged);
+        sampleByIdx.put(merged.getUid(), merged);
         alignmentBackbone = alignmentStrategy.align(merged, alignmentBackbone, Arrays.asList(alignmentBackbone.getSamples()), alignmentAlgorithm, alignmentScorerFull);
         for (ProcessedSample sample : alignmentBackbone.getSamples()) {
             sample.setScanPointInterpolator(new ScanPointInterpolator(merged.getMapping(), sample.getMapping(), sample.getRtRecalibration()));
         }
+        merged.getStorage().getAlignmentStorage().setStatistics(alignmentBackbone.getStatistics());
         return alignmentBackbone;
     }
 
@@ -196,107 +202,33 @@ public class LCMSProcessing {
                 .build();
         merged.setRun(mergedRun);
 
-        importStrategy.importMergedRun(mergedRun);
+        siriusDatabaseAdapter.importMergedRun(mergedRun);
 
         importScanPointMapping(merged, mergedRun.getRunId());
-
-        Long2LongMap mergedTrace2trace = new Long2LongOpenHashMap();
-        Long2LongMap sourceTrace2trace = new Long2LongOpenHashMap();
-        System.out.println("#Step 1: Import traces");
-        int N = merged.getStorage().getMergeStorage().numberOfMergedTraces();
-        System.out.println("There are " + N + " merged traces to import.");
-//        int count = 0;
-        for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
-            ProcessedSample[] samplesInTrace = new ProcessedSample[trace.getSampleIds().size()];
-            for (int i = 0; i < trace.getSampleIds().size(); ++i) {
-                samplesInTrace[i] = idx2sample.get(trace.getSampleIds().getInt(i));
-            }
-
-            Iterator<IntObjectPair<AbstractTrace>> titer = traceExtractionStrategy.extractTrace(merged, samplesInTrace, trace);
-            while (titer.hasNext()) {
-                IntObjectPair<AbstractTrace> pair = titer.next();
-                AbstractTrace atrace = pair.right();
-                importStrategy.importTrace(atrace);
-                if (atrace instanceof de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace) {
-                    mergedTrace2trace.put(pair.leftInt(), ((de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace) atrace).getMergedTraceId());
-                } else if (atrace instanceof SourceTrace) {
-                    sourceTrace2trace.put(pair.leftInt(), ((SourceTrace) atrace).getSourceTraceId());
-                }
-            }
-            //System.out.println(++count + " / " + N + " merged traces imported.");
+        ProjectSpaceImporter<Object> importer = (ProjectSpaceImporter<Object>) this.importer;
+        Object obj = importer.initializeImport(siriusDatabaseAdapter);
+        for (ProcessedSample sample : samples) {
+            if (sample!=merged) importer.importRun(siriusDatabaseAdapter, obj, sample);
+            else importer.importMergedRun(siriusDatabaseAdapter, obj, sample);
         }
-        System.out.println("#Step 2: Import Aligned Features");
-//        count = 0;
-
-        /*try (final PrintStream OUT = new PrintStream("/tmp/lcms2_" + TSID.fast() + ".json")) {
-            OUT.println("[");
-            for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
-                Iterator<AlignedFeatures> fiter = mergedFeatureExtractionStrategy.extractFeatures(merged, trace, ms2MergeStrategy, isotopePatternExtractionStrategy, mergedTrace2trace, sourceTrace2trace, idx2sample);
-                List<AlignedFeatures> fs = new ArrayList<>();
-                while (fiter.hasNext()) {
-                    AlignedFeatures feature = fiter.next();
-                    fs.add(feature);
-                    importStrategy.importAlignedFeature(feature);
+        List<BasicJJob<long[]>> jobs = new ArrayList<>();
+        for (final Rect r : merged.getStorage().getMergeStorage().getRectangleMap()) {
+            jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<long[]>() {
+                @Override
+                protected long[] compute() throws Exception {
+                    MergedTrace mergedTrace = collectMergedTrace(merged, r.id);
+                    if (isSuitableForImport(mergedTrace)) {
+                        return Arrays.stream(importer.importMergedTrace(siriusDatabaseAdapter, obj,merged, mergedTrace)).mapToLong(AlignedFeatures::getAlignedFeatureId).toArray();
+                    }
+                    return new long[0];
                 }
-                if (fs.size() >= 20 || (fs.size()>=1 && Math.random()>=0.97)) {
-                    // dump this weird trace
-                    OUT.print("{\"mergedTrace\": [[");
-                    {
-                        Trace tr = trace.toTrace(merged);
-                        for (int k = tr.startId(); k <= tr.endId(); ++k) {
-                            OUT.print(tr.intensity(k));
-                            if (k < tr.endId()) OUT.print(", ");
-                        }
-                        OUT.print("],[");
-                        for (int k = tr.startId(); k <= tr.endId(); ++k) {
-                            OUT.print(merged.getMapping().getRetentionTimeAt(k));
-                            if (k < tr.endId()) OUT.print(", ");
-                        }
-                        OUT.print("]");
-                    }
-                    OUT.println("],\n\"traces\": [");
-                    for (int J=0; J < trace.getTraceIds().size(); ++J) {
-                        ProcessedSample sample = idx2sample.get(trace.getSampleIds().getInt(J));
-                        ContiguousTrace tr = merged.getStorage().getMergeStorage().getTrace(sample.getMapping(), trace.getTraceIds().getInt(J));
-                        OUT.print("\n[[");
-                        for (int k=tr.startId(); k <= tr.endId(); ++k) {
-                            OUT.print(tr.intensity(k));
-                            if (k < tr.endId()) OUT.print(", ");
-                        }
-                        OUT.print("],[");
-                        for (int k=tr.startId(); k <= tr.endId(); ++k) {
-                            OUT.print(sample.getRtRecalibration().value(sample.getMapping().getRetentionTimeAt(k)));
-                            if (k < tr.endId()) OUT.print(", ");
-                        }
-                        OUT.print("]]");
-                        if (J < trace.getTraceIds().size()-1) OUT.print(",");
-                    }
-
-                    OUT.println("],\n\"features\": [");
-                    for (int jj = 0; jj < fs.size(); ++jj) {
-                        final AlignedFeatures feature = fs.get(jj);
-                        OUT.print("[");
-                        OUT.print(feature.getTraceRef().get().getStart());
-                        OUT.print(", ");
-                        OUT.print(feature.getTraceRef().get().getApex());
-                        OUT.print(", ");
-                        OUT.print(feature.getTraceRef().get().getEnd());
-                        OUT.print("]");;
-                        if (jj < fs.size()-1) OUT.print(", ");
-                    }
-                    OUT.print("]},");
-                    OUT.flush();
-                }
-                //System.out.println(++count + " / " + N + " aligned features imported.");
-            }
-            OUT.println("]");
-        }*/
-
-        for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
-            Iterator<AlignedFeatures> fiter = mergedFeatureExtractionStrategy.extractFeatures(merged, trace, ms2MergeStrategy, isotopePatternExtractionStrategy, mergedTrace2trace, sourceTrace2trace, idx2sample);
-            while (fiter.hasNext())
-                importStrategy.importAlignedFeature(fiter.next());
+            }));
         }
+        jobs.forEach(JJob::takeResult);
+    }
+
+    private boolean isSuitableForImport(MergedTrace mergedTrace) {
+        return mergedTrace.getTraces().length>0; // todo: implement a proper filter
     }
 
     protected void importScanPointMapping(ProcessedSample sample, long sampleId) throws IOException {
@@ -305,37 +237,7 @@ public class LCMSProcessing {
                 .scanNumbers(sample.getMapping().scanids)
                 .retentionTimes(sample.getMapping().retentionTimes)
                 .noiseLevelPerScan(sample.getStorage().getStatistics().getNoiseLevelPerScan()).build();
-        importStrategy.importRetentionTimeAxis(axis);
-    }
-
-    public void exportFeaturesToFiles(ProcessedSample merged, AlignmentBackbone backbone) {
-        int J = 0;
-        final HashMap<Integer, ProcessedSample> idx2sample = new HashMap<>();
-        for (ProcessedSample s : backbone.getSamples()) idx2sample.put(s.getUid(), s);
-
-        try {
-            Path p = Path.of(System.getProperty("lcms.logdir"), "data.js");
-            Files.createDirectories(p.getParent());
-            try (PrintStream out = new PrintStream(p.toAbsolutePath().toString())) {
-                out.print("document.traces = {");
-                for (MergedTrace trace : merged.getStorage().getMergeStorage()) {
-                    //if (trace.getSampleIds().size()<6 || trace.toTrace(merged).apexIntensity() < 0.01) continue;
-                    ProcessedSample[] samplesInTrace = new ProcessedSample[trace.getSampleIds().size()];
-                    for (int i = 0; i < trace.getSampleIds().size(); ++i) {
-                        samplesInTrace[i] = idx2sample.get(trace.getSampleIds().getInt(i));
-                    }
-                    String line = ((MergedFeatureExtractor) mergedFeatureExtractionStrategy).extractFeaturesToString(merged, samplesInTrace, trace, ms2MergeStrategy);
-                    if (line != null) {
-                        out.println("\"" + trace.getUid() + "\": " + line + ",");
-                    }
-                }
-                out.println("\n};");
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        siriusDatabaseAdapter.importRetentionTimeAxis(axis);
     }
 
     private void collectStatistics(ProcessedSample sample) {
@@ -388,6 +290,7 @@ public class LCMSProcessing {
                 MoI moi = new MoI(rect, segment.apex, sample.getMapping().getRetentionTimeAt(segment.apex),
                         (float) normalizer.normalize(trace.intensity(segment.apex)), sample.getUid());
 
+                if (trace.getSegments().length==1) moi.setSingleApex(true);
                 detectIsotopesForMoI(sample, trace, segment, moi);
 
                 moi.setConfidence(confidenceEstimatorStrategy.estimateConfidence(sample, trace, moi, null));
@@ -406,6 +309,13 @@ public class LCMSProcessing {
         } else {
             moi.setIsotopePeakFlag(true);
         }
+    }
+
+    public MergedTrace collectMergedTrace(ProcessedSample merged, int uid) {
+        // collect all projectedTraces that have the given uid
+        ProjectedTrace[] projectedTraces = merged.getStorage().getMergeStorage().getAllProjectedTracesOf(uid);
+        ProjectedTrace[][] isotopes = merged.getStorage().getMergeStorage().getIsotopePatternFor(uid);
+        return MergedTrace.collect(merged, sampleByIdx, projectedTraces, isotopes);
     }
 
 
