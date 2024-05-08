@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.sirius;
 
+import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.CandidateFormulas;
@@ -34,11 +35,16 @@ import de.unijena.bioinf.sirius.IdentificationResult;
 import de.unijena.bioinf.sirius.Ms1Preprocessor;
 import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.spectraldb.InjectSpectralLibraryMatchFormulas;
+import de.unijena.bioinf.spectraldb.SpectraMatchingJJob;
+import de.unijena.bioinf.spectraldb.SpectralSearchResult;
+import de.unijena.bioinf.spectraldb.SpectralSearchResults;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class SiriusSubToolJob extends InstanceJob {
     public SiriusSubToolJob(JobSubmitter jobSubmitter) {
@@ -58,6 +64,7 @@ public class SiriusSubToolJob extends InstanceJob {
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
         MutableMs2Experiment mut = inst.getExperiment().mutate();
+        List<SpectralSearchResult.SearchResult> searchResults = inst.getSpectraMatches();
         // set whiteSet or merge with whiteSet from db search if available
         CandidateFormulas wSet = null;
         final Ms2Experiment exp;
@@ -76,8 +83,14 @@ public class SiriusSubToolJob extends InstanceJob {
                 }
                 mut.setIonMass(ms1.getMzAt(index));
             }
-            exp= mut;
+            exp = mut;
 
+            // extract additional candidates from library matches
+            if (searchResults != null && !searchResults.isEmpty()){
+                //add adduct and formula from high-scoring library hits to detected adducts and formula candiadates list
+                InjectSpectralLibraryMatchFormulas injectFormulas = exp.getAnnotationOrDefault(InjectSpectralLibraryMatchFormulas.class);
+                addAdductsAndFormulasFromHighScoringLibraryMatches(exp, searchResults, injectFormulas.getMinScoreToInject(), injectFormulas.getMinPeakMatchesToInject());
+            }
 
             // create WhiteSet from DB if necessary
             final Optional<FormulaSearchDB> searchDB = exp.getAnnotation(FormulaSearchDB.class);
@@ -136,6 +149,23 @@ public class SiriusSubToolJob extends InstanceJob {
             LoggerFactory.getLogger(SiriusSubToolJob.class).error("Could not detect adducts. Molecular formula candidate list may be affected and incomplete.");
             return experiment.getPossibleAdductsOrFallback();
         }).getAdducts().toArray(l -> new PrecursorIonType[l]);
+    }
+
+    private void addAdductsAndFormulasFromHighScoringLibraryMatches(Ms2Experiment exp, List<SpectralSearchResult.SearchResult> searchResults, double minSimilarity, int minSharedPeaks) {
+        final DetectedAdducts detAdds = exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new);
+        Set<PrecursorIonType> adducts = SpectralSearchResults.deriveDistinctAdductsSetWithThreshold(searchResults, exp.getIonMass(), minSimilarity, minSharedPeaks);
+        if (adducts.isEmpty()) return;
+
+        PossibleAdducts possibleAdducts = new PossibleAdducts(adducts);
+        //overrides any detected addcuts from previous spectral library searches for consistency reasons. alternatively, we could use union.
+        detAdds.put(DetectedAdducts.Source.SPECTRAL_LIBRARY_SEARCH, possibleAdducts);
+
+        //set high-scoring formulas
+        Set<MolecularFormula> formulas = SpectralSearchResults.deriveDistinctFormulaSetWithThreshold(searchResults, exp.getIonMass(), minSimilarity, minSharedPeaks);
+        if (formulas.isEmpty()) return;
+
+        CandidateFormulas candidateFormulas = exp.computeAnnotationIfAbsent(CandidateFormulas.class);
+        candidateFormulas.addAndMergeSpectralLibrarySearchFormulas(formulas, SpectraMatchingJJob.class);
     }
 
     @Override
