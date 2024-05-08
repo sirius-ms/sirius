@@ -2,6 +2,7 @@ package de.unijena.bioinf.lcms.msms;
 
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -10,6 +11,7 @@ import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import lombok.Data;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,6 +24,9 @@ public class MergedSpectrum implements Spectrum<MergedPeak> {
     //private DoubleArrayList ms2Weights;
     private CosineQuerySpectrum cosineQuerySpectrum;
     private double precursorMz, precursorMzWeighted, scoreSum;
+    private Ms2SpectrumHeader[] headers = new Ms2SpectrumHeader[0];
+
+    private IntArrayList sampleIds = new IntArrayList();
 
     public void merge(MsMsQuerySpectrum msms) {
         int sampleId = msms.sampleId;
@@ -55,6 +60,20 @@ public class MergedSpectrum implements Spectrum<MergedPeak> {
         precursorMzWeighted += msms.score*msms.exactParentMass;
         precursorMz = precursorMzWeighted/scoreSum;
         cosineQuerySpectrum=null;
+        headers = Arrays.copyOf(headers, headers.length+1);
+        headers[headers.length-1] = msms.header;
+        sampleIds.add(msms.sampleId);
+    }
+
+    public CollisionEnergy[] getCollisionEnergies() {
+        return Arrays.stream(headers).map(x->x.getEnergy().orElse(null)).toArray(CollisionEnergy[]::new);
+    }
+    public IsolationWindow[] getIsolationWindows() {
+        return Arrays.stream(headers).map(x->x.getIsolationWindow().orElse(null)).toArray(IsolationWindow[]::new);
+    }
+
+    public int[] getSampleIds() {
+        return sampleIds.toIntArray();
     }
 
     public CosineQuerySpectrum getCosineQuerySpectrum() {

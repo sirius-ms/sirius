@@ -15,8 +15,6 @@ import lombok.experimental.SuperBuilder;
 public class RetentionTimeAxis {
 
     @Id
-    private long id;
-
     private long runId;
     private int[] scanNumbers;
     private double[] retentionTimes;

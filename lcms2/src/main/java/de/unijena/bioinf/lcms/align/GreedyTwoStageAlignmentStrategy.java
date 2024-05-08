@@ -33,12 +33,99 @@ import java.util.*;
  */
 public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
 
+    private AlignmentBackbone makeSingleApexPreAlignment(AlignmentStorage storage, List<ProcessedSample> samples, AlignmentAlgorithm algorithm, AlignmentScorer scorer, AlignmentStatistics stats) {
+        List<BasicJJob<Object>> todo = new ArrayList<>();
+        ProcessedSample first = samples.get(0);
+        JobManager globalJobManager = SiriusJobs.getGlobalJobManager();
+        final double[] bins = makeBins(stats.minMz, stats.maxMz);
+        first.active();
+        // copy all MoIs into storage
+        storage.clearMoIs();
+        for (MoI moi : first.getStorage().getAlignmentStorage()) {
+            if (moi.getConfidence()>= MassOfInterestConfidenceEstimatorStrategy.CONFIDENT && moi.isSingleApex()) {
+                storage.addMoI(moi);
+            }
+        }
+        first.inactive();
+        for (int k=1; k < samples.size(); ++k) {
+            ProcessedSample S = samples.get(k);
+            S.active();
+            for (int i=0; i < (bins.length-1); ++i) {
+                final double from = bins[i];
+                final double to = bins[i+1];
+                todo.add(globalJobManager.submitJob(new BasicJJob<Object>() {
+                    @Override
+                    protected Object compute() throws Exception {
+                        final MoI[] leftSet = storage.getMoIWithin(from, to).toArray(MoI[]::new);
+                        if (leftSet.length==0) return false;
+                        final MoI[] rightSet = S.getStorage().getAlignmentStorage().getMoIWithin(from, to).stream().
+                                filter(x->x.getConfidence()>=MassOfInterestConfidenceEstimatorStrategy.CONFIDENT).toArray(MoI[]::new);
+                        if (rightSet.length==0) return false;
+                        algorithm.align(stats, scorer, AlignWithRecalibration.noRecalibration(), leftSet,rightSet,
+                                (al, left, right, leftIndex, rightIndex) -> storage.mergeMoIs(al, left[leftIndex], right[rightIndex]),
+                                (al,right,rightIndex)->storage.addMoI(AlignedMoI.merge(al, right[rightIndex]))
+                        );
+                        return true;
+                    };
+                }));
+            }
+            todo.forEach(JJob::takeResult);
+            todo.clear();
+            S.inactive();
+        }
+        // all mois that are aligned with at least 10% of the samples are part of the backbone
+        final long[] backboneMois;
+        ShortArrayList sizes = new ShortArrayList();
+        {
+            final LongArrayList backboneMoisList = new LongArrayList();
+            final int minSamples = Math.max(2, (int) Math.ceil(samples.size() * 0.1));
+            for (MoI m : storage) {
+                if (m instanceof AlignedMoI) {
+                    if (((AlignedMoI) m).getAligned().length >= minSamples) {
+                        storage.addMoI(((AlignedMoI) m).finishMerging());
+                        backboneMoisList.add(m.getUid());
+                        sizes.add((short)Math.min(Short.MAX_VALUE, ((AlignedMoI) m).getAligned().length));
+                    }
+                }
+            }
+            backboneMois = backboneMoisList.toLongArray();
+        }
+        System.out.println(backboneMois.length + " MoIs are used for backbone and recalibration.");
+        final ScanPointMapping backboneMapping = createBackboneMapping(stats);
+        // compute recalibration functions from backbone mois
+        final RecalibrationFunction[] rtRecalibrations = new RecalibrationFunction[samples.size()];
+        final RecalibrationFunction[] mzRecalibrations = new RecalibrationFunction[samples.size()];
+        HashMap<Integer,int[]> counts = getNumberOfSamplePointsPerRegions(storage,backboneMapping, samples, backboneMois);
+        double[] rtErrors = new double[samples.size()];
+        for (int s=0; s < samples.size(); ++s) {
+            final int sidx = s;
+            todo.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<Object>() {
+                @Override
+                protected Object compute() throws Exception {
+                    rtErrors[sidx] = retentionTimeError(samples.get(sidx), storage, backboneMois);
+                    return true;
+                }
+            }));
+        }
+        todo.forEach(JJob::takeResult);
+        todo.clear();
+        stats.setExpectedRetentionTimeDeviation(Statistics.robustAverage(rtErrors));
+        stats.averageNumberOfAlignments = (float)sizes.intStream().average().orElse(0d);
+        stats.medianNumberOfAlignments = sizes.isEmpty() ? 0f : (float)sizes.intStream().sorted().toArray()[sizes.size()/2];
+
+        System.out.println("Stage 0: average alignment error is " + stats.getExpectedRetentionTimeDeviation());
+
+        return AlignmentBackbone.builder().scanPointMapping(backboneMapping).samples(samples.toArray(ProcessedSample[]::new)).statistics(stats).build();
+    }
 
     public AlignmentBackbone makeAlignmentBackbone(AlignmentStorage storage, List<ProcessedSample> samples, AlignmentAlgorithm algorithm, AlignmentScorer scorer) {
         List<BasicJJob<Object>> todo = new ArrayList<>();
         // sort samples by number of confident annotations
         final AlignmentStatistics stats = collectStatistics(samples);
         samples.sort(Comparator.comparingInt((ProcessedSample x)->x.getTraceStats().getNumberOfHighQualityTraces()).reversed());
+
+        makeSingleApexPreAlignment(storage, samples, algorithm, scorer, stats);
+        storage.clearMoIs();
         ProcessedSample first = samples.get(0);
         JobManager globalJobManager = SiriusJobs.getGlobalJobManager();
         final double[] bins = makeBins(stats.minMz, stats.maxMz);
@@ -119,6 +206,20 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
         System.out.println("Stage 1: average alignment error is " + stats.getExpectedRetentionTimeDeviation());
 
         return AlignmentBackbone.builder().scanPointMapping(backboneMapping).samples(samples.toArray(ProcessedSample[]::new)).statistics(stats).build();
+    }
+
+    public static double oneSidedOutlierRemoval(double[] xs) {
+        if (xs.length < 4) return Statistics.expectation(xs);
+        final double[] ys = xs.clone();
+        Arrays.sort(ys);
+        double mean = 0d;
+        int i=0, n=(int)(ys.length*0.75);
+        double sz = n-i;
+        for (; i < n; ++i) {
+            mean += ys[i];
+        }
+        mean /= sz;
+        return mean;
     }
 
     protected void cleanupOldMoIs(ProcessedSample sample, List<ProcessedSample> samples, int currentIdx, int deleteLast) {
@@ -328,7 +429,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
             ppmErrors.add(err[2]);
             mzErrors.add(err[3]);
         }
-        stats.setExpectedRetentionTimeDeviation(Statistics.robustAverage(rtErrors.toDoubleArray()));
+        stats.setExpectedRetentionTimeDeviation((3*Statistics.robustAverage(rtErrors.toDoubleArray())+stats.getExpectedRetentionTimeDeviation())/4d);
         stats.setExpectedMassDeviationBetweenSamples(new Deviation(Statistics.robustAverage(ppmErrors.toDoubleArray()),Statistics.robustAverage(mzErrors.toDoubleArray())));
         cleanupOldMoIs(merge, samples, samples.size(), samples.size());
 
@@ -357,10 +458,22 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
         return counts;
     }
 
+    private double retentionTimeError(ProcessedSample sample, AlignmentStorage storage, long[] alignments) {
+        DoubleArrayList xs=new DoubleArrayList(), ys=new DoubleArrayList(), xs2 = new DoubleArrayList(), ys2 = new DoubleArrayList();
+        populate(storage, xs, ys, null, null, alignments, sample.getUid());
+        double rtError = 0d;
+        for (int i=0; i < xs.size(); ++i) {
+            rtError += Math.pow(xs.getDouble(i)-ys.getDouble(i), 2);
+        }
+        rtError/=xs.size();
+        return Math.sqrt(rtError);
+
+    }
+
     // recalibrate and return average retention time error
     private double recalibrateByAlignment(ProcessedSample sample, AlignmentStorage storage, long[] alignments, HashMap<Integer, int[]> bucketCounts) {
         final int minimumBuckSize;
-        double rtError = 0d;
+        double rtError = 0d, rtErrorBeforeCalibration = 0d;
         {
             int minbc = Integer.MAX_VALUE;
             for (int c : bucketCounts.get(sample.getUid())) {
@@ -383,9 +496,13 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
             for (int i=0; i < xs.size(); ++i) {
                 final double recal = medianLinearRecalibration.value(xs.getDouble(i));
                 final double delta = recal-ys.getDouble(i);
-                rtError += Math.abs(delta);
+                rtErrorBeforeCalibration += (xs.getDouble(i)-ys.getDouble(i))*(xs.getDouble(i)-ys.getDouble(i));
+                rtError += delta*delta;
             }
             rtError /= xs.size();
+            rtError = Math.sqrt(rtError);
+            rtErrorBeforeCalibration /= xs.size();
+            rtErrorBeforeCalibration = Math.sqrt(rtErrorBeforeCalibration);
 
             sample.setRtRecalibration(RecalibrationFunction.linear(medianLinearRecalibration));
             sample.setMzRecalibration(RecalibrationFunction.identity());
@@ -406,17 +523,29 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
                 // get rt error
                 double linError=0d,loessError=0d;
                 for (int k=0; k < xs.size(); ++k) {
-                    linError += Math.abs(linearRecalibration.value(xs.getDouble(k))-ys.getDouble(k));
-                    loessError += Math.abs(loess.value(xs.getDouble(k))-ys.getDouble(k));
+                    linError += Math.pow(linearRecalibration.value(xs.getDouble(k))-ys.getDouble(k), 2);
+                    loessError += Math.pow(loess.value(xs.getDouble(k))-ys.getDouble(k), 2);
+                    rtErrorBeforeCalibration += Math.pow(xs.getDouble(k)-ys.getDouble(k),2);
                 }
-                if (linError<loessError) {
+
+                linError /= xs.size();
+                linError = Math.sqrt(linError);
+                loessError /= xs.size();
+                loessError = Math.sqrt(loessError);
+                rtErrorBeforeCalibration /= xs.size();
+                rtErrorBeforeCalibration = Math.sqrt(rtErrorBeforeCalibration);
+                if (rtErrorBeforeCalibration < Math.min(linError, loessError)) {
+                    sample.setRtRecalibration(RecalibrationFunction.identity());
+                    sample.setMzRecalibration(RecalibrationFunction.identity());
+                    rtError = rtErrorBeforeCalibration;
+                } else if (linError*0.95<loessError) { // use linear recalibration as long as it fits almost as good as more complicated loess recalibration
                     sample.setRtRecalibration(RecalibrationFunction.linear(linearRecalibration));
                     sample.setMzRecalibration(RecalibrationFunction.identity());
-                    rtError = linError/xs.size();
+                    rtError = linError;
                 } else {
                     sample.setRtRecalibration(RecalibrationFunction.loess(loess, linearRecalibration));
                     sample.setMzRecalibration(RecalibrationFunction.identity());
-                    rtError = loessError/xs.size();
+                    rtError = loessError;
                 }
             }
         }
@@ -424,7 +553,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
     }
     private double[] recalibrateByAlignmentWithMzRecal(ProcessedSample sample, AlignmentStorage storage, long[] alignments, HashMap<Integer, int[]> bucketCounts) {
         final int minimumBuckSize;
-        double rtError=0d, mzError=0d, mzPPMError=0d, mzAbsError=0d;
+        double rtError=0d, rtErrorBeforeRecalibration, mzError=0d, mzPPMError=0d, mzAbsError=0d;
         {
             int minbc = Integer.MAX_VALUE;
             for (int c : bucketCounts.get(sample.getUid())) {

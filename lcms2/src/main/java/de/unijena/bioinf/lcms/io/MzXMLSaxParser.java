@@ -370,7 +370,7 @@ class MzXMLSaxParser extends DefaultHandler {
                                 scanConsumer.consume(scan);
                                 ms1Ids.put(scanNumber, scan.getScanId());
 
-                                final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(), Integer.toString(scanNumber), polarity.charge, centroided);
+                                final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(),scanNumber, Integer.toString(scanNumber), polarity.charge, centroided);
                                 retentionTimes.add(retentionTime);
                                 idmap.put(scanNumber, scanids.size());
                                 scanids.add(scanNumber);
@@ -391,10 +391,12 @@ class MzXMLSaxParser extends DefaultHandler {
 
                                 final Ms2SpectrumHeader header = new Ms2SpectrumHeader(
                                         Integer.toString(scanNumber),
-                                        polarity.charge, centroided,
+                                        scanNumber,
+                                        polarity.charge, msLevel, centroided,
                                         collisionEnergy,
                                         new IsolationWindow(0d, isolationWindowWidth),
                                         idmap.getOrDefault(precursorScanNumber, -1), // TODO: potential error
+                                        precursorScanNumber,
                                         precursorMz,
                                         precursorMz,
                                         retentionTime

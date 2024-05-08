@@ -10,10 +10,5 @@ import java.util.ArrayList;
 
 public interface Ms2MergeStrategy {
 
-    interface AssignMs2ToFeature {
-        void assignMs2ToFeature(MergedTrace mergedTrace, TraceSegment segment, int index, MergedSpectrum mergedSpectrum, ArrayList<MsMsQuerySpectrum> spectra);
-    }
-
-    void assignMs2(ProcessedSample mergedSample, MergedTrace trace, TraceSegment[] featureSegments, Int2ObjectOpenHashMap<ProcessedSample> otherSamples, AssignMs2ToFeature assigner);
-
+    public MergedSpectrum[][] assignMs2(ProcessedSample mergedSample, MergedTrace trace, TraceSegment[] mergedSegments, TraceSegment[][] projectedSegments);
 }

@@ -5,6 +5,10 @@ import java.util.function.Predicate;
 
 public interface AlignmentStorage extends Iterable<MoI> {
 
+    public void setStatistics(AlignmentStatistics statistics);
+
+    public AlignmentStatistics getStatistics();
+
     public List<MoI> getMoIWithin(double fromMz, double toMz);
 
     AlignedMoI mergeMoIs(AlignWithRecalibration recalibration, MoI left, MoI right);

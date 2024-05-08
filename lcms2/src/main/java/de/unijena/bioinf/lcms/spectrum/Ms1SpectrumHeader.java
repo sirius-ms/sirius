@@ -12,6 +12,9 @@ public class Ms1SpectrumHeader implements Serializable {
     @Getter
     protected final String sourceId;
 
+    @Getter
+    protected final int scanIndex;
+
     protected final byte polarity;
 
     protected final boolean centroided;
@@ -20,14 +23,15 @@ public class Ms1SpectrumHeader implements Serializable {
 //        this(-1, polarity, centroided);
 //    }
 
-    public Ms1SpectrumHeader(int uid, String sourceId, int polarity, boolean centroided) {
+    public Ms1SpectrumHeader(int uid, int scanIndex, String sourceId, int polarity, boolean centroided) {
         this.uid = uid;
+        this.scanIndex = scanIndex;
         this.sourceId = sourceId;
         this.polarity = (byte) polarity;
         this.centroided = centroided;
     }
 
     public Ms1SpectrumHeader withUid(int uid) {
-        return new Ms1SpectrumHeader(uid, sourceId, polarity, centroided);
+        return new Ms1SpectrumHeader(uid, scanIndex, sourceId, polarity, centroided);
     }
 }

@@ -1,5 +1,7 @@
 package de.unijena.bioinf.ms.persistence.model.core.trace;
 
+import lombok.Getter;
+
 /**
  * While merged features point to a trace in a merged run,
  * individual features point to traces in the projected
