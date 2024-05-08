@@ -5,7 +5,10 @@ import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import lombok.Builder;
+import lombok.Getter;
 
+import javax.annotation.concurrent.ThreadSafe;
 import java.util.Arrays;
 import java.util.BitSet;
 
@@ -13,11 +16,8 @@ import java.util.BitSet;
  * This algorithm requires that there is at most one pair of peaks (u,v) where the m/z of u
  * and v are within the allowed mass tolerance.
  */
+@ThreadSafe
 public class ModifiedCosine extends AbstractSpectralMatching {
-
-    // assigns peak from left to right
-    private int[] assignment;
-    private double score;
 
     public ModifiedCosine(Deviation deviation) {
         super(deviation);
@@ -29,35 +29,29 @@ public class ModifiedCosine extends AbstractSpectralMatching {
     }
 
     public SpectralSimilarity score(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, double precursorLeft, double precursorRight, double powerIntensity) {
+        return scoreWithResult(left, right, precursorLeft, precursorRight,powerIntensity).getSimilarity();
+    }
+
+    public Result scoreWithResult(OrderedSpectrum<Peak> left, OrderedSpectrum<Peak> right, double precursorLeft, double precursorRight, double powerIntensity) {
+        int[] assignment;
+        double score;
         if (precursorLeft <= precursorRight) {
             final DP dp = new DP(left, right, precursorLeft, precursorRight, deviation, powerIntensity);
             dp.compute();
-            this.score = dp.score;
-            this.assignment = dp.assignments.toArray(new int[0]);
+            score = dp.score;
+            assignment = dp.assignments.toArray(new int[0]);
         } else {
             final DP dp = new DP(right, left, precursorRight, precursorLeft, deviation, powerIntensity);
             dp.compute();
-            this.score = dp.score;
-            this.assignment = dp.assignments.toArray(new int[0]);
-            for (int k=0; k < this.assignment.length; k+=2) {
+            score = dp.score;
+            assignment = dp.assignments.toArray(new int[0]);
+            for (int k = 0; k < assignment.length; k += 2) {
                 int swap = assignment[k];
-                assignment[k] = assignment[k+1];
-                assignment[k+1] = swap;
+                assignment[k] = assignment[k + 1];
+                assignment[k + 1] = swap;
             }
         }
-        return getSimilarity();
-    }
-
-    public double getScore() {
-        return score;
-    }
-
-    public int[] getAssignment() {
-        return assignment;
-    }
-
-    public SpectralSimilarity getSimilarity() {
-        return new SpectralSimilarity(score, assignment.length>>1);
+        return Result.builder().assignment(assignment).score(score).build();
     }
 
     protected static class DP {
@@ -282,6 +276,18 @@ public class ModifiedCosine extends AbstractSpectralMatching {
         private double scoreFor(int a, int b) {
             if (a < 0 || b < 0) return Double.NEGATIVE_INFINITY;
             return Math.pow(left.getIntensityAt(a) * right.getIntensityAt(b), powerIntensity);
+        }
+    }
+
+    @Getter
+    @Builder
+    public static final class Result{
+        // assigns peak from left to right
+        private final int[] assignment;
+        private final double score;
+
+        public SpectralSimilarity getSimilarity() {
+            return new SpectralSimilarity(score, assignment.length>>1);
         }
     }
 }

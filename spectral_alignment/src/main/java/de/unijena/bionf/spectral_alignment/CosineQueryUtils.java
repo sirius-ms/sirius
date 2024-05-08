@@ -20,7 +20,10 @@
 
 package de.unijena.bionf.spectral_alignment;
 
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.Normalization;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
+import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -53,8 +56,11 @@ public class CosineQueryUtils {
     /**
      *
      */
-    public CosineQuerySpectrum createQuery(Spectrum<Peak> spectrum, double precursorMz, boolean transformSqrtIntensity, boolean transformIntensityByMass){
+    public CosineQuerySpectrum createQuery(Spectrum<Peak> spectrum, double precursorMz, boolean transformSqrtIntensity, boolean transformIntensityByMass) {
+        return createQuery(spectrum, precursorMz, transformSqrtIntensity, transformIntensityByMass, 13d);
+    }
 
+    public CosineQuerySpectrum createQuery(Spectrum<Peak> spectrum, double precursorMz, boolean transformSqrtIntensity, boolean transformIntensityByMass, double precursorRemovalWindowDa) {
         IntensityTransformation intensityTransformation = new CosineQueryUtils.IntensityTransformation(transformIntensityByMass, transformSqrtIntensity);
         SimpleMutableSpectrum mutableSpectrum;
         if (spectrum instanceof SimpleMutableSpectrum){
@@ -64,7 +70,7 @@ public class CosineQueryUtils {
         }
 
         Spectrums.transform(mutableSpectrum, intensityTransformation);
-        Spectrums.cutByMassThreshold(mutableSpectrum, precursorMz-20);
+        Spectrums.cutByMassThreshold(mutableSpectrum, precursorMz - precursorRemovalWindowDa);
 
         Spectrums.normalize(mutableSpectrum, NORMALIZATION);
 
@@ -79,7 +85,11 @@ public class CosineQueryUtils {
     /**
      * kaidu: Zwischenloesung. Das sollte alles irgendwie einfacher aufgebaut sein.
      */
-    public CosineQuerySpectrum createQueryWithIntensityTransformationNoLoss(Spectrum<Peak> spectrum, double precursorMz, boolean transformSqrtIntensity){
+    public CosineQuerySpectrum createQueryWithIntensityTransformationNoLoss(Spectrum<Peak> spectrum, double precursorMz, boolean transformSqrtIntensity) {
+        return createQueryWithIntensityTransformationNoLoss(spectrum, precursorMz, transformSqrtIntensity, 13d);
+    }
+
+    public CosineQuerySpectrum createQueryWithIntensityTransformationNoLoss(Spectrum<Peak> spectrum, double precursorMz, boolean transformSqrtIntensity, double precursorRemovalWindowDa) {
         IntensityTransformation intensityTransformation = new CosineQueryUtils.IntensityTransformation(true, transformSqrtIntensity);
         SimpleMutableSpectrum mutableSpectrum;
         if (spectrum instanceof SimpleMutableSpectrum){
@@ -89,7 +99,7 @@ public class CosineQueryUtils {
         }
 
         Spectrums.transform(mutableSpectrum, intensityTransformation);
-        Spectrums.cutByMassThreshold(mutableSpectrum, precursorMz - 20);
+        Spectrums.cutByMassThreshold(mutableSpectrum, precursorMz - precursorRemovalWindowDa);
 
         Spectrums.normalize(mutableSpectrum, NORMALIZATION);
 

@@ -29,7 +29,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.OrderedSpectrum;
  */
 public abstract class AbstractSpectralMatching {
 
-    protected Deviation deviation;
+    protected final Deviation deviation;
 
     /**
      * @param deviation should be higher than usual expected mass deviation to not punish mz errors too much. this results in low cosine scores even for the same compounds
