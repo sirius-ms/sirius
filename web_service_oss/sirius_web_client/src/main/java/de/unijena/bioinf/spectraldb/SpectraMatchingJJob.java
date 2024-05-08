@@ -21,10 +21,10 @@
 package de.unijena.bioinf.spectraldb;
 
 import com.google.common.collect.Streams;
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.CandidateFormulas;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.chemdb.annotations.SpectralMatchingScorer;
 import de.unijena.bioinf.chemdb.annotations.SpectralSearchDB;
@@ -38,7 +38,6 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -105,10 +104,6 @@ public class SpectraMatchingJJob extends BasicMasterJJob<SpectralSearchResult> {
                 }).toList())
                 .build();
 
-        //add adduct and formula from high-scoring library hits to detected adducts and formula candiadates list
-        InjectSpectralLibraryMatchFormulas injectFormulas = experiment.getAnnotationOrDefault(InjectSpectralLibraryMatchFormulas.class);
-        addAdductsAndFormulasFromHighScoringLibraryMatches(experiment, searchResults, injectFormulas.getMinScoreToInject(), injectFormulas.getMinPeakMatchesToInject());
-
         return searchResults;
     }
 
@@ -153,7 +148,7 @@ public class SpectraMatchingJJob extends BasicMasterJJob<SpectralSearchResult> {
                 .filter(i -> similarities.get(i).sharedPeaks > 0)
                 .mapToObj(i -> {
                     if (similarities.get(i).similarity > 1)
-                        System.out.println("OVER 100%  " + similarities.get(i).similarity);
+                        logWarn("Modified Cosine above 1! This is likely a bug. Please submit bug report with example data.");
                     Ms2ReferenceSpectrum reference = references.get(input.get(i).getRight().getIndex());
                     return SpectralSearchResult.SearchResult.builder()
                             .dbName(reference.getLibraryName())
@@ -169,22 +164,5 @@ public class SpectraMatchingJJob extends BasicMasterJJob<SpectralSearchResult> {
                             .exactMass(reference.getExactMass())
                             .build();
                 });
-    }
-
-    private void addAdductsAndFormulasFromHighScoringLibraryMatches(Ms2Experiment exp, SpectralSearchResult result, double minSimilarity, int minSharedPeaks) {
-        final DetectedAdducts detAdds = exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new);
-        Set<PrecursorIonType> adducts = SpectralSearchResults.deriveDistinctAdductsSetWithThreshold(result.getResults(), exp.getIonMass(), minSimilarity, minSharedPeaks);
-        if (adducts.isEmpty()) return;
-
-        PossibleAdducts possibleAdducts = new PossibleAdducts(adducts);
-        //overrides any detected addcuts from previous spectral library searches for consistency reasons. alternatively, we could use union.
-        detAdds.put(DetectedAdducts.Source.SPECTRAL_LIBRARY_SEARCH, possibleAdducts);
-
-        //set high-scoring formulas
-        Set<MolecularFormula> formulas = SpectralSearchResults.deriveDistinctFormulaSetWithThreshold(result.getResults(), exp.getIonMass(), minSimilarity, minSharedPeaks);
-        if (formulas.isEmpty()) return;
-
-        CandidateFormulas candidateFormulas = exp.computeAnnotationIfAbsent(CandidateFormulas.class);
-        candidateFormulas.addAndMergeSpectralLibrarySearchFormulas(formulas, SpectraMatchingJJob.class);
     }
 }
