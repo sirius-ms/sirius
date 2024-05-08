@@ -89,7 +89,7 @@ public class CosineQueryUtils {
         }
 
         Spectrums.transform(mutableSpectrum, intensityTransformation);
-        Spectrums.cutByMassThreshold(mutableSpectrum, precursorMz - new Deviation(20).absoluteFor(precursorMz));
+        Spectrums.cutByMassThreshold(mutableSpectrum, precursorMz - 20);
 
         Spectrums.normalize(mutableSpectrum, NORMALIZATION);
 
@@ -108,8 +108,12 @@ public class CosineQueryUtils {
      */
     public SpectralSimilarity cosineProductWithLosses(CosineQuerySpectrum query1, CosineQuerySpectrum query2) {
         SpectralSimilarity similarity = cosineProduct(query1, query2);
-        SpectralSimilarity similarityLosses = cosineProductOfInverse(query1, query2);
-        return new SpectralSimilarity((similarity.similarity +similarityLosses.similarity)/2d, Math.max(similarity.sharedPeaks, similarityLosses.sharedPeaks));
+        if (spectralMatchingMethod instanceof ModifiedCosine) {
+            return similarity;
+        } else {
+            SpectralSimilarity similarityLosses = cosineProductOfInverse(query1, query2);
+            return new SpectralSimilarity((similarity.similarity + similarityLosses.similarity) / 2d, Math.max(similarity.sharedPeaks, similarityLosses.sharedPeaks));
+        }
     }
 
     public SpectralSimilarity cosineProduct(CosineQuerySpectrum query1, CosineQuerySpectrum query2) {
