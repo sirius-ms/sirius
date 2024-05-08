@@ -79,6 +79,11 @@ public class ScanPointInterpolator {
         return (int)Math.ceil(right2left[targetIndex]);
     }
 
+    public int roundIndex(int targetIndex) {
+        if (targetIndex < 0 || Float.isInfinite(right2left[targetIndex])) return 0;
+        return (int)Math.round(right2left[targetIndex]);
+    }
+
     public int reverseMapLowerIndex(int targetIndex) {
         if (targetIndex < 0 || Float.isInfinite(left2right[targetIndex])) return 0;
         return (int)Math.floor(left2right[targetIndex]);
@@ -121,13 +126,13 @@ public class ScanPointInterpolator {
     }
     public double interpolateMz(Trace t, int k) {
         float tg = k >= left2right.length ? Float.NEGATIVE_INFINITY : (left2right[k]);
-        if (!Float.isFinite(tg)) return 0f;
+        if (!Float.isFinite(tg)) return Double.NaN;
         int targetLeft = (int)tg;
         int targetRight = (int)Math.ceil(tg);
         double mzLeft = (targetLeft < t.startId() || targetLeft > t.endId()) ? t.averagedMz() : t.mz(targetLeft);
         double mzRight = (targetRight < t.startId() || targetRight > t.endId()) ? t.averagedMz() : t.mz(targetRight);
         if (!Double.isFinite(mzLeft)) {
-            if (!Double.isFinite(mzRight)) return 0f;
+            if (!Double.isFinite(mzRight)) return Double.NaN;
             else return mzRight;
         } else if (!Double.isFinite(mzRight)) {
             return mzLeft;

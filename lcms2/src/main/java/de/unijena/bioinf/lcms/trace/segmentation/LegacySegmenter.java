@@ -10,10 +10,10 @@ import java.util.List;
 
 public class LegacySegmenter implements TraceSegmentationStrategy {
 
-    public List<TraceSegment> detectSegments(SampleStats stats, Trace trace) {
-        double[] signal = getSignal(stats, trace);
+    public List<TraceSegment> detectSegments(Trace trace, double noiseLevel) {
+        double[] signal = getSignal(trace);
         Maxima maxima = new Maxima(signal);
-        float N = stats.noiseLevel(trace.apex());
+        float N = (float)noiseLevel;
         maxima.split(N, 0.05);
         de.unijena.bioinf.lcms.Extrema extrema = maxima.toExtrema();
         if (!extrema.isMinimum(extrema.numberOfExtrema()-1)) {
@@ -46,13 +46,13 @@ public class LegacySegmenter implements TraceSegmentationStrategy {
 
     @Override
     public int[] detectMaxima(SampleStats stats, Trace trace) {
-        Maxima maxima = new Maxima(getSignal(stats, trace));
+        Maxima maxima = new Maxima(getSignal(trace));
         float N = stats.noiseLevel(trace.apex());
         maxima.split(N, 0.05);
         return Arrays.stream(maxima.getMaximaLocations()).map(x->x+trace.startId()).toArray();
     }
 
-    private double[] getSignal(SampleStats stats, Trace trace) {
+    private double[] getSignal(Trace trace) {
         final double[] signal = new double[trace.length()];
         for (int j=0, k=trace.startId(), n = trace.endId(); k <= n; ++k) {
             signal[j++] = trace.intensity(k);

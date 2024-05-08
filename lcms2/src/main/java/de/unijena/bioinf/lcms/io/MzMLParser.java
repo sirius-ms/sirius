@@ -265,7 +265,6 @@ public class MzMLParser implements LCMSParser {
                     log.error("No valid spectrum data found Spectrum with id: " + spectrum.getId() + " Skipping!");
                     continue;
                 }
-
                 if (msLevel == 1) {
                     if (scanConsumer != null) {
                         Scan scan = Scan.builder()
@@ -280,7 +279,7 @@ public class MzMLParser implements LCMSParser {
                         ms1Ids.put(spectrum.getId(), scan.getScanId());
                     }
 
-                    final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(), sid, polarity.charge, true);
+                    final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(), spectrum.getIndex(), sid, polarity.charge, true);
                     retentionTimes.add(rt);
                     idmap.put(spectrum.getIndex().intValue(), scanids.size());
                     scanids.add(spectrum.getIndex().intValue());
@@ -337,10 +336,12 @@ public class MzMLParser implements LCMSParser {
 
                     final Ms2SpectrumHeader header = new Ms2SpectrumHeader(
                             sid,
-                            polarity.charge, centroided,
+                            spectrum.getIndex(),
+                            polarity.charge, msLevel, centroided,
                             Double.isFinite(collisionEnergy) ? new CollisionEnergy(collisionEnergy) : CollisionEnergy.none(),
                             prec.getIsolationWindow(),
                             idmap.getOrDefault(prec.getIndex(), -1), // TODO: potential error
+                            prec.getIndex(),
                             prec.getMass(),
                             prec.getMass(), // todo: fix
                             rt

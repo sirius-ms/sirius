@@ -39,7 +39,10 @@ import java.util.Arrays;
 public class MergedTrace extends AbstractTrace {
 
     public MergedTrace(long runId, float[] intensities, int scanIndexOffset, double[] masses) {
-        super(runId, new FloatArrayList(intensities), scanIndexOffset);
+        super();
+        this.runId = runId;
+        this.scanIndexOffset = scanIndexOffset;
+        this.intensities = new FloatArrayList(intensities);
         double avgmz = 0d;
         double intsum=0d;
         for (int k=0; k < masses.length; ++k) {
@@ -62,6 +65,4 @@ public class MergedTrace extends AbstractTrace {
      * deviations from average mass in float
      */
     DoubleList mz;
-
-    double averageMz;
 }

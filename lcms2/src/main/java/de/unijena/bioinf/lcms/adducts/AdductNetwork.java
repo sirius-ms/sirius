@@ -174,6 +174,13 @@ public class AdductNetwork {
                 singletons.size(), rtOrderedNodes.length);
         System.out.printf("There are %d decoy edges:\n", pValueStats.count);
 
+
+        singletons.sort(Comparator.comparingDouble(x->-x.features.getApexIntensity()));
+        for (AdductNode singleton : singletons) {
+            System.out.println(singleton.getMass() + "\t" + singleton.getRetentionTime() + " has no edges :(");
+        }
+
+
     }
 
     private void deleteEdgesWithLowPvalue(PValueStats pValueStats, int threshold) {
