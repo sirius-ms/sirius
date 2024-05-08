@@ -17,7 +17,7 @@ import java.util.Locale;
  */
 public class MoI {
 
-    private static final byte ISOTOPE_FLAG = 1, MULTIPLE_CHARGED = 2;
+    private static final byte ISOTOPE_FLAG = 1, MULTIPLE_CHARGED = 2, SINGLE_APEX = 4;
 
     @Getter private final Rect rect;
     @Getter @With private final double retentionTime;
@@ -72,6 +72,10 @@ public class MoI {
         return (this.state & MULTIPLE_CHARGED) != 0;
     }
 
+    public boolean isSingleApex() {
+        return (this.state & SINGLE_APEX) != 0;
+    }
+
     public void setIsotopePeakFlag(boolean value) {
         if (value) this.state |= ISOTOPE_FLAG;
         else this.state &= ~ISOTOPE_FLAG;
@@ -79,6 +83,11 @@ public class MoI {
     public void setMultiChargeFlag(boolean value) {
         if (value) this.state |= MULTIPLE_CHARGED;
         else this.state &= ~MULTIPLE_CHARGED;
+    }
+
+    public void setSingleApex(boolean value) {
+        if (value) this.state |= SINGLE_APEX;
+        else this.state &= ~SINGLE_APEX;
     }
 
     public int getTraceId() {

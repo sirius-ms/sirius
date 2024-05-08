@@ -43,14 +43,12 @@ public class MSData {
     private long alignedFeatureId;
 
     /**
-     * Merged MSn spectrum
-     */
-    private MergedMSnSpectrum mergedMSnSpectrum;
-
-    /**
      * MSn spectra
+     * @markus: previously we had something like a merged msn spectrum here. I do not know that this is supposed to be,
+     * but if we need something like this (e.g. for visualization) we either can compute it on the fly or add it
+     * again here.
      */
-    private List<MutableMs2Spectrum> msnSpectra;
+    private List<MergedMSnSpectrum> msnSpectra;
 
     /**
      * Extracted isotope pattern

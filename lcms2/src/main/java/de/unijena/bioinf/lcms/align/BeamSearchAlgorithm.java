@@ -1,15 +1,16 @@
 package de.unijena.bioinf.lcms.align;
 
+import de.unijena.bioinf.lcms.utils.AlignmentBeamSearch;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.List;
 
-public class GreedyAlgorithm implements AlignmentAlgorithm{
+public class BeamSearchAlgorithm implements AlignmentAlgorithm{
     @Override
     public void align(AlignmentStatistics stats, AlignmentScorer scorer, AlignWithRecalibration rec, MoI[] left, MoI[] right, CallbackForAlign align,CallbackForLeftOver leftOver) {
-        final double maxAllowedRtDiff = 5*stats.getExpectedRetentionTimeDeviation();
+        final double maxAllowedRtDiff = 4*stats.getExpectedRetentionTimeDeviation();
         final double maxAllowedMzDiff = 4*stats.expectedMassDeviationBetweenSamples.absoluteFor(Math.max(left[left.length-1].getMz(),right[right.length-1].getMz()));
         final List<PossibleAlignment> possibleAlignments = new ArrayList<>();
         int rinit = 0;
@@ -32,13 +33,16 @@ public class GreedyAlgorithm implements AlignmentAlgorithm{
             }
         }
         possibleAlignments.sort(null);
+
+        AlignmentBeamSearch beamSearch = new AlignmentBeamSearch(10);
+        possibleAlignments.forEach(x-> beamSearch.add(x.left,x.right,x.score + 5 + 10*(left[x.left].getIntensity() + right[x.right].getIntensity())));
+
         final BitSet alignedLeft = new BitSet(left.length), alignedRight = new BitSet(right.length);
-        for (int k=0; k < possibleAlignments.size(); ++k) {
-            PossibleAlignment A = possibleAlignments.get(k);
-            if (alignedLeft.get(A.left) || alignedRight.get(A.right)) continue;
-            align.alignWith(rec, left,right,A.left,A.right);
-            alignedLeft.set(A.left);
-            alignedRight.set(A.right);
+
+        for (AlignmentBeamSearch.MatchNode match : beamSearch.getTopSolution()) {
+            align.alignWith(rec, left,right,match.leftIndex(), match.rightIndex());
+            alignedLeft.set(match.leftIndex());
+            alignedRight.set(match.rightIndex());
         }
         for (int i=alignedRight.nextClearBit(0); i < right.length; i = alignedRight.nextClearBit(i+1) ) {
             leftOver.leftOver(rec, right, i);
@@ -56,7 +60,7 @@ public class GreedyAlgorithm implements AlignmentAlgorithm{
         }
 
         @Override
-        public int compareTo(@NotNull GreedyAlgorithm.PossibleAlignment o) {
+        public int compareTo(@NotNull BeamSearchAlgorithm.PossibleAlignment o) {
             return Float.compare(o.score, score);
         }
     }

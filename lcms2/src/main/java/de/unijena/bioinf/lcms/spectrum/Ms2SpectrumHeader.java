@@ -12,16 +12,16 @@ public class Ms2SpectrumHeader extends Ms1SpectrumHeader implements Serializable
     @Nullable protected final CollisionEnergy energy;
 
     @Nullable protected final IsolationWindow isolationWindow;
-    @Getter protected final int parentId;
+    @Getter protected final int parentId, parentIndex;
     @Getter  protected final double retentionTime;
     @Getter protected final double precursorMz;
     @Getter protected final double targetedMz;
+    @Getter protected final int msLevel;
 
-    public Ms2SpectrumHeader(String sourceId, int polarity, boolean centroided, CollisionEnergy energy, IsolationWindow window, int parentId, double precursorMz, double targetedMz, double retentionTime) {
-        this(-1, sourceId, polarity,centroided,energy,window,parentId,precursorMz,targetedMz,retentionTime);
+    public Ms2SpectrumHeader(String sourceId, int index, int polarity, int mslevel, boolean centroided, CollisionEnergy energy, IsolationWindow window, int parentId, int parentIndex, double precursorMz, double targetedMz, double retentionTime) {
+        this(-1, index, sourceId, polarity,mslevel,centroided,energy,window,parentId,parentIndex,precursorMz,targetedMz,retentionTime);
     }
 
-    @Nullable
     public Optional<CollisionEnergy> getEnergy() {
         return Optional.ofNullable(energy);
     }
@@ -30,12 +30,14 @@ public class Ms2SpectrumHeader extends Ms1SpectrumHeader implements Serializable
         return Optional.ofNullable(isolationWindow);
     }
 
-    public Ms2SpectrumHeader(int uid, String sourceId, int polarity, boolean centroided,  CollisionEnergy energy, IsolationWindow window, int parentId, double precursorMz, double targetedMz, double retentionTime) {
-        super(uid, sourceId, polarity, centroided);
+    public Ms2SpectrumHeader(int uid, int index, String sourceId, int polarity, int msLevel, boolean centroided,  CollisionEnergy energy, IsolationWindow window, int parentId, int parentIndex, double precursorMz, double targetedMz, double retentionTime) {
+        super(uid, index, sourceId, polarity, centroided);
         this.energy = energy;
         this.parentId = parentId;
         this.isolationWindow = window==null || window.isUndefined() ? null : window;
         this.retentionTime = retentionTime;
+        this.parentIndex = parentIndex;
+        this.msLevel = msLevel;
         if (precursorMz<0 && targetedMz<0) {
             throw new IllegalArgumentException("Neither precursor nor targeted mz is known");
         }
@@ -49,7 +51,7 @@ public class Ms2SpectrumHeader extends Ms1SpectrumHeader implements Serializable
     }
 
     public Ms2SpectrumHeader withUid(int uid) {
-        return new Ms2SpectrumHeader(uid, sourceId, polarity, centroided, energy, isolationWindow, parentId, precursorMz, targetedMz, retentionTime);
+        return new Ms2SpectrumHeader(uid, scanIndex, sourceId, polarity, msLevel, centroided, energy, isolationWindow, parentId, parentIndex, precursorMz, targetedMz, retentionTime);
     }
 
     @Override

@@ -50,4 +50,6 @@ public abstract class AbstractTrace {
      */
     int scanIndexOffset;
 
+    double averageMz;
+
 }

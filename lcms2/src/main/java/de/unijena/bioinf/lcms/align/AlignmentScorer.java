@@ -9,22 +9,22 @@ public class AlignmentScorer {
     }
 
     public static AlignmentScorer expectSimilarIntensity() {
-        return new AlignmentScorer(1.5);
+        return new AlignmentScorer(1);
     }
     public static AlignmentScorer intensityMayBeDifferent() {
-        return new AlignmentScorer(4);
+        return new AlignmentScorer(5);
     }
 
     public double score(AlignmentStatistics stats, MoI left, MoI right) {
 
-        final double rtDiff = left.getRetentionTime()-right.getMz();
+        final double rtDiff = left.getRetentionTime()-right.getRetentionTime();
         final double mzDiff = left.getMz() - right.getMz();
         final double intensityDelta = Math.log((left.getIntensity()+0.05)/(right.getIntensity()+0.05));
 
 
         return gaussianRbfLog(rtDiff, stats.expectedRetentionTimeDeviation) +
                 gaussianRbfLog(mzDiff, stats.expectedMassDeviationBetweenSamples.absoluteFor(Math.max(left.getMz(),right.getMz()))) +
-                gaussianRbfLog(intensityDelta, 0.1);
+                gaussianRbfLog(intensityDelta, intensityAwareness);
 
     }
 

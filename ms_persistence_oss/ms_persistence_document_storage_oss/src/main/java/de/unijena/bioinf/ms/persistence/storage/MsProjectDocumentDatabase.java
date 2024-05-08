@@ -61,18 +61,16 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                         Index.nonUnique("name"),
                         Index.nonUnique("runType"))
 
-                .addRepository(MergedLCMSRun.class,
+                .addRepository(MergedLCMSRun.class, // TODO: das ist doof -_- Wozu überhaupt zwischen beidem unterscheiden?
                         Index.nonUnique("name"),
                         Index.nonUnique("runType"))
 
                 .addRepository(Scan.class,
-                        Index.nonUnique("runId"),
-                        Index.nonUnique("scanTime"))
+                        Index.nonUnique("runId", "scanTime"))
                 .setOptionalFields(Scan.class, "peaks")
 
                 .addRepository(MSMSScan.class,
-                        Index.nonUnique("runId"),
-                        Index.nonUnique("scanTime"),
+                        Index.nonUnique("runId", "scanTime"),
                         Index.nonUnique("precursorScanId"))
                 .setOptionalFields(MSMSScan.class, "peaks")
 
@@ -123,7 +121,7 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                         Index.nonUnique("neutralMass"),
                         Index.nonUnique("rt.middle"))
 
-                .addRepository(RetentionTimeAxis.class, Index.unique("runId"));
+                .addRepository(RetentionTimeAxis.class);
     }
 
     default <T> Stream<T> stream(Iterable<T> iterable){

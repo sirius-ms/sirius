@@ -53,7 +53,7 @@ public class StorageUtils {
         //should we copy or not?
         MutableMs2Experiment exp = new MutableMs2Experiment();
         exp.addAnnotationsFrom(config, Ms2ExperimentAnnotation.class);
-        exp.setMs2Spectra(spectra.getMsnSpectra() != null ? Collections.unmodifiableList(spectra.getMsnSpectra()) : List.of());
+        exp.setMs2Spectra(spectra.getMsnSpectra() != null ? Collections.unmodifiableList(spectra.getMsnSpectra()).stream().map(MergedMSnSpectrum::toMs2Spectrum).toList() : List.of());
         exp.setMs1Spectra(Stream.of(spectra.getIsotopePattern(), spectra.getMergedMs1Spectrum())
                 .filter(Objects::nonNull).collect(Collectors.toList()));
         exp.setMergedMs1Spectrum(spectra.getMergedMs1Spectrum());
@@ -88,15 +88,14 @@ public class StorageUtils {
         MergedMSnSpectrum mergedMsn = MergedMSnSpectrum.builder()
                 .peaks(Spectrums.from(new Ms2Preprocessor().preprocess(exp).getMergedPeaks()))
                 .percursorMzs(exp.getMs2Spectra().stream().mapToDouble(Ms2Spectrum::getPrecursorMz).toArray())
-                .collisionEnergies(exp.getMs2Spectra().stream().map(Ms2Spectrum::getCollisionEnergy).toArray(CollisionEnergy[]::new))
+                .mergedCollisionEnergy(exp.getMs2Spectra().stream().map(Ms2Spectrum::getCollisionEnergy).toArray(CollisionEnergy[]::new)[0])
                 .isolationWindows(null)
                 .build();
 
         MSData.MSDataBuilder builder = MSData.builder()
                 .isotopePattern(isotopePattern != null ? new IsotopePattern(isotopePattern, IsotopePattern.Type.MERGED_APEX) : null)
                 .mergedMs1Spectrum(mergedMs1)
-                .mergedMSnSpectrum(mergedMsn)
-                .msnSpectra(exp.getMs2Spectra());
+                .msnSpectra(exp.getMs2Spectra().stream().map(StorageUtils::msnSpectrumFrom).toList());
 
         MSData msData = builder.build();
 
@@ -122,6 +121,16 @@ public class StorageUtils {
             log.warn("Experiment '" + exp.getName() + "' contains Detected adducts that which will not preserved during import!");
 
         return alignedFeature;
+    }
+
+    private static MergedMSnSpectrum msnSpectrumFrom(Ms2Spectrum<Peak> ms2Spectrum) {
+        final MergedMSnSpectrum msn = new MergedMSnSpectrum();
+        msn.setCharge(ms2Spectrum.getIonization().getCharge());
+        msn.setPeaks(new SimpleSpectrum(ms2Spectrum));
+        msn.setMsLevel(ms2Spectrum.getMsLevel());
+        msn.setMergedCollisionEnergy(ms2Spectrum.getCollisionEnergy());
+        msn.setMergedPrecursorMz(ms2Spectrum.getPrecursorMz());
+        return msn;
     }
 
     public static DetectedAdducts fromMs2ExpAnnotation(@Nullable de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts adducts) {

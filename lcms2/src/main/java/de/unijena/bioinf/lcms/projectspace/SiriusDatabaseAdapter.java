@@ -10,7 +10,7 @@ import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
 
 import java.io.IOException;
 
-public interface ImportStrategy {
+public interface SiriusDatabaseAdapter {
 
     void importRun(LCMSRun run) throws IOException;
 

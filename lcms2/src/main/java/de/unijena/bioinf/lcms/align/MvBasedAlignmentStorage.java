@@ -18,10 +18,25 @@ public class MvBasedAlignmentStorage implements AlignmentStorage {
     private MVStore store;
     private MVMap<Long, MoI> mois;
     private AtomicInteger ids;
+
+    // actually, we do not have to store this tiny little object...
+    private AlignmentStatistics statistics;
+
     public MvBasedAlignmentStorage(MVStore store) {
         this.store = store;
         this.ids = new AtomicInteger();
         this.mois = store.openMap("mois", new MVMap.Builder<Long,MoI>().valueType(new MoI.DataType()));
+        this.statistics = null;
+    }
+
+    @Override
+    public void setStatistics(AlignmentStatistics statistics) {
+        this.statistics = statistics;
+    }
+
+    @Override
+    public AlignmentStatistics getStatistics() {
+        return statistics;
     }
 
     @Override

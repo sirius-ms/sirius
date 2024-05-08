@@ -39,10 +39,6 @@ import lombok.experimental.SuperBuilder;
 @ToString(onlyExplicitlyIncluded = true, callSuper = true)
 public class SourceTrace extends AbstractTrace {
 
-    public SourceTrace(long runId, FloatList intensities, int scanIndexOffset) {
-        super(runId, intensities, scanIndexOffset);
-    }
-
     @Id
     @ToString.Include
     private long sourceTraceId;
@@ -50,6 +46,4 @@ public class SourceTrace extends AbstractTrace {
     FloatList rawIntensities;
 
     int rawScanIndexOffset;
-
-
 }

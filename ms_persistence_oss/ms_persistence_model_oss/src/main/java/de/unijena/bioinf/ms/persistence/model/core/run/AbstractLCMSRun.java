@@ -48,7 +48,11 @@ public class AbstractLCMSRun {
 
     @JsonIgnore
     @ToString.Exclude
-    private Optional<RetentionTimeAxis> retentionTimeAxis;
+    private RetentionTimeAxis retentionTimeAxis;
+
+    public Optional<RetentionTimeAxis> getRetentionTimeAxis() {
+        return Optional.ofNullable(retentionTimeAxis);
+    }
 
 
 }

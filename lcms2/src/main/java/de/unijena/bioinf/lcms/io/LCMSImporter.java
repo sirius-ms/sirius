@@ -21,7 +21,7 @@
 package de.unijena.bioinf.lcms.io;
 
 import de.unijena.bioinf.lcms.LCMSStorageFactory;
-import de.unijena.bioinf.lcms.projectspace.ImportStrategy;
+import de.unijena.bioinf.lcms.projectspace.SiriusDatabaseAdapter;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
@@ -34,7 +34,7 @@ public class LCMSImporter {
     public static ProcessedSample importToProject(
             URI source,
             LCMSStorageFactory storageFactory,
-            ImportStrategy importStrategy,
+            SiriusDatabaseAdapter siriusDatabaseAdapter,
             boolean saveRawScans,
             LCMSRun.Type runType,
             Chromatography chromatography
@@ -49,9 +49,9 @@ public class LCMSImporter {
         }
         LCMSRun run = LCMSRun.builder().runType(runType).chromatography(chromatography).build();
         if (!saveRawScans) {
-            return parser.parse(source, storageFactory, importStrategy::importRun, importStrategy::updateRun, null, null, run);
+            return parser.parse(source, storageFactory, siriusDatabaseAdapter::importRun, siriusDatabaseAdapter::updateRun, null, null, run);
         } else {
-            return parser.parse(source, storageFactory, importStrategy::importRun, importStrategy::updateRun, importStrategy::importScan, importStrategy::importMSMSScan, run);
+            return parser.parse(source, storageFactory, siriusDatabaseAdapter::importRun, siriusDatabaseAdapter::updateRun, siriusDatabaseAdapter::importScan, siriusDatabaseAdapter::importMSMSScan, run);
         }
     }
 
