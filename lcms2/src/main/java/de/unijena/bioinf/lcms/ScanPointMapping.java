@@ -71,5 +71,13 @@ public class ScanPointMapping {
         return retentionTimes[index];
     }
 
+    public int[] getScanIdArray() {
+        return scanids;
+    }
+
+    public double[] getRetentionTimeArray() {
+        return retentionTimes;
+    }
+
 
 }

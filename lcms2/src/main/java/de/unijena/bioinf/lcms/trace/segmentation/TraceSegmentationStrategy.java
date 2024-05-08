@@ -7,7 +7,12 @@ import java.util.List;
 
 public interface TraceSegmentationStrategy extends ApexDetection {
 
-    public List<TraceSegment> detectSegments(SampleStats stats, Trace trace);
+    public List<TraceSegment> detectSegments(Trace trace, double intensityThreshold);
+
+    public default List<TraceSegment> detectSegments(SampleStats stats, Trace trace) {
+        float intensityThreshold = stats.noiseLevel(trace.apex());
+        return detectSegments(trace, intensityThreshold);
+    }
 
     default int[] detectMaxima(SampleStats stats, Trace trace) {
         return detectSegments(stats, trace).stream().mapToInt(x->x.apex).sorted().toArray();
