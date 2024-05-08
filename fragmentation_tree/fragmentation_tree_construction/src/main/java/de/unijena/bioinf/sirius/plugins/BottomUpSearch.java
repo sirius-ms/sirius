@@ -25,6 +25,13 @@ import java.util.zip.GZIPInputStream;
 
 public class BottomUpSearch extends SiriusPlugin {
 
+    private final static int RARE_ELEMENT_N_PEAKS = 3,
+                             COMMON_N_PEAKS = 1;
+
+    private final static double RARE_ELEMENT_INTENSITY = 0.15,
+                                COMMON_INTENSITY = 0.05;
+
+
     public final static MolecularFormulaMap MOLECULAR_FORMULA_MAP;
     static {
         MolecularFormulaMap map = null;

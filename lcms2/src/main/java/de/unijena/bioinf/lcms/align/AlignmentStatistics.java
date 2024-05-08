@@ -5,8 +5,10 @@ import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class AlignmentStatistics {
+public class AlignmentStatistics implements Serializable {
 
     protected Deviation expectedMassDeviationBetweenSamples;
     protected double expectedRetentionTimeDeviation;

@@ -1,237 +1,292 @@
 package de.unijena.bioinf.lcms.merge;
 
+import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
 import de.unijena.bioinf.lcms.ScanPointMapping;
-import de.unijena.bioinf.lcms.datatypes.CustomDataType;
+import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
+import de.unijena.bioinf.lcms.statistics.NormalizationStrategy;
+import de.unijena.bioinf.lcms.trace.LCMSStorage;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
+import de.unijena.bioinf.lcms.trace.ProjectedTrace;
 import de.unijena.bioinf.lcms.trace.Trace;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleList;
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import lombok.Getter;
-import org.h2.mvstore.WriteBuffer;
 
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Locale;
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-@Getter
-public class MergedTrace {
+public class MergedTrace implements Trace {
 
-    private int uid;
-    private double[] mz;
-    private double[] ints;
-    private IntArrayList sampleIds, traceIds;
-    private int startId;
-    private int endId;
-    private IntArrayList isotopeUids;
+    private final double[] mz;
+    private final double avgMz;
+    private final float[] intensity;
+    private final ScanPointMapping mapping;
+    private int startId, endId, apexId;
+    private final MergedTrace[] isotopes;
+    private final ProcessedSample[] samples;
+    private final ProjectedTrace[] traces;
 
-    private Int2ObjectOpenHashMap<int[]> ms2SpectraIds;
-
-    public MergedTrace(int uid) {
-        this.uid = uid;
-        this.mz = new double[0];
-        this.ints = new double[0];
-        this.sampleIds = new IntArrayList();
-        this.traceIds = new IntArrayList();
-        this.isotopeUids = new IntArrayList();
-        this.ms2SpectraIds = new Int2ObjectOpenHashMap<>();
-        this.startId = -1;
-        this.endId = -1;
+    public static MergedTrace collect(ProcessedSample mergedSample, Map<Integer, ProcessedSample> sampleByIdx, ProjectedTrace[] projectedTraces, ProjectedTrace[][] isotopes) {
+        // collect isotopes
+        MergedTrace[] isoMerged = new MergedTrace[isotopes.length];
+        for (int k=0; k < isoMerged.length; ++k) {
+            isoMerged[k] = collectIsotopic(mergedSample, sampleByIdx, isotopes[k], null);
+        }
+        return collectIsotopic(mergedSample, sampleByIdx, projectedTraces, isoMerged);
     }
 
-    protected MergedTrace(int uid, double[] mz, double[] ints, int[] sampleIds, int[] traceIds, int[] isotopeUids, Int2ObjectOpenHashMap<int[]> ms2SpectraList, int startId, int endId) {
-        this.uid = uid;
+    private static MergedTrace collectIsotopic(ProcessedSample mergedSample, Map<Integer, ProcessedSample> sampleByIdx, ProjectedTrace[] projectedTraces, MergedTrace[] isotopes) {
+        final ScanPointMapping mergedMapping = mergedSample.getMapping();
+        // first we have to define the range of the trace
+        int mindex = Integer.MAX_VALUE, maxdex = Integer.MIN_VALUE;
+        for (ProjectedTrace trace : projectedTraces) {
+            mindex = Math.min(trace.getProjectedStartId(), mindex);
+            maxdex = Math.max(trace.getProjectedEndId(), maxdex);
+        }
+        // now we can add all traces into one
+        final double[] mz = new double[maxdex-mindex+1];
+        final double[] intensity = new double[maxdex-mindex+1];
+        ArrayList<ProcessedSample> samples = new ArrayList<>();
+        for (ProjectedTrace trace : projectedTraces) {
+            final ProcessedSample sample = sampleByIdx.get(trace.getSampleId());
+            samples.add(sample);
+            NormalizationStrategy.Normalizer normalizer = sample.getNormalizer();
+            for (int k=trace.getProjectedStartId(); k <= trace.getProjectedEndId(); ++k) {
+                final double normalizedIntensity = normalizer.normalize(trace.projectedIntensity(k));
+                intensity[k-mindex] += normalizedIntensity;
+                mz[k-mindex] += normalizedIntensity * trace.projectedMz(k);
+            }
+        }
+        // now we can merge everything
+        double avgMz = 0d, intSum=0d;
+        int apexOffset = 0;
+        for (int k=0; k < mz.length; ++k) {
+            if (intensity[k]>0){
+                avgMz += mz[k];
+                mz[k] /= intensity[k];
+                intSum += intensity[k];
+                if (intensity[k]>intensity[apexOffset]) apexOffset = k;
+            } else mz[k] = Double.NaN;
+        }
+        avgMz /= intSum;
+
+        return new MergedTrace(mz, avgMz, MatrixUtils.double2float(intensity), mergedMapping, mindex, maxdex, mindex+apexOffset, isotopes, samples.toArray(ProcessedSample[]::new), projectedTraces);
+
+
+    }
+
+    private final int minMz, maxMz;
+
+    private MergedTrace(double[] mz, double avgMz, float[] intensity, ScanPointMapping mapping, int startId, int endId, int apexId, MergedTrace[] isotopes, ProcessedSample[] samples, ProjectedTrace[] traces) {
         this.mz = mz;
-        this.ints = ints;
-        this.sampleIds = new IntArrayList(sampleIds);
-        this.traceIds = new IntArrayList(traceIds);
-        this.isotopeUids = new IntArrayList(isotopeUids);
-        this.ms2SpectraIds =  ms2SpectraList;
+        this.avgMz = avgMz;
+        this.intensity = intensity;
+        this.mapping = mapping;
         this.startId = startId;
         this.endId = endId;
-    }
-
-    public void finishMerging() {
+        this.apexId = apexId;
+        this.isotopes = isotopes;
+        this.samples = samples;
+        this.traces = traces;
+        int mindex=0,maxdex=0;
         for (int k=0; k < mz.length; ++k) {
-            if (ints[k]>0) mz[k] /=  ints[k];
+            if (mz[k]<mz[mindex])mindex=k;
+            if (mz[k]>mz[maxdex]) maxdex=k;
         }
-        for (int key : ms2SpectraIds.keySet().toIntArray()) {
-            ms2SpectraIds.put(key, new IntOpenHashSet(ms2SpectraIds.get(key)).intStream().sorted().toArray());
-        }
+        this.minMz=mindex;
+        this.maxMz=maxdex;
     }
 
     @Override
-    public String toString() {
-        if (mz.length==0) return "<>";
-        double m=0d;
-        for (int k=0; k < mz.length; ++k) {
-            if (ints[k]>0) {
-                m=mz[k];
-                break;
-            }
-        }
-        return String.format(Locale.US, "MergedTrace(mz = %.4f, idx = %d..%d, %d alignments)", m, startId, endId, traceIds.size());
+    public int startId() {
+        return startId;
     }
 
-    public Trace toTrace(ProcessedSample mergedSample) {
-        ScanPointMapping mapping = mergedSample.getMapping();
-        int apex = 0;
-        double apexIntensity = 0d;
-        double avgMz = 0d;
-        double count=0;
-        double minMz = Double.POSITIVE_INFINITY, maxMz=Double.NEGATIVE_INFINITY;
-        for (int k=0; k < ints.length; ++k) {
-            if (ints[k] > apexIntensity) {
-                apexIntensity = ints[k];
-                apex = k;
-            }
-            if (ints[k]>0 && Double.isFinite(mz[k])) {
-                avgMz += mz[k] * ints[k];
-                count += ints[k];
-                minMz = Math.min(minMz,mz[k]);
-                maxMz = Math.max(maxMz,mz[k]);
-            }
-        }
-        avgMz /= count;
-        final int apexIndex = apex + startId;
-        final double averageMz = avgMz;
-        final double minimumMz=minMz, maximumMz=maxMz;
-
-        return new Trace() {
-            @Override
-            public int startId() {
-                return startId;
-            }
-
-            @Override
-            public int endId() {
-                return endId;
-            }
-
-            @Override
-            public int apex() {
-                return apexIndex;
-            }
-
-            @Override
-            public double mz(int index) {
-                return mz[index-startId];
-            }
-
-            @Override
-            public double averagedMz() {
-                return averageMz;
-            }
-
-            @Override
-            public double minMz() {
-                return minimumMz;
-            }
-
-            @Override
-            public double maxMz() {
-                return maximumMz;
-            }
-
-            @Override
-            public float intensity(int index) {
-                return (float)ints[index-startId];
-            }
-
-            @Override
-            public int scanId(int index) {
-                return mapping.getScanIdAt(index);
-            }
-
-            @Override
-            public double retentionTime(int index) {
-                return mapping.getRetentionTimeAt(index);
-            }
-        };
+    @Override
+    public int endId() {
+        return endId;
     }
 
-    public void extend(int startId, int endId) {
-        if (this.startId<0) {
-            this.startId = startId;
-            this.endId = endId;
-            int n = this.endId-this.startId+1;
-            this.mz = new double[n];
-            this.ints = new double[n];
-        } else {
-            int st = Math.min(startId, this.startId);
-            int ed = Math.max(endId, this.endId);
-            int n = this.endId - this.startId + 1;
-            int nn = ed-st+1;
-            if (nn > n) {
-                final double[] mzs = new double[nn];
-                final double[] ints = new double[nn];
-                System.arraycopy(this.mz, 0, mzs, this.startId-st, n);
-                System.arraycopy(this.ints, 0, ints, this.startId-st, n);
-                this.mz = mzs;
-                this.ints = ints;
-                this.startId = st;
-                this.endId = ed;
+    @Override
+    public int apex() {
+        return apexId;
+    }
+
+    @Override
+    public double mz(int index) {
+        return mz[index-startId];
+    }
+
+    @Override
+    public double averagedMz() {
+        return avgMz;
+    }
+
+    @Override
+    public double minMz() {
+        return mz[minMz];
+    }
+
+    @Override
+    public double maxMz() {
+        return mz[maxMz];
+    }
+
+    @Override
+    public float intensity(int index) {
+        return intensity[index-startId];
+    }
+
+    @Override
+    public int scanId(int index) {
+        return mapping.getScanIdAt(index);
+    }
+
+    @Override
+    public double retentionTime(int index) {
+        return mapping.getRetentionTimeAt(index);
+    }
+
+    public ScanPointMapping getMapping() {
+        return mapping;
+    }
+
+    public MergedTrace[] getIsotopes() {
+        return isotopes;
+    }
+
+    public ProcessedSample[] getSamples() {
+        return samples;
+    }
+
+    public ProjectedTrace[] getTraces() {
+        return traces;
+    }
+
+    public DoubleList getMzArrayList() {
+        return new DoubleArrayList(mz);
+    }
+    public FloatArrayList getIntensityArrayList() {
+        return new FloatArrayList(intensity);
+    }
+
+    // DEBUG
+    public void debugJSON() {
+        StringBuilder buf = new StringBuilder();
+        buf.append("{\"mz\": ");
+        buf.append(String.valueOf(averagedMz()));
+        buf.append(", \"merged\": [");
+        for (int k=0; k < intensity.length; ++k) {
+            buf.append(String.valueOf(intensity[k]));
+            if (k < intensity.length-1) buf.append(", ");
+        }
+        buf.append("],\n");
+        buf.append("\"traces\": [");
+        for (int i=0; i < traces.length; ++i) {
+            buf.append("{");
+            buf.append("\"normalizer\": ");
+            buf.append(String.valueOf(samples[i].getNormalizer().normalize(1d)));
+            buf.append(",\n");
+            buf.append("\"raw\": [");
+            float[] xs = traces[i].rawIntensityArrayList().toFloatArray();
+            for (int k=0; k < xs.length; ++k) {
+                buf.append(String.valueOf(xs[k]));
+                if (k < xs.length-1) buf.append(", ");
             }
+            buf.append("],\n");
+            buf.append("\"projected\": [");
+            xs = getvec(traces[i].projectedIntensityArrayList(), traces[i].getProjectedStartId(), traces[i].getProjectedEndId(), startId, endId);
+            for (int k=0; k < intensity.length; ++k) {
+                buf.append(String.valueOf(xs[k]));
+                if (k < intensity.length-1) buf.append(", ");
+            }
+            buf.append("]\n");
+            buf.append("}");
+            if (i < traces.length-1) buf.append(",\n");
+        }
+        buf.append("]}\n");
+        try (final PrintStream out = new PrintStream("/tmp/debug_json.json")) {
+            out.println(buf.toString());
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public void addMs2(int sampleId, int... ms2Ids) {
-        int[] xs = ms2SpectraIds.get(sampleId);
-        if (xs!=null) {
-            int n=xs.length;
-            xs = Arrays.copyOf(xs, xs.length+ms2Ids.length);
-            System.arraycopy(ms2Ids, 0, xs, n, ms2Ids.length);
-        } else xs = ms2Ids;
-        ms2SpectraIds.put(sampleId, xs);
+    private float[] getvec(FloatArrayList floats, int rawStartId, int rawEndId, int startId, int endId) {
+        final float[] vec = new float[endId-startId+1];
+        for (int k=rawStartId; k <= rawEndId; ++k) {
+            vec[k-startId] = floats.getFloat(k-rawStartId);
+        }
+        return vec;
     }
 
-    public static class DataType extends CustomDataType<MergedTrace> {
 
-        @Override
-        public int getMemory(MergedTrace obj) {
-            return 8*4 + 12 + obj.mz.length*16 + obj.sampleIds.size()*8 + obj.isotopeUids.size()*8;
+    public void debugJSON(AlignedFeatures[] features) {
+        final int offset = startId;
+        StringBuilder buf = new StringBuilder();
+        buf.append("{\"mz\": ");
+        buf.append(String.valueOf(averagedMz()));
+        buf.append(", \"rtPerBin\": ");
+        buf.append(getMapping().getRetentionTimeAt(10)-getMapping().getRetentionTimeAt(9));
+        buf.append(", \"merged\": [");
+        for (int k=0; k < intensity.length; ++k) {
+            buf.append(String.valueOf(intensity[k]));
+            if (k < intensity.length-1) buf.append(", ");
         }
-
-        @Override
-        public void write(WriteBuffer buff, MergedTrace obj) {
-            buff.putInt(obj.uid);
-            buff.putInt(obj.startId);
-            buff.putInt(obj.endId);
-            writeDouble(buff, obj.mz);
-            writeDouble(buff, obj.ints);
-            writeInt(buff, obj.sampleIds.toIntArray());
-            writeInt(buff, obj.traceIds.toIntArray());
-            writeInt(buff, obj.isotopeUids.toIntArray());
-            buff.putInt(obj.ms2SpectraIds.size());
-            for (int id : obj.ms2SpectraIds.keySet()) {
-                buff.putInt(id);
-                writeInt(buff, obj.ms2SpectraIds.get(id));
+        buf.append("],\n");
+        buf.append("\"apexes\": [");
+        IntArrayList inds = new IntArrayList();
+        for (AlignedFeatures f : features) {
+            inds.add(f.getTraceRef().getApex()+f.getTraceRef().getScanIndexOffsetOfTrace()  - offset);
+        }
+        buf.append(inds.intStream().mapToObj(Integer::toString).collect(Collectors.joining(", ")));
+        buf.append("],\n");
+        buf.append("\"traces\": [");
+        for (int i=0; i < traces.length; ++i) {
+            buf.append("{");
+            buf.append("\"normalizer\": ");
+            buf.append(String.valueOf(samples[i].getNormalizer().normalize(1d)));
+            buf.append(",\n");
+            buf.append("\"raw\": [");
+            float[] xs = traces[i].rawIntensityArrayList().toFloatArray();
+            for (int k=0; k < xs.length; ++k) {
+                buf.append(String.valueOf(xs[k]));
+                if (k < xs.length-1) buf.append(", ");
             }
-        }
-
-        @Override
-        public MergedTrace read(ByteBuffer buff) {
-            int uid = buff.getInt();
-            int startId = buff.getInt();
-            int endId = buff.getInt();
-            double[] mz = readDouble(buff);
-            double[] ints = readDouble(buff);
-            int[] sampleIds = readInt(buff);
-            int[] traceIds = readInt(buff);
-            int[] isotopeUids = readInt(buff);
-            int ms2n = buff.getInt();
-            Int2ObjectOpenHashMap<int[]> ms2 = new Int2ObjectOpenHashMap<>();
-            for (int k=0; k < ms2n; ++k) {
-                int sampleId = buff.getInt();
-                int[] uids = readInt(buff);
-                ms2.put(sampleId, uids);
+            buf.append("],\n");
+            buf.append("\"projected\": [");
+            xs = getvec(traces[i].projectedIntensityArrayList(), traces[i].getProjectedStartId(), traces[i].getProjectedEndId(), startId, endId);
+            for (int k=0; k < intensity.length; ++k) {
+                buf.append(String.valueOf(xs[k]));
+                if (k < intensity.length-1) buf.append(", ");
             }
-            return new MergedTrace(uid, mz, ints, sampleIds, traceIds, isotopeUids, ms2, startId, endId);
+            buf.append("],\n");
+            buf.append("\"apexes\": [");
+            inds.clear();
+            for (AlignedFeatures f : features) {
+                for (Feature g : f.getFeatures().get()) {
+                    if (g.getRunId()==samples[i].getRun().getRunId()) {
+                        inds.add(g.getTraceReference().get().getScanIndexOffsetOfTrace()+g.getTraceReference().get().getApex() - offset);
+                    }
+                }
+            }
+            buf.append(inds.intStream().mapToObj(Integer::toString).collect(Collectors.joining(", ")));
+            buf.append("]");
+            buf.append("}");
+            if (i < traces.length-1) buf.append(",\n");
         }
-
-        @Override
-        public MergedTrace[] createStorage(int i) {
-            return new MergedTrace[i];
+        buf.append("]}\n");
+        try (final PrintStream out = new PrintStream("/tmp/debug_json.json")) {
+            out.println(buf.toString());
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
         }
     }
 }

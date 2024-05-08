@@ -3,6 +3,7 @@ package de.unijena.bioinf.lcms;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.lcms.adducts.AdductManager;
@@ -10,9 +11,8 @@ import de.unijena.bioinf.lcms.adducts.AdductNetwork;
 import de.unijena.bioinf.lcms.adducts.ProjectSpaceTraceProvider;
 import de.unijena.bioinf.lcms.align.AlignmentBackbone;
 import de.unijena.bioinf.lcms.align.MoI;
-import de.unijena.bioinf.lcms.features.MergedFeatureExtractor;
 import de.unijena.bioinf.lcms.merge.MergedTrace;
-import de.unijena.bioinf.lcms.projectspace.ProjectSpaceImporter;
+import de.unijena.bioinf.lcms.projectspace.SiriusProjectDocumentDbAdapter;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
@@ -93,13 +93,11 @@ public class TestMain {
         }
 
         final de.unijena.bioinf.lcms.trace.ProcessedSample[] samples;
-        LCMSProcessing processing = new LCMSProcessing();
 
         Path storeLocation = Files.createTempFile("nitrite", SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(storeLocation)) {
             Database<?> store = ps.getStorage();
-            ((MergedFeatureExtractor)(processing.getMergedFeatureExtractionStrategy())).store = store;
-            processing.setImportStrategy(new ProjectSpaceImporter(ps));
+            LCMSProcessing processing = new LCMSProcessing(new SiriusProjectDocumentDbAdapter(ps));
             {
                 if (ops.cores >= 1) {
                     SiriusJobs.setGlobalJobManager(ops.cores);
@@ -143,16 +141,6 @@ public class TestMain {
             try {
                 AlignmentBackbone bac = processing.align();
                 ProcessedSample merged = processing.merge(bac);
-                {
-                    int hasIsotopes = 0, hasNoIsotopes = 0;
-                    for (MergedTrace t : merged.getStorage().getMergeStorage()) {
-                        if (t.getIsotopeUids().size() > 0) {
-                            ++hasIsotopes;
-                        } else ++hasNoIsotopes;
-                    }
-                    System.out.println("merged sample with " + hasIsotopes + " / " + (hasIsotopes + hasNoIsotopes) + " isotope features");
-                    rtTolerance = bac.getStatistics().getExpectedRetentionTimeDeviation();
-                }
 //            processing.exportFeaturesToFiles(merged, bac);
 
                 // TODO check intensity normalization in aligned features
@@ -221,8 +209,8 @@ public class TestMain {
                         store.countAll(Feature.class), store.countAll(AlignedIsotopicFeatures.class), store.countAll(AlignedFeatures.class),
 
                         (int)(store.findAllStr(MSData.class).filter(x->x.getIsotopePattern()!=null && x.getIsotopePattern().size()>=2).count()),
-                        (int)(store.findAllStr(MSData.class).filter(x->x.getMergedMSnSpectrum()!=null).count()),
-                        (int)(store.findAllStr(MSData.class).filter(x->x.getMergedMSnSpectrum()!=null && x.getIsotopePattern()!=null && x.getIsotopePattern().size()>=2).count())
+                        (int)(store.findAllStr(MSData.class).filter(x-> x.getMsnSpectra()!=null && !x.getMsnSpectra().isEmpty()).count()),
+                        (int)(store.findAllStr(MSData.class).filter(x-> x.getMsnSpectra()!=null && !x.getMsnSpectra().isEmpty() && x.getIsotopePattern()!=null && x.getIsotopePattern().size()>=2).count())
                 );
 
                 // simplify
@@ -236,6 +224,22 @@ public class TestMain {
                     ++count;
                 }
 
+                /////
+                // MS2 Features
+                ////
+                System.out.println("################## MS/MS Features #########################");
+                int hasms2=0;
+                for (AlignedFeatures f : store.findAllStr(AlignedFeatures.class, "averageMass", Database.SortOrder.ASCENDING).toList())  {
+                    List<MSData> msdata = store.findStr(Filter.where("alignedFeatureId").eq(f.getAlignedFeatureId()), MSData.class).toList();
+                    if (msdata.size()>0) {
+                        f.setMsData(msdata.get(0));
+                        if (f.getMSData().get().getMsnSpectra()!=null && f.getMSData().get().getMsnSpectra().size()>0) {
+                            System.out.println(f.getAverageMass() + "m/z\t" + (f.getRetentionTime().getRetentionTimeInSeconds()/60d) + " minutes\t" + f.getMSData().get().getMsnSpectra().size() + " ms2 spectra, \t" + (f.getMSData().get().getIsotopePattern()==null ? " no isotopes" : Arrays.toString(Spectrums.extractPeakList(f.getMSData().get().getIsotopePattern()).stream().mapToDouble(x->x.getIntensity()).toArray()) + " isotopes"));
+                            ++hasms2;
+                        }
+                    }
+                }
+                System.out.println("MS2 = " + hasms2);
 
                 AdductManager manager = new AdductManager();
                 manager.addAdducts(Set.of(PrecursorIonType.getPrecursorIonType("[M+H]+"), PrecursorIonType.getPrecursorIonType("[M+Na]+"),

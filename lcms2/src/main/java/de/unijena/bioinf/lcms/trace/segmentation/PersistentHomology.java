@@ -26,7 +26,9 @@
 
 package de.unijena.bioinf.lcms.trace.segmentation;
 
+import de.unijena.bioinf.ChemistryBase.algorithm.Quickselect;
 import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
+import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ms.persistence.model.core.run.SampleStats;
 import de.unijena.bioinf.lcms.trace.Trace;
 import de.unijena.bioinf.lcms.trace.filter.Filter;
@@ -61,12 +63,20 @@ public class PersistentHomology implements TraceSegmentationStrategy {
 
     private final Filter filter;
 
+    private final boolean highPrecisionMode;
+
     public PersistentHomology() {
         this(new NoFilter());
     }
 
     public PersistentHomology(Filter filter) {
         this.filter = filter;
+        this.highPrecisionMode = false;
+    }
+
+    public PersistentHomology(boolean highPrecisionMode) {
+        this.highPrecisionMode = highPrecisionMode;
+        this.filter = new NoFilter();
     }
 
     @Getter
@@ -84,6 +94,15 @@ public class PersistentHomology implements TraceSegmentationStrategy {
             this.born = this.left = this.right = idx;
         }
 
+        @Override
+        public String toString() {
+            return "Segment{" +
+                    "left=" + left +
+                    ", right=" + right +
+                    ", born=" + born +
+                    ", died=" + died +
+                    '}';
+        }
     }
 
     /**
@@ -115,6 +134,11 @@ public class PersistentHomology implements TraceSegmentationStrategy {
             if (intensities!=null) return intensities[index];
             return trace.intensity(index+offset);
         }
+
+        private double percentile10() {
+            return Quickselect.quickselectInplace(intensities.clone(), 0, intensities.length, (int)Math.ceil(intensities.length*0.1));
+        }
+
         public double getAverageRt(Segment segment) {
             double sum = 0d;
             double norm = 0d;
@@ -137,7 +161,7 @@ public class PersistentHomology implements TraceSegmentationStrategy {
             }
             return Math.sqrt(var);
         }
-
+// modell peak als gaussian, cut bei 3*sigma
         private Segment trimToXStdRT(Segment peak, double x) {
             double mean = getAverageRt(peak);
             double std = getStdRT(peak,mean);
@@ -161,7 +185,7 @@ public class PersistentHomology implements TraceSegmentationStrategy {
         }
     }
 
-    private static List<Segment> computePersistentHomology(Trace trace, Filter filter, double intensityThreshold, double persistenceThreshold, double trim) {
+    private static List<Segment> computePersistentHomology(Trace trace, Filter filter, double intensityThreshold, double persistenceThresholdValue, double noisePercentile, double slopeThreshold, double trim) {
         if (trace.apexIntensity() < intensityThreshold) return Collections.emptyList();
         final TraceIntensityArray seq = new TraceIntensityArray(trace, filter);
         List<Segment> peaks = new ArrayList<>();
@@ -169,7 +193,8 @@ public class PersistentHomology implements TraceSegmentationStrategy {
         Arrays.fill(idx2Peak, -1);
         IntList indices = new IntArrayList(IntStream.range(0, seq.size()).toArray());
         indices.sort((a, b) -> Double.compare(seq.get(b), seq.get(a)));
-
+        // get 10% percentile
+        final double persistenceThreshold = Math.max(persistenceThresholdValue, seq.get(indices.getInt((int)Math.floor(indices.size()*(1-noisePercentile)))));
         for (int idx : indices) {
             boolean leftDone = (idx > 0 && idx2Peak[idx - 1] > -1);
             boolean rightDone = (idx < seq.size() - 1 && idx2Peak[idx + 1] > -1);
@@ -237,7 +262,7 @@ public class PersistentHomology implements TraceSegmentationStrategy {
             // 2. the valley intensity is low (either below the int threshold or half max)
             if (last.getRight() < current.getLeft() ||
                     seq.get(current.getLeft()) < intensityThreshold ||
-                    seq.get(current.getLeft()) < 0.5 * seq.get(current.getBorn())
+                    seq.get(current.getLeft()) < slopeThreshold * seq.get(current.getBorn())
             ) {
                 merged.add(current);
             } else {
@@ -255,7 +280,7 @@ public class PersistentHomology implements TraceSegmentationStrategy {
         // sort peaks by persistence
         merged.sort((a, b) -> Double.compare(getPersistence(b, seq), getPersistence(a, seq)));
         // delete all peaks which have a persistence lower the threshold
-        if (persistenceThreshold > 0) merged.removeIf(x->getPersistence(x, seq)<persistenceThreshold);
+        if (persistenceThreshold > 0 && merged.size()>1) merged.removeIf(x->getPersistence(x, seq)<persistenceThreshold);
         return merged;
     }
 
@@ -268,10 +293,10 @@ public class PersistentHomology implements TraceSegmentationStrategy {
     }
 
     @Override
-    public List<TraceSegment> detectSegments(SampleStats stats, Trace trace) {
+    public List<TraceSegment> detectSegments(Trace trace, double intensityThreshold) {
         final int offset=trace.startId();
-        float intensityThreshold = stats.noiseLevel(trace.apex());
-        return computePersistentHomology(trace, filter, intensityThreshold, intensityThreshold/2d, 3d).stream().map(seg->
+        return computePersistentHomology(trace, filter, highPrecisionMode ? intensityThreshold : 2*intensityThreshold, highPrecisionMode ? 2*intensityThreshold : 5*intensityThreshold,
+                highPrecisionMode ? 0.01 : 0.1, highPrecisionMode ? 0.95 : 0.8, 3d).stream().map(seg->
                 TraceSegment.createSegmentFor(trace, seg.left+offset, seg.right+offset)
         ).toList();
     }

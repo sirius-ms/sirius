@@ -43,6 +43,18 @@ public final class BinarySearch {
     }
 
     /**
+     * In case BinarySearch found the right result, this method returns just the index.
+     * Otherwise, binary search would have returned an entry point (negative of the index
+     * of the first entry larger than the key). This method converts this to the first
+     * index that is smaller than the key.
+     * Note that this is always a valid index (0-len of array-1).
+     */
+    public static int close2Smaller(int key) {
+        if (key >= 0) return key;
+        else return -key - 1;
+    }
+
+    /**
      * Given a function that maps an integer to an integer. Search for a given integer.
      */
     public static <T> int searchForIntByIndex(IntToIntFunction intfunc, int fromIndex, int toIndex, int key) {
@@ -128,7 +140,7 @@ public final class BinarySearch {
         return -(low + 1);  // key not found.
     }
 
-    private interface IntToIntFunction {
+    public interface IntToIntFunction {
         public int applyAsInt(int v);
     }
 
