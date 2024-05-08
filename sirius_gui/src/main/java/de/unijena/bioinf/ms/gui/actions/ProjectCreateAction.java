@@ -31,16 +31,20 @@ import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectInfoOptField;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import javax.swing.text.Document;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -82,9 +86,6 @@ public class ProjectCreateAction extends ProjectOpenAction {
         jfc.removeChoosableFileFilter(jfc.getAcceptAllFileFilter());
         jfc.addChoosableFileFilter(new NoSQLProjectFileFilter());
 
-        Path selectedFile = null;
-        String projectName = null;
-
         //region jfilechooser hack
 
         final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
@@ -98,20 +99,20 @@ public class ProjectCreateAction extends ProjectOpenAction {
             chooserSouthComponent = (JPanel) ((BorderLayout) central.getLayout()).getLayoutComponent(jfc, BorderLayout.SOUTH);
         }
 
-        PlaceholderTextField directoryNameField = new PlaceholderTextField("");
-        directoryNameField.setEditable(false);
         PlaceholderTextField projectNameField = new PlaceholderTextField("");
 
         JButton cButton = (JButton) ((JPanel) chooserSouthComponent.getComponent(3)).getComponent(0);
         cButton.setEnabled(false);
 
         projectNameField.addFocusListener(new FocusAdapter() {
+            @SneakyThrows
             @Override
             public void focusLost(FocusEvent e) {
                 String name = projectNameField.getText();
 
                 if (!name.endsWith(SIRIUS_PROJECT_SUFFIX)) {
-                    projectNameField.setText(name + SIRIUS_PROJECT_SUFFIX);
+                    Document doc = projectNameField.getDocument();
+                    doc.insertString(name.length(), SIRIUS_PROJECT_SUFFIX, null);
                 }
             }
         });
@@ -124,30 +125,36 @@ public class ProjectCreateAction extends ProjectOpenAction {
                     name = name.substring(0, name.length() - SIRIUS_PROJECT_SUFFIX.length());
                 }
 
-                String error = null;
-                if (name.isEmpty()) {
-                    error = "Project name must not be empty.";
+                if (jfc.getCurrentDirectory() == null) {
                     SwingUtilities.invokeLater(() -> cButton.setEnabled(false));
-                } else if (name.isBlank()) {
-                    error = "Project name must not contain only white spaces.";
-                    SwingUtilities.invokeLater(() -> cButton.setEnabled(false));
-                } else if (!PROJECT_ID_VALIDATOR.matcher(name).matches()) {
-                    error = "Project name must be valid: \"([a-zA-Z0-9_-]+).sirius\"";
-                    SwingUtilities.invokeLater(() -> cButton.setEnabled(false));
-                } else if (jfc.getCurrentDirectory() != null && Files.exists(jfc.getCurrentDirectory().toPath().resolve(name + SIRIUS_PROJECT_SUFFIX))) {
-                    error = "Project already exists";
-                    SwingUtilities.invokeLater(() -> cButton.setEnabled(false));
-                } else {
-                    SwingUtilities.invokeLater(() -> cButton.setEnabled(true));
+                    return "No directory selected.";
                 }
 
+                File pfile = jfc.getCurrentDirectory().toPath().resolve(name + SIRIUS_PROJECT_SUFFIX).toFile();
+
+                String error = null;
+                if (name.isEmpty()) {
+                    error =  "Project name must not be empty.";
+                } else if (name.isBlank()) {
+                    error =  "Project name must not contain only white spaces.";
+                } else if (!PROJECT_ID_VALIDATOR.matcher(name).matches()) {
+                    error =  "Project name must be valid: \"([a-zA-Z0-9_-]+).sirius\"";
+                } else if (pfile.exists()) {
+                    error =  "Project already exists";
+                }
+
+                if (error != null) {
+                    SwingUtilities.invokeLater(() -> cButton.setEnabled(false));
+                } else {
+                    jfc.setSelectedFile(pfile);
+                    SwingUtilities.invokeLater(() -> cButton.setEnabled(true));
+                }
                 return error;
             }
 
         });
 
         TwoColumnPanel textComponent = new TwoColumnPanel();
-        textComponent.addNamed("Directory:", directoryNameField);
         textComponent.addNamed("Project name:", projectNameField);
 
         chooserSouthComponent.remove(2);
@@ -158,9 +165,11 @@ public class ProjectCreateAction extends ProjectOpenAction {
         jfc.addPropertyChangeListener(JFileChooser.SELECTED_FILE_CHANGED_PROPERTY, (e) -> {
             if (e.getNewValue() instanceof File file) {
                 final Path f = file.toPath();
-                if (Files.isDirectory(f)) {
-                    SwingUtilities.invokeLater(() -> directoryNameField.setText(f.toFile().getAbsolutePath()));
-                } else {
+                if (e.getOldValue() instanceof File old) {
+                    if (old.toPath().equals(f)) return;
+                }
+
+                if (Files.isRegularFile(f)) {
                     SwingUtilities.invokeLater(() -> projectNameField.setText(ensureUniqueProjectId(f)));
                 }
             }
@@ -170,32 +179,39 @@ public class ProjectCreateAction extends ProjectOpenAction {
 
         int returnval = jfc.showDialog(mainFrame, buttonText);
         if (returnval == JFileChooser.APPROVE_OPTION) {
-            Path selDir = Path.of(directoryNameField.getText());
-            projectName = projectNameField.getText();
-
-            if (projectName.endsWith(SIRIUS_PROJECT_SUFFIX)) {
-                projectName = projectName.substring(0, projectName.length() - SIRIUS_PROJECT_SUFFIX.length());
-            }
-
-            if (Files.exists(selDir) && Files.isDirectory(selDir)) {
-                Jobs.runInBackground(() ->
-                        SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(SiriusProperties.DEFAULT_SAVE_DIR_PATH, selDir.toAbsolutePath().toString())
-                );
-
-                if (PROJECT_ID_VALIDATOR.matcher(projectName).matches())
-                    selectedFile = selDir.resolve(projectName + SIRIUS_PROJECT_SUFFIX);
-            }
-        }
-
-        if (projectName != null) {
             try {
-                if (projectName.endsWith(SIRIUS_PROJECT_SUFFIX)) {
-                    projectName = projectName.substring(0, projectName.length() - SIRIUS_PROJECT_SUFFIX.length());
+                File selectedFile = jfc.getSelectedFile();
+
+                if (selectedFile == null) {
+                    throw new IllegalArgumentException("No file selected.");
+                }
+                if (selectedFile.exists()) {
+                    throw new FileAlreadyExistsException(selectedFile.toString());
+                }
+                if (!new File(selectedFile.getParent()).isDirectory()) {
+                    throw new FileNotFoundException(selectedFile.getParent());
+                }
+                if (!selectedFile.getName().endsWith(SIRIUS_PROJECT_SUFFIX)) {
+                    throw new IllegalArgumentException("File name must end with " + SIRIUS_PROJECT_SUFFIX);
+                }
+                String projectName = selectedFile.getName().substring(0, selectedFile.getName().length() - SIRIUS_PROJECT_SUFFIX.length());
+                if (projectName.isEmpty()) {
+                    throw new IllegalArgumentException("Project name must not be empty.");
+                }
+                if (projectName.isBlank()) {
+                    throw new IllegalArgumentException("Project name must not contain only white spaces.");
+                }
+                if (!PROJECT_ID_VALIDATOR.matcher(projectName).matches()) {
+                    throw new IllegalArgumentException("File name must be valid: \"([a-zA-Z0-9_-]+).sirius\"");
                 }
 
-                onSuccess.accept(projectName, selectedFile);
-            } catch (Exception e2) {
-                new StacktraceDialog(mainFrame, e2.getMessage(), e2);
+                Jobs.runInBackground(() ->
+                        SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(SiriusProperties.DEFAULT_SAVE_DIR_PATH, selectedFile.getParent())
+                );
+                onSuccess.accept(projectName, selectedFile.toPath());
+
+            } catch (Exception e) {
+                new StacktraceDialog(mainFrame, e.getMessage(), e);
             }
         }
     }

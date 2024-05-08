@@ -82,17 +82,13 @@ public class ProjectOpenAction extends AbstractGuiAction {
                     new WarningDialog(mainFrame, "'" + selFile.toAbsolutePath() + "' has no valid file suffix: \".sirius\" !");
                 } else {
                     projectID = projectID.substring(0, projectID.length() - SIRIUS_PROJECT_SUFFIX.length());
-                    if (ProjectCreateAction.PROJECT_ID_VALIDATOR.matcher(projectID).matches()) {
-                        Path parentDir = selFile.getParent();
-                        if (Files.exists(parentDir) && Files.isDirectory(parentDir)) {
-                            Jobs.runInBackground(() ->
-                                    SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(SiriusProperties.DEFAULT_LOAD_DIALOG_PATH, parentDir.toAbsolutePath().toString())
-                            );
-                        }
-                        openProject(projectID, selFile);
-                    } else {
-                        new WarningDialog(mainFrame, "'" + selFile.toAbsolutePath() + "' has no valid file name: \"([a-zA-Z0-9_-]+).sirius\".");
+                    Path parentDir = selFile.getParent();
+                    if (Files.exists(parentDir) && Files.isDirectory(parentDir)) {
+                        Jobs.runInBackground(() ->
+                                SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(SiriusProperties.DEFAULT_LOAD_DIALOG_PATH, parentDir.toAbsolutePath().toString())
+                        );
                     }
+                    openProject(projectID, selFile);
                 }
             } else {
                 new WarningDialog(mainFrame, "'" + selFile.toAbsolutePath() + "' is no valid SIRIUS project.");
