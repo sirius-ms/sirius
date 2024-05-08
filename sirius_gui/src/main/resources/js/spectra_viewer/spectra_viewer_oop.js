@@ -797,6 +797,16 @@ class MirrorPlot extends Base {
             .attr("height", function (d) {
                 return self.h / 2 - self.y1(d.intensity);
             });
+        self.peakArea.selectAll(".peak_matched").transition().duration(duration)
+                    .attr("x", function (d) {
+                        return self.x(d.mz);
+                    })
+                    .attr("y", function (d) {
+                        return self.y1(d.intensity);
+                    })
+                    .attr("height", function (d) {
+                        return self.h / 2 - self.y1(d.intensity);
+                    });
         self.peakArea.selectAll(".peak_2").transition().duration(duration)
             .attr("x", function (d) {
                 return self.x(d.mz);
