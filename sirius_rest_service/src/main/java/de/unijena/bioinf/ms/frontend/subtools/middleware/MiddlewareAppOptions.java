@@ -26,6 +26,7 @@ import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.middleware.model.projects.ProjectInfo;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
@@ -119,6 +120,7 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
                         splash.setVisible(false);
                         splash.dispose();
                     }
+                    Jobs.runEDTLater(() -> Thread.currentThread().setPriority(9));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
