@@ -27,12 +27,9 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.chemdb.annotations.SpectralMatchingScorer;
-import de.unijena.bioinf.chemdb.annotations.SpectralSearchDB;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JobProgressMerger;
-import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
-import de.unijena.bioinf.webapi.WebAPI;
 import de.unijena.bionf.spectral_alignment.*;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -43,19 +40,17 @@ import java.util.stream.Stream;
 
 public class SpectraMatchingJJob extends BasicMasterJJob<SpectralSearchResult> {
 
-    private final WebAPI<?> api;
-
     private final Ms2Experiment experiment;
 
     private CosineQueryUtils queryUtils;
     private Deviation precursorDev;
     private Deviation peakDev;
     private double precursorMz;
-
-    public SpectraMatchingJJob(WebAPI<?> api, Ms2Experiment experiment) {
-        super(JobType.SCHEDULER);
+    private List<Ms2ReferenceSpectrum> references;
+    public SpectraMatchingJJob(List<Ms2ReferenceSpectrum> references, Ms2Experiment experiment) {
+        super(JobType.CPU);
         this.experiment = experiment;
-        this.api = api;
+        this.references = references;
     }
 
     @Override
@@ -74,10 +69,6 @@ public class SpectraMatchingJJob extends BasicMasterJJob<SpectralSearchResult> {
         List<SpectralMatchMasterJJob> jobs = new ArrayList<>();
 
         JobProgressMerger progressMonitor = new JobProgressMerger(this.pcs);
-
-
-        final List<Ms2ReferenceSpectrum> references = NetUtils.tryAndWait(() -> api.getChemDB()
-                .lookupSpectra(precursorMz, precursorDev, true, experiment.getAnnotationOrDefault(SpectralSearchDB.class).searchDBs), this::checkForInterruption);
 
         List<SpectralMatchMasterJJob> dbJobs = getAlignmentJJobs(queryUtils, cosineQueries, references);
 

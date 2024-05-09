@@ -119,7 +119,9 @@ public abstract class AbstractClient {
     }
 
     public <T> T executeWithResponse(@NotNull OkHttpClient client, @NotNull final Request.Builder request, IOFunctions.IOFunction<Response, T> respHandling) throws IOException {
-        return respHandling.apply(client.newCall(request.build()).execute());
+        try (Response resp = client.newCall(request.build()).execute()) {
+            return respHandling.apply(resp);
+        }
     }
 
     public <T> T execute(@NotNull OkHttpClient client, @NotNull final Request.Builder request, IOFunctions.IOFunction<BufferedReader, T> respHandling) throws IOException {
@@ -174,11 +176,12 @@ public abstract class AbstractClient {
         for (IOFunctions.IOConsumer<Request.Builder> requestDecorator : requestDecorators)
             requestDecorator.accept(request);
 
-        Response response = client.newCall(request.build()).execute();
-        isSuccessful(response, response.request());
-        try (ResponseBody body = response.body()) {
-            if (body != null) {
-                return respHandling.apply(body.byteStream());
+        try (Response response = client.newCall(request.build()).execute()) {
+            isSuccessful(response, response.request());
+            try (ResponseBody body = response.body()) {
+                if (body != null) {
+                    return respHandling.apply(body.byteStream());
+                }
             }
         }
         return null;

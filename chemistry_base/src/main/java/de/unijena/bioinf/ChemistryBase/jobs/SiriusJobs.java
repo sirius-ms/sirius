@@ -25,7 +25,6 @@ import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.ProgressJJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -123,7 +122,7 @@ public class SiriusJobs {
     }
 
     private static int defaultThreadNumber(){
-        int threadsAv = PropertyManager.getNumberOfThreads();
-        return Math.max(1, threadsAv <= 8 ? threadsAv - 2 : threadsAv - (int)(threadsAv * .2));
+        int threadsAv = Runtime.getRuntime().availableProcessors();
+        return Math.max(1, threadsAv <= 8 ? threadsAv - 2 : threadsAv - (int)(threadsAv * .5));
     }
 }

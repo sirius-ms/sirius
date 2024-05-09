@@ -21,12 +21,12 @@
 package de.unijena.bionf.spectral_alignment;
 
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A JJob class for scheduling spectral alignment matches for given pairs of spectra
@@ -57,17 +57,16 @@ public class SpectralMatchMasterJJob extends BasicMasterJJob<List<SpectralSimila
             queries = null;
         }
 
-        int maxProgress = jobs.size() + 1;  // The last unit of progress is added after the master task is done
-        AtomicInteger progress = new AtomicInteger(0);
+//        int maxProgress = jobs.size() + 1;  // The last unit of progress is added after the master task is done
+//        AtomicInteger progress = new AtomicInteger(0);
 
-        jobs.forEach(job -> {
-            job.addJobProgressListener(evt -> {
-                if (evt.isDone()) {
-                    updateProgress(0, maxProgress,  progress.incrementAndGet());
-                }
-            });
-            submitSubJob(job);
-        });
-        return jobs.stream().map(SpectralMatchJJob::takeResult).toList();
+//        jobs.forEach(job -> job.addJobProgressListener(evt -> {
+//            if (evt.isDone())
+//                updateProgress(0, maxProgress, progress.incrementAndGet());
+//        }));
+
+        submitSubJobsInBatches(jobs, jobManager.getCPUThreads()).forEach(JJob::takeResult);
+
+        return jobs.stream().map(SpectralMatchJJob::result).toList();
     }
 }
