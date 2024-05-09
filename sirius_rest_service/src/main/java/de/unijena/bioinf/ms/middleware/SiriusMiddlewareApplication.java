@@ -84,7 +84,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
         // SwingJobManager is needed to show loading screens in GUI
         SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(
                 cpuThreads,
-                Math.min(PropertyManager.getNumberOfThreads(), 4),
+                2,
                 Thread.currentThread().getContextClassLoader()
         ));
 

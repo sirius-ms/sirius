@@ -21,13 +21,16 @@ package de.unijena.bioinf.ms.frontend.subtools.spectra_search;
 
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
+import de.unijena.bioinf.chemdb.annotations.SpectralSearchDB;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.spectraldb.SpectraMatchingJJob;
+import de.unijena.bioinf.spectraldb.SpectralMatchingMassDeviation;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
@@ -81,9 +84,15 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
     @Override
     protected void computeAndAnnotateResult(@NotNull Instance inst) throws Exception {
         final Ms2Experiment exp = inst.getExperiment();
-        SpectraMatchingJJob job = new SpectraMatchingJJob(ApplicationCore.WEB_API, exp);
+        Deviation peakDev = exp.getAnnotationOrDefault(MS1MassDeviation.class).allowedMassDeviation;
+        Deviation precursorDev = exp.getAnnotationOrDefault(SpectralMatchingMassDeviation.class).allowedPrecursorDeviation;
+        double precursorMz = exp.getIonMass();
+
+        final List<Ms2ReferenceSpectrum> references = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getChemDB()
+                .lookupSpectra(precursorMz, precursorDev, true, exp.getAnnotationOrDefault(SpectralSearchDB.class).searchDBs), this::checkForInterruption);
+        SpectraMatchingJJob job = new SpectraMatchingJJob(references, exp);
         job.addJobProgressListener(evt -> updateProgress(evt.getMinValue(), evt.getMaxValue(), evt.getProgress()));
-        SpectralSearchResult result = submitSubJob(job).awaitResult();
+        SpectralSearchResult result = submitJob(job).awaitResult();
 
         checkForInterruption();
 
@@ -98,9 +107,6 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
 
         if (print < 1)
             return;
-
-        Deviation peakDev = exp.getAnnotationOrDefault(MS1MassDeviation.class).allowedMassDeviation;
-        Deviation precursorDev = exp.getAnnotationOrDefault(MS2MassDeviation.class).allowedMassDeviation;
 
         StringBuilder builder = new StringBuilder("##########  BEGIN SPECTRUM SEARCH RESULTS  ##########");
         builder.append("\nPrecursor deviation: ").append(precursorDev);
