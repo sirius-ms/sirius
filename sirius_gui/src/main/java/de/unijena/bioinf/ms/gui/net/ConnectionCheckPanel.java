@@ -60,8 +60,9 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
                     "wait until a new worker instance is started. Please send an error " +
                     "report if this message occurs for a longer time.";
 
+
     public static final String READ_MORE_LICENSING =
-            "<br> <a href=\"https://boecker-lab.github.io/docs.sirius.github.io/account-and-license/\">" +
+            "<br> <a href=\"" + PropertyManager.getProperty("de.unijena.bioinf.sirius.docu.url") + "/account-and-license/\">" +
                     "Read more</a> about account and licensing.";
 
 

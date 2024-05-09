@@ -1,6 +1,6 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blueviolet.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Generic badge](https://img.shields.io/badge/Version-5.5.7-informational.svg)](https://shields.io/)
-[![Build and Pubish](https://github.com/boecker-lab/sirius/actions/workflows/distribute.yaml/badge.svg?branch=release-4-pre)](https://github.com/boecker-lab/sirius/actions/workflows/distribute.yaml)
+[![Build and Publish](https://github.com/sirius-ms/sirius/actions/workflows/distribute.yaml/badge.svg?branch=release-4-pre)](https://github.com/sirius-ms/sirius/actions/workflows/distribute.yaml)
 
 *<span style="color: #808080;">Our methods are offered to the scientific community as freely available resources. (Re-)distribution of the
 methods, in whole or in part, for commercial purposes is prohibited.
@@ -9,17 +9,17 @@ Please review the [terms of service](https://bio.informatik.uni-jena.de/terms-of
 For non-academic users, the [Bright Giant GmbH](https://bright-giant.com) provides licenses and all related services.
 We ask that users of our tools cite the corresponding papers in any resulting publications.</span>*
 
-Contact: ![](https://raw.githubusercontent.com/boecker-lab/sirius_frontend/release/manual/source/siriusMailtrans.png)
-
 SIRIUS is a java-based software framework for the analysis of LC-MS/MS data of metabolites and other "small molecules of biological interest".
 SIRIUS integrates a collection of our tools, including CSI:FingerID (with [COSMIC](https://bio.informatik.uni-jena.de/software/cosmic/)), [ZODIAC](https://bio.informatik.uni-jena.de/software/zodiac/) and
 [CANOPUS](https://bio.informatik.uni-jena.de/software/canopus/). In particular, both the
 graphical user interface and the command line version of SIRIUS seamlessly integrate the CSI:FingerID and CANOPUS web services.
 
+Main developers of SIRIUS are the [Böcker group](https://bio.informatik.uni-jena.de/) and the [Bright Giant GmbH](https://bright-giant.com)
+
 ## Download Links
 
 ### Documentation
-- [Online Documentation](https://boecker-lab.github.io/docs.sirius.github.io/)
+- [Online Documentation](https://v6.docs.sirius-ms.io/)
 - [Video tutorials](https://www.youtube.com/channel/UCIbW_ZFSADRUQ-T5nmgU4VA/featured)
 - [Bookchapter on using SIRIUS 4](https://doi.org/10.1007/978-1-0716-0239-3_11) ([Preprint](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2020/12/SIRIUS4_book_chapter_preprint-2.pdf)) -- does not cover the new LC-MS/MS processing option
 - [Demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
@@ -42,9 +42,9 @@ graphical user interface and the command line version of SIRIUS seamlessly integ
 
 <!--end download-->
 
-All (including previous) releases can be found [here](https://github.com/boecker-lab/sirius/releases).
+All (including previous) releases can be found [here](https://github.com/sirius-ms/sirius/releases).
 
-### [Installation](https://boecker-lab.github.io/docs.sirius.github.io/install)
+### [Installation](https://v6.docs.sirius-ms.io/install)
 For  Windows and MacOS, the installer version of SIRIUS (msi/pkg) should be preferred but might require administrator permissions.
 
 Since we do not pay Microsoft/Apple for certification, you might have to confirm that you want to trust "software from
@@ -53,29 +53,26 @@ Therefore, we highly recommend using the [**signed** installers](https://github.
 [Bright Giant](https://bright-giant.com) (also linked above).
 These installers ease the installation process by triggering no (or less) security issues of the respective OS.
 
-See the [documenntation](https://boecker-lab.github.io/docs.sirius.github.io/install) for details.
+See the [documenntation](https://v6.docs.sirius-ms.io/install) for details.
 
 
-### [Creating a user account](https://boecker-lab.github.io/docs.sirius.github.io/account-and-license/)
+### [Creating a user account](https://v6.docs.sirius-ms.io/account-and-license/)
 User accounts can be created directly via the SIRIUS GUI. Please, use your **institutional email address**. SIRIUS
 web services are free for academic/non-commercial use. Usually academic institutions are identified by their
 email domain and access will be granted automatically. In some cases, further validation of your academic/non-commercial
 may be required.
-[See also SIRIUS Documentation – Account and License](https://boecker-lab.github.io/docs.sirius.github.io/account-and-license/).
+[See also SIRIUS Documentation – Account and License](https://v6.docs.sirius-ms.io/account-and-license/).
 
-These might be especially interesting for Windows and MacOS users that have problems with the installation due to
-an unsigned installer (Unknown developer etc...)
+### [Sources on GitHub](https://github.com/sirius-ms)
+- [SIRIUS frontend](https://github.com/sirius-ms/sirius)
+- [SIRIUS library](https://github.com/sirius-ms/sirius-libs)
 
-### [Sources on GitHub](https://github.com/boecker-lab)
-- [SIRIUS frontend](https://github.com/boecker-lab/sirius)
-- [SIRIUS library](https://github.com/boecker-lab/sirius-libs)
+### [Changelog](https://v6.docs.sirius-ms.io/changelog/)
 
-### [Changelog](https://boecker-lab.github.io/docs.sirius.github.io/changelog/)
+### Integration of CSI:FingerID, CANOPUS and MSNovelist
 
-### Integration of CSI:FingerID
-
-Fragmentation trees and spectra can be directly uploaded from SIRIUS to a CSI:FingerID web service, without the need to access the (deprecated) CSI:FingerID
-website. Results are retrieved from the web service and can be displayed in the SIRIUS graphical user interface. This functionality is
+Fragmentation trees and spectra can be directly uploaded from SIRIUS to the CSI:FingerID, CANOPUS and MSNovelist web services.
+Results are retrieved from the web service and can be displayed in the SIRIUS graphical user interface. This functionality is
 also available for the SIRIUS command-line tool. Training structures for CSI:FingerID's predictors are available through the CSI:FingerID web API:
 <!--begin training-->
 
