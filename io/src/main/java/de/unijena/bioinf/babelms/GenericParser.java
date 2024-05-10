@@ -53,8 +53,7 @@ public class GenericParser<T> implements Parser<T> {
     }
 
     public T parse(InputStream input) throws IOException {
-        final BufferedReader reader = FileUtils.ensureBuffering(new InputStreamReader(input));
-        return parse(reader);
+        return parse(input, null);
     }
 
     @Deprecated
@@ -68,8 +67,48 @@ public class GenericParser<T> implements Parser<T> {
     }
 
     public CloseableIterator<T> parseIterator(InputStream input, URI source) throws IOException {
-        final BufferedReader reader = FileUtils.ensureBuffering(new InputStreamReader(input));
-        return parseIterator(reader, source);
+        return new CloseableIterator<>() {
+            @Override
+            public void close() {
+                tryclose();
+            }
+
+            InputStream reader = input;
+            T nextElement = parse(reader, source);
+
+            @Override
+            public boolean hasNext() {
+                if (nextElement == null) tryclose(); //for reader without any element
+                return reader != null;
+            }
+
+            @Override
+            public T next() {
+                T current = nextElement;
+                try {
+                    nextElement = parse(reader, source);
+                } catch (IOException e) {
+                    tryclose();
+                    throw new RuntimeException(e);
+                }
+                if (nextElement == null) tryclose();
+                return current;
+            }
+
+            private void tryclose() {
+                try {
+                    if (reader != null) {
+                        reader.close();
+                        reader = null;
+                    }
+                } catch (IOException ignored) {}
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 
     public CloseableIterator<T> parseIterator(final BufferedReader r, final URI source) throws IOException {
@@ -118,15 +157,16 @@ public class GenericParser<T> implements Parser<T> {
     }
 
     public CloseableIterator<T> parseFromFileIterator(File file) throws IOException {
-        final BufferedReader r = FileUtils.ensureBuffering(new FileReader(file));
-        return parseIterator(r, file.toURI());
+        try(InputStream s = new FileInputStream(file)) {
+            return parseIterator(s, file.toURI());
+        }
     }
 
     public CloseableIterator<T> parseFromPathIterator(Path file) throws IOException {
-        final BufferedReader r = Files.newBufferedReader(file);
-        return parseIterator(r, file.toUri());
+        try(final InputStream s = Files.newInputStream(file)){
+            return parseIterator(s, file.toUri());
+        }
     }
-
 
     public List<T> parseFromFile(File file) throws IOException {
         final URI source = file.toURI();
@@ -156,6 +196,14 @@ public class GenericParser<T> implements Parser<T> {
     @Override
     public T parse(BufferedReader reader, URI source) throws IOException {
         T it = parser.parse(reader, source);
+        if (it != null)
+            postProcessor.accept(it);
+        return it;
+    }
+
+    @Override
+    public T parse(InputStream stream, URI source) throws IOException {
+        T it = parser.parse(stream, source);
         if (it != null)
             postProcessor.accept(it);
         return it;
