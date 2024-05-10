@@ -49,9 +49,9 @@ public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
     protected LCMSProccessingInstance instance;
     protected int counter = 0;
 
-    protected abstract boolean setNewSource(BufferedReader sourceReader, URI source);
+    protected abstract boolean setNewSource(BufferedReader sourceReader, URI source) throws IOException;
 
-    protected abstract LCMSRun parseToLCMSRun(BufferedReader sourceReader, URI source) throws IOException;
+    protected abstract LCMSRun parseToLCMSRun() throws IOException;
 
     @Override
     public Ms2Experiment parse(BufferedReader sourceReader, URI source) throws IOException {
@@ -59,7 +59,7 @@ public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
             if (setNewSource(sourceReader, source)) {
                 instance = new LCMSProccessingInstance();
                 inMemoryStorage = new InMemoryStorage();
-                final LCMSRun run = parseToLCMSRun(sourceReader, source);
+                final LCMSRun run = parseToLCMSRun();
                 sample = instance.addSample(run, inMemoryStorage);
                 instance.detectFeatures(sample);
 

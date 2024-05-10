@@ -20,29 +20,63 @@
 
 package de.unijena.bioinf.babelms.mzml;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.io.lcms.MzMLParser;
 import de.unijena.bioinf.model.lcms.LCMSRun;
+import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Objects;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class MzMlExperimentParser extends AbstractMzParser {
 
-    protected URI currentSource;
+    public URI sourceId;
+    protected File sourceFile;
 
-    @Override
-    protected boolean setNewSource(BufferedReader sourceReader, URI source) {
-        if (!Objects.equals(currentSource,source)) {
-            currentSource = source;
+    protected boolean setNewSource(BufferedReader sourceReader, URI source) throws IOException {
+        if (sourceId == null) {
+            if (sourceReader == null) {
+                return false;
+            } else {
+                sourceId = source;
+                sourceFile = createTempFile(sourceReader, source);
+                return true;
+            }
+        } else if (!source.equals(sourceId)) {
+            sourceId = source;
+            sourceFile = createTempFile(sourceReader, source);
             return true;
         }
         return false;
     }
 
+    private File createTempFile(BufferedReader sourceReader, URI source) throws IOException {
+        if (source != null && source.getScheme() != null && source.getScheme().equalsIgnoreCase("file")) {
+            if (sourceReader != null)
+                sourceReader.close();
+            return new File(source);
+        }else {
+            Path tmp = FileUtils.newTempFile("mzml_", ".mzml");
+                try (BufferedWriter w = Files.newBufferedWriter(tmp)) {
+                    IOUtils.copy(sourceReader, w);
+                }finally {
+                    sourceReader.close();
+                }
+                File f = tmp.toFile();
+                f.deleteOnExit();
+                return f;
+        }
+    }
+
+
     @Override
-    protected LCMSRun parseToLCMSRun(BufferedReader sourceReader, URI source) throws IOException {
-        return new MzMLParser().parse(currentSource, inMemoryStorage);
+    protected LCMSRun parseToLCMSRun() throws IOException {
+        // we write buffer to local fs because if it is not it will be copied anyway
+        return new MzMLParser().parse(sourceFile, inMemoryStorage);
     }
 }

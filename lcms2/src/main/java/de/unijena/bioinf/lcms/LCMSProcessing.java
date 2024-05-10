@@ -112,7 +112,7 @@ public class LCMSProcessing {
      * parses an MZML file and stores the processed sample. Note: we should add possibility to parse from input
      * stream later
      */
-    public ProcessedSample processSample(File file) throws IOException {
+    public ProcessedSample processSample(Path file) throws IOException {
         return processSample(file, false, LCMSRun.Type.SAMPLE, Chromatography.LC);
     }
 
@@ -122,12 +122,15 @@ public class LCMSProcessing {
 
 
     public ProcessedSample processSample(
-            File file,
+            Path file,
             boolean saveRawScans,
             LCMSRun.Type runType,
             Chromatography chromatography
     ) throws IOException {
-        return processSample(file.toURI(), saveRawScans, runType, chromatography);
+        ProcessedSample sample = LCMSImporter.importToProject(
+                file, storageFactory, importStrategy, saveRawScans, runType, chromatography);
+        processSample(sample);
+        return sample;
     }
 
     /**
@@ -143,6 +146,11 @@ public class LCMSProcessing {
         // parse file and extract spectra
         ProcessedSample sample = LCMSImporter.importToProject(
                 input, storageFactory, importStrategy, saveRawScans, runType, chromatography);
+        processSample(sample);
+        return sample;
+    }
+
+    private void processSample(ProcessedSample sample) throws IOException {
         sample.setUid(this.samples.size());
         this.samples.add(sample);
         sample.active();
@@ -153,7 +161,6 @@ public class LCMSProcessing {
         extractMoIsForAlignment(sample);
         collectStatisticsBeforeAlignment(sample);
         importScanPointMapping(sample, sample.getRun().getRunId());
-        return sample;
     }
 
     public AlignmentBackbone align() throws IOException {
