@@ -110,7 +110,7 @@ public class MS2ExpInputIterator implements InstIterProvider, CloseableIterator<
                             LOG.error("Unknown file format: '" + currentResource + "'");
                         } else {
                             if (progress == null) {
-                                currentExperimentIterator = p.parseIterator(currentResource.getBufferedReader(), currentResource.toUri());
+                                currentExperimentIterator = p.parseIterator(currentResource.getInputStream(), currentResource.toUri());
                             } else {
                                 ProgressInputStream s = new ProgressInputStream(currentResource.getInputStream());
                                 s.addPropertyChangeListener(progress);
