@@ -102,69 +102,72 @@ public class MCESDist2 extends EDIC{
         final IAtomContainer mol1 = this.preprocessMolecule(this.getFirstMolecule());
         final IAtomContainer mol2 = this.preprocessMolecule(this.getSecondMolecule());
 
-        this.computeLowerBound(mol1, mol2);
-        if(this.lowerBound <= THRESHOLD){
-            try {
-                // 1.: Create list of modified copies of mol1 and mol2:
-                final HashMap<IAtomContainerSet, Double> modMol1Copies = this.getModifiedMoleculeCopies(mol1);
-                final HashMap<IAtomContainerSet, Double> modMol2Copies = this.getModifiedMoleculeCopies(mol2);
+        if(this.weightedDegreeBasedFilter(mol1, mol2) <= THRESHOLD){
+            if(this.neighborhoodBasedFilter(mol1,mol2) <= THRESHOLD){
+                try {
+                    // 1.: Create list of modified copies of mol1 and mol2:
+                    final HashMap<IAtomContainerSet, Double> modMol1Copies = this.getModifiedMoleculeCopies(mol1);
+                    final HashMap<IAtomContainerSet, Double> modMol2Copies = this.getModifiedMoleculeCopies(mol2);
 
-                // 2.: Iterate over all combinations of modifications and
-                // check if both modified structures are isomorphic
-                double minDistance = Double.POSITIVE_INFINITY;
-                for(final IAtomContainerSet modMol1Copy : modMol1Copies.keySet()){
-                    final double modCost1 = modMol1Copies.get(modMol1Copy);
-                    for(final IAtomContainerSet modMol2Copy : modMol2Copies.keySet()){
-                        final double modCost2 = modMol2Copies.get(modMol2Copy);
+                    // 2.: Iterate over all combinations of modifications and
+                    // check if both modified structures are isomorphic
+                    double minDistance = Double.POSITIVE_INFINITY;
+                    for (final IAtomContainerSet modMol1Copy : modMol1Copies.keySet()) {
+                        final double modCost1 = modMol1Copies.get(modMol1Copy);
+                        for (final IAtomContainerSet modMol2Copy : modMol2Copies.keySet()) {
+                            final double modCost2 = modMol2Copies.get(modMol2Copy);
 
-                        // For both molecules an isomorphism check will be done, if the number of connected components is equal
-                        // otherwise: both modified molecules are not isomorphic
-                        final int numComponents1 = modMol1Copy.getAtomContainerCount();
-                        final int numComponents2 = modMol2Copy.getAtomContainerCount();
-                        if(numComponents1 == numComponents2){
-                            if(numComponents1 > 1) {
-                                // bipartite matching for the components:
-                                // costMatrix[i][j] := cost for mapping component i in modMol1Copy onto component j in modMol2Copy
-                                final double[][] costMatrix = new double[numComponents1][numComponents2];
-                                for (int i = 0; i < numComponents1; i++) {
-                                    for (int j = 0; j < numComponents2; j++) {
-                                        final double mappingCost = this.getComponentMappingCost(modMol1Copy.getAtomContainer(i), modMol2Copy.getAtomContainer(j));
-                                        costMatrix[i][j] = (mappingCost == Double.POSITIVE_INFINITY) ? Double.MAX_VALUE : mappingCost; // the HungarianAlgorithm cannot handle Infinity
+                            // For both molecules an isomorphism check will be done, if the number of connected components is equal
+                            // otherwise: both modified molecules are not isomorphic
+                            final int numComponents1 = modMol1Copy.getAtomContainerCount();
+                            final int numComponents2 = modMol2Copy.getAtomContainerCount();
+                            if (numComponents1 == numComponents2) {
+                                if (numComponents1 > 1) {
+                                    // bipartite matching for the components:
+                                    // costMatrix[i][j] := cost for mapping component i in modMol1Copy onto component j in modMol2Copy
+                                    final double[][] costMatrix = new double[numComponents1][numComponents2];
+                                    for (int i = 0; i < numComponents1; i++) {
+                                        for (int j = 0; j < numComponents2; j++) {
+                                            final double mappingCost = this.getComponentMappingCost(modMol1Copy.getAtomContainer(i), modMol2Copy.getAtomContainer(j));
+                                            costMatrix[i][j] = (mappingCost == Double.POSITIVE_INFINITY) ? Double.MAX_VALUE : mappingCost; // the HungarianAlgorithm cannot handle Infinity
+                                        }
                                     }
+
+                                    // assignment[i] = j means that component i in modMol1Copy is assigned to component j in modMol2Copy
+                                    final int[] assignment = new HungarianAlgorithm(costMatrix).execute();
+                                    double cost = modCost1 + modCost2;
+                                    for (int i = 0; i < assignment.length; i++) {
+                                        if (costMatrix[i][assignment[i]] == Double.MAX_VALUE) {
+                                            cost = Double.POSITIVE_INFINITY;
+                                            break;
+                                        } else {
+                                            cost += costMatrix[i][assignment[i]];
+                                        }
+                                    }
+                                    minDistance = Math.min(minDistance, cost);
+                                } else if (numComponents1 == 1) {
+                                    final IAtomContainer component1 = modMol1Copy.getAtomContainer(0); // maybe here will be an IndexOutOfBoundsException
+                                    final IAtomContainer component2 = modMol2Copy.getAtomContainer(0);
+                                    minDistance = Math.min(minDistance, modCost1 + modCost2 +
+                                            this.getComponentMappingCost(component1, component2));
+                                } else {
+                                    minDistance = Math.min(minDistance, modCost1 + modCost2);
                                 }
 
-                                // assignment[i] = j means that component i in modMol1Copy is assigned to component j in modMol2Copy
-                                final int[] assignment = new HungarianAlgorithm(costMatrix).execute();
-                                double cost = modCost1 + modCost2;
-                                for (int i = 0; i < assignment.length; i++){
-                                    if(costMatrix[i][assignment[i]] == Double.MAX_VALUE){
-                                        cost = Double.POSITIVE_INFINITY;
-                                        break;
-                                    }else {
-                                        cost += costMatrix[i][assignment[i]];
-                                    }
+                                if (minDistance == this.lowerBound) {
+                                    this.score = minDistance;
+                                    return this.score;
                                 }
-                                minDistance = Math.min(minDistance, cost);
-                            }else if (numComponents1 == 1){
-                                final IAtomContainer component1 = modMol1Copy.getAtomContainer(0); // maybe here will be an IndexOutOfBoundsException
-                                final IAtomContainer component2 = modMol2Copy.getAtomContainer(0);
-                                minDistance = Math.min(minDistance, modCost1 + modCost2 +
-                                        this.getComponentMappingCost(component1, component2));
-                            } else {
-                                minDistance = Math.min(minDistance, modCost1 + modCost2);
-                            }
-
-                            if(minDistance == this.lowerBound){
-                                this.score = minDistance;
-                                return this.score;
                             }
                         }
                     }
-                }
 
-                this.score = minDistance <= THRESHOLD ? minDistance : Double.POSITIVE_INFINITY;
-            } catch (CloneNotSupportedException e) {
-                throw new RuntimeException(e);
+                    this.score = minDistance <= THRESHOLD ? minDistance : Double.POSITIVE_INFINITY;
+                } catch (CloneNotSupportedException e) {
+                    throw new RuntimeException(e);
+                }
+            }else{
+                this.score = Double.POSITIVE_INFINITY;
             }
         }else{
             this.score = Double.POSITIVE_INFINITY;
@@ -172,6 +175,7 @@ public class MCESDist2 extends EDIC{
 
         return this.score;
     }
+
 
     private double getComponentMappingCost(IAtomContainer component1, IAtomContainer component2){
         if(component1.getAtomCount() != component2.getAtomCount()) return Double.POSITIVE_INFINITY;
