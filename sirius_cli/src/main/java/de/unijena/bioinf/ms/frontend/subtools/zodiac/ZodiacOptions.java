@@ -68,25 +68,19 @@ public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSet
     ///////////////////////
     //library hits     ///
     /////////////////////
-    @Option(names = "--min-cosine", descriptionKey = "ZodiacLibraryScoring.minCosine",
-            description = {"Spectral library hits must have at least this cosine or higher to be considered in scoring.", "Value must be in [0,1]."})
-    public void setMinCosine(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("ZodiacLibraryScoring.minCosine", value);
-    }
+    //todo we want to include library hits from SIRIUS spectral library search as anchors. Not sure, if we will use these parameters or if the library search parameters are sufficient.
+//    @Option(names = "--min-cosine", descriptionKey = "ZodiacLibraryScoring.minCosine",
+//            description = {"Spectral library hits must have at least this cosine or higher to be considered in scoring.", "Value must be in [0,1]."})
+//    public void setMinCosine(DefaultParameter value) throws Exception {
+//        defaultConfigOptions.changeOption("ZodiacLibraryScoring.minCosine", value);
+//    }
+//
+//    @Option(names = "--lambda", descriptionKey = "ZodiacLibraryScoring.lambda",
+//            description = {"Lambda used in the scoring function of spectral library hits. The higher this value the higher are library hits weighted in ZODIAC scoring."})
+//    public void setLambda(DefaultParameter value) throws Exception {
+//        defaultConfigOptions.changeOption("ZodiacLibraryScoring.lambda", value);
+//    }
 
-    @Option(names = "--lambda", descriptionKey = "ZodiacLibraryScoring.lambda",
-            description = {"Lambda used in the scoring function of spectral library hits. The higher this value the higher are library hits weighted in ZODIAC scoring."})
-    public void setLambda(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("ZodiacLibraryScoring.lambda", value);
-    }
-
-    public Path libraryHitsFile;
-
-    @Option(names = "--library-hits",
-            description = {"CSV file containing spectral library hits. Library hits are used as anchors to improve ZODIAC scoring."})
-    public void setLibraryHits(String filePath) throws Exception {
-        libraryHitsFile = Paths.get(filePath);
-    }
 
     ///////////////////////
     //number of epochs///
