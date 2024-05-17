@@ -43,6 +43,7 @@ import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.LoggerFactory;
 import uk.ac.ebi.jmzml.model.mzml.*;
 import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
 
@@ -50,6 +51,8 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -100,6 +103,7 @@ public class MzMLParser implements LCMSParser {
 
             final DoubleArrayList retentionTimes = new DoubleArrayList();
             final IntArrayList scanids = new IntArrayList();
+            final ArrayList<String> scanIdentifiers = new ArrayList<>();
             final Int2IntMap idmap = new Int2IntOpenHashMap();
 
             // Read available instument information
@@ -161,9 +165,6 @@ public class MzMLParser implements LCMSParser {
             run.setIonization(ionization);
             run.setMassAnalyzers(!massAnalyzers.isEmpty() ? massAnalyzers : null);
             runConsumer.consume(run);
-
-            //map id to index  because mzml is id and not index based
-            final Map<String, Integer> idToIndex = um.getSpectrumIndexes().stream().collect(Collectors.toMap(um::getSpectrumIDFromSpectrumIndex, idx -> idx));
 
             // read spectra
             Map<String, Long> ms1Ids = new HashMap<>();
@@ -279,10 +280,13 @@ public class MzMLParser implements LCMSParser {
                         ms1Ids.put(spectrum.getId(), scan.getScanId());
                     }
 
-                    final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(), spectrum.getIndex(), sid, polarity.charge, true);
+                    final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(), parseScanNumber(sid, spectrum.getIndex()), sid, polarity.charge, true);
                     retentionTimes.add(rt);
-                    idmap.put(spectrum.getIndex().intValue(), scanids.size());
-                    scanids.add(spectrum.getIndex().intValue());
+                    idmap.put(header.getScanId(), scanids.size());
+                    scanids.add(header.getScanId());
+                    if (sid.startsWith("scan=")) {
+                        scanIdentifiers.add(null);
+                    } else scanIdentifiers.add(sid);
                     storage.getSpectrumStorage().addSpectrum(header, peaks);
 
                 } else {
@@ -317,7 +321,7 @@ public class MzMLParser implements LCMSParser {
                         }
                     }
 
-                    Precursor prec = makePrecursor(precursor, ms1Ids, idToIndex);
+                    Precursor prec = makePrecursor(precursor);
 
                     if (msmsScanConsumer != null) {
                         MSMSScan.MSMSScanBuilder scanBuilder = MSMSScan.builder()
@@ -336,12 +340,11 @@ public class MzMLParser implements LCMSParser {
 
                     final Ms2SpectrumHeader header = new Ms2SpectrumHeader(
                             sid,
-                            spectrum.getIndex(),
+                            parseScanNumber(sid, spectrum.getIndex()),
                             polarity.charge, msLevel, centroided,
                             Double.isFinite(collisionEnergy) ? new CollisionEnergy(collisionEnergy) : CollisionEnergy.none(),
                             prec.getIsolationWindow(),
-                            idmap.getOrDefault(prec.getIndex(), -1), // TODO: potential error
-                            prec.getIndex(),
+                            idmap.getOrDefault(prec.getScanId(), -1), // TODO: potential error
                             prec.getMass(),
                             prec.getMass(), // todo: fix
                             rt
@@ -360,7 +363,9 @@ public class MzMLParser implements LCMSParser {
                 runUpdateConsumer.consume(run);
             }
 
-            final ScanPointMapping mapping = new ScanPointMapping(retentionTimes.toDoubleArray(), scanids.toIntArray(), idmap);
+            String[] sids = scanIdentifiers.stream().allMatch(Objects::isNull) ? null : scanIdentifiers.toArray(String[]::new);
+
+            final ScanPointMapping mapping = new ScanPointMapping(retentionTimes.toDoubleArray(), scanids.toIntArray(), sids, idmap);
             storage.setMapping(mapping);
             ProcessedSample sample = new ProcessedSample(mapping, storage, samplePolarity, -1);
             sample.setRun(run);
@@ -371,7 +376,23 @@ public class MzMLParser implements LCMSParser {
         }
     }
 
-    private Precursor makePrecursor(uk.ac.ebi.jmzml.model.mzml.Precursor precursor, Map<String, Long> ms1Ids, Map<String, Integer> idToIndex) {
+    private static Pattern SCAN_PATTERN = Pattern.compile("scan=(\\d+)"), ALT_PATTERN = Pattern.compile("\\S+=(\\d+)");
+    private int parseScanNumber(String sid, Integer index) {
+        Matcher m = SCAN_PATTERN.matcher(sid);
+        if (m.find()) {
+            return Integer.parseInt(m.group(1));
+        } else {
+            m = ALT_PATTERN.matcher(sid);
+            if (m.find()) {
+                return Integer.parseInt(m.group(1));
+            } else {
+                LoggerFactory.getLogger(MzMLParser.class).warn("Spectrum has no valid scan ID. Use index instead. This won't effect the preprocessing at all, but might complicate mapping back the processed spectra to their raw datapoints.");
+                return index;
+            }
+        }
+    }
+
+    private Precursor makePrecursor(uk.ac.ebi.jmzml.model.mzml.Precursor precursor) {
         IsolationWindow w = new IsolationWindow(0, Double.NaN);
         double target_mz = Double.NaN;
         if (precursor.getIsolationWindow() != null) {
@@ -415,10 +436,9 @@ public class MzMLParser implements LCMSParser {
         //use isolation target m/z if available
         //(it happens that the instrument targets the +2 isotope peak but the selected ion m/z is the monoisotopic m/z)
         double mz = !Double.isNaN(target_mz) ? target_mz : selectedIon_mz;
-
         return new Precursor(
-                idToIndex.getOrDefault(precursor.getSpectrumRef(), -1),
-                ms1Ids.getOrDefault(precursor.getSpectrumRef(), -1L),
+                precursor.getSpectrumRef(),
+                parseScanNumber(precursor.getSpectrumRef(), -1),
                 mz, intensity, chargeState, w
         );
     }

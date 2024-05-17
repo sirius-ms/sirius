@@ -2,6 +2,8 @@ package de.unijena.bioinf.lcms.adducts;
 
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
@@ -98,5 +100,14 @@ public class ProjectSpaceTraceProvider implements TraceProvider {
                 throw new RuntimeException(e);
             }
         } else return feature.getFeatures().get();
+    }
+
+    @Override
+    public List<MergedMSnSpectrum> getMs2SpectraOf(AlignedFeatures features) {
+        try {
+            return storage.getStorage().findStr(Filter.where("alignedFeatureId").eq(features.getAlignedFeatureId()), MSData.class).filter(x->x.getMsnSpectra()!=null).flatMap(x->x.getMsnSpectra().stream()).toList();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

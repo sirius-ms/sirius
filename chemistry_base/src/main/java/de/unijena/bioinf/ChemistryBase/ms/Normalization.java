@@ -51,6 +51,10 @@ public class Normalization {
 		this.norm = norm;
 	}
 
+    public static Normalization L2() {
+        return new Normalization(L2, 1d);
+    }
+
     /**
      * Given a value from 0.0 to 1.0, this function returns the scaled value from 0.0 to MAX.
      */

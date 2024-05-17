@@ -1,5 +1,6 @@
 package de.unijena.bioinf.lcms;
 
+import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
@@ -18,7 +19,6 @@ import de.unijena.bioinf.lcms.msms.Ms2TraceStrategy;
 import de.unijena.bioinf.lcms.projectspace.PickFeaturesAndImportToSirius;
 import de.unijena.bioinf.lcms.projectspace.ProjectSpaceImporter;
 import de.unijena.bioinf.lcms.projectspace.SiriusDatabaseAdapter;
-import de.unijena.bioinf.lcms.projectspace.SiriusProjectDocumentDbAdapter;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.statistics.*;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
@@ -32,13 +32,8 @@ import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
-import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
-import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntObjectPair;
-import it.unimi.dsi.fastutil.longs.Long2LongMap;
-import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.text.similarity.LongestCommonSubsequence;
@@ -50,6 +45,8 @@ import java.net.URI;
 import java.util.*;
 
 public class LCMSProcessing {
+
+    private static Range R = Range.closed(1,2);
 
     /**
      * Creates temporary databases to store traces and spectra
@@ -234,7 +231,7 @@ public class LCMSProcessing {
     protected void importScanPointMapping(ProcessedSample sample, long sampleId) throws IOException {
         RetentionTimeAxis axis = RetentionTimeAxis.builder()
                 .runId(sampleId)
-                .scanNumbers(sample.getMapping().scanids)
+                .scanIndizes(sample.getMapping().scanIndizes)
                 .retentionTimes(sample.getMapping().retentionTimes)
                 .noiseLevelPerScan(sample.getStorage().getStatistics().getNoiseLevelPerScan()).build();
         siriusDatabaseAdapter.importRetentionTimeAxis(axis);
@@ -294,6 +291,9 @@ public class LCMSProcessing {
                 detectIsotopesForMoI(sample, trace, segment, moi);
 
                 moi.setConfidence(confidenceEstimatorStrategy.estimateConfidence(sample, trace, moi, null));
+                if (moi.getMz()>=236.1 && moi.getMz()<=236.2 && Range.closed(2.8,2.95).contains(moi.getRetentionTime()/60d)) {
+                    System.err.println("Ha!");
+                }
                 if (moi.getConfidence() >= 0) {
                     //System.out.println(moi + " intensity = " + moi.getIntensity() + ", isotopes = " + (moi.getIsotopes()==null ? 0 : moi.getIsotopes().isotopeIntensities.length) + ", confidence = "+ moi.getConfidence());
                     alignmentStorage.addMoI(moi);

@@ -2,23 +2,45 @@ package de.unijena.bioinf.lcms.adducts;
 
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.algorithm.BinarySearch;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Normalization;
+import de.unijena.bioinf.ChemistryBase.ms.Peak;
+import de.unijena.bioinf.ChemistryBase.ms.utils.MassMap;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.JJob;
+import de.unijena.bioinf.jjobs.JobManager;
+import de.unijena.bioinf.lcms.adducts.assignment.AdductAssignment;
+import de.unijena.bioinf.lcms.adducts.assignment.SubnetworkResolver;
+import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
+import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
+import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
+import de.unijena.bioinf.sirius.Sirius;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class AdductNetwork {
 
     protected AdductNode[] rtOrderedNodes;
     protected AdductManager adductManager;
+    List<List<AdductNode>> subgraphs = new ArrayList<>();
 
     protected Deviation deviation;
-
     ProjectSpaceTraceProvider provider;
+
+    double retentionTimeTolerance;
+    PValueStats pValueStats;
 
     public AdductNetwork(ProjectSpaceTraceProvider provider, AlignedFeatures[] features, AdductManager manager, double retentionTimeTolerance) {
         this.rtOrderedNodes = new AdductNode[features.length];
@@ -28,167 +50,391 @@ public class AdductNetwork {
         Arrays.sort(rtOrderedNodes, Comparator.comparingDouble(AdductNode::getRetentionTime));
         adductManager = manager;
         this.provider = provider;
+        pValueStats = new PValueStats();
         deviation = new Deviation(10);
-        buildNetworkFromMassDeltas(retentionTimeTolerance);
+        this.retentionTimeTolerance = retentionTimeTolerance;
     }
 
-    protected void buildNetworkFromMassDeltas(double retentionTimeTolerance) {
-        Scorer scorer = new Scorer();
-        final PValueStats pValueStats = new PValueStats();
-        for (int l=0; l < rtOrderedNodes.length; ++l) {
-            final AdductNode leftNode = rtOrderedNodes[l];
-            final double thresholdLeft = rtOrderedNodes[l].getFeature().getRetentionTime().getStartTime();
-            final double thresholdRight = rtOrderedNodes[l].getFeature().getRetentionTime().getEndTime();
-            final Range<Double> threshold = Range.closed(thresholdLeft, thresholdRight);
-            /*
-            int rLeft=l-1;
-            for (; rLeft >= 0; --rLeft) {
-                if (!threshold.contains(rtOrderedNodes[rLeft].getRetentionTime() )  ) {
-                    break;
-                }
-            }
-            ++rLeft;
-            */
-            int rLeft=l+1;
-            int rRight=l+1;
-            for (; rRight < rtOrderedNodes.length; ++rRight) {
-                if (!threshold.contains(rtOrderedNodes[rRight].getRetentionTime() )  ) {
-                    break;
-                }
-            }
-            --rRight;
+    record NetworkResult(AdductEdge[] realEdges, AdductEdge[] decoyEdges) {
+    }
 
-            for (int i=rLeft; i <= rRight; ++i) {
-                if (i != l) {
-                    final AdductNode rightNode = rtOrderedNodes[i];
-                    if (leftNode.getMass() < rightNode.getMass() && Math.abs(leftNode.getRetentionTime() - rightNode.getRetentionTime()) < retentionTimeTolerance &&  rightNode.features.getRetentionTime().asRange().contains(leftNode.getRetentionTime())) {
-                        final double massDelta = rightNode.getMass() - leftNode.getMass();
-                        List<KnownMassDelta> knownMassDeltas = adductManager.retrieveMassDeltas(massDelta, deviation);
-                        if (!knownMassDeltas.isEmpty()) {
-                            final AdductEdge adductEdge = new AdductEdge(leftNode, rightNode, knownMassDeltas.toArray(KnownMassDelta[]::new));
-                            scorer.computeScore(provider, adductEdge);
-                            if (Double.isFinite(adductEdge.ratioScore)) {
-                                addEdge(adductEdge);
-                                System.out.printf("%.3f (%d sec) ---> %.3f (%d sec) || ratio=%.3f, cor=%.3f cor2=%.3f %s\n", leftNode.getMass(), (int) leftNode.getRetentionTime(),
-                                        rightNode.getMass(), (int) rightNode.getRetentionTime(), adductEdge.ratioScore, adductEdge.correlationScore, adductEdge.representativeCorrelationScore, knownMassDeltas.stream().map(Object::toString).collect(Collectors.joining(", ")));
-                            }
-                        } else if (adductManager.hasDecoy(massDelta)) {
-                            final AdductEdge adductEdge = new AdductEdge(leftNode, rightNode, new KnownMassDelta[0]);
-                            scorer.computeScore(provider, adductEdge);
-                            pValueStats.add(adductEdge);
+    public void buildNetworkFromMassDeltas(JobManager jjobs) {
+        Scorer scorer = new Scorer();
+        List<BasicJJob<NetworkResult>> jobs = new ArrayList<>();
+        for (int rr=0; rr < rtOrderedNodes.length; ++rr) {
+            final int r = rr;
+            jobs.add(jjobs.submitJob(new BasicJJob<NetworkResult>() {
+                @Override
+                protected NetworkResult compute() throws Exception {
+                    List<AdductEdge> realEdges = new ArrayList<>();
+                    List<AdductEdge> decoyEdges = new ArrayList<>();
+                    final AdductNode rightNode = rtOrderedNodes[r];
+                    final double thresholdStart = Math.min(rtOrderedNodes[r].getFeature().getRetentionTime().getMiddleTime() - retentionTimeTolerance, rtOrderedNodes[r].getFeature().getRetentionTime().getStartTime());
+                    final double thresholdEnd = Math.max(rtOrderedNodes[r].getFeature().getRetentionTime().getMiddleTime() + retentionTimeTolerance, rtOrderedNodes[r].getFeature().getRetentionTime().getEndTime());
+                    final Range<Double> threshold = Range.closed(thresholdStart, thresholdEnd);
+
+                    // obtain potential fragment peaks
+                    List<MergedMSnSpectrum> ms2Right = provider.getMs2SpectraOf(rightNode.getFeatures());
+                    if (!ms2Right.isEmpty()) rightNode.hasMsMs = true;
+                    SimpleSpectrum preparedRight = null;
+                    boolean ms2rightGood = false;
+                    MassMap<Peak> potentialInsourceFragments = getPotentialInsourceFragments(ms2Right, rightNode);
+
+                    int rStart=r;
+                    int rEnd=r+1;
+                    for (; rEnd < rtOrderedNodes.length; ++rEnd) {
+                        if (!threshold.contains(rtOrderedNodes[rEnd].getRetentionTime() )  ) {
+                            break;
                         }
                     }
+                    --rEnd;
+
+                    for (; rStart >= 0; --rStart) {
+                        if (!threshold.contains(rtOrderedNodes[rStart].getRetentionTime() )  ) {
+                            break;
+                        }
+                    }
+                    ++rStart;
+
+                    for (int i=rStart; i <= rEnd; ++i) {
+                        if (i != r) {
+                            final AdductNode leftNode = rtOrderedNodes[i];
+                            RetentionTime rt = leftNode.getFeature().getRetentionTime();
+                            final double thresholdStart2 = Math.min(rt.getStartTime(),  rt.getMiddleTime() - retentionTimeTolerance);
+                            final double thresholdEnd2 = Math.max(rt.getEndTime(), rt.getMiddleTime() + retentionTimeTolerance);
+                            final Range<Double> threshold2 = Range.closed(thresholdStart2, thresholdEnd2);
+                            if (rightNode.getMass() > leftNode.getMass() && Math.abs(rightNode.getRetentionTime() - leftNode.getRetentionTime()) < retentionTimeTolerance &&  threshold2.contains(rightNode.getRetentionTime())) {
+                                final double massDelta = rightNode.getMass() - leftNode.getMass();
+                                List<KnownMassDelta> knownMassDeltas = adductManager.retrieveMassDeltas(massDelta, deviation);
+
+                                // add multimere edge if present
+                                adductManager.checkForMultimere(rightNode.getMass(), leftNode.getMass(), deviation).ifPresent(knownMassDeltas::add);
+
+                                if (knownMassDeltas.isEmpty()) {
+                                    List<Peak> potentialInsourcePeaks = potentialInsourceFragments == null ? Collections.emptyList() : potentialInsourceFragments.retrieveAll(massDelta, deviation);
+                                    if (!potentialInsourcePeaks.isEmpty()) {
+                                        UnknownLossRelationship insourceFragment = new UnknownLossRelationship();
+                                        knownMassDeltas.add(insourceFragment);
+                                    }
+                                }
+                                if (!knownMassDeltas.isEmpty()) {
+                                    final AdductEdge adductEdge = new AdductEdge(leftNode, rightNode, knownMassDeltas.toArray(KnownMassDelta[]::new));
+                                    scorer.computeScore(provider, adductEdge);
+                                    if (Double.isFinite(adductEdge.ratioScore)) {
+
+                                        // add MS/MS score
+                                        if (!ms2Right.isEmpty()) {
+                                            List<MergedMSnSpectrum> ms2Left = provider.getMs2SpectraOf(leftNode.getFeatures());
+                                            if (!ms2Left.isEmpty()) {
+                                                if (preparedRight==null) {
+                                                    preparedRight = scorer.prepareForCosine(rightNode, ms2Right);
+                                                    ms2rightGood = scorer.hasMinimumMs2Quality(preparedRight);
+                                                }
+                                                if (ms2rightGood) {
+                                                    SimpleSpectrum ms2left = scorer.prepareForCosine(leftNode, ms2Left);
+                                                    if (scorer.hasMinimumMs2Quality(ms2left)) {
+                                                        scorer.computeMs2Score(adductEdge, ms2left, preparedRight);
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        realEdges.add(adductEdge);
+                                    }
+                                } if (decoyEdges.size() < 10 && adductManager.hasDecoy(massDelta)) {
+                                    final AdductEdge adductEdge = new AdductEdge(leftNode, rightNode, new KnownMassDelta[0]);
+                                    scorer.computeScore(provider, adductEdge);
+                                    decoyEdges.add(adductEdge);
+                                }
+                            }
+                        }
+                    }
+                    return new NetworkResult(realEdges.toArray(AdductEdge[]::new), decoyEdges.toArray(AdductEdge[]::new));
                 }
+            }));
+        }
+        {
+            Iterator<BasicJJob<NetworkResult>> iter = jobs.listIterator();
+            while (iter.hasNext()) {
+                NetworkResult r = iter.next().takeResult();
+                for (AdductEdge e : r.realEdges) addEdge(e);
+                for (AdductEdge e : r.decoyEdges) pValueStats.add(e);
+                iter.remove(); // release memory
             }
         }
-
         pValueStats.done();
-
-        deleteEdgesWithLowPvalue(pValueStats, 5);
+        assignPValues(pValueStats);
 
         BitSet visited = new BitSet(rtOrderedNodes.length);
-        List<List<AdductNode>> subgraphs = new ArrayList<>();
-        List<AdductNode> singletons = new ArrayList<>();
         for (int k=0; k < rtOrderedNodes.length; ++k) {
             if (!visited.get(rtOrderedNodes[k].index)) {
                 List<AdductNode> nodes = spread(rtOrderedNodes[k], visited);
                 if (nodes.size()>1) subgraphs.add(nodes);
-                else singletons.add(rtOrderedNodes[k]);
             }
         }
-        FloatArrayList sizes = new FloatArrayList();
-        for (List<AdductNode> subg : subgraphs) {
-            Set<AdductEdge> edges = new HashSet<>();
-            int adductEdges=0;
-            for (AdductNode n : subg) {
-                edges.addAll(n.edges);
-                Set<KnownAdductType> ionTypes = new HashSet<>(Arrays.asList(n.ionTypes));
-                for (AdductEdge e : n.edges) {
-                    for (KnownMassDelta t : e.explanations) {
-                        if (t instanceof AdductRelationship) {
-                            if (e.left==n) ionTypes.add(((AdductRelationship)t).left);
-                            if (e.right==n) ionTypes.add(((AdductRelationship)t).right);
-                            ++adductEdges;
-                        }
-                    }
-                }
-                n.ionTypes = ionTypes.toArray(KnownAdductType[]::new);
-            }
-            // resolve other edges
-            for (AdductNode n : subg) {
-                Set<KnownAdductType> ionTypes = new HashSet<>(Arrays.asList(n.ionTypes));
-                for (AdductEdge e : n.edges) {
-                    for (KnownMassDelta t : e.explanations) {
-                        if (t instanceof LossRelationship) {
-                            if (e.left==n) ionTypes.addAll(Arrays.asList(e.right.ionTypes));
-                            if (e.right==n) ionTypes.addAll(Arrays.asList(e.left.ionTypes));
-                        }
-                    }
-                }
-                n.ionTypes = ionTypes.toArray(KnownAdductType[]::new);
-            }
-            if (adductEdges>0) {
-                System.out.println("--------------------------");
-                sizes.add(edges.size());
-                for (AdductEdge e : edges) {
-                    System.out.printf("%.3f (%d sec) ---> %.3f (%d sec) || pvalue = %.3f ratio=%.3f, corr=%.3f corr2=%.3f %s\n", e.left.getMass(), (int) e.left.getRetentionTime(),
-                                e.right.getMass(), (int) e.right.getRetentionTime(), pValueStats.logPvalue(e), e.ratioScore, e.correlationScore, e.representativeCorrelationScore, Arrays.stream(e.explanations).map(Object::toString).collect(Collectors.joining(", ")));
-
-                    if (e.correlationScore < -0.8 || e.representativeCorrelationScore < -0.8) {
-                        System.err.println("Strange...");
-                        scorer.computeScore(provider, e);
-                    }
-                }
-                // check for compatibility
-                int incompatibleNodes = 0;
-                for (AdductNode n : subg) {
-                    if (n.ionTypes.length>2) ++incompatibleNodes;
-                    else if (n.ionTypes.length==2 && n.ionTypes[0].toPrecursorIonType().isPresent() && n.ionTypes[0].toPrecursorIonType().get().isIonizationUnknown()){
-                        n.selectedIon = 1;
-                    } else n.selectedIon=0;
-                }
-                if (incompatibleNodes==0) {
-                    int incompatibleEdges = 0;
-                    for (AdductEdge e : edges) {
-                        for (KnownMassDelta m : e.explanations) {
-                            if (!m.isCompatible(e.left.ionTypes[e.left.selectedIon], e.right.ionTypes[e.right.selectedIon])) {
-                                ++incompatibleEdges;
-                            }
-                        }
-                    }
-                    if (incompatibleEdges<=0) {
-                        System.out.println("Subnetwork can be resolved.");
-                    } else {
-                        System.out.println(incompatibleEdges + " incompatible edges.");
-                    }
-                } else {
-                    System.out.println(incompatibleNodes + " incompatible nodes.");
-                }
-
-            }
-        }
-
-        System.out.println("average network size: " + sizes.doubleStream().average().getAsDouble());
-        System.out.println("--------------------------");
-        System.out.printf("%d subnetworks and %d singletons out of %d total features.\n", sizes.size(),
-                singletons.size(), rtOrderedNodes.length);
-        System.out.printf("There are %d decoy edges:\n", pValueStats.count);
-
-
-        singletons.sort(Comparator.comparingDouble(x->-x.features.getApexIntensity()));
-        for (AdductNode singleton : singletons) {
-            System.out.println(singleton.getMass() + "\t" + singleton.getRetentionTime() + " has no edges :(");
-        }
-
-
     }
 
-    private void deleteEdgesWithLowPvalue(PValueStats pValueStats, int threshold) {
+    private MassMap<Peak> getPotentialInsourceFragments(List<MergedMSnSpectrum> data, AdductNode rightNode) {
+        if (!data.isEmpty()) {
+            MassMap<Peak> potentialInsourceFragments = new MassMap<>(500);
+            MergedMSnSpectrum mergedMSnSpectrum = data.stream().min(Comparator.comparingDouble(x->x.getMergedCollisionEnergy().getMaxEnergy(false))).get();
+            SimpleSpectrum ms2 = mergedMSnSpectrum.getPeaks();
+            double maximalIntensity = Spectrums.getMaximalIntensity(ms2);
+            double intensityThreshold = 0.1*maximalIntensity;
+            for (int k=0; k < ms2.size(); ++k) {
+                if (ms2.getMzAt(k) < (rightNode.getMass()-4) && ms2.getIntensityAt(k)>=intensityThreshold) {
+                    potentialInsourceFragments.put(ms2.getMzAt(k), ms2.getPeakAt(k));
+                }
+            }
+            return potentialInsourceFragments;
+        } else return null;
+    }
+
+    public void assign(JobManager manager, SubnetworkResolver resolver, int charge, Consumer<Compound> updateRoutine) {
+        final ArrayList<BasicJJob<Object>> jobs = new ArrayList<>();
+        for (List<AdductNode> subgraph : subgraphs) {
+            jobs.add(manager.submitJob(new BasicJJob<Object>() {
+                @Override
+                protected Object compute() throws Exception {
+                    AdductNode[] nodes = subgraph.toArray(AdductNode[]::new);
+                    AdductAssignment[] assignments = resolver.resolve(nodes, charge);
+                    HashMap<AdductNode, AdductAssignment> assignmentMap = new HashMap<>();
+                    if (assignments!=null) {
+
+                            for (int i = 0; i < assignments.length; ++i) {
+                                List<DetectedAdduct> pas = assignments[i].toPossibleAdducts(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN);
+                                if (!pas.isEmpty()) {
+                                    AlignedFeatures feature = subgraph.get(i).getFeature();
+                                    DetectedAdducts detectedAdducts = feature.getDetectedAdducts();
+                                    if (detectedAdducts == null) {
+                                        detectedAdducts = new DetectedAdducts();
+                                        feature.setDetectedAdducts(detectedAdducts);
+                                    }
+                                    detectedAdducts.add(pas.toArray(DetectedAdduct[]::new));
+                                }
+                                assignmentMap.put(nodes[i], assignments[i]);
+                            }
+                            final HashSet<AdductNode> visited = new HashSet<>();
+                            boolean before = false;
+                            for (int i = 0; i < assignments.length; ++i) {
+                                if (!visited.contains(nodes[i])) {
+                                    Compound c = extractCompound(assignmentMap, visited, nodes[i], 0.5);
+                                    updateRoutine.accept(c);
+                                }
+                            }
+                        }
+                    return "";
+                }
+            }));
+        }
+        jobs.forEach(JJob::takeResult);
+    }
+
+
+
+    public void assignWithDebugOutput(JobManager manager, SubnetworkResolver resolver, int charge, Consumer<Compound> updateRoutine) {
+        final ArrayList<BasicJJob<Object>> jobs = new ArrayList<>();
+        for (List<AdductNode> subgraph : subgraphs) {
+            jobs.add(manager.submitJob(new BasicJJob<Object>() {
+                @Override
+                protected Object compute() throws Exception {
+                    AdductNode[] nodes = subgraph.toArray(AdductNode[]::new);
+                    AdductAssignment[] assignments = resolver.resolve(nodes, charge);
+                    HashMap<AdductNode, AdductAssignment> assignmentMap = new HashMap<>();
+                    if (assignments!=null) {
+
+                        synchronized (AdductNetwork.class) {
+
+                            System.out.println("~~~~~~~~    " + Arrays.stream(nodes).mapToDouble(AdductNode::getRetentionTime).average().orElse(0d) +  " min + (" + nodes.length + " nodes)   ~~~~~~~~~");
+
+                            for (int i = 0; i < assignments.length; ++i) {
+                                List<DetectedAdduct> pas = assignments[i].toPossibleAdducts(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN);
+                                if (!pas.isEmpty()) {
+                                    AlignedFeatures feature = subgraph.get(i).getFeature();
+                                    DetectedAdducts detectedAdducts = feature.getDetectedAdducts();
+                                    if (detectedAdducts == null) {
+                                        detectedAdducts = new DetectedAdducts();
+                                        feature.setDetectedAdducts(detectedAdducts);
+                                    }
+                                    detectedAdducts.add(pas.toArray(DetectedAdduct[]::new));
+                                }
+                                assignmentMap.put(nodes[i], assignments[i]);
+                            }
+                            final HashSet<AdductNode> visited = new HashSet<>();
+                            boolean before = false;
+                            for (int i = 0; i < assignments.length; ++i) {
+                                if (!visited.contains(nodes[i])) {
+                                    Compound c = extractCompound(assignmentMap, visited, nodes[i], 0.5);
+                                    if (before ) {
+                                        System.out.println("\n");
+                                    }
+                                    for (AlignedFeatures features : c.getAdductFeatures().get()) {
+                                        System.out.println("Assign " +
+                                                String.format(Locale.US, "%.4f @ %.2f", features.getApexMass(), (features.getRetentionTime().getRetentionTimeInSeconds() / 60d))
+                                                + " minutes  with " + features.getDetectedAdducts().asMap().values().stream().flatMap(Collection::stream).map(x -> x.getAdduct() + " (" + x.getScore() + ")").collect(Collectors.joining(", ")) + (!provider.getMs2SpectraOf(features).isEmpty() ? "\thas MS/MS" : ""));
+
+                                    }
+                                    before = true;
+
+                                    updateRoutine.accept(c);
+                                }
+
+                            }
+
+
+
+
+
+                            System.out.println("~~~~~~~~~~~~~~~~~~~~");
+
+                        }
+                    }
+                    return "";
+                }
+            }));
+        }
+        jobs.forEach(JJob::takeResult);
+    }
+
+    private Compound extractCompound(Map<AdductNode, AdductAssignment> assignments, Set<AdductNode> visited, AdductNode seed, double probabilityThreshold) {
+        if (assignments.get(seed).likelyUnknown() || assignments.get(seed).probabilityOfMostLikelyAdduct() < probabilityThreshold) {
+            return new Compound(0, seed.features.getRetentionTime(), null, null, seed.hasMsMs, Collections.singletonList(seed.features), Collections.emptyList());
+        }
+        ArrayList<AdductNode> compound = new ArrayList<>();
+        ArrayList<CorrelatedIonPair> pairs = new ArrayList<>();
+        HashSet<AdductNode> exclusion = new HashSet<>();
+        compound.add(seed);
+        visited.add(seed);
+        DoubleArrayList mzs = new DoubleArrayList();
+        double mzint = 0d;
+        int done = 0;
+        for (; done < compound.size(); ++done) {
+            AdductNode u = compound.get(done);
+            IonType ut = assignments.get(u).mostLikelyAdduct();
+            if (ut.toPrecursorIonType().isPresent()) {
+                mzs.add(ut.toPrecursorIonType().get().precursorMassToNeutralMass(u.getMass()) * u.features.getApexIntensity());
+                mzint += u.features.getApexIntensity();
+            }
+            for (AdductEdge uv : u.edges) {
+
+                AdductNode left = uv.left;
+                AdductNode right = uv.right;
+
+                // special rule: if two edges have MS/MS and cosine is very low, we exclude this node from the compound
+                AdductNode v = uv.getOther(u);
+                if (visited.contains(v)) continue;
+                if (Float.isNaN(uv.ms2score)) {
+                    // no MS/MS score
+                    if (exclusion.contains(v)) continue;
+                } else if (uv.ms2score <= 0.25) {
+                    exclusion.add(v);
+                    continue;
+                } else {
+                    // if at least one edge has high cosine, we forgive the low cosine edge
+                }
+
+                AdductAssignment la = assignments.get(left);
+                AdductAssignment ra = assignments.get(right);
+                if (la==null || ra==null) continue;
+                IonType lt = la.mostLikelyAdduct();
+                IonType rt = ra.mostLikelyAdduct();
+                for (KnownMassDelta D : uv.explanations) {
+                    if (!D.isCompatible(lt,rt))
+                        continue;
+                    visited.add(v);
+                    exclusion.remove(v);
+                    compound.add(v);
+                    pairs.add(new CorrelatedIonPair(
+                            0,
+                            0,
+                            u.features.getAlignedFeatureId(),
+                            v.features.getAlignedFeatureId(),
+                            u.features,
+                            v.features,
+                            typeFor(D),
+                            (double)uv.getScore(),
+                            Float.isFinite(uv.correlationScore) ? Double.valueOf(uv.correlationScore) : null,
+                            Float.isFinite(uv.ms2score) ? Double.valueOf(uv.ms2score) : null
+                    ));
+                    break;
+                }
+            }
+        }
+        for (AdductNode u : exclusion) visited.remove(u);
+        if (compound.isEmpty()) return null;
+        double rt = 0d;
+        double intens = 0d;
+        double minRt = Double.POSITIVE_INFINITY, maxRt = Double.NEGATIVE_INFINITY;
+        for (AdductNode n : compound) {
+            rt += n.features.getApexIntensity() * n.features.getRetentionTime().getMiddleTime();
+            intens += n.features.getApexIntensity();
+            minRt = Math.min(minRt, n.features.getRetentionTime().getStartTime());
+            maxRt = Math.max(maxRt, n.features.getRetentionTime().getEndTime());
+        }
+        rt /= intens;
+        return new Compound(
+                0,
+                new RetentionTime(minRt, maxRt, rt),
+                mzs.doubleStream().sum()/mzint,
+                null,compound.stream().anyMatch(x->x.hasMsMs),
+                compound.stream().map(AdductNode::getFeature).toList(),
+                pairs
+        );
+    }
+
+    private String pp(SimpleSpectrum spec) {
+        StringBuilder buf = new StringBuilder();
+        SimpleSpectrum xs =Spectrums.getNormalizedSpectrum(spec, Normalization.Max);
+        xs = Spectrums.extractMostIntensivePeaks(xs, 5, 300);
+        for (Peak p : xs) {
+            buf.append(String.format(Locale.US, "\t%.4f\t%.3f\n", p.getMass(), p.getIntensity()));
+        }
+        return buf.toString();
+    }
+
+    private CorrelatedIonPair.Type typeFor(KnownMassDelta D) {
+        if (D instanceof AdductRelationship) return CorrelatedIonPair.Type.ADDUCT;
+        if (D instanceof LossRelationship) return CorrelatedIonPair.Type.INSOURCE;
+        if (D instanceof UnknownLossRelationship) return CorrelatedIonPair.Type.INSOURCE;
+        if (D instanceof MultimereRelationship) return CorrelatedIonPair.Type.MULTIMERE;
+        return CorrelatedIonPair.Type.UNKNOWN;
+    }
+
+    private void assignPValues(PValueStats pValueStats) {
+        int count = 0;
+        for (AdductNode node : rtOrderedNodes) {
+            for (AdductEdge e : node.getEdges()){
+                if (Double.isNaN(e.pvalue)) {
+                    double score = pValueStats.logPvalue(e);
+                    // for ms2 we do not compute p-values as this would take quite a lot of time
+                    // so we just "guess" an exponential distribution
+                    double ms2value = Float.isNaN(e.ms2score) ? 0f : (e.ms2score - 0.25)*4;
+                    e.pvalue = (float) (score + ms2value);
+                    ++count;
+                }
+            }
+        }
+        double correction = Math.log(Math.sqrt(count))+1d;
+        int above5=0, aboveCorrect=0;
+        for (AdductNode node : rtOrderedNodes) {
+            for (AdductEdge e : node.getEdges()){
+                if (e.getLeft()==node) {
+                    if (e.getScore()>=5) ++above5;
+                    if (e.getScore()>=(correction)) ++aboveCorrect;
+                }
+            }
+        }
+        System.out.println(count + " edges in total, so correction would be " + Math.log(count));
+        System.out.println(above5 + " edges have a score above 5, " + aboveCorrect + " also have a score above correction value.");
+        deleteEdgesWithLowPvalue(Math.max(correction, 3d));
+    }
+
+    private void deleteEdgesWithLowPvalue(double threshold) {
         for (AdductNode node : rtOrderedNodes) {
             Iterator<AdductEdge> iterator = node.edges.iterator();
             while (iterator.hasNext()) {
                 AdductEdge e = iterator.next();
-                if (-pValueStats.logPvalue(e) < threshold) {
+                if (-e.pvalue < threshold) {
                     iterator.remove();
                 }
             }

@@ -43,8 +43,10 @@ public class Compound {
     @Id
     private long compoundId;
     protected RetentionTime rt;
-    protected double neutralMass;
+    protected Double neutralMass;
     protected String name;
+
+    protected boolean ms2Available;
 
     //foreign fields
     @JsonIgnore

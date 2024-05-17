@@ -3,7 +3,7 @@ package de.unijena.bioinf.lcms.adducts;
 public class UnrelatedRelationship implements KnownMassDelta {
 
     @Override
-    public boolean isCompatible(KnownAdductType left, KnownAdductType right) {
+    public boolean isCompatible(IonType left, IonType right) {
         return true;
     }
 }
