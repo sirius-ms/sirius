@@ -28,31 +28,33 @@ import org.xml.sax.InputSource;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URL;
 
 public class MzXmlExperimentParser extends AbstractMzParser {
-
+    public URI sourceId;;
     protected BufferedReader currentSource;
 
-    @Override
-    protected boolean setNewSource(BufferedReader sourceReader, URI source) {
-        if (currentSource == null) {
+
+    protected boolean setNewSource(BufferedReader sourceReader, URI source) throws IOException {
+        if (sourceId == null) {
             if (sourceReader == null) {
                 return false;
             } else {
+                sourceId = source;
                 currentSource = sourceReader;
                 return true;
             }
-        } else if (!currentSource.equals(sourceReader)) {
+        } else if (!source.equals(sourceId)) {
+            sourceId = source;
             currentSource = sourceReader;
             return true;
         }
         return false;
     }
 
+
     @Override
-    protected LCMSRun parseToLCMSRun(BufferedReader sourceReader, URI source) throws IOException {
+    protected LCMSRun parseToLCMSRun() throws IOException {
         final MzXMLParser parser = new MzXMLParser();
-        return parser.parse(new DataSource(source), new InputSource(currentSource), inMemoryStorage);
+        return parser.parse(new DataSource(sourceId), new InputSource(currentSource), inMemoryStorage);
     }
 }

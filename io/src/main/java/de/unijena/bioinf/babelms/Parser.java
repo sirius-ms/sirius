@@ -21,8 +21,12 @@
 
 package de.unijena.bioinf.babelms;
 
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 
 public interface Parser<T> {
@@ -41,4 +45,14 @@ public interface Parser<T> {
      * @throws IOException if an IO error happens
      */
     T parse(BufferedReader reader, URI source) throws IOException;
+
+    default T parse(InputStream inputStream, URI source) throws IOException{
+       return parse(FileUtils.ensureBuffering(new InputStreamReader(inputStream)), source);
+    }
+
+    default T parse(URI source) throws IOException{
+        try(InputStream s = source.toURL().openStream()) {
+            return parse(s, source);
+        }
+    }
 }

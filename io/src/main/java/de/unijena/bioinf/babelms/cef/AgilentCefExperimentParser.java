@@ -30,6 +30,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.apache.commons.io.input.ReaderInputStream;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +51,7 @@ import java.net.URI;
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import static de.unijena.bioinf.babelms.cef.CEFUtils.*;
@@ -66,24 +68,26 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
 
     private Iterator<Ms2Experiment> iterator = null;
 
+
     @Override
-    public Ms2Experiment parse(BufferedReader secondChoice, @Nullable URI source) throws IOException {
+    public Ms2Experiment parse(BufferedReader reader, @Nullable URI source) throws IOException {
+        return parse(source, () -> new ReaderInputStream(reader, Charset.defaultCharset()));
+    }
+
+    @Override
+    public Ms2Experiment parse(@NotNull InputStream stream, @Nullable URI source) throws IOException {
+        return parse(source, () -> stream);
+    }
+
+    private Ms2Experiment parse(@Nullable URI source, Supplier<InputStream> streamSupplier) throws IOException {
         //XML parsing on readers works bad, so we create our own stream from url
         if (iterator != null && iterator.hasNext()) {
             return iterator.next();
         } else if (!Objects.equals(currentUrl, source) || xmlEventReader == null || unmarshaller == null) {
             try {
-                if (secondChoice == null && source == null)
-                    throw new IllegalArgumentException("Neither Reader nor File is given, No Input to parse!");
-
                 currentUrl = source;
-                if (currentUrl != null && currentUrl.isAbsolute()) { //only absolute paths can be used
-                    currentStream = currentUrl.toURL().openStream();
-                    if (secondChoice != null)
-                        secondChoice.close();
-                } else {
-                    currentStream = new ReaderInputStream(secondChoice, Charset.defaultCharset());
-                }
+                currentStream = streamSupplier.get();
+
 
                 // create xml event reader for input stream
                 XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
