@@ -144,6 +144,8 @@ public abstract class CustomDatabase implements SearchableDatabase {
         return toOptional(this::toWriteableSpectralLibraryOrThrow, WriteableSpectralLibrary.class);
     }
 
+    public abstract void setSearchFlag(long flag);
+
     @FunctionalInterface
     private interface ThrowingSupplier<T> {
 

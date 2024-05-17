@@ -58,6 +58,10 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     @Setter
     private String name = null;
 
+    @Getter
+    @Setter
+    private Long dbFlag = null;
+
     public ChemicalNoSQLDatabase(Database<Doctype> database) throws IOException {
         super(database);
     }
@@ -92,7 +96,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
             final double from = mass - deviation.absoluteFor(mass);
             final double to = mass + deviation.absoluteFor(mass);
             return this.storage.findStr(Filter.where("mass").beetweenBothInclusive(from, to), FingerprintCandidateWrapper.class)
-                    .map(c -> c.getCandidate().toFormulaCandidate(ionType)).toList();
+                    .map(c -> c.getFormulaCandidate(dbFlag, ionType)).toList();
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
@@ -111,7 +115,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     public List<CompoundCandidate> lookupStructuresByFormula(MolecularFormula formula) throws ChemicalDatabaseException {
         try {
             return storage.findStr(Filter.where("formula").eq(formula.toString()), FingerprintCandidateWrapper.class)
-                    .map(FingerprintCandidateWrapper::getCandidate).toList();
+                    .map(fpw -> fpw.getCandidate(name(), dbFlag)).toList();
         } catch (RuntimeException | IOException e) {
             throw new ChemicalDatabaseException(e);
         }
@@ -121,7 +125,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     public <T extends Collection<FingerprintCandidate>> T lookupStructuresAndFingerprintsByFormula(MolecularFormula formula, T fingerprintCandidates) throws ChemicalDatabaseException {
         try {
             storage.findStr(Filter.where("formula").eq(formula.toString()), FingerprintCandidateWrapper.class, "fingerprint")
-                    .map(FingerprintCandidateWrapper::getFingerprintCandidate)
+                    .map(fpw -> fpw.getFingerprintCandidate(name(), dbFlag))
                     .forEach(fingerprintCandidates::add);
             return fingerprintCandidates;
         } catch (IOException e) {
@@ -133,7 +137,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
         try {
             String[] keys = StreamSupport.stream(inchi_keys.spliterator(), false).toArray(String[]::new);
             return storage.findStr(Filter.where("candidate.inchikey").in(keys), FingerprintCandidateWrapper.class, "fingerprint")
-                    .map(FingerprintCandidateWrapper::getFingerprintCandidate);
+                    .map(fpw -> fpw.getFingerprintCandidate(name(), dbFlag));
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
@@ -172,7 +176,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     public List<InChI> findInchiByNames(List<String> names) throws ChemicalDatabaseException {
         try {
             return storage.findStr(Filter.where("candidate.name").in(names.toArray(String[]::new)), FingerprintCandidateWrapper.class)
-                    .map(fc -> fc.getCandidate().getInchi()).toList();
+                    .map(fc -> fc.getCandidate(name(), dbFlag).getInchi()).toList();
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
@@ -253,7 +257,7 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     private void doUpdate(List<FingerprintCandidateWrapper> chunk, Consumer<FingerprintCandidate> updater) {
         List<FingerprintCandidateWrapper> updated = new ArrayList<>();
         for (FingerprintCandidateWrapper wrapper : chunk) {
-            FingerprintCandidate fingerprintCandidate = wrapper.getFingerprintCandidate();
+            FingerprintCandidate fingerprintCandidate = wrapper.getFingerprintCandidate(name(), dbFlag);
             updater.accept(fingerprintCandidate);
             updated.add(FingerprintCandidateWrapper.of(wrapper.getFormula(), wrapper.getMass(), fingerprintCandidate));
         }

@@ -120,8 +120,8 @@ public class Ms2ReferenceSpectrum {
 
     @JsonIgnore
     public void setSpectralDbLink(DBLink spectralDbLink) {
-        this.libraryName = spectralDbLink.name;
-        this.libraryId = spectralDbLink.id;
+        this.libraryName = spectralDbLink.getName();
+        this.libraryId = spectralDbLink.getId();
     }
 
     @Override

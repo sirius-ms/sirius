@@ -23,6 +23,8 @@
 package de.unijena.bioinf.chemdb;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,12 +34,14 @@ import java.util.Objects;
     A single link to a compound database with a database name
     and a database id
  */
+@Getter
 public final class DBLink {
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-    public final @NotNull String name;
-    public final @Nullable  String id;
+    @Setter
+    private @NotNull String name;
+    private final @Nullable String id;
 
-    public DBLink(@NotNull String name, @Nullable  String id) {
+    public DBLink(@NotNull String name, @Nullable String id) {
         this.name = name;
         this.id = id;
     }
@@ -49,19 +53,28 @@ public final class DBLink {
 
         DBLink dbLink = (DBLink) o;
 
-        if (!name.equals(dbLink.name)) return false;
+        if (!Objects.equals(name, dbLink.name)) return false;
         return Objects.equals(id, dbLink.id);
     }
 
     @Override
     public int hashCode() {
-        int result = name.hashCode();
+        int result = (name != null ? name.hashCode() : 0);
         result = 31 * result + (id != null ? id.hashCode() : 0);
         return result;
     }
 
     @Override
     public String toString() {
-        return id==null ? name :  name + ":" + id;
+        if ((id == null || id.isBlank()) && (name == null || name.isBlank()))
+            return "EMPTY";
+
+        if (id != null && !id.isBlank() && name != null && !name.isBlank())
+            return name + ":" + id;
+
+        if (id != null && !id.isBlank())
+            return id;
+
+        return name;
     }
 }
