@@ -99,7 +99,7 @@ public class ChemDBFileCache extends AbstractCompressible {
         SiriusJobs.runInBackgroundIO(() ->
                 cacheStorage.withWriter(relative, w -> Compressible.withCompression(w, getCompression(), cw -> FingerprintCandidate.toJSONList(fpcs, cw))));
 
-        return fpcs;
+        return fpcs.stream().map(FingerprintCandidate::new).toList(); //we do a copy since writing cache is async and the candidate might get modified after returning it.
     }
 }
 

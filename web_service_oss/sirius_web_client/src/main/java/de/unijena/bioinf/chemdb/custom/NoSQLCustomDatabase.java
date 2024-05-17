@@ -59,6 +59,11 @@ public class NoSQLCustomDatabase<Doctype, DB extends ChemicalNoSQLDatabase<Docty
     @Override
     public void readSettings() throws IOException {
         setSettings(database.asObject(getSettingsFromDB().orElseThrow(() -> new IllegalArgumentException("No custom DB settings! Please reimport.")), CustomDatabaseSettings.class));
+    }
+
+    @Override
+    protected synchronized void setSettings(CustomDatabaseSettings config) {
+        super.setSettings(config);
         database.setName(getSettings().getName());
     }
 
@@ -100,6 +105,11 @@ public class NoSQLCustomDatabase<Doctype, DB extends ChemicalNoSQLDatabase<Docty
     @Override
     public WriteableSpectralLibrary toWriteableSpectralLibraryOrThrow() throws IOException {
         return database;
+    }
+
+    @Override
+    public void setSearchFlag(long flag) {
+        database.setDbFlag(flag);
     }
 
 }

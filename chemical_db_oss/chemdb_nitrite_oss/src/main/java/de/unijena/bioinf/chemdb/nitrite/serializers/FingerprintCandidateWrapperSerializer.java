@@ -45,9 +45,9 @@ public class FingerprintCandidateWrapperSerializer extends StdSerializer<Fingerp
         gen.writeStringField("formula", value.getFormula());
         gen.writeNumberField("mass", value.getMass());
         gen.writeFieldName("candidate");
-        CompoundCandidate candidate = value.getCandidate();
+        CompoundCandidate candidate = value.getCandidate(null, null);
         if (candidate != null) {
-            compoundCandidateSerializer.serialize(value.getCandidate(), gen, provider);
+            compoundCandidateSerializer.serialize(candidate, gen, provider);
         } else {
             gen.writeNull();
         }

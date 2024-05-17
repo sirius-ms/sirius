@@ -39,6 +39,10 @@ public class FingerprintCandidate extends CompoundCandidate {
 
     protected Fingerprint fingerprint;
 
+    public FingerprintCandidate(FingerprintCandidate c) {
+        this(c, c.getFingerprint());
+    }
+
     public FingerprintCandidate(CompoundCandidate c, Fingerprint fp) {
         super(c);
         this.fingerprint = fp;
