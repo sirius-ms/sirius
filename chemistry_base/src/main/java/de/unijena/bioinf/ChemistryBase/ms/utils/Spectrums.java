@@ -103,6 +103,8 @@ public class Spectrums {
 
     public static <P extends Peak, S extends Spectrum<P>>
     SimpleSpectrum mergeSpectra(@SuppressWarnings("unchecked") final S... spectra) {
+        if (spectra.length==0) return new SimpleSpectrum(new double[0], new double[0]);
+        if (spectra.length==1) return new SimpleSpectrum(spectra[0]);
         final SimpleMutableSpectrum ms = new SimpleMutableSpectrum();
         for (S s : spectra) {
             for (Peak p : s) {
@@ -114,6 +116,8 @@ public class Spectrums {
 
     public static <P extends Peak, S extends Spectrum<P>>
     SimpleSpectrum mergeSpectra(@SuppressWarnings("unchecked") final List<S> spectra) {
+        if (spectra.size()==0) return new SimpleSpectrum(new double[0], new double[0]);
+        if (spectra.size()==1) return new SimpleSpectrum(spectra.get(0));
         final SimpleMutableSpectrum ms = new SimpleMutableSpectrum();
         for (S s : spectra) {
             for (Peak p : s) {
@@ -404,7 +408,6 @@ public class Spectrums {
         final SimpleMutableSpectrum buffer = new SimpleMutableSpectrum(msms.size() / 4);
         final boolean[] chosen = new boolean[massOrdered.size()];
         for (int k = 0; k < intensityOrdered.size(); ++k) {
-            if (chosen[k]) continue;
             final double mz = intensityOrdered.getMzAt(k);
             final int a = indexOfFirstPeakWithin(massOrdered, mz, mergeWindow);
             if (a < 0 || a > massOrdered.size())
@@ -415,6 +418,7 @@ public class Spectrums {
             for (int b = a; b < massOrdered.size(); ++b) {
                 final double m = massOrdered.getMzAt(b);
                 if (m > threshold) break;
+                if (chosen[b]) continue;
                 final double p = massOrdered.getIntensityAt(b);
                 chosen[b] = true;
                 if (p > maxIntensity) {
@@ -424,6 +428,7 @@ public class Spectrums {
                 selectedMz += p * m;
                 selectedIntensity += p;
             }
+            if (maxIntensity<=0) continue; // we already merged this entire window
             if (mergeMasses) selectedMz /= selectedIntensity;
             else selectedMz = massOrdered.getMzAt(maxPeak);
             if (!sumIntensities) selectedIntensity = massOrdered.getIntensityAt(maxPeak);
@@ -902,7 +907,7 @@ public class Spectrums {
             mz[i] = spectrum.getMzAt(k);
             intensities[i++] = spectrum.getIntensityAt(k);
         }
-        return new SimpleSpectrum(mz, intensities);
+        return new SimpleSpectrum(mz, intensities, spectrum instanceof OrderedSpectrum);
     }
 
     public static <P extends Peak, S extends Spectrum<P>> List<P> extractPeakList(S spectrum) {
@@ -1045,6 +1050,7 @@ public class Spectrums {
             case MAX -> normalizeToMax(spectrum, norm.getBase());
             case SUM -> normalizeToSum(spectrum, norm.getBase());
             case FIRST -> normalizeByFirstPeak(spectrum, norm.getBase());
+            case L2 -> normalizeByL2Norm(spectrum, norm.getBase());
         };
     }
 
@@ -1082,6 +1088,19 @@ public class Spectrums {
             }
         }
         final double scale = norm / maxIntensity;
+        for (int i = 0; i < n; ++i) {
+            spectrum.setIntensityAt(i, spectrum.getIntensityAt(i) * scale);
+        }
+        return scale;
+    }
+
+    private static <P extends Peak, S extends MutableSpectrum<P>> double normalizeByL2Norm(S spectrum, double norm) {
+        final int n = spectrum.size();
+        double sumIntensity = 0d;
+        for (int i = 0; i < n; ++i) {
+            sumIntensity += spectrum.getIntensityAt(i)*spectrum.getIntensityAt(i);
+        }
+        final double scale = norm / Math.sqrt(sumIntensity);
         for (int i = 0; i < n; ++i) {
             spectrum.setIntensityAt(i, spectrum.getIntensityAt(i) * scale);
         }

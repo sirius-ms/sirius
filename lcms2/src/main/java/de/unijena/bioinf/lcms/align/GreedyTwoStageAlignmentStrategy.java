@@ -1,5 +1,6 @@
 package de.unijena.bioinf.lcms.align;
 
+import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.algorithm.Sorting;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
@@ -59,7 +60,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
                         final MoI[] leftSet = storage.getMoIWithin(from, to).toArray(MoI[]::new);
                         if (leftSet.length==0) return false;
                         final MoI[] rightSet = S.getStorage().getAlignmentStorage().getMoIWithin(from, to).stream().
-                                filter(x->x.getConfidence()>=MassOfInterestConfidenceEstimatorStrategy.CONFIDENT).toArray(MoI[]::new);
+                                filter(x->x.getConfidence()>=MassOfInterestConfidenceEstimatorStrategy.CONFIDENT && x.isSingleApex()).toArray(MoI[]::new);
                         if (rightSet.length==0) return false;
                         algorithm.align(stats, scorer, AlignWithRecalibration.noRecalibration(), leftSet,rightSet,
                                 (al, left, right, leftIndex, rightIndex) -> storage.mergeMoIs(al, left[leftIndex], right[rightIndex]),
@@ -231,7 +232,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
             if (moi instanceof AlignedMoI) {
                 if (((AlignedMoI) moi).getAligned().length>1) return false;
                 MoI key = ((AlignedMoI) moi).getAligned()[0];
-                return map.contains(key.getSampleIdx()) || key.getConfidence()>=MassOfInterestConfidenceEstimatorStrategy.KEEP_FOR_ALIGNMENT;
+                return map.contains(key.getSampleIdx()) && key.getConfidence()<MassOfInterestConfidenceEstimatorStrategy.KEEP_FOR_ALIGNMENT;
             } else return true;
         });
     }
@@ -265,7 +266,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
         for (int k=0; k < rts.length; ++k) {
             scanpoints[k] = k;
         }
-        return new ScanPointMapping(rts, scanpoints);
+        return new ScanPointMapping(rts, scanpoints, null);
 
     }
 
@@ -342,6 +343,11 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
             first.active();
             // transfer all mois to merge sample and recalibrate them
             for (MoI moi : first.getStorage().getAlignmentStorage()) {
+                {
+                    if (moi.getMz()>=236.1 && moi.getMz()<=236.2 && Range.closed(2.8,2.95).contains(moi.getRetentionTime()/60d)) {
+                        System.err.println("Ha!");
+                    }
+                }
                 storage.addMoI(AlignedMoI.merge(backbone, moi));
             }
             first.inactive();
@@ -356,16 +362,27 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
                     @Override
                     protected Object compute() throws Exception {
                         final MoI[] leftSet = storage.getMoIWithin(from, to).toArray(MoI[]::new);
-                        if (leftSet.length==0) return false;
                         final MoI[] rightSet = S.getStorage().getAlignmentStorage().getMoIWithin(from, to).stream().
                                 toArray(MoI[]::new);
-                        if (rightSet.length==0) return false;
-                        algorithm.align(stats, scorer, backbone, leftSet,rightSet,
-                                (al, left, right, leftIndex, rightIndex) -> storage.mergeMoIs(al, left[leftIndex], right[rightIndex]),
-                                (al, right, rightIndex) -> storage.addMoI(
-                                        AlignedMoI.merge(al, right[rightIndex])
-                                )
-                        );
+                        {
+                            for (MoI moi : rightSet) {
+                                {
+                                    if (moi.getMz()>=236.1 && moi.getMz()<=236.2 && Range.closed(2.8,2.95).contains(moi.getRetentionTime()/60d)) {
+                                        System.err.println("Ha!");
+                                    }
+                                }
+                            }
+                        }
+                        if (leftSet.length>0 && rightSet.length > 0) {
+                            algorithm.align(stats, scorer, backbone, leftSet, rightSet,
+                                    (al, left, right, leftIndex, rightIndex) -> storage.mergeMoIs(al, left[leftIndex], right[rightIndex]),
+                                    (al, right, rightIndex) -> storage.addMoI(
+                                            AlignedMoI.merge(al, right[rightIndex])
+                                    )
+                            );
+                        } else {
+                            for (MoI m : rightSet) storage.addMoI(AlignedMoI.merge(backbone, m));
+                        }
                         return true;
                     };
                 }));

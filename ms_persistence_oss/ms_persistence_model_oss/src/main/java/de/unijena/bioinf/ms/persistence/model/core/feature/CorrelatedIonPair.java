@@ -37,7 +37,7 @@ import java.util.Optional;
 @NoArgsConstructor
 @ToString
 public class CorrelatedIonPair {
-    public enum Type {ADDUCT, INSOURCE, MULTIMERE, ISOMERE}
+    public enum Type {ADDUCT, INSOURCE, MULTIMERE, ISOMERE, UNKNOWN}
 
     @Id
     private long ionPairId;
@@ -69,4 +69,5 @@ public class CorrelatedIonPair {
     //MetaInformation...
     private Double score;
     private Double correlationCoefficient;
+    private Double ms2ModifiedCosineSimilarity;
 }

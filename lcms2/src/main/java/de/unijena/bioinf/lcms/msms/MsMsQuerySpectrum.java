@@ -52,9 +52,9 @@ public class MsMsQuerySpectrum {
             ++right;
         --right;
         this.chimericSpectrum = Spectrums.subspectrum(ms1Spectrum, left, right-left+1);
-        double chi = -ms1Spectrum.getIntensityAt(target);
+        double chi = 0d;
         for (int k=0; k < chimericSpectrum.size(); ++k) {
-            chi += chimericSpectrum.getIntensityAt(k) * Math.exp(-Math.pow(chimericSpectrum.getMzAt(k)-(header.getTargetedMz()+isolationWindow.getWindowOffset()), 2)/(isolationWindow.getWindowWidth()*isolationWindow.getWindowWidth()));
+            if (k!=(target-left)) chi += chimericSpectrum.getIntensityAt(k) * Math.exp(-Math.pow(chimericSpectrum.getMzAt(k)-(header.getTargetedMz()+isolationWindow.getWindowOffset()), 2)/(isolationWindow.getWindowWidth()*isolationWindow.getWindowWidth()));
         }
         this.chimericPollution = chi;
         this.ms1Intensity = ms1Spectrum.getIntensityAt(target);

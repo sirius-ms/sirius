@@ -91,6 +91,8 @@ public class PrecursorIonType implements TreeAnnotation {
     private final String name;
     private final boolean multipleIons;
 
+    private final byte multimere;
+
 
     public boolean hasNeitherAdductNorInsource() {
         return inSourceFragmentation.isEmpty() && adduct.isEmpty();
@@ -136,13 +138,14 @@ public class PrecursorIonType implements TreeAnnotation {
         return PeriodicTable.getInstance().unknownNegativePrecursorIonType();
     }
 
-    PrecursorIonType(Ionization ion, MolecularFormula insource, MolecularFormula adduct, final SPECIAL_TYPES special) {
+    PrecursorIonType(Ionization ion, MolecularFormula insource, MolecularFormula adduct, int multimere, final SPECIAL_TYPES special) {
         this.ionization = ion;
         this.inSourceFragmentation = insource == null ? MolecularFormula.emptyFormula() : insource;
         this.adduct = adduct == null ? MolecularFormula.emptyFormula() : adduct;
         this.special = special;
-        this.name = formatToString();
+        this.multimere = (byte)multimere;
         this.multipleIons = checkForMultipleIons();
+        this.name = formatToString();
     }
 
     private boolean checkForMultipleIons() {
@@ -151,9 +154,10 @@ public class PrecursorIonType implements TreeAnnotation {
 
     public String substituteName(MolecularFormula neutralFormula) {
         if (isIonizationUnknown()) {
-            return neutralFormula + " " + (getCharge() > 0 ? "+" : "-") + getCharge();
+            return multimereStr() + neutralFormula + " " + (getCharge() > 0 ? "+" : "-") + getCharge();
         }
         final StringBuilder buf = new StringBuilder(128);
+        buf.append(multimereStr());
         buf.append(neutralFormula.toString());
         if (!inSourceFragmentation.isEmpty()) {
             buf.append(" - ");
@@ -181,9 +185,13 @@ public class PrecursorIonType implements TreeAnnotation {
         return buf.toString();
     }
 
+    private String multimereStr() {
+        return multimere == 1 ? "" : String.valueOf(multimere);
+    }
+
     public boolean equals(PrecursorIonType other) {
         if (other == null) return false;
-        return this.special == other.special && this.ionization.equals(other.ionization) && this.adduct.equals(other.adduct) && this.inSourceFragmentation.equals(other.inSourceFragmentation);
+        return this.special == other.special && this.ionization.equals(other.ionization) && this.adduct.equals(other.adduct) && this.inSourceFragmentation.equals(other.inSourceFragmentation) && this.multimere==other.multimere;
     }
 
     public boolean equals(Object other) {
@@ -194,24 +202,28 @@ public class PrecursorIonType implements TreeAnnotation {
     }
 
     public PrecursorIonType withoutAdduct() {
-        return new PrecursorIonType(getIonization(), inSourceFragmentation, MolecularFormula.emptyFormula(), special);
+        return new PrecursorIonType(getIonization(), inSourceFragmentation, MolecularFormula.emptyFormula(), multimere, special);
+    }
+
+    public PrecursorIonType withMultimere(int count) {
+        return new PrecursorIonType(getIonization(), inSourceFragmentation, MolecularFormula.emptyFormula(), count, special);
     }
 
     public PrecursorIonType withoutInsource() {
-        return new PrecursorIonType(getIonization(), MolecularFormula.emptyFormula(), adduct, special);
+        return new PrecursorIonType(getIonization(), MolecularFormula.emptyFormula(), adduct, multimere, special);
     }
 
     public PrecursorIonType substituteAdduct(MolecularFormula newAdduct) {
-        return new PrecursorIonType(getIonization(), inSourceFragmentation, newAdduct, special);
+        return new PrecursorIonType(getIonization(), inSourceFragmentation, newAdduct, multimere, special);
     }
 
     public PrecursorIonType substituteInsource(MolecularFormula newInsource) {
-        return new PrecursorIonType(getIonization(), newInsource, adduct, special);
+        return new PrecursorIonType(getIonization(), newInsource, adduct, multimere, special);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(ionization, inSourceFragmentation, adduct, special);
+        return Objects.hash(ionization, inSourceFragmentation, adduct, special, multimere);
     }
 
     @Override
@@ -224,10 +236,10 @@ public class PrecursorIonType implements TreeAnnotation {
             return ionization.toString();
         }
         if (isIntrinsicalCharged()) {
-            return "[M]" + (getCharge() > 0 ? "+" : "-");
+            return "[" + multimereStr() + "M]" + (getCharge() > 0 ? "+" : "-");
         }
         final StringBuilder buf = new StringBuilder(128);
-        buf.append("[M");
+        buf.append("[").append(multimereStr()).append("M");
         if (!inSourceFragmentation.isEmpty()) {
             buf.append(" - ");
             buf.append(inSourceFragmentation.toString());
@@ -295,7 +307,7 @@ public class PrecursorIonType implements TreeAnnotation {
      * @return molecular formula with adducts, in-source fragmentations and so on, but WITHOUT charge (no H+, Na+, ...)
      */
     public MolecularFormula neutralMoleculeToMeasuredNeutralMolecule(MolecularFormula neutral) {
-        return neutral.subtract(inSourceFragmentation).add(adduct);
+        return neutral.multiply(multimere).subtract(inSourceFragmentation).add(adduct);
     }
 
     /**
@@ -303,7 +315,7 @@ public class PrecursorIonType implements TreeAnnotation {
      * @return molecular formula without any modification in neutralized form (even when intrinsical-charged)
      */
     public MolecularFormula measuredNeutralMoleculeToNeutralMolecule(MolecularFormula measured) {
-        return measured.add(inSourceFragmentation).subtract(adduct);
+        return measured.add(inSourceFragmentation).subtract(adduct).divide(multimere);
     }
 
     /**
@@ -311,7 +323,7 @@ public class PrecursorIonType implements TreeAnnotation {
      * @return molecular formula without any modification in neutralized form (even when intrinsical-charged)
      */
     public MolecularFormula precursorIonToNeutralMolecule(MolecularFormula precursor) {
-        return precursor.subtract(adduct).add(inSourceFragmentation).subtract(ionization.getAtoms());
+        return precursor.subtract(adduct).add(inSourceFragmentation).subtract(ionization.getAtoms()).divide(multimere);
     }
 
     /**
@@ -319,7 +331,7 @@ public class PrecursorIonType implements TreeAnnotation {
      * @return molecular formula with adducts, in-source fragmentations AND charge (atoms of the ionization)
      */
     public MolecularFormula neutralMoleculeToPrecursorIon(MolecularFormula formula) {
-        return formula.add(adduct).subtract(inSourceFragmentation).add(ionization.getAtoms());
+        return formula.multiply(multimere).add(adduct).subtract(inSourceFragmentation).add(ionization.getAtoms());
     }
 
     /**
@@ -328,7 +340,7 @@ public class PrecursorIonType implements TreeAnnotation {
      * @return molecular formula with adducts, in-source fragmentations and so on, but WITHOUT charge (no H+, Na+, ...)
      */
     public double neutralMassToMeasuredNeutralMass(double neutral) {
-        return neutral - inSourceFragmentation.getMass() + adduct.getMass();
+        return neutral*multimere - inSourceFragmentation.getMass() + adduct.getMass();
     }
 
     /**
@@ -336,7 +348,7 @@ public class PrecursorIonType implements TreeAnnotation {
      * @return molecular formula without any modification in neutralized form (even when intrinsical-charged)
      */
     public double measuredNeutralMassToNeutralMass(double measured) {
-        return measured + inSourceFragmentation.getMass() - adduct.getMass();
+        return (measured + inSourceFragmentation.getMass() - adduct.getMass())/multimere;
     }
 
 
@@ -345,7 +357,7 @@ public class PrecursorIonType implements TreeAnnotation {
      * @return molecular formula without any modification in neutralized form (even when intrinsical-charged)
      */
     public double precursorMassToNeutralMass(double precursor) {
-        return ionization.subtractFromMass(precursor - adduct.getMass() + inSourceFragmentation.getMass());
+        return (ionization.subtractFromMass(precursor - adduct.getMass() + inSourceFragmentation.getMass()))/multimere;
     }
 
 
@@ -354,7 +366,7 @@ public class PrecursorIonType implements TreeAnnotation {
      * @return molecular formula with adducts, in-source fragmentations AND charge (atoms of the ionization)
      */
     public double neutralMassToPrecursorMass(double formula) {
-        return ionization.addToMass(formula + adduct.getMass() - inSourceFragmentation.getMass());
+        return ionization.addToMass(formula*multimere + adduct.getMass() - inSourceFragmentation.getMass());
     }
 
 
@@ -410,6 +422,18 @@ public class PrecursorIonType implements TreeAnnotation {
 
     public MolecularFormula getAdduct() {
         return adduct;
+    }
+
+    public int getMultimereCount() {
+        return multimere;
+    }
+
+    public boolean isMultimere() {
+        return multimere>1;
+    }
+
+    public boolean isSupportedForFragmentationTreeComputation() {
+        return Math.abs(getCharge())==1 && multimere==1;
     }
 
     public MolecularFormula getAdductAndIons() {

@@ -1,6 +1,5 @@
 package de.unijena.bioinf.lcms.projectspace;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
@@ -15,7 +14,6 @@ import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.ProjectedTrace;
 import de.unijena.bioinf.lcms.trace.Trace;
-import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
 import de.unijena.bioinf.ms.persistence.model.core.run.SampleStats;
@@ -376,7 +374,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                     Ms2SpectrumHeader header = m.getHeaders()[j];
                     Ms2Pointer ms2Pointer = ms2Pointers.computeIfAbsent(sampleIds[j], idx -> new Ms2Pointer(idx, new IntArrayList(),
                             new IntArrayList(), new IntArrayList()));
-                    ms2Pointer.ms2scans().add(header.getScanIndex());
+                    ms2Pointer.ms2scans().add(header.getScanId());
                     ms2Pointer.rawscans().add(header.getParentId());
                     ms2Pointer.projectedScans().add(smp.getScanPointInterpolator().roundIndex(header.getParentId()));
                 }

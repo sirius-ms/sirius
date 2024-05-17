@@ -3,28 +3,37 @@ package de.unijena.bioinf.lcms;
 import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 
+import javax.annotation.Nullable;
 import java.util.Arrays;
 
 /**
  * Bijective mapping between a contiguous ID and its corresponding Scan Number and Retention Time
+ *
+ * Note: scanIdentifiers is an super annoying artefact of the MzML format: scans have an ID that consists
+ * of a string with an integer number. In basically all cases this id is scan=NUM, so storing hundred thousands
+ * of strings that all are basically numbers is a vaste of memory. We store all IDs that follow the convention
+ * as NULL and instead store the value as integer number. We only store IDs that have a different prefix.
  */
 public class ScanPointMapping {
 
     protected Int2IntMap scan2id;
 
     protected double[] retentionTimes;
-    protected int[] scanids;
+    protected int[] scanIndizes; // TODO: maybe we remove that and use scanIds instead?
+    protected int[] scanIds;
+    @Nullable protected String[] scanIdentifiers;
 
-    public ScanPointMapping(double[] retentionTimes, int[] scanids, Int2IntMap map) {
+    public ScanPointMapping(double[] retentionTimes, int[] scanIds, String[] scanIdentifiers, Int2IntMap map) {
         this.retentionTimes = retentionTimes;
-        this.scanids = scanids;
+        this.scanIndizes = scanIds;
         this.scan2id = map;
+        this.scanIdentifiers = scanIdentifiers;
     }
 
-    public ScanPointMapping(double[] retentionTimes, int[] scanids) {
-        this(retentionTimes, scanids, new Int2IntOpenHashMap(scanids.length));
-        for (int k=0; k < scanids.length; ++k) {
-            scan2id.put(scanids[k], k);
+    public ScanPointMapping(double[] retentionTimes, int[] scanIds, String[] scanIdentifiers) {
+        this(retentionTimes, scanIds, scanIdentifiers, new Int2IntOpenHashMap(scanIds.length));
+        for (int k=0; k < scanIds.length; ++k) {
+            scan2id.put(scanIds[k], k);
         }
     }
 
@@ -61,7 +70,7 @@ public class ScanPointMapping {
      * @return scan id at the given index
      */
     public int getScanIdAt(int index) {
-        return scanids[index];
+        return scanIndizes[index];
     }
 
     /**
@@ -72,7 +81,11 @@ public class ScanPointMapping {
     }
 
     public int[] getScanIdArray() {
-        return scanids;
+        return scanIndizes;
+    }
+
+    @Nullable public String[] getScanIdentifiersArray() {
+        return scanIdentifiers;
     }
 
     public double[] getRetentionTimeArray() {

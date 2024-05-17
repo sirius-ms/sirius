@@ -24,14 +24,13 @@ import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import lombok.Getter;
 
+import javax.annotation.Nullable;
+
 @Getter
 public class Precursor implements Peak {
 
-    private final long scanId;
-    /**
-     * index (scan number) or -1 if number is unknown
-     */
-    private final int index;
+    private final int scanId;
+    @Nullable  private final String scanIdentifier;
     private final int charge;
     private final IsolationWindow isolationWindow;
     /**
@@ -39,10 +38,10 @@ public class Precursor implements Peak {
      */
     private final double mass, intensity;
 
-    public Precursor(int index, long scanId, double targedMz, double intensity, int charge, IsolationWindow isolationWindow) {
+    public Precursor(@Nullable  String scanIdentifier, int scanId, double targedMz, double intensity, int charge, IsolationWindow isolationWindow) {
         this.mass = targedMz;
         this.intensity = intensity;
-        this.index = index;
+        this.scanIdentifier = scanIdentifier;
         this.scanId = scanId;
         this.charge = charge;
         this.isolationWindow = isolationWindow;

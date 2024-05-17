@@ -46,6 +46,9 @@ public class DetectedAdducts {
         return detectedAdducts;
     }
 
+    /* @TODO: Kaidu this method is very likely very wrong :/
+     */
+    @Deprecated
     public DetectedAdducts add(String key, DetectedAdduct... adducts) {
         return add(PrecursorIonType.fromString(key), adducts);
     }

@@ -32,6 +32,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+// TODO: kaidu: warum ist MSData eine n:1 relationship zu AlignedFeature. Es sollte eine 1:1 relationship sein
 public class MSData {
 
     @Id

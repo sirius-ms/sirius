@@ -6,25 +6,22 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 public class AdductNode {
 
-    private static KnownAdductType[] NOTHING_KNOWN_PLUS = new KnownAdductType[]{new IonType(PrecursorIonType.unknown(1))},
-                                    NOTHING_KNOWN_MINUS = new KnownAdductType[]{new IonType(PrecursorIonType.unknown(-1))};
 
     protected final int index;
 
     protected final AlignedFeatures features;
     protected final List<AdductEdge> edges;
 
-    protected int selectedIon;
-    protected KnownAdductType[] ionTypes;
+    protected boolean hasMsMs;
 
     public AdductNode(AlignedFeatures features, int index) {
         this.features = features;
         this.edges = new ArrayList<>();
         this.index = index;
-        this.ionTypes = features.getCharge()>0 ? NOTHING_KNOWN_PLUS : NOTHING_KNOWN_MINUS;
     }
 
     public List<AdductNode> getNeighbours() {
@@ -34,6 +31,18 @@ public class AdductNode {
             else xs.add(edge.left);
         }
         return xs;
+    }
+
+    public List<AdductEdge> getEdges() {
+        return edges;
+    }
+
+    public int getIndex() {
+        return index;
+    }
+
+    public AlignedFeatures getFeatures() {
+        return features;
     }
 
     public double getMass() {
@@ -46,5 +55,10 @@ public class AdductNode {
 
     public double getRetentionTime() {
         return features.getRetentionTime().getRetentionTimeInSeconds();
+    }
+
+    @Override
+    public String toString() {
+        return String.format(Locale.US, "<%.4f m/z @ %.2f min>", getMass(), getRetentionTime()/60d);
     }
 }

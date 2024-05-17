@@ -9,13 +9,15 @@ import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.lcms.adducts.AdductManager;
 import de.unijena.bioinf.lcms.adducts.AdductNetwork;
 import de.unijena.bioinf.lcms.adducts.ProjectSpaceTraceProvider;
+import de.unijena.bioinf.lcms.adducts.assignment.OptimalAssignmentViaBeamSearch;
 import de.unijena.bioinf.lcms.align.AlignmentBackbone;
 import de.unijena.bioinf.lcms.align.MoI;
-import de.unijena.bioinf.lcms.merge.MergedTrace;
 import de.unijena.bioinf.lcms.projectspace.SiriusProjectDocumentDbAdapter;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
+import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
@@ -233,7 +235,7 @@ public class TestMain {
                     List<MSData> msdata = store.findStr(Filter.where("alignedFeatureId").eq(f.getAlignedFeatureId()), MSData.class).toList();
                     if (msdata.size()>0) {
                         f.setMsData(msdata.get(0));
-                        if (f.getMSData().get().getMsnSpectra()!=null && f.getMSData().get().getMsnSpectra().size()>0) {
+                        if (f.getMSData().get().getMsnSpectra()!=null && !f.getMSData().get().getMsnSpectra().isEmpty()) {
                             System.out.println(f.getAverageMass() + "m/z\t" + (f.getRetentionTime().getRetentionTimeInSeconds()/60d) + " minutes\t" + f.getMSData().get().getMsnSpectra().size() + " ms2 spectra, \t" + (f.getMSData().get().getIsotopePattern()==null ? " no isotopes" : Arrays.toString(Spectrums.extractPeakList(f.getMSData().get().getIsotopePattern()).stream().mapToDouble(x->x.getIntensity()).toArray()) + " isotopes"));
                             ++hasms2;
                         }
@@ -244,16 +246,49 @@ public class TestMain {
                 AdductManager manager = new AdductManager();
                 manager.addAdducts(Set.of(PrecursorIonType.getPrecursorIonType("[M+H]+"), PrecursorIonType.getPrecursorIonType("[M+Na]+"),
                         PrecursorIonType.getPrecursorIonType("[M+K]+"),  PrecursorIonType.getPrecursorIonType("[M+NH3+H]+"),
-                        PrecursorIonType.fromString("[M + FA + H]+"),
-                        PrecursorIonType.fromString("[M + ACN + H]+")));
+                        PrecursorIonType.getPrecursorIonType("[M + FA + H]+"),
+                        PrecursorIonType.getPrecursorIonType("[M + ACN + H]+"))
+                );
+                manager.allowMultimeresFor(Set.of(PrecursorIonType.getPrecursorIonType("[M+H]+"), PrecursorIonType.getPrecursorIonType("[M+Na]+")));
                 manager.addLoss(MolecularFormula.parseOrThrow("H2O"));
 
-                AdductNetwork network = new AdductNetwork(new ProjectSpaceTraceProvider(ps),  store.findAllStr(AlignedFeatures.class).toArray(AlignedFeatures[]::new), manager, rtTolerance/2);
+                ProjectSpaceTraceProvider prov = new ProjectSpaceTraceProvider(ps);
+                AdductNetwork network = new AdductNetwork(prov,  store.findAllStr(AlignedFeatures.class).toArray(AlignedFeatures[]::new), manager, rtTolerance/2);
+                network.buildNetworkFromMassDeltas(SiriusJobs.getGlobalJobManager());
+                int[] c = new int[2];
+
+                network.assign(SiriusJobs.getGlobalJobManager(), new OptimalAssignmentViaBeamSearch(), 1, compound -> {
+                    try {
+                        boolean hasMs2 = compound.isMs2Available();
+                        groupFeaturesToCompound(store, compound);
+                        ++c[0];
+                        if (hasMs2) ++c[1];
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+
+                System.out.println(String.valueOf(c[0]) + " features with adducts. " + c[1] + " of them have MS/MS.");
+
 
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    private static void groupFeaturesToCompound(Database<?> ps, Compound compound) throws IOException {
+        ps.insert(compound);
+        for (CorrelatedIonPair pair : compound.getCorrelatedIonPairs().get()) {
+            ps.insert(pair);
+        }
+        for (AlignedFeatures f : compound.getAdductFeatures().get()) {
+            if (f.getCompoundId()==null || f.getCompoundId()!=compound.getCompoundId()) {
+                f.setCompoundId(compound.getCompoundId());
+                ps.upsert(f);
+            }
+        }
+
     }
 
     private static synchronized int simpl(HashMap<Long,Integer> map, long key) {

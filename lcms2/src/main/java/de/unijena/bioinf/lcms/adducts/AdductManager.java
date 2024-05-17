@@ -6,26 +6,34 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.MassMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class AdductManager {
 
-    private List<IonType> precursorTypes;
+    private List<PrecursorIonType> precursorTypes;
+
+    private List<PrecursorIonType> multimereIonTypes;
 
     private MassMap<KnownMassDelta> massDeltas;
+    private MassMap<AdductRelationship> multimereDeltas;
     private IntOpenHashSet decoys;
 
     private Set<MolecularFormula> losses;
 
     public AdductManager() {
         this.precursorTypes = new ArrayList<>();
-        this.massDeltas = null;
+        this.massDeltas = new MassMap<>(500);
         this.decoys = initDecoys();
         this.losses = new HashSet<>();
+        this.multimereIonTypes = new ArrayList<>();
     }
+
+    public void allowMultimeresFor(Set<PrecursorIonType> ionTypes) {
+        multimereIonTypes = new ArrayList<>(ionTypes);
+        buildMassDifferences();
+    }
+
+
 
     private IntOpenHashSet initDecoys() {
         final IntOpenHashSet set = new IntOpenHashSet(Decoys.length);
@@ -36,20 +44,23 @@ public class AdductManager {
     }
 
     public void addAdducts(Set<PrecursorIonType> precursorIonTypes) {
-        this.massDeltas=null;
-        this.precursorTypes.addAll(precursorIonTypes.stream().map(IonType::new).toList());
+        this.precursorTypes.addAll(precursorIonTypes);
+        buildMassDifferences();
     }
 
     public void addLoss(MolecularFormula lossFormula) {
         losses.add(lossFormula);
-        this.massDeltas = null;
+        for (MolecularFormula loss : losses) {
+            massDeltas.put(loss.getMass(), new LossRelationship(loss));
+            massDeltas.put(-loss.getMass(), new LossRelationship(loss.negate()));
+        }
     }
 
     public void buildMassDifferences() {
         this.massDeltas = new MassMap<>(500);
-        for (IonType left : precursorTypes) {
-            for (IonType right : precursorTypes) {
-                final double massDifference = right.ionType.getModificationMass() - left.ionType.getModificationMass();
+        for (PrecursorIonType left : precursorTypes) {
+            for (PrecursorIonType right : precursorTypes) {
+                final double massDifference = right.getModificationMass() - left.getModificationMass();
                 if (Math.abs(massDifference) > 1e-3) {
                     massDeltas.put(massDifference, new AdductRelationship(left, right));
                 }
@@ -59,10 +70,24 @@ public class AdductManager {
             massDeltas.put(loss.getMass(), new LossRelationship(loss));
             massDeltas.put(-loss.getMass(), new LossRelationship(loss.negate()));
         }
+
+        multimereDeltas = new MassMap<>(500);
+        for (PrecursorIonType a : multimereIonTypes) {
+            for (PrecursorIonType b : multimereIonTypes) {
+                multimereDeltas.put(a.getModificationMass()-2*b.getModificationMass(), new AdductRelationship(b.withMultimere(1), a.withMultimere(2)));
+            }
+        }
+    }
+
+    public Optional<AdductRelationship> checkForMultimere(double largerMass, double smallerMass, Deviation dev) {
+        final double delta = largerMass - 2*smallerMass;
+        for (AdductRelationship r : multimereDeltas.retrieveAll(delta, dev)) {
+            return Optional.of(r);
+        }
+        return Optional.empty();
     }
 
     public List<KnownMassDelta> retrieveMassDeltas(double massDifference, Deviation deviation) {
-        if (massDeltas==null) buildMassDifferences();
         return massDeltas.retrieveAll(massDifference, deviation);
     }
 

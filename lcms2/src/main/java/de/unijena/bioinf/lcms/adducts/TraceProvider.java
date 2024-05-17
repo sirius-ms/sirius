@@ -1,6 +1,7 @@
 package de.unijena.bioinf.lcms.adducts;
 
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
@@ -24,5 +25,7 @@ public interface TraceProvider {
     public Long2DoubleMap getIntensities(AlignedFeatures features);
 
     public Optional<Pair<TraceRef, SourceTrace>> getSourceTrace(AlignedFeatures features, long runId);
+
+    public List<MergedMSnSpectrum> getMs2SpectraOf(AlignedFeatures features);
 
 }

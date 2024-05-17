@@ -27,7 +27,7 @@ import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.data.DataDocument;
 
 public enum NormalizationMode implements ImmutableParameterized {
-    SUM, MAX,FIRST;
+    SUM, MAX,FIRST, L2;
 
     @Override
     public Object readFromParameters(ParameterHelper helper, DataDocument document, Object dictionary) {
