@@ -44,12 +44,17 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
+import org.jetbrains.annotations.NotNull;
 import uk.ac.ebi.jmzml.model.mzml.*;
 import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
 
 import javax.annotation.Nullable;
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -57,6 +62,18 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class MzMLParser implements LCMSParser {
+
+    private File createTempFile(@NotNull Path input) throws IOException {
+        if (input.getFileSystem().equals(FileSystems.getDefault())) {
+            return input.toFile();
+        }else {
+            Path tmp = FileUtils.newTempFile("mzml_", ".mzml");
+            Files.copy(input,tmp);
+            File f = tmp.toFile();
+            f.deleteOnExit();
+            return f;
+        }
+    }
 
     @Override
     public ProcessedSample parse(
@@ -71,6 +88,18 @@ public class MzMLParser implements LCMSParser {
         return parse(input, storageFactory, new MzMLUnmarshaller(input.toURL()), runConsumer, runUpdateConsumer, scanConsumer, msmsScanConsumer, run);
     }
 
+    @Override
+    public ProcessedSample parse(
+            Path input,
+            LCMSStorageFactory storageFactory,
+            LCMSParser.IOThrowingConsumer<LCMSRun> runConsumer,
+            LCMSParser.IOThrowingConsumer<LCMSRun> runUpdateConsumer,
+            @Nullable LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
+            @Nullable LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
+            LCMSRun run
+    ) throws IOException {
+        return parse(input.toUri(), storageFactory, new MzMLUnmarshaller(createTempFile(input)), runConsumer, runUpdateConsumer, scanConsumer, msmsScanConsumer, run);
+    }
 
     private ProcessedSample parse(
             URI input,

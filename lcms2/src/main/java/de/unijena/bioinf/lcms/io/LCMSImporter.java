@@ -28,8 +28,33 @@ import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Path;
 
 public class LCMSImporter {
+
+    public static ProcessedSample importToProject(
+            Path file,
+            LCMSStorageFactory storageFactory,
+            ImportStrategy importStrategy,
+            boolean saveRawScans,
+            LCMSRun.Type runType,
+            Chromatography chromatography
+    ) throws IOException {
+        LCMSParser parser;
+        if (file.toString().toLowerCase().endsWith(".mzml")) {
+            parser = new MzMLParser();
+        } else if (file.toString().toLowerCase().endsWith(".mzxml")) {
+            parser = new MzXMLParser();
+        } else {
+            throw new IOException("Illegal file extension. Only .mzml and .mzxml are supported");
+        }
+        LCMSRun run = LCMSRun.builder().runType(runType).chromatography(chromatography).build();
+        if (!saveRawScans) {
+            return parser.parse(file, storageFactory, importStrategy::importRun, importStrategy::updateRun, null, null, run);
+        } else {
+            return parser.parse(file, storageFactory, importStrategy::importRun, importStrategy::updateRun, importStrategy::importScan, importStrategy::importMSMSScan, run);
+        }
+    }
 
     public static ProcessedSample importToProject(
             URI source,
