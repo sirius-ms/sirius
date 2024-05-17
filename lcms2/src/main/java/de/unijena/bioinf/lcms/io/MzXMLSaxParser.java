@@ -396,7 +396,6 @@ class MzXMLSaxParser extends DefaultHandler {
                                         collisionEnergy,
                                         new IsolationWindow(0d, isolationWindowWidth),
                                         idmap.getOrDefault(precursorScanNumber, -1), // TODO: potential error
-                                        precursorScanNumber,
                                         precursorMz,
                                         precursorMz,
                                         retentionTime
