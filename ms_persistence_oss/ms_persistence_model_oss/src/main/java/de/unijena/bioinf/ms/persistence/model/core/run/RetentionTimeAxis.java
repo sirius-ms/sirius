@@ -16,7 +16,9 @@ public class RetentionTimeAxis {
 
     @Id
     private long runId;
+    private int[] scanIndizes;
     private int[] scanNumbers;
+    private String[] scanIdentifiers;
     private double[] retentionTimes;
     /**
      * Estimated noise level per scan to compute a local SNR value.

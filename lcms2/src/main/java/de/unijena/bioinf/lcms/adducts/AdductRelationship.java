@@ -4,16 +4,26 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 
 public class AdductRelationship implements KnownMassDelta{
 
-    protected final KnownAdductType left, right;
+    protected final PrecursorIonType left, right;
 
-    public AdductRelationship(KnownAdductType left, KnownAdductType right) {
+    public AdductRelationship(PrecursorIonType left, PrecursorIonType right) {
         this.left = left;
         this.right = right;
     }
 
     @Override
-    public boolean isCompatible(KnownAdductType left, KnownAdductType right) {
-        return left.equals(this.left) && right.equals(this.right);
+    public boolean isCompatible(IonType left, IonType right) {
+        if (left instanceof IonType && right instanceof IonType) {
+            return ((IonType) left).ionType.equals(this.left) && ((IonType) right).ionType.equals(this.right);
+        } else return false;
+    }
+
+    public PrecursorIonType getLeft() {
+        return left;
+    }
+
+    public PrecursorIonType getRight() {
+        return right;
     }
 
     @Override

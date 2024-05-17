@@ -148,7 +148,7 @@ class MzXMLSaxParser extends DefaultHandler {
             throw new RuntimeException("No spectra imported from " + sourcePath);
         }
 
-        final ScanPointMapping mapping = new ScanPointMapping(retentionTimes.toDoubleArray(), scanids.toIntArray(), idmap);
+        final ScanPointMapping mapping = new ScanPointMapping(retentionTimes.toDoubleArray(), scanids.toIntArray(), null, idmap);
         storage.setMapping(mapping);
         ProcessedSample sample = new ProcessedSample(mapping, storage, samplePolarity, -1);
         sample.setRun(run);
@@ -396,7 +396,6 @@ class MzXMLSaxParser extends DefaultHandler {
                                         collisionEnergy,
                                         new IsolationWindow(0d, isolationWindowWidth),
                                         idmap.getOrDefault(precursorScanNumber, -1), // TODO: potential error
-                                        precursorScanNumber,
                                         precursorMz,
                                         precursorMz,
                                         retentionTime

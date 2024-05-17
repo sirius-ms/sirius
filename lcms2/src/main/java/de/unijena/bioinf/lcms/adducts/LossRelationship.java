@@ -15,14 +15,22 @@ public class LossRelationship implements KnownMassDelta{
     }
 
     @Override
-    public boolean isCompatible(KnownAdductType left, KnownAdductType right) {
-        return left.equals(right);
+    public boolean isCompatible(IonType left, IonType right) {
+        if (!(left.ionType.equals(right.ionType) && (int)left.multimere==(int)right.multimere))
+            return false;
+        return left.insource.subtract(right.insource).equals(formula);
+    }
+
+    public MolecularFormula getFormula() {
+        return formula;
     }
 
     @Override
     public String toString() {
-        return "LossRelationship{" +
-                "formula=" + formula +
-                '}';
+        if (formula.isAllPositiveOrZero()) {
+            return "gain of " + formula;
+        } else {
+            return "loss of " + formula.negate();
+        }
     }
 }

@@ -23,7 +23,7 @@ public class MsSpectrumHeaderDatatype extends CustomDataType<Ms1SpectrumHeader> 
         if (obj.centroided) flags |= 8;
         if (obj instanceof Ms2SpectrumHeader) flags |= 16;
         buff.putInt(obj.uid);
-        buff.putInt(obj.scanIndex);
+        buff.putInt(obj.scanId);
         buff.putInt(obj.sourceId.length());
         buff.putStringData(obj.sourceId, obj.sourceId.length());
         buff.put(flags);
@@ -34,7 +34,6 @@ public class MsSpectrumHeaderDatatype extends CustomDataType<Ms1SpectrumHeader> 
             buff.putDouble(header2.isolationWindow!=null ? header2.isolationWindow.getWindowOffset() : -1);
             buff.putDouble(header2.isolationWindow!=null ? header2.isolationWindow.getWindowWidth() : -1);
             buff.putInt(header2.parentId);
-            buff.putInt(header2.parentIndex);
             buff.putDouble(header2.precursorMz);
             buff.putDouble(header2.retentionTime);
             buff.putInt(header2.msLevel);
@@ -63,12 +62,11 @@ public class MsSpectrumHeaderDatatype extends CustomDataType<Ms1SpectrumHeader> 
                 window = null;
             } else window = new IsolationWindow(iso1, iso2);
             int pid =buff.getInt();
-            int pindex = buff.getInt();
             double mz = buff.getDouble();
             double rt = buff.getDouble();
             int level = buff.getInt();
             return new Ms2SpectrumHeader(
-                    uid, scanid, sourceId, polarity, level, centroided, ce, window, pid, pindex, mz,mz, rt
+                    uid, scanid, sourceId, polarity, level, centroided, ce, window, pid, mz,mz, rt
             );
         } else { // MS1 Header
             return new Ms1SpectrumHeader(uid,scanid, sourceId, polarity, centroided);

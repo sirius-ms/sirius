@@ -84,7 +84,7 @@ public class MergeGreedyStrategy implements Ms2MergeStrategy{
         final double maxTic = msMsQuerySpectrums.stream().mapToDouble(x->x.filteredSpectrum.getSelfSimilarity()).max().orElse(1d);
         for (int k=0; k < msMsQuerySpectrums.size(); ++k) {
             MsMsQuerySpectrum msms = msMsQuerySpectrums.get(k);
-            msms.score = Math.min(10, msms.ms1Intensity/msms.chimericPollution) + msms.ms1Intensity/maxIntensity + msms.filteredSpectrum.getSelfSimilarity()/maxTic;
+            msms.score = (msms.chimericPollution>0 ? Math.min(10, msms.ms1Intensity/msms.chimericPollution) : 10)/3d + msms.ms1Intensity/maxIntensity + msms.filteredSpectrum.getSelfSimilarity()/maxTic;
         }
     }
 

@@ -1,21 +1,33 @@
 package de.unijena.bioinf.lcms.adducts;
 
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.Normalization;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
+import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
+import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
+import de.unijena.bionf.spectral_alignment.ModifiedCosine;
+import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.longs.Long2DoubleMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 
+import java.util.List;
 import java.util.Optional;
 
 public class Scorer {
 
     private final static double DEFAULT_SCORE = 1;
+
+    public final static float SCORE_BONUS_FOR_SIMPLE_EDGES = 1;
 
     public Scorer() {
     }
@@ -91,7 +103,8 @@ public class Scorer {
                 ys.add(right.getOrDefault(key, 0d));
             }
         });
-        if (xs.size() <= 3 || ys.size()<=3) return Float.NEGATIVE_INFINITY;
+        if (xs.size() <= 0 || ys.size()<=0) return Float.NEGATIVE_INFINITY;
+        if (xs.size() <= 2 || ys.size() <= 2) return 0f;
         // normalize both vectors
         double xsum = xs.doubleStream().sum(), ysum = ys.doubleStream().sum();
         for (int k=0; k < xs.size(); ++k) {
@@ -174,4 +187,29 @@ public class Scorer {
 
     }
 
+    public SimpleSpectrum prepareForCosine(AdductNode node, List<MergedMSnSpectrum> ms2Left) {
+        SimpleSpectrum spec = Spectrums.mergePeaksWithinSpectrum(Spectrums.mergeSpectra(ms2Left.stream().map(MergedMSnSpectrum::getPeaks).toArray(SimpleSpectrum[]::new)),
+                new Deviation(10), true, false);
+        final int cut = Spectrums.getFirstPeakGreaterOrEqualThan(spec, node.getMass()-8);
+        if (cut < spec.size()) spec = Spectrums.subspectrum(spec, 0, cut);
+        return Spectrums.getNormalizedSpectrum(spec, Normalization.L2());
+    }
+
+    public boolean hasMinimumMs2Quality(SimpleSpectrum spec) {
+        // we expect at least 3 peaks with intensity above 0.05
+        // as well as an intensity difference between largest and smallest peak of at least 10
+        final double MAX = Spectrums.getMaximalIntensity(spec);
+        double MIN = MAX;
+        int count = 0;
+        for (int i=0; i < spec.size(); ++i) {
+            if (spec.getIntensityAt(i)/MAX >= 0.05) ++count;
+            MIN = Math.min(MIN, spec.getIntensityAt(i));
+        }
+        return count >= 3 && MAX/MIN >= 10;
+    }
+
+    public void computeMs2Score(AdductEdge adductEdge, SimpleSpectrum left, SimpleSpectrum right) {
+        SpectralSimilarity score = new ModifiedCosine(new Deviation(10)).score(left, right, adductEdge.getLeft().getMass(), adductEdge.getRight().getMass(), 1d);
+        adductEdge.ms2score = (float)score.similarity;
+    }
 }
