@@ -63,11 +63,6 @@ public abstract class AbstractFeature {
     protected double averageMass;
 
     /**
-     * ion type
-     */
-    protected PrecursorIonType ionType;
-
-    /**
      * retention time (start, apex, end)
      */
     protected RetentionTime retentionTime;
