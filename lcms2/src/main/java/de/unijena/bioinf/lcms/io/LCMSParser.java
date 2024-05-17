@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.file.Path;
 
 public interface LCMSParser {
 
@@ -55,4 +56,15 @@ public interface LCMSParser {
             LCMSRun run
     ) throws IOException;
 
+    default ProcessedSample parse(
+            Path input,
+            LCMSStorageFactory storageFactory,
+            LCMSParser.IOThrowingConsumer<LCMSRun> runConsumer,
+            LCMSParser.IOThrowingConsumer<LCMSRun> runUpdateConsumer,
+            LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
+            LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
+            LCMSRun run
+    ) throws IOException{
+        return parse(input.toUri(), storageFactory, runConsumer, runUpdateConsumer, scanConsumer, msmsScanConsumer, run);
+    }
 }
