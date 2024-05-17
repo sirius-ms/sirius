@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.backgroundruns;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
@@ -30,6 +31,7 @@ import de.unijena.bioinf.jjobs.ProgressSupport;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJobNoSql;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJobSiriusPs;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
 import lombok.extern.slf4j.Slf4j;
 
@@ -121,7 +123,7 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
                 } else if (psm instanceof NoSQLProjectSpaceManager spsm) {
                     LcmsAlignSubToolJobNoSql importerJJob = new LcmsAlignSubToolJobNoSql(
                             inputResources.stream().map(PathInputResource::getResource).collect(Collectors.toList()),
-                            () -> spsm);
+                            () -> spsm, PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable());
                     SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
                     importerJJob.addJobProgressListener(progressSupport);
                     importedCompounds = new ArrayList<>(importerJJob.getImportedCompounds());

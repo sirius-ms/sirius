@@ -66,9 +66,23 @@ public class Spectrums {
         return spectrum;
     }
 
-    public static BasicSpectrum createMergedMsMs(@NotNull MergedMSnSpectrum sourceSpectrum) {
-        BasicSpectrum spectrum = new BasicSpectrum(sourceSpectrum.getPeaks());
+    private static <S extends AbstractSpectrum<?>> S decorateMsMs(S spectrum, @NotNull MergedMSnSpectrum sourceSpectrum) {
         spectrum.setPrecursorMz(sourceSpectrum.getMergedPrecursorMz());
+        if (sourceSpectrum.getMergedCollisionEnergy() != null && !sourceSpectrum.getMergedCollisionEnergy().equals(CollisionEnergy.none())) {
+            spectrum.setCollisionEnergy(new CollisionEnergy(sourceSpectrum.getMergedCollisionEnergy()));
+            spectrum.setName("MS2 " + sourceSpectrum.getMergedCollisionEnergy().toString());
+        } else {
+            spectrum.setName("MS2");
+        }
+
+        spectrum.setMsLevel(2);
+
+        return spectrum;
+    }
+
+    public static BasicSpectrum createMergedMsMs(@NotNull SimpleSpectrum sourceSpectrum, double mz) {
+        BasicSpectrum spectrum = new BasicSpectrum(sourceSpectrum);
+        spectrum.setPrecursorMz(mz);
         spectrum.setMsLevel(2);
         spectrum.setName("MS2 merged");
         return spectrum;
@@ -110,6 +124,9 @@ public class Spectrums {
         return createMs1(mergedMs1);
     }
 
+    public static BasicSpectrum createMsMs(@NotNull MergedMSnSpectrum x) {
+        return decorateMsMs(new BasicSpectrum(x.getPeaks()), x);
+    }
     public static BasicSpectrum createMsMs(@NotNull Ms2Spectrum<Peak> x) {
         return decorateMsMs(new BasicSpectrum(x), x);
     }

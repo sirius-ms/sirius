@@ -36,6 +36,7 @@ import de.unijena.bioinf.fingerid.MsNovelistFingerblastResult;
 import de.unijena.bioinf.fingerid.StructureSearchResult;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
@@ -52,10 +53,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -129,7 +127,10 @@ public class NoSQLInstance implements Instance {
 
     @Override
     public PrecursorIonType getIonType() {
-        return getAlignedFeatures().getIonType();
+        AlignedFeatures f = getAlignedFeatures();
+        List<PrecursorIonType> allAdducts = f.getDetectedAdducts().getAllAdducts();
+        if (allAdducts.size()==1) return allAdducts.get(0);
+        else return PrecursorIonType.unknown(f.getCharge());
     }
 
     @SneakyThrows
@@ -165,7 +166,7 @@ public class NoSQLInstance implements Instance {
 
     @Override
     public boolean hasMsMs() {
-        return getMSData()
+        return alignedFeatures.getMSData()
                 .map(ms -> ms.getMergedMSnSpectrum() != null || (ms.getMsnSpectra() != null && !ms.getMsnSpectra().isEmpty()))
                 .orElse(false);
     }
