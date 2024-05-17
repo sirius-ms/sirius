@@ -7,6 +7,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.MassMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class AdductManager {
 
@@ -28,13 +29,6 @@ public class AdductManager {
         this.multimereIonTypes = new ArrayList<>();
     }
 
-    public void allowMultimeresFor(Set<PrecursorIonType> ionTypes) {
-        multimereIonTypes = new ArrayList<>(ionTypes);
-        buildMassDifferences();
-    }
-
-
-
     private IntOpenHashSet initDecoys() {
         final IntOpenHashSet set = new IntOpenHashSet(Decoys.length);
         for (double decoy : Decoys) {
@@ -43,18 +37,21 @@ public class AdductManager {
         return set;
     }
 
-    public void addAdducts(Set<PrecursorIonType> precursorIonTypes) {
-        this.precursorTypes.addAll(precursorIonTypes);
+    public void add(Set<PrecursorIonType> ionTypes) {
+        // split adducts into Adducts, Insource and Multimere
+        Set<PrecursorIonType> adducts = new HashSet<>(), insource = new HashSet<>(), multimeres = new HashSet<>();
+        for (PrecursorIonType ionType : ionTypes) {
+            if (ionType.isMultimere()) multimeres.add(ionType);
+            else if (!ionType.getAdduct().isEmpty()) adducts.add(ionType);
+            else if (!ionType.getInSourceFragmentation().isEmpty()) insource.add(ionType);
+            else if (ionType.hasNeitherAdductNorInsource() && !ionType.isIntrinsicalCharged()) adducts.add(ionType);
+        }
+        this.precursorTypes.addAll(adducts);
+        this.losses.addAll(insource.stream().map(PrecursorIonType::getInSourceFragmentation).collect(Collectors.toSet()));
+        this.multimereIonTypes.addAll(multimeres);
         buildMassDifferences();
     }
 
-    public void addLoss(MolecularFormula lossFormula) {
-        losses.add(lossFormula);
-        for (MolecularFormula loss : losses) {
-            massDeltas.put(loss.getMass(), new LossRelationship(loss));
-            massDeltas.put(-loss.getMass(), new LossRelationship(loss.negate()));
-        }
-    }
 
     public void buildMassDifferences() {
         this.massDeltas = new MassMap<>(500);

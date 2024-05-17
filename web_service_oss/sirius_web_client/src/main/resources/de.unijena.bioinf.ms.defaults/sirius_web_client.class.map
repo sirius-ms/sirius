@@ -1,5 +1,5 @@
-SpectralAlignmentScorer=de.unijena.bioinf.chemdb.annotations.SpectralAlignmentScorer
 SpectralMatchingMassDeviation=de.unijena.bioinf.spectraldb.SpectralMatchingMassDeviation
+SpectralMatchingScorer=de.unijena.bioinf.chemdb.annotations.SpectralMatchingScorer
 NumberOfStructureCandidates=de.unijena.bioinf.fingerid.annotations.NumberOfStructureCandidates
 SpectralSearchDB=de.unijena.bioinf.chemdb.annotations.SpectralSearchDB
 FormulaSearchDB=de.unijena.bioinf.chemdb.annotations.FormulaSearchDB

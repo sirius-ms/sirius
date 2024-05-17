@@ -59,9 +59,11 @@ public class StorageUtils {
         exp.setMergedMs1Spectrum(spectra.getMergedMs1Spectrum());
         exp.setName(feature.getName()); //todo not stored do we want this?
         exp.setFeatureId(feature.getExternalFeatureId());//todo not stored do we want this?
-        exp.setPrecursorIonType(feature.getIonType());
         exp.setIonMass(feature.getAverageMass());
         exp.setMolecularFormula(feature.getMolecularFormula()); //todo not stored do we need this?
+
+        exp.setPrecursorIonType(PrecursorIonType.unknown(feature.getCharge()));
+
         feature.getDataSource().ifPresent(s -> {
             if (s.getFormat() == DataSource.Format.JENA_MS)
                 exp.setSource(new MsFileSource(URI.create(s.getSource())));
@@ -98,10 +100,13 @@ public class StorageUtils {
                 .msnSpectra(exp.getMs2Spectra().stream().map(StorageUtils::msnSpectrumFrom).toList());
 
         MSData msData = builder.build();
+        de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts det =exp.getAnnotation(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.class).orElse(new de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts());
+        if (!exp.getPrecursorIonType().isIonizationUnknown()) {
+            det.put(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.UNSPECIFIED_SOURCE, new PossibleAdducts(exp.getPrecursorIonType()));
+        }
 
         Feature feature = Feature.builder()
                 .dataSource(DataSource.fromPath(exp.getSourceString()))
-                .ionType(exp.getPrecursorIonType())
                 .retentionTime(exp.getAnnotation(RetentionTime.class).orElse(null))
                 //todo @MEL: wir habe im modell kein MZ of interest, aber letztendlich ist das einfach average mz oder? Gibt ja nur ein window keine wirkliche mzofinterest
                 .averageMass(Arrays.stream(mergedMsn.getPercursorMzs()).average().orElse(Double.NaN))
@@ -115,7 +120,7 @@ public class StorageUtils {
         alignedFeature.setName(exp.getName());
         alignedFeature.setExternalFeatureId(exp.getFeatureId());
         alignedFeature.setMolecularFormula(exp.getMolecularFormula());
-
+        alignedFeature.setDetectedAdducts(StorageUtils.fromMs2ExpAnnotation(det));
         //todo how do we want to handle detected adducts without losing scores?
         if (exp.hasAnnotation(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.class))
             log.warn("Experiment '" + exp.getName() + "' contains Detected adducts that which will not preserved during import!");

@@ -39,18 +39,18 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE, getterVisibility = JsonAutoDetect.Visibility.ANY, setterVisibility = JsonAutoDetect.Visibility.ANY)
 public class DetectedAdducts {
+
+    public static DetectedAdducts singleton(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source source, PrecursorIonType ionType) {
+        DetectedAdducts det = new DetectedAdducts();
+        det.add(new DetectedAdduct(ionType, 1d, source));
+        return det;
+    }
+
     @NotNull
     private final Map<PrecursorIonType, Set<DetectedAdduct>> detectedAdducts = new HashMap<>();
 
     public Map<PrecursorIonType, Set<DetectedAdduct>> asMap() {
         return detectedAdducts;
-    }
-
-    /* @TODO: Kaidu this method is very likely very wrong :/
-     */
-    @Deprecated
-    public DetectedAdducts add(String key, DetectedAdduct... adducts) {
-        return add(PrecursorIonType.fromString(key), adducts);
     }
 
     public DetectedAdducts add(PrecursorIonType key, DetectedAdduct... adducts) {
@@ -74,18 +74,18 @@ public class DetectedAdducts {
 
     @NotNull
     @JsonIgnore
-    List<PrecursorIonType> getAllAdducts() {
+    public List<PrecursorIonType> getAllAdducts() {
         return detectedAdducts.keySet().stream().toList();
     }
 
     @NotNull
     @JsonIgnore
-    Optional<PrecursorIonType> getBestAdduct() {
+    public Optional<PrecursorIonType> getBestAdduct() {
         return getBestDetectedAdduct().map(DetectedAdduct::getAdduct);
     }
 
     @JsonIgnore
-    Optional<DetectedAdduct> getBestDetectedAdduct() {
+    public Optional<DetectedAdduct> getBestDetectedAdduct() {
         return detectedAdducts.values().stream().flatMap(Collection::stream).max(Comparator.naturalOrder());
     }
 

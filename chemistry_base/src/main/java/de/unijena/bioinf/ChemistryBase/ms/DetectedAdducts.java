@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
  * Can be attached to MsExperiment
  */
 public final class DetectedAdducts extends ConcurrentHashMap<String, PossibleAdducts> implements Ms2ExperimentAnnotation, Cloneable { //todo ElementFilter: ConcurrentHashMap is not immutable. Hence, in princlipe, this could be cleared. Should Ms2ExperimentAnnotation be immutable?
-    public enum Source {LCMS_ALIGN, MS1_PREPROCESSOR, SPECTRAL_LIBRARY_SEARCH, UNSPECIFIED_SOURCE} //todo implement PossibleAdducts by library search
+    public enum Source {INPUT_FILE, LCMS_ALIGN, MS1_PREPROCESSOR, SPECTRAL_LIBRARY_SEARCH, UNSPECIFIED_SOURCE} //todo implement PossibleAdducts by library search
 
     public DetectedAdducts() {
         super();

@@ -59,6 +59,6 @@ public class MSData {
     /**
      * A merged or representative MS1 spectrum e.g. for visualization in the gui
      */
-    private SimpleSpectrum mergedMs1Spectrum;
+    private SimpleSpectrum mergedMs1Spectrum, mergedMSnSpectrum;
 
 }

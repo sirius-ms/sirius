@@ -181,7 +181,6 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
         Compound compound = Compound.builder()
                 .name(alignedFeature.getName())
                 .rt(alignedFeature.getRetentionTime())
-                .neutralMass(alignedFeature.getIonType().subtractIonAndAdduct(alignedFeature.getAverageMass()))
                 .rt(alignedFeature.getRetentionTime())
                 .adductFeatures(List.of(alignedFeature))
                 .build();
@@ -201,8 +200,6 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
         List<Compound> compounds = alignedFeatures.stream().map(
                 alignedFeature -> Compound.builder()
                         .name(alignedFeature.getName())
-                        .rt(alignedFeature.getRetentionTime())
-                        .neutralMass(alignedFeature.getIonType().subtractIonAndAdduct(alignedFeature.getAverageMass()))
                         .rt(alignedFeature.getRetentionTime())
                         .adductFeatures(List.of(alignedFeature))
                         .build()

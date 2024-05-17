@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
@@ -169,18 +170,20 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
                 return true;
             }
         }).forEach(p -> {
+            PrecursorIonType ionType = PrecursorIonType.fromString("[" + p.getS() + "]" + mfe.getMSDetails().p);
             Feature f = Feature.builder()
                     .averageMass(p.getX().doubleValue())
                     .apexMass(p.getX().doubleValue())
                     .apexIntensity(p.getY().doubleValue())
+                    .charge((byte)ionType.getCharge())
                     .snr(p.getY().doubleValue() > 0 ? p.getX().doubleValue() / p.getY().doubleValue() : 0)
-                    .ionType(PrecursorIonType.fromString("[" + p.getS() + "]" + mfe.getMSDetails().p))
                     .build();
             parseRT(mfe).ifPresent(f::setRetentionTime);
 
             IsotopePattern isotopePattern = featureFromCompound(compound, f);
 
             AlignedFeatures al = AlignedFeatures.singleton(f, isotopePattern);
+            al.setDetectedAdducts(DetectedAdducts.singleton(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.INPUT_FILE, ionType));
             siriusFeatures.add(al);
         });
 
@@ -207,7 +210,7 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
                 .apexMass(apexMass)
                 .apexIntensity(apexInt)
                 .snr(apexInt > 0 ? apexMass / apexInt : 0)
-                .ionType(ms.getMSDetails().p.equals("-") ? PrecursorIonType.unknownNegative() : PrecursorIonType.unknownPositive())
+                .charge((byte)(ms.getMSDetails().p.equals("-") ? -1 : +1))
                 .build();
         parseRT(ms).ifPresent(f::setRetentionTime);
 
@@ -232,7 +235,7 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
                 .apexMass(apexMass)
                 .apexIntensity(apexInt)
                 .snr(apexInt > 0 ? apexMass / apexInt : 0)
-                .ionType(s.getMSDetails().p.equals("-") ? PrecursorIonType.unknownNegative() : PrecursorIonType.unknownPositive())
+                .charge((byte)(s.getMSDetails().p.equals("-") ? -1 : 1))
                 .build();
         parseRT(s).ifPresent(f::setRetentionTime);
 

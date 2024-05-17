@@ -108,4 +108,8 @@ public class MergedSpectrum implements Spectrum<MergedPeak> {
     public Iterator<MergedPeak> iterator() {
         return mergedPeaks.iterator();
     }
+
+    public double getAveragedPrecursorMz() {
+        return precursorMzWeighted/scoreSum;
+    }
 }

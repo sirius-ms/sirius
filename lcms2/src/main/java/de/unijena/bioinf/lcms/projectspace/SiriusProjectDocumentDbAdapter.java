@@ -28,9 +28,11 @@ import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 
 public class SiriusProjectDocumentDbAdapter implements SiriusDatabaseAdapter {
 
@@ -78,6 +80,12 @@ public class SiriusProjectDocumentDbAdapter implements SiriusDatabaseAdapter {
 
     @Override
     public void importAlignedFeature(AlignedFeatures alignedFeatures) throws IOException {
+        if (Math.abs(alignedFeatures.getCharge()) > 1) {
+            LoggerFactory.getLogger(SiriusProjectDocumentDbAdapter.class).warn(String.format(Locale.US,
+                    "SIRIUS does not support multiple charged ions yet. This feature will be ignored: m/z = %.4f, rt = %.2f minutes",
+                    alignedFeatures.getApexMass(), alignedFeatures.getRetentionTime().getMiddleTime()/60d));
+            return;
+        }
         store.importAlignedFeatures(List.of(alignedFeatures));
     }
 
