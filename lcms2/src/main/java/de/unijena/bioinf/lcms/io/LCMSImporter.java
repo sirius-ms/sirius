@@ -35,7 +35,7 @@ public class LCMSImporter {
     public static ProcessedSample importToProject(
             Path file,
             LCMSStorageFactory storageFactory,
-            ImportStrategy importStrategy,
+            SiriusDatabaseAdapter siriusDatabaseAdapter,
             boolean saveRawScans,
             LCMSRun.Type runType,
             Chromatography chromatography
@@ -50,9 +50,9 @@ public class LCMSImporter {
         }
         LCMSRun run = LCMSRun.builder().runType(runType).chromatography(chromatography).build();
         if (!saveRawScans) {
-            return parser.parse(file, storageFactory, importStrategy::importRun, importStrategy::updateRun, null, null, run);
+            return parser.parse(file, storageFactory, siriusDatabaseAdapter::importRun, siriusDatabaseAdapter::updateRun, null, null, run);
         } else {
-            return parser.parse(file, storageFactory, importStrategy::importRun, importStrategy::updateRun, importStrategy::importScan, importStrategy::importMSMSScan, run);
+            return parser.parse(file, storageFactory, siriusDatabaseAdapter::importRun, siriusDatabaseAdapter::updateRun, siriusDatabaseAdapter::importScan, siriusDatabaseAdapter::importMSMSScan, run);
         }
     }
 
