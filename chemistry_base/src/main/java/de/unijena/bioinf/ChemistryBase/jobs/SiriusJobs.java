@@ -123,6 +123,6 @@ public class SiriusJobs {
 
     private static int defaultThreadNumber(){
         int threadsAv = Runtime.getRuntime().availableProcessors();
-        return Math.max(1, threadsAv <= 8 ? threadsAv - 2 : threadsAv - (int)(threadsAv * .5));
+        return Math.max(3, (threadsAv <= 8 ? threadsAv - 2 : threadsAv - (int)(threadsAv * .5)));
     }
 }
