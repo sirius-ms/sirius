@@ -169,7 +169,7 @@ public class CompoundCandidate {
         Multimap<String, String> databases = ArrayListMultimap.create(names.size(), 1);
         if (links != null) {
             for (DBLink link : links) {
-                databases.put(link.name, link.id);
+                databases.put(link.getName(), link.getId());
             }
         }
 
@@ -251,12 +251,12 @@ public class CompoundCandidate {
                 final Set<String> set = new HashSet<>(3);
                 for (int k = 0; k < value.links.size(); ++k) {
                     final DBLink link = value.links.get(k);
-                    if (set.add(link.name)) {
-                        gen.writeArrayFieldStart(link.name);
-                        gen.writeString(link.id);
+                    if (set.add(link.getName())) {
+                        gen.writeArrayFieldStart(link.getName());
+                        gen.writeString(link.getId());
                         for (int j = k + 1; j < value.links.size(); ++j) {
-                            if (value.links.get(j).name.equals(link.name)) {
-                                gen.writeString(value.links.get(j).id);
+                            if (Objects.equals(value.links.get(j).getName(), link.getName())) {
+                                gen.writeString(value.links.get(j).getId());
                             }
                         }
                         gen.writeEndArray();

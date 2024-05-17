@@ -193,7 +193,7 @@ public class CustomDatabases {
         }
 
         db.getSettings(); //readsSetting only if not exists...
-        CustomDataSources.addCustomSourceIfAbsent(db.name(), db.displayName(), db.storageLocation());
+        CustomDataSources.addCustomSourceIfAbsent(db);
         return db;
     }
 
@@ -228,7 +228,7 @@ public class CustomDatabases {
             db = new BlobCustomDatabase<>(CompressibleBlobStorage.of(bs), version);
         }
         db.writeSettings(config);
-        CustomDataSources.addCustomSourceIfAbsent(db.name(), db.displayName(), db.storageLocation());
+        CustomDataSources.addCustomSourceIfAbsent(db);
         return db;
     }
 

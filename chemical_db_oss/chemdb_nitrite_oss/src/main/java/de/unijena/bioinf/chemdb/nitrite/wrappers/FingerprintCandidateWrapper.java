@@ -22,43 +22,85 @@ package de.unijena.bioinf.chemdb.nitrite.wrappers;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
+import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
+import de.unijena.bioinf.chemdb.FormulaCandidate;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-@NoArgsConstructor
+import java.util.ArrayList;
+import java.util.List;
+
 @AllArgsConstructor
-@Getter
 @Setter
 public class  FingerprintCandidateWrapper {
+    public static final String CUSTOM_DB_NAME_PLACEHOLDER = ";;;CUSTOM;;;";
 
     @Id
+    @Getter
     String inchiKey;
 
+    @Getter
     String formula;
-    double mass;
-    CompoundCandidate candidate;
-    Fingerprint fingerprint;
 
-    public FingerprintCandidate getFingerprintCandidate() {
-        return new FingerprintCandidate(candidate, fingerprint);
+    @Getter
+    double mass;
+
+    private CompoundCandidate candidate;
+
+    @Getter
+    private Fingerprint fingerprint;
+
+    private FingerprintCandidateWrapper() {}
+
+    public FormulaCandidate getFormulaCandidate(@Nullable Long dbFlag, @NotNull PrecursorIonType precursorIonType) {
+        if (dbFlag != null)
+            return enrichCandidate(candidate, null, dbFlag).toFormulaCandidate(precursorIonType);
+        return candidate.toFormulaCandidate(precursorIonType);
     }
 
-    public static FingerprintCandidateWrapper of(String formula, double mass, FingerprintCandidate candidate) {
+    public CompoundCandidate getCandidate(@Nullable String dbName, @Nullable Long dbFlag) {
+        return enrichCandidate(candidate, dbName, dbFlag);
+    }
+
+    public FingerprintCandidate getFingerprintCandidate(@Nullable String dbName, @Nullable Long dbFlag) {
+        return enrichCandidate(new FingerprintCandidate(candidate, fingerprint), dbName, dbFlag);
+    }
+
+    private static <C extends CompoundCandidate> C enrichCandidate(@NotNull C fpc, @Nullable String dbName, @Nullable Long dbFlag){
+        if (dbName != null) {
+            List<DBLink> links = fpc.getMutableLinks();
+            if (links != null && !links.isEmpty() ) {
+                fpc.getMutableLinks().forEach(l -> {
+                    if (CUSTOM_DB_NAME_PLACEHOLDER.equals(l.getName()) || l.getName().isBlank())
+                        l.setName(dbName);
+                });
+            }else {
+                fpc.setLinks(new ArrayList<>(List.of(new DBLink(dbName, null))));
+            }
+        }
+        if (dbFlag != null)
+            fpc.setBitset(dbFlag);
+        return fpc;
+    }
+
+    public static FingerprintCandidateWrapper of(String formula, double mass, @NotNull FingerprintCandidate candidate) {
         return new FingerprintCandidateWrapper(candidate.getInchiKey2D(), formula, mass, candidate.toCompoundCandidate(), candidate.getFingerprint());
     }
 
-    public static FingerprintCandidateWrapper of(MolecularFormula formula, FingerprintCandidate candidate) {
+    public static FingerprintCandidateWrapper of(MolecularFormula formula, @NotNull FingerprintCandidate candidate) {
         return new FingerprintCandidateWrapper(candidate.getInchiKey2D(), formula.toString(), formula.getMass(), candidate.toCompoundCandidate(), candidate.getFingerprint());
     }
 
-    public static FingerprintCandidateWrapper of(FingerprintCandidate candidate) throws UnknownElementException {
+    public static FingerprintCandidateWrapper of(@NotNull FingerprintCandidate candidate) throws UnknownElementException {
         MolecularFormula formula = InChIs.extractNeutralFormulaByAdjustingHsOrThrow(candidate.getInchi().in2D);
         return FingerprintCandidateWrapper.of(formula, candidate);
     }
