@@ -207,8 +207,6 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
             importOptionals(f.getFeatures(), f.getAlignedIsotopeFeatureId(), this::importFeatures);
             if (f.getMSData().isPresent()) {
                 importMSData(f.getMSData().get(), f.getAlignedIsotopeFeatureId());
-            } else {
-                LoggerFactory.getLogger(getClass()).warn("Importing AlignedIsotopicFeatures without MSData! RT: {}| M/Z: {}", f.getRetentionTime(), f.getAverageMass());
             }
         }
     }

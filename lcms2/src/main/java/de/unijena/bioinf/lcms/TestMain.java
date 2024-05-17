@@ -244,13 +244,17 @@ public class TestMain {
                 System.out.println("MS2 = " + hasms2);
 
                 AdductManager manager = new AdductManager();
-                manager.addAdducts(Set.of(PrecursorIonType.getPrecursorIonType("[M+H]+"), PrecursorIonType.getPrecursorIonType("[M+Na]+"),
+                manager.add(Set.of(PrecursorIonType.getPrecursorIonType("[M+H]+"), PrecursorIonType.getPrecursorIonType("[M+Na]+"),
                         PrecursorIonType.getPrecursorIonType("[M+K]+"),  PrecursorIonType.getPrecursorIonType("[M+NH3+H]+"),
                         PrecursorIonType.getPrecursorIonType("[M + FA + H]+"),
-                        PrecursorIonType.getPrecursorIonType("[M + ACN + H]+"))
+                        PrecursorIonType.getPrecursorIonType("[M + ACN + H]+"),
+
+                        PrecursorIonType.getPrecursorIonType("[M - H2O + H]+"),
+
+                        PrecursorIonType.getPrecursorIonType("[2M + Na]+"),
+                        PrecursorIonType.getPrecursorIonType("[2M + H]+")
+                        )
                 );
-                manager.allowMultimeresFor(Set.of(PrecursorIonType.getPrecursorIonType("[M+H]+"), PrecursorIonType.getPrecursorIonType("[M+Na]+")));
-                manager.addLoss(MolecularFormula.parseOrThrow("H2O"));
 
                 ProjectSpaceTraceProvider prov = new ProjectSpaceTraceProvider(ps);
                 AdductNetwork network = new AdductNetwork(prov,  store.findAllStr(AlignedFeatures.class).toArray(AlignedFeatures[]::new), manager, rtTolerance/2);
@@ -288,7 +292,6 @@ public class TestMain {
                 ps.upsert(f);
             }
         }
-
     }
 
     private static synchronized int simpl(HashMap<Long,Integer> map, long key) {

@@ -1,6 +1,7 @@
 package de.unijena.bioinf.lcms.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -23,6 +24,7 @@ import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.trace.RawTraceRef;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
+import de.unijena.bioinf.sirius.Ms2Preprocessor;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -115,6 +117,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         for (int fid=0; fid < traceSegments.length; ++fid) {
             if (traceSegments[fid]==null) continue;
             features[fid] = new AlignedFeatures();
+            features[fid].setDetectedAdducts(new DetectedAdducts());
             features[fid].setFeatures(new ArrayList<>());
             // assign segments
             int o = mergedTrace.startId();
@@ -305,7 +308,10 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         for (int i=0; i <featuresParent.length; ++i) {
             if (featuresParent[i]!=null) {
                 MSData data = featuresParent[i].getMSData().orElseGet(MSData::new);
-                data.setIsotopePattern(new IsotopePattern(Spectrums.getNormalizedSpectrum(isotopePatterns[i], Normalization.Sum), IsotopePattern.Type.AVERAGE));
+                SimpleSpectrum isotopePattern = Spectrums.getNormalizedSpectrum(isotopePatterns[i], Normalization.Sum);
+                data.setIsotopePattern(new IsotopePattern(isotopePattern, IsotopePattern.Type.AVERAGE));
+                data.setMergedMs1Spectrum(new SimpleSpectrum(isotopePatterns[i]));
+                featuresParent[i].setMsData(data);
             }
         }
     }
@@ -381,7 +387,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                 msn[k] = new MergedMSnSpectrum(m.getHeaders()[0].getMsLevel(),
                         mergedSample.getPolarity(), // TODO: what is with multiple charged compounds? Double check!!!
                         m.getCollisionEnergies()[0],
-                        m.getPrecursorMzWeighted(),
+                        m.getAveragedPrecursorMz(),
                         m.getIsolationWindows(),
                         sampleIds,
                         Arrays.stream(sampleIds).mapToObj(x->ms2Pointers.get(x).ms2scans().toIntArray()).toArray(int[][]::new),
@@ -391,7 +397,13 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                         new SimpleSpectrum(m)
                 );
             }
-            feature.getMSData().get().setMsnSpectra(new ArrayList<MergedMSnSpectrum>(Arrays.asList(msn)));
+            feature.getMSData().get().setMsnSpectra(Arrays.asList(msn));
+            if (msn.length==0) return;
+            SimpleSpectrum merged;
+            if (msn.length>1) {
+                merged = Spectrums.mergeSpectra(new Deviation(10), true, false, Arrays.stream(msn).map(MergedMSnSpectrum::getPeaks).toArray(SimpleSpectrum[]::new));
+            } else merged = msn[0].getPeaks();
+            feature.getMSData().get().setMergedMSnSpectrum(Spectrums.getNormalizedSpectrum(merged, Normalization.Sum));
         }
     }
 
