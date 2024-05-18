@@ -154,7 +154,7 @@ public class WebWithCustomDatabase {
 
             final long requestFilter = extractFilterBits(dbs).orElse(-1);
             if (requestFilter >= 0 || includeRestAllDb) {
-                final long searchFilter = includeRestAllDb ? 0 : requestFilter;
+                final long searchFilter = includeRestAllDb ? DataSource.ALL.searchFlag : requestFilter;
                 result = api.applyStructureDB(searchFilter, restCache, restDb -> new CandidateResult(
                         restDb.lookupStructuresAndFingerprintsByFormula(formula), searchFilter, requestFilter));
             } else {
@@ -491,7 +491,7 @@ public class WebWithCustomDatabase {
 
 
         public boolean containsAllDb() {
-            return restFilter == 0;
+            return restFilter == DataSource.ALL.searchFlag;
         }
 
         public void merge(@NotNull CandidateResult other) {
