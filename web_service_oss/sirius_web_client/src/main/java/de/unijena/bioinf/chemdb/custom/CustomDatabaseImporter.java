@@ -69,9 +69,8 @@ import static de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrap
 public class CustomDatabaseImporter {
     private final NoSQLCustomDatabase<?, ?> database;
     private WriteableSpectralLibrary databaseAsSpecLib;
-    private final String dbname;
 
-    private final Queue<Listener> listeners = new LinkedList<>();//new ConcurrentLinkedQueue<>();
+    private final Queue<Listener> listeners = new LinkedList<>();
 
     // molecule buffer:  used to bundle molecular formula requests
     private final List<Molecule> moleculeBuffer;
@@ -96,7 +95,6 @@ public class CustomDatabaseImporter {
     private CustomDatabaseImporter(@NotNull NoSQLCustomDatabase<?, ?> database, CdkFingerprintVersion version, WebAPI<?> api, int bufferSize) {
         this.api = api;
         this.database = database;
-        this.dbname = database.name();
         this.fingerprintVersion = version;
 
         this.molBufferSize = bufferSize;
@@ -298,6 +296,7 @@ public class CustomDatabaseImporter {
                 InChI inchi = InChISMILESUtils.getInchi(c, false);
                 if (inchi != null) {
                     Molecule molecule = new Molecule(c, smiles, inchi);
+                    molecule.name=c.getProperty("Name");
                     addMolecule(molecule);
                 } else {
                     LoggerFactory.getLogger(getClass()).warn("Could not create InChI from parsed Atom container. Skipping Molecule: " + smiles);
