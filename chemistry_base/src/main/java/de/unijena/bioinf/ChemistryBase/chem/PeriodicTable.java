@@ -569,7 +569,7 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
         }
 
         for (PrecursorIonType i : knownIonTypes.values()) {
-            if (!i.isIntrinsicalCharged() && i.getIonization().equals(ion) && i.getAdduct().atomCount() == 0 && i.getInSourceFragmentation().atomCount() == 0)
+            if (!i.isIntrinsicalCharged() && i.getIonization().equals(ion) && i.getAdduct().atomCount() == 0 && i.getInSourceFragmentation().atomCount() == 0 && !i.isMultimere())
                 return i;
         }
         return new PrecursorIonType(ion, MolecularFormula.emptyFormula(), MolecularFormula.emptyFormula(), 1, PrecursorIonType.SPECIAL_TYPES.REGULAR);
@@ -1008,6 +1008,7 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
         for (PrecursorIonType iontype : knownIonTypes.values()) {
             final Ionization ion = iontype.getIonization();
             if (charge != 0 && ion.getCharge() != charge) continue;
+            if (iontype.isMultimere()) continue;
             final double abw = Math.abs(iontype.getModificationMass() - mass);
             if (abw < minDistance) {
                 minDistance = abw;

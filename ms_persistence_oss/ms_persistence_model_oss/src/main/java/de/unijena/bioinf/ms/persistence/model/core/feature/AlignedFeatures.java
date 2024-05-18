@@ -102,6 +102,7 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
                 .apexIntensity(feature.apexIntensity)
                 .snr(feature.snr)
                 .detectedAdducts(new DetectedAdducts())
+                .charge(feature.getCharge())
                 .retentionTime(feature.retentionTime)
                 .msData(msData)
                 .build();
