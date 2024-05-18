@@ -36,7 +36,6 @@ import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -179,7 +178,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
                 CustomDatabaseSettings settings = CustomDatabaseSettings.builder()
                         .usedFingerprints(List.of(version.getUsedFingerprints()))
-                        .schemaVersion(VersionsInfo.CUSTOM_DATABASE_SCHEMA)
+                        .schemaVersion(CustomDatabase.CUSTOM_DATABASE_SCHEMA)
                         .name(mode.importParas.name)
                         .displayName(mode.importParas.displayName)
                         .matchRtOfReferenceSpectra(false)
@@ -235,11 +234,10 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
                 checkForInterruption();
 
-                dbjob = db.importToDatabaseJob(
+                dbjob = CustomDatabaseImporter.makeImportToDatabaseJob(
                         spectrumFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
                         structureFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
-                        listener,
-                        ApplicationCore.WEB_API, mode.importParas.writeBuffer
+                        listener,(NoSQLCustomDatabase<?, ?>) db, ApplicationCore.WEB_API, mode.importParas.writeBuffer
                 );
                 checkForInterruption();
                 submitJob(dbjob).awaitResult();
