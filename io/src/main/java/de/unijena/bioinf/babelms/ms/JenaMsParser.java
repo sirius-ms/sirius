@@ -28,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.CandidateFormulas;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration;
 import de.unijena.bioinf.ChemistryBase.ms.utils.*;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
@@ -41,6 +42,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -71,22 +74,27 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
         System.out.println("end");
     }
 
-    // todo quickn dirty hack
-    BufferedReader lastReader = null;
+    Object lastSource = null;
     String lastCompoundName = null;
 
     @Override
-    public Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
-        return parse(reader, source, PropertyManager.DEFAULTS);
+    public Ms2Experiment parse(InputStream inputStream, URI source) throws IOException {
+        return parse(FileUtils.ensureBuffering(new InputStreamReader(inputStream)),inputStream,  source, PropertyManager.DEFAULTS);
+
     }
 
-    public Ms2Experiment parse(BufferedReader reader, URI source, ParameterConfig config) throws IOException {
+    @Override
+    public Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
+        return parse(reader, reader, source, PropertyManager.DEFAULTS);
+    }
+
+    private Ms2Experiment parse(BufferedReader reader, Object currentSource, URI source, ParameterConfig config) throws IOException {
 
         ParserInstance p = null;
         while (true) {
             try {
                 p = new ParserInstance(source, reader, config);
-                if (reader == lastReader) {
+                if (currentSource == lastSource) {
                     p.newCompound(lastCompoundName);
                 }
                 return p.parse();
@@ -95,7 +103,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
             } finally {
                 if (p != null) {
                     if (p.compoundName != null) {
-                        lastReader = reader;
+                        lastSource = currentSource;
                     }
                     lastCompoundName = p.compoundName;
                 }

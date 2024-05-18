@@ -31,6 +31,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.data.DataSource;
 import de.unijena.bioinf.ChemistryBase.data.JSONDocumentType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.descriptor.Descriptor;
 import de.unijena.bioinf.babelms.descriptor.DescriptorRegistry;
@@ -40,10 +41,7 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
+import java.io.*;
 import java.net.URI;
 import java.util.ArrayDeque;
 import java.util.HashMap;
@@ -69,6 +67,11 @@ public class FTJsonReader implements Parser<FTree> {
 
     public MolecularFormula formula(String formula) {
         return formulaCache.computeIfAbsent(formula, MolecularFormula::parseOrThrow);
+    }
+
+    @Override
+    public FTree parse(InputStream inputStream, URI source) throws IOException {
+        return parse(FileUtils.ensureBuffering(new InputStreamReader(inputStream)), source);
     }
 
     @Deprecated

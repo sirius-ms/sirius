@@ -27,25 +27,26 @@ import org.xml.sax.InputSource;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 
 public class MzXmlExperimentParser extends AbstractMzParser {
-    public URI sourceId;;
-    protected BufferedReader currentSource;
+    public URI sourceId;
+    protected Object currentSource;
 
 
-    protected boolean setNewSource(BufferedReader sourceReader, URI source) throws IOException {
+    protected boolean setNewSource(Object sourceReaderOrStream, URI source) throws IOException {
         if (sourceId == null) {
-            if (sourceReader == null) {
+            if (sourceReaderOrStream == null) {
                 return false;
             } else {
                 sourceId = source;
-                currentSource = sourceReader;
+                currentSource = sourceReaderOrStream;
                 return true;
             }
         } else if (!source.equals(sourceId)) {
             sourceId = source;
-            currentSource = sourceReader;
+            currentSource = sourceReaderOrStream;
             return true;
         }
         return false;
@@ -55,6 +56,14 @@ public class MzXmlExperimentParser extends AbstractMzParser {
     @Override
     protected LCMSRun parseToLCMSRun() throws IOException {
         final MzXMLParser parser = new MzXMLParser();
-        return parser.parse(new DataSource(sourceId), new InputSource(currentSource), inMemoryStorage);
+        InputSource inputSource;
+        if (currentSource instanceof InputStream is)
+            inputSource = new InputSource(is);
+        else if (currentSource instanceof BufferedReader br)
+            inputSource = new InputSource(br);
+        else
+            throw new IllegalArgumentException("Only BufferedReader, InputStream are supported.");
+
+        return parser.parse(new DataSource(sourceId), inputSource, inMemoryStorage);
     }
 }
