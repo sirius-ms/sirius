@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
 //Flags/BitSets: Every bit that is set in our postgres db should also represented as DataSource here
 public enum DataSource {
 
-    ALL("All included DBs", 0, null, null, null, null),
+    ALL("All included DBs", makeALLFLAG(), null, null, null, null),
     //the BIO flag is a collection of many bio-like databases. Furthermore, there was a flag 128 in the PSQL structure database which was called bio. This is now obsolete and replaced by a combined flags.
     BIO("Bio Database", makeBIOFLAG(), null, null, null, null), //todo make distinction to normal databases more clear
     PUBCHEM("PubChem", 2, "compound_id","pubchem", "https://pubchem.ncbi.nlm.nih.gov/compound/%s", new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
@@ -161,6 +161,16 @@ public enum DataSource {
             bioflag |= (1L << i);
         }
         return bioflag;
+    }
+
+    public static long makeALLFLAG(){
+        long allflag=0L;
+        for(int i = 1; i < 32; i++ ){
+            if (i==7 || i==13 || i==15 ||i==19) continue;
+            allflag |=(1L << i);
+        }
+        allflag |=(1L << 37); //This custom adds DSSTox which has a flag >32.
+        return allflag;
     }
 
 
