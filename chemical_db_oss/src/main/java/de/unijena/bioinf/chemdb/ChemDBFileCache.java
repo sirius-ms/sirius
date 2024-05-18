@@ -71,7 +71,7 @@ public class ChemDBFileCache extends AbstractCompressible {
             if (cacheStorage.hasBlob(blobKey)) {
                 try {
                     try(InputStream i = cacheStorage.reader(blobKey)){
-                        try (final CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(),
+                        try (final CloseableIterator<FingerprintCandidate> fciter = new CompoundJsonMapper().readFingerprints(CdkFingerprintVersion.getDefault(),
                                 Compressible.decompressRawStream(i, getCompression()).get())) {
                             while (fciter.hasNext())
                                 fpcs.add(fciter.next());
@@ -97,9 +97,9 @@ public class ChemDBFileCache extends AbstractCompressible {
 
         // write cache in background -> cache has to be unfiltered
         SiriusJobs.runInBackgroundIO(() ->
-                cacheStorage.withWriter(relative, w -> Compressible.withCompression(w, getCompression(), cw -> FingerprintCandidate.toJSONList(fpcs, cw))));
+                cacheStorage.withWriter(relative, w -> Compressible.withCompression(w, getCompression(), cw -> CompoundJsonMapper.toJSONList(fpcs, cw))));
 
-        return fpcs;
+        return fpcs.stream().map(FingerprintCandidate::new).toList(); //we do a copy since writing cache is async and the candidate might get modified after returning it.
     }
 }
 

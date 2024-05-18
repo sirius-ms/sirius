@@ -285,7 +285,7 @@ public class WebWithCustomDatabase {
         for (FormulaCandidate formula : formulas) {
             final FormulaKey key = new FormulaKey(formula);
             map.computeIfAbsent(key, k -> new AtomicLong(0))
-                    .accumulateAndGet(formula.bitset, (a, b) -> a |= b);
+                    .accumulateAndGet(formula.bitset, (a, b) -> a | b);
         }
 
         //add non contained custom db flags
@@ -297,7 +297,7 @@ public class WebWithCustomDatabase {
                             throw new RuntimeException(ex);
                         }
                     })
-                    .map(AbstractChemicalDatabase::getName).collect(Collectors.toSet())), (a, b) -> a |= b);
+                    .map(AbstractChemicalDatabase::getName).collect(Collectors.toSet())), (a, b) -> a | b);
         }
 
         return map.entrySet().stream().map(e ->

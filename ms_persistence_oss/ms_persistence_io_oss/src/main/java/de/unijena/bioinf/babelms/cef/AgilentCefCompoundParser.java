@@ -68,38 +68,59 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
     private InputStream currentStream = null;
     private URI currentUrl = null;
 
+    @Override
+    public de.unijena.bioinf.ms.persistence.model.core.Compound parse(InputStream inputStream, URI source) throws IOException {
+        if (!Objects.equals(currentUrl, source) || !Objects.equals(inputStream, currentStream) || xmlEventReader == null || unmarshaller == null) {
+            if (inputStream == null && source == null)
+                throw new IllegalArgumentException("Neither Reader nor File is given, No Input to parse!");
+            currentUrl = source;
+            if (inputStream != null) {
+                currentStream = inputStream;
+            } else {
+                currentStream = currentUrl.toURL().openStream();
+            }
+            initXmlParser();
+        }
+        return parse();
+    }
 
     @Override
     public de.unijena.bioinf.ms.persistence.model.core.Compound parse(BufferedReader secondChoice, @Nullable URI source) throws IOException {
-        //XML parsing on readers works bad, so we create our own stream from url
         if (!Objects.equals(currentUrl, source) || xmlEventReader == null || unmarshaller == null) {
-            try {
-                if (secondChoice == null && source == null)
-                    throw new IllegalArgumentException("Neither Reader nor File is given, No Input to parse!");
 
-                currentUrl = source;
-                if (source != null) {
-                    currentStream = currentUrl.toURL().openStream();
-                    if (secondChoice != null)
-                        secondChoice.close();
-                } else {
-                    //todo how to handle charset.
-                    currentStream = new ReaderInputStream(secondChoice, Charset.defaultCharset());
-                }
+            if (secondChoice == null && source == null)
+                throw new IllegalArgumentException("Neither Reader nor File is given, No Input to parse!");
 
-                // create xml event reader for input stream
-                XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
-                xmlEventReader = xmlInputFactory.createXMLEventReader(currentStream);
-
-                // initialize jaxb
-                JAXBContext context = JAXBContext.newInstance(CEF.class);
-                unmarshaller = context.createUnmarshaller();
-            } catch (JAXBException | XMLStreamException e) {
-                throw new IOException("Error When initializing JAXB parser context", e);
+            currentUrl = source;
+            if (source != null) {
+                currentStream = currentUrl.toURL().openStream();
+                if (secondChoice != null)
+                    secondChoice.close();
+            } else {
+                //todo how to handle charset.
+                currentStream = new ReaderInputStream(secondChoice, Charset.defaultCharset());
             }
+            initXmlParser();
         }
+        return parse();
+    }
 
+    private void initXmlParser() throws IOException {
+        try {
+            // create xml event reader for input stream
+            XMLInputFactory xmlInputFactory = XMLInputFactory.newInstance();
+            xmlEventReader = xmlInputFactory.createXMLEventReader(currentStream);
 
+            // initialize jaxb
+            JAXBContext context = JAXBContext.newInstance(CEF.class);
+            unmarshaller = context.createUnmarshaller();
+        } catch (JAXBException | XMLStreamException e) {
+            throw new IOException("Error When initializing JAXB parser context", e);
+        }
+    }
+
+    public de.unijena.bioinf.ms.persistence.model.core.Compound parse() throws IOException {
+        //XML parsing on readers works bad, so we create our own stream from url
         try {
             XMLEvent e;
             // loop though the xml stream
@@ -141,7 +162,6 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
         parseRT(compound).ifPresent(b::rt);
 
         return b.build();
-
 
 
     }
@@ -212,7 +232,7 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
         parseRT(ms).ifPresent(f::setRetentionTime);
 
         featureFromCompound(compound, f);
-        return List.of( AlignedFeatures.singleton(f));
+        return List.of(AlignedFeatures.singleton(f));
     }
 
     private List<AlignedFeatures> fromRawCompound(Compound compound) {

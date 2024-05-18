@@ -32,12 +32,15 @@ import de.unijena.bioinf.ChemistryBase.ms.SimplePeak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FragmentAnnotation;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.graphUtils.tree.PreOrderTraversal;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
@@ -75,6 +78,11 @@ public class FTDotReader implements Parser<FTree> {
         });
         if (source != null) tree.setAnnotation(DataSource.class, new DataSource(source));
         return tree;
+    }
+
+    @Override
+    public FTree parse(InputStream inputStream, URI source) throws IOException {
+        return parse(FileUtils.ensureBuffering(new InputStreamReader(inputStream)), source);
     }
 
     public static class FragmentPropertySet {

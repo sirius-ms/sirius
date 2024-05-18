@@ -23,7 +23,6 @@ package de.unijena.bioinf.chemdb.custom;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.storage.blob.BlobStorage;
 import de.unijena.bioinf.storage.blob.BlobStorages;
 import de.unijena.bioinf.storage.blob.Compressible;
@@ -165,7 +164,7 @@ public class CustomDatabases {
                 try {
                     final CustomDatabase db = open(bucketLocation, version);
                     if (up2date && db.needsUpgrade())
-                        throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + VersionsInfo.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
+                        throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + CustomDatabase.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
 
                     databases.add(db);
                 } catch (IOException e) {
@@ -181,7 +180,7 @@ public class CustomDatabases {
         final CustomDatabase db = open(bucketLocation, version);
         if (!up2date || !db.needsUpgrade())
             return db;
-        throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + VersionsInfo.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
+        throw new OutdatedDBExeption("DB '" + db.name() + "' is outdated (DB-Version: " + db.getDatabaseVersion() + " vs. ReqVersion: " + CustomDatabase.CUSTOM_DATABASE_SCHEMA + ") . PLease reimport the structures. ");
     }
 
     public static CustomDatabase open(String location, CdkFingerprintVersion version) throws IOException {
@@ -193,7 +192,7 @@ public class CustomDatabases {
         }
 
         db.getSettings(); //readsSetting only if not exists...
-        CustomDataSources.addCustomSourceIfAbsent(db.name(), db.displayName(), db.storageLocation());
+        CustomDataSources.addCustomSourceIfAbsent(db);
         return db;
     }
 
@@ -228,7 +227,7 @@ public class CustomDatabases {
             db = new BlobCustomDatabase<>(CompressibleBlobStorage.of(bs), version);
         }
         db.writeSettings(config);
-        CustomDataSources.addCustomSourceIfAbsent(db.name(), db.displayName(), db.storageLocation());
+        CustomDataSources.addCustomSourceIfAbsent(db);
         return db;
     }
 

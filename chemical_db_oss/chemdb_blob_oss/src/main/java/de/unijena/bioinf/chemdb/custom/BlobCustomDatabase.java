@@ -122,4 +122,10 @@ public class BlobCustomDatabase<Storage extends BlobStorage> extends CustomDatab
         throw new IOException("Writeable spectral library API not implemented for blob storage");
     }
 
+    Long searchFlag = null;
+    //todo use flag in ChemicalBlobDatabase
+    @Override
+    public void setSearchFlag(long flag) {
+        this.searchFlag = flag;
+    }
 }
