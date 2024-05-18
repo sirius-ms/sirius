@@ -124,6 +124,11 @@ public class FingerprintSubToolJob extends InstanceJob {
         updateProgress(97);
     }
 
+    @Override
+    public boolean needsProperIonizationMode() {
+        return true;
+    }
+
     private Set<MolecularFormula> extractEnforcedFormulasFromSpectralLibrarySearch(Instance inst) {
         InjectSpectralLibraryMatchFormulas injectionSettings = inst.getExperiment().getAnnotationOrDefault(InjectSpectralLibraryMatchFormulas.class);
         if (!injectionSettings.isAlwaysPredict()) return Set.of();

@@ -57,6 +57,11 @@ public class SiriusSubToolJob extends InstanceJob {
     }
 
     @Override
+    public boolean needsProperIonizationMode() {
+        return true;
+    }
+
+    @Override
     public boolean isAlreadyComputed(@NotNull Instance inst) {
         return inst.hasSiriusResult();
     }
