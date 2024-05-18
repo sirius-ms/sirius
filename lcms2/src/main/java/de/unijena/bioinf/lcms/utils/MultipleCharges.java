@@ -1,7 +1,9 @@
 package de.unijena.bioinf.lcms.utils;
 
+import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.lcms.isotopes.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
@@ -85,11 +87,15 @@ public class MultipleCharges {
 
     }
 
-    public static Decision checkForMultipleCharges(MergedMSnSpectrum spectrum) {
-        final double precursorMass = spectrum.getMergedPrecursorMz();
+    public static Decision checkForMultipleCharges(MergedMSnSpectrum spec) {
+        return checkForMultipleCharges(spec.getPeaks(), spec.getMergedPrecursorMz());
+
+    }
+
+    public static Decision checkForMultipleCharges(SimpleSpectrum spec, double precursorMass) {
+        if (noisySpectrum(spec)) return Decision.UNKNOWN;
         double suspicousIntensities = 0d;
         int suspiciousPeaks = 0;
-        SimpleSpectrum spec = spectrum.getPeaks();
         double maxInt = Spectrums.getMaximalIntensity(spec);
         // 1. count how many peaks are behind the precursor
         double threshold = precursorMass + 6;
@@ -99,19 +105,47 @@ public class MultipleCharges {
                 if (spec.getIntensityAt(k)/maxInt >= 0.01) ++suspiciousPeaks;
             } else break;
         }
-        if (suspiciousPeaks>=3 && suspicousIntensities>=0.1) return Decision.LIKELY;
+        double intsum = 0d;
         // 2. count how many peaks are multiple charged
         double highQualityPeaks = 0;
         for (int k=0; k < spec.size(); ++k) {
             final double normed = spec.getIntensityAt(k)/maxInt;
+            if (normed>=0.01) intsum += normed;
             if (normed>=0.01 && checkForMultipleCharges(spec.getMzAt(k))==Decision.LIKELY) {
                 ++suspiciousPeaks;
                 suspicousIntensities += normed;
+                // also check for monotonic increasing isotope pattern
+                double intens = spec.getIntensityAt(k);
+                int j = k-1;
+                while (j >= 0 && spec.getIntensityAt(j) >= intens && spec.getMzAt(j)-spec.getMzAt(j+1) < 0.75) {
+                    intens = spec.getIntensityAt(j);
+                    --j;
+                }
+                ++j;
+                List<IsotopePattern> isotopePatterns = IsotopePattern.extractPatterns(spec, j).stream().filter(x->x.chargeState>1).toList();
+                if (!isotopePatterns.isEmpty()) {
+                    float[] fs = isotopePatterns.get(0).floatIntensityArray();
+                    for (float f : fs) suspicousIntensities += f;
+                    suspiciousPeaks += fs.length;
+                }
             }
             if (normed >= 0.05) ++highQualityPeaks;
         }
-        if (suspiciousPeaks>=3 && suspicousIntensities>=0.2) return Decision.LIKELY;
+        if (suspiciousPeaks>=5 && suspicousIntensities/intsum>=0.2) return Decision.LIKELY;
         if (highQualityPeaks >= 5 && suspiciousPeaks==0 && suspicousIntensities<0.01) return Decision.UNLIKELY;
         return Decision.UNKNOWN;
+    }
+
+    public static boolean noisySpectrum(SimpleSpectrum spec) {
+        Range<Double> intSpan = Spectrums.getIntensityRange(spec);
+        if (intSpan.upperEndpoint() / intSpan.lowerEndpoint() < 10) return true;
+        int numberOfPeaks = 0;
+        final double threshold = Math.max(intSpan.upperEndpoint()*0.05, intSpan.lowerEndpoint()*5);
+        for (int k=0; k < spec.size(); ++k) {
+            if (spec.getIntensityAt(k)>=threshold) {
+                if (++numberOfPeaks >= 3) return false;
+            }
+        }
+        return true;
     }
 }
