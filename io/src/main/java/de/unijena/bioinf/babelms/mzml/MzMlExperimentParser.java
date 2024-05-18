@@ -25,10 +25,7 @@ import de.unijena.bioinf.io.lcms.MzMLParser;
 import de.unijena.bioinf.model.lcms.LCMSRun;
 import org.apache.commons.io.IOUtils;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,38 +35,46 @@ public class MzMlExperimentParser extends AbstractMzParser {
     public URI sourceId;
     protected File sourceFile;
 
-    protected boolean setNewSource(BufferedReader sourceReader, URI source) throws IOException {
+    protected boolean setNewSource(Object sourceReaderOrStream, URI source) throws IOException {
         if (sourceId == null) {
-            if (sourceReader == null) {
+            if (sourceReaderOrStream == null) {
                 return false;
             } else {
                 sourceId = source;
-                sourceFile = createTempFile(sourceReader, source);
+                sourceFile = createTempFile(sourceReaderOrStream, source);
                 return true;
             }
         } else if (!source.equals(sourceId)) {
             sourceId = source;
-            sourceFile = createTempFile(sourceReader, source);
+            sourceFile = createTempFile(sourceReaderOrStream, source);
             return true;
         }
         return false;
     }
 
-    private File createTempFile(BufferedReader sourceReader, URI source) throws IOException {
+    private File createTempFile(Object sourceReaderOrStream, URI source) throws IOException {
         if (source != null && source.getScheme() != null && source.getScheme().equalsIgnoreCase("file")) {
-            if (sourceReader != null)
-                sourceReader.close();
+            if (sourceReaderOrStream != null && sourceReaderOrStream instanceof Closeable c)
+                c.close();
             return new File(source);
-        }else {
+        } else {
             Path tmp = FileUtils.newTempFile("mzml_", ".mzml");
+            try {
                 try (BufferedWriter w = Files.newBufferedWriter(tmp)) {
-                    IOUtils.copy(sourceReader, w);
-                }finally {
-                    sourceReader.close();
+                    if (sourceReaderOrStream instanceof InputStream ir)
+                        IOUtils.copy(FileUtils.ensureBuffering(new InputStreamReader(ir)), w);
+                    else if (sourceReaderOrStream instanceof Reader)
+                        IOUtils.copy((Reader) sourceReaderOrStream, w);
+                    else
+                        throw new IllegalArgumentException("Only InputStream and Reader is supported!");
                 }
-                File f = tmp.toFile();
-                f.deleteOnExit();
-                return f;
+            } finally {
+                if (sourceReaderOrStream != null && sourceReaderOrStream instanceof Closeable c)
+                    c.close();
+            }
+            File f = tmp.toFile();
+            f.deleteOnExit();
+            return f;
         }
     }
 
