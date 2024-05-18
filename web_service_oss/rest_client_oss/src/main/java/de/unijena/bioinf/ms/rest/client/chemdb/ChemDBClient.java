@@ -25,7 +25,7 @@ import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.chemdb.JSONReader;
+import de.unijena.bioinf.chemdb.CompoundJsonMapper;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -61,7 +61,7 @@ public class ChemDBClient extends StructureSearchClient {
                         .post(RequestBody.create(new ObjectMapper().writeValueAsBytes(inChIs2d),APPLICATION_JSON)),
                 br -> {
                     final List<FingerprintCandidate> compounds = new ArrayList<>(inChIs2d.size());
-                    try (CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(fpVersion, br)) {
+                    try (CloseableIterator<FingerprintCandidate> fciter = new CompoundJsonMapper().readFingerprints(fpVersion, br)) {
                         while (fciter.hasNext())
                             compounds.add(fciter.next());
                     }

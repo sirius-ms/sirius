@@ -22,19 +22,13 @@
 
 package de.unijena.bioinf.chemdb;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
-import de.unijena.bioinf.ChemistryBase.fp.FPIter;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.io.IOException;
-
 @Setter
 @Getter
-@JsonSerialize(using = FingerprintCandidate.Serializer.class)
 public class FingerprintCandidate extends CompoundCandidate {
 
     protected Fingerprint fingerprint;
@@ -55,19 +49,5 @@ public class FingerprintCandidate extends CompoundCandidate {
 
     public CompoundCandidate toCompoundCandidate(){
         return new CompoundCandidate(this);
-    }
-
-    public static class Serializer extends BaseSerializer<FingerprintCandidate> {
-        @Override
-        protected void serializeInternal(FingerprintCandidate value, JsonGenerator gen) throws IOException {
-            super.serializeInternal(value, gen);
-            gen.writeArrayFieldStart("fingerprint");
-            if (value.fingerprint != null) {
-                for (FPIter iter : value.fingerprint.presentFingerprints()) {
-                    gen.writeNumber(iter.getIndex());
-                }
-            }
-            gen.writeEndArray();
-        }
     }
 }

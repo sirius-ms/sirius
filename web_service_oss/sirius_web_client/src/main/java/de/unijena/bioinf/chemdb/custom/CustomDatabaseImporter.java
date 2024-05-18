@@ -93,7 +93,7 @@ public class CustomDatabaseImporter {
     private static final int BYTE_EQUIVALENTS = 52428;
 
     // todo make abstract and implement different versions for blob and document storage
-    protected CustomDatabaseImporter(@NotNull NoSQLCustomDatabase<?, ?> database, CdkFingerprintVersion version, WebAPI<?> api, int bufferSize) {
+    private CustomDatabaseImporter(@NotNull NoSQLCustomDatabase<?, ?> database, CdkFingerprintVersion version, WebAPI<?> api, int bufferSize) {
         this.api = api;
         this.database = database;
         this.dbname = database.name();
@@ -703,5 +703,63 @@ public class CustomDatabaseImporter {
         default void bytesRead(int numOfBytes) {
 
         }
+    }
+
+
+    public static void importToDatabase(
+            List<InputResource<?>> spectrumFiles,
+            List<InputResource<?>> structureFiles,
+            CustomDatabaseImporter importer
+    ) throws IOException {
+
+        try {
+            if (structureFiles != null && !structureFiles.isEmpty())
+                importer.importStructuresFromResources(structureFiles);
+
+            if (spectrumFiles != null && !spectrumFiles.isEmpty())
+                importer.importSpectraFromResources(spectrumFiles);
+
+        } finally {
+            // update tags & statistics
+            importer.flushAllAndUpdateStatistics();
+        }
+    }
+
+
+
+    public  static JJob<Boolean> makeImportToDatabaseJob(
+            List<InputResource<?>> spectrumFiles,
+            List<InputResource<?>> structureFiles,
+            @Nullable CustomDatabaseImporter.Listener listener,
+            @NotNull NoSQLCustomDatabase<?, ?> database, WebAPI<?> api, int bufferSize
+
+    ) {
+        return new BasicJJob<Boolean>() {
+            CustomDatabaseImporter importer;
+            CustomDatabaseImporter.Listener l = listener;
+
+            @Override
+            protected Boolean compute() throws Exception {
+                importer = new CustomDatabaseImporter(database, api.getCDKChemDBFingerprintVersion(), api, bufferSize);
+                if (listener != null)
+                    importer.addListener(listener);
+                importToDatabase(spectrumFiles, structureFiles, importer);
+                return true;
+            }
+
+            @Override
+            public void cancel(boolean mayInterruptIfRunning) {
+                super.cancel(mayInterruptIfRunning);
+                if (importer != null)
+                    importer.cancel();
+            }
+
+            @Override
+            protected void cleanup() {
+                super.cleanup();
+                if (l != null)
+                    importer.removeListener(l);
+            }
+        }.asCPU();
     }
 }

@@ -92,7 +92,7 @@ public class ChemicalNoSQLDatabaseTest {
     public void rawTestCompounds() throws IOException {
         List<FingerprintCandidateWrapper> fcs = chemDb.getStorage().findAllStr(FingerprintCandidateWrapper.class).toList();
         assertEquals(21, fcs.size());
-        fcs.forEach(fc -> assertNotNull(fc.getCandidate()));
+        fcs.forEach(fc -> assertNotNull(fc.getCandidate(null, null)));
         fcs.forEach(fc -> assertNull(fc.getFingerprint()));
 
         fcs = chemDb.getStorage().findAllStr(FingerprintCandidateWrapper.class, "fingerprint").toList();
@@ -206,10 +206,10 @@ public class ChemicalNoSQLDatabaseTest {
     public void testUpsert() throws IOException {
         long fingerprintCountBefore = chemDb.countAllFingerprints();
         NitriteDatabase storage = chemDb.getStorage();
-        double avgXLogPBefore = storage.findAllStr(FingerprintCandidateWrapper.class).mapToDouble(w -> w.getCandidate().xlogp).average().orElse(Double.NaN);
+        double avgXLogPBefore = storage.findAllStr(FingerprintCandidateWrapper.class).mapToDouble(w -> w.getCandidate(null, null).xlogp).average().orElse(Double.NaN);
 
         chemDb.updateAllFingerprints(fpc -> fpc.xlogp += 1);
-        double avgXLogPAfter = storage.findAllStr(FingerprintCandidateWrapper.class).mapToDouble(w -> w.getCandidate().xlogp).average().orElse(Double.NaN);
+        double avgXLogPAfter = storage.findAllStr(FingerprintCandidateWrapper.class).mapToDouble(w -> w.getCandidate(null, null).xlogp).average().orElse(Double.NaN);
         assertEquals(fingerprintCountBefore, chemDb.countAllFingerprints());
         assertEquals(avgXLogPBefore + 1, avgXLogPAfter, 10e-9);
     }
