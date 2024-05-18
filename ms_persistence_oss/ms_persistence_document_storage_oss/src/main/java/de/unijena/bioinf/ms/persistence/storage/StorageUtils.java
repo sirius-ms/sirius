@@ -105,11 +105,19 @@ public class StorageUtils {
             det.put(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.UNSPECIFIED_SOURCE, new PossibleAdducts(exp.getPrecursorIonType()));
         }
 
+        int charge = exp.getPrecursorIonType().getCharge();
+        if (msData.getMsnSpectra()!=null) {
+            for (MergedMSnSpectrum spec : msData.getMsnSpectra()) {
+                spec.setCharge(charge);
+            }
+        }
+
         Feature feature = Feature.builder()
                 .dataSource(DataSource.fromPath(exp.getSourceString()))
                 .retentionTime(exp.getAnnotation(RetentionTime.class).orElse(null))
                 //todo @MEL: wir habe im modell kein MZ of interest, aber letztendlich ist das einfach average mz oder? Gibt ja nur ein window keine wirkliche mzofinterest
                 .averageMass(Arrays.stream(mergedMsn.getPercursorMzs()).average().orElse(Double.NaN))
+                .charge((byte)exp.getPrecursorIonType().getCharge())
                 //todo @MEL ich habe die mal als nullable wrapper objekte gemacht, da wir diese info fuer peak list daten nicht wirklich haben.
 //                .apexIntensity()
 //                .apexMass()
@@ -130,7 +138,7 @@ public class StorageUtils {
 
     private static MergedMSnSpectrum msnSpectrumFrom(Ms2Spectrum<Peak> ms2Spectrum) {
         final MergedMSnSpectrum msn = new MergedMSnSpectrum();
-        msn.setCharge(ms2Spectrum.getIonization().getCharge());
+        if (ms2Spectrum.getIonization()!=null) msn.setCharge(ms2Spectrum.getIonization().getCharge());
         msn.setPeaks(new SimpleSpectrum(ms2Spectrum));
         msn.setMsLevel(ms2Spectrum.getMsLevel());
         msn.setMergedCollisionEnergy(ms2Spectrum.getCollisionEnergy());

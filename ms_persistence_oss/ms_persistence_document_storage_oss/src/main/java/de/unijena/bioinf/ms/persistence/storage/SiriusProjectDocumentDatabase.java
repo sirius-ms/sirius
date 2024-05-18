@@ -181,7 +181,6 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
         Compound compound = Compound.builder()
                 .name(alignedFeature.getName())
                 .rt(alignedFeature.getRetentionTime())
-                .rt(alignedFeature.getRetentionTime())
                 .adductFeatures(List.of(alignedFeature))
                 .build();
         importCompounds(List.of(compound));

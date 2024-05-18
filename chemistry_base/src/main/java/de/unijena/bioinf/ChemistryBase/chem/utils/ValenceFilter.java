@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A formula passes this filter, if its RDBE value is greater or equal to the given limit
@@ -89,7 +90,7 @@ public class ValenceFilter implements FormulaFilter {
     @Override
     public boolean isValid(MolecularFormula measuredNeutralFormula, Ionization ionization) {
         if (ionization==PeriodicTable.getInstance().neutralIonization()) return isValid(measuredNeutralFormula);
-        Set<PrecursorIonType> adducts = possibleAdducts.getAdducts(ionization);
+        Set<PrecursorIonType> adducts = possibleAdducts.getAdducts(ionization).stream().filter(PrecursorIonType::isSupportedForFragmentationTreeComputation).collect(Collectors.toSet());
         if (adducts.size() == 0)
            adducts.add(PrecursorIonType.fromString(ionization.toString()));
 
@@ -103,6 +104,7 @@ public class ValenceFilter implements FormulaFilter {
 
     @Override
     public boolean isValid(MolecularFormula measuredNeutralFormula, PrecursorIonType ionType) {
+        if (!ionType.isSupportedForFragmentationTreeComputation()) return false;
         MolecularFormula compoundMF = ionType.measuredNeutralMoleculeToNeutralMolecule(measuredNeutralFormula);
         if (!compoundMF.isAllPositiveOrZero()) return false;
         return compoundMF.doubledRDBE() >= minValenceInt;
