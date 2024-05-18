@@ -89,7 +89,7 @@ public class BottomUpSearch extends SiriusPlugin {
             if (formulaSearchSettings.applyFormulaConstraintsToBottomUp) {
                 final FormulaConstraints formulaConstraints = input.getAnnotationOrThrow(FormulaConstraints.class);
                 PossibleAdducts possibleAdducts = input.getAnnotationOrThrow(PossibleAdducts.class);
-                formulas = Whiteset.filterMeasuredFormulas(formulas, formulaConstraints, possibleAdducts.getAdducts());
+                formulas = Whiteset.filterMeasuredFormulas(formulas, formulaConstraints, possibleAdducts.getAdducts().stream().filter(x->x.isSupportedForFragmentationTreeComputation()).collect(Collectors.toSet()));
             }
 
             Whiteset bottomUpWs = Whiteset.ofMeasuredFormulas(formulas, BottomUpSearch.class);
