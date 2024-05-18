@@ -155,6 +155,11 @@ public class SpectraSearchSubtoolJob extends InstanceJob {
     }
 
     @Override
+    public boolean needsProperIonizationMode() {
+        return false;
+    }
+
+    @Override
     public String getToolName() {
         return PicoUtils.getCommand(SpectraSearchOptions.class).name();
     }

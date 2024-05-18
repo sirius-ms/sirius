@@ -183,6 +183,11 @@ public class MsNovelistSubToolJob extends InstanceJob {
         updateProgress(97);
     }
 
+    @Override
+    public boolean needsProperIonizationMode() {
+        return true;
+    }
+
     private WebJJob<MsNovelistJobInput, ?, MsNovelistJobOutput, ?> buildAndSubmitRemote(@NotNull final FCandidate<?> ir, int specHash) {
         try {
             return ApplicationCore.WEB_API.submitMsNovelistJob(

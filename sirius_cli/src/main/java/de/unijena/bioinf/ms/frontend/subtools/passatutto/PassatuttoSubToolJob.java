@@ -68,6 +68,11 @@ public class PassatuttoSubToolJob extends InstanceJob {
     }
 
     @Override
+    public boolean needsProperIonizationMode() {
+        return true;
+    }
+
+    @Override
     public String getToolName() {
         return PicoUtils.getCommand(PassatuttoOptions.class).name();
     }

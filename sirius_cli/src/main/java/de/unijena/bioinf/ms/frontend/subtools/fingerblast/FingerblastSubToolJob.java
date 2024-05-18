@@ -155,6 +155,11 @@ public class FingerblastSubToolJob extends InstanceJob {
     }
 
     @Override
+    public boolean needsProperIonizationMode() {
+        return true;
+    }
+
+    @Override
     public String getToolName() {
         return PicoUtils.getCommand(FingerblastOptions.class).name();
     }
