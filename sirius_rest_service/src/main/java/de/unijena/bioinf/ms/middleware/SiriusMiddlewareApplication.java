@@ -110,7 +110,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
 
 
                 Splash splashScreen = null;
-                if (Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("--gui"))) {
+                if (Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("--gui") || it.equalsIgnoreCase("-g"))) {
                     Path propsFile = Workspace.siriusPropsFile;
                     //override VM defaults from OS
                     if (!System.getProperties().containsKey("sun.java2d.uiScale"))
@@ -123,7 +123,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                             if (props.containsKey("sun.java2d.uiScale"))
                                 System.setProperty("sun.java2d.uiScale", props.getProperty("sun.java2d.uiScale"));
                         } catch (IOException e) {
-                            e.printStackTrace();
+                            log.error("Error when initializing Splash.", e);
                         }
                     }
                     splashScreen = new Splash(true);
