@@ -31,7 +31,6 @@ public class VersionsInfo {
     /**
      * this version number increments if custom databases change and are not longer valid. This is for example the case when the fingerprint computation changes.
      */
-    public static final int CUSTOM_DATABASE_SCHEMA = PropertyManager.getInteger("de.unijena.bioinf.fingerid.customdb.version", 0);
     public String databaseDate;
     public final DefaultArtifactVersion siriusGuiVersion;
     private DefaultArtifactVersion latestSiriusVersion = null;

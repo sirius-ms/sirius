@@ -25,12 +25,12 @@ import de.unijena.bioinf.ChemistryBase.fp.StandardFingerprintData;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.ms.InputFileConfig;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.chemdb.JSONReader;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CanopusPredictionDeserializer;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CsiPredictionDeserializer;
+import de.unijena.bioinf.chemdb.nitrite.serializers.NitriteCompoundSerializers;
 import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -97,8 +97,8 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
                 .addRepository(FingerprintCandidate.class) //pk inchiKey
                 .setOptionalFields(FingerprintCandidate.class, "fingerprint")
                 .addSerialization(FingerprintCandidate.class,
-                        new FingerprintCandidate.Serializer(),
-                        new JSONReader.FingerprintCandidateDeserializer(null)) //will be added later because it has to be read from project
+                        new NitriteCompoundSerializers.FingerprintCandidateSerializer(),
+                        new NitriteCompoundSerializers.FingerprintCandidateDeserializer(null)) //will be added later because it has to be read from project
         ;
 
         return sourceMetadata;

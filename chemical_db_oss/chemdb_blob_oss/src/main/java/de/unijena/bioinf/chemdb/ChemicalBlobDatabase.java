@@ -177,7 +177,7 @@ public class ChemicalBlobDatabase<Storage extends BlobStorage> extends AbstractC
             }
         }
 
-        this.reader = format == Format.CSV ? new CSVReader() : new JSONReader();
+        this.reader = format == Format.CSV ? new CSVReader() : new CompoundJsonMapper();
     }
 
     @NotNull

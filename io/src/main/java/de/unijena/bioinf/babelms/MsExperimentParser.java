@@ -118,6 +118,7 @@ public class MsExperimentParser {
         endings.put(".mat", MSPExperimentParser.class);
         endings.put(".mb", MassbankExperimentParser.class);
         endings.put(".mblib", MassbankExperimentParser.class);
+        endings.put(".txt", MassbankExperimentParser.class);
         endings.put(".json", JsonExperimentParserDispatcher.class);
         return endings;
     }
