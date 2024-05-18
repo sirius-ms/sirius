@@ -26,6 +26,7 @@ import de.unijena.bioinf.ChemistryBase.exceptions.MultimereException;
 import de.unijena.bioinf.ChemistryBase.exceptions.MultipleChargeException;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.SpectralParser;
 import de.unijena.bioinf.babelms.utils.ParserUtils;
@@ -33,6 +34,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -80,16 +83,18 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
     private static class MgfParserInstance {
         private final MgfSpec prototype;
         private final ArrayDeque<MgfSpec> buffer;
+        private final Object source;
         private final BufferedReader reader;
         private int specIndex = 0;
         protected boolean ignoreUnsupportedIonTypes;
 
-        public MgfParserInstance(BufferedReader reader) {
-            this(reader, false);
+        public MgfParserInstance(BufferedReader reader, Object source) {
+            this(reader, source,false);
         }
 
-        public MgfParserInstance(BufferedReader reader, boolean ignoreUnsupportedIonTypes) {
+        public MgfParserInstance(BufferedReader reader, Object source, boolean ignoreUnsupportedIonTypes) {
             this.reader = reader;
+            this.source = source;
             this.prototype = new MgfSpec();
             this.prototype.spectrum = new MutableMs2Spectrum();
             this.buffer = new ArrayDeque<>();
@@ -301,7 +306,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
     public Iterator<Ms2Spectrum<Peak>> parseSpectra(final BufferedReader reader) {
         return new Iterator<>() {
 
-            private final MgfParserInstance inst = new MgfParserInstance(reader);
+            private final MgfParserInstance inst = new MgfParserInstance(reader, reader);
 
             @Override
             public boolean hasNext() {
@@ -332,9 +337,21 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
     private MgfParserInstance inst;
 
     @Override
+    public synchronized Ms2Experiment parse(InputStream inputStream, URI source) throws IOException {
+        if (inst == null || inst.source != inputStream) inst = new MgfParserInstance(FileUtils.ensureBuffering(new InputStreamReader(inputStream)), inputStream);
+        return parseInst(source);
+    }
+
+    @Override
     public synchronized Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
-        if (inst == null || inst.reader != reader) inst = new MgfParserInstance(reader);
-        if (!inst.hasNext()) return null;
+        if (inst == null || inst.source != reader) inst = new MgfParserInstance(reader, reader);
+        return parseInst(source);
+    }
+
+    private synchronized Ms2Experiment parseInst(URI source) throws IOException {
+        if (!inst.hasNext())
+            return null;
+
         ++inst.specIndex;
         final MutableMs2Experiment exp = new MutableMs2Experiment();
         exp.setMs2Spectra(new ArrayList<>());

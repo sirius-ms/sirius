@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.Iterator;
 
@@ -49,14 +50,23 @@ public abstract class AbstractMzParser implements Parser<Ms2Experiment> {
     protected LCMSProccessingInstance instance;
     protected int counter = 0;
 
-    protected abstract boolean setNewSource(BufferedReader sourceReader, URI source) throws IOException;
+    protected abstract boolean setNewSource(Object sourceReaderOrStream, URI source) throws IOException;
 
     protected abstract LCMSRun parseToLCMSRun() throws IOException;
 
     @Override
+    public Ms2Experiment parse(InputStream inputStream, URI source) throws IOException {
+        return parseTypeLess(inputStream, source);
+    }
+
+    @Override
     public Ms2Experiment parse(BufferedReader sourceReader, URI source) throws IOException {
+        return parseTypeLess(sourceReader, source);
+    }
+
+    private Ms2Experiment parseTypeLess(Object sourceReaderOrStream, URI source) throws IOException {
         try {
-            if (setNewSource(sourceReader, source)) {
+            if (setNewSource(sourceReaderOrStream, source)) {
                 instance = new LCMSProccessingInstance();
                 inMemoryStorage = new InMemoryStorage();
                 final LCMSRun run = parseToLCMSRun();
