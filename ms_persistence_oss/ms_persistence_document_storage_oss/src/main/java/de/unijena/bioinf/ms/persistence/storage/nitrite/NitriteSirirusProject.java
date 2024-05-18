@@ -23,11 +23,11 @@ package de.unijena.bioinf.ms.persistence.storage.nitrite;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintData;
 import de.unijena.bioinf.ChemistryBase.fp.StandardFingerprintData;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.chemdb.JSONReader;
 import de.unijena.bioinf.ms.persistence.model.sirius.CanopusPrediction;
 import de.unijena.bioinf.ms.persistence.model.sirius.CsiPrediction;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CanopusPredictionDeserializer;
 import de.unijena.bioinf.ms.persistence.model.sirius.serializers.CsiPredictionDeserializer;
+import de.unijena.bioinf.chemdb.nitrite.serializers.NitriteCompoundSerializers;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
@@ -72,7 +72,7 @@ public class NitriteSirirusProject extends SiriusProjectDatabaseImpl<NitriteData
             Optional<CanopusNpcData> npcNeg = findFingerprintData(CanopusNpcData.class, -1);
 
             csiPos.ifPresent(data ->
-                    ((JSONReader.FingerprintCandidateDeserializer) metadata.deserializers.get(FingerprintCandidate.class))
+                    ((NitriteCompoundSerializers.FingerprintCandidateDeserializer) metadata.deserializers.get(FingerprintCandidate.class))
                             .setVersion(data.getFingerprintVersion()));
 
             ((CsiPredictionDeserializer) metadata.deserializers.get(CsiPrediction.class)).setVersions(
