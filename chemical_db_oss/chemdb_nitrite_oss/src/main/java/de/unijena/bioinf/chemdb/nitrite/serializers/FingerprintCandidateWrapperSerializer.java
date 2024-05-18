@@ -23,8 +23,6 @@ package de.unijena.bioinf.chemdb.nitrite.serializers;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
-import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
-import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 
@@ -32,7 +30,7 @@ import java.io.IOException;
 
 public class FingerprintCandidateWrapperSerializer extends StdSerializer<FingerprintCandidateWrapper> {
 
-    private final CompoundCandidate.Serializer compoundCandidateSerializer = new CompoundCandidate.Serializer();
+
 
     public FingerprintCandidateWrapperSerializer() {
         super(FingerprintCandidateWrapper.class);
@@ -47,20 +45,12 @@ public class FingerprintCandidateWrapperSerializer extends StdSerializer<Fingerp
         gen.writeFieldName("candidate");
         CompoundCandidate candidate = value.getCandidate(null, null);
         if (candidate != null) {
-            compoundCandidateSerializer.serialize(candidate, gen, provider);
+            NitriteCompoundSerializers.serializeCandidate(candidate, gen, provider);
         } else {
             gen.writeNull();
         }
-        Fingerprint fingerprint = value.getFingerprint();
-        if (fingerprint != null) {
-            short[] indices = value.getFingerprint().toIndizesArray();
-            int[] indicesInt = Utils.shortsToInts(indices);
-            gen.writeArrayFieldStart("fingerprint");
-            gen.writeArray(indicesInt, 0, indicesInt.length);
-            gen.writeEndArray();
-        } else {
-            gen.writeNullField("fingerprint");
-        }
+
+        NitriteCompoundSerializers.serializeFingerprint(value.getFingerprint(), gen, provider);
         gen.writeEndObject();
     }
 

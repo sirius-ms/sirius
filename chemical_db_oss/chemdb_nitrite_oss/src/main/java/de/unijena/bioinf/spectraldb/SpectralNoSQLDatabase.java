@@ -46,6 +46,10 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
 
     final protected Database<Doctype> storage;
 
+    public Database<Doctype> getStorage() {
+        return storage;
+    }
+
     public SpectralNoSQLDatabase(Database<Doctype> storage) {
         this.storage = storage;
     }

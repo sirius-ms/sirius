@@ -24,11 +24,9 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
-import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
-import de.unijena.bioinf.chemdb.JSONReader;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import lombok.Getter;
 import lombok.Setter;
@@ -40,8 +38,6 @@ public class FingerprintCandidateWrapperDeserializer extends StdDeserializer<Fin
     @Getter
     @Setter
     private FingerprintVersion version;
-
-    private final JSONReader.CompoundCandidateDeserializer compoundCandidateDeserializer = new JSONReader.CompoundCandidateDeserializer();
 
     public FingerprintCandidateWrapperDeserializer(FingerprintVersion version) {
         super(FingerprintCandidateWrapper.class);
@@ -73,17 +69,11 @@ public class FingerprintCandidateWrapperDeserializer extends StdDeserializer<Fin
                     break;
                 case "candidate":
                     p.nextToken();
-                    if (p.currentToken() != JsonToken.VALUE_NULL) {
-                        candidate = compoundCandidateDeserializer.deserialize(p, ctxt);
-                    }
+                    if (p.currentToken() != JsonToken.VALUE_NULL)
+                        candidate = NitriteCompoundSerializers.deserializeCandidate(p, null).getKey();
                     break;
                 case "fingerprint":
-                    p.nextToken();
-                    if (p.currentToken() != JsonToken.VALUE_NULL) {
-                        p.nextToken();
-                        short[] indices = p.readValueAs(short[].class);
-                        fingerprint = new ArrayFingerprint(version, indices);
-                    }
+                    fingerprint = NitriteCompoundSerializers.deserializeFingerprint(p, version);
                     break;
             }
         }

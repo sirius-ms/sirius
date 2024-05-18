@@ -21,10 +21,11 @@
 package de.unijena.bioinf.chemdb;
 
 import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.babelms.CloseableIterator;
@@ -36,27 +37,51 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.util.*;
 import java.util.stream.Collectors;
 
-public class JSONReader extends CompoundReader {
+public class CompoundJsonMapper extends CompoundReader {
     private static final Map<String, String> REALNAME_TO_NAME = Arrays.stream(DataSource.values()).collect(Collectors.toMap(DataSource::realName, Enum::name));
+    private static final ObjectMapper OBJECT_MAPPER = intitMapper();
+
+    private static ObjectMapper intitMapper() {
+        ObjectMapper mapper = new ObjectMapper();
+
+        SimpleModule module = new SimpleModule();
+        module.addSerializer(CompoundCandidate.class, new CompoundCandidateSerializer());
+        module.addSerializer(FingerprintCandidate.class, new FingerprintCandidateSerializer());
+        module.addDeserializer(CompoundCandidate.class, new CompoundCandidateDeserializer());
+        module.addDeserializer(FingerprintCandidate.class, new FingerprintCandidateDeserializer());
+        mapper.registerModule(module);
+        return mapper;
+    }
 
     public static List<FingerprintCandidate> fromJSONList(FingerprintVersion version, InputStream in) throws IOException {
         final List<FingerprintCandidate> compounds = new ArrayList<>();
         final MaskedFingerprintVersion mv = (version instanceof MaskedFingerprintVersion) ? (MaskedFingerprintVersion) version : MaskedFingerprintVersion.buildMaskFor(version).enableAll().toMask();
-        try (final CloseableIterator<FingerprintCandidate> reader = new JSONReader().readFingerprints(mv, in)) {
+        try (final CloseableIterator<FingerprintCandidate> reader = new CompoundJsonMapper().readFingerprints(mv, in)) {
             while (reader.hasNext()) {
                 compounds.add(reader.next());
             }
         }
         return compounds;
+    }
+
+    public static void toJSONList(List<FingerprintCandidate> fpcs, Writer out) throws IOException {
+        toJSONList(fpcs, new JsonFactory().createGenerator(out));
+    }
+
+    public static void toJSONList(List<FingerprintCandidate> fpcs, OutputStream out) throws IOException {
+        toJSONList(fpcs, new JsonFactory().createGenerator(out));
+    }
+
+    public static <C extends CompoundCandidate> void toJSONList(List<C> fpcs, JsonGenerator generator) throws IOException {
+        generator.writeStartObject();
+        generator.writeFieldName("compounds");
+        OBJECT_MAPPER.writeValue(generator, fpcs);
+        generator.writeEndObject();
+        generator.flush();
     }
 
 
@@ -138,6 +163,10 @@ public class JSONReader extends CompoundReader {
         }
     }
 
+
+    // classes
+
+    //deserializers
     public static class CompoundCandidateDeserializer extends JsonDeserializer<CompoundCandidate> {
         @NotNull final FingerprintCandidateDeserializer wrapped;
 
@@ -268,4 +297,69 @@ public class JSONReader extends CompoundReader {
             return Pair.of(c, (indizes == null || version == null) ? null : new ArrayFingerprint(version, indizes.toArray()));
         }
     }
+
+    //serializers
+    public static class CompoundCandidateSerializer extends BaseSerializer<CompoundCandidate> {
+    }
+
+    public abstract static class BaseSerializer<C extends CompoundCandidate> extends JsonSerializer<C> {
+
+        protected void serializeInternal(C value, JsonGenerator gen) throws IOException {
+            gen.writeStringField("name", value.name);
+            gen.writeStringField("inchi", (value.inchi != null) ? value.inchi.in3D : null);
+            gen.writeStringField("inchikey", value.inchikey);
+            if (value.pLayer != 0) gen.writeNumberField("pLayer", value.pLayer);
+            if (value.qLayer != 0) gen.writeNumberField("qLayer", value.qLayer);
+            gen.writeNumberField("xlogp", value.xlogp);
+            gen.writeStringField("smiles", value.smiles);
+            gen.writeNumberField("bitset", value.bitset);
+            if (value.links != null) {
+                gen.writeObjectFieldStart("links");
+                final Set<String> set = new HashSet<>(3);
+                for (int k = 0; k < value.links.size(); ++k) {
+                    final DBLink link = value.links.get(k);
+                    if (set.add(link.getName())) {
+                        gen.writeArrayFieldStart(link.getName());
+                        gen.writeString(link.getId());
+                        for (int j = k + 1; j < value.links.size(); ++j) {
+                            if (Objects.equals(value.links.get(j).getName(), link.getName())) {
+                                gen.writeString(value.links.get(j).getId());
+                            }
+                        }
+                        gen.writeEndArray();
+                    }
+                }
+                gen.writeEndObject();
+            }
+            if (value.pubmedIDs != null && value.pubmedIDs.getNumberOfPubmedIDs() > 0) {
+                gen.writeArrayFieldStart("pubmedIDs");
+                for (int id : value.pubmedIDs.getCopyOfPubmedIDs()) {
+                    gen.writeNumber(id);
+                }
+                gen.writeEndArray();
+            }
+        }
+
+        @Override
+        public void serialize(C value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+            gen.writeStartObject();
+            serializeInternal(value, gen);
+            gen.writeEndObject();
+        }
+    }
+
+    public static class FingerprintCandidateSerializer extends BaseSerializer<FingerprintCandidate> {
+        @Override
+        protected void serializeInternal(FingerprintCandidate value, JsonGenerator gen) throws IOException {
+            super.serializeInternal(value, gen);
+            gen.writeArrayFieldStart("fingerprint");
+            if (value.fingerprint != null) {
+                for (FPIter iter : value.fingerprint.presentFingerprints()) {
+                    gen.writeNumber(iter.getIndex());
+                }
+            }
+            gen.writeEndArray();
+        }
+    }
+
 }
