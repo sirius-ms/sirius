@@ -16,6 +16,8 @@ import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.ProjectedTrace;
 import de.unijena.bioinf.lcms.trace.Trace;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
+import de.unijena.bioinf.lcms.utils.AlignedFeatureUtils;
+import de.unijena.bioinf.lcms.utils.MultipleCharges;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
 import de.unijena.bioinf.ms.persistence.model.core.run.SampleStats;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
@@ -30,10 +32,12 @@ import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickFeaturesAndImportToSirius.DbMapper>  {
 
@@ -147,6 +151,8 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         assignMs2(dbMapper, mergedSample, mergedTrace, traceSegments, rawSegments, features);
         // assign ms1 data
         extractMs1(dbMapper, mergedSample, mergedTrace, traceSegments, rawSegments, features, dbIsotopeIds);
+        // reassign charge
+        reassignCharge(features);
         // store feature
         for (AlignedFeatures f : features) {
             if (f==null) continue;
@@ -158,6 +164,26 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         }
         features = Arrays.stream(features).filter(Objects::nonNull).toArray(AlignedFeatures[]::new);
         return features;
+    }
+
+    private void reassignCharge(AlignedFeatures[] features) {
+        for (AlignedFeatures f : features) {
+            if (f==null) continue;
+            MultipleCharges.Decision decision = MultipleCharges.checkForMultipleCharges(f);
+            if (decision== MultipleCharges.Decision.LIKELY && Math.abs(f.getCharge())==1) {
+                setCharge(f, f.getCharge()*2);
+            } else if (decision == MultipleCharges.Decision.UNLIKELY && Math.abs(f.getCharge())!=1) {
+                setCharge(f, (int)Math.signum(f.getCharge()));
+            }
+        }
+    }
+    private void setCharge(AlignedFeatures f, int charge ) {
+        f.setCharge((byte)charge);
+        f.getFeatures().ifPresent(gg->gg.forEach(g->g.setCharge((byte)charge)));
+        f.getIsotopicFeatures().ifPresent(gg->gg.forEach(g->{
+            g.setCharge((byte)charge);
+            g.getFeatures().ifPresent(hh->hh.forEach(h->h.setCharge((byte)charge)));
+        }));
     }
 
     private int estimateChargeFromIsotopes(ProcessedSample sample, MergedTrace mergedTrace) {
