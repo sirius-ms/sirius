@@ -1120,6 +1120,28 @@ public class Spectrums {
         return scale;
     }
 
+    public static <S extends Spectrum<P>, P extends Peak> Range<Double> getMassRange(S spectrum) {
+        if (spectrum instanceof OrderedSpectrum<?>) {
+            return Range.closed(spectrum.getMzAt(0), spectrum.getMzAt(spectrum.size()-1));
+        } else {
+            double minMass=Double.POSITIVE_INFINITY, maxMass=Double.NEGATIVE_INFINITY;
+            for (int k=0; k < spectrum.size(); ++k) {
+                minMass = Math.min(spectrum.getMzAt(k), minMass);
+                maxMass = Math.max(spectrum.getMzAt(k), maxMass);
+            }
+            return Range.closed(minMass, maxMass);
+        }
+    }
+
+    public static <S extends Spectrum<P>, P extends Peak> Range<Double> getIntensityRange(S spectrum) {
+        double minIntensity=Double.POSITIVE_INFINITY, maxIntensity=Double.NEGATIVE_INFINITY;
+        for (int k=0; k < spectrum.size(); ++k) {
+            minIntensity = Math.min(spectrum.getIntensityAt(k), minIntensity);
+            maxIntensity = Math.max(spectrum.getIntensityAt(k), maxIntensity);
+        }
+        return Range.closed(minIntensity, maxIntensity);
+    }
+
 
     /**
      * search for the given peak using {@link Object#equals(Object)}. If the spectrum implements
