@@ -25,15 +25,11 @@ import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
-import de.unijena.bioinf.chemdb.custom.CustomDataSources;
-import de.unijena.bioinf.chemdb.custom.CustomDatabase;
-import de.unijena.bioinf.chemdb.custom.CustomDatabaseSettings;
-import de.unijena.bioinf.chemdb.custom.CustomDatabases;
+import de.unijena.bioinf.chemdb.custom.*;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabase;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabaseParameters;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabases;
-import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.webapi.WebAPI;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -98,7 +94,7 @@ public class ChemDbServiceImpl implements ChemDbService {
         Map<Boolean, List<InputResource<?>>> split = inputResources.stream()
                 .collect(Collectors.partitioningBy(p -> MsExperimentParser.isSupportedFileName(p.getFilename())));
 
-        SiriusJobs.runInBackground(db.importToDatabaseJob(split.get(true), split.get(false), null, webAPI, bufferSize))
+        SiriusJobs.runInBackground(CustomDatabaseImporter.makeImportToDatabaseJob(split.get(true), split.get(false), null, (NoSQLCustomDatabase<?, ?>) db, webAPI, bufferSize))
                 .takeResult();
 
         return SearchableDatabases.of(db);
@@ -150,7 +146,7 @@ public class ChemDbServiceImpl implements ChemDbService {
             CustomDatabaseSettings.CustomDatabaseSettingsBuilder configBuilder = CustomDatabaseSettings.builder()
                     .name(databaseId)
                     .usedFingerprints(List.of(version().getUsedFingerprints()))
-                    .schemaVersion(VersionsInfo.CUSTOM_DATABASE_SCHEMA)
+                    .schemaVersion(CustomDatabase.CUSTOM_DATABASE_SCHEMA)
                     .statistics(new CustomDatabaseSettings.Statistics());
 
             if (dbParameters != null) {
