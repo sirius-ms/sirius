@@ -33,8 +33,8 @@ import picocli.CommandLine;
 
 import java.nio.file.Path;
 
-@CommandLine.Command(name = "write-summaries", aliases = {"W"}, description = "<STANDALONE, POSTPROCESSING> Write Summary files from a given project-space into the given project-space or a custom location.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
-public class SummaryOptions implements PostprocessingTool<SiriusProjectSpaceSummarySubToolJob>, StandaloneTool<Workflow> {
+@CommandLine.Command(name = "summaries", aliases = {"write-summaries", "W"}, description = "@|bold <STANDALONE, POSTPROCESSING>|@ Write Summary files from a given project-space into the given project-space or a custom location. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+public class SummaryOptions implements PostprocessingTool<NoSqlSummarySubToolJob>, StandaloneTool<Workflow> {
 
     //specify negated  name since default is true ->  special picocli behavior
     //https://picocli.info/#_negatable_options
@@ -72,8 +72,8 @@ public class SummaryOptions implements PostprocessingTool<SiriusProjectSpaceSumm
     }
 
     @Override
-    public SiriusProjectSpaceSummarySubToolJob makePostprocessingJob() {
-        return new SiriusProjectSpaceSummarySubToolJob(this);
+    public NoSqlSummarySubToolJob makePostprocessingJob() {
+        return new NoSqlSummarySubToolJob(SummaryOptions.this);
     }
 
     @Override

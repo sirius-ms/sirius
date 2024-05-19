@@ -182,19 +182,20 @@ public class ZodiacSubToolJob extends DataSetJob {
         //node scoring
         NodeScorer[] nodeScorers;
         List<LibraryHit> anchors = null;
-        if (cliOptions.libraryHitsFile != null) {
-            //todo implement option to set all anchors as good quality compounds
-            logInfo("use library hits as anchors.");
-            ZodiacLibraryScoring zodiacLibraryScoring = settings.getAnnotationOrThrow(ZodiacLibraryScoring.class);
-
-            anchors = parseAnchors(new ArrayList<>(ms2ExperimentToTreeCandidates.keySet()));
-
-            Reaction[] reactions = ZodiacUtils.parseReactions(1);
-            Set<MolecularFormula> netSingleReactionDiffs = new HashSet<>();
-            for (Reaction reaction : reactions) {
-                netSingleReactionDiffs.add(reaction.netChange());
-            }
-            nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d), new LibraryHitScorer(zodiacLibraryScoring.lambda, zodiacLibraryScoring.minCosine, netSingleReactionDiffs)};
+        final boolean includeLibraryHitsAsAnchorsHere = false;
+        if (includeLibraryHitsAsAnchorsHere) { //todo include library hits from SIRIUS spectral library search as anchors. Don't use a separate input file anymore
+//            //todo implement option to set all anchors as good quality compounds
+//            logInfo("use library hits as anchors.");
+//            ZodiacLibraryScoring zodiacLibraryScoring = settings.getAnnotationOrThrow(ZodiacLibraryScoring.class);
+//
+//            anchors = parseAnchors(new ArrayList<>(ms2ExperimentToTreeCandidates.keySet()));
+//
+//            Reaction[] reactions = ZodiacUtils.parseReactions(1);
+//            Set<MolecularFormula> netSingleReactionDiffs = new HashSet<>();
+//            for (Reaction reaction : reactions) {
+//                netSingleReactionDiffs.add(reaction.netChange());
+//            }
+//            nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d), new LibraryHitScorer(zodiacLibraryScoring.lambda, zodiacLibraryScoring.minCosine, netSingleReactionDiffs)};
         } else {
             nodeScorers = new NodeScorer[]{new StandardNodeScorer(true, 1d)};
         }
@@ -346,17 +347,17 @@ public class ZodiacSubToolJob extends DataSetJob {
         return true;
     }
 
-    private List<LibraryHit> parseAnchors(List<Ms2Experiment> ms2Experiments) {
-        List<LibraryHit> anchors;
-        Path libraryHitsFile = cliOptions.libraryHitsFile;
-        try {
-            anchors = (libraryHitsFile == null) ? null : ZodiacUtils.parseLibraryHits(libraryHitsFile, ms2Experiments, LoggerFactory.getLogger(loggerKey())); //GNPS and in-house format
-        } catch (IOException e) {
-            logError("Cannot load library hits from file.", e);
-            return null;
-        }
-        return anchors;
-    }
+//    private List<LibraryHit> parseAnchors(List<Ms2Experiment> ms2Experiments) {
+//        List<LibraryHit> anchors;
+//        Path libraryHitsFile = cliOptions.libraryHitsFile;
+//        try {
+//            anchors = (libraryHitsFile == null) ? null : ZodiacUtils.parseLibraryHits(libraryHitsFile, ms2Experiments, LoggerFactory.getLogger(loggerKey())); //GNPS and in-house format
+//        } catch (IOException e) {
+//            logError("Cannot load library hits from file.", e);
+//            return null;
+//        }
+//        return anchors;
+//    }
 
 
     @Override

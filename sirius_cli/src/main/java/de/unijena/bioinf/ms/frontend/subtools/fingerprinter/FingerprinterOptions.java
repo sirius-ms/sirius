@@ -28,7 +28,7 @@ import picocli.CommandLine;
 
 import java.nio.file.Path;
 
-@CommandLine.Command(name = "fingerprinter", aliases = {"FP"}, description = "Compute SIRIUS compatible fingerprints from PubChem standardized SMILES in tsv format.",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+@CommandLine.Command(name = "fingerprinter", aliases = {"FP"}, description = "<STANDALONE> Compute SIRIUS compatible fingerprints from PubChem standardized SMILES in tsv format. %n %n",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class FingerprinterOptions implements StandaloneTool<FingerprinterWorkflow> {
 
     @CommandLine.Option(names = {"--output", "-o"}, description = "Specify output tsv file.", required = true)

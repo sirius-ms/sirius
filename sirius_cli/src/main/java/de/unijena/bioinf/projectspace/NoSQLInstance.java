@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -573,16 +573,19 @@ public class NoSQLInstance implements Instance {
             project().getStorage().insertAll(matches);
 
             // write only fingerprint candidates that do not yet exist in a transaction
-            int inserted = project().getStorage().write(() -> {
-                List<FingerprintCandidate> toInsert = new ArrayList<>(matches.size());
-                for (CsiStructureMatch m : matches) {
-                    FingerprintCandidate c = m.getCandidate();
-                    if (!project().getStorage().containsPrimaryKey(c.getInchiKey2D(), FingerprintCandidate.class))
-                        toInsert.add(c);
-                }
-                //insert all candidates that do not exist
-                return project().getStorage().upsertAll(toInsert); //todo should be insert, workaround to prevent duplicate key error.
-            });
+//            int inserted = project().getStorage().write(() -> {
+//                List<FingerprintCandidate> toInsert = new ArrayList<>(matches.size());
+//                for (CsiStructureMatch m : matches) {
+//                    FingerprintCandidate c = m.getCandidate();
+//                    if (!project().getStorage().containsPrimaryKey(c.getInchiKey2D(), FingerprintCandidate.class))
+//                        toInsert.add(c);
+//                }
+//                //insert all candidates that do not exist
+//                return project().getStorage().upsertAll(toInsert); //should be insert, workaround to prevent duplicate key error.
+//            });
+
+            //always update to allow for updated flags after custom db removal or adding //todo more efficient solution preferred
+            int inserted = project().getStorage().upsertAll(matches.stream().map(CsiStructureMatch::getCandidate).toList());
             upsertComputedSubtools(cs -> cs.setStructureSearch(true));
             log.debug("Inserted: {} of {} CSI candidates.", inserted, matches.size());
 
@@ -681,15 +684,17 @@ public class NoSQLInstance implements Instance {
             project().getStorage().insertAll(matches);
 
             // write only fingerprint candidates that do not yet exist in a transaction
-            int inserted = project().getStorage().write(() -> {
-                List<FingerprintCandidate> toInsert = new ArrayList<>(matches.size());
-                for (DenovoStructureMatch m : matches) {
-                    FingerprintCandidate c = m.getCandidate();
-                    if (!project().getStorage().containsPrimaryKey(c.getInchiKey2D(), FingerprintCandidate.class))
-                        toInsert.add(c);
-                }
-                return project().getStorage().upsertAll(toInsert); //todo should be insert, workaround to prevent duplicate key error.
-            });
+//            int inserted = project().getStorage().write(() -> {
+//                List<FingerprintCandidate> toInsert = new ArrayList<>(matches.size());
+//                for (DenovoStructureMatch m : matches) {
+//                    FingerprintCandidate c = m.getCandidate();
+//                    if (!project().getStorage().containsPrimaryKey(c.getInchiKey2D(), FingerprintCandidate.class))
+//                        toInsert.add(c);
+//                }
+//                return project().getStorage().upsertAll(toInsert); //should be insert, workaround to prevent duplicate key error.
+//            });
+            //always update to allow for updated flags after custom db removal or adding //todo more efficient solution preferred
+            int inserted = project().getStorage().upsertAll(matches.stream().map(DenovoStructureMatch::getCandidate).toList());
             upsertComputedSubtools(cs -> cs.setDeNovoSearch(true));
             log.debug("Inserted: {} of {} DeNovo candidates.", inserted, matches.size());
         } catch (Exception e) {

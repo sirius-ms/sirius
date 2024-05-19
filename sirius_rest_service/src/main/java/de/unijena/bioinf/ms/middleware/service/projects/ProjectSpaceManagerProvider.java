@@ -213,7 +213,7 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
             return old;
 
         PSM psm = getProjectSpaceManager(sourceProjectId).orElseThrow();
-        copyProject(psm, copyPath);
+        copyProject(sourceProjectId, psm, copyPath);
 
         //open new project as well
         if (copyId != null)
@@ -222,7 +222,7 @@ public abstract class ProjectSpaceManagerProvider<PSM extends ProjectSpaceManage
         return old;
     }
 
-    protected abstract void copyProject(PSM psm, Path copyPath) throws IOException;
+    protected abstract void copyProject(String projectId, PSM psm, Path copyPath) throws IOException;
 
     @Override
     public void closeAll() {

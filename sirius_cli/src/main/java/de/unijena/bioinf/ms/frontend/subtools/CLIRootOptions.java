@@ -91,16 +91,21 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
 
     }
 
-    @Option(names = {"--cores", "--processors"}, description = "Number of cpu cores to use. If not specified Sirius uses all available cores.", order = 10)
+    @Option(names = {"--threads", "--cores", "--processors"}, description = "Number of simultaneous worker thread to be used for compute intense workload. If not specified SIRIUS chooses a reasonable number based you CPU specs.", order = 10)
     public void setNumOfCores(int numOfCores) {
+        if(numOfCores < 3){
+            LOG.warn("Number of Cores must be at least 3. Specified: {}. Using 3 instead.", numOfCores);
+            numOfCores = 3;
+        }
+
         PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(numOfCores));
         SiriusJobs.setGlobalJobManager(numOfCores);
         if (instanceBuffer == null)
             setInitialInstanceBuffer(0);
-        LOG.info("Adjusted JobManager CPU threads to '" + SiriusJobs.getGlobalJobManager().getCPUThreads() + "' by command line.");
+        LOG.info("Adjusted JobManager CPU threads to '{}' by command line.", SiriusJobs.getGlobalJobManager().getCPUThreads());
     }
 
-    @Option(names = {"--instance-buffer", "--compound-buffer", "--initial-compound-buffer"}, defaultValue = "0", description = "Number of compounds that will be loaded into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to -1. Default (numeric value 0): 3 x --cores. Note that for <DATASET_TOOLS> the compound buffer may have no effect because this tools may have to load compounds simultaneously into the memory.", order = 20)
+    @Option(names = {"--buffer", "--instance-buffer"}, defaultValue = "0", description = "Number of instances that will be loaded into the Memory. A larger buffer ensures that there are enough instances available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all instances immediately set it to -1. Default (numeric value 0): 3 x --cores. Note that for <DATASET_TOOLS> the compound buffer may have no effect because this tools may have to load compounds simultaneously into the memory.", order = 20)
     public void setInitialInstanceBuffer(int initialInstanceBuffer) {
         this.instanceBuffer = /*initialInstanceBuffer == null ? -1 :*/ initialInstanceBuffer;
         if (instanceBuffer == 0) {

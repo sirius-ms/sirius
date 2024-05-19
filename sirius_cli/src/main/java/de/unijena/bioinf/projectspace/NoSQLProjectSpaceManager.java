@@ -150,7 +150,8 @@ public class NoSQLProjectSpaceManager extends AbstractProjectSpaceManager {
 
     @Override
     public String getName() {
-        return project.getStorage().location().getFileName().toString();
+        String filename = project.getStorage().location().getFileName().toString();
+        return filename.substring(0, filename.lastIndexOf('.'));
     }
 
     @Override

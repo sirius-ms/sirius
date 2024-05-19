@@ -75,14 +75,16 @@ public class NoSQLProjectProviderImpl extends ProjectSpaceManagerProvider<NoSQLP
     }
 
     @Override
-    protected void copyProject(NoSQLProjectSpaceManager instances, Path copyPath) throws IOException {
+    protected void copyProject(String projectId, NoSQLProjectSpaceManager instances, Path copyPath) throws IOException {
         //use read lock to ensure no changes happen.
-        instances.getProject().getStorage().read(() -> {
-            instances.flush();
-            Path source = Path.of(instances.getLocation()).normalize();
+        Path source = Path.of(instances.getLocation()).normalize();
+        closeProjectSpace(projectId);
+        try {
             Path target = copyPath.normalize();
             Files.copy(source, target);
-        });
+        } finally {
+            openProject(projectId, source.toString(), EnumSet.noneOf(ProjectInfo.OptField.class));
+        }
     }
 
     @SneakyThrows

@@ -27,20 +27,17 @@ import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoade
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.frontend.subtools.decomp.DecompOptions;
 import de.unijena.bioinf.ms.frontend.subtools.export.mgf.MgfExporterOptions;
-import de.unijena.bioinf.ms.frontend.subtools.export.tables.ExportPredictionsOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprinter.FingerprinterOptions;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.frontend.subtools.login.LoginOptions;
 import de.unijena.bioinf.ms.frontend.subtools.msnovelist.MsNovelistOptions;
-import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
 import de.unijena.bioinf.ms.frontend.subtools.settings.SettingsOptions;
 import de.unijena.bioinf.ms.frontend.subtools.similarity.SimilarityMatrixOptions;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOptions;
 import de.unijena.bioinf.ms.frontend.subtools.summaries.SummaryOptions;
-import de.unijena.bioinf.ms.frontend.subtools.updatefps.UpdateFingerprintOptions;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import de.unijena.bioinf.ms.frontend.utils.AutoCompletionScript;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -103,9 +100,9 @@ public class WorkflowBuilder {
 
     //postprocessing, project-space consuming tool, exporting tools,
     public final SummaryOptions summaryOptions;
-    public final ExportPredictionsOptions exportPredictions;
+//    public final ExportPredictionsOptions exportPredictions;
     public final MgfExporterOptions mgfExporterOptions;
-    public final UpdateFingerprintOptions updateFingerprintOptions;
+//    public final UpdateFingerprintOptions updateFingerprintOptions;
     public final AutoCompletionScript autocompleteOptions;
 
     //preprocessing, project-space providing tool, pre-project-space tool
@@ -147,7 +144,7 @@ public class WorkflowBuilder {
                 SpectraSearchOptions.class, new SpectraSearchOptions(configOptionLoader),
                 SiriusOptions.class, new SiriusOptions(configOptionLoader),
                 ZodiacOptions.class, new ZodiacOptions(configOptionLoader),
-                PassatuttoOptions.class, new PassatuttoOptions(configOptionLoader),
+//                PassatuttoOptions.class, new PassatuttoOptions(configOptionLoader),
                 FingerprintOptions.class, new FingerprintOptions(configOptionLoader),
                 FingerblastOptions.class, new FingerblastOptions(configOptionLoader),
                 CanopusOptions.class, new CanopusOptions(configOptionLoader),
@@ -159,12 +156,12 @@ public class WorkflowBuilder {
         decompOptions = new DecompOptions();
         mgfExporterOptions = new MgfExporterOptions();
         summaryOptions = new SummaryOptions();
-        exportPredictions = new ExportPredictionsOptions();
+//        exportPredictions = new ExportPredictionsOptions();
         loginOptions = new LoginOptions();
         settingsOptions = new SettingsOptions();
         autocompleteOptions = new AutoCompletionScript();
         fingerprinterOptions = new FingerprinterOptions();
-        updateFingerprintOptions = new UpdateFingerprintOptions();
+//        updateFingerprintOptions = new UpdateFingerprintOptions();
     }
 
     public void initRootSpec() {
@@ -191,7 +188,7 @@ public class WorkflowBuilder {
 
     protected Object[] standaloneTools() {
         return Streams.concat(
-                Stream.of(customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, exportPredictions, fingerprinterOptions, updateFingerprintOptions),
+                Stream.of(customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, /*exportPredictions,*/ fingerprinterOptions/*, updateFingerprintOptions*/),
                 additionalTools.stream(), Stream.of(loginOptions, settingsOptions, autocompleteOptions)
         ).toArray(Object[]::new);
 

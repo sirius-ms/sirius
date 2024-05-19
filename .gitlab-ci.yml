@@ -142,7 +142,7 @@ pushToGitHub:
     - git config --global user.email "${GITLAB_GITHUB_SIRIUS_USERNAME}"
     - git config --global user.name "boeckergitlab"
     - git remote show origin
-    - git remote set-url --push origin git@github.com:boecker-lab/sirius.git
+    - git remote set-url --push origin git@github.com:sirius-ms/sirius.git
     - git remote show origin
     - git push --follow-tags origin HEAD:$CI_COMMIT_REF_NAME
   cache:

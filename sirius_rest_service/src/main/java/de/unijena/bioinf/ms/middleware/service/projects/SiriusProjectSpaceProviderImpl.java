@@ -67,7 +67,7 @@ public class SiriusProjectSpaceProviderImpl extends ProjectSpaceManagerProvider<
     }
 
     @Override
-    protected void copyProject(SiriusProjectSpaceManager psm, Path copyPath) throws IOException {
+    protected void copyProject(String projectId, SiriusProjectSpaceManager psm, Path copyPath) throws IOException {
         ProjectSpaceIO.copyProject(psm.getProjectSpaceImpl(), copyPath, false);
     }
 
