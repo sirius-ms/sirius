@@ -27,7 +27,6 @@ import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
-import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import de.unijena.bioinf.projectspace.Instance;
 import org.slf4j.LoggerFactory;
@@ -46,7 +45,7 @@ import java.util.function.Consumer;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 
-@Command(name = "formula", aliases = {"tree", "sirius" }, description = "<COMPOUND_TOOL> Identify molecular formula for each compound individually using fragmentation trees and isotope patterns.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
+@Command(name = "formulas", aliases = {"trees", "formula", "sirius" }, description = "@|bold <COMPOUND TOOL>|@ Identify molecular formula for each compound individually using fragmentation trees and isotope patterns. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
 public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, InstanceJob.Factory<SiriusSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
@@ -242,6 +241,6 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
 
     @Override
     public List<Class<? extends ToolChainOptions<?, ?>>> getDependentSubCommands() {
-        return List.of(PassatuttoOptions.class, ZodiacOptions.class, FingerprintOptions.class);
+        return List.of(/*PassatuttoOptions.class, */ZodiacOptions.class, FingerprintOptions.class);
     }
 }

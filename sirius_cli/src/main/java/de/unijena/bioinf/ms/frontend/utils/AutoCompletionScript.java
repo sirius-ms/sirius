@@ -39,7 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * generates and installs an Autocompletion-Script with all subcommands
  */
 @Command(name = "install-autocompletion", description = "<INSTALL> generates and installs an Autocompletion-Script with " +
-        "all subcommands. Default installation is for the current user", mixinStandardHelpOptions = true)
+        "all subcommands. Default installation is for the current user. %n %n", mixinStandardHelpOptions = true)
 public class AutoCompletionScript implements StandaloneTool<Workflow> {
 
     /**
