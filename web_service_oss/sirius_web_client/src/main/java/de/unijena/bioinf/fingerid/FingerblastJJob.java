@@ -22,7 +22,6 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -77,7 +76,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
 
     private StructureSearchResult structureSearchResult;
 
-    Set<WebJJob<?,?,?,?>> webJJobs = new HashSet<>();
+    Set<WebJJob<?, ?, ?, ?>> webJJobs = new HashSet<>();
 
     public FingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI) {
         this(predictor, webAPI, null);
@@ -203,7 +202,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                     blastJob.addRequiredJob(covTreeJob);
                     //remove jobs to free up memory
                     blastJob.addJobProgressListener(jobProgressEvent -> {
-                        if (((JJob<?>)jobProgressEvent.getSource()).isFinished())
+                        if (((JJob<?>) jobProgressEvent.getSource()).isFinished())
                             webJJobs.remove(covTreeJob);
                     });
                 }
@@ -448,7 +447,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
 
             final int specHash = Spectrums.mergeSpectra(experiment.getMs2Spectra()).hashCode();
             WebJJob<CanopusJobInput, ?, CanopusResult, ?> canopusWebJJob = webAPI.submitCanopusJob(
-                    requestedMergedCandidates.get(0).getCandidate().getInchi().extractFormula(),
+                    requestedMergedCandidates.get(0).getCandidate().getInchi().extractFormulaOrThrow(),
                     experiment.getPrecursorIonType().getCharge(),
                     requestedMergedCandidates.get(0).getCandidate().getFingerprint().asProbabilistic(),
                     specHash);
@@ -477,7 +476,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
             checkForInterruption();
 
             return submitJob(confidenceJJobRequested);
-        } catch (ExecutionException | UnknownElementException | IOException e) {
+        } catch (ExecutionException | IOException e) {
             logError("Couldn't compute confidence Job", e);
             return null;
         }
