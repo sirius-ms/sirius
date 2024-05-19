@@ -78,8 +78,7 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
 
                 .addRepository(SourceTrace.class)
 
-                .addRepository(MSData.class,
-                        Index.nonUnique("alignedFeatureId"))
+                .addRepository(MSData.class)
 
                 .addRepository(Feature.class,
                         Index.nonUnique("alignedFeatureId")
