@@ -53,10 +53,10 @@ published ([Artifactory](https://bio.informatik.uni-jena.de/repository/webapp/#/
 by our internal Linux build pipeline. These builds are intended as internal infrastructure for the development. Not for building releases.
 
 #### Github (public)
-Pushes to  `stable` are automatically mirrored to our [Github repo](https://github.com/boecker-lab/sirius/tree/stable) 
+Pushes to  `stable` are automatically mirrored to our [Github repo](https://github.com/sirius-ms/sirius/tree/stable)
 and will be build for Linux/Mac/Win and published to our 
 [Artifactory](https://bio.informatik.uni-jena.de/repository/webapp/#/artifacts/browse/tree/General/dist/de/unijena/bioinf/ms/sirius)
-by [Github actions](https://github.com/boecker-lab/sirius/actions) (see, [*.distribute.yml*](../.github/workflows/distribute.yaml)).
+by [Github actions](https://github.com/sirius-ms/sirius/actions) (see, [*.distribute.yml*](../.github/workflows/distribute.yaml)).
 
 #### IMPORTANT: 
 Take care about version numbers on branches that are built by CI/CD pipelines to not override versions from
@@ -65,7 +65,7 @@ other branches. **Use Merge Requests to merge in such branches if you are unsure
 
 ### Make a Release
 Releases are created from a specific branch (`stable`) that is automatically mirrored to our 
-[Github repo](https://github.com/boecker-lab/sirius/tree/stable) (see above). 
+[Github repo](https://github.com/sirius-ms/sirius/tree/stable) (see above).
 
 The workflow contains of two pushes to `stable` and assumes that a **non SNAPSHOT** version is immutable and will be built only once:
 
@@ -75,7 +75,7 @@ The workflow contains of two pushes to `stable` and assumes that a **non SNAPSHO
  * Create Tag `<VERSION>` (Optional but strongly recommended)
  * Commit and Push to `stable`
 
-**Check if the build on [Github](https://github.com/boecker-lab/sirius/actions) worked and Test the release builds**
+**Check if the build on [Github](https://github.com/sirius-ms/sirius/actions) worked and Test the release builds**
 
 2. Publish Release and bump to new Dev version (SNAPSHOT)
  * Refresh main [*README.md*](../README.md) (which is also the SIRIUS web page) by executing the following task

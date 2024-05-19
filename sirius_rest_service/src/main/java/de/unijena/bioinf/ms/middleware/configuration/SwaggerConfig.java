@@ -61,7 +61,7 @@ public class SwaggerConfig {
                 )
 //                .termsOfServiceUrl("https://bio.informatik.uni-jena.de/software/sirius/")
 //                .license("GNU General Public License v3.0")
-//                .licenseUrl("https://github.com/boecker-lab/sirius_frontend/blob/release-4.4/LICENSE.txt")
+//                .licenseUrl("https://github.com/sirius-ms/sirius_frontend/blob/release-4.4/LICENSE.txt")
                 .version(context.getApiVersion());
 
     }

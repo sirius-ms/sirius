@@ -38,7 +38,7 @@ import java.util.function.Consumer;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "msnovelist", aliases = {"predict-candidates"}, description = "<COMPOUND_TOOL> Predict MsNovelist compound candidates and compare them against molecular fingerprint using CSI:FingerID scoring method.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+@CommandLine.Command(name = "denovo-structures", aliases = {"msnovelist"}, description = "@|bold <COMPOUND TOOL>|@ Predict MsNovelist compound candidates and compare them against molecular fingerprint using CSI:FingerID scoring method. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class MsNovelistOptions implements ToolChainOptions<MsNovelistSubToolJob, InstanceJob.Factory<MsNovelistSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 

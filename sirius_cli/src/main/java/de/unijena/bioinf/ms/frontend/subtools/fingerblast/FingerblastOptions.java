@@ -40,7 +40,7 @@ import java.util.function.Consumer;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "structure", aliases = {"search-structure-db"}, description = "<COMPOUND_TOOL> Search in molecular structure db for each compound Individually using CSI:FingerID structure database search.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+@CommandLine.Command(name = "structures", aliases = {"structure-db-search", "structure"}, description = "@|bold <COMPOUND TOOL>|@ Search in molecular structure db for each compound Individually using CSI:FingerID structure database search. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJob, InstanceJob.Factory<FingerblastSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 

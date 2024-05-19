@@ -43,7 +43,7 @@ import java.util.Optional;
 
 import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
 
-@CommandLine.Command(name = "asService", aliases = {"rest", "REST"}, description = "EXPERIMENTAL/UNSTABLE: Starts SIRIUS as a background (REST) service that can be requested via a REST-API", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
+@CommandLine.Command(name = "service", aliases = {"rest", "REST"}, description = "@|bold <STANDALONE>|@ Starts SIRIUS as a background (REST) service that can be requested via a REST-API. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
 public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implements StandaloneTool<MiddlewareAppOptions<I>.Flow> {
     @Setter
     private ProjectsProvider<?> projectsProvider;

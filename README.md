@@ -1,6 +1,6 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blueviolet.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Generic badge](https://img.shields.io/badge/Version-5.5.7-informational.svg)](https://shields.io/)
-[![Build and Pubish](https://github.com/boecker-lab/sirius/actions/workflows/distribute.yaml/badge.svg?branch=release-4-pre)](https://github.com/boecker-lab/sirius/actions/workflows/distribute.yaml)
+[![Generic badge](https://img.shields.io/badge/Version-6.0.0--SNAPSHOT-informational.svg)](https://shields.io/)
+[![Build and Publish](https://github.com/sirius-ms/sirius/actions/workflows/distribute.yaml/badge.svg?branch=release-4-pre)](https://github.com/sirius-ms/sirius/actions/workflows/distribute.yaml)
 
 *<span style="color: #808080;">Our methods are offered to the scientific community as freely available resources. (Re-)distribution of the
 methods, in whole or in part, for commercial purposes is prohibited.
@@ -9,17 +9,17 @@ Please review the [terms of service](https://bio.informatik.uni-jena.de/terms-of
 For non-academic users, the [Bright Giant GmbH](https://bright-giant.com) provides licenses and all related services.
 We ask that users of our tools cite the corresponding papers in any resulting publications.</span>*
 
-Contact: ![](https://raw.githubusercontent.com/boecker-lab/sirius_frontend/release/manual/source/siriusMailtrans.png)
-
 SIRIUS is a java-based software framework for the analysis of LC-MS/MS data of metabolites and other "small molecules of biological interest".
 SIRIUS integrates a collection of our tools, including CSI:FingerID (with [COSMIC](https://bio.informatik.uni-jena.de/software/cosmic/)), [ZODIAC](https://bio.informatik.uni-jena.de/software/zodiac/) and
 [CANOPUS](https://bio.informatik.uni-jena.de/software/canopus/). In particular, both the
 graphical user interface and the command line version of SIRIUS seamlessly integrate the CSI:FingerID and CANOPUS web services.
 
+Main developers of SIRIUS are the [Böcker group](https://bio.informatik.uni-jena.de/) and the [Bright Giant GmbH](https://bright-giant.com)
+
 ## Download Links
 
 ### Documentation
-- [Online Documentation](https://boecker-lab.github.io/docs.sirius.github.io/)
+- [Online Documentation](https://v6.docs.sirius-ms.io/)
 - [Video tutorials](https://www.youtube.com/channel/UCIbW_ZFSADRUQ-T5nmgU4VA/featured)
 - [Bookchapter on using SIRIUS 4](https://doi.org/10.1007/978-1-0716-0239-3_11) ([Preprint](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2020/12/SIRIUS4_book_chapter_preprint-2.pdf)) -- does not cover the new LC-MS/MS processing option
 - [Demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
@@ -27,24 +27,20 @@ graphical user interface and the command line version of SIRIUS seamlessly integ
 
 <!--begin download-->
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 5.5.7 (2022-07-13)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 6.0.0-SNAPSHOT (2024-05-10)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v5.5.7/sirius-5.5.7-win64.msi) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.7/sirius-5.5.7-win64.zip) / [msi (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.5.7/sirius-5.5.7-win64.msi)
-- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v5.5.7/sirius-5.5.7-osx64.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.7/sirius-5.5.7-osx64.zip) / [pkg (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.5.7/sirius-5.5.7-osx64.pkg)
-- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.7/sirius-5.5.7-linux64.zip)
+- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v6.0.0-SNAPSHOT/sirius-6.0.0-SNAPSHOT-win64.msi) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.0-SNAPSHOT/sirius-6.0.0-SNAPSHOT-win64.zip) / - for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v6.0.0-SNAPSHOT/sirius-6.0.0-SNAPSHOT-osx64.pkg) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.0-SNAPSHOT/sirius-6.0.0-SNAPSHOT-osx64.zip) / - for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.0-SNAPSHOT/sirius-6.0.0-SNAPSHOT-linux64.zip)
 
-### SIRIUS+CSI:FingerID Command-Line Interface only - Version 5.5.7 (2022-07-13)
+### SIRIUS+CSI:FingerID Command-Line Interface only - Version 6.0.0-SNAPSHOT (2024-05-10)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
-- for Windows (64bit): [msi](https://github.com/boecker-lab/sirius/releases/download/v5.5.7/sirius-5.5.7-win64-headless.msi) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.7/sirius-5.5.7-win64-headless.zip) / [msi (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.5.7/sirius-5.5.7-win64-headless.msi)
-- for Mac (64bit): [pkg](https://github.com/boecker-lab/sirius/releases/download/v5.5.7/sirius-5.5.7-osx64-headless.pkg) / [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.7/sirius-5.5.7-osx64-headless.zip) / [pkg (signed by Bright Giant)](https://github.com/bright-giant/sirius/releases/download/v5.5.7/sirius-5.5.7-osx64-headless.pkg)
-- for Linux (64bit): [zip](https://github.com/boecker-lab/sirius/releases/download/v5.5.7/sirius-5.5.7-linux64-headless.zip)
+- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v6.0.0-SNAPSHOT/sirius-6.0.0-SNAPSHOT-win64-headless.msi) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.0-SNAPSHOT/sirius-6.0.0-SNAPSHOT-win64-headless.zip) / - for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v6.0.0-SNAPSHOT/sirius-6.0.0-SNAPSHOT-osx64-headless.pkg) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.0-SNAPSHOT/sirius-6.0.0-SNAPSHOT-osx64-headless.zip) / - for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.0-SNAPSHOT/sirius-6.0.0-SNAPSHOT-linux64-headless.zip)
 
 
 <!--end download-->
 
-All (including previous) releases can be found [here](https://github.com/boecker-lab/sirius/releases).
+All (including previous) releases can be found [here](https://github.com/sirius-ms/sirius/releases).
 
-### [Installation](https://boecker-lab.github.io/docs.sirius.github.io/install)
+### [Installation](https://v6.docs.sirius-ms.io/install)
 For  Windows and MacOS, the installer version of SIRIUS (msi/pkg) should be preferred but might require administrator permissions.
 
 Since we do not pay Microsoft/Apple for certification, you might have to confirm that you want to trust "software from
@@ -53,34 +49,31 @@ Therefore, we highly recommend using the [**signed** installers](https://github.
 [Bright Giant](https://bright-giant.com) (also linked above).
 These installers ease the installation process by triggering no (or less) security issues of the respective OS.
 
-See the [documenntation](https://boecker-lab.github.io/docs.sirius.github.io/install) for details.
+See the [documenntation](https://v6.docs.sirius-ms.io/install) for details.
 
 
-### [Creating a user account](https://boecker-lab.github.io/docs.sirius.github.io/account-and-license/)
+### [Creating a user account](https://v6.docs.sirius-ms.io/account-and-license/)
 User accounts can be created directly via the SIRIUS GUI. Please, use your **institutional email address**. SIRIUS
 web services are free for academic/non-commercial use. Usually academic institutions are identified by their
 email domain and access will be granted automatically. In some cases, further validation of your academic/non-commercial
 may be required.
-[See also SIRIUS Documentation – Account and License](https://boecker-lab.github.io/docs.sirius.github.io/account-and-license/).
+[See also SIRIUS Documentation – Account and License](https://v6.docs.sirius-ms.io/account-and-license/).
 
-These might be especially interesting for Windows and MacOS users that have problems with the installation due to
-an unsigned installer (Unknown developer etc...)
+### [Sources on GitHub](https://github.com/sirius-ms)
+- [SIRIUS frontend](https://github.com/sirius-ms/sirius)
+- [SIRIUS library](https://github.com/sirius-ms/sirius-libs)
 
-### [Sources on GitHub](https://github.com/boecker-lab)
-- [SIRIUS frontend](https://github.com/boecker-lab/sirius)
-- [SIRIUS library](https://github.com/boecker-lab/sirius-libs)
+### [Changelog](https://v6.docs.sirius-ms.io/changelog/)
 
-### [Changelog](https://boecker-lab.github.io/docs.sirius.github.io/changelog/)
+### Integration of CSI:FingerID, CANOPUS and MSNovelist
 
-### Integration of CSI:FingerID
-
-Fragmentation trees and spectra can be directly uploaded from SIRIUS to a CSI:FingerID web service, without the need to access the (deprecated) CSI:FingerID
-website. Results are retrieved from the web service and can be displayed in the SIRIUS graphical user interface. This functionality is
+Fragmentation trees and spectra can be directly uploaded from SIRIUS to the CSI:FingerID, CANOPUS and MSNovelist web services.
+Results are retrieved from the web service and can be displayed in the SIRIUS graphical user interface. This functionality is
 also available for the SIRIUS command-line tool. Training structures for CSI:FingerID's predictors are available through the CSI:FingerID web API:
 <!--begin training-->
 
-- https://www.csi-fingerid.uni-jena.de/v2.6/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)
-- https://www.csi-fingerid.uni-jena.de/v2.6/api/fingerid/trainingstructures?predictor=2 (training structures for negative ion mode)
+- https://www.csi-fingerid.uni-jena.de/v3.0/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)
+- https://www.csi-fingerid.uni-jena.de/v3.0/api/fingerid/trainingstructures?predictor=2 (training structures for negative ion mode)
 
 <!--end training-->
 
@@ -117,6 +110,10 @@ Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Alexander A. Aksenov, Alexey V.
 *Nature Methods* 16, 299–302, 2019.
 
 ---
+Stravs, Michael A. and Dührkop, Kai and Böcker, Sebastian and Zamboni, Nicola
+[MSNovelist: De novo structure generation from mass spectra](https://doi.org/10.1101/2021.07.06.450875)
+bioRxiv, 2021. (Cite if you are using: MSNovelist)
+
 Martin A. Hoffmann and Louis-Félix Nothias and Marcus Ludwig and Markus Fleischauer and Emily C. Gentry and Michael Witting and Pieter C. Dorrestein and Kai Dührkop and Sebastian Böcker
 [Assigning confidence to structural annotations from mass spectra with COSMIC](https://doi.org/10.1101/2021.03.18.435634)
 bioRxiv, 2021. (Cite if you are using: *CSI:FingerID*, *COSMIC*)

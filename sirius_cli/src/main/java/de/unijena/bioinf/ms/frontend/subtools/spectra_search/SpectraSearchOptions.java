@@ -33,7 +33,7 @@ import picocli.CommandLine;
 import java.util.List;
 import java.util.function.Consumer;
 
-@CommandLine.Command(name = "spectra-search", aliases = {"spectral-search"}, description = "<STANDALONE> Computes the similarity between all compounds/features in the project-space (queries) one vs all spectra in the selected databases.",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+@CommandLine.Command(name = "spectra-search", aliases = {"library-search"}, description = "@|bold <COMPOUND TOOL>|@ Computes the similarity between all compounds/features in the project-space (queries) one vs all spectra in the selected databases. %n %n",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class SpectraSearchOptions implements ToolChainOptions<SpectraSearchSubtoolJob, InstanceJob.Factory<SpectraSearchSubtoolJob>> {
 
     protected final DefaultParameterConfigLoader defaultConfigOptions;

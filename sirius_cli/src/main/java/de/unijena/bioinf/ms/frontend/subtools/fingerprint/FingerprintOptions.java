@@ -39,7 +39,7 @@ import java.util.function.Consumer;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "fingerprint", description = "<COMPOUND_TOOL> Predict molecular fingerprint from MS/MS and fragmentation trees for each compound individually using CSI:FingerID fingerprint prediction.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+@CommandLine.Command(name = "fingerprints", aliases = {"fingerprint"}, description = "@|bold <COMPOUND TOOL>|@ Predict molecular fingerprint from MS/MS and fragmentation trees for each compound individually using CSI:FingerID fingerprint prediction. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class FingerprintOptions implements ToolChainOptions<FingerprintSubToolJob, InstanceJob.Factory<FingerprintSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 

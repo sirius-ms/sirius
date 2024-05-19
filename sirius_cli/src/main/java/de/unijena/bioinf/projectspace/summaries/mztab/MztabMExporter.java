@@ -37,6 +37,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.AnnotatedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SpectrumWithAdditionalFields;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
+import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
@@ -167,7 +168,7 @@ public class MztabMExporter implements Summarizer {
 
 
                 List<String> ids = bestHit.getCandidate().getLinks().stream()
-                        .filter(dbLink -> dbLink.name.equals(DataSource.PUBCHEM.name())).map(dbLink -> dbLink.id)
+                        .filter(dbLink -> Objects.equals(dbLink.getName(), DataSource.PUBCHEM.name())).map(DBLink::getId)
                         .toList();
 
                 smlItem.setDatabaseIdentifier(

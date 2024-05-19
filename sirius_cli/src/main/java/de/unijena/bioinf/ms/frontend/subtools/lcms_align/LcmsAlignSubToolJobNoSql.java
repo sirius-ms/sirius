@@ -103,7 +103,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                 jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<de.unijena.bioinf.lcms.trace.ProcessedSample>() {
                     @Override
                     protected de.unijena.bioinf.lcms.trace.ProcessedSample compute() throws Exception {
-                        ProcessedSample sample = processing.processSample(f.toUri());
+                        ProcessedSample sample = processing.processSample(f);
                         int hasIsotopes = 0, hasNoIsotopes = 0;
                         for (MoI m : sample.getStorage().getAlignmentStorage()) {
                             if (m.hasIsotopes()) ++hasIsotopes;

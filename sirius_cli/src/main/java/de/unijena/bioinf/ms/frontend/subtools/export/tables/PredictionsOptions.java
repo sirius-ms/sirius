@@ -28,8 +28,9 @@ public class PredictionsOptions {
 
     protected DecimalFormat decimalFormat = null;
 
+    //this tool is already integrated in summaries tool.
     @CommandLine.Option(names = {"--digits","--precision","-p"},
-            description = {"Specify number of digits used for printing floating point values. -1 -> full length Double value."}, defaultValue="-1")
+            description = "@|bold Specify number of digits used for printing floating point values. -1 -> full length Double value.  %n %n|@", defaultValue="-1", hidden = true)
     protected void setDigits(int digits) {
         if (digits == 0) {
             decimalFormat = new DecimalFormat("0");

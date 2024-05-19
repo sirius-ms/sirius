@@ -36,7 +36,6 @@ import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import org.jetbrains.annotations.NotNull;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
@@ -54,7 +53,7 @@ import java.util.stream.Collectors;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "custom-db", aliases = {"DB"}, description = "@|bold %n<STANDALONE> Generate a custom searchable structure/spectral database. Import multiple files with compounds into this DB. %n %n|@", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true, sortOptions = false)
+@CommandLine.Command(name = "custom-db", aliases = {"DB"}, description = "<STANDALONE> Generate a custom searchable structure/spectral database. Import multiple files with compounds into this DB. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true, sortOptions = false)
 public class CustomDBOptions implements StandaloneTool<Workflow> {
 
 
@@ -179,7 +178,7 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
                 CustomDatabaseSettings settings = CustomDatabaseSettings.builder()
                         .usedFingerprints(List.of(version.getUsedFingerprints()))
-                        .schemaVersion(VersionsInfo.CUSTOM_DATABASE_SCHEMA)
+                        .schemaVersion(CustomDatabase.CUSTOM_DATABASE_SCHEMA)
                         .name(mode.importParas.name)
                         .displayName(mode.importParas.displayName)
                         .matchRtOfReferenceSpectra(false)
@@ -235,11 +234,10 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
 
                 checkForInterruption();
 
-                dbjob = db.importToDatabaseJob(
+                dbjob = CustomDatabaseImporter.makeImportToDatabaseJob(
                         spectrumFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
                         structureFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
-                        listener,
-                        ApplicationCore.WEB_API, mode.importParas.writeBuffer
+                        listener,(NoSQLCustomDatabase<?, ?>) db, ApplicationCore.WEB_API, mode.importParas.writeBuffer
                 );
                 checkForInterruption();
                 submitJob(dbjob).awaitResult();
