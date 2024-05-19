@@ -87,16 +87,10 @@ public class StorageUtils {
                 exp.getPrecursorIonType().getCharge(),
                 true);
 
-        MergedMSnSpectrum mergedMsn = MergedMSnSpectrum.builder()
-                .peaks(Spectrums.from(new Ms2Preprocessor().preprocess(exp).getMergedPeaks()))
-                .percursorMzs(exp.getMs2Spectra().stream().mapToDouble(Ms2Spectrum::getPrecursorMz).toArray())
-                .mergedCollisionEnergy(exp.getMs2Spectra().stream().map(Ms2Spectrum::getCollisionEnergy).toArray(CollisionEnergy[]::new)[0])
-                .isolationWindows(null)
-                .build();
-
         MSData.MSDataBuilder builder = MSData.builder()
                 .isotopePattern(isotopePattern != null ? new IsotopePattern(isotopePattern, IsotopePattern.Type.MERGED_APEX) : null)
                 .mergedMs1Spectrum(mergedMs1)
+                .mergedMSnSpectrum(Spectrums.from(new Ms2Preprocessor().preprocess(exp).getMergedPeaks()))
                 .msnSpectra(exp.getMs2Spectra().stream().map(StorageUtils::msnSpectrumFrom).toList());
 
         MSData msData = builder.build();
@@ -116,7 +110,7 @@ public class StorageUtils {
                 .dataSource(DataSource.fromPath(exp.getSourceString()))
                 .retentionTime(exp.getAnnotation(RetentionTime.class).orElse(null))
                 //todo @MEL: wir habe im modell kein MZ of interest, aber letztendlich ist das einfach average mz oder? Gibt ja nur ein window keine wirkliche mzofinterest
-                .averageMass(Arrays.stream(mergedMsn.getPercursorMzs()).average().orElse(Double.NaN))
+                .averageMass(exp.getMs2Spectra().stream().mapToDouble(Ms2Spectrum::getPrecursorMz).average().orElse(Double.NaN))
                 .charge((byte)exp.getPrecursorIonType().getCharge())
                 //todo @MEL ich habe die mal als nullable wrapper objekte gemacht, da wir diese info fuer peak list daten nicht wirklich haben.
 //                .apexIntensity()
