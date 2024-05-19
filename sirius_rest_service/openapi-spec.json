@@ -5363,15 +5363,6 @@
         "description": "User/developer friendly parameter subset for the Formula/SIRIUS tool\n Can use results from Spectral library search tool.",
         "nullable": true
       },
-      "SpectralMatchingType": {
-        "type": "string",
-        "nullable": true,
-        "enum": [
-          "INTENSITY",
-          "GAUSSIAN",
-          "MODIFIED_COSINE"
-        ]
-      },
       "SpectralLibrarySearch": {
         "type": "object",
         "properties": {
@@ -5406,6 +5397,15 @@
         },
         "description": "User/developer friendly parameter subset for the Spectral library search tool.",
         "nullable": true
+      },
+      "SpectralMatchingType": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "INTENSITY",
+          "GAUSSIAN",
+          "MODIFIED_COSINE"
+        ]
       },
       "StructureDbSearch": {
         "type": "object",
