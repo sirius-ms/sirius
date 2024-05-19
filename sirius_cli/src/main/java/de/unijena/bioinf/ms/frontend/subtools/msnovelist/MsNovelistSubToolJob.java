@@ -52,6 +52,8 @@ import java.util.stream.Collectors;
  */
 public class MsNovelistSubToolJob extends InstanceJob {
 
+    private Map<FCandidate<?>, WebJJob<MsNovelistJobInput, ?, MsNovelistJobOutput, ?>> msnJobs;
+
     public MsNovelistSubToolJob(JobSubmitter submitter) {
         super(submitter);
         asWEBSERVICE();
@@ -97,8 +99,7 @@ public class MsNovelistSubToolJob extends InstanceJob {
         checkForInterruption();
 
         // submit prediction jobs; order of prediction from worker(s) will not matter as we use map
-        Map<FCandidate<?>, WebJJob<MsNovelistJobInput, ?, MsNovelistJobOutput, ?>> msnJobs =
-                inputData.stream().collect(Collectors.toMap(ir -> ir,
+        msnJobs = inputData.stream().collect(Collectors.toMap(ir -> ir,
                         ir -> buildAndSubmitRemote(ir, specHash)
                 ));
 
@@ -181,6 +182,19 @@ public class MsNovelistSubToolJob extends InstanceJob {
 
 
         updateProgress(97);
+    }
+
+    @Override
+    public void cancel(boolean mayInterruptIfRunning) {
+        super.cancel(mayInterruptIfRunning);
+        if (msnJobs != null)
+            msnJobs.values().forEach(j -> j.cancel(mayInterruptIfRunning));
+    }
+
+    @Override
+    protected void cleanup() {
+        super.cleanup();
+        msnJobs = null;
     }
 
     @Override
