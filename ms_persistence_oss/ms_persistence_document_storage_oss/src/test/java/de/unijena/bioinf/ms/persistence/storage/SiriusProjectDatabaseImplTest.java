@@ -19,7 +19,7 @@ import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.chemdb.JSONReader;
+import de.unijena.bioinf.chemdb.CompoundJsonMapper;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
@@ -235,7 +235,7 @@ public class SiriusProjectDatabaseImplTest {
             List<FingerprintCandidate> inputCompounds = Stream.of("/structures/C6H4ClN3.json.gz", "/structures/C47H75NO17.json.gz").flatMap(s -> {
                 try (InputStream i = Objects.requireNonNull(getClass().getResourceAsStream(s))) {
                     List<FingerprintCandidate> compounds = new ArrayList<>();
-                    try (final CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(CdkFingerprintVersion.getDefault(),
+                    try (final CloseableIterator<FingerprintCandidate> fciter = new CompoundJsonMapper().readFingerprints(CdkFingerprintVersion.getDefault(),
                             Compressible.decompressRawStream(i, Compressible.Compression.GZIP).orElse(null))) {
                         while (fciter.hasNext())
                             compounds.add(fciter.next());

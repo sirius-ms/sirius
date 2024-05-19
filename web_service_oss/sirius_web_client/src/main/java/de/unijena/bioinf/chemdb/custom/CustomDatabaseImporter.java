@@ -64,12 +64,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import static de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper.CUSTOM_DB_NAME_PLACEHOLDER;
+
 public class CustomDatabaseImporter {
     private final NoSQLCustomDatabase<?, ?> database;
     private WriteableSpectralLibrary databaseAsSpecLib;
-    private final String dbname;
 
-    private final Queue<Listener> listeners = new LinkedList<>();//new ConcurrentLinkedQueue<>();
+    private final Queue<Listener> listeners = new LinkedList<>();
 
     // molecule buffer:  used to bundle molecular formula requests
     private final List<Molecule> moleculeBuffer;
@@ -91,10 +92,9 @@ public class CustomDatabaseImporter {
     private static final int BYTE_EQUIVALENTS = 52428;
 
     // todo make abstract and implement different versions for blob and document storage
-    protected CustomDatabaseImporter(@NotNull NoSQLCustomDatabase<?, ?> database, CdkFingerprintVersion version, WebAPI<?> api, int bufferSize) {
+    private CustomDatabaseImporter(@NotNull NoSQLCustomDatabase<?, ?> database, CdkFingerprintVersion version, WebAPI<?> api, int bufferSize) {
         this.api = api;
         this.database = database;
-        this.dbname = database.name();
         this.fingerprintVersion = version;
 
         this.molBufferSize = bufferSize;
@@ -249,7 +249,7 @@ public class CustomDatabaseImporter {
         }
 
         final Molecule molecule = new Molecule(container, smiles, inchi);
-        molecule.id = id;
+        molecule.ids.add(id);
         molecule.name = name;
         addMolecule(molecule);
         return Optional.of(molecule);
@@ -296,6 +296,7 @@ public class CustomDatabaseImporter {
                 InChI inchi = InChISMILESUtils.getInchi(c, false);
                 if (inchi != null) {
                     Molecule molecule = new Molecule(c, smiles, inchi);
+                    molecule.name=c.getProperty("Name");
                     addMolecule(molecule);
                 } else {
                     LoggerFactory.getLogger(getClass()).warn("Could not create InChI from parsed Atom container. Skipping Molecule: " + smiles);
@@ -399,16 +400,15 @@ public class CustomDatabaseImporter {
                             final String key2d = inchi.key2D();
                             if (key2DToComp.containsKey(key2d)) {
                                 Comp comp = key2DToComp.get(key2d);
-                                if (comp.molecule.id == null && c.id != null)
-                                    comp.molecule.id = c.id;
-                                if (comp.molecule.name == null && c.name != null)
+                                comp.molecule.ids.addAll(c.ids);
+                                if ((c.name != null && !c.name.isBlank()) && (comp.molecule.name == null || comp.molecule.name.isBlank() || comp.molecule.name.length() > c.name.length()))
                                     comp.molecule.name = c.name;
                             } else {
                                 Comp comp = new Comp(c);
                                 key2DToComp.put(key2d, comp);
                             }
                         } catch (IllegalArgumentException e) {
-                            CustomDatabase.logger.error("Error when flushing molecule. Skipping: " + c.id + " - " + c.name, e);
+                            CustomDatabase.logger.error("Error when flushing molecule. Skipping: " + c.ids + " - " + c.name, e);
                         }
                     }
                     checkCancellation();
@@ -458,7 +458,7 @@ public class CustomDatabaseImporter {
                             .findStr(Filter.where("inchiKey").eq(comp.key2D()), FingerprintCandidateWrapper.class, "fingerprint")
                             .findFirst()
                             .orElse(null);
-                    mergeCandidateLinksIfPresent(comp);
+                    mergeLinksAndNames(comp);
                     notifyFingerprintCreation(comp);
                 }
             }
@@ -488,8 +488,8 @@ public class CustomDatabaseImporter {
                         Comp toAdd = key2DToComp.get(can.getInchi().key2D());
                         if (toAdd != null) {
                             toAdd.candidate = FingerprintCandidateWrapper.of(formula, can);
-                            mergeCandidateLinksIfPresent(toAdd);
-                            CustomDatabase.logger.info(toAdd.candidate.getCandidate().getInchi().in2D + " downloaded");
+                            clearAndCreateLinksAndName(toAdd);
+                            CustomDatabase.logger.info("{} downloaded", toAdd.candidate.getCandidate(null, null).getInchi().in2D);
                             notifyFingerprintCreation(toAdd);
                         }
                     }
@@ -513,8 +513,7 @@ public class CustomDatabaseImporter {
                         FingerprintCalculator fcalc = null;
                         try {
                             fcalc = getFingerprintCalculator();
-                            c.candidate = fcalc.computeNewCandidate(c.molecule);
-                            //no link merging needed since newly created candidate contains all links
+                            c.candidate = fcalc.computeNewCandidate(c.molecule); //adding links and name info is done here.
                             notifyFingerprintCreation(c);
                         } finally {
                             if (fcalc != null)
@@ -543,14 +542,14 @@ public class CustomDatabaseImporter {
     private FingerprintCalculator getFingerprintCalculator() {
         FingerprintCalculator calc = freeFingerprinter.poll();
         if (calc == null)
-            calc = new FingerprintCalculator(dbname, fingerprintVersion);
+            calc = new FingerprintCalculator(fingerprintVersion);
         return calc;
     }
 
     private void storeCandidates(Collection<FingerprintCandidateWrapper> candidates) throws IOException {
         synchronized (database) {
             database.database.getStorage().upsertAll(candidates);
-            List<InChI> inchis = candidates.stream().map(candidate -> candidate.getCandidate().getInchi()).toList();
+            List<InChI> inchis = candidates.stream().map(candidate -> candidate.getCandidate(null, null).getInchi()).toList();
 
             synchronized (listeners) {
                 for (Listener l : listeners)
@@ -559,29 +558,54 @@ public class CustomDatabaseImporter {
         }
     }
 
-    protected void mergeCandidateLinksIfPresent(@NotNull Comp comp) {
+    //used to merge information from existing entries in this custom db.
+    private void mergeLinksAndNames(@NotNull Comp comp) {
         if (comp.molecule == null || comp.candidate == null)
             return;
 
         Molecule molecule = comp.molecule;
-        CompoundCandidate fc = comp.candidate.getCandidate();
+        CompoundCandidate fc = comp.candidate.getCandidate(null, null);
 
-        if (fc.getLinks() == null)
-            fc.setLinks(new ArrayList<>(0));
+        fc.setBitset(0);//bit sets of custom dbs are non-persistent, so every custom db entry stores a zero.
 
-        if (fc.getName() == null || fc.getName().isEmpty()) {
-            if (molecule.name != null)
-                fc.setName(molecule.name);
+        if ((molecule.name != null && !molecule.name.isBlank()) && (fc.getName() == null || fc.getName().isBlank() || fc.getName().length() > molecule.name.length()))
+            fc.setName(molecule.name);
+
+        final HashSet<DBLink> links = new HashSet<>(fc.getMutableLinks());
+
+        if (!molecule.ids.isEmpty()) {
+            molecule.ids.stream().map(id -> new DBLink(CUSTOM_DB_NAME_PLACEHOLDER, id)).forEach(links::add);
+            if (fc.getName() == null || fc.getName().isBlank())
+                fc.setName(molecule.ids.iterator().next());
+        }else {
+            links.add(new DBLink(CUSTOM_DB_NAME_PLACEHOLDER,null));
         }
 
-        if (molecule.id != null) {
-            if (fc.getName() == null || fc.getName().isEmpty())
-                fc.setName(molecule.id);
-            fc.getMutableLinks().add(new DBLink(dbname, molecule.id));
-        } else {
-            fc.getMutableLinks().add(new DBLink(dbname, ""));
+        fc.setLinks(new ArrayList<>(links));
+    }
+
+    //used to clear link data from remote db and add links of this custom db
+    private void clearAndCreateLinksAndName(@NotNull Comp comp) {
+        if (comp.molecule == null || comp.candidate == null)
+            return;
+
+        Molecule molecule = comp.molecule;
+        CompoundCandidate fc = comp.candidate.getCandidate(null, null);
+
+        fc.setBitset(0);//bit sets of custom dbs are non-persistent, so every custom db entry stores a zero.
+
+        //set custom db name or id if name is null. otherwise keep the downloaded name from remote db.
+        if (molecule.name != null)
+            fc.setName(molecule.name);
+
+        //override remote db links.
+        if (!molecule.ids.isEmpty()){
+            fc.setLinks(molecule.ids.stream().map(id -> new DBLink(CUSTOM_DB_NAME_PLACEHOLDER, id)).toList()); //we add just id so that names can be added during db retrieval
+            if (fc.getName() == null || fc.getName().isBlank())
+                fc.setName(molecule.ids.iterator().next());
+        }else {
+            fc.setLinks(new ArrayList<>(List.of(new DBLink(CUSTOM_DB_NAME_PLACEHOLDER,null))));
         }
-        fc.setBitset(fc.getBitset() | CustomDataSources.getSourceFromName(dbname).flag());
     }
 
     private void checkCancellation() {
@@ -597,7 +621,7 @@ public class CustomDatabaseImporter {
         private final InChI inchi;
         @NotNull
         private final Smiles smiles;
-        private String id = null;
+        private final Set<String> ids = new HashSet<>();
         private String name = null;
         @NotNull
         private IAtomContainer container;
@@ -627,32 +651,31 @@ public class CustomDatabaseImporter {
     }
 
     private static class FingerprintCalculator {
-        private final String dbname;
         private final FixedFingerprinter fingerprinter;
         private final LogPEstimator logPEstimator;
 
-        public FingerprintCalculator(String dbname, CdkFingerprintVersion version) {
-            this.dbname = dbname;
+        public FingerprintCalculator(CdkFingerprintVersion version) {
             this.fingerprinter = new FixedFingerprinter(version);
             this.logPEstimator = new LogPEstimator();
         }
 
         private FingerprintCandidateWrapper computeNewCandidate(Molecule molecule) throws CDKException, IllegalArgumentException, UnknownElementException {
-            CustomDatabase.logger.info("Compute fingerprint for " + molecule.getInchi().in2D);
+            CustomDatabase.logger.info("Compute fingerprint for {}", molecule.getInchi().in2D);
             final ArrayFingerprint fps = fingerprinter.computeFingerprintFromSMILES(molecule.smiles.smiles);
 
             final FingerprintCandidate fc = new FingerprintCandidate(molecule.getInchi(), fps);
             fc.setSmiles(molecule.smiles.smiles);
+            fc.setBitset(0);//bit sets of custom dbs are non-persistent, so every custom db entry stores a zero.
 
             if (molecule.name != null)
                 fc.setName(molecule.name);
 
-            if (molecule.id != null) {
-                fc.setLinks(List.of(new DBLink(dbname, molecule.id)));
+            if (!molecule.ids.isEmpty()) {
+                fc.setLinks(molecule.ids.stream().map(id -> new DBLink(CUSTOM_DB_NAME_PLACEHOLDER, id)).toList());
                 if (fc.getName() == null || fc.getName().isEmpty())
-                    fc.setName(molecule.id);//set id as name if no name was set
-            } else {
-                fc.setLinks(new ArrayList<>());
+                    fc.setName(molecule.ids.iterator().next()); //set id as name if no name was set
+            }else {
+                fc.setLinks(new ArrayList<>(List.of(new DBLink(CUSTOM_DB_NAME_PLACEHOLDER,null))));
             }
             // compute XLOGP
             fc.setXlogp(logPEstimator.prepareMolAndComputeLogP(molecule.container));
@@ -661,7 +684,7 @@ public class CustomDatabaseImporter {
     }
 
 
-    private void notifyFingerprintCreation(Comp comp){
+    private void notifyFingerprintCreation(Comp comp) {
         synchronized (listeners) {
             listeners.forEach(l -> l.newFingerprint(comp.molecule.getInchi(), BYTE_EQUIVALENTS));
         }
@@ -670,12 +693,6 @@ public class CustomDatabaseImporter {
 
     @FunctionalInterface
     public interface Listener {
-        // informs about molecules that have to be parsed
-//        default void newMolecules(int size) {
-//        }
-//        default void newSpectra(int size) {
-//        }
-
         default void newFingerprint(InChI inChI, int byteEquivalent) {
         }
 
@@ -685,5 +702,63 @@ public class CustomDatabaseImporter {
         default void bytesRead(int numOfBytes) {
 
         }
+    }
+
+
+    public static void importToDatabase(
+            List<InputResource<?>> spectrumFiles,
+            List<InputResource<?>> structureFiles,
+            CustomDatabaseImporter importer
+    ) throws IOException {
+
+        try {
+            if (structureFiles != null && !structureFiles.isEmpty())
+                importer.importStructuresFromResources(structureFiles);
+
+            if (spectrumFiles != null && !spectrumFiles.isEmpty())
+                importer.importSpectraFromResources(spectrumFiles);
+
+        } finally {
+            // update tags & statistics
+            importer.flushAllAndUpdateStatistics();
+        }
+    }
+
+
+
+    public  static JJob<Boolean> makeImportToDatabaseJob(
+            List<InputResource<?>> spectrumFiles,
+            List<InputResource<?>> structureFiles,
+            @Nullable CustomDatabaseImporter.Listener listener,
+            @NotNull NoSQLCustomDatabase<?, ?> database, WebAPI<?> api, int bufferSize
+
+    ) {
+        return new BasicJJob<Boolean>() {
+            CustomDatabaseImporter importer;
+            CustomDatabaseImporter.Listener l = listener;
+
+            @Override
+            protected Boolean compute() throws Exception {
+                importer = new CustomDatabaseImporter(database, api.getCDKChemDBFingerprintVersion(), api, bufferSize);
+                if (listener != null)
+                    importer.addListener(listener);
+                importToDatabase(spectrumFiles, structureFiles, importer);
+                return true;
+            }
+
+            @Override
+            public void cancel(boolean mayInterruptIfRunning) {
+                super.cancel(mayInterruptIfRunning);
+                if (importer != null)
+                    importer.cancel();
+            }
+
+            @Override
+            protected void cleanup() {
+                super.cleanup();
+                if (l != null)
+                    importer.removeListener(l);
+            }
+        }.asCPU();
     }
 }

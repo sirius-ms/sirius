@@ -22,30 +22,24 @@
 
 package de.unijena.bioinf.chemdb;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Writer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@JsonSerialize(using = CompoundCandidate.Serializer.class)
 public class CompoundCandidate {
     //The 2d inchi key is the UUID of an CompoundCandidate, field need to exist fot proper object based serialization
     @Id
@@ -71,9 +65,14 @@ public class CompoundCandidate {
     @Setter
     protected double xlogp = Double.NaN;
     //database info
-    @Getter
     @Setter
     protected long bitset;
+
+    public long getBitset() {
+        if (bitset <= 0)
+            bitset = CustomDataSources.getDBFlagsFromNames(getLinkedDatabases().keys());
+        return bitset;
+    }
 
     protected ArrayList<DBLink> links;
     //citation info
@@ -85,6 +84,7 @@ public class CompoundCandidate {
     //todo the following fields are results and should be in an extended class. In the meantime they should not be part of the constructor
     /**
      * Maximum Common Edge Subgraph (MCES) distance to the top scoring hit (CSI:FingerID) in a candidate list.
+     *
      * @see <a href="https://doi.org/10.1101/2023.03.27.534311">Small molecule machine learning: All models are wrong, some may not even be useful</a>
      */
     @Nullable
@@ -159,25 +159,15 @@ public class CompoundCandidate {
     }
 
     public @NotNull Multimap<String, String> getLinkedDatabases() {
-        Set<String> names = new HashSet<>();
-        for (DataSource s : DataSource.valuesNoALL()) {
-            if ((bitset & s.flag) == s.flag) {
-                names.add(s.name());
-            }
-        }
-
-        Multimap<String, String> databases = ArrayListMultimap.create(names.size(), 1);
         if (links != null) {
+            Multimap<String, String> databases = ArrayListMultimap.create(links.size(), 2);
             for (DBLink link : links) {
-                databases.put(link.name, link.id);
+                databases.put(link.getName(), link.getId());
             }
+            return databases;
         }
 
-        for (String aname : names)
-            if (!databases.containsKey(aname))
-                databases.put(aname, null);
-
-        return databases;
+        return ArrayListMultimap.create();
     }
 
     @Deprecated
@@ -229,72 +219,6 @@ public class CompoundCandidate {
             return;
         if (this.name == null || this.name.isBlank() || this.name.length() > name.length())
             this.name = name;
-    }
-
-    //region Serializer
-    public static class Serializer extends BaseSerializer<CompoundCandidate> {
-    }
-
-    public abstract static class BaseSerializer<C extends CompoundCandidate> extends JsonSerializer<C> {
-
-        protected void serializeInternal(C value, JsonGenerator gen) throws IOException {
-            gen.writeStringField("name", value.name);
-            gen.writeStringField("inchi", (value.inchi != null) ? value.inchi.in3D : null);
-            gen.writeStringField("inchikey", value.inchikey);
-            if (value.pLayer != 0) gen.writeNumberField("pLayer", value.pLayer);
-            if (value.qLayer != 0) gen.writeNumberField("qLayer", value.qLayer);
-            gen.writeNumberField("xlogp", value.xlogp);
-            gen.writeStringField("smiles", value.smiles);
-            gen.writeNumberField("bitset", value.bitset);
-            if (value.links != null) {
-                gen.writeObjectFieldStart("links");
-                final Set<String> set = new HashSet<>(3);
-                for (int k = 0; k < value.links.size(); ++k) {
-                    final DBLink link = value.links.get(k);
-                    if (set.add(link.name)) {
-                        gen.writeArrayFieldStart(link.name);
-                        gen.writeString(link.id);
-                        for (int j = k + 1; j < value.links.size(); ++j) {
-                            if (value.links.get(j).name.equals(link.name)) {
-                                gen.writeString(value.links.get(j).id);
-                            }
-                        }
-                        gen.writeEndArray();
-                    }
-                }
-                gen.writeEndObject();
-            }
-            if (value.pubmedIDs != null && value.pubmedIDs.getNumberOfPubmedIDs() > 0) {
-                gen.writeArrayFieldStart("pubmedIDs");
-                for (int id : value.pubmedIDs.getCopyOfPubmedIDs()) {
-                    gen.writeNumber(id);
-                }
-                gen.writeEndArray();
-            }
-        }
-
-        @Override
-        public void serialize(C value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-            gen.writeStartObject();
-            serializeInternal(value, gen);
-            gen.writeEndObject();
-        }
-    }
-
-    public static void toJSONList(List<FingerprintCandidate> fpcs, Writer out) throws IOException {
-        toJSONList(fpcs, new JsonFactory().createGenerator(out));
-    }
-
-    public static void toJSONList(List<FingerprintCandidate> fpcs, OutputStream out) throws IOException {
-        toJSONList(fpcs, new JsonFactory().createGenerator(out));
-    }
-
-    public static <C extends CompoundCandidate> void toJSONList(List<C> fpcs, JsonGenerator generator) throws IOException {
-        generator.writeStartObject();
-        generator.writeFieldName("compounds");
-        new ObjectMapper().writeValue(generator, fpcs);
-        generator.writeEndObject();
-        generator.flush();
     }
 
     public FormulaCandidate toFormulaCandidate(PrecursorIonType ionization) {

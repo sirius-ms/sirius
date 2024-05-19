@@ -33,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayDeque;
 import java.util.List;
@@ -42,8 +43,10 @@ import java.util.Queue;
 public class JsonExperimentParserDispatcher implements Parser<Ms2Experiment> {
 
     private final List<JsonExperimentParser> parsers;
-    private BufferedReader consumedReader;
     private Queue<JsonNode> nextRoots;
+
+    private Object consumedSource;
+
 
     public JsonExperimentParserDispatcher() {
         this.parsers = List.of(
@@ -54,7 +57,16 @@ public class JsonExperimentParserDispatcher implements Parser<Ms2Experiment> {
 
     @Override
     public Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
-        if (reader == consumedReader) {
+        return parseTypeless(reader, source);
+    }
+
+    @Override
+    public Ms2Experiment parse(InputStream inputStream, URI source) throws IOException {
+        return parseTypeless(inputStream, source);
+    }
+
+    public Ms2Experiment parseTypeless(Object input, URI source) throws IOException {
+        if (input == consumedSource) {
             if (nextRoots == null || nextRoots.isEmpty()) {
                 return null;
             } else {
@@ -62,8 +74,15 @@ public class JsonExperimentParserDispatcher implements Parser<Ms2Experiment> {
             }
         }
 
-        JsonNode root = new ObjectMapper().readTree(reader);
-        consumedReader = reader;
+        JsonNode root;
+        if (input instanceof InputStream is)
+            root = new ObjectMapper().readTree(is);
+        else if (input instanceof BufferedReader br)
+            root = new ObjectMapper().readTree(br);
+        else
+            throw new IllegalArgumentException("Only InputStream and BufferedReader are supported");
+
+        consumedSource = input;
 
         if (root.isArray()) {
             nextRoots = new ArrayDeque<>();

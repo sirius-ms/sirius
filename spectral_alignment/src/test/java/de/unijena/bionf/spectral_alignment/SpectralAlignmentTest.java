@@ -69,10 +69,10 @@ public class SpectralAlignmentTest {
     @Test
     public void testModifiedCosine() {
         ModifiedCosine modifiedCosine = new ModifiedCosine(new Deviation(10));
-        SpectralSimilarity spectralSimilarity = modifiedCosine.score(left, right, precursorMzLeft, precursorMzRight);
+        ModifiedCosine.Result res = modifiedCosine.scoreWithResult(left, right, precursorMzLeft, precursorMzRight, 1d);
 
-        assertEquals(3.5, spectralSimilarity.similarity, 1e-9);
-        assertEquals(4, spectralSimilarity.sharedPeaks);
+        assertEquals(3.5, res.getSimilarity().similarity, 1e-9);
+        assertEquals(4, res.getSimilarity().sharedPeaks);
 
         Map<Integer, Integer> expectedAssignment = new HashMap<>();
         expectedAssignment.put(0, 0);  // ASSIGN 1.0 WITH 1.0
@@ -82,8 +82,8 @@ public class SpectralAlignmentTest {
 
         Map<Integer, Integer> actualAssignment = new HashMap<>();
 
-        for (int i=0; i < modifiedCosine.getAssignment().length; i+=2) {
-            actualAssignment.put(modifiedCosine.getAssignment()[i], modifiedCosine.getAssignment()[i+1]);
+        for (int i=0; i < res.getAssignment().length; i+=2) {
+            actualAssignment.put(res.getAssignment()[i], res.getAssignment()[i+1]);
         }
 
         assertEquals(expectedAssignment, actualAssignment);

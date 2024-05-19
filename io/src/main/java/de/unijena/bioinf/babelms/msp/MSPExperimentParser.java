@@ -28,11 +28,14 @@ import de.unijena.bioinf.ChemistryBase.exceptions.MultipleChargeException;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SpectrumWithAdditionalFields;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.Parser;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.Optional;
 
@@ -48,6 +51,17 @@ public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2
         this.clearSpectrum = clearSpectrum;
     }
 
+    private InputStream lastStream;
+    private BufferedReader lastReader;
+
+    @Override
+    public Ms2Experiment parse(InputStream inputStream, URI source) throws IOException {
+        if (inputStream != lastStream){
+            lastStream = inputStream;
+            lastReader = FileUtils.ensureBuffering(new InputStreamReader(inputStream));
+        }
+        return parse(lastReader, source);
+    }
 
     @Override
     public synchronized Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {

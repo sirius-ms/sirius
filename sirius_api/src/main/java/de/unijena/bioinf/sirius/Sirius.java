@@ -615,10 +615,10 @@ public class Sirius {
     ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-  /*  public class SiriusMS1IdentificationJob extends BasicMasterJJob<List<IdentificationResult<SiriusScore>>> {
+  /*  public class SiriusMS1IdentificationJob extends BasicMasterJJob<List<IdentificationResult>> {
 
         @Override
-        protected List<IdentificationResult<SiriusScore>> compute() throws Exception {
+        protected List<IdentificationResult> compute() throws Exception {
             return null;
         }
     }*/

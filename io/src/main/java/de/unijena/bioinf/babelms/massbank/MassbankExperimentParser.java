@@ -26,11 +26,14 @@ import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SpectrumWithAdditionalFields;
+import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.babelms.annotations.CompoundMetaData;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 
 import static de.unijena.bioinf.babelms.massbank.MassbankFormat.*;
@@ -46,11 +49,26 @@ public class MassbankExperimentParser extends MassbankSpectralParser implements 
         this.clearSpectrum = clearSpectrum;
     }
 
+    private InputStream lastStream;
+    private BufferedReader lastReader;
+
+    @Override
+    public Ms2Experiment parse(InputStream inputStream, URI source) throws IOException {
+        if (inputStream != lastStream){
+            lastStream = inputStream;
+            lastReader = FileUtils.ensureBuffering(new InputStreamReader(inputStream));
+        }
+        return parse(lastReader, source);
+    }
+
 
     @Override
     public Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
         SpectrumWithAdditionalFields<Peak> spectrum = parseSpectrum(reader);
+        return specToExp(spectrum, source);
+    }
 
+    private Ms2Experiment specToExp(SpectrumWithAdditionalFields<Peak> spectrum, URI source) {
         if (spectrum == null)
             return null;
 
@@ -74,17 +92,17 @@ public class MassbankExperimentParser extends MassbankSpectralParser implements 
                 .compoundName(fields.getField(CH_NAME.k()).orElse(null))
                 .compoundId(fields.getField(ACCESSION.k()).orElse(null))
                 .build();
-        if (b.getCompoundId() !=  null || b.getCompoundName() != null)
+        if (b.getCompoundId() != null || b.getCompoundName() != null)
             exp.annotate(b);
 
         fields.getField(CH_IUPAC.k()).ifPresent(inchi -> fields.getField(CH_IUPAC_KEY.k()).ifPresentOrElse(key -> exp.annotate(InChIs.newInChI(key, inchi)), () -> exp.annotate(InChIs.newInChI(inchi))));
         fields.getField(CH_SMILES.k()).map(Smiles::new).ifPresent(exp::annotate);
         fields.getField(PK_SPLASH.k()).map(Splash::new).ifPresent(exp::annotate);
         parseRetentionTime(fields).ifPresent(exp::annotate);
-        fields.getField(AC_INSTRUMENT.k()).map(MsInstrumentation::getBestFittingInstrument).ifPresent(i -> exp.setAnnotation(MsInstrumentation.class,i));
+        fields.getField(AC_INSTRUMENT.k()).map(MsInstrumentation::getBestFittingInstrument).ifPresent(i -> exp.setAnnotation(MsInstrumentation.class, i));
         if (!exp.hasAnnotation(MsInstrumentation.class) || MsInstrumentation.Unknown.equals(exp.getAnnotation(MsInstrumentation.class).orElse(null)))
             fields.getField(AC_INSTRUMENT_TYPE.k()).map(MsInstrumentation::getBestFittingInstrument)
-                    .ifPresent(i -> exp.setAnnotation(MsInstrumentation.class,i));
+                    .ifPresent(i -> exp.setAnnotation(MsInstrumentation.class, i));
 
         if (clearSpectrum)
             spectrum.setAdditionalFields(new AdditionalFields());
