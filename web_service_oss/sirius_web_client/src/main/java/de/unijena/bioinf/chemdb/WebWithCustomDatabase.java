@@ -154,7 +154,7 @@ public class WebWithCustomDatabase {
 
             final long requestFilter = extractFilterBits(dbs).orElse(-1);
             if (requestFilter >= 0 || includeRestAllDb) {
-                final long searchFilter = includeRestAllDb ? 0 : requestFilter;
+                final long searchFilter = includeRestAllDb ? DataSource.ALL.searchFlag : requestFilter;
                 result = api.applyStructureDB(searchFilter, restCache, restDb -> new CandidateResult(
                         restDb.lookupStructuresAndFingerprintsByFormula(formula), searchFilter, requestFilter));
             } else {
@@ -285,7 +285,7 @@ public class WebWithCustomDatabase {
         for (FormulaCandidate formula : formulas) {
             final FormulaKey key = new FormulaKey(formula);
             map.computeIfAbsent(key, k -> new AtomicLong(0))
-                    .accumulateAndGet(formula.bitset, (a, b) -> a |= b);
+                    .accumulateAndGet(formula.bitset, (a, b) -> a | b);
         }
 
         //add non contained custom db flags
@@ -297,7 +297,7 @@ public class WebWithCustomDatabase {
                             throw new RuntimeException(ex);
                         }
                     })
-                    .map(AbstractChemicalDatabase::getName).collect(Collectors.toSet())), (a, b) -> a |= b);
+                    .map(AbstractChemicalDatabase::getName).collect(Collectors.toSet())), (a, b) -> a | b);
         }
 
         return map.entrySet().stream().map(e ->
@@ -491,7 +491,7 @@ public class WebWithCustomDatabase {
 
 
         public boolean containsAllDb() {
-            return restFilter == 0;
+            return restFilter == DataSource.ALL.searchFlag;
         }
 
         public void merge(@NotNull CandidateResult other) {

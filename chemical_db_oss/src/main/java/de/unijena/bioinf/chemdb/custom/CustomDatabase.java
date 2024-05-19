@@ -20,28 +20,23 @@
 
 package de.unijena.bioinf.chemdb.custom;
 
-import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.chemdb.AbstractChemicalDatabase;
 import de.unijena.bioinf.chemdb.SearchableDatabase;
 import de.unijena.bioinf.chemdb.WriteableChemicalDatabase;
-import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.spectraldb.SpectralLibrary;
 import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
-import de.unijena.bioinf.webapi.WebAPI;
 import lombok.SneakyThrows;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 public abstract class CustomDatabase implements SearchableDatabase {
+    public static final int CUSTOM_DATABASE_SCHEMA = PropertyManager.getInteger("de.unijena.bioinf.fingerid.customdb.version", 0);
+
     protected static Logger logger = LoggerFactory.getLogger(CustomDatabase.class);
 
     public abstract void deleteDatabase();
@@ -64,7 +59,7 @@ public abstract class CustomDatabase implements SearchableDatabase {
 
     public boolean needsUpgrade() {
         //todo nightsky: check fingerprint compatibility?
-        return settings.getSchemaVersion() != VersionsInfo.CUSTOM_DATABASE_SCHEMA;
+        return settings.getSchemaVersion() != CUSTOM_DATABASE_SCHEMA;
     }
 
     public abstract String storageLocation();
@@ -144,6 +139,8 @@ public abstract class CustomDatabase implements SearchableDatabase {
         return toOptional(this::toWriteableSpectralLibraryOrThrow, WriteableSpectralLibrary.class);
     }
 
+    public abstract void setSearchFlag(long flag);
+
     @FunctionalInterface
     private interface ThrowingSupplier<T> {
 
@@ -158,54 +155,5 @@ public abstract class CustomDatabase implements SearchableDatabase {
             LoggerFactory.getLogger(getClass()).error("Could not create " + type + " from Custom database'" + name() + "'", e);
             return Optional.empty();
         }
-    }
-
-    public static void importToDatabase(
-            List<InputResource<?>> spectrumFiles,
-            List<InputResource<?>> structureFiles,
-            CustomDatabaseImporter importer
-    ) throws IOException {
-
-        try {
-            if (structureFiles != null && !structureFiles.isEmpty())
-                importer.importStructuresFromResources(structureFiles);
-
-            if (spectrumFiles != null && !spectrumFiles.isEmpty())
-                importer.importSpectraFromResources(spectrumFiles);
-
-        } finally {
-            // update tags & statistics
-            importer.flushAllAndUpdateStatistics();
-        }
-    }
-
-
-
-    public  JJob<Boolean> importToDatabaseJob(
-            List<InputResource<?>> spectrumFiles,
-            List<InputResource<?>> structureFiles,
-            @Nullable CustomDatabaseImporter.Listener listener,
-            @NotNull WebAPI<?> api,
-            int bufferSize
-    ) {
-        return new BasicJJob<Boolean>() {
-            CustomDatabaseImporter importer;
-
-            @Override
-            protected Boolean compute() throws Exception {
-                importer = new CustomDatabaseImporter((NoSQLCustomDatabase<?, ?>) CustomDatabase.this, api.getCDKChemDBFingerprintVersion(), api, bufferSize);
-                if (listener != null)
-                    importer.addListener(listener);
-                importToDatabase(spectrumFiles, structureFiles, importer);
-                return true;
-            }
-
-            @Override
-            public void cancel(boolean mayInterruptIfRunning) {
-                super.cancel(mayInterruptIfRunning);
-                if (importer != null)
-                    importer.cancel();
-            }
-        }.asCPU();
     }
 }

@@ -31,7 +31,7 @@ import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.babelms.CloseableIterator;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import de.unijena.bioinf.chemdb.FormulaCandidate;
-import de.unijena.bioinf.chemdb.JSONReader;
+import de.unijena.bioinf.chemdb.CompoundJsonMapper;
 import de.unijena.bioinf.ms.rest.client.AbstractCsiClient;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -125,7 +125,7 @@ public class StructureSearchClient extends AbstractCsiClient {
                         .addQueryParameter("dbfilter", String.valueOf(filter))
                         .build()).get(),
                 br -> {
-                    try (CloseableIterator<FingerprintCandidate> fciter = new JSONReader().readFingerprints(fpVersion, br)) {
+                    try (CloseableIterator<FingerprintCandidate> fciter = new CompoundJsonMapper().readFingerprints(fpVersion, br)) {
                         final ArrayList<FingerprintCandidate> compounds = new ArrayList<>(100);
                         while (fciter.hasNext())
                             compounds.add(fciter.next());
