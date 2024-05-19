@@ -134,18 +134,26 @@ public class CustomDataSources {
         }
     }
 
+    static Source addCustomSourceIfAbsent(CustomDatabase db) {
+        CustomSource source = (CustomSource) addCustomSourceIfAbsent(db.name(), db.displayName(), db.storageLocation());
+        if (source != null)
+            db.setSearchFlag(source.flag());
+
+        return source;
+    }
+
     static Source addCustomSourceIfAbsent(String name, String displayName, String bucketLocation) {
         synchronized (SOURCE_MAP) {
-            Source s = getSourceFromName(name);
-            if (s == null) {
+            Source existing = getSourceFromName(name);
+            if (existing == null) {
                 int bitIndex = bits.nextClearBit(lastEnumBit);
                 bits.set(bitIndex);
                 long flag = 1L << bitIndex;
-                Source r = new CustomSource(flag, name, displayName, bucketLocation);
-                SOURCE_MAP.put(r.name(), r);
+                Source created = new CustomSource(flag, name, displayName, bucketLocation);
+                SOURCE_MAP.put(created.name(), created);
 
-                notifyListeners(r, false);
-                return r;
+                notifyListeners(created, false);
+                return created;
             }
         }
         return null;
