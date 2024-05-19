@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.spectrum;
 
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import jakarta.persistence.Id;
 import lombok.*;
@@ -32,22 +31,17 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-// TODO: kaidu: warum ist MSData eine n:1 relationship zu AlignedFeature. Es sollte eine 1:1 relationship sein
 public class MSData {
 
-    @Id
-    private long msDataId;
-
     /**
-     * ID of the aligned feature that own this ms data. Can be the id of an AlignedIsotopicFeatures or an AlignedFeature
+     * ID of the aligned feature that own this ms data. Can be the id of an AlignedIsotopicFeatures or an AlignedFeature.
+     * Is also pkey of this object.
      */
+    @Id
     private long alignedFeatureId;
 
     /**
-     * MSn spectra
-     * @markus: previously we had something like a merged msn spectrum here. I do not know that this is supposed to be,
-     * but if we need something like this (e.g. for visualization) we either can compute it on the fly or add it
-     * again here.
+     * MSn spectra merge among features form multiple aligned MS runs
      */
     private List<MergedMSnSpectrum> msnSpectra;
 
@@ -59,6 +53,12 @@ public class MSData {
     /**
      * A merged or representative MS1 spectrum e.g. for visualization in the gui
      */
-    private SimpleSpectrum mergedMs1Spectrum, mergedMSnSpectrum;
+    private SimpleSpectrum mergedMs1Spectrum;
+
+    /**
+     * A merged or representative MSm spectrum e.g. for visualization in the gui.
+     * This spectrum is usually based on the `msnSpectra`
+     */
+    private SimpleSpectrum mergedMSnSpectrum;
 
 }
