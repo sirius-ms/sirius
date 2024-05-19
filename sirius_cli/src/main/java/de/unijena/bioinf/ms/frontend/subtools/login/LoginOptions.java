@@ -54,7 +54,7 @@ import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-@CommandLine.Command(name = "login", description = "<STANDALONE> Allows a user to login for SIRIUS Webservices (e.g. CSI:FingerID or CANOPUS) and securely store a personal access token.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+@CommandLine.Command(name = "login", description = "<STANDALONE> Allows a user to login for SIRIUS Webservices (e.g. CSI:FingerID or CANOPUS) and securely store a personal access token. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> {
     // DELETE Token
     @CommandLine.Option(names = {"--logout", "--clear"},

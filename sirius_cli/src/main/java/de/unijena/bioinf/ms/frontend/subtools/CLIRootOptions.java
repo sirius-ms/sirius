@@ -105,7 +105,7 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
         LOG.info("Adjusted JobManager CPU threads to '{}' by command line.", SiriusJobs.getGlobalJobManager().getCPUThreads());
     }
 
-    @Option(names = {"--instance-buffer", "--compound-buffer", "--initial-compound-buffer"}, defaultValue = "0", description = "Number of compounds that will be loaded into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to -1. Default (numeric value 0): 3 x --cores. Note that for <DATASET_TOOLS> the compound buffer may have no effect because this tools may have to load compounds simultaneously into the memory.", order = 20)
+    @Option(names = {"--buffer", "--instance-buffer"}, defaultValue = "0", description = "Number of instances that will be loaded into the Memory. A larger buffer ensures that there are enough instances available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all instances immediately set it to -1. Default (numeric value 0): 3 x --cores. Note that for <DATASET_TOOLS> the compound buffer may have no effect because this tools may have to load compounds simultaneously into the memory.", order = 20)
     public void setInitialInstanceBuffer(int initialInstanceBuffer) {
         this.instanceBuffer = /*initialInstanceBuffer == null ? -1 :*/ initialInstanceBuffer;
         if (instanceBuffer == 0) {

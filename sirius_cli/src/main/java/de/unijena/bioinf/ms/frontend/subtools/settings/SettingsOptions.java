@@ -30,7 +30,7 @@ import picocli.CommandLine;
 
 import java.util.List;
 
-@CommandLine.Command(name = "settings", description = "<STANDALONE> Configure persistent (technical) settings of SIRIUS (e.g. ProxySettings or ILP Solver).", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+@CommandLine.Command(name = "settings", description = "<STANDALONE> Configure persistent (technical) settings of SIRIUS (e.g. ProxySettings or ILP Solver). %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class SettingsOptions implements StandaloneTool<SettingsOptions.SettingsWorkflow> {
 
     @CommandLine.ArgGroup(exclusive = false, multiplicity = "0..*", heading = "@|bold %n Generic key-value pairs of properties. %n|@")

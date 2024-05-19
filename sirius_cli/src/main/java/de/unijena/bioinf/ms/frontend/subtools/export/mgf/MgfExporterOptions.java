@@ -33,7 +33,7 @@ import java.nio.file.Paths;
 /**
  * Options for the mgf exporter sub-tool.
  */
-@CommandLine.Command(name = "mgf-export", aliases = {"MGF"}, description = "<STANDALONE> Exports the spectra of a given input as mgf.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
+@CommandLine.Command(name = "mgf-export", aliases = {"MGF"}, description = "<STANDALONE> Exports the spectra of a given input as mgf. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
 public class MgfExporterOptions implements StandaloneTool<MgfExporterWorkflow> {
     protected Path output = null;
     protected double ppmDev = Double.NaN;

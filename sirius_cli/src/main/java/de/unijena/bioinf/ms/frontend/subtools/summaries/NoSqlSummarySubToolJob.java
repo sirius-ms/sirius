@@ -33,6 +33,8 @@ import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.NoSQLInstance;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.storage.db.nosql.Database;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +44,7 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implements Workflow {
     private final SummaryOptions options;
@@ -63,15 +66,9 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
         this.instances = instances;
     }
 
+    @Setter
+    @Getter
     private boolean standalone = false;
-
-    public boolean isStandalone() {
-        return standalone;
-    }
-
-    public void setStandalone(boolean standalone) {
-        this.standalone = standalone;
-    }
 
     @Override
     protected Boolean compute() throws Exception {
@@ -89,7 +86,7 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
             if (inst.getProjectSpaceManager() instanceof NoSQLProjectSpaceManager ps)
                 project = ps;
             else {
-                throw new IllegalArgumentException("This summary job only supports the SIRIUS projectSpace!");
+                throw new IllegalArgumentException("This summary job only supports the SIRIUS NoSQL projectSpace!");
             }
         }
 
@@ -100,35 +97,39 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
             StopWatch w = new StopWatch();
             w.start();
 
-            Files.createDirectories(options.location);
+            Path location = options.location;
+            if (location == null)
+                location = Path.of(project.getLocation()).getParent().resolve(project.getName());
+
+            Files.createDirectories(location);
             try (
                     NoSqlFormulaSummaryWriter formulaTopHit = options.topHitSummary
-                            ? initFormulaSummaryWriter("formula_identifications.tsv") : null;
+                            ? initFormulaSummaryWriter(location, "formula_identifications.tsv") : null;
                     NoSqlFormulaSummaryWriter formulaTopHitAdducts = options.topHitWithAdductsSummary
-                            ? initFormulaSummaryWriter("formula_identifications_adducts.tsv") : null;
+                            ? initFormulaSummaryWriter(location, "formula_identifications_adducts.tsv") : null;
                     NoSqlFormulaSummaryWriter formulaAll = options.fullSummary
-                            ? initFormulaSummaryWriter("formula_identifications_all.tsv") : null;
+                            ? initFormulaSummaryWriter(location, "formula_identifications_all.tsv") : null;
                     NoSqlFormulaSummaryWriter formulaTopK = options.topK > 1
-                            ? initFormulaSummaryWriter("formula_identifications_top-" + options.topK + ".tsv") : null;
+                            ? initFormulaSummaryWriter(location, "formula_identifications_top-" + options.topK + ".tsv") : null;
 
                     NoSqlStructureSummaryWriter structureTopHit = options.topHitSummary
-                            ? initStructureSummaryWriter("structure_identifications.tsv") : null;
+                            ? initStructureSummaryWriter(location, "structure_identifications.tsv") : null;
                     NoSqlStructureSummaryWriter structureAll = options.fullSummary
-                            ? initStructureSummaryWriter("structure_identifications_all.tsv") : null;
+                            ? initStructureSummaryWriter(location, "structure_identifications_all.tsv") : null;
                     NoSqlStructureSummaryWriter structureTopK = options.topK > 1
-                            ? initStructureSummaryWriter("structure_identifications_top-" + options.topK + ".tsv") : null;
+                            ? initStructureSummaryWriter(location, "structure_identifications_top-" + options.topK + ".tsv") : null;
 
                     NoSqlDeNovoSummaryWriter deNovoTopHit = options.topHitSummary
-                            ? initDeNovoSummaryWriter("denovo_structure_identifications.tsv") : null;
+                            ? initDeNovoSummaryWriter(location, "denovo_structure_identifications.tsv") : null;
                     NoSqlDeNovoSummaryWriter deNovoAll = options.fullSummary
-                            ? initDeNovoSummaryWriter("denovo_structure_identifications_all.tsv") : null;
+                            ? initDeNovoSummaryWriter(location, "denovo_structure_identifications_all.tsv") : null;
                     NoSqlDeNovoSummaryWriter deNovoTopK = options.topK > 1
-                            ? initDeNovoSummaryWriter("denovo_structure_identifications_top-" + options.topK + ".tsv") : null;
+                            ? initDeNovoSummaryWriter(location, "denovo_structure_identifications_top-" + options.topK + ".tsv") : null;
 
                     NoSqlCanopusSummaryWriter canopusFormula = options.topHitSummary
-                            ? initCanopusSummaryWriter("canopus_formula_summary.tsv") : null;
+                            ? initCanopusSummaryWriter(location, "canopus_formula_summary.tsv") : null;
                     NoSqlCanopusSummaryWriter canopusStructure = options.topHitSummary
-                            ? initCanopusSummaryWriter("canopus_structure_summary.tsv") : null;
+                            ? initCanopusSummaryWriter(location, "canopus_structure_summary.tsv") : null;
 
             ) {
                 //we load all data on demand from project db without manual caching or re-usage.
@@ -142,7 +143,7 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                     { //formula summary
                         boolean first = true;
                         MolecularFormula lastPrecursorFormula = null;
-                        //we use the formula rank for search because its index an we do not know whether siriusScore or zodiacScore was used for ranking.
+                        //we use the formula rank for search because its index, and we do not know whether siriusScore or zodiacScore was used for ranking.
                         for (FormulaCandidate fc : project.getProject().findByFeatureId(f.getAlignedFeatureId(), FormulaCandidate.class, "formulaRank", Database.SortOrder.ASCENDING)) {
                             boolean nothingWritten = true;
 
@@ -268,32 +269,32 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
         }
     }
 
-    NoSqlFormulaSummaryWriter initFormulaSummaryWriter(String filename) throws IOException {
-        NoSqlFormulaSummaryWriter formulaSummaryWriter = new NoSqlFormulaSummaryWriter(makeFileWriter(filename));
+    NoSqlFormulaSummaryWriter initFormulaSummaryWriter(Path location, String filename) throws IOException {
+        NoSqlFormulaSummaryWriter formulaSummaryWriter = new NoSqlFormulaSummaryWriter(makeFileWriter(location, filename));
         formulaSummaryWriter.writeHeader();
         return formulaSummaryWriter;
     }
 
-    NoSqlCanopusSummaryWriter initCanopusSummaryWriter(String filename) throws IOException {
-        NoSqlCanopusSummaryWriter canopusSummaryWriter = new NoSqlCanopusSummaryWriter(makeFileWriter(filename));
+    NoSqlCanopusSummaryWriter initCanopusSummaryWriter(Path location, String filename) throws IOException {
+        NoSqlCanopusSummaryWriter canopusSummaryWriter = new NoSqlCanopusSummaryWriter(makeFileWriter(location, filename));
         canopusSummaryWriter.writeHeader();
         return canopusSummaryWriter;
     }
 
-    NoSqlStructureSummaryWriter initStructureSummaryWriter(String filename) throws IOException {
-        NoSqlStructureSummaryWriter structureSummaryWriter = new NoSqlStructureSummaryWriter(makeFileWriter(filename));
+    NoSqlStructureSummaryWriter initStructureSummaryWriter(Path location, String filename) throws IOException {
+        NoSqlStructureSummaryWriter structureSummaryWriter = new NoSqlStructureSummaryWriter(makeFileWriter(location, filename));
         structureSummaryWriter.writeHeader();
         return structureSummaryWriter;
     }
 
-    NoSqlDeNovoSummaryWriter initDeNovoSummaryWriter(String filename) throws IOException {
-        NoSqlDeNovoSummaryWriter denovoSummaryWriter = new NoSqlDeNovoSummaryWriter(makeFileWriter(filename));
+    NoSqlDeNovoSummaryWriter initDeNovoSummaryWriter(Path location, String filename) throws IOException {
+        NoSqlDeNovoSummaryWriter denovoSummaryWriter = new NoSqlDeNovoSummaryWriter(makeFileWriter(location, filename));
         denovoSummaryWriter.writeHeader();
         return denovoSummaryWriter;
     }
 
-    private BufferedWriter makeFileWriter(String filename) throws IOException {
-        OutputStream out = Files.newOutputStream(options.location.resolve(filename)); //todo some compression support
+    private BufferedWriter makeFileWriter(Path location, String filename) throws IOException {
+        OutputStream out = Files.newOutputStream(location.resolve(filename)); //todo some compression support
 //            OutputStream out = options.compress
 //                    ? new ZipOutputStream(Files.newOutputStream(options.location.resolve(filename + ".zip")))
 //                    : Files.newOutputStream(options.location.resolve(filename));
