@@ -1,6 +1,6 @@
 # GuiApi
 
-All URIs are relative to *http://localhost:8080*
+All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
@@ -31,7 +31,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.GuiApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         GuiApi apiInstance = new GuiApi(defaultClient);
         String projectId = "projectId_example"; // String | if project-space the GUI instance is connected to.
@@ -99,7 +99,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.GuiApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         GuiApi apiInstance = new GuiApi(defaultClient);
         try {
@@ -161,7 +161,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.GuiApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         GuiApi apiInstance = new GuiApi(defaultClient);
         String projectId = "projectId_example"; // String | of project-space the GUI instance will connect to.
