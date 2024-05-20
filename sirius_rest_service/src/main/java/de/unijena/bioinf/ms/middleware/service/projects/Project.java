@@ -30,10 +30,7 @@ import de.unijena.bioinf.ms.middleware.model.annotations.StructureCandidateFormu
 import de.unijena.bioinf.ms.middleware.model.annotations.StructureCandidateScored;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
-import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
-import de.unijena.bioinf.ms.middleware.model.features.AlignedFeatureQuality;
-import de.unijena.bioinf.ms.middleware.model.features.AnnotatedMsMsData;
-import de.unijena.bioinf.ms.middleware.model.features.FeatureImport;
+import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.projectspace.Instance;
@@ -58,6 +55,11 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     @NotNull
     PSM getProjectSpaceManager();
+
+    Optional<QuantificationTable> getQuantificationForAlignedFeature(String alignedFeatureId, QuantificationTable.QuantificationType type);
+
+    Optional<TraceSet> getTraceSetForAlignedFeature(String alignedFeatureId);
+    Optional<TraceSet> getTraceSetForCompound(String compoundId);
 
     Page<Compound> findCompounds(Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields,
                                  @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
