@@ -592,7 +592,7 @@ public class SiriusProjectDatabaseImplTest {
                         assertEquals(ms1, feature.getMSData().get().getMergedMs1Spectrum() != null);
                         assertEquals(ms1, feature.getMSData().get().getIsotopePattern() != null);
                         assertTrue(Math.abs(exp.getIonMass() - feature.getAverageMass()) < .0001);
-                        assertEquals(exp.getPrecursorIonType(), feature.getIonType());
+                        assertEquals(exp.getPrecursorIonType().getCharge(), feature.getCharge());
                         assertEquals(exp.getName(), feature.getName());
                         assertEquals(exp.getFeatureId(), feature.getExternalFeatureId());
                         assertEquals(exp.getMolecularFormula(), feature.getMolecularFormula());
@@ -614,7 +614,7 @@ public class SiriusProjectDatabaseImplTest {
                         assertEquals(ms1, extrFeature.getMSData().get().getIsotopePattern() != null);
 
                         assertTrue(Math.abs(exp.getIonMass() - extrFeature.getAverageMass()) < .0001);
-                        assertEquals(exp.getPrecursorIonType(), extrFeature.getIonType());
+                        assertEquals(exp.getPrecursorIonType().getCharge(), extrFeature.getCharge());
                         assertEquals(exp.getName(), extrFeature.getName());
                         assertEquals(exp.getFeatureId(), extrFeature.getExternalFeatureId());
                         assertEquals(exp.getMolecularFormula(), extrFeature.getMolecularFormula());
