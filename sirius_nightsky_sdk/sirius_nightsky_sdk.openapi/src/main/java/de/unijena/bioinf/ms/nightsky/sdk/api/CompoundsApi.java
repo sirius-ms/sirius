@@ -7,6 +7,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.Compound;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundImport;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageCompound;
+import de.unijena.bioinf.ms.nightsky.sdk.model.TraceSet;
 
 import java.util.HashMap;
 import java.util.List;
@@ -501,5 +502,88 @@ public class CompoundsApi {
      */
     public ResponseSpec getCompoundsPagedWithResponseSpec(String projectId, Integer page, Integer size, List<String> sort, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         return getCompoundsPagedRequestCreation(projectId, page, size, sort, optFields, optFieldsFeatures);
+    }
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param compoundId The compoundId parameter
+     * @return TraceSet
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getTracesRequestCreation(String projectId, String compoundId) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getTraces", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'compoundId' is set
+        if (compoundId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'compoundId' when calling getTraces", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("compoundId", compoundId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/compounds/{compoundId}/traces", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param compoundId The compoundId parameter
+     * @return TraceSet
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public TraceSet getTraces(String projectId, String compoundId) throws WebClientResponseException {
+        ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
+        return getTracesRequestCreation(projectId, compoundId).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param compoundId The compoundId parameter
+     * @return ResponseEntity&lt;TraceSet&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<TraceSet> getTracesWithHttpInfo(String projectId, String compoundId) throws WebClientResponseException {
+        ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
+        return getTracesRequestCreation(projectId, compoundId).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param compoundId The compoundId parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getTracesWithResponseSpec(String projectId, String compoundId) throws WebClientResponseException {
+        return getTracesRequestCreation(projectId, compoundId);
     }
 }

@@ -24,15 +24,12 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.lcms.msms.MergeGreedyStrategy;
-import de.unijena.bioinf.lcms.msms.MergedSpectrum;
-import de.unijena.bioinf.lcms.msms.MsMsQuerySpectrum;
-import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.ms.middleware.model.annotations.CanopusPrediction;
 import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
@@ -43,9 +40,15 @@ import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
-import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.*;
+import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
+import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
+import de.unijena.bioinf.ms.persistence.model.core.trace.RawTraceRef;
+import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
+import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
@@ -56,6 +59,9 @@ import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
+import it.unimi.dsi.fastutil.floats.FloatList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import lombok.SneakyThrows;
@@ -111,6 +117,234 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public @NotNull NoSQLProjectSpaceManager getProjectSpaceManager() {
         return projectSpaceManager;
+    }
+
+    @Override
+    @SneakyThrows
+    public Optional<QuantificationTable> getQuantificationForAlignedFeature(String alignedFeatureId, QuantificationTable.QuantificationType type) {
+        if (type != QuantificationTable.QuantificationType.APEX_HEIGHT) return Optional.empty();
+        Database<?> storage = storage();
+        Optional<AlignedFeatures> maybeFeature = storage.getByPrimaryKey(Long.parseLong(alignedFeatureId), AlignedFeatures.class);
+        if (maybeFeature.isEmpty()) return Optional.empty();
+        AlignedFeatures feature = maybeFeature.get();
+        storage.fetchChild(feature, "features", "alignedFeatureId", Feature.class);
+        // only use features with LC/MS information
+        List<Feature> features = feature.getFeatures().get().stream().filter(x->x.getApexIntensity()!=null).toList();
+        List<LCMSRun> samples = new ArrayList<>();
+        for (int k=0; k < features.size(); ++k) {
+            samples.add(storage.getByPrimaryKey(features.get(k).getRunId(), LCMSRun.class).orElse(null));
+        }
+
+        QuantificationTable table = new QuantificationTable();
+        table.setQuantificationType(type);
+        table.setRowType(QuantificationTable.RowType.FEATURES);
+        table.setColumnType(QuantificationTable.ColumnType.SAMPLES);
+        table.setRowIds(new long[]{feature.getAlignedFeatureId()});
+        table.setRowNames(new String[]{feature.getName()});
+        table.setColumnIds(features.stream().mapToLong(AbstractFeature::getRunId).toArray());
+        table.setColumnNames(samples.stream().map(x->x==null ? "unknown" : x.getName()).toArray(String[]::new));
+        double[] vec = new double[samples.size()];
+        for (int k=0; k < features.size(); ++k) {
+            vec[k] = features.get(k).getApexIntensity();
+        }
+        table.setValues(new double[][]{vec});
+        return Optional.of(table);
+    }
+
+    @Override
+    @SneakyThrows
+    public Optional<TraceSet> getTraceSetForAlignedFeature(String alignedFeatureId) {
+        Database<?> storage = storage();
+        Optional<AlignedFeatures> maybeFeature = storage.getByPrimaryKey(Long.parseLong(alignedFeatureId), AlignedFeatures.class);
+        if (maybeFeature.isEmpty()) return Optional.empty();
+        AlignedFeatures feature = maybeFeature.get();
+        storage.fetchChild(feature, "features", "alignedFeatureId", Feature.class);
+        project().fetchMsData(feature);
+
+        // only use features with LC/MS information
+        List<Feature> features = feature.getFeatures().get().stream().filter(x->x.getApexIntensity()!=null).toList();
+        List<LCMSRun> samples = new ArrayList<>();
+        for (int k=0; k < features.size(); ++k) {
+            samples.add(storage.getByPrimaryKey(features.get(k).getRunId(), LCMSRun.class).orElse(null));
+        }
+
+        LCMSRun merged = storage.getByPrimaryKey(feature.getRunId(), LCMSRun.class).orElse(null);
+        if (merged==null) return Optional.empty();
+        storage.fetchChild(merged, "retentionTimeAxis", "runId", RetentionTimeAxis.class);
+        if (merged.getRetentionTimeAxis().isEmpty()) return Optional.empty();
+        RetentionTimeAxis mergedAxis = merged.getRetentionTimeAxis().get();
+        TraceSet traceSet = new TraceSet();
+
+        TraceSet.Axes axes = new TraceSet.Axes();
+        axes.setScanNumber(mergedAxis.getScanNumbers());
+        axes.setScanIds(mergedAxis.getScanIdentifiers());
+        axes.setRetentionTimeInSeconds(mergedAxis.getRetentionTimes());
+        traceSet.setAxes(axes);
+
+        TraceRef ref = feature.getTraceRef();
+        Optional<MergedTrace> maybeMergedTrace = storage.getByPrimaryKey(ref.getTraceId(), MergedTrace.class);
+        if (maybeMergedTrace.isEmpty()) return Optional.empty();
+        MergedTrace mergedTrace = maybeMergedTrace.get();
+
+        Long2ObjectOpenHashMap<IntArrayList> ms2annotations = new Long2ObjectOpenHashMap<>();
+
+        feature.getMSData().ifPresent(x->{
+            for (MergedMSnSpectrum spec : x.getMsnSpectra()) {
+                long[] sampleIds = spec.getSampleIds();
+                int[][] scanIds = spec.getProjectedPrecursorScanIds();
+                for (int i=0; i < sampleIds.length; ++i) {
+                    ms2annotations.computeIfAbsent(sampleIds[i], (q)->new IntArrayList()).addAll(IntList.of(scanIds[i]));
+                }
+            }
+        });
+
+
+        int firstTraceId = mergedTrace.getScanIndexOffset();
+        List<TraceSet.Trace> traces = new ArrayList<>();
+        for (int k=0; k < features.size(); ++k) {
+            Optional<RawTraceRef> traceReference = features.get(k).getTraceReference();
+            if (traceReference.isPresent()) {
+                RawTraceRef r = traceReference.get();
+                Optional<SourceTrace> sourceTrace = storage.getByPrimaryKey(r.getTraceId(), SourceTrace.class);
+                if (sourceTrace.isPresent()) {
+                    // remap trace
+                    FloatList intensities = sourceTrace.get().getIntensities();
+                    int offset = sourceTrace.get().getScanIndexOffset();
+
+                    int len = intensities.size();
+                    int startIdx=0, shift=0;
+                    // this should never happen. Just in case the single trace appears before the merged trace
+                    // we cut it of
+                    if (offset < firstTraceId) {
+                        len -= (offset - firstTraceId);
+                        startIdx = offset-firstTraceId;
+                        shift=0;
+                    }
+
+                    // this might happen from time to time
+                    if (offset > firstTraceId) {
+                        len += firstTraceId-offset;
+                        startIdx = 0;
+                        shift = firstTraceId-offset;
+                    }
+
+                    double[] vec = new double[len];
+                    for (int i=startIdx; i < len; ++i) {
+                        vec[i+shift] = intensities.getFloat(i);
+                    }
+
+                    TraceSet.Trace trace = new TraceSet.Trace();
+                    trace.setId(features.get(k).getFeatureId());
+                    trace.setSampleId(features.get(k).getRunId());
+                    trace.setSampleName(samples.get(k)==null ? "unknown" : samples.get(k).getName());
+
+                    trace.setIntensities(vec);
+                    trace.setLabel(trace.getSampleName());
+                    trace.setMz(features.get(k).getAverageMass());
+
+                    // add annotations
+                    ArrayList<TraceSet.Annotation> annotations = new ArrayList<>();
+                    // feature annotation
+                    annotations.add(new TraceSet.Annotation("feature", "feature from " + samples.get(k).getName(),
+                            r.getApex() - r.getScanIndexOffsetOfTrace() + shift, r.getStart() - r.getScanIndexOffsetOfTrace() + shift, r.getEnd()- r.getScanIndexOffsetOfTrace() + shift));
+
+                    // ms2 annotations
+                    IntArrayList scanIds = ms2annotations.get(features.get(k).getRunId());
+                    if (scanIds!=null) {
+                        for (int id : scanIds)  {
+                            annotations.add(new TraceSet.Annotation("ms2", "MS2 spectrum in " + samples.get(k).getName(),
+                                    id - r.getScanIndexOffsetOfTrace() + shift));
+
+                        }
+                    }
+                    trace.setAnnotations(annotations.toArray(TraceSet.Annotation[]::new));
+                    traces.add(trace);
+                }
+            }
+        }
+        traceSet.setTraces(traces.toArray(TraceSet.Trace[]::new));
+
+        traceSet.setSampleName(merged.getName());
+        traceSet.setSampleId(merged.getRunId());
+
+        return Optional.of(traceSet);
+    }
+
+    @Override
+    @SneakyThrows
+    public Optional<TraceSet> getTraceSetForCompound(String compoundId) {
+        Database<?> storage = storage();
+        Optional<de.unijena.bioinf.ms.persistence.model.core.Compound> maybeCompound = storage.getByPrimaryKey(Long.parseLong(compoundId), de.unijena.bioinf.ms.persistence.model.core.Compound.class);
+        if (maybeCompound.isEmpty()) return Optional.empty();
+        de.unijena.bioinf.ms.persistence.model.core.Compound compound = maybeCompound.get();
+        storage.fetchChild(compound, "adductFeatures", "compoundId", AlignedFeatures.class);
+        ArrayList<AbstractAlignedFeatures> allFeatures = new ArrayList<>();
+        List<String> labels = new ArrayList<>();
+        for (AlignedFeatures f : compound.getAdductFeatures().get()) {
+            if (f.getApexIntensity()==null) continue; // ignore features without lcms information
+
+            String mainLabel;
+            if (f.getDetectedAdducts().getAllAdducts().size()==1) {
+                mainLabel = f.getDetectedAdducts().getAllAdducts().get(0).toString();
+            } else mainLabel = "[M + ?]" + (f.getCharge() > 0 ? "+" : "-");
+
+            storage.fetchChild(f, "isotopicFeatures", "alignedFeatureId", AlignedIsotopicFeatures.class);
+            allFeatures.add(f);
+            labels.add(mainLabel);
+            List<AlignedIsotopicFeatures> isotopes = f.getIsotopicFeatures().get().stream().filter(x -> x.getApexIntensity() != null).sorted(Comparator.comparingDouble(AbstractFeature::getAverageMass)).toList();
+            for (int k=0; k < isotopes.size(); ++k) {
+                allFeatures.add(isotopes.get(k));
+                labels.add(mainLabel + (k+1)+"-th isotope");
+            }
+        }
+        if (allFeatures.isEmpty()) return Optional.empty();
+
+        TraceSet traceSet = new TraceSet();
+        LCMSRun merged = storage.getByPrimaryKey(allFeatures.get(0).getRunId(), LCMSRun.class).orElse(null);
+        if (merged==null) return Optional.empty();
+        storage.fetchChild(merged, "retentionTimeAxis", "runId", RetentionTimeAxis.class);
+        if (merged.getRetentionTimeAxis().isEmpty()) return Optional.empty();
+        RetentionTimeAxis mergedAxis = merged.getRetentionTimeAxis().get();
+        TraceSet.Axes axes = new TraceSet.Axes();
+        axes.setScanNumber(mergedAxis.getScanNumbers());
+        axes.setScanIds(mergedAxis.getScanIdentifiers());
+        axes.setRetentionTimeInSeconds(mergedAxis.getRetentionTimes());
+        traceSet.setAxes(axes);
+
+        traceSet.setSampleId(merged.getRunId());
+        traceSet.setSampleName(merged.getName());
+
+        int startIndexOfTraces = Integer.MAX_VALUE;
+        for (AbstractAlignedFeatures f : allFeatures) {
+            startIndexOfTraces = Math.min(startIndexOfTraces, f.getTraceRef().getScanIndexOffsetOfTrace());
+        }
+
+        ArrayList<TraceSet.Trace> traces = new ArrayList<>();
+        for (int k=0; k < allFeatures.size(); ++k) {
+            AbstractAlignedFeatures f = allFeatures.get(k);
+            String label = labels.get(k);
+            MergedTrace mergedTrace = storage().getByPrimaryKey(f.getTraceRef().getTraceId(), MergedTrace.class).orElse(null);
+            if (mergedTrace==null) continue;
+
+            TraceSet.Trace trace = new TraceSet.Trace();
+            trace.setMz(f.getAverageMass());
+            trace.setId(f instanceof AlignedIsotopicFeatures ? ((AlignedIsotopicFeatures) f).getAlignedIsotopeFeatureId() : (f instanceof AlignedFeatures ? ((AlignedFeatures) f).getAlignedFeatureId() : 0));
+            trace.setLabel(label);
+
+            int shift = mergedTrace.getScanIndexOffset() - startIndexOfTraces;
+            FloatList fs = mergedTrace.getIntensities();
+            int len = fs.size() + shift;
+            double[] vec = new double[len];
+            for (int i=0; i < fs.size(); ++i) {
+                vec[i+shift] = fs.getFloat(i);
+            }
+            trace.setIntensities(vec);
+            traces.add(trace);
+        }
+
+        traceSet.setTraces(traces.toArray(TraceSet.Trace[]::new));
+
+        return Optional.of(traceSet);
     }
 
     private Pair<String, Database.SortOrder> sort(Sort sort, Pair<String, Database.SortOrder> defaults, Function<String, String> translator) {

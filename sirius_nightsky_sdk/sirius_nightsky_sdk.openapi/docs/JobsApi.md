@@ -1,6 +1,6 @@
 # JobsApi
 
-All URIs are relative to *http://localhost:8080*
+All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
@@ -42,7 +42,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.JobsApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to delete job from
@@ -113,7 +113,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.JobsApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String name = "name_example"; // String | name of the job-config to delete
@@ -178,7 +178,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.JobsApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to delete jobs from
@@ -247,7 +247,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.JobsApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         Boolean includeConfigMap = false; // Boolean | if true, generic configmap with-defaults will be included
@@ -313,7 +313,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.JobsApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to run jobs on
@@ -383,7 +383,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.JobsApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String name = "name_example"; // String | name of the job-config to return
@@ -451,7 +451,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.JobsApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         Boolean includeConfigMap = false; // Boolean | if true the generic configmap will be part of the output
@@ -517,7 +517,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.JobsApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to run jobs on
@@ -585,7 +585,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.JobsApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to run jobs on
@@ -657,7 +657,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.JobsApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String projectId = "projectId_example"; // String | 
@@ -725,7 +725,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.JobsApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String name = "name_example"; // String | name of the job-config to add
@@ -795,7 +795,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.JobsApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to perform the command for.
@@ -865,7 +865,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.JobsApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to run jobs on
@@ -935,7 +935,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.JobsApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         JobsApi apiInstance = new JobsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to run jobs on

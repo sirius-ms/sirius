@@ -9,12 +9,12 @@
 |------------ | ------------- | ------------- | -------------|
 |**totalPages** | **Integer** |  |  [optional] |
 |**totalElements** | **Long** |  |  [optional] |
-|**first** | **Boolean** |  |  [optional] |
-|**sort** | [**SortObject**](SortObject.md) |  |  [optional] |
-|**last** | **Boolean** |  |  [optional] |
 |**size** | **Integer** |  |  [optional] |
 |**content** | [**List&lt;Job&gt;**](Job.md) |  |  [optional] |
 |**number** | **Integer** |  |  [optional] |
+|**sort** | [**SortObject**](SortObject.md) |  |  [optional] |
+|**last** | **Boolean** |  |  [optional] |
+|**first** | **Boolean** |  |  [optional] |
 |**numberOfElements** | **Integer** |  |  [optional] |
 |**pageable** | [**PageableObject**](PageableObject.md) |  |  [optional] |
 |**empty** | **Boolean** |  |  [optional] |

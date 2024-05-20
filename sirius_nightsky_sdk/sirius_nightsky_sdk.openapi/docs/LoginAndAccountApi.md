@@ -1,6 +1,6 @@
 # LoginAndAccountApi
 
-All URIs are relative to *http://localhost:8080*
+All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
@@ -37,7 +37,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.LoginAndAccountApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         LoginAndAccountApi apiInstance = new LoginAndAccountApi(defaultClient);
         Boolean includeSubs = false; // Boolean | include available and active subscriptions in {@link AccountInfo AccountInfo}.
@@ -103,7 +103,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.LoginAndAccountApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         LoginAndAccountApi apiInstance = new LoginAndAccountApi(defaultClient);
         try {
@@ -165,7 +165,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.LoginAndAccountApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         LoginAndAccountApi apiInstance = new LoginAndAccountApi(defaultClient);
         try {
@@ -227,7 +227,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.LoginAndAccountApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         LoginAndAccountApi apiInstance = new LoginAndAccountApi(defaultClient);
         try {
@@ -289,7 +289,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.LoginAndAccountApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         LoginAndAccountApi apiInstance = new LoginAndAccountApi(defaultClient);
         Boolean acceptTerms = true; // Boolean | 
@@ -361,7 +361,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.LoginAndAccountApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         LoginAndAccountApi apiInstance = new LoginAndAccountApi(defaultClient);
         try {
@@ -422,7 +422,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.LoginAndAccountApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         LoginAndAccountApi apiInstance = new LoginAndAccountApi(defaultClient);
         try {
@@ -483,7 +483,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.LoginAndAccountApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         LoginAndAccountApi apiInstance = new LoginAndAccountApi(defaultClient);
         String sid = "sid_example"; // String | 
@@ -549,7 +549,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.LoginAndAccountApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         LoginAndAccountApi apiInstance = new LoginAndAccountApi(defaultClient);
         try {

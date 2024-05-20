@@ -1,6 +1,6 @@
 # SearchableDatabasesApi
 
-All URIs are relative to *http://localhost:8080*
+All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
@@ -36,7 +36,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.SearchableDatabasesApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
         List<String> requestBody = Arrays.asList(); // List<String> | 
@@ -100,7 +100,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.SearchableDatabasesApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
         String databaseId = "databaseId_example"; // String | 
@@ -166,7 +166,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.SearchableDatabasesApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
         Boolean includeStats = false; // Boolean | 
@@ -230,7 +230,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.SearchableDatabasesApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
         String databaseId = "databaseId_example"; // String | 
@@ -296,7 +296,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.SearchableDatabasesApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
         Boolean includeStats = false; // Boolean | 
@@ -360,7 +360,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.SearchableDatabasesApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
         Boolean includeStats = false; // Boolean | 
@@ -426,7 +426,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.SearchableDatabasesApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
         String databaseId = "databaseId_example"; // String | database to import into
@@ -496,7 +496,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.SearchableDatabasesApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
         String databaseId = "databaseId_example"; // String | database to import into
@@ -566,7 +566,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.SearchableDatabasesApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
         String databaseId = "databaseId_example"; // String | 
@@ -631,7 +631,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.SearchableDatabasesApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         SearchableDatabasesApi apiInstance = new SearchableDatabasesApi(defaultClient);
         String databaseId = "databaseId_example"; // String | 

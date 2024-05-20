@@ -87,7 +87,7 @@ public class ApiClient {
     private HttpHeaders defaultHeaders = new HttpHeaders();
     private MultiValueMap<String, String> defaultCookies = new LinkedMultiValueMap<String, String>();
 
-    private String basePath = "http://localhost:8080";
+    private String basePath = "http://localhost:8888";
 
     private final WebClient webClient;
     private final DateFormat dateFormat;
