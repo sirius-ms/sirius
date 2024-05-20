@@ -1,12 +1,17 @@
 package de.unijena.bioinf.ms.middleware.model.features;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-import javax.annotation.Nullable;
-
+@Setter
+@Getter
+@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class QuantificationTable {
 
     @Schema(enumAsRef = false, name = "QuantificationType", nullable = false)
@@ -36,71 +41,4 @@ public class QuantificationTable {
     @Schema(nullable = true) private String[] rowNames;
     @Schema(nullable = true) private String[] columnNames;
     private double[][] values;
-
-    public QuantificationTable() {
-    }
-
-    public QuantificationType getQuantificationType() {
-        return quantificationType;
-    }
-
-    public void setQuantificationType(QuantificationType quantificationType) {
-        this.quantificationType = quantificationType;
-    }
-
-    public RowType getRowType() {
-        return rowType;
-    }
-
-    public void setRowType(RowType rowType) {
-        this.rowType = rowType;
-    }
-
-    public ColumnType getColumnType() {
-        return columnType;
-    }
-
-    public void setColumnType(ColumnType columnType) {
-        this.columnType = columnType;
-    }
-
-    public long[] getRowIds() {
-        return rowIds;
-    }
-
-    public void setRowIds(long[] rowIds) {
-        this.rowIds = rowIds;
-    }
-
-    public long[] getColumnIds() {
-        return columnIds;
-    }
-
-    public void setColumnIds(long[] columnIds) {
-        this.columnIds = columnIds;
-    }
-
-    public String[] getRowNames() {
-        return rowNames;
-    }
-
-    public void setRowNames(String[] rowNames) {
-        this.rowNames = rowNames;
-    }
-
-    public String[] getColumnNames() {
-        return columnNames;
-    }
-
-    public void setColumnNames(String[] columnNames) {
-        this.columnNames = columnNames;
-    }
-
-    public double[][] getValues() {
-        return values;
-    }
-
-    public void setValues(double[][] values) {
-        this.values = values;
-    }
 }
