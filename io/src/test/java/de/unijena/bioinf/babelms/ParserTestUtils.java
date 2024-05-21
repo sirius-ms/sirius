@@ -28,8 +28,12 @@ import java.util.Objects;
 
 public class ParserTestUtils {
 
+    public static File getTestFile(String path) {
+        return new File(Objects.requireNonNull(ParserTestUtils.class.getClassLoader().getResource(path)).getFile());
+    }
+
     public static Ms2Experiment loadExperiment(String file) throws IOException {
-        File input = new File(Objects.requireNonNull(ParserTestUtils.class.getClassLoader().getResource(file)).getFile());
+        File input = getTestFile(file);
         return new MsExperimentParser().getParser(input).parseFromFile(input).get(0);
     }
 }
