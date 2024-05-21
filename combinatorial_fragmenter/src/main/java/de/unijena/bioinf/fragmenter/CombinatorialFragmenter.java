@@ -137,7 +137,7 @@ public class CombinatorialFragmenter {
         final int[] counting = new int[]{1,0};
         while (currentj < nodes.length) {
             if (counting[0] > maxNumberOfNodes) {
-                LoggerFactory.getLogger(CombinatorialFragmenter.class).warn("Too many fragments, cancel fragmentation process");
+                LoggerFactory.getLogger(CombinatorialFragmenter.class).debug("Too many fragments, cancel fragmentation process");
                 break;
             }
             CombinatorialNode n;
