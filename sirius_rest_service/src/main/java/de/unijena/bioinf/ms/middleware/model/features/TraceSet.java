@@ -1,37 +1,45 @@
 package de.unijena.bioinf.ms.middleware.model.features;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import javax.annotation.Nullable;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(ignoreUnknown = true)
 public class TraceSet {
 
     @Getter
     @Setter
-    @NoArgsConstructor
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Axes {
-        private int[] scanNumber;
-        private String[] scanIds;
+        @Nullable private int[] scanNumber;
+        @Nullable private String[] scanIds;
         private double[] retentionTimeInSeconds;
+        public Axes() {
+        }
+    }
+
+    @Schema(enumAsRef = false, name = "AnnotationType", nullable = false)
+    public enum AnnotationType {
+        /**
+         * describes the position of the feature
+         */
+        FEATURE,
+        /**
+         * describes the position where an MS/MS was recorded
+         */
+        MS2;
     }
 
     @Getter
     @Setter
-    @NoArgsConstructor
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Annotation {
-        private String name;
+        private AnnotationType type;
         @Schema(nullable = true)
         private String description;
         private int index;
@@ -40,17 +48,19 @@ public class TraceSet {
         @Schema(nullable = true)
         private Integer to;
 
+        public Annotation() {
+        }
 
-        public Annotation(String name, String description, int index, Integer from, Integer to) {
-            this.name = name;
+        public Annotation(AnnotationType type, String description, int index, Integer from, Integer to) {
+            this.type = type;
             this.description = description;
             this.index = index;
             this.from = from;
             this.to = to;
         }
 
-        public Annotation(String name, String description, int index) {
-            this.name = name;
+        public Annotation(AnnotationType type, String description, int index) {
+            this.type = type;
             this.description = description;
             this.index = index;
         }
@@ -58,9 +68,7 @@ public class TraceSet {
 
     @Getter
     @Setter
-    @NoArgsConstructor
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Trace {
         private long id;
         @Schema(nullable = true)
@@ -71,10 +79,25 @@ public class TraceSet {
         private double[] intensities;
         private Annotation[] annotations;
         private double mz;
+        @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+        private boolean merged;
+        /**
+         * Traces are stored with raw intensity values. The normalization factor maps them to relative intensities,
+         * such that traces from different samples can be compared.
+         */
+        private double normalizationFactor;
+
+
+
+        public Trace() {
+        }
     }
 
     private long sampleId;
     private String sampleName;
     private Axes axes;
     private Trace[] traces;
+
+    public TraceSet() {
+    }
 }
