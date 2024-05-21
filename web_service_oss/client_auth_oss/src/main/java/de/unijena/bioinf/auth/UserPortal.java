@@ -84,6 +84,12 @@ public class UserPortal {
         return withPath(pwResetPath());
     }
 
+    public static URI explorerLicURL(String licenseInfo) {
+        return baseURLBuilder().addPathSegments(explorerLicPath())
+                .addEncodedQueryParameter("key", URLEncoder.encode(licenseInfo, StandardCharsets.UTF_8))
+                .build().uri();
+    }
+
     public static String signUpPath() {
         return "auth/register/";
     }
@@ -94,5 +100,9 @@ public class UserPortal {
 
     public static String signInPath() {
         return "auth/login/";
+    }
+
+    public static String explorerLicPath() {
+        return "register-explorer-license/";
     }
 }
