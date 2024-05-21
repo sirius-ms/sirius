@@ -167,6 +167,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         List<LCMSRun> samples = new ArrayList<>();
         for (int k=0; k < features.size(); ++k) {
             samples.add(storage.getByPrimaryKey(features.get(k).getRunId(), LCMSRun.class).orElse(null));
+            storage.fetchChild(samples.get(k), "runId", "retentionTimeAxis", RetentionTimeAxis.class);
         }
 
         MergedLCMSRun merged = storage.getByPrimaryKey(feature.getRunId(), MergedLCMSRun.class).orElse(null);
@@ -209,6 +210,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     feature.getTraceRef().getApex(), feature.getTraceRef().getStart(), feature.getTraceRef().getEnd())});
             mergedtrace.setMerged(true);
             mergedtrace.setIntensities(mergedTrace.getIntensities().doubleStream().toArray());
+            mergedtrace.setNoiseLevel((double)(mergedAxis.getNoiseLevelPerScan()[feature.getTraceRef().getScanIndexOffsetOfTrace()+feature.getTraceRef().getApex()]));
             traces.add(mergedtrace);
         }
 
@@ -269,7 +271,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                         }
                     }
                     trace.setAnnotations(annotations.toArray(TraceSet.Annotation[]::new));
-                    // TODO: normalization factor!!!
+                    RetentionTimeAxis axis = samples.get(k).getRetentionTimeAxis().get();
+                    trace.setNormalizationFactor(axis.getNormalizationFactor());
+                    trace.setNoiseLevel((double)axis.getNoiseLevelPerScan()[r.getRawScanIndexOfset()+r.getRawApex()]);
                     traces.add(trace);
                 }
             }

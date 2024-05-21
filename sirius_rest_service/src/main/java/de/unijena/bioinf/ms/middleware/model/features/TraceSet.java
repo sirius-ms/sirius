@@ -86,6 +86,11 @@ public class TraceSet {
          * such that traces from different samples can be compared.
          */
         private double normalizationFactor;
+        /**
+         * The noise level is estimated from the median noise in the surrounding scans. It can be used to
+         * calculate signal-to-noise ratios.
+         */
+        private Double noiseLevel;
 
 
 
