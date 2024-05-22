@@ -44,6 +44,7 @@ import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.msnovelist.MsNovelistCandidate;
 import de.unijena.bioinf.ms.webapi.WebJJob;
+import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.webapi.WebAPI;
 import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -120,10 +121,10 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
         //filter 2d duplicates
 
         // needed for fingerprinting and FingerprintCandidate generation
-        final FixedFingerprinter fixedFingerprinter = new FixedFingerprinter(webAPI.getCDKChemDBFingerprintVersion());
+        final FixedFingerprinter fixedFingerprinter = new FixedFingerprinter(NetUtils.tryAndWait(webAPI::getCDKChemDBFingerprintVersion, this::checkForInterruption));
         final FingerIdData fingerIdData = idResult.getPrecursorIonType().getCharge() > 0
-                ? webAPI.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE)
-                : webAPI.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE);
+                ? NetUtils.tryAndWait(() -> webAPI.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE), this::checkForInterruption)
+                : NetUtils.tryAndWait(() -> webAPI.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE), this::checkForInterruption);
         final MaskedFingerprintVersion fpMask = fingerIdData.getFingerprintVersion();
 
         // needed to perceive aromaticity
@@ -201,10 +202,10 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
         checkForInterruption();
 
         // try and get bayessian network (covTree) for molecular formula
-        BayesnetScoring bayesnetScoring = webAPI.getBayesnetScoring(
+        BayesnetScoring bayesnetScoring = NetUtils.tryAndWait(() -> webAPI.getBayesnetScoring(
                 predictor.predictorType,
                 webAPI.getFingerIdData(predictor.predictorType),
-                idResult.getMolecularFormula());
+                idResult.getMolecularFormula()), this::checkForInterruption);
 
         checkForInterruption();
 
