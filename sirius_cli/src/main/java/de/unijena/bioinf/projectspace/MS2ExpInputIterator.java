@@ -90,7 +90,6 @@ public class MS2ExpInputIterator implements InstIterProvider, CloseableIterator<
     }
 
     private void fetchNext() {
-        start:
         while (true) {
             if (currentExperimentIterator == null || !currentExperimentIterator.hasNext()) {
                 //close old iterator
@@ -118,7 +117,7 @@ public class MS2ExpInputIterator implements InstIterProvider, CloseableIterator<
                             }
                         }
                     } catch (Exception e) {
-                        LOG.error("Cannot parse file '" + currentResource + "':\n", e);
+                        throw new RuntimeException(new Exception("Cannot parse file " + currentResource.getFilename(), e));  // Nesting because JJob will unwrap the cause
                     }
                 } else {
                     return;
