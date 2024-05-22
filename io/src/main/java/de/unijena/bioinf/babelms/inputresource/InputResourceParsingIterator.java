@@ -26,6 +26,7 @@ import de.unijena.bioinf.babelms.GenericParser;
 import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.ReportingInputStream;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -33,6 +34,7 @@ import java.io.InputStreamReader;
 import java.util.*;
 import java.util.function.BiConsumer;
 
+@Slf4j
 public class InputResourceParsingIterator implements Iterator<Ms2Experiment> {
 
     private final Iterator<InputResource<?>> inputResources;
@@ -46,6 +48,9 @@ public class InputResourceParsingIterator implements Iterator<Ms2Experiment> {
     private long bytesRead = 0;
 
     List<BiConsumer<Integer, Long>> listeners = new ArrayList<>();
+
+    @Getter
+    private final Map<String, Exception> parsingErrors = new LinkedHashMap<>();
 
 
     public InputResourceParsingIterator(@NotNull Iterable<InputResource<?>> inputResources) {
@@ -64,8 +69,8 @@ public class InputResourceParsingIterator implements Iterator<Ms2Experiment> {
     public boolean hasNext() {
         if (buffer.isEmpty()) {
             while (inputResources.hasNext()) {
+                InputResource<?> next = inputResources.next();
                 try {
-                    InputResource<?> next = inputResources.next();
                     String ext = next.getFileExt();
                     if (!parsers.containsKey(ext))
                         parsers.put(ext, parser.getParserByExt(ext));
@@ -76,12 +81,15 @@ public class InputResourceParsingIterator implements Iterator<Ms2Experiment> {
                             listeners.forEach(c -> c.accept(chunkRead, this.bytesRead));
                         });
                         try (CloseableIterator<Ms2Experiment> it = parsers.get(ext).parseIterator(new BufferedReader(new InputStreamReader(stream)), next.toUri())) {
-                            it.forEachRemaining(buffer::add); //todo maybe one by sone safes memory
+                            it.forEachRemaining(buffer::add); //todo maybe one by one saves memory
                         }
                     }
                     if (!buffer.isEmpty())
                         break;
-                } catch (Exception ignored) {
+                } catch (Exception e) {
+                    String fileName = next.getFilename();
+                    log.error("Error parsing " + fileName, e);
+                    parsingErrors.put(next.getFilename(), e);
                 }
             }
         }
