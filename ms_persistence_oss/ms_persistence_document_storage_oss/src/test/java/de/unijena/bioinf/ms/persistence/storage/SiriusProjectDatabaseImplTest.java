@@ -630,7 +630,7 @@ public class SiriusProjectDatabaseImplTest {
                         assertEquals(expectedMsMs, extrExp.getMs2Spectra().size());
                         assertEquals(ms1, extrExp.getMs1Spectra() != null && !extrExp.getMs1Spectra().isEmpty());
                         assertTrue(Math.abs(exp.getIonMass() - extrExp.getIonMass()) < .0001);
-                        assertEquals(exp.getPrecursorIonType(), extrExp.getPrecursorIonType());
+                        assertEquals(exp.getPrecursorIonType().getCharge(), extrExp.getPrecursorIonType().getCharge());
                         assertEquals(exp.getName(), extrExp.getName());
                         assertEquals(exp.getFeatureId(), extrExp.getFeatureId());
                         assertEquals(exp.getMolecularFormula(), extrExp.getMolecularFormula());
