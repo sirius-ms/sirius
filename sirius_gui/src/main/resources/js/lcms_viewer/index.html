@@ -6,22 +6,27 @@
     <title>Liquid Chromatography Plot</title>
     <!-- Load D3.js from CDN -->
     <style>
-        /* Basic styling for the SVG plot */
         svg {
             border: 1px solid #ccc;
             padding: 10px;
-            rect.featureBox {
+        }
+        rect.featureBox {
                 fill:gray;
-                fill-opacity: 0.05;
+                fill-opacity: 0.04;
                 stroke:gray;
                 stroke-width: 1px;
-            }
-            .curve {
+        }
+        rect.featureBox:hover {
+                fill:gray;
+                fill-opacity: 0.08;
+                stroke:gray;
                 stroke-width: 1px;
-            }
-            .curve.focused {
+        }
+        .curve {
+                stroke-width: 1px;
+        }
+        .curve.focused {
                 stroke-width: 4px;
-            }
         }
                 
         #legend-container {
@@ -76,8 +81,6 @@
     </style>
 </head>
 <body>
-    <h1>Liquid Chromatography Run</h1>
-    <!-- Empty SVG for the plot -->
     <svg id="lc-plot" width="800" height="400"></svg>
     <div id="legend-container">
     </div>

@@ -25,9 +25,6 @@ import java.util.function.Consumer;
 
 public class LCMSWebview extends JFXPanel {
 
-    private LCMSPeakInformation lcmsPeakInformation;
-    private int activeId;
-
     private FxTaskList taskList;
     private List<Consumer<JSObject>> delayAfterHTMLLoading;
 
@@ -67,9 +64,7 @@ public class LCMSWebview extends JFXPanel {
             webView.getEngine().getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
 //                System.out.println(oldState + " -> " + newState);
                 if (newState == Worker.State.SUCCEEDED) {
-                    System.out.println("GOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
                     webView.getEngine().executeScript(loadJs());
-                    System.out.println("GOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO222222222222");
                     lock.lock();
                     ((JSObject)webView.getEngine().executeScript("window")).setMember("console", console);
                     if (!theme.equals("Dark")) {
@@ -81,19 +76,18 @@ public class LCMSWebview extends JFXPanel {
                     delayAfterHTMLLoading.forEach(x->x.accept(this.lcmsViewer));
                     delayAfterHTMLLoading.clear();
                     lock.unlock();
-                    System.out.println("LETS GO!");
                     System.out.println(lcmsViewer);
                 }
             });
         });
     }
 
-    public void setInstance(TraceSet peakInformation) {
+    public void setInstance(TraceSet peakInformation, LCMSViewerPanel.Order order) {
         lcmsView(f->{
             try {
                 final String json = objectMapper.writeValueAsString(peakInformation);
-                System.out.println(json);
-                f.call("loadJson", json);
+                f.call("setOrder", order.name());
+                f.call("loadString", json);
             } catch (Throwable e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);
