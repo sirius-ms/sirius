@@ -74,17 +74,17 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
             return;
         }
         //todo nightsky: fill with new LCMS data
-        final LCMSPeakInformation peakInformation = null;//currentInstance.loadCompoundContainer(LCMSPeakInformation.class).getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
-        currentInfo = peakInformation;
-        lcmsWebview.setInstance(peakInformation);
-        toolbar.reloadContent(peakInformation);
+        //final LCMSPeakInformation peakInformation = null;//currentInstance.loadCompoundContainer(LCMSPeakInformation.class).getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
+        //currentInfo = peakInformation;
+        lcmsWebview.setInstance(currentInstance.getClient().features().getTraces1(currentInstance.getProjectManager().projectId,currentInstance.getFeatureId()));
+        //toolbar.reloadContent(peakInformation);
         updateInfo();
     }
 
     public void setActiveIndex(int id) {
         if (id != activeIndex) {
             activeIndex = id;
-            lcmsWebview.setSampleIndex(activeIndex);
+            //lcmsWebview.setSampleIndex(activeIndex);
             updateInfo();
             invalidate();
         }
@@ -92,7 +92,7 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
 
     private void updateInfo() {
         //todo nightsky: fill with new LCMS data
-        final Optional<CoelutingTraceSet> trace = activeIndex < currentInfo.length() ? currentInfo.getTracesFor(activeIndex) : Optional.empty();
+        //final Optional<CoelutingTraceSet> trace = activeIndex < currentInfo.length() ? currentInfo.getTracesFor(activeIndex) : Optional.empty();
 //        if (trace.isPresent())
 //            summaryPanel.set(trace.get(), currentInstance.getExperiment());
 //        else summaryPanel.reset();

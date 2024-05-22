@@ -81,6 +81,7 @@ public class TraceSet {
         private double mz;
         @JsonInclude(JsonInclude.Include.NON_DEFAULT)
         private boolean merged;
+
         /**
          * Traces are stored with raw intensity values. The normalization factor maps them to relative intensities,
          * such that traces from different samples can be compared.
