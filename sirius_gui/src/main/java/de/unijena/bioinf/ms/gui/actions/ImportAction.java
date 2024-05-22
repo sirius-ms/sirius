@@ -130,7 +130,7 @@ public class ImportAction extends AbstractGuiAction {
 
             task.awaitResult();
         } catch (ExecutionException e) {
-            new StacktraceDialog(gui.getMainFrame(), "Error when importing data!", e);
+            new StacktraceDialog(gui.getMainFrame(), "Error when importing data!", e.getCause());
         }
     }
 }
