@@ -94,7 +94,7 @@ public class FingerprintSubToolJob extends InstanceJob {
         checkForInterruption();
 
         updateProgress(20);
-        //apply soft thresholding to het ist of fomrula to compute
+        //apply soft thresholding to select list of formula to compute
         final FingerprintPreprocessingJJob fpPreproJob = new FingerprintPreprocessingJJob(inst.getExperiment(), formulaResults, enforcedFormulas);
 
         // do computation and await results
