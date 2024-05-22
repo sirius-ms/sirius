@@ -7,11 +7,20 @@
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**name** | **String** |  |  [optional] |
+|**type** | [**TypeEnum**](#TypeEnum) |  |  [optional] |
 |**description** | **String** |  |  [optional] |
 |**index** | **Integer** |  |  [optional] |
 |**from** | **Integer** |  |  [optional] |
 |**to** | **Integer** |  |  [optional] |
+
+
+
+## Enum: TypeEnum
+
+| Name | Value |
+|---- | -----|
+| FEATURE | &quot;FEATURE&quot; |
+| MS2 | &quot;MS2&quot; |
 
 
 

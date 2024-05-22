@@ -6,15 +6,19 @@ import com.google.common.io.Resources;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.utils.FxTaskList;
+import de.unijena.bioinf.ms.nightsky.sdk.model.TraceSet;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
+import javafx.scene.web.WebErrorEvent;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
+import org.checkerframework.checker.units.qual.C;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -33,6 +37,8 @@ public class LCMSWebview extends JFXPanel {
     private JSObject lcmsViewer;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    private Console console = new Console();
 
     public LCMSWebview() {
         this.taskList = new FxTaskList();
@@ -61,30 +67,33 @@ public class LCMSWebview extends JFXPanel {
             webView.getEngine().getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
 //                System.out.println(oldState + " -> " + newState);
                 if (newState == Worker.State.SUCCEEDED) {
+                    System.out.println("GOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+                    webView.getEngine().executeScript(loadJs());
+                    System.out.println("GOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO222222222222");
                     lock.lock();
-                    ((JSObject)webView.getEngine().executeScript("window")).setMember("console", new Console());
+                    ((JSObject)webView.getEngine().executeScript("window")).setMember("console", console);
                     if (!theme.equals("Dark")) {
                         this.webView.getEngine().executeScript("var fg_color = 'black';");
                     } else {
                         this.webView.getEngine().executeScript("var fg_color = 'lightsteelblue';");
                     }
-                    this.lcmsViewer = (JSObject)webView.getEngine().executeScript(
-                            "document.lcmsViewer = new LCMSViewer(\"#lcms\", \"#lcms_view\");"
-                    );
+                    this.lcmsViewer = (JSObject)webView.getEngine().executeScript("document.drawPlot('#lc-plot')");
                     delayAfterHTMLLoading.forEach(x->x.accept(this.lcmsViewer));
                     delayAfterHTMLLoading.clear();
                     lock.unlock();
+                    System.out.println("LETS GO!");
+                    System.out.println(lcmsViewer);
                 }
             });
         });
     }
 
-    public void setInstance(LCMSPeakInformation peakInformation) {
+    public void setInstance(TraceSet peakInformation) {
         lcmsView(f->{
             try {
                 final String json = objectMapper.writeValueAsString(peakInformation);
-//                System.err.println(json);
-                f.call("bindStringData", json);
+                System.out.println(json);
+                f.call("loadJson", json);
             } catch (Throwable e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);
@@ -109,24 +118,25 @@ public class LCMSWebview extends JFXPanel {
     }
 
     private String getHTMLContent() {
-        return "<html><head><script>" + loadJs() +
-                "</script><body><div id=\"lcms\"><svg id=\"lcms_view\"></svg></div></body></html>";
-    }
-
-    private String loadJs() {
         try {
             return Resources.toString(LCMSWebview.class.getResource(
-                    "/js/lcms_viewer/d3.min.js"
-            ), Charsets.UTF_8) + "\n" + Resources.toString(LCMSWebview.class.getResource(
-                    "/js/lcms_viewer/lcms_viewer.js"
+                    "/js/lcms_viewer/index.html"
             ), Charsets.UTF_8);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void setSampleIndex(int activeIndex) {
-        lcmsView(x->x.call("setSample", activeIndex));
+    private String loadJs() {
+        try {
+            return Resources.toString(LCMSWebview.class.getResource(
+                    "/js/lcms_viewer/d3.v7.min.js"
+            ), Charsets.UTF_8) + "\n" + Resources.toString(LCMSWebview.class.getResource(
+                    "/js/lcms_viewer/lcms.js"
+            ), Charsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void reset() {
@@ -140,13 +150,16 @@ public class LCMSWebview extends JFXPanel {
         });
     }
 
-    private static class Console {
+    public static class Console {
 
+        public void log(Object msg) {
+            System.err.println(Objects.toString(msg));
+        }
         public void log(String msg) {
             System.err.println(msg);
         }
         public void log(JSObject msg) {
-            System.err.println(msg.toString());
+            System.err.println(String.valueOf(msg));
         }
 
     }

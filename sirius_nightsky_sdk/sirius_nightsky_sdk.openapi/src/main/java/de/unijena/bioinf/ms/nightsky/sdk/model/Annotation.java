@@ -27,7 +27,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * Annotation
  */
 @JsonPropertyOrder({
-  Annotation.JSON_PROPERTY_NAME,
+  Annotation.JSON_PROPERTY_TYPE,
   Annotation.JSON_PROPERTY_DESCRIPTION,
   Annotation.JSON_PROPERTY_INDEX,
   Annotation.JSON_PROPERTY_FROM,
@@ -35,8 +35,43 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class Annotation {
-  public static final String JSON_PROPERTY_NAME = "name";
-  private String name;
+  /**
+   * Gets or Sets type
+   */
+  public enum TypeEnum {
+    FEATURE("FEATURE"),
+    
+    MS2("MS2");
+
+    private String value;
+
+    TypeEnum(String value) {
+      this.value = value;
+    }
+
+    @JsonValue
+    public String getValue() {
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static TypeEnum fromValue(String value) {
+      for (TypeEnum b : TypeEnum.values()) {
+        if (b.value.equals(value)) {
+          return b;
+        }
+      }
+      throw new IllegalArgumentException("Unexpected value '" + value + "'");
+    }
+  }
+
+  public static final String JSON_PROPERTY_TYPE = "type";
+  private TypeEnum type;
 
   public static final String JSON_PROPERTY_DESCRIPTION = "description";
   private String description;
@@ -53,29 +88,29 @@ public class Annotation {
   public Annotation() {
   }
 
-  public Annotation name(String name) {
+  public Annotation type(TypeEnum type) {
     
-    this.name = name;
+    this.type = type;
     return this;
   }
 
    /**
-   * Get name
-   * @return name
+   * Get type
+   * @return type
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(JSON_PROPERTY_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public String getName() {
-    return name;
+  public TypeEnum getType() {
+    return type;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_NAME)
+  @JsonProperty(JSON_PROPERTY_TYPE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setName(String name) {
-    this.name = name;
+  public void setType(TypeEnum type) {
+    this.type = type;
   }
 
 
@@ -191,7 +226,7 @@ public class Annotation {
       return false;
     }
     Annotation annotation = (Annotation) o;
-    return Objects.equals(this.name, annotation.name) &&
+    return Objects.equals(this.type, annotation.type) &&
         Objects.equals(this.description, annotation.description) &&
         Objects.equals(this.index, annotation.index) &&
         Objects.equals(this.from, annotation.from) &&
@@ -200,14 +235,14 @@ public class Annotation {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, description, index, from, to);
+    return Objects.hash(type, description, index, from, to);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class Annotation {\n");
-    sb.append("    name: ").append(toIndentedString(name)).append("\n");
+    sb.append("    type: ").append(toIndentedString(type)).append("\n");
     sb.append("    description: ").append(toIndentedString(description)).append("\n");
     sb.append("    index: ").append(toIndentedString(index)).append("\n");
     sb.append("    from: ").append(toIndentedString(from)).append("\n");

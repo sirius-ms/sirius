@@ -32,8 +32,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   PageableObject.JSON_PROPERTY_SORT,
   PageableObject.JSON_PROPERTY_PAGE_NUMBER,
   PageableObject.JSON_PROPERTY_PAGE_SIZE,
-  PageableObject.JSON_PROPERTY_UNPAGED,
-  PageableObject.JSON_PROPERTY_PAGED
+  PageableObject.JSON_PROPERTY_PAGED,
+  PageableObject.JSON_PROPERTY_UNPAGED
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class PageableObject {
@@ -49,11 +49,11 @@ public class PageableObject {
   public static final String JSON_PROPERTY_PAGE_SIZE = "pageSize";
   private Integer pageSize;
 
-  public static final String JSON_PROPERTY_UNPAGED = "unpaged";
-  private Boolean unpaged;
-
   public static final String JSON_PROPERTY_PAGED = "paged";
   private Boolean paged;
+
+  public static final String JSON_PROPERTY_UNPAGED = "unpaged";
+  private Boolean unpaged;
 
   public PageableObject() {
   }
@@ -162,32 +162,6 @@ public class PageableObject {
   }
 
 
-  public PageableObject unpaged(Boolean unpaged) {
-    
-    this.unpaged = unpaged;
-    return this;
-  }
-
-   /**
-   * Get unpaged
-   * @return unpaged
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_UNPAGED)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Boolean isUnpaged() {
-    return unpaged;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_UNPAGED)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setUnpaged(Boolean unpaged) {
-    this.unpaged = unpaged;
-  }
-
-
   public PageableObject paged(Boolean paged) {
     
     this.paged = paged;
@@ -213,6 +187,32 @@ public class PageableObject {
     this.paged = paged;
   }
 
+
+  public PageableObject unpaged(Boolean unpaged) {
+    
+    this.unpaged = unpaged;
+    return this;
+  }
+
+   /**
+   * Get unpaged
+   * @return unpaged
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_UNPAGED)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isUnpaged() {
+    return unpaged;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_UNPAGED)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setUnpaged(Boolean unpaged) {
+    this.unpaged = unpaged;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -226,13 +226,13 @@ public class PageableObject {
         Objects.equals(this.sort, pageableObject.sort) &&
         Objects.equals(this.pageNumber, pageableObject.pageNumber) &&
         Objects.equals(this.pageSize, pageableObject.pageSize) &&
-        Objects.equals(this.unpaged, pageableObject.unpaged) &&
-        Objects.equals(this.paged, pageableObject.paged);
+        Objects.equals(this.paged, pageableObject.paged) &&
+        Objects.equals(this.unpaged, pageableObject.unpaged);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(offset, sort, pageNumber, pageSize, unpaged, paged);
+    return Objects.hash(offset, sort, pageNumber, pageSize, paged, unpaged);
   }
 
   @Override
@@ -243,8 +243,8 @@ public class PageableObject {
     sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
     sb.append("    pageNumber: ").append(toIndentedString(pageNumber)).append("\n");
     sb.append("    pageSize: ").append(toIndentedString(pageSize)).append("\n");
-    sb.append("    unpaged: ").append(toIndentedString(unpaged)).append("\n");
     sb.append("    paged: ").append(toIndentedString(paged)).append("\n");
+    sb.append("    unpaged: ").append(toIndentedString(unpaged)).append("\n");
     sb.append("}");
     return sb.toString();
   }

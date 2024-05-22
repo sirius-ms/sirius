@@ -6927,10 +6927,10 @@
             "type": "integer",
             "format": "int32"
           },
-          "unpaged": {
+          "paged": {
             "type": "boolean"
           },
-          "paged": {
+          "unpaged": {
             "type": "boolean"
           }
         }
@@ -6952,8 +6952,12 @@
       "Annotation": {
         "type": "object",
         "properties": {
-          "name": {
-            "type": "string"
+          "type": {
+            "type": "string",
+            "enum": [
+              "FEATURE",
+              "MS2"
+            ]
           },
           "description": {
             "type": "string",
@@ -7034,6 +7038,19 @@
           },
           "mz": {
             "type": "number",
+            "format": "double"
+          },
+          "merged": {
+            "type": "boolean"
+          },
+          "normalizationFactor": {
+            "type": "number",
+            "description": "Traces are stored with raw intensity values. The normalization factor maps them to relative intensities,\n such that traces from different samples can be compared.",
+            "format": "double"
+          },
+          "noiseLevel": {
+            "type": "number",
+            "description": "The noise level is estimated from the median noise in the surrounding scans. It can be used to\n calculate signal-to-noise ratios.",
             "format": "double"
           }
         }

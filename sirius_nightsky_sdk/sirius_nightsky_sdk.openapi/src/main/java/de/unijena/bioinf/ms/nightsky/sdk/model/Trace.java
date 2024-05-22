@@ -37,7 +37,10 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Trace.JSON_PROPERTY_LABEL,
   Trace.JSON_PROPERTY_INTENSITIES,
   Trace.JSON_PROPERTY_ANNOTATIONS,
-  Trace.JSON_PROPERTY_MZ
+  Trace.JSON_PROPERTY_MZ,
+  Trace.JSON_PROPERTY_MERGED,
+  Trace.JSON_PROPERTY_NORMALIZATION_FACTOR,
+  Trace.JSON_PROPERTY_NOISE_LEVEL
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class Trace {
@@ -61,6 +64,15 @@ public class Trace {
 
   public static final String JSON_PROPERTY_MZ = "mz";
   private Double mz;
+
+  public static final String JSON_PROPERTY_MERGED = "merged";
+  private Boolean merged;
+
+  public static final String JSON_PROPERTY_NORMALIZATION_FACTOR = "normalizationFactor";
+  private Double normalizationFactor;
+
+  public static final String JSON_PROPERTY_NOISE_LEVEL = "noiseLevel";
+  private Double noiseLevel;
 
   public Trace() {
   }
@@ -262,6 +274,84 @@ public class Trace {
     this.mz = mz;
   }
 
+
+  public Trace merged(Boolean merged) {
+    
+    this.merged = merged;
+    return this;
+  }
+
+   /**
+   * Get merged
+   * @return merged
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_MERGED)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isMerged() {
+    return merged;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_MERGED)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setMerged(Boolean merged) {
+    this.merged = merged;
+  }
+
+
+  public Trace normalizationFactor(Double normalizationFactor) {
+    
+    this.normalizationFactor = normalizationFactor;
+    return this;
+  }
+
+   /**
+   * Traces are stored with raw intensity values. The normalization factor maps them to relative intensities,  such that traces from different samples can be compared.
+   * @return normalizationFactor
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_NORMALIZATION_FACTOR)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getNormalizationFactor() {
+    return normalizationFactor;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_NORMALIZATION_FACTOR)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setNormalizationFactor(Double normalizationFactor) {
+    this.normalizationFactor = normalizationFactor;
+  }
+
+
+  public Trace noiseLevel(Double noiseLevel) {
+    
+    this.noiseLevel = noiseLevel;
+    return this;
+  }
+
+   /**
+   * The noise level is estimated from the median noise in the surrounding scans. It can be used to  calculate signal-to-noise ratios.
+   * @return noiseLevel
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_NOISE_LEVEL)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getNoiseLevel() {
+    return noiseLevel;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_NOISE_LEVEL)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setNoiseLevel(Double noiseLevel) {
+    this.noiseLevel = noiseLevel;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -277,12 +367,15 @@ public class Trace {
         Objects.equals(this.label, trace.label) &&
         Objects.equals(this.intensities, trace.intensities) &&
         Objects.equals(this.annotations, trace.annotations) &&
-        Objects.equals(this.mz, trace.mz);
+        Objects.equals(this.mz, trace.mz) &&
+        Objects.equals(this.merged, trace.merged) &&
+        Objects.equals(this.normalizationFactor, trace.normalizationFactor) &&
+        Objects.equals(this.noiseLevel, trace.noiseLevel);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(id, sampleId, sampleName, label, intensities, annotations, mz);
+    return Objects.hash(id, sampleId, sampleName, label, intensities, annotations, mz, merged, normalizationFactor, noiseLevel);
   }
 
   @Override
@@ -296,6 +389,9 @@ public class Trace {
     sb.append("    intensities: ").append(toIndentedString(intensities)).append("\n");
     sb.append("    annotations: ").append(toIndentedString(annotations)).append("\n");
     sb.append("    mz: ").append(toIndentedString(mz)).append("\n");
+    sb.append("    merged: ").append(toIndentedString(merged)).append("\n");
+    sb.append("    normalizationFactor: ").append(toIndentedString(normalizationFactor)).append("\n");
+    sb.append("    noiseLevel: ").append(toIndentedString(noiseLevel)).append("\n");
     sb.append("}");
     return sb.toString();
   }

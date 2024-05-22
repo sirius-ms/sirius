@@ -185,11 +185,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         Long2ObjectOpenHashMap<IntArrayList> ms2annotations = new Long2ObjectOpenHashMap<>();
 
         feature.getMSData().ifPresent(x->{
-            for (MergedMSnSpectrum spec : x.getMsnSpectra()) {
-                long[] sampleIds = spec.getSampleIds();
-                int[][] scanIds = spec.getProjectedPrecursorScanIds();
-                for (int i=0; i < sampleIds.length; ++i) {
-                    ms2annotations.computeIfAbsent(sampleIds[i], (q)->new IntArrayList()).addAll(IntList.of(scanIds[i]));
+            if (x.getMsnSpectra()!=null) {
+                for (MergedMSnSpectrum spec : x.getMsnSpectra()) {
+                    long[] sampleIds = spec.getSampleIds();
+                    int[][] scanIds = spec.getProjectedPrecursorScanIds();
+                    for (int i = 0; i < sampleIds.length; ++i) {
+                        ms2annotations.computeIfAbsent(sampleIds[i], (q) -> new IntArrayList()).addAll(IntList.of(scanIds[i]));
+                    }
                 }
             }
         });

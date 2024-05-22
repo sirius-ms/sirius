@@ -11,8 +11,8 @@
 |**sort** | [**SortObject**](SortObject.md) |  |  [optional] |
 |**pageNumber** | **Integer** |  |  [optional] |
 |**pageSize** | **Integer** |  |  [optional] |
-|**unpaged** | **Boolean** |  |  [optional] |
 |**paged** | **Boolean** |  |  [optional] |
+|**unpaged** | **Boolean** |  |  [optional] |
 
 
 
