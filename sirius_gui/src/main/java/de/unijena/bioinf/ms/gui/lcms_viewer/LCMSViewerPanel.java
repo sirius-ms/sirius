@@ -10,22 +10,32 @@ import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.Optional;
 
 public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
 
     private InstanceBean currentInstance;
-    private LCMSPeakInformation currentInfo;
 
     private LCMSWebview lcmsWebview;
-    private LCMSToolbar toolbar;
+    private JToolBar toolbar;
     private LCMSCompoundSummaryPanel summaryPanel;
     private int activeIndex;
 
+    enum Order {
+        ALPHABETICALLY("alphabetically"), BY_INTENSITY("by intensity");
+        private final String label;
+        Order(String label) {
+            this.label = label;
+        }
+    }
+
+    private Order order = Order.ALPHABETICALLY;
+
     public LCMSViewerPanel(FormulaList siriusResultElements) {
         // set content
-        this.toolbar = new LCMSToolbar(this);
+        this.toolbar = new JToolBar(JToolBar.HORIZONTAL);
         setLayout(new BorderLayout());
         add(toolbar, BorderLayout.NORTH);
         this.lcmsWebview = new LCMSWebview();
@@ -34,16 +44,40 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         summaryPanel = new LCMSCompoundSummaryPanel();
         this.add(new ToggableSidePanel("quality report", summaryPanel), BorderLayout.EAST);
 
-
-
+        JLabel label = new JLabel("Order samples ");
+        toolbar.add(label);
+        ButtonGroup group = new ButtonGroup();
+        for (Order o : Order.values()) {
+            JRadioButton button = new JRadioButton(new SetOrder(o));
+            if(o==order) button.setSelected(true);
+            group.add(button);
+            toolbar.add(button);
+        }
         // add listeners
         siriusResultElements.addActiveResultChangedListener(this);
+    }
+
+    private class SetOrder extends AbstractAction {
+
+        Order value;
+
+        public SetOrder(Order order) {
+            super(order.label);
+            this.value = order;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (order != value) {
+                order = value;
+                updateContent();
+            }
+        }
     }
 
     public void reset() {
         lcmsWebview.reset();
         summaryPanel.reset();
-        toolbar.reset();
     }
 
     public String getDescription() {
@@ -73,11 +107,9 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
             reset();
             return;
         }
-        //todo nightsky: fill with new LCMS data
-        //final LCMSPeakInformation peakInformation = null;//currentInstance.loadCompoundContainer(LCMSPeakInformation.class).getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
-        //currentInfo = peakInformation;
-        lcmsWebview.setInstance(currentInstance.getClient().features().getTraces1(currentInstance.getProjectManager().projectId,currentInstance.getFeatureId()));
-        //toolbar.reloadContent(peakInformation);
+        lcmsWebview.setInstance(currentInstance.getClient().features().getTraces1(currentInstance.getProjectManager().projectId,currentInstance.getFeatureId()),
+                order
+                );
         updateInfo();
     }
 

@@ -7,19 +7,26 @@ class LiquidChromatographyPlot {
         this.margin = { top: 20, right: 30, bottom: 40, left: 100 };
         this.plotWidth = this.width - this.margin.left - this.margin.right;
         this.plotHeight = this.height - this.margin.top - this.margin.bottom;
-
+        this.order = "ALPHABETICALLY";
+        this.zoomedIn = false;
         this.initPlot();
         this.initZoom();
     }
 
     loadJson(json) {
-        window.console.log("test");
-        window.console.log(json);
-        window.console.log(json.traces.length);
         this.data = new LiquidChromatographyData(json);
         this.clear();
         this.createPlot();
-        window.console.log(json);
+    }
+
+    loadString(jsonString) {
+        this.data = new LiquidChromatographyData(JSON.parse(jsonString));
+        this.clear();
+        this.createPlot();
+    }
+
+    setOrder(order) {
+        this.order = order;
     }
 
     loadData(dataUrl, afterwards) {
@@ -62,12 +69,14 @@ class LiquidChromatographyPlot {
     updateSamples() {
         const intensity = d3.format(" >.4p");
         let comparisonFunction;
-        if (false) {
+        if (this.order == "ALPHABETICALLY") {
             comparisonFunction = (u,v)=>u.name.localeCompare(v.name);
         }
-        if (true) {
+        
+        if (this.order == "BY_INTENSITY") {
             comparisonFunction = (u,v)=>v.relativeIntensity-u.relativeIntensity;
         }
+        
         this.samples = d3.select("#legend-container");
         this.samples.selectAll("ul").remove();
         this.items = this.samples.append("ul").classed("legend-list", true).selectAll("li").data(this.data.samples).join("li")
@@ -123,44 +132,7 @@ class LiquidChromatographyPlot {
     createPlot() {
         this.updateSamples();
         if (this.zoomOut) this.zoomOut.remove();
-        this.zoomOut = this.plotArea.append("g")
-        .attr("transform", "translate(10,5)")
-        .on("mouseover", function() {
-            d3.select(this).attr("transform", "translate(10,5) scale(1.3)");
-        })
-        .on("mouseout", function() {
-            d3.select(this).attr("transform", "translate(10,5) scale(1)");
-        }).attr("visibility","hidden")
-        .on("click", () => {
-            this.resetZoom();
-        });
-        // Draw the circle
-        this.zoomOut.append("rect").attr("x",0).attr("y",0).attr("width",23).attr("height",23).attr("fill","white").attr("fill-opacity","0.0");
-        this.zoomOut.append("circle")
-            .attr("cx", 11)
-            .attr("cy", 11)
-            .attr("r", 8)
-            .attr("stroke", "black")
-            .attr("fill", "none")
-            .attr("stroke-width", 2);
-
-        // Draw the horizontal line (minus sign)
-        this.zoomOut.append("line")
-            .attr("x1", 7)
-            .attr("y1", 11)
-            .attr("x2", 15)
-            .attr("y2", 11)
-            .attr("stroke", "black")
-            .attr("stroke-width", 2);
-
-        // Draw the handle of the magnifying glass
-        this.zoomOut.append("line")
-            .attr("x1", 16.6569)
-            .attr("y1", 16.6569)
-            .attr("x2", 23)
-            .attr("y2", 23)
-            .attr("stroke", "black")
-            .attr("stroke-width", 2);
+        this.zoomedIn = false;
 
         // Define scales and axes
         this.xScale = d3.scaleLinear()
@@ -227,6 +199,46 @@ class LiquidChromatographyPlot {
         // add event listeners
         this.featureArea.on('click', () => this.zoomToFeature());
 
+        this.zoomOut = this.plotArea.append("g").attr("transform", "translate(10,5)")
+        .on("mouseover", function() {
+            d3.select(this).attr("transform", "translate(10,5) scale(1.3)");
+        })
+        .on("mouseout", function() {
+            d3.select(this).attr("transform", "translate(10,5) scale(1)");
+        }).attr("visibility","hidden")
+        .on("click", () => {
+            this.resetZoom();
+        });
+        // Draw the circle
+        this.zoomOut.append("rect").attr("x",0).attr("y",0).attr("width",23).attr("height",23).attr("fill","white").attr("fill-opacity","0.0")
+
+        this.zoomOut.append("circle")
+            .attr("cx", 11)
+            .attr("cy", 11)
+            .attr("r", 8)
+            .attr("stroke", "black")
+            .attr("fill", "none")
+            .attr("stroke-width", 2);
+
+        // Draw the horizontal line (minus sign)
+        this.zoomOut.append("line")
+            .attr("x1", 7)
+            .attr("y1", 11)
+            .attr("x2", 15)
+            .attr("y2", 11)
+            .attr("stroke", "black")
+            .attr("stroke-width", 2);
+
+        // Draw the handle of the magnifying glass
+        this.zoomOut.append("line")
+            .attr("x1", 16.6569)
+            .attr("y1", 16.6569)
+            .attr("x2", 23)
+            .attr("y2", 23)
+            .attr("stroke", "black")
+            .attr("stroke-width", 2);
+
+
     }
 
     resetZoom() {
@@ -235,9 +247,14 @@ class LiquidChromatographyPlot {
             this.zoomTo(this.xScale, this.yScale)
         );
         this.zoomOut.attr("visibility", "hidden");
+        this.zoomedIn = false;
     }
 
     zoomToFeature() {
+        if (this.zoomedIn) {
+            return; // already zoomed in
+        }
+        this.zoomedIn = true;
         // Get the feature's data
         const feature = this.data.mainFeature;
 
@@ -296,7 +313,7 @@ class LiquidChromatographyData {
                     this.merged = new Trace(this, this.json.traces[i]);
                 } else {
                     this.traces.push(new Trace(this, this.json.traces[i]));
-                    this.samples.push(new Sample(this, this.json.traces[i].sampleName, i));
+                    this.samples.push(new Sample(this, this.json.traces[i].sampleName, this.samples.length));
                 }
             }
             this.empty=false;
@@ -412,7 +429,7 @@ class Trace {
             let a = json.annotations[i];
             if (a.type=="FEATURE") {
                 this.featureAnnotations.push(new DataSelection(
-                    a.index, rts[a.index], a.from, a.to, rts[a.from], rts[a.to], a.description
+                    a.index, a.from, a.to, rts[a.index], rts[a.from], rts[a.to], a.description
                 ));
             } else if (a.type=="MS2") {
 
