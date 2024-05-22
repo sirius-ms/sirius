@@ -22,7 +22,6 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -40,7 +39,9 @@ import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
+import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.rest.NetUtils;
@@ -75,7 +76,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
 
     private StructureSearchResult structureSearchResult;
 
-//    List<WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?>> covtreeJobs = new ArrayList<>();
+    Set<WebJJob<?, ?, ?, ?>> webJJobs = new HashSet<>();
 
     public FingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI) {
         this(predictor, webAPI, null);
@@ -160,6 +161,11 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                 BayesnetScoring[] s = new BayesnetScoring[idResults.size()];
                 webAPI.executeBatch((api, client) -> {
                     for (int i = 0; i < idResults.size(); i++) {
+                        try {//interrupt if canceled
+                            checkForInterruption();
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
                         final FingerIdResult fingeridInput = idResults.get(i);
                         // fingerblast job: score candidate fingerprints against predicted fingerprint
                         s[i] = api.fingerprintClient().getCovarianceScoring(
@@ -191,8 +197,14 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                     searchJJobs.add(blastJob);
                     WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?> covTreeJob =
                             webAPI.submitCovtreeJob(fingeridInput.getMolecularFormula(), predictor.predictorType);
+                    webJJobs.add(covTreeJob);
+
                     blastJob.addRequiredJob(covTreeJob);
-//                    covtreeJobs.add(covTreeJob);
+                    //remove jobs to free up memory
+                    blastJob.addJobProgressListener(jobProgressEvent -> {
+                        if (((JJob<?>) jobProgressEvent.getSource()).isFinished())
+                            webJJobs.remove(covTreeJob);
+                    });
                 }
 
                 blastJob.addRequiredJob(formulaJobs.get(i));
@@ -389,34 +401,36 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                                                   int confScoreApproxDist,
                                                   StructureSearchDB searchDB,
                                                   ParameterStore parameterStore,
-                                                  CanopusResult topFormulaCanopusResult) {
+                                                  CanopusResult topFormulaCanopusResult) throws InterruptedException {
 
         if (requestedMergedCandidates.isEmpty() || parameterStore == null) return null;
 
-
         try {
+            checkForInterruption();
             //Start and finish MCES job for requested DBs here, since Epi and conf are dependent on the mces-condensed list
             final MCESJJob mcesJJobRequested = new MCESJJob(confScoreApproxDist, requestedMergedCandidates);
             submitJob(mcesJJobRequested);
             int mcesIndexRequested = mcesJJobRequested.awaitResult();
 
+            checkForInterruption();
+
 
             //MCES-condensed list for requested
             ArrayList<Scored<FingerprintCandidate>> requestedMergedCandidatesMCESCondensed = new ArrayList<>();
             requestedMergedCandidatesMCESCondensed.add(requestedMergedCandidates.get(0));
-            Map removedCandidatesrequested = requestedMergedCandidates.subList(1, mcesIndexRequested + 1).stream().collect(Collectors.toMap(c -> c.getCandidate().getInchiKey2D(), Scored<FingerprintCandidate>::getScore));
+            Map<String, Double> removedCandidatesrequested = requestedMergedCandidates.subList(1, mcesIndexRequested + 1).stream().collect(Collectors.toMap(c -> c.getCandidate().getInchiKey2D(), Scored<FingerprintCandidate>::getScore));
             requestedMergedCandidatesMCESCondensed.addAll(requestedMergedCandidates.subList(mcesIndexRequested + 1, requestedMergedCandidates.size()));
 
 
-            /**
-             *
-             * Submit epi jobs for requested databases
-             */
+            checkForInterruption();
 
+            //Submit epi jobs for requested databases
             //epi Job for <exact, requested>
             final SubstructureAnnotationJJob epiJJobExactRequested = new SubstructureAnnotationJJob(requestedMergedCandidates.size() >= 5 ? 5 : requestedMergedCandidates.size() >= 2 ? 2 : requestedMergedCandidates.size() >= 1 ? 1 : 0);
             epiJJobExactRequested.setInput(fTreeCandidatesMap);
             submitJob(epiJJobExactRequested);
+
+            checkForInterruption();
 
             //epi job for <approximate, requested>. Remove candidate from ftreeCandidatesMap that are within MCES distance of approximate mode
             final SubstructureAnnotationJJob epiJJobApproximateRequested = new SubstructureAnnotationJJob(requestedMergedCandidatesMCESCondensed.size() >= 5 ? 5 : requestedMergedCandidatesMCESCondensed.size() >= 2 ? 2 : requestedMergedCandidatesMCESCondensed.size() >= 1 ? 1 : 0);
@@ -428,20 +442,29 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
             epiJJobApproximateRequested.setInput(fTreeCandidatesMapMCESCondensedRequested);
             submitJob(epiJJobApproximateRequested);
 
+            checkForInterruption();
+
 
             final int specHash = Spectrums.mergeSpectra(experiment.getMs2Spectra()).hashCode();
-            CanopusResult canopusResultTopHit = webAPI.submitCanopusJob(
-                            requestedMergedCandidates.get(0).getCandidate().getInchi().extractFormula(),
-                            experiment.getPrecursorIonType().getCharge(),
-                            requestedMergedCandidates.get(0).getCandidate().getFingerprint().asProbabilistic(),
-                            specHash)
-                    .awaitResult();
+            WebJJob<CanopusJobInput, ?, CanopusResult, ?> canopusWebJJob = webAPI.submitCanopusJob(
+                    requestedMergedCandidates.get(0).getCandidate().getInchi().extractFormulaOrThrow(),
+                    experiment.getPrecursorIonType().getCharge(),
+                    requestedMergedCandidates.get(0).getCandidate().getFingerprint().asProbabilistic(),
+                    specHash);
+            webJJobs.add(canopusWebJJob);
+
+            checkForInterruption();
+
+            CanopusResult canopusResultTopHit = canopusWebJJob.awaitResult();
+            webJJobs.remove(canopusWebJJob);
+
+            checkForInterruption();
+
 
             //confidence job for requested
             final ConfidenceJJob confidenceJJobRequested = (predictor.getConfidenceScorer() != null) && enableConfidence
                     ? new ConfidenceJJob(predictor, experiment, allMergedCandidates, requestedMergedCandidates, requestedMergedCandidatesMCESCondensed, searchDB, parameterStore, topFormulaCanopusResult, canopusResultTopHit, mcesIndexRequested)
                     : null;
-
 
             //we use result because it is non blocking...
             confidenceJJobRequested.setEpiExact(epiJJobExactRequested::result);
@@ -450,11 +473,11 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
             confidenceJJobRequested.addRequiredJob(epiJJobExactRequested);
             confidenceJJobRequested.addRequiredJob(epiJJobApproximateRequested);
 
+            checkForInterruption();
 
             return submitJob(confidenceJJobRequested);
-        } catch (ExecutionException | UnknownElementException | IOException e) {
-            e.printStackTrace();
-            logError("Couldn't compute confidence Job");
+        } catch (ExecutionException | IOException e) {
+            logError("Couldn't compute confidence Job", e);
             return null;
         }
 
@@ -463,14 +486,14 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
     @Override
     public void cancel(boolean mayInterruptIfRunning) {
         super.cancel(mayInterruptIfRunning);
-//        if (covtreeJobs != null)
-//            covtreeJobs.forEach(c -> c.cancel(mayInterruptIfRunning));
+        if (webJJobs != null)
+            webJJobs.forEach(c -> c.cancel(mayInterruptIfRunning));
     }
 
     @Override
     protected void cleanup() {
         super.cleanup();
-//        covtreeJobs = null;
+        webJJobs = null;
     }
 
     @Override

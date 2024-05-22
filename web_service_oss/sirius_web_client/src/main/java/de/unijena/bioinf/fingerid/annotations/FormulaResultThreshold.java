@@ -32,7 +32,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class FormulaResultThreshold implements Ms2ExperimentAnnotation {
     //could be used as second property to specify different threshold types in the future
-    private ThresholdCalculator thresholdCalculator = (topHitScore) -> Math.max(topHitScore, 0) - Math.max(5, topHitScore * 0.25);
+    private ThresholdCalculator thresholdCalculator = (topHitScore) -> Math.max(topHitScore, 0) - Math.max(5, topHitScore * 0.15);
     public final boolean value;
 
 
