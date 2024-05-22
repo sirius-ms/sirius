@@ -42,7 +42,6 @@ import java.util.List;
 @AllArgsConstructor
 @Setter
 public class  FingerprintCandidateWrapper {
-    public static final String CUSTOM_DB_NAME_PLACEHOLDER = ";;;CUSTOM;;;";
 
     @Id
     @Getter
@@ -80,7 +79,7 @@ public class  FingerprintCandidateWrapper {
             List<DBLink> links = fpc.getMutableLinks();
             if (links != null && !links.isEmpty() ) {
                 fpc.getMutableLinks().forEach(l -> {
-                    if (CUSTOM_DB_NAME_PLACEHOLDER.equals(l.getName()) || l.getName().isBlank())
+                    if (l.getName() == null || l.getName().isBlank())
                         l.setName(dbName);
                 });
             }else {

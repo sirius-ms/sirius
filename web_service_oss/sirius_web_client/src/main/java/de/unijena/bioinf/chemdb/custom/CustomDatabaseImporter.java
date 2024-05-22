@@ -64,8 +64,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper.CUSTOM_DB_NAME_PLACEHOLDER;
-
 public class CustomDatabaseImporter {
     private final NoSQLCustomDatabase<?, ?> database;
     private WriteableSpectralLibrary databaseAsSpecLib;
@@ -296,7 +294,7 @@ public class CustomDatabaseImporter {
                 InChI inchi = InChISMILESUtils.getInchi(c, false);
                 if (inchi != null) {
                     Molecule molecule = new Molecule(c, smiles, inchi);
-                    molecule.name=c.getProperty("Name");
+                    molecule.name = c.getProperty("Name");
                     addMolecule(molecule);
                 } else {
                     LoggerFactory.getLogger(getClass()).warn("Could not create InChI from parsed Atom container. Skipping Molecule: " + smiles);
@@ -574,11 +572,9 @@ public class CustomDatabaseImporter {
         final HashSet<DBLink> links = new HashSet<>(fc.getMutableLinks());
 
         if (!molecule.ids.isEmpty()) {
-            molecule.ids.stream().map(id -> new DBLink(CUSTOM_DB_NAME_PLACEHOLDER, id)).forEach(links::add);
+            molecule.ids.stream().map(id -> new DBLink(null, id)).forEach(links::add);
             if (fc.getName() == null || fc.getName().isBlank())
                 fc.setName(molecule.ids.iterator().next());
-        }else {
-            links.add(new DBLink(CUSTOM_DB_NAME_PLACEHOLDER,null));
         }
 
         fc.setLinks(new ArrayList<>(links));
@@ -593,18 +589,17 @@ public class CustomDatabaseImporter {
         CompoundCandidate fc = comp.candidate.getCandidate(null, null);
 
         fc.setBitset(0);//bit sets of custom dbs are non-persistent, so every custom db entry stores a zero.
+        fc.setLinks(List.of());
 
         //set custom db name or id if name is null. otherwise keep the downloaded name from remote db.
         if (molecule.name != null)
             fc.setName(molecule.name);
 
         //override remote db links.
-        if (!molecule.ids.isEmpty()){
-            fc.setLinks(molecule.ids.stream().map(id -> new DBLink(CUSTOM_DB_NAME_PLACEHOLDER, id)).toList()); //we add just id so that names can be added during db retrieval
+        if (!molecule.ids.isEmpty()) {
+            fc.setLinks(molecule.ids.stream().map(id -> new DBLink(null, id)).toList()); //we add just id so that names can be added during db retrieval
             if (fc.getName() == null || fc.getName().isBlank())
                 fc.setName(molecule.ids.iterator().next());
-        }else {
-            fc.setLinks(new ArrayList<>(List.of(new DBLink(CUSTOM_DB_NAME_PLACEHOLDER,null))));
         }
     }
 
@@ -671,11 +666,9 @@ public class CustomDatabaseImporter {
                 fc.setName(molecule.name);
 
             if (!molecule.ids.isEmpty()) {
-                fc.setLinks(molecule.ids.stream().map(id -> new DBLink(CUSTOM_DB_NAME_PLACEHOLDER, id)).toList());
+                fc.setLinks(molecule.ids.stream().map(id -> new DBLink(null, id)).toList());
                 if (fc.getName() == null || fc.getName().isEmpty())
                     fc.setName(molecule.ids.iterator().next()); //set id as name if no name was set
-            }else {
-                fc.setLinks(new ArrayList<>(List.of(new DBLink(CUSTOM_DB_NAME_PLACEHOLDER,null))));
             }
             // compute XLOGP
             fc.setXlogp(logPEstimator.prepareMolAndComputeLogP(molecule.container));
@@ -725,8 +718,7 @@ public class CustomDatabaseImporter {
     }
 
 
-
-    public  static JJob<Boolean> makeImportToDatabaseJob(
+    public static JJob<Boolean> makeImportToDatabaseJob(
             List<InputResource<?>> spectrumFiles,
             List<InputResource<?>> structureFiles,
             @Nullable CustomDatabaseImporter.Listener listener,

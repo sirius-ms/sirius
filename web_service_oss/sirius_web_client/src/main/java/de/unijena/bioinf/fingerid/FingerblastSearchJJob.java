@@ -116,7 +116,8 @@ public class FingerblastSearchJJob extends FingerprintDependentJJob<FingerblastR
         checkForInterruption();
         scoreJobs.forEach(this::submitSubJob);
         checkForInterruption();
-        scoredCandidates = scoreJobs.stream().flatMap(r -> r.takeResult().stream()).sorted(Comparator.reverseOrder()).map(fpc -> new Scored<>(fpc.getCandidate(), fpc.getScore())).collect(Collectors.toList());
+        //This sorting here needs to be consistent with the sorting everywhere else
+        scoredCandidates = scoreJobs.stream().flatMap(r -> r.takeResult().stream()).sorted(Comparator.<Scored<FingerprintCandidate>>reverseOrder().thenComparing((Scored<FingerprintCandidate> s) -> s.getCandidate().getInchiKey2D())).map(fpc -> new Scored<>(fpc.getCandidate(), fpc.getScore())).collect(Collectors.toList());
         checkForInterruption();
         scoredCandidates.forEach(sc -> postprocessCandidate(sc.getCandidate()));
         checkForInterruption();

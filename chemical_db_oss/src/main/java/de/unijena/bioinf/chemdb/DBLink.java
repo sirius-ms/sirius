@@ -38,12 +38,14 @@ import java.util.Objects;
 public final class DBLink {
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
     @Setter
-    private @NotNull String name;
+    private @Nullable String name;
     private final @Nullable String id;
 
-    public DBLink(@NotNull String name, @Nullable String id) {
+    public DBLink(@Nullable String name, @Nullable String id) {
         this.name = name;
         this.id = id;
+        if (name == null && id == null)
+            throw new IllegalArgumentException("Either id or name must be set.");
     }
 
     @Override
