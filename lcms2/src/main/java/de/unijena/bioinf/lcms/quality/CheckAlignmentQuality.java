@@ -6,10 +6,9 @@ import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AbstractFeature;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
-import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
 
 import java.util.Arrays;
-import java.util.Locale;
+import java.util.List;
 
 public class CheckAlignmentQuality implements FeatureQualityChecker{
     @Override
@@ -18,12 +17,12 @@ public class CheckAlignmentQuality implements FeatureQualityChecker{
         QualityReport.Category peakQuality = new QualityReport.Category(QualityReport.ALIGNMENT_QUALITY);
 
         // 1. number of alignments
-        final int medianAl = Math.max((int)(run.getRuns().get().size()*0.15), run.getSampleStats().getMedianNumberOfAlignments());
-        int minimumNumber = (int)Math.max(2, medianAl*0.1);
+        final int medianAl = Math.max((int)(run.getRuns().map(List::size).orElse(0) * 0.15), run.getSampleStats().getMedianNumberOfAlignments());
+        int minimumNumber = (int)Math.max(2, medianAl * 0.1);
 
-        int actualNumber = feature.getFeatures().get().size();
+        int actualNumber = feature.getFeatures().map(List::size).orElse(0); //robust against empty features but they should not occur?
 
-        if (actualNumber < minimumNumber) {
+        if (actualNumber == 0 || actualNumber < minimumNumber) {
             peakQuality.getItems().add(new QualityReport.Item(
                     "feature alignment consists of only " + actualNumber + " features.", DataQuality.LOWEST, QualityReport.Weight.MAJOR
             ));
@@ -39,7 +38,7 @@ public class CheckAlignmentQuality implements FeatureQualityChecker{
 
         // minors
         // check if there is a minimum number of intensive features
-        double[] ints = feature.getFeatures().get().stream().mapToDouble(AbstractFeature::getApexIntensity).toArray();
+        double[] ints = feature.getFeatures().stream().flatMap(List::stream).mapToDouble(AbstractFeature::getApexIntensity).toArray();
         double max = Arrays.stream(ints).max().orElse(1d);
         int intensiveFeatures = (int)Arrays.stream(ints).filter(x->x>max*0.33d).count();
         if (intensiveFeatures >= minimumNumber) {
