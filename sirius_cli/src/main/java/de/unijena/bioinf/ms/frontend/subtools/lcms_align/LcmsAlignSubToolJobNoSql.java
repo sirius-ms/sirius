@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
+import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.lcms.LCMSProcessing;
 import de.unijena.bioinf.lcms.adducts.AdductManager;
@@ -35,16 +36,19 @@ import de.unijena.bioinf.lcms.align.MoI;
 import de.unijena.bioinf.lcms.merge.MergedTrace;
 import de.unijena.bioinf.lcms.projectspace.ProjectSpaceImporter;
 import de.unijena.bioinf.lcms.projectspace.SiriusProjectDocumentDbAdapter;
+import de.unijena.bioinf.lcms.quality.QualityAssessment;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
+import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
@@ -145,7 +149,8 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         // -_- na toll, die Liste ist nicht identisch mit den Configs. Macht irgendwie auch Sinn. Ich will aber ungern
         // Multimere in die AductSettings reinpacken, das zu debuggen wird die Hoelle. Machen wir ein andern Mal.
         adductManager.add(((merged.getPolarity()<0) ? PeriodicTable.getInstance().getNegativeAdducts() : PeriodicTable.getInstance().getPositiveAdducts()).stream().filter(PrecursorIonType::isMultimere).collect(Collectors.toSet()));
-        AdductNetwork network = new AdductNetwork(new ProjectSpaceTraceProvider(ps),  store.findAllStr(AlignedFeatures.class).toArray(AlignedFeatures[]::new), adductManager, bac.getStatistics().getExpectedRetentionTimeDeviation()/2d);
+        ProjectSpaceTraceProvider provider = new ProjectSpaceTraceProvider(ps);
+        AdductNetwork network = new AdductNetwork(provider,  store.findAllStr(AlignedFeatures.class).toArray(AlignedFeatures[]::new), adductManager, bac.getStatistics().getExpectedRetentionTimeDeviation()/2d);
         network.buildNetworkFromMassDeltas(SiriusJobs.getGlobalJobManager());
         network.assign(SiriusJobs.getGlobalJobManager(), new OptimalAssignmentViaBeamSearch(), merged.getPolarity(), (compound)-> {
             try {
@@ -154,6 +159,41 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                 throw new RuntimeException(e);
             }
         });
+
+        // quality assessment
+        HashMap<DataQuality, Integer> countMap = new HashMap<>();
+        for (DataQuality q : DataQuality.values()) {
+            countMap.put(q, 0);
+        }
+        final QualityAssessment qa = new QualityAssessment();
+        ArrayList<BasicJJob<DataQuality>> jobs = new ArrayList<>();
+        store.fetchChild(merged.getRun(), "runId", "retentionTimeAxis", RetentionTimeAxis.class);
+        ps.fetchLCMSRuns((MergedLCMSRun) merged.getRun());
+        space.getProject().getAllAlignedFeatures().filter(x->x.getDataQuality()==DataQuality.NOT_APPLICABLE).forEach(feature -> {
+            jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<DataQuality>() {
+                @Override
+                protected DataQuality compute() throws Exception {
+                    QualityReport report = QualityReport.withDefaultCategories();
+                    ps.fetchFeatures(feature);
+                    ps.fetchIsotopicFeatures(feature);
+                    ps.fetchMsData(feature);
+                    try {
+                        qa.addToReport(report, (MergedLCMSRun) merged.getRun(), feature, provider);
+                        report.setAlignedFeatureId(feature.getAlignedFeatureId());
+                        feature.setDataQuality(report.getOverallQuality());
+                        store.insert(report);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    return report.getOverallQuality();
+                }
+            }));
+        });
+        jobs.forEach(x->{
+            DataQuality q = x.takeResult();
+            countMap.put(q, countMap.get(q)+1);
+        });
+
         System.out.printf(
                 """
                         # Run:                     %d
@@ -168,13 +208,18 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                         Feature                 SNR: %f
                         AlignedIsotopicFeatures SNR: %f
                         AlignedFeatures         SNR: %f
+                        Good Al. Features:           %d
+                        Decent Al. Features:         %d
+                        Bad Al. Features:            %d
+                        Lowest Quality Al. Features: %d
                        \s""",
                 store.countAll(LCMSRun.class), store.countAll(Scan.class), store.countAll(MSMSScan.class),
                 store.countAll(SourceTrace.class), store.countAll(de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace.class),
                 store.countAll(de.unijena.bioinf.ms.persistence.model.core.feature.Feature.class), store.countAll(AlignedIsotopicFeatures.class), store.countAll(AlignedFeatures.class),
                 store.findAllStr(de.unijena.bioinf.ms.persistence.model.core.feature.Feature.class).map(Feature::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
                 store.findAllStr(AlignedIsotopicFeatures.class).map(AlignedIsotopicFeatures::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
-                store.findAllStr(AlignedFeatures.class).map(AlignedFeatures::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN)
+                store.findAllStr(AlignedFeatures.class).map(AlignedFeatures::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
+                countMap.get(DataQuality.GOOD), countMap.get(DataQuality.DECENT), countMap.get(DataQuality.BAD), countMap.get(DataQuality.LOWEST)
         );
 
         return space;
