@@ -12,7 +12,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.Objects;
 
 import static de.unijena.bioinf.babelms.ParserTestUtils.loadExperiment;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -77,7 +76,7 @@ class GnpsJsonParserTest {
 
     @Test
     public void testRootArray() throws IOException {
-        File input = new File(Objects.requireNonNull(ParserTestUtils.class.getClassLoader().getResource("gnps/spectrum_array.json")).getFile());
+        File input = ParserTestUtils.getTestFile("gnps/spectrum_array.json");
         List<Ms2Experiment> experiments = new MsExperimentParser().getParser(input).parseFromFile(input);
 
         assertEquals(3, experiments.size());
