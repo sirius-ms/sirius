@@ -27,6 +27,7 @@ public class MergedSpectrum implements Spectrum<MergedPeak> {
     private Ms2SpectrumHeader[] headers = new Ms2SpectrumHeader[0];
 
     private IntArrayList sampleIds = new IntArrayList();
+    private double chimericPollution;
 
     public void merge(MsMsQuerySpectrum msms) {
         int sampleId = msms.sampleId;
@@ -63,6 +64,13 @@ public class MergedSpectrum implements Spectrum<MergedPeak> {
         headers = Arrays.copyOf(headers, headers.length+1);
         headers[headers.length-1] = msms.header;
         sampleIds.add(msms.sampleId);
+
+        this.chimericPollution += weight * (msms.ms1Intensity/msms.chimericPollution);
+    }
+
+    public double getChimericPollutionRatio() {
+        if (scoreSum==0) return 0d;
+        return this.chimericPollution / scoreSum;
     }
 
     public CollisionEnergy[] getCollisionEnergies() {

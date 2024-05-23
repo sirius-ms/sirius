@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
  * Two ions might differ in a certain loss (e.g. H2O). In this case they need to have the same adduct,
  * but beyond that, are free in their choice of adduct.
  */
+@Deprecated
 public class MultimereRelationship implements KnownMassDelta{
 
     float multiplicator;
