@@ -34,6 +34,7 @@ import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.rest.ProxyManager;
 import de.unijena.bioinf.webapi.Tokens;
+import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
@@ -45,7 +46,7 @@ import java.net.URL;
 public class AccountPanel extends JPanel {
     private final AuthService service;
     private JLabel userIconLabel, userInfoLabel;
-    private JButton login, create, changeSub;
+    private JButton login, create, changeSub, registerExplorer;
     private ToolbarButton refresh;
 
     private SiriusGui gui;
@@ -95,11 +96,14 @@ public class AccountPanel extends JPanel {
         //south
         create = new JButton();
         login = new JButton();
+        registerExplorer = new JButton(SiriusActions.REGISTER_EXPLORER.getInstance(gui, true));
         changeSub = new JButton(SiriusActions.SELECT_SUBSCRIPTION.getInstance(gui, true));
         Box buttons = Box.createHorizontalBox();
         buttons.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         buttons.add(create);
         buttons.add(Box.createHorizontalGlue());
+        if (SystemUtils.IS_OS_WINDOWS)
+            buttons.add(registerExplorer);
         buttons.add(changeSub);
         buttons.add(login);
         add(buttons, BorderLayout.SOUTH);
@@ -122,9 +126,11 @@ public class AccountPanel extends JPanel {
             login.setAction(SiriusActions.SIGN_IN.getInstance(gui, true));
             refresh.setEnabled(false);
             changeSub.setEnabled(false);
+            registerExplorer.setEnabled(false);
         } else {
             refresh.setEnabled(true);
             changeSub.setEnabled(true);
+            registerExplorer.setEnabled(true);
             try {
                 Image image = ImageIO.read(new URL(userInfo.getClaim("picture").asString()));
                 image = Icons.makeEllipse(image);
