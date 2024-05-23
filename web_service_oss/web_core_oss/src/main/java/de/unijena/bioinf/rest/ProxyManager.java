@@ -84,7 +84,7 @@ public class ProxyManager {
     private static OkHttpClient getSirirusHttpClient(boolean pooled) {
         if (pooled)
             return decorateWithPoolSettings(getSirirusHttpClientBuilder(getProxyStrategy())).build();
-        return getSirirusHttpClient(1, 1, 1);
+        return getSirirusHttpClient(2, 3, 1);
     }
 
     private static OkHttpClient getSirirusHttpClient(int maxPerRoute, int maxTotal, int keeAlive) {
