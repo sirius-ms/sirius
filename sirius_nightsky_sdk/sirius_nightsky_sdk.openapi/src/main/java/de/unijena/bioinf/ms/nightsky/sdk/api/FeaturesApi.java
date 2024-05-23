@@ -20,11 +20,13 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.PageFormulaCandidate;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageSpectralLibraryMatch;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageStructureCandidateFormula;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageStructureCandidateScored;
+import de.unijena.bioinf.ms.nightsky.sdk.model.QuantificationTable;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatch;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatchOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateFormula;
 import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateScored;
+import de.unijena.bioinf.ms.nightsky.sdk.model.TraceSet;
 
 import java.util.HashMap;
 import java.util.List;
@@ -2100,6 +2102,95 @@ public class FeaturesApi {
         return getMsDataRequestCreation(projectId, alignedFeatureId);
     }
     /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param alignedFeatureId The alignedFeatureId parameter
+     * @param type The type parameter
+     * @return QuantificationTable
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getQuantificationRequestCreation(String projectId, String alignedFeatureId, String type) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getQuantification", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'alignedFeatureId' is set
+        if (alignedFeatureId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getQuantification", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("alignedFeatureId", alignedFeatureId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "type", type));
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/quantification", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param alignedFeatureId The alignedFeatureId parameter
+     * @param type The type parameter
+     * @return QuantificationTable
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public QuantificationTable getQuantification(String projectId, String alignedFeatureId, String type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
+        return getQuantificationRequestCreation(projectId, alignedFeatureId, type).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param alignedFeatureId The alignedFeatureId parameter
+     * @param type The type parameter
+     * @return ResponseEntity&lt;QuantificationTable&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<QuantificationTable> getQuantificationWithHttpInfo(String projectId, String alignedFeatureId, String type) throws WebClientResponseException {
+        ParameterizedTypeReference<QuantificationTable> localVarReturnType = new ParameterizedTypeReference<QuantificationTable>() {};
+        return getQuantificationRequestCreation(projectId, alignedFeatureId, type).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param alignedFeatureId The alignedFeatureId parameter
+     * @param type The type parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getQuantificationWithResponseSpec(String projectId, String alignedFeatureId, String type) throws WebClientResponseException {
+        return getQuantificationRequestCreation(projectId, alignedFeatureId, type);
+    }
+    /**
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
      * Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
      * <p><b>200</b> - Fragmentation Tree in internal format.  &lt;p&gt;  NOTE: This endpoint is likely to be removed in future versions of the API.
@@ -3095,5 +3186,88 @@ public class FeaturesApi {
      */
     public ResponseSpec getStructureCandidatesPagedWithResponseSpec(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<StructureCandidateOptField> optFields) throws WebClientResponseException {
         return getStructureCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields);
+    }
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param alignedFeatureId The alignedFeatureId parameter
+     * @return TraceSet
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getTraces1RequestCreation(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getTraces1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'alignedFeatureId' is set
+        if (alignedFeatureId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getTraces1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("alignedFeatureId", alignedFeatureId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param alignedFeatureId The alignedFeatureId parameter
+     * @return TraceSet
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public TraceSet getTraces1(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
+        return getTraces1RequestCreation(projectId, alignedFeatureId).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param alignedFeatureId The alignedFeatureId parameter
+     * @return ResponseEntity&lt;TraceSet&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<TraceSet> getTraces1WithHttpInfo(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
+        return getTraces1RequestCreation(projectId, alignedFeatureId).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * 
+     * 
+     * <p><b>200</b> - OK
+     * @param projectId The projectId parameter
+     * @param alignedFeatureId The alignedFeatureId parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getTraces1WithResponseSpec(String projectId, String alignedFeatureId) throws WebClientResponseException {
+        return getTraces1RequestCreation(projectId, alignedFeatureId);
     }
 }

@@ -1,6 +1,6 @@
 # InfoApi
 
-All URIs are relative to *http://localhost:8080*
+All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
@@ -28,7 +28,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.InfoApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         InfoApi apiInstance = new InfoApi(defaultClient);
         try {
@@ -88,7 +88,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.api.InfoApi;
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
-        defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBasePath("http://localhost:8888");
 
         InfoApi apiInstance = new InfoApi(defaultClient);
         try {

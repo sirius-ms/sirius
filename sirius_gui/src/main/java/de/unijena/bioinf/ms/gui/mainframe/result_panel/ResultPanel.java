@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassBean;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassList;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintList;
+import de.unijena.bioinf.ms.gui.lcms_viewer.LCMSViewerPanel;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.*;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
@@ -46,7 +47,7 @@ public class ResultPanel extends JTabbedPane {
 
     public final FormulaOverviewPanel formulasTab;
 
-//    public final LCMSViewerPanel lcmsTab;
+    public final LCMSViewerPanel lcmsTab;
 
     public final CandidateListDetailViewPanel structuresTab;
     public final DeNovoStructureListDetailViewPanel deNovoStructuresTab;
@@ -61,7 +62,7 @@ public class ResultPanel extends JTabbedPane {
         spectralMatchingPanel = new SpectralMatchingPanel(spectralMatchList);
         formulasTab = new FormulaOverviewPanel(siriusResultElements);
 
-//        this.lcmsTab = new LCMSViewerPanel(siriusResultElements); //todo LCMS: reactivate if LCMS Data structures are done!
+        this.lcmsTab = new LCMSViewerPanel(siriusResultElements); //todo LCMS: reactivate if LCMS Data structures are done!
 
         structureAnnoTab = new EpimetheusPanel(combinedStructureListSubstructureView);
         structuresTab = new CandidateListDetailViewPanel(this, databaseStructureList, gui);
@@ -83,8 +84,7 @@ public class ResultPanel extends JTabbedPane {
         );
 
 
-        addTab("LC-MS", null, new JPanel(), "TODO ENABLE again!");
-//        addTab("LC-MS", null, lcmsTab, lcmsTab.getDescription()); //todo LCMS: reactivate if LCMS Data structures are done!
+        addTab("LC-MS", null, lcmsTab, lcmsTab.getDescription()); //todo LCMS: reactivate if LCMS Data structures are done!
 
         addTab("Formulas", null, formulasTab, formulasTab.getDescription());
 

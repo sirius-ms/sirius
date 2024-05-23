@@ -1,0 +1,21 @@
+
+
+# GuiResultTab
+
+## Enum
+
+
+* `FORMULAS` (value: `"FORMULAS"`)
+
+* `PREDICTED_FINGERPRINT` (value: `"PREDICTED_FINGERPRINT"`)
+
+* `COMPOUND_CLASSES` (value: `"COMPOUND_CLASSES"`)
+
+* `STRUCTURES` (value: `"STRUCTURES"`)
+
+* `STRUCTURE_ANNOTATION` (value: `"STRUCTURE_ANNOTATION"`)
+
+* `DE_NOVO_STRUCTURES` (value: `"DE_NOVO_STRUCTURES"`)
+
+
+
