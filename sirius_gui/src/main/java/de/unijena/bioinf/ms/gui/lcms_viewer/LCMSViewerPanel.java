@@ -5,8 +5,11 @@ import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.ToggableSidePanel;
+import de.unijena.bioinf.ms.nightsky.sdk.model.TraceSet;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
 import javax.swing.*;
 import java.awt.*;
@@ -107,9 +110,17 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
             reset();
             return;
         }
-        lcmsWebview.setInstance(currentInstance.getClient().features().getTraces1(currentInstance.getProjectManager().projectId,currentInstance.getFeatureId()),
-                order
-                );
+
+        TraceSet spec = currentInstance.getClient().features()
+                .getTraces1WithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getFeatureId())
+                .bodyToMono(TraceSet.class).onErrorComplete().block();
+
+        if (spec == null){
+            reset();
+            return;
+        }
+
+        lcmsWebview.setInstance(spec, order);
         updateInfo();
     }
 
