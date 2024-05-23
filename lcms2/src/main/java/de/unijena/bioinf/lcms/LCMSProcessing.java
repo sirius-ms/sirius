@@ -178,6 +178,7 @@ public class LCMSProcessing {
         alignmentBackbone = alignmentStrategy.align(merged, alignmentBackbone, Arrays.asList(alignmentBackbone.getSamples()), alignmentAlgorithm, alignmentScorerFull);
         for (ProcessedSample sample : alignmentBackbone.getSamples()) {
             sample.setScanPointInterpolator(new ScanPointInterpolator(merged.getMapping(), sample.getMapping(), sample.getRtRecalibration()));
+            updateRetentionTimeAxis(sample);
         }
         merged.getStorage().getAlignmentStorage().setStatistics(alignmentBackbone.getStatistics());
         return alignmentBackbone;
@@ -241,7 +242,19 @@ public class LCMSProcessing {
                 .scanIndizes(sample.getMapping().scanIndizes)
                 .retentionTimes(sample.getMapping().retentionTimes)
                 .noiseLevelPerScan(sample.getStorage().getStatistics().getNoiseLevelPerScan()).build();
-        siriusDatabaseAdapter.importRetentionTimeAxis(axis);
+        siriusDatabaseAdapter.importRetentionTimeAxis(axis, false);
+    }
+    private void updateRetentionTimeAxis(ProcessedSample sample) throws IOException {
+        RecalibrationFunction recalibrationFunction = sample.getRtRecalibration();
+        RetentionTimeAxis axis = RetentionTimeAxis.builder()
+                .runId(sample.getRun().getRunId())
+                .scanIndizes(sample.getMapping().scanIndizes)
+                .retentionTimes(sample.getMapping().retentionTimes)
+                .noiseLevelPerScan(sample.getStorage().getStatistics().getNoiseLevelPerScan())
+                .recalbratedRetentionTimes(Arrays.stream(sample.getMapping().retentionTimes).map(recalibrationFunction::value).toArray())
+                .normalizationFactor(sample.getNormalizer().normalize(1d))
+                .build();
+        siriusDatabaseAdapter.importRetentionTimeAxis(axis, true);
     }
 
     private void collectStatistics(ProcessedSample sample) {
