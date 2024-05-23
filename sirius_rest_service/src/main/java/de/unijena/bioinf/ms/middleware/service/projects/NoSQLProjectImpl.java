@@ -163,7 +163,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         project().fetchMsData(feature);
 
         // only use features with LC/MS information
-        List<Feature> features = feature.getFeatures().get().stream().filter(x->x.getApexIntensity()!=null).toList();
+        List<Feature> features = feature.getFeatures().stream().flatMap(List::stream).filter(x->x.getApexIntensity()!=null).toList();
         List<LCMSRun> samples = new ArrayList<>();
         for (int k=0; k < features.size(); ++k) {
             samples.add(storage.getByPrimaryKey(features.get(k).getRunId(), LCMSRun.class).orElse(null));
@@ -535,6 +535,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .alignedFeatureId(fid)
                 .name(features.getName())
                 .ionMass(features.getAverageMass())
+                .quality(features.getDataQuality())
                 .computing(computeStateProvider.apply(this, fid));
 
 
