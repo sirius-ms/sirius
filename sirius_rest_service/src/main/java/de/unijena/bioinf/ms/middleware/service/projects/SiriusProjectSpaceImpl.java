@@ -119,6 +119,20 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
         return projectSpaceManager;
     }
 
+    @Override
+    public Optional<QuantificationTable> getQuantificationForAlignedFeature(String alignedFeatureId, QuantificationTable.QuantificationType type) {
+        throw new UnsupportedOperationException("getQuantificationForAlignedFeature not supported by the project");
+    }
+
+    @Override
+    public Optional<TraceSet> getTraceSetForAlignedFeature(String alignedFeatureId) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Optional<TraceSet> getTraceSetForCompound(String compoundId) {
+        throw new UnsupportedOperationException();
+    }
 
     @Override
     public Page<Compound> findCompounds(Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields,

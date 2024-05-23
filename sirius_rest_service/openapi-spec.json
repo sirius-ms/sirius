@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:8080",
+      "url": "http://localhost:8888",
       "description": "Generated server url"
     }
   ],
@@ -2293,6 +2293,44 @@
         }
       }
     },
+    "/api/projects/{projectId}/compounds/{compoundId}/traces": {
+      "get": {
+        "tags": [
+          "Compounds"
+        ],
+        "operationId": "getTraces",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "compoundId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceSet"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/compounds/page": {
       "get": {
         "tags": [
@@ -2513,6 +2551,44 @@
         }
       }
     },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "operationId": "getTraces_1",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TraceSet"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches": {
       "get": {
         "tags": [
@@ -2713,6 +2789,56 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PageSpectralLibraryMatch"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/quantification": {
+      "get": {
+        "tags": [
+          "Features"
+        ],
+        "operationId": "getQuantification",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "APEX_HEIGHT",
+              "enum": [
+                "APEX_HEIGHT"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuantificationTable"
                 }
               }
             }
@@ -4909,7 +5035,7 @@
           },
           "subscriberId": {
             "type": "string",
-            "description": "ID of the owner of the subscription. This can be the ID of any SubscriptionOwner (e.g.  Group or  User) depending on the level on which a subscription should be is valid."
+            "description": "ID of the owner of the subscription.\n This can be the ID of any SubscriptionOwner (e.g.  Group or  User)\n depending on the level on which a subscription should be is valid."
           },
           "subscriberName": {
             "type": "string",
@@ -4938,13 +5064,13 @@
           },
           "instanceHashRecordingTime": {
             "type": "integer",
-            "description": "Hash is used to allow recomputing identical data without increasing counted instances (features). The recording time is the amount of time an instance is memorized.",
+            "description": "Hash is used to allow recomputing identical data without increasing counted instances (features).\n The recording time is the amount of time an instance is memorized is",
             "format": "int32",
             "nullable": true
           },
           "maxQueriesPerInstance": {
             "type": "integer",
-            "description": "Maximum number of queries (e.g. prediction) that can be performed for one instance before it is counted another time.",
+            "description": "Maximum number of queries (e.g. prediction) that can be performed\n for one instance before it is counted another time.",
             "format": "int32",
             "nullable": true
           },
@@ -6748,15 +6874,6 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
-            "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "last": {
-            "type": "boolean"
-          },
           "size": {
             "type": "integer",
             "format": "int32"
@@ -6770,6 +6887,15 @@
           "number": {
             "type": "integer",
             "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "first": {
+            "type": "boolean"
           },
           "numberOfElements": {
             "type": "integer",
@@ -6786,12 +6912,12 @@
       "PageableObject": {
         "type": "object",
         "properties": {
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
           "offset": {
             "type": "integer",
             "format": "int64"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
           },
           "pageNumber": {
             "type": "integer",
@@ -6823,6 +6949,133 @@
           }
         }
       },
+      "Annotation": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "FEATURE",
+              "MS2"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "index": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "from": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "to": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        }
+      },
+      "Axes": {
+        "type": "object",
+        "properties": {
+          "scanNumber": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          "scanIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "retentionTimeInSeconds": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        }
+      },
+      "Trace": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sampleId": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          },
+          "sampleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "label": {
+            "type": "string"
+          },
+          "intensities": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            }
+          },
+          "annotations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Annotation"
+            }
+          },
+          "mz": {
+            "type": "number",
+            "format": "double"
+          },
+          "merged": {
+            "type": "boolean"
+          },
+          "normalizationFactor": {
+            "type": "number",
+            "description": "Traces are stored with raw intensity values. The normalization factor maps them to relative intensities,\n such that traces from different samples can be compared.",
+            "format": "double"
+          },
+          "noiseLevel": {
+            "type": "number",
+            "description": "The noise level is estimated from the median noise in the surrounding scans. It can be used to\n calculate signal-to-noise ratios.",
+            "format": "double"
+          }
+        }
+      },
+      "TraceSet": {
+        "type": "object",
+        "properties": {
+          "sampleId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sampleName": {
+            "type": "string"
+          },
+          "axes": {
+            "$ref": "#/components/schemas/Axes"
+          },
+          "traces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Trace"
+            }
+          }
+        }
+      },
       "PageCompound": {
         "type": "object",
         "properties": {
@@ -6833,15 +7086,6 @@
           "totalElements": {
             "type": "integer",
             "format": "int64"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "last": {
-            "type": "boolean"
           },
           "size": {
             "type": "integer",
@@ -6856,6 +7100,15 @@
           "number": {
             "type": "integer",
             "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "first": {
+            "type": "boolean"
           },
           "numberOfElements": {
             "type": "integer",
@@ -6888,15 +7141,6 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
-            "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "last": {
-            "type": "boolean"
-          },
           "size": {
             "type": "integer",
             "format": "int32"
@@ -6911,6 +7155,15 @@
             "type": "integer",
             "format": "int32"
           },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "first": {
+            "type": "boolean"
+          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
@@ -6920,6 +7173,73 @@
           },
           "empty": {
             "type": "boolean"
+          }
+        }
+      },
+      "QuantificationTable": {
+        "type": "object",
+        "properties": {
+          "quantificationType": {
+            "type": "string",
+            "enum": [
+              "APEX_HEIGHT"
+            ]
+          },
+          "rowType": {
+            "type": "string",
+            "enum": [
+              "FEATURES"
+            ]
+          },
+          "columnType": {
+            "type": "string",
+            "enum": [
+              "SAMPLES"
+            ]
+          },
+          "rowIds": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "integer",
+              "format": "int64",
+              "nullable": true
+            }
+          },
+          "columnIds": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "integer",
+              "format": "int64",
+              "nullable": true
+            }
+          },
+          "rowNames": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "columnNames": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "format": "double"
+              }
+            }
           }
         }
       },
@@ -6977,15 +7297,6 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
-            "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "last": {
-            "type": "boolean"
-          },
           "size": {
             "type": "integer",
             "format": "int32"
@@ -6999,6 +7310,15 @@
           "number": {
             "type": "integer",
             "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "first": {
+            "type": "boolean"
           },
           "numberOfElements": {
             "type": "integer",
@@ -7023,15 +7343,6 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
-            "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "last": {
-            "type": "boolean"
-          },
           "size": {
             "type": "integer",
             "format": "int32"
@@ -7045,6 +7356,15 @@
           "number": {
             "type": "integer",
             "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "first": {
+            "type": "boolean"
           },
           "numberOfElements": {
             "type": "integer",
@@ -7142,15 +7462,6 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
-            "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "last": {
-            "type": "boolean"
-          },
           "size": {
             "type": "integer",
             "format": "int32"
@@ -7164,6 +7475,15 @@
           "number": {
             "type": "integer",
             "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "first": {
+            "type": "boolean"
           },
           "numberOfElements": {
             "type": "integer",
@@ -7188,15 +7508,6 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
-            "type": "boolean"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "last": {
-            "type": "boolean"
-          },
           "size": {
             "type": "integer",
             "format": "int32"
@@ -7210,6 +7521,15 @@
           "number": {
             "type": "integer",
             "format": "int32"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "first": {
+            "type": "boolean"
           },
           "numberOfElements": {
             "type": "integer",

@@ -23,10 +23,7 @@ import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
-import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
-import de.unijena.bioinf.ms.middleware.model.features.AnnotatedMsMsData;
-import de.unijena.bioinf.ms.middleware.model.features.FeatureImport;
-import de.unijena.bioinf.ms.middleware.model.features.MsData;
+import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.service.databases.ChemDbService;
@@ -46,6 +43,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Optional;
 
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.removeNone;
 
@@ -690,6 +688,24 @@ public class AlignedFeatureController {
         if (res == null)
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Compound Classes for '" + idString(projectId, alignedFeatureId, formulaId) + "' not found!");
         return res;
+    }
+
+    /*
+        LCMS Stuff
+     */
+
+    @GetMapping(value = "/{alignedFeatureId}/quantification", produces = MediaType.APPLICATION_JSON_VALUE)
+    public QuantificationTable getQuantification(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationTable.QuantificationType type) {
+        Optional<QuantificationTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantificationForAlignedFeature(alignedFeatureId, type);
+        if (quantificationForAlignedFeature.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No quantification information available for " + idString(projectId, alignedFeatureId) + " and quantification type " + type );
+        else return quantificationForAlignedFeature.get();
+    }
+
+    @GetMapping(value = "/{alignedFeatureId}/traces", produces = MediaType.APPLICATION_JSON_VALUE)
+    public TraceSet getTraces(@PathVariable String projectId, @PathVariable String alignedFeatureId) {
+        Optional<TraceSet> traceSet = projectsProvider.getProjectOrThrow(projectId).getTraceSetForAlignedFeature(alignedFeatureId);
+        if (traceSet.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No trace information available for " + idString(projectId, alignedFeatureId) );
+        else return traceSet.get();
     }
 
 
