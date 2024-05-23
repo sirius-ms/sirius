@@ -131,7 +131,7 @@ public class ImportAction extends AbstractGuiAction {
 
             task.awaitResult();
         } catch (ExecutionException e) {
-            new StacktraceDialog(gui.getMainFrame(), GuiUtils.formatToolTip("Error when importing data! Cause: " + e.getMessage()), e.getCause());
+            new StacktraceDialog(gui.getMainFrame(), "Error when importing data! Cause: " + e.getMessage(), e.getCause());
         }
     }
 }
