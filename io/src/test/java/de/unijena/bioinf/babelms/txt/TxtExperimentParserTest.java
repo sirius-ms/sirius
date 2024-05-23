@@ -15,7 +15,7 @@ public class TxtExperimentParserTest {
 
     @Test
     public void testParseValidFile() throws IOException {
-        File input = ParserTestUtils.getTestFile("massbank/MSBNK-UFZ-UA000101.txt");
+        File input = ParserTestUtils.getTestFile("massbank/MSBNK-UFZ-UP000040.txt");
         URI uri = input.toURI();
         TxtExperimentParser parser = new TxtExperimentParser();
         try (FileInputStream stream = new FileInputStream(input)) {
