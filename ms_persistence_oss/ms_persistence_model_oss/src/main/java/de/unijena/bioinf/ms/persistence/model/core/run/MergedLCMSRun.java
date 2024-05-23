@@ -21,7 +21,6 @@
 package de.unijena.bioinf.ms.persistence.model.core.run;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import it.unimi.dsi.fastutil.ints.IntList;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
