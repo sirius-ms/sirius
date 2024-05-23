@@ -121,6 +121,15 @@ public class NoSQLInstance implements Instance {
     }
 
     @Override
+    public String toString() {
+        String name = getName();
+        String id = getId();
+        if (name != null && !name.equals(id))
+            return name + " (" + id +")";
+        return name;
+    }
+
+    @Override
     public double getIonMass() {
         return getAlignedFeatures().getAverageMass();
     }
