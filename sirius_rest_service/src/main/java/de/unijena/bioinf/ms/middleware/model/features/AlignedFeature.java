@@ -58,6 +58,11 @@ public class AlignedFeature {
     protected Double rtEndSeconds;
 
     /**
+     * Quality of this feature.
+     */
+    protected DataQuality quality;
+
+    /**
      * Mass Spec data of this feature (input data)
      */
     @Schema(nullable = true)
