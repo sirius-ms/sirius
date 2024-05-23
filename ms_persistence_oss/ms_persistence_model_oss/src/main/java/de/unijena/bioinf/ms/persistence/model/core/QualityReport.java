@@ -5,11 +5,8 @@ import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
-import org.dizitart.no2.collection.Document;
 
-import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 
