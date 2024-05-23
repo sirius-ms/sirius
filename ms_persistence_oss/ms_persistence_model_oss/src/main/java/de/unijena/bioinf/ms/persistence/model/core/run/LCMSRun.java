@@ -34,6 +34,7 @@ import java.util.List;
 @ToString
 public class LCMSRun extends AbstractLCMSRun {
     //todo are there other types like validation or calibration???
+    // TODO: @kaidu: suggest to remove and solve via tagging system
     public enum Type {
         SAMPLE,
         BLANK
