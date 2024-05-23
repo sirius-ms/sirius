@@ -189,8 +189,8 @@ public class CustomDatabaseImporter {
             addToSpectraBuffer(specs);
         }
         if (!iterator.getParsingErrors().isEmpty()) {
-            String files = String.join(" ", iterator.getParsingErrors().keySet());
-            throw new RuntimeException("Following files could not be imported, see log for details: " + files);
+            String files = "'" + String.join("', '", iterator.getParsingErrors().keySet()) + "'";
+            throw new RuntimeException("Following files could not be imported: " + files);
         }
     }
 
