@@ -31,6 +31,7 @@ import de.unijena.bioinf.babelms.ReportingInputStream;
 import de.unijena.bioinf.babelms.annotations.CompoundMetaData;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.InputResourceParsingIterator;
+import de.unijena.bioinf.babelms.sdf.IteratingSDFReader;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
@@ -49,7 +50,6 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.io.ISimpleChemObjectReader;
 import org.openscience.cdk.io.ReaderFactory;
-import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
@@ -298,7 +298,8 @@ public class CustomDatabaseImporter {
                 InChI inchi = InChISMILESUtils.getInchi(c, false);
                 if (inchi != null) {
                     Molecule molecule = new Molecule(c, smiles, inchi);
-                    molecule.name = c.getProperty("Name");
+                    //All properties must be lowercase
+                    molecule.name = c.getProperty("name");
                     addMolecule(molecule);
                 } else {
                     LoggerFactory.getLogger(getClass()).warn("Could not create InChI from parsed Atom container. Skipping Molecule: " + smiles);

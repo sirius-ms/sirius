@@ -157,16 +157,15 @@ public class GenericParser<T> implements Parser<T> {
     }
 
     public CloseableIterator<T> parseFromFileIterator(File file) throws IOException {
-        try(InputStream s = new FileInputStream(file)) {
-            return parseIterator(s, file.toURI());
-        }
+        final BufferedReader r = FileUtils.ensureBuffering(new FileReader(file));
+        return parseIterator(r, file.toURI());
     }
 
     public CloseableIterator<T> parseFromPathIterator(Path file) throws IOException {
-        try(final InputStream s = Files.newInputStream(file)){
-            return parseIterator(s, file.toUri());
-        }
+        final BufferedReader r = Files.newBufferedReader(file);
+        return parseIterator(r, file.toUri());
     }
+
 
     public List<T> parseFromFile(File file) throws IOException {
         final URI source = file.toURI();

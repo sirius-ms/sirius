@@ -90,8 +90,12 @@ public class SiriusProjectDocumentDbAdapter implements SiriusDatabaseAdapter {
     }
 
     @Override
-    public void importRetentionTimeAxis(RetentionTimeAxis axis) throws IOException {
-        store.getStorage().insert(axis);
+    public void importRetentionTimeAxis(RetentionTimeAxis axis, boolean update) throws IOException {
+        if (update) {
+            store.getStorage().upsert(axis);
+        } else {
+            store.getStorage().insert(axis);
+        }
     }
 
 }

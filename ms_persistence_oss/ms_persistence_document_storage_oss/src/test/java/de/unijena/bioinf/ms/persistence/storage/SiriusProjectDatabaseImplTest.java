@@ -592,7 +592,7 @@ public class SiriusProjectDatabaseImplTest {
                         assertEquals(ms1, feature.getMSData().get().getMergedMs1Spectrum() != null);
                         assertEquals(ms1, feature.getMSData().get().getIsotopePattern() != null);
                         assertTrue(Math.abs(exp.getIonMass() - feature.getAverageMass()) < .0001);
-                        assertEquals(exp.getPrecursorIonType(), feature.getIonType());
+                        assertEquals(exp.getPrecursorIonType().getCharge(), feature.getCharge());
                         assertEquals(exp.getName(), feature.getName());
                         assertEquals(exp.getFeatureId(), feature.getExternalFeatureId());
                         assertEquals(exp.getMolecularFormula(), feature.getMolecularFormula());
@@ -614,7 +614,7 @@ public class SiriusProjectDatabaseImplTest {
                         assertEquals(ms1, extrFeature.getMSData().get().getIsotopePattern() != null);
 
                         assertTrue(Math.abs(exp.getIonMass() - extrFeature.getAverageMass()) < .0001);
-                        assertEquals(exp.getPrecursorIonType(), extrFeature.getIonType());
+                        assertEquals(exp.getPrecursorIonType().getCharge(), extrFeature.getCharge());
                         assertEquals(exp.getName(), extrFeature.getName());
                         assertEquals(exp.getFeatureId(), extrFeature.getExternalFeatureId());
                         assertEquals(exp.getMolecularFormula(), extrFeature.getMolecularFormula());
@@ -630,7 +630,7 @@ public class SiriusProjectDatabaseImplTest {
                         assertEquals(expectedMsMs, extrExp.getMs2Spectra().size());
                         assertEquals(ms1, extrExp.getMs1Spectra() != null && !extrExp.getMs1Spectra().isEmpty());
                         assertTrue(Math.abs(exp.getIonMass() - extrExp.getIonMass()) < .0001);
-                        assertEquals(exp.getPrecursorIonType(), extrExp.getPrecursorIonType());
+                        assertEquals(exp.getPrecursorIonType().getCharge(), extrExp.getPrecursorIonType().getCharge());
                         assertEquals(exp.getName(), extrExp.getName());
                         assertEquals(exp.getFeatureId(), extrExp.getFeatureId());
                         assertEquals(exp.getMolecularFormula(), extrExp.getMolecularFormula());

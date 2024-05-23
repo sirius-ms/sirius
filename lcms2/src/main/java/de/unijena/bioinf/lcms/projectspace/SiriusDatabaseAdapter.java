@@ -26,5 +26,5 @@ public interface SiriusDatabaseAdapter {
 
     void importAlignedFeature(AlignedFeatures alignedFeatures) throws IOException;
 
-    void importRetentionTimeAxis(RetentionTimeAxis axis) throws IOException;
+    void importRetentionTimeAxis(RetentionTimeAxis axis, boolean update) throws IOException;
 }
