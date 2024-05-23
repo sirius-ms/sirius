@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.MsBatchDataFormatFilter;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.nightsky.sdk.jjobs.SseProgressJJob;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
@@ -130,7 +131,7 @@ public class ImportAction extends AbstractGuiAction {
 
             task.awaitResult();
         } catch (ExecutionException e) {
-            new StacktraceDialog(gui.getMainFrame(), "Error when importing data!", e.getCause());
+            new StacktraceDialog(gui.getMainFrame(), GuiUtils.formatToolTip("Error when importing data! Cause: " + e.getMessage()), e.getCause());
         }
     }
 }
