@@ -21,6 +21,8 @@
 
 package de.unijena.bioinf.ms.gui.dialogs;
 
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -73,7 +75,7 @@ public class StacktraceDialog extends JDialog implements ActionListener, KeyList
         final JPanel stackedPanel = new JPanel();
         stackedPanel.setLayout(new BoxLayout(stackedPanel, BoxLayout.Y_AXIS));
         northPanel.add(new JLabel(icon));
-        northPanel.add(new JLabel(message));
+        northPanel.add(new JLabel(GuiUtils.formatToolTip(message)));
         final JTextArea textarea = new JTextArea(stacktrace);
         textarea.setEditable(false);
         textarea.addKeyListener(this);
