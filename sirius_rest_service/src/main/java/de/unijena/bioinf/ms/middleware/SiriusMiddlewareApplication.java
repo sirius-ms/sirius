@@ -49,6 +49,7 @@ import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.boot.context.ApplicationPidFileWriter;
+import org.springframework.boot.system.ApplicationHome;
 import org.springframework.boot.web.context.WebServerInitializedEvent;
 import org.springframework.boot.web.context.WebServerPortFileWriter;
 import org.springframework.context.ApplicationContext;
@@ -107,7 +108,8 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
 
                 ApplicationCore.DEFAULT_LOGGER.info("Starting Application Core");
                 PropertyManager.setProperty("de.unijena.bioinf.sirius.BackgroundRuns.autoremove", "false");
-
+                //just store the sirius base dir
+                PropertyManager.setProperty("de.unijena.bioinf.sirius.homeDir", Path.of(new ApplicationHome().getDir().getAbsolutePath()).getParent().toString());
 
                 Splash splashScreen = null;
                 if (Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("--gui") || it.equalsIgnoreCase("-g"))) {
