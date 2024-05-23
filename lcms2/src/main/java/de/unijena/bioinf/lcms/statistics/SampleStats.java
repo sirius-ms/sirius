@@ -1,10 +1,11 @@
-package de.unijena.bioinf.ms.persistence.model.core.run;
+package de.unijena.bioinf.lcms.statistics;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
+import de.unijena.bioinf.ms.persistence.model.core.run.SampleStatistics;
 import lombok.*;
 
 @Getter
@@ -42,5 +43,4 @@ public class SampleStats {
     public float ms2NoiseLevel() {
         return ms2NoiseLevel;
     }
-
 }

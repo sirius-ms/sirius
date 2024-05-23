@@ -60,4 +60,6 @@ public abstract class AbstractAlignedFeatures extends AbstractFeature {
         return Optional.ofNullable(msData);
     }
 
+    public abstract long databaseId();
+
 }

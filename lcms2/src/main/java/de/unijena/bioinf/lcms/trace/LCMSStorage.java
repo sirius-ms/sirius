@@ -9,7 +9,7 @@ import de.unijena.bioinf.lcms.align.MvBasedAlignmentStorage;
 import de.unijena.bioinf.lcms.merge.MergeMvStorage;
 import de.unijena.bioinf.lcms.merge.MergeStorage;
 import de.unijena.bioinf.lcms.spectrum.SpectrumStorage;
-import de.unijena.bioinf.ms.persistence.model.core.run.SampleStats;
+import de.unijena.bioinf.lcms.statistics.SampleStats;
 import de.unijena.bioinf.lcms.statistics.SampleStatsDataType;
 import org.h2.mvstore.*;
 
