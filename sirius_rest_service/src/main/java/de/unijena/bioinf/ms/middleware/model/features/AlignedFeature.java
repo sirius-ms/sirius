@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.middleware.model.features;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ms.middleware.model.annotations.FeatureAnnotations;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
