@@ -42,4 +42,8 @@ public class AlignedIsotopicFeatures extends AbstractAlignedFeatures {
 
     private long alignedFeatureId;
 
+    @Override
+    public long databaseId() {
+        return alignedIsotopeFeatureId;
+    }
 }

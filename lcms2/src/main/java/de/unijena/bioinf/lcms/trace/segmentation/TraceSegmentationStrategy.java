@@ -1,6 +1,6 @@
 package de.unijena.bioinf.lcms.trace.segmentation;
 
-import de.unijena.bioinf.ms.persistence.model.core.run.SampleStats;
+import de.unijena.bioinf.lcms.statistics.SampleStats;
 import de.unijena.bioinf.lcms.trace.Trace;
 
 import java.util.List;

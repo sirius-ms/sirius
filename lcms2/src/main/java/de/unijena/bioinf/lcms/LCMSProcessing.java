@@ -2,6 +2,7 @@ package de.unijena.bioinf.lcms;
 
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.lcms.align.*;
@@ -28,14 +29,14 @@ import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.traceextractor.*;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
-import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
-import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
-import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
-import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
+import de.unijena.bioinf.ms.persistence.model.core.run.*;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.math3.util.DoubleArray;
 import org.apache.commons.text.similarity.LongestCommonSubsequence;
 import org.slf4j.LoggerFactory;
 
@@ -45,8 +46,6 @@ import java.nio.file.Path;
 import java.util.*;
 
 public class LCMSProcessing {
-
-    private static Range R = Range.closed(1,2);
 
     /**
      * Creates temporary databases to store traces and spectra
@@ -203,7 +202,7 @@ public class LCMSProcessing {
 
         MergedLCMSRun mergedRun = MergedLCMSRun.builder()
                 .name(name)
-                .sampleStats(merged.getStorage().getStatistics())
+                .runIds(Arrays.stream(backbone.getSamples()).mapToLong(x->x.getRun().getRunId()).toArray())
                 .build();
         merged.setRun(mergedRun);
 
@@ -230,6 +229,35 @@ public class LCMSProcessing {
             }));
         }
         jobs.forEach(JJob::takeResult);
+
+        mergedRun.setSampleStats(collectFinalStatistics(merged, backbone));
+        siriusDatabaseAdapter.updateMergedRun(mergedRun);
+
+
+    }
+
+    private SampleStatistics collectFinalStatistics(ProcessedSample merged, AlignmentBackbone alignmentBackbone) throws IOException {
+        /*
+         * this code relies on lazy evaluation of streams. If that is not the case we might have a huge memory peak here :/
+         */
+        DoubleArrayList fwhms = new DoubleArrayList();
+        DoubleArrayList ms2Noise = new DoubleArrayList();
+        siriusDatabaseAdapter.getImportedFeatureStream(true)
+                .filter(x -> x.getRunId() == merged.getRun().getRunId())
+                .filter(x -> x.getMSData().get().getIsotopePattern() != null && x.getMSData().get().getIsotopePattern().size() >= 2)
+                .forEach(x->{
+                    fwhms.add(x.getFwhm().doubleValue());
+                });
+        SampleStats st = merged.getStorage().getStatistics();
+        fwhms.sort(null);
+        return new SampleStatistics(
+                st.getMs1MassDeviationWithinTraces(),
+                alignmentBackbone.getStatistics().getExpectedMassDeviationBetweenSamples(),
+                alignmentBackbone.getStatistics().getExpectedRetentionTimeDeviation(),
+                fwhms.getDouble(fwhms.size()/2), (int)alignmentBackbone.getStatistics().getMedianNumberOfAlignments(),
+                st.ms2NoiseLevel()
+        );
+
     }
 
     private boolean isSuitableForImport(MergedTrace mergedTrace) {
@@ -263,6 +291,11 @@ public class LCMSProcessing {
         ;
         for (int idx = 0, n = sample.getMapping().length(); idx < n; ++idx) {
             calc.processMs1(sample.getStorage().getSpectrumStorage().ms1SpectrumHeader(idx), sample.getStorage().getSpectrumStorage().getSpectrum(idx));
+        }
+
+        for (Ms2SpectrumHeader h : sample.getStorage().getSpectrumStorage().ms2SpectraHeader()) {
+            SimpleSpectrum ms2 = sample.getStorage().getSpectrumStorage().getMs2Spectrum(h.getUid());
+            calc.processMs2(h, ms2);
         }
         sample.getStorage().setStatistics(calc.done());
     }

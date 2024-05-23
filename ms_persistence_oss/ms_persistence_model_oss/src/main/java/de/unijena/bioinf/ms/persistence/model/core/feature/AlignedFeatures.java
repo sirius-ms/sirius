@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.persistence.model.core.feature;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
@@ -76,6 +77,8 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
      */
     private MolecularFormula molecularFormula;
 
+    protected DataQuality dataQuality = DataQuality.NOT_APPLICABLE;
+
 
     @JsonIgnore
     @ToString.Exclude
@@ -109,4 +112,8 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
     }
 
 
+    @Override
+    public long databaseId() {
+        return alignedFeatureId;
+    }
 }

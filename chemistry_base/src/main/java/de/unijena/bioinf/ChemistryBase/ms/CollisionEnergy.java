@@ -283,4 +283,8 @@ public class CollisionEnergy implements Serializable {
     public static CollisionEnergy none() {
         return NONE;
     }
+
+    public boolean isRamp() {
+        return getMinEnergy(false) < getMaxEnergy();
+    }
 }

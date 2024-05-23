@@ -33,6 +33,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
+import java.util.stream.Stream;
 
 public class SiriusProjectDocumentDbAdapter implements SiriusDatabaseAdapter {
 
@@ -61,6 +62,11 @@ public class SiriusProjectDocumentDbAdapter implements SiriusDatabaseAdapter {
     @Override
     public void importMergedRun(MergedLCMSRun mergedRun) throws IOException {
         store.getStorage().insert(mergedRun);
+    }
+
+    @Override
+    public void updateMergedRun(MergedLCMSRun mergedRun) throws IOException {
+        store.getStorage().upsert(mergedRun);
     }
 
     @Override
@@ -96,6 +102,11 @@ public class SiriusProjectDocumentDbAdapter implements SiriusDatabaseAdapter {
         } else {
             store.getStorage().insert(axis);
         }
+    }
+
+    @Override
+    public Stream<AlignedFeatures> getImportedFeatureStream(boolean msdata) throws IOException {
+        return store.getAllAlignedFeatures().map(x->store.fetchMsData(x));
     }
 
 }

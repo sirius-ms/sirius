@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.persistence.model.core.run;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import it.unimi.dsi.fastutil.ints.IntList;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -36,11 +37,13 @@ import java.util.Optional;
 public class MergedLCMSRun extends AbstractLCMSRun {
 
     @ToString.Exclude
-    private SampleStats sampleStats;
+    private SampleStatistics sampleStats;
 
     @JsonIgnore
     @ToString.Exclude
     private List<LCMSRun> runs;
+
+    private long[] runIds;
 
     public Optional<List<LCMSRun>> getRuns() {
         return Optional.ofNullable(runs);

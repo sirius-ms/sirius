@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.persistence.storage;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ms.persistence.model.Tag;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
+import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -58,12 +60,10 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                 .addRepository(Tag.class, Index.unique("name"))
 
                 .addRepository(LCMSRun.class,
-                        Index.nonUnique("name"),
-                        Index.nonUnique("runType"))
+                        Index.nonUnique("name"))
 
                 .addRepository(MergedLCMSRun.class, // TODO: das ist doof -_- Wozu überhaupt zwischen beidem unterscheiden?
-                        Index.nonUnique("name"),
-                        Index.nonUnique("runType"))
+                        Index.nonUnique("name"))
 
                 .addRepository(Scan.class,
                         Index.nonUnique("runId", "scanTime"))
@@ -120,7 +120,13 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                         Index.nonUnique("neutralMass"),
                         Index.nonUnique("rt.middle"))
 
-                .addRepository(RetentionTimeAxis.class);
+                .addRepository(RetentionTimeAxis.class)
+
+                .addRepository(QualityReport.class)
+
+                ;
+
+
     }
 
     default <T> Stream<T> stream(Iterable<T> iterable){
@@ -154,9 +160,28 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
     }
 
     @SneakyThrows
+    default <A extends AlignedFeatures> A fetchIsotopicFeatures(@NotNull final A alignedFeatures) {
+        getStorage().fetchAllChildren(alignedFeatures, "alignedFeatureId", "alignedFeatureId", "isotopicFeatures", AlignedIsotopicFeatures.class);
+        return alignedFeatures;
+    }
+
+    @SneakyThrows
     default <A extends AbstractAlignedFeatures> A fetchMsData(@NotNull final A alignedFeatures) {
         getStorage().fetchChild(alignedFeatures, "alignedFeatureId", "msData", MSData.class);
         return alignedFeatures;
+    }
+
+    @SneakyThrows
+    default MergedLCMSRun fetchLCMSRuns(@NotNull final MergedLCMSRun run) {
+        Storage storage = getStorage();
+        run.setRuns(Arrays.stream(run.getRunIds()).mapToObj(x-> {
+            try {
+                return storage.getByPrimaryKey(x, LCMSRun.class).orElse(null);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }).toList());
+        return run;
     }
 
     default void importCompounds(List<Compound> compounds) throws IOException {
