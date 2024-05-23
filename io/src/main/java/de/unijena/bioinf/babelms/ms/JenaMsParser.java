@@ -76,19 +76,22 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
 
     Object lastSource = null;
     String lastCompoundName = null;
-
+    BufferedReader reader = null;
     @Override
     public Ms2Experiment parse(InputStream inputStream, URI source) throws IOException {
-        return parse(FileUtils.ensureBuffering(new InputStreamReader(inputStream)),inputStream,  source, PropertyManager.DEFAULTS);
-
+        if (lastSource != inputStream || reader == null)
+            reader = FileUtils.ensureBuffering(new InputStreamReader(inputStream));
+        return parse(inputStream,  source, PropertyManager.DEFAULTS);
     }
 
     @Override
     public Ms2Experiment parse(BufferedReader reader, URI source) throws IOException {
-        return parse(reader, reader, source, PropertyManager.DEFAULTS);
+        if (lastSource != reader || reader == null)
+            this.reader = reader;
+        return parse(reader, source, PropertyManager.DEFAULTS);
     }
 
-    private Ms2Experiment parse(BufferedReader reader, Object currentSource, URI source, ParameterConfig config) throws IOException {
+    private Ms2Experiment parse(Object currentSource, URI source, ParameterConfig config) throws IOException {
 
         ParserInstance p = null;
         while (true) {
