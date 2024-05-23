@@ -188,6 +188,10 @@ public class CustomDatabaseImporter {
 
             addToSpectraBuffer(specs);
         }
+        if (!iterator.getParsingErrors().isEmpty()) {
+            String files = "'" + String.join("', '", iterator.getParsingErrors().keySet()) + "'";
+            throw new RuntimeException("Following files could not be imported: " + files);
+        }
     }
 
     public void importStructuresFromSmileAndInChis(String smilesOrInChI) throws IOException {
@@ -195,7 +199,7 @@ public class CustomDatabaseImporter {
         importStructuresFromSmileAndInChis(smilesOrInChI, null, null);
     }
 
-    public Optional<Molecule> importStructuresFromSmileAndInChis(@Nullable String smilesOrInChI, @Nullable String id, @Nullable String name) throws IOException {
+    public Optional<Molecule> importStructuresFromSmileAndInChis(@Nullable String smilesOrInChI, @Nullable String id, @Nullable String name) {
         throwIfShutdown();
         if (smilesOrInChI == null || smilesOrInChI.isBlank()) {
             LoggerFactory.getLogger(getClass()).warn("No structure information given in Line ' " + smilesOrInChI + "\t" + id + "\t" + name + "'. Skipping!");
@@ -620,7 +624,7 @@ public class CustomDatabaseImporter {
         private final Set<String> ids = new HashSet<>();
         private String name = null;
         @NotNull
-        private IAtomContainer container;
+        private final IAtomContainer container;
 
         private Molecule(@NotNull IAtomContainer container, @NotNull Smiles smiles, @NotNull InChI inchi) {
             this.container = container;
@@ -728,7 +732,7 @@ public class CustomDatabaseImporter {
     ) {
         return new BasicJJob<Boolean>() {
             CustomDatabaseImporter importer;
-            CustomDatabaseImporter.Listener l = listener;
+            final CustomDatabaseImporter.Listener l = listener;
 
             @Override
             protected Boolean compute() throws Exception {

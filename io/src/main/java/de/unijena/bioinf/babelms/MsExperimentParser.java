@@ -31,6 +31,7 @@ import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.babelms.msp.MSPExperimentParser;
 import de.unijena.bioinf.babelms.mzml.MzMlExperimentParser;
 import de.unijena.bioinf.babelms.mzml.MzXmlExperimentParser;
+import de.unijena.bioinf.babelms.txt.TxtExperimentParser;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,7 @@ public class MsExperimentParser {
     protected static final Map<String, Class<? extends Parser<Ms2Experiment>>> KNOWN_ENDINGS = addKnownEndings();
 
     // there is no good solution without writing the endings here explicitly (otherwise DESCRIPTION can not be used in annotations)
-    public static final String DESCRIPTION = ".ms, .mgf, .mzxml, .mzml, .cef, .msp, .mat, .mb, .mblib, .json (GNPS, MoNA), .zip";
+    public static final String DESCRIPTION = ".ms, .mgf, .mzxml, .mzml, .cef, .msp, .mat, .mb, .mblib, .txt (MassBank), .json (GNPS, MoNA), .zip";
 
     /**
      * This postprocessor annotates Parameter configs to the {@link Ms2Experiment}. If {@link InputFileConfig} is given
@@ -118,7 +119,7 @@ public class MsExperimentParser {
         endings.put(".mat", MSPExperimentParser.class);
         endings.put(".mb", MassbankExperimentParser.class);
         endings.put(".mblib", MassbankExperimentParser.class);
-        endings.put(".txt", MassbankExperimentParser.class);
+        endings.put(".txt", TxtExperimentParser.class);
         endings.put(".json", JsonExperimentParserDispatcher.class);
         return endings;
     }
