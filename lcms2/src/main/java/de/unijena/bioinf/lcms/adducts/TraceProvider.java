@@ -1,5 +1,6 @@
 package de.unijena.bioinf.lcms.adducts;
 
+import de.unijena.bioinf.ms.persistence.model.core.feature.AbstractAlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
@@ -18,14 +19,14 @@ import java.util.Optional;
 
 public interface TraceProvider {
 
-    public Optional<MergedTrace> getMergeTrace(AlignedFeatures feature) throws IOException;
+    public Optional<MergedTrace> getMergeTrace(AbstractAlignedFeatures feature) throws IOException;
 
-    public Long2ObjectMap<SourceTrace> getSourceTraces(AlignedFeatures features);
+    public Long2ObjectMap<SourceTrace> getSourceTraces(AbstractAlignedFeatures features);
 
-    public Long2DoubleMap getIntensities(AlignedFeatures features);
+    public Long2DoubleMap getIntensities(AbstractAlignedFeatures features);
 
-    public Optional<Pair<TraceRef, SourceTrace>> getSourceTrace(AlignedFeatures features, long runId);
+    public Optional<Pair<TraceRef, SourceTrace>> getSourceTrace(AbstractAlignedFeatures features, long runId);
 
-    public List<MergedMSnSpectrum> getMs2SpectraOf(AlignedFeatures features);
+    public List<MergedMSnSpectrum> getMs2SpectraOf(AbstractAlignedFeatures features);
 
 }

@@ -6,6 +6,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.lcms.ScanPointMapping;
 import de.unijena.bioinf.lcms.features.IsotopePatternExtractionStrategy;
 import de.unijena.bioinf.lcms.features.MergedFeatureExtractionStrategy;
 import de.unijena.bioinf.lcms.merge.MergedTrace;
@@ -16,28 +17,24 @@ import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.ProjectedTrace;
 import de.unijena.bioinf.lcms.trace.Trace;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
-import de.unijena.bioinf.lcms.utils.AlignedFeatureUtils;
 import de.unijena.bioinf.lcms.utils.MultipleCharges;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
-import de.unijena.bioinf.ms.persistence.model.core.run.SampleStats;
+import de.unijena.bioinf.lcms.statistics.SampleStats;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.trace.RawTraceRef;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
-import de.unijena.bioinf.sirius.Ms2Preprocessor;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickFeaturesAndImportToSirius.DbMapper>  {
 
@@ -128,7 +125,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
             TraceSegment traceSegment = traceSegments[fid];
             features[fid].setTraceRef(new TraceRef(dbId.mergeTrace, o, traceSegment.leftEdge-o, traceSegment.apex-o, traceSegment.rightEdge-o));
             features[fid].setMsData(new MSData());
-            setGenericAttributes(mergedTrace, traceSegment, traceSegment.apex,  features[fid], charge, mergedSample);
+            setGenericAttributes(mergedTrace, traceSegment, traceSegment.apex,  features[fid], charge, mergedSample, mergedSample);
             features[fid].setIsotopicFeatures(new ArrayList<>());
             // set features
             for (int j=0; j < rawSegments.length; ++j) {
@@ -142,7 +139,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                 int ra = Math.max(subTrace.getRawStartId(), S.getScanPointInterpolator().reverseMapLowerIndex(r.leftEdge));
                 int rb = Math.min(subTrace.getRawEndId(), S.getScanPointInterpolator().reverseMapLargerIndex(r.rightEdge));
                 int rapex = getAdjustedApex(subTrace.raw(S.getMapping()), ra, rb);
-                setGenericAttributes(subTrace.projected(mergedSample.getMapping()), r, rapex, sub, charge, S);
+                setGenericAttributes(subTrace.projected(mergedSample.getMapping()), r, rapex, sub, charge, S, mergedSample);
                 sub.setTraceRef(new RawTraceRef(dbId.rawTraces[j], o1, r.leftEdge-o1, r.apex-o1, r.rightEdge-o1, ra-o2, rapex-o2, rb-o2, o2));
                 features[fid].getFeatures().get().add(sub);
             }
@@ -246,7 +243,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                         iso.setTraceRef(new TraceRef(dbIsotopeIds[isotopePeak].mergeTrace, o, t.leftEdge-o, adjustedMergedApex-o, t.rightEdge-o));
                     }
                     featuresParent[traceIndex].getIsotopicFeatures().get().add(iso);
-                    setGenericAttributes(isotope, t, adjustedMergedApex, iso, featuresParent[traceIndex].getCharge(), mergedSample);
+                    setGenericAttributes(isotope, t, adjustedMergedApex, iso, featuresParent[traceIndex].getCharge(), mergedSample, mergedSample);
 
                     double weightedAverageIntensity = 0d;
                     double weighting = 0d;
@@ -292,7 +289,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                             int newRawApex = getAdjustedApex(subTrace.raw(subSample.getMapping()), from, to);
                             int off = subTrace.getRawStartId();
                             int off2 = subTrace.getProjectedStartId();
-                            setGenericAttributes(subTrace.projected(mergedSample.getMapping()), projectedSegment, newRawApex, feature, featuresParent[traceIndex].getCharge(), subSample);
+                            setGenericAttributes(subTrace.projected(mergedSample.getMapping()), projectedSegment, newRawApex, feature, featuresParent[traceIndex].getCharge(), subSample, mergedSample);
                             feature.setTraceRef(new RawTraceRef(
                                     dbIsotopeIds[isotopePeak].rawTraces[isotopeSampleIndex],
                                     off2,
@@ -355,15 +352,51 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
     }
 
 
-    private void setGenericAttributes(Trace trace, TraceSegment segment, int rawApex, AbstractFeature feature, int charge, ProcessedSample s) {
+    private void setGenericAttributes(Trace trace, TraceSegment segment, int rawApex, AbstractFeature feature, int charge, ProcessedSample rawSample, ProcessedSample projectedSample) {
         float apexIntensity = trace.intensity(segment.apex);
-        feature.setSnr(apexIntensity / (double)s.getStorage().getStatistics().noiseLevel(rawApex));
+        feature.setSnr(apexIntensity / (double)rawSample.getStorage().getStatistics().noiseLevel(rawApex));
         feature.setApexIntensity((double)apexIntensity);
         feature.setCharge((byte)charge);
         feature.setApexMass(trace.mz(segment.apex));
         feature.setAverageMass(trace.averagedMz());
         feature.setRetentionTime(new RetentionTime(trace.retentionTime(segment.leftEdge), trace.retentionTime(segment.rightEdge), trace.retentionTime(segment.apex)));
-        feature.setRunId(s.getRun().getRunId());
+        feature.setRunId(rawSample.getRun().getRunId());
+        feature.setFwhm(calcFwhm(segment, trace, projectedSample.getMapping()));
+    }
+
+    private double calcFwhm(TraceSegment segment, Trace trace, ScanPointMapping mapping) {
+        int apex = segment.apex;
+        double threshold = trace.intensity(apex)/2d;
+        int i = apex-1;
+        int leftEdge = -1;
+        while (trace.inRange(i)) {
+            if (trace.intensity(i) < trace.intensity(i+1)) {
+                if (leftEdge < 0 && trace.intensity(i)<= threshold) {
+                    leftEdge=i;
+                    if (i <= segment.leftEdge) break; // we are done
+                }
+            } else {
+                leftEdge = -1; // erase information
+            }
+            --i;
+        }
+        if (leftEdge<0) leftEdge = segment.leftEdge;
+        i = apex+1;
+        int rightEdge = -1;
+        while (trace.inRange(i)) {
+            if (trace.intensity(i) < trace.intensity(i-1)) {
+                if (rightEdge < 0 && trace.intensity(i)<= threshold) {
+                    rightEdge=i;
+                    if (i >= segment.rightEdge) break; // we are done
+                }
+            } else {
+                rightEdge = -1; // erase information
+            }
+            ++i;
+        }
+        if (rightEdge<0) rightEdge = segment.rightEdge;
+
+        return mapping.getRetentionTimeAt(rightEdge)-mapping.getRetentionTimeAt(leftEdge);
     }
 
     public MergeTraceId importMergedTraceWithoutIsotopes(SiriusDatabaseAdapter adapter, DbMapper dbMapper, MergedTrace mergedTrace) throws IOException {
@@ -420,6 +453,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                         Arrays.stream(sampleIds).mapToObj(x->ms2Pointers.get(x).rawscans().toIntArray()).toArray(int[][]::new),
                         Arrays.stream(sampleIds).mapToObj(x->ms2Pointers.get(x).projectedScans().toIntArray()).toArray(int[][]::new),
                         Arrays.stream(m.getHeaders()).mapToDouble(Ms2SpectrumHeader::getPrecursorMz).toArray(),
+                        m.getChimericPollutionRatio(),
                         new SimpleSpectrum(m)
                 );
             }

@@ -9,6 +9,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeMs2Settings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.MsExperimentParser;
+import de.unijena.bioinf.babelms.ParserTestUtils;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.junit.Test;
 
@@ -23,7 +24,7 @@ public class MsParserTest{
     @Test
     public void readFile() throws Exception {
         //values example file
-        File input = new File(this.getClass().getClassLoader().getResource("Adenosine.ms").getFile());
+        File input = ParserTestUtils.getTestFile("Adenosine.ms");
         Ms2Experiment experiment = new MsExperimentParser().getParser(input).parseFromFile(input).get(0);
 
         assertEquals("molecule name differs", experiment.getName(), "Adenosine");

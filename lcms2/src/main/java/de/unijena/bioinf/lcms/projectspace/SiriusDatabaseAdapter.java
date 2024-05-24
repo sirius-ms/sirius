@@ -9,6 +9,7 @@ import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
 
 import java.io.IOException;
+import java.util.stream.Stream;
 
 public interface SiriusDatabaseAdapter {
 
@@ -17,6 +18,7 @@ public interface SiriusDatabaseAdapter {
     void updateRun(LCMSRun run) throws IOException;
 
     void importMergedRun(MergedLCMSRun mergedRun) throws IOException;
+    void updateMergedRun(MergedLCMSRun mergedRun) throws IOException;
 
     void importScan(Scan scan) throws IOException;
 
@@ -27,4 +29,6 @@ public interface SiriusDatabaseAdapter {
     void importAlignedFeature(AlignedFeatures alignedFeatures) throws IOException;
 
     void importRetentionTimeAxis(RetentionTimeAxis axis, boolean update) throws IOException;
+
+    Stream<AlignedFeatures> getImportedFeatureStream(boolean includeMsdata) throws IOException;
 }

@@ -47,6 +47,8 @@ public class MergedMSnSpectrum {
 
     private double[] percursorMzs;
 
+    private Double chimericPollutionRatio;
+
     private SimpleSpectrum peaks;
 
     /**
@@ -65,6 +67,7 @@ public class MergedMSnSpectrum {
                 new int[0][],
                 new int[0][],
                 new double[0],
+                null,
                 new SimpleSpectrum(spec)
         );
     }

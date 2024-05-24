@@ -73,4 +73,8 @@ public class TraceRef {
         this.end = end;
     }
 
+    public int absoluteApexId() {
+        return apex + getScanIndexOffsetOfTrace();
+    }
+
 }

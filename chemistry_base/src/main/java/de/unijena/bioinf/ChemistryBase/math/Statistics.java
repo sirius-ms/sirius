@@ -47,6 +47,21 @@ public class Statistics {
         return mean;
     }
 
+    public static double robustAverage(float[] xs) {
+        if (xs.length < 4) return expectation(xs);
+        final float[] ys = xs.clone();
+        Arrays.sort(ys);
+        double mean = 0d;
+        int i=(int)(ys.length*0.25), n=(int)(ys.length*0.75);
+        double sz = n-i;
+        for (; i < n; ++i) {
+            mean += ys[i];
+        }
+        mean /= sz;
+        return mean;
+    }
+
+
     public static double median(double[] xs) {
         return medianInPlace(xs.clone());
     }
@@ -126,6 +141,14 @@ public class Statistics {
      * Computes mean of xs
      */
     public static double expectation(double[] xs) {
+        double sum = 0d;
+        for (int i = 0; i < xs.length; ++i) {
+            sum += xs[i];
+        }
+        sum /= xs.length;
+        return sum;
+    }
+    public static double expectation(float[] xs) {
         double sum = 0d;
         for (int i = 0; i < xs.length; ++i) {
             sum += xs[i];
