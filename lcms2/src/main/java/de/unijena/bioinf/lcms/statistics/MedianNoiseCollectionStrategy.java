@@ -52,8 +52,11 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
                 // ignore spectra that are almost empty
                 return;
             }
-            int perc = Math.min(xs.length-10, Math.max(60, (int)(0.8*xs.length)));
+            int perc = Math.min(xs.length-10, (int)(0.75*xs.length));
             double noiseLevel = Quickselect.quickselectInplace(xs, 0, xs.length, perc);
+            double minimumIntensity = Arrays.stream(xs).min().orElse(noiseLevel);
+            // I have the feeling the noise level is a bit too high, so I incorporate the minimum noise to it.
+            noiseLevel = (2*noiseLevel+minimumIntensity)/3d;
             ms2Noise.add((float)noiseLevel);
         }
 

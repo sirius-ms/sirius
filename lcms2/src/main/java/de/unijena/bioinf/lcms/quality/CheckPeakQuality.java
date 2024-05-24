@@ -59,13 +59,13 @@ public class CheckPeakQuality implements FeatureQualityChecker{
         {
             if (squareness >= medianSquareness) {
                 peakQuality.getItems().add(new QualityReport.Item(
-                        String.format(Locale.US, "peak has proper Gaussian shape.", feature.getFwhm()), DataQuality.GOOD, QualityReport.Weight.MAJOR
+                        String.format(Locale.US, "peak has proper shape.", feature.getFwhm()), DataQuality.GOOD, QualityReport.Weight.MAJOR
                 ));
-            } else if (squareness >= medianSquareness*0.5) {
+            } else if (feature.getFwhm() >= medianPeakWidth && squareness >= medianSquareness*0.5) {
                 peakQuality.getItems().add(new QualityReport.Item(
                         String.format(Locale.US, "peak is too wide with fwhm is %.1f seconds", feature.getFwhm()), DataQuality.DECENT, QualityReport.Weight.MAJOR
                 ));
-            } else {
+            } else if (feature.getFwhm() >= medianPeakWidth) {
                 peakQuality.getItems().add(new QualityReport.Item(
                         String.format(Locale.US, "peak is too wide with fwhm is %.1f seconds", feature.getFwhm()), DataQuality.BAD, QualityReport.Weight.MAJOR
                 ));
