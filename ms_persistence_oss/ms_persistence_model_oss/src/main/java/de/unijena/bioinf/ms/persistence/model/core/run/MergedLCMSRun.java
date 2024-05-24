@@ -36,11 +36,13 @@ import java.util.Optional;
 public class MergedLCMSRun extends AbstractLCMSRun {
 
     @ToString.Exclude
-    private SampleStats sampleStats;
+    private SampleStatistics sampleStats;
 
     @JsonIgnore
     @ToString.Exclude
     private List<LCMSRun> runs;
+
+    private long[] runIds;
 
     public Optional<List<LCMSRun>> getRuns() {
         return Optional.ofNullable(runs);

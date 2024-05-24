@@ -1,12 +1,13 @@
 package de.unijena.bioinf.lcms.statistics;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Quickselect;
+import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
+import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.spectrum.Ms1SpectrumHeader;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
-import de.unijena.bioinf.ms.persistence.model.core.run.SampleStats;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import org.slf4j.LoggerFactory;
 
@@ -47,14 +48,18 @@ public class MedianNoiseCollectionStrategy implements StatisticsCollectionStrate
                 noise.add((float)noise.doubleStream().average().orElse(0d));
                 return;
             }
-            int perc = Math.min(xs.length-1, Math.max(60, (int)(0.8*xs.length)));
+            if (xs.length <= 10) {
+                // ignore spectra that are almost empty
+                return;
+            }
+            int perc = Math.min(xs.length-10, Math.max(60, (int)(0.8*xs.length)));
             double noiseLevel = Quickselect.quickselectInplace(xs, 0, xs.length, perc);
             ms2Noise.add((float)noiseLevel);
         }
 
         @Override
         public SampleStats done() {
-            final float ms2NoiseAvg = (float)ms2Noise.doubleStream().average().orElse(0d);
+            final float ms2NoiseAvg = (float)Statistics.robustAverage(ms2Noise.toFloatArray());
             final float[] ms1Noises = noise.toFloatArray();
             if (ms1Noises.length <= 20) {
                 Arrays.sort(ms1Noises);
