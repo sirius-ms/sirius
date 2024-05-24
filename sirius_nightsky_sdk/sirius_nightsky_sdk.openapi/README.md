@@ -120,6 +120,9 @@ Class | Method | HTTP request | Description
 *CompoundsApi* | [**getCompounds**](docs/CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | List of all available compounds (group of ion identities) in the given project-space.
 *CompoundsApi* | [**getCompoundsPaged**](docs/CompoundsApi.md#getCompoundsPaged) | **GET** /api/projects/{projectId}/compounds/page | Page of available compounds (group of ion identities) in the given project-space.
 *CompoundsApi* | [**getTraces**](docs/CompoundsApi.md#getTraces) | **GET** /api/projects/{projectId}/compounds/{compoundId}/traces | 
+*ExperimentalDataQualityApi* | [**getAlignedFeaturesQuality**](docs/ExperimentalDataQualityApi.md#getAlignedFeaturesQuality) | **GET** /api/projects/{projectId}/aligned-features-quality | List of data quality information for features (aligned over runs) in the given project-space.
+*ExperimentalDataQualityApi* | [**getAlignedFeaturesQuality1**](docs/ExperimentalDataQualityApi.md#getAlignedFeaturesQuality1) | **GET** /api/projects/{projectId}/aligned-features-quality/{alignedFeatureId} | Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
+*ExperimentalDataQualityApi* | [**getAlignedFeaturesQualityPaged**](docs/ExperimentalDataQualityApi.md#getAlignedFeaturesQualityPaged) | **GET** /api/projects/{projectId}/aligned-features-quality/page | Page of data quality information for features (aligned over runs) in the given project-space.
 *FeaturesApi* | [**addAlignedFeatures**](docs/FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | Import (aligned) features into the project.
 *FeaturesApi* | [**deleteAlignedFeature**](docs/FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**deleteAlignedFeatures**](docs/FeaturesApi.md#deleteAlignedFeatures) | **PUT** /api/projects/{projectId}/aligned-features/delete | Delete feature (aligned over runs) with the given identifier from the specified project-space.
@@ -213,6 +216,7 @@ Class | Method | HTTP request | Description
  - [AccountInfo](docs/AccountInfo.md)
  - [AlignedFeature](docs/AlignedFeature.md)
  - [AlignedFeatureOptField](docs/AlignedFeatureOptField.md)
+ - [AlignedFeatureQuality](docs/AlignedFeatureQuality.md)
  - [AnnotatedMsMsData](docs/AnnotatedMsMsData.md)
  - [AnnotatedPeak](docs/AnnotatedPeak.md)
  - [AnnotatedSpectrum](docs/AnnotatedSpectrum.md)
@@ -223,6 +227,7 @@ Class | Method | HTTP request | Description
  - [BinaryFingerprint](docs/BinaryFingerprint.md)
  - [Canopus](docs/Canopus.md)
  - [CanopusPrediction](docs/CanopusPrediction.md)
+ - [Category](docs/Category.md)
  - [CommandSubmission](docs/CommandSubmission.md)
  - [Compound](docs/Compound.md)
  - [CompoundClass](docs/CompoundClass.md)
@@ -250,6 +255,7 @@ Class | Method | HTTP request | Description
  - [Info](docs/Info.md)
  - [Instrument](docs/Instrument.md)
  - [IsotopePatternAnnotation](docs/IsotopePatternAnnotation.md)
+ - [Item](docs/Item.md)
  - [Job](docs/Job.md)
  - [JobOptField](docs/JobOptField.md)
  - [JobProgress](docs/JobProgress.md)
@@ -261,6 +267,7 @@ Class | Method | HTTP request | Description
  - [MsData](docs/MsData.md)
  - [MsNovelist](docs/MsNovelist.md)
  - [PageAlignedFeature](docs/PageAlignedFeature.md)
+ - [PageAlignedFeatureQuality](docs/PageAlignedFeatureQuality.md)
  - [PageCompound](docs/PageCompound.md)
  - [PageFormulaCandidate](docs/PageFormulaCandidate.md)
  - [PageJob](docs/PageJob.md)

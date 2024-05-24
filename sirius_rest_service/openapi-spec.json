@@ -13,6 +13,10 @@
   ],
   "tags": [
     {
+      "name": "[Experimental] Data Quality",
+      "description": "Access data quality information for various entities of a specified project-space."
+    },
+    {
       "name": "Info",
       "description": "Status und Information"
     },
@@ -4409,6 +4413,151 @@
         }
       }
     },
+    "/api/projects/{projectId}/aligned-features-quality": {
+      "get": {
+        "tags": [
+          "[Experimental] Data Quality"
+        ],
+        "summary": "List of data quality information for features (aligned over runs) in the given project-space.",
+        "description": "List of data quality information for features (aligned over runs) in the given project-space.",
+        "operationId": "getAlignedFeaturesQuality",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlignedFeatureQuality quality information of the respective feature.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlignedFeatureQuality"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features-quality/{alignedFeatureId}": {
+      "get": {
+        "tags": [
+          "[Experimental] Data Quality"
+        ],
+        "summary": "Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.",
+        "description": "Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.",
+        "operationId": "getAlignedFeaturesQuality_1",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignedFeatureId",
+            "in": "path",
+            "description": "identifier of feature (aligned over runs) to access.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlignedFeatureQuality quality information of the respective feature.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlignedFeatureQuality"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/aligned-features-quality/page": {
+      "get": {
+        "tags": [
+          "[Experimental] Data Quality"
+        ],
+        "summary": "Page of data quality information for features (aligned over runs) in the given project-space.",
+        "description": "Page of data quality information for features (aligned over runs) in the given project-space.",
+        "operationId": "getAlignedFeaturesQualityPaged",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "AlignedFeatureQuality quality information of the respective feature.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageAlignedFeatureQuality"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/job-configs": {
       "get": {
         "tags": [
@@ -5862,6 +6011,18 @@
             "format": "double",
             "nullable": true
           },
+          "quality": {
+            "type": "string",
+            "description": "Quality of this feature.",
+            "enum": [
+              "LOWEST",
+              "LOWEST_WITH_DEPENDENCIES",
+              "NOT_APPLICABLE",
+              "BAD",
+              "DECENT",
+              "GOOD"
+            ]
+          },
           "msData": {
             "$ref": "#/components/schemas/MsData"
           },
@@ -6874,25 +7035,15 @@
             "type": "integer",
             "format": "int64"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Job"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
+          "last": {
+            "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "last": {
-            "type": "boolean"
+          "number": {
+            "type": "integer",
+            "format": "int32"
           },
           "first": {
             "type": "boolean"
@@ -6904,6 +7055,16 @@
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
           },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Job"
+            }
+          },
           "empty": {
             "type": "boolean"
           }
@@ -6912,10 +7073,6 @@
       "PageableObject": {
         "type": "object",
         "properties": {
-          "offset": {
-            "type": "integer",
-            "format": "int64"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
@@ -6932,19 +7089,23 @@
           },
           "unpaged": {
             "type": "boolean"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
       "SortObject": {
         "type": "object",
         "properties": {
-          "empty": {
-            "type": "boolean"
-          },
           "sorted": {
             "type": "boolean"
           },
           "unsorted": {
+            "type": "boolean"
+          },
+          "empty": {
             "type": "boolean"
           }
         }
@@ -7087,25 +7248,15 @@
             "type": "integer",
             "format": "int64"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Compound"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
+          "last": {
+            "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "last": {
-            "type": "boolean"
+          "number": {
+            "type": "integer",
+            "format": "int32"
           },
           "first": {
             "type": "boolean"
@@ -7116,6 +7267,16 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Compound"
+            }
           },
           "empty": {
             "type": "boolean"
@@ -7141,25 +7302,15 @@
             "type": "integer",
             "format": "int64"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SpectralLibraryMatch"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
+          "last": {
+            "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "last": {
-            "type": "boolean"
+          "number": {
+            "type": "integer",
+            "format": "int32"
           },
           "first": {
             "type": "boolean"
@@ -7170,6 +7321,16 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpectralLibraryMatch"
+            }
           },
           "empty": {
             "type": "boolean"
@@ -7297,25 +7458,15 @@
             "type": "integer",
             "format": "int64"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StructureCandidateScored"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
+          "last": {
+            "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "last": {
-            "type": "boolean"
+          "number": {
+            "type": "integer",
+            "format": "int32"
           },
           "first": {
             "type": "boolean"
@@ -7326,6 +7477,16 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StructureCandidateScored"
+            }
           },
           "empty": {
             "type": "boolean"
@@ -7343,25 +7504,15 @@
             "type": "integer",
             "format": "int64"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FormulaCandidate"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
+          "last": {
+            "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "last": {
-            "type": "boolean"
+          "number": {
+            "type": "integer",
+            "format": "int32"
           },
           "first": {
             "type": "boolean"
@@ -7372,6 +7523,16 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormulaCandidate"
+            }
           },
           "empty": {
             "type": "boolean"
@@ -7462,25 +7623,15 @@
             "type": "integer",
             "format": "int64"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StructureCandidateFormula"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
+          "last": {
+            "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "last": {
-            "type": "boolean"
+          "number": {
+            "type": "integer",
+            "format": "int32"
           },
           "first": {
             "type": "boolean"
@@ -7491,6 +7642,16 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StructureCandidateFormula"
+            }
           },
           "empty": {
             "type": "boolean"
@@ -7508,25 +7669,15 @@
             "type": "integer",
             "format": "int64"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AlignedFeature"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
+          "last": {
+            "type": "boolean"
           },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
-          "last": {
-            "type": "boolean"
+          "number": {
+            "type": "integer",
+            "format": "int32"
           },
           "first": {
             "type": "boolean"
@@ -7537,6 +7688,147 @@
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlignedFeature"
+            }
+          },
+          "empty": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AlignedFeatureQuality": {
+        "required": [
+          "alignedFeatureId",
+          "categories",
+          "overallQuality"
+        ],
+        "type": "object",
+        "properties": {
+          "alignedFeatureId": {
+            "type": "string",
+            "description": "Id of the feature (aligned over runs) this quality information belongs to."
+          },
+          "overallQuality": {
+            "type": "string",
+            "description": "Overall Quality",
+            "enum": [
+              "LOWEST",
+              "LOWEST_WITH_DEPENDENCIES",
+              "NOT_APPLICABLE",
+              "BAD",
+              "DECENT",
+              "GOOD"
+            ]
+          },
+          "categories": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Category"
+            },
+            "description": "Contains all pre-computation quality information that belong to\n this feature (aligned over runs), such as information about the quality of the peak shape, MS2 spectrum etc.,"
+          }
+        }
+      },
+      "Category": {
+        "type": "object",
+        "properties": {
+          "categoryName": {
+            "type": "string"
+          },
+          "overallQuality": {
+            "type": "string",
+            "enum": [
+              "LOWEST",
+              "LOWEST_WITH_DEPENDENCIES",
+              "NOT_APPLICABLE",
+              "BAD",
+              "DECENT",
+              "GOOD"
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Item"
+            }
+          }
+        }
+      },
+      "Item": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "quality": {
+            "type": "string",
+            "enum": [
+              "LOWEST",
+              "LOWEST_WITH_DEPENDENCIES",
+              "NOT_APPLICABLE",
+              "BAD",
+              "DECENT",
+              "GOOD"
+            ]
+          },
+          "weight": {
+            "type": "string",
+            "enum": [
+              "MINOR",
+              "MAJOR",
+              "CRITICAL"
+            ]
+          }
+        }
+      },
+      "PageAlignedFeatureQuality": {
+        "type": "object",
+        "properties": {
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlignedFeatureQuality"
+            }
           },
           "empty": {
             "type": "boolean"

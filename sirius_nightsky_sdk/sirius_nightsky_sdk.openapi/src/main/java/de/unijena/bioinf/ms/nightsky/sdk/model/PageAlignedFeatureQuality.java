@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidate;
+import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeatureQuality;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageableObject;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SortObject;
 import java.util.ArrayList;
@@ -30,23 +30,23 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * PageFormulaCandidate
+ * PageAlignedFeatureQuality
  */
 @JsonPropertyOrder({
-  PageFormulaCandidate.JSON_PROPERTY_TOTAL_PAGES,
-  PageFormulaCandidate.JSON_PROPERTY_TOTAL_ELEMENTS,
-  PageFormulaCandidate.JSON_PROPERTY_LAST,
-  PageFormulaCandidate.JSON_PROPERTY_SORT,
-  PageFormulaCandidate.JSON_PROPERTY_NUMBER,
-  PageFormulaCandidate.JSON_PROPERTY_FIRST,
-  PageFormulaCandidate.JSON_PROPERTY_NUMBER_OF_ELEMENTS,
-  PageFormulaCandidate.JSON_PROPERTY_PAGEABLE,
-  PageFormulaCandidate.JSON_PROPERTY_SIZE,
-  PageFormulaCandidate.JSON_PROPERTY_CONTENT,
-  PageFormulaCandidate.JSON_PROPERTY_EMPTY
+  PageAlignedFeatureQuality.JSON_PROPERTY_TOTAL_PAGES,
+  PageAlignedFeatureQuality.JSON_PROPERTY_TOTAL_ELEMENTS,
+  PageAlignedFeatureQuality.JSON_PROPERTY_LAST,
+  PageAlignedFeatureQuality.JSON_PROPERTY_SORT,
+  PageAlignedFeatureQuality.JSON_PROPERTY_NUMBER,
+  PageAlignedFeatureQuality.JSON_PROPERTY_FIRST,
+  PageAlignedFeatureQuality.JSON_PROPERTY_NUMBER_OF_ELEMENTS,
+  PageAlignedFeatureQuality.JSON_PROPERTY_PAGEABLE,
+  PageAlignedFeatureQuality.JSON_PROPERTY_SIZE,
+  PageAlignedFeatureQuality.JSON_PROPERTY_CONTENT,
+  PageAlignedFeatureQuality.JSON_PROPERTY_EMPTY
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
-public class PageFormulaCandidate {
+public class PageAlignedFeatureQuality {
   public static final String JSON_PROPERTY_TOTAL_PAGES = "totalPages";
   private Integer totalPages;
 
@@ -75,15 +75,15 @@ public class PageFormulaCandidate {
   private Integer size;
 
   public static final String JSON_PROPERTY_CONTENT = "content";
-  private List<FormulaCandidate> content;
+  private List<AlignedFeatureQuality> content;
 
   public static final String JSON_PROPERTY_EMPTY = "empty";
   private Boolean empty;
 
-  public PageFormulaCandidate() {
+  public PageAlignedFeatureQuality() {
   }
 
-  public PageFormulaCandidate totalPages(Integer totalPages) {
+  public PageAlignedFeatureQuality totalPages(Integer totalPages) {
     
     this.totalPages = totalPages;
     return this;
@@ -109,7 +109,7 @@ public class PageFormulaCandidate {
   }
 
 
-  public PageFormulaCandidate totalElements(Long totalElements) {
+  public PageAlignedFeatureQuality totalElements(Long totalElements) {
     
     this.totalElements = totalElements;
     return this;
@@ -135,7 +135,7 @@ public class PageFormulaCandidate {
   }
 
 
-  public PageFormulaCandidate last(Boolean last) {
+  public PageAlignedFeatureQuality last(Boolean last) {
     
     this.last = last;
     return this;
@@ -161,7 +161,7 @@ public class PageFormulaCandidate {
   }
 
 
-  public PageFormulaCandidate sort(SortObject sort) {
+  public PageAlignedFeatureQuality sort(SortObject sort) {
     
     this.sort = sort;
     return this;
@@ -187,7 +187,7 @@ public class PageFormulaCandidate {
   }
 
 
-  public PageFormulaCandidate number(Integer number) {
+  public PageAlignedFeatureQuality number(Integer number) {
     
     this.number = number;
     return this;
@@ -213,7 +213,7 @@ public class PageFormulaCandidate {
   }
 
 
-  public PageFormulaCandidate first(Boolean first) {
+  public PageAlignedFeatureQuality first(Boolean first) {
     
     this.first = first;
     return this;
@@ -239,7 +239,7 @@ public class PageFormulaCandidate {
   }
 
 
-  public PageFormulaCandidate numberOfElements(Integer numberOfElements) {
+  public PageAlignedFeatureQuality numberOfElements(Integer numberOfElements) {
     
     this.numberOfElements = numberOfElements;
     return this;
@@ -265,7 +265,7 @@ public class PageFormulaCandidate {
   }
 
 
-  public PageFormulaCandidate pageable(PageableObject pageable) {
+  public PageAlignedFeatureQuality pageable(PageableObject pageable) {
     
     this.pageable = pageable;
     return this;
@@ -291,7 +291,7 @@ public class PageFormulaCandidate {
   }
 
 
-  public PageFormulaCandidate size(Integer size) {
+  public PageAlignedFeatureQuality size(Integer size) {
     
     this.size = size;
     return this;
@@ -317,13 +317,13 @@ public class PageFormulaCandidate {
   }
 
 
-  public PageFormulaCandidate content(List<FormulaCandidate> content) {
+  public PageAlignedFeatureQuality content(List<AlignedFeatureQuality> content) {
     
     this.content = content;
     return this;
   }
 
-  public PageFormulaCandidate addContentItem(FormulaCandidate contentItem) {
+  public PageAlignedFeatureQuality addContentItem(AlignedFeatureQuality contentItem) {
     if (this.content == null) {
       this.content = new ArrayList<>();
     }
@@ -339,19 +339,19 @@ public class PageFormulaCandidate {
   @JsonProperty(JSON_PROPERTY_CONTENT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public List<FormulaCandidate> getContent() {
+  public List<AlignedFeatureQuality> getContent() {
     return content;
   }
 
 
   @JsonProperty(JSON_PROPERTY_CONTENT)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setContent(List<FormulaCandidate> content) {
+  public void setContent(List<AlignedFeatureQuality> content) {
     this.content = content;
   }
 
 
-  public PageFormulaCandidate empty(Boolean empty) {
+  public PageAlignedFeatureQuality empty(Boolean empty) {
     
     this.empty = empty;
     return this;
@@ -384,18 +384,18 @@ public class PageFormulaCandidate {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    PageFormulaCandidate pageFormulaCandidate = (PageFormulaCandidate) o;
-    return Objects.equals(this.totalPages, pageFormulaCandidate.totalPages) &&
-        Objects.equals(this.totalElements, pageFormulaCandidate.totalElements) &&
-        Objects.equals(this.last, pageFormulaCandidate.last) &&
-        Objects.equals(this.sort, pageFormulaCandidate.sort) &&
-        Objects.equals(this.number, pageFormulaCandidate.number) &&
-        Objects.equals(this.first, pageFormulaCandidate.first) &&
-        Objects.equals(this.numberOfElements, pageFormulaCandidate.numberOfElements) &&
-        Objects.equals(this.pageable, pageFormulaCandidate.pageable) &&
-        Objects.equals(this.size, pageFormulaCandidate.size) &&
-        Objects.equals(this.content, pageFormulaCandidate.content) &&
-        Objects.equals(this.empty, pageFormulaCandidate.empty);
+    PageAlignedFeatureQuality pageAlignedFeatureQuality = (PageAlignedFeatureQuality) o;
+    return Objects.equals(this.totalPages, pageAlignedFeatureQuality.totalPages) &&
+        Objects.equals(this.totalElements, pageAlignedFeatureQuality.totalElements) &&
+        Objects.equals(this.last, pageAlignedFeatureQuality.last) &&
+        Objects.equals(this.sort, pageAlignedFeatureQuality.sort) &&
+        Objects.equals(this.number, pageAlignedFeatureQuality.number) &&
+        Objects.equals(this.first, pageAlignedFeatureQuality.first) &&
+        Objects.equals(this.numberOfElements, pageAlignedFeatureQuality.numberOfElements) &&
+        Objects.equals(this.pageable, pageAlignedFeatureQuality.pageable) &&
+        Objects.equals(this.size, pageAlignedFeatureQuality.size) &&
+        Objects.equals(this.content, pageAlignedFeatureQuality.content) &&
+        Objects.equals(this.empty, pageAlignedFeatureQuality.empty);
   }
 
   @Override
@@ -406,7 +406,7 @@ public class PageFormulaCandidate {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class PageFormulaCandidate {\n");
+    sb.append("class PageAlignedFeatureQuality {\n");
     sb.append("    totalPages: ").append(toIndentedString(totalPages)).append("\n");
     sb.append("    totalElements: ").append(toIndentedString(totalElements)).append("\n");
     sb.append("    last: ").append(toIndentedString(last)).append("\n");
