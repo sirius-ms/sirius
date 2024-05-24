@@ -336,25 +336,24 @@ public class WebWithCustomDatabase {
     }
 
 
-    public static List<FingerprintCandidate> mergeCompounds(Collection<FingerprintCandidate> compounds) {
-        return mergeCompounds(compounds, false);
+    private static List<FingerprintCandidate> mergeCompounds(Collection<FingerprintCandidate> compounds, Set<String> customNames) {
+        return mergeCompounds(compounds, customNames, false);
     }
-
 
     /**
      * merge compounds with same InChIKey
      */
-    public static List<FingerprintCandidate> mergeCompounds(Collection<FingerprintCandidate> compounds, boolean onlyContained) {
+    private static List<FingerprintCandidate> mergeCompounds(Collection<FingerprintCandidate> compounds, Set<String> customNames, boolean onlyContained) {
         HashMap<String, FingerprintCandidate> it = new HashMap<>();
-        mergeCompounds(compounds, it, onlyContained);
+        mergeCompounds(compounds, it, customNames,  onlyContained,false);
         return new ArrayList<>(it.values());
     }
 
-    public static Set<FingerprintCandidate> mergeCompounds(Collection<FingerprintCandidate> compounds, final HashMap<String, FingerprintCandidate> mergeMap) {
-        return mergeCompounds(compounds, mergeMap, false);
+    private static Set<FingerprintCandidate> mergeCompounds(Collection<FingerprintCandidate> compounds, final HashMap<String, FingerprintCandidate> mergeMap, Set<String> customNames) {
+        return mergeCompounds(compounds, mergeMap, customNames, false,false);
     }
 
-    public static Set<FingerprintCandidate> mergeCompounds(Collection<FingerprintCandidate> compounds, final HashMap<String, FingerprintCandidate> mergeMap, boolean onlyContained) {
+    private static Set<FingerprintCandidate> mergeCompounds(Collection<FingerprintCandidate> compounds, final HashMap<String, FingerprintCandidate> mergeMap, Set<String> customNames, boolean onlyContained, boolean fromCustomDB) {
         final Set<FingerprintCandidate> mergedCandidates = new HashSet<>(compounds.size());
         for (FingerprintCandidate c : compounds) {
             final String key = c.getInchiKey2D();
@@ -366,7 +365,25 @@ public class WebWithCustomDatabase {
                 x.setQLayer(x.getQLayer() | c.getQLayer());
                 x.mergeDBLinks(c.links);
                 x.mergeBits(c.bitset);
-                x.mergeCompoundName(c.getName());
+                if (customNames.contains(key)){
+                    if (fromCustomDB)
+                        //search the shortest name among custom names
+                        x.mergeCompoundName(c.getName());
+                    else if (c.getName()!=null && !c.getName().isBlank())
+                        //replace remote name with custom name
+                        x.setName(c.getName());
+                }else {
+                    if (fromCustomDB){
+                        //replace remote name with custom name
+                        if (c.getName()!=null && !c.getName().isBlank()){
+                            x.setName(c.getName());
+                            customNames.add(key);
+                        }
+                    }else {
+                        //search the shortest name among remote names
+                        x.mergeCompoundName(c.getName());
+                    }
+                }
             } else {
                 if (onlyContained)
                     continue;
@@ -379,6 +396,8 @@ public class WebWithCustomDatabase {
 
     public static class CandidateResult {
         final HashMap<String, FingerprintCandidate> cs = new HashMap<>();
+        final Set<String> customNames = new HashSet<>();
+
         final HashMap<String, Set<FingerprintCandidate>> customInChIs = new HashMap<>();
         final Set<FingerprintCandidate> restDbInChIs;
         private long requestFilter;
@@ -405,13 +424,13 @@ public class WebWithCustomDatabase {
         private CandidateResult(List<FingerprintCandidate> compounds, long appliedFilter, long requestFilter) {
             restFilter = appliedFilter;
             this.requestFilter = requestFilter;
-            restDbInChIs = mergeCompounds(compounds, cs);
+            restDbInChIs = mergeCompounds(compounds, cs, customNames);
         }
 
         private void addRequestedCustom(String name, List<FingerprintCandidate> compounds) {
             if (customInChIs.containsKey(name))
                 throw new IllegalArgumentException("Custom db already exists: '" + name + "'");
-            customInChIs.put(name, mergeCompounds(compounds, cs, false));
+            customInChIs.put(name, mergeCompounds(compounds, cs, customNames, false,true));
         }
 
         private void addAdditionalCustom(String name, List<FingerprintCandidate> compounds) {
@@ -419,7 +438,7 @@ public class WebWithCustomDatabase {
                 throw new IllegalArgumentException("Custom db already exists: '" + name + "'");
             HashMap<String, FingerprintCandidate> candidates = new HashMap<>(cs);
             candidates.keySet().retainAll(getReqCandidatesInChIs());
-            customInChIs.put(name, mergeCompounds(compounds, candidates, true));
+            customInChIs.put(name, mergeCompounds(compounds, candidates, customNames, true,false));
         }
 
         public Set<String> getCombCandidatesInChIs() {
@@ -498,8 +517,8 @@ public class WebWithCustomDatabase {
             if (other.requestFilter != requestFilter || other.restFilter != restFilter)
                 throw new IllegalArgumentException("Instances with different filters cannot be merged!");
 
-            restDbInChIs.addAll(mergeCompounds(other.restDbInChIs, cs));
-            other.customInChIs.forEach((k, v) -> customInChIs.get(k).addAll(mergeCompounds(v, cs)));
+            restDbInChIs.addAll(mergeCompounds(other.restDbInChIs, cs, customNames));
+            other.customInChIs.forEach((k, v) -> customInChIs.get(k).addAll(mergeCompounds(v, cs, customNames)));
         }
     }
 }

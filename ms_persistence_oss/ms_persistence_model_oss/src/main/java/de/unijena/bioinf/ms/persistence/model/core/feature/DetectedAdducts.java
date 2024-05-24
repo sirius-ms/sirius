@@ -54,7 +54,7 @@ public class DetectedAdducts {
     }
 
     public DetectedAdducts add(PrecursorIonType key, DetectedAdduct... adducts) {
-        return add(Arrays.asList(adducts));
+        return add(key, Arrays.asList(adducts));
     }
 
     public DetectedAdducts add(PrecursorIonType key, Collection<DetectedAdduct> adducts) {
