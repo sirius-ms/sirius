@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.middleware.model.features;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ms.middleware.model.annotations.FeatureAnnotations;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -61,6 +62,11 @@ public class AlignedFeature {
     protected Double rtStartSeconds;
     @Schema(nullable = true)
     protected Double rtEndSeconds;
+
+    /**
+     * Quality of this feature.
+     */
+    protected DataQuality quality;
 
     /**
      * Mass Spec data of this feature (input data)

@@ -161,7 +161,7 @@ public abstract class Icons {
 
     public static final Icon DRAG_N_DROP_256 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-dragndrop@4x.png"));
 
-    public static final Icon SIRIUS_SPLASH = new ImageIcon(AboutDialog.class.getResource("/icons/sirius.jpg"));
+    public static final Icon SIRIUS_SPLASH = new ImageIcon(AboutDialog.class.getResource("/icons/sirius.png"));
     public static final Icon SIRIUS_APP_ICON = new ImageIcon(Icons.class.getResource("/icons/sirius_icon.png"));
     public static final Image SIRIUS_APP_IMAGE = Toolkit.getDefaultToolkit().createImage(Icons.class.getResource("/icons/sirius_icon.png"));
     public static BufferedImage DRAG_N_DROP_IMAGE_160() {

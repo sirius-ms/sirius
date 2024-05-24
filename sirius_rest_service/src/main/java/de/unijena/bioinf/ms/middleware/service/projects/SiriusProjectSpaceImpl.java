@@ -188,21 +188,13 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable, @NotNull EnumSet<AlignedFeatureQuality.OptField> optFields) {
-        LoggerFactory.getLogger(AlignedFeatureController.class).info("Started collecting aligned features quality...");
-        final List<AlignedFeatureQuality> alignedFeatureQualities = projectSpaceManager.getProjectSpaceImpl().stream()
-                .skip(pageable.getOffset()).limit(pageable.getPageSize())
-                .map(ccid -> asAlignedFeatureQuality(ccid, optFields))
-                .toList();
-        LoggerFactory.getLogger(AlignedFeatureController.class).info("Finished parsing aligned features quality...");
-
-        return new PageImpl<>(alignedFeatureQualities, pageable, projectSpaceManager.size());
+    public Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
-    public AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId, @NotNull EnumSet<AlignedFeatureQuality.OptField> optFields) {
-        final CompoundContainerId ccid = parseCID(alignedFeatureId);
-        return asAlignedFeatureQuality(ccid, optFields);
+    public AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId) {
+       throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
@@ -476,18 +468,6 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
         return alignedFeature;
     }
 
-    private AlignedFeatureQuality asAlignedFeatureQuality(CompoundContainerId cid, EnumSet<AlignedFeatureQuality.OptField> optFields) {
-        final AlignedFeatureQuality.AlignedFeatureQualityBuilder builder = AlignedFeatureQuality.builder()
-                .alignedFeatureId(cid.getDirectoryName());
-        if (!optFields.isEmpty()) {
-            SiriusProjectSpaceInstance instance = projectSpaceManager.getInstanceFromCompound(cid);
-            if (optFields.contains(AlignedFeatureQuality.OptField.lcmsFeatureQuality))
-                builder.lcmsFeatureQuality(asCompoundLCMSFeatureQuality(instance));
-            if (optFields.contains(AlignedFeatureQuality.OptField.qualityFlags))
-                builder.qualityFlags(asCompoundQualityData(instance));
-        }
-        return builder.build();
-    }
 
     private static final DecimalFormat NUMBER_FORMAT = new DecimalFormat("#0.000");
 

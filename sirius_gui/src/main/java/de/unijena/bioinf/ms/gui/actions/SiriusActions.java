@@ -70,6 +70,8 @@ public enum SiriusActions {
     SHOW_DB(ShowDBDialogAction.class),
     SHOW_LOG(OpenLogAction.class),
 
+    REGISTER_EXPLORER(ExplorerLicRegisterAction.class),
+
     SHOW_ACCOUNT(ShowAccountDialog.class),
     SIGN_OUT(SignOutAction.class),
     SIGN_IN(SignInAction.class),

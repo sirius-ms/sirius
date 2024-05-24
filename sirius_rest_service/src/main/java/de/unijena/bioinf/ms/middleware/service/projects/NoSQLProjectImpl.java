@@ -40,6 +40,7 @@ import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
+import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
@@ -83,6 +84,8 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 
 public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
@@ -536,6 +539,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .alignedFeatureId(fid)
                 .name(features.getName())
                 .ionMass(features.getAverageMass())
+                .quality(features.getDataQuality())
                 .computing(computeStateProvider.apply(this, fid))
                 .charge(features.getCharge())
                 .detectedAdducts(features.getDetectedAdducts().getAllAdducts().stream().map(PrecursorIonType::toString)
@@ -739,7 +743,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     return convertCompound(c, optFields, optFeatureFields);
                 })
                 // TODO annotations
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no compound '" + compoundId + "' in project " + projectId + "."));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no compound '" + compoundId + "' in project " + projectId + "."));
     }
 
     @SneakyThrows
@@ -748,16 +752,38 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         project().cascadeDeleteCompound(Long.parseLong(compoundId));
     }
 
+
+    @SneakyThrows
     @Override
-    public Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable, @NotNull EnumSet<AlignedFeatureQuality.OptField> optFields) {
-        // TODO POST 6.0?
-        return null;
+    public AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId) {
+        return storage().getByPrimaryKey(alignedFeatureId, QualityReport.class).map(this::convertToFeatureQuality)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Not Quality information found for feature '" + alignedFeatureId + "' in project " + projectId + "."));
     }
 
+    @SneakyThrows
     @Override
-    public AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId, @NotNull EnumSet<AlignedFeatureQuality.OptField> optFields) {
-        // TODO POST 6.0?
-        return null;
+    public Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable) {
+        Stream<QualityReport> stream;
+        if (pageable.isUnpaged() && pageable.getSort().isUnsorted()) {
+            stream = storage().findAllStr(QualityReport.class);
+        } else {
+            Pair<String, Database.SortOrder> sort = sortFeature(pageable.getSort());
+            stream = storage().findAllStr(QualityReport.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
+        }
+
+        List<AlignedFeatureQuality> features = stream.map(this::convertToFeatureQuality).toList();
+
+        long total = storage().countAll(QualityReport.class);
+
+        return new PageImpl<>(features, pageable, total);
+    }
+
+    private AlignedFeatureQuality convertToFeatureQuality(QualityReport report){
+        return AlignedFeatureQuality.builder()
+                .alignedFeatureId(String.valueOf(report.getAlignedFeatureId()))
+                .overallQuality(report.getOverallQuality())
+                .categories(report.getCategories())
+                .build();
     }
 
     @SneakyThrows
@@ -791,7 +817,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         CompoundImport ci = CompoundImport.builder().name(name).features(features).build();
         Compound compound = addCompounds(List.of(ci), EnumSet.of(Compound.OptField.none), optFields).stream().findFirst().orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Compound could not be imported to " + projectId + ".")
+                () -> new ResponseStatusException(NOT_FOUND, "Compound could not be imported to " + projectId + ".")
         );
         return compound.getFeatures();
     }
@@ -806,7 +832,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                         project().fetchMsData(a);
                     }
                     return convertToApiFeature(a, optFields);
-                }).orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "There is no aligned feature '" + alignedFeatureId + "' in project " + projectId + "."));
+                }).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no aligned feature '" + alignedFeatureId + "' in project " + projectId + "."));
     }
 
     @SneakyThrows
@@ -843,7 +869,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public SpectralLibraryMatch findLibraryMatchesByFeatureIdAndMatchId(String alignedFeatureId, String matchId) {
         long specMatchId = Long.parseLong(matchId);
         return storage().getByPrimaryKey(specMatchId, SpectraMatch.class).map(SpectralLibraryMatch::of)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Not Spectral match with ID '" + matchId + "' Exists."));
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Not Spectral match with ID '" + matchId + "' Exists."));
     }
 
     @SneakyThrows
@@ -951,7 +977,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         long longAFId = Long.parseLong(alignedFeatureId);
         long longFId = Long.parseLong(formulaId);
         CsiStructureMatch match = project().findByFeatureIdAndFormulaIdAndInChIStr(longAFId, longFId, inchiKey, CsiStructureMatch.class)
-                .findFirst().orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Structure Candidate with InChIKey: " + inchiKey + "| formulaId: " + formulaId + "| alignedFeatureId: " + alignedFeatureId + " could not be found!"));
+                .findFirst().orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Structure Candidate with InChIKey: " + inchiKey + "| formulaId: " + formulaId + "| alignedFeatureId: " + alignedFeatureId + " could not be found!"));
         return convertStructureMatch(match, optFields);
     }
 
