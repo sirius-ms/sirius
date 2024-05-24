@@ -4,6 +4,7 @@ docs/AccountInfo.md
 docs/ActuatorApi.md
 docs/AlignedFeature.md
 docs/AlignedFeatureOptField.md
+docs/AlignedFeatureQuality.md
 docs/AnnotatedMsMsData.md
 docs/AnnotatedPeak.md
 docs/AnnotatedSpectrum.md
@@ -14,6 +15,7 @@ docs/BasicSpectrum.md
 docs/BinaryFingerprint.md
 docs/Canopus.md
 docs/CanopusPrediction.md
+docs/Category.md
 docs/CommandSubmission.md
 docs/Compound.md
 docs/CompoundClass.md
@@ -30,6 +32,7 @@ docs/ConsensusCriterionCSI.md
 docs/ConsensusCriterionDeNovo.md
 docs/DBLink.md
 docs/Deviation.md
+docs/ExperimentalDataQualityApi.md
 docs/FeatureAnnotations.md
 docs/FeatureImport.md
 docs/FeaturesApi.md
@@ -45,6 +48,7 @@ docs/Info.md
 docs/InfoApi.md
 docs/Instrument.md
 docs/IsotopePatternAnnotation.md
+docs/Item.md
 docs/Job.md
 docs/JobOptField.md
 docs/JobProgress.md
@@ -58,6 +62,7 @@ docs/Mode.md
 docs/MsData.md
 docs/MsNovelist.md
 docs/PageAlignedFeature.md
+docs/PageAlignedFeatureQuality.md
 docs/PageCompound.md
 docs/PageFormulaCandidate.md
 docs/PageJob.md
@@ -102,6 +107,7 @@ docs/ZodiacEdgeFilterThresholds.md
 docs/ZodiacEpochs.md
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/ActuatorApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/CompoundsApi.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/ExperimentalDataQualityApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/FeaturesApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/GuiApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/InfoApi.java
@@ -122,6 +128,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/AccountCredentials.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/AccountInfo.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/AlignedFeature.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/AlignedFeatureOptField.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/AlignedFeatureQuality.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/AnnotatedMsMsData.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/AnnotatedPeak.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/AnnotatedSpectrum.java
@@ -132,6 +139,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/BasicSpectrum.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/BinaryFingerprint.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Canopus.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/CanopusPrediction.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Category.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/CommandSubmission.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Compound.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/CompoundClass.java
@@ -159,6 +167,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ImportResult.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Info.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Instrument.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/IsotopePatternAnnotation.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Item.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Job.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/JobOptField.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/JobProgress.java
@@ -170,6 +179,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Mode.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/MsData.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/MsNovelist.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageAlignedFeature.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageAlignedFeatureQuality.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageCompound.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageFormulaCandidate.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageJob.java

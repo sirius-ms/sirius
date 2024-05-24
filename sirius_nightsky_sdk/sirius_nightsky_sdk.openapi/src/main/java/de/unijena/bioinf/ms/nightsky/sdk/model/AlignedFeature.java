@@ -39,6 +39,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AlignedFeature.JSON_PROPERTY_DETECTED_ADDUCTS,
   AlignedFeature.JSON_PROPERTY_RT_START_SECONDS,
   AlignedFeature.JSON_PROPERTY_RT_END_SECONDS,
+  AlignedFeature.JSON_PROPERTY_QUALITY,
   AlignedFeature.JSON_PROPERTY_MS_DATA,
   AlignedFeature.JSON_PROPERTY_TOP_ANNOTATIONS,
   AlignedFeature.JSON_PROPERTY_TOP_ANNOTATIONS_DE_NOVO,
@@ -66,6 +67,52 @@ public class AlignedFeature {
 
   public static final String JSON_PROPERTY_RT_END_SECONDS = "rtEndSeconds";
   private Double rtEndSeconds;
+
+  /**
+   * Quality of this feature.
+   */
+  public enum QualityEnum {
+    LOWEST("LOWEST"),
+
+    LOWEST_WITH_DEPENDENCIES("LOWEST_WITH_DEPENDENCIES"),
+
+    NOT_APPLICABLE("NOT_APPLICABLE"),
+
+    BAD("BAD"),
+
+    DECENT("DECENT"),
+
+    GOOD("GOOD");
+
+    private String value;
+
+    QualityEnum(String value) {
+      this.value = value;
+    }
+
+    @JsonValue
+    public String getValue() {
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static QualityEnum fromValue(String value) {
+      for (QualityEnum b : QualityEnum.values()) {
+        if (b.value.equals(value)) {
+          return b;
+        }
+      }
+      throw new IllegalArgumentException("Unexpected value '" + value + "'");
+    }
+  }
+
+  public static final String JSON_PROPERTY_QUALITY = "quality";
+  private QualityEnum quality;
 
   public static final String JSON_PROPERTY_MS_DATA = "msData";
   private MsData msData;
@@ -187,7 +234,7 @@ public class AlignedFeature {
 
 
   public AlignedFeature detectedAdducts(Set<String> detectedAdducts) {
-    
+
     this.detectedAdducts = detectedAdducts;
     return this;
   }
@@ -270,6 +317,32 @@ public class AlignedFeature {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setRtEndSeconds(Double rtEndSeconds) {
     this.rtEndSeconds = rtEndSeconds;
+  }
+
+
+  public AlignedFeature quality(QualityEnum quality) {
+
+    this.quality = quality;
+    return this;
+  }
+
+   /**
+   * Quality of this feature.
+   * @return quality
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_QUALITY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public QualityEnum getQuality() {
+    return quality;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_QUALITY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setQuality(QualityEnum quality) {
+    this.quality = quality;
   }
 
 
@@ -392,6 +465,7 @@ public class AlignedFeature {
         Objects.equals(this.detectedAdducts, alignedFeature.detectedAdducts) &&
         Objects.equals(this.rtStartSeconds, alignedFeature.rtStartSeconds) &&
         Objects.equals(this.rtEndSeconds, alignedFeature.rtEndSeconds) &&
+        Objects.equals(this.quality, alignedFeature.quality) &&
         Objects.equals(this.msData, alignedFeature.msData) &&
         Objects.equals(this.topAnnotations, alignedFeature.topAnnotations) &&
         Objects.equals(this.topAnnotationsDeNovo, alignedFeature.topAnnotationsDeNovo) &&
@@ -400,7 +474,7 @@ public class AlignedFeature {
 
   @Override
   public int hashCode() {
-    return Objects.hash(alignedFeatureId, name, ionMass, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, msData, topAnnotations, topAnnotationsDeNovo, computing);
+    return Objects.hash(alignedFeatureId, name, ionMass, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, quality, msData, topAnnotations, topAnnotationsDeNovo, computing);
   }
 
   @Override
@@ -414,6 +488,7 @@ public class AlignedFeature {
     sb.append("    detectedAdducts: ").append(toIndentedString(detectedAdducts)).append("\n");
     sb.append("    rtStartSeconds: ").append(toIndentedString(rtStartSeconds)).append("\n");
     sb.append("    rtEndSeconds: ").append(toIndentedString(rtEndSeconds)).append("\n");
+    sb.append("    quality: ").append(toIndentedString(quality)).append("\n");
     sb.append("    msData: ").append(toIndentedString(msData)).append("\n");
     sb.append("    topAnnotations: ").append(toIndentedString(topAnnotations)).append("\n");
     sb.append("    topAnnotationsDeNovo: ").append(toIndentedString(topAnnotationsDeNovo)).append("\n");

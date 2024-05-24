@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -21,38 +21,35 @@
 package de.unijena.bioinf.ms.middleware.model.features;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.unijena.bioinf.ChemistryBase.ms.CompoundQuality;
+import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
+import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.EnumSet;
+import java.util.LinkedHashMap;
 
 @Getter
 @Setter
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AlignedFeatureQuality {
-    @Schema(enumAsRef = true, name = "AlignedFeatureQualityOptField", nullable = true)
-    public enum OptField {none, qualityFlags, lcmsFeatureQuality}
-
+    /**
+     * Id of the feature (aligned over runs) this quality information belongs to.
+     */
+    @Schema(nullable = false, requiredMode = Schema.RequiredMode.REQUIRED)
     protected String alignedFeatureId;
 
-    // Data and Result quality
+    /**
+     * Overall Quality
+     */
+    @Schema(nullable = false, requiredMode = Schema.RequiredMode.REQUIRED)
+    private DataQuality overallQuality;
     /**
      * Contains all pre-computation quality information that belong to
      * this feature (aligned over runs), such as information about the quality of the peak shape, MS2 spectrum etc.,
-     * see ({@link CompoundQuality.CompoundQualityFlag})
-     * <p>
-     * Each Feature has a Set of Quality assessment flags.
      */
-    @Schema(nullable = true)
-    protected EnumSet<CompoundQuality.CompoundQualityFlag> qualityFlags;
-
-    /**
-     * LCMS feature-based quality information as also provided in the LCMS-view in the GUI
-     */
-    @Schema(nullable = true)
-    protected LCMSFeatureQuality lcmsFeatureQuality;
+    @Schema(nullable = false, requiredMode = Schema.RequiredMode.REQUIRED)
+    private LinkedHashMap<String, QualityReport.Category> categories;
 }

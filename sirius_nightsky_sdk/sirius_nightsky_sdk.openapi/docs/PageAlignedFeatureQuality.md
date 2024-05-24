@@ -1,6 +1,6 @@
 
 
-# PageStructureCandidateFormula
+# PageAlignedFeatureQuality
 
 
 ## Properties
@@ -16,7 +16,7 @@
 |**numberOfElements** | **Integer** |  |  [optional] |
 |**pageable** | [**PageableObject**](PageableObject.md) |  |  [optional] |
 |**size** | **Integer** |  |  [optional] |
-|**content** | [**List&lt;StructureCandidateFormula&gt;**](StructureCandidateFormula.md) |  |  [optional] |
+|**content** | [**List&lt;AlignedFeatureQuality&gt;**](AlignedFeatureQuality.md) |  |  [optional] |
 |**empty** | **Boolean** |  |  [optional] |
 
 

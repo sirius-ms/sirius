@@ -24,7 +24,7 @@ import picocli.CommandLine;
 import java.nio.file.Path;
 
 public class OutputOptions {
-    @CommandLine.Option(names = {"--output", "--project", "-o"}, description = "Specify the project-space to write into. If no [--input] is specified it is also used as input. For compression use the File ending .zip or .sirius.", order = 210)
+    @CommandLine.Option(names = {"--output", "--project", "-o", "-p"}, description = "Specify the project-space to write into. If no [--input] is specified it is also used as input. For compression use the File ending .zip or .sirius.", order = 210)
     protected Path outputProjectLocation;
 
     public Path getOutputProjectLocation() {
