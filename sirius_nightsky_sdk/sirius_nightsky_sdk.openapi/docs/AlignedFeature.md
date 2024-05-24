@@ -11,7 +11,8 @@ The AlignedFeature contains the ID of a feature (aligned over runs) together wit
 |**alignedFeatureId** | **String** |  |  [optional] |
 |**name** | **String** |  |  [optional] |
 |**ionMass** | **Double** |  |  [optional] |
-|**ionType** | **String** |  |  [optional] |
+|**charge** | **Integer** |  |  |
+|**detectedAdducts** | **Set&lt;String&gt;** |  |  |
 |**rtStartSeconds** | **Double** |  |  [optional] |
 |**rtEndSeconds** | **Double** |  |  [optional] |
 |**msData** | [**MsData**](MsData.md) |  |  [optional] |

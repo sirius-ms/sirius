@@ -21,23 +21,19 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.*;
+import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
+import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
+import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
-import de.unijena.bioinf.ms.nightsky.sdk.model.MsData;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.sirius.Ms1Preprocessor;
-import de.unijena.bioinf.sirius.ProcessedInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -232,8 +228,8 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         Set<PrecursorIonType> adducts = new HashSet<>();
         Set<PrecursorIonType> adductsEnabled = new HashSet<>();
 
+        AdductSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class);
         if (!precursorIonTypes.isEmpty()) {
-            AdductSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class);
             if (precursorIonTypes.contains(PrecursorIonType.unknownPositive())) {
                 adducts.addAll(PeriodicTable.getInstance().getPositiveAdducts());
                 adductsEnabled.addAll(
@@ -259,48 +255,16 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         } else {
             adductList.checkBoxList.replaceElements(adducts.stream().sorted(PrecursorIonTypeSelector.ionTypeComparator).toList());
             adductList.checkBoxList.uncheckAll();
-            if (!isBatchDialog() && !ecs.get(0).getMsData().getMs2Spectra().isEmpty()) {
-                detectPossibleAdducts(ecs.get(0));
+            if (!isBatchDialog()) {
+                Set<PrecursorIonType> detectedAdds = ecs.get(0).getDetectedAdducts();
+                if (detectedAdds.isEmpty())
+                    settings.getFallback().forEach(adductList.checkBoxList::check);
+                else
+                    detectedAdds.forEach(adductList.checkBoxList::check);
             } else {
                 adductsEnabled.forEach(adductList.checkBoxList::check);
             }
             adductList.setEnabled(enabled);
-        }
-
-    }
-
-    private void detectPossibleAdducts(InstanceBean ec) {
-        //todo is this the same detection as happening in batch mode?
-        //todo Nightsky: do we want this in the frontend?
-        String notWorkingMessage = "Adduct detection requires MS1 spectrum.";
-        MsData msData = ec.getMsData();
-        if (msData != null && (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null)) {
-            Jobs.runInBackgroundAndLoad(owner, "Detecting adducts...", () -> {
-                final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
-                MutableMs2Experiment experiment = new MutableMs2Experiment(ec.asMs2Experiment(), true);
-                DetectedAdducts detectedAdducts = experiment.getAnnotationOrNull(DetectedAdducts.class);
-                if (detectedAdducts != null) {
-                    //copy DetectedAdducts, to remove previously detected adducts and to make sure the following preprocess does not already alter this annotation (probably not copy-safe)
-                    DetectedAdducts daWithoutMS1Detect = new DetectedAdducts();
-                    for (DetectedAdducts.Source source : detectedAdducts.getSources()) {
-                        if (!DetectedAdducts.Source.MS1_PREPROCESSOR.name().equals(source)) {
-                            daWithoutMS1Detect.put(source, detectedAdducts.get(source));
-                        }
-                    }
-                    experiment.setAnnotation(DetectedAdducts.class, daWithoutMS1Detect);
-                }
-                ProcessedInput pi = pp.preprocess(experiment);
-
-                pi.getAnnotation(PossibleAdducts.class).
-                        ifPresentOrElse(pa -> {
-                                    adductList.checkBoxList.uncheckAll();
-                                    pa.getAdducts().forEach(adductList.checkBoxList::check);
-                                },
-                                () -> new ExceptionDialog(owner, "Failed to detect Adducts from MS1")
-                        );
-            }).getResult();
-        } else {
-            LoggerFactory.getLogger(getClass()).warn(notWorkingMessage);
         }
     }
 

@@ -27,6 +27,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 /**
  * The AlignedFeature contains the ID of a feature (aligned over runs) together with some read-only information
  * that might be displayed in some summary view.
@@ -49,7 +51,11 @@ public class AlignedFeature {
     // additional attributes
     protected Double ionMass;
 
-    protected String ionType;
+    @Schema(nullable = false, requiredMode = Schema.RequiredMode.REQUIRED)
+    protected int charge;
+
+    @Schema(nullable = false, requiredMode = Schema.RequiredMode.REQUIRED)
+    protected Set<String> detectedAdducts;
 
     @Schema(nullable = true)
     protected Double rtStartSeconds;

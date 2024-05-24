@@ -213,11 +213,18 @@ public class InstanceBean implements SiriusPCS {
     }
 
     public PrecursorIonType getIonType() {
-        if (getSourceFeature().getIonType() == null)
-            return null;
-        return PrecursorIonType.fromString(getSourceFeature().getIonType());
+        Set<PrecursorIonType> adducts = getDetectedAdducts();
+        if (adducts.size() == 1)
+            return adducts.iterator().next();
+        return PrecursorIonType.unknown(getSourceFeature().getCharge());
     }
 
+    public Set<PrecursorIonType> getDetectedAdducts(){
+        return getSourceFeature().getDetectedAdducts().stream()
+                .map(PrecursorIonType::parsePrecursorIonType)
+                .flatMap(Optional::stream)
+                .collect(Collectors.toSet());
+    }
     public double getIonMass() {
         return getSourceFeature().getIonMass();
     }
