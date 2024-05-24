@@ -101,8 +101,8 @@ public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Sou
         return getUnionOfAdducts((Source[]) Arrays.stream(Source.values()).filter(Source::isAdditionalDetectionSource).toArray(l -> new Source[l])).flatMap(pa -> pa.isEmpty() ? Optional.empty() : Optional.of(pa));
     }
 
-    protected boolean hasPrimarySourceTheForbidsAdditionalSources() {
-        return Arrays.stream(Source.values()).filter(Source::isPrimaryDetectionSource).anyMatch(source -> getOrDefault(source, PossibleAdducts.empty()).isEmpty());
+    protected boolean hasPrimarySourceThatForbidsAdditionalSources() {
+        return Arrays.stream(Source.values()).filter(Source::isPrimaryDetectionSource).anyMatch(source -> !getOrDefault(source, PossibleAdducts.empty()).isEmpty());
     }
 
     /**
@@ -126,7 +126,7 @@ public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Sou
                         (pa.hasUnknownIontype() || pa.isEmpty()) ? PossibleAdducts.union(pa, fallbackAdductsSupplier.get()) : pa)
                 .orElse(new PossibleAdducts(fallbackAdductsSupplier.get()));
 
-        if (hasPrimarySourceTheForbidsAdditionalSources()) return primaryAdductsOrFallback;
+        if (hasPrimarySourceThatForbidsAdditionalSources()) return primaryAdductsOrFallback;
 
         Optional<PossibleAdducts> additionalAdducts = getAdditionalAdducts();
         if (additionalAdducts.isEmpty()) return primaryAdductsOrFallback;
