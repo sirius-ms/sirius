@@ -84,6 +84,10 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType>, Proces
         return false;
     }
 
+    public boolean hasUnknownIontype() {
+        return value.stream().anyMatch(PrecursorIonType::isIonizationUnknown);
+    }
+
     public PossibleAdducts keepOnlyPositive() {
         return new PossibleAdducts(value.stream().filter(it -> it.getCharge() > 1).collect(Collectors.toSet()));
     }

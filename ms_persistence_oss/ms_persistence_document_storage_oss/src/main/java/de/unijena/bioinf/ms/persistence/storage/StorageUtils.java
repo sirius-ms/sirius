@@ -96,7 +96,7 @@ public class StorageUtils {
         MSData msData = builder.build();
         de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts det =exp.getAnnotation(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.class).orElse(new de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts());
         if (!exp.getPrecursorIonType().isIonizationUnknown()) {
-            det.put(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.UNSPECIFIED_SOURCE, new PossibleAdducts(exp.getPrecursorIonType()));
+            det.put(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.KNOWN_ADDUCT, new PossibleAdducts(exp.getPrecursorIonType()));
         }
 
         int charge = exp.getPrecursorIonType().getCharge();
@@ -144,7 +144,7 @@ public class StorageUtils {
         if (adducts == null)
             return null;
         List<DetectedAdduct> featureAdducts = adducts.entrySet().stream().flatMap(e -> e.getValue().getAdducts().stream()
-                        .map(p -> DetectedAdduct.builder().adduct(p).source(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.valueOf(e.getKey())).build()))
+                        .map(p -> DetectedAdduct.builder().adduct(p).source(e.getKey()).build()))
                 .toList();
 
         DetectedAdducts featureDetectedAdducts = new DetectedAdducts();

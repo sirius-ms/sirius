@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 public class Ms1Preprocessor implements SiriusPreprocessor {
     protected Ms2ExperimentValidator validator = new Ms1Validator();
     protected ElementDetection elementDetection = new DeepNeuralNetworkElementDetector();
-    protected AdductDetection ionModeDetection = new DetectIonsFromMs1();
+    protected DetectIonsFromMs1 ms1IonAdductDetection = new DetectIonsFromMs1();
     protected Ms1Merging ms1Merging = new Ms1Merging();
     protected IsotopePatternDetection deisotoper = new TargetedIsotopePatternDetection();
 
@@ -128,11 +128,12 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
         if (pinput.hasAnnotation(PossibleAdducts.class)) return;
 
         final DetectedAdducts detAdds = exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new);
-        if (!detAdds.containsKey(DetectedAdducts.Source.MS1_PREPROCESSOR) && !detAdds.containsKey(DetectedAdducts.Source.LCMS_ALIGN))  {
+        if (!detAdds.containsKey(DetectedAdducts.Source.MS1_PREPROCESSOR) && !detAdds.hasMoreImportantSource(DetectedAdducts.Source.MS1_PREPROCESSOR))  {
+            //Source.MS1_PREPROCESSOR shall only be present for peaklist data for which adducts are not specified in input file
             final int charge = exp.getPrecursorIonType().getCharge();
 
             final AdductSettings settings = pinput.getAnnotationOrDefault(AdductSettings.class);
-            final PossibleAdducts ionModes = ionModeDetection.detect(pinput, settings.getDetectable(charge));
+            final PossibleAdducts ionModes = ms1IonAdductDetection.detect(pinput, settings.getDetectable(charge));
 
             if (ionModes != null)
                 detAdds.put(DetectedAdducts.Source.MS1_PREPROCESSOR, new PossibleAdducts(ionModes.getAdducts()));
