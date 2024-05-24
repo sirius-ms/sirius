@@ -125,8 +125,9 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
         g2.drawLine(2, 17, Math.min(maxWidth - 3, 2 + compoundLength), 17);
 
         g2.setFont(compoundFont);
-        if (ec.getSourceFeature()!=null) {
-            getQualityIcon(ec.getSourceFeature().getQuality()).paintIcon(this, g2, 2, 4);
+        AlignedFeature.QualityEnum q = ec.getSourceFeature().getQuality();
+        if (q != null) {
+            getQualityIcon(q).paintIcon(this, g2, 2, 4);
             g2.drawString(ec.getGUIName(), 13, 13);
         } else {
             g2.drawString(ec.getGUIName(), 4, 13);
@@ -176,12 +177,16 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
         GuiUtils.drawListStatusElement(ec.isComputing(), g2, this);
     }
 
-    private static Icon getQualityIcon(AlignedFeature.QualityEnum quality) {
+    private static Icon getQualityIcon(@NotNull AlignedFeature.QualityEnum quality) {
         switch (quality) {
-            case LOWEST: return Icons.TRAFFIC_LIGHT_TINY_GRAY;
-            case BAD: return Icons.TRAFFIC_LIGHT_TINY[0];
-            case DECENT: return Icons.TRAFFIC_LIGHT_TINY[1];
-            case GOOD: return Icons.TRAFFIC_LIGHT_TINY[2];
+            case LOWEST:
+                return Icons.TRAFFIC_LIGHT_TINY_GRAY;
+            case BAD:
+                return Icons.TRAFFIC_LIGHT_TINY[0];
+            case DECENT:
+                return Icons.TRAFFIC_LIGHT_TINY[1];
+            case GOOD:
+                return Icons.TRAFFIC_LIGHT_TINY[2];
         }
         return Icons.TRAFFIC_LIGHT_TINY_GRAY;
     }
