@@ -35,6 +35,7 @@ public class AdductNetwork {
     protected AdductNode[] rtOrderedNodes;
     protected AdductManager adductManager;
     List<List<AdductNode>> subgraphs = new ArrayList<>();
+    List<AdductNode> singletons = new ArrayList<>();
 
     protected Deviation deviation;
     ProjectSpaceTraceProvider provider;
@@ -170,6 +171,7 @@ public class AdductNetwork {
             if (!visited.get(rtOrderedNodes[k].index)) {
                 List<AdductNode> nodes = spread(rtOrderedNodes[k], visited);
                 if (nodes.size()>1) subgraphs.add(nodes);
+                else singletons.add(nodes.get(0));
             }
         }
     }
@@ -227,6 +229,15 @@ public class AdductNetwork {
                 }
             }));
         }
+        jobs.add(manager.submitJob(new BasicJJob<Object>() {
+            @Override
+            protected Object compute() throws Exception {
+                for (AdductNode node : singletons) {
+                    updateRoutine.accept(singletonCompound(node));
+                }
+                return "";
+            }
+        }));
         jobs.forEach(JJob::takeResult);
     }
 
@@ -379,6 +390,19 @@ public class AdductNetwork {
                 null,compound.stream().anyMatch(x->x.hasMsMs),
                 compound.stream().map(AdductNode::getFeature).toList(),
                 pairs
+        );
+    }
+
+    public Compound singletonCompound(AdductNode n) {
+        AlignedFeatures f = n.features;
+        return new Compound(
+                0,
+                f.getRetentionTime(),
+                null,
+                f.getName(),
+                n.hasMsMs,
+                new ArrayList<>(List.of(f)),
+                new ArrayList<>()
         );
     }
 
