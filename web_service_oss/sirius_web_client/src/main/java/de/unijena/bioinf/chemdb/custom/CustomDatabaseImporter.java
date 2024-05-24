@@ -577,7 +577,7 @@ public class CustomDatabaseImporter {
         final HashSet<DBLink> links = new HashSet<>(fc.getMutableLinks());
 
         if (!molecule.ids.isEmpty()) {
-            molecule.ids.stream().map(id -> new DBLink(null, id)).forEach(links::add);
+            molecule.ids.stream().filter(Objects::nonNull).map(id -> new DBLink(null, id)).forEach(links::add);
             if (fc.getName() == null || fc.getName().isBlank())
                 fc.setName(molecule.ids.iterator().next());
         }
@@ -602,7 +602,7 @@ public class CustomDatabaseImporter {
 
         //override remote db links.
         if (!molecule.ids.isEmpty()) {
-            fc.setLinks(molecule.ids.stream().map(id -> new DBLink(null, id)).toList()); //we add just id so that names can be added during db retrieval
+            fc.setLinks(molecule.ids.stream().filter(Objects::nonNull).map(id -> new DBLink(null, id)).toList()); //we add just id so that names can be added during db retrieval
             if (fc.getName() == null || fc.getName().isBlank())
                 fc.setName(molecule.ids.iterator().next());
         }
@@ -671,7 +671,7 @@ public class CustomDatabaseImporter {
                 fc.setName(molecule.name);
 
             if (!molecule.ids.isEmpty()) {
-                fc.setLinks(molecule.ids.stream().map(id -> new DBLink(null, id)).toList());
+                fc.setLinks(molecule.ids.stream().filter(Objects::nonNull).map(id -> new DBLink(null, id)).toList());
                 if (fc.getName() == null || fc.getName().isEmpty())
                     fc.setName(molecule.ids.iterator().next()); //set id as name if no name was set
             }
