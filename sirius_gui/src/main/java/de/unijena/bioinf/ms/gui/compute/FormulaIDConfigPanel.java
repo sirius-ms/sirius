@@ -282,7 +282,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
                 if (detectedAdducts != null) {
                     //copy DetectedAdducts, to remove previously detected adducts and to make sure the following preprocess does not already alter this annotation (probably not copy-safe)
                     DetectedAdducts daWithoutMS1Detect = new DetectedAdducts();
-                    for (String source : detectedAdducts.getSourceStrings()) {
+                    for (DetectedAdducts.Source source : detectedAdducts.getSources()) {
                         if (!DetectedAdducts.Source.MS1_PREPROCESSOR.name().equals(source)) {
                             daWithoutMS1Detect.put(source, detectedAdducts.get(source));
                         }

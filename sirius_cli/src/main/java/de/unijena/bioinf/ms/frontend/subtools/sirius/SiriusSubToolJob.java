@@ -146,7 +146,7 @@ public class SiriusSubToolJob extends InstanceJob {
             //copy DetectedAdducts, so the following preprocess does not already alter this annotation. (not 100% sure if this is needed here)
             DetectedAdducts detectedAdducts = me.getAnnotationOrNull(DetectedAdducts.class);
             DetectedAdducts daWithoutMS1Detect = new DetectedAdducts();
-            detectedAdducts.getSourceStrings().stream().forEach(s -> daWithoutMS1Detect.put(s, detectedAdducts.get(s)));
+            detectedAdducts.getSources().stream().forEach(s -> daWithoutMS1Detect.put(s, detectedAdducts.get(s)));
             me.setAnnotation(DetectedAdducts.class, daWithoutMS1Detect);
         }
         ProcessedInput pi = pp.preprocess(me);
