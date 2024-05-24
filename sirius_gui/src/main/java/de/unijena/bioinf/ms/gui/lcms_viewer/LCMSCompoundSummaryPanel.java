@@ -11,12 +11,11 @@
 
 package de.unijena.bioinf.ms.gui.lcms_viewer;
 
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.lcms.CoelutingTraceSet;
-import de.unijena.bioinf.lcms.LCMSCompoundSummary;
-import de.unijena.bioinf.lcms.quality.LCMSQualityCheck;
-import de.unijena.bioinf.lcms.quality.LCMSQualityCheckResult;
+import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeatureQuality;
+import de.unijena.bioinf.ms.nightsky.sdk.model.Category;
+import de.unijena.bioinf.ms.nightsky.sdk.model.Item;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,8 +23,7 @@ import java.util.List;
 
 public class LCMSCompoundSummaryPanel extends JPanel {
 
-    CoelutingTraceSet traceSet;
-    Ms2Experiment experiment;
+    private AlignedFeatureQuality report;
 
     public LCMSCompoundSummaryPanel() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -33,56 +31,70 @@ public class LCMSCompoundSummaryPanel extends JPanel {
     }
 
     public void reset() {
-        this.traceSet = null;
-        updateContent();
+        setReport(null);
     }
 
-    public void set(CoelutingTraceSet traceSet, Ms2Experiment experiment) {
-        this.traceSet = traceSet;
-        this.experiment = experiment;
-        updateContent();
-    }
-
-    public void setTraceSet(CoelutingTraceSet traceSet) {
-        if (this.traceSet!=traceSet) {
-            this.traceSet = traceSet;
+    public void setReport(AlignedFeatureQuality report) {
+        if (this.report!=report) {
+            this.report = report;
             updateContent();
         }
     }
 
     private void updateContent() {
         removeAll();
-        if (this.traceSet!=null && experiment != null) {
-
-            final LCMSCompoundSummary summary = new LCMSCompoundSummary(traceSet, traceSet.getIonTrace(), experiment);
-
-            addSection("Peak Quality", summary.peakQualityResult);
-
-            addSection("Isotope Quality", summary.isotopeQualityResult);
-            addSection("MS/MS Quality", summary.ms2QualityResult);
-            addSection("Adducts", summary.adductQualityResult);
-
+        if (this.report!=null) {
+            for (Category category : report.getCategories().values()) {
+                addSection(category);
+            }
         }
         revalidate();
         repaint();
     }
 
 
-    private void addSection(String title, LCMSQualityCheckResult qualityCheckResult) {
-        List<LCMSQualityCheck> checkList = qualityCheckResult.getChecks();
-        LCMSQualityCheck.Quality quality = qualityCheckResult.getQuality();
-        if (quality==null) return;
-        final TitledIconBorder peakHeader = new TitledIconBorder(title);
-        peakHeader.setIcon(Icons.TRAFFIC_LIGHT_MEDIUM[quality.ordinal()]);
+    private void addSection(Category qualityCheckResult) {
+        List<Item> checkList = qualityCheckResult.getItems();
+        DataQuality quality = DataQuality.valueOf(qualityCheckResult.getOverallQuality().getValue());
+        if (quality==null || quality==DataQuality.NOT_APPLICABLE) return;
+        final TitledIconBorder peakHeader = new TitledIconBorder(qualityCheckResult.getCategoryName());
+        peakHeader.setIcon(getLargeColoredIcon(DataQuality.valueOf(qualityCheckResult.getOverallQuality().getValue())));
         JPanel peakPanel = new JPanel();
         peakPanel.setLayout(new BoxLayout(peakPanel,BoxLayout.Y_AXIS));
         peakPanel.setBorder(peakHeader);
         add(peakPanel);
 
-        for (LCMSQualityCheck check : checkList) {
-            JLabel c = new JLabel("<html>"+check.getDescription()+"</html>", Icons.TRAFFIC_LIGHT_SMALL[check.getQuality().ordinal()], JLabel.LEADING);
+        for (Item check : checkList) {
+            JLabel c = new JLabel("<html>"+check.getDescription()+"</html>", getSmallColoredIcon(DataQuality.valueOf(check.getQuality().getValue())), JLabel.LEADING);
             c.setBorder(BorderFactory.createEmptyBorder(6,0,2,0));
             peakPanel.add(c);
         }
+    }
+
+    private Icon getSmallColoredIcon(DataQuality quality) {
+        switch (quality) {
+            case GOOD:
+                return Icons.TRAFFIC_LIGHT_SMALL[2];
+            case DECENT:
+                return Icons.TRAFFIC_LIGHT_SMALL[1];
+            case BAD:
+                return Icons.TRAFFIC_LIGHT_SMALL[0];
+            case LOWEST, NOT_APPLICABLE:
+                return Icons.TRAFFIC_LIGHT_SMALL_GRAY;
+        }
+        return Icons.TRAFFIC_LIGHT_SMALL_GRAY;
+    }
+    private Icon getLargeColoredIcon(DataQuality quality) {
+        switch (quality) {
+            case GOOD:
+                return Icons.TRAFFIC_LIGHT_MEDIUM[2];
+            case DECENT:
+                return Icons.TRAFFIC_LIGHT_MEDIUM[1];
+            case BAD:
+                return Icons.TRAFFIC_LIGHT_MEDIUM[0];
+            case LOWEST, NOT_APPLICABLE:
+                return Icons.TRAFFIC_LIGHT_MEDIUM_GRAY;
+        }
+        return Icons.TRAFFIC_LIGHT_MEDIUM_GRAY;
     }
 }

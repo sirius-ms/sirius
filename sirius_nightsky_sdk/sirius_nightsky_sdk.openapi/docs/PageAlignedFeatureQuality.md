@@ -9,14 +9,14 @@
 |------------ | ------------- | ------------- | -------------|
 |**totalPages** | **Integer** |  |  [optional] |
 |**totalElements** | **Long** |  |  [optional] |
-|**last** | **Boolean** |  |  [optional] |
-|**sort** | [**SortObject**](SortObject.md) |  |  [optional] |
-|**number** | **Integer** |  |  [optional] |
-|**first** | **Boolean** |  |  [optional] |
-|**numberOfElements** | **Integer** |  |  [optional] |
-|**pageable** | [**PageableObject**](PageableObject.md) |  |  [optional] |
 |**size** | **Integer** |  |  [optional] |
 |**content** | [**List&lt;AlignedFeatureQuality&gt;**](AlignedFeatureQuality.md) |  |  [optional] |
+|**number** | **Integer** |  |  [optional] |
+|**sort** | [**SortObject**](SortObject.md) |  |  [optional] |
+|**first** | **Boolean** |  |  [optional] |
+|**last** | **Boolean** |  |  [optional] |
+|**numberOfElements** | **Integer** |  |  [optional] |
+|**pageable** | [**PageableObject**](PageableObject.md) |  |  [optional] |
 |**empty** | **Boolean** |  |  [optional] |
 
 

@@ -44,11 +44,9 @@ public class Category {
    * Gets or Sets overallQuality
    */
   public enum OverallQualityEnum {
-    LOWEST("LOWEST"),
-    
-    LOWEST_WITH_DEPENDENCIES("LOWEST_WITH_DEPENDENCIES"),
-    
     NOT_APPLICABLE("NOT_APPLICABLE"),
+    
+    LOWEST("LOWEST"),
     
     BAD("BAD"),
     

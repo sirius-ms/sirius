@@ -62,6 +62,8 @@ public class NightSkyClient implements AutoCloseable {
 
     protected final FeaturesApi features;
 
+    protected final ExperimentalApi experimental;
+
     protected final JobsApi jobs;
 
     protected final GuiApi gui;
@@ -102,6 +104,7 @@ public class NightSkyClient implements AutoCloseable {
 
         compounds = new CompoundsApi(apiClient);
         features = new FeaturesApi(apiClient);
+        experimental = new ExperimentalApi(apiClient);
         jobs = new JobsApi(apiClient);
         gui = new GuiApi(apiClient);
         account = new LoginAndAccountApi(apiClient);
@@ -243,6 +246,10 @@ public class NightSkyClient implements AutoCloseable {
 
     public CompoundsApi compounds() {
         return compounds;
+    }
+
+    public ExperimentalApi experimental() {
+        return experimental;
     }
 
     public FeaturesApi features() {

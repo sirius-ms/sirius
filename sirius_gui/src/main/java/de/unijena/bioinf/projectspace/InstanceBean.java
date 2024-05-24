@@ -170,9 +170,10 @@ public class InstanceBean implements SiriusPCS {
         return projectManager;
     }
 
+
     @NotNull
-    private AlignedFeature getSourceFeature(AlignedFeatureOptField... optFields) {
-        return getSourceFeature(List.of(optFields));
+    public AlignedFeature getSourceFeature() {
+        return getSourceFeature(List.of());
     }
 
     @NotNull

@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  */
 @JsonPropertyOrder({
   AlignedFeature.JSON_PROPERTY_ALIGNED_FEATURE_ID,
+  AlignedFeature.JSON_PROPERTY_COMPOUND_ID,
   AlignedFeature.JSON_PROPERTY_NAME,
   AlignedFeature.JSON_PROPERTY_ION_MASS,
   AlignedFeature.JSON_PROPERTY_ION_TYPE,
@@ -45,6 +46,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 public class AlignedFeature {
   public static final String JSON_PROPERTY_ALIGNED_FEATURE_ID = "alignedFeatureId";
   private String alignedFeatureId;
+
+  public static final String JSON_PROPERTY_COMPOUND_ID = "compoundId";
+  private String compoundId;
 
   public static final String JSON_PROPERTY_NAME = "name";
   private String name;
@@ -65,11 +69,9 @@ public class AlignedFeature {
    * Quality of this feature.
    */
   public enum QualityEnum {
-    LOWEST("LOWEST"),
-    
-    LOWEST_WITH_DEPENDENCIES("LOWEST_WITH_DEPENDENCIES"),
-    
     NOT_APPLICABLE("NOT_APPLICABLE"),
+    
+    LOWEST("LOWEST"),
     
     BAD("BAD"),
     
@@ -145,6 +147,32 @@ public class AlignedFeature {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setAlignedFeatureId(String alignedFeatureId) {
     this.alignedFeatureId = alignedFeatureId;
+  }
+
+
+  public AlignedFeature compoundId(String compoundId) {
+    
+    this.compoundId = compoundId;
+    return this;
+  }
+
+   /**
+   * Get compoundId
+   * @return compoundId
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_COMPOUND_ID)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getCompoundId() {
+    return compoundId;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_COMPOUND_ID)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setCompoundId(String compoundId) {
+    this.compoundId = compoundId;
   }
 
 
@@ -417,6 +445,7 @@ public class AlignedFeature {
     }
     AlignedFeature alignedFeature = (AlignedFeature) o;
     return Objects.equals(this.alignedFeatureId, alignedFeature.alignedFeatureId) &&
+        Objects.equals(this.compoundId, alignedFeature.compoundId) &&
         Objects.equals(this.name, alignedFeature.name) &&
         Objects.equals(this.ionMass, alignedFeature.ionMass) &&
         Objects.equals(this.ionType, alignedFeature.ionType) &&
@@ -431,7 +460,7 @@ public class AlignedFeature {
 
   @Override
   public int hashCode() {
-    return Objects.hash(alignedFeatureId, name, ionMass, ionType, rtStartSeconds, rtEndSeconds, quality, msData, topAnnotations, topAnnotationsDeNovo, computing);
+    return Objects.hash(alignedFeatureId, compoundId, name, ionMass, ionType, rtStartSeconds, rtEndSeconds, quality, msData, topAnnotations, topAnnotationsDeNovo, computing);
   }
 
   @Override
@@ -439,6 +468,7 @@ public class AlignedFeature {
     StringBuilder sb = new StringBuilder();
     sb.append("class AlignedFeature {\n");
     sb.append("    alignedFeatureId: ").append(toIndentedString(alignedFeatureId)).append("\n");
+    sb.append("    compoundId: ").append(toIndentedString(compoundId)).append("\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    ionMass: ").append(toIndentedString(ionMass)).append("\n");
     sb.append("    ionType: ").append(toIndentedString(ionType)).append("\n");
