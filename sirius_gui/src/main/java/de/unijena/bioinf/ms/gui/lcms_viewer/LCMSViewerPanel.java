@@ -72,7 +72,7 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
                 toolbar.add(button);
             }
         }
-        toolbar.add(Box.createHorizontalStrut(6));
+        toolbar.add(Box.createHorizontalStrut(18));
         {
             JLabel label = new JLabel("Order samples ");
             toolbar.add(label);
