@@ -3,7 +3,6 @@ package de.unijena.bioinf.lcms.statistics;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.lcms.spectrum.Ms1SpectrumHeader;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
-import de.unijena.bioinf.ms.persistence.model.core.run.SampleStats;
 
 /**
  * Step 1 of LC/MS Processing: collecting statistics about noise peak distribution

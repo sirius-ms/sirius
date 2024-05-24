@@ -63,6 +63,11 @@ public abstract class AbstractFeature {
     protected double averageMass;
 
     /**
+     * width (in seconds) of the peak at half maximum
+     */
+    protected Double fwhm;
+
+    /**
      * retention time (start, apex, end)
      */
     protected RetentionTime retentionTime;

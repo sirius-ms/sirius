@@ -28,8 +28,7 @@ package de.unijena.bioinf.lcms.trace.segmentation;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.Quickselect;
 import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
-import de.unijena.bioinf.ChemistryBase.math.Statistics;
-import de.unijena.bioinf.ms.persistence.model.core.run.SampleStats;
+import de.unijena.bioinf.lcms.statistics.SampleStats;
 import de.unijena.bioinf.lcms.trace.Trace;
 import de.unijena.bioinf.lcms.trace.filter.Filter;
 import de.unijena.bioinf.lcms.trace.filter.NoFilter;
