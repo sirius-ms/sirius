@@ -735,7 +735,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
                 .computing(computeStateProvider.apply(this, cid.getDirectoryName()))
                 .build();
 
-        cid.getIonType().map(PrecursorIonType::toString).ifPresent(id::setIonType);
+        cid.getIonType().map(PrecursorIonType::getCharge).ifPresent(id::setCharge);
         cid.getRt().ifPresent(rt -> {
             if (rt.isInterval()) {
                 id.setRtStartSeconds(rt.getStartTime());

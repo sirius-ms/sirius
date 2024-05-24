@@ -5837,6 +5837,10 @@
         ]
       },
       "AlignedFeature": {
+        "required": [
+          "charge",
+          "detectedAdducts"
+        ],
         "type": "object",
         "properties": {
           "alignedFeatureId": {
@@ -5849,8 +5853,16 @@
             "type": "number",
             "format": "double"
           },
-          "ionType": {
-            "type": "string"
+          "charge": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "detectedAdducts": {
+            "uniqueItems": true,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "rtStartSeconds": {
             "type": "number",
