@@ -241,12 +241,13 @@ public class LCMSProcessing {
          * this code relies on lazy evaluation of streams. If that is not the case we might have a huge memory peak here :/
          */
         DoubleArrayList fwhms = new DoubleArrayList();
-        DoubleArrayList ms2Noise = new DoubleArrayList();
+        DoubleArrayList heightDividedByfwhms = new DoubleArrayList();
         siriusDatabaseAdapter.getImportedFeatureStream(true)
                 .filter(x -> x.getRunId() == merged.getRun().getRunId())
                 .filter(x -> x.getMSData().get().getIsotopePattern() != null && x.getMSData().get().getIsotopePattern().size() >= 2)
                 .forEach(x->{
                     fwhms.add(x.getFwhm().doubleValue());
+                    heightDividedByfwhms.add(x.getApexIntensity()/x.getFwhm());
                 });
         SampleStats st = merged.getStorage().getStatistics();
         fwhms.sort(null);
@@ -254,7 +255,9 @@ public class LCMSProcessing {
                 st.getMs1MassDeviationWithinTraces(),
                 alignmentBackbone.getStatistics().getExpectedMassDeviationBetweenSamples(),
                 alignmentBackbone.getStatistics().getExpectedRetentionTimeDeviation(),
-                fwhms.getDouble(fwhms.size()/2), (int)alignmentBackbone.getStatistics().getMedianNumberOfAlignments(),
+                fwhms.getDouble(fwhms.size()/2),
+                heightDividedByfwhms.getDouble(heightDividedByfwhms.size()/2),
+                (int)alignmentBackbone.getStatistics().getMedianNumberOfAlignments(),
                 st.ms2NoiseLevel()
         );
 

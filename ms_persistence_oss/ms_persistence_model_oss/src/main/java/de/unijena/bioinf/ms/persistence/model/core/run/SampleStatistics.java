@@ -24,13 +24,16 @@ public class SampleStatistics {
 
     private int medianNumberOfAlignments;
 
+    private double medianHeightDividedByPeakWidth;
+
     protected SampleStatistics() {
     }
 
-    public SampleStatistics(Deviation ms1MassDeviationsWithinSamples, Deviation ms1MassDeviationsBetweenSamples, double retentionTimeDeviationsInSeconds, double medianPeakWidthInSeconds, int medianNumberOfAlignments, double ms2NoiseLevel) {
+    public SampleStatistics(Deviation ms1MassDeviationsWithinSamples, Deviation ms1MassDeviationsBetweenSamples, double retentionTimeDeviationsInSeconds, double medianPeakWidthInSeconds, double medianHeightDividedByPeakWidth, int medianNumberOfAlignments, double ms2NoiseLevel) {
         this.ms1MassDeviationsWithinSamples = ms1MassDeviationsWithinSamples;
         this.ms1MassDeviationsBetweenSamples = ms1MassDeviationsBetweenSamples;
         this.retentionTimeDeviationsInSeconds = retentionTimeDeviationsInSeconds;
+        this.medianHeightDividedByPeakWidth = medianHeightDividedByPeakWidth;
         this.ms2NoiseLevel = ms2NoiseLevel;
         this.medianPeakWidthInSeconds =medianPeakWidthInSeconds;
         this.medianNumberOfAlignments = medianNumberOfAlignments;
