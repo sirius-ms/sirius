@@ -22,7 +22,6 @@ package de.unijena.bioinf.lcms.statistics;
 
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.lcms.datatypes.CustomDataType;
-import de.unijena.bioinf.ms.persistence.model.core.run.SampleStats;
 import org.h2.mvstore.WriteBuffer;
 
 import java.nio.ByteBuffer;

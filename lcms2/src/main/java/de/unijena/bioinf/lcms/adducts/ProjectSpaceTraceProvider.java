@@ -1,5 +1,6 @@
 package de.unijena.bioinf.lcms.adducts;
 
+import de.unijena.bioinf.ms.persistence.model.core.feature.AbstractAlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
@@ -29,7 +30,7 @@ public class ProjectSpaceTraceProvider implements TraceProvider {
     }
 
     @Override
-    public Optional<MergedTrace> getMergeTrace(AlignedFeatures feature) {
+    public Optional<MergedTrace> getMergeTrace(AbstractAlignedFeatures feature) {
         return feature.getTraceReference().map(id-> {
             Iterator<MergedTrace> iter = null;
             try {
@@ -44,7 +45,7 @@ public class ProjectSpaceTraceProvider implements TraceProvider {
     }
 
     @Override
-    public Long2ObjectMap<SourceTrace> getSourceTraces(AlignedFeatures features) {
+    public Long2ObjectMap<SourceTrace> getSourceTraces(AbstractAlignedFeatures features) {
         Long2ObjectOpenHashMap<SourceTrace> traces = new Long2ObjectOpenHashMap<>();
         for (Feature f : getFeatures(features)) {
             if (f.getTraceReference().isPresent()) {
@@ -64,7 +65,7 @@ public class ProjectSpaceTraceProvider implements TraceProvider {
     }
 
     @Override
-    public Optional<Pair<TraceRef, SourceTrace>> getSourceTrace(AlignedFeatures features, long runId) {
+    public Optional<Pair<TraceRef, SourceTrace>> getSourceTrace(AbstractAlignedFeatures features, long runId) {
         Long2ObjectOpenHashMap<SourceTrace> traces = new Long2ObjectOpenHashMap<>();
         for (Feature f : getFeatures(features)) {
             if (f.getTraceReference().isPresent() && f.getRunId()==runId) {
@@ -84,7 +85,7 @@ public class ProjectSpaceTraceProvider implements TraceProvider {
     }
 
     @Override
-    public Long2DoubleMap getIntensities(AlignedFeatures features) {
+    public Long2DoubleMap getIntensities(AbstractAlignedFeatures features) {
         Long2DoubleMap map = new Long2DoubleOpenHashMap();
         for (Feature f : getFeatures(features)) {
             map.put(f.getRunId(), f.getApexIntensity());
@@ -92,10 +93,10 @@ public class ProjectSpaceTraceProvider implements TraceProvider {
         return map;
     }
 
-    private List<Feature> getFeatures(AlignedFeatures feature)  {
+    private List<Feature> getFeatures(AbstractAlignedFeatures feature)  {
         if (feature.getFeatures().isEmpty()) {
             try {
-                return storage.getStorage().findStr(Filter.where("alignedFeatureId").eq(feature.getAlignedFeatureId()), Feature.class).toList();
+                return storage.getStorage().findStr(Filter.where("alignedFeatureId").eq(feature.databaseId()), Feature.class).toList();
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -103,9 +104,9 @@ public class ProjectSpaceTraceProvider implements TraceProvider {
     }
 
     @Override
-    public List<MergedMSnSpectrum> getMs2SpectraOf(AlignedFeatures features) {
+    public List<MergedMSnSpectrum> getMs2SpectraOf(AbstractAlignedFeatures features) {
         try {
-            return storage.getStorage().findStr(Filter.where("alignedFeatureId").eq(features.getAlignedFeatureId()), MSData.class).filter(x->x.getMsnSpectra()!=null).flatMap(x->x.getMsnSpectra().stream()).toList();
+            return storage.getStorage().findStr(Filter.where("alignedFeatureId").eq(features.databaseId()), MSData.class).filter(x->x.getMsnSpectra()!=null).flatMap(x->x.getMsnSpectra().stream()).toList();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

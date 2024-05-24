@@ -1,35 +1,13 @@
 package de.unijena.bioinf.lcms.features;
 
-import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
-import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.merge.MergedTrace;
-import de.unijena.bioinf.lcms.msms.MergedSpectrum;
-import de.unijena.bioinf.lcms.msms.Ms2MergeStrategy;
-import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.ProjectedTrace;
 import de.unijena.bioinf.lcms.trace.Trace;
 import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.lcms.utils.AlignmentBeamSearch;
-import de.unijena.bioinf.ms.persistence.model.core.feature.AbstractAlignedFeatures;
-import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
-import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
-import de.unijena.bioinf.ms.persistence.model.core.run.SampleStats;
-import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
-import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
-import de.unijena.bioinf.ms.persistence.model.core.trace.RawTraceRef;
-import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
-import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import it.unimi.dsi.fastutil.doubles.DoubleList;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import de.unijena.bioinf.lcms.statistics.SampleStats;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;

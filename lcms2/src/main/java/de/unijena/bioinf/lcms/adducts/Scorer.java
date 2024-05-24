@@ -5,6 +5,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AbstractAlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
@@ -69,7 +70,7 @@ public class Scorer {
         return 0d;
     }
 
-    private float correlateRepresentatives(ProjectSpaceTraceProvider provider, AlignedFeatures left, AlignedFeatures right, Long2DoubleMap leftInts, Long2DoubleMap rightInts) {
+    public static float correlateRepresentatives(TraceProvider provider, AbstractAlignedFeatures left, AbstractAlignedFeatures right, Long2DoubleMap leftInts, Long2DoubleMap rightInts) {
         LongOpenHashSet ks = new LongOpenHashSet(leftInts.keySet());
         ks.retainAll(rightInts.keySet());
         double maxIntens = 0d;
@@ -91,7 +92,7 @@ public class Scorer {
         return Float.NaN;
     }
 
-    private double correlateAcrossSamples(Long2DoubleMap left, Long2DoubleMap right) {
+    public static double correlateAcrossSamples(Long2DoubleMap left, Long2DoubleMap right) {
         DoubleArrayList xs = new DoubleArrayList(), ys = new DoubleArrayList();
         left.keySet().forEach(key->{
             xs.add(left.getOrDefault(key,0d));
@@ -130,7 +131,7 @@ public class Scorer {
         return logProb;
     }
 
-    private double correlateLargerWithSmaller(TraceRef refLeft, AbstractTrace left, TraceRef refRight, AbstractTrace right) {
+    private static double correlateLargerWithSmaller(TraceRef refLeft, AbstractTrace left, TraceRef refRight, AbstractTrace right) {
         // we first define the range where we do correlation
         // we use the maximum of the minimum range and the FWHM-Range of the larger trace
         int offsetL = refLeft.getStart();
@@ -178,7 +179,7 @@ public class Scorer {
 
     }
 
-    private double correlateTraces(TraceRef refLeft, AbstractTrace left, TraceRef refRight, AbstractTrace right) {
+    public static double correlateTraces(TraceRef refLeft, AbstractTrace left, TraceRef refRight, AbstractTrace right) {
         if (left.getIntensities().getFloat(refLeft.getApex()) > right.getIntensities().getFloat(refRight.getApex())) {
             return correlateLargerWithSmaller(refLeft, left, refRight, right);
         } else {
