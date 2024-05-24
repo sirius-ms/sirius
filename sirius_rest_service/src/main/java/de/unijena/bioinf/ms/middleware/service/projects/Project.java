@@ -115,22 +115,9 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     void deleteCompoundById(String compoundId);
 
-    @Deprecated
-    Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable, @NotNull EnumSet<AlignedFeatureQuality.OptField> optFields);
+    Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable);
 
-    @Deprecated
-    default Page<AlignedFeatureQuality> findAlignedFeaturesQuality(Pageable pageable, AlignedFeatureQuality.OptField... optFields) {
-        return findAlignedFeaturesQuality(pageable, toEnumSet(AlignedFeatureQuality.OptField.class, optFields));
-    }
-
-    @Deprecated
-    AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId, @NotNull EnumSet<AlignedFeatureQuality.OptField> optFields);
-
-    @Deprecated
-    default AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId, AlignedFeatureQuality.OptField... optFields) {
-        return findAlignedFeaturesQualityById(alignedFeatureId, toEnumSet(AlignedFeatureQuality.OptField.class, optFields));
-    }
-
+    AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId);
 
     Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields);
 
