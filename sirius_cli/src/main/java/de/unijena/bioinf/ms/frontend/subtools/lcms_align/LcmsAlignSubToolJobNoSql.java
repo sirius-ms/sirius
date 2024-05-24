@@ -182,6 +182,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                         report.setAlignedFeatureId(feature.getAlignedFeatureId());
                         feature.setDataQuality(report.getOverallQuality());
                         store.insert(report);
+                        store.upsert(feature);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }

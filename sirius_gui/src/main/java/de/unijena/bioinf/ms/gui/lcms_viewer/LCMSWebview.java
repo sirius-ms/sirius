@@ -3,17 +3,14 @@ package de.unijena.bioinf.ms.gui.lcms_viewer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.utils.FxTaskList;
 import de.unijena.bioinf.ms.nightsky.sdk.model.TraceSet;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
-import javafx.scene.web.WebErrorEvent;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
-import org.checkerframework.checker.units.qual.C;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -82,12 +79,16 @@ public class LCMSWebview extends JFXPanel {
         });
     }
 
-    public void setInstance(TraceSet peakInformation, LCMSViewerPanel.Order order) {
+    public void setInstance(TraceSet peakInformation, LCMSViewerPanel.Order order, LCMSViewerPanel.ViewType viewType, String featureId) {
         lcmsView(f->{
             try {
                 final String json = objectMapper.writeValueAsString(peakInformation);
                 f.call("setOrder", order.name());
-                f.call("loadString", json);
+                if (viewType== LCMSViewerPanel.ViewType.ALIGNMENT) {
+                    f.call("loadString", json);
+                } else {
+                    f.call("loadStringForCompound", json, Long.parseLong(featureId));
+                }
             } catch (Throwable e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);

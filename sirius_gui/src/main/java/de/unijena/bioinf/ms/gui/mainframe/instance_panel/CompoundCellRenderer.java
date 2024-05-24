@@ -25,8 +25,10 @@ import de.unijena.bioinf.fingerid.ConfidenceScoreApproximate;
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
+import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeature;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,6 +37,7 @@ import java.awt.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public class CompoundCellRenderer extends JLabel implements ListCellRenderer<InstanceBean> {
@@ -122,7 +125,12 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
         g2.drawLine(2, 17, Math.min(maxWidth - 3, 2 + compoundLength), 17);
 
         g2.setFont(compoundFont);
-        g2.drawString(ec.getGUIName(), 4, 13);
+        if (ec.getSourceFeature()!=null) {
+            getQualityIcon(ec.getSourceFeature().getQuality()).paintIcon(this, g2, 2, 4);
+            g2.drawString(ec.getGUIName(), 13, 13);
+        } else {
+            g2.drawString(ec.getGUIName(), 4, 13);
+        }
 
         if (trigger) g2.setPaint(p);
 
@@ -166,6 +174,16 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 
         g2.setFont(statusFont);
         GuiUtils.drawListStatusElement(ec.isComputing(), g2, this);
+    }
+
+    private static Icon getQualityIcon(AlignedFeature.QualityEnum quality) {
+        switch (quality) {
+            case LOWEST: return Icons.TRAFFIC_LIGHT_TINY_GRAY;
+            case BAD: return Icons.TRAFFIC_LIGHT_TINY[0];
+            case DECENT: return Icons.TRAFFIC_LIGHT_TINY[1];
+            case GOOD: return Icons.TRAFFIC_LIGHT_TINY[2];
+        }
+        return Icons.TRAFFIC_LIGHT_TINY_GRAY;
     }
 
 }
