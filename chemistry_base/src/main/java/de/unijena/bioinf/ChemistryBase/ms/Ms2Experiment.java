@@ -60,21 +60,6 @@ public interface Ms2Experiment extends Cloneable, AnnotatedWithDefaults<Ms2Exper
     @NotNull PrecursorIonType getPrecursorIonType();
 
 
-    /**
-     * Returns a list of detected adducts, if available
-     *
-     * Do not add any enforced or fallback adducts!
-     * Use the #getPossibleAdductsOrFallback for that!
-     *
-     * @return Optional collection of detected adducts
-     */
-    @NotNull
-    default Optional<PossibleAdducts> getDetectedAdducts() {
-        final PossibleAdducts adducts = getAnnotation(DetectedAdducts.class).flatMap(DetectedAdducts::getAdducts)
-                .orElseGet(PossibleAdducts::empty);
-        return adducts.isEmpty() ? Optional.empty() : Optional.of(adducts);
-    }
-
 
     /**
      * Returns a list of detected adducts, if no adducts are found a fallback list will be returned
@@ -83,12 +68,9 @@ public interface Ms2Experiment extends Cloneable, AnnotatedWithDefaults<Ms2Exper
      */
     @NotNull
     default PossibleAdducts getPossibleAdductsOrFallback() {
-        final PossibleAdducts detectedOrFallback = getDetectedAdducts().
-                orElseGet(() -> getAnnotation(AdductSettings.class).map(as -> as.getFallback(getPrecursorIonType().getCharge())).map(PossibleAdducts::new).orElseGet(() -> new PossibleAdducts(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getFallback(getPrecursorIonType().getCharge())))
-                );
-        final PossibleAdducts detected = getAnnotation(AdductSettings.class).map(as -> PossibleAdducts.union(detectedOrFallback, as.getEnforced(getPrecursorIonType().getCharge()))).orElse(detectedOrFallback);
-
-        return detected;
+        return getAnnotation(DetectedAdducts.class).orElseGet(DetectedAdducts::new).getDetectedAdductsAndOrFallback(
+                getAnnotation(AdductSettings.class).orElse(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class)), getPrecursorIonType().getCharge()
+        );
     }
 
 
