@@ -19,15 +19,15 @@ public class CheckPeakQuality implements FeatureQualityChecker{
         QualityReport.Category peakQuality = new QualityReport.Category(QualityReport.PEAK_QUALITY);
         // 1. Peak should be clearly above noise level
         final double ratio = feature.getSnr();
-        if (ratio >= 20) {
+        if (ratio >= 50) {
             peakQuality.getItems().add(new QualityReport.Item(
                     String.format(Locale.US, "peak intensity is %.1f-fold above noise intensity", ratio), DataQuality.GOOD, QualityReport.Weight.MAJOR
             ));
-        } else if (ratio >= 5) {
+        } else if (ratio >= 10) {
             peakQuality.getItems().add(new QualityReport.Item(
                     String.format(Locale.US, "peak intensity is %.1f-fold above noise intensity", ratio), DataQuality.DECENT, QualityReport.Weight.MAJOR
             ));
-        } else if (ratio > 1) {
+        } else if (ratio > 2) {
             peakQuality.getItems().add(new QualityReport.Item(
                     String.format(Locale.US, "peak intensity is %.1f-fold above noise intensity", ratio), DataQuality.BAD, QualityReport.Weight.MAJOR
             ));
@@ -37,20 +37,35 @@ public class CheckPeakQuality implements FeatureQualityChecker{
             ));
         }
 
-        // 2. Peak should be not too wide
-        final double medianPeakWidthOfIntensivePeaks = run.getSampleStats().getMedianPeakWidthInSeconds();
-        final double minimumPeakWidth = (retentionTimes[1]-retentionTimes[0])*6;
-
-        if (feature.getFwhm() < minimumPeakWidth) {
+        // 2. Peak should be not too short
+        final int dp = feature.getTraceRef().getEnd()-feature.getTraceRef().getStart()+1;
+        if (dp <= 4) {
             peakQuality.getItems().add(new QualityReport.Item(
-                    String.format(Locale.US, "peak has too few data points (fwhm is %.1f seconds)", feature.getFwhm()), DataQuality.BAD, QualityReport.Weight.MAJOR
+                    String.format(Locale.US, "peak has too few data points (%d datapoints in merged trace)", dp), DataQuality.BAD, QualityReport.Weight.MAJOR
+            ));
+        } else if (dp <= 8) {
+            peakQuality.getItems().add(new QualityReport.Item(
+                    String.format(Locale.US, "peak has few data points (%d datapoints in merged trace)", dp), DataQuality.DECENT, QualityReport.Weight.MAJOR
             ));
         } else {
-            if (feature.getFwhm() <= 3*medianPeakWidthOfIntensivePeaks) {
+            peakQuality.getItems().add(new QualityReport.Item(
+                    String.format(Locale.US, "peak has many data points (%d datapoints in merged trace)", dp), DataQuality.GOOD, QualityReport.Weight.MAJOR
+            ));
+        }
+        // 2. Peak should be not too wide
+        final double medianSquareness = run.getSampleStats().getMedianHeightDividedByPeakWidth();
+        final double medianPeakWidth = run.getSampleStats().getMedianPeakWidthInSeconds();
+        final double squareness = feature.getApexIntensity()/feature.getFwhm();
+        {
+            if (squareness >= medianSquareness) {
                 peakQuality.getItems().add(new QualityReport.Item(
-                        String.format(Locale.US, "proper peak width of %.1f seconds", feature.getFwhm()), DataQuality.GOOD, QualityReport.Weight.MAJOR
+                        String.format(Locale.US, "peak has proper shape.", feature.getFwhm()), DataQuality.GOOD, QualityReport.Weight.MAJOR
                 ));
-            } else {
+            } else if (feature.getFwhm() >= medianPeakWidth && squareness >= medianSquareness*0.5) {
+                peakQuality.getItems().add(new QualityReport.Item(
+                        String.format(Locale.US, "peak is too wide with fwhm is %.1f seconds", feature.getFwhm()), DataQuality.DECENT, QualityReport.Weight.MAJOR
+                ));
+            } else if (feature.getFwhm() >= medianPeakWidth) {
                 peakQuality.getItems().add(new QualityReport.Item(
                         String.format(Locale.US, "peak is too wide with fwhm is %.1f seconds", feature.getFwhm()), DataQuality.BAD, QualityReport.Weight.MAJOR
                 ));
@@ -74,22 +89,26 @@ public class CheckPeakQuality implements FeatureQualityChecker{
         final MergedTrace trace = traceProvider.getMergeTrace(feature).orElse(null);
         if (trace!=null) {
             float start = trace.getIntensities().getFloat(feature.getTraceRef().getStart());
-            float end = trace.getIntensities().getFloat(feature.getTraceRef().getStart());
+            float end = trace.getIntensities().getFloat(feature.getTraceRef().getEnd());
             double ratioStart = feature.getApexIntensity()/ start;
             double ratioEnd = feature.getApexIntensity() / end;
             boolean goodStart = (start <= 2*noise && ratioStart>3) || ratioStart>=10;
             boolean goodEnd = (end <= 2*noise && ratioEnd>3) || ratioEnd>=10;
             if (goodStart && goodEnd) {
                 peakQuality.getItems().add(new QualityReport.Item(
-                        "peak has clearly defined start and end points.", DataQuality.GOOD, QualityReport.Weight.MINOR
+                        "peak has clearly defined start and end points.", DataQuality.GOOD, QualityReport.Weight.MAJOR
                 ));
             } else if (goodStart) {
                 peakQuality.getItems().add(new QualityReport.Item(
-                        "the right edge of the peak is not clearly defined", DataQuality.BAD, QualityReport.Weight.MINOR
+                        "the right edge of the peak is not clearly defined", DataQuality.BAD, QualityReport.Weight.MAJOR
                 ));
             } else if (goodEnd) {
                 peakQuality.getItems().add(new QualityReport.Item(
-                        "the left edge of the peak is not clearly defined", DataQuality.BAD, QualityReport.Weight.MINOR
+                        "the left edge of the peak is not clearly defined", DataQuality.BAD, QualityReport.Weight.MAJOR
+                ));
+            } else {
+                peakQuality.getItems().add(new QualityReport.Item(
+                        "the peak has no clearly defined edges.", DataQuality.BAD, QualityReport.Weight.MAJOR
                 ));
             }
         }

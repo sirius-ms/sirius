@@ -2,6 +2,8 @@ package de.unijena.bioinf.lcms;
 
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.math.Statistics;
+import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
@@ -31,6 +33,8 @@ import de.unijena.bioinf.lcms.traceextractor.*;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.run.*;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleList;
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -172,6 +176,7 @@ public class LCMSProcessing {
                 samples.get(0).getPolarity(),
                 samples.size() // TODO: better use sample idx 0?
         );
+        makeMergeStatistics(merged, alignmentBackbone.getSamples());
         samples.add(merged);
         sampleByIdx.put(merged.getUid(), merged);
         alignmentBackbone = alignmentStrategy.align(merged, alignmentBackbone, Arrays.asList(alignmentBackbone.getSamples()), alignmentAlgorithm, alignmentScorerFull);
@@ -181,6 +186,26 @@ public class LCMSProcessing {
         }
         merged.getStorage().getAlignmentStorage().setStatistics(alignmentBackbone.getStatistics());
         return alignmentBackbone;
+    }
+
+    private void makeMergeStatistics(ProcessedSample merged, ProcessedSample[] samples) {
+        FloatArrayList ms2NoiseLevels = new FloatArrayList();
+        FloatArrayList ppmsWithinTraces = new FloatArrayList(), ppmsBetweenTraces = new FloatArrayList();
+        FloatArrayList absWithinTraces = new FloatArrayList(), absBetweenTraces = new FloatArrayList();
+        for (ProcessedSample sample : samples) {
+            SampleStats s = sample.getStorage().getStatistics();
+            ms2NoiseLevels.add(s.getMs2NoiseLevel());
+            ppmsWithinTraces.add((float)s.getMs1MassDeviationWithinTraces().getPpm());
+            ppmsBetweenTraces.add((float)s.getMinimumMs1MassDeviationBetweenTraces().getPpm());
+            absWithinTraces.add((float)s.getMs1MassDeviationWithinTraces().getAbsolute());
+            absBetweenTraces.add((float)s.getMinimumMs1MassDeviationBetweenTraces().getAbsolute());
+        }
+        SampleStats statistics = new SampleStats(
+                new float[0], (float)Statistics.robustAverage(ms2NoiseLevels.toFloatArray()),
+                new Deviation(Statistics.robustAverage(ppmsWithinTraces.toFloatArray()),Statistics.robustAverage(absWithinTraces.toFloatArray())),
+                new Deviation(Statistics.robustAverage(ppmsBetweenTraces.toFloatArray()),Statistics.robustAverage(absBetweenTraces.toFloatArray()))
+        );
+        merged.getStorage().setStatistics(statistics);
     }
 
     public ProcessedSample merge(AlignmentBackbone backbone) {
@@ -241,20 +266,28 @@ public class LCMSProcessing {
          * this code relies on lazy evaluation of streams. If that is not the case we might have a huge memory peak here :/
          */
         DoubleArrayList fwhms = new DoubleArrayList();
-        DoubleArrayList ms2Noise = new DoubleArrayList();
+        DoubleArrayList heightDividedByfwhms = new DoubleArrayList();
         siriusDatabaseAdapter.getImportedFeatureStream(true)
                 .filter(x -> x.getRunId() == merged.getRun().getRunId())
                 .filter(x -> x.getMSData().get().getIsotopePattern() != null && x.getMSData().get().getIsotopePattern().size() >= 2)
                 .forEach(x->{
                     fwhms.add(x.getFwhm().doubleValue());
+                    heightDividedByfwhms.add(x.getApexIntensity()/x.getFwhm());
                 });
         SampleStats st = merged.getStorage().getStatistics();
         fwhms.sort(null);
+        DoubleList ms2NoiseLevel = new DoubleArrayList();
+        for (ProcessedSample sample : alignmentBackbone.getSamples()) {
+            SampleStats statistics = sample.getStorage().getStatistics();
+            ms2NoiseLevel.add(statistics.getMs2NoiseLevel());
+        }
         return new SampleStatistics(
                 st.getMs1MassDeviationWithinTraces(),
                 alignmentBackbone.getStatistics().getExpectedMassDeviationBetweenSamples(),
                 alignmentBackbone.getStatistics().getExpectedRetentionTimeDeviation(),
-                fwhms.getDouble(fwhms.size()/2), (int)alignmentBackbone.getStatistics().getMedianNumberOfAlignments(),
+                fwhms.getDouble(fwhms.size()/2),
+                heightDividedByfwhms.getDouble(heightDividedByfwhms.size()/2),
+                (int)alignmentBackbone.getStatistics().getMedianNumberOfAlignments(),
                 st.ms2NoiseLevel()
         );
 

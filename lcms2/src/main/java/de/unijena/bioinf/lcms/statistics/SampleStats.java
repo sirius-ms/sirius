@@ -18,7 +18,7 @@ public class SampleStats {
      * Assigns a noise level to each spectrum in the sample
      * The noise level is the intensity where we think all peaks below it are noise
      */
-    private float[] noiseLevelPerScan;
+    @With private float[] noiseLevelPerScan;
 
     /**
      * Assigns a noise level to all MS/MS in the sample

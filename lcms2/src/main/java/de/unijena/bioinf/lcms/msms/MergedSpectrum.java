@@ -65,7 +65,7 @@ public class MergedSpectrum implements Spectrum<MergedPeak> {
         headers[headers.length-1] = msms.header;
         sampleIds.add(msms.sampleId);
 
-        this.chimericPollution += weight * (msms.ms1Intensity/msms.chimericPollution);
+        this.chimericPollution += weight * (msms.chimericPollution/msms.ms1Intensity);
     }
 
     public double getChimericPollutionRatio() {

@@ -2,6 +2,7 @@ package de.unijena.bioinf.lcms.adducts;
 
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.algorithm.BinarySearch;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
@@ -35,6 +36,7 @@ public class AdductNetwork {
     protected AdductNode[] rtOrderedNodes;
     protected AdductManager adductManager;
     List<List<AdductNode>> subgraphs = new ArrayList<>();
+    List<AdductNode> singletons = new ArrayList<>();
 
     protected Deviation deviation;
     ProjectSpaceTraceProvider provider;
@@ -170,6 +172,7 @@ public class AdductNetwork {
             if (!visited.get(rtOrderedNodes[k].index)) {
                 List<AdductNode> nodes = spread(rtOrderedNodes[k], visited);
                 if (nodes.size()>1) subgraphs.add(nodes);
+                else singletons.add(nodes.get(0));
             }
         }
     }
@@ -227,6 +230,15 @@ public class AdductNetwork {
                 }
             }));
         }
+        jobs.add(manager.submitJob(new BasicJJob<Object>() {
+            @Override
+            protected Object compute() throws Exception {
+                for (AdductNode node : singletons) {
+                    updateRoutine.accept(singletonCompound(node));
+                }
+                return "";
+            }
+        }));
         jobs.forEach(JJob::takeResult);
     }
 
@@ -379,6 +391,22 @@ public class AdductNetwork {
                 null,compound.stream().anyMatch(x->x.hasMsMs),
                 compound.stream().map(AdductNode::getFeature).toList(),
                 pairs
+        );
+    }
+
+    public Compound singletonCompound(AdductNode n) {
+        AlignedFeatures f = n.features;
+        if (f.getDetectedAdducts()==null) {
+            f.setDetectedAdducts(DetectedAdducts.singleton(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN, PrecursorIonType.unknown(f.getCharge())));
+        }
+        return new Compound(
+                0,
+                f.getRetentionTime(),
+                null,
+                f.getName(),
+                n.hasMsMs,
+                new ArrayList<>(List.of(f)),
+                new ArrayList<>()
         );
     }
 
