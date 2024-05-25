@@ -450,7 +450,8 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                 }
             } else {
                 exp.setPrecursorIonType(PrecursorIonType.unknown(ionization.getCharge()));
-                if (!ionization.isIonizationUnknown()) exp.setAnnotation(DetectedAdducts.class, DetectedAdducts.singleton(DetectedAdducts.Source.INPUT_FILE, ionization));
+                if (!ionization.isIonizationUnknown())
+                    exp.setAnnotation(DetectedAdducts.class, DetectedAdducts.singleton(DetectedAdducts.Source.INPUT_FILE, ionization));
             }
             exp.setMs1Spectra(ms1spectra);
             exp.setMs2Spectra(ms2spectra);
