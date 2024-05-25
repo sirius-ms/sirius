@@ -135,7 +135,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
             final PossibleAdducts ionModes = ms1IonAdductDetection.detect(pinput, settings.getDetectable(charge));
 
             if (ionModes != null)
-                detAdds.putMs1PreprocessorDetectedAdducts(new PossibleAdducts(ionModes.getAdducts()), charge);
+                detAdds.put(DetectedAdducts.Source.MS1_PREPROCESSOR, new PossibleAdducts(ionModes.getAdducts()));
         }
         pinput.setAnnotation(PossibleAdducts.class, exp.getPossibleAdductsOrFallback());
     }
