@@ -49,7 +49,7 @@ public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Sou
         /**
          * adducts detected based on MS1 only are never very confident. Hence, we will always add the fallback adducts.
          */
-        MS1_PREPROCESSOR(true, false, false),//can't be empty since it must contain unknown adduct
+        MS1_PREPROCESSOR(true, true, false),
 
         //special sources. These are only added additionally, but not used as primary source. Hence. if only these are available, we add the fallbacks.
 
@@ -160,8 +160,20 @@ public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Sou
         LoggerFactory.getLogger(this.getClass()).warn("Detected adduct source '" + source + "' specified, but adducts are empty.");
     }
 
-    private PossibleAdducts cleanUnknownAdducts(PossibleAdducts possibleAdducts) {
-        return new PossibleAdducts(possibleAdducts.getAdducts().stream().filter(a -> !a.isIonizationUnknown()).collect(Collectors.toSet()));
+
+    private static final PrecursorIonType M_PLUS = PrecursorIonType.getPrecursorIonType("[M]+");
+    private static final PrecursorIonType M_H_PLUS = PrecursorIonType.getPrecursorIonType("[M+H]+");
+
+    /**
+     * 1. remove unknown adducts
+     * 2. guarantees that never both, [M]+ and [M+H]+, are contained. This prevents issues with duplicate structure candidates in subsequent steps. [M+H]+ is favored.
+     * @param possibleAdducts
+     * @return
+     */
+    private PossibleAdducts cleanAdducts(PossibleAdducts possibleAdducts) {
+        Set<PrecursorIonType> adducts = possibleAdducts.getAdducts().stream().filter(a -> !a.isIonizationUnknown()).collect(Collectors.toCollection(HashSet::new));
+        if (adducts.contains(M_PLUS) && adducts.contains(M_H_PLUS)) adducts.remove(M_PLUS);
+        return new PossibleAdducts(adducts);
     }
 
     /**
@@ -177,7 +189,7 @@ public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Sou
         if (!as.getEnforced(charge).isEmpty())
             possibleAdducts = PossibleAdducts.union(possibleAdducts, as.getEnforced(charge));
 
-        possibleAdducts = cleanUnknownAdducts(possibleAdducts);
+        possibleAdducts = cleanAdducts(possibleAdducts);
 
         if (possibleAdducts.isEmpty())
             LoggerFactory.getLogger(this.getClass()).error("Final set of selected adducts is empty.");
@@ -230,20 +242,22 @@ public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Sou
 
     public PossibleAdducts put(@NotNull Source key, @NotNull PossibleAdducts value) {
         if (key == Source.MS1_PREPROCESSOR)
-            LoggerFactory.getLogger(this.getClass()).warn("Adducts of MS1_PREPROCESSOR must be added via dedicated method.");
-        return super.put(key, value);
+            return super.put(key, ensureMS1PreprocessorAllowsToAddFallbackAdducts(value));
+        else
+            return super.put(key, value);
     }
 
-    public PossibleAdducts putMs1PreprocessorDetectedAdducts(@NotNull PossibleAdducts value, int charge) {
-        value = ensureMS1PreprocessorAllowsToAddFallbackAdducts(value, charge);
-        return put(Source.MS1_PREPROCESSOR, value);
-    }
-
-    private PossibleAdducts ensureMS1PreprocessorAllowsToAddFallbackAdducts(@NotNull PossibleAdducts value, int charge) {
+    private PossibleAdducts ensureMS1PreprocessorAllowsToAddFallbackAdducts(@NotNull PossibleAdducts value) {
         //this ensures we add fallback adducts, because we are never certain enough with MS1_PREPROCESSOR
-        if (!value.hasUnknownIontype()) {
+        //both, empty list or unknown adduct indicate to add fallback
+        if (!value.isEmpty() && !value.hasUnknownIontype()) {
             Set<PrecursorIonType> adducts = new HashSet<>(value.getAdducts());
-            adducts.add(PrecursorIonType.unknown(charge)); //to indicate that MS1_PREPROCESSOR is always combined with fallback adducts
+            //to indicate that MS1_PREPROCESSOR is always combined with fallback adducts
+            if (adducts.stream().anyMatch(PrecursorIonType::isPositive)) {
+                adducts.add(PrecursorIonType.unknown(1));
+            } else {
+                adducts.add(PrecursorIonType.unknown(-1));
+            }
             return new PossibleAdducts(adducts);
         } else {
             return value;
