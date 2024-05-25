@@ -33,8 +33,6 @@ import de.unijena.bioinf.lcms.adducts.ProjectSpaceTraceProvider;
 import de.unijena.bioinf.lcms.adducts.assignment.OptimalAssignmentViaBeamSearch;
 import de.unijena.bioinf.lcms.align.AlignmentBackbone;
 import de.unijena.bioinf.lcms.align.MoI;
-import de.unijena.bioinf.lcms.merge.MergedTrace;
-import de.unijena.bioinf.lcms.projectspace.ProjectSpaceImporter;
 import de.unijena.bioinf.lcms.projectspace.SiriusProjectDocumentDbAdapter;
 import de.unijena.bioinf.lcms.quality.QualityAssessment;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;

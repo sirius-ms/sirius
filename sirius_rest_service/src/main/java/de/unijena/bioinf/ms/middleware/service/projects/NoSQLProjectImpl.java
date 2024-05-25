@@ -305,8 +305,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     @SneakyThrows
     public Optional<TraceSet> getTraceSetForCompound(String compoundId) {
-        Database<?> storage1 = storage();
-        Database<?> storage = storage1;
+        Database<?> storage = storage();
         Optional<de.unijena.bioinf.ms.persistence.model.core.Compound> maybeCompound = storage.getByPrimaryKey(Long.parseLong(compoundId), de.unijena.bioinf.ms.persistence.model.core.Compound.class);
         if (maybeCompound.isEmpty()) return Optional.empty();
         de.unijena.bioinf.ms.persistence.model.core.Compound compound = maybeCompound.get();
@@ -356,7 +355,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             AbstractAlignedFeatures f = allFeatures.get(k);
             String label = labels.get(k);
             TraceRef r = f.getTraceRef();
-            MergedTrace mergedTrace = storage1.getByPrimaryKey(r.getTraceId(), MergedTrace.class).orElse(null);
+            MergedTrace mergedTrace = storage.getByPrimaryKey(r.getTraceId(), MergedTrace.class).orElse(null);
             if (mergedTrace==null) continue;
 
             TraceSet.Trace trace = new TraceSet.Trace();
