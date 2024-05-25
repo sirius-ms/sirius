@@ -33,13 +33,15 @@ import de.unijena.bioinf.sirius.deisotope.IsotopePatternDetection;
 import de.unijena.bioinf.sirius.deisotope.TargetedIsotopePatternDetection;
 import de.unijena.bioinf.sirius.elementdetection.DeepNeuralNetworkElementDetector;
 import de.unijena.bioinf.sirius.elementdetection.ElementDetection;
-import de.unijena.bioinf.sirius.iondetection.AdductDetection;
 import de.unijena.bioinf.sirius.iondetection.DetectIonsFromMs1;
 import de.unijena.bioinf.sirius.merging.Ms1Merging;
 import de.unijena.bioinf.sirius.validation.Ms1Validator;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
