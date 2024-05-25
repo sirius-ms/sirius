@@ -21,11 +21,13 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 
@@ -36,34 +38,39 @@ import java.util.stream.Collectors;
  */
 public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Source, PossibleAdducts> implements Ms2ExperimentAnnotation, Cloneable { //todo ElementFilter: ConcurrentHashMap is not immutable. Hence, in princlipe, this could be cleared. Should Ms2ExperimentAnnotation be immutable?
     public enum Source {
-        /*
-        for compatibility with old way of settting Ms2Experiment PrecursorIonType in input parser
+        /**
+         * this source indicates adducts specified in the input file
          */
-        KNOWN_ADDUCT(true, false, false),
-        /*
-        this way adducts should now be specified in the input file
+        INPUT_FILE(true, false, true),
+        /**
+         * adducts found during SIRIUS LCMS preprocessing. May contain unknown adduct to indicate to add fallback adducts.
          */
-        INPUT_FILE(true, false, false),
-        LCMS_ALIGN(true, true, true),
-        MS1_PREPROCESSOR(true, true, true),
+        LCMS_ALIGN(true, true, false),
+        /**
+         * adducts detected based on MS1 only are never very confident. Hence, we will always add the fallback adducts.
+         */
+        MS1_PREPROCESSOR(true, false, false),//can't be empty since it must contain unknown adduct
 
         //special sources. These are only added additionally, but not used as primary source. Hence. if only these are available, we add the fallbacks.
 
-        SPECTRAL_LIBRARY_SEARCH(false, false, true),
-        /*
-        this is in case the source string could not be parsed
+        /**
+         * adducts found by spectral library search. May be additionally added.
          */
-        UNSPECIFIED_SOURCE(false, false, true);
+        SPECTRAL_LIBRARY_SEARCH(false, false, false),
+        /**
+         * this is never directly specified. It is only used to make sure the map can be parsed from string. Unknown sources are mapped to this enum value. May be additionally added.
+         */
+        UNSPECIFIED_SOURCE(false, false, false);
 
 
         private final boolean isPrimarySource;
         private final boolean canBeEmpty;
-        private final boolean isEnforced;
+        private final boolean forbidAdditionalSources;
 
-        Source(boolean isPrimarySource, boolean canBeEmpty, boolean allowAdditionalSources) {
+        Source(boolean isPrimarySource, boolean canBeEmpty, boolean forbidAdditionalSources) {
             this.isPrimarySource = isPrimarySource;
             this.canBeEmpty = canBeEmpty;
-            this.isEnforced = allowAdditionalSources;
+            this.forbidAdditionalSources = forbidAdditionalSources;
         }
 
         public boolean isPrimaryDetectionSource() {
@@ -72,6 +79,10 @@ public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Sou
 
         public boolean isAdditionalDetectionSource() {
             return !isPrimarySource;
+        }
+
+        public boolean isForbidAdditionalSources() {
+            return forbidAdditionalSources;
         }
     }
 
@@ -89,7 +100,7 @@ public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Sou
      *
      * @return primary adducts, if available. If no adducts are available returns Optional.empty and not empty PossibleAdducts.
      */
-    public Optional<PossibleAdducts> getPrimaryAdducts() {
+    protected Optional<PossibleAdducts> getPrimaryAdducts() {
         return getAdducts((Source[]) Arrays.stream(Source.values()).filter(Source::isPrimaryDetectionSource).toArray(l -> new Source[l])).flatMap(pa -> pa.isEmpty() ? Optional.empty() : Optional.of(pa));
     }
 
@@ -97,46 +108,93 @@ public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Sou
      *
      * @return additional adducts, if available. If no adducts are available returns Optional.empty and not empty PossibleAdducts.
      */
-    public Optional<PossibleAdducts> getAdditionalAdducts() {
+    protected Optional<PossibleAdducts> getAdditionalAdducts() {
         return getUnionOfAdducts((Source[]) Arrays.stream(Source.values()).filter(Source::isAdditionalDetectionSource).toArray(l -> new Source[l])).flatMap(pa -> pa.isEmpty() ? Optional.empty() : Optional.of(pa));
     }
 
     protected boolean hasPrimarySourceThatForbidsAdditionalSources() {
-        return Arrays.stream(Source.values()).filter(Source::isPrimaryDetectionSource).anyMatch(source -> !getOrDefault(source, PossibleAdducts.empty()).isEmpty());
+        return Arrays.stream(Source.values()).filter(Source::isPrimaryDetectionSource).filter(Source::isForbidAdditionalSources).anyMatch(source -> !getOrDefault(source, PossibleAdducts.empty()).isEmpty());
     }
 
-    /**
-     * returns detected adducts from the best primary source (see {@link Source}). Plus detected adducts from the "additional" sources maybe added.
-     * @return set of adducts that shall be considered for compound annnotation
-     */
-    public PossibleAdducts getSelectedDetectedAdducts() {
-        return getDetectedAdductsAndOrFallback(() -> Collections.emptySet());
-    }
 
     /**
-     * returns detected adducts when a primary source detected/specified adducts (see {@link Source}). Else uses the fallback adducts.
-     * On top, detected adducts from the "additional" sources maybe added.
-     * Special case: if primary source contains unknown {@link PrecursorIonType} fallback is also added
-     * @param fallbackAdductsSupplier
+     * returns adducts by the following rules
+     * 1. input file adducts are returned if prioritized
+     * 2. adducts of the most important primary source (may be from input file) are selected
+     * 3. adducts of the additional sources are added if primary source allows for addition
+     * 4. fallback adducts are added if set of adducts is empty so far or if the set contains an unknown {@link PrecursorIonType} [M+?] to specify fallback adduct shall be added
+     * 5. the intersection of the set of adducts and the detectable adducts is calculated
+     * 6. enforced adducts are added
+     * 7. the final set is cleaned of unknown adducts and is returnd
      * @return set of adducts that shall be considered for compound annnotation
      */
-    public PossibleAdducts getDetectedAdductsAndOrFallback(Supplier<Set<PrecursorIonType>> fallbackAdductsSupplier) {
+    public PossibleAdducts getDetectedAdductsAndOrFallback(AdductSettings adductSettings, int charge) {
+        if (adductSettings.isPrioritizeInputFileAdducts() && containsKey(Source.INPUT_FILE)) {
+            PossibleAdducts inputAdducts = get(Source.INPUT_FILE);
+            if (inputAdducts.isEmpty()){
+                warnIsEmpty(Source.INPUT_FILE);
+            } else if (!inputAdducts.hasUnknownIontype()) {
+                return inputAdducts;
+            } else {
+                //input file detected adduct annotation contains unknown adduct.
+                //Probably a very uncommon way to specify this
+            }
+        }
         PossibleAdducts primaryAdductsOrFallback = getPrimaryAdducts().map(pa ->
-                //an unknown PrecursorIonType such aus [M+?]+ means that we are not sure and still want to add fallback adducts
-                        (pa.hasUnknownIontype() || pa.isEmpty()) ? PossibleAdducts.union(pa, fallbackAdductsSupplier.get()) : pa)
-                .orElse(new PossibleAdducts(fallbackAdductsSupplier.get()));
+                        (allowFallbackAdducts(pa)) ? PossibleAdducts.union(pa, adductSettings.getFallback(charge)) : pa)
+                .orElse(new PossibleAdducts(adductSettings.getFallback(charge)));
 
-        if (hasPrimarySourceThatForbidsAdditionalSources()) return primaryAdductsOrFallback;
+        if (hasPrimarySourceThatForbidsAdditionalSources()) return processwithAdductSettingsAndClean(primaryAdductsOrFallback, adductSettings, charge);
 
         Optional<PossibleAdducts> additionalAdducts = getAdditionalAdducts();
-        if (additionalAdducts.isEmpty()) return primaryAdductsOrFallback;
-        else return PossibleAdducts.union(primaryAdductsOrFallback, additionalAdducts.get());
+        if (additionalAdducts.isEmpty()) return processwithAdductSettingsAndClean(primaryAdductsOrFallback, adductSettings, charge);
+        else return processwithAdductSettingsAndClean(PossibleAdducts.union(primaryAdductsOrFallback, additionalAdducts.get()), adductSettings, charge);
+    }
+
+    private boolean allowFallbackAdducts(PossibleAdducts pa) {
+        //an unknown PrecursorIonType such aus [M+?]+ means that we are not sure and still want to add fallback adducts
+        return pa.hasUnknownIontype() || pa.isEmpty();
+    }
+
+    private void warnIsEmpty(Source source) {
+        LoggerFactory.getLogger(this.getClass()).warn("Detected adduct source '" + source + "' specified, but adducts are empty.");
+    }
+
+    private PossibleAdducts cleanUnknownAdducts(PossibleAdducts possibleAdducts) {
+        return new PossibleAdducts(possibleAdducts.getAdducts().stream().filter(a -> !a.isIonizationUnknown()).collect(Collectors.toSet()));
+    }
+
+    /**
+     * interect with detectable adducts, add enforced and clean unknown adducts
+     * @param possibleAdducts
+     * @param as
+     * @param charge
+     * @return
+     */
+    private PossibleAdducts processwithAdductSettingsAndClean(PossibleAdducts possibleAdducts, AdductSettings as, int charge) {
+        possibleAdducts = PossibleAdducts.intersection(possibleAdducts, as.getDetectable());
+
+        if (!as.getEnforced(charge).isEmpty())
+            possibleAdducts = PossibleAdducts.union(possibleAdducts, as.getEnforced(charge));
+
+        possibleAdducts = cleanUnknownAdducts(possibleAdducts);
+
+        if (possibleAdducts.isEmpty())
+            LoggerFactory.getLogger(this.getClass()).error("Final set of selected adducts is empty.");
+
+        return possibleAdducts;
     }
 
     public Optional<PossibleAdducts> getAdducts(Source... keyPrio) {
-        for (Source key : keyPrio)
-            if (containsKey(key) && (key.canBeEmpty || !get(key).isEmpty()))
-                return Optional.of(get(key));
+        for (Source key : keyPrio) {
+            if (containsKey(key)) {
+                if (key.canBeEmpty || !get(key).isEmpty()) {
+                    return Optional.of(get(key));
+                } else {
+                    warnIsEmpty(key);
+                }
+            }
+        }
         return Optional.empty();
     }
 
@@ -170,6 +228,33 @@ public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Sou
         return keySet();
     }
 
+    public PossibleAdducts put(@NotNull Source key, @NotNull PossibleAdducts value) {
+        if (key == Source.MS1_PREPROCESSOR)
+            LoggerFactory.getLogger(this.getClass()).warn("Adducts of MS1_PREPROCESSOR must be added via dedicated method.");
+        return super.put(key, value);
+    }
+
+    public PossibleAdducts putMs1PreprocessorDetectedAdducts(@NotNull PossibleAdducts value, int charge) {
+        value = ensureMS1PreprocessorAllowsToAddFallbackAdducts(value, charge);
+        return put(Source.MS1_PREPROCESSOR, value);
+    }
+
+    private PossibleAdducts ensureMS1PreprocessorAllowsToAddFallbackAdducts(@NotNull PossibleAdducts value, int charge) {
+        //this ensures we add fallback adducts, because we are never certain enough with MS1_PREPROCESSOR
+        if (!value.hasUnknownIontype()) {
+            Set<PrecursorIonType> adducts = new HashSet<>(value.getAdducts());
+            adducts.add(PrecursorIonType.unknown(charge)); //to indicate that MS1_PREPROCESSOR is always combined with fallback adducts
+            return new PossibleAdducts(adducts);
+        } else {
+            return value;
+        }
+    }
+
+    /**
+     *
+     * @param source
+     * @return true if {@link DetectedAdducts} contain adducts from a {@link Source} that is more important than the queried.
+     */
     public boolean hasMoreImportantSource(Source source) {
         return keySet().stream().anyMatch(k -> k.compareTo(source)<0);
     }

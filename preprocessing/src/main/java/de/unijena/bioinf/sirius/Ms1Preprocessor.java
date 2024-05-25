@@ -39,10 +39,7 @@ import de.unijena.bioinf.sirius.merging.Ms1Merging;
 import de.unijena.bioinf.sirius.validation.Ms1Validator;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -119,7 +116,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
         //todo we need to write to the original data here. to keep the predicted adducts. maybe this should be part of the IDResult instead????
         final Ms2Experiment exp = pinput.getOriginalInput();
 
-        // if input file contains an adduct annotation, disable adduct detection
+        //todo this is contained of historical reasons. Remove if absolutely sure that this is not necessary anymore. Currently it still seems to be needed for detectElements() in the compute panel
         if (!exp.getPrecursorIonType().isIonizationUnknown()) {
             pinput.setAnnotation(PossibleAdducts.class, new PossibleAdducts(exp.getPrecursorIonType()));
             return;
@@ -136,7 +133,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
             final PossibleAdducts ionModes = ms1IonAdductDetection.detect(pinput, settings.getDetectable(charge));
 
             if (ionModes != null)
-                detAdds.put(DetectedAdducts.Source.MS1_PREPROCESSOR, new PossibleAdducts(ionModes.getAdducts()));
+                detAdds.putMs1PreprocessorDetectedAdducts(new PossibleAdducts(ionModes.getAdducts()), charge);
         }
         pinput.setAnnotation(PossibleAdducts.class, exp.getPossibleAdductsOrFallback());
     }

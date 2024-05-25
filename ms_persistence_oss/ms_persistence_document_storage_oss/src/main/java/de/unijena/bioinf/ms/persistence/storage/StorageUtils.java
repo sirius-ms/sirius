@@ -112,8 +112,12 @@ public class StorageUtils {
         if (exp.getMs1Spectra() != null && !exp.getMs1Spectra().isEmpty())
             sirius.getMs1Preprocessor().preprocess(exp);
         de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts det = exp.getAnnotation(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.class).orElse(new de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts());
-        if (!exp.getPrecursorIonType().isIonizationUnknown())
-            det.put(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.KNOWN_ADDUCT, new PossibleAdducts(exp.getPrecursorIonType()));
+        if (!exp.getPrecursorIonType().isIonizationUnknown()) {
+            PossibleAdducts inputFileAdducts = det.get(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.INPUT_FILE);
+            PossibleAdducts ionTypeAdducts = new PossibleAdducts(exp.getPrecursorIonType());
+            det.put(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.INPUT_FILE,
+                    inputFileAdducts == null ? ionTypeAdducts : PossibleAdducts.union(inputFileAdducts, ionTypeAdducts));
+        }
 
         int charge = exp.getPrecursorIonType().getCharge();
         if (msData.getMsnSpectra()!=null) {
