@@ -428,6 +428,7 @@ public class SearchableDatabase {
     return Optional.ofNullable(getDisplayName()).orElse(getDatabaseId());
   }
 
+
   /**
    * Convert the given object to string with each line indented by 4 spaces
    * (except the first line).

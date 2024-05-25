@@ -164,6 +164,7 @@ public abstract class Icons {
     public static final Icon SIRIUS_SPLASH = new ImageIcon(AboutDialog.class.getResource("/icons/sirius.png"));
     public static final Icon SIRIUS_APP_ICON = new ImageIcon(Icons.class.getResource("/icons/sirius_icon.png"));
     public static final Image SIRIUS_APP_IMAGE = Toolkit.getDefaultToolkit().createImage(Icons.class.getResource("/icons/sirius_icon.png"));
+
     public static BufferedImage DRAG_N_DROP_IMAGE_160() {
         try {
             return ImageIO.read(Icons.class.getResource("/icons/circular-icons/c-dragNdrop-160px.png"));
@@ -180,6 +181,14 @@ public abstract class Icons {
             new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/yellow_l.png")),
             new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/green_l.png"))};
 
+    public static final Icon[] TRAFFIC_LIGHT_TINY = new Icon[]{new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/red_t.png")),
+            new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/yellow_t.png")),
+            new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/green_t.png"))};
+
+
+    public static final Icon TRAFFIC_LIGHT_MEDIUM_GRAY = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/gray_m.png"));
+    public static final Icon TRAFFIC_LIGHT_SMALL_GRAY = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/gray_s.png"));
+    public static final Icon TRAFFIC_LIGHT_TINY_GRAY =  new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/gray_t.png"));
     public static final Icon[] TRAFFIC_LIGHT_MEDIUM = new Icon[]{new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/red_m.png")),
             new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/yellow_m.png")),
             new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/green_m.png"))};

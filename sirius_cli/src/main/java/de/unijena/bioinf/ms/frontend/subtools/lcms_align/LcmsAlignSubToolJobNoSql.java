@@ -144,8 +144,36 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         }
 
         AdductManager adductManager = new AdductManager();
-        adductManager.add(ionTypes);
-        System.out.println(ionTypes);
+        if (merged.getPolarity()>0){
+            adductManager.add(Set.of(PrecursorIonType.getPrecursorIonType("[M+H]+"), PrecursorIonType.getPrecursorIonType("[M+Na]+"),
+                            PrecursorIonType.getPrecursorIonType("[M+K]+"),  PrecursorIonType.getPrecursorIonType("[M+NH3+H]+"),
+                            PrecursorIonType.getPrecursorIonType("[M + FA + H]+"),
+                            PrecursorIonType.getPrecursorIonType("[M + ACN + H]+"),
+
+                            PrecursorIonType.getPrecursorIonType("[M - H2O + H]+"),
+
+                            PrecursorIonType.getPrecursorIonType("[2M + Na]+"),
+                            PrecursorIonType.getPrecursorIonType("[2M + H]+"),
+                    PrecursorIonType.getPrecursorIonType("[2M + K]+")
+                    )
+            );
+        } else {
+            adductManager.add(Set.of(PrecursorIonType.getPrecursorIonType("[M-H]-"), PrecursorIonType.getPrecursorIonType("[M+Cl]-"),
+                            PrecursorIonType.getPrecursorIonType("[M+Br]-"),
+                            PrecursorIonType.getPrecursorIonType("[2M + H]-"),
+                            PrecursorIonType.getPrecursorIonType("[2M + Br]-"),
+                            PrecursorIonType.getPrecursorIonType("[2M + Cl]-"),
+                    PrecursorIonType.fromString("[M+Na-2H]-"),
+                    PrecursorIonType.fromString("[M + CH2O2 - H]-"),
+                    PrecursorIonType.fromString("[M + C2H4O2 - H]-"),
+                    PrecursorIonType.fromString("[M + H2O - H]-"),
+                    PrecursorIonType.fromString("[M - H3N - H]-"),
+                    PrecursorIonType.fromString("[M - CO2 - H]-"),
+                    PrecursorIonType.fromString("[M - CH2O3 - H]-"),
+                    PrecursorIonType.fromString("[M - CH3 - H]-")
+                    )
+            );
+        }
         // -_- na toll, die Liste ist nicht identisch mit den Configs. Macht irgendwie auch Sinn. Ich will aber ungern
         // Multimere in die AductSettings reinpacken, das zu debuggen wird die Hoelle. Machen wir ein andern Mal.
         adductManager.add(((merged.getPolarity()<0) ? PeriodicTable.getInstance().getNegativeAdducts() : PeriodicTable.getInstance().getPositiveAdducts()).stream().filter(PrecursorIonType::isMultimere).collect(Collectors.toSet()));
@@ -182,6 +210,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                         report.setAlignedFeatureId(feature.getAlignedFeatureId());
                         feature.setDataQuality(report.getOverallQuality());
                         store.insert(report);
+                        store.upsert(feature);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
