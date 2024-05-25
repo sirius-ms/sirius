@@ -35,7 +35,8 @@ public class FormulaSearchSettings implements Ms2ExperimentAnnotation {
     public final boolean ignoreMassDeviationForCandidateList; //this is currently not set. I prepared this so it is easy to add/force user-specified formula lists for bad-quality features -> e.g. for checking want went wrong
 
     /**
-     * apply {@link de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints} (chemical alphabet / element filter, and filters such as {@link de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter}) to formulas from bottum-up search
+     * apply chemical alphabet / element filter specified via {@link de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints} to formulas from bottum-up search.
+     * Filters such as {@link de.unijena.bioinf.ChemistryBase.chem.utils.ValenceFilter}) are always applied
      */
     public final boolean applyFormulaConstraintsToBottomUp;
 
