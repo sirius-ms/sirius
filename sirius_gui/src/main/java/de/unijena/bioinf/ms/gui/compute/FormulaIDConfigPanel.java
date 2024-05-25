@@ -266,7 +266,6 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
             adductList.checkBoxList.replaceElements(adducts.stream().sorted(PrecursorIonTypeSelector.ionTypeComparator).toList());
             adductList.checkBoxList.uncheckAll();
             if (!isBatchDialog()) {
-//                Set<PrecursorIonType> detectedAdds = ecs.get(0).getDetectedAdducts();
                 if (detectedAdducteWithoutCharge.isEmpty())
                     settings.getFallback().forEach(adductList.checkBoxList::check);
                 else
