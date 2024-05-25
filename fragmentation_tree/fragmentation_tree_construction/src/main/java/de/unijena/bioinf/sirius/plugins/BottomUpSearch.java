@@ -16,10 +16,7 @@ import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
@@ -86,10 +83,14 @@ public class BottomUpSearch extends SiriusPlugin {
             Whiteset ws = input.getAnnotationOrThrow(Whiteset.class);
 
             FormulaSearchSettings formulaSearchSettings = input.getAnnotation(FormulaSearchSettings.class, FormulaSearchSettings::bottomUpOnly);
+            final FormulaConstraints formulaConstraints = input.getAnnotationOrThrow(FormulaConstraints.class);
+            PossibleAdducts possibleAdducts = input.getAnnotationOrThrow(PossibleAdducts.class);
             if (formulaSearchSettings.applyFormulaConstraintsToBottomUp) {
-                final FormulaConstraints formulaConstraints = input.getAnnotationOrThrow(FormulaConstraints.class);
-                PossibleAdducts possibleAdducts = input.getAnnotationOrThrow(PossibleAdducts.class);
                 formulas = Whiteset.filterMeasuredFormulas(formulas, formulaConstraints, possibleAdducts.getAdducts().stream().filter(x->x.isSupportedForFragmentationTreeComputation()).collect(Collectors.toSet()));
+            } else {
+                //filter need to be applied because later we cannot differientiate formulas with and without applied filter anyways but need this to select adducts.
+                FormulaConstraints formulaConstraintsWithAllElements = new FormulaConstraints(formulaConstraints.getChemicalAlphabet().extend(formulas.stream().flatMap(mf -> mf.elements().stream()).filter(Objects::isNull).distinct().toArray(Element[]::new)), formulaConstraints.getFilters());
+                formulas = Whiteset.filterMeasuredFormulas(formulas, formulaConstraintsWithAllElements, possibleAdducts.getAdducts().stream().filter(x->x.isSupportedForFragmentationTreeComputation()).collect(Collectors.toSet()));
             }
 
             Whiteset bottomUpWs = Whiteset.ofMeasuredFormulas(formulas, BottomUpSearch.class);
