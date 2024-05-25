@@ -36,15 +36,16 @@ public class QualityAssessment implements FeatureQualityChecker {
                 ++count;
             }
         }
+        float c = report.getCategories().get(QualityReport.MS2_QUALITY).getOverallQuality().getScore();
         if (count==0) {
             report.setOverallQuality(DataQuality.NOT_APPLICABLE);
         } else {
             score /= count;
-            if (score >= 2.66) {
+            if (score >= 2.5 && c>=2) {
                 report.setOverallQuality(DataQuality.GOOD);
-            } else if (score >= 1.66) {
+            } else if (score >= 1.6) {
                 report.setOverallQuality(DataQuality.DECENT);
-            } else if (score >= 0.66) {
+            } else if (score >= 0.6) {
                 report.setOverallQuality(DataQuality.BAD);
             } else report.setOverallQuality(DataQuality.LOWEST);
         }
@@ -52,7 +53,6 @@ public class QualityAssessment implements FeatureQualityChecker {
         // - whenever we have a good MS2 we KEEP the data. ALWAYS.
         // - if almost everything is bad (including the spectra) we downgrade the quality level to lowest
         //   this essentially marks a compound for "deletion".
-        float c = report.getCategories().get(QualityReport.MS2_QUALITY).getOverallQuality().getScore();
         float c2 = report.getCategories().get(QualityReport.PEAK_QUALITY).getOverallQuality().getScore();
         float c3 = report.getCategories().get(QualityReport.ADDUCT_QUALITY).getOverallQuality().getScore();
         float c4 = report.getCategories().get(QualityReport.ISOTOPE_QUALITY).getOverallQuality().getScore();
