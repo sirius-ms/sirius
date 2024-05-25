@@ -23,8 +23,8 @@ package de.unijena.bioinf.ms.middleware.service.projects;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
-import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
@@ -82,6 +82,7 @@ import java.io.StringWriter;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.springframework.http.HttpStatus.NOT_FOUND;
@@ -133,10 +134,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         AlignedFeatures feature = maybeFeature.get();
         storage.fetchAllChildren(feature, "alignedFeatureId", "features", Feature.class);
         // only use features with LC/MS information
-        List<Feature> features = feature.getFeatures().get().stream().filter(x->x.getApexIntensity()!=null).toList();
+        List<Feature> features = feature.getFeatures().stream().flatMap(List::stream).filter(x -> x.getApexIntensity() != null).toList();
         List<LCMSRun> samples = new ArrayList<>();
-        for (int k=0; k < features.size(); ++k) {
-            samples.add(storage.getByPrimaryKey(features.get(k).getRunId(), LCMSRun.class).orElse(null));
+        for (Feature value : features) {
+            samples.add(storage.getByPrimaryKey(value.getRunId(), LCMSRun.class).orElse(null));
         }
 
         QuantificationTable table = new QuantificationTable();
@@ -166,7 +167,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         project().fetchMsData(feature);
 
         // only use features with LC/MS information
-        List<Feature> features = feature.getFeatures().stream().flatMap(List::stream).filter(x->x.getApexIntensity()!=null).toList();
+        List<Feature> features = feature.getFeatures().stream().flatMap(List::stream).filter(x -> x.getApexIntensity() != null).toList();
         List<LCMSRun> samples = new ArrayList<>();
         for (int k=0; k < features.size(); ++k) {
             samples.add(storage.getByPrimaryKey(features.get(k).getRunId(), LCMSRun.class).orElse(null));
@@ -308,32 +309,32 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         Optional<de.unijena.bioinf.ms.persistence.model.core.Compound> maybeCompound = storage.getByPrimaryKey(Long.parseLong(compoundId), de.unijena.bioinf.ms.persistence.model.core.Compound.class);
         if (maybeCompound.isEmpty()) return Optional.empty();
         de.unijena.bioinf.ms.persistence.model.core.Compound compound = maybeCompound.get();
-        storage.fetchChild(compound, "adductFeatures", "compoundId", AlignedFeatures.class);
+        storage.fetchAllChildren(compound, "compoundId", "adductFeatures", AlignedFeatures.class);
         ArrayList<AbstractAlignedFeatures> allFeatures = new ArrayList<>();
         List<String> labels = new ArrayList<>();
-        for (AlignedFeatures f : compound.getAdductFeatures().get()) {
-            if (f.getApexIntensity()==null) continue; // ignore features without lcms information
+        for (AlignedFeatures f : compound.getAdductFeatures().stream().flatMap(Collection::stream).toList()) {
+            if (f.getApexIntensity() == null) continue; // ignore features without lcms information
 
             String mainLabel;
             if (f.getDetectedAdducts().getAllAdducts().size()==1) {
                 mainLabel = f.getDetectedAdducts().getAllAdducts().get(0).toString();
             } else mainLabel = "[M + ?]" + (f.getCharge() > 0 ? "+" : "-");
 
-            storage.fetchChild(f, "isotopicFeatures", "alignedFeatureId", AlignedIsotopicFeatures.class);
+            storage.fetchAllChildren(f, "alignedFeatureId", "isotopicFeatures", AlignedIsotopicFeatures.class);
             allFeatures.add(f);
-            labels.add(mainLabel);
-            List<AlignedIsotopicFeatures> isotopes = f.getIsotopicFeatures().get().stream().filter(x -> x.getApexIntensity() != null).sorted(Comparator.comparingDouble(AbstractFeature::getAverageMass)).toList();
+            labels.add(mainLabel + String.format(Locale.US, " (%.2f m/z) ", f.getAverageMass()));
+            List<AlignedIsotopicFeatures> isotopes = f.getIsotopicFeatures().orElse(new ArrayList<>()).stream().filter(x -> x.getApexIntensity() != null).sorted(Comparator.comparingDouble(AbstractFeature::getAverageMass)).toList();
             for (int k=0; k < isotopes.size(); ++k) {
                 allFeatures.add(isotopes.get(k));
-                labels.add(mainLabel + (k+1)+"-th isotope");
+                labels.add(mainLabel + String.format(Locale.US, " (%.2f m/z) ", isotopes.get(k).getAverageMass()) + (k+1)+"-th isotope");
             }
         }
         if (allFeatures.isEmpty()) return Optional.empty();
 
         TraceSet traceSet = new TraceSet();
-        LCMSRun merged = storage.getByPrimaryKey(allFeatures.get(0).getRunId(), LCMSRun.class).orElse(null);
+        MergedLCMSRun merged = storage.getByPrimaryKey(allFeatures.get(0).getRunId(), MergedLCMSRun.class).orElse(null);
         if (merged==null) return Optional.empty();
-        storage.fetchChild(merged, "retentionTimeAxis", "runId", RetentionTimeAxis.class);
+        storage.fetchChild(merged, "runId", "retentionTimeAxis", RetentionTimeAxis.class);
         if (merged.getRetentionTimeAxis().isEmpty()) return Optional.empty();
         RetentionTimeAxis mergedAxis = merged.getRetentionTimeAxis().get();
         TraceSet.Axes axes = new TraceSet.Axes();
@@ -353,7 +354,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         for (int k=0; k < allFeatures.size(); ++k) {
             AbstractAlignedFeatures f = allFeatures.get(k);
             String label = labels.get(k);
-            MergedTrace mergedTrace = storage().getByPrimaryKey(f.getTraceRef().getTraceId(), MergedTrace.class).orElse(null);
+            TraceRef r = f.getTraceRef();
+            MergedTrace mergedTrace = storage.getByPrimaryKey(r.getTraceId(), MergedTrace.class).orElse(null);
             if (mergedTrace==null) continue;
 
             TraceSet.Trace trace = new TraceSet.Trace();
@@ -369,7 +371,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 vec[i+shift] = fs.getFloat(i);
             }
             trace.setIntensities(vec);
+
+            // add annotations
+            ArrayList<TraceSet.Annotation> annotations = new ArrayList<>();
+            // feature annotation
+            annotations.add(new TraceSet.Annotation(TraceSet.AnnotationType.FEATURE, label,
+                    r.getApex() + shift, r.getStart() + shift, r.getEnd() + shift));
+
+            trace.setAnnotations(annotations.toArray(TraceSet.Annotation[]::new));
             traces.add(trace);
+
         }
 
         traceSet.setTraces(traces.toArray(TraceSet.Trace[]::new));
@@ -490,31 +501,31 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             msDataBuilder.mergedMs1Spectrum(mergedMs1);
         }
 
-            if (featureImport.getMs2Spectra() != null && !featureImport.getMs2Spectra().isEmpty()) {
-                List<MutableMs2Spectrum> msnSpectra = new ArrayList<>();
-                List<CollisionEnergy> ce = new ArrayList<>();
-                DoubleList pmz = new DoubleArrayList();
-                for (int i = 0; i < featureImport.getMs2Spectra().size(); i++) {
-                    BasicSpectrum spectrum = featureImport.getMs2Spectra().get(i);
-                    MutableMs2Spectrum mutableMs2 = new MutableMs2Spectrum(spectrum);
-                    mutableMs2.setMsLevel(spectrum.getMsLevel());
-                    if (spectrum.getScanNumber() != null) {
-                        mutableMs2.setScanNumber(spectrum.getScanNumber());
-                    }
-                    if (spectrum.getCollisionEnergy() != null) {
-                        mutableMs2.setCollisionEnergy(spectrum.getCollisionEnergy());
-                        ce.add(spectrum.getCollisionEnergy());
-                    }
-                    if (spectrum.getPrecursorMz() != null) {
-                        mutableMs2.setPrecursorMz(spectrum.getPrecursorMz());
-                        pmz.add(spectrum.getPrecursorMz());
-                    }
-                    msnSpectra.add(mutableMs2);
-                    msDataBuilder.msnSpectra(msnSpectra.stream().map(MergedMSnSpectrum::fromMs2Spectrum).toList());
+        if (featureImport.getMs2Spectra() != null && !featureImport.getMs2Spectra().isEmpty()) {
+            List<MutableMs2Spectrum> msnSpectra = new ArrayList<>();
+            List<CollisionEnergy> ce = new ArrayList<>();
+            DoubleList pmz = new DoubleArrayList();
+            for (int i = 0; i < featureImport.getMs2Spectra().size(); i++) {
+                BasicSpectrum spectrum = featureImport.getMs2Spectra().get(i);
+                MutableMs2Spectrum mutableMs2 = new MutableMs2Spectrum(spectrum);
+                mutableMs2.setMsLevel(spectrum.getMsLevel());
+                if (spectrum.getScanNumber() != null) {
+                    mutableMs2.setScanNumber(spectrum.getScanNumber());
                 }
-                SimpleSpectrum merged = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getNormalizedSpectrum(de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.mergeSpectra(new Deviation(10), true, false, msnSpectra), Normalization.Sum);
-                msDataBuilder.mergedMSnSpectrum(merged);
+                if (spectrum.getCollisionEnergy() != null) {
+                    mutableMs2.setCollisionEnergy(spectrum.getCollisionEnergy());
+                    ce.add(spectrum.getCollisionEnergy());
+                }
+                if (spectrum.getPrecursorMz() != null) {
+                    mutableMs2.setPrecursorMz(spectrum.getPrecursorMz());
+                    pmz.add(spectrum.getPrecursorMz());
+                }
+                msnSpectra.add(mutableMs2);
+                msDataBuilder.msnSpectra(msnSpectra.stream().map(MergedMSnSpectrum::fromMs2Spectrum).toList());
             }
+            SimpleSpectrum merged = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getNormalizedSpectrum(de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.mergeSpectra(new Deviation(10), true, false, msnSpectra), Normalization.Sum);
+            msDataBuilder.mergedMSnSpectrum(merged);
+        }
         builder.msData(msDataBuilder.build());
 
 
@@ -537,14 +548,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         AlignedFeature.AlignedFeatureBuilder builder = AlignedFeature.builder()
                 .alignedFeatureId(fid)
                 .name(features.getName())
+                .compoundId(features.getCompoundId()==null ? null : features.getCompoundId().toString())
                 .ionMass(features.getAverageMass())
                 .quality(features.getDataQuality())
-                .computing(computeStateProvider.apply(this, fid));
-
-
-        List<PrecursorIonType> allAdducts = features.getDetectedAdducts().getAllAdducts();
-        if (allAdducts.size()==1) builder.ionType(allAdducts.get(0).toString());
-        else builder.ionType(PrecursorIonType.unknown(features.getCharge()).toString());
+                .computing(computeStateProvider.apply(this, fid))
+                .charge(features.getCharge())
+                .detectedAdducts(features.getDetectedAdducts().getAllAdducts().stream().map(PrecursorIonType::toString)
+                        .collect(Collectors.toSet()));
 
         RetentionTime rt = features.getRetentionTime();
         if (rt != null) {
@@ -757,7 +767,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId) {
-        return storage().getByPrimaryKey(alignedFeatureId, QualityReport.class).map(this::convertToFeatureQuality)
+        return storage().getByPrimaryKey(Long.parseLong(alignedFeatureId), QualityReport.class).map(this::convertToFeatureQuality)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Not Quality information found for feature '" + alignedFeatureId + "' in project " + projectId + "."));
     }
 

@@ -43,11 +43,9 @@ public class AlignedFeatureQuality {
    * Overall Quality
    */
   public enum OverallQualityEnum {
-    LOWEST("LOWEST"),
-    
-    LOWEST_WITH_DEPENDENCIES("LOWEST_WITH_DEPENDENCIES"),
-    
     NOT_APPLICABLE("NOT_APPLICABLE"),
+    
+    LOWEST("LOWEST"),
     
     BAD("BAD"),
     

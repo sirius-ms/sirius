@@ -709,6 +709,22 @@ public class AlignedFeatureController {
     }
 
 
+    /**
+     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
+     *
+     * @param projectId      project-space to read from.
+     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
+     * @return AlignedFeatureQuality quality information of the respective feature.
+     */
+    @Tag(name = "experimental")
+    @GetMapping(value = "/{alignedFeatureId}/quality-report", produces = MediaType.APPLICATION_JSON_VALUE)
+    public AlignedFeatureQuality getAlignedFeaturesQuality(
+            @PathVariable String projectId, @PathVariable String alignedFeatureId
+    ) {
+        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesQualityById(alignedFeatureId);
+    }
+
+
     protected static String idString(String pid, String fid) {
         return "'" + pid + "/" + fid + "'";
     }

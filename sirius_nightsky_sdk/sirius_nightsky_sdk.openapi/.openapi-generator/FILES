@@ -32,7 +32,7 @@ docs/ConsensusCriterionCSI.md
 docs/ConsensusCriterionDeNovo.md
 docs/DBLink.md
 docs/Deviation.md
-docs/ExperimentalDataQualityApi.md
+docs/ExperimentalApi.md
 docs/FeatureAnnotations.md
 docs/FeatureImport.md
 docs/FeaturesApi.md
@@ -62,7 +62,6 @@ docs/Mode.md
 docs/MsData.md
 docs/MsNovelist.md
 docs/PageAlignedFeature.md
-docs/PageAlignedFeatureQuality.md
 docs/PageCompound.md
 docs/PageFormulaCandidate.md
 docs/PageJob.md
@@ -107,7 +106,7 @@ docs/ZodiacEdgeFilterThresholds.md
 docs/ZodiacEpochs.md
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/ActuatorApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/CompoundsApi.java
-src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/ExperimentalDataQualityApi.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/ExperimentalApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/FeaturesApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/GuiApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/InfoApi.java
@@ -179,7 +178,6 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Mode.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/MsData.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/MsNovelist.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageAlignedFeature.java
-src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageAlignedFeatureQuality.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageCompound.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageFormulaCandidate.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageJob.java

@@ -16,6 +16,11 @@ text {
     font-size: 13px;
     color: #bbb;
 }
+/* for svg we have to use the fill attribute instead of the color attribute */
+text.label, text.legend {
+    font-size: 13px;
+    fill:#bbb;
+}
 
 #tooltip, .popup {
     color: black;
@@ -89,3 +94,67 @@ g.highlight_atom path { fill: #4169E1; }
 
 .intensity_1 { fill: #bbb; }
 .intensity_2 { fill: #bbb; }
+
+
+/*
+    LCMS-Viewer
+*/
+rect.lcfeatureBox {
+        fill:gray;
+        fill-opacity: 0.04;
+        stroke:gray;
+        stroke-width: 1px;
+}
+rect.lcfeatureBox:hover {
+        fill:gray;
+        fill-opacity: 0.08;
+        stroke:gray;
+        stroke-width: 1px;
+}
+.lccurve {
+        stroke-width: 1px;
+}
+.lccurve.lcfocused {
+        stroke-width: 4px;
+}
+.lclegend-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.lclegend-item {
+    display: flex;
+    align-items: center;
+    width: 48%;
+    margin: 0%;
+    box-sizing: border-box;
+    padding:9px;
+}
+.lclegend-item.lcfocused {
+    border: 1px solid black;
+    background-color: SlateBlue;
+}
+
+.lccolor-box {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    margin-right: 10px;
+}
+
+.lcsample-name {
+    flex: 1;
+    color: white;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lcintensity-value {
+    margin-left: 10px;
+    text-align: right;
+    min-width: 60px;
+}

@@ -5,7 +5,9 @@ import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.ToggableSidePanel;
+import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeatureQuality;
 import de.unijena.bioinf.ms.nightsky.sdk.model.TraceSet;
+import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -14,8 +16,11 @@ import reactor.core.publisher.Mono;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListener<FormulaResultBean, InstanceBean> {
 
@@ -34,7 +39,16 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         }
     }
 
+    enum ViewType {
+        ALIGNMENT("feature alignment"), COMPOUND("adduct/isotope assignment");
+        private final String label;
+        ViewType(String label) {
+            this.label = label;
+        }
+    }
+
     private Order order = Order.ALPHABETICALLY;
+    private ViewType viewType = ViewType.ALIGNMENT;
 
     public LCMSViewerPanel(FormulaList siriusResultElements) {
         // set content
@@ -47,14 +61,28 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         summaryPanel = new LCMSCompoundSummaryPanel();
         this.add(new ToggableSidePanel("quality report", summaryPanel), BorderLayout.EAST);
 
-        JLabel label = new JLabel("Order samples ");
-        toolbar.add(label);
-        ButtonGroup group = new ButtonGroup();
-        for (Order o : Order.values()) {
-            JRadioButton button = new JRadioButton(new SetOrder(o));
-            if(o==order) button.setSelected(true);
-            group.add(button);
-            toolbar.add(button);
+        {
+            JLabel label = new JLabel("Show ");
+            toolbar.add(label);
+            ButtonGroup group = new ButtonGroup();
+            for (ViewType o : ViewType.values()) {
+                JRadioButton button = new JRadioButton(new SetViewType(o));
+                if(o==viewType) button.setSelected(true);
+                group.add(button);
+                toolbar.add(button);
+            }
+        }
+        toolbar.add(Box.createHorizontalStrut(18));
+        {
+            JLabel label = new JLabel("Order samples ");
+            toolbar.add(label);
+            ButtonGroup group = new ButtonGroup();
+            for (Order o : Order.values()) {
+                JRadioButton button = new JRadioButton(new SetOrder(o));
+                if(o==order) button.setSelected(true);
+                group.add(button);
+                toolbar.add(button);
+            }
         }
         // add listeners
         siriusResultElements.addActiveResultChangedListener(this);
@@ -73,6 +101,24 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         public void actionPerformed(ActionEvent e) {
             if (order != value) {
                 order = value;
+                updateContent();
+            }
+        }
+    }
+
+    private class SetViewType extends AbstractAction {
+
+        ViewType value;
+
+        public SetViewType(ViewType order) {
+            super(order.label);
+            this.value = order;
+        }
+
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            if (viewType != value) {
+                viewType = value;
                 updateContent();
             }
         }
@@ -111,16 +157,30 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
             return;
         }
 
-        TraceSet spec = currentInstance.getClient().features()
-                .getTraces1WithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getFeatureId())
-                .bodyToMono(TraceSet.class).onErrorComplete().block();
+        CompletableFuture<AlignedFeatureQuality> future = currentInstance.getClient().experimental().getAlignedFeaturesQualityWithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getFeatureId())
+                .bodyToMono(AlignedFeatureQuality.class).onErrorComplete().toFuture();
+
+        TraceSet spec;
+        if (viewType==ViewType.ALIGNMENT) {
+            spec = currentInstance.getClient().features().getTraces1WithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getFeatureId()).bodyToMono(TraceSet.class).onErrorComplete().block();
+        } else {
+            spec = currentInstance.getSourceFeature().getCompoundId()==null ? null : currentInstance.getClient().compounds().getTracesWithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getSourceFeature().getCompoundId()).bodyToMono(TraceSet.class).onErrorComplete().block();
+        }
+
+        try {
+            AlignedFeatureQuality alignedFeatureQuality = future.get();
+            summaryPanel.setReport(alignedFeatureQuality);
+        } catch (InterruptedException | ExecutionException e) {
+            summaryPanel.setReport(null);
+            throw new RuntimeException(e);
+        }
 
         if (spec == null){
             reset();
             return;
         }
 
-        lcmsWebview.setInstance(spec, order);
+        lcmsWebview.setInstance(spec, order, viewType, currentInstance.getFeatureId());
         updateInfo();
     }
 

@@ -9,9 +9,11 @@ The AlignedFeature contains the ID of a feature (aligned over runs) together wit
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
 |**alignedFeatureId** | **String** |  |  [optional] |
+|**compoundId** | **String** |  |  [optional] |
 |**name** | **String** |  |  [optional] |
 |**ionMass** | **Double** |  |  [optional] |
-|**ionType** | **String** |  |  [optional] |
+|**charge** | **Integer** |  |  |
+|**detectedAdducts** | **Set&lt;String&gt;** |  |  |
 |**rtStartSeconds** | **Double** |  |  [optional] |
 |**rtEndSeconds** | **Double** |  |  [optional] |
 |**quality** | [**QualityEnum**](#QualityEnum) | Quality of this feature. |  [optional] |
@@ -26,9 +28,8 @@ The AlignedFeature contains the ID of a feature (aligned over runs) together wit
 
 | Name | Value |
 |---- | -----|
-| LOWEST | &quot;LOWEST&quot; |
-| LOWEST_WITH_DEPENDENCIES | &quot;LOWEST_WITH_DEPENDENCIES&quot; |
 | NOT_APPLICABLE | &quot;NOT_APPLICABLE&quot; |
+| LOWEST | &quot;LOWEST&quot; |
 | BAD | &quot;BAD&quot; |
 | DECENT | &quot;DECENT&quot; |
 | GOOD | &quot;GOOD&quot; |
