@@ -42,7 +42,8 @@ public class LCMSWebview extends JFXPanel {
             this.webView = new WebView();
             final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
             final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
-            if (!theme.equals("Dark")) {
+            boolean DarkMode = theme.equals("Dark");
+            if (!DarkMode) {
                 this.webView.getEngine().setUserStyleSheetLocation(
                         getClass().getResource("/js/" + "styles.css").toExternalForm());
             } else {
@@ -64,10 +65,10 @@ public class LCMSWebview extends JFXPanel {
                     webView.getEngine().executeScript(loadJs());
                     lock.lock();
                     ((JSObject)webView.getEngine().executeScript("window")).setMember("console", console);
-                    if (!theme.equals("Dark")) {
-                        this.webView.getEngine().executeScript("var fg_color = 'black';");
+                    if (!DarkMode) {
+                        this.webView.getEngine().executeScript("document.setBright()");
                     } else {
-                        this.webView.getEngine().executeScript("var fg_color = 'lightsteelblue';");
+                        this.webView.getEngine().executeScript("document.setDark()");
                     }
                     this.lcmsViewer = (JSObject)webView.getEngine().executeScript("document.drawPlot('#lc-plot')");
                     delayAfterHTMLLoading.forEach(x->x.accept(this.lcmsViewer));
