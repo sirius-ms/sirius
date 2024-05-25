@@ -12,7 +12,8 @@ The AlignedFeature contains the ID of a feature (aligned over runs) together wit
 |**compoundId** | **String** |  |  [optional] |
 |**name** | **String** |  |  [optional] |
 |**ionMass** | **Double** |  |  [optional] |
-|**ionType** | **String** |  |  [optional] |
+|**charge** | **Integer** |  |  |
+|**detectedAdducts** | **Set&lt;String&gt;** |  |  |
 |**rtStartSeconds** | **Double** |  |  [optional] |
 |**rtEndSeconds** | **Double** |  |  [optional] |
 |**quality** | [**QualityEnum**](#QualityEnum) | Quality of this feature. |  [optional] |

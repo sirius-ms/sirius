@@ -94,13 +94,15 @@ public class SiriusSubToolJob extends InstanceJob {
             if (searchResults != null && !searchResults.isEmpty()){
                 //add adduct and formula from high-scoring library hits to detected adducts and formula candiadates list
                 InjectSpectralLibraryMatchFormulas injectFormulas = exp.getAnnotationOrDefault(InjectSpectralLibraryMatchFormulas.class);
+                //todo Adducts from spectral library search are not stored persistently, when implementing library search 2.0 we have to evaluate whether we want to do this.
                 addAdductsAndFormulasFromHighScoringLibraryMatches(exp, searchResults, injectFormulas.getMinScoreToInject(), injectFormulas.getMinPeakMatchesToInject());
             }
 
             // create WhiteSet from DB if necessary
             final Optional<FormulaSearchDB> searchDB = exp.getAnnotation(FormulaSearchDB.class);
             if (searchDB.isPresent() && !searchDB.get().isEmpty())
-                wSet = submitSubJob(FormulaWhiteListJob.create(ApplicationCore.WEB_API.getChemDB(), searchDB.get().searchDBs, exp, detectPossibleAdducts(exp)))
+                wSet = submitSubJob(FormulaWhiteListJob
+                        .create(ApplicationCore.WEB_API.getChemDB(), searchDB.get().searchDBs, exp))
                         .awaitResult();
 
             checkForInterruption();
@@ -136,24 +138,6 @@ public class SiriusSubToolJob extends InstanceJob {
         //make possible adducts persistent without rewriting whole experiment
         exp.getAnnotation(DetectedAdducts.class).ifPresent(inst::saveDetectedAdductsAnnotation);
         updateProgress(currentProgress().getProgress() + 2);
-    }
-
-    @Deprecated //todo remove when detection is always performed at import and this is not necessary anymore
-    protected PrecursorIonType[] detectPossibleAdducts(Ms2Experiment experiment) {
-        final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
-        Ms2Experiment me = new MutableMs2Experiment(experiment, true);
-        if (me.hasAnnotation(DetectedAdducts.class)) {
-            //copy DetectedAdducts, so the following preprocess does not already alter this annotation. (not 100% sure if this is needed here)
-            DetectedAdducts detectedAdducts = me.getAnnotationOrNull(DetectedAdducts.class);
-            DetectedAdducts daWithoutMS1Detect = new DetectedAdducts();
-            detectedAdducts.getSourceStrings().stream().forEach(s -> daWithoutMS1Detect.put(s, detectedAdducts.get(s)));
-            me.setAnnotation(DetectedAdducts.class, daWithoutMS1Detect);
-        }
-        ProcessedInput pi = pp.preprocess(me);
-        return pi.getAnnotation(PossibleAdducts.class).orElseGet(() -> {
-            LoggerFactory.getLogger(SiriusSubToolJob.class).error("Could not detect adducts. Molecular formula candidate list may be affected and incomplete.");
-            return experiment.getPossibleAdductsOrFallback();
-        }).getAdducts().toArray(l -> new PrecursorIonType[l]);
     }
 
     private void addAdductsAndFormulasFromHighScoringLibraryMatches(Ms2Experiment exp, List<SpectralSearchResult.SearchResult> searchResults, double minSimilarity, int minSharedPeaks) {
