@@ -4,8 +4,8 @@ class LiquidChromatographyPlot {
     constructor(svgSelector) {
         this.svgSelector = svgSelector;
         this.svg = d3.select(svgSelector);
-        this.width = +this.svg.attr('width');
-        this.height = +this.svg.attr('height');
+        this.width = 800;
+        this.height = 400;
         this.margin = { top: 20, right: 30, bottom: 40, left: 100 };
         this.plotWidth = this.width - this.margin.left - this.margin.right;
         this.plotHeight = this.height - this.margin.top - this.margin.bottom;
@@ -72,17 +72,17 @@ class LiquidChromatographyPlot {
         this.removeFocus();
         this.focusedItem = d3.select(`#sample-${index}`);
         this.focusedCurve = d3.select(`#curve-${index}`);
-        this.focusedItem.classed("focused", true);
-        this.focusedCurve.classed("focused", true);
+        this.focusedItem.classed("lcfocused", true);
+        this.focusedCurve.classed("lcfocused", true);
     }
 
     removeFocus() {
         if (this.focusedItem) {
-            this.focusedItem.classed("focused",false);
+            this.focusedItem.classed("lcfocused",false);
             this.focusedItem = null;
         }
         if (this.focusedCurve) {
-            this.focusedCurve.classed("focused",false);
+            this.focusedCurve.classed("lcfocused",false);
             this.focusedCurve = null;
         }
     }
@@ -103,15 +103,15 @@ class LiquidChromatographyPlot {
             comparisonFunction = (u,v)=>v.relativeIntensity-u.relativeIntensity;
         }
         console.log(this.data.traces);
-        this.samples = d3.select("#legend-container");
+        this.samples = d3.select("#lclegend-container");
         this.samples.selectAll("ul").remove();
 
-        this.items = this.samples.append("ul").classed("legend-list", true).selectAll("li").data(this.data.traces).join("li")
-            .classed("legend-item", true).attr("id", (d)=>`sample-${d.index}`).sort(comparisonFunction);
+        this.items = this.samples.append("ul").classed("lclegend-list", true).selectAll("li").data(this.data.traces).join("li")
+            .classed("lclegend-item", true).attr("id", (d)=>`sample-${d.index}`).sort(comparisonFunction);
 
-        this.items.append("span").classed("color-box", true).style("background-color", (d)=>d.color);
-        this.items.append("span").classed("sample-name", true).text((d)=>d.label);
-        this.items.append("span").classed("intensity-value", true).text((d)=>intensity(d.relativeIntensity));
+        this.items.append("span").classed("lccolor-box", true).style("background-color", (d)=>d.color);
+        this.items.append("span").classed("lcsample-name", true).text((d)=>d.label);
+        this.items.append("span").classed("lcintensity-value", true).text((d)=>intensity(d.relativeIntensity));
         this.items.on("click", (e,d)=>d.mainFeature()===null ? null : this.zoomToFeature(d.mainFeature()));
 
         this.items.on("mouseover", (e,d)=>this.focusOn(d.index))
@@ -136,8 +136,8 @@ class LiquidChromatographyPlot {
         this.plotArea.append('g')
             .attr('class', 'y-axis');
 
-        this.svg.append("text").attr("class", "x-label").attr("x", this.plotWidth/2).attr("y",this.height).text("retention time (" + this.unit + ")");
-        this.svg.append("text").attr("class", "y-label").attr("transform", `translate(10, ${this.height/2}) rotate(-90)`).text("intensity");
+        this.svg.append("text").classed("legend", true).attr("x", this.plotWidth/2).attr("y",this.height).text("retention time (" + this.unit + ")");
+        this.svg.append("text").classed("legend", true).attr("transform", `translate(10, ${this.height/2}) rotate(-90)`).text("intensity");
 
     }
 
@@ -154,7 +154,7 @@ class LiquidChromatographyPlot {
         this.yScale.range([this.plotHeight, 0].map(d => transform.applyY(d)));
 
         this.plotArea.select('.y-axis').call(this.yAxis);
-        this.plotArea.select('.line').attr('d', this.line);
+        this.plotArea.select('.lcline').attr('d', this.line);
         this.updatePlot();
     }
 
@@ -187,7 +187,7 @@ class LiquidChromatographyPlot {
         // feature area
         this.featureArea = this.mainPlot.append("g")
             .data(this.data.focusFeatures).append("rect")
-            .attr("class", "featureBox")
+            .attr("class", "lcfeatureBox")
             .attr("x", (d)=>this.xScale(d.fromRt))
             .attr("y", 0)
             .attr("width", (d)=>this.xScale(d.toRt)-this.xScale(d.fromRt))
@@ -206,7 +206,7 @@ class LiquidChromatographyPlot {
             let j=i;
             let trace = this.mainPlot.append('path')
                     .datum(tr.data())
-                    .attr('class', "curve lines")
+                    .attr('class', "lccurve lclines")
                     .attr('d', this.line)
                     .attr("id", (d)=>`curve-${j}`)
                     .style('fill', 'none')
@@ -220,10 +220,10 @@ class LiquidChromatographyPlot {
         if (this.data.specialTrace) {
             this.mergedTrace = this.mainPlot.append('path')
             .datum(this.data.specialTrace.data())
-            .attr('class', "maincurve lines")
+            .attr('class', "lcmaincurve lclines")
             .attr('d', this.line)
             .style('fill', 'none')
-            .style('stroke', 'black')
+            .style('stroke', getEmphColor())
             .style('stroke-width', '3px');
         }
 
@@ -241,13 +241,13 @@ class LiquidChromatographyPlot {
             this.resetZoom();
         });
         // Draw the circle
-        this.zoomOut.append("rect").attr("x",0).attr("y",0).attr("width",23).attr("height",23).attr("fill","white").attr("fill-opacity","0.0")
+        this.zoomOut.append("rect").classed("lczoombox",true).attr("x",0).attr("y",0).attr("width",23).attr("height",23).attr("fill","white").attr("fill-opacity","0.0")
 
         this.zoomOut.append("circle")
             .attr("cx", 11)
             .attr("cy", 11)
             .attr("r", 8)
-            .attr("stroke", "black")
+            .attr("stroke", getEmphColor())
             .attr("fill", "none")
             .attr("stroke-width", 2);
 
@@ -257,7 +257,7 @@ class LiquidChromatographyPlot {
             .attr("y1", 11)
             .attr("x2", 15)
             .attr("y2", 11)
-            .attr("stroke", "black")
+            .attr("stroke", getEmphColor())
             .attr("stroke-width", 2);
 
         // Draw the handle of the magnifying glass
@@ -266,7 +266,7 @@ class LiquidChromatographyPlot {
             .attr("y1", 16.6569)
             .attr("x2", 23)
             .attr("y2", 23)
-            .attr("stroke", "black")
+            .attr("stroke", getEmphColor())
             .attr("stroke-width", 2);
 
 
@@ -314,11 +314,11 @@ class LiquidChromatographyPlot {
                 .call(this.yAxis.scale(newYScale));
 
             // Update line path
-            transition.selectAll('.lines')
+            transition.selectAll('.lclines')
                 .attr('d', d => this.line.x(d => newXScale(d.rt)).y(d => newYScale(d.intensity))(d));
 
             // Update feature area
-            transition.select('.featureBox')
+            transition.select('.lcfeatureBox')
                 .attr("x", (d) => newXScale(d.fromRt))
                 .attr("width", (d) => newXScale(d.toRt) - newXScale(d.fromRt));
         };
@@ -421,7 +421,7 @@ class LCAlignmentData extends AbstractLiquidChromatographyData {
         for (var i=0; i < this.json.traces.length; ++i) {
             if (this.json.traces[i].merged===true) {
                 let tr = new Trace(this, this.json.traces[i], -1, "");
-                tr.color = "black";
+                tr.color = getEmphColor();
                 this.setSpecialTrace(tr);
             } else {
                 let tr = new Trace(this, this.json.traces[i], this.traces.length,this.json.traces[i].sampleName);
@@ -443,6 +443,7 @@ class LCCompoundData extends AbstractLiquidChromatographyData {
             let tr = new Trace(this, this.json.traces[i], this.traces.length, this.json.traces[i].label);
             this.addTrace(tr);
             if (this.json.traces[i].id==mainFeature) {
+                tr.color = getEmphColor();
                 this.setSpecialTrace(tr);
             }
         }
@@ -546,54 +547,68 @@ class DataSelection {
     }
 }
 
+function getEmphColor() {
+    if (isDark()) {
+        return "#fff";
+    } else {
+        return "black";
+    }
+}
+
 function getColor(index) {
     const colorPalette = [
-        '#1f78b4', // blue
-        '#33a02c', // green
-        '#e31a1c', // red
-        '#ff7f00', // orange
-        '#6a3d9a', // purple
-        '#b15928', // brown
-        '#a6cee3', // light blue
-        '#b2df8a', // light green
-        '#fb9a99', // light red
-        '#fdbf6f', // light orange
-        '#cab2d6', // light purple
-        '#ffff99'  // yellow
+"#a6cee3",
+"#1f78b4",
+"#b2df8a",
+"#33a02c",
+"#fb9a99",
+"#e31a1c",
+"#fdbf6f",
+"#ff7f00",
+"#cab2d6",
+"#6a3d9a",
+"#ffff99",
+"#b15928",
+"#00876c",
+"#439981",
+"#6aaa96",
+"#8cbcac",
+"#aecdc2",
+"#cfdfd9",
+"#f1f1f1",
+"#f1d4d4",
+"#f0b8b8",
+"#ec9c9d",
+"#e67f83",
+"#de6069",
+"#d43d51"
     ];
 
     const baseColor = colorPalette[index % colorPalette.length];
     const variationFactor = Math.floor(index / colorPalette.length);
-
-    return adjustColor(baseColor, variationFactor);
-}
-
-function adjustColor(color, factor) {
-    // Convert hex color to RGB
-    const rgb = hexToRgb(color);
     
-    // Apply a variation factor
-    const r = (rgb.r + factor * 10) % 256;
-    const g = (rgb.g + factor * 10) % 256;
-    const b = (rgb.b + factor * 10) % 256;
-
-    // Convert back to hex
-    return rgbToHex(r, g, b);
+    let col = d3.color(baseColor);
+    if (isDark()) {
+        col = col.brighter(variationFactor/10.0 + 0.1);
+    } else {
+        col = col.darker(variationFactor/10.0);
+    }
+    return col.formatHex();
 }
 
-function hexToRgb(hex) {
-    const bigint = parseInt(hex.slice(1), 16);
-    const r = (bigint >> 16) & 255;
-    const g = (bigint >> 8) & 255;
-    const b = bigint & 255;
-
-    return { r, g, b };
+var COLOR_MODE = "bright";
+function setBright() {
+    COLOR_MODE = "bright"; 
 }
-
-function rgbToHex(r, g, b) {
-    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+function setDark() {
+    COLOR_MODE = "dark"; 
 }
-
+function isBright() {
+    return COLOR_MODE==="bright";
+}
+function isDark() {
+    return COLOR_MODE==="dark";
+}
 
 function drawPlot(svgSelector, dataUrl) {
     const plot = new LiquidChromatographyPlot(svgSelector);
@@ -602,5 +617,6 @@ function drawPlot(svgSelector, dataUrl) {
     }
     return plot;
 }
-
+document.setDark = setDark;
+document.setBright = setBright;
 document.drawPlot = drawPlot;
