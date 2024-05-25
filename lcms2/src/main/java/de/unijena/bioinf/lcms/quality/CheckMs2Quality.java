@@ -27,8 +27,8 @@ public class CheckMs2Quality implements FeatureQualityChecker{
 
         // 1. number of peaks above 10*noise level
         int numberOfIntensivePeaks = 0, bareMinimum = 0;
-        final double threshold = run.getSampleStats().getMs2NoiseLevel()*10;
-        final double threshold2 = run.getSampleStats().getMs2NoiseLevel()*5;
+        final double threshold = run.getSampleStats().getMs2NoiseLevel()*4;
+        final double threshold2 = run.getSampleStats().getMs2NoiseLevel()*2;
         findSpec:
         for (MergedMSnSpectrum spec : spectra) {
             int sofar=numberOfIntensivePeaks, bsofar=bareMinimum;
@@ -38,7 +38,7 @@ public class CheckMs2Quality implements FeatureQualityChecker{
                 if (peaks.getMzAt(k) >= spec.getMergedPrecursorMz()-6)
                     break;
                 if (peaks.getIntensityAt(k) >= threshold) {
-                    ++numberOfIntensivePeaks;
+                    ++numberOfIntensivePeaks;++bareMinimum;
                     if (numberOfIntensivePeaks>=8) break findSpec;
                 } else if (peaks.getIntensityAt(k) >= threshold2) ++bareMinimum;
             }
