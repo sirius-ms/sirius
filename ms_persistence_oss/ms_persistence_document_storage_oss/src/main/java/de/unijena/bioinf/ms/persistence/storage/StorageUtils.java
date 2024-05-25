@@ -35,7 +35,8 @@ import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.sirius.Ms2Preprocessor;
+import de.unijena.bioinf.sirius.Sirius;
+import de.unijena.bioinf.sirius.SiriusCachedFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +48,14 @@ import java.util.stream.Stream;
 
 @Slf4j
 public class StorageUtils {
+    private static SiriusCachedFactory SIRIUS_PROVIDER;
+
+    public synchronized static SiriusCachedFactory siriusProvider() {
+        if (SIRIUS_PROVIDER == null)
+            SIRIUS_PROVIDER = new SiriusCachedFactory();
+        return SIRIUS_PROVIDER;
+    }
+
     public static Ms2Experiment toMs2Experiment(@NotNull AlignedFeatures feature, @NotNull ParameterConfig config) {
         MSData spectra = feature.getMSData().orElseThrow();
 
@@ -76,6 +85,10 @@ public class StorageUtils {
     }
 
     public static AlignedFeatures fromMs2Experiment(Ms2Experiment exp) {
+        Sirius sirius = siriusProvider().sirius(exp.getAnnotation(MsInstrumentation.class)
+                .orElse(MsInstrumentation.Unknown)
+                .getRecommendedProfile());
+
         SimpleSpectrum mergedMs1 = exp.getMergedMs1Spectrum() != null
                 ? (SimpleSpectrum) exp.getMergedMs1Spectrum()
                 : Spectrums.mergeSpectra(exp.getMs1Spectra());
@@ -90,13 +103,20 @@ public class StorageUtils {
         MSData.MSDataBuilder builder = MSData.builder()
                 .isotopePattern(isotopePattern != null ? new IsotopePattern(isotopePattern, IsotopePattern.Type.MERGED_APEX) : null)
                 .mergedMs1Spectrum(mergedMs1)
-                .mergedMSnSpectrum(Spectrums.from(new Ms2Preprocessor().preprocess(exp).getMergedPeaks()))
+                .mergedMSnSpectrum(Spectrums.from(sirius.getMs2Preprocessor().preprocess(exp).getMergedPeaks()))
                 .msnSpectra(exp.getMs2Spectra().stream().map(StorageUtils::msnSpectrumFrom).toList());
 
         MSData msData = builder.build();
-        de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts det =exp.getAnnotation(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.class).orElse(new de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts());
+
+        //detect adducts for the first time
+        if (exp.getMs1Spectra() != null && !exp.getMs1Spectra().isEmpty())
+            sirius.getMs1Preprocessor().preprocess(exp);
+        de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts det = exp.getAnnotation(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.class).orElse(new de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts());
         if (!exp.getPrecursorIonType().isIonizationUnknown()) {
-            det.put(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.UNSPECIFIED_SOURCE, new PossibleAdducts(exp.getPrecursorIonType()));
+            PossibleAdducts inputFileAdducts = det.get(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.INPUT_FILE);
+            PossibleAdducts ionTypeAdducts = new PossibleAdducts(exp.getPrecursorIonType());
+            det.put(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.INPUT_FILE,
+                    inputFileAdducts == null ? ionTypeAdducts : PossibleAdducts.union(inputFileAdducts, ionTypeAdducts));
         }
 
         int charge = exp.getPrecursorIonType().getCharge();
@@ -109,9 +129,8 @@ public class StorageUtils {
         Feature feature = Feature.builder()
                 .dataSource(DataSource.fromPath(exp.getSourceString()))
                 .retentionTime(exp.getAnnotation(RetentionTime.class).orElse(null))
-                //todo @MEL: wir habe im modell kein MZ of interest, aber letztendlich ist das einfach average mz oder? Gibt ja nur ein window keine wirkliche mzofinterest
                 .averageMass(exp.getMs2Spectra().stream().mapToDouble(Ms2Spectrum::getPrecursorMz).average().orElse(Double.NaN))
-                .charge((byte)exp.getPrecursorIonType().getCharge())
+                .charge((byte) charge)
                 //todo @MEL ich habe die mal als nullable wrapper objekte gemacht, da wir diese info fuer peak list daten nicht wirklich haben.
 //                .apexIntensity()
 //                .apexMass()
@@ -123,9 +142,6 @@ public class StorageUtils {
         alignedFeature.setExternalFeatureId(exp.getFeatureId());
         alignedFeature.setMolecularFormula(exp.getMolecularFormula());
         alignedFeature.setDetectedAdducts(StorageUtils.fromMs2ExpAnnotation(det));
-        //todo how do we want to handle detected adducts without losing scores?
-        if (exp.hasAnnotation(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.class))
-            log.warn("Experiment '" + exp.getName() + "' contains Detected adducts that which will not preserved during import!");
 
         return alignedFeature;
     }
@@ -144,7 +160,7 @@ public class StorageUtils {
         if (adducts == null)
             return null;
         List<DetectedAdduct> featureAdducts = adducts.entrySet().stream().flatMap(e -> e.getValue().getAdducts().stream()
-                        .map(p -> DetectedAdduct.builder().adduct(p).source(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.valueOf(e.getKey())).build()))
+                        .map(p -> DetectedAdduct.builder().adduct(p).source(e.getKey()).build()))
                 .toList();
 
         DetectedAdducts featureDetectedAdducts = new DetectedAdducts();
