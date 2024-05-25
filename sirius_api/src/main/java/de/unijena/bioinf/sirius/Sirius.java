@@ -701,7 +701,7 @@ public class Sirius {
 
                 List<IdentificationResult> resolvedTrees = new ArrayList<>();
                 for (PrecursorIonType pa : possibleAdducts.getAdducts(ionType.getIonization())) {
-                    boolean checkElementFilter = false;
+                    boolean checkElementFilter = false; //should be sufficient to check when adding to whiteset. since filter is not applied to all formulas. E.g. bottom up may be excluded.
                     if(isValidNeutralFormula(measuredMF, pa, ws, constraints, checkElementFilter)) {
                         resolvedTrees.add(new IdentificationResult(new IonTreeUtils().treeToNeutralTree(tree, pa, true), siriusScore));
                     }
@@ -709,7 +709,7 @@ public class Sirius {
                 if (resolvedTrees.size()==0) {
                     //should not happen anymore
                     LoggerFactory.getLogger(getClass()).warn("No valid adducts found for ionization " + ionType.getIonization() + " for compound " + experiment.getName());
-                    return Collections.singletonList(identificationResult);
+                    //return Collections.singletonList(identificationResult);
                 }
                 return resolvedTrees;
 
