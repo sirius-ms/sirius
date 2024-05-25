@@ -2,6 +2,7 @@ package de.unijena.bioinf.lcms.adducts;
 
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.algorithm.BinarySearch;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
@@ -395,6 +396,9 @@ public class AdductNetwork {
 
     public Compound singletonCompound(AdductNode n) {
         AlignedFeatures f = n.features;
+        if (f.getDetectedAdducts()==null) {
+            f.setDetectedAdducts(DetectedAdducts.singleton(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN, PrecursorIonType.unknown(f.getCharge())));
+        }
         return new Compound(
                 0,
                 f.getRetentionTime(),
