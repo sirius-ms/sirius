@@ -64,7 +64,7 @@ public class MergeTracesWithoutGapFilling {
         for (int k=0; k < mergedNoiseLevelPerScan.length; ++k) {
             mergedNoiseLevelPerScan[k] /= alignment.getStatistics().getAverageNumberOfAlignments();
         }
-        merged.getStorage().setStatistics(SampleStats.builder().noiseLevelPerScan(mergedNoiseLevelPerScan).ms2NoiseLevel(0f).ms1MassDeviationWithinTraces(new Deviation(10)).minimumMs1MassDeviationBetweenTraces(new Deviation(10)).build());
+        merged.getStorage().setStatistics(merged.getStorage().getStatistics().withNoiseLevelPerScan(mergedNoiseLevelPerScan));
 
     }
 
