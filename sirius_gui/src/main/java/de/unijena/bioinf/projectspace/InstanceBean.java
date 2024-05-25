@@ -170,9 +170,10 @@ public class InstanceBean implements SiriusPCS {
         return projectManager;
     }
 
+
     @NotNull
-    private AlignedFeature getSourceFeature(AlignedFeatureOptField... optFields) {
-        return getSourceFeature(List.of(optFields));
+    public AlignedFeature getSourceFeature() {
+        return getSourceFeature(List.of());
     }
 
     @NotNull
@@ -213,9 +214,24 @@ public class InstanceBean implements SiriusPCS {
     }
 
     public PrecursorIonType getIonType() {
-        if (getSourceFeature().getIonType() == null)
-            return null;
-        return PrecursorIonType.fromString(getSourceFeature().getIonType());
+        Set<PrecursorIonType> adducts = getDetectedAdducts();
+        if (adducts.size() == 1)
+            return adducts.iterator().next();
+        return PrecursorIonType.unknown(getSourceFeature().getCharge());
+    }
+
+    public Set<PrecursorIonType> getDetectedAdducts(){
+        return getSourceFeature().getDetectedAdducts().stream()
+                .map(PrecursorIonType::parsePrecursorIonType)
+                .flatMap(Optional::stream)
+                .filter(it -> !it.isIonizationUnknown()) //Detected adducts may contain unknown adduct by convention to indicate that they are not very confident
+                .collect(Collectors.toSet());
+    }
+
+    public Set<PrecursorIonType> getDetectedAdductsOrCharge() {
+        Set<PrecursorIonType> detected = getDetectedAdducts();
+        if (detected.isEmpty()) return Collections.singleton(PrecursorIonType.unknown(getSourceFeature().getCharge()));
+        else return detected;
     }
 
     public double getIonMass() {

@@ -23,13 +23,13 @@ import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuil
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.bibtex.BibtexManager;
+import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
 import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.properties.SiriusConfigUtils;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.rest.ProxyManager;
-import de.unijena.bioinf.sirius.SiriusCachedFactory;
 import de.unijena.bioinf.sirius.SiriusFactory;
 import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.webapi.WebAPI;
@@ -71,7 +71,7 @@ public abstract class ApplicationCore {
 
     public static final Path TOKEN_FILE;
 
-    public static final SiriusFactory SIRIUS_PROVIDER = new SiriusCachedFactory();
+    public static final SiriusFactory SIRIUS_PROVIDER = StorageUtils.siriusProvider();
     public static final WebAPI<?> WEB_API;
     @NotNull
     public static final BibtexManager BIBTEX;
