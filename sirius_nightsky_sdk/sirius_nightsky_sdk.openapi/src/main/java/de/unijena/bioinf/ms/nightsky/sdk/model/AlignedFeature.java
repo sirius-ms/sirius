@@ -20,11 +20,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FeatureAnnotations;
 import de.unijena.bioinf.ms.nightsky.sdk.model.MsData;
-import java.util.LinkedHashSet;
-import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -33,10 +30,10 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  */
 @JsonPropertyOrder({
   AlignedFeature.JSON_PROPERTY_ALIGNED_FEATURE_ID,
+  AlignedFeature.JSON_PROPERTY_COMPOUND_ID,
   AlignedFeature.JSON_PROPERTY_NAME,
   AlignedFeature.JSON_PROPERTY_ION_MASS,
-  AlignedFeature.JSON_PROPERTY_CHARGE,
-  AlignedFeature.JSON_PROPERTY_DETECTED_ADDUCTS,
+  AlignedFeature.JSON_PROPERTY_ION_TYPE,
   AlignedFeature.JSON_PROPERTY_RT_START_SECONDS,
   AlignedFeature.JSON_PROPERTY_RT_END_SECONDS,
   AlignedFeature.JSON_PROPERTY_QUALITY,
@@ -50,17 +47,17 @@ public class AlignedFeature {
   public static final String JSON_PROPERTY_ALIGNED_FEATURE_ID = "alignedFeatureId";
   private String alignedFeatureId;
 
+  public static final String JSON_PROPERTY_COMPOUND_ID = "compoundId";
+  private String compoundId;
+
   public static final String JSON_PROPERTY_NAME = "name";
   private String name;
 
   public static final String JSON_PROPERTY_ION_MASS = "ionMass";
   private Double ionMass;
 
-  public static final String JSON_PROPERTY_CHARGE = "charge";
-  private Integer charge;
-
-  public static final String JSON_PROPERTY_DETECTED_ADDUCTS = "detectedAdducts";
-  private Set<String> detectedAdducts = new LinkedHashSet<>();
+  public static final String JSON_PROPERTY_ION_TYPE = "ionType";
+  private String ionType;
 
   public static final String JSON_PROPERTY_RT_START_SECONDS = "rtStartSeconds";
   private Double rtStartSeconds;
@@ -72,16 +69,14 @@ public class AlignedFeature {
    * Quality of this feature.
    */
   public enum QualityEnum {
-    LOWEST("LOWEST"),
-
-    LOWEST_WITH_DEPENDENCIES("LOWEST_WITH_DEPENDENCIES"),
-
     NOT_APPLICABLE("NOT_APPLICABLE"),
-
+    
+    LOWEST("LOWEST"),
+    
     BAD("BAD"),
-
+    
     DECENT("DECENT"),
-
+    
     GOOD("GOOD");
 
     private String value;
@@ -155,6 +150,32 @@ public class AlignedFeature {
   }
 
 
+  public AlignedFeature compoundId(String compoundId) {
+    
+    this.compoundId = compoundId;
+    return this;
+  }
+
+   /**
+   * Get compoundId
+   * @return compoundId
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_COMPOUND_ID)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getCompoundId() {
+    return compoundId;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_COMPOUND_ID)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setCompoundId(String compoundId) {
+    this.compoundId = compoundId;
+  }
+
+
   public AlignedFeature name(String name) {
     
     this.name = name;
@@ -207,64 +228,29 @@ public class AlignedFeature {
   }
 
 
-  public AlignedFeature charge(Integer charge) {
+  public AlignedFeature ionType(String ionType) {
     
-    this.charge = charge;
+    this.ionType = ionType;
     return this;
   }
 
    /**
-   * Get charge
-   * @return charge
+   * Get ionType
+   * @return ionType
   **/
-  @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_CHARGE)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_ION_TYPE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Integer getCharge() {
-    return charge;
+  public String getIonType() {
+    return ionType;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_CHARGE)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setCharge(Integer charge) {
-    this.charge = charge;
-  }
-
-
-  public AlignedFeature detectedAdducts(Set<String> detectedAdducts) {
-
-    this.detectedAdducts = detectedAdducts;
-    return this;
-  }
-
-  public AlignedFeature addDetectedAdductsItem(String detectedAdductsItem) {
-    if (this.detectedAdducts == null) {
-      this.detectedAdducts = new LinkedHashSet<>();
-    }
-    this.detectedAdducts.add(detectedAdductsItem);
-    return this;
-  }
-
-   /**
-   * Get detectedAdducts
-   * @return detectedAdducts
-  **/
-  @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_DETECTED_ADDUCTS)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-
-  public Set<String> getDetectedAdducts() {
-    return detectedAdducts;
-  }
-
-
-  @JsonDeserialize(as = LinkedHashSet.class)
-  @JsonProperty(JSON_PROPERTY_DETECTED_ADDUCTS)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setDetectedAdducts(Set<String> detectedAdducts) {
-    this.detectedAdducts = detectedAdducts;
+  @JsonProperty(JSON_PROPERTY_ION_TYPE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setIonType(String ionType) {
+    this.ionType = ionType;
   }
 
 
@@ -321,7 +307,7 @@ public class AlignedFeature {
 
 
   public AlignedFeature quality(QualityEnum quality) {
-
+    
     this.quality = quality;
     return this;
   }
@@ -459,10 +445,10 @@ public class AlignedFeature {
     }
     AlignedFeature alignedFeature = (AlignedFeature) o;
     return Objects.equals(this.alignedFeatureId, alignedFeature.alignedFeatureId) &&
+        Objects.equals(this.compoundId, alignedFeature.compoundId) &&
         Objects.equals(this.name, alignedFeature.name) &&
         Objects.equals(this.ionMass, alignedFeature.ionMass) &&
-        Objects.equals(this.charge, alignedFeature.charge) &&
-        Objects.equals(this.detectedAdducts, alignedFeature.detectedAdducts) &&
+        Objects.equals(this.ionType, alignedFeature.ionType) &&
         Objects.equals(this.rtStartSeconds, alignedFeature.rtStartSeconds) &&
         Objects.equals(this.rtEndSeconds, alignedFeature.rtEndSeconds) &&
         Objects.equals(this.quality, alignedFeature.quality) &&
@@ -474,7 +460,7 @@ public class AlignedFeature {
 
   @Override
   public int hashCode() {
-    return Objects.hash(alignedFeatureId, name, ionMass, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, quality, msData, topAnnotations, topAnnotationsDeNovo, computing);
+    return Objects.hash(alignedFeatureId, compoundId, name, ionMass, ionType, rtStartSeconds, rtEndSeconds, quality, msData, topAnnotations, topAnnotationsDeNovo, computing);
   }
 
   @Override
@@ -482,10 +468,10 @@ public class AlignedFeature {
     StringBuilder sb = new StringBuilder();
     sb.append("class AlignedFeature {\n");
     sb.append("    alignedFeatureId: ").append(toIndentedString(alignedFeatureId)).append("\n");
+    sb.append("    compoundId: ").append(toIndentedString(compoundId)).append("\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    ionMass: ").append(toIndentedString(ionMass)).append("\n");
-    sb.append("    charge: ").append(toIndentedString(charge)).append("\n");
-    sb.append("    detectedAdducts: ").append(toIndentedString(detectedAdducts)).append("\n");
+    sb.append("    ionType: ").append(toIndentedString(ionType)).append("\n");
     sb.append("    rtStartSeconds: ").append(toIndentedString(rtStartSeconds)).append("\n");
     sb.append("    rtEndSeconds: ").append(toIndentedString(rtEndSeconds)).append("\n");
     sb.append("    quality: ").append(toIndentedString(quality)).append("\n");

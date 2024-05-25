@@ -3,17 +3,14 @@ package de.unijena.bioinf.ms.gui.lcms_viewer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.utils.FxTaskList;
 import de.unijena.bioinf.ms.nightsky.sdk.model.TraceSet;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
-import javafx.scene.web.WebErrorEvent;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
-import org.checkerframework.checker.units.qual.C;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -45,7 +42,8 @@ public class LCMSWebview extends JFXPanel {
             this.webView = new WebView();
             final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
             final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
-            if (!theme.equals("Dark")) {
+            boolean DarkMode = theme.equals("Dark");
+            if (!DarkMode) {
                 this.webView.getEngine().setUserStyleSheetLocation(
                         getClass().getResource("/js/" + "styles.css").toExternalForm());
             } else {
@@ -67,10 +65,10 @@ public class LCMSWebview extends JFXPanel {
                     webView.getEngine().executeScript(loadJs());
                     lock.lock();
                     ((JSObject)webView.getEngine().executeScript("window")).setMember("console", console);
-                    if (!theme.equals("Dark")) {
-                        this.webView.getEngine().executeScript("var fg_color = 'black';");
+                    if (!DarkMode) {
+                        this.webView.getEngine().executeScript("document.setBright()");
                     } else {
-                        this.webView.getEngine().executeScript("var fg_color = 'lightsteelblue';");
+                        this.webView.getEngine().executeScript("document.setDark()");
                     }
                     this.lcmsViewer = (JSObject)webView.getEngine().executeScript("document.drawPlot('#lc-plot')");
                     delayAfterHTMLLoading.forEach(x->x.accept(this.lcmsViewer));
@@ -82,12 +80,16 @@ public class LCMSWebview extends JFXPanel {
         });
     }
 
-    public void setInstance(TraceSet peakInformation, LCMSViewerPanel.Order order) {
+    public void setInstance(TraceSet peakInformation, LCMSViewerPanel.Order order, LCMSViewerPanel.ViewType viewType, String featureId) {
         lcmsView(f->{
             try {
                 final String json = objectMapper.writeValueAsString(peakInformation);
                 f.call("setOrder", order.name());
-                f.call("loadString", json);
+                if (viewType== LCMSViewerPanel.ViewType.ALIGNMENT) {
+                    f.call("loadString", json);
+                } else {
+                    f.call("loadStringForCompound", json, Long.parseLong(featureId));
+                }
             } catch (Throwable e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);

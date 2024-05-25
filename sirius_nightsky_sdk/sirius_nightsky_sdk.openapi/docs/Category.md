@@ -17,9 +17,8 @@
 
 | Name | Value |
 |---- | -----|
-| LOWEST | &quot;LOWEST&quot; |
-| LOWEST_WITH_DEPENDENCIES | &quot;LOWEST_WITH_DEPENDENCIES&quot; |
 | NOT_APPLICABLE | &quot;NOT_APPLICABLE&quot; |
+| LOWEST | &quot;LOWEST&quot; |
 | BAD | &quot;BAD&quot; |
 | DECENT | &quot;DECENT&quot; |
 | GOOD | &quot;GOOD&quot; |

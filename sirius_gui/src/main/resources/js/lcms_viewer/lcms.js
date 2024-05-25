@@ -1,26 +1,41 @@
+'use strict';
+
 class LiquidChromatographyPlot {
     constructor(svgSelector) {
         this.svgSelector = svgSelector;
         this.svg = d3.select(svgSelector);
-        this.width = +this.svg.attr('width');
-        this.height = +this.svg.attr('height');
+        this.width = 800;
+        this.height = 400;
         this.margin = { top: 20, right: 30, bottom: 40, left: 100 };
         this.plotWidth = this.width - this.margin.left - this.margin.right;
         this.plotHeight = this.height - this.margin.top - this.margin.bottom;
         this.order = "ALPHABETICALLY";
         this.zoomedIn = false;
+        this.unit = "s";
         this.initPlot();
         this.initZoom();
     }
 
+    loadJsonForCompound(json, mainFeature) {
+        this.data = new LCCompoundData(json, mainFeature);
+        this.clear();
+        this.createPlot();
+    }
+
     loadJson(json) {
-        this.data = new LiquidChromatographyData(json);
+        this.data = new LCAlignmentData(json);
         this.clear();
         this.createPlot();
     }
 
     loadString(jsonString) {
-        this.data = new LiquidChromatographyData(JSON.parse(jsonString));
+        this.data = new LCAlignmentData(JSON.parse(jsonString));
+        this.clear();
+        this.createPlot();
+    }
+
+    loadStringForCompound(jsonString, mainFeature) {
+        this.data = new LCCompoundData(JSON.parse(jsonString), mainFeature);
         this.clear();
         this.createPlot();
     }
@@ -29,16 +44,27 @@ class LiquidChromatographyPlot {
         this.order = order;
     }
 
-    loadData(dataUrl, afterwards) {
+    setRtUnit(value) {
+        if (value=="min") {
+            this.unit = "min";
+        } else if (value=="s") {
+            this.unit = "s";
+        }
+        this.clear();
+        this.initPlot();
+        this.createPlot();
+    }
+
+    loadData(dataUrl, afterwards, compoundMainFeature=null) {
         d3.json(dataUrl).then(data => {
-            this.data = new LiquidChromatographyData(data);
+            this.data = compoundMainFeature===null ? new LCAlignmentData(data) : new LCCompoundData(data, compoundMainFeature);
             this.clear();
             this.createPlot();
             if (afterwards) {
                 afterwards.call();
             }
         }).catch(error => {
-
+            console.log(error);
         });
     }
 
@@ -46,17 +72,17 @@ class LiquidChromatographyPlot {
         this.removeFocus();
         this.focusedItem = d3.select(`#sample-${index}`);
         this.focusedCurve = d3.select(`#curve-${index}`);
-        this.focusedItem.classed("focused", true);
-        this.focusedCurve.classed("focused", true);
+        this.focusedItem.classed("lcfocused", true);
+        this.focusedCurve.classed("lcfocused", true);
     }
 
     removeFocus() {
         if (this.focusedItem) {
-            this.focusedItem.classed("focused",false);
+            this.focusedItem.classed("lcfocused",false);
             this.focusedItem = null;
         }
         if (this.focusedCurve) {
-            this.focusedCurve.classed("focused",false);
+            this.focusedCurve.classed("lcfocused",false);
             this.focusedCurve = null;
         }
     }
@@ -70,24 +96,26 @@ class LiquidChromatographyPlot {
         const intensity = d3.format(" >.4p");
         let comparisonFunction;
         if (this.order == "ALPHABETICALLY") {
-            comparisonFunction = (u,v)=>u.name.localeCompare(v.name);
+            comparisonFunction = (u,v)=>u.label.localeCompare(v.label);
         }
         
         if (this.order == "BY_INTENSITY") {
             comparisonFunction = (u,v)=>v.relativeIntensity-u.relativeIntensity;
         }
-        
-        this.samples = d3.select("#legend-container");
+        console.log(this.data.traces);
+        this.samples = d3.select("#lclegend-container");
         this.samples.selectAll("ul").remove();
-        this.items = this.samples.append("ul").classed("legend-list", true).selectAll("li").data(this.data.samples).join("li")
-            .classed("legend-item", true).attr("id", (d)=>`sample-${d.index}`).sort(comparisonFunction);
 
-        this.items.append("span").classed("color-box", true).style("background-color", (d)=>getColor(d.index));
-        this.items.append("span").classed("sample-name", true).text((d)=>d.name);
-        this.items.append("span").classed("intensity-value", true).text((d)=>intensity(d.relativeIntensity));
+        this.items = this.samples.append("ul").classed("lclegend-list", true).selectAll("li").data(this.data.traces).join("li")
+            .classed("lclegend-item", true).attr("id", (d)=>`sample-${d.index}`).sort(comparisonFunction);
+
+        this.items.append("span").classed("lccolor-box", true).style("background-color", (d)=>d.color);
+        this.items.append("span").classed("lcsample-name", true).text((d)=>d.label);
+        this.items.append("span").classed("lcintensity-value", true).text((d)=>intensity(d.relativeIntensity));
+        this.items.on("click", (e,d)=>d.mainFeature()===null ? null : this.zoomToFeature(d.mainFeature()));
 
         this.items.on("mouseover", (e,d)=>this.focusOn(d.index))
-            .on("mouseout", (e,d)=>this.removeFocus());
+            .on("mouseout", (e,d)=>(d.mainFeature()===null) ? null : this.removeFocus(d.mainFeature()));
 
     }
 
@@ -108,8 +136,9 @@ class LiquidChromatographyPlot {
         this.plotArea.append('g')
             .attr('class', 'y-axis');
 
-        this.svg.append("text").attr("class", "x-label").attr("x", this.plotWidth/2).attr("y",this.height).text("retention time (s)");
-        this.svg.append("text").attr("class", "y-label").attr("transform", `translate(10, ${this.height/2}) rotate(-90)`).text("intensity");
+        this.svg.append("text").classed("legend", true).attr("x", this.plotWidth/2).attr("y",this.height).text("retention time (" + this.unit + ")");
+        this.svg.append("text").classed("legend", true).attr("transform", `translate(10, ${this.height/2}) rotate(-90)`).text("intensity");
+
     }
 
     initZoom() {
@@ -125,7 +154,7 @@ class LiquidChromatographyPlot {
         this.yScale.range([this.plotHeight, 0].map(d => transform.applyY(d)));
 
         this.plotArea.select('.y-axis').call(this.yAxis);
-        this.plotArea.select('.line').attr('d', this.line);
+        this.plotArea.select('.lcline').attr('d', this.line);
         this.updatePlot();
     }
 
@@ -156,9 +185,9 @@ class LiquidChromatographyPlot {
         if (this.data.empty) return;
 
         // feature area
-        this.featureArea = this.mainPlot.append("rect")
-            .datum(this.data.mainFeature)
-            .attr("class", "featureBox")
+        this.featureArea = this.mainPlot.append("g")
+            .data(this.data.focusFeatures).append("rect")
+            .attr("class", "lcfeatureBox")
             .attr("x", (d)=>this.xScale(d.fromRt))
             .attr("y", 0)
             .attr("width", (d)=>this.xScale(d.toRt)-this.xScale(d.fromRt))
@@ -177,27 +206,29 @@ class LiquidChromatographyPlot {
             let j=i;
             let trace = this.mainPlot.append('path')
                     .datum(tr.data())
-                    .attr('class', "curve lines")
+                    .attr('class', "lccurve lclines")
                     .attr('d', this.line)
                     .attr("id", (d)=>`curve-${j}`)
                     .style('fill', 'none')
-                    .style('stroke', getColor(j))
+                    .style('stroke', tr.color)
                     .on("mouseover", (e,d)=>{this.focusOn(j)})
                     .on("mouseout",(e,d)=>this.removeFocus());
                 this.traces.push(trace);
         }
 
         // Add the line to the plot
-        this.mergedTrace = this.mainPlot.append('path')
-            .datum(this.data.merged.data())
-            .attr('class', "maincurve lines")
+        if (this.data.specialTrace) {
+            this.mergedTrace = this.mainPlot.append('path')
+            .datum(this.data.specialTrace.data())
+            .attr('class', "lcmaincurve lclines")
             .attr('d', this.line)
             .style('fill', 'none')
-            .style('stroke', 'black')
+            .style('stroke', getEmphColor())
             .style('stroke-width', '3px');
+        }
 
         // add event listeners
-        this.featureArea.on('click', () => this.zoomToFeature());
+        this.featureArea.on('click', (e,d) => this.zoomToFeature(d));
 
         this.zoomOut = this.plotArea.append("g").attr("transform", "translate(10,5)")
         .on("mouseover", function() {
@@ -210,13 +241,13 @@ class LiquidChromatographyPlot {
             this.resetZoom();
         });
         // Draw the circle
-        this.zoomOut.append("rect").attr("x",0).attr("y",0).attr("width",23).attr("height",23).attr("fill","white").attr("fill-opacity","0.0")
+        this.zoomOut.append("rect").classed("lczoombox",true).attr("x",0).attr("y",0).attr("width",23).attr("height",23).attr("fill","white").attr("fill-opacity","0.0")
 
         this.zoomOut.append("circle")
             .attr("cx", 11)
             .attr("cy", 11)
             .attr("r", 8)
-            .attr("stroke", "black")
+            .attr("stroke", getEmphColor())
             .attr("fill", "none")
             .attr("stroke-width", 2);
 
@@ -226,7 +257,7 @@ class LiquidChromatographyPlot {
             .attr("y1", 11)
             .attr("x2", 15)
             .attr("y2", 11)
-            .attr("stroke", "black")
+            .attr("stroke", getEmphColor())
             .attr("stroke-width", 2);
 
         // Draw the handle of the magnifying glass
@@ -235,7 +266,7 @@ class LiquidChromatographyPlot {
             .attr("y1", 16.6569)
             .attr("x2", 23)
             .attr("y2", 23)
-            .attr("stroke", "black")
+            .attr("stroke", getEmphColor())
             .attr("stroke-width", 2);
 
 
@@ -250,13 +281,9 @@ class LiquidChromatographyPlot {
         this.zoomedIn = false;
     }
 
-    zoomToFeature() {
-        if (this.zoomedIn) {
-            return; // already zoomed in
-        }
+    zoomToFeature(feature) {
         this.zoomedIn = true;
         // Get the feature's data
-        const feature = this.data.mainFeature;
 
         // Calculate new domains
         const newXDomain = [feature.fromRt, feature.toRt];
@@ -287,11 +314,11 @@ class LiquidChromatographyPlot {
                 .call(this.yAxis.scale(newYScale));
 
             // Update line path
-            transition.selectAll('.lines')
+            transition.selectAll('.lclines')
                 .attr('d', d => this.line.x(d => newXScale(d.rt)).y(d => newYScale(d.intensity))(d));
 
             // Update feature area
-            transition.select('.featureBox')
+            transition.select('.lcfeatureBox')
                 .attr("x", (d) => newXScale(d.fromRt))
                 .attr("width", (d) => newXScale(d.toRt) - newXScale(d.fromRt));
         };
@@ -300,37 +327,38 @@ class LiquidChromatographyPlot {
 }
 
 
-class LiquidChromatographyData {
+class AbstractLiquidChromatographyData {
 
     constructor(json) {
         this.json = json;
+        this.empty = json.traces.length<=0;
         this.traces = [];
         this.samples = [];
-        if (this.json.traces) {
-            this.empty=false;
-            for (var i=0; i < this.json.traces.length; ++i) {
-                if (this.json.traces[i].merged===true) {
-                    this.merged = new Trace(this, this.json.traces[i]);
-                } else {
-                    this.traces.push(new Trace(this, this.json.traces[i]));
-                    this.samples.push(new Sample(this, this.json.traces[i].sampleName, this.samples.length));
-                }
-            }
-            this.empty=false;
-            this.mainFeature = this.merged.featureAnnotations[0];
-            let maxInt = 0.0;
-            for (var i=0; i < this.samples.length; ++i) {
-                this.samples[i].intensity = this.traces[i].featureIntensity();
-                maxInt = Math.max(maxInt, this.samples[i].intensity);
-            }
-            for (var i=0; i < this.samples.length; ++i) {
-                this.samples[i].relativeIntensity = this.samples[i].intensity/maxInt;
-            }
-        } else {
-            this.empty=true;
-            this.traces=[];
-            this.samples=[];
-            this.mergedTrace=null;
+        this.focusFeatures = [];
+        this.calculateNormalizations();
+    }
+
+    addTrace(trace, sample) {
+        this.traces.push(trace)
+    }
+
+    addFocusFeature(feature) {
+        this.focusFeatures.push(feature);
+    }
+
+    setSpecialTrace(trace) {
+        this.specialTrace = trace;
+    }
+
+    finishDefinition() {
+        if (this.empty) return;
+        let maxInt = 0.0;
+        for (var i=0; i < this.traces.length; ++i) {
+            this.traces[i].intensity = this.traces[i].featureIntensity();
+            maxInt = Math.max(maxInt, this.traces[i].intensity);
+        }
+        for (var i=0; i < this.traces.length; ++i) {
+            this.traces[i].relativeIntensity = this.traces[i].intensity/maxInt;
         }
     }
 
@@ -369,47 +397,76 @@ class LiquidChromatographyData {
         return [minInt, maxInt*1.1];
     }
 
-    averageNormFactor() {
-        if (this.empty) return 0;
-        let normFactor = 0; let count=0;
-        for (var i=0; i < this.json.traces.length; ++i) {
-            let t = this.json.traces[i];
-            if (t.merged !== true) {
-                normFactor += t.normalizationFactor;
-                count += 1;
+    calculateNormalizations() {
+        if (this.json.traces.length==0) {
+            this.normFactor = 0.0;
+        } else {
+            let normFactor = 0; let count=0;
+            for (var i=0; i < this.json.traces.length; ++i) {
+                let t = this.json.traces[i];
+                if (t.merged !== true) {
+                    normFactor += t.normalizationFactor;
+                    count += 1;
+                }
             }
+            this.normFactor = normFactor==0 ? 1.0 : normFactor;
         }
-        return normFactor/count;
-    }
-    sumNormFactor() {
-        if (this.empty) return 0;
-        let normFactor = 0; let count=0;
-        for (var i=0; i < this.json.traces.length; ++i) {
-            let t = this.json.traces[i];
-            if (t.merged !== true) {
-                normFactor += t.normalizationFactor;
-                count += 1;
-            }
-        }
-        return normFactor;
     }
 
 }
 
-class Sample {
-    constructor(traceset, name, index) {
-        this.traceset = traceset;
-        this.name = name;
-        this.index = index;
+class LCAlignmentData extends AbstractLiquidChromatographyData {
+    constructor(json) {
+        super(json);
+        for (var i=0; i < this.json.traces.length; ++i) {
+            if (this.json.traces[i].merged===true) {
+                let tr = new Trace(this, this.json.traces[i], -1, "");
+                tr.color = getEmphColor();
+                this.setSpecialTrace(tr);
+            } else {
+                let tr = new Trace(this, this.json.traces[i], this.traces.length,this.json.traces[i].sampleName);
+                this.addTrace(tr);
+            }
+        }
+        this.finishDefinition();
+        if (this.specialTrace) {
+            this.addFocusFeature(this.specialTrace.featureAnnotations[0]);
+        }
+    }
+}
+
+class LCCompoundData extends AbstractLiquidChromatographyData {
+    constructor(json, mainFeature) {
+        super(json);
+        this.mainFeatureId = mainFeature;
+        for (var i=0; i < this.json.traces.length; ++i) {
+            let tr = new Trace(this, this.json.traces[i], this.traces.length, this.json.traces[i].label);
+            this.addTrace(tr);
+            if (this.json.traces[i].id==mainFeature) {
+                tr.color = getEmphColor();
+                this.setSpecialTrace(tr);
+            }
+        }
+        this.finishDefinition();
+        if (this.specialTrace) {
+            this.addFocusFeature(this.specialTrace.featureAnnotations[0]);
+        }
+    }
+
+    calculateNormalizations() {
+        this.normFactor = 1.0;
     }
 }
 
 class Trace {
 
-    constructor(traceset, json) {
+    constructor(traceset, json, index, label) {
         this.json = json;
         this.traceset = traceset;
-        let norm = traceset.sumNormFactor();
+        this.index = index;
+        this.label = label;
+        this.color = index >= 0 ? getColor(index) : null;
+        let norm = traceset.normFactor;
         let rts = traceset.retentionTimes();
         let len = rts.length;
         let m = this.isMerged();
@@ -423,18 +480,25 @@ class Trace {
                 this.data_.push(new DataPoint(this, rts[i], json.intensities[i], json.intensities[i]*json.normFactor));
             }
         }
-        this.ms2Annotations = []
-        this.featureAnnotations = []
-        for (var i=0; i < json.annotations.length; ++i) {
-            let a = json.annotations[i];
-            if (a.type=="FEATURE") {
-                this.featureAnnotations.push(new DataSelection(
-                    a.index, a.from, a.to, rts[a.index], rts[a.from], rts[a.to], a.description
-                ));
-            } else if (a.type=="MS2") {
+        this.ms2Annotations = [];
+        this.featureAnnotations = [];
+        if (json.annotations) {
+            for (var i=0; i < json.annotations.length; ++i) {
+                let a = json.annotations[i];
+                if (a.type=="FEATURE") {
+                    this.featureAnnotations.push(new DataSelection(
+                        a.index, a.from, a.to, rts[a.index], rts[a.from], rts[a.to], a.description
+                    ));
+                } else if (a.type=="MS2") {
 
+                }
             }
         }
+    }
+
+    mainFeature() {
+        if (this.featureAnnotations.length>0) return this.featureAnnotations[0];
+        else return null;
     }
 
     featureIntensity() {
@@ -483,54 +547,68 @@ class DataSelection {
     }
 }
 
+function getEmphColor() {
+    if (isDark()) {
+        return "#fff";
+    } else {
+        return "black";
+    }
+}
+
 function getColor(index) {
     const colorPalette = [
-        '#1f78b4', // blue
-        '#33a02c', // green
-        '#e31a1c', // red
-        '#ff7f00', // orange
-        '#6a3d9a', // purple
-        '#b15928', // brown
-        '#a6cee3', // light blue
-        '#b2df8a', // light green
-        '#fb9a99', // light red
-        '#fdbf6f', // light orange
-        '#cab2d6', // light purple
-        '#ffff99'  // yellow
+"#a6cee3",
+"#1f78b4",
+"#b2df8a",
+"#33a02c",
+"#fb9a99",
+"#e31a1c",
+"#fdbf6f",
+"#ff7f00",
+"#cab2d6",
+"#6a3d9a",
+"#ffff99",
+"#b15928",
+"#00876c",
+"#439981",
+"#6aaa96",
+"#8cbcac",
+"#aecdc2",
+"#cfdfd9",
+"#f1f1f1",
+"#f1d4d4",
+"#f0b8b8",
+"#ec9c9d",
+"#e67f83",
+"#de6069",
+"#d43d51"
     ];
 
     const baseColor = colorPalette[index % colorPalette.length];
     const variationFactor = Math.floor(index / colorPalette.length);
-
-    return adjustColor(baseColor, variationFactor);
-}
-
-function adjustColor(color, factor) {
-    // Convert hex color to RGB
-    const rgb = hexToRgb(color);
     
-    // Apply a variation factor
-    const r = (rgb.r + factor * 10) % 256;
-    const g = (rgb.g + factor * 10) % 256;
-    const b = (rgb.b + factor * 10) % 256;
-
-    // Convert back to hex
-    return rgbToHex(r, g, b);
+    let col = d3.color(baseColor);
+    if (isDark()) {
+        col = col.brighter(variationFactor/10.0 + 0.1);
+    } else {
+        col = col.darker(variationFactor/10.0);
+    }
+    return col.formatHex();
 }
 
-function hexToRgb(hex) {
-    const bigint = parseInt(hex.slice(1), 16);
-    const r = (bigint >> 16) & 255;
-    const g = (bigint >> 8) & 255;
-    const b = bigint & 255;
-
-    return { r, g, b };
+var COLOR_MODE = "bright";
+function setBright() {
+    COLOR_MODE = "bright"; 
 }
-
-function rgbToHex(r, g, b) {
-    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+function setDark() {
+    COLOR_MODE = "dark"; 
 }
-
+function isBright() {
+    return COLOR_MODE==="bright";
+}
+function isDark() {
+    return COLOR_MODE==="dark";
+}
 
 function drawPlot(svgSelector, dataUrl) {
     const plot = new LiquidChromatographyPlot(svgSelector);
@@ -539,5 +617,6 @@ function drawPlot(svgSelector, dataUrl) {
     }
     return plot;
 }
-
+document.setDark = setDark;
+document.setBright = setBright;
 document.drawPlot = drawPlot;
