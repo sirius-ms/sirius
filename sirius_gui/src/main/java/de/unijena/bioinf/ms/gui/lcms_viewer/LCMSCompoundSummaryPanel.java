@@ -27,7 +27,7 @@ public class LCMSCompoundSummaryPanel extends JPanel {
 
     public LCMSCompoundSummaryPanel() {
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        setPreferredSize(new Dimension(512,1024));
+        setPreferredSize(new Dimension(400,1024));
     }
 
     public void reset() {
