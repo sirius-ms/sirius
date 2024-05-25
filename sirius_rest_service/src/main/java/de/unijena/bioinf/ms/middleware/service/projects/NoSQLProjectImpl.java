@@ -305,11 +305,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     @SneakyThrows
     public Optional<TraceSet> getTraceSetForCompound(String compoundId) {
-        Database<?> storage = storage();
+        Database<?> storage1 = storage();
+        Database<?> storage = storage1;
         Optional<de.unijena.bioinf.ms.persistence.model.core.Compound> maybeCompound = storage.getByPrimaryKey(Long.parseLong(compoundId), de.unijena.bioinf.ms.persistence.model.core.Compound.class);
         if (maybeCompound.isEmpty()) return Optional.empty();
         de.unijena.bioinf.ms.persistence.model.core.Compound compound = maybeCompound.get();
-        storage.fetchChild(compound, "adductFeatures", "compoundId", AlignedFeatures.class);
+        storage.fetchAllChildren(compound, "compoundId", "adductFeatures", AlignedFeatures.class);
         ArrayList<AbstractAlignedFeatures> allFeatures = new ArrayList<>();
         List<String> labels = new ArrayList<>();
         for (AlignedFeatures f : compound.getAdductFeatures().stream().flatMap(Collection::stream).toList()) {
@@ -320,21 +321,21 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 mainLabel = f.getDetectedAdducts().getAllAdducts().get(0).toString();
             } else mainLabel = "[M + ?]" + (f.getCharge() > 0 ? "+" : "-");
 
-            storage.fetchChild(f, "isotopicFeatures", "alignedFeatureId", AlignedIsotopicFeatures.class);
+            storage.fetchAllChildren(f, "alignedFeatureId", "isotopicFeatures", AlignedIsotopicFeatures.class);
             allFeatures.add(f);
-            labels.add(mainLabel);
-            List<AlignedIsotopicFeatures> isotopes = f.getIsotopicFeatures().get().stream().filter(x -> x.getApexIntensity() != null).sorted(Comparator.comparingDouble(AbstractFeature::getAverageMass)).toList();
+            labels.add(mainLabel + String.format(Locale.US, " (%.2f m/z) ", f.getAverageMass()));
+            List<AlignedIsotopicFeatures> isotopes = f.getIsotopicFeatures().orElse(new ArrayList<>()).stream().filter(x -> x.getApexIntensity() != null).sorted(Comparator.comparingDouble(AbstractFeature::getAverageMass)).toList();
             for (int k=0; k < isotopes.size(); ++k) {
                 allFeatures.add(isotopes.get(k));
-                labels.add(mainLabel + (k+1)+"-th isotope");
+                labels.add(mainLabel + String.format(Locale.US, " (%.2f m/z) ", isotopes.get(k).getAverageMass()) + (k+1)+"-th isotope");
             }
         }
         if (allFeatures.isEmpty()) return Optional.empty();
 
         TraceSet traceSet = new TraceSet();
-        LCMSRun merged = storage.getByPrimaryKey(allFeatures.get(0).getRunId(), LCMSRun.class).orElse(null);
+        MergedLCMSRun merged = storage.getByPrimaryKey(allFeatures.get(0).getRunId(), MergedLCMSRun.class).orElse(null);
         if (merged==null) return Optional.empty();
-        storage.fetchChild(merged, "retentionTimeAxis", "runId", RetentionTimeAxis.class);
+        storage.fetchChild(merged, "runId", "retentionTimeAxis", RetentionTimeAxis.class);
         if (merged.getRetentionTimeAxis().isEmpty()) return Optional.empty();
         RetentionTimeAxis mergedAxis = merged.getRetentionTimeAxis().get();
         TraceSet.Axes axes = new TraceSet.Axes();
@@ -354,7 +355,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         for (int k=0; k < allFeatures.size(); ++k) {
             AbstractAlignedFeatures f = allFeatures.get(k);
             String label = labels.get(k);
-            MergedTrace mergedTrace = storage().getByPrimaryKey(f.getTraceRef().getTraceId(), MergedTrace.class).orElse(null);
+            TraceRef r = f.getTraceRef();
+            MergedTrace mergedTrace = storage1.getByPrimaryKey(r.getTraceId(), MergedTrace.class).orElse(null);
             if (mergedTrace==null) continue;
 
             TraceSet.Trace trace = new TraceSet.Trace();
@@ -370,7 +372,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 vec[i+shift] = fs.getFloat(i);
             }
             trace.setIntensities(vec);
+
+            // add annotations
+            ArrayList<TraceSet.Annotation> annotations = new ArrayList<>();
+            // feature annotation
+            annotations.add(new TraceSet.Annotation(TraceSet.AnnotationType.FEATURE, label,
+                    r.getApex() + shift, r.getStart() + shift, r.getEnd() + shift));
+
+            trace.setAnnotations(annotations.toArray(TraceSet.Annotation[]::new));
             traces.add(trace);
+
         }
 
         traceSet.setTraces(traces.toArray(TraceSet.Trace[]::new));
@@ -538,6 +549,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         AlignedFeature.AlignedFeatureBuilder builder = AlignedFeature.builder()
                 .alignedFeatureId(fid)
                 .name(features.getName())
+                .compoundId(features.getCompoundId()==null ? null : features.getCompoundId().toString())
                 .ionMass(features.getAverageMass())
                 .quality(features.getDataQuality())
                 .computing(computeStateProvider.apply(this, fid))
@@ -756,7 +768,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public AlignedFeatureQuality findAlignedFeaturesQualityById(String alignedFeatureId) {
-        return storage().getByPrimaryKey(alignedFeatureId, QualityReport.class).map(this::convertToFeatureQuality)
+        return storage().getByPrimaryKey(Long.parseLong(alignedFeatureId), QualityReport.class).map(this::convertToFeatureQuality)
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Not Quality information found for feature '" + alignedFeatureId + "' in project " + projectId + "."));
     }
 

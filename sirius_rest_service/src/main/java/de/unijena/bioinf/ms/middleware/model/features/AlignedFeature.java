@@ -46,6 +46,8 @@ public class AlignedFeature {
     @NotNull
     protected String alignedFeatureId;
 
+    protected String compoundId;
+
     // identifier source
     protected String name;
 
