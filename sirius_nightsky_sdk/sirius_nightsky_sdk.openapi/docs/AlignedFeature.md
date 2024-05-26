@@ -17,6 +17,8 @@ The AlignedFeature contains the ID of a feature (aligned over runs) together wit
 |**rtStartSeconds** | **Double** |  |  [optional] |
 |**rtEndSeconds** | **Double** |  |  [optional] |
 |**quality** | **DataQuality** |  |  [optional] |
+|**hasMs1** | **Boolean** | If true, the feature has at lease one MS1 spectrum |  [optional] |
+|**hasMsMs** | **Boolean** | If true, the feature has at lease one MS/MS spectrum |  [optional] |
 |**msData** | [**MsData**](MsData.md) |  |  [optional] |
 |**topAnnotations** | [**FeatureAnnotations**](FeatureAnnotations.md) |  |  [optional] |
 |**topAnnotationsDeNovo** | [**FeatureAnnotations**](FeatureAnnotations.md) |  |  [optional] |

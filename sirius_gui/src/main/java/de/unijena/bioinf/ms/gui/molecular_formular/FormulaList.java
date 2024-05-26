@@ -65,7 +65,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
         //this is the selection refresh, element changes are detected by eventlist
         compoundList.addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
+            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
                 if (!selection.isSelectionEmpty()) {
                     while (event.next()) {
                         if (selection.isSelectedIndex(event.getIndex())) {
@@ -77,7 +77,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
                 if (!selection.isSelectionEmpty())
                     changeData(selection.getSelected().get(0));
                 else

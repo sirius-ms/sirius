@@ -42,6 +42,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AlignedFeature.JSON_PROPERTY_RT_START_SECONDS,
   AlignedFeature.JSON_PROPERTY_RT_END_SECONDS,
   AlignedFeature.JSON_PROPERTY_QUALITY,
+  AlignedFeature.JSON_PROPERTY_HAS_MS1,
+  AlignedFeature.JSON_PROPERTY_HAS_MS_MS,
   AlignedFeature.JSON_PROPERTY_MS_DATA,
   AlignedFeature.JSON_PROPERTY_TOP_ANNOTATIONS,
   AlignedFeature.JSON_PROPERTY_TOP_ANNOTATIONS_DE_NOVO,
@@ -75,6 +77,12 @@ public class AlignedFeature {
 
   public static final String JSON_PROPERTY_QUALITY = "quality";
   private DataQuality quality;
+
+  public static final String JSON_PROPERTY_HAS_MS1 = "hasMs1";
+  private Boolean hasMs1;
+
+  public static final String JSON_PROPERTY_HAS_MS_MS = "hasMsMs";
+  private Boolean hasMsMs;
 
   public static final String JSON_PROPERTY_MS_DATA = "msData";
   private MsData msData;
@@ -334,6 +342,58 @@ public class AlignedFeature {
   }
 
 
+  public AlignedFeature hasMs1(Boolean hasMs1) {
+    
+    this.hasMs1 = hasMs1;
+    return this;
+  }
+
+   /**
+   * If true, the feature has at lease one MS1 spectrum
+   * @return hasMs1
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_HAS_MS1)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isHasMs1() {
+    return hasMs1;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_HAS_MS1)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setHasMs1(Boolean hasMs1) {
+    this.hasMs1 = hasMs1;
+  }
+
+
+  public AlignedFeature hasMsMs(Boolean hasMsMs) {
+    
+    this.hasMsMs = hasMsMs;
+    return this;
+  }
+
+   /**
+   * If true, the feature has at lease one MS/MS spectrum
+   * @return hasMsMs
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_HAS_MS_MS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isHasMsMs() {
+    return hasMsMs;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_HAS_MS_MS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setHasMsMs(Boolean hasMsMs) {
+    this.hasMsMs = hasMsMs;
+  }
+
+
   public AlignedFeature msData(MsData msData) {
     
     this.msData = msData;
@@ -455,6 +515,8 @@ public class AlignedFeature {
         Objects.equals(this.rtStartSeconds, alignedFeature.rtStartSeconds) &&
         Objects.equals(this.rtEndSeconds, alignedFeature.rtEndSeconds) &&
         Objects.equals(this.quality, alignedFeature.quality) &&
+        Objects.equals(this.hasMs1, alignedFeature.hasMs1) &&
+        Objects.equals(this.hasMsMs, alignedFeature.hasMsMs) &&
         Objects.equals(this.msData, alignedFeature.msData) &&
         Objects.equals(this.topAnnotations, alignedFeature.topAnnotations) &&
         Objects.equals(this.topAnnotationsDeNovo, alignedFeature.topAnnotationsDeNovo) &&
@@ -463,7 +525,7 @@ public class AlignedFeature {
 
   @Override
   public int hashCode() {
-    return Objects.hash(alignedFeatureId, compoundId, name, ionMass, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, quality, msData, topAnnotations, topAnnotationsDeNovo, computing);
+    return Objects.hash(alignedFeatureId, compoundId, name, ionMass, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, quality, hasMs1, hasMsMs, msData, topAnnotations, topAnnotationsDeNovo, computing);
   }
 
   @Override
@@ -479,6 +541,8 @@ public class AlignedFeature {
     sb.append("    rtStartSeconds: ").append(toIndentedString(rtStartSeconds)).append("\n");
     sb.append("    rtEndSeconds: ").append(toIndentedString(rtEndSeconds)).append("\n");
     sb.append("    quality: ").append(toIndentedString(quality)).append("\n");
+    sb.append("    hasMs1: ").append(toIndentedString(hasMs1)).append("\n");
+    sb.append("    hasMsMs: ").append(toIndentedString(hasMsMs)).append("\n");
     sb.append("    msData: ").append(toIndentedString(msData)).append("\n");
     sb.append("    topAnnotations: ").append(toIndentedString(topAnnotations)).append("\n");
     sb.append("    topAnnotationsDeNovo: ").append(toIndentedString(topAnnotationsDeNovo)).append("\n");

@@ -30,9 +30,9 @@ import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -75,21 +75,40 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
             return false;
         }
 
+        if (filterModel.isHasMs1() && !item.getSourceFeature().isHasMs1())
+            return false;
+
+        if (filterModel.isHasMsMs() && !item.getSourceFeature().isHasMsMs())
+            return false;
+
         if (filterModel.isAdductFilterActive() && !filterModel.getAdducts().contains(item.getIonType()))
+            return false;
+
+
+        if (filterModel.getFeatureQualityFilter().isEnabled() && !filterModel.getFeatureQualityFilter().isQualitySelected(item.getSourceFeature().getQuality()))
             return false;
 
         return anyIOIntenseFilterMatches(item, filterModel);
     }
 
     private boolean anyIOIntenseFilterMatches(InstanceBean item, CompoundFilterModel filterModel) {
+        if (filterModel.getIoQualityFilters().stream().anyMatch(CompoundFilterModel.QualityFilter::isEnabled)) {
+            AlignedFeatureQuality qualityReport = item.getQualityReport();
+            Map<String, Category> categories = qualityReport.getCategories();
+            for (CompoundFilterModel.QualityFilter filter : filterModel.getIoQualityFilters()) {
+                if (filter.isEnabled()) {
+                    Category q = categories.get(filter.getName());
+                    if (q != null && !filter.isQualitySelected(q.getOverallQuality()))
+                        return false;
+                }
+            }
+        }
+
         if (filterModel.isElementFilterEnabled())
             if (!matchesElementFilter(item, filterModel)) return false;
 
-        if (filterModel.isPeakShapeFilterEnabled())
-            if (!filterByPeakShape(item, filterModel)) return false;
-
-        if(filterModel.isMinIsotopePeaksFilterEnabled())
-            if(!filterByMinIsotopePeaks(item,filterModel)) return false;
+        if (filterModel.isMinIsotopePeaksFilterEnabled())
+            if (!filterByMinIsotopePeaks(item, filterModel)) return false;
 
         if (filterModel.isLipidFilterEnabled())
             if (!matchesLipidFilter(item, filterModel)) return false;
@@ -100,40 +119,18 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
         return true;
     }
 
-    private boolean filterByMinIsotopePeaks(InstanceBean item, CompoundFilterModel filterModel){
-       return Optional.ofNullable(item.getMsData())
-               .map(MsData::getMergedMs1)
-               .map(ms1 -> WrapperSpectrum.of(ms1.getPeaks(), SimplePeak::getMz, SimplePeak::getIntensity))
-               .map(s -> Spectrums.extractIsotopePattern(s,
-                       PropertyManager.DEFAULTS.createInstanceWithDefaults(MS1MassDeviation.class),
-                       item.getIonMass(), item.getIonType().getCharge(), true))
-               .map(s -> s.size() >= filterModel.getCurrentMinIsotopePeaks())
-               .orElse(false);
-                //todo nightsky: -> add isotope pattern to MS/MS data to make such things easier?.
-    }
 
-    private boolean filterByPeakShape(InstanceBean item, CompoundFilterModel filterModel) {
-        //todo implement
-        /*final CompoundContainer compoundContainer = item.loadCompoundContainer(LCMSPeakInformation.class);
-        final Optional<LCMSPeakInformation> annotation = compoundContainer.getAnnotation(LCMSPeakInformation.class);
-        if (annotation.isEmpty()) return false;
-        final LCMSPeakInformation lcmsPeakInformation = annotation.get();
-        for (int k = 0; k < lcmsPeakInformation.length(); ++k) {
-            final Optional<CoelutingTraceSet> tracesFor = lcmsPeakInformation.getTracesFor(k);
-            if (tracesFor.isPresent()) {
-                final CoelutingTraceSet coelutingTraceSet = tracesFor.get();
-                LCMSQualityCheck.Quality peakQuality = LCMSCompoundSummary.checkPeakQuality(coelutingTraceSet, coelutingTraceSet.getIonTrace());
-                if (filterModel.getPeakShapeQuality(peakQuality)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-
-        */
-        LoggerFactory.getLogger(getClass()).warn("Filter by PeakShape not implemented via NIghtSky -> Fileter is always True");
-        //todo nightsky: -> implement peak shape filter into api
-        return false;
+    //todo maybe add directly to feature
+    private boolean filterByMinIsotopePeaks(InstanceBean item, CompoundFilterModel filterModel) {
+        return Optional.ofNullable(item.getMsData())
+                .map(MsData::getMergedMs1)
+                .map(ms1 -> WrapperSpectrum.of(ms1.getPeaks(), SimplePeak::getMz, SimplePeak::getIntensity))
+                .map(s -> Spectrums.extractIsotopePattern(s,
+                        PropertyManager.DEFAULTS.createInstanceWithDefaults(MS1MassDeviation.class),
+                        item.getIonMass(), item.getIonType().getCharge(), true))
+                .map(s -> s.size() >= filterModel.getCurrentMinIsotopePeaks())
+                .orElse(false);
+        //todo nightsky: -> add isotope pattern to MS/MS data to make such things easier?.
     }
 
     private boolean matchesLipidFilter(InstanceBean item, CompoundFilterModel filterModel) {

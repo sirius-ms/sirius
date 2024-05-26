@@ -87,4 +87,8 @@ public class TextHeaderBoxPanel extends JPanel {
     public JPanel getBody() {
         return body;
     }
+
+    public void addFooter(Component comp){
+        super.add(comp, BorderLayout.SOUTH);
+    }
 }

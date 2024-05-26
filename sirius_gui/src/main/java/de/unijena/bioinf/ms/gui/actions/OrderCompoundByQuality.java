@@ -17,16 +17,22 @@
  *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
+package de.unijena.bioinf.ms.gui.actions;
 
-import ca.odell.glazedlists.event.ListEvent;
-import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
-/**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
- */
-public interface ExperimentListChangeListener{
-    void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize);
-    void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, int fullSize);
+import java.awt.event.ActionEvent;
+import java.util.Comparator;
+
+public class OrderCompoundByQuality extends AbstractGuiAction {
+
+    public OrderCompoundByQuality(SiriusGui gui) {
+        super("Order by Quality", gui);
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        mainFrame.getCompoundList().orderBy(Comparator.comparing(InstanceBean::getQuality).reversed());
+    }
 }

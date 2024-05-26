@@ -41,16 +41,18 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
 
     final CardLayout centerCards = new CardLayout();
     final JPanel center = new JPanel(centerCards);
-    private ExperimentListChangeListener sizeListener = new ExperimentListChangeListener() {
+    private final ExperimentListChangeListener sizeListener = new ExperimentListChangeListener() {
         @Override
-        public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
-            elementCounter.setText(selection.getSelected().size() + " of " + event.getSourceList().size() + " selected");
+        public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
+            int filteredSize =  event.getSourceList().size();
+            elementCounter.setText(selection.getSelected().size() + " of " + filteredSize + ((filteredSize != fullSize) ?" (" + fullSize + ")":"") + " selected");
         }
 
         @Override
-        public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
-            int selected = selection.getSelected().size();
-            elementCounter.setText(selected + " of " + (selection.getDeselected().size() + selected) + " selected");
+        public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
+            int selectedSize = selection.getSelected().size();
+            int filteredSize = (selection.getDeselected().size() + selectedSize);
+            elementCounter.setText(selectedSize + " of " + filteredSize  + ((filteredSize != fullSize) ?" (" + fullSize + ")":"") + " selected");
         }
     };
 

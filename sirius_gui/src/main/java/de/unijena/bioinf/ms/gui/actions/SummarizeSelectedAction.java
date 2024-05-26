@@ -41,11 +41,11 @@ public class SummarizeSelectedAction extends SummarizeAllAction {
 
         mainFrame.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
+            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
                 setEnabled(SiriusActions.notComputingOrEmptySelected(selection));
             }
         });

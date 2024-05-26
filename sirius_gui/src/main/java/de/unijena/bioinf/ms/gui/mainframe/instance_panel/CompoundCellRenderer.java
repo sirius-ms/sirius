@@ -29,6 +29,7 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeature;
+import de.unijena.bioinf.ms.nightsky.sdk.model.DataQuality;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
 
@@ -125,7 +126,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
         g2.drawLine(2, 17, Math.min(maxWidth - 3, 2 + compoundLength), 17);
 
         g2.setFont(compoundFont);
-        AlignedFeature.QualityEnum q = ec.getSourceFeature().getQuality();
+        DataQuality q = ec.getSourceFeature().getQuality();
         if (q != null) {
             getQualityIcon(q).paintIcon(this, g2, 2, 4);
             g2.drawString(ec.getGUIName(), 13, 13);
@@ -177,7 +178,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
         GuiUtils.drawListStatusElement(ec.isComputing(), g2, this);
     }
 
-    private static Icon getQualityIcon(@NotNull AlignedFeature.QualityEnum quality) {
+    private static Icon getQualityIcon(@NotNull DataQuality quality) {
         switch (quality) {
             case LOWEST:
                 return Icons.TRAFFIC_LIGHT_TINY_GRAY;

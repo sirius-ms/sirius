@@ -5923,6 +5923,14 @@
           "quality": {
             "$ref": "#/components/schemas/DataQuality"
           },
+          "hasMs1": {
+            "type": "boolean",
+            "description": "If true, the feature has at lease one MS1 spectrum"
+          },
+          "hasMsMs": {
+            "type": "boolean",
+            "description": "If true, the feature has at lease one MS/MS spectrum"
+          },
           "msData": {
             "$ref": "#/components/schemas/MsData"
           },
