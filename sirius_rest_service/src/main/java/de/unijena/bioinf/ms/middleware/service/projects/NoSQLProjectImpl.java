@@ -287,12 +287,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         traceSet.setTraces(traces.toArray(TraceSet.Trace[]::new));
 
         TraceSet.Axes axes = new TraceSet.Axes();
-        final int traceTo = mergedTrace.getScanIndexOffset()+traces.stream().mapToInt(x->x.getIntensities().length).max().orElse(0);
+        int traceTo = mergedTrace.getScanIndexOffset()+traces.stream().mapToInt(x->x.getIntensities().length).max().orElse(0);
         /*
             Merged traces do not have scan numbers....
          */
         //axes.setScanNumber(Arrays.copyOfRange(mergedAxis.getScanNumbers(), firstTraceId, traceTo));
         //axes.setScanIds(Arrays.copyOfRange(mergedAxis.getScanIdentifiers(), firstTraceId, traceTo));
+        traceTo = Math.max(traceTo, Math.min(mergedAxis.getRetentionTimes().length, firstTraceId + (int)Math.ceil(merged.getSampleStats().getMedianPeakWidthInSeconds()*4/(mergedAxis.getRetentionTimes()[1]-mergedAxis.getRetentionTimes()[0]))));
         axes.setRetentionTimeInSeconds(Arrays.copyOfRange(mergedAxis.getRetentionTimes(), firstTraceId, traceTo));
         traceSet.setAxes(axes);
 
@@ -336,11 +337,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (merged==null) return Optional.empty();
         storage.fetchChild(merged, "runId", "retentionTimeAxis", RetentionTimeAxis.class);
         if (merged.getRetentionTimeAxis().isEmpty()) return Optional.empty();
-        RetentionTimeAxis mergedAxis = merged.getRetentionTimeAxis().get();
-        TraceSet.Axes axes = new TraceSet.Axes();
-        axes.setScanIds(mergedAxis.getScanIdentifiers());
-        axes.setRetentionTimeInSeconds(mergedAxis.getRetentionTimes());
-        traceSet.setAxes(axes);
 
         traceSet.setSampleId(merged.getRunId());
         traceSet.setSampleName(merged.getName());
@@ -349,7 +345,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         for (AbstractAlignedFeatures f : allFeatures) {
             startIndexOfTraces = Math.min(startIndexOfTraces, f.getTraceRef().getScanIndexOffsetOfTrace());
         }
-
+        RetentionTimeAxis mergedAxis = merged.getRetentionTimeAxis().get();
+        int maximumIndex = mergedAxis.getRetentionTimes().length;
         ArrayList<TraceSet.Trace> traces = new ArrayList<>();
         for (int k=0; k < allFeatures.size(); ++k) {
             AbstractAlignedFeatures f = allFeatures.get(k);
@@ -357,7 +354,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             TraceRef r = f.getTraceRef();
             MergedTrace mergedTrace = storage.getByPrimaryKey(r.getTraceId(), MergedTrace.class).orElse(null);
             if (mergedTrace==null) continue;
-
+            maximumIndex = Math.min(maximumIndex, mergedTrace.getScanIndexOffset() + mergedTrace.getIntensities().size());
             TraceSet.Trace trace = new TraceSet.Trace();
             trace.setMz(f.getAverageMass());
             trace.setId(f instanceof AlignedIsotopicFeatures ? ((AlignedIsotopicFeatures) f).getAlignedIsotopeFeatureId() : (f instanceof AlignedFeatures ? ((AlignedFeatures) f).getAlignedFeatureId() : 0));
@@ -382,6 +379,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             traces.add(trace);
 
         }
+        TraceSet.Axes axes = new TraceSet.Axes();
+
+        /*
+         * little dirty trick: to make the plots look nicer, we set the minimum width of the retention time
+         * axis to 4xwidth. It would be nicer doing this in the UI directly, but then we would have to add
+         * another API endpoint which would be a bit stupid for such a single number...
+         */
+        maximumIndex = Math.max(maximumIndex, Math.min(mergedAxis.getRetentionTimes().length, (startIndexOfTraces + (int)Math.ceil(merged.getSampleStats().getMedianPeakWidthInSeconds()*4/(mergedAxis.getRetentionTimes()[1]-mergedAxis.getRetentionTimes()[0])))));
+        axes.setRetentionTimeInSeconds(Arrays.copyOfRange(mergedAxis.getRetentionTimes(), startIndexOfTraces, maximumIndex));
+        traceSet.setAxes(axes);
 
         traceSet.setTraces(traces.toArray(TraceSet.Trace[]::new));
 
