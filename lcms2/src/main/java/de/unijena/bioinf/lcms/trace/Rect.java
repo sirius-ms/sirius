@@ -73,7 +73,7 @@ public class Rect implements Comparable<Rect>, Serializable {
     }
 
     public Spatial toKey() {
-        return new MVSpatialKey(id, minMz, maxMz, minRt, maxRt);
+        return new MVSpatialKey(id, minMz-Rect.FLOATING_POINT_TOLERANCE, maxMz+Rect.FLOATING_POINT_TOLERANCE, minRt, maxRt);
     }
 
     public Rect recalibrateRt(RecalibrationFunction rtRecalibration) {
