@@ -102,7 +102,6 @@ class LiquidChromatographyPlot {
         if (this.order == "BY_INTENSITY") {
             comparisonFunction = (u,v)=>v.relativeIntensity-u.relativeIntensity;
         }
-        console.log(this.data.traces);
         this.samples = d3.select("#lclegend-container");
         this.samples.selectAll("ul").remove();
 
