@@ -484,8 +484,8 @@ public class CustomDatabaseImporter {
             @Override
             protected Boolean compute() throws Exception {
                 checkCancellation();
-                api.consumeStructureDB(DataSource.ALL.flag(), db -> {
-                    List<FingerprintCandidate> cans = db.lookupStructuresAndFingerprintsByFormula(formula);
+                api.consumeStructureDB(0, db -> {
+                    List<FingerprintCandidate> cans = db.lookupStructuresAndFingerprintsByFormula(formula).stream().filter(s -> DataSource.isInAll(s.getBitset())).toList();
                     for (FingerprintCandidate can : cans) {
                         checkCancellation();
                         Comp toAdd = key2DToComp.get(can.getInchi().key2D());
