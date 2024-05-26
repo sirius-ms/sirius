@@ -3,6 +3,7 @@ package de.unijena.bioinf.confidence_score;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * Expansive search parameters.
@@ -12,7 +13,7 @@ import de.unijena.bioinf.ms.properties.DefaultProperty;
 public class ExpansiveSearchConfidenceMode implements Ms2ExperimentAnnotation {
 
 
-
+    @Schema(enumAsRef = true, name = "ConfidenceMode")
     public enum Mode implements DescriptiveOptions {
         OFF("No expansive search is performed."),
         EXACT("Use confidence score in exact mode: Only molecular structures identical to the true structure should count as correct identification."),//todo NewWorkflow: change description -> should be javadoc instead to allow for automatic usage in config files, CLI and GUI

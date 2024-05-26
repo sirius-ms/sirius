@@ -52,6 +52,9 @@ public abstract class AbstractAlignedFeatures extends AbstractFeature {
         return Optional.ofNullable(features);
     }
 
+    private boolean hasMs1;
+    private boolean hasMsMs;
+
     @JsonIgnore
     @ToString.Exclude
     protected MSData msData;
