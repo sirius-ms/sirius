@@ -213,7 +213,7 @@ public class InstanceBean implements SiriusPCS {
         return getFeatureId();
     }
 
-    public DataQuality getQuality(){
+    public @Nullable DataQuality getQuality(){
         return getSourceFeature().getQuality();
     }
 
