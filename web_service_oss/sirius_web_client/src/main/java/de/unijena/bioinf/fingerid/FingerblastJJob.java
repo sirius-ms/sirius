@@ -39,7 +39,6 @@ import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
-import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusJobInput;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
@@ -76,7 +75,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
 
     private StructureSearchResult structureSearchResult;
 
-    Set<WebJJob<?, ?, ?, ?>> webJJobs = new HashSet<>();
+    Set<WebJJob> webJJobs = new HashSet<>();
 
     public FingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI) {
         this(predictor, webAPI, null);
@@ -180,35 +179,34 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                 return s;
             }, this::checkForInterruption);
 
-            // Loop over all fingerprints and start SearchJjobs for each one. Jobs gets saved in searchJJobs, jobFidResult maps a searchjob back to the FingerIDresult
-            for (int i = 0; i < idResults.size(); i++) {
-                final FingerIdResult fingeridInput = idResults.get(i);
-
-                final FingerblastSearchJJob blastJob;
-                if (scorings[i] != null) {
-                    blastJob = FingerblastSearchJJob.of(predictor, scorings[i], fingeridInput);
-                    searchJJobs.add(blastJob);
-
-                } else {
-                    System.out.println("Executing Bayes tree job!!!!!");
-                    // bayesnetScoring is null --> make a prepare job which computes the bayessian network (covTree) for the
-                    // given molecular formula
-                    blastJob = FingerblastSearchJJob.of(predictor, fingeridInput);
-                    searchJJobs.add(blastJob);
-                    WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?> covTreeJob =
-                            webAPI.submitCovtreeJob(fingeridInput.getMolecularFormula(), predictor.predictorType);
-                    webJJobs.add(covTreeJob);
-
-                    blastJob.addRequiredJob(covTreeJob);
-                    //remove jobs to free up memory
-                    blastJob.addJobProgressListener(jobProgressEvent -> {
-                        if (((JJob<?>) jobProgressEvent.getSource()).isFinished())
-                            webJJobs.remove(covTreeJob);
-                    });
+            {
+                //compute missing trees
+                WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?>[] bayesJobs = new WebJJob[scorings.length];
+                for (int i = 0; i < scorings.length; i++) {
+                    if (scorings[i] == null) {
+                        logInfo("Starting new BayesTree Job.");
+                        bayesJobs[i] = webAPI.submitCovtreeJob(idResults.get(i).getMolecularFormula(), predictor.predictorType);
+                        webJJobs.add(bayesJobs[i]);
+                    }
                 }
 
-                blastJob.addRequiredJob(formulaJobs.get(i));
-                submitJob(blastJob); //no submitsubjob because we are waiting for web job.
+
+                // Loop over all fingerprints and start SearchJjobs for each one. Jobs gets saved in searchJJobs, jobFidResult maps a searchjob back to the FingerIDresult
+                for (int i = 0; i < idResults.size(); i++) {
+                    final FingerIdResult fingeridInput = idResults.get(i);
+
+                    if (scorings[i] == null) {
+                        if (bayesJobs[i] == null)
+                            throw new IllegalStateException("Expected bayes tree job missing.");
+                        scorings[i] = bayesJobs[i].awaitResult();
+                        webJJobs.remove(bayesJobs[i]);
+                    }
+                    final FingerblastSearchJJob blastJob = FingerblastSearchJJob.of(predictor, scorings[i], fingeridInput);
+                    searchJJobs.add(blastJob);
+
+                    blastJob.addRequiredJob(formulaJobs.get(i));
+                    submitJob(blastJob); //no submitsubjob because we are waiting for web job.
+                }
             }
         }
         //search job are now prepared and submitted
@@ -444,7 +442,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
 
             checkForInterruption();
 
-
+            //todo can probably be optimized by starting them before other local computations
             final int specHash = Spectrums.mergeSpectra(experiment.getMs2Spectra()).hashCode();
             WebJJob<CanopusJobInput, ?, CanopusResult, ?> canopusWebJJob = webAPI.submitCanopusJob(
                     requestedMergedCandidates.get(0).getCandidate().getInchi().extractFormulaOrThrow(),
