@@ -83,12 +83,14 @@ public class CompoundList {
             baseList.add(element.getIonType().toString());
             baseList.add(String.valueOf(element.getIonMass()));
         }, false));
+
         //additional filter based on specific parameters
         compoundFilterModel = new CompoundFilterModel();
         listOfFilters.add(new CompoundFilterMatcherEditor(new CompoundFilterMatcher(gui.getProperties(), compoundFilterModel)));
         //combined filters
         CompositeMatcherEditor<InstanceBean> compositeMatcherEditor = new CompositeMatcherEditor<>(listOfFilters);
         compositeMatcherEditor.setMode(CompositeMatcherEditor.AND);
+
         compoundListMatchEditor = new MatcherEditorWithOptionalInvert<>(compositeMatcherEditor);
         backgroundFilterMatcher = new BackgroundJJobMatcheEditor<>(compoundListMatchEditor);
         FilterList<InstanceBean> filterList = new FilterList<>(sortedSource, backgroundFilterMatcher);
@@ -97,10 +99,9 @@ public class CompoundList {
         //filter dialog
         openFilterPanelButton = new JButton("...");
         defaultOpenFilterPanelButtonColor = openFilterPanelButton.getBackground();
-        openFilterPanelButton.addActionListener(e -> {
-            new CompoundFilterOptionsDialog(gui, searchField, compoundFilterModel, this);
-            colorByActiveFilter(openFilterPanelButton, compoundFilterModel);
-        });
+
+        openFilterPanelButton.addActionListener(e -> new CompoundFilterOptionsDialog(gui, searchField, compoundFilterModel, this));
+        compositeMatcherEditor.addMatcherEditorListener(evt -> colorByActiveFilter(openFilterPanelButton, compoundFilterModel));
 
         compountListSelectionModel = new DefaultEventSelectionModel<>(compoundList);
 
@@ -118,7 +119,7 @@ public class CompoundList {
         //is any filtering option active (despite the text filter which is visible all the time)
         if (isFilterInverted()){
             openFilterPanelButton.setBackground(new Color(235, 94, 85));
-        } else if (compoundFilterModel.isActive()){
+        } else if (compoundFilterModel.isActive() || !searchField.getText().isEmpty()){
             openFilterPanelButton.setBackground(new Color(49, 153, 187));
         }else {
             openFilterPanelButton.setBackground(defaultOpenFilterPanelButtonColor);
@@ -149,13 +150,13 @@ public class CompoundList {
     private void notifyListenerDataChange(ListEvent<InstanceBean> event) {
         for (ExperimentListChangeListener l : listeners) {
             event.reset();//this is hell important to reset the iterator
-            l.listChanged(event, compountListSelectionModel);
+            l.listChanged(event, compountListSelectionModel, sortedSource.size());
         }
     }
 
     private void notifyListenerSelectionChange() {
         for (ExperimentListChangeListener l : listeners) {
-            l.listSelectionChanged(compountListSelectionModel);
+            l.listSelectionChanged(compountListSelectionModel, sortedSource.size());
         }
     }
 

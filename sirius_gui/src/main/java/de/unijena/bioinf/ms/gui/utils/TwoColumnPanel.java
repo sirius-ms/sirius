@@ -61,13 +61,18 @@ public class TwoColumnPanel extends JPanel {
         setRow(0);
     }
 
-    public TwoColumnPanel(String leftLabel, JComponent right) {
+    public TwoColumnPanel(String leftLabel, Component right) {
         this(new JLabel(leftLabel), right);
     }
 
-    public TwoColumnPanel(JComponent left, JComponent right) {
+    public TwoColumnPanel(Component left, Component right) {
         this();
         add(left, right);
+    }
+
+    public TwoColumnPanel(Component center) {
+        this();
+        add(center);
     }
 
     public void setRow(int i) {

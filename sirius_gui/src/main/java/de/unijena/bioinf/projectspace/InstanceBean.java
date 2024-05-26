@@ -213,6 +213,15 @@ public class InstanceBean implements SiriusPCS {
         return getFeatureId();
     }
 
+    public DataQuality getQuality(){
+        return getSourceFeature().getQuality();
+    }
+
+    public AlignedFeatureQuality getQualityReport() {
+        return withIds((pid, fid) -> getClient().experimental().getAlignedFeaturesQualityWithResponseSpec(pid, fid)
+                .bodyToMono(AlignedFeatureQuality.class).onErrorComplete().block());
+    }
+
     public PrecursorIonType getIonType() {
         Set<PrecursorIonType> adducts = getDetectedAdducts();
         if (adducts.size() == 1)

@@ -42,10 +42,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.HashSet;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -59,19 +57,20 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner, minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner, minIsotopeSpinner;
     public final JCheckboxListPanel<PrecursorIonType> adductOptions;
     JButton discard, apply, reset;
-    JCheckBox invertFilter;
-    JCheckBox deleteSelection;
+    final JCheckBox invertFilter, deleteSelection, elementsMatchFormula, elementsMatchPrecursorFormula, hasMs1, hasMsMs;
+
     final CompoundFilterModel filterModel;
     final CompoundList compoundList;
 
-//    JCheckBox[] peakShape;
 
     final JComboBox<CompoundFilterModel.LipidFilter> lipidFilterBox;
     final PlaceholderTextField elementsField;
-    final JCheckBox elementsMatchFormula;
-    final JCheckBox elementsMatchPrecursorFormula;
 
     final JCheckboxListPanel<SearchableDatabase> searchDBList;
+
+    private final QualityFilterPanel overallQualityPanel;
+    private final List<QualityFilterPanel> qualityPanels;
+
 
     final SiriusGui gui;
 
@@ -83,78 +82,103 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         this.compoundList = compoundList;
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
+        setResizable(false);
+        final TwoColumnPanel generalParameters = new TwoColumnPanel();
+        add(generalParameters, BorderLayout.CENTER);
 
-        final TwoColumnPanel smallParameters = new TwoColumnPanel();
-        add(smallParameters, BorderLayout.CENTER);
-
-        smallParameters.add(new JXTitledSeparator("Filter criteria"));
-
-        searchFieldDialogCopy = new JTextField(searchField.getText());
-        smallParameters.addNamed("filter by text", searchFieldDialogCopy);
-
-        minMzSpinner = makeSpinner(filterModel.getCurrentMinMz(), filterModel.getMinMz(), filterModel.getMaxMz(), 10);
-        smallParameters.addNamed("minimum m/z: ", minMzSpinner);
-        maxMzSpinner = makeSpinner(filterModel.getCurrentMaxMz(), filterModel.getMinMz(), filterModel.getMaxMz(), 10);
-        smallParameters.addNamed("maximum m/z: ", maxMzSpinner);
-        ((JSpinner.DefaultEditor) maxMzSpinner.getEditor()).getTextField().setFormatterFactory(new MaxDoubleAsInfinityTextFormatterFactory((SpinnerNumberModel) maxMzSpinner.getModel(), filterModel.getMaxMz()));
-
-        ensureCompatibleBounds(minMzSpinner, maxMzSpinner);
-
-        minRtSpinner = makeSpinner(filterModel.getCurrentMinRt(), filterModel.getMinRt(), filterModel.getMaxRt(), 10);
-        smallParameters.addNamed("minimum RT in sec: ", minRtSpinner);
-        maxRtSpinner = makeSpinner(filterModel.getCurrentMaxRt(), filterModel.getMinRt(), filterModel.getMaxRt(), 10);
-        smallParameters.addNamed("maximum RT in sec: ", maxRtSpinner);
-        ((JSpinner.DefaultEditor) maxRtSpinner.getEditor()).getTextField().setFormatterFactory(new MaxDoubleAsInfinityTextFormatterFactory((SpinnerNumberModel) maxRtSpinner.getModel(), filterModel.getMaxRt()));
-
-        ensureCompatibleBounds(minRtSpinner, maxRtSpinner);
-
-        minConfidenceSpinner = makeSpinner(filterModel.getCurrentMinConfidence(), filterModel.getMinConfidence(), filterModel.getMaxConfidence(), .05);
-        smallParameters.addNamed("minimum Confidence: ", minConfidenceSpinner);
-        maxConfidenceSpinner = makeSpinner(filterModel.getCurrentMaxConfidence(), filterModel.getMinConfidence(), filterModel.getMaxConfidence(), .05);
-        smallParameters.addNamed("maximum Confidence: ", maxConfidenceSpinner);
-
-        ensureCompatibleBounds(minConfidenceSpinner, maxConfidenceSpinner);
-
-
-        //peak shape filter
-        //todo enable if implemented
-//        {
-//            peakShape = new JCheckBox[]{
-//                    new JCheckBox("Low"),
-//                    new JCheckBox("Medium"),
-//                    new JCheckBox("High"),
-//            };
-//            final JPanel group = new JPanel();
-//            final BoxLayout groupLayout = new BoxLayout(group, BoxLayout.X_AXIS);
-//            group.setLayout(groupLayout);
-//            for (JCheckBox box : peakShape) {
-//                group.add(Box.createHorizontalGlue());
-//                group.add(box);
-//            }
-//            group.add(Box.createHorizontalGlue());
-//            for (int i = 0; i < peakShape.length; ++i) {
-//                peakShape[i].setSelected(filterModel.getPeakShapeQuality(i));
-//            }
-//            smallParameters.addNamed("Peak shape quality: ", group);
-//        }
-
-        //isotope peak filter
-
-        minIsotopeSpinner = makeSpinner(filterModel.getCurrentMinIsotopePeaks(), filterModel.getMinIsotopePeaks(), filterModel.getMaxIsotopePeaks(), 1);
-        smallParameters.addNamed("Minimum number of isotope peaks: ", minIsotopeSpinner);
-
-
-        //lipid filter
         {
-            lipidFilterBox = new JComboBox<>();
-            java.util.List.copyOf(EnumSet.allOf(CompoundFilterModel.LipidFilter.class)).forEach(lipidFilterBox::addItem);
-            smallParameters.addNamed("Lipid filter: ", lipidFilterBox);
-            lipidFilterBox.setSelectedItem(filterModel.getLipidFilter());
+            searchFieldDialogCopy = new JTextField(searchField.getText());
+            generalParameters.addNamed("Fulltext search", searchFieldDialogCopy);
         }
+        //general filter
+        {
+            generalParameters.add(Box.createVerticalStrut(5));
+            generalParameters.add(new JXTitledSeparator("General"));
+
+            {
+                TwoColumnPanel min = new TwoColumnPanel();
+                TwoColumnPanel max = new TwoColumnPanel();
+                Box box = Box.createHorizontalBox();
+
+                box.add(min);
+                box.add(Box.createHorizontalGlue());
+                box.add(max);
+
+                minMzSpinner = makeSpinner(filterModel.getCurrentMinMz(), filterModel.getMinMz(), filterModel.getMaxMz(), 10);
+                maxMzSpinner = makeSpinner(filterModel.getCurrentMaxMz(), filterModel.getMinMz(), filterModel.getMaxMz(), 10);
+                ((JSpinner.DefaultEditor) maxMzSpinner.getEditor()).getTextField().setFormatterFactory(new MaxDoubleAsInfinityTextFormatterFactory((SpinnerNumberModel) maxMzSpinner.getModel(), filterModel.getMaxMz()));
+                min.addNamed("Min m/z", minMzSpinner);
+                max.addNamed("Max m/z", maxMzSpinner);
+                ensureCompatibleBounds(minMzSpinner, maxMzSpinner);
+
+                minRtSpinner = makeSpinner(filterModel.getCurrentMinRt(), filterModel.getMinRt(), filterModel.getMaxRt(), 10);
+                maxRtSpinner = makeSpinner(filterModel.getCurrentMaxRt(), filterModel.getMinRt(), filterModel.getMaxRt(), 10);
+                ((JSpinner.DefaultEditor) maxRtSpinner.getEditor()).getTextField().setFormatterFactory(new MaxDoubleAsInfinityTextFormatterFactory((SpinnerNumberModel) maxRtSpinner.getModel(), filterModel.getMaxRt()));
+
+                min.addNamed("Min RT (in sec)", minRtSpinner);
+                max.addNamed("Max RT (in sec)", maxRtSpinner);
+                ensureCompatibleBounds(minRtSpinner, maxRtSpinner);
+
+                minConfidenceSpinner = makeSpinner(filterModel.getCurrentMinConfidence(), filterModel.getMinConfidence(), filterModel.getMaxConfidence(), .05);
+                maxConfidenceSpinner = makeSpinner(filterModel.getCurrentMaxConfidence(), filterModel.getMinConfidence(), filterModel.getMaxConfidence(), .05);
+                min.addNamed("Min confidence", minConfidenceSpinner);
+                max.addNamed("Max confidence", maxConfidenceSpinner);
+                ensureCompatibleBounds(minConfidenceSpinner, maxConfidenceSpinner);
+
+                generalParameters.add(box);
+            }
+
+            {
+                //lipid filter
+                lipidFilterBox = new JComboBox<>();
+                java.util.List.copyOf(EnumSet.allOf(CompoundFilterModel.LipidFilter.class)).forEach(lipidFilterBox::addItem);
+                generalParameters.addNamed("Lipid filter", lipidFilterBox);
+                lipidFilterBox.setSelectedItem(filterModel.getLipidFilter());
+            }
+
+            //isotope peak filter
+            {
+                generalParameters.add(Box.createVerticalStrut(5));
+                generalParameters.add(new JXTitledSeparator("MS Data"));
+                hasMs1 = new JCheckBox("MS1");
+                hasMs1.setToolTipText("Feature must have a least one MS1 Spectrum");
+                hasMs1.setSelected(filterModel.isHasMs1());
+                hasMsMs = new JCheckBox("MS/MS");
+                hasMsMs.setToolTipText("Feature must have a least one MS/MS Spectrum");
+                hasMsMs.setSelected(filterModel.isHasMsMs());
+                minIsotopeSpinner = makeSpinner(filterModel.getCurrentMinIsotopePeaks(), filterModel.getMinIsotopePeaks(), filterModel.getMaxIsotopePeaks(), 1);
+
+                Box box = Box.createHorizontalBox();
+                box.add(hasMs1);
+                box.add(Box.createHorizontalStrut(50));
+                box.add(hasMsMs);
+                box.add(Box.createHorizontalStrut(50));
+                box.add(new TwoColumnPanel("Min isotope peaks", minIsotopeSpinner));
+                box.add(Box.createHorizontalStrut(10));
+                generalParameters.add(box);
+            }
+
+
+        }
+        //quality filter
+        {
+            generalParameters.add(Box.createVerticalStrut(5));
+            generalParameters.add(new JXTitledSeparator("Quality Filter"));
+            overallQualityPanel = new QualityFilterPanel(filterModel.getFeatureQualityFilter());
+            generalParameters.addNamed("<html><b>Overall quality</b></html>", overallQualityPanel);
+            generalParameters.add(Box.createVerticalStrut(5));
+            qualityPanels = filterModel.getIoQualityFilters().stream().map(qf -> {
+                QualityFilterPanel qfp = new QualityFilterPanel(qf);
+                generalParameters.addNamed(qf.getName(), qfp);
+                return qfp;
+            }).toList();
+        }
+
 
         // Element filter
         {
-            smallParameters.add(new JXTitledSeparator("Elements"));
+            generalParameters.add(Box.createVerticalStrut(5));
+            generalParameters.add(new JXTitledSeparator("Elements"));
 
             JPanel elementSelector = new JPanel();
             elementSelector.setLayout(new BoxLayout(elementSelector, BoxLayout.X_AXIS));
@@ -175,49 +199,60 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             elementsField.setPlaceholder("Insert or Select formula constraints");
             elementSelector.add(elementsField);
             elementSelector.add(selectElements);
-            smallParameters.add(elementSelector);
-            final JPanel group = new JPanel();
-            final BoxLayout groupLayout = new BoxLayout(group, BoxLayout.X_AXIS);
-            group.setLayout(groupLayout);
-
             elementsMatchFormula = new JCheckBox("Molecular Formula");
             elementsMatchFormula.setSelected(filterModel.getElementFilter().isMatchFormula());
             elementsMatchPrecursorFormula = new JCheckBox("Precursor Formula");
             elementsMatchPrecursorFormula.setSelected(filterModel.getElementFilter().isMatchPrecursorFormula());
-            group.add(Box.createHorizontalGlue());
+
+            final Box group = Box.createHorizontalBox();
             group.add(elementsMatchFormula);
-            group.add(Box.createHorizontalGlue());
+            group.add(Box.createHorizontalStrut(25));
             group.add(elementsMatchPrecursorFormula);
             group.add(Box.createHorizontalGlue());
-            smallParameters.add(group);
+
+            generalParameters.add(elementSelector);
+            generalParameters.add(group);
         }
 
         // Adduct filter
-        adductOptions = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Adducts", GuiUtils.formatToolTip("Select adducts to  filter by. Selecting all or none mean every adducts can pass"));
-        adductOptions.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>(PrecursorIonType.fromString("[M + H20 + Na]+"), false));
-
-        List<PrecursorIonType> ionizations = new ArrayList<>();
-        ionizations.add(PrecursorIonType.unknownPositive());
-        ionizations.add(PrecursorIonType.unknownNegative());
-        ionizations.addAll(PeriodicTable.getInstance().getPositiveAdducts());
-        ionizations.addAll(PeriodicTable.getInstance().getNegativeAdducts());
-        ionizations.sort(PrecursorIonTypeSelector.ionTypeComparator);
-
-        adductOptions.checkBoxList.replaceElements(ionizations);
-        adductOptions.checkBoxList.uncheckAll();
-        adductOptions.setEnabled(true);
-
-        smallParameters.add(adductOptions);
-        adductOptions.checkBoxList.checkAll(filterModel.getAdducts());
-
-        // db filter
         {
+            generalParameters.add(Box.createVerticalStrut(5));
+            adductOptions = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Adducts", GuiUtils.formatToolTip("Select adducts to  filter by. Selecting all or none mean every adducts can pass"));
+            adductOptions.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>(PrecursorIonType.fromString("[M + H20 + Na]+"), false));
+
+            List<PrecursorIonType> ionizations = new ArrayList<>();
+            ionizations.add(PrecursorIonType.unknownPositive());
+            ionizations.add(PrecursorIonType.unknownNegative());
+            ionizations.addAll(PeriodicTable.getInstance().getPositiveAdducts());
+            ionizations.addAll(PeriodicTable.getInstance().getNegativeAdducts());
+            ionizations.sort(PrecursorIonTypeSelector.ionTypeComparator);
+
+            adductOptions.checkBoxList.replaceElements(ionizations);
+            adductOptions.checkBoxList.uncheckAll();
+            adductOptions.setEnabled(true);
+
+//            generalParameters.add(adductOptions);
+            adductOptions.checkBoxList.checkAll(filterModel.getAdducts());
+
+
+            // db filter
             searchDBList = new JCheckboxListPanel<>(DBSelectionList.fromSearchableDatabases(gui.getSiriusClient()), "Hit in structure DB");
-            smallParameters.add(searchDBList);
+//            generalParameters.add(searchDBList);
             searchDBList.remove(searchDBList.buttons);
             searchDBList.checkBoxList.uncheckAll();
+
             candidateSpinner = makeSpinner(1, 1, 100, 1);
-            smallParameters.addNamed("Candidates to check: ", candidateSpinner);
+            searchDBList.addFooter(new TwoColumnPanel("Candidates to check", candidateSpinner));
+
+            // create adduct lists
+            Box box = Box.createHorizontalBox();
+            box.add(adductOptions);
+            box.add(Box.createHorizontalStrut(50));
+            box.add(searchDBList);
+            box.add(Box.createHorizontalStrut(10));
+
+
+            generalParameters.add(box);
 
             if (filterModel.isDbFilterEnabled()) { //null check
                 searchDBList.checkBoxList.checkAll(filterModel.getDbFilter().getDbs());
@@ -225,19 +260,29 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             }
         }
 
-        smallParameters.add(new JXTitledSeparator("Filter options"));
+        // filter modifiers
+        {
+            generalParameters.add(Box.createVerticalStrut(5));
+            generalParameters.add(new JXTitledSeparator("Filter modifiers"));
 
-        invertFilter = new JCheckBox("Invert Filter");
-        invertFilter.setSelected(compoundList.isFilterInverted());
-        smallParameters.add(invertFilter);
+            invertFilter = new JCheckBox("Invert Filter");
+            invertFilter.setSelected(compoundList.isFilterInverted());
 
-        deleteSelection = new JCheckBox("<html>Delete all <b>non-</b>matching compounds</html>");
-        deleteSelection.setSelected(false);
-        smallParameters.add(deleteSelection);
+            deleteSelection = new JCheckBox("<html>Delete all <b>non-</b>matching compounds</html>");
+            deleteSelection.setSelected(false);
+
+            final Box group = Box.createHorizontalBox();
+            group.add(invertFilter);
+            group.add(Box.createHorizontalStrut(25));
+            group.add(deleteSelection);
+            group.add(Box.createHorizontalGlue());
+            generalParameters.add(group);
+
+        }
 
         reset = new JButton("Reset");
         reset.addActionListener(this);
-        smallParameters.add(new JSeparator(SwingConstants.VERTICAL));
+        generalParameters.add(new JSeparator(SwingConstants.VERTICAL));
 
         discard = new JButton("Discard");
         discard.addActionListener(this);
@@ -304,13 +349,17 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         filterModel.setCurrentMaxRt(getMaxRt());
         filterModel.setCurrentMinConfidence(getMinConfidence());
         filterModel.setCurrentMaxConfidence(getMaxConfidence());
+        filterModel.setHasMs1(hasMs1.isSelected());
+        filterModel.setHasMsMs(hasMsMs.isSelected());
         filterModel.setCurrentMinIsotopePeaks(getMinIsotopePeaks());
         filterModel.setAdducts(new HashSet<>(adductOptions.checkBoxList.getCheckedItems()));
 
-        //todo enable if implemented
-        /*for (int k = 0; k < peakShape.length; ++k) {
-            filterModel.setPeakShapeQuality(k, peakShape[k].isSelected());
-        }*/
+        overallQualityPanel.updateModel(filterModel.getFeatureQualityFilter());
+
+        Iterator<QualityFilterPanel> qualityPanelIt = qualityPanels.iterator();
+        Iterator<CompoundFilterModel.QualityFilter> qualityFilterIt = filterModel.getIoQualityFilters().iterator();
+        while (qualityPanelIt.hasNext() && qualityFilterIt.hasNext())
+            qualityPanelIt.next().updateModel(qualityFilterIt.next());
 
         filterModel.setLipidFilter((CompoundFilterModel.LipidFilter) lipidFilterBox.getSelectedItem());
 
@@ -389,16 +438,17 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     private void resetFilter() {
         resetSpinnerValues();
         adductOptions.checkBoxList.uncheckAll();
-        //todo enable if implemented
-//        for (int i = 0; i < peakShape.length; ++i) {
-//            peakShape[i].setSelected(true);
-//        }
+        overallQualityPanel.reset();
+        qualityPanels.forEach(QualityFilterPanel::reset);
+
         lipidFilterBox.setSelectedItem(CompoundFilterModel.LipidFilter.KEEP_ALL_COMPOUNDS);
         elementsField.setText(null);
         searchDBList.checkBoxList.uncheckAll();
         searchFieldDialogCopy.setText("");
         invertFilter.setSelected(false);
         deleteSelection.setSelected(false);
+        hasMs1.setSelected(false);
+        hasMsMs.setSelected(false);
     }
 
     private void resetSpinnerValues() {
@@ -478,5 +528,33 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         spinner.setPreferredSize(new Dimension(200, 26));
 
         return spinner;
+    }
+
+    private static class QualityFilterPanel extends JPanel {
+        JCheckBox[] qualityBoxes;
+
+        public QualityFilterPanel(@NotNull CompoundFilterModel.QualityFilter qualityFilterModel) {
+            super();
+            final BoxLayout groupLayout = new BoxLayout(this, BoxLayout.X_AXIS);
+            setLayout(groupLayout);
+
+            qualityBoxes = qualityFilterModel.getPossibleQualities().stream().map(JCheckBox::new).toArray(JCheckBox[]::new);
+            for (int i = 0; i < qualityBoxes.length; ++i) {
+                add(Box.createHorizontalGlue());
+                add(qualityBoxes[i]);
+                qualityBoxes[i].setSelected(qualityFilterModel.isQualitySelected(i));
+            }
+            add(Box.createHorizontalStrut(10));
+        }
+
+        public void reset() {
+            for (JCheckBox jCheckBox : qualityBoxes)
+                jCheckBox.setSelected(true);
+        }
+
+        public void updateModel(CompoundFilterModel.QualityFilter qualityFilter) {
+            for (int k = 0; k < qualityBoxes.length; ++k)
+                qualityFilter.setQualitySelected(k, qualityBoxes[k].isSelected());
+        }
     }
 }

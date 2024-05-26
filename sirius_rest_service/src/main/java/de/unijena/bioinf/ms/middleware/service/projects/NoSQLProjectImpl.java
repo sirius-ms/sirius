@@ -551,6 +551,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .compoundId(features.getCompoundId()==null ? null : features.getCompoundId().toString())
                 .ionMass(features.getAverageMass())
                 .quality(features.getDataQuality())
+                .hasMs1(features.isHasMs1())
+                .hasMsMs(features.isHasMsMs())
                 .computing(computeStateProvider.apply(this, fid))
                 .charge(features.getCharge())
                 .detectedAdducts(features.getDetectedAdducts().getAllAdducts().stream().map(PrecursorIonType::toString)

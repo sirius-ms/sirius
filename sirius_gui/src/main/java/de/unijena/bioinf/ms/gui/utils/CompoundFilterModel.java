@@ -20,16 +20,16 @@ package de.unijena.bioinf.ms.gui.utils;/*
 
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.lcms.quality.LCMSQualityCheck;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
+import de.unijena.bioinf.ms.nightsky.sdk.model.DataQuality;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
+import lombok.Getter;
+import lombok.Setter;
+import org.apache.commons.text.CaseUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This model stores the filter criteria for a compound list
@@ -40,20 +40,47 @@ public class CompoundFilterModel implements SiriusPCS {
     /*
     currently selected values
      */
+    @Getter
     private double currentMinMz;
+    @Getter
     private double currentMaxMz;
+    @Getter
     private double currentMinRt;
+    @Getter
     private double currentMaxRt;
 
+    @Getter
     private double currentMinConfidence;
+    @Getter
     private double currentMaxConfidence;
 
-    //
 
+    @Getter
+    private final QualityFilter featureQualityFilter = new QualityFilter("Feature Quality");
+    @Getter
+    private final QualityFilter peakShapeQualityFilter = new QualityFilter("Peak Quality");
+    @Getter
+    private final QualityFilter alignmentQuality = new QualityFilter( "Alignment Quality");
+    @Getter
+    private final QualityFilter isotopePatternQuality = new QualityFilter( "Isotope Pattern Quality");
+    @Getter
+    private final QualityFilter fragmentationPatternQuality = new QualityFilter("Fragmentation Pattern Quality");
+    @Getter
+    private final QualityFilter adductAssignmentQuality = new QualityFilter("Adduct Assignment Quality");
+    @Getter
+    private final List<QualityFilter> ioQualityFilters = List.of(peakShapeQualityFilter, alignmentQuality, isotopePatternQuality, fragmentationPatternQuality, adductAssignmentQuality);
+
+    // MSData filter
+    @Getter
+    private boolean hasMs1 = false;
+    @Getter
+    private boolean hasMsMs = false;
+    @Getter
     private int currentMinIsotopePeaks;
-    private boolean[] peakShapeQualities = new boolean[]{true, true, true};
 
+    @Setter
     private Set<PrecursorIonType> adducts = Set.of();
+    @Getter
     private LipidFilter lipidFilter = LipidFilter.KEEP_ALL_COMPOUNDS;
 
     @NotNull
@@ -62,23 +89,32 @@ public class CompoundFilterModel implements SiriusPCS {
     @Nullable
     private DbFilter dbFilter;
 
+
     /*
     min/max possible values
      */
+    @Getter
     private final double minMz;
+    @Getter
     private final double maxMz;
+    @Getter
     private final double minRt;
+    @Getter
     private final double maxRt;
 
+    @Getter
     private final int minIsotopePeaks;
+    @Getter
     private final int maxIsotopePeaks;
 
+    @Getter
     private final double minConfidence;
+    @Getter
     private final double maxConfidence;
 
 
     public CompoundFilterModel() {
-        this(0, 5000d, 0, 10000d, 0, 1d,0,Integer.MAX_VALUE);
+        this(0, 5000d, 0, 10000d, 0, 1d, 0, Integer.MAX_VALUE);
     }
 
 
@@ -100,7 +136,7 @@ public class CompoundFilterModel implements SiriusPCS {
         this.currentMaxRt = maxRt;
         this.currentMinConfidence = minConfidence;
         this.currentMaxConfidence = maxConfidence;
-        this.currentMinIsotopePeaks=minIsotopePeaks;
+        this.currentMinIsotopePeaks = minIsotopePeaks;
 
         this.minMz = minMz;
         this.maxMz = maxMz;
@@ -117,27 +153,13 @@ public class CompoundFilterModel implements SiriusPCS {
         pcs.firePropertyChange("filterUpdateCompleted", null, this);
     }
 
-    public boolean isPeakShapeFilterEnabled() {
-        for (boolean val : peakShapeQualities) {
-            if (!val) return true;
-        }
-        return false;
-    }
 
-    public boolean isMinIsotopePeaksFilterEnabled(){
-        if (currentMinIsotopePeaks != minIsotopePeaks) return true;
-
-        return false;
-
-
+    public boolean isMinIsotopePeaksFilterEnabled() {
+        return currentMinIsotopePeaks != minIsotopePeaks;
     }
 
     public boolean isLipidFilterEnabled() {
         return lipidFilter != LipidFilter.KEEP_ALL_COMPOUNDS;
-    }
-
-    public LipidFilter getLipidFilter() {
-        return lipidFilter;
     }
 
     public void setLipidFilter(LipidFilter value) {
@@ -174,36 +196,26 @@ public class CompoundFilterModel implements SiriusPCS {
         pcs.firePropertyChange("setElementFilter", oldValue, value);
     }
 
-    public void setPeakShapeQuality(LCMSQualityCheck.Quality quality, boolean value) {
-        boolean oldValue = peakShapeQualities[quality.ordinal()];
-        peakShapeQualities[quality.ordinal()] = value;
-        pcs.firePropertyChange("setPeakShapeQuality", oldValue, value);
+    public void setHasMs1(boolean hasMs1) {
+        boolean old = this.hasMs1;
+        this.hasMs1 = hasMs1;
+        pcs.firePropertyChange("setHasMs1", old, hasMs1);
     }
 
-    public void setPeakShapeQuality(int quality, boolean value) {
-        boolean oldValue = peakShapeQualities[quality];
-        peakShapeQualities[quality] = value;
-        pcs.firePropertyChange("setPeakShapeQuality", oldValue, value);
+    public void setHasMsMs(boolean hasMsMs) {
+        boolean old = this.hasMsMs;
+        this.hasMsMs = hasMsMs;
+        pcs.firePropertyChange("setHasMsMs", old, hasMsMs);
     }
 
-    public boolean getPeakShapeQuality(LCMSQualityCheck.Quality quality) {
-        return peakShapeQualities[quality.ordinal()];
-    }
-
-    public boolean getPeakShapeQuality(int quality) {
-        return peakShapeQualities[quality];
-    }
-
-    public void setCurrentMinIsotopePeaks(int currentMinIsotopePeaks){
-        if (currentMinIsotopePeaks < minIsotopePeaks) throw new IllegalArgumentException("current value out of range: " + currentMinMz);
+    public void setCurrentMinIsotopePeaks(int currentMinIsotopePeaks) {
+        if (currentMinIsotopePeaks < minIsotopePeaks)
+            throw new IllegalArgumentException("current value out of range: " + currentMinMz);
         int oldValue = this.currentMinIsotopePeaks;
-        this.currentMinIsotopePeaks=currentMinIsotopePeaks;
-        pcs.firePropertyChange("setMinIsotopePeaks",oldValue,currentMinIsotopePeaks);
+        this.currentMinIsotopePeaks = currentMinIsotopePeaks;
+        pcs.firePropertyChange("setMinIsotopePeaks", oldValue, currentMinIsotopePeaks);
 
     }
-
-    public int getCurrentMinIsotopePeaks(){return currentMinIsotopePeaks;}
-
 
     public void setCurrentMinMz(double currentMinMz) {
         if (currentMinMz < minMz) throw new IllegalArgumentException("current value out of range: " + currentMinMz);
@@ -212,23 +224,11 @@ public class CompoundFilterModel implements SiriusPCS {
         pcs.firePropertyChange("setMinMz", oldValue, currentMinMz);
     }
 
-    public double getCurrentMinMz() {
-        return currentMinMz;
-    }
-
-    public double getCurrentMaxMz() {
-        return currentMaxMz;
-    }
-
     public void setCurrentMaxMz(double currentMaxMz) {
         if (currentMaxMz > maxMz) throw new IllegalArgumentException("current value out of range: " + currentMaxMz);
         double oldValue = this.currentMaxMz;
         this.currentMaxMz = currentMaxMz;
         pcs.firePropertyChange("setMaxMz", oldValue, currentMaxMz);
-    }
-
-    public double getCurrentMinRt() {
-        return currentMinRt;
     }
 
     public void setCurrentMinRt(double currentMinRt) {
@@ -239,41 +239,12 @@ public class CompoundFilterModel implements SiriusPCS {
 
     }
 
-    public double getCurrentMaxRt() {
-        return currentMaxRt;
-    }
-
     public void setCurrentMaxRt(double currentMaxRt) {
         if (currentMaxRt > maxRt) throw new IllegalArgumentException("current value out of range: " + currentMaxRt);
         double oldValue = this.currentMaxRt;
         this.currentMaxRt = currentMaxRt;
         pcs.firePropertyChange("setMaxRt", oldValue, currentMaxRt);
 
-    }
-
-    public double getMinMz() {
-        return minMz;
-    }
-
-    public double getMaxMz() {
-        return maxMz;
-    }
-
-    public double getMinRt() {
-        return minRt;
-    }
-
-    public double getMaxRt() {
-        return maxRt;
-    }
-
-    public int getMinIsotopePeaks(){return minIsotopePeaks;}
-
-    public int getMaxIsotopePeaks(){return maxIsotopePeaks;}
-
-
-    public double getCurrentMaxConfidence() {
-        return currentMaxConfidence;
     }
 
     public void setCurrentMaxConfidence(double currentMaxConfidence) {
@@ -285,10 +256,6 @@ public class CompoundFilterModel implements SiriusPCS {
 
     }
 
-    public double getCurrentMinConfidence() {
-        return currentMinConfidence;
-    }
-
     public void setCurrentMinConfidence(double currentMinConfidence) {
         if (currentMinConfidence < minConfidence)
             throw new IllegalArgumentException("current value out of range: " + currentMinConfidence);
@@ -298,26 +265,21 @@ public class CompoundFilterModel implements SiriusPCS {
 
     }
 
-    public double getMinConfidence() {
-        return minConfidence;
-    }
-
-    public double getMaxConfidence() {
-        return maxConfidence;
-    }
-
     /**
      * filter options are active. that means selected values differ from absolute min/max
      *
      * @return true if active and false if not.
      */
     public boolean isActive() {
+        if (hasMs1 || hasMsMs)
+            return true;
         if (currentMinMz != minMz || currentMaxMz != maxMz ||
                 currentMinRt != minRt || currentMaxRt != maxRt ||
                 currentMinConfidence != minConfidence || currentMaxConfidence != maxConfidence
         ) return true;
         if (!adducts.isEmpty()) return true;
-        if (isPeakShapeFilterEnabled() || isLipidFilterEnabled() || isElementFilterEnabled() || isDbFilterEnabled()) return true;
+        if (getIoQualityFilters().stream().anyMatch(QualityFilter::isEnabled) || getFeatureQualityFilter().isEnabled() || isLipidFilterEnabled() || isElementFilterEnabled() || isDbFilterEnabled())
+            return true;
 
         return false;
     }
@@ -339,17 +301,13 @@ public class CompoundFilterModel implements SiriusPCS {
     }
 
 
-    public void setAdducts(Set<PrecursorIonType> adducts) {
-        this.adducts = adducts;
-    }
-
     public Set<PrecursorIonType> getAdducts() {
         return Collections.unmodifiableSet(adducts);
     }
+
     public boolean isAdductFilterActive() {
         return adducts != null && !adducts.isEmpty();
     }
-
 
 
     @Override
@@ -365,11 +323,14 @@ public class CompoundFilterModel implements SiriusPCS {
         setCurrentMaxRt(maxRt);
         setCurrentMaxConfidence(maxConfidence);
         setCurrentMinConfidence(minConfidence);
-        Arrays.fill(peakShapeQualities, true);
+        getFeatureQualityFilter().reset();
+        getPeakShapeQualityFilter().reset();
         setLipidFilter(LipidFilter.KEEP_ALL_COMPOUNDS);
         setDbFilter(null);
         setElementFilter(ElementFilter.disabled());
         adducts = Set.of();
+        setHasMs1(false);
+        setHasMsMs(false);
     }
 
     public enum LipidFilter {
@@ -384,6 +345,7 @@ public class CompoundFilterModel implements SiriusPCS {
             this(dbs, 5);
 
         }
+
         public DbFilter(List<SearchableDatabase> dbFilter, int numOfCandidates) {
             this.dbs = dbFilter;
             this.numOfCandidates = numOfCandidates;
@@ -446,5 +408,82 @@ public class CompoundFilterModel implements SiriusPCS {
         public static ElementFilter disabled() {
             return DISABLED;
         }
+    }
+
+
+    public class QualityFilter {
+        private final static List<DataQuality> DEFAULT_STATE = Arrays.asList(DataQuality.values()).subList(1,DataQuality.values().length);
+
+        @Getter
+        private final String name;
+        private final EnumSet<DataQuality> dataQualities = EnumSet.copyOf(DEFAULT_STATE);
+
+        public QualityFilter() {
+            this("quality");
+        }
+
+        public QualityFilter(String name) {
+            this.name = name;
+        }
+
+        public boolean addQuality(int publicIndex) {
+            return addQuality(DEFAULT_STATE.get(publicIndex));
+        }
+
+        public boolean addQuality(DataQuality quality) {
+            if (quality == DataQuality.NOT_APPLICABLE) //no error thrown because this is GUI stuff, just silently ignore
+                return false;
+
+            if (dataQualities.add(quality)) {
+                pcs.firePropertyChange(name, null, quality);
+                return true;
+            }
+            return false;
+        }
+
+        public boolean removeQuality(int publicIndex) {
+            return removeQuality(DEFAULT_STATE.get(publicIndex));
+        }
+
+        public boolean removeQuality(DataQuality quality) {
+            if (quality == DataQuality.NOT_APPLICABLE) //no error thrown because this is GUI stuff, just silently ignore
+                return false;
+
+            if (dataQualities.remove(quality)) {
+                pcs.firePropertyChange(name, quality, null);
+                return true;
+            }
+            return false;
+        }
+
+        public boolean isQualitySelected(int publicIndex) {
+            return isQualitySelected(DEFAULT_STATE.get(publicIndex));
+        }
+
+        public boolean isQualitySelected(DataQuality quality) {
+            return dataQualities.contains(quality);
+        }
+
+        public boolean setQualitySelected(int publicIndex, boolean selected){
+            if (selected)
+                return addQuality(publicIndex);
+            return removeQuality(publicIndex);
+        }
+
+        public boolean isEnabled() {
+            return dataQualities.size() < DEFAULT_STATE.size();
+        }
+
+        public void reset(){
+            dataQualities.clear();
+            dataQualities.addAll(DEFAULT_STATE);
+        }
+
+        public List<java.lang.String> getPossibleQualities(){
+            return DEFAULT_STATE.stream()
+                    .map(dq -> CaseUtils.toCamelCase(dq.name(), true, '_',' ','\t'))
+                    .toList();
+        }
+
     }
 }

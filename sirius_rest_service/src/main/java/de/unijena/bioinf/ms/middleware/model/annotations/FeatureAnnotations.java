@@ -66,7 +66,7 @@ public class FeatureAnnotations {
      * Result that shows if structure annotation was expanded by using PubChem as fallback and if so, which confidence mode was used (as per input paramter)
      *
      */
-    @Schema(enumAsRef = true,nullable = true)
+    @Schema(nullable = true)
     protected ExpansiveSearchConfidenceMode.Mode expansiveSearchState;
 }
 

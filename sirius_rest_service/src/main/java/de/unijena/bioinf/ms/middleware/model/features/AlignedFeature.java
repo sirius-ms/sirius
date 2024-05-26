@@ -69,6 +69,14 @@ public class AlignedFeature {
      * Quality of this feature.
      */
     protected DataQuality quality;
+    /**
+     * If true, the feature has at lease one MS1 spectrum
+     */
+    protected boolean hasMs1;
+    /**
+     * If true, the feature has at lease one MS/MS spectrum
+     */
+    protected boolean hasMsMs;
 
     /**
      * Mass Spec data of this feature (input data)

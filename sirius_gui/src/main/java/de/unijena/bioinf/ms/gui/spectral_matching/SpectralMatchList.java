@@ -53,12 +53,12 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
         this.sharedPeaksStats = new DoubleListStats();
         compoundList.addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
+            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
                 System.out.println("IGNORE LIST CHANGE");
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
                 if (!selection.isSelectionEmpty())
                     changeData(selection.getSelected().get(0), null);
                 else
