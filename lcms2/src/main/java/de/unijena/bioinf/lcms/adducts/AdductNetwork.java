@@ -384,6 +384,11 @@ public class AdductNetwork {
             maxRt = Math.max(maxRt, n.features.getRetentionTime().getEndTime());
         }
         rt /= intens;
+        if (compound.size()==1) {
+            // damned, have to look closer into that. But if a compound cannot be resolved properly, then
+            // adduct detection is likely wrong
+            compound.get(0).features.getDetectedAdducts().add(DetectedAdduct.builder().adduct(PrecursorIonType.unknown(compound.get(0).getFeature().getCharge())).score(0.5d).source(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN).build());
+        }
         return new Compound(
                 0,
                 new RetentionTime(minRt, maxRt, rt),
