@@ -11,6 +11,7 @@ import de.unijena.bioinf.lcms.trace.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,8 +60,8 @@ public class MergeTracesWithoutGapFilling {
             jobs.clear();
             sample.inactive();
         }
-        System.out.println("Average number of Alignmments in backbone: "  + alignment.getStatistics().getAverageNumberOfAlignments());
-        System.out.println("Median number of Alignmments in backbone: " + alignment.getStatistics().getMedianNumberOfAlignments());
+        LoggerFactory.getLogger(MergeTracesWithoutGapFilling.class).debug("Average number of Alignmments in backbone: "  + alignment.getStatistics().getAverageNumberOfAlignments());
+        LoggerFactory.getLogger(MergeTracesWithoutGapFilling.class).debug("Median number of Alignmments in backbone: " + alignment.getStatistics().getMedianNumberOfAlignments());
         for (int k=0; k < mergedNoiseLevelPerScan.length; ++k) {
             mergedNoiseLevelPerScan[k] /= alignment.getStatistics().getAverageNumberOfAlignments();
         }
@@ -79,9 +80,6 @@ public class MergeTracesWithoutGapFilling {
         MergeStorage mergeStorage = merged.getStorage().getMergeStorage();
         TraceRectangleMap rectangleMap = mergeStorage.getRectangleMap();
         for (MoI m : merged.getStorage().getAlignmentStorage()) {
-            if (m.isIsotopePeak()) {
-                System.err.println("That shouldn't happen, right?");
-            }
             final AlignedMoI moi = (AlignedMoI)m;
             Rect r = new Rect(moi.getRect());
             r.minMz = (float)moi.getMz();
