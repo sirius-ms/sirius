@@ -1,5 +1,8 @@
 package de.unijena.bioinf.ChemistryBase.utils;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(enumAsRef = true, nullable = true)
 public enum DataQuality {
 
     /**

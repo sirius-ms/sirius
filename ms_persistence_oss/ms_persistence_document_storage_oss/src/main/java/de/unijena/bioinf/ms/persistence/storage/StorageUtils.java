@@ -142,6 +142,8 @@ public class StorageUtils {
         alignedFeature.setExternalFeatureId(exp.getFeatureId());
         alignedFeature.setMolecularFormula(exp.getMolecularFormula());
         alignedFeature.setDetectedAdducts(StorageUtils.fromMs2ExpAnnotation(det));
+        alignedFeature.setHasMs1(msData.getMergedMs1Spectrum() != null);
+        alignedFeature.setHasMsMs((msData.getMsnSpectra() != null && !msData.getMsnSpectra().isEmpty()) || (msData.getMergedMSnSpectrum() != null));
 
         return alignedFeature;
     }
