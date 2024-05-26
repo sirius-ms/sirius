@@ -22,9 +22,9 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
- * Gets or Sets Mode
+ * Gets or Sets ConfidenceMode
  */
-public enum Mode {
+public enum ConfidenceMode {
   
   OFF("OFF"),
   
@@ -34,7 +34,7 @@ public enum Mode {
 
   private String value;
 
-  Mode(String value) {
+  ConfidenceMode(String value) {
     this.value = value;
   }
 
@@ -49,8 +49,8 @@ public enum Mode {
   }
 
   @JsonCreator
-  public static Mode fromValue(String value) {
-    for (Mode b : Mode.values()) {
+  public static ConfidenceMode fromValue(String value) {
+    for (ConfidenceMode b : ConfidenceMode.values()) {
       if (b.value.equals(value)) {
         return b;
       }

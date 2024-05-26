@@ -24,6 +24,7 @@ docs/CompoundClasses.md
 docs/CompoundImport.md
 docs/CompoundOptField.md
 docs/CompoundsApi.md
+docs/ConfidenceMode.md
 docs/ConnectionCheck.md
 docs/ConnectionError.md
 docs/ConsensusAnnotationsCSI.md
@@ -31,6 +32,7 @@ docs/ConsensusAnnotationsDeNovo.md
 docs/ConsensusCriterionCSI.md
 docs/ConsensusCriterionDeNovo.md
 docs/DBLink.md
+docs/DataQuality.md
 docs/Deviation.md
 docs/ExperimentalApi.md
 docs/FeatureAnnotations.md
@@ -58,7 +60,6 @@ docs/LicenseInfo.md
 docs/LipidAnnotation.md
 docs/LoginAndAccountApi.md
 docs/LossEdge.md
-docs/Mode.md
 docs/MsData.md
 docs/MsNovelist.md
 docs/PageAlignedFeature.md
@@ -146,6 +147,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/CompoundClassType.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/CompoundClasses.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/CompoundImport.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/CompoundOptField.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ConfidenceMode.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ConnectionCheck.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ConnectionError.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ConsensusAnnotationsCSI.java
@@ -153,6 +155,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ConsensusAnnotationsDeNovo
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ConsensusCriterionCSI.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ConsensusCriterionDeNovo.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/DBLink.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/DataQuality.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Deviation.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FeatureAnnotations.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FeatureImport.java
@@ -174,7 +177,6 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/JobSubmission.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/LicenseInfo.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/LipidAnnotation.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/LossEdge.java
-src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Mode.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/MsData.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/MsNovelist.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/PageAlignedFeature.java

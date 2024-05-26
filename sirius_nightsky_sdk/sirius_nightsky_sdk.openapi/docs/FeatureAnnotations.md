@@ -13,7 +13,7 @@ Summary of the results of a feature (aligned over runs). Can be added to a Align
 |**compoundClassAnnotation** | [**CompoundClasses**](CompoundClasses.md) |  |  [optional] |
 |**confidenceExactMatch** | **Double** | Confidence Score that represents the confidence whether the top hit is correct. |  [optional] |
 |**confidenceApproxMatch** | **Double** | Confidence Score that represents the confidence whether the top hit or a very similar hit (estimated by MCES distance) is correct. |  [optional] |
-|**expansiveSearchState** | **Mode** |  |  [optional] |
+|**expansiveSearchState** | **ConfidenceMode** |  |  [optional] |
 
 
 

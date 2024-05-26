@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import de.unijena.bioinf.ms.nightsky.sdk.model.DataQuality;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Item;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,49 +41,8 @@ public class Category {
   public static final String JSON_PROPERTY_CATEGORY_NAME = "categoryName";
   private String categoryName;
 
-  /**
-   * Gets or Sets overallQuality
-   */
-  public enum OverallQualityEnum {
-    NOT_APPLICABLE("NOT_APPLICABLE"),
-    
-    LOWEST("LOWEST"),
-    
-    BAD("BAD"),
-    
-    DECENT("DECENT"),
-    
-    GOOD("GOOD");
-
-    private String value;
-
-    OverallQualityEnum(String value) {
-      this.value = value;
-    }
-
-    @JsonValue
-    public String getValue() {
-      return value;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static OverallQualityEnum fromValue(String value) {
-      for (OverallQualityEnum b : OverallQualityEnum.values()) {
-        if (b.value.equals(value)) {
-          return b;
-        }
-      }
-      throw new IllegalArgumentException("Unexpected value '" + value + "'");
-    }
-  }
-
   public static final String JSON_PROPERTY_OVERALL_QUALITY = "overallQuality";
-  private OverallQualityEnum overallQuality;
+  private DataQuality overallQuality;
 
   public static final String JSON_PROPERTY_ITEMS = "items";
   private List<Item> items;
@@ -116,7 +76,7 @@ public class Category {
   }
 
 
-  public Category overallQuality(OverallQualityEnum overallQuality) {
+  public Category overallQuality(DataQuality overallQuality) {
     
     this.overallQuality = overallQuality;
     return this;
@@ -130,14 +90,14 @@ public class Category {
   @JsonProperty(JSON_PROPERTY_OVERALL_QUALITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public OverallQualityEnum getOverallQuality() {
+  public DataQuality getOverallQuality() {
     return overallQuality;
   }
 
 
   @JsonProperty(JSON_PROPERTY_OVERALL_QUALITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setOverallQuality(OverallQualityEnum overallQuality) {
+  public void setOverallQuality(DataQuality overallQuality) {
     this.overallQuality = overallQuality;
   }
 

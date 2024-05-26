@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import de.unijena.bioinf.ms.nightsky.sdk.model.DataQuality;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FeatureAnnotations;
 import de.unijena.bioinf.ms.nightsky.sdk.model.MsData;
 import java.util.LinkedHashSet;
@@ -72,49 +73,8 @@ public class AlignedFeature {
   public static final String JSON_PROPERTY_RT_END_SECONDS = "rtEndSeconds";
   private Double rtEndSeconds;
 
-  /**
-   * Quality of this feature.
-   */
-  public enum QualityEnum {
-    NOT_APPLICABLE("NOT_APPLICABLE"),
-    
-    LOWEST("LOWEST"),
-    
-    BAD("BAD"),
-    
-    DECENT("DECENT"),
-    
-    GOOD("GOOD");
-
-    private String value;
-
-    QualityEnum(String value) {
-      this.value = value;
-    }
-
-    @JsonValue
-    public String getValue() {
-      return value;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static QualityEnum fromValue(String value) {
-      for (QualityEnum b : QualityEnum.values()) {
-        if (b.value.equals(value)) {
-          return b;
-        }
-      }
-      throw new IllegalArgumentException("Unexpected value '" + value + "'");
-    }
-  }
-
   public static final String JSON_PROPERTY_QUALITY = "quality";
-  private QualityEnum quality;
+  private DataQuality quality;
 
   public static final String JSON_PROPERTY_MS_DATA = "msData";
   private MsData msData;
@@ -348,28 +308,28 @@ public class AlignedFeature {
   }
 
 
-  public AlignedFeature quality(QualityEnum quality) {
+  public AlignedFeature quality(DataQuality quality) {
     
     this.quality = quality;
     return this;
   }
 
    /**
-   * Quality of this feature.
+   * Get quality
    * @return quality
   **/
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_QUALITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public QualityEnum getQuality() {
+  public DataQuality getQuality() {
     return quality;
   }
 
 
   @JsonProperty(JSON_PROPERTY_QUALITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setQuality(QualityEnum quality) {
+  public void setQuality(DataQuality quality) {
     this.quality = quality;
   }
 

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import de.unijena.bioinf.ms.nightsky.sdk.model.DataQuality;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -36,49 +37,8 @@ public class Item {
   public static final String JSON_PROPERTY_DESCRIPTION = "description";
   private String description;
 
-  /**
-   * Gets or Sets quality
-   */
-  public enum QualityEnum {
-    NOT_APPLICABLE("NOT_APPLICABLE"),
-    
-    LOWEST("LOWEST"),
-    
-    BAD("BAD"),
-    
-    DECENT("DECENT"),
-    
-    GOOD("GOOD");
-
-    private String value;
-
-    QualityEnum(String value) {
-      this.value = value;
-    }
-
-    @JsonValue
-    public String getValue() {
-      return value;
-    }
-
-    @Override
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static QualityEnum fromValue(String value) {
-      for (QualityEnum b : QualityEnum.values()) {
-        if (b.value.equals(value)) {
-          return b;
-        }
-      }
-      throw new IllegalArgumentException("Unexpected value '" + value + "'");
-    }
-  }
-
   public static final String JSON_PROPERTY_QUALITY = "quality";
-  private QualityEnum quality;
+  private DataQuality quality;
 
   /**
    * Gets or Sets weight
@@ -149,7 +109,7 @@ public class Item {
   }
 
 
-  public Item quality(QualityEnum quality) {
+  public Item quality(DataQuality quality) {
     
     this.quality = quality;
     return this;
@@ -163,14 +123,14 @@ public class Item {
   @JsonProperty(JSON_PROPERTY_QUALITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public QualityEnum getQuality() {
+  public DataQuality getQuality() {
     return quality;
   }
 
 
   @JsonProperty(JSON_PROPERTY_QUALITY)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setQuality(QualityEnum quality) {
+  public void setQuality(DataQuality quality) {
     this.quality = quality;
   }
 

@@ -5274,6 +5274,15 @@
         "description": "User/developer friendly parameter subset for the CANOPUS tool\n CANOPUS is parameter free, so this Object is just a flag that canopus should be executed.\n Needs results from FingerprintPrediction Tool",
         "nullable": true
       },
+      "ConfidenceMode": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "OFF",
+          "EXACT",
+          "APPROXIMATE"
+        ]
+      },
       "FingerprintPrediction": {
         "type": "object",
         "properties": {
@@ -5387,15 +5396,6 @@
           }
         },
         "description": "Object to submit a job to be executed by SIRIUS"
-      },
-      "Mode": {
-        "type": "string",
-        "nullable": true,
-        "enum": [
-          "OFF",
-          "EXACT",
-          "APPROXIMATE"
-        ]
       },
       "MsNovelist": {
         "type": "object",
@@ -5598,7 +5598,7 @@
             "nullable": true
           },
           "expansiveSearchConfidenceMode": {
-            "$ref": "#/components/schemas/Mode"
+            "$ref": "#/components/schemas/ConfidenceMode"
           }
         },
         "description": "User/developer friendly parameter subset for the CSI:FingerID structure db search tool.\n Needs results from FingerprintPrediction and Canopus Tool.\n Non-Null parameters in this Object well override their equivalent value in the config map.",
@@ -5921,15 +5921,7 @@
             "nullable": true
           },
           "quality": {
-            "type": "string",
-            "description": "Quality of this feature.",
-            "enum": [
-              "NOT_APPLICABLE",
-              "LOWEST",
-              "BAD",
-              "DECENT",
-              "GOOD"
-            ]
+            "$ref": "#/components/schemas/DataQuality"
           },
           "msData": {
             "$ref": "#/components/schemas/MsData"
@@ -6290,6 +6282,17 @@
         },
         "nullable": true
       },
+      "DataQuality": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "NOT_APPLICABLE",
+          "LOWEST",
+          "BAD",
+          "DECENT",
+          "GOOD"
+        ]
+      },
       "Deviation": {
         "type": "object",
         "properties": {
@@ -6329,7 +6332,7 @@
             "nullable": true
           },
           "expansiveSearchState": {
-            "$ref": "#/components/schemas/Mode"
+            "$ref": "#/components/schemas/ConfidenceMode"
           }
         },
         "description": "Summary of the results of a feature (aligned over runs). Can be added to a AlignedFeature.\n The different annotation fields within this summary object are null if the corresponding\n feature does not contain the represented results. If fields are non-null\n the corresponding result has been computed but might still be empty.",
@@ -6943,6 +6946,26 @@
             "type": "integer",
             "format": "int64"
           },
+          "sort": {
+            "$ref": "#/components/schemas/SortObject"
+          },
+          "last": {
+            "type": "boolean"
+          },
+          "first": {
+            "type": "boolean"
+          },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "numberOfElements": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageable": {
+            "$ref": "#/components/schemas/PageableObject"
+          },
           "size": {
             "type": "integer",
             "format": "int32"
@@ -6953,26 +6976,6 @@
               "$ref": "#/components/schemas/Job"
             }
           },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "sort": {
-            "$ref": "#/components/schemas/SortObject"
-          },
-          "last": {
-            "type": "boolean"
-          },
-          "first": {
-            "type": "boolean"
-          },
-          "numberOfElements": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "pageable": {
-            "$ref": "#/components/schemas/PageableObject"
-          },
           "empty": {
             "type": "boolean"
           }
@@ -6981,10 +6984,6 @@
       "PageableObject": {
         "type": "object",
         "properties": {
-          "offset": {
-            "type": "integer",
-            "format": "int64"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
@@ -7001,19 +7000,23 @@
           },
           "unpaged": {
             "type": "boolean"
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
       "SortObject": {
         "type": "object",
         "properties": {
-          "empty": {
-            "type": "boolean"
-          },
           "sorted": {
             "type": "boolean"
           },
           "unsorted": {
+            "type": "boolean"
+          },
+          "empty": {
             "type": "boolean"
           }
         }
@@ -7156,20 +7159,6 @@
             "type": "integer",
             "format": "int64"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Compound"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
@@ -7179,12 +7168,26 @@
           "first": {
             "type": "boolean"
           },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Compound"
+            }
           },
           "empty": {
             "type": "boolean"
@@ -7210,20 +7213,6 @@
             "type": "integer",
             "format": "int64"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/SpectralLibraryMatch"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
@@ -7233,12 +7222,26 @@
           "first": {
             "type": "boolean"
           },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SpectralLibraryMatch"
+            }
           },
           "empty": {
             "type": "boolean"
@@ -7325,15 +7328,7 @@
             "description": "Id of the feature (aligned over runs) this quality information belongs to."
           },
           "overallQuality": {
-            "type": "string",
-            "description": "Overall Quality",
-            "enum": [
-              "NOT_APPLICABLE",
-              "LOWEST",
-              "BAD",
-              "DECENT",
-              "GOOD"
-            ]
+            "$ref": "#/components/schemas/DataQuality"
           },
           "categories": {
             "type": "object",
@@ -7351,14 +7346,7 @@
             "type": "string"
           },
           "overallQuality": {
-            "type": "string",
-            "enum": [
-              "NOT_APPLICABLE",
-              "LOWEST",
-              "BAD",
-              "DECENT",
-              "GOOD"
-            ]
+            "$ref": "#/components/schemas/DataQuality"
           },
           "items": {
             "type": "array",
@@ -7375,14 +7363,7 @@
             "type": "string"
           },
           "quality": {
-            "type": "string",
-            "enum": [
-              "NOT_APPLICABLE",
-              "LOWEST",
-              "BAD",
-              "DECENT",
-              "GOOD"
-            ]
+            "$ref": "#/components/schemas/DataQuality"
           },
           "weight": {
             "type": "string",
@@ -7448,20 +7429,6 @@
             "type": "integer",
             "format": "int64"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StructureCandidateScored"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
@@ -7471,12 +7438,26 @@
           "first": {
             "type": "boolean"
           },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StructureCandidateScored"
+            }
           },
           "empty": {
             "type": "boolean"
@@ -7494,20 +7475,6 @@
             "type": "integer",
             "format": "int64"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/FormulaCandidate"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
@@ -7517,12 +7484,26 @@
           "first": {
             "type": "boolean"
           },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FormulaCandidate"
+            }
           },
           "empty": {
             "type": "boolean"
@@ -7613,20 +7594,6 @@
             "type": "integer",
             "format": "int64"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StructureCandidateFormula"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
@@ -7636,12 +7603,26 @@
           "first": {
             "type": "boolean"
           },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StructureCandidateFormula"
+            }
           },
           "empty": {
             "type": "boolean"
@@ -7659,20 +7640,6 @@
             "type": "integer",
             "format": "int64"
           },
-          "size": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "content": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AlignedFeature"
-            }
-          },
-          "number": {
-            "type": "integer",
-            "format": "int32"
-          },
           "sort": {
             "$ref": "#/components/schemas/SortObject"
           },
@@ -7682,12 +7649,26 @@
           "first": {
             "type": "boolean"
           },
+          "number": {
+            "type": "integer",
+            "format": "int32"
+          },
           "numberOfElements": {
             "type": "integer",
             "format": "int32"
           },
           "pageable": {
             "$ref": "#/components/schemas/PageableObject"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AlignedFeature"
+            }
           },
           "empty": {
             "type": "boolean"

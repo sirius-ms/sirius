@@ -21,8 +21,8 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundClasses;
+import de.unijena.bioinf.ms.nightsky.sdk.model.ConfidenceMode;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidate;
-import de.unijena.bioinf.ms.nightsky.sdk.model.Mode;
 import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateScored;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -56,7 +56,7 @@ public class FeatureAnnotations {
   private Double confidenceApproxMatch;
 
   public static final String JSON_PROPERTY_EXPANSIVE_SEARCH_STATE = "expansiveSearchState";
-  private Mode expansiveSearchState;
+  private ConfidenceMode expansiveSearchState;
 
   public FeatureAnnotations() {
   }
@@ -191,7 +191,7 @@ public class FeatureAnnotations {
   }
 
 
-  public FeatureAnnotations expansiveSearchState(Mode expansiveSearchState) {
+  public FeatureAnnotations expansiveSearchState(ConfidenceMode expansiveSearchState) {
     
     this.expansiveSearchState = expansiveSearchState;
     return this;
@@ -205,14 +205,14 @@ public class FeatureAnnotations {
   @JsonProperty(JSON_PROPERTY_EXPANSIVE_SEARCH_STATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Mode getExpansiveSearchState() {
+  public ConfidenceMode getExpansiveSearchState() {
     return expansiveSearchState;
   }
 
 
   @JsonProperty(JSON_PROPERTY_EXPANSIVE_SEARCH_STATE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setExpansiveSearchState(Mode expansiveSearchState) {
+  public void setExpansiveSearchState(ConfidenceMode expansiveSearchState) {
     this.expansiveSearchState = expansiveSearchState;
   }
 

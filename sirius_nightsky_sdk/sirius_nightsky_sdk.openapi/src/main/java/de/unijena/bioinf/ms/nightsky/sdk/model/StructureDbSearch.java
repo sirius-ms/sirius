@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import de.unijena.bioinf.ms.nightsky.sdk.model.Mode;
+import de.unijena.bioinf.ms.nightsky.sdk.model.ConfidenceMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -48,7 +48,7 @@ public class StructureDbSearch {
   private Boolean tagStructuresWithLipidClass;
 
   public static final String JSON_PROPERTY_EXPANSIVE_SEARCH_CONFIDENCE_MODE = "expansiveSearchConfidenceMode";
-  private Mode expansiveSearchConfidenceMode;
+  private ConfidenceMode expansiveSearchConfidenceMode;
 
   public StructureDbSearch() {
   }
@@ -139,7 +139,7 @@ public class StructureDbSearch {
   }
 
 
-  public StructureDbSearch expansiveSearchConfidenceMode(Mode expansiveSearchConfidenceMode) {
+  public StructureDbSearch expansiveSearchConfidenceMode(ConfidenceMode expansiveSearchConfidenceMode) {
     
     this.expansiveSearchConfidenceMode = expansiveSearchConfidenceMode;
     return this;
@@ -153,14 +153,14 @@ public class StructureDbSearch {
   @JsonProperty(JSON_PROPERTY_EXPANSIVE_SEARCH_CONFIDENCE_MODE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Mode getExpansiveSearchConfidenceMode() {
+  public ConfidenceMode getExpansiveSearchConfidenceMode() {
     return expansiveSearchConfidenceMode;
   }
 
 
   @JsonProperty(JSON_PROPERTY_EXPANSIVE_SEARCH_CONFIDENCE_MODE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setExpansiveSearchConfidenceMode(Mode expansiveSearchConfidenceMode) {
+  public void setExpansiveSearchConfidenceMode(ConfidenceMode expansiveSearchConfidenceMode) {
     this.expansiveSearchConfidenceMode = expansiveSearchConfidenceMode;
   }
 
