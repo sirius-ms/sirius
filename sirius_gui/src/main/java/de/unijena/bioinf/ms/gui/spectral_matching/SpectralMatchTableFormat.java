@@ -28,7 +28,7 @@ import java.util.function.Function;
 
 public class SpectralMatchTableFormat extends SiriusTableFormat<SpectralMatchBean> {
 
-    private static final int COL_COUNT = 11;
+    private static final int COL_COUNT = 10;
 
     public SpectralMatchTableFormat(Function<SpectralMatchBean, Boolean> bestFunc) {
         super(bestFunc);
@@ -55,10 +55,10 @@ public class SpectralMatchTableFormat extends SiriusTableFormat<SpectralMatchBea
             case 5 -> "Shared Peaks";
             case 6 -> "Ionization";
             case 7 -> "Collision Energy";
-            case 8 -> "Instrument";
-            case 9 -> "Database";
-            case 10 -> "ID";
-            case 11 -> "Best";
+//            case 8 -> "Instrument";
+            case 8 -> "Database";
+            case 9 -> "ID";
+            case 10 -> "Best";
             default -> throw new IllegalStateException();
         };
     }
@@ -74,10 +74,10 @@ public class SpectralMatchTableFormat extends SiriusTableFormat<SpectralMatchBea
             case 5 -> baseObject.getMatch().getSharedPeaks();
             case 6 -> Optional.ofNullable(baseObject.getMatch().getAdduct()).orElse("N/A");
             case 7 -> baseObject.getReference().map(BasicSpectrum::getCollisionEnergy).orElse("N/A");
-            case 8 -> "N/A"; //todo nightsky -> do we want to add this info to the api model?
-            case 9 -> baseObject.getMatch().getDbName();
-            case 10 -> baseObject.getDBLink();
-            case 11 -> isBest.apply(baseObject);
+//            case 8 -> "N/A"; //todo nightsky -> do we want to add this info to the api model?
+            case 8 -> baseObject.getMatch().getDbName();
+            case 9 -> baseObject.getDBLink();
+            case 10 -> isBest.apply(baseObject);
             default -> throw new IllegalStateException();
         };
     }
