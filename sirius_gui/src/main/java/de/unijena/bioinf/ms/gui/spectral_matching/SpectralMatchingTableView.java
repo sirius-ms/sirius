@@ -99,7 +99,7 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
                         return null;
                     }
                 }, DBLink::getId);
-        linkRenderer.registerToTable(table, 10);
+        linkRenderer.registerToTable(table, 9);
 
         addToCenterCard(ActionList.ViewState.DATA, new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED));
         showCenterCard(ActionList.ViewState.NOT_COMPUTED);
