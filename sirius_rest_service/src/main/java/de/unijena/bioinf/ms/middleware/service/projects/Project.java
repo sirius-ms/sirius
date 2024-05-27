@@ -24,10 +24,7 @@ import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.ms.backgroundruns.ImportMsFromResourceWorkflow;
 import de.unijena.bioinf.ms.backgroundruns.ImportPeaksFomResourceWorkflow;
-import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
-import de.unijena.bioinf.ms.middleware.model.annotations.SpectralLibraryMatch;
-import de.unijena.bioinf.ms.middleware.model.annotations.StructureCandidateFormula;
-import de.unijena.bioinf.ms.middleware.model.annotations.StructureCandidateScored;
+import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.features.*;
@@ -137,7 +134,13 @@ public interface Project<PSM extends ProjectSpaceManager> {
     void deleteAlignedFeaturesById(String alignedFeatureId);
     void deleteAlignedFeaturesByIds(List<String> alignedFeatureId);
 
-    Page<SpectralLibraryMatch> findLibraryMatchesByFeatureId(String alignedFeatureId, Pageable pageable);
+    SpectralLibraryMatchSummary summarizeLibraryMatchesByFeatureId(String alignedFeatureId, int minSharedPeaks, double minSimilarity);
+
+    SpectralLibraryMatchSummary summarizeLibraryMatchesByFeatureIdAndInchi(String alignedFeatureId, String candidateInchi, int minSharedPeaks, double minSimilarity);
+
+    Page<SpectralLibraryMatch> findLibraryMatchesByFeatureId(String alignedFeatureId, int minSharedPeaks, double minSimilarity, Pageable pageable);
+
+    Page<SpectralLibraryMatch> findLibraryMatchesByFeatureIdAndInchi(String alignedFeatureId, String candidateInchi, int minSharedPeaks, double minSimilarity, Pageable pageable);
 
     SpectralLibraryMatch findLibraryMatchesByFeatureIdAndMatchId(String alignedFeatureId, String matchId);
 

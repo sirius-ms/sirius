@@ -59,6 +59,7 @@ import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.storage.db.nosql.Database;
+import de.unijena.bioinf.storage.db.nosql.Filter;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.floats.FloatList;
@@ -66,6 +67,8 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.LongestCommonSubsequence;
@@ -78,6 +81,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
 import java.util.function.BiFunction;
@@ -436,9 +440,28 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return sort(sort, Pair.of("searchResult.rank", Database.SortOrder.ASCENDING), s -> switch (s) {
             case "rank" -> "searchResult.rank";
             case "similarity" -> "searchResult.similarity.similarity";
-            case "sharedPeaks" -> "similarity.sharedPeaks";
+            case "sharedPeaks" -> "searchResult.similarity.sharedPeaks";
             default -> s;
         });
+    }
+
+    private Filter spectralMatchFilter(String alignedFeatureId, int minSharedPeaks, double minSimilarity) {
+        long longId = Long.parseLong(alignedFeatureId);
+        return Filter.and(
+                Filter.where("alignedFeatureId").eq(longId),
+                Filter.where("searchResult.similarity.sharedPeaks").gte(minSharedPeaks),
+                Filter.where("searchResult.similarity.similarity").gte(minSimilarity)
+        );
+    }
+
+    private Filter spectralMatchInchiFilter(String alignedFeatureId, String candidateInchi, int minSharedPeaks, double minSimilarity) {
+        long longId = Long.parseLong(alignedFeatureId);
+        return Filter.and(
+                Filter.where("alignedFeatureId").eq(longId),
+                Filter.where("searchResult.candidateInChiKey").eq(candidateInchi),
+                Filter.where("searchResult.similarity.sharedPeaks").gte(minSharedPeaks),
+                Filter.where("searchResult.similarity.similarity").gte(minSimilarity)
+        );
     }
 
     private Pair<String, Database.SortOrder> sortFormulaCandidate(Sort sort) {
@@ -867,21 +890,75 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         project().cascadeDeleteAlignedFeatures(alignedFeatureIds.stream().map(Long::parseLong).sorted().toList());
     }
 
+    private SpectralLibraryMatchSummary summarize(Filter filter) throws IOException {
+        LongSet refSpecSet = new LongOpenHashSet();
+        long total = 0;
+        Set<String> compoundSet = new HashSet<>();
+        SpectraMatch bestMatch = null;
+        for (SpectraMatch match : project().getStorage().find(filter, SpectraMatch.class, "searchResult.similarity.similarity", Database.SortOrder.DESCENDING)) {
+            refSpecSet.add(match.getUuid());
+            compoundSet.add(match.getCandidateInChiKey());
+            if (bestMatch == null) {
+                bestMatch = match;
+            } else if (
+                    Math.abs(bestMatch.getSimilarity().similarity - match.getSimilarity().similarity) < 1E-3 &&
+                    bestMatch.getSimilarity().sharedPeaks < match.getSimilarity().sharedPeaks
+            ) {
+                bestMatch = match;
+            } else if (bestMatch.getSimilarity().similarity < match.getSimilarity().similarity) {
+                bestMatch = match;
+            }
+        }
+
+        return SpectralLibraryMatchSummary.builder()
+                .bestMatch(bestMatch != null ? SpectralLibraryMatch.of(bestMatch) : null)
+                .spectralMatchCount(total)
+                .referenceSpectraCount(refSpecSet.size())
+                .databaseCompoundCount(compoundSet.size()).build();
+    }
+
     @SneakyThrows
     @Override
-    public Page<SpectralLibraryMatch> findLibraryMatchesByFeatureId(String alignedFeatureId, Pageable pageable) {
-        long longId = Long.parseLong(alignedFeatureId);
+    public SpectralLibraryMatchSummary summarizeLibraryMatchesByFeatureId(String alignedFeatureId, int minSharedPeaks, double minSimilarity) {
+        Filter filter = spectralMatchFilter(alignedFeatureId, minSharedPeaks, minSimilarity);
+        return summarize(filter);
+    }
+
+    @SneakyThrows
+    @Override
+    public SpectralLibraryMatchSummary summarizeLibraryMatchesByFeatureIdAndInchi(String alignedFeatureId, String candidateInchi, int minSharedPeaks, double minSimilarity) {
+        Filter filter = spectralMatchInchiFilter(alignedFeatureId, candidateInchi, minSharedPeaks, minSimilarity);
+        return summarize(filter);
+    }
+
+    private Page<SpectralLibraryMatch> findLibMatches(Filter filter, Pageable pageable) throws IOException {
         Pair<String, Database.SortOrder> sort = sortMatch(pageable.getSort());
-        List<SpectralLibraryMatch> matches;
+
+        Stream<SpectraMatch> matches;
         if (pageable.isPaged()) {
-            matches = project().findByFeatureIdStr(longId, SpectraMatch.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight())
-                    .map(SpectralLibraryMatch::of).toList();
+            matches = project().getStorage().findStr(filter, SpectraMatch.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight()
+            );
         } else {
-            matches = project().findByFeatureIdStr(longId, SpectraMatch.class, sort.getLeft(), sort.getRight())
-                    .map(SpectralLibraryMatch::of).toList();
+            matches = project().getStorage().findStr(filter, SpectraMatch.class, sort.getLeft(), sort.getRight());
         }
-        long total = project().countByFeatureId(longId, SpectraMatch.class);
-        return new PageImpl<>(matches, pageable, total);
+
+        long total = project().getStorage().count(filter, SpectraMatch.class);
+
+        return new PageImpl<>(matches.map(SpectralLibraryMatch::of).toList(), pageable, total);
+    }
+
+    @SneakyThrows
+    @Override
+    public Page<SpectralLibraryMatch> findLibraryMatchesByFeatureId(String alignedFeatureId, int minSharedPeaks, double minSimilarity, Pageable pageable) {
+        Filter filter = spectralMatchFilter(alignedFeatureId, minSharedPeaks, minSimilarity);
+        return findLibMatches(filter, pageable);
+    }
+
+    @SneakyThrows
+    @Override
+    public Page<SpectralLibraryMatch> findLibraryMatchesByFeatureIdAndInchi(String alignedFeatureId, String candidateInchi, int minSharedPeaks, double minSimilarity, Pageable pageable) {
+        Filter filter = spectralMatchInchiFilter(alignedFeatureId, candidateInchi, minSharedPeaks, minSimilarity);
+        return findLibMatches(filter, pageable);
     }
 
     @SneakyThrows
