@@ -24,6 +24,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.PageStructureCandidateScored;
 import de.unijena.bioinf.ms.nightsky.sdk.model.QuantificationTable;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatch;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatchOptField;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatchSummary;
 import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateFormula;
 import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateScored;
@@ -2472,11 +2473,14 @@ public class FeaturesApi {
      * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param minSharedPeaks The minSharedPeaks parameter
+     * @param minSimilarity The minSimilarity parameter
+     * @param candidateInChiKey The candidateInChiKey parameter
      * @param optFields The optFields parameter
      * @return List&lt;SpectralLibraryMatch&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getSpectralLibraryMatchesRequestCreation(String projectId, String alignedFeatureId, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getSpectralLibraryMatchesRequestCreation(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -2497,6 +2501,9 @@ public class FeaturesApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSharedPeaks", minSharedPeaks));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSimilarity", minSimilarity));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "candidateInChiKey", candidateInChiKey));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
@@ -2518,13 +2525,16 @@ public class FeaturesApi {
      * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param minSharedPeaks The minSharedPeaks parameter
+     * @param minSimilarity The minSimilarity parameter
+     * @param candidateInChiKey The candidateInChiKey parameter
      * @param optFields The optFields parameter
      * @return List&lt;SpectralLibraryMatch&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<SpectralLibraryMatch> getSpectralLibraryMatches(String projectId, String alignedFeatureId, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    public List<SpectralLibraryMatch> getSpectralLibraryMatches(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<SpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<SpectralLibraryMatch>() {};
-        return getSpectralLibraryMatchesRequestCreation(projectId, alignedFeatureId, optFields).bodyToFlux(localVarReturnType).collectList().block();
+        return getSpectralLibraryMatchesRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey, optFields).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
@@ -2533,13 +2543,16 @@ public class FeaturesApi {
      * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param minSharedPeaks The minSharedPeaks parameter
+     * @param minSimilarity The minSimilarity parameter
+     * @param candidateInChiKey The candidateInChiKey parameter
      * @param optFields The optFields parameter
      * @return ResponseEntity&lt;List&lt;SpectralLibraryMatch&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<SpectralLibraryMatch>> getSpectralLibraryMatchesWithHttpInfo(String projectId, String alignedFeatureId, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<List<SpectralLibraryMatch>> getSpectralLibraryMatchesWithHttpInfo(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<SpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<SpectralLibraryMatch>() {};
-        return getSpectralLibraryMatchesRequestCreation(projectId, alignedFeatureId, optFields).toEntityList(localVarReturnType).block();
+        return getSpectralLibraryMatchesRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey, optFields).toEntityList(localVarReturnType).block();
     }
 
     /**
@@ -2548,27 +2561,33 @@ public class FeaturesApi {
      * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param minSharedPeaks The minSharedPeaks parameter
+     * @param minSimilarity The minSimilarity parameter
+     * @param candidateInChiKey The candidateInChiKey parameter
      * @param optFields The optFields parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getSpectralLibraryMatchesWithResponseSpec(String projectId, String alignedFeatureId, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
-        return getSpectralLibraryMatchesRequestCreation(projectId, alignedFeatureId, optFields);
+    public ResponseSpec getSpectralLibraryMatchesWithResponseSpec(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+        return getSpectralLibraryMatchesRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey, optFields);
     }
     /**
      * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
-     * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, returns only matches for the database compound with the given InChI key.
      * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param minSharedPeaks The minSharedPeaks parameter
+     * @param minSimilarity The minSimilarity parameter
+     * @param candidateInChiKey The candidateInChiKey parameter
      * @param optFields The optFields parameter
      * @return PageSpectralLibraryMatch
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getSpectralLibraryMatchesPagedRequestCreation(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec getSpectralLibraryMatchesPagedRequestCreation(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -2592,6 +2611,9 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "page", page));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSharedPeaks", minSharedPeaks));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSimilarity", minSimilarity));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "candidateInChiKey", candidateInChiKey));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
 
         final String[] localVarAccepts = { 
@@ -2609,55 +2631,163 @@ public class FeaturesApi {
 
     /**
      * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
-     * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, returns only matches for the database compound with the given InChI key.
      * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param minSharedPeaks The minSharedPeaks parameter
+     * @param minSimilarity The minSimilarity parameter
+     * @param candidateInChiKey The candidateInChiKey parameter
      * @param optFields The optFields parameter
      * @return PageSpectralLibraryMatch
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public PageSpectralLibraryMatch getSpectralLibraryMatchesPaged(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    public PageSpectralLibraryMatch getSpectralLibraryMatchesPaged(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PageSpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<PageSpectralLibraryMatch>() {};
-        return getSpectralLibraryMatchesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields).bodyToMono(localVarReturnType).block();
+        return getSpectralLibraryMatchesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, candidateInChiKey, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
      * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
-     * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, returns only matches for the database compound with the given InChI key.
      * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param minSharedPeaks The minSharedPeaks parameter
+     * @param minSimilarity The minSimilarity parameter
+     * @param candidateInChiKey The candidateInChiKey parameter
      * @param optFields The optFields parameter
      * @return ResponseEntity&lt;PageSpectralLibraryMatch&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<PageSpectralLibraryMatch> getSpectralLibraryMatchesPagedWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<PageSpectralLibraryMatch> getSpectralLibraryMatchesPagedWithHttpInfo(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<PageSpectralLibraryMatch> localVarReturnType = new ParameterizedTypeReference<PageSpectralLibraryMatch>() {};
-        return getSpectralLibraryMatchesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields).toEntity(localVarReturnType).block();
+        return getSpectralLibraryMatchesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, candidateInChiKey, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
      * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
-     * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
+     * Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, returns only matches for the database compound with the given InChI key.
      * <p><b>200</b> - Spectral library matches of this feature (aligned over runs).
      * @param projectId project-space to read from.
      * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+     * @param minSharedPeaks The minSharedPeaks parameter
+     * @param minSimilarity The minSimilarity parameter
+     * @param candidateInChiKey The candidateInChiKey parameter
      * @param optFields The optFields parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getSpectralLibraryMatchesPagedWithResponseSpec(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
-        return getSpectralLibraryMatchesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields);
+    public ResponseSpec getSpectralLibraryMatchesPagedWithResponseSpec(String projectId, String alignedFeatureId, Integer page, Integer size, List<String> sort, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey, List<SpectralLibraryMatchOptField> optFields) throws WebClientResponseException {
+        return getSpectralLibraryMatchesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, candidateInChiKey, optFields);
+    }
+    /**
+     * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.
+     * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, summarizes only matches for the database compound with the given InChI key.
+     * <p><b>200</b> - Summary object with best match, number of spectral library matches, matched reference spectra and matched database compounds of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param minSharedPeaks min threshold of shared peaks.
+     * @param minSimilarity min spectral similarity threshold.
+     * @param candidateInChiKey inchi key of the database compound.
+     * @return SpectralLibraryMatchSummary
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    private ResponseSpec getSpectralLibraryMatchesSummaryRequestCreation(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey) throws WebClientResponseException {
+        Object postBody = null;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getSpectralLibraryMatchesSummary", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'alignedFeatureId' is set
+        if (alignedFeatureId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getSpectralLibraryMatchesSummary", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+        pathParams.put("alignedFeatureId", alignedFeatureId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSharedPeaks", minSharedPeaks));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSimilarity", minSimilarity));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "candidateInChiKey", candidateInChiKey));
+
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<SpectralLibraryMatchSummary> localVarReturnType = new ParameterizedTypeReference<SpectralLibraryMatchSummary>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/summary", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.
+     * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, summarizes only matches for the database compound with the given InChI key.
+     * <p><b>200</b> - Summary object with best match, number of spectral library matches, matched reference spectra and matched database compounds of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param minSharedPeaks min threshold of shared peaks.
+     * @param minSimilarity min spectral similarity threshold.
+     * @param candidateInChiKey inchi key of the database compound.
+     * @return SpectralLibraryMatchSummary
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public SpectralLibraryMatchSummary getSpectralLibraryMatchesSummary(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey) throws WebClientResponseException {
+        ParameterizedTypeReference<SpectralLibraryMatchSummary> localVarReturnType = new ParameterizedTypeReference<SpectralLibraryMatchSummary>() {};
+        return getSpectralLibraryMatchesSummaryRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.
+     * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, summarizes only matches for the database compound with the given InChI key.
+     * <p><b>200</b> - Summary object with best match, number of spectral library matches, matched reference spectra and matched database compounds of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param minSharedPeaks min threshold of shared peaks.
+     * @param minSimilarity min spectral similarity threshold.
+     * @param candidateInChiKey inchi key of the database compound.
+     * @return ResponseEntity&lt;SpectralLibraryMatchSummary&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<SpectralLibraryMatchSummary> getSpectralLibraryMatchesSummaryWithHttpInfo(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey) throws WebClientResponseException {
+        ParameterizedTypeReference<SpectralLibraryMatchSummary> localVarReturnType = new ParameterizedTypeReference<SpectralLibraryMatchSummary>() {};
+        return getSpectralLibraryMatchesSummaryRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.
+     * Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, summarizes only matches for the database compound with the given InChI key.
+     * <p><b>200</b> - Summary object with best match, number of spectral library matches, matched reference spectra and matched database compounds of this feature (aligned over runs).
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature (aligned over runs) the structure candidates belong to.
+     * @param minSharedPeaks min threshold of shared peaks.
+     * @param minSimilarity min spectral similarity threshold.
+     * @param candidateInChiKey inchi key of the database compound.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec getSpectralLibraryMatchesSummaryWithResponseSpec(String projectId, String alignedFeatureId, Integer minSharedPeaks, Double minSimilarity, String candidateInChiKey) throws WebClientResponseException {
+        return getSpectralLibraryMatchesSummaryRequestCreation(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey);
     }
     /**
      * Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.
