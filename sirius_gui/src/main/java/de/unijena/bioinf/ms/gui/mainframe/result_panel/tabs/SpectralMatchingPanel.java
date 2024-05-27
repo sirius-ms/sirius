@@ -20,32 +20,38 @@
 
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
+import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
-import de.unijena.bioinf.ms.gui.ms_viewer.SpectraViewContainer;
-import de.unijena.bioinf.ms.gui.ms_viewer.WebViewSpectraViewer;
+import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchBean;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingTableView;
-import de.unijena.bioinf.ms.nightsky.sdk.model.BasicSpectrum;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
 public class SpectralMatchingPanel extends JPanel implements PanelDescription {
 
 
-    private final WebViewSpectraViewer browser;
+    private final SpectraVisualizationPanel spectraVisualizationPanel;
     private final SpectralMatchingTableView tableView;
 
 
     public SpectralMatchingPanel(@NotNull SpectralMatchList matchList) {
         super(new BorderLayout());
-        this.browser = new WebViewSpectraViewer();
-        this.tableView = new SpectralMatchingTableView(matchList, this);
+        this.spectraVisualizationPanel = new SpectraVisualizationPanel(SpectraVisualizationPanel.MS2_MIRROR_DISPLAY, true);
+        this.tableView = new SpectralMatchingTableView(matchList);
 
-        JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableView, browser);
+        this.tableView.getFilteredSelectionModel().addListSelectionListener(e -> {
+            DefaultEventSelectionModel<SpectralMatchBean> selections = (DefaultEventSelectionModel<SpectralMatchBean>) e.getSource();
+            selections.getSelected().stream().findFirst().ifPresent(matchBean -> {
+                matchList.readDataByConsumer(instanceBean -> {
+                    spectraVisualizationPanel.resultsChanged(instanceBean, matchList, matchBean);
+                });
+            });
+        });
+
+        JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableView, spectraVisualizationPanel);
         major.setDividerLocation(250);
         add(major, BorderLayout.CENTER);
     }
@@ -60,17 +66,5 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
                 + "For the selected match in the upper panel, the bottom panel shows a comparison of the experimental and reference spectrum."
                 + "</html>";
     }
-
-    public void showMatch(BasicSpectrum query, BasicSpectrum reference, String svg) {
-        try {
-            if (reference == null || query == null)
-                this.browser.clear();
-            else
-                this.browser.loadData(SpectraViewContainer.of(List.of(query, reference)), svg, "normal", 5);
-        } catch (Exception e) {
-            LoggerFactory.getLogger(getClass()).error("Error.", e);
-        }
-    }
-
 
 }

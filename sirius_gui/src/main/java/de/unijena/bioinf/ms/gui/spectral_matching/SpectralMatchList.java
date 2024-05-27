@@ -26,18 +26,17 @@ import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
-import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
-import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatch;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
 import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBean> {
 
@@ -47,6 +46,8 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
     private JJob<Boolean> backgroundLoader = null;
     private final Lock backgroundLoaderLock = new ReentrantLock();
 
+    private Function<Long, List<SpectralMatchBean>> beanGroupGetter = uuid -> List.of();
+
     public SpectralMatchList(CompoundList compoundList) {
         super(SpectralMatchBean.class);
         this.similarityStats = new DoubleListStats();
@@ -54,49 +55,48 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
         compoundList.addChangeListener(new ExperimentListChangeListener() {
             @Override
             public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
-                System.out.println("IGNORE LIST CHANGE");
             }
 
             @Override
             public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
-                if (!selection.isSelectionEmpty())
-                    changeData(selection.getSelected().get(0), null);
-                else
-                    changeData(null, null);
+                if (!selection.isSelectionEmpty()) {
+                    final InstanceBean instanceBean = selection.getSelected().get(0);
+                    changeData(instanceBean, instanceBean::getTopSpectralMatches);
+                    beanGroupGetter = instanceBean::getSpectralMatchGroupFromTop;
+                } else {
+                    changeData(null, List::of);
+                    beanGroupGetter = uuid -> List.of();
+                }
             }
         });
 
         //set initial state because listeners are called on change and not on creation
         DefaultEventSelectionModel<InstanceBean> m = compoundList.getCompoundListSelectionModel();
         if (!m.isSelectionEmpty()) {
-            changeData(m.getSelected().iterator().next(), null);
+            final InstanceBean instanceBean = m.getSelected().iterator().next();
+            changeData(instanceBean, instanceBean::getTopSpectralMatches);
+            beanGroupGetter = instanceBean::getSpectralMatchGroupFromTop;
         } else {
-            changeData(null, null);
+            changeData(null, List::of);
+            beanGroupGetter = uuid -> List.of();
         }
     }
 
-    public SpectralMatchList(StructureList structureList) {
-        super(SpectralMatchBean.class);
-        this.similarityStats = new DoubleListStats();
-        this.sharedPeaksStats = new DoubleListStats();
-
-        structureList.addActiveResultChangedListener((inst, fpCandidate, resultElements, selections) ->
-                changeData(inst, fpCandidate));
-
-        //set initial state because listeners are called on change and not on creation
-        structureList.readDataByConsumer(d -> changeData(d, structureList.getSelectedElement()));
-    }
-
-    public SpectralMatchList(final InstanceBean ec, final FingerprintCandidateBean candidateBean) {
+    public SpectralMatchList(final InstanceBean instanceBean, final FingerprintCandidateBean candidateBean) {
         super(SpectralMatchBean.class);
         this.similarityStats = new DoubleListStats();
         this.sharedPeaksStats = new DoubleListStats();
 
         //set state
-        changeData(ec, candidateBean);
+        changeData(instanceBean, candidateBean::getTopSpectralMatches);
+        beanGroupGetter = candidateBean::getSpectralMatchGroupFromTop;
     }
 
-    public void changeData(final InstanceBean ec, final FingerprintCandidateBean candidateBean) {
+    public List<SpectralMatchBean> getMatchBeanGroup(long refSpecUUID) {
+        return beanGroupGetter.apply(refSpecUUID);
+    }
+
+    public void changeData(final InstanceBean instanceBean, final Supplier<List<SpectralMatchBean>> beanSupplier) {
         //cancel running job if not finished to not waist resources for fetching data that is not longer needed.
         try {
             backgroundLoaderLock.lock();
@@ -111,28 +111,20 @@ public class SpectralMatchList extends ActionList<SpectralMatchBean, InstanceBea
                     }
                     checkForInterruption();
 
+                    List<SpectralMatchBean> beans = beanSupplier.get();
+
                     Jobs.runEDTAndWait(() -> {
                         similarityStats.reset();
                         sharedPeaksStats.reset();
+                        beans.forEach(bean -> {
+                            similarityStats.addValue(bean.getMatch().getSimilarity());
+                            sharedPeaksStats.addValue(bean.getMatch().getSharedPeaks() != null ? bean.getMatch().getSharedPeaks() : 0);
+                        });
                     });
 
                     checkForInterruption();
 
-                    if (ec != null) {
-                        List<SpectralLibraryMatch> searchResults = candidateBean == null
-                                ? ec.getSpectralSearchResults().getAllResults()
-                                : candidateBean.getReferenceMatches();
-
-                        List<SpectralMatchBean> matches = searchResults.stream().map(r -> {
-                            similarityStats.addValue(r.getSimilarity());
-                            sharedPeaksStats.addValue(r.getSharedPeaks());
-                            return new SpectralMatchBean(r, ec);
-                        }).toList();
-
-                        refillElementsEDT(ec, matches);
-                    } else {
-                        refillElementsEDT(null, List.of());
-                    }
+                    refillElementsEDT(instanceBean, beans);
                     return true;
                 }
             });
