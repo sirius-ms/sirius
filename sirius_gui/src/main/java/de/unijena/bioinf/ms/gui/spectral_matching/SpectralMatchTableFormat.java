@@ -47,10 +47,10 @@ public class SpectralMatchTableFormat extends SiriusTableFormat<SpectralMatchBea
     @Override
     public String getColumnName(int column) {
         return switch (column) {
-            case 0 -> "Rank";
-            case 1 -> "Query";
-            case 2 -> "Name";
-            case 3 -> "SMILES";
+            case 0 -> "Name";
+            case 1 -> "Molecular Formula";
+            case 2 -> "SMILES";
+            case 3 -> "Precursor m/z";
             case 4 -> "Similarity";
             case 5 -> "Shared Peaks";
             case 6 -> "Ionization";
@@ -66,10 +66,10 @@ public class SpectralMatchTableFormat extends SiriusTableFormat<SpectralMatchBea
     @Override
     public Object getColumnValue(SpectralMatchBean baseObject, int column) {
         return switch (column) {
-            case 0 -> baseObject.getRank();
-            case 1 -> baseObject.getQueryName();
-            case 2 -> baseObject.getReference().map(BasicSpectrum::getName).orElse("");
-            case 3 -> baseObject.getMatch().getSmiles();
+            case 0 -> baseObject.getReference().map(BasicSpectrum::getName).orElse("");
+            case 1 -> baseObject.getMatch().getMolecularFormula();
+            case 2 -> baseObject.getMatch().getSmiles();
+            case 3 -> baseObject.getReference().map(BasicSpectrum::getPrecursorMz).map(d -> Double.toString(d)).orElse("N/A");
             case 4 -> baseObject.getMatch().getSimilarity();
             case 5 -> baseObject.getMatch().getSharedPeaks();
             case 6 -> Optional.ofNullable(baseObject.getMatch().getAdduct()).orElse("N/A");
