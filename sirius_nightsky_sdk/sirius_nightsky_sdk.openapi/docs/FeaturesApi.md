@@ -32,6 +32,7 @@ All URIs are relative to *http://localhost:8888*
 | [**getSpectralLibraryMatch**](FeaturesApi.md#getSpectralLibraryMatch) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/{matchId} | List of spectral library matches for the given &#39;alignedFeatureId&#39;. |
 | [**getSpectralLibraryMatches**](FeaturesApi.md#getSpectralLibraryMatches) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches | List of spectral library matches for the given &#39;alignedFeatureId&#39;. |
 | [**getSpectralLibraryMatchesPaged**](FeaturesApi.md#getSpectralLibraryMatchesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/page | Page of spectral library matches for the given &#39;alignedFeatureId&#39;. |
+| [**getSpectralLibraryMatchesSummary**](FeaturesApi.md#getSpectralLibraryMatchesSummary) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/summary | Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;. |
 | [**getStructureAnnotatedMsData**](FeaturesApi.md#getStructureAnnotatedMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-msmsdata | Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey. |
 | [**getStructureAnnotatedSpectrum**](FeaturesApi.md#getStructureAnnotatedSpectrum) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum | Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available. |
 | [**getStructureCandidates**](FeaturesApi.md#getStructureCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/db-structures | List of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information. |
@@ -1882,7 +1883,7 @@ No authorization required
 
 ## getSpectralLibraryMatches
 
-> List&lt;SpectralLibraryMatch&gt; getSpectralLibraryMatches(projectId, alignedFeatureId, optFields)
+> List&lt;SpectralLibraryMatch&gt; getSpectralLibraryMatches(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey, optFields)
 
 List of spectral library matches for the given &#39;alignedFeatureId&#39;.
 
@@ -1906,9 +1907,12 @@ public class Example {
         FeaturesApi apiInstance = new FeaturesApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
         String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the structure candidates belong to.
+        Integer minSharedPeaks = 1; // Integer | 
+        Double minSimilarity = 0.2D; // Double | 
+        String candidateInChiKey = ""; // String | 
         List<SpectralLibraryMatchOptField> optFields = Arrays.asList(); // List<SpectralLibraryMatchOptField> | 
         try {
-            List<SpectralLibraryMatch> result = apiInstance.getSpectralLibraryMatches(projectId, alignedFeatureId, optFields);
+            List<SpectralLibraryMatch> result = apiInstance.getSpectralLibraryMatches(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getSpectralLibraryMatches");
@@ -1928,6 +1932,9 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
 | **alignedFeatureId** | **String**| feature (aligned over runs) the structure candidates belong to. | |
+| **minSharedPeaks** | **Integer**|  | [optional] [default to 1] |
+| **minSimilarity** | **Double**|  | [optional] [default to 0.2] |
+| **candidateInChiKey** | **String**|  | [optional] [default to ] |
 | **optFields** | [**List&lt;SpectralLibraryMatchOptField&gt;**](SpectralLibraryMatchOptField.md)|  | [optional] |
 
 ### Return type
@@ -1952,11 +1959,11 @@ No authorization required
 
 ## getSpectralLibraryMatchesPaged
 
-> PageSpectralLibraryMatch getSpectralLibraryMatchesPaged(projectId, alignedFeatureId, page, size, sort, optFields)
+> PageSpectralLibraryMatch getSpectralLibraryMatchesPaged(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, candidateInChiKey, optFields)
 
 Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
 
-Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
+Page of spectral library matches for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, returns only matches for the database compound with the given InChI key.
 
 ### Example
 
@@ -1979,9 +1986,12 @@ public class Example {
         Integer page = 0; // Integer | Zero-based page index (0..N)
         Integer size = 20; // Integer | The size of the page to be returned
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+        Integer minSharedPeaks = 1; // Integer | 
+        Double minSimilarity = 0.2D; // Double | 
+        String candidateInChiKey = ""; // String | 
         List<SpectralLibraryMatchOptField> optFields = Arrays.asList(); // List<SpectralLibraryMatchOptField> | 
         try {
-            PageSpectralLibraryMatch result = apiInstance.getSpectralLibraryMatchesPaged(projectId, alignedFeatureId, page, size, sort, optFields);
+            PageSpectralLibraryMatch result = apiInstance.getSpectralLibraryMatchesPaged(projectId, alignedFeatureId, page, size, sort, minSharedPeaks, minSimilarity, candidateInChiKey, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getSpectralLibraryMatchesPaged");
@@ -2004,6 +2014,9 @@ public class Example {
 | **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
 | **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
 | **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
+| **minSharedPeaks** | **Integer**|  | [optional] [default to 1] |
+| **minSimilarity** | **Double**|  | [optional] [default to 0.2] |
+| **candidateInChiKey** | **String**|  | [optional] [default to ] |
 | **optFields** | [**List&lt;SpectralLibraryMatchOptField&gt;**](SpectralLibraryMatchOptField.md)|  | [optional] |
 
 ### Return type
@@ -2024,6 +2037,80 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | Spectral library matches of this feature (aligned over runs). |  -  |
+
+
+## getSpectralLibraryMatchesSummary
+
+> SpectralLibraryMatchSummary getSpectralLibraryMatchesSummary(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey)
+
+Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.
+
+Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.  If a &#39;candidateInChiKey&#39; is provided, summarizes only matches for the database compound with the given InChI key.
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.FeaturesApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        FeaturesApi apiInstance = new FeaturesApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String alignedFeatureId = "alignedFeatureId_example"; // String | feature (aligned over runs) the structure candidates belong to.
+        Integer minSharedPeaks = 1; // Integer | min threshold of shared peaks.
+        Double minSimilarity = 0.2D; // Double | min spectral similarity threshold.
+        String candidateInChiKey = ""; // String | inchi key of the database compound.
+        try {
+            SpectralLibraryMatchSummary result = apiInstance.getSpectralLibraryMatchesSummary(projectId, alignedFeatureId, minSharedPeaks, minSimilarity, candidateInChiKey);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling FeaturesApi#getSpectralLibraryMatchesSummary");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **alignedFeatureId** | **String**| feature (aligned over runs) the structure candidates belong to. | |
+| **minSharedPeaks** | **Integer**| min threshold of shared peaks. | [optional] [default to 1] |
+| **minSimilarity** | **Double**| min spectral similarity threshold. | [optional] [default to 0.2] |
+| **candidateInChiKey** | **String**| inchi key of the database compound. | [optional] [default to ] |
+
+### Return type
+
+[**SpectralLibraryMatchSummary**](SpectralLibraryMatchSummary.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Summary object with best match, number of spectral library matches, matched reference spectra and matched database compounds of this feature (aligned over runs). |  -  |
 
 
 ## getStructureAnnotatedMsData

@@ -27,30 +27,23 @@ import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
-import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SpectraVisualizationPanel;
-import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SpectralMatchingPanel;
+import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.table.*;
 import de.unijena.bioinf.ms.gui.utils.NameFilterRangeSlider;
-import de.unijena.bioinf.ms.gui.utils.WrapLayout;
+import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.nightsky.sdk.model.BasicSpectrum;
 import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.awt.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BiFunction;
 
 public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatchBean, InstanceBean, SpectralMatchList> {
 
@@ -59,17 +52,14 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
 
     private SortedList<SpectralMatchBean> sortedSource;
 
-    private JJob<Boolean> backgroundLoader = null;
-    private final Lock backgroundLoaderLock = new ReentrantLock();
-
-    public SpectralMatchingTableView(SpectralMatchList source, SpectralMatchingPanel parentPanel) {
+    public SpectralMatchingTableView(SpectralMatchList source) {
         super(source, true);
 
         getSource().addActiveResultChangedListener((experiment, sre, resultElements, selections) -> {
             filteredSelectionModel.setValueIsAdjusting(true);
             try {
                 filteredSelectionModel.clearSelection();
-                if (experiment == null || experiment.getSpectralSearchResults() == null)
+                if (experiment == null || experiment.getNumberOfSpectralMatches() == 0)
                     showCenterCard(ActionList.ViewState.NOT_COMPUTED);
                 else if (resultElements.isEmpty())
                     showCenterCard(ActionList.ViewState.EMPTY);
@@ -87,48 +77,6 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
 
         final SpectralMatchTableFormat tf = new SpectralMatchTableFormat(source.getBestFunc());
         ActionTable<SpectralMatchBean> table = new ActionTable<>(filteredSource, sortedSource, tf);
-
-
-        filteredSelectionModel.addListSelectionListener(e -> {
-            try {
-                parentPanel.showMatch(null, null, null);
-
-                backgroundLoaderLock.lock();
-                final SpectralMatchBean matchBean = filteredSelectionModel.getSelected().stream()
-                        .findFirst().orElse(null);
-
-                if (matchBean == null)
-                    return;
-                final JJob<Boolean> old = backgroundLoader;
-                backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<>() {
-
-                    @Override
-                    protected Boolean compute() throws Exception {
-                        if (old != null && !old.isFinished()) {
-                            old.cancel(false);
-                            old.getResult(); //await cancellation so that nothing strange can happen.
-                        }
-                        checkForInterruption();
-
-                        Pair<BasicSpectrum, BasicSpectrum> data = getSource().readDataByFunction(ec -> {
-                            if (ec == null)
-                                return null;
-                            BasicSpectrum queryMS2 = ec.getMsData().getMs2Spectra().get(matchBean.getMatch().getQuerySpectrumIndex());
-
-                            return matchBean.getReference().map(r -> Pair.of(queryMS2, r)).orElse(null);
-                        });
-
-                        if (data == null)
-                            return false;
-
-                        parentPanel.showMatch(data.getLeft(), data.getRight(), SpectraVisualizationPanel.makeSVG(matchBean.getMatch().getSmiles()));
-                        return true;
-                    }
-                });
-            } finally {
-                backgroundLoaderLock.unlock();
-            }
-        });
 
         table.setSelectionModel(filteredSelectionModel);
         final SiriusResultTableCellRenderer defaultRenderer = new SiriusResultTableCellRenderer(tf.highlightColumnIndex());
@@ -152,7 +100,7 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
                         return null;
                     }
                 }, DBLink::getId);
-        linkRenderer.registerToTable(table, 10);
+        linkRenderer.registerToTable(table, 9);
 
         addToCenterCard(ActionList.ViewState.DATA, new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED));
         showCenterCard(ActionList.ViewState.NOT_COMPUTED);
@@ -163,7 +111,7 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
         JToolBar tb = new JToolBar();
         tb.setFloatable(false);
         tb.setBorderPainted(false);
-        tb.setLayout(new WrapLayout(FlowLayout.LEFT, 0, 0));
+        tb.setRollover(true);
 
         scoreSlider = new FilterRangeSlider<>(source, source.similarityStats, true);
         peaksSlider = new FilterRangeSlider<>(source, source.sharedPeaksStats);
@@ -171,7 +119,24 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
         tb.add(new NameFilterRangeSlider("Similarity:", scoreSlider));
         tb.addSeparator();
         tb.add(new NameFilterRangeSlider("Shared Peaks:", peaksSlider));
-        tb.addSeparator();
+
+        int size = source.getSize();
+        int total = source.getTotalSize();
+        BiFunction<Integer, Integer, String> toolTipText = (s, t) -> s < t ? "Load " + (t - s) + " more reference spectr" + (t - s > 1 ? "a." : "um.") : "Load more reference spectra.";
+
+        ToolbarToggleButton loadAll = new ToolbarToggleButton(Icons.LOAD_ALL_24, toolTipText.apply(size, total));
+        loadAll.setEnabled(source.getSize() < source.getTotalSize());
+        source.addSizeChangedListener((s, t) -> {
+            loadAll.setToolTipText(toolTipText.apply(s, t));
+            loadAll.setEnabled(s < t);
+        });
+        loadAll.addActionListener(e -> {
+            source.setLoadAll();
+            source.reloadData();
+        });
+        tb.add(firstGap);
+        tb.add(secondGap);
+        tb.add(loadAll);
 
         return tb;
     }

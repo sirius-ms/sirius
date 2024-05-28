@@ -149,6 +149,7 @@ Class | Method | HTTP request | Description
 *FeaturesApi* | [**getSpectralLibraryMatch**](docs/FeaturesApi.md#getSpectralLibraryMatch) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/{matchId} | List of spectral library matches for the given &#39;alignedFeatureId&#39;.
 *FeaturesApi* | [**getSpectralLibraryMatches**](docs/FeaturesApi.md#getSpectralLibraryMatches) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches | List of spectral library matches for the given &#39;alignedFeatureId&#39;.
 *FeaturesApi* | [**getSpectralLibraryMatchesPaged**](docs/FeaturesApi.md#getSpectralLibraryMatchesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/page | Page of spectral library matches for the given &#39;alignedFeatureId&#39;.
+*FeaturesApi* | [**getSpectralLibraryMatchesSummary**](docs/FeaturesApi.md#getSpectralLibraryMatchesSummary) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/summary | Summarize matched reference spectra for the given &#39;alignedFeatureId&#39;.
 *FeaturesApi* | [**getStructureAnnotatedMsData**](docs/FeaturesApi.md#getStructureAnnotatedMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-msmsdata | Returns MS/MS Data (Merged MS/MS and list of measured MS/MS ) which are annotated with fragments and losses  for the given formula result identifier and structure candidate inChIKey.
 *FeaturesApi* | [**getStructureAnnotatedSpectrum**](docs/FeaturesApi.md#getStructureAnnotatedSpectrum) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/structures/{inchiKey}/annotated-spectrum | Returns a fragmentation spectrum (e.g. Merged MS/MS) which is annotated with fragments and losses for the given formula result identifier  These annotations are only available if a fragmentation tree is available.
 *FeaturesApi* | [**getStructureCandidates**](docs/FeaturesApi.md#getStructureCandidates) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/db-structures | List of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.
@@ -287,6 +288,7 @@ Class | Method | HTTP request | Description
  - [SortObject](docs/SortObject.md)
  - [SpectralLibraryMatch](docs/SpectralLibraryMatch.md)
  - [SpectralLibraryMatchOptField](docs/SpectralLibraryMatchOptField.md)
+ - [SpectralLibraryMatchSummary](docs/SpectralLibraryMatchSummary.md)
  - [SpectralLibrarySearch](docs/SpectralLibrarySearch.md)
  - [SpectralMatchingType](docs/SpectralMatchingType.md)
  - [SpectrumAnnotation](docs/SpectrumAnnotation.md)

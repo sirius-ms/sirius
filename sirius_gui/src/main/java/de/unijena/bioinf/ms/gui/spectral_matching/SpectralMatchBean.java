@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Getter
-class SpectralMatchBean implements SiriusPCS, Comparable<SpectralMatchBean> {
+public class SpectralMatchBean implements SiriusPCS, Comparable<SpectralMatchBean> {
 
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
 
@@ -82,6 +82,9 @@ class SpectralMatchBean implements SiriusPCS, Comparable<SpectralMatchBean> {
 
     @Override
     public int compareTo(@NotNull SpectralMatchBean o) {
+        if (Math.abs(o.getMatch().getSimilarity() - match.getSimilarity()) < 1E-3 && o.getMatch().getSharedPeaks() != null && match.getSharedPeaks() != null) {
+            return Integer.compare(o.getMatch().getSharedPeaks(), match.getSharedPeaks());
+        }
         return Double.compare(o.getMatch().getSimilarity(), match.getSimilarity());
     }
 

@@ -66,6 +66,8 @@ import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -265,13 +267,69 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public Page<SpectralLibraryMatch> findLibraryMatchesByFeatureId(String alignedFeatureId, Pageable pageable) {
+    public SpectralLibraryMatchSummary summarizeLibraryMatchesByFeatureId(String alignedFeatureId, int minSharedPeaks, double minSimilarity) {
+        List<SpectralSearchResult.SearchResult> searchResults = loadSpectalLibraryMachtes(loadInstance(alignedFeatureId)).map(SpectralSearchResult::getResults)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Could not find spectral library search results for '" + alignedFeatureId + "'! Maybe library search has not been executed"));
+        LongSet refSpecSet = new LongOpenHashSet();
+        Set<String> compoundSet = new HashSet<>();
+        SpectralLibraryMatch bestMatch = searchResults.stream().filter(
+                searchResult -> searchResult.getSimilarity().similarity >= minSimilarity && searchResult.getSimilarity().sharedPeaks >= minSharedPeaks
+        ).peek(searchResult -> {
+            refSpecSet.add(searchResult.getUuid());
+            compoundSet.add(searchResult.getCandidateInChiKey());
+        }).findFirst().map(searchResult -> SpectralLibraryMatch.of(searchResult, null)).orElse(null);
+        return SpectralLibraryMatchSummary.builder()
+                .bestMatch(bestMatch)
+                .spectralMatchCount((long) searchResults.size())
+                .referenceSpectraCount(refSpecSet.size())
+                .databaseCompoundCount(compoundSet.size()).build();
+    }
+
+    @Override
+    public SpectralLibraryMatchSummary summarizeLibraryMatchesByFeatureIdAndInchi(String alignedFeatureId, String candidateInchi, int minSharedPeaks, double minSimilarity) {
+        List<SpectralSearchResult.SearchResult> searchResults = loadSpectalLibraryMachtes(loadInstance(alignedFeatureId)).map(SpectralSearchResult::getResults)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Could not find spectral library search results for '" + alignedFeatureId + "'! Maybe library search has not been executed"));
+        LongSet refSpecSet = new LongOpenHashSet();
+        SpectralLibraryMatch bestMatch = searchResults.stream().filter(
+                searchResult -> searchResult.getCandidateInChiKey().equals(candidateInchi) && searchResult.getSimilarity().similarity >= minSimilarity && searchResult.getSimilarity().sharedPeaks >= minSharedPeaks
+        ).peek(searchResult -> {
+            refSpecSet.add(searchResult.getUuid());
+        }).findFirst().map(searchResult -> SpectralLibraryMatch.of(searchResult, null)).orElse(null);
+        return SpectralLibraryMatchSummary.builder()
+                .bestMatch(bestMatch)
+                .spectralMatchCount((long) searchResults.size())
+                .referenceSpectraCount(refSpecSet.size())
+                .databaseCompoundCount(!refSpecSet.isEmpty() ? 1 : 0).build();
+    }
+
+    @Override
+    public Page<SpectralLibraryMatch> findLibraryMatchesByFeatureIdAndInchi(String alignedFeatureId, String candidateInchi, int minSharedPeaks, double minSimilarity, Pageable pageable) {
         SpectralSearchResult searchresult = loadSpectalLibraryMachtes(loadInstance(alignedFeatureId))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
                         "Could not find spectral library search results for '" + alignedFeatureId + "'! Maybe library search has not been executed"));
 
         return new PageImpl<>(
                 searchresult.getResults().stream()
+                        .filter(searchResult -> searchResult.getCandidateInChiKey().equals(candidateInchi) && searchResult.getSimilarity().similarity >= minSimilarity && searchResult.getSimilarity().sharedPeaks >= minSharedPeaks)
+                        .skip(pageable.getOffset())
+                        .limit(pageable.getPageSize())
+                        .map(it  -> SpectralLibraryMatch.of(it, null))
+                        .toList(),
+                pageable,
+                searchresult.getResults().size()
+        );
+    }
+
+    @Override
+    public Page<SpectralLibraryMatch> findLibraryMatchesByFeatureId(String alignedFeatureId, int minSharedPeaks, double minSimilarity, Pageable pageable) {
+        SpectralSearchResult searchresult = loadSpectalLibraryMachtes(loadInstance(alignedFeatureId))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "Could not find spectral library search results for '" + alignedFeatureId + "'! Maybe library search has not been executed"));
+
+        return new PageImpl<>(
+                searchresult.getResults().stream().filter(searchResult -> searchResult.getSimilarity().similarity >= minSimilarity && searchResult.getSimilarity().sharedPeaks >= minSharedPeaks)
                         .skip(pageable.getOffset())
                         .limit(pageable.getPageSize())
                         .map(it  -> SpectralLibraryMatch.of(it, null))
