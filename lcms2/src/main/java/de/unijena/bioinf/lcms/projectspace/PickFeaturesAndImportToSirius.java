@@ -207,6 +207,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
             if (featuresParent[i]!=null) {
                 isotopePatterns[i] = new SimpleMutableSpectrum();
                 isotopePatterns[i].addPeak(mergedTraceParent.averagedMz(), 1d);
+                featuresParent[i].setHasMs1(true);
             }
         }
 
@@ -464,6 +465,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                 merged = Spectrums.mergeSpectra(new Deviation(10), true, false, Arrays.stream(msn).map(MergedMSnSpectrum::getPeaks).toArray(SimpleSpectrum[]::new));
             } else merged = msn[0].getPeaks();
             feature.getMSData().get().setMergedMSnSpectrum(Spectrums.getNormalizedSpectrum(merged, Normalization.Sum));
+            feature.setHasMsMs(true);
         }
     }
 

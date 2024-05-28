@@ -154,9 +154,9 @@ public class WebWithCustomDatabase {
 
             final long requestFilter = extractFilterBits(dbs).orElse(-1);
             if (requestFilter >= 0 || includeRestAllDb) {
-                final long searchFilter = includeRestAllDb ? DataSource.ALL.searchFlag : requestFilter;
+                final long searchFilter = includeRestAllDb ? 0 : requestFilter;
                 result = api.applyStructureDB(searchFilter, restCache, restDb -> new CandidateResult(
-                        restDb.lookupStructuresAndFingerprintsByFormula(formula), searchFilter, requestFilter));
+                        restDb.lookupStructuresAndFingerprintsByFormula(formula).stream().filter(s -> DataSource.isInAll(s.getBitset())).toList(), searchFilter, requestFilter));
             } else {
                 logger.warn("No filter for Rest DBs found bits in DB list: '" + dbs.stream().map(CustomDataSources.Source::name).collect(Collectors.joining(",")) + "'. Returning empty search list from REST DB");
                 result = new CandidateResult();
@@ -508,9 +508,9 @@ public class WebWithCustomDatabase {
             return Optional.of(restDbInChIs);
         }
 
-
+        //Filtering for this happens earlier in loadCompoundsByFormula, not sure how useful this part still is
         public boolean containsAllDb() {
-            return restFilter == DataSource.ALL.searchFlag;
+            return restFilter == 0 || restFilter == DataSource.ALL.searchFlag;
         }
 
         public void merge(@NotNull CandidateResult other) {

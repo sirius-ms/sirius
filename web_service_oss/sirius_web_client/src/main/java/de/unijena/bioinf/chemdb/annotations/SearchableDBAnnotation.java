@@ -55,8 +55,6 @@ public abstract class SearchableDBAnnotation implements Ms2ExperimentAnnotation 
     public static List<CustomDataSources.Source> makeDB(@NotNull String names) {
         if (names.equalsIgnoreCase(DataSource.ALL.name()) || names.equalsIgnoreCase(DataSource.ALL.realName()))
             return CustomDataSources.getAllSelectableDbs();
-        if (names.equalsIgnoreCase("ALL_BUT_INSILICO") || names.equalsIgnoreCase("All but combinatorial DBs")) //just for legacy command support
-            return CustomDataSources.getNonInSilicoSelectableDbs();
 
         return Arrays.stream(names.trim().split("\\s*,\\s*"))
                 .map(CustomDataSources::getSourceFromName).filter(Objects::nonNull).distinct().toList();
