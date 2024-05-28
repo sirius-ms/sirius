@@ -2,6 +2,8 @@ package de.unijena.bioinf.babelms.sdf;
 
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.SpectrumFileSource;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.Parser;
@@ -38,7 +40,9 @@ public class SdfExperimentParser implements Parser<Ms2Experiment> {
         if (sdfReader.hasNext()) {
             IAtomContainer sdfData = sdfReader.next();
             ExperimentData data = extractData(sdfData);
-            return new ExperimentDataParser().parse(data);
+            MutableMs2Experiment experiment = new ExperimentDataParser().parse(data);
+            experiment.setAnnotation(SpectrumFileSource.class, new SpectrumFileSource(source));
+            return experiment;
         }
         return null;
     }
