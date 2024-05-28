@@ -48,7 +48,8 @@ public class ExperimentDataParser {
     protected void addSpectrum() {
         SimpleSpectrum spectrum = data.getSpectrum();
         if (spectrum == null) {
-            throw new RuntimeException("Spectrum is not set in record " + data.getId() + ".");
+            log.warn("Spectrum is missing in record " + data.getId() + ".");
+            return;
         }
 
         String spectrumLevel = data.getSpectrumLevel();
