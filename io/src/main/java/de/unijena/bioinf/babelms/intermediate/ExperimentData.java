@@ -33,6 +33,9 @@ import java.util.List;
 @Data
 @Builder
 public class ExperimentData {
+    /**
+     * Only for error reporting purposes
+     */
     private String id;
 
     private SimpleSpectrum spectrum;
