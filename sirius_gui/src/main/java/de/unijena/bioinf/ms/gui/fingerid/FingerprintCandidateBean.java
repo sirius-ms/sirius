@@ -29,11 +29,13 @@ import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
-import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingResult;
+import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchBean;
+import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingCache;
 import de.unijena.bioinf.ms.nightsky.sdk.model.BinaryFingerprint;
 import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
-import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatch;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatchSummary;
 import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateFormula;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import it.unimi.dsi.fastutil.shorts.ShortArrayList;
 import it.unimi.dsi.fastutil.shorts.ShortList;
 import org.apache.commons.lang3.ArrayUtils;
@@ -88,7 +90,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     private final StructureCandidateFormula candidate;
     private final boolean isDatabase; //both denovo and database can be true at the same time.
     private final boolean isDeNovo;
-    private final SpectralMatchingResult spectralMatchingResult;
+    private SpectralMatchingCache spectralMatchingCache;
 
 
     //view
@@ -113,12 +115,11 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
     protected ReentrantLock compoundLock = new ReentrantLock();
 
 
-    public FingerprintCandidateBean(@NotNull StructureCandidateFormula candidate, boolean isDatabase, boolean isDeNovo, @NotNull ProbabilityFingerprint fp, SpectralMatchingResult spectralMatchingResult) {
+    public FingerprintCandidateBean(@NotNull StructureCandidateFormula candidate, boolean isDatabase, boolean isDeNovo, @NotNull ProbabilityFingerprint fp, InstanceBean parent) {
         this.fp = fp; //todo nightsky: ->  do we want to lazy load the fp instead?
         this.candidate = candidate;
         this.isDatabase = isDatabase;
         this.isDeNovo = isDeNovo;
-        this.spectralMatchingResult = spectralMatchingResult;
         this.relevantFps = null;
 
 
@@ -142,27 +143,39 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
             this.labels = labels.toArray(DatabaseLabel[]::new);
         }
 
-        bestRefMatchLabel = getBestReferenceMatch().map(match ->
-                new DatabaseLabel(
-                        match.getDbName(),
-                        Math.round(100 * match.getSimilarity()) + "% " + CustomDataSources.getSourceFromNameOpt(match.getDbName()).map(CustomDataSources.Source::displayName).orElseGet(match::getDbName),
-                        new String[]{match.getDbId()}
-                )).orElse(null);
+        if (parent != null) {
+            spectralMatchingCache = new SpectralMatchingCache(parent, candidate.getInchiKey());
 
-        final int size = getReferenceMatches().size();
-        switch (size) {
-            case 0 -> moreRefMatchesLabel = null;
-            case 1 -> moreRefMatchesLabel = new EmptyLabel("...show more", "Opem table with detailed information and spectrum visualisation for all reference matches.");
-            default -> moreRefMatchesLabel = new EmptyLabel(String.format("...show %d more", size - 1), "Opem table with detailed information and spectrum visualisation for all reference matches.");
+            SpectralLibraryMatchSummary summary = spectralMatchingCache.getSummary();
+
+            bestRefMatchLabel = (summary.getBestMatch() != null) ?
+                    new DatabaseLabel(
+                            summary.getBestMatch().getDbName(),
+                            Math.round(100 * summary.getBestMatch().getSimilarity()) + "% " + CustomDataSources.getSourceFromNameOpt(summary.getBestMatch().getDbName()).map(CustomDataSources.Source::displayName).orElseGet(() -> summary.getBestMatch().getDbName()),
+                            new String[]{summary.getBestMatch().getDbId()}
+                    ) : null;
+
+
+            final int size = summary.getReferenceSpectraCount();
+            switch (size) {
+                case 0 -> moreRefMatchesLabel = null;
+                case 1 ->
+                        moreRefMatchesLabel = new EmptyLabel("...show more", "Open table with detailed information and spectrum visualisation for all reference matches.");
+                default ->
+                        moreRefMatchesLabel = new EmptyLabel(String.format("...show %d more", size - 1), "Open table with detailed information and spectrum visualisation for all reference matches.");
+            }
+        }  else {
+            bestRefMatchLabel = null;
+            moreRefMatchesLabel = null;
         }
     }
 
-    protected FingerprintCandidateBean(@NotNull StructureCandidateFormula candidate, boolean isDatabase, boolean isDeNovo, @NotNull ProbabilityFingerprint fp, SpectralMatchingResult spectralMatchingResult, DatabaseLabel[] labels, DatabaseLabel bestRefMatchLabel, EmptyLabel moreRefMatchesLabel) {
+    protected FingerprintCandidateBean(@NotNull StructureCandidateFormula candidate, boolean isDatabase, boolean isDeNovo, @NotNull ProbabilityFingerprint fp, SpectralMatchingCache spectralMatchingCache, DatabaseLabel[] labels, DatabaseLabel bestRefMatchLabel, EmptyLabel moreRefMatchesLabel) {
         this.fp = fp; //todo nightsky: ->  do we want to lazy load the fp instead?
         this.candidate = candidate;
         this.isDatabase = isDatabase;
         this.isDeNovo = isDeNovo;
-        this.spectralMatchingResult = spectralMatchingResult;
+        this.spectralMatchingCache = spectralMatchingCache;
         this.relevantFps = null;
         this.labels = labels;
         this.bestRefMatchLabel = bestRefMatchLabel;
@@ -176,7 +189,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
      * @return
      */
     public FingerprintCandidateBean withNewDatabaseAndDeNovoFlag(boolean isDatabase, boolean isDeNovo) {
-        return new FingerprintCandidateBean(candidate, isDatabase, isDeNovo, fp, spectralMatchingResult);
+        return new FingerprintCandidateBean(candidate, isDatabase, isDeNovo, fp, spectralMatchingCache, this.labels==null ? labels : ArrayUtils.addAll(labels, this.labels), bestRefMatchLabel, moreRefMatchesLabel);
     }
 
     /**
@@ -184,7 +197,7 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
      * @return
      */
     public FingerprintCandidateBean withAdditionalLabelAtBeginning(DatabaseLabel[] labels) {
-        return new FingerprintCandidateBean(candidate, isDatabase, isDeNovo, fp, spectralMatchingResult, this.labels==null ? labels : ArrayUtils.addAll(labels, this.labels), bestRefMatchLabel, moreRefMatchesLabel);
+        return new FingerprintCandidateBean(candidate, isDatabase, isDeNovo, fp, spectralMatchingCache, this.labels==null ? labels : ArrayUtils.addAll(labels, this.labels), bestRefMatchLabel, moreRefMatchesLabel);
     }
 
     public void highlightInBackground() {
@@ -194,18 +207,24 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         }
     }
 
-    @NotNull
-    public List<SpectralLibraryMatch> getReferenceMatches() {
-        if (spectralMatchingResult == null)
-            return List.of();
-        return spectralMatchingResult.getMatchingSpectraForFPCandidate(getInChiKey()).orElse(List.of());
+    public int getNumberOfSpectralMatches() {
+        return spectralMatchingCache.getSummary().getReferenceSpectraCount();
     }
 
-    @NotNull
-    public Optional<SpectralLibraryMatch> getBestReferenceMatch() {
-        if (spectralMatchingResult == null)
-            return Optional.empty();
-        return spectralMatchingResult.getBestMatchingSpectrumForFPCandidate(getInChiKey());
+    public List<SpectralMatchBean> getTopSpectralMatches() {
+        return spectralMatchingCache.getPageFiltered(0);
+    }
+
+    public List<SpectralMatchBean> getAllSpectralMatches() {
+        return spectralMatchingCache.getAllFiltered();
+    }
+
+    public List<SpectralMatchBean> getSpectralMatchGroupFromTop(long refSpecUUID) {
+        return spectralMatchingCache.getGroupOnPage(0, refSpecUUID);
+    }
+
+    public List<SpectralMatchBean> getSpectralMatchGroup(long refSpecUUID) {
+        return spectralMatchingCache.getGroup(refSpecUUID);
     }
 
     public Double getTanimotoScore() {

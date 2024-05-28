@@ -42,11 +42,17 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.ms_viewer.SpectraViewContainer;
 import de.unijena.bioinf.ms.gui.ms_viewer.SpectraViewerConnector;
 import de.unijena.bioinf.ms.gui.ms_viewer.WebViewSpectraViewer;
+import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchBean;
+import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.webView.WebViewIO;
 import de.unijena.bioinf.ms.nightsky.sdk.model.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntComparators;
+import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.depict.DepictionGenerator;
@@ -68,10 +74,8 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -93,13 +97,14 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                 + "</html>";
     }
 
-    public static final String MS1_DISPLAY = "MS1", MS1_MIRROR_DISPLAY = "MS1 mirror-plot", MS2_DISPLAY = "MS2",
+    public static final String MS1_DISPLAY = "MS1", MS1_MIRROR_DISPLAY = "MS1 mirror-plot", MS2_DISPLAY = "MS2", MS2_MIRROR_DISPLAY = "MS2 mirror-plot",
             MS2_MERGED_DISPLAY = "merged";
 
     public enum FileFormat {
         svg, pdf, json, none
     }
 
+    final Set<String> possibleModes;
     MsData msData;
     IsotopePatternAnnotation isotopePatternAnnotation;
     AnnotatedMsMsData annotatedMsMsData;
@@ -114,12 +119,32 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
     public WebViewSpectraViewer browser;
     final JToolBar toolBar;
 
+//    private final boolean ms2MirrorEnabled;
+    private SpectralSimilarity[] similarities;
+    private IntList queryIndices;
+    private SpectralMatchBean selectedMatchBean;
+
     public SpectraVisualizationPanel() {
         this(MS1_DISPLAY);
     }
 
     public SpectraVisualizationPanel(String preferredMode) {
+        this(preferredMode, false);
+    }
+
+    public SpectraVisualizationPanel(String preferredMode, boolean ms2MirrorEnabled) {
+        this(preferredMode, ms2MirrorEnabled
+                ? Set.of(MS1_DISPLAY, MS1_MIRROR_DISPLAY, MS2_DISPLAY, MS2_MIRROR_DISPLAY)
+                : Set.of(MS1_DISPLAY, MS1_MIRROR_DISPLAY, MS2_DISPLAY));
+    }
+
+    public SpectraVisualizationPanel(String preferredMode, String... possibleModes) {
+        this(preferredMode, Set.of(possibleModes));
+    }
+
+    public SpectraVisualizationPanel(String preferredMode, Set<String> possibleModes) {
         this.setLayout(new BorderLayout());
+        this.possibleModes = possibleModes;
         this.preferredMode = preferredMode;
         this.popupOwner = (JFrame) SwingUtilities.getWindowAncestor(this);
 
@@ -224,6 +249,9 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                     } else
                         jsonSpectra = SpectraViewContainer.of(msData.getMs2Spectra().get(ce_index));
                 }
+            } else if (mode.equals(MS2_MIRROR_DISPLAY)) {
+                jsonSpectra = SpectraViewContainer.of(List.of(msData.getMs2Spectra().get(queryIndices.getInt(ce_index)), selectedMatchBean.getReference().orElseThrow()));
+                smiles = selectedMatchBean.getMatch().getSmiles();
             } else {
                 LoggerFactory.getLogger(getClass()).warn("Cannot draw spectra: Mode " + mode + " not (yet) supported!");
                 return;
@@ -233,11 +261,13 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                 String svg = null;
                 String diff = null;
                 int showMzTopK = 5;
-                if (mode.equals(MS2_DISPLAY) && smiles != null) {
+                if (mode.startsWith(MS2_DISPLAY) && smiles != null) {
                     svg = makeSVG(smiles);
                 }
                 if (mode.equals(MS1_MIRROR_DISPLAY))
                     diff = "difference";
+                if (mode.equals(MS2_MIRROR_DISPLAY))
+                    diff = "normal";
                 browser.loadData(jsonSpectra, svg, diff, showMzTopK);
             }
         } catch (JsonProcessingException e) {
@@ -299,6 +329,14 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 
 
     public void resultsChanged(InstanceBean instance, @Nullable String formulaCandidateId, @Nullable String smiles) {
+        resultsChanged(instance, formulaCandidateId, smiles, null, null);
+    }
+
+    public void resultsChanged(InstanceBean instance, @Nullable SpectralMatchList matchList, @Nullable SpectralMatchBean selectedMatchBean) {
+        resultsChanged(instance, null, null, matchList, selectedMatchBean);
+    }
+
+    private void resultsChanged(InstanceBean instance, @Nullable String formulaCandidateId, @Nullable String smiles, @Nullable SpectralMatchList matchList, @Nullable SpectralMatchBean matchBean) {
         try {
             backgroundLoaderLock.lock();
             final JJob<Boolean> old = backgroundLoader;
@@ -339,35 +377,52 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                                 isotopePatternAnnotation = null;
                                 annotatedMsMsData = null;
                             }
-                            checkForInterruption();
-                            final List<String> items = new ArrayList<>(5);
-
-                            Jobs.runEDTAndWait(() -> setToolbarEnabled(true));
-                            if (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null)
-                                items.add(MS1_DISPLAY);
-                            if (isotopePatternAnnotation != null) {
-                                if (isotopePatternAnnotation.getSimulatedPattern() != null)
-                                    items.add(MS1_MIRROR_DISPLAY);
+                            if (matchList != null && matchBean != null) {
+                                selectedMatchBean = matchBean;
+                                similarities = new SpectralSimilarity[msData.getMs2Spectra().size()];
+                                queryIndices = new IntArrayList();
+                                matchList.getMatchBeanGroup(matchBean.getMatch().getUuid()).forEach(match -> {
+                                    similarities[match.getMatch().getQuerySpectrumIndex()] = new SpectralSimilarity(
+                                            match.getMatch().getSimilarity(),
+                                            match.getMatch().getSharedPeaks() != null ? match.getMatch().getSharedPeaks() : 0
+                                    );
+                                    queryIndices.add((int) match.getMatch().getQuerySpectrumIndex());
+                                });
+                                queryIndices.sort(IntComparators.NATURAL_COMPARATOR);
                             }
-                            if (!msData.getMs2Spectra().isEmpty())
-                                items.add(MS2_DISPLAY);
 
                             checkForInterruption();
+                            {
+                                final List<String> items = new ArrayList<>(5);
 
-                            Jobs.runEDTAndWait(() -> {
-                                // update modeBox elements, don't listen to these events
-                                modesBox.removeItemListener(SpectraVisualizationPanel.this);
-                                try {
-                                    modesBox.removeAllItems();
-                                    if (!items.isEmpty()) {
-                                        items.forEach(modesBox::addItem);
-                                        updateCEBox(msData);
-                                    }
-                                } finally {
-                                    modesBox.addItemListener(SpectraVisualizationPanel.this);
+                                Jobs.runEDTAndWait(() -> setToolbarEnabled(true));
+                                if (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null)
+                                    items.add(MS1_DISPLAY);
+                                if (isotopePatternAnnotation != null) {
+                                    if (isotopePatternAnnotation.getSimulatedPattern() != null)
+                                        items.add(MS1_MIRROR_DISPLAY);
                                 }
-                            });
+                                if (!msData.getMs2Spectra().isEmpty())
+                                    items.add(MS2_DISPLAY);
+                                if (!msData.getMs2Spectra().isEmpty())
+                                    items.add(MS2_MIRROR_DISPLAY);
 
+                                checkForInterruption();
+
+                                Jobs.runEDTAndWait(() -> {
+                                    // update modeBox elements, don't listen to these events
+                                    modesBox.removeItemListener(SpectraVisualizationPanel.this);
+                                    try {
+                                        modesBox.removeAllItems();
+                                        if (!items.isEmpty()) {
+                                            items.stream().filter(possibleModes::contains).forEach(modesBox::addItem);
+                                            updateCEBox(msData);
+                                        }
+                                    } finally {
+                                        modesBox.addItemListener(SpectraVisualizationPanel.this);
+                                    }
+                                });
+                            }
 
                             SpectraVisualizationPanel.this.msData = msData;
                             SpectraVisualizationPanel.this.isotopePatternAnnotation = isotopePatternAnnotation;
@@ -384,7 +439,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                                 if (preferredPossible) {
                                     modesBox.removeItemListener(SpectraVisualizationPanel.this);
                                     modesBox.setSelectedItem(preferredMode);
-                                    ceBox.setVisible(modesBox.getSelectedItem() != null && modesBox.getSelectedItem().equals(MS2_DISPLAY));
+                                    ceBox.setVisible(modesBox.getSelectedItem() != null && ((String) modesBox.getSelectedItem()).startsWith(MS2_DISPLAY));
                                     modesBox.addItemListener(SpectraVisualizationPanel.this);
                                 }
                                 updateCEBox(msData);
@@ -423,22 +478,40 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
     private void updateCEBox(MsData msData) {
         ceBox.removeItemListener(this);
         ceBox.removeAllItems();
-        for (int i = 0; i < msData.getMs2Spectra().size(); ++i) {
-            BasicSpectrum spectrum = msData.getMs2Spectra().get(i);
-            String collisionEnergy = spectrum.getCollisionEnergy();
-            ceBox.addItem(collisionEnergy == null ? "mode " + (i + 1) : collisionEnergy);
+        if (possibleModes.contains(MS2_MIRROR_DISPLAY)) {
+            SpectralSimilarity maxSimilarity = new SpectralSimilarity(0, 0);
+            int maxIndex = 0;
+            for (int i = 0; i < msData.getMs2Spectra().size(); ++i) {
+                if (similarities[i] != null) {
+                    BasicSpectrum spectrum = msData.getMs2Spectra().get(i);
+                    String collisionEnergy = spectrum.getCollisionEnergy();
+                    ceBox.addItem(collisionEnergy == null ? "mode " + (i + 1) : collisionEnergy +
+                            String.format(" (%.1f %% similarity, %d shared peaks)", 100 * similarities[i].similarity, similarities[i].sharedPeaks));
+                    if (similarities[i].similarity > maxSimilarity.similarity || (Math.abs(similarities[i].similarity - maxSimilarity.similarity) < 1E-3 && similarities[i].sharedPeaks > maxSimilarity.sharedPeaks)) {
+                        maxSimilarity = similarities[i];
+                        maxIndex = i;
+                    }
+                }
+            }
+            ceBox.setSelectedIndex(maxIndex);
+        } else {
+            for (int i = 0; i < msData.getMs2Spectra().size(); ++i) {
+                BasicSpectrum spectrum = msData.getMs2Spectra().get(i);
+                String collisionEnergy = spectrum.getCollisionEnergy();
+                ceBox.addItem(collisionEnergy == null ? "mode " + (i + 1) : collisionEnergy);
+            }
+            ceBox.addItem(MS2_MERGED_DISPLAY);
+            ceBox.setSelectedItem(MS2_MERGED_DISPLAY);
         }
-        ceBox.addItem(MS2_MERGED_DISPLAY);
-        ceBox.setSelectedItem(MS2_MERGED_DISPLAY);
         ceBox.addItemListener(this);
     }
 
     @Override
     public void itemStateChanged(ItemEvent e) {
-        final Object sel = modesBox.getSelectedItem();
-        ceBox.setVisible(sel != null && sel.equals(MS2_DISPLAY));
+        final String sel = (String) modesBox.getSelectedItem();
+        ceBox.setVisible(sel != null && sel.startsWith(MS2_DISPLAY));
 
-        preferredMode = (String) sel;
+        preferredMode = sel;
         if (sel != null)
             drawSpectra();
     }

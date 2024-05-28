@@ -34,7 +34,8 @@ import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.fingerid.DatabaseLabel;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
-import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingResult;
+import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchBean;
+import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingCache;
 import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
 import de.unijena.bioinf.ms.nightsky.sdk.model.*;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +48,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -64,7 +66,7 @@ public class InstanceBean implements SiriusPCS {
     private final String featureId;
     private AlignedFeature sourceFeature;
     private MsData msData;
-    private SpectralMatchingResult spectralMatchingResult;
+    private SpectralMatchingCache spectralMatchingCache;
 
     @NotNull
     private final GuiProjectManager projectManager;
@@ -122,7 +124,7 @@ public class InstanceBean implements SiriusPCS {
     }
     void clearCache(@Nullable ProjectChangeEvent pce){
         synchronized (InstanceBean.this) { //todo nighsky: check if this makes sense or if this needs to change on selection only
-            InstanceBean.this.spectralMatchingResult = null;
+            InstanceBean.this.spectralMatchingCache = null;
             InstanceBean.this.sourceFeature = null;
         }
         if (pce != null && pce.getEventType() != null) {
@@ -398,7 +400,11 @@ public class InstanceBean implements SiriusPCS {
                         fpVersion,
                         (List<Double>) withIds((pid, fid) -> getClient().features().getFingerprintPrediction(pid, fid, fcid))
                 )));
-        return page.getContent().stream().map(c -> new FingerprintCandidateBean(c, isDatabase, isDeNovo, fps.get(c.getFormulaId()), getSpectralSearchResults())).toList();
+        return page.getContent().stream().map(c -> new FingerprintCandidateBean(c, isDatabase, isDeNovo, fps.get(c.getFormulaId()), this)).toList();
+    }
+
+    public List<SpectralMatchBean> getTopSpectralMatches() {
+        return withSpectralMatchingCache(cache -> cache.getPageFiltered(0));
     }
 
     public synchronized MsData getMsData() {
@@ -410,26 +416,27 @@ public class InstanceBean implements SiriusPCS {
         return msData;
     }
 
-    public SpectralMatchingResult getSpectralSearchResults() {
-        if (spectralMatchingResult == null) {
-            spectralMatchingResult = getSpectralSearchResults(10);
+    private <R> R withSpectralMatchingCache(Function<SpectralMatchingCache, R> doWithCache) {
+        if (spectralMatchingCache == null) {
+            spectralMatchingCache = new SpectralMatchingCache(this);
         }
-        return spectralMatchingResult;
-    }
-    public SpectralMatchingResult getSpectralSearchResults(int topK) {
-        return Optional.ofNullable(getSpectralSearchResultsPage(topK)).map(PageSpectralLibraryMatch::getContent)
-                .map(SpectralMatchingResult::new).orElse(new SpectralMatchingResult(List.of()));
+        return doWithCache.apply(spectralMatchingCache);
     }
 
-    protected PageSpectralLibraryMatch getSpectralSearchResultsPage(int topK) {
-        return getSpectralSearchResultsPage(0, topK);
-
+    public int getNumberOfSpectralMatches() {
+        return withSpectralMatchingCache(cache -> cache.getSummary().getReferenceSpectraCount());
     }
 
-    protected PageSpectralLibraryMatch getSpectralSearchResultsPage(int pageNum, int pageSize) {
-        return withIds((pid, fid) -> getClient().features()
-                .getSpectralLibraryMatchesPagedWithResponseSpec(pid, fid, pageNum, pageSize, null,
-                        List.of(SpectralLibraryMatchOptField.REFERENCESPECTRUM)).bodyToMono(PageSpectralLibraryMatch.class).onErrorComplete().block());
+    public List<SpectralMatchBean> getAllSpectralMatches() {
+        return withSpectralMatchingCache(SpectralMatchingCache::getAllFiltered);
+    }
+
+    public List<SpectralMatchBean> getSpectralMatchGroupFromTop(long refSpecUUID) {
+        return withSpectralMatchingCache(cache -> cache.getGroupOnPage(0, refSpecUUID));
+    }
+
+    public List<SpectralMatchBean> getSpectralMatchGroup(long refSpecUUID) {
+        return withSpectralMatchingCache(cache -> cache.getGroup(refSpecUUID));
     }
 
     public MutableMs2Experiment asMs2Experiment() {
