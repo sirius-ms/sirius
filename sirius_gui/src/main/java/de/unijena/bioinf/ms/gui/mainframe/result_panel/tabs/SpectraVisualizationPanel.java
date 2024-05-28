@@ -74,10 +74,8 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -106,6 +104,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
         svg, pdf, json, none
     }
 
+    final Set<String> possibleModes;
     MsData msData;
     IsotopePatternAnnotation isotopePatternAnnotation;
     AnnotatedMsMsData annotatedMsMsData;
@@ -120,7 +119,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
     public WebViewSpectraViewer browser;
     final JToolBar toolBar;
 
-    private final boolean ms2MirrorEnabled;
+//    private final boolean ms2MirrorEnabled;
     private SpectralSimilarity[] similarities;
     private IntList queryIndices;
     private SpectralMatchBean selectedMatchBean;
@@ -134,8 +133,18 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
     }
 
     public SpectraVisualizationPanel(String preferredMode, boolean ms2MirrorEnabled) {
+        this(preferredMode, ms2MirrorEnabled
+                ? Set.of(MS1_DISPLAY, MS1_MIRROR_DISPLAY, MS2_DISPLAY, MS2_MIRROR_DISPLAY)
+                : Set.of(MS1_DISPLAY, MS1_MIRROR_DISPLAY, MS2_DISPLAY));
+    }
+
+    public SpectraVisualizationPanel(String preferredMode, String... possibleModes) {
+        this(preferredMode, Set.of(possibleModes));
+    }
+
+    public SpectraVisualizationPanel(String preferredMode, Set<String> possibleModes) {
         this.setLayout(new BorderLayout());
-        this.ms2MirrorEnabled = ms2MirrorEnabled;
+        this.possibleModes = possibleModes;
         this.preferredMode = preferredMode;
         this.popupOwner = (JFrame) SwingUtilities.getWindowAncestor(this);
 
@@ -383,36 +392,37 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                             }
 
                             checkForInterruption();
-                            final List<String> items = new ArrayList<>(5);
+                            {
+                                final List<String> items = new ArrayList<>(5);
 
-                            Jobs.runEDTAndWait(() -> setToolbarEnabled(true));
-                            if (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null)
-                                items.add(MS1_DISPLAY);
-                            if (isotopePatternAnnotation != null) {
-                                if (isotopePatternAnnotation.getSimulatedPattern() != null)
-                                    items.add(MS1_MIRROR_DISPLAY);
-                            }
-                            if (!msData.getMs2Spectra().isEmpty())
-                                items.add(MS2_DISPLAY);
-                            if (ms2MirrorEnabled && !msData.getMs2Spectra().isEmpty())
-                                items.add(MS2_MIRROR_DISPLAY);
-
-                            checkForInterruption();
-
-                            Jobs.runEDTAndWait(() -> {
-                                // update modeBox elements, don't listen to these events
-                                modesBox.removeItemListener(SpectraVisualizationPanel.this);
-                                try {
-                                    modesBox.removeAllItems();
-                                    if (!items.isEmpty()) {
-                                        items.forEach(modesBox::addItem);
-                                        updateCEBox(msData);
-                                    }
-                                } finally {
-                                    modesBox.addItemListener(SpectraVisualizationPanel.this);
+                                Jobs.runEDTAndWait(() -> setToolbarEnabled(true));
+                                if (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null)
+                                    items.add(MS1_DISPLAY);
+                                if (isotopePatternAnnotation != null) {
+                                    if (isotopePatternAnnotation.getSimulatedPattern() != null)
+                                        items.add(MS1_MIRROR_DISPLAY);
                                 }
-                            });
+                                if (!msData.getMs2Spectra().isEmpty())
+                                    items.add(MS2_DISPLAY);
+                                if (!msData.getMs2Spectra().isEmpty())
+                                    items.add(MS2_MIRROR_DISPLAY);
 
+                                checkForInterruption();
+
+                                Jobs.runEDTAndWait(() -> {
+                                    // update modeBox elements, don't listen to these events
+                                    modesBox.removeItemListener(SpectraVisualizationPanel.this);
+                                    try {
+                                        modesBox.removeAllItems();
+                                        if (!items.isEmpty()) {
+                                            items.stream().filter(possibleModes::contains).forEach(modesBox::addItem);
+                                            updateCEBox(msData);
+                                        }
+                                    } finally {
+                                        modesBox.addItemListener(SpectraVisualizationPanel.this);
+                                    }
+                                });
+                            }
 
                             SpectraVisualizationPanel.this.msData = msData;
                             SpectraVisualizationPanel.this.isotopePatternAnnotation = isotopePatternAnnotation;
@@ -468,7 +478,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
     private void updateCEBox(MsData msData) {
         ceBox.removeItemListener(this);
         ceBox.removeAllItems();
-        if (ms2MirrorEnabled) {
+        if (possibleModes.contains(MS2_MIRROR_DISPLAY)) {
             SpectralSimilarity maxSimilarity = new SpectralSimilarity(0, 0);
             int maxIndex = 0;
             for (int i = 0; i < msData.getMs2Spectra().size(); ++i) {

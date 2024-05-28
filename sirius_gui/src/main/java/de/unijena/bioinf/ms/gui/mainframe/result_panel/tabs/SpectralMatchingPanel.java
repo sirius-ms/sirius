@@ -30,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
+import static de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.SpectraVisualizationPanel.*;
+
 public class SpectralMatchingPanel extends JPanel implements PanelDescription {
 
 
@@ -39,7 +41,7 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
 
     public SpectralMatchingPanel(@NotNull SpectralMatchList matchList) {
         super(new BorderLayout());
-        this.spectraVisualizationPanel = new SpectraVisualizationPanel(SpectraVisualizationPanel.MS2_MIRROR_DISPLAY, true);
+        this.spectraVisualizationPanel = new SpectraVisualizationPanel(MS2_MIRROR_DISPLAY, MS2_DISPLAY, MS2_MIRROR_DISPLAY, MS2_MERGED_DISPLAY);
         this.tableView = new SpectralMatchingTableView(matchList);
 
         this.tableView.getFilteredSelectionModel().addListSelectionListener(e -> {
