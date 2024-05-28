@@ -258,14 +258,6 @@ public class CustomDataSources {
                 .collect(Collectors.toList());
     }
 
-    public static List<Source> getNonInSilicoSelectableDbs() {
-        return Arrays.stream(DataSource.valuesNoALLNoMINES())
-                .map(DataSource::name)
-                .filter(CustomDataSources::isSearchable)
-                .map(CustomDataSources::getSourceFromName)
-                .filter(Objects::nonNull)
-                .toList();
-    }
 
     // listener stuff
     public static void notifyListeners(Source changed, boolean removed) {

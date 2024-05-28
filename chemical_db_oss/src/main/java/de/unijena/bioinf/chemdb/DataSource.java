@@ -131,6 +131,10 @@ public enum DataSource {
         return flags != 0 && (flags & BIO.flag) != 0;
     }
 
+    public static boolean isInAll(long flags){
+        return flags != 0 && (flags & ALL.flag) != 0;
+    }
+
     public boolean isBioOnly() {
         return isBioOnly(flag);
     }
@@ -147,11 +151,8 @@ public enum DataSource {
         return Arrays.stream(DataSource.values()).filter(it -> it != ALL).toArray(DataSource[]::new);
     }
 
-    public static DataSource[] valuesNoALLNoMINES() {
-        return Arrays.stream(DataSource.values()).filter(it -> it != ALL && !it.mines).toArray(DataSource[]::new);
-    }
 
-    private final static DataSource[] BioDatabases = new DataSource[] {MESH, HMDB, KNAPSACK,CHEBI,KEGG,HSDB,MACONDA,METACYC,GNPS,TRAIN,YMDB,PLANTCYC,NORMAN,SUPERNATURAL,COCONUT,BloodExposome,TeroMol,PUBCHEMANNOTATIONBIO,PUBCHEMANNOTATIONDRUG,PUBCHEMANNOTATIONSAFETYANDTOXIC,PUBCHEMANNOTATIONFOOD,LOTUS,FooDB,MiMeDB,LIPIDMAPS,LIPID};
+    private final static DataSource[] BIO_DATABASES = new DataSource[] {MESH, HMDB, KNAPSACK,CHEBI,KEGG,HSDB,MACONDA,METACYC,GNPS,TRAIN,YMDB,PLANTCYC,NORMAN,SUPERNATURAL,COCONUT,BloodExposome,TeroMol,PUBCHEMANNOTATIONBIO,PUBCHEMANNOTATIONDRUG,PUBCHEMANNOTATIONSAFETYANDTOXIC,PUBCHEMANNOTATIONFOOD,LOTUS,FooDB,MiMeDB,LIPIDMAPS,LIPID};
 
     // 4294401852
     private static long makeBIOFLAG() {

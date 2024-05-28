@@ -1,22 +1,20 @@
 package de.unijena.bioinf.ChemistryBase.utils;
 
-public enum DataQuality {
+import io.swagger.v3.oas.annotations.media.Schema;
 
-    /**
-     * Features with the lowest quality are probably not real signals. We would rather delete then.
-     */
-    LOWEST(0f),
-    /**
-     * Features with the lowest quality that have dependencies (e.g. are adducts or isotopes) should not
-     * be deleted for this reason.
-     */
-    LOWEST_WITH_DEPENDENCIES(0f),
+@Schema(enumAsRef = true, nullable = true)
+public enum DataQuality {
 
     /**
      * If a subcategory is "NOT_APPLICABLE" then it should not be considered for quality check
      * (e.g. a feature without MS/MS has not a LOWEST MS/MS quality just because it has no MS/MS)
      */
     NOT_APPLICABLE(0f),
+
+    /**
+     * Features with the lowest quality are probably not real signals. We would rather delete then.
+     */
+    LOWEST(0f),
 
     /**
      * features with bad quality are maybe real features. Still, we don't want to list them

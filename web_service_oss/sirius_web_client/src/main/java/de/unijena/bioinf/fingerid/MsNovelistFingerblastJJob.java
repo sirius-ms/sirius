@@ -211,11 +211,11 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
 
         // bayesnetScoring is null --> make a job which computes the bayessian network (covTree) for the
         // given molecular formula
+        //todo can probably be optimized by starting them before other local computations
         if (bayesnetScoring == null) {
             WebJJob<CovtreeJobInput, ?, BayesnetScoring, ?> covTreeJob =
                     webAPI.submitCovtreeJob(idResult.getMolecularFormula(), predictor.predictorType);
-            covTreeJob.awaitResult();
-            bayesnetScoring = covTreeJob.getResult();
+            bayesnetScoring = covTreeJob.awaitResult();
         }
 
         checkForInterruption();

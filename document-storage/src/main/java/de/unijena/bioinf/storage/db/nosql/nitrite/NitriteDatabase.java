@@ -479,6 +479,18 @@ public class NitriteDatabase implements Database<Document> {
         return CustomDocumentStream.of(cursor).project(omittedFields);
     }
 
+    private FindOptions translateSort(String[] sortFields, SortOrder[] sortOrder) {
+        if (sortFields.length == sortOrder.length && sortFields.length > 0) {
+            FindOptions options = FindOptions.orderBy(sortFields[0], (sortOrder[0] == SortOrder.ASCENDING) ? org.dizitart.no2.common.SortOrder.Ascending : org.dizitart.no2.common.SortOrder.Descending);
+            for (int i = 1; i < sortFields.length; i++) {
+                options.thenOrderBy(sortFields[i], (sortOrder[i] == SortOrder.ASCENDING) ? org.dizitart.no2.common.SortOrder.Ascending : org.dizitart.no2.common.SortOrder.Descending);
+            }
+            return options;
+        } else {
+            return new FindOptions();
+        }
+    }
+
     private <T> Iterable<T> doFind(Class<T> clazz, @Nullable Filter filter, @Nullable FindOptions findOptions) throws IOException {
         if (filter != null && findOptions != null) {
             return getRepository(clazz).find(getFilter(filter), findOptions);
@@ -672,8 +684,19 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
+    public <T> Iterable<T> find(Filter filter, Class<T> clazz, String[] sortFields, SortOrder[] sortOrders, String... withOptionalFields) throws IOException {
+        return this.read(() -> maybeProject(clazz, filter, translateSort(sortFields, sortOrders), withOptionalFields));
+    }
+
+    @Override
     public <T> Iterable<T> find(Filter filter, Class<T> clazz, long offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
         return this.read(() -> maybeProject(clazz, filter, FindOptions.orderBy(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.common.SortOrder.Ascending : org.dizitart.no2.common.SortOrder.Descending).skip(offset).limit(pageSize), withOptionalFields));
+    }
+
+    @Override
+    public <T> Iterable<T> find(Filter filter, Class<T> clazz, long offset, int pageSize, String[] sortFields, SortOrder[] sortOrders, String... withOptionalFields) throws IOException {
+        FindOptions options = translateSort(sortFields, sortOrders);
+        return this.read(() -> maybeProject(clazz, filter, options.skip(offset).limit(pageSize), withOptionalFields));
     }
 
     @Override
@@ -712,8 +735,19 @@ public class NitriteDatabase implements Database<Document> {
     }
 
     @Override
+    public <T> Iterable<T> findAll(Class<T> clazz, String[] sortFields, SortOrder[] sortOrders, String... withOptionalFields) throws IOException {
+        return this.read(() -> maybeProject(clazz, null, translateSort(sortFields, sortOrders), withOptionalFields));
+    }
+
+    @Override
     public <T> Iterable<T> findAll(Class<T> clazz, long offset, int pageSize, String sortField, SortOrder sortOrder, String... withOptionalFields) throws IOException {
         return this.read(() -> maybeProject(clazz, null, FindOptions.orderBy(sortField, (sortOrder == SortOrder.ASCENDING) ? org.dizitart.no2.common.SortOrder.Ascending : org.dizitart.no2.common.SortOrder.Descending).skip(offset).limit(pageSize), withOptionalFields));
+    }
+
+    @Override
+    public <T> Iterable<T> findAll(Class<T> clazz, long offset, int pageSize, String[] sortFields, SortOrder[] sortOrders, String... withOptionalFields) throws IOException {
+        FindOptions options = translateSort(sortFields, sortOrders);
+        return this.read(() -> maybeProject(clazz, null, options.skip(offset).limit(pageSize), withOptionalFields));
     }
 
     @Override

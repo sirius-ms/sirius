@@ -60,11 +60,10 @@ public class FormulaWhiteListJob extends BasicJJob<CandidateFormulas> {
         this.searchDB = searchDB;
     }
 
-    //todo as soon as we always perform adduct detection directly at import (and not as part of MS1PreProcessor), we can change this and retrieve the allowedIonTypes from PossibleAdducts
-    public static FormulaWhiteListJob create(WebWithCustomDatabase searchDB, List<CustomDataSources.Source> dbToSearch, Ms2Experiment experiment , PrecursorIonType[] allowedIonTypes) {
+    public static FormulaWhiteListJob create(WebWithCustomDatabase searchDB, List<CustomDataSources.Source> dbToSearch, Ms2Experiment experiment) {
         final double precursorMass = experiment.getIonMass();
         final Deviation massDev = getMassDeviation(experiment);
-        return new FormulaWhiteListJob(searchDB, dbToSearch, precursorMass, massDev, allowedIonTypes);
+        return new FormulaWhiteListJob(searchDB, dbToSearch, precursorMass, massDev, experiment.getPossibleAdductsOrFallback().getAdducts().toArray(PrecursorIonType[]::new));
     }
 
     /**
