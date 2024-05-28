@@ -31,6 +31,6 @@ dependencies {
     api project(':lcms')
     api project(':elgordo')
 
-    for (module in ["data", "smiles", "formula"])
+    for (module in ["data", "smiles", "formula", "qsarmolecular", "bundle"])
         api "org.openscience.cdk:cdk-$module:$cdk_version"
 }
