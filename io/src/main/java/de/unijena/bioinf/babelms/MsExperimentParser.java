@@ -31,6 +31,7 @@ import de.unijena.bioinf.babelms.ms.JenaMsParser;
 import de.unijena.bioinf.babelms.msp.MSPExperimentParser;
 import de.unijena.bioinf.babelms.mzml.MzMlExperimentParser;
 import de.unijena.bioinf.babelms.mzml.MzXmlExperimentParser;
+import de.unijena.bioinf.babelms.sdf.SdfExperimentParser;
 import de.unijena.bioinf.babelms.txt.TxtExperimentParser;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.PropertyManager;
@@ -121,6 +122,7 @@ public class MsExperimentParser {
         endings.put(".mblib", MassbankExperimentParser.class);
         endings.put(".txt", TxtExperimentParser.class);
         endings.put(".json", JsonExperimentParserDispatcher.class);
+        endings.put(".sdf", SdfExperimentParser.class);
         return endings;
     }
 }
