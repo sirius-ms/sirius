@@ -31,7 +31,6 @@ import de.unijena.bioinf.babelms.ReportingInputStream;
 import de.unijena.bioinf.babelms.annotations.CompoundMetaData;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.InputResourceParsingIterator;
-import de.unijena.bioinf.babelms.sdf.IteratingSDFReader;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
@@ -48,14 +47,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
-import org.openscience.cdk.io.ISimpleChemObjectReader;
-import org.openscience.cdk.io.ReaderFactory;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -194,11 +194,6 @@ public class CustomDatabaseImporter {
         }
     }
 
-    public void importStructuresFromSmileAndInChis(String smilesOrInChI) throws IOException {
-        throwIfShutdown();
-        importStructuresFromSmileAndInChis(smilesOrInChI, null, null);
-    }
-
     public Optional<Molecule> importStructuresFromSmileAndInChis(@Nullable String smilesOrInChI, @Nullable String id, @Nullable String name) {
         throwIfShutdown();
         if (smilesOrInChI == null || smilesOrInChI.isBlank()) {
@@ -276,40 +271,6 @@ public class CustomDatabaseImporter {
         }
     }
 
-    public void importStructuresFromSdf(InputStream stream) throws IOException {
-        ReportingInputStream rs = new ReportingInputStream(stream);
-        rs.addBytesRaiseListener((rb, rbTotal) -> {
-            synchronized (listeners) {
-                listeners.forEach(l -> l.bytesRead(rb));
-            }
-        });
-        importStructuresFromSdf(rs);
-    }
-
-    public void importStructuresFromSdf(ReportingInputStream stream) throws IOException {
-        throwIfShutdown();
-        try {
-            IteratingSDFReader reader = new IteratingSDFReader(new BufferedReader(new InputStreamReader(stream)), SilentChemObjectBuilder.getInstance());
-            while (reader.hasNext()) {
-                checkCancellation();
-                IAtomContainer c = reader.next();
-                checkCancellation();
-                Smiles smiles = new Smiles(smilesGen.create(c));
-                InChI inchi = InChISMILESUtils.getInchi(c, false);
-                if (inchi != null) {
-                    Molecule molecule = new Molecule(c, smiles, inchi);
-                    //All properties must be lowercase
-                    molecule.name = c.getProperty("name");
-                    addMolecule(molecule);
-                } else {
-                    LoggerFactory.getLogger(getClass()).warn("Could not create InChI from parsed Atom container. Skipping Molecule: " + smiles);
-                }
-            }
-        } catch (CDKException e) {
-            throw new IOException(e);
-        }
-    }
-
     public void importStructuresFromResources(List<InputResource<?>> structureFiles) throws IOException {
         throwIfShutdown();
         for (InputResource<?> f : structureFiles) {
@@ -319,37 +280,10 @@ public class CustomDatabaseImporter {
                         listeners.forEach(l -> l.bytesRead(rb));
                     }
                 });
-                if (f.getFileExt().equalsIgnoreCase("sdf")) {
-                    importStructuresFromSdf(s);
-                } else {
-                    importStructuresFromSmileAndInChis(s);
-                }
+                importStructuresFromSmileAndInChis(s);
             }
         }
     }
-
-    public void importStructureFromFile(File file) throws IOException {
-        throwIfShutdown();
-        ReaderFactory factory = new ReaderFactory();
-        ISimpleChemObjectReader reader;
-
-        try (InputStream stream = new FileInputStream(file)) {
-            reader = factory.createReader(stream);
-        }
-
-        try (ReportingInputStream stream = new ReportingInputStream(new FileInputStream(file))) {
-            stream.addBytesRaiseListener((rb, rbTotal) -> {
-                synchronized (listeners) {
-                    listeners.forEach(l -> l.bytesRead(rb));
-                }
-            });
-            if (reader != null)
-                importStructuresFromSdf(stream);
-            else
-                importStructuresFromSmileAndInChis(stream);
-        }
-    }
-
 
     protected void addToSpectraBuffer(List<Ms2ReferenceSpectrum> spectra) throws ChemicalDatabaseException {
         synchronized (spectraBuffer) {
@@ -506,7 +440,7 @@ public class CustomDatabaseImporter {
         SiriusJobs.getGlobalJobManager().submitJobsInBatches(jobs).forEach(JJob::getResult);
     }
 
-    private void computeAndAnnotateMissingCandidates(final ConcurrentHashMap<String, Comp> key2DToComp) throws IOException {
+    private void computeAndAnnotateMissingCandidates(final ConcurrentHashMap<String, Comp> key2DToComp) {
         // compound fps locally if not already downloaded or loaded from local db
         List<BasicJJob<Void>> jobs = key2DToComp.values().stream()
                 .filter(c -> c.candidate == null)
