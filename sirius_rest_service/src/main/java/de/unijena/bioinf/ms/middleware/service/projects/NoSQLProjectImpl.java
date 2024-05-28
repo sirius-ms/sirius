@@ -399,27 +399,20 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return Optional.of(traceSet);
     }
 
-    private Pair<String, Database.SortOrder> sort(Sort sort, Pair<String, Database.SortOrder> defaults, Function<String, String> translator) {
-        if (sort == null)
-            return defaults;
+    private Pair<String[], Database.SortOrder[]> sort(Sort sort, Pair<String, Database.SortOrder> defaults, Function<String, String> translator) {
+        if (sort == null || sort.isEmpty() || sort == Sort.unsorted())
+            return Pair.of(new String[]{defaults.getLeft()}, new Database.SortOrder[]{defaults.getRight()});
 
-        if (sort == Sort.unsorted())
-            return defaults;
-
-        Optional<Sort.Order> order = sort.stream().findFirst();
-        if (order.isEmpty())
-            return defaults;
-
-        String property = order.get().getProperty();
-        if (property.isEmpty() || property.isBlank()) {
-            return defaults;
-        }
-
-        Database.SortOrder so = order.get().getDirection().isAscending() ? Database.SortOrder.ASCENDING : Database.SortOrder.DESCENDING;
-        return Pair.of(translator.apply(property), so);
+        List<String> properties = new ArrayList<>();
+        List<Database.SortOrder> orders = new ArrayList<>();
+        sort.stream().forEach(s -> {
+            properties.add(translator.apply(s.getProperty()));
+            orders.add(s.getDirection().isAscending() ? Database.SortOrder.ASCENDING : Database.SortOrder.DESCENDING);
+        });
+        return Pair.of(properties.toArray(String[]::new), orders.toArray(Database.SortOrder[]::new));
     }
 
-    private Pair<String, Database.SortOrder> sortCompound(Sort sort) {
+    private Pair<String[], Database.SortOrder[]> sortCompound(Sort sort) {
         return sort(sort, Pair.of("name", Database.SortOrder.ASCENDING), s -> switch (s) {
             case "rtStartSeconds" -> "rt.start";
             case "rtEndSeconds" -> "rt.end";
@@ -427,7 +420,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         });
     }
 
-    private Pair<String, Database.SortOrder> sortFeature(Sort sort) {
+    private Pair<String[], Database.SortOrder[]> sortFeature(Sort sort) {
         return sort(sort, Pair.of("name", Database.SortOrder.ASCENDING), s -> switch (s) {
             case "rtStartSeconds" -> "retentionTime.start";
             case "rtEndSeconds" -> "retentionTime.end";
@@ -436,7 +429,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         });
     }
 
-    private Pair<String, Database.SortOrder> sortMatch(Sort sort) {
+    private Pair<String[], Database.SortOrder[]> sortMatch(Sort sort) {
         return sort(sort, Pair.of("searchResult.rank", Database.SortOrder.ASCENDING), s -> switch (s) {
             case "rank" -> "searchResult.rank";
             case "similarity" -> "searchResult.similarity.similarity";
@@ -464,11 +457,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         );
     }
 
-    private Pair<String, Database.SortOrder> sortFormulaCandidate(Sort sort) {
+    private Pair<String[], Database.SortOrder[]> sortFormulaCandidate(Sort sort) {
         return sort(sort, Pair.of("formulaRank", Database.SortOrder.ASCENDING), Function.identity());
     }
 
-    private Pair<String, Database.SortOrder> sortStructureMatch(Sort sort) {
+    private Pair<String[], Database.SortOrder[]> sortStructureMatch(Sort sort) {
         return sort(sort, Pair.of("structureRank", Database.SortOrder.ASCENDING), Function.identity());
     }
 
@@ -642,8 +635,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                             //todo add searched database and expanded databases
                         });
         } else {
-            Pair<String, Database.SortOrder> formSort = sortFormulaCandidate(null); //null == default
-            formulaCandidate = project().findByFeatureIdStr(longAFIf, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, formSort.getLeft(), formSort.getRight())
+            Pair<String[], Database.SortOrder[]> formSort = sortFormulaCandidate(null); //null == default
+            formulaCandidate = project().findByFeatureIdStr(longAFIf, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, formSort.getLeft()[0], formSort.getRight()[0])
                     .findFirst().orElse(null); //todo should we call a page of size one instead?
         }
 
@@ -744,7 +737,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public Page<Compound> findCompounds(Pageable pageable,
                                         @NotNull EnumSet<Compound.OptField> optFields,
                                         @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields) {
-        Pair<String, Database.SortOrder> sort = sortCompound(pageable.getSort());
+        Pair<String[], Database.SortOrder[]> sort = sortCompound(pageable.getSort());
         Stream<de.unijena.bioinf.ms.persistence.model.core.Compound> stream;
         if (pageable.isPaged()) {
             stream = storage().findAllStr(de.unijena.bioinf.ms.persistence.model.core.Compound.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
@@ -810,7 +803,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (pageable.isUnpaged() && pageable.getSort().isUnsorted()) {
             stream = storage().findAllStr(QualityReport.class);
         } else {
-            Pair<String, Database.SortOrder> sort = sortFeature(pageable.getSort());
+            Pair<String[], Database.SortOrder[]> sort = sortFeature(pageable.getSort());
             stream = storage().findAllStr(QualityReport.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
         }
 
@@ -836,7 +829,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (pageable.isUnpaged() && pageable.getSort().isUnsorted()) {
             stream = storage().findAllStr(AlignedFeatures.class);
         } else {
-            Pair<String, Database.SortOrder> sort = sortFeature(pageable.getSort());
+            Pair<String[], Database.SortOrder[]> sort = sortFeature(pageable.getSort());
             stream = storage().findAllStr(AlignedFeatures.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
         }
 
@@ -932,7 +925,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     private Page<SpectralLibraryMatch> findLibMatches(Filter filter, Pageable pageable) throws IOException {
-        Pair<String, Database.SortOrder> sort = sortMatch(pageable.getSort());
+        Pair<String[], Database.SortOrder[]> sort = sortMatch(pageable.getSort());
 
         Stream<SpectraMatch> matches;
         if (pageable.isPaged()) {
@@ -973,7 +966,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public Page<FormulaCandidate> findFormulaCandidatesByFeatureId(String alignedFeatureId, Pageable pageable, @NotNull EnumSet<FormulaCandidate.OptField> optFields) {
         long longAFId = Long.parseLong(alignedFeatureId);
-        Pair<String, Database.SortOrder> sort = sortFormulaCandidate(pageable.getSort());
+        Pair<String[], Database.SortOrder[]> sort = sortFormulaCandidate(pageable.getSort());
 
         //load ms data only once per formula candidate
         final MSData msData = Stream.of(/*FormulaCandidate.OptField.annotatedSpectrum,*/ FormulaCandidate.OptField.isotopePattern).anyMatch(optFields::contains)
@@ -981,10 +974,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         List<FormulaCandidate> candidates;
         if (pageable.isPaged()) {
-            candidates = project().findByFeatureIdStr(longAFId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight())
+            candidates = project().findByFeatureIdStr(longAFId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft()[0], sort.getRight()[0])
                     .map(fc -> convertFormulaCandidate(msData, fc, optFields)).toList();
         } else {
-            candidates = project().findByFeatureIdStr(longAFId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, sort.getLeft(), sort.getRight())
+            candidates = project().findByFeatureIdStr(longAFId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class, sort.getLeft()[0], sort.getRight()[0])
                     .map(fc -> convertFormulaCandidate(msData, fc, optFields)).toList();
         }
         long total = project().countByFeatureId(longAFId, de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate.class);
@@ -1021,8 +1014,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     private <T extends StructureMatch> Page<StructureCandidateScored> findStructureCandidatesByFeatureIdAndFormulaId(Class<T> clzz, String formulaId, String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
         long longAFId = Long.parseLong(alignedFeatureId);
         long longFId = Long.parseLong(formulaId);
-        Pair<String, Database.SortOrder> sort = sortStructureMatch(pageable.getSort());
-        List<StructureCandidateScored> candidates = project().findByFeatureIdAndFormulaIdStr(longAFId, longFId, clzz, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight())
+        Pair<String[], Database.SortOrder[]> sort = sortStructureMatch(pageable.getSort());
+        List<StructureCandidateScored> candidates = project().findByFeatureIdAndFormulaIdStr(longAFId, longFId, clzz, pageable.getOffset(), pageable.getPageSize(), sort.getLeft()[0], sort.getRight()[0])
                 .map(s -> convertStructureMatch(s, optFields)).map(s -> (StructureCandidateScored) s).toList();
 
         long total = project().countByFeatureId(longFId, clzz);
@@ -1043,11 +1036,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     private <T extends StructureMatch> Page<StructureCandidateFormula> findStructureCandidatesByFeatureId(Class<T> clzz, String alignedFeatureId, Pageable pageable, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
         long longAFId = Long.parseLong(alignedFeatureId);
-        Pair<String, Database.SortOrder> sort = sortStructureMatch(pageable.getSort());
+        Pair<String[], Database.SortOrder[]> sort = sortStructureMatch(pageable.getSort());
 
         Long2ObjectMap<de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate> fidToFC = new Long2ObjectOpenHashMap<>();
 
-        List<StructureCandidateFormula> candidates = project().findByFeatureIdStr(longAFId, clzz, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight())
+        List<StructureCandidateFormula> candidates = project().findByFeatureIdStr(longAFId, clzz, pageable.getOffset(), pageable.getPageSize(), sort.getLeft()[0], sort.getRight()[0])
                 .map(candidate -> {
                     de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate fc = fidToFC
                             .computeIfAbsent(candidate.getFormulaId(), k -> project()
@@ -1064,8 +1057,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @Override
     public StructureCandidateScored findTopStructureCandidateByFeatureId(String alignedFeatureId, @NotNull EnumSet<StructureCandidateScored.OptField> optFields) {
         long longAFId = Long.parseLong(alignedFeatureId);
-        Pair<String, Database.SortOrder> sort = sortStructureMatch(Sort.by(Sort.Direction.DESC, "csiScore"));
-        return project().findByFeatureIdStr(longAFId, CsiStructureMatch.class, sort.getLeft(), sort.getRight())
+        Pair<String[], Database.SortOrder[]> sort = sortStructureMatch(Sort.by(Sort.Direction.DESC, "csiScore"));
+        return project().findByFeatureIdStr(longAFId, CsiStructureMatch.class, sort.getLeft()[0], sort.getRight()[0])
                 .findFirst().map(s -> convertStructureMatch(s, optFields)).orElse(null);
     }
 
