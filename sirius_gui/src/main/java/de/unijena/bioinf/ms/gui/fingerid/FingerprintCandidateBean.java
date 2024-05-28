@@ -207,6 +207,10 @@ public class FingerprintCandidateBean implements SiriusPCS, Comparable<Fingerpri
         }
     }
 
+    public int getNumberOfSpectralMatches() {
+        return spectralMatchingCache.getSummary().getReferenceSpectraCount();
+    }
+
     public List<SpectralMatchBean> getTopSpectralMatches() {
         return spectralMatchingCache.getPageFiltered(0);
     }
