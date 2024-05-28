@@ -27,22 +27,23 @@ import ca.odell.glazedlists.SortedList;
 import ca.odell.glazedlists.matchers.MatcherEditor;
 import ca.odell.glazedlists.swing.TextComponentMatcherEditor;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.table.*;
 import de.unijena.bioinf.ms.gui.utils.NameFilterRangeSlider;
-import de.unijena.bioinf.ms.gui.utils.WrapLayout;
+import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.nightsky.sdk.model.BasicSpectrum;
 import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.awt.*;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.function.BiFunction;
 
 public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatchBean, InstanceBean, SpectralMatchList> {
 
@@ -110,7 +111,7 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
         JToolBar tb = new JToolBar();
         tb.setFloatable(false);
         tb.setBorderPainted(false);
-        tb.setLayout(new WrapLayout(FlowLayout.LEFT, 0, 0));
+        tb.setRollover(true);
 
         scoreSlider = new FilterRangeSlider<>(source, source.similarityStats, true);
         peaksSlider = new FilterRangeSlider<>(source, source.sharedPeaksStats);
@@ -118,7 +119,24 @@ public class SpectralMatchingTableView extends ActionListDetailView<SpectralMatc
         tb.add(new NameFilterRangeSlider("Similarity:", scoreSlider));
         tb.addSeparator();
         tb.add(new NameFilterRangeSlider("Shared Peaks:", peaksSlider));
-        tb.addSeparator();
+
+        int size = source.getSize();
+        int total = source.getTotalSize();
+        BiFunction<Integer, Integer, String> toolTipText = (s, t) -> s < t ? "Load " + (t - s) + " more reference spectr" + (t - s > 1 ? "a." : "um.") : "Load more reference spectra.";
+
+        ToolbarToggleButton loadAll = new ToolbarToggleButton(Icons.LOAD_ALL_24, toolTipText.apply(size, total));
+        loadAll.setEnabled(source.getSize() < source.getTotalSize());
+        source.addSizeChangedListener((s, t) -> {
+            loadAll.setToolTipText(toolTipText.apply(s, t));
+            loadAll.setEnabled(s < t);
+        });
+        loadAll.addActionListener(e -> {
+            source.setLoadAll();
+            source.reloadData();
+        });
+        tb.add(firstGap);
+        tb.add(secondGap);
+        tb.add(loadAll);
 
         return tb;
     }
