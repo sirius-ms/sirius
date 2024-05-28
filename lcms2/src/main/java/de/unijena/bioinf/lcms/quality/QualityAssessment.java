@@ -36,17 +36,30 @@ public class QualityAssessment implements FeatureQualityChecker {
                 ++count;
             }
         }
+        float c = report.getCategories().get(QualityReport.MS2_QUALITY).getOverallQuality().getScore();
         if (count==0) {
             report.setOverallQuality(DataQuality.NOT_APPLICABLE);
         } else {
             score /= count;
-            if (score >= 2.66) {
+            if (score >= 2.5 && c>=2) {
                 report.setOverallQuality(DataQuality.GOOD);
-            } else if (score >= 1.66) {
+            } else if (score >= 1.6) {
                 report.setOverallQuality(DataQuality.DECENT);
-            } else if (score >= 0.66) {
+            } else if (score >= 0.6) {
                 report.setOverallQuality(DataQuality.BAD);
             } else report.setOverallQuality(DataQuality.LOWEST);
+        }
+        // we add some additional rules:
+        // - whenever we have a good MS2 we KEEP the data. ALWAYS.
+        // - if almost everything is bad (including the spectra) we downgrade the quality level to lowest
+        //   this essentially marks a compound for "deletion".
+        float c2 = report.getCategories().get(QualityReport.PEAK_QUALITY).getOverallQuality().getScore();
+        float c3 = report.getCategories().get(QualityReport.ADDUCT_QUALITY).getOverallQuality().getScore();
+        float c4 = report.getCategories().get(QualityReport.ISOTOPE_QUALITY).getOverallQuality().getScore();
+        if (report.getOverallQuality().getScore() > 1 || c >= 2 || Math.max(c2,Math.max(c3,c4))>=3 || (c2+c3+c4) >= 5 ) {
+            if (report.getOverallQuality().getScore()<0) report.setOverallQuality(DataQuality.BAD);
+        } else {
+            report.setOverallQuality(DataQuality.LOWEST);
         }
 
     }
@@ -58,30 +71,29 @@ public class QualityAssessment implements FeatureQualityChecker {
     public static DataQuality scoreCategory(QualityReport.Category category) {
         if (category.getItems().isEmpty()) return DataQuality.NOT_APPLICABLE;
         float minScore= DataQuality.GOOD.getScore(), maxScore = DataQuality.LOWEST.getScore();
-        float tiebreaker = 0f; int tiebreakcount=0;
+        float flexibleScore = 0, count = 0;
         for (QualityReport.Item item : category.getItems()) {
             if (item.getWeight()== QualityReport.Weight.MAJOR) {
                 minScore = Math.min(minScore, item.getQuality().getScore());
                 maxScore = Math.max(maxScore, item.getQuality().getScore());
+                flexibleScore += item.getQuality().getScore();
+                count+=1;
             } else {
-                tiebreakcount++;
-                tiebreaker += item.getQuality().getScore();
+                flexibleScore += item.getQuality().getScore()*0.2f;
+                count += 0.2f;
             }
         }
-        if (tiebreakcount==0) tiebreaker = 1;
-        else tiebreaker/=tiebreakcount;
-        float score = (maxScore+minScore)/2f;
-        if (score <= 0) {
-            return DataQuality.LOWEST;
-        } else if (score < 1) {
-            return tiebreaker >= 1 ? DataQuality.BAD : DataQuality.LOWEST;
-        } else if (score == 1) {return DataQuality.BAD;
-        } else if (score < 2) {
-            return tiebreaker >= 2 ? DataQuality.DECENT : DataQuality.BAD;
-        } else if (score == 2) {
-            return DataQuality.DECENT;
-        } else if (score < 3) {
-            return tiebreaker >= 3 ? DataQuality.GOOD : DataQuality.DECENT;
-        } else return DataQuality.GOOD;
+        float score = Math.min(minScore+1, flexibleScore/count);
+        if (count==0) {
+            return DataQuality.NOT_APPLICABLE;
+        } else {
+            if (score >= 2.66) {
+                return DataQuality.GOOD;
+            } else if (score >= 1.66) {
+                return DataQuality.DECENT;
+            } else if (score >= 0.66) {
+                return DataQuality.BAD;
+            } else return DataQuality.LOWEST;
+        }
     }
 }

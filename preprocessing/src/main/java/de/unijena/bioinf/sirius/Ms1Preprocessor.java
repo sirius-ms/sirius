@@ -33,7 +33,6 @@ import de.unijena.bioinf.sirius.deisotope.IsotopePatternDetection;
 import de.unijena.bioinf.sirius.deisotope.TargetedIsotopePatternDetection;
 import de.unijena.bioinf.sirius.elementdetection.DeepNeuralNetworkElementDetector;
 import de.unijena.bioinf.sirius.elementdetection.ElementDetection;
-import de.unijena.bioinf.sirius.iondetection.AdductDetection;
 import de.unijena.bioinf.sirius.iondetection.DetectIonsFromMs1;
 import de.unijena.bioinf.sirius.merging.Ms1Merging;
 import de.unijena.bioinf.sirius.validation.Ms1Validator;
@@ -51,7 +50,7 @@ import java.util.stream.Collectors;
 public class Ms1Preprocessor implements SiriusPreprocessor {
     protected Ms2ExperimentValidator validator = new Ms1Validator();
     protected ElementDetection elementDetection = new DeepNeuralNetworkElementDetector();
-    protected AdductDetection ionModeDetection = new DetectIonsFromMs1();
+    protected DetectIonsFromMs1 ms1IonAdductDetection = new DetectIonsFromMs1();
     protected Ms1Merging ms1Merging = new Ms1Merging();
     protected IsotopePatternDetection deisotoper = new TargetedIsotopePatternDetection();
 
@@ -119,7 +118,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
         //todo we need to write to the original data here. to keep the predicted adducts. maybe this should be part of the IDResult instead????
         final Ms2Experiment exp = pinput.getOriginalInput();
 
-        // if input file contains an adduct annotation, disable adduct detection
+        //todo this is contained of historical reasons. Remove if absolutely sure that this is not necessary anymore. Currently it still seems to be needed for detectElements() in the compute panel
         if (!exp.getPrecursorIonType().isIonizationUnknown()) {
             pinput.setAnnotation(PossibleAdducts.class, new PossibleAdducts(exp.getPrecursorIonType()));
             return;
@@ -128,11 +127,12 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
         if (pinput.hasAnnotation(PossibleAdducts.class)) return;
 
         final DetectedAdducts detAdds = exp.computeAnnotationIfAbsent(DetectedAdducts.class, DetectedAdducts::new);
-        if (!detAdds.containsKey(DetectedAdducts.Source.MS1_PREPROCESSOR) && !detAdds.containsKey(DetectedAdducts.Source.LCMS_ALIGN))  {
+        if (!detAdds.containsKey(DetectedAdducts.Source.MS1_PREPROCESSOR) && !detAdds.hasMoreImportantSource(DetectedAdducts.Source.MS1_PREPROCESSOR))  {
+            //Source.MS1_PREPROCESSOR shall only be present for peaklist data for which adducts are not specified in input file
             final int charge = exp.getPrecursorIonType().getCharge();
 
             final AdductSettings settings = pinput.getAnnotationOrDefault(AdductSettings.class);
-            final PossibleAdducts ionModes = ionModeDetection.detect(pinput, settings.getDetectable(charge));
+            final PossibleAdducts ionModes = ms1IonAdductDetection.detect(pinput, settings.getDetectable(charge));
 
             if (ionModes != null)
                 detAdds.put(DetectedAdducts.Source.MS1_PREPROCESSOR, new PossibleAdducts(ionModes.getAdducts()));

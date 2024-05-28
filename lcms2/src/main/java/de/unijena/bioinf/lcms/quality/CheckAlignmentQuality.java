@@ -41,7 +41,7 @@ public class CheckAlignmentQuality implements FeatureQualityChecker{
         double[] ints = feature.getFeatures().stream().flatMap(List::stream).mapToDouble(AbstractFeature::getApexIntensity).toArray();
         double max = Arrays.stream(ints).max().orElse(1d);
         int intensiveFeatures = (int)Arrays.stream(ints).filter(x->x>max*0.33d).count();
-        if (intensiveFeatures >= minimumNumber) {
+        if (intensiveFeatures < minimumNumber) {
             peakQuality.getItems().add(new QualityReport.Item(
                     "feature alignment is very imbalanced with only " + intensiveFeatures + " have a high apex intensity.", DataQuality.BAD, QualityReport.Weight.MINOR
             ));
