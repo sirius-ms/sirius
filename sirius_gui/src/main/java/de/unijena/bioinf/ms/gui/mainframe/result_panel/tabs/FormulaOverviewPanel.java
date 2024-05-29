@@ -50,8 +50,12 @@ public class FormulaOverviewPanel extends JPanel implements PanelDescription {
         TreeVisualizationPanel overviewTVP = new TreeVisualizationPanel();
         suriusResultElements.addActiveResultChangedListener(overviewTVP);
         SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel();
-        suriusResultElements.addActiveResultChangedListener((experiment, sre, resultElements, selections) ->
-                overviewSVP.resultsChanged(experiment, sre != null ? sre.getFormulaId() : null, null));
+        suriusResultElements.addActiveResultChangedListener((experiment, sre, resultElements, selections) -> {
+                if (sre != null)
+                    overviewSVP.resultsChanged(experiment, sre.getFormulaId(), null);
+                else
+                    overviewSVP.clear();
+        });
 
         // Class to synchronize selected peak/node
         VisualizationPanelSynchronizer synchronizer = new VisualizationPanelSynchronizer(

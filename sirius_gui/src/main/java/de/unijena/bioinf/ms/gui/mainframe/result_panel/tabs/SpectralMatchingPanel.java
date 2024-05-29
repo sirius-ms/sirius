@@ -46,11 +46,11 @@ public class SpectralMatchingPanel extends JPanel implements PanelDescription {
 
         this.tableView.getFilteredSelectionModel().addListSelectionListener(e -> {
             DefaultEventSelectionModel<SpectralMatchBean> selections = (DefaultEventSelectionModel<SpectralMatchBean>) e.getSource();
-            selections.getSelected().stream().findFirst().ifPresent(matchBean -> {
-                matchList.readDataByConsumer(instanceBean -> {
-                    spectraVisualizationPanel.resultsChanged(instanceBean, matchList, matchBean);
-                });
-            });
+            selections.getSelected().stream().findFirst().ifPresentOrElse(
+                    matchBean ->
+                            matchList.readDataByConsumer(instanceBean ->
+                                    spectraVisualizationPanel.resultsChanged(instanceBean, matchList, matchBean)),
+                    spectraVisualizationPanel::clear);
         });
 
         JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, tableView, spectraVisualizationPanel);
