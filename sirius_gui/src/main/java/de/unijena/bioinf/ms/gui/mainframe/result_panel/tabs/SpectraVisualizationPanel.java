@@ -119,7 +119,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
     public WebViewSpectraViewer browser;
     final JToolBar toolBar;
 
-//    private final boolean ms2MirrorEnabled;
+    private final boolean ms2MirrorEnabled;
     private SpectralSimilarity[] similarities;
     private IntList queryIndices;
     private SpectralMatchBean selectedMatchBean;
@@ -146,6 +146,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
         this.setLayout(new BorderLayout());
         this.possibleModes = possibleModes;
         this.preferredMode = preferredMode;
+        this.ms2MirrorEnabled = possibleModes.contains(MS2_MIRROR_DISPLAY);
         this.popupOwner = (JFrame) SwingUtilities.getWindowAncestor(this);
 
         toolBar = new JToolBar();
@@ -328,15 +329,19 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
     private final Lock backgroundLoaderLock = new ReentrantLock();
 
 
+    public void clear() {
+        resultsChanged(null, null, null, null, null, true);
+    }
+
     public void resultsChanged(InstanceBean instance, @Nullable String formulaCandidateId, @Nullable String smiles) {
-        resultsChanged(instance, formulaCandidateId, smiles, null, null);
+        resultsChanged(instance, formulaCandidateId, smiles, null, null, false);
     }
 
     public void resultsChanged(InstanceBean instance, @Nullable SpectralMatchList matchList, @Nullable SpectralMatchBean selectedMatchBean) {
-        resultsChanged(instance, null, null, matchList, selectedMatchBean);
+        resultsChanged(instance, null, null, matchList, selectedMatchBean, matchList == null || selectedMatchBean == null);
     }
 
-    private void resultsChanged(InstanceBean instance, @Nullable String formulaCandidateId, @Nullable String smiles, @Nullable SpectralMatchList matchList, @Nullable SpectralMatchBean matchBean) {
+    private void resultsChanged(InstanceBean instance, @Nullable String formulaCandidateId, @Nullable String smiles, @Nullable SpectralMatchList matchList, @Nullable SpectralMatchBean matchBean, boolean clear) {
         try {
             backgroundLoaderLock.lock();
             final JJob<Boolean> old = backgroundLoader;
@@ -349,6 +354,13 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                         old.getResult(); //await cancellation so that nothing strange can happen.
                     }
                     clearData();
+
+                    if (clear) {
+                        clearData();
+                        Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
+                        browser.clear();
+                        return true;
+                    }
 
                     checkForInterruption();
                     //todo check if data is unchanged and prevent re-rendering
@@ -395,17 +407,17 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                             {
                                 final List<String> items = new ArrayList<>(5);
 
-                                Jobs.runEDTAndWait(() -> setToolbarEnabled(true));
-                                if (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null)
-                                    items.add(MS1_DISPLAY);
-                                if (isotopePatternAnnotation != null) {
-                                    if (isotopePatternAnnotation.getSimulatedPattern() != null)
-                                        items.add(MS1_MIRROR_DISPLAY);
-                                }
-                                if (!msData.getMs2Spectra().isEmpty())
-                                    items.add(MS2_DISPLAY);
-                                if (!msData.getMs2Spectra().isEmpty())
-                                    items.add(MS2_MIRROR_DISPLAY);
+                            Jobs.runEDTAndWait(() -> setToolbarEnabled(true));
+                            if (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null)
+                                items.add(MS1_DISPLAY);
+                            if (isotopePatternAnnotation != null) {
+                                if (isotopePatternAnnotation.getSimulatedPattern() != null)
+                                    items.add(MS1_MIRROR_DISPLAY);
+                            }
+                            if (!msData.getMs2Spectra().isEmpty())
+                                items.add(MS2_DISPLAY);
+                            if (ms2MirrorEnabled && !msData.getMs2Spectra().isEmpty())
+                                items.add(MS2_MIRROR_DISPLAY);
 
                                 checkForInterruption();
 
@@ -473,16 +485,18 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
         msData = null;
         isotopePatternAnnotation = null;
         annotatedMsMsData = null;
+        selectedMatchBean = null;
+        similarities = null;
     }
 
     private void updateCEBox(MsData msData) {
         ceBox.removeItemListener(this);
         ceBox.removeAllItems();
-        if (possibleModes.contains(MS2_MIRROR_DISPLAY)) {
+        if (ms2MirrorEnabled) {
             SpectralSimilarity maxSimilarity = new SpectralSimilarity(0, 0);
             int maxIndex = 0;
             for (int i = 0; i < msData.getMs2Spectra().size(); ++i) {
-                if (similarities[i] != null) {
+                if (similarities != null && similarities[i] != null) {
                     BasicSpectrum spectrum = msData.getMs2Spectra().get(i);
                     String collisionEnergy = spectrum.getCollisionEnergy();
                     ceBox.addItem(collisionEnergy == null ? "mode " + (i + 1) : collisionEnergy +

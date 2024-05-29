@@ -56,9 +56,10 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
         candidateTable.getFilteredSelectionModel().addListSelectionListener(e -> {
             DefaultEventSelectionModel<FingerprintCandidateBean> selections = (DefaultEventSelectionModel<FingerprintCandidateBean>) e.getSource();
             Optional<FingerprintCandidateBean> sre = selections.getSelected().stream().findFirst();
-            structureList.readDataByConsumer(d -> overviewSVP.resultsChanged(d,
-                    sre.map(FingerprintCandidateBean::getCandidate).map(StructureCandidateFormula::getFormulaId).orElse(null),
-                    sre.map(FingerprintCandidateBean::getSmiles).orElse(null)));
+            sre.ifPresentOrElse(bean ->
+                    structureList.readDataByConsumer(d ->
+                            overviewSVP.resultsChanged(d, bean.getCandidate().getFormulaId(), bean.getCandidate().getSmiles())),
+                    overviewSVP::clear);
         });
 
         JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, candidateTable, overviewSVP);
