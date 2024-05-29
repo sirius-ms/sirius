@@ -182,6 +182,12 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
             siriusCompounds.add(experimentFromCompound(compound, exp));
         });
 
+        if (siriusCompounds.size() == 1) {
+            // We are not sure what adduct it was, unlike when multiple adducts were detected
+            MutableMs2Experiment exp = (MutableMs2Experiment) siriusCompounds.get(0);
+            exp.setPrecursorIonType(PrecursorIonType.unknown(exp.getPrecursorIonType().getCharge()));
+        }
+
         return siriusCompounds;
     }
 

@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 
 public class ParserTestUtils {
@@ -33,7 +34,11 @@ public class ParserTestUtils {
     }
 
     public static Ms2Experiment loadExperiment(String file) throws IOException {
+        return loadExperiments(file).get(0);
+    }
+
+    public static List<Ms2Experiment> loadExperiments(String file) throws IOException {
         File input = getTestFile(file);
-        return new MsExperimentParser().getParser(input).parseFromFile(input).get(0);
+        return new MsExperimentParser().getParser(input).parseFromFile(input);
     }
 }
