@@ -56,7 +56,7 @@ class NoSqlFormulaSummaryWriter implements AutoCloseable {
             "retentionTimeInSeconds\t" +
             "formulaId\t" +
             "alignedFeatureId\t" +
-            "featureId"; //todo rename to 'providedFeatureId'
+            "mappingFeatureId";
 
     private final BufferedWriter w;
 
@@ -116,7 +116,7 @@ class NoSqlFormulaSummaryWriter implements AutoCloseable {
         writeSep();
         w.write(String.format(LONG_FORMAT, fc.getAlignedFeatureId()));
         writeSep();
-        w.write(Objects.requireNonNullElse(f.getExternalFeatureId(), ""));
+        w.write(Objects.requireNonNullElse(f.getExternalFeatureId(), String.format(LONG_FORMAT, fc.getAlignedFeatureId())));
         w.newLine();
     }
 

@@ -51,7 +51,7 @@ class NoSqlDeNovoSummaryWriter implements AutoCloseable {
             "retentionTimeInSeconds\t" +
             "formulaId\t" +
             "alignedFeatureId\t" +
-            "featureId"; //todo rename to 'providedFeatureId'
+            "mappingFeatureId";
     final BufferedWriter w;
 
     NoSqlDeNovoSummaryWriter(BufferedWriter writer) {
@@ -106,7 +106,7 @@ class NoSqlDeNovoSummaryWriter implements AutoCloseable {
         writeSep();
         w.write(String.format(LONG_FORMAT, f.getAlignedFeatureId()));
         writeSep();
-        w.write(Objects.requireNonNullElse(f.getExternalFeatureId(), ""));
+        w.write(Objects.requireNonNullElse(f.getExternalFeatureId(), String.format(LONG_FORMAT, f.getAlignedFeatureId())));
         w.newLine();
     }
 
