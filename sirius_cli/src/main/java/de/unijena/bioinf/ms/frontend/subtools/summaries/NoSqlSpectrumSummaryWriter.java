@@ -55,7 +55,7 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
             "ionMass\t" +
             "retentionTimeInSeconds\t" +
             "alignedFeatureId\t" +
-            "featureId"; //todo rename to 'providedFeatureId'
+            "providedFeatureId";
 
     final BufferedWriter w;
 
@@ -132,7 +132,7 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
         writeSep();
         w.write(String.format(LONG_FORMAT, match.getAlignedFeatureId()));
         writeSep();
-        w.write(Objects.requireNonNullElse(f.getExternalFeatureId(), ""));
+        w.write(Objects.requireNonNullElse(f.getExternalFeatureId(), String.format(LONG_FORMAT, match.getAlignedFeatureId())));
         w.newLine();
 
     }
