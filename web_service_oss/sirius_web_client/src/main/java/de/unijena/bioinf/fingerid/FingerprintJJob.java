@@ -22,6 +22,7 @@ package de.unijena.bioinf.fingerid;
 
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.fingerid.predictor_types.UserDefineablePredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
@@ -95,6 +96,9 @@ public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
         logDebug("Submitting CSI:FingerID fingerprint prediction jobs.");
         predictionJobs = new LinkedHashMap<>(idResult.size());
 
+        // spec has to count compounds
+        final int specHash = Spectrums.mergeSpectra(experiment.getMs2Spectra()).hashCode();
+
         checkForInterruption();
         {
             final SpectralPreprocessor spectralPreprocessor = new SpectralPreprocessor();
@@ -103,7 +107,7 @@ public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
                 predictionJobs.put(webAPI.submitFingerprintJob(new FingerprintJobInput(
                         spectralPreprocessor.extractInputFeatures(fingeridInput.getSourceTree(), experiment),
                         EnumSet.of(UserDefineablePredictorType.CSI_FINGERID.toPredictorType(experiment.getPrecursorIonType()))
-                )), new FingerIdResult(fingeridInput.getSourceTree()));
+                ), specHash), new FingerIdResult(fingeridInput.getSourceTree()));
             }
         }
         checkForInterruption();
