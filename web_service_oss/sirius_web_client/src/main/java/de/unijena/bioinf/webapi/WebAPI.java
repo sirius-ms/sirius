@@ -198,7 +198,7 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
     //endregion
 
     //region CSI:FingerID
-    WebJJob<FingerprintJobInput, ?, FingerprintResult, ?> submitFingerprintJob(FingerprintJobInput input) throws IOException;
+    WebJJob<FingerprintJobInput, ?, FingerprintResult, ?> submitFingerprintJob(FingerprintJobInput input, @Nullable Integer countingHash) throws IOException;
 
     @NotNull
     default StructurePredictor getStructurePredictor(int charge) throws IOException {

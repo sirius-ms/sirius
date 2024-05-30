@@ -61,6 +61,7 @@ import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.covtree.CovtreeJobInput;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobInput;
+import de.unijena.bioinf.ms.rest.model.fingerid.FingerprintJobOutput;
 import de.unijena.bioinf.ms.rest.model.fingerid.TrainingData;
 import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
@@ -422,10 +423,11 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
     //endregion
 
     //region CSI:FingerID
-    public WebJJob<FingerprintJobInput, ?, FingerprintResult, ?> submitFingerprintJob(FingerprintJobInput input) throws IOException {
+    public WebJJob<FingerprintJobInput, ?, FingerprintResult, ?> submitFingerprintJob(FingerprintJobInput input, Integer countingHash) throws IOException {
         final MaskedFingerprintVersion version = getCDKMaskedFingerprintVersion(input.predictors.iterator().next().toCharge());
-        return jobWatcher.submitAndWatchJob(JobTable.JOBS_FINGERID,
-                new RestWebJJob<>(input, new FingerprintWebResultConverter(version)));
+        RestWebJJob<FingerprintJobInput, FingerprintJobOutput, FingerprintResult> job = new RestWebJJob<>(input, new FingerprintWebResultConverter(version));
+        job.setCountingHash(countingHash);
+        return jobWatcher.submitAndWatchJob(JobTable.JOBS_FINGERID, job);
     }
 
     @Override
