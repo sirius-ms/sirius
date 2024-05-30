@@ -22,7 +22,11 @@ package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.PostprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
@@ -32,7 +36,9 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.NoSQLInstance;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
+import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.db.nosql.Database;
+import de.unijena.bioinf.storage.db.nosql.Filter;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.time.StopWatch;
@@ -45,6 +51,7 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 
 public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implements Workflow {
     private final SummaryOptions options;
@@ -130,6 +137,11 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                             ? initCanopusSummaryWriter(location, "canopus_formula_summary.tsv") : null;
                     NoSqlCanopusSummaryWriter canopusStructure = options.topHitSummary
                             ? initCanopusSummaryWriter(location, "canopus_structure_summary.tsv") : null;
+
+                    NoSqlSpectrumSummaryWriter refSpectrumAll = options.allSpectra
+                            ? initSpectrumSummaryWriter(location, "reference_spectrum_all.tsv") : null;
+                    NoSqlSpectrumSummaryWriter refSpectrumTopK = options.topKSpectra > 0
+                            ? initSpectrumSummaryWriter(location, "reference_spectrum_top-" + options.topKSpectra + ".tsv") : null;
 
             ) {
                 //we load all data on demand from project db without manual caching or re-usage.
@@ -258,6 +270,41 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                             first = false;
                         }
                     }
+
+                    if (options.topKSpectra > 0 || options.allSpectra) {// spectral match summary
+                        List<MutableMs2Spectrum> queries = inst.getExperiment().getMs2Spectra();
+                        int rank = 1;
+                        for (SpectraMatch match : project.getProject().getStorage().find(Filter.where("alignedFeatureId").eq(f.getAlignedFeatureId()), SpectraMatch.class, new String[]{"searchResult.similarity.similarity", "searchResult.similarity.sharedPeaks"}, new Database.SortOrder[]{Database.SortOrder.DESCENDING, Database.SortOrder.DESCENDING})) {
+
+                            if (match.getQuerySpectrumIndex() >= queries.size())
+                                continue;
+
+                            MutableMs2Spectrum query = queries.get(match.getQuerySpectrumIndex());
+                            Ms2ReferenceSpectrum reference;
+                            try {
+                                reference = ApplicationCore.WEB_API.getChemDB().getReferenceSpectrum(CustomDataSources.getSourceFromName(match.getDbName()), match.getUuid());
+                            } catch (ChemicalDatabaseException e) {
+                                break;
+                            }
+
+                            boolean nothingWritten = true;
+
+                            if (refSpectrumAll != null) {
+                                refSpectrumAll.writeStructureCandidate(f, match, query, reference);
+                                nothingWritten  = false;
+                            }
+
+                            if (refSpectrumTopK != null && rank <= options.getTopKSpectra()) {
+                                refSpectrumTopK.writeStructureCandidate(f, match, query, reference);
+                                nothingWritten = false;
+                            }
+
+                            if (nothingWritten)
+                                break;
+
+                            rank++;
+                        }
+                    }
                 }
                 w.stop();
                 updateProgress(maxProgress, maxProgress, "Summaries written in: " + w);
@@ -291,6 +338,12 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
         NoSqlDeNovoSummaryWriter denovoSummaryWriter = new NoSqlDeNovoSummaryWriter(makeFileWriter(location, filename));
         denovoSummaryWriter.writeHeader();
         return denovoSummaryWriter;
+    }
+
+    NoSqlSpectrumSummaryWriter initSpectrumSummaryWriter(Path location, String filename) throws IOException {
+        NoSqlSpectrumSummaryWriter spectrumSummaryWriter = new NoSqlSpectrumSummaryWriter(makeFileWriter(location, filename));
+        spectrumSummaryWriter.writeHeader();
+        return spectrumSummaryWriter;
     }
 
     private BufferedWriter makeFileWriter(Path location, String filename) throws IOException {
