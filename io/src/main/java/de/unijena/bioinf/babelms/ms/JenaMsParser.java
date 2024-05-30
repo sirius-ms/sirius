@@ -449,7 +449,7 @@ public class JenaMsParser implements Parser<Ms2Experiment> {
                     exp.setPrecursorIonType(PrecursorIonType.unknown(charge));
                 }
             } else {
-                exp.setPrecursorIonType(PrecursorIonType.unknown(ionization.getCharge()));
+                exp.setPrecursorIonType(ionization);
                 if (!ionization.isIonizationUnknown())
                     exp.setAnnotation(DetectedAdducts.class, DetectedAdducts.singleton(DetectedAdducts.Source.INPUT_FILE, ionization));
             }
