@@ -64,7 +64,7 @@ class NoSqlCanopusSummaryWriter implements AutoCloseable {
                     "retentionTimeInSeconds\t" +
                     "formulaId\t" +
                     "alignedFeatureId\t" +
-                    "featureId"; //todo rename to 'providedFeatureId'
+                    "mappingFeatureId";
 
     private final BufferedWriter w;
 
@@ -101,7 +101,7 @@ class NoSqlCanopusSummaryWriter implements AutoCloseable {
         writeSep();
         w.write(String.format(LONG_FORMAT, f.getAlignedFeatureId()));
         writeSep();
-        w.write(Objects.requireNonNullElse(f.getExternalFeatureId(), ""));
+        w.write(Objects.requireNonNullElse(f.getExternalFeatureId(), String.format(LONG_FORMAT, f.getAlignedFeatureId())));
         w.newLine();
     }
 
