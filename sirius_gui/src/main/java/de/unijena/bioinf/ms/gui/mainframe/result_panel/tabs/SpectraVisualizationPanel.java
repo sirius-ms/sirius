@@ -109,6 +109,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
     IsotopePatternAnnotation isotopePatternAnnotation;
     AnnotatedMsMsData annotatedMsMsData;
     SpectraViewContainer jsonSpectra;
+    private String smiles;
 
     JComboBox<String> modesBox;
     JComboBox<String> ceBox;
@@ -208,7 +209,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 
             int ce_index = getCEIndex();
             jsonSpectra = null;
-            String smiles = null;
+            smiles = null;
 
 
             if (mode.contains(MS1_DISPLAY)) {
@@ -483,6 +484,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 
     private void clearData() {
         msData = null;
+        smiles = null;
         isotopePatternAnnotation = null;
         annotatedMsMsData = null;
         selectedMatchBean = null;
@@ -693,7 +695,11 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                 try {
                     // for SVG/PDF ask whether to export structure
                     boolean exportStructure = false;
-                    if ((fff == FileFormat.svg || fff == FileFormat.pdf) && annotatedMsMsData != null) {
+                    if ((fff == FileFormat.svg || fff == FileFormat.pdf) &&
+                            modesBox.getSelectedItem() != null &&
+                            ((String) modesBox.getSelectedItem()).startsWith(MS2_DISPLAY) &&
+                            smiles != null
+                    ) {
                         QuestionDialog exportStructureDialog = new QuestionDialog(popupOwner,
                                 "Do you want to export the corresponding compound structure as well?");
                         ReturnValue rv = exportStructureDialog.getReturnValue();
