@@ -138,10 +138,12 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                     NoSqlCanopusSummaryWriter canopusStructure = options.topHitSummary
                             ? initCanopusSummaryWriter(location, "canopus_structure_summary.tsv") : null;
 
-                    NoSqlSpectrumSummaryWriter refSpectrumAll = options.allSpectra
-                            ? initSpectrumSummaryWriter(location, "reference_spectrum_all.tsv") : null;
-                    NoSqlSpectrumSummaryWriter refSpectrumTopK = options.topKSpectra > 0
-                            ? initSpectrumSummaryWriter(location, "reference_spectrum_top-" + options.topKSpectra + ".tsv") : null;
+                    NoSqlSpectrumSummaryWriter refSpectrum = options.topHitSummary
+                            ? initSpectrumSummaryWriter(location, "spectral_matches.tsv") : null;
+                    NoSqlSpectrumSummaryWriter refSpectrumAll = options.fullSummary
+                            ? initSpectrumSummaryWriter(location, "spectral_matches_all.tsv") : null;
+                    NoSqlSpectrumSummaryWriter refSpectrumTopK = options.topK > 0
+                            ? initSpectrumSummaryWriter(location, "spectral_matches_top-" + options.topK + ".tsv") : null;
 
             ) {
                 //we load all data on demand from project db without manual caching or re-usage.
@@ -271,7 +273,7 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                         }
                     }
 
-                    if (options.topKSpectra > 0 || options.allSpectra) {// spectral match summary
+                    if (options.topK > 0 || options.fullSummary) {// spectral match summary
                         List<MutableMs2Spectrum> queries = inst.getExperiment().getMs2Spectra();
                         int rank = 1;
                         for (SpectraMatch match : project.getProject().getStorage().find(Filter.where("alignedFeatureId").eq(f.getAlignedFeatureId()), SpectraMatch.class, new String[]{"searchResult.similarity.similarity", "searchResult.similarity.sharedPeaks"}, new Database.SortOrder[]{Database.SortOrder.DESCENDING, Database.SortOrder.DESCENDING})) {
@@ -289,13 +291,18 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
 
                             boolean nothingWritten = true;
 
+                            if (refSpectrum != null && rank == 1) {
+                                refSpectrum.writeSpectralMatch(f, match, query, reference);
+                                nothingWritten = false;
+                            }
+
                             if (refSpectrumAll != null) {
-                                refSpectrumAll.writeStructureCandidate(f, match, query, reference);
+                                refSpectrumAll.writeSpectralMatch(f, match, query, reference);
                                 nothingWritten  = false;
                             }
 
-                            if (refSpectrumTopK != null && rank <= options.getTopKSpectra()) {
-                                refSpectrumTopK.writeStructureCandidate(f, match, query, reference);
+                            if (refSpectrumTopK != null && rank <= options.getTopK()) {
+                                refSpectrumTopK.writeSpectralMatch(f, match, query, reference);
                                 nothingWritten = false;
                             }
 
