@@ -34,7 +34,9 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
 
     final static String DOUBLE_FORMAT = "%.3f";
     final static String LONG_FORMAT = "%d";
-    final static String HEADER = "querySpectrumIndex\t" +
+    final static String HEADER =
+            "spectralMatchRank\t" +
+            "querySpectrumIndex\t" +
             "querySpectrumScanNumber\t" +
             "querySpectrumMsLevel\t" +
             "querySpectrumCE\t" +
@@ -68,7 +70,10 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
         w.newLine();
     }
 
-    public void writeStructureCandidate(AlignedFeatures f, SpectraMatch match, MutableMs2Spectrum query, Ms2ReferenceSpectrum reference) throws IOException {
+    public void writeSpectralMatch(AlignedFeatures f, SpectraMatch match, MutableMs2Spectrum query, Ms2ReferenceSpectrum reference) throws IOException {
+        w.write(String.format(LONG_FORMAT, match.getRank()));
+        writeSep();
+
         w.write(String.format(LONG_FORMAT, match.getQuerySpectrumIndex()));
         writeSep();
 
