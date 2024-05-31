@@ -663,6 +663,7 @@ class SpectrumPlot extends Base {
             .attr("y", function (d) {
                 return self.y(d.intensity);
             })
+            .attr("width", 1)
             .attr("height", function (d) {
                 return self.h - self.y(d.intensity);
             })
@@ -1209,6 +1210,7 @@ class MirrorPlot extends Base {
             .attr("y", function (d) {
                 return self.y1(d.intensity);
             })
+            .attr("width", 1)
             .attr("height", function (d) {
                 return self.h / 2 - self.y1(d.intensity);
             });
@@ -1225,6 +1227,7 @@ class MirrorPlot extends Base {
                 return self.x(d.mz);
             })
             .attr("y", self.h / 2)
+            .attr("width", 1)
             .attr("height", function (d) {
                 return self.y2(d.intensity) - self.h / 2;
             });
