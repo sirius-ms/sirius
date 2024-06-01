@@ -53,8 +53,6 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
     final JComboBox<String> solver, confidenceDisplayMode;
     private boolean restartRequired = false;
 
-    final JCheckBox allowMS1Only, ignoreFormulas;
-
     public GerneralSettingsPanel(Properties properties) {
         super();
         this.props = properties;
@@ -74,15 +72,6 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         scalingSpinner.setToolTipText(GuiUtils.formatToolTip("Set scaling factor of the Graphical User Interface"));
         addNamed("Scaling Factor", scalingSpinner);
 
-        add(new JXTitledSeparator("Data Import"));
-        allowMS1Only = new JCheckBox();
-        allowMS1Only.setSelected(Boolean.parseBoolean(props.getProperty("de.unijena.bioinf.sirius.ui.allowMs1Only","true")));
-        allowMS1Only.setToolTipText(GuiUtils.formatToolTip("If checked data without MS/MS spectra will be imported. Otherwise they will be skipped during import."));
-        addNamed("Import data without MS/MS", allowMS1Only);
-        ignoreFormulas = new JCheckBox();
-        ignoreFormulas.setSelected(Boolean.parseBoolean(props.getProperty("de.unijena.bioinf.sirius.ui.ignoreFormulas","false")));
-        ignoreFormulas.setToolTipText(GuiUtils.formatToolTip("If checked molecular formula and structure annotations will be ignored during import when  given in the input file."));
-        addNamed("Ignore formulas", ignoreFormulas);
         add(new JXTitledSeparator("Display settings"));
         Vector<String> modes =  new Vector<>(Arrays.asList("approximate (default)","exact"));
         String selectedMode = props.getProperty("de.unijena.bioinf.sirius.ui.confidenceDisplayMode");
@@ -134,8 +123,6 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
             restartRequired = true;
         }
         props.setProperty("de.unijena.bioinf.sirius.treebuilder.solvers", (String) solver.getSelectedItem());
-        props.setProperty("de.unijena.bioinf.sirius.ui.allowMs1Only", String.valueOf(allowMS1Only.isSelected()));
-        props.setProperty("de.unijena.bioinf.sirius.ui.ignoreFormulas", String.valueOf(ignoreFormulas.isSelected()));
         props.setProperty("de.unijena.bioinf.sirius.ui.confidenceDisplayMode",String.valueOf(confidenceDisplayMode.getSelectedItem()));
 //        props.setProperty("de.unijena.bioinf.sirius.treebuilder.timeout", treeTimeout.getNumber().toString());
 

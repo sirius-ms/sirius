@@ -19,7 +19,9 @@
 
 package de.unijena.bioinf.ms.gui.dialogs;
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -83,7 +85,10 @@ public abstract class DoNotShowAgainDialog extends JDialog {
         }
 
         northPanel.add(textPane);
-        this.add(northPanel, BorderLayout.CENTER);
+        TwoColumnPanel bodyPanel = new TwoColumnPanel();
+        bodyPanel.add(northPanel);
+        decorateBodyPanel(bodyPanel);
+        add(bodyPanel, BorderLayout.CENTER);
         JPanel south = new JPanel();
         south.setLayout(new BoxLayout(south, BoxLayout.X_AXIS));
         south.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -104,11 +109,15 @@ public abstract class DoNotShowAgainDialog extends JDialog {
     }
 
     protected void saveDoNotAskMeAgain() {
-        if (dontAsk != null && property != null && !property.isBlank() && dontAsk.isSelected())
-            SiriusProperties.SIRIUS_PROPERTIES_FILE().setAndStoreProperty(property, getResult());
+        if (dontAsk != null && property != null && !property.isBlank() && dontAsk.isSelected()){
+            SiriusProperties.setProperty(property, getResult());
+            SiriusJobs.runInBackground(() -> SiriusProperties.SIRIUS_PROPERTIES_FILE().store());
+        }
     }
 
     protected abstract String getResult();
+
+    protected void decorateBodyPanel(TwoColumnPanel boxedButtonPanel){};
     protected abstract void decorateButtonPanel(JPanel boxedButtonPanel);
 
     protected abstract Icon makeDialogIcon();
