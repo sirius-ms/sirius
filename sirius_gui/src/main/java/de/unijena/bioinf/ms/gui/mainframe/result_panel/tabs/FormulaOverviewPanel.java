@@ -51,8 +51,8 @@ public class FormulaOverviewPanel extends JPanel implements PanelDescription {
         suriusResultElements.addActiveResultChangedListener(overviewTVP);
         SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel();
         suriusResultElements.addActiveResultChangedListener((experiment, sre, resultElements, selections) -> {
-                if (sre != null)
-                    overviewSVP.resultsChanged(experiment, sre.getFormulaId(), null);
+                if (experiment != null)
+                    overviewSVP.resultsChanged(experiment, (sre != null ? sre.getFormulaId() : null), null);
                 else
                     overviewSVP.clear();
         });
