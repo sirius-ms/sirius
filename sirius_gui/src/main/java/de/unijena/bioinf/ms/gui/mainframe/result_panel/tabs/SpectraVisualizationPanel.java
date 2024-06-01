@@ -536,34 +536,6 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
         return ceBox.getSelectedItem() == null || ceBox.getSelectedItem().equals(MS2_MERGED_DISPLAY) ? -1 : ceBox.getSelectedIndex();
     }
 
-    public enum SpectrumMode {
-        MS1(MS1_DISPLAY, 1),
-        MS1_MIRROR(MS1_MIRROR_DISPLAY, 1),
-        MS2_MERGED(MS2_MERGED_DISPLAY, 2),
-        MS2(MS2_DISPLAY, 2);
-
-        private final String label;
-        private final int msLevel;
-
-        SpectrumMode(String label, int msLevel) {
-            this.label = label;
-            this.msLevel = msLevel;
-        }
-    }
-
-    public Optional<SpectrumMode> getCurrentMode() {
-        // we should use a variable for this!
-        // then, connect everything with listeners
-        final Object s = modesBox.getSelectedItem();
-        if (s == null)
-            return Optional.empty();
-        if (s.equals(MS1_DISPLAY)) return Optional.of(SpectrumMode.MS1);
-        if (s.equals(MS1_MIRROR_DISPLAY)) return Optional.of(SpectrumMode.MS1_MIRROR);
-        if (s.equals(MS2_MERGED_DISPLAY)) return Optional.of(SpectrumMode.MS2_MERGED);
-        if (s.equals(MS2_DISPLAY)) return Optional.of(SpectrumMode.MS2);
-        return Optional.of(SpectrumMode.MS1); // ?
-    }
-
     public void saveSpectra() {
         // adapted from
         // de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.TreeVisualizationPanel
