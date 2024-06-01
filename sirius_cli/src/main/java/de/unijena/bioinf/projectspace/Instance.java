@@ -21,10 +21,11 @@
 package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.QuantificationTable;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
@@ -54,6 +55,8 @@ public interface Instance {
      */
     String getName();
 
+    Optional<RetentionTime> getRT();
+
     double getIonMass();
 
     PrecursorIonType getIonType();
@@ -65,7 +68,7 @@ public interface Instance {
     boolean hasMs1();
     boolean hasMsMs();
 
-    LCMSPeakInformation getLCMSPeakInformation();
+    Optional<QuantificationTable> getQuantificationTable();
     List<FCandidate<?>> getFormulaCandidates();
 
     List<SpectralSearchResult.SearchResult> getSpectraMatches();
@@ -79,7 +82,6 @@ public interface Instance {
     Optional<FCandidate<?>> getTopFormulaCandidate();
     Optional<FCandidate<?>> getTopPredictions();
     Optional<FCandidate<?>> getTopFTree();
-
 
     Optional<ParameterConfig> loadInputFileConfig();
     Optional<ParameterConfig> loadProjectConfig();

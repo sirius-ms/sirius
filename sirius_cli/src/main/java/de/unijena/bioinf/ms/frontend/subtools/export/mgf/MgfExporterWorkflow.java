@@ -22,9 +22,7 @@ package de.unijena.bioinf.ms.frontend.subtools.export.mgf;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Quantification;
-import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.QuantificationMeasure;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.QuantificationTable;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
@@ -55,7 +53,7 @@ public class MgfExporterWorkflow implements Workflow {
     private final MgfWriter mgfWriter;
     private final PreprocessingJob<?> ppj;
     private final Optional<Path> quantPath;
-
+    private final boolean ignoreMs1Only;
     private final AtomicBoolean useFeatureId;
 
 
@@ -66,6 +64,7 @@ public class MgfExporterWorkflow implements Workflow {
         this.ppj = ppj;
         this.quantPath = Optional.ofNullable(options.quantTable).map(File::toPath);
         this.useFeatureId = new AtomicBoolean(options.featureId);
+        this.ignoreMs1Only = options.ignoreMs1Only;
     }
 
 
@@ -95,11 +94,17 @@ public class MgfExporterWorkflow implements Workflow {
             try (final BufferedWriter writer = Files.newBufferedWriter(outputPath)) {
                 for (Instance inst : ps) {
                     try {
-                        mgfWriter.write(writer, inst.getExperiment(), extractFid(inst));
+                        MutableMs2Experiment exp = inst.getExperiment().mutate();
+                        if (ignoreMs1Only && (exp.getMs2Spectra() == null || exp.getMs2Spectra().isEmpty()))
+                            continue; //we ignore features without ms/ms only in mgf, in quant table they are still useful (e.g. for QIIME)
+                        //just to make sure that all the fields are compatible with gnps
+                        String fid = extractFid(inst);
+                        exp.setName(fid);
+                        mgfWriter.write(writer, exp, fid);
                     } catch (IOException e) {
                         throw e;
                     } catch (Exception e) {
-                        LoggerFactory.getLogger(getClass()).warn("Invalid instance '" + inst + "'. Skipping this instance!", e);
+                        LoggerFactory.getLogger(getClass()).warn("Invalid instance '{}'. Skipping this instance!", inst, e);
                     } finally {
                         inst.clearCompoundCache();
                     }
@@ -131,12 +136,11 @@ public class MgfExporterWorkflow implements Workflow {
 
         try (BufferedWriter bw = FileUtils.getWriter(path.toFile())) {
             for (Instance i : ps) {
-                final Ms2Experiment experiment = i.getExperiment();
-                getQuantificationTable(i, experiment).ifPresent(quant -> {
+                i.getQuantificationTable().ifPresent(quant -> {
                     for (int j = 0; j < quant.length(); ++j) sampleNames.add(quant.getName(j));
 
-                    compounds.put(extractFid(i), new QuantInfo(experiment.getIonMass(),
-                            experiment.getAnnotation(RetentionTime.class)
+                    compounds.put(extractFid(i), new QuantInfo(i.getIonMass(),
+                            i.getRT()
                                     .orElse(new RetentionTime(0d))
                                     .getRetentionTimeInSeconds() / 60d, //use min
                             quant
@@ -168,23 +172,11 @@ public class MgfExporterWorkflow implements Workflow {
                 bw.write(String.valueOf(quantInfo.rt));
                 for (String sampleName : sampleNameList) {
                     bw.write(',');
-                    bw.write(String.valueOf(quantInfo.quants.getAbundance(sampleName)));
+                    bw.write(String.valueOf(quantInfo.quants.mayGetAbundance(sampleName).orElse(0d)));
                 }
                 bw.newLine();
             }
         }
-    }
-
-    private Optional<QuantificationTable> getQuantificationTable(Instance i, Ms2Experiment experiment) {
-        LCMSPeakInformation lcms = i.getLCMSPeakInformation();
-        if (lcms.isEmpty()) {
-            lcms = experiment.getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
-        }
-        if (lcms.isEmpty()) {
-            Quantification quant = experiment.getAnnotationOrNull(Quantification.class);
-            if (quant != null) lcms = new LCMSPeakInformation(quant.asQuantificationTable());
-        }
-        return lcms.isEmpty() ? Optional.empty() : Optional.of(lcms.getQuantificationTable());
     }
 
     private String toQuantSuffix(QuantificationMeasure m) {

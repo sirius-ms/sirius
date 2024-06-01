@@ -22,11 +22,14 @@ package de.unijena.bioinf.projectspace;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.Quantification;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.IonTreeUtils;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.QuantificationTable;
 import de.unijena.bioinf.ChemistryBase.ms.properties.ConfigAnnotation;
 import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
@@ -110,6 +113,11 @@ public class SiriusProjectSpaceInstance implements Instance {
     @Override
     public PrecursorIonType getIonType() {
         return getCompoundContainerId().getIonType().orElse(PrecursorIonType.unknown(1));
+    }
+
+    @Override
+    public Optional<RetentionTime> getRT() {
+        return  getCompoundContainerId().getRt();
     }
 
     @Deprecated
@@ -732,7 +740,19 @@ public class SiriusProjectSpaceInstance implements Instance {
     }
 
     @Override
-    public synchronized LCMSPeakInformation getLCMSPeakInformation() {
+    public synchronized Optional<QuantificationTable> getQuantificationTable() {
+        LCMSPeakInformation lcms = getLCMSPeakInformation();
+        if (lcms.isEmpty()) {
+            lcms = getExperiment().getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
+        }
+        if (lcms.isEmpty()) {
+            Quantification quant = getExperiment().getAnnotationOrNull(Quantification.class);
+            if (quant != null) lcms = new LCMSPeakInformation(quant.asQuantificationTable());
+        }
+        return lcms.isEmpty() ? Optional.empty() : Optional.of(lcms.getQuantificationTable());
+    }
+
+    private synchronized LCMSPeakInformation getLCMSPeakInformation() {
         return loadCompoundContainer(LCMSPeakInformation.class)
                 .getAnnotation(LCMSPeakInformation.class, LCMSPeakInformation::empty);
     }

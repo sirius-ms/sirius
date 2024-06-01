@@ -41,10 +41,14 @@ public class MgfExporterOptions implements StandaloneTool<MgfExporterWorkflow> {
     @CommandLine.Option(names = "--write-ms1", description = "Write MS1 spectra into file.")
     public boolean writeMs1;
 
+    @CommandLine.Option(names = "--ignore-ms1-only", description = "Ignore features without MS/MS spectrum.")
+    public boolean ignoreMs1Only;
+
+
     @CommandLine.Option(names = "--merge-ms2", description = "Merge all MS2 of a compound into one single spectrum.")
     public boolean mergeMs2;
 
-    @CommandLine.Option(names = "--feature-id", description = "If available use the feature ids from the input data instead of the SIRIUS internal id. internal id will be used as fallback if the given feature ids are not available or contain duplicates.")
+    @CommandLine.Option(names = "--feature-id", description = "If available use the feature ids from the input data instead of the SIRIUS internal id. internal id will be used as fallback if the given feature ids are not available or contain duplicates.", defaultValue = "true")
     public boolean featureId;
 
     @CommandLine.Option(names = "--quant-table", description = "Quantification table file name for Feature Based Molecular Networking.")

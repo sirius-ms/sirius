@@ -40,9 +40,7 @@ public class FBMNExportAction extends AbstractGuiAction {
         super("FBMN Export", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.FBMN_32);
         putValue(Action.SHORT_DESCRIPTION, "Export project for GNPS Feature Based Molecular Networking.");
-        //todo re-enable if if implemented
-        setEnabled(false);
-//        initListeners();
+        initListeners();
     }
 
     protected void initListeners() {
@@ -72,11 +70,11 @@ public class FBMNExportAction extends AbstractGuiAction {
           n = path.getFileName().toString();
         }
 
-
-
-        new ExecutionDialog<>(gui,
-                new MgfExporterConfigPanel(p,n),
+        ExecutionDialog<MgfExporterConfigPanel> exec = new ExecutionDialog<>(gui,
+                new MgfExporterConfigPanel(p, n),
                 List.copyOf(mainFrame.getCompounds()), mainFrame, //todo sublist of feature, fully in background?
-                "Export Project for GNPS FBMN", true, false).start();
+                "Export Project for GNPS FBMN", true, true);
+        exec.setIndeterminateProgress(true);
+        exec.start();
     }
 }

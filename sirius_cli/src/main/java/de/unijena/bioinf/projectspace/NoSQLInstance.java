@@ -23,10 +23,12 @@ package de.unijena.bioinf.projectspace;
 import com.googlecode.concurentlocks.ReentrantReadWriteUpdateLock;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
-import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.QuantificationMeasure;
+import de.unijena.bioinf.ChemistryBase.ms.lcms.QuantificationTable;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
@@ -36,7 +38,8 @@ import de.unijena.bioinf.fingerid.MsNovelistFingerblastResult;
 import de.unijena.bioinf.fingerid.StructureSearchResult;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
-import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
+import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
+import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
@@ -46,8 +49,13 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.passatutto.Decoy;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
+import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import it.unimi.dsi.fastutil.Pair;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleList;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -125,8 +133,13 @@ public class NoSQLInstance implements Instance {
         String name = getName();
         String id = getId();
         if (name != null && !name.equals(id))
-            return name + " (" + id +")";
+            return name + " (" + id + ")";
         return name;
+    }
+
+    @Override
+    public Optional<RetentionTime> getRT() {
+        return Optional.ofNullable(getAlignedFeatures().getRetentionTime());
     }
 
     @Override
@@ -138,7 +151,7 @@ public class NoSQLInstance implements Instance {
     public PrecursorIonType getIonType() {
         AlignedFeatures f = getAlignedFeatures();
         List<PrecursorIonType> allAdducts = f.getDetectedAdducts().getAllAdducts();
-        if (allAdducts.size()==1) return allAdducts.get(0);
+        if (allAdducts.size() == 1) return allAdducts.get(0);
         else return PrecursorIonType.unknown(f.getCharge());
     }
 
@@ -175,7 +188,7 @@ public class NoSQLInstance implements Instance {
 
     @Override
     public boolean hasMsMs() {
-        return alignedFeatures.getMSData()
+        return getAlignedFeatures().getMSData()
                 .map(ms -> ms.getMergedMSnSpectrum() != null || (ms.getMsnSpectra() != null && !ms.getMsnSpectra().isEmpty()))
                 .orElse(false);
     }
@@ -185,10 +198,29 @@ public class NoSQLInstance implements Instance {
         return project().getStorage().findStr(Filter.where("alignedFeatureId").eq(id), MSData.class).findFirst();
     }
 
+    @SneakyThrows
     @Override
-    public LCMSPeakInformation getLCMSPeakInformation() {
-        return null;
+    public Optional<QuantificationTable> getQuantificationTable() {
+        Database<?> storage = project().getStorage();
+        Optional<AlignedFeatures> maybeFeature = storage.getByPrimaryKey(getLongId(), AlignedFeatures.class);
+        if (maybeFeature.isEmpty())
+            return Optional.empty();
+        AlignedFeatures feature = maybeFeature.get();
+        storage.fetchAllChildren(feature, "alignedFeatureId", "features", Feature.class);
+        // only use features with LC/MS information
+        List<Feature> features = feature.getFeatures().stream().flatMap(List::stream).filter(x -> x.getApexIntensity() != null).toList();
+        List<LCMSRun> samples = new ArrayList<>();
+        for (Feature value : features) {
+            samples.add(storage.getByPrimaryKey(value.getRunId(), LCMSRun.class).orElse(null));
+        }
+
+        QuantTableImpl table = new QuantTableImpl(QuantificationMeasure.APEX);
+        String[] sampleNames = samples.stream().map(x -> x.getName() == null ? "unknown" : x.getName()).toArray(String[]::new);
+        for (int k = 0; k < features.size(); ++k)
+            table.add(sampleNames[k], features.get(k).getApexIntensity());
+        return Optional.of(table);
     }
+
 
     public Stream<FCandidate<?>> getFormulaCandidatesStr() {
         return project().findByFeatureIdStr(id, FormulaCandidate.class)
@@ -732,6 +764,62 @@ public class NoSQLInstance implements Instance {
         @NotNull ComputedSubtools it = getComputedSubtools();
         modifier.accept(it);
         return project().getStorage().upsert(it);
+    }
+
+
+    private class QuantTableImpl implements QuantificationTable {
+        private List<String> sampleNames = new ArrayList<>();
+        private Object2IntMap<String> namesToIndex = new Object2IntOpenHashMap<>();
+        private DoubleList abundances = new DoubleArrayList();
+        private final QuantificationMeasure measure;
+
+        private QuantTableImpl(QuantificationMeasure measure) {
+            this.measure = measure;
+        }
+
+        public int add(String name, double abundance) {
+            sampleNames.add(name);
+            abundances.add(abundance);
+            namesToIndex.put(name, namesToIndex.size() - 1);
+            return namesToIndex.getInt(name);
+        }
+
+        @Override
+        public String getName(int i) {
+            if (i < 0 || i >= sampleNames.size())
+                return null;
+            return sampleNames.get(i);
+        }
+
+        @Override
+        public double getAbundance(int i) {
+            if (i < 0 || i >= abundances.size())
+                return Double.NaN;
+            return abundances.getDouble(i);
+        }
+
+        @Override
+        public double getAbundance(String name) {
+            return getAbundance(namesToIndex.getOrDefault(name, -1));
+        }
+
+        @Override
+        public Optional<Double> mayGetAbundance(String name) {
+            double ab = getAbundance(name);
+            if (Double.isNaN(ab))
+                return Optional.empty();
+            return Optional.of(ab);
+        }
+
+        @Override
+        public int length() {
+            return sampleNames.size();
+        }
+
+        @Override
+        public QuantificationMeasure getMeasure() {
+            return measure;
+        }
     }
 
 }

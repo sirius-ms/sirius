@@ -31,12 +31,17 @@ public class MgfExporterConfigPanel extends SubToolConfigPanel<MgfExporterOption
         getOptionDescriptionByName("write-ms1").ifPresent(it -> addMs1.setToolTipText(GuiUtils.formatToolTip(it)));
         paras.add(addMs1);
 
+        JCheckBox ignoreMs1Only = new JCheckBox("Ignore MS1 only features?", true);
+        parameterBindings.put("ignore-ms1-only", () -> "~" + ignoreMs1Only.isSelected());
+        getOptionDescriptionByName("ignore-ms1-only").ifPresent(it -> ignoreMs1Only.setToolTipText(GuiUtils.formatToolTip(it)));
+        paras.add(ignoreMs1Only);
+
         JCheckBox mergeMs2 = new JCheckBox("Merge MS/MS?", true);
         parameterBindings.put("merge-ms2", () -> "~" + mergeMs2.isSelected());
         getOptionDescriptionByName("merge-ms2").ifPresent(it -> mergeMs2.setToolTipText(GuiUtils.formatToolTip(it)));
         paras.add(mergeMs2);
 
-        JCheckBox featureId = new JCheckBox("Feature ID?", true);
+        JCheckBox featureId = new JCheckBox("External Feature ID?", true);
         parameterBindings.put("feature-id", () -> "~" + featureId.isSelected());
         getOptionDescriptionByName("feature-id").ifPresent(it -> featureId.setToolTipText(GuiUtils.formatToolTip(it)));
         paras.add(featureId);
