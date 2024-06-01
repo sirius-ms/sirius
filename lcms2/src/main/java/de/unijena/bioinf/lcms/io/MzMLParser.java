@@ -407,6 +407,10 @@ public class MzMLParser implements LCMSParser {
 
     private static Pattern SCAN_PATTERN = Pattern.compile("scan=(\\d+)"), ALT_PATTERN = Pattern.compile("\\S+=(\\d+)");
     private int parseScanNumber(String sid, Integer index) {
+        if (sid == null || sid.isEmpty()){
+            LoggerFactory.getLogger(MzMLParser.class).warn("Scan ID is null or Empty. Using index instead. This won't effect the preprocessing at all, but might complicate mapping back the processed spectra to their raw datapoints.");
+            return index;
+        }
         Matcher m = SCAN_PATTERN.matcher(sid);
         if (m.find()) {
             return Integer.parseInt(m.group(1));
@@ -415,7 +419,7 @@ public class MzMLParser implements LCMSParser {
             if (m.find()) {
                 return Integer.parseInt(m.group(1));
             } else {
-                LoggerFactory.getLogger(MzMLParser.class).warn("Spectrum has no valid scan ID. Use index instead. This won't effect the preprocessing at all, but might complicate mapping back the processed spectra to their raw datapoints.");
+                LoggerFactory.getLogger(MzMLParser.class).warn("Spectrum has no valid scan ID. Using index instead. This won't effect the preprocessing at all, but might complicate mapping back the processed spectra to their raw datapoints.");
                 return index;
             }
         }
@@ -467,7 +471,7 @@ public class MzMLParser implements LCMSParser {
         double mz = !Double.isNaN(target_mz) ? target_mz : selectedIon_mz;
         return new Precursor(
                 precursor.getSpectrumRef(),
-                parseScanNumber(precursor.getSpectrumRef(), -1),
+                parseScanNumber(precursor.getSpectrumRef(), Optional.ofNullable(precursor.getSpectrum()).map(Spectrum::getIndex).orElse(-1)),
                 mz, intensity, chargeState, w
         );
     }
