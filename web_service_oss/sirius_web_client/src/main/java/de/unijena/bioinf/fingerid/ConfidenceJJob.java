@@ -126,10 +126,7 @@ public class ConfidenceJJob extends BasicDependentMasterJJob<ConfidenceResult> {
 
 
     @Override
-    public synchronized void handleFinishedRequiredJob(JJob required) {
-
-
-    }
+    public void handleFinishedRequiredJob(JJob required) {}
 
 
     public void setEpiExact(Supplier<Map<FTree, SubstructureAnnotationResult>> epiExact) {

@@ -60,7 +60,7 @@ public abstract class FingerprintDependentJJob<R extends DataAnnotation> extends
     }
 
     @Override
-    public synchronized void handleFinishedRequiredJob(JJob required) {
+    public void handleFinishedRequiredJob(JJob required) {
         if (fp == null) {
             if (required.result() instanceof FingerprintResult) {
                 fp = ((FingerprintResult) required.result()).fingerprint;
