@@ -76,7 +76,7 @@ public class FingerblastSearchJJob extends FingerprintDependentJJob<FingerblastR
     }
 
     @Override
-    public synchronized void handleFinishedRequiredJob(JJob required) {
+    public void handleFinishedRequiredJob(JJob required) {
         super.handleFinishedRequiredJob(required);
         if (candidates == null) {
             if (required instanceof FormulaJob) {
