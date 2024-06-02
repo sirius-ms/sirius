@@ -107,9 +107,9 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
 
     @Option(names = {"--buffer", "--instance-buffer"}, defaultValue = "0", description = "Number of instances that will be loaded into the Memory. A larger buffer ensures that there are enough instances available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all instances immediately set it to -1. Default (numeric value 0): 3 x --cores. Note that for <DATASET_TOOLS> the compound buffer may have no effect because this tools may have to load compounds simultaneously into the memory.", order = 20)
     public void setInitialInstanceBuffer(int initialInstanceBuffer) {
-        this.instanceBuffer = /*initialInstanceBuffer == null ? -1 :*/ initialInstanceBuffer;
+        this.instanceBuffer = initialInstanceBuffer;
         if (instanceBuffer == 0) {
-            instanceBuffer = 5 * SiriusJobs.getGlobalJobManager().getCPUThreads();
+            instanceBuffer = 10 * SiriusJobs.getGlobalJobManager().getCPUThreads();
         }
 
         PropertyManager.setProperty("de.unijena.bioinf.sirius.instanceBuffer", String.valueOf(instanceBuffer));
