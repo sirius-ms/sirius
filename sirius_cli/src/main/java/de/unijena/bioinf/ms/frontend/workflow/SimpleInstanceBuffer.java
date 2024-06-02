@@ -202,11 +202,11 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
         @Override
         public void cancel(boolean mayInterruptIfRunning) {
             toWaitOnCleanUp = new HashSet<>();
-            final LinkedList<JJob<?>> deps = new LinkedList<>(this.requiredJobs());
+            final LinkedList<JJob<?>> deps = new LinkedList<>(this.getRequiredJobs());
             while (deps.peekFirst() != null) {
                 JJob<?> current = deps.pollFirst();
                 if (current instanceof DependentJJob)
-                    deps.addAll(((DependentJJob<?>) current).requiredJobs());
+                    deps.addAll(((DependentJJob<?>) current).getRequiredJobs());
                 toWaitOnCleanUp.add(current);
                 current.cancel();
             }
