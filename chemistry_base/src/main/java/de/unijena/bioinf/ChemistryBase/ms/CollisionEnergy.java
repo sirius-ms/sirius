@@ -36,7 +36,7 @@ import java.util.Comparator;
 /**
  * Collision Energy in eV
  */
-@JsonSerialize(using = ToStringSerializer.class)
+@JsonSerialize(using = SimpleSerializers.CollisionEnergySerializer.class)
 @JsonDeserialize(using = SimpleSerializers.CollisionEnergyDeserializer.class)
 public class CollisionEnergy implements Serializable {
 
@@ -163,7 +163,7 @@ public class CollisionEnergy implements Serializable {
         }
     }
 
-    private static String stringify(double minEnergy) {
+    public static String stringify(double minEnergy) {
         if (Math.abs((int) minEnergy - minEnergy) < 1e-12) return String.valueOf((int) minEnergy);
         return String.valueOf(minEnergy);
     }
@@ -282,6 +282,10 @@ public class CollisionEnergy implements Serializable {
 
     public static CollisionEnergy none() {
         return NONE;
+    }
+
+    public static CollisionEnergy copyWithoutCorrection(CollisionEnergy ce){
+        return new CollisionEnergy(ce.minEnergySource,ce.maxEnergySource);
     }
 
     public boolean isRamp() {

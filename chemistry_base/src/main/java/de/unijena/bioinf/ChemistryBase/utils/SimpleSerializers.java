@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
@@ -40,6 +41,8 @@ import de.unijena.bioinf.ms.annotations.SpectrumAnnotation;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+
+import static de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy.stringify;
 
 public class SimpleSerializers {
 
@@ -74,6 +77,31 @@ public class SimpleSerializers {
         @Override
         public MolecularFormula getObject(String text) {
             return MolecularFormula.parseOrThrow(text);
+        }
+    }
+
+    public static final class CollisionEnergySerializer extends JsonSerializer<CollisionEnergy> {
+
+        @Override
+        public void serialize(CollisionEnergy value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+
+            try {
+                String toSerialize;
+
+                if (value.minEnergySource() == value.maxEnergySource())
+                    toSerialize=stringify(value.minEnergySource()) + " eV";
+
+               else
+                toSerialize=stringify(value.minEnergySource()) + " - " + stringify(value.maxEnergySource()) + " eV";
+
+
+                gen.writeString(toSerialize);
+
+
+
+            }catch (RuntimeException e){
+                throw new IOException();
+            }
         }
     }
 
