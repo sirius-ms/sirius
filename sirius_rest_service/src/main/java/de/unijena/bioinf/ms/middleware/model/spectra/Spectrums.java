@@ -54,7 +54,7 @@ public class Spectrums {
     private static <S extends AbstractSpectrum<?>> S decorateMsMs(S spectrum, @NotNull Ms2Spectrum<Peak> sourceSpectrum) {
         spectrum.setPrecursorMz(sourceSpectrum.getPrecursorMz());
         if (sourceSpectrum.getCollisionEnergy() != null && sourceSpectrum.getCollisionEnergy() != CollisionEnergy.none() && !sourceSpectrum.getCollisionEnergy().equals(CollisionEnergy.none())) {
-            spectrum.setCollisionEnergy(new CollisionEnergy(sourceSpectrum.getCollisionEnergy()));
+            spectrum.setCollisionEnergy(CollisionEnergy.copyWithoutCorrection(sourceSpectrum.getCollisionEnergy()));
             spectrum.setName("MS2 " + sourceSpectrum.getCollisionEnergy().toString());
         } else {
             spectrum.setName("MS2");
@@ -69,7 +69,7 @@ public class Spectrums {
     private static <S extends AbstractSpectrum<?>> S decorateMsMs(S spectrum, @NotNull MergedMSnSpectrum sourceSpectrum) {
         spectrum.setPrecursorMz(sourceSpectrum.getMergedPrecursorMz());
         if (sourceSpectrum.getMergedCollisionEnergy() != null && !sourceSpectrum.getMergedCollisionEnergy().equals(CollisionEnergy.none())) {
-            spectrum.setCollisionEnergy(new CollisionEnergy(sourceSpectrum.getMergedCollisionEnergy()));
+            spectrum.setCollisionEnergy(CollisionEnergy.copyWithoutCorrection(sourceSpectrum.getMergedCollisionEnergy()));
             spectrum.setName("MS2 " + sourceSpectrum.getMergedCollisionEnergy().toString());
         } else {
             spectrum.setName("MS2");
