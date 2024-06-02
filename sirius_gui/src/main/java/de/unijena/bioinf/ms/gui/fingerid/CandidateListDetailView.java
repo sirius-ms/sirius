@@ -27,6 +27,7 @@ import ca.odell.glazedlists.swing.DefaultEventListModel;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.chemdb.InChISMILESUtils;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
@@ -64,6 +65,7 @@ import java.text.NumberFormat;
 import java.util.List;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CandidateListDetailView extends CandidateListView implements MouseListener, ActionListener {
     public static final Color INVERT_HIGHLIGHTED_COLOR = new Color(255, 30, 0, 192);
@@ -295,7 +297,17 @@ public class CandidateListDetailView extends CandidateListView implements MouseL
             if (label.values == null || label.values.length == 0 || s.URI() == null)
                 return;
             try {
-                for (String id : label.values) {
+                String[] sorted;
+                try {
+                    //try sort everything by its numeric value
+                    sorted = Arrays.stream(label.values).sorted(Comparator.comparing(Long::parseLong)).toArray(String[]::new);
+                } catch (NumberFormatException e) {
+                    //use Alphanumeric ordering as fallback to have consistent results
+                    sorted = Arrays.stream(label.values).sorted(Utils.ALPHANUMERIC_COMPARATOR).toArray(String[]::new);
+                }
+
+                for (int i = 0; i < Math.min(5, sorted.length); i++) {
+                    String id = sorted[i];
                     if (id == null) continue;
                     if (s.noCustomSource() && ((CustomDataSources.EnumSource) s).source() == DataSource.LIPID) {
                         Jobs.runInBackground(() -> {
