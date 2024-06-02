@@ -49,7 +49,7 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
     }
 
     @Override
-    public synchronized void handleFinishedRequiredJob(JJob required) {
+    public void handleFinishedRequiredJob(JJob required) {
         final Object r = required.result();
         if (r instanceof Instance inst)
             if (input == null || input.equals(r))

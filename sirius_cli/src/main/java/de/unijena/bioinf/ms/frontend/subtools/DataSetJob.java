@@ -118,7 +118,7 @@ public abstract class DataSetJob extends ToolChainJobImpl<Iterable<Instance>> im
     }
 
     @Override
-    public synchronized void handleFinishedRequiredJob(JJob required) {
+    public void handleFinishedRequiredJob(JJob required) {
         if (required instanceof InstanceJob) {
             final Object r = required.result();
             if (r == null)
