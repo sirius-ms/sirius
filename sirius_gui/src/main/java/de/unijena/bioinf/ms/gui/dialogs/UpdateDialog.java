@@ -21,8 +21,8 @@ package de.unijena.bioinf.ms.gui.dialogs;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.nightsky.sdk.model.Info;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -36,9 +36,9 @@ public class UpdateDialog extends DoNotShowAgainDialog implements ActionListener
     public static final String DO_NOT_ASK_KEY = "de.unijena.bioinf.sirius.UpdateDialog.dontAskAgain";
     JButton ignore, download;
 
-    private final VersionsInfo version;
+    private final Info version;
 
-    public UpdateDialog(Frame owner, VersionsInfo version) {
+    public UpdateDialog(Frame owner, Info version) {
         super(owner, "Update for SIRIUS available!", createMessage(version), DO_NOT_ASK_KEY);
         this.version = version;
         setPreferredSize(new Dimension(50, getPreferredSize().height));
@@ -46,38 +46,23 @@ public class UpdateDialog extends DoNotShowAgainDialog implements ActionListener
     }
 
 
-    private static String createMessage(VersionsInfo version){
+    private static String createMessage(Info version) {
         StringBuilder message = new StringBuilder();
         message.append("<html>A new version (<b>").append(version.getLatestSiriusVersion()).append("</b>) of SIRIUS is available! <br><br>Upgrade to the latest <b>SIRIUS</b>")
                 .append(" to receive the newest features and fixes.<br> Your current version is: <b>")
                 .append(ApplicationCore.VERSION())
                 .append("</b><br>");
 
-        if (version.expired()) {
-            if (version.finishJobs()) {
-                if (version.acceptJobs()) {
-                    message.append("The CSI:FingerID webservice will accept jobs from your current version until <b>")
-                            .append(version.acceptJobs.toString()).append("</b>.<br>");
-                } else {
-                    message.append("The CSI:FingerID webservice will no longer accept jobs from your current version")
-                            .append("<br>");
-                }
-                message.append("Submitted jobs will be allowed to finish until <b>").append(version.finishJobs.toString()).append("</b>.");
-            } else {
-                message.append("Your Sirius version is not longer supported by the CSI:FingerID webservice.<br> Therefore the CSI:FingerID search is disabled in this version");
-            }
-        }
         message.append("</html>");
         return message.toString();
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-       /* if (e.getSource() == ignore) {
-
-        } else */if (e.getSource() == download) {
+        if (e.getSource() == download) {
             try {
-                Desktop.getDesktop().browse(URI.create(version.getLatestSiriusLink()));
+                if (version.getLatestSiriusLink() != null)
+                    Desktop.getDesktop().browse(URI.create(version.getLatestSiriusLink()));
             } catch (IOException e1) {
                 LoggerFactory.getLogger(this.getClass()).error(e1.getMessage(), e1);
             }
@@ -86,8 +71,13 @@ public class UpdateDialog extends DoNotShowAgainDialog implements ActionListener
         dispose();
     }
 
-    public static boolean isDontAskMe(){
-        return PropertyManager.getBoolean(DO_NOT_ASK_KEY,false);
+    public static boolean isDontAskMe() {
+        return PropertyManager.getBoolean(DO_NOT_ASK_KEY, false);
+    }
+
+    @Override
+    protected String getResult() {
+        return String.valueOf(isDontAskMe());
     }
 
     @Override

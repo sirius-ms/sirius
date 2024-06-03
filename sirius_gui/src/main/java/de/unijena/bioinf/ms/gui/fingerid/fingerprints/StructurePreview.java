@@ -21,15 +21,16 @@ package de.unijena.bioinf.ms.gui.fingerid.fingerprints;
 
 import de.unijena.bioinf.ChemistryBase.fp.ExtendedConnectivityProperty;
 import de.unijena.bioinf.ChemistryBase.fp.SubstructureProperty;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.fingerid.CandidateListDetailView;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
+import de.unijena.bioinf.ms.gui.utils.ThemedAtomColors;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.renderer.AtomContainerRenderer;
-import org.openscience.cdk.renderer.color.CDK2DAtomColors;
 import org.openscience.cdk.renderer.font.AWTFontManager;
 import org.openscience.cdk.renderer.generators.BasicSceneGenerator;
 import org.openscience.cdk.renderer.generators.IGenerator;
@@ -60,12 +61,12 @@ public class StructurePreview extends JPanel implements Runnable {
     protected volatile int state = 0; // needRefresh=0, recalculated=1, done=2
     protected volatile boolean shutdown = false;
 
-    public StructurePreview(FingerprintTable table) {
+    public StructurePreview(FingerprintList table) {
         this(table.visualizations);
     }
 
     public StructurePreview(FingerprintVisualization[] visualizations) {
-        setBackground(Color.WHITE);
+        setBackground(Colors.BACKGROUND);
         this.visualizations = visualizations;
         this.entry = null;
         this.backgroundThread = new Thread(this);
@@ -83,7 +84,7 @@ public class StructurePreview extends JPanel implements Runnable {
         renderer.getRenderer2DModel().set(StandardGenerator.Highlighting.class,
                 StandardGenerator.HighlightStyle.OuterGlow);
         renderer.getRenderer2DModel().set(StandardGenerator.AtomColor.class,
-                new CDK2DAtomColors());
+                new ThemedAtomColors());
 
         setPreferredSize(new Dimension(0, 220));
     }
@@ -95,6 +96,7 @@ public class StructurePreview extends JPanel implements Runnable {
         if (state < 1) return;
         final Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+        g2d.setBackground(Colors.BACKGROUND);
         final IAtomContainer[] mols = depiction;
         if (mols == null || mols.length==0) {
             g2d.clearRect(0,0,getWidth(),getHeight());

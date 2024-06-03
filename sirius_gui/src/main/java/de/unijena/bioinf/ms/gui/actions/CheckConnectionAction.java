@@ -19,11 +19,12 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ConnectionDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
+import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
@@ -31,38 +32,33 @@ import javax.annotation.concurrent.ThreadSafe;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
+import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
+import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isWarningOnly;
 
-/**
- * Created by fleisch on 08.06.17.
- */
+
 @ThreadSafe
-public class CheckConnectionAction extends AbstractAction {
+public class CheckConnectionAction extends AbstractGuiAction {
 
-    protected CheckConnectionAction() {
-        super("Webservice");
+    protected CheckConnectionAction(SiriusGui gui) {
+        super("Webservice", gui);
         putValue(Action.SHORT_DESCRIPTION, "Check and refresh webservice connection");
 
-        MF.CONNECTION_MONITOR().addConnectionStateListener(evt -> {
-            ConnectionMonitor.ConnectionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
-            Jobs.runEDTLater(() -> {
-                setIcon(check);
-                if (!check.isConnected())
-                    ConnectionDialog.of(MainFrame.MF, check.errors, check.workerInfo, check.licenseInfo);
-            });
+        this.gui.getConnectionMonitor().addConnectionStateListener(evt -> {
+            ConnectionCheck check = ((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck();
+            Jobs.runEDTLater(() -> setIcon(check));
         });
 
-        Jobs.runInBackground(() -> setIcon(MF.CONNECTION_MONITOR().checkConnection()));
+        Jobs.runInBackground(() -> setIcon(this.gui.getConnectionMonitor().checkConnection()));
     }
 
 
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
-            ConnectionMonitor.ConnectionCheck r = checkConnectionAndLoad();
+            ConnectionCheck r = checkConnectionAndLoad(gui);
             if (r != null) {
                 setIcon(r);
-                ConnectionDialog.of(MainFrame.MF, r.errors, r.workerInfo, r.licenseInfo);
+                ConnectionDialog.of(gui, r);
             }
         } catch (Exception e1) {
             LoggerFactory.getLogger(getClass()).error("Error when checking connection by action", e1);
@@ -70,17 +66,17 @@ public class CheckConnectionAction extends AbstractAction {
     }
 
 
-    public static ConnectionMonitor.ConnectionCheck checkConnectionAndLoad() {
-        return Jobs.runInBackgroundAndLoad(MF, "Checking connection...",
-                () -> MF.CONNECTION_MONITOR().checkConnection()).getResult();
+    public static ConnectionCheck checkConnectionAndLoad(SiriusGui gui) {
+        return Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Checking connection...",
+                () -> gui.getConnectionMonitor().checkConnection()).getResult();
     }
 
-    protected synchronized void setIcon(final @Nullable ConnectionMonitor.ConnectionCheck check) {
+    protected synchronized void setIcon(final @Nullable ConnectionCheck check) {
 
         if (check != null) {
-            if (check.isConnected())
+            if (isConnected(check))
                 putValue(Action.LARGE_ICON_KEY, Icons.NET_YES_32);
-            else if (check.hasOnlyWarning())
+            else if (isWarningOnly(check))
                 putValue(Action.LARGE_ICON_KEY, Icons.NET_WARN_32);
             else
                 putValue(Action.LARGE_ICON_KEY, Icons.NET_NO_32);

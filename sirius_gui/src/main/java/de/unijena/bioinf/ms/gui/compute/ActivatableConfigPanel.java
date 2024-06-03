@@ -19,59 +19,79 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.beans.PropertyChangeListener;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
+
+import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 
 public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoColumnPanel {
 
     protected ToolbarToggleButton activationButton;
     protected final String toolName;
+    protected final String[] toolDescription;
     protected final C content;
+    protected PropertyChangeListener listener;
+    protected final SiriusGui gui;
 
     protected LinkedHashSet<EnableChangeListener<C>> listeners = new LinkedHashSet<>();
 
-    public ActivatableConfigPanel(String toolname, Icon buttonIcon, boolean needsCSIConnection, Supplier<C> contentSuppl) {
-        this(toolname, null, buttonIcon, needsCSIConnection, contentSuppl);
+    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, Supplier<C> contentSuppl) {
+        this(gui, toolname, buttonIcon, false, contentSuppl);
     }
 
-    public ActivatableConfigPanel(String toolname, String toolDescription, Icon buttonIcon, boolean needsCSIConnection, Supplier<C> contentSuppl) {
+    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, Icon buttonIcon, boolean checkServerConnection, Supplier<C> contentSuppl) {
+        this(gui, toolname, null, buttonIcon, checkServerConnection, contentSuppl);
+    }
+
+    protected ActivatableConfigPanel(@NotNull SiriusGui gui, String toolname, String toolDescription, Icon buttonIcon, boolean checkServerConnection, Supplier<C> contentSuppl) {
         super();
+        left.anchor = GridBagConstraints.NORTH;
         this.toolName = toolname;
         this.content = contentSuppl.get();
+        this.gui = gui;
 
         activationButton = new ToolbarToggleButton(this.toolName, buttonIcon);
         activationButton.setPreferredSize(new Dimension(110, 60));
         activationButton.setMaximumSize(new Dimension(110, 60));
         activationButton.setMinimumSize(new Dimension(110, 60));
         if (toolDescription != null)
-            activationButton.setToolTipText(toolDescription);
+            this.toolDescription = new String[]{toolDescription};
         else if (content instanceof SubToolConfigPanel)
-            activationButton.setToolTipText(GuiUtils.formatToolTip(((SubToolConfigPanel<?>) content).toolDescription()));
+            this.toolDescription = ((SubToolConfigPanel<?>) content).toolDescription();
+        else
+            this.toolDescription = new String[]{};
+
+        activationButton.setToolTipText(GuiUtils.formatAndStripToolTip(this.toolDescription));
         add(activationButton, content);
 
 
-        if (needsCSIConnection) {
-            MainFrame.MF.CONNECTION_MONITOR().addConnectionStateListener(evt -> setButtonEnabled(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck().isConnected()));
+        if (checkServerConnection) {
+            listener = evt -> setButtonEnabled(isConnected(((ConnectionMonitor.ConnectionStateEvent) evt).getConnectionCheck()));
+            gui.getConnectionMonitor().addConnectionStateListener(listener);
+            @Nullable ConnectionCheck check = gui.getConnectionMonitor().getCurrentCheckResult();
+            setButtonEnabled(check == null || isConnected(check));
         } else {
+            listener = null;
             setButtonEnabled(true);
         }
 
-        activationButton.addActionListener(e -> {
-            setComponentsEnabled(activationButton.isSelected());
-            //todo do we want switch?
-            //            activationButton.setToolTipText((activationButton.isSelected() ? "Disable " + this.toolName : "Enable " + this.toolName));
-        });
-
+        activationButton.addActionListener(e -> setComponentsEnabled(activationButton.isSelected()));
         activationButton.setSelected(false);
         setComponentsEnabled(activationButton.isSelected());
     }
@@ -86,29 +106,38 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
         setButtonEnabled(enabled, null);
     }
 
-    protected void setButtonEnabled(final boolean enabled, @Nullable String toolTip) {
-//todo do we want switch?
-        //        activationButton.setToolTipText(toolTip != null ? toolTip :
-//                (enabled ? "Enable " + toolName : toolName + " Not available!")
-//        );
-
+    protected void setButtonEnabled(final boolean enabled, @Nullable String disabledMessage) {
         if (enabled != activationButton.isEnabled()) {
             if (enabled) {
                 activationButton.setEnabled(true);
+                activationButton.setToolTipText(GuiUtils.formatAndStripToolTip(this.toolDescription));
             } else {
                 activationButton.setEnabled(false);
                 activationButton.setSelected(false);
+                activationButton.setToolTipText(GuiUtils.formatAndStripToolTip(Stream.concat(Stream.of("Disabled: " + disabledMessage), Arrays.stream(this.toolDescription)).toList()));
             }
         }
     }
 
+    public void destroy(){
+        if (listener != null)
+            gui.getConnectionMonitor().removePropertyChangeListener(listener);
+    }
 
-    public boolean isToolSelected() {
+    boolean isToolSelected() {
         return activationButton == null || activationButton.isSelected();
+    }
+
+    public C getContent() {
+        return content;
     }
 
     public List<String> asParameterList() {
         return content.asParameterList();
+    }
+
+    public Map<String, String> asConfigMap() {
+        return content.asConfigMap();
     }
 
     public boolean removeEnableChangeListener(EnableChangeListener<C> listener) {

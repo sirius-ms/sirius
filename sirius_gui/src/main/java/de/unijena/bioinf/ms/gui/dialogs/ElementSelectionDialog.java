@@ -19,33 +19,38 @@
 
 package de.unijena.bioinf.ms.gui.dialogs;
 
+import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ms.gui.compute.ElementsPanel;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
+import java.util.List;
 
 public class ElementSelectionDialog extends JDialog {
 
     private ReturnValue rv;
     ElementsPanel elementsPanel;
 
+    public ElementSelectionDialog(Window owner, String title, @NotNull FormulaConstraints constraints) {
+        this(owner, title, null, null, constraints);
+    }
 
 
     /**
      * @param owner            see JDialog
      * @param title            Title of the dialog
      */
-    public ElementSelectionDialog(Window owner, String title, @NotNull FormulaConstraints constraints) {
+    public ElementSelectionDialog(Window owner, String title, Collection<Element> possibleDetectable, Collection<Element> enabledDetectable, @NotNull FormulaConstraints constraints) {
         super(owner, title, ModalityType.APPLICATION_MODAL);
         setLayout(new BorderLayout());
 
-        rv = ReturnValue.Abort;
+        rv = ReturnValue.Cancel;
 
-        elementsPanel = new ElementsPanel(this, 4, constraints);
+        elementsPanel = new ElementsPanel(this, 4, possibleDetectable, enabledDetectable, constraints);
         add(elementsPanel, BorderLayout.CENTER);
 
 
@@ -62,7 +67,7 @@ public class ElementSelectionDialog extends JDialog {
 
         final JButton abort = new JButton("Cancel");
         abort.addActionListener(e -> {
-            rv = ReturnValue.Abort;
+            rv = ReturnValue.Cancel;
             dispose();
         });
 
@@ -87,7 +92,7 @@ public class ElementSelectionDialog extends JDialog {
     }
 
     public boolean isAbort() {
-        return rv.equals(ReturnValue.Abort);
+        return rv.equals(ReturnValue.Cancel);
     }
 
     public ElementsPanel getElementsPanel() {
@@ -99,5 +104,9 @@ public class ElementSelectionDialog extends JDialog {
         if (isSuccess())
             return elementsPanel.getElementConstraints();
         return FormulaConstraints.empty();
+    }
+
+    public List<Element> getAutoDetect() {
+        return elementsPanel.getElementsToAutoDetect();
     }
 }

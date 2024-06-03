@@ -18,54 +18,48 @@
  */
 
 package de.unijena.bioinf.ms.gui.actions;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 29.01.17.
- */
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.ChemistryBase.utils.Utils;
+import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
+import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.CloseDialogNoSaveReturnValue;
 import de.unijena.bioinf.ms.gui.dialogs.CloseDialogReturnValue;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
-public class DeleteExperimentAction extends AbstractAction {
+public class DeleteExperimentAction extends AbstractGuiAction {
     public static final String NEVER_ASK_AGAIN_KEY = PropertyManager.PROPERTY_BASE + ".sirius.dialog.delete_experiment_action.ask_again";
-    private final List<InstanceBean> toRemove;
 
-    public DeleteExperimentAction(List<InstanceBean> toRemove) {
-        this.toRemove = toRemove;
-    }
-
-    public DeleteExperimentAction() {
-        super("Delete");
-        toRemove = null;
+    public DeleteExperimentAction(SiriusGui gui) {
+        super("Delete", gui);
         putValue(Action.SMALL_ICON, Icons.REMOVE_DOC_16);
         putValue(Action.SHORT_DESCRIPTION, "Delete the selected data");
 
-        setEnabled(SiriusActions.notComputingOrEmptySelected(MF.getCompoundListSelectionModel()));
 
-        MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
+        setEnabled(SiriusActions.notComputingOrEmptySelected(this.mainFrame.getCompoundListSelectionModel()));
+
+        this.mainFrame.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
+            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
                 setEnabled(SiriusActions.notComputingOrEmptySelected(selection));
             }
         });
@@ -73,19 +67,58 @@ public class DeleteExperimentAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        deleteCompounds();
-    }
-
-    public void deleteCompounds() {
-        if (!PropertyManager.getBoolean(NEVER_ASK_AGAIN_KEY,false)) {
-            CloseDialogNoSaveReturnValue diag = new CloseDialogNoSaveReturnValue(MF, "When removing the selected compound(s) you will loose all computed identification results?", NEVER_ASK_AGAIN_KEY);
+        if (!PropertyManager.getBoolean(NEVER_ASK_AGAIN_KEY, false)) {
+            CloseDialogNoSaveReturnValue diag = new CloseDialogNoSaveReturnValue(mainFrame, "When removing the selected feature(s) you will loose all computed results?", NEVER_ASK_AGAIN_KEY);
             CloseDialogReturnValue val = diag.getReturnValue();
             if (val == CloseDialogReturnValue.abort) return;
         }
+        deleteCompounds(new ArrayList<>(mainFrame.getCompoundList().getCompoundListSelectionModel().getSelected()));
+    }
 
-        //use provided list or remove selected.
-        List<InstanceBean> toRemove = this.toRemove!=null ? new ArrayList<>(this.toRemove) : new ArrayList<>(MF.getCompoundList().getCompoundListSelectionModel().getSelected());
-        MF.getCompoundList().getCompoundListSelectionModel().clearSelection();
-        MF.ps().deleteCompounds(toRemove);
+    public void deleteCompounds(List<InstanceBean> toRemove) {
+        if (toRemove == null || toRemove.isEmpty())
+            return;
+
+        //clear selection to prevent EventList from going crazy.
+        mainFrame.getCompoundList().getCompoundListSelectionModel().clearSelection();
+
+        Jobs.runInBackgroundAndLoad(mainFrame, "Deleting Data...", false, new TinyBackgroundJJob<Boolean>() {
+            @Override
+            protected Boolean compute() {
+                synchronized (this) {
+                    final int max = toRemove.size() + 2;
+                    Utils.withTime("Deleting took: ", w -> {
+                    updateProgress(0, max, 0);
+                        List<InstanceBean> removed = new ArrayList<>();
+//                        gui.getProjectManager().disbableProjectListener();
+                        try {
+                            gui.acceptSiriusClient((client, pid) ->
+                                toRemove.forEach(feature -> {
+                                    try {
+                                        updateProgress(0, max, removed.size(),"Removing '" + feature.getGUIName() + "'...");
+                                        if (!feature.isComputing()) {
+                                            client.features().deleteAlignedFeature(pid, feature.getFeatureId());
+                                            removed.add(feature);
+                                        } else {
+                                            LoggerFactory.getLogger(getClass()).warn("Cannot delete '" + feature.getFeatureId() + "' because it is currently computing. Skipping!");
+                                        }
+                                    } catch (Exception e) {
+                                        LoggerFactory.getLogger(getClass()).error("Could not delete: " + feature.getFeatureId(), e);
+                                    }
+                                }));
+
+                        } finally {
+//                            updateProgress(0, toRemove.size(), removed.size() + 1,"Cleaning up...");
+//                            gui.getProjectManager().INSTANCE_LIST.removeAll(removed);
+//                            gui.getProjectManager().enableProjectListener();
+                            updateProgress(0, toRemove.size(), removed.size() + 2,"DONE!");
+
+                        }
+                    });
+
+                    return true;
+                }
+            }
+        });
     }
 }

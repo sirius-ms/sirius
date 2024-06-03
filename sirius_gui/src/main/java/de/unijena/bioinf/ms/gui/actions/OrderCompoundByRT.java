@@ -20,22 +20,21 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 
-import javax.swing.*;
 import java.awt.event.ActionEvent;
 
-public class OrderCompoundByRT extends AbstractAction {
+public class OrderCompoundByRT extends AbstractGuiAction {
 
-    public OrderCompoundByRT() {
-        super("Order by RT");
+    public OrderCompoundByRT(SiriusGui gui) {
+        super("Order by RT (default)", gui);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        MainFrame.MF.getCompoundList().orderBy((o1, o2) -> {
-            double d1 = o1.getID().getRt().map(RetentionTime::getMiddleTime).orElse(Double.NaN);
-            double d2 = o2.getID().getRt().map(RetentionTime::getMiddleTime).orElse(Double.NaN);
+        mainFrame.getCompoundList().orderBy((o1, o2) -> {
+            double d1 = o1.getRT().map(RetentionTime::getMiddleTime).orElse(Double.NaN);
+            double d2 = o2.getRT().map(RetentionTime::getMiddleTime).orElse(Double.NaN);
             return Double.compare(d1, d2);
         });
     }

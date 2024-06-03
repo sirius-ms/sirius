@@ -19,7 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
-import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintTable;
+import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintList;
 import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintTableView;
 import de.unijena.bioinf.ms.gui.fingerid.fingerprints.StructurePreview;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
@@ -42,7 +42,7 @@ public class FingerprintPanel extends JPanel implements PanelDescription {
     }
 
     protected Logger logger = LoggerFactory.getLogger(FingerprintPanel.class);
-    public FingerprintPanel(FingerprintTable table) {
+    public FingerprintPanel(FingerprintList table) {
         super(new BorderLayout());
 
         final FingerprintTableView north = new FingerprintTableView(table);

@@ -27,36 +27,41 @@ import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.subtools.export.tables.PredictionsOptions;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import lombok.Getter;
 import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
 
-@CommandLine.Command(name = "write-summaries", aliases = {"W"}, description = "<STANDALONE, POSTPROCESSING> Write Summary files from a given project-space into the given project-space or a custom location.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
-public class SummaryOptions implements PostprocessingTool<SummarySubToolJob>, StandaloneTool<Workflow> {
+@CommandLine.Command(name = "summaries", aliases = {"write-summaries", "W"}, description = "@|bold <STANDALONE, POSTPROCESSING>|@ Write Summary files from a given project-space into the given project-space or a custom location. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+public class SummaryOptions implements PostprocessingTool<NoSqlSummarySubToolJob>, StandaloneTool<Workflow> {
 
     //specify negated  name since default is true ->  special picocli behavior
     //https://picocli.info/#_negatable_options
+    @Getter
     @CommandLine.Option(names = {"--no-top-hit-summary"}, description = "Write project wide summary files with all Top Hits.", defaultValue = "true", negatable = true)
     protected boolean topHitSummary;
 
-    public boolean isTopHitSummary() {
-        return topHitSummary;
-    }
-
+    @Getter
     @CommandLine.Option(names = {"--top-hit-adduct-summary"}, description = "Write project wide summary files with all Top Hits and their adducts", defaultValue = "false", negatable = true)
     protected boolean topHitWithAdductsSummary;
 
-    public boolean isTopHitWithAdductsSummary() {
-        return topHitWithAdductsSummary;
-    }
-
+    @Getter
     @CommandLine.Option(names = {"--full-summary"}, description = {"Write project wide summary files with ALL Hits. ", "(Use with care! Might create large files and consume large amounts of memory for large projects.)"}, defaultValue = "false", negatable = true)
     protected boolean fullSummary;
 
-    public boolean isFullSummary() {
-        return fullSummary;
-    }
+    @Getter
+    @CommandLine.Option(names = {"--top-k-summary"}, description = {"Write project wide summary files with top k hits . ", "(Use with care! Using large 'k' might create large files and consume large amounts of memory for large projects.)"})
+    protected int topK = -1;
+
+    //todo enable when implementing spectral match export, per compound candidate
+//    @Getter
+//    @CommandLine.Option(names = {"--all-spectra"}, description = {"Write project wide summary files with ALL reference spectrum hits. ", "(Use with care! Might create large files and consume large amounts of memory for large projects.)"}, defaultValue = "false", negatable = true)
+//    protected boolean allSpectra;
+//
+//    @Getter
+//    @CommandLine.Option(names = {"--top-k-spectra"}, description = {"Write project wide summary files with top k reference spectrum hits . ", "(Use with care! Using large 'k' might create large files and consume large amounts of memory for large projects.)"})
+//    protected int topKSpectra = -1;
 
     @CommandLine.Option(names = {"--output", "-o"}, description = "Specify location (outside the project) for writing summary files. Per default summaries are written to the project-space")
     Path location;
@@ -76,12 +81,12 @@ public class SummaryOptions implements PostprocessingTool<SummarySubToolJob>, St
     }
 
     @Override
-    public SummarySubToolJob makePostprocessingJob(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
-        return new SummarySubToolJob(rootOptions, config, this);
+    public NoSqlSummarySubToolJob makePostprocessingJob() {
+        return new NoSqlSummarySubToolJob(SummaryOptions.this);
     }
 
     @Override
-    public Workflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
-        return makePostprocessingJob(rootOptions, config);
+    public Workflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
+        return new NoSqlSummarySubToolJob(rootOptions.makeDefaultPreprocessingJob(), SummaryOptions.this);
     }
 }

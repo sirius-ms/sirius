@@ -20,19 +20,13 @@
 package de.unijena.bioinf.ms.frontend.subtools.config;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.properties.FinalConfig;
-import de.unijena.bioinf.babelms.ms.InputFileConfig;
-import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import de.unijena.bioinf.ms.annotations.RecomputeResults;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
+import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.projectspace.FormulaResultRankingScore;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.ProjectSpaceConfig;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.apache.commons.configuration2.CombinedConfiguration;
 import org.jetbrains.annotations.NotNull;
-
 import java.util.Optional;
 
 public class AddConfigsJob extends InstanceJob {
@@ -50,73 +44,55 @@ public class AddConfigsJob extends InstanceJob {
     }
 
     @Override
+    public boolean needsProperIonizationMode() {
+        return false;
+    }
+
+    @Override
     public boolean isAlreadyComputed(@NotNull Instance inst) {
         return false;
     }
 
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
-        final Ms2Experiment exp = inst.getExperiment();
-        final Optional<ProjectSpaceConfig> psConfig = inst.loadConfig();
+        ParameterConfig baseConfig = computeConfig;
+
+        {
+            //override defaults
+            // CLI_CONFIG might already exist from previous runs and needs to be updated.
+            Optional<ParameterConfig> projectSpaceConfigOpt = inst.loadProjectConfig();
+            checkForInterruption();
+            if (projectSpaceConfigOpt.isPresent()){
+                ParameterConfig projectSpaceConfig = projectSpaceConfigOpt.get();
+                if (!computeConfig.getLocalConfigName().equals(ConfigType.CLI.name()) && computeConfig.containsConfiguration(ConfigType.CLI.name())) {
+                    projectSpaceConfig = projectSpaceConfig.newIndependentInstance(ConfigType.CLI.name());
+                    projectSpaceConfig.updateConfig(ConfigType.CLI.name(), ((CombinedConfiguration) computeConfig.getConfigs()).getConfiguration(ConfigType.CLI.name()));
+                }
+                baseConfig = projectSpaceConfig.newIndependentInstance(computeConfig, true);
+                //remove runtime configs from previous analyses
+                baseConfig.getConfigNames().stream().filter(s -> s.startsWith(ConfigType.RUNTIME.name())).forEach(baseConfig::removeConfig);
+            }
+        }
 
 
-        ParameterConfig baseConfig;
-
-        checkForInterruption();
-
-        //override defaults
-        // CLI_CONFIG might already exist from previous runs and needs to be updated.
-        baseConfig = psConfig
-                .map(projectSpaceConfig -> {
-                    ParameterConfig conf = projectSpaceConfig.config;
-                    if (!computeConfig.getLocalConfigName().equals(DefaultParameterConfigLoader.CLI_CONFIG_NAME) && computeConfig.containsConfiguration(DefaultParameterConfigLoader.CLI_CONFIG_NAME)) {
-                        conf = conf.newIndependentInstance(DefaultParameterConfigLoader.CLI_CONFIG_NAME);
-                        conf.updateConfig(DefaultParameterConfigLoader.CLI_CONFIG_NAME, ((CombinedConfiguration) computeConfig.getConfigs()).getConfiguration(DefaultParameterConfigLoader.CLI_CONFIG_NAME));
-                    }
-
-                    return conf.newIndependentInstance(computeConfig, true);
-                }).orElse(computeConfig);
-
-        //remove runtime configs from previous analyses
-        baseConfig.getConfigNames().stream().filter(s -> s.startsWith("RUNTIME_CONFIG")).forEach(baseConfig::removeConfig);
 
         //input file configs are intended to be immutable, we still reload to ensure that it is on top position after CLI config
-        if (exp.hasAnnotation(InputFileConfig.class)) {
-            @NotNull InputFileConfig msConf = exp.getAnnotationOrThrow(InputFileConfig.class);
-            baseConfig.removeConfig(msConf.config.getLocalConfigName());
-            baseConfig = baseConfig.newIndependentInstance(msConf.config, false);
+        {
+            final Optional<ParameterConfig> msConf = inst.loadInputFileConfig();
+            checkForInterruption();
+            if (msConf.isPresent()) {
+                baseConfig.removeConfig(msConf.get().getLocalConfigName());
+                baseConfig = baseConfig.newIndependentInstance(msConf.get(), false);
+            }
         }
-
         checkForInterruption();
 
-        //runtime modification layer,  that does not effect the other configs, needs to be cleared before further analyses starts
+        //runtime modification layer,  that does not affect the other configs, needs to be cleared before further analyses starts
         //name cannot be based on the ID because people might rename their compounds
-        baseConfig = baseConfig.newIndependentInstance("RUNTIME_CONFIG", true);
-        inst.loadCompoundContainer().setAnnotation(FinalConfig.class, new FinalConfig(baseConfig));
-
-        //fill all annotations
-        exp.setAnnotationsFrom(baseConfig, Ms2ExperimentAnnotation.class);
-
-        checkForInterruption();
-
-        final FormulaResultRankingScore it = exp.getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO);
-        // this value is a commandline parameter that specifies how to handle the ranking score. If auto we decide how to
-        // handle, otherwise we set the user defined value
-        if (it.isAuto()) {
-            if (inst.getID().getRankingScoreTypes().isEmpty()) //set a default if nothing else is already set
-                inst.getID().setRankingScoreTypes(SiriusScore.class);
-        } else {
-            inst.getID().setRankingScoreTypes(it.value);
-        }
-
-        checkForInterruption();
-
-        inst.updateExperiment(); //todo we should optimize this, so that this is not needed anymore
-        inst.updateConfig();
-    }
-
-    private void clearRuntimeConfigs(final ParameterConfig config) {
-        //todo fill me
+        baseConfig = baseConfig.newIndependentInstance(ConfigType.RUNTIME.name(), true);
+        //writes full config stack to be used as base config when rerunning computations
+        inst.updateProjectConfig(baseConfig);
+        inst.setRecompute(baseConfig.createInstanceWithDefaults(RecomputeResults.class).value());
     }
 
     @Override

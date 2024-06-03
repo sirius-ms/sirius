@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.gui.dialogs;
 
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,7 +28,7 @@ import java.util.function.Supplier;
 
 public class QuestionDialog extends DoNotShowAgainDialog {
 
-    private ReturnValue rv;
+    protected ReturnValue rv;
 
     public QuestionDialog(Window owner, String question) {
         this(owner, question, null);
@@ -61,7 +62,12 @@ public class QuestionDialog extends DoNotShowAgainDialog {
      */
     public QuestionDialog(Window owner, String title, Supplier<String> questionSupplier, String propertyKey) {
         super(owner, title, questionSupplier, propertyKey);
-        rv = ReturnValue.Abort;
+        if (propertyKey != null){
+            rv = PropertyManager.getEnum(propertyKey, ReturnValue.class);
+            if (rv != null)
+                return;
+        }
+        rv = ReturnValue.Cancel;
         this.setVisible(true);
     }
 
@@ -77,7 +83,8 @@ public class QuestionDialog extends DoNotShowAgainDialog {
 
         final JButton abort = new JButton("No");
         abort.addActionListener(e -> {
-            rv = ReturnValue.Abort;
+            rv = ReturnValue.Cancel;
+            saveDoNotAskMeAgain();
             dispose();
         });
 
@@ -91,6 +98,11 @@ public class QuestionDialog extends DoNotShowAgainDialog {
         return UIManager.getIcon("OptionPane.questionIcon");
     }
 
+    @Override
+    protected String getResult() {
+        return getReturnValue().name();
+    }
+
     public ReturnValue getReturnValue() {
         return rv;
     }
@@ -99,7 +111,7 @@ public class QuestionDialog extends DoNotShowAgainDialog {
         return rv.equals(ReturnValue.Success);
     }
 
-    public boolean isAbort() {
-        return rv.equals(ReturnValue.Abort);
+    public boolean isCancel() {
+        return rv.equals(ReturnValue.Cancel);
     }
 }

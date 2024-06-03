@@ -27,21 +27,23 @@ import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoade
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.frontend.subtools.decomp.DecompOptions;
 import de.unijena.bioinf.ms.frontend.subtools.export.mgf.MgfExporterOptions;
-import de.unijena.bioinf.ms.frontend.subtools.export.tables.ExportPredictionsOptions;
-import de.unijena.bioinf.ms.frontend.subtools.export.trees.FTreeExporterOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprinter.FingerprinterOptions;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.frontend.subtools.login.LoginOptions;
-import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
-import de.unijena.bioinf.ms.frontend.subtools.projectspace.ProjecSpaceOptions;
+import de.unijena.bioinf.ms.frontend.subtools.msnovelist.MsNovelistOptions;
 import de.unijena.bioinf.ms.frontend.subtools.settings.SettingsOptions;
 import de.unijena.bioinf.ms.frontend.subtools.similarity.SimilarityMatrixOptions;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
+import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOptions;
 import de.unijena.bioinf.ms.frontend.subtools.summaries.SummaryOptions;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import de.unijena.bioinf.ms.frontend.utils.AutoCompletionScript;
+import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -73,9 +75,7 @@ import java.util.stream.Stream;
  * On the other hand I do not think it is performance critical.
  */
 
-public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
-
-    private final InstanceBufferFactory<?> bufferFactory;
+public class WorkflowBuilder {
     //root
     private CommandLine.Model.CommandSpec rootSpec;
 
@@ -83,14 +83,14 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
         return rootSpec;
     }
 
-    public final R rootOptions;
+    public final RootOptions<?> rootOptions;
 
     //global configs (subtool)
     DefaultParameterConfigLoader configOptionLoader;
 
     //standalone tools
     public final CustomDBOptions customDBOptions;
-    public final ProjecSpaceOptions projectSpaceOptions; // this is also singleton
+
     public final SimilarityMatrixOptions similarityMatrixOptions;
     public final DecompOptions decompOptions;
     public final LoginOptions loginOptions;
@@ -100,9 +100,9 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
 
     //postprocessing, project-space consuming tool, exporting tools,
     public final SummaryOptions summaryOptions;
-    public final ExportPredictionsOptions exportPredictions;
+//    public final ExportPredictionsOptions exportPredictions;
     public final MgfExporterOptions mgfExporterOptions;
-    public final FTreeExporterOptions ftreeExporterOptions;
+//    public final UpdateFingerprintOptions updateFingerprintOptions;
     public final AutoCompletionScript autocompleteOptions;
 
     //preprocessing, project-space providing tool, pre-project-space tool
@@ -113,37 +113,55 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
 
     protected final @NotNull List<StandaloneTool<?>> additionalTools;
 
-    public WorkflowBuilder(@NotNull R rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, InstanceBufferFactory<?> bufferFactory) throws IOException {
-        this(rootOptions, configOptionLoader, bufferFactory, List.of());
+    protected final ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory;
+
+    boolean closeProject = true;
+
+    public WorkflowBuilder(@NotNull CLIRootOptions rootOptions) {
+        this(rootOptions, rootOptions.getDefaultConfigOptions(), rootOptions.getSpaceManagerFactory());
     }
 
-    public WorkflowBuilder(@NotNull R rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, InstanceBufferFactory<?> bufferFactory, @NotNull List<StandaloneTool<?>> additionalTools) throws IOException {
-        this.bufferFactory = bufferFactory;
+    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory, boolean closeProject) {
+        this(rootOptions, configOptionLoader, spaceManagerFactory);
+        this.closeProject = closeProject;
+    }
+
+    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory) {
+        this(rootOptions, configOptionLoader, spaceManagerFactory, List.of());
+    }
+
+    public WorkflowBuilder(@NotNull CLIRootOptions rootOptions, @NotNull List<StandaloneTool<?>> additionalTools) {
+        this(rootOptions, rootOptions.getDefaultConfigOptions(), rootOptions.getSpaceManagerFactory(), additionalTools);
+    }
+
+    public WorkflowBuilder(@NotNull RootOptions<?> rootOptions, @NotNull DefaultParameterConfigLoader configOptionLoader, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory, @NotNull List<StandaloneTool<?>> additionalTools) {
         this.rootOptions = rootOptions;
+        this.spaceManagerFactory = spaceManagerFactory;
         this.configOptionLoader = configOptionLoader;
         this.additionalTools = additionalTools;
 
         toolChainTools = Map.of(
+                SpectraSearchOptions.class, new SpectraSearchOptions(configOptionLoader),
                 SiriusOptions.class, new SiriusOptions(configOptionLoader),
                 ZodiacOptions.class, new ZodiacOptions(configOptionLoader),
-                PassatuttoOptions.class, new PassatuttoOptions(configOptionLoader),
+//                PassatuttoOptions.class, new PassatuttoOptions(configOptionLoader),
                 FingerprintOptions.class, new FingerprintOptions(configOptionLoader),
                 FingerblastOptions.class, new FingerblastOptions(configOptionLoader),
-                CanopusOptions.class, new CanopusOptions(configOptionLoader)
+                CanopusOptions.class, new CanopusOptions(configOptionLoader),
+                MsNovelistOptions.class, new MsNovelistOptions(configOptionLoader)
         );
 
         customDBOptions = new CustomDBOptions();
-        projectSpaceOptions = new ProjecSpaceOptions();
-        similarityMatrixOptions = new SimilarityMatrixOptions();
+        similarityMatrixOptions = new SimilarityMatrixOptions(spaceManagerFactory);
         decompOptions = new DecompOptions();
         mgfExporterOptions = new MgfExporterOptions();
-        ftreeExporterOptions = new FTreeExporterOptions();
         summaryOptions = new SummaryOptions();
-        exportPredictions = new ExportPredictionsOptions();
+//        exportPredictions = new ExportPredictionsOptions();
         loginOptions = new LoginOptions();
         settingsOptions = new SettingsOptions();
         autocompleteOptions = new AutoCompletionScript();
         fingerprinterOptions = new FingerprinterOptions();
+//        updateFingerprintOptions = new UpdateFingerprintOptions();
     }
 
     public void initRootSpec() {
@@ -170,7 +188,7 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
 
     protected Object[] standaloneTools() {
         return Streams.concat(
-                Stream.of(projectSpaceOptions, customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, ftreeExporterOptions, exportPredictions, fingerprinterOptions),
+                Stream.of(customDBOptions, similarityMatrixOptions, decompOptions, mgfExporterOptions, /*exportPredictions,*/ fingerprinterOptions/*, updateFingerprintOptions*/),
                 additionalTools.stream(), Stream.of(loginOptions, settingsOptions, autocompleteOptions)
         ).toArray(Object[]::new);
 
@@ -227,12 +245,18 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
         return parentSpec;
     }
 
-    public ParseResultHandler makeParseResultHandler() {
-        return new ParseResultHandler();
+    public ParseResultHandler makeParseResultHandler(@NotNull InstanceBufferFactory<?> bufferFactory) {
+        return new ParseResultHandler(bufferFactory);
     }
 
 
     public class ParseResultHandler extends CommandLine.AbstractParseResultHandler<Workflow> {
+        private final InstanceBufferFactory<?> bufferFactory;
+
+        public ParseResultHandler(InstanceBufferFactory<?> bufferFactory) {
+            this.bufferFactory = bufferFactory;
+        }
+
         @Override
         protected Workflow handle(CommandLine.ParseResult parseResult) throws CommandLine.ExecutionException {
             //here we create the workflow that we will execute later
@@ -252,11 +276,16 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
                 if (parseResult.commandSpec().commandLine().getCommand() instanceof DefaultParameterConfigLoader.ConfigOptions)
                     parseResult = parseResult.subcommand();
                 if (parseResult.commandSpec().commandLine().getCommand() instanceof StandaloneTool)
-                    return ((StandaloneTool<?>) parseResult.commandSpec().commandLine().getCommand()).makeWorkflow(rootOptions, configOptionLoader.config);
-                if (parseResult.commandSpec().commandLine().getCommand() instanceof PreprocessingTool)
-                    preproJob = ((PreprocessingTool<?>) parseResult.commandSpec().commandLine().getCommand()).makePreprocessingJob(rootOptions, configOptionLoader.config);
-                else
+                    return ((StandaloneTool<?>) parseResult.commandSpec().commandLine().getCommand())
+                            .makeWorkflow(rootOptions, configOptionLoader.config);
+                if (parseResult.commandSpec().commandLine().getCommand() instanceof PreprocessingTool) {
+                    if (spaceManagerFactory == null)
+                        throw new IllegalStateException("Preprocessing tool requires a ProjectSpaceManagerFactory!");
+                    preproJob = ((PreprocessingTool<?>) parseResult.commandSpec().commandLine().getCommand())
+                            .makePreprocessingJob(rootOptions.getInput(), rootOptions.getOutput(), spaceManagerFactory, configOptionLoader.config);
+                } else {
                     execute(parseResult.commandSpec().commandLine(), toolchain, toolchainOptions);
+                }
             } else {
                 return () -> LoggerFactory.getLogger(getClass()).warn("No execution steps have been Specified!");
             }
@@ -267,7 +296,8 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
             while (parseResult.hasSubcommand()) {
                 parseResult = parseResult.subcommand();
                 if (parseResult.commandSpec().commandLine().getCommand() instanceof PostprocessingTool) {
-                    postproJob = ((PostprocessingTool<?>) parseResult.commandSpec().commandLine().getCommand()).makePostprocessingJob(rootOptions, configOptionLoader.config);
+                    postproJob = ((PostprocessingTool<?>) parseResult.commandSpec().commandLine().getCommand())
+                            .makePostprocessingJob();
                     break;
                 } else {
                     execute(parseResult.commandSpec().commandLine(), toolchain, toolchainOptions);
@@ -276,8 +306,8 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
 
             if (preproJob == null)
                 preproJob = rootOptions.makeDefaultPreprocessingJob();
-            if (postproJob == null)
-                postproJob = rootOptions.makeDefaultPostprocessingJob();
+            if (closeProject && postproJob == null)
+                postproJob = new ClosingProjectPostprocessor();
 
             //find dependent jobs
             assignEarliestInputProvider(toolchain, toolchainOptions);
@@ -292,7 +322,7 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
             for (int i = 0; i < toolchain.size(); i++) {
                 ToolChainJob.Factory<?> factory = toolchain.get(i);
                 ToolChainOptions<?, ?> options = toolchainOptions.get(i);
-                for (int j = i-1; j >= 0; j--) {
+                for (int j = i - 1; j >= 0; j--) {
                     ToolChainOptions<?, ?> probableInputProvider = toolchainOptions.get(j);
                     ToolChainJob.Factory<?> probableInputProviderFactory = toolchain.get(j);
 
@@ -341,5 +371,37 @@ public class WorkflowBuilder<R extends RootOptions<?, ?, ?, ?>> {
                     .flatMap(Collection::stream).collect(Collectors.toSet());
         }
         reachable.stream().map(toolChainTools::get).forEach(sub -> task.addInvalidator(sub.getInvalidator()));
+    }
+
+    private static class ClosingProjectPostprocessor extends PostprocessingJob<Void> {
+
+        private Iterable<? extends Instance> instances;
+
+        @Override
+        public void setInput(Iterable<? extends Instance> instances, ParameterConfig config) {
+            this.instances = instances;
+        }
+
+        @Override
+        protected Void compute() {
+            Set<ProjectSpaceManager> managersToClose = new HashSet<>();
+            instances.forEach(i -> managersToClose.add(i.getProjectSpaceManager()));
+            instances = null;
+
+            managersToClose.forEach(ps -> {
+                try {
+                    ps.close();
+                } catch (IOException e) {
+                    LoggerFactory.getLogger(getClass()).warn("Error when closing Project after workflow!", e);
+                }
+            });
+            return null;
+        }
+
+        @Override
+        protected void cleanup() {
+            instances = null;
+            super.cleanup();
+        }
     }
 }

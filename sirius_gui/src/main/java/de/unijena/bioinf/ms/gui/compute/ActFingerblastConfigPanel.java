@@ -19,25 +19,26 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ActFingerblastConfigPanel extends ActivatableConfigPanel<FingerblastConfigPanel> {
-    public ActFingerblastConfigPanel(@Nullable final JCheckBoxList<CustomDataSources.Source> syncSource) {
-        super("Search DBs", Icons.DB_LENS_32, true, () -> new FingerblastConfigPanel(syncSource));
-        //todo change icon
-    }
-
-    @Override
-    protected void setComponentsEnabled(final boolean enabled) {
-        super.setComponentsEnabled(enabled);
-        content.searchDBList.setEnabled(enabled);
+    public ActFingerblastConfigPanel(@NotNull SiriusGui gui, @Nullable final FormulaIDConfigPanel syncSource) {
+        super(gui, "Search DBs", Icons.DB_LENS_32, true, () -> new FingerblastConfigPanel(gui, syncSource));
     }
 
     @Override
     protected void setButtonEnabled(boolean enabled) {
-        setButtonEnabled(enabled, enabled ? "Enable CSI:FingerID search" : "Can't connect to CSI:FingerID server!");
+        setButtonEnabled(enabled,"Can't connect to structure db server!");
+    }
+
+    @Override
+    protected void setComponentsEnabled(boolean enabled) {
+        super.setComponentsEnabled(enabled);
+        if (enabled) {
+            content.refreshPubChem();
+        }
     }
 }

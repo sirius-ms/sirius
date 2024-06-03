@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Multimap;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
+import de.unijena.bioinf.auth.LoginException;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
@@ -34,21 +35,18 @@ import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.rest.model.info.Term;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
+import de.unijena.bioinf.rest.ConnectionError;
 import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.webapi.WebAPI;
-import de.unijena.bioinf.rest.ConnectionError;
-import de.unijena.bioinf.rest.ProxyManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import java.io.IOException;
-import java.net.URI;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -56,7 +54,7 @@ import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
-@CommandLine.Command(name = "login", description = "<STANDALONE> Allows a user to login for SIRIUS Webservices (e.g. CSI:FingerID or CANOPUS) and securely store a personal access token.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+@CommandLine.Command(name = "login", description = "<STANDALONE> Allows a user to login for SIRIUS Webservices (e.g. CSI:FingerID or CANOPUS) and securely store a personal access token. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> {
     // DELETE Token
     @CommandLine.Option(names = {"--logout", "--clear"},
@@ -165,7 +163,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
 
 
     @Override
-    public LoginWorkflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
+    public LoginWorkflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
         return new LoginWorkflow();
     }
 
@@ -183,61 +181,70 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                 return;
             }
 
-            if (login != null) {
-                AuthService service = ApplicationCore.WEB_API.getAuthService();
-                try {
-                    if (login.isTokenAuth())
-                        service.login(login.getRefreshToken());
-                    else
-                        service.login(login.getUsername(), login.getPassword());
 
-                    if (tokenRequestOnly) {
-                        String rToken = service.getToken().map(t -> t.getSource().getRefreshToken()).orElseThrow(() -> new IOException("Could not extract refresh token after successful login!"));
-                        System.out.println("###################### Refresh token ######################");
-                        System.out.println(rToken);
-                        System.out.println("###########################################################");
+            AuthService service = ApplicationCore.WEB_API.getAuthService();
+            try {
+                if (login != null) {
+                    try {
+                        if (login.isTokenAuth())
+                            service.login(login.getRefreshToken());
+                        else
+                            service.login(login.getUsername(), login.getPassword());
+
+                        if (tokenRequestOnly) {
+                            String rToken = service.getToken().map(t -> t.getSource().getRefreshToken()).orElseThrow(() -> new IOException("Could not extract refresh token after successful login!"));
+                            System.out.println("###################### Refresh token ######################");
+                            System.out.println(rToken);
+                            System.out.println("###########################################################");
+                        }
+                        AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE);
+                        final AuthService.Token token = service.getToken().orElse(null);
+                        if (showProfile)
+                            showProfile(token);
+
+                        Multimap<ConnectionError.Klass, ConnectionError> errors = determineAndCheckActiveSubscription(token);
+                        if (errors.isEmpty())
+                            System.out.println("Login successful!");
+
+                    } catch (ExecutionException | InterruptedException | IOException e) {
+                        LoggerFactory.getLogger(getClass()).error("Could not login to Authentication Server!", e);
                     }
+                } else if (sid != null) {
+                    if (service.getToken().isEmpty()) {
+                        showProfile(null);
+                        System.out.println("Not logged in! Please log in to select a license!");
+                    }else {
+                        final AuthService.Token token = service.refreshIfNeeded();
+                        try {
+                            determineAndCheckActiveSubscription(token);
+                            if (showProfile)
+                                showProfile(token);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                } else if (showProfile) {
+                    if (service.getToken().isEmpty())
+                        showProfile(null);
+                    else
+                        showProfile(service.refreshIfNeeded());
+                }
+
+                if (showLicense)
+                    try {
+                        showLicense();
+                    } catch (IOException e) {
+                        throw new RuntimeException("Error when requesting license information.", e);
+                    }
+            } catch (LoginException e) {
+                throw new IllegalStateException("Not logged in! Please log in to perform this operation!");
+            } finally {
+                try {
                     AuthServices.writeRefreshToken(service, ApplicationCore.TOKEN_FILE);
-                    final AuthService.Token token = service.getToken().orElse(null);
-                    if (showProfile)
-                        showProfile(token);
-
-                    Multimap<ConnectionError.Klass, ConnectionError> errors = determineAndCheckActiveSubscription(token);
-                    if (errors.isEmpty())
-                        System.out.println("Login successful!");
-
-                } catch (ExecutionException | InterruptedException | IOException e) {
-                    LoggerFactory.getLogger(getClass()).error("Could not login to Authentication Server!", e);
-                }
-            } else if (sid != null) {
-                try {
-                    AuthService service = ProxyManager.applyClient(c -> AuthServices.createDefault(
-                            URI.create(SiriusProperties.getProperty("de.unijena.bioinf.sirius.security.audience")),
-                            ApplicationCore.TOKEN_FILE, c));
-                    final AuthService.Token token = service.getToken().orElseThrow(() -> new IllegalStateException("Not logged in! Please log in to select a license!"));
-                    determineAndCheckActiveSubscription(token);
-                    if (showProfile)
-                        showProfile(service.getToken().orElse(null));
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            } else if (showProfile) {
-                try {
-                    AuthService service =  ProxyManager.applyClient(c -> AuthServices.createDefault(
-                            URI.create(SiriusProperties.getProperty("de.unijena.bioinf.sirius.security.audience")),
-                            ApplicationCore.TOKEN_FILE, c));
-                    showProfile(service.getToken().orElse(null));
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new RuntimeException("Error when storing refresh token. You may have to re-login.", e);
                 }
             }
-
-            if (showLicense)
-                try {
-                    showLicense();
-                } catch (IOException e) {
-                    throw new RuntimeException("Error when requesting license information.", e);
-                }
         }
 
         private void showProfile(@Nullable AuthService.Token token) {
@@ -270,25 +277,28 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
 
         private void showLicense() throws IOException {
             WebAPI<?> api = ApplicationCore.WEB_API;
-            @Nullable Subscription subs = Tokens.getActiveSubscription(api.getAuthService().getToken().orElse(null));
+            @Nullable Subscription sub = Tokens.getActiveSubscription(api.getAuthService().getToken().orElse(null));
 
             System.out.println();
             System.out.println("###################### License Info ######################");
-            if (subs != null) {
+            if (sub != null) {
                 final LicenseInfo licenseInfo = new LicenseInfo();
-                licenseInfo.setSubscription(subs);
-                System.out.println("Licensed to: " + subs.getSubscriberName() + " (" + subs.getDescription() + ")");
-                System.out.println("Expires at: " + (subs.hasExpirationTime() ? subs.getExpirationDate().toString() : "NEVER"));
-                if (subs.getCountQueries()) {
-                    if (subs.hasCompoundLimit()) {
-                        licenseInfo.setConsumables(api.getConsumables(false));
-                        System.out.println("Compounds Computed (Yearly): " + licenseInfo.consumables()
-                                .map(SubscriptionConsumables::getCountedCompounds)
-                                .map(String::valueOf).orElse("?") + " of " + subs.getCompoundLimit());
+                licenseInfo.subscription = sub;
+                System.out.println("Licensed to: " + sub.getSubscriberName() + " (" + sub.getDescription() + ")");
+                System.out.println("Expires at: " + (sub.hasExpirationTime() ? sub.getExpirationDate().toString() : "NEVER"));
+                if (sub.isCountQueries()) {
+                    if (sub.hasCompoundLimit()) {
+                        licenseInfo.consumables = api.getConsumables(false);
+                        System.out.println("Quota utilized (Yearly): '" +
+                                licenseInfo.consumables()
+                                        .map(SubscriptionConsumables::getCountedCompounds)
+                                        .map(String::valueOf).orElse("?") + " of " + sub.getCompoundLimit() + "' features computed");
                     } else {
-                        licenseInfo.setConsumables(api.getConsumables(true));
-                        System.out.println("Compounds Computed (Monthly): " + licenseInfo.consumables().map(SubscriptionConsumables::getCountedCompounds)
-                                .map(String::valueOf).orElse("?"));
+                        licenseInfo.consumables = api.getConsumables(true);
+                        System.out.println("Quota utilized (Monthly): '" +
+                                licenseInfo.consumables()
+                                        .map(SubscriptionConsumables::getCountedCompounds)
+                                        .map(String::valueOf).orElse("?") + "' features computed");
                     }
                 }
             } else {
@@ -305,8 +315,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                 sub = Tokens.getActiveSubscription(subs, sid, null, false);
             if (sub == null) {
                 if (sid != null)
-                    LoggerFactory.getLogger(getClass()).debug("Could not find subscription with sid '"
-                            + sid + "'. Trying to find fallback");
+                    LoggerFactory.getLogger(getClass()).debug("Could not find subscription with sid '{}'. Trying to find fallback", sid);
                 sub = Tokens.getActiveSubscription(subs, Tokens.getDefaultSubscriptionID(token));
             }
             SiriusProperties.SIRIUS_PROPERTIES_FILE().setProperty(Tokens.ACTIVE_SUBSCRIPTION_KEY, sub.getSid());
@@ -314,9 +323,8 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
 
             //check connection
             Multimap<ConnectionError.Klass, ConnectionError> errors = ApplicationCore.WEB_API.checkConnection();
-            LoggerFactory.getLogger(getClass()).debug("Connection check after login returned errors: " +
-                    errors.values().stream().sorted(Comparator.comparing(ConnectionError::getSiriusErrorCode))
-                            .map(ConnectionError::toString).collect(Collectors.joining(",\n")));
+            LoggerFactory.getLogger(getClass()).debug("Connection check after login returned errors: {}", errors.values().stream().sorted(Comparator.comparing(ConnectionError::getSiriusErrorCode))
+                    .map(ConnectionError::toString).collect(Collectors.joining(",\n")));
 
             if (errors.containsKey(ConnectionError.Klass.TERMS)) {
                 List<Term> terms = Tokens.getActiveSubscriptionTerms(token);
@@ -355,6 +363,29 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
             }
 
             return errors;
+        }
+    }
+
+    private static class LicenseInfo {
+        /**
+         * Email address of the user account this license information belongs to.
+         */
+        private String userEmail;
+        /**
+         * User ID (uid) of the user account this license information belongs to.
+         */
+        private String userId;
+        /**
+         * The active subscription that was used the requested the information
+         */
+        private Subscription subscription;
+        /**
+         * Status of the consumable resources of the {@link Subscription}.
+         */
+        private SubscriptionConsumables consumables;
+
+        public Optional<SubscriptionConsumables> consumables() {
+            return Optional.ofNullable(consumables);
         }
     }
 }

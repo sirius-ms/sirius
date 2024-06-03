@@ -26,16 +26,10 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.webView.WebViewJPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import javafx.scene.web.WebView;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
-import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
@@ -43,7 +37,6 @@ import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Objects;
 
 public class AboutDialog extends JDialog {
     public static final String PROPERTY_KEY = "de.unijena.bioinf.sirius.ui.cite";
@@ -104,7 +97,7 @@ public class AboutDialog extends JDialog {
         defineActions();
 
         setMinimumSize(new Dimension(Icons.SIRIUS_SPLASH.getIconWidth(), Icons.SIRIUS_SPLASH.getIconHeight() + south.getPreferredSize().height + 100));
-        setPreferredSize(new Dimension(Icons.SIRIUS_SPLASH.getIconWidth(), MainFrame.MF.getHeight()));
+        setPreferredSize(new Dimension(Icons.SIRIUS_SPLASH.getIconWidth(),getOwner().getHeight()));
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         pack();

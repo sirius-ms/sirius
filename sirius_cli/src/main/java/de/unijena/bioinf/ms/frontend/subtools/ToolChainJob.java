@@ -21,7 +21,6 @@ package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.jjobs.ProgressJJob;
-import de.unijena.bioinf.ms.annotations.RecomputeResults;
 import de.unijena.bioinf.projectspace.Instance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,28 +29,12 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public interface ToolChainJob<T> extends ProgressJJob<T> {
-
-    default boolean isRecompute(final @NotNull Instance inst) {
-        return inst.getExperiment().getAnnotation(RecomputeResults.class, () -> RecomputeResults.FALSE).value;
-    }
-
-    default boolean enableRecompute(final @NotNull Instance inst) {
-        return setRecompute(inst, true);
-    }
-
-    default boolean disableRecompute(final @NotNull Instance inst) {
-        return setRecompute(inst, false);
-    }
-
-    default boolean setRecompute(final @NotNull Instance inst, boolean recompute) {
-        return inst.getExperiment().setAnnotation(RecomputeResults.class, RecomputeResults.newInstance(recompute));
-    }
-
     boolean isAlreadyComputed(final @NotNull Instance inst);
 
     default String getToolName() {
         return getClass().getSimpleName();
     }
+    String getProjectName();
 
     void setInvalidator(Consumer<Instance> invalidator);
 

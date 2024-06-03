@@ -1,9 +1,15 @@
 apply plugin: 'java-library'
 dependencies {
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
     // wrong place START (should be in dist) but IDEA does not recognize dependency from no code modules //todo find alternative
-    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "2.0.+"
+    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "2.0.7"
     implementation("de.unijena.bioinf.cbc-java:cbc-java-jni:$cbc_version:${siriusTargetPlatform.jenaClassifier().orElseThrow()}")
     implementation("de.unijena.bioinf.cbc-java:cbc-java-native:$cbc_version:${siriusTargetPlatform.jenaClassifier().orElseThrow()}")
+    implementation 'org.apache.commons:commons-collections4:4.4'
+    implementation group: 'org.apache.commons', name: 'commons-configuration2', version: '2.9.0'
+    implementation 'com.auth0:java-jwt:3.16.0' //jwt decoder
+
     // wrong place END
 
 
@@ -16,6 +22,8 @@ dependencies {
         exclude group: "com.gurobi", module: "gurobi-jar"
     }
 
+    api "de.unijena.bioinf.ms:combinatorial_fragmenter:$siriusVersion"
+
     api group: "de.unijena.bioinf.ms", name: "tree_motif_search", version: "$siriusVersion"
     api group: "de.unijena.bioinf.ms", name: "sirius_project_space", version: "$siriusVersion"
     api group: "de.unijena.bioinf.ms", name: "quality_assessment", version: "$siriusVersion"
@@ -26,22 +34,28 @@ dependencies {
     api group: "de.unijena.bioinf.ms", name: "fingerblast_oss", version: "$fingeridVersion"
     api group: "de.unijena.bioinf.ms", name: "chemdb_rest_oss", version: "$fingeridVersion"
     api group: "de.unijena.bioinf.ms", name: "chemdb_blob_oss", version: "$fingeridVersion"
+    api group: "de.unijena.bioinf.ms", name: "chemdb_nitrite_oss", version: "$fingeridVersion"
     api group: "de.unijena.bioinf.ms", name: "chemical_db_oss", version: "$fingeridVersion"
     api group: "de.unijena.bioinf.ms", name: "confidence_score_predict_oss", version: "$fingeridVersion"
     api group: "de.unijena.bioinf.ms", name: "canopus_predict_oss", version: "$fingeridVersion"
     api group: "de.unijena.bioinf.ms", name: "sirius_web_client", version: "$fingeridVersion"
     api group: "de.unijena.bioinf.ms", name: "fingerid_project_space_oss", version: "$fingeridVersion"
+    api group: "de.unijena.bioinf.ms", name: "document-storage", version: "$siriusVersion"
+    api group: "de.unijena.bioinf.ms", name: "ms_persistence_model_oss", version: "$siriusVersion"
+    api group: "de.unijena.bioinf.ms", name: "ms_persistence_document_storage_oss", version: "$siriusVersion"
+    api group: "de.unijena.bioinf.ms", name: "lcms2", version: "$siriusVersion"
 
     api group: "de.unijena.bioinf.ms", name: "FTAlignmentTool", version: "$siriusVersion"
 
     //cdk
-    api "org.openscience.cdk:cdk-silent:$cdk_version"
+    for (module in ["silent", "smiles", "data", "formula"])
+        api "org.openscience.cdk:cdk-$module:$cdk_version"
 
     //mztabm
     api group: 'de.isas.mztab', name: 'jmztabm-api', version: "$mztabm_version"
     api group: 'de.isas.mztab', name: 'jmztabm-io', version: "$mztabm_version"
 
-    api group: 'org.jbibtex', name: 'jbibtex', version: '1.0.20'
+    api group: 'org.jbibtex', name: 'jbibtex', version: '1.0.17'
     api group: 'commons-io', name: 'commons-io', version: '2.11.0'
 
     //ilp solver support

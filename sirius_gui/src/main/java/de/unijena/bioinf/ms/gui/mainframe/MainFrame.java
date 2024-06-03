@@ -19,31 +19,28 @@
 
 package de.unijena.bioinf.ms.gui.mainframe;
 
-import ca.odell.glazedlists.BasicEventList;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
-import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
-import de.unijena.bioinf.ms.frontend.subtools.gui.GuiAppOptions;
-import de.unijena.bioinf.ms.gui.compute.JobDialog;
+import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.actions.ImportAction;
+import de.unijena.bioinf.ms.gui.actions.ProjectOpenAction;
+import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
-import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
+import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.DragAndDrop;
-import de.unijena.bioinf.ms.gui.io.LoadController;
-import de.unijena.bioinf.ms.gui.io.spectrum.csv.CSVFormatReader;
-import de.unijena.bioinf.ms.gui.logging.LogDialog;
+import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
-import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListView;
-import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableExperimentListPanel;
+import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundListView;
+import de.unijena.bioinf.ms.gui.mainframe.instance_panel.FilterableCompoundListPanel;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.ResultPanel;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
-import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
+import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.projectspace.InstanceImporter;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -51,41 +48,33 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.dnd.*;
 import java.io.File;
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.net.CookieHandler;
 import java.net.CookieManager;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
+
+import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
 
 public class MainFrame extends JFrame implements DropTargetListener {
 
     public static final CookieManager cookieGuard = new CookieManager();
-    public static final MainFrame MF = new MainFrame();
 
     static {
         CookieHandler.setDefault(cookieGuard);
     }
 
     //Logging Panel
-    private final LogDialog log;
+    private final SiriusGui gui;
+    private CompoundListView compoundListView;
 
-    public LogDialog getLogConsole() {
-        return log;
+    public void ensureCompoundIsVisible(int index){
+        compoundListView.ensureIndexIsVisible(index);
     }
 
-    // Project Space
-    private GuiProjectSpaceManager ps;
-
-    public GuiProjectSpaceManager ps() {
-        return ps;
+    public SiriusGui getGui() {
+        return gui;
     }
-
-    private BasicEventList<InstanceBean> compoundBaseList;
 
     //left side panel
     private CompoundList compoundList;
@@ -105,23 +94,16 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     // right side panel
     private FormulaList formulaList;
+    private StructureList databaseStructureList;
+    private StructureList combinedStructureListSubstructureView;
+    private StructureList combinedStructureListDeNovoView;
+    private SpectralMatchList spectralMatchList;
 
-    public FormulaList getFormulaList() {
-        return formulaList;
-    }
 
     private ResultPanel resultsPanel;
 
     public ResultPanel getResultsPanel() {
         return resultsPanel;
-    }
-
-
-    //job dialog
-    private JobDialog jobDialog;
-
-    public JobDialog getJobDialog() {
-        return jobDialog;
     }
 
     //toolbar
@@ -132,35 +114,29 @@ public class MainFrame extends JFrame implements DropTargetListener {
     }
 
 
-    //drop target for file input
-    private DropTarget dropTarget;
+    private final ActionMap globalActions = new ActionMap();
 
-
-    public ConnectionMonitor CONNECTION_MONITOR() {
-        return CONNECTION_MONITOR;
+    @NotNull
+    public ActionMap getGlobalActions() {
+        return globalActions;
     }
 
-    //internet connection monitor
-    private final ConnectionMonitor CONNECTION_MONITOR;
-
     // methods for creating the mainframe
-    private MainFrame() {
+    public MainFrame(SiriusGui gui) {
         super(ApplicationCore.VERSION_STRING());
         //inti connection monitor
-        CONNECTION_MONITOR = new ConnectionMonitor();
-
         setIconImage(Icons.SIRIUS_APP_IMAGE);
         configureTaskbar();
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         setLayout(new BorderLayout());
         new DropTarget(this, DnDConstants.ACTION_COPY_OR_MOVE, this);
 
-        log = new LogDialog(null,false, Level.INFO); //todo property
+        this.gui = gui;
     }
 
     //if we want to add taskbar stuff we can configure this here
     private void configureTaskbar() {
-        if (Taskbar.isTaskbarSupported()){
+        if (Taskbar.isTaskbarSupported()) {
             LoggerFactory.getLogger(getClass()).debug("Adding Taskbar support");
             if (Taskbar.getTaskbar().isSupported(Taskbar.Feature.ICON_IMAGE))
                 Taskbar.getTaskbar().setIconImage(Icons.SIRIUS_APP_IMAGE);
@@ -172,77 +148,29 @@ public class MainFrame extends JFrame implements DropTargetListener {
     }
 
 
-    public void openNewProjectSpace(Path selFile) {
-        changeProject(() -> new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(selFile));
-    }
-
-    public void createNewProjectSpace(Path selFile) {
-        changeProject(() -> new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(selFile));
-    }
-
-    protected void changeProject(IOFunctions.IOSupplier<SiriusProjectSpace> makeSpace) {
-        final BasicEventList<InstanceBean> psList = compoundBaseList;
-        final AtomicBoolean compatible = new AtomicBoolean(true);
-        this.ps = Jobs.runInBackgroundAndLoad(MF, "Opening new Project...", () -> {
-            GuiProjectSpaceManager old = this.ps;
-            try {
-                final SiriusProjectSpace ps = makeSpace.get();
-                compatible.set(InstanceImporter.checkDataCompatibility(ps, NetUtils.checkThreadInterrupt(Thread.currentThread())) == null);
-                Jobs.cancelAllRuns();
-                final GuiProjectSpaceManager gps = new GuiProjectSpaceManager(ps, psList, PropertyManager.getInteger(GuiAppOptions.COMPOUND_BUFFER_KEY, 10));
-                inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
-
-                gps.projectSpace().addProjectSpaceListener(event -> {
-                    if (event.equals(ProjectSpaceEvent.LOCATION_CHANGED))
-                        inEDTAndWait(() -> MF.setTitlePath(gps.projectSpace().getLocation().toString()));
-                });
-                return gps;
-            } finally {
-                old.close();
-            }
-        }).getResult();
-
-        if (this.ps == null) {
-            try {
-                LoggerFactory.getLogger(getClass()).warn("Error when changing project-space. Falling back to tmp project-space");
-                createNewProjectSpace(ProjectSpaceIO.createTmpProjectSpaceLocation());
-            } catch (IOException e) {
-                new StacktraceDialog(MF, "Cannot recreate a valid project-space due to: " + e.getMessage() + "'.  SIRIUS will not work properly without valid project-space. Please restart SIRIUS.", e);
-            }
-        }
-        if (!compatible.get())
-            if (new QuestionDialog(MF, "<html><body>" +
-                    "The opened project-space contains results based on an outdated fingerprint version.<br><br>" +
-                    "You can either convert the project to the new fingerprint version and <b>lose all fingerprint related results</b> (e.g. CSI:FingerID an CANOPUS),<br>" +
-                    "or you stay with the old fingerprint version but without being able to execute any fingerprint related computations (e.g. for data visualization).<br><br>" +
-                    "Do you wish to convert and lose all fingerprint related results?" +
-                    "</body></html>").isSuccess())
-                ps().updateFingerprintData();
-    }
-
-    public void decoradeMainFrameInstance(@NotNull GuiProjectSpaceManager projectSpaceManager) {
-        //add project-space
-        ps = projectSpaceManager;
-        compoundBaseList = ps.INSTANCE_LIST;
-        inEDTAndWait(() -> MF.setTitlePath(ps.projectSpace().getLocation().toString()));
+    public void decoradeMainFrame() {
+        Jobs.runEDTAndWaitLazy(() -> setTitlePath(gui.getProjectManager().getProjectLocation()));
 
         // create models for views
-        compoundList = new CompoundList(ps);
+        compoundList = new CompoundList(gui);
         formulaList = new FormulaList(compoundList);
+        databaseStructureList = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getStructureCandidates(k, true), false);
+        combinedStructureListSubstructureView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
+        combinedStructureListDeNovoView = new StructureList(compoundList, (inst, k, loadDatabaseHits, loadDenovo) -> inst.getBothStructureCandidates(k, true, loadDatabaseHits, loadDenovo), true);
+        spectralMatchList = new SpectralMatchList(compoundList);
 
 
         //CREATE VIEWS
-        jobDialog = new JobDialog(this);
         // results Panel
-        resultsPanel = new ResultPanel(formulaList, ApplicationCore.WEB_API);
+        resultsPanel = new ResultPanel(databaseStructureList, combinedStructureListSubstructureView, combinedStructureListDeNovoView, formulaList, spectralMatchList, gui);
         JPanel resultPanelContainer = new JPanel(new BorderLayout());
         resultPanelContainer.setBorder(BorderFactory.createEmptyBorder());
-        resultPanelContainer.add(resultsPanel,BorderLayout.CENTER);
+        resultPanelContainer.add(resultsPanel, BorderLayout.CENTER);
         if (PropertyManager.getBoolean("de.unijena.bioinf.webservice.infopanel", false))
-            resultPanelContainer.add(new WebServiceInfoPanel(CONNECTION_MONITOR()), BorderLayout.SOUTH);
+            resultPanelContainer.add(new WebServiceInfoPanel(gui.getConnectionMonitor()), BorderLayout.SOUTH);
 
         // toolbar
-        toolbar = new SiriusToolbar();
+        toolbar = new SiriusToolbar(gui);
 
         final JSplitPane mainPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 
@@ -251,19 +179,21 @@ public class MainFrame extends JFrame implements DropTargetListener {
         add(mainPanel, BorderLayout.CENTER);
 
         //build left sidepane
-        FilterableExperimentListPanel experimentListPanel = new FilterableExperimentListPanel(new ExperimentListView(compoundList));
-        experimentListPanel.setPreferredSize(new Dimension(228, (int) experimentListPanel.getPreferredSize().getHeight()));
+        compoundListView = new CompoundListView(gui, compoundList);
+        FilterableCompoundListPanel compoundListPanel = new FilterableCompoundListPanel(compoundListView);
+        compoundListPanel.setPreferredSize(new Dimension(228, (int) compoundListPanel.getPreferredSize().getHeight()));
         mainPanel.setDividerLocation(232);
 
         //BUILD the MainFrame (GUI)
-        mainPanel.setLeftComponent(experimentListPanel);
+        mainPanel.setLeftComponent(compoundListPanel);
         mainPanel.setRightComponent(resultPanelContainer);
         add(toolbar, BorderLayout.NORTH);
 
         Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
         setSize(new Dimension((int) (screen.width * .7), (int) (screen.height * .7)));
-        MainFrame.MF.setLocationRelativeTo(null); //init mainframe
+        setLocationRelativeTo(null); //init mainframe
         setVisible(true);
+        toFront();
     }
 
 
@@ -295,57 +225,37 @@ public class MainFrame extends JFrame implements DropTargetListener {
 
     }
 
-    public static final String DONT_ASK_OPEN_KEY = "de.unijena.bioinf.sirius.dragdrop.open.dontAskAgain";
 
     @Override
     public void drop(DropTargetDropEvent dtde) {
-        boolean openNewProject = false;
+        List<File> files = DragAndDrop.getFileListFromDrop(this, dtde);
+        //todo projectspace: add project file check to open project via drag and drop
+
 
         final InputFilesOptions inputF = new InputFilesOptions();
-        inputF.msInput = Jobs.runInBackgroundAndLoad(MF, "Analyzing Dropped Files...", false,
-                InstanceImporter.makeExpandFilesJJob(DragAndDrop.getFileListFromDrop(dtde))).getResult();
+        inputF.msInput = Jobs.runInBackgroundAndLoad(this, "Analyzing Dropped Files...", false,
+                InstanceImporter.makeExpandFilesJJob(files)).getResult();
 
-        if (!inputF.msInput.isEmpty()) {
-            if (inputF.msInput.isSingleProject())
-                openNewProject = new QuestionDialog(MF, "<html><body>Do you want to open the dropped Project instead of importing it? <br> The currently opened project will be closed!</br></body></html>"/*, DONT_ASK_OPEN_KEY*/).isSuccess();
+        List<Path> projectFiles = inputF.msInput.unknownFiles.keySet().stream().filter(p -> p.toString().endsWith(SIRIUS_PROJECT_SUFFIX)).toList();
+        inputF.msInput.unknownFiles.clear();
+        if (!projectFiles.isEmpty()){
+            Boolean replaceCurrent = projectFiles.size() == 1 ? null : false;
+            ProjectOpenAction opener = (ProjectOpenAction) SiriusActions.LOAD_WS.getInstance(gui);
+            projectFiles.forEach(f -> opener.openProject(f, replaceCurrent));
 
-            if (openNewProject) {
-                MF.openNewProjectSpace(inputF.msInput.projects.keySet().iterator().next());
-            } else {
-                importDragAndDropFiles(inputF);
-            }
         }
+        if (!inputF.msInput.isEmpty())
+            importDragAndDropFiles(inputF); //does not support importing projects
     }
-
 
     private void importDragAndDropFiles(InputFilesOptions files) {
-        ps.importOneExperimentPerLocation(files); //import all batch mode importable file types (e.g. .sirius, project-dir, .ms, .mgf, .mzml, .mzxml)
+        //import all batch mode importable file types (e.g. .ms, .mgf, .mzml, .mzxml)
+        ((ImportAction) SiriusActions.IMPORT_EXP_BATCH.getInstance(gui)).importOneExperimentPerLocation(files, this);
 
-        // check if unknown files contain csv files with spectra
-        final CSVFormatReader csvChecker = new CSVFormatReader();
-        List<File> csvFiles = files.msInput != null ? files.msInput.unknownFiles.keySet().stream().map(Path::toFile)
-                .filter(f -> csvChecker.isCompatible(f) || f.getName().toLowerCase().endsWith(".txt"))
-                .collect(Collectors.toList()) : Collections.emptyList();
-
-        if (!csvFiles.isEmpty())
-            openImporterWindow(csvFiles, Collections.emptyList(), Collections.emptyList());
-    }
-
-    private void openImporterWindow(List<File> csvFiles, List<File> msFiles, List<File> mgfFiles) {
-        LoadController lc = new LoadController(this);
-        lc.addSpectra(csvFiles, msFiles, mgfFiles);
-        lc.showDialog();
-    }
-
-    public static void inEDTAndWait(@NotNull final Runnable run) {
-        if (SwingUtilities.isEventDispatchThread()) {
-            run.run();
-        } else {
-            try {
-                Jobs.runEDTAndWait(run);
-            } catch (InterruptedException | InvocationTargetException e) {
-                throw new RuntimeException(e);
-            }
+        if (files.msInput != null && !files.msInput.unknownFiles.isEmpty()) {
+            new WarningDialog(this, "The following files are not supported and will not be Imported: "
+                    + files.msInput.unknownFiles.keySet().stream().map(Path::toString)
+                    .collect(Collectors.joining(", ")));
         }
     }
 }

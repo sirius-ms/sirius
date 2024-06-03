@@ -20,68 +20,48 @@
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.fingerid.CandidateListTableView;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
-import de.unijena.bioinf.projectspace.FormulaResultBean;
-import de.unijena.bioinf.projectspace.InstanceBean;
+import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
+import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateFormula;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Optional;
 
-/**
- * Created by fleisch on 15.05.17.
- */
+
 public class EpimetheusPanel extends JPanel implements PanelDescription {
     @Override
     public String getDescription() {
         return "<html>"
                 +"<b>EPIMETHEUS - Substructure annotations</b>"
                 +"<br>"
-                + "CSI:FingerID db search results Epimetheus with substructure annotations from combinatorial fragmentation for all molecular formulas that had been searched."
+                + "Structure search results annotated with substructures from combinatorial fragmentation for all molecular formulas that had been searched."
                 + "<br>"
                 + "For the selected candidate structure in the upper panel, the bottom panel shows the source spectrum annotated with substructures computed by combinatorial fragmentation (Epimetheus)."
                 + "</html>";
     }
 
     protected final StructureList structureList;
-    protected final CandidateListTableView candidateTable;
+    protected final EpimetheusPanelCandidateListTableView candidateTable;
     public EpimetheusPanel(final StructureList structureList) {
         super(new BorderLayout());
         this.structureList = structureList;
-        this.candidateTable = new CandidateListTableView(structureList);
-//        final TreeVisualizationPanel overviewTVP = new TreeVisualizationPanel();
-        final SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel(SpectraVisualizationPanel.MS2_DISPLAY, false, false);
-        this.structureList.getTopLevelSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        this.candidateTable = new EpimetheusPanelCandidateListTableView(structureList);
+        final SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel(SpectraVisualizationPanel.MS2_DISPLAY);
 
-        // Class to synchronize selected peak/node
-//        VisualizationPanelSynchronizer synchronizer = new VisualizationPanelSynchronizer(overviewTVP, overviewSVP);
- 
-//
         candidateTable.getFilteredSelectionModel().addListSelectionListener(e -> {
             DefaultEventSelectionModel<FingerprintCandidateBean> selections = (DefaultEventSelectionModel<FingerprintCandidateBean>) e.getSource();
-            FingerprintCandidateBean sre = selections.getSelected().stream().findFirst().orElse(null);
-            FormulaResultBean form = sre != null ? sre.getFormulaResult() : null;
-            InstanceBean inst = form != null ? form.getInstance() : null;
-//            overviewTVP.resultsChanged(inst, form, null, null);
-            overviewSVP.resultsChanged(inst, form, sre != null ? sre.getFingerprintCandidate() : null);
-        });
-        overviewSVP.getAnoModeBox().ifPresent(x->{
-            x.addItemListener(y->{
-                DefaultEventSelectionModel<FingerprintCandidateBean> selections = (DefaultEventSelectionModel<FingerprintCandidateBean>) candidateTable.getFilteredSelectionModel();
-                FingerprintCandidateBean sre = selections.getSelected().stream().findFirst().orElse(null);
-                FormulaResultBean form = sre != null ? sre.getFormulaResult() : null;
-                InstanceBean inst = form != null ? form.getInstance() : null;
-//            overviewTVP.resultsChanged(inst, form, null, null);
-                overviewSVP.resultsChanged(inst, form, sre != null ? sre.getFingerprintCandidate() : null);
-            });
+            Optional<FingerprintCandidateBean> sre = selections.getSelected().stream().findFirst();
+            sre.ifPresentOrElse(bean ->
+                    structureList.readDataByConsumer(d ->
+                            overviewSVP.resultsChanged(d, bean.getCandidate().getFormulaId(), bean.getCandidate().getSmiles())),
+                    overviewSVP::clear);
         });
 
-
-//        JSplitPane south = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, overviewSVP, overviewTVP);
-//        south.setDividerLocation(.5d);
-//        south.setResizeWeight(.5d);
         JSplitPane major = new JSplitPane(JSplitPane.VERTICAL_SPLIT, candidateTable, overviewSVP);
         major.setDividerLocation(250);
         add(major, BorderLayout.CENTER);
@@ -93,5 +73,27 @@ public class EpimetheusPanel extends JPanel implements PanelDescription {
 
     public CandidateListTableView getCandidateTable() {
         return candidateTable;
+    }
+
+    protected class EpimetheusPanelCandidateListTableView extends CandidateListTableView {
+
+        public EpimetheusPanelCandidateListTableView(StructureList list) {
+            super(list);
+        }
+
+        @Override
+        protected JToolBar getToolBar() {
+            JToolBar tb = super.getToolBar();
+            ToolbarToggleButton showMSNovelist = new ToolbarToggleButton(null, Icons.DENOVO_24, "Show MSNovelist de novo structure candidates together with CSI:FingerID structure database hits.");
+            showMSNovelist.setSelected(true);
+            tb.add(showMSNovelist, getIndexOfSecondGap(tb) + 1);
+
+            loadAll.removeActionListener(loadDataActionListener);
+            loadDataActionListener = e -> structureList.reloadData(loadAll.isSelected(), true, showMSNovelist.isSelected());
+            showMSNovelist.addActionListener(loadDataActionListener);
+            loadAll.addActionListener(loadDataActionListener);
+
+            return tb;
+        }
     }
 }

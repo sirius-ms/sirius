@@ -21,19 +21,29 @@ package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
+import de.unijena.bioinf.fingerid.ConfidenceScoreApproximate;
+import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.configs.Fonts;
+import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeature;
+import de.unijena.bioinf.ms.nightsky.sdk.model.DataQuality;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 public class CompoundCellRenderer extends JLabel implements ListCellRenderer<InstanceBean> {
 
+    private final SiriusGui gui;
     private InstanceBean ec;
 
     private Color backColor, foreColor;
@@ -41,12 +51,12 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
     private Font valueFont, compoundFont, propertyFont, statusFont;
 
     private Color selectedBackground, evenBackground, unevenBackground, selectedForeground;
-    private Color activatedForeground, deactivatedForeground, disableBackground;
+    private Color activatedForeground;
 
-    private DecimalFormat numberFormat;
-    private ImageIcon loadingGif;
+    private final DecimalFormat numberFormat;
 
-    public CompoundCellRenderer() {
+    public CompoundCellRenderer(@NotNull SiriusGui gui) {
+        this.gui = gui;
         this.setPreferredSize(new Dimension(210, 86));
         initColorsAndFonts();
         this.numberFormat = new DecimalFormat("#0.00");
@@ -60,11 +70,9 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 
         selectedBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].background");
         selectedForeground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\"[Selected].textForeground");
-        evenBackground = UIManager.getColor("ComboBox:\"ComboBox.listRenderer\".background");
-        disableBackground = UIManager.getColor("ComboBox.background");
-        unevenBackground = new Color(213, 227, 238);
+        evenBackground = Colors.LIST_EVEN_BACKGROUND;
+        unevenBackground = Colors.LIST_UNEVEN_BACKGROUND;
         activatedForeground = UIManager.getColor("List.foreground");
-        deactivatedForeground = Color.GRAY;
     }
 
     @Override
@@ -100,7 +108,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 
         FontMetrics compoundFm = g2.getFontMetrics(this.compoundFont);
         FontMetrics propertyFm = g2.getFontMetrics(this.propertyFont);
-        FontMetrics valueFm = g2.getFontMetrics(this.valueFont);
+//        FontMetrics valueFm = g2.getFontMetrics(this.valueFont);
 
         g2.setColor(this.foreColor);
 
@@ -118,17 +126,22 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
         g2.drawLine(2, 17, Math.min(maxWidth - 3, 2 + compoundLength), 17);
 
         g2.setFont(compoundFont);
-        g2.drawString(ec.getGUIName(), 4, 13);
+        DataQuality q = ec.getSourceFeature().getQuality();
+        if (q != null) {
+            getQualityIcon(q).paintIcon(this, g2, 2, 4);
+            g2.drawString(ec.getGUIName(), 13, 13);
+        } else {
+            g2.drawString(ec.getGUIName(), 4, 13);
+        }
 
         if (trigger) g2.setPaint(p);
-
-//		int ms1No = ec.getMs1Spectra().size();
-//		int ms2No = ec.getMs2Spectra().size();
 
         String ionizationProp = "Ionization";
         String focMassProp = "Precursor";
         String rtProp = "RT";
-        String confProp = ConfidenceScore.NA(ConfidenceScore.class).shortName();
+        String confProp = gui.getProperties().isConfidenceViewMode(ConfidenceDisplayMode.APPROXIMATE)
+                ? ConfidenceScore.NA(ConfidenceScoreApproximate.class).shortName()
+                : ConfidenceScore.NA(ConfidenceScore.class).shortName();
 
         g2.setFont(propertyFont);
         g2.drawString(ionizationProp, 4, 32);
@@ -143,10 +156,10 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
                 propertyFm.stringWidth(confProp)
         ).max(Integer::compareTo).get() + 15;
 
-        String ionValue = ec.getIonization().toString();
+        String ionValue = ec.getIonType().toString();
         double focD = ec.getIonMass();
         String focMass = focD > 0 ? numberFormat.format(focD) + " Da" : "unknown";
-        String rtValue = ec.getID().getRt().map(RetentionTime::getRetentionTimeInSeconds).map(s -> s / 60)
+        String rtValue = ec.getRT().map(RetentionTime::getRetentionTimeInSeconds).map(s -> s / 60)
                 .map(numberFormat::format).map(i -> i + " min").orElse("N/A");
 
         g2.setFont(valueFont);
@@ -154,7 +167,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
         g2.drawString(focMass, xPos, 48);
         g2.drawString(rtValue, xPos, 64);
 
-        ec.getID().getConfidenceScore().ifPresent(confScore -> {
+        ec.getConfidenceScore(gui.getProperties().getConfidenceDisplayMode()).ifPresent(confScore -> {
             g2.setFont(propertyFont);
             String conf = confScore < 0 || Double.isNaN(confScore) ? ConfidenceScore.NA() : BigDecimal.valueOf(confScore).setScale(3, RoundingMode.HALF_UP).toString();
             g2.drawString(conf, xPos, 80);
@@ -163,6 +176,20 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 
         g2.setFont(statusFont);
         GuiUtils.drawListStatusElement(ec.isComputing(), g2, this);
+    }
+
+    private static Icon getQualityIcon(@NotNull DataQuality quality) {
+        switch (quality) {
+            case LOWEST:
+                return Icons.TRAFFIC_LIGHT_TINY_GRAY;
+            case BAD:
+                return Icons.TRAFFIC_LIGHT_TINY[0];
+            case DECENT:
+                return Icons.TRAFFIC_LIGHT_TINY[1];
+            case GOOD:
+                return Icons.TRAFFIC_LIGHT_TINY[2];
+        }
+        return Icons.TRAFFIC_LIGHT_TINY_GRAY;
     }
 
 }

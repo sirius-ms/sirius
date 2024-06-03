@@ -21,9 +21,11 @@ package de.unijena.bioinf.ms.frontend.subtools.config;
 
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
+import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.properties.SiriusConfigUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +40,6 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class DefaultParameterConfigLoader {
-    public static final String CLI_CONFIG_NAME = "CLI_CONFIG";
     private static final Logger LOG = LoggerFactory.getLogger(DefaultParameterConfigLoader.class);
     private final Map<String, CommandLine.Model.OptionSpec> options;
     private CommandLine.Model.CommandSpec commandSpec = null;
@@ -46,13 +47,16 @@ public class DefaultParameterConfigLoader {
 
 
     public DefaultParameterConfigLoader() throws IOException {
-        this(PropertyManager.DEFAULTS, CLI_CONFIG_NAME);
+        this(PropertyManager.DEFAULTS, ConfigType.CLI);
     }
 
     public DefaultParameterConfigLoader(ParameterConfig baseConfig) throws IOException {
-        this(baseConfig, null);
+        this(baseConfig, (String) null);
     }
 
+    public DefaultParameterConfigLoader(ParameterConfig baseConfig, @NotNull ConfigType modificationLayer) throws IOException {
+        this(baseConfig, modificationLayer.name());
+    }
     public DefaultParameterConfigLoader(ParameterConfig baseConfig, @Nullable String modificationLayerName) throws IOException {
         this.config = baseConfig;
         if (modificationLayerName != null)
@@ -113,10 +117,10 @@ public class DefaultParameterConfigLoader {
     }
 
     public void changeOption(String optionName, List<String> value) throws Exception {
-        options.get(optionName).setter().set(value.stream().collect(Collectors.joining(",")));
+        options.get(optionName).setter().set(String.join(",", value));
     }
 
-    @CommandLine.Command(name = "config", description = "<CONFIGURATION> Override all possible default configurations of this toolbox from the command line.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
+    @CommandLine.Command(name = "config", description = "%n<CONFIGURATION> Override all possible default configurations of this toolbox from the command line. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
     public final class ConfigOptions {
     }
 }

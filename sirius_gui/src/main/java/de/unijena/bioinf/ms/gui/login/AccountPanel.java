@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -25,14 +25,16 @@ import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.LoginException;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ToolbarButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
-import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.rest.ProxyManager;
+import de.unijena.bioinf.webapi.Tokens;
+import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.LoggerFactory;
 
 import javax.imageio.ImageIO;
@@ -40,21 +42,19 @@ import javax.swing.*;
 import java.awt.*;
 import java.net.URL;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 public class AccountPanel extends JPanel {
     private final AuthService service;
     private JLabel userIconLabel, userInfoLabel;
-    private JButton login, create, changeSub;
+    private JButton login, create, changeSub, registerExplorer;
     private ToolbarButton refresh;
 
-    public AccountPanel(AuthService service) {
+    private SiriusGui gui;
+
+    public AccountPanel(SiriusGui gui, AuthService service) {
         super(new BorderLayout());
         this.service = service;
-        buildPanel();
-    }
-
-    private void buildPanel() {
+        this.gui = gui;
         TwoColumnPanel center = new TwoColumnPanel();
 
         userIconLabel = new JLabel();
@@ -64,9 +64,9 @@ public class AccountPanel extends JPanel {
         iconPanel.add(userIconLabel, BorderLayout.CENTER);
         refresh = new ToolbarButton(Icons.REFRESH_32);
         refresh.addActionListener(e ->
-                Jobs.runInBackgroundAndLoad(MF, () -> {
+                Jobs.runInBackgroundAndLoad(SwingUtilities.getWindowAncestor(this), () -> {
                     try {
-                        ProxyManager.withConnectionLock((ExFunctions.Runnable) () ->{
+                        ProxyManager.withConnectionLock((ExFunctions.Runnable) () -> {
                             ApplicationCore.WEB_API.changeActiveSubscription(null);
                             AuthService.Token t = ApplicationCore.WEB_API.getAuthService().refreshIfNeeded(true);
                             ApplicationCore.WEB_API.changeActiveSubscription(Tokens.getActiveSubscription(t));
@@ -76,8 +76,8 @@ public class AccountPanel extends JPanel {
                         LoggerFactory.getLogger(getClass()).error("Error when refreshing access_token!", ex);
                     } catch (Exception ex) {
                         throw new RuntimeException(ex); //should not happen
-                    }finally {
-                        MF.CONNECTION_MONITOR().checkConnectionInBackground();
+                    } finally {
+                        gui.getConnectionMonitor().checkConnectionInBackground();
                     }
                 }));
         refresh.setPreferredSize(new Dimension(45, 45));
@@ -96,11 +96,14 @@ public class AccountPanel extends JPanel {
         //south
         create = new JButton();
         login = new JButton();
-        changeSub = new JButton(SiriusActions.SELECT_SUBSCRIPTION.getInstance());
+        registerExplorer = new JButton(SiriusActions.REGISTER_EXPLORER.getInstance(gui, true));
+        changeSub = new JButton(SiriusActions.SELECT_SUBSCRIPTION.getInstance(gui, true));
         Box buttons = Box.createHorizontalBox();
         buttons.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         buttons.add(create);
         buttons.add(Box.createHorizontalGlue());
+        if (SystemUtils.IS_OS_WINDOWS)
+            buttons.add(registerExplorer);
         buttons.add(changeSub);
         buttons.add(login);
         add(buttons, BorderLayout.SOUTH);
@@ -119,13 +122,15 @@ public class AccountPanel extends JPanel {
         if (userInfo == null) {
             userIconLabel.setIcon(Icons.USER_128);
             userInfoLabel.setText("Please log in!");
-            create.setAction(SiriusActions.SIGN_UP.getInstance());
-            login.setAction(SiriusActions.SIGN_IN.getInstance());
+            create.setAction(SiriusActions.SIGN_UP.getInstance(gui, true));
+            login.setAction(SiriusActions.SIGN_IN.getInstance(gui, true));
             refresh.setEnabled(false);
             changeSub.setEnabled(false);
+            registerExplorer.setEnabled(false);
         } else {
             refresh.setEnabled(true);
             changeSub.setEnabled(true);
+            registerExplorer.setEnabled(true);
             try {
                 Image image = ImageIO.read(new URL(userInfo.getClaim("picture").asString()));
                 image = Icons.makeEllipse(image);
@@ -141,8 +146,8 @@ public class AccountPanel extends JPanel {
                     + "<br>"
                     + "(" + userInfo.getClaim("sub").asString() + ")"
                     + "</html>");
-            create.setAction(SiriusActions.MANAGE_ACCOUNT.getInstance());
-            login.setAction(SiriusActions.SIGN_OUT.getInstance());
+            create.setAction(SiriusActions.MANAGE_ACCOUNT.getInstance(gui, true));
+            login.setAction(SiriusActions.SIGN_OUT.getInstance(gui, true));
         }
     }
 

@@ -64,7 +64,7 @@ class SubscriptionHTMLRenderer extends DefaultListCellRenderer {
         setText(START + "<div WIDTH=" + maxWidth + ">"
                 + "<p><b>" + item.getName() + "</b></p>"
                 + "<p><i>" + item.getDescription() + "</i></p>"
-                + "<p>" + "<b>Count:</b> " + item.getCountQueries() + "&nbsp;&nbsp;&nbsp;&nbsp;<b>Limit:</b> " +
+                + "<p>" + "<b>Count:</b> " + item.isCountQueries() + "&nbsp;&nbsp;&nbsp;&nbsp;<b>Limit:</b> " +
                 Optional.ofNullable(item.getCompoundLimit()).map(Objects::toString).orElse("UNLIMITED") + "</p>"
                 + "<p>" + "<b>Hosting URL:</b> " + item.getServiceUrl() + "</p>"
                 + "</div>" + END);

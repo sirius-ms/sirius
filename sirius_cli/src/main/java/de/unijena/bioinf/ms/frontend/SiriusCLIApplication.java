@@ -28,11 +28,11 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.CLIRootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.WorkFlowSupplier;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import de.unijena.bioinf.projectspace.NitriteProjectSpaceManagerFactory;
+import de.unijena.bioinf.projectspace.SiriusProjectSpaceManagerFactory;
 import de.unijena.bioinf.rest.ProxyManager;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -55,13 +55,14 @@ public class SiriusCLIApplication {
     public static void main(String[] args) {
         runMain(args, List.of());
     }
+
     public static void runMain(String[] args, List<StandaloneTool<?>> injectTools) {
         System.setProperty(APP_TYPE_PROPERTY_KEY, "CLI");
         {
             List<String> argsl = List.of(args);
             int i = argsl.indexOf("--workspace");
             if (i >= 0)
-                System.setProperty("de.unijena.bioinf.sirius.ws.location", args[i+1].replace("'","").replace("\"",""));
+                System.setProperty("de.unijena.bioinf.sirius.ws.location", args[i + 1].replace("'", "").replace("\"", ""));
         }
         if (TIME)
             t1 = System.currentTimeMillis();
@@ -73,10 +74,11 @@ public class SiriusCLIApplication {
 
             configureShutDownHook(shutdownWebservice());
             measureTime("Start Run method");
-            run(args, () -> {
-                final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader();
-                return new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader, new SimpleInstanceBuffer.Factory(), injectTools);
-            });
+            run(args, () -> new WorkflowBuilder(
+                    PropertyManager.getProperty("sirius.middleware.project-space", null, "NITRITE-NOSQL").equals("NITRITE-NOSQL")
+                            ? new CLIRootOptions(new DefaultParameterConfigLoader(), new NitriteProjectSpaceManagerFactory())
+                            : new CLIRootOptions(new DefaultParameterConfigLoader(), new SiriusProjectSpaceManagerFactory())
+                    , injectTools));
         } finally {
             System.exit(0);
         }
@@ -110,7 +112,7 @@ public class SiriusCLIApplication {
                         Files.deleteIfExists(ApplicationCore.TOKEN_FILE);
                 } catch (IOException e) {
                     e.printStackTrace();
-                }finally {
+                } finally {
                     ProxyManager.disconnect();
                     if (successfulParsed && PropertyManager.DEFAULTS.createInstanceWithDefaults(PrintCitations.class).value)
                         ApplicationCore.BIBTEX.citeToSystemErr();
@@ -138,7 +140,8 @@ public class SiriusCLIApplication {
             measureTime("init Run");
             RUN = new Run(supplier.make());
             measureTime("Start Parse args");
-            successfulParsed = RUN.parseArgs(args);
+            RUN.parseArgs(args);
+            successfulParsed = RUN.makeWorkflow() != null;
             measureTime("Parse args Done!");
             if (successfulParsed) {
                 measureTime("Compute");

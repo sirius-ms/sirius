@@ -3,8 +3,15 @@ apply plugin: 'java-library'
 mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
 
 dependencies {
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+    annotationProcessor 'org.projectlombok:lombok:1.18.30'
 //project
-    api project(':sirius_cli')
+    implementation(project(':sirius_cli')){
+//        exclude group: "de.unijena.bioinf.ms", module: "sirius_web_client"
+//        exclude group: "de.unijena.bioinf.ms", module: "web_core_oss"
+    }
+    implementation project(':sirius_nightsky_sdk')
+    implementation project(':sirius_nightsky_sdk:sirius_nightsky_sdk.jjobs')
 
 //internal
     api "de.unijena.bioinf:jjobs-swing:$jjobs_version"
@@ -13,25 +20,19 @@ dependencies {
 //external
     api "net.sf.opencsv:opencsv:2.3"
     api "org.swinglabs.swingx:swingx-all:1.6.5-1"
-    api "org.openscience.cdk:cdk-render:$cdk_version"
-    api "org.openscience.cdk:cdk-renderextra:$cdk_version"
-    api "org.openscience.cdk:cdk-renderawt:$cdk_version"
-    api "org.openscience.cdk:cdk-data:$cdk_version"
-    api "org.openscience.cdk:cdk-core:$cdk_version"
-    api "org.openscience.cdk:cdk-interfaces:$cdk_version"
-    api "org.openscience.cdk:cdk-inchi:$cdk_version"
-    api "org.openscience.cdk:cdk-smiles:$cdk_version"
-    api "org.openscience.cdk:cdk-io:$cdk_version"
-    api "org.openscience.cdk:cdk-ioformats:$cdk_version"
-    api "org.openscience.cdk:cdk-sdg:$cdk_version"
-    api "org.openscience.cdk:cdk-smarts:$cdk_version"
-    api "org.openscience.cdk:cdk-legacy:$cdk_version"
+
+    //cdk
+    for (module in ["render", "renderextra", "renderawt", "data", "core", "interfaces", "inchi", "smiles", "io", "ioformats", "sdg", "smarts", "legacy", "fingerprint", "silent", "depict"])
+        api "org.openscience.cdk:cdk-$module:$cdk_version"
 
     api 'com.glazedlists:glazedlists:1.11.0'
 
     api 'org.apache.xmlgraphics:batik-rasterizer:1.16'
     api 'org.apache.xmlgraphics:fop:2.7'
 
+    api 'com.formdev:flatlaf:3.1'
+
+    api 'org.apache.commons:commons-text:1.12.0'
     if (excludeJFX)
         for (m in javaFX_modules) //define jfx as compile only, so that we can decide during build to either package for one or all platforms.
             compileOnly "org.openjfx:$m:$targetCompatibility.+:${siriusTargetPlatform.jfxClassifier().get()}"

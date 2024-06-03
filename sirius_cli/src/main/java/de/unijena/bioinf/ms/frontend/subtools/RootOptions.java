@@ -19,25 +19,13 @@
 
 package de.unijena.bioinf.ms.frontend.subtools;
 
-import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public interface RootOptions<I extends Instance, M extends ProjectSpaceManager<I>, T extends PreprocessingJob<? extends Iterable<I>>, P extends PostprocessingJob<?>> {
+public interface RootOptions<T extends PreprocessingJob<?>> {
     InputFilesOptions getInput();
 
     OutputOptions getOutput();
 
-
-    M getProjectSpace();
-
     @NotNull
     T makeDefaultPreprocessingJob();
-
-    @Nullable
-    P makeDefaultPostprocessingJob();
-
-    ProjectSpaceManagerFactory<I,M> getSpaceManagerFactory();
 }

@@ -20,12 +20,12 @@
 package de.unijena.bioinf.ms.frontend.subtools;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,11 +33,9 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Optional;
-import java.util.concurrent.TimeoutException;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -52,15 +50,22 @@ import java.util.logging.LogManager;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 @CommandLine.Command(name = "sirius", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false, showDefaultValues = true)
-public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>> implements RootOptions<I, M, PreprocessingJob<M>, PostprocessingJob<Boolean>> {
+public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends ProjectSpaceManager>> {
     public static final Logger LOG = LoggerFactory.getLogger(CLIRootOptions.class);
 
     protected final DefaultParameterConfigLoader defaultConfigOptions;
-    protected final ProjectSpaceManagerFactory<I, M> spaceManagerFactory;
 
-    public CLIRootOptions(@NotNull DefaultParameterConfigLoader defaultConfigOptions, @NotNull ProjectSpaceManagerFactory<I, M> spaceManagerFactory) {
+    @Getter
+    @Setter
+    protected ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory;
+
+    public CLIRootOptions(@NotNull DefaultParameterConfigLoader defaultConfigOptions, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory) {
         this.defaultConfigOptions = defaultConfigOptions;
         this.spaceManagerFactory = spaceManagerFactory;
+    }
+
+    public DefaultParameterConfigLoader getDefaultConfigOptions() {
+        return defaultConfigOptions;
     }
 
     public enum LogLevel {
@@ -76,30 +81,35 @@ public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>
     public void setLogLevel(final LogLevel loglevel) {
         Optional.ofNullable(LoggerFactory.getLogger(JJob.DEFAULT_LOGGER_KEY)).map(Logger::getName)
                 .map(LogManager.getLogManager()::getLogger).map(java.util.logging.Logger::getHandlers)
-                .map(Arrays::stream).ifPresent(s -> {
-                    s.filter(h -> h instanceof ConsoleHandler).findFirst().ifPresent(h -> h.setFilter(r -> {
-                        if (r.getLoggerName().equals(JJob.DEFAULT_LOGGER_KEY))
-                            return r.getLevel().intValue() >= loglevel.level.intValue();
-                        return true;
-                    }));
-                });
+                .map(Arrays::stream)
+                .flatMap(s -> s.filter(h -> h instanceof ConsoleHandler).findFirst())
+                .ifPresent(h -> h.setFilter(r -> {
+                    if (r.getLoggerName().equals(JJob.DEFAULT_LOGGER_KEY))
+                        return r.getLevel().intValue() >= loglevel.level.intValue();
+                    return true;
+                }));
 
     }
 
-    @Option(names = {"--cores", "--processors"}, description = "Number of cpu cores to use. If not specified Sirius uses all available cores.", order = 10)
+    @Option(names = {"--threads", "--cores", "--processors"}, description = "Number of simultaneous worker thread to be used for compute intense workload. If not specified SIRIUS chooses a reasonable number based you CPU specs.", order = 10)
     public void setNumOfCores(int numOfCores) {
+        if(numOfCores < 3){
+            LOG.warn("Number of Cores must be at least 3. Specified: {}. Using 3 instead.", numOfCores);
+            numOfCores = 3;
+        }
+
         PropertyManager.setProperty("de.unijena.bioinf.sirius.cpu.cores", String.valueOf(numOfCores));
         SiriusJobs.setGlobalJobManager(numOfCores);
         if (instanceBuffer == null)
             setInitialInstanceBuffer(0);
-        LOG.info("Adjusted JobManager CPU threads to '" + SiriusJobs.getGlobalJobManager().getCPUThreads() + "' by command line.");
+        LOG.info("Adjusted JobManager CPU threads to '{}' by command line.", SiriusJobs.getGlobalJobManager().getCPUThreads());
     }
 
-    @Option(names = {"--instance-buffer", "--compound-buffer", "--initial-compound-buffer"}, defaultValue = "0", description = "Number of compounds that will be loaded into the Memory. A larger buffer ensures that there are enough compounds available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all compounds immediately set it to -1. Default (numeric value 0): 3 x --cores. Note that for <DATASET_TOOLS> the compound buffer may have no effect because this tools may have to load compounds simultaneously into the memory.", order = 20)
+    @Option(names = {"--buffer", "--instance-buffer"}, defaultValue = "0", description = "Number of instances that will be loaded into the Memory. A larger buffer ensures that there are enough instances available to use all cores efficiently during computation. A smaller buffer saves Memory. To load all instances immediately set it to -1. Default (numeric value 0): 3 x --cores. Note that for <DATASET_TOOLS> the compound buffer may have no effect because this tools may have to load compounds simultaneously into the memory.", order = 20)
     public void setInitialInstanceBuffer(int initialInstanceBuffer) {
-        this.instanceBuffer = /*initialInstanceBuffer == null ? -1 :*/ initialInstanceBuffer;
+        this.instanceBuffer = initialInstanceBuffer;
         if (instanceBuffer == 0) {
-            instanceBuffer = 5 * SiriusJobs.getGlobalJobManager().getCPUThreads();
+            instanceBuffer = 10 * SiriusJobs.getGlobalJobManager().getCPUThreads();
         }
 
         PropertyManager.setProperty("de.unijena.bioinf.sirius.instanceBuffer", String.valueOf(instanceBuffer));
@@ -134,7 +144,6 @@ public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>
     }
     //endregion
 
-
     // region Options: INPUT/OUTPUT
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     @Option(names = {"--zip-provider"}, description = "Specify the Provider for handling zip compressed resources (e.g. project-space). Valid values: ${COMPLETION-CANDIDATES}", hidden = true, order = 298)
@@ -149,79 +158,6 @@ public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>
     public OutputOptions getOutput() {
         return psOpts;
     }
-
-    private M projectSpaceToWriteOn = null;
-
-    public ProjectSpaceManagerFactory<I, M> getSpaceManagerFactory() {
-        return spaceManagerFactory;
-    }
-
-    @Override
-    public M getProjectSpace() {
-        if (projectSpaceToWriteOn == null)
-            projectSpaceToWriteOn = configureProjectSpace();
-
-        return projectSpaceToWriteOn;
-    }
-
-    protected M configureProjectSpace() {
-        try {
-            if (psOpts.outputProjectLocation == null) {
-                if (inputFiles != null && inputFiles.msInput.projects.size() == 1) {
-                    psOpts.outputProjectLocation = (inputFiles.msInput.projects.keySet().iterator().next());
-                    LOG.info("No output location given. Writing output to input location: " + psOpts.outputProjectLocation.toString());
-                } else {
-                    psOpts.outputProjectLocation = ProjectSpaceIO.createTmpProjectSpaceLocation();
-                    LOG.warn("No unique output location found. Writing output to Temporary folder: " + psOpts.outputProjectLocation.toString());
-                }
-            }
-
-            final SiriusProjectSpace psTmp;
-            if (Files.notExists(psOpts.outputProjectLocation)) {
-                psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).createNewProjectSpace(psOpts.outputProjectLocation, !psOpts.isNoCompression());
-            } else {
-                psTmp = new ProjectSpaceIO(ProjectSpaceManager.newDefaultConfig()).openExistingProjectSpace(psOpts.outputProjectLocation);
-            }
-
-            //check for formatter
-            if (psOpts.projectSpaceFilenameFormatter == null) {
-                try {
-                    psOpts.projectSpaceFilenameFormatter = psTmp.getProjectSpaceProperty(FilenameFormatter.PSProperty.class).map(it -> new StandardMSFilenameFormatter(it.formatExpression)).orElse(new StandardMSFilenameFormatter());
-                } catch (Exception e) {
-                    LOG.warn("Could not Parse 'FilenameFormatter' -> Using default");
-                    psOpts.projectSpaceFilenameFormatter = new StandardMSFilenameFormatter();
-                }
-
-                psTmp.setProjectSpaceProperty(FilenameFormatter.PSProperty.class, new FilenameFormatter.PSProperty(psOpts.projectSpaceFilenameFormatter));
-            }
-
-            final M space = spaceManagerFactory.create(psTmp, psOpts.projectSpaceFilenameFormatter);
-            space.setCompoundIdFilter(cid -> {
-                if (cid.getIonMass().orElse(Double.NaN) <= maxMz)
-                    return true;
-                else {
-                    LOG.info("Skipping instance " + cid.toString() + " with mass: " + cid.getIonMass().orElse(Double.NaN) + " > " + maxMz);
-                    return false;
-                }
-            });
-
-
-            if (ApplicationCore.WEB_API.getAuthService().isLoggedIn() && ApplicationCore.WEB_API.getActiveSubscription() != null) {
-                try {
-                    space.checkAndFixDataFiles(NetUtils.checkThreadInterrupt(Thread.currentThread()));
-                } catch (TimeoutException | InterruptedException e) {
-                    LoggerFactory.getLogger(getClass()).warn("Could not check Fingerprint version on Project creation. " + e.getMessage());
-                } catch (Exception e) {
-                    LoggerFactory.getLogger(getClass()).error("Could not check Fingerprint version on Project creation due to an unknown error!", e);
-                }
-            }
-
-            return space;
-        } catch (IOException e) {
-            throw new CommandLine.PicocliException("Could not initialize workspace!", e);
-        }
-    }
-
 
     @CommandLine.ArgGroup(exclusive = false, order = 300)
     private InputFilesOptions inputFiles;
@@ -242,35 +178,21 @@ public class CLIRootOptions<I extends Instance, M extends ProjectSpaceManager<I>
     public boolean assessDataQuality;
     //endregion
 
-    @NotNull
     @Override
-    public PreprocessingJob<M> makeDefaultPreprocessingJob() {
+    public @NotNull PreprocessingJob<? extends ProjectSpaceManager> makeDefaultPreprocessingJob() {
         return new PreprocessingJob<>() {
             @Override
-            protected M compute() throws Exception {
-                M space = getProjectSpace();
+            protected ProjectSpaceManager compute() throws Exception {
+                ProjectSpaceManager space = spaceManagerFactory.createOrOpen(psOpts.getOutputProjectLocation());;
                 InputFilesOptions input = getInput();
                 if (space != null) {
                     if (input != null)
-                        SiriusJobs.getGlobalJobManager().submitJob(new InstanceImporter(space, (exp) -> exp.getIonMass() < maxMz, (c) -> c.getIonMass().map(m -> m < maxMz).orElse(true), false, getOutput().isUpdateFingerprints()).makeImportJJob(input)).awaitResult();
+                        SiriusJobs.getGlobalJobManager().submitJob(new InstanceImporter(space, (exp) -> exp.getIonMass() < maxMz).makeImportJJob(input)).awaitResult();
                     if (space.size() < 1)
                         logInfo("No Input has been imported to Project-Space. Starting application without input data.");
                     return space;
                 }
                 throw new CommandLine.PicocliException("No Project-Space for writing output!");
-            }
-        };
-    }
-
-    @NotNull
-    @Override
-    public PostprocessingJob<Boolean> makeDefaultPostprocessingJob() {
-        return new PostprocessingJob<>() {
-            @Override
-            protected Boolean compute() throws Exception {
-                LOG.info("No Postprocessing specified. Closing project-space.");
-                getProjectSpace().close();
-                return true;
             }
         };
     }

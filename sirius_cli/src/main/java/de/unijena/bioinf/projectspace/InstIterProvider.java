@@ -26,7 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.function.Predicate;
 
 public interface InstIterProvider extends Iterator<Ms2Experiment> {
     /**
@@ -44,11 +43,7 @@ public interface InstIterProvider extends Iterator<Ms2Experiment> {
         LoggerFactory.getLogger(InstIterProvider.class).warn("Estimating Iterable<Instance> size from project-space. Might be inaccurate and slow.");
         return source.iterator().next().getProjectSpaceManager().size();
     }
-    default InstanceImportIteratorMS2Exp asInstanceIterator(ProjectSpaceManager<?> projectSpace) {
+    default InstanceImportIteratorMS2Exp asInstanceIterator(ProjectSpaceManager projectSpace) {
         return new InstanceImportIteratorMS2Exp(this, projectSpace);
-    }
-
-    default InstanceImportIteratorMS2Exp asInstanceIterator(ProjectSpaceManager<?> projectSpace, Predicate<CompoundContainer> compoundFilter) {
-        return new InstanceImportIteratorMS2Exp(this, projectSpace, compoundFilter);
     }
 }

@@ -18,17 +18,13 @@
  */
 
 package de.unijena.bioinf.ms.gui.utils;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 06.10.16.
- */
 
-import de.unijena.bioinf.ms.gui.configs.Colors;
-import de.unijena.bioinf.ms.gui.configs.Fonts;
+import com.formdev.flatlaf.FlatDarculaLaf;
+import com.formdev.flatlaf.FlatIntelliJLaf;
+import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.webView.WebViewBrowserDialog;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.NotNull;
@@ -38,15 +34,17 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import javax.swing.plaf.nimbus.AbstractRegionPainter;
 import java.awt.*;
-import java.awt.image.BufferedImage;
+import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.Properties;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 
 /**
@@ -57,48 +55,38 @@ public class GuiUtils {
     public final static int SMALL_GAP = 5;
     public final static int MEDIUM_GAP = 10;
     public final static int LARGE_GAP = 20;
-    public final static FontMetrics TOOL_TIP_FONT_METRIC = makeToolTipMetric();
 
-
-
-    public static FontMetrics makeToolTipMetric() {
-        UIDefaults uidefs=UIManager.getLookAndFeelDefaults();
-        Font font=uidefs.getFont("ToolTip.font");
-        GraphicsEnvironment ge=GraphicsEnvironment.getLocalGraphicsEnvironment();
-        Graphics2D g2d=ge.createGraphics(new BufferedImage(1,1,1));
-        return g2d.getFontMetrics(font);
-    }
     public static void initUI() {
-        //load nimbus look and feel, before mainframe is built
-        try {
-            //improve rendering?
-            Fonts.initFonts();
-            //todo stupid scaling is useless :/
-            for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    UIManager.setLookAndFeel(info.getClassName());
-                    UIManager.put("nimbusOrange", Colors.ICON_GREEN);
-//                    System.out.println(UIManager.getColor("nimbusBase"));
-//                    System.out.println(UIManager.getColor("nimbusBlueGrey"));
-//                    System.out.println(UIManager.getColor("control"));
+        final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
+        final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
 
-                    try {
-                        Constructor c = Class.forName("SiriusStyleFactory").getConstructor(String.class);
-                        c.newInstance("mini"); // regular, mini, small or large
-                    } catch (ExceptionInInitializerError eiie) {
-                        //
-                    } catch (LinkageError le) {
-                        //
-                    } catch (ClassNotFoundException cnfe) {
-                        //
-                    }
-
+        switch (theme) {
+            case "Dark":
+                try {
+                    UIManager.setLookAndFeel(new FlatDarculaLaf());
                     break;
+                } catch (UnsupportedLookAndFeelException e) {
+                    e.printStackTrace();
                 }
-            }
-        } catch (Exception e) {
-            LoggerFactory.getLogger(GuiUtils.class).error("Error when configuring Nimbus look and feel!", e);
-            // If Nimbus is not available, you can set the GUI to another look and feel.
+            case "Light":
+                try {
+                    UIManager.setLookAndFeel(new FlatIntelliJLaf());
+                    break;
+                } catch (UnsupportedLookAndFeelException e) {
+                    e.printStackTrace();
+                }
+            case "Classic":
+            default:
+                try {
+                    for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+                        if ("Nimbus".equals(info.getName())) {
+                            UIManager.setLookAndFeel(info.getClassName());
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    LoggerFactory.getLogger(GuiUtils.class).error("Error when configuring look and feel!", e);
+                }
         }
 
         //nicer times for tooltips
@@ -191,7 +179,6 @@ public class GuiUtils {
     }
 
 
-
     public static boolean assignParameterToolTip(@NotNull final JComponent comp, @NotNull String parameterKey) {
         final String parameterKeyShort = PropertyManager.DEFAULTS.shortKey(parameterKey);
         if (PropertyManager.DEFAULTS.getConfigValue(parameterKeyShort) != null) {
@@ -211,8 +198,19 @@ public class GuiUtils {
         }
     }
 
-
     public static final int toolTipWidth = 500;
+
+    public static String formatAndStripToolTip(String... lines) {
+        return formatAndStripToolTip(Arrays.asList(lines));
+    }
+
+    public static String formatAndStripToolTip(List<String> lines) {
+        return formatToolTip(lines.stream()
+                .filter(Objects::nonNull)
+                .map(l -> l.replaceAll("\\s*%n\\s*", ""))
+                .map(l -> l.replaceAll("\\s*@\\|.*\\|@\\s*", ""))
+                .toList());
+    }
 
     public static String formatToolTip(String... lines) {
         return formatToolTip(toolTipWidth, lines);
@@ -231,9 +229,8 @@ public class GuiUtils {
     public static String formatToolTip(int width, java.util.List<String> lines) {
         if (lines == null || lines.isEmpty())
             return null;
-        width = Math.min(width, lines.stream().mapToInt(TOOL_TIP_FONT_METRIC::stringWidth).max().orElse(width));
         return "<html><p width=\"" + width + "\">"
-                + lines.stream().map(it -> it.replace("\n", "<br>")).collect(Collectors.joining("<br>"))
+                + lines.stream().filter(Objects::nonNull).map(it -> it.replace("\n", "<br>")).collect(Collectors.joining("<br>"))
                 + "</p></html>";
     }
 
@@ -286,19 +283,16 @@ public class GuiUtils {
         return p;
     }
 
-    public static void openURL(URI url) throws IOException {
-        openURL(url, true);
+    public static void openURL(@NotNull Frame owner, URI url) throws IOException {
+        openURL(owner, url, true);
     }
 
-    public static void openURL(URI url, boolean useSystemBrowser) throws IOException {
-        openURL(url, null, useSystemBrowser);
+    public static void openURL(@NotNull Frame owner, URI url, boolean useSystemBrowser) throws IOException {
+        openURL(owner, url, null, useSystemBrowser);
     }
 
-    public static void openURL(URI url, @Nullable String title, boolean useSystemBrowser) throws IOException {
-        openURL(MF, url, title, useSystemBrowser);
-    }
 
-    public static void openURL(@NotNull JFrame owner, @NotNull URI url, String title, boolean useSystemBrowser) throws IOException {
+    public static void openURL(@NotNull Frame owner, @NotNull URI url, String title, boolean useSystemBrowser) throws IOException {
         if (url == null)
             new ExceptionDialog(owner, "Cannot open empty URL!");
 
@@ -313,5 +307,51 @@ public class GuiUtils {
         }
 
         new WebViewBrowserDialog(owner, title == null ? "SIRIUS WebView" : title, url);
+    }
+
+    /**
+     * Adds a key binding to close the given dialog on pressing escape
+     */
+    public static void closeOnEscape(JDialog dialog) {
+        JRootPane rootPane = dialog.getRootPane();
+        String escapePressed = "escapePressed";
+        rootPane.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("ESCAPE"), escapePressed);
+        rootPane.getActionMap().put(escapePressed, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dialog.dispatchEvent(new WindowEvent(dialog, WindowEvent.WINDOW_CLOSING));
+            }
+        });
+    }
+
+    public static int getComponentIndex(JComponent parent, JComponent child) {
+        for (int i = 0; i < parent.getComponentCount(); ++i) {
+            if (parent.getComponent(i).equals(child)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public static <T extends DescriptiveOptions> JComboBox<T> makeParameterComboBoxFromDescriptiveValues(T[] options) {
+        return makeParameterComboBoxFromDescriptiveValues(options, null);
+    }
+    public static <T extends DescriptiveOptions> JComboBox<T> makeParameterComboBoxFromDescriptiveValues(T[] options, @Nullable T defaultSelection) {
+        JComboBox<T> box = new JComboBox<>(options);
+        if (options.length > 0) {
+            box.setToolTipText(options[0].getDescription());
+        }
+        box.addItemListener(e -> {
+            if (e.getStateChange() != ItemEvent.SELECTED) {
+                return;
+            }
+            final DescriptiveOptions source = (DescriptiveOptions) e.getItem();
+            box.setToolTipText(source.getDescription());
+        });
+
+        if (defaultSelection != null && Arrays.asList(options).contains(defaultSelection))
+            box.setSelectedItem(defaultSelection);
+
+        return box;
     }
 }

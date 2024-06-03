@@ -19,6 +19,8 @@
 
 package de.unijena.bioinf.ms.gui.io.filefilter;
 
+import de.unijena.bioinf.babelms.MsExperimentParser;
+
 import javax.swing.filechooser.FileFilter;
 import java.io.File;
 
@@ -28,19 +30,12 @@ public class MsBatchDataFormatFilter extends FileFilter {
 	public boolean accept(File f) {
 		if(f.isDirectory()) return true;
 		String name = f.getName();name = name.toLowerCase();
-        return name.endsWith(".ms")
-				|| name.endsWith(".mgf")
-				|| name.endsWith(".cef")
-				|| name.endsWith(".msp")
-				|| name.endsWith(".mat")  // MS-Finder format
-				|| name.endsWith(".txt") //Massbank format
-				|| name.endsWith(".mzml")
-				|| name.endsWith(".mzxml");
+		return MsExperimentParser.isSupportedFileName(name);
     }
 
 	@Override
 	public String getDescription() {
-		return ".ms, .mgf, .cef, .msp, .mat, .txt, .mzml, .mzxml";
+		return MsExperimentParser.DESCRIPTION;
 	}
 
 }

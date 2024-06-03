@@ -24,8 +24,8 @@ import de.unijena.bioinf.jjobs.JJobTable;
 import de.unijena.bioinf.jjobs.JJobTableFormat;
 import de.unijena.bioinf.jjobs.SwingJJobContainer;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.table.SiriusTableCellRenderer;
 import de.unijena.bioinf.ms.gui.logging.JobLogDialog;
+import de.unijena.bioinf.ms.gui.table.SiriusTableCellRenderer;
 
 import javax.swing.*;
 import java.awt.*;
@@ -33,13 +33,19 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class JobDialog extends JDialog {
+    private static JobDialog INSTANCE = null;
 
-    protected JFrame owner;
+    public synchronized static JobDialog INSTANCE() {
+        if (INSTANCE == null)
+            return INSTANCE = new JobDialog();
+        return INSTANCE;
+    }
 
-    public JobDialog(JFrame owner) {
-        super(owner, "Jobs", false);
-        this.owner = owner;
-
+    private JobDialog() {
+        this(null);
+    }
+    private JobDialog(JFrame owner) {
+        super(owner, "Jobs (All Projects)", false);
 
         JJobManagerPanel managerPanel = createJobManagerPanel();
 
@@ -84,7 +90,7 @@ public class JobDialog extends JDialog {
         });
 
         jobTable.getSelectionModel().addListSelectionListener(e -> {
-            final boolean enabled = e.getFirstIndex() >= 0;
+            final boolean enabled = e.getLastIndex() >= 0;
             cancelB.setEnabled(enabled);
             openLogb.setEnabled(enabled);
         });

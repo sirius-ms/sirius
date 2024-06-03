@@ -19,54 +19,74 @@
 
 package de.unijena.bioinf.ms.gui.actions;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.BatchComputeDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.nightsky.sdk.model.BackgroundComputationsStateEvent;
+import de.unijena.bioinf.sse.DataEventType;
+import de.unijena.bioinf.sse.DataObjectEvent;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.util.List;
+import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
-public class ComputeAllAction extends AbstractAction {
+public class ComputeAllAction extends AbstractGuiAction {
     private final static AtomicBoolean isActive = new AtomicBoolean(false);
 
-    public ComputeAllAction() {
-        super();
+    public ComputeAllAction(SiriusGui gui) {
+        super(gui);
         computationCanceled();
-        setEnabled(false);
 
         //filtered Workspace Listener
-        MF.getCompoundList().getCompoundList().addListEventListener(listChanges ->
-                setEnabled(listChanges.getSourceList().size() > 0));
+        this.mainFrame.getCompoundList().getCompoundList().addListEventListener(listChanges ->
+                setEnabled(!listChanges.getSourceList().isEmpty()));
+
+        setEnabled(!mainFrame.getCompoundList().getCompoundList().isEmpty());
 
         //Listen if there are active gui jobs
-        Jobs.MANAGER().getJobs().addListEventListener(listChanges -> {
-            if (Jobs.MANAGER().hasActiveJobs()) {
+        gui.acceptSiriusClient((client, pid) -> client.addEventListener(evt -> {
+            DataObjectEvent<BackgroundComputationsStateEvent> eventData = ((DataObjectEvent<BackgroundComputationsStateEvent>) evt.getNewValue());
+            if (eventData.getData().getNumberOfRunningJobs() > 0) {
                 computationStarted();
             } else {
                 computationCanceled();
             }
-        });
+        }, pid, DataEventType.BACKGROUND_COMPUTATIONS_STATE));
+        checkState();
     }
 
+    private void checkState() {
+        gui.acceptSiriusClient((client, pid) -> {
+            if (client.jobs().hasJobs(pid, false))
+                computationStarted();
+            else
+                computationCanceled();
+        });
+
+
+    }
 
     @Override
     public void actionPerformed(ActionEvent e) {
         if (isActive.get()) {
-            Jobs.runInBackgroundAndLoad(MF, "Canceling Jobs...", Jobs::cancelAllRuns);
+            Jobs.runInBackgroundAndLoad(mainFrame, "Canceling Jobs...", () -> {
+                gui.acceptSiriusClient((c, pid) -> c.jobs().deleteJobs(pid, true, true));
+                checkState();
+            });
+
         } else {
-            if (MF.getCompounds().isEmpty()){
+            if (mainFrame.getCompounds().isEmpty()) {
                 LoggerFactory.getLogger(getClass()).warn("Not instances to compute! Closing Compute Dialog...");
                 return;
             }
-            new BatchComputeDialog(MF, List.copyOf(MF.getCompounds()));
+            new BatchComputeDialog(gui, Collections.unmodifiableList(mainFrame.getCompounds()));
         }
     }
 
@@ -77,7 +97,7 @@ public class ComputeAllAction extends AbstractAction {
         putValue(Action.LARGE_ICON_KEY, Icons.RUN_32);
         putValue(Action.SMALL_ICON, Icons.RUN_16);
         putValue(Action.SHORT_DESCRIPTION, "Compute all compounds");
-        setEnabled(!MF.getCompoundList().getCompoundList().isEmpty());
+        setEnabled(!mainFrame.getCompoundList().getCompoundList().isEmpty());
     }
 
     private void computationStarted() {
@@ -87,7 +107,7 @@ public class ComputeAllAction extends AbstractAction {
         putValue(Action.LARGE_ICON_KEY, Icons.CANCEL_32);
         putValue(Action.SMALL_ICON, Icons.CANCEL_16);
         putValue(Action.SHORT_DESCRIPTION, "Cancel all running computations");
-        setEnabled(!MF.getCompoundList().getCompoundList().isEmpty());
+        setEnabled(!mainFrame.getCompoundList().getCompoundList().isEmpty());
     }
 
 }

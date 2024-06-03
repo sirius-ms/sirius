@@ -22,42 +22,55 @@ package de.unijena.bioinf.ms.gui.fingerid;
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.FilterList;
 import ca.odell.glazedlists.SortedList;
-import de.unijena.bioinf.chemdb.PubmedLinks;
 import de.unijena.bioinf.ms.gui.table.*;
+import lombok.Getter;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 
-/**
- * Created by fleisch on 15.05.17.
- */
 public class CandidateListTableView extends CandidateListView {
 
-    private final ActionTable<FingerprintCandidateBean> table;
     private SortedList<FingerprintCandidateBean> sortedSource;
+
+    @Getter
+    private ActionTable<FingerprintCandidateBean> table;
 
     public CandidateListTableView(final StructureList list) {
         super(list);
 
-        getSource().addActiveResultChangedListener((experiment, sre, resultElements, selections) -> {
-            if (experiment == null || experiment.stream().noneMatch(e -> e.getFingerprintResult().isPresent()))
-                showCenterCard(ActionList.ViewState.NOT_COMPUTED);
-            else if (resultElements.isEmpty())
-                showCenterCard(ActionList.ViewState.EMPTY);
-            else
-                showCenterCard(ActionList.ViewState.DATA);
+        getSource().addActiveResultChangedListener((instanceBean, sre, resultElements, selections) -> {
+            try {
+                filteredSelectionModel.setValueIsAdjusting(true);
+                filteredSelectionModel.clearSelection();
+                if (instanceBean == null) //todo nighsky: how to check if fingerprint was computed
+                    showCenterCard(ActionList.ViewState.NOT_COMPUTED);
+                else if (resultElements.isEmpty())
+                    showCenterCard(ActionList.ViewState.EMPTY);
+                else
+                    showCenterCard(ActionList.ViewState.DATA);
+                if (!getSource().getElementListSelectionModel().isSelectionEmpty())
+                    filteredSelectionModel.setSelectionInterval(getSource().getElementListSelectionModel().getMinSelectionIndex(), getSource().getElementListSelectionModel().getMaxSelectionIndex());
+            } catch (Exception e) {
+                LoggerFactory.getLogger(getClass()).warn("Error when resetting selection for elementList", e);
+            } finally {
+                filteredSelectionModel.setValueIsAdjusting(false);
+            }
         });
 
         final CandidateTableFormat tf = new CandidateTableFormat(getSource().getBestFunc());
-        this.table = new ActionTable<>(filteredSource, sortedSource, tf);
+        table = new ActionTable<>(filteredSource, sortedSource, tf);
 
         table.setSelectionModel(filteredSelectionModel);
         final SiriusResultTableCellRenderer defaultRenderer = new SiriusResultTableCellRenderer(tf.highlightColumnIndex());
         table.setDefaultRenderer(Object.class, defaultRenderer);
 
+        table.getTableHeader().setDefaultRenderer(new CandidateListTableHeaderRenderer());
+
         table.getColumnModel().getColumn(5).setCellRenderer(new ListStatBarTableCellRenderer<>(tf.highlightColumnIndex(), source.csiScoreStats, false, false, null));
         table.getColumnModel().getColumn(6).setCellRenderer(new BarTableCellRenderer(tf.highlightColumnIndex(), 0f, 1f, true));
-        LinkedSiriusTableCellRenderer linkRenderer = new LinkedSiriusTableCellRenderer(defaultRenderer, (LinkedSiriusTableCellRenderer.LinkCreator<PubmedLinks>) s -> s == null ? null : s.getPubmedLink());
-        linkRenderer.registerToTable(table, 7);
+        //todo nightsky: add pubmed link feature!
+//        LinkedSiriusTableCellRenderer linkRenderer = new LinkedSiriusTableCellRenderer(defaultRenderer, (LinkedSiriusTableCellRenderer.LinkCreator<PubmedLinks>) s -> s == null ? null : s.getPubmedLink());
+//        linkRenderer.registerToTable(table, 6);
 
         addToCenterCard(ActionList.ViewState.DATA, new JScrollPane(table, ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED));
         showCenterCard(ActionList.ViewState.NOT_COMPUTED);

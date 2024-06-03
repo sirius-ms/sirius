@@ -25,7 +25,8 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.WrapLayout;
-import de.unijena.bioinf.projectspace.FormulaResultBean;
+import de.unijena.bioinf.projectspace.InstanceBean;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -35,10 +36,12 @@ import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class DBFilterPanel extends JPanel implements ActiveElementChangedListener<FingerprintCandidateBean, Set<FormulaResultBean>>, CustomDataSources.DataSourceChangeListener {
-    public final static Set<String> BLACK_LIST = Set.of(/*DataSource.ADDITIONAL.realName,*/ DataSource.ALL.realName, DataSource.ALL_BUT_INSILICO.realName,
-            DataSource.PUBCHEMANNOTATIONBIO.realName, DataSource.PUBCHEMANNOTATIONDRUG.realName, DataSource.PUBCHEMANNOTATIONFOOD.realName, DataSource.PUBCHEMANNOTATIONSAFETYANDTOXIC.realName,
-            DataSource.SUPERNATURAL.realName
+public class DBFilterPanel extends JPanel implements ActiveElementChangedListener<FingerprintCandidateBean, InstanceBean>, CustomDataSources.DataSourceChangeListener {
+    public final static Set<String> NON_FILTERABLE = Set.of(
+            DataSource.ALL.name(),
+            DataSource.PUBCHEMANNOTATIONBIO.name(), DataSource.PUBCHEMANNOTATIONDRUG.name(),
+            DataSource.PUBCHEMANNOTATIONFOOD.name(), DataSource.PUBCHEMANNOTATIONSAFETYANDTOXIC.name(),
+            DataSource.SUPERNATURAL.name()
     );
 
     private final Queue<FilterChangeListener> listeners = new ConcurrentLinkedQueue<>();
@@ -53,8 +56,11 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
         setBorder(BorderFactory.createEmptyBorder(0, 0, GuiUtils.SMALL_GAP, 0));
         this.checkboxes = new ArrayList<>(CustomDataSources.size());
         for (CustomDataSources.Source source : CustomDataSources.sources()) {
-            if (!BLACK_LIST.contains(source.name()))
-                checkboxes.add(new JCheckBox(source.name()));
+            if (!NON_FILTERABLE.contains(source.name())){
+                JCheckBox b = new JCheckBox(source.displayName());
+                b.setName(source.name());
+                checkboxes.add(b);
+            }
         }
         addBoxes();
         CustomDataSources.addListener(this);
@@ -75,14 +81,14 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
         this.bitSet = 0L;
         for (final JCheckBox box : checkboxes) {
             if (box.isSelected())
-                this.bitSet |= CustomDataSources.getSourceFromName(box.getText()).flag();
+                this.bitSet |= CustomDataSources.getSourceFromName(box.getName()).flag();
             add(box);
             box.addChangeListener(e -> {
                 if (!isRefreshing.get()) {
                     if (box.isSelected())
-                        bitSet |= CustomDataSources.getSourceFromName(box.getText()).flag();
+                        bitSet |= CustomDataSources.getSourceFromName(box.getName()).flag();
                     else
-                        bitSet &= ~CustomDataSources.getSourceFromName(box.getText()).flag();
+                        bitSet &= ~CustomDataSources.getSourceFromName(box.getName()).flag();
                     fireFilterChangeEvent();
                 }
             });
@@ -108,30 +114,27 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
     }
 
     @Override
-    public void resultsChanged(Set<FormulaResultBean> datas, FingerprintCandidateBean sre, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
+    public void resultsChanged(InstanceBean elementsParent, FingerprintCandidateBean selectedElement, List<FingerprintCandidateBean> resultElements, ListSelectionModel selections) {
         reset();
     }
 
     @Override
-    public void fireDataSourceChanged(Collection<String> changes) {
+    public void fireDataSourceChanged(CustomDataSources.Source change, boolean removed) {
         Jobs.runEDTLater(() -> {
-            HashSet<String> changed = new HashSet<>(changes);
             isRefreshing.set(true);
             boolean c = false;
-            Iterator<JCheckBox> it = checkboxes.iterator();
 
-            while (it.hasNext()) {
-                JCheckBox checkbox = it.next();
-                if (changed.remove(checkbox.getText())) {
-                    it.remove();
+            if (removed)
+                c = checkboxes.removeIf(b -> b.getName().equals(change.name()));
+            else
+                if (checkboxes.stream().noneMatch(b -> b.getName().equals(change.name()))){
+                    JCheckBox b = new JCheckBox(change.displayName());
+                    b.setName(change.name());
+                    checkboxes.add(b);
                     c = true;
+                } else {
+                    LoggerFactory.getLogger(getClass()).warn("Got change request to add DataSource '" + change.name() + "', but it already exists? Ignoring!");
                 }
-            }
-
-            for (String name : changed) {
-                checkboxes.add(new JCheckBox(name));
-                c = true;
-            }
 
             if (c) {
                 removeAll();
@@ -140,8 +143,6 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
                 repaint();
                 fireFilterChangeEvent();
             }
-
-
             isRefreshing.set(false);
         });
     }
