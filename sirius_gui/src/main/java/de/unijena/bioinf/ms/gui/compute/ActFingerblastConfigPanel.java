@@ -31,7 +31,7 @@ public class ActFingerblastConfigPanel extends ActivatableConfigPanel<Fingerblas
 
     @Override
     protected void setButtonEnabled(boolean enabled) {
-        setButtonEnabled(enabled, enabled ? "Enable CSI:FingerID search" : "Can't connect to CSI:FingerID server!");
+        setButtonEnabled(enabled,"Can't connect to structure db server!");
     }
 
     @Override

@@ -47,7 +47,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
-
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
@@ -180,7 +179,6 @@ public class GuiUtils {
     }
 
 
-
     public static boolean assignParameterToolTip(@NotNull final JComponent comp, @NotNull String parameterKey) {
         final String parameterKeyShort = PropertyManager.DEFAULTS.shortKey(parameterKey);
         if (PropertyManager.DEFAULTS.getConfigValue(parameterKeyShort) != null) {
@@ -200,8 +198,19 @@ public class GuiUtils {
         }
     }
 
-
     public static final int toolTipWidth = 500;
+
+    public static String formatAndStripToolTip(String... lines) {
+        return formatAndStripToolTip(Arrays.asList(lines));
+    }
+
+    public static String formatAndStripToolTip(List<String> lines) {
+        return formatToolTip(lines.stream()
+                .filter(Objects::nonNull)
+                .map(l -> l.replaceAll("\\s*%n\\s*", ""))
+                .map(l -> l.replaceAll("\\s*@\\|.*\\|@\\s*", ""))
+                .toList());
+    }
 
     public static String formatToolTip(String... lines) {
         return formatToolTip(toolTipWidth, lines);
@@ -221,7 +230,7 @@ public class GuiUtils {
         if (lines == null || lines.isEmpty())
             return null;
         return "<html><p width=\"" + width + "\">"
-                + lines.stream().map(it -> it.replace("\n", "<br>")).collect(Collectors.joining("<br>"))
+                + lines.stream().filter(Objects::nonNull).map(it -> it.replace("\n", "<br>")).collect(Collectors.joining("<br>"))
                 + "</p></html>";
     }
 
