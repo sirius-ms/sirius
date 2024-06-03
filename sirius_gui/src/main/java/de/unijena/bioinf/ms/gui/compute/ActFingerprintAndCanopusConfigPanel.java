@@ -21,12 +21,11 @@ package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ActFingerprintAndCanopusConfigPanel extends ActivatableConfigPanel<FingerprintAndCanopusConfigPanel> {
     public ActFingerprintAndCanopusConfigPanel(@NotNull SiriusGui gui) {
-        super(gui, "Predict", GuiUtils.formatToolTip(FingerprintAndCanopusConfigPanel.description),
+        super(gui, "Predict", FingerprintAndCanopusConfigPanel.description,
                 Icons.FINGER_32, true, FingerprintAndCanopusConfigPanel::new);
     }
 
@@ -37,6 +36,6 @@ public class ActFingerprintAndCanopusConfigPanel extends ActivatableConfigPanel<
 
     @Override
     protected void setButtonEnabled(boolean enabled) {
-        setButtonEnabled(enabled, enabled ? "Enable prediction" : "Can't connect to prediction server!");
+        setButtonEnabled(enabled, "Can't connect to prediction server!");
     }
 }

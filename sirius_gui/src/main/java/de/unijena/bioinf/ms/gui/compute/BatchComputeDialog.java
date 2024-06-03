@@ -27,7 +27,10 @@ import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchOption
 import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.dialogs.*;
+import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
+import de.unijena.bioinf.ms.gui.dialogs.InfoDialog;
+import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
+import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.nightsky.sdk.model.*;
@@ -50,7 +53,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.*;
+import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
+import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isWarningOnly;
 
 
 public class BatchComputeDialog extends JDialog {
@@ -83,6 +87,7 @@ public class BatchComputeDialog extends JDialog {
 
     public BatchComputeDialog(SiriusGui gui, List<InstanceBean> compoundsToProcess) {
         super(gui.getMainFrame(), "Compute", true);
+        gui.getConnectionMonitor().checkConnectionInBackground();
         this.gui = gui;
         this.compoundsToProcess = compoundsToProcess;
         final boolean ms2 = compoundsToProcess.stream().anyMatch(inst -> !inst.getMsData().getMs2Spectra().isEmpty());
@@ -214,11 +219,26 @@ public class BatchComputeDialog extends JDialog {
             if (getMaximumSize().width < getPreferredSize().width)
                 mainSP.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             configureActions();
+
+            checkResult = gui.getConnectionMonitor().getCurrentCheckResult();
         });
 
         pack();
         setLocationRelativeTo(getParent());
         setVisible(true);
+    }
+
+    @Override
+    public void dispose() {
+        try {
+            super.dispose();
+        } finally {
+            formulaIDConfigPanel.destroy(); //Sirius configs
+            zodiacConfigs.destroy(); //Zodiac configs
+            fingerprintAndCanopusConfigPanel.destroy(); //Combines CSI:FingerID predict and CANOPUS configs
+            csiSearchConfigs.destroy(); //CSI:FingerID search configs
+            msNovelistConfigs.destroy(); //MsNovelist configs
+        }
     }
 
     private MainFrame mf() {
@@ -489,52 +509,43 @@ public class BatchComputeDialog extends JDialog {
         return false;
     }
 
-    private void checkConnection() {
-        if (checkResult == null)
-            checkResult = CheckConnectionAction.checkConnectionAndLoad(gui);
-
-        if (checkResult != null) {
-            if (isConnected(checkResult)) {
-                if ((fingerprintAndCanopusConfigPanel.isToolSelected() || csiSearchConfigs.isToolSelected() || msNovelistConfigs.isToolSelected()) && isWorkerWarning(checkResult)) {
-                    if (checkResult.getWorkerInfo() == null ||
-                            (!checkResult.isSupportsNegPredictorTypes()
-                                    && compoundsToProcess.stream().anyMatch(it -> it.getIonType().isNegative())) ||
-
-                            (!checkResult.isSupportsPosPredictorTypes()
-                                    && compoundsToProcess.stream().anyMatch(it -> it.getIonType().isPositive()))
-                    ) new WorkerWarningDialog(gui, checkResult.getWorkerInfo() == null);
-                }
-            } else {
-                if (formulaIDConfigPanel.content.getFormulaSearchDBs() != null) {
-                    new WarnFormulaSourceDialog(mf());
-                    formulaIDConfigPanel.content.getSearchDBList().checkBoxList.uncheckAll();
-                }
-            }
-        } else {
-            if (formulaIDConfigPanel.content.getFormulaSearchDBs() != null) {
-                new WarnFormulaSourceDialog(mf());
-                formulaIDConfigPanel.content.getSearchDBList().checkBoxList.uncheckAll();
-            }
-        }
-    }
-
-    public void initSingleExperimentDialog() {
-        JPanel north = new JPanel(new BorderLayout());
-        north.setBorder(BorderFactory.createEmptyBorder(GuiUtils.SMALL_GAP, 0, GuiUtils.SMALL_GAP, 0));
-
-        add(north, BorderLayout.NORTH);
-    }
-
-    private static class WarnFormulaSourceDialog extends WarningDialog {
-        private final static String DONT_ASK_KEY = PropertyManager.PROPERTY_BASE + ".sirius.computeDialog.formulaSourceWarning.dontAskAgain";
-        public static final String FORMULA_SOURCE_WARNING_MESSAGE =
-                "<b>Warning:</b> No connection to webservice available! <br>" +
-                        "Online databases cannot be used for formula identification.<br> " +
-                        "If online databases are selected, the default option <br>" +
-                        "(all molecular formulas) will be used instead. Spectral library matching will also not be performed.";
-
-        public WarnFormulaSourceDialog(Frame owner) {
-            super(owner, FORMULA_SOURCE_WARNING_MESSAGE, DONT_ASK_KEY);
-        }
-    }
+    //todo reenable in the future?
+//    private void checkConnection(ConnectionCheck checkResult) {
+//       if (checkResult != null) {
+//            if (isConnected(checkResult)) {
+//                if ((fingerprintAndCanopusConfigPanel.isToolSelected() || csiSearchConfigs.isToolSelected() || msNovelistConfigs.isToolSelected()) && isWorkerWarning(checkResult)) {
+//                    if (checkResult.getWorkerInfo() == null ||
+//                            (!checkResult.isSupportsNegPredictorTypes()
+//                                    && compoundsToProcess.stream().anyMatch(it -> it.getIonType().isNegative())) ||
+//
+//                            (!checkResult.isSupportsPosPredictorTypes()
+//                                    && compoundsToProcess.stream().anyMatch(it -> it.getIonType().isPositive()))
+//                    ) new WorkerWarningDialog(gui, checkResult.getWorkerInfo() == null);
+//                }
+//            } else {
+//                if (formulaIDConfigPanel.content.getFormulaSearchDBs() != null) {
+//                    new WarnFormulaSourceDialog(mf());
+//                    formulaIDConfigPanel.content.getSearchDBList().checkBoxList.uncheckAll();
+//                }
+//            }
+//        } else {
+//            if (formulaIDConfigPanel.content.getFormulaSearchDBs() != null) {
+//                new WarnFormulaSourceDialog(mf());
+//                formulaIDConfigPanel.content.getSearchDBList().checkBoxList.uncheckAll();
+//            }
+//        }
+//    }
+//
+//    private static class WarnFormulaSourceDialog extends WarningDialog {
+//        private final static String DONT_ASK_KEY = PropertyManager.PROPERTY_BASE + ".sirius.computeDialog.formulaSourceWarning.dontAskAgain";
+//        public static final String FORMULA_SOURCE_WARNING_MESSAGE =
+//                "<b>Warning:</b> No connection to webservice available! <br>" +
+//                        "Online databases cannot be used for formula identification.<br> " +
+//                        "If online databases are selected, the default option <br>" +
+//                        "(all molecular formulas) will be used instead. Spectral library matching will also not be performed.";
+//
+//        public WarnFormulaSourceDialog(Frame owner) {
+//            super(owner, FORMULA_SOURCE_WARNING_MESSAGE, DONT_ASK_KEY);
+//        }
+//    }
 }

@@ -28,6 +28,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.LicenseInfo;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionError;
 import org.jdesktop.beans.AbstractBean;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.ThreadSafe;
@@ -84,6 +85,14 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
 
     private synchronized void removeCheckJob() {
         checkJob = null;
+    }
+
+    @Nullable
+    public synchronized ConnectionCheck getCurrentCheckResult(){
+        if (checkResult == null)
+            if (checkJob != null)
+                return checkJob.getResult();
+        return checkResult;
     }
 
 
