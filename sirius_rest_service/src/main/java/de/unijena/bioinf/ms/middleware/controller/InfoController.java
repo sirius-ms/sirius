@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
 import de.unijena.bioinf.ms.middleware.model.info.Info;
 import de.unijena.bioinf.ms.middleware.service.info.ConnectionChecker;
+import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -53,22 +54,37 @@ public class InfoController {
     @RequestMapping(value = "/api/info", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
     public Info getInfo() {
-        String dbDate = "N/A";
-        try {
-            dbDate = Optional.ofNullable(siriusContext.webAPI().getChemDbDate()).orElse("N/A");
-        } catch (Exception e) {
-            log.warn("Could not get chemDbDate because of: {}", e.getMessage());
-        }
-        return Info.builder()
-                .chemDbVersion(dbDate)
+
+        Info.InfoBuilder b = Info.builder()
+                .chemDbVersion("N/A")
                 .nightSkyApiVersion(siriusContext.getApiVersion())
                 .siriusVersion(ApplicationCore.VERSION())
                 .siriusLibVersion(FingerIDProperties.siriusVersion())
                 .fingerIdLibVersion(FingerIDProperties.fingeridFullVersion())
                 .availableILPSolvers(TreeBuilderFactory.getInstance().getAvailableBuilders())
                 .fingerIdModelVersion("N/A") //todo add model version in a performant way.
-                .fingerprintId(ChemicalDatabase.FINGERPRINT_ID)
-                .build();
+                .fingerprintId(ChemicalDatabase.FINGERPRINT_ID);
+
+        try {
+            VersionsInfo info = siriusContext.webAPI().getVersionInfo(true);
+            if (info != null){
+                b.chemDbVersion(info.databaseDate);
+                b.latestSiriusVersion(info.getLatestSiriusVersion().toString());
+                b.latestSiriusLink(info.getLatestSiriusLink());
+                b.updateAvailable(ApplicationCore.VERSION_OBJ().compareTo(info.getLatestSiriusVersion()) < 0);
+            } else {
+                try {
+                    String dbDate = Optional.ofNullable(siriusContext.webAPI().getChemDbDate()).orElse("N/A");
+                    b.chemDbVersion(dbDate);
+                } catch (Exception e) {
+                    log.warn("Could not get chemDbDate because of: {}", e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Could not get VersionsInfo because of: {}", e.getMessage());
+        }
+
+        return b.build();
     }
 
     @RequestMapping(value = "/api/connection-status", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)

@@ -41,6 +41,26 @@ public class Info {
      */
     @Schema(nullable = true)
     private final String siriusVersion;
+
+    /**
+     * Latest available Version of the SIRIUS application
+     */
+    @Schema(nullable = true)
+    private final String latestSiriusVersion;
+
+    /**
+     * Link to the latest available Version of the SIRIUS application
+     */
+    @Schema(nullable = true)
+    private final String latestSiriusLink;
+
+    /**
+     * true if newer SIRIUS version is available
+     */
+    @Schema(nullable = false)
+    private final boolean updateAvailable;
+
+
     /**
      * Version of the SIRIUS libraries
      */
