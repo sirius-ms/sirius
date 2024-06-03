@@ -19,77 +19,83 @@
 
 package de.unijena.bioinf.ms.gui.mainframe.result_panel;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassBean;
 import de.unijena.bioinf.ms.gui.canopus.compound_classes.CompoundClassList;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
-import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintTable;
+import de.unijena.bioinf.ms.gui.fingerid.fingerprints.FingerprintList;
 import de.unijena.bioinf.ms.gui.lcms_viewer.LCMSViewerPanel;
+import de.unijena.bioinf.ms.gui.mainframe.instance_panel.CompoundList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.*;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaListHeaderPanel;
-import de.unijena.bioinf.ms.gui.table.ActionList;
-import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.webapi.WebAPI;
+import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
+import de.unijena.bioinf.ms.nightsky.sdk.model.CanopusPrediction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.io.IOException;
+import java.util.List;
+import java.util.Objects;
 
 public class ResultPanel extends JTabbedPane {
 
     protected static final Logger logger = LoggerFactory.getLogger(ResultPanel.class);
 
+    public final SpectralMatchingPanel spectralMatchingPanel;
+
     public final FormulaOverviewPanel formulasTab;
-    public final TreeVisualizationPanel treeTab;
-    public final SpectraVisualizationPanel spectrumTab;
 
     public final LCMSViewerPanel lcmsTab;
 
     public final CandidateListDetailViewPanel structuresTab;
+    public final DeNovoStructureListDetailViewPanel deNovoStructuresTab;
     public final EpimetheusPanel structureAnnoTab;
     public final FingerprintPanel fpTab;
     public final CompoundClassPanel canopusTab;
 
-    private final FormulaList fl;
-
-    public ResultPanel(final FormulaList siriusResultElements, WebAPI webAPI) {
+    public ResultPanel(final StructureList databaseStructureList, final StructureList combinedStructureListSubstructureView, final StructureList combinedStructureListDeNovoView, final FormulaList siriusResultElements, final SpectralMatchList spectralMatchList, SiriusGui gui) {
         super();
         this.setToolTipText("Results");
 
+        spectralMatchingPanel = new SpectralMatchingPanel(spectralMatchList);
         formulasTab = new FormulaOverviewPanel(siriusResultElements);
-        treeTab = new TreeVisualizationPanel();
-        spectrumTab = new SpectraVisualizationPanel(PropertyManager.getBoolean("de.unijena.bioinf.spec_viewer.sirius.anopanel", false));
 
-        this.lcmsTab = new LCMSViewerPanel(siriusResultElements);
+        this.lcmsTab = new LCMSViewerPanel(siriusResultElements); //todo LCMS: reactivate if LCMS Data structures are done!
 
-        structureAnnoTab = new EpimetheusPanel(new StructureList(siriusResultElements, ActionList.DataSelectionStrategy.ALL));
-        structuresTab = new CandidateListDetailViewPanel(new StructureList(siriusResultElements));
+        structureAnnoTab = new EpimetheusPanel(combinedStructureListSubstructureView);
+        structuresTab = new CandidateListDetailViewPanel(this, databaseStructureList, gui);
+        deNovoStructuresTab = new DeNovoStructureListDetailViewPanel(this, combinedStructureListDeNovoView, gui);
         FingerprintPanel fpTabTmp;
         try {
-            fpTabTmp = new FingerprintPanel(new FingerprintTable(siriusResultElements, webAPI));
+            fpTabTmp = new FingerprintPanel(new FingerprintList(siriusResultElements, gui));
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
             fpTabTmp = null;
         }
 
         fpTab = fpTabTmp;
-        canopusTab = new CompoundClassPanel(new CompoundClassList(siriusResultElements), siriusResultElements);
+        canopusTab = new CompoundClassPanel(
+                new CompoundClassList(siriusResultElements, sre ->
+                        sre.getCanopusPrediction()
+                                .stream().map(CanopusPrediction::getClassyFireClasses).filter(Objects::nonNull)
+                                .flatMap(List::stream).map(CompoundClassBean::new).toList()), siriusResultElements
+        );
 
 
-        addTab("LC-MS", null, lcmsTab, lcmsTab.getDescription());
+        addTab("LC-MS", null, lcmsTab, lcmsTab.getDescription()); //todo LCMS: reactivate if LCMS Data structures are done!
 
-        addTab("Formulas"/*""Sirius Overview"*/, null, formulasTab, formulasTab.getDescription());
-        addTab("Spectra", null, new FormulaListHeaderPanel(siriusResultElements, spectrumTab), spectrumTab.getDescription());
-        addTab("Trees", null, new FormulaListHeaderPanel(siriusResultElements, treeTab), treeTab.getDescription());
+        addTab("Formulas", null, formulasTab, formulasTab.getDescription());
 
-        addTab("Predicted Fingerprint", null, new FormulaListHeaderPanel(siriusResultElements, fpTab), fpTab.getDescription());
-
-        addTab("Structures", null, new FormulaListHeaderPanel(siriusResultElements, structuresTab), structuresTab.getDescription());
-        addTab("Substructure Annotation", null, structureAnnoTab, structureAnnoTab.getDescription());
-
+        addTab("Predicted Fingerprints", null, new FormulaListHeaderPanel(siriusResultElements, fpTab), fpTab.getDescription());
         addTab("Compound Classes", null, new FormulaListHeaderPanel(siriusResultElements, canopusTab), canopusTab.getDescription());
 
-        this.fl = siriusResultElements;
+        addTab("Structures", null, structuresTab, structuresTab.getDescription());
+        addTab("De Novo Structures", null, deNovoStructuresTab, deNovoStructuresTab.getDescription());
+        addTab("Substructure Annotations", null, structureAnnoTab, structureAnnoTab.getDescription());
+
+        addTab("Library Matches", null, spectralMatchingPanel, spectralMatchingPanel.getDescription());
 
         setSelectedIndex(1);
     }

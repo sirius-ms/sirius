@@ -18,11 +18,6 @@
  */
 
 package de.unijena.bioinf.ms.gui.table;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 24.01.17.
- */
 
 import ca.odell.glazedlists.EventList;
 import ca.odell.glazedlists.FilterList;
@@ -38,7 +33,7 @@ import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import javax.swing.*;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
 public class ActionTable<T extends SiriusPCS> extends JTable {
     public final TableComparatorChooser<T> comparatorChooser;
@@ -56,18 +51,4 @@ public class ActionTable<T extends SiriusPCS> extends JTable {
         setModel(new DefaultEventTableModel<>(filtered, format));
         comparatorChooser = TableComparatorChooser.install(this, sorted, AbstractTableComparatorChooser.SINGLE_COLUMN);
     }
-
-    /*public static void main(String[] args) {
-
-        ActionTable<SiriusResultElement> issuesJTable = new ActionTable<>((new ObservableElementList<>(GlazedLists.eventList(new ArrayList<SiriusResultElement>()), GlazedLists.beanConnector(SiriusResultElement.class))), new SiriusResultTableFormat());
-        JScrollPane issuesTableScrollPane = new JScrollPane(issuesJTable);
-//        panel.add(issuesTableScrollPane, new GridBagConstraints(...));
-
-        // create a frame with that panel
-        JFrame frame = new JFrame("Issues");
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        frame.setSize(540, 380);
-        frame.getContentPane().add(issuesTableScrollPane);
-        frame.show();
-    }*/
 }

@@ -19,41 +19,33 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.fingerblast;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.Tanimoto;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
+import de.unijena.bioinf.canopus.CanopusResult;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
-import de.unijena.bioinf.fingerid.*;
-import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
-import de.unijena.bioinf.fingerid.blast.FBCandidates;
+import de.unijena.bioinf.fingerid.CSIPredictor;
+import de.unijena.bioinf.fingerid.FingerIdResult;
+import de.unijena.bioinf.fingerid.FingerblastJJob;
+import de.unijena.bioinf.fingerid.FingerprintResult;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
-import de.unijena.bioinf.fingerid.blast.TopCSIScore;
-import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
-import de.unijena.bioinf.fingerid.predictor_types.PredictorTypeAnnotation;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobSubmitter;
 import de.unijena.bioinf.jjobs.Partition;
-import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
-import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
-import de.unijena.bioinf.projectspace.FormulaResult;
-import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.projectspace.FCandidate;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.fingerid.FingerIdDataProperty;
 import de.unijena.bioinf.rest.NetUtils;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
 import org.apache.commons.math3.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -62,8 +54,6 @@ import java.util.stream.Collectors;
  */
 public class FingerblastSubToolJob extends InstanceJob {
 
-    public static final List<Class<? extends DataAnnotation>> formulaResultComponentsToClear = new ArrayList<>(List.of(FTree.class, FBCandidates.class, FBCandidateFingerprints.class));
-
     public FingerblastSubToolJob(JobSubmitter submitter) {
         super(submitter);
         asSCHEDULER();
@@ -71,18 +61,22 @@ public class FingerblastSubToolJob extends InstanceJob {
 
     @Override
     public boolean isAlreadyComputed(@NotNull Instance inst) {
-        return inst.loadCompoundContainer().hasResults() && inst.loadFormulaResults(FBCandidates.class).stream().map(SScored::getCandidate).anyMatch(c -> c.hasAnnotation(FBCandidates.class));
+        return inst.hasStructureSearchResult();
     }
 
     @Override
     protected void computeAndAnnotateResult(final @NotNull Instance inst) throws Exception {
-        List<? extends SScored<FormulaResult, ? extends FormulaScore>> formulaResults =
-                inst.loadFormulaResults(FormulaScoring.class, FTree.class, FingerprintResult.class, FBCandidates.class);
+        List<FCandidate<?>> inputData = inst.getFingerblastInput().stream()
+                .filter(c -> c.hasAnnotation(CanopusResult.class))
+                .filter(c -> c.hasAnnotation(FingerprintResult.class))
+                .filter(c -> c.hasAnnotation(FTree.class))
+                .peek(c -> c.annotate(c.asFingerIdResult())) //maps fingerid result back to fcandidate
+                .toList();
 
         checkForInterruption();
 
-        if (formulaResults == null || formulaResults.isEmpty()) {
-            logInfo("Skipping instance \"" + inst.getExperiment().getName() + "\" because there are no trees computed.");
+        if (inputData.isEmpty()) {
+            logInfo("Skipping instance \"" + inst.getName() + "\" because there is not formula candidate for which ot all inputs are available (Trees, Fingerprint, Compound classes).");
             return;
         }
 
@@ -91,35 +85,22 @@ public class FingerblastSubToolJob extends InstanceJob {
         checkForInterruption();
 
         // add CSIClientData to PS if it is not already there
-        if (inst.getProjectSpaceManager().getProjectSpaceProperty(FingerIdDataProperty.class).isEmpty()) {
-            final FingerIdData pos = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE), this::checkForInterruption);
-            final FingerIdData neg = NetUtils.tryAndWait(() -> ApplicationCore.WEB_API.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE), this::checkForInterruption);
-            inst.getProjectSpaceManager().setProjectSpaceProperty(FingerIdDataProperty.class, new FingerIdDataProperty(pos, neg));
-        }
+        NetUtils.tryAndWait(() -> inst.getProjectSpaceManager().writeFingerIdDataIfMissing(ApplicationCore.WEB_API), this::checkForInterruption);
 
         updateProgress(10);
         checkForInterruption();
 
         final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor)
-                        ApplicationCore.WEB_API.getStructurePredictor(
-                                inst.getExperiment().getAnnotationOrThrow(PredictorTypeAnnotation.class)
-                                        .toPredictors(inst.getExperiment().getPrecursorIonType().getCharge()).iterator().next()),
+                        ApplicationCore.WEB_API.getStructurePredictor(inst.getIonType().getCharge()),
                 this::checkForInterruption);
 
         updateProgress(15);
         checkForInterruption();
 
-        final Map<FormulaResult, FingerIdResult> formulaResultsMap = formulaResults.stream().map(SScored::getCandidate)
-                .filter(res -> res.hasAnnotation(FingerprintResult.class))
-                .collect(Collectors.toMap(res -> res, res -> {
-                    FingerIdResult idr = new FingerIdResult(res.getAnnotationOrThrow(FTree.class));
-                    idr.setAnnotation(FingerprintResult.class, res.getAnnotationOrThrow(FingerprintResult.class));
-                    return idr;
-                }));
-
         updateProgress(20);
         {
-            final FingerblastJJob job = new FingerblastJJob(csi, ApplicationCore.WEB_API, inst.getExperiment(), new ArrayList<>(formulaResultsMap.values()));
+            final FingerblastJJob job = new FingerblastJJob(csi, ApplicationCore.WEB_API, inst.getExperiment(),
+                    inputData.stream().map(fc -> fc.getAnnotationOrThrow(FingerIdResult.class)).toList());
 
             checkForInterruption();
             // do computation and await results -> objects are already in formulaResultsMap
@@ -133,12 +114,15 @@ public class FingerblastSubToolJob extends InstanceJob {
             //calculate and annotate tanimoto scores
             List<Pair<ProbabilityFingerprint, FingerprintCandidate>> tanimotoJobs = new ArrayList<>();
             updateProgress(55);
-            formulaResultsMap.values().stream().filter(it -> it.hasAnnotation(FingerprintResult.class) && it.hasAnnotation(FingerblastResult.class)).forEach(it -> {
-                final ProbabilityFingerprint fp = it.getPredictedFingerprint();
-                it.getFingerprintCandidates().stream().map(SScored::getCandidate).forEach(candidate ->
-                        tanimotoJobs.add(Pair.create(fp, candidate))
-                );
-            });
+            inputData.stream()
+                    .map(fc -> fc.getAnnotationOrThrow(FingerIdResult.class))
+                    .filter(it -> it.hasAnnotation(FingerprintResult.class) && it.hasAnnotation(FingerblastResult.class))
+                    .forEach(it -> {
+                        final ProbabilityFingerprint fp = it.getPredictedFingerprint();
+                        it.getFingerprintCandidates().stream().map(SScored::getCandidate).forEach(candidate ->
+                                tanimotoJobs.add(Pair.create(fp, candidate))
+                        );
+                    });
 
             updateProgress(60);
             checkForInterruption();
@@ -159,43 +143,21 @@ public class FingerblastSubToolJob extends InstanceJob {
             updateProgress(70);
             jobs.forEach(JJob::getResult);
 
-            updateProgress(80);
+            updateProgress(85);
             checkForInterruption();
         }
 
+
         //annotate FingerIdResults to FormulaResult
-        for (Map.Entry<FormulaResult, FingerIdResult> entry : formulaResultsMap.entrySet()) {
-            final FormulaResult formRes = entry.getKey();
-            final FingerIdResult structRes = entry.getValue();
-            assert structRes.sourceTree == formRes.getAnnotationOrThrow(FTree.class);
-
-            // annotate results
-            formRes.setAnnotation(FBCandidates.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getCandidates).orElse(null));
-            formRes.setAnnotation(FBCandidateFingerprints.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getCandidateFingerprints).orElse(null));
-            formRes.getAnnotationOrThrow(FormulaScoring.class)
-                    .setAnnotation(TopCSIScore.class, structRes.getAnnotation(FingerblastResult.class).map(FingerblastResult::getTopHitScore).orElse(null));
-
-            formRes.getAnnotationOrThrow(FormulaScoring.class)
-                    .setAnnotation(ConfidenceScore.class, structRes.getAnnotation(ConfidenceResult.class).map(x -> x.score).orElse(null));
-
-            // write results
-            inst.updateFormulaResult(formRes,
-                    FormulaScoring.class, FingerprintResult.class, FBCandidates.class, FBCandidateFingerprints.class);
-        }
-        updateProgress(90);
-
-        final Double confidence = inst.loadTopFormulaResult(List.of(TopCSIScore.class, SiriusScore.class)).flatMap(r -> r.getAnnotation(FormulaScoring.class)).flatMap(s -> s.getAnnotation(ConfidenceScore.class)).map(ConfidenceScore::score).orElse(null);
-        inst.getID().setConfidenceScore(confidence);
-        inst.updateCompoundID();
+        inst.saveStructureSearchResult(inputData);
         updateProgress(97);
 
     }
 
     @Override
-    protected Class<? extends DataAnnotation>[] formulaResultComponentsToClear() {
-        return formulaResultComponentsToClear.toArray(Class[]::new);
+    public boolean needsProperIonizationMode() {
+        return true;
     }
-
 
     @Override
     public String getToolName() {

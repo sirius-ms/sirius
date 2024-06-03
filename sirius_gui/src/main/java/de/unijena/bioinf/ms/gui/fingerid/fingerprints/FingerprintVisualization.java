@@ -189,8 +189,8 @@ class FingerprintVisualization {
 
     private static void addNeighbours(IAtomContainer molecule, int[][] matrix, BitSet ids, TIntArrayList inds) {
         for (int i : inds.toArray()) {
-            for (int j=0; j < matrix.length; ++j) {
-                if (matrix[i][j]>0 && !ids.get(j)) {
+            for (int j = 0; j < matrix.length; ++j) {
+                if (matrix[i][j] > 0 && !ids.get(j)) {
                     inds.add(j);
                     ids.set(j);
                 }
@@ -205,9 +205,9 @@ class FingerprintVisualization {
         final TIntArrayList stack = new TIntArrayList(molecule.getAtomCount());
         stack.add(atomId);
         while (!stack.isEmpty()) {
-            final int id = stack.removeAt(stack.size()-1);
-            for (int i=0; i < matrix.length; ++i) {
-                if (matrix[id][i]>0 && i != id) {
+            final int id = stack.removeAt(stack.size() - 1);
+            for (int i = 0; i < matrix.length; ++i) {
+                if (matrix[id][i] > 0 && i != id) {
                     if (!visited.get(i) && molecule.getAtom(i).isAromatic() && molecule.getAtom(i).isAromatic()) {
                         visited.set(i);
                         stack.add(i);
@@ -227,7 +227,7 @@ class FingerprintVisualization {
         final FingerprintVisualization[] viz = new FingerprintVisualization[cdk.size()];
         try (final BufferedReader br = FileUtils.ensureBuffering(new InputStreamReader(FingerprintVisualization.class.getResourceAsStream("/sirius/feature_examples.tsv")))) {
             String line;
-            while ((line=br.readLine())!=null) {
+            while ((line = br.readLine()) != null) {
                 String[] tabs = line.split("\t");
                 final int index = Integer.parseInt(tabs[0]);
                 viz[index] = new FingerprintVisualization(tabs);
@@ -238,10 +238,10 @@ class FingerprintVisualization {
 
     private FingerprintVisualization(String... tabs) {
         final CdkFingerprintVersion cdk = CdkFingerprintVersion.getComplete();
-        exampleSmiles = new String[(tabs.length-3)];
-        int k=0;
+        exampleSmiles = new String[(tabs.length - 3)];
+        int k = 0;
         smarts = tabs[2];
-        for (int i=3; i < tabs.length; ++i) {
+        for (int i = 3; i < tabs.length; ++i) {
             exampleSmiles[k++] = tabs[i];
         }
         numberOfMatchesAtoms = Integer.parseInt(tabs[1]);

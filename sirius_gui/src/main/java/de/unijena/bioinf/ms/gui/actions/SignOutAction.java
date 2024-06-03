@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.gui.actions;
 import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.rest.ProxyManager;
 import org.slf4j.LoggerFactory;
@@ -30,21 +31,19 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
-
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class SignOutAction extends AbstractAction {
+public class SignOutAction extends AbstractGuiAction {
 
-    public SignOutAction() {
-        super("Log out");
+    public SignOutAction(SiriusGui gui) {
+        super("Log out", gui);
         putValue(Action.SHORT_DESCRIPTION, "Logout from the current account.");
     }
 
     @Override
     public synchronized void actionPerformed(ActionEvent e) {
-        boolean r = Jobs.runInBackgroundAndLoad(MF, "Logging out...", () -> {
+        boolean r = Jobs.runInBackgroundAndLoad(mainFrame, "Logging out...", () -> {
             try {
                 ProxyManager.withConnectionLock((ExFunctions.Runnable) () -> {
                     ApplicationCore.WEB_API.changeActiveSubscription(null);
@@ -56,7 +55,7 @@ public class SignOutAction extends AbstractAction {
                 LoggerFactory.getLogger(getClass()).warn("Error during logout!", ex);
                 return false;
             } finally {
-                MF.CONNECTION_MONITOR().checkConnectionInBackground();
+                gui.getConnectionMonitor().checkConnectionInBackground();
             }
         }).getResult();
         firePropertyChange("logout", null, r);

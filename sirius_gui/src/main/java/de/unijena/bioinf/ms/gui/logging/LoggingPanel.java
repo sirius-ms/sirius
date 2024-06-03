@@ -70,7 +70,7 @@ public class LoggingPanel extends JPanel {
 
         add(new JScrollPane(handler.getArea()), BorderLayout.CENTER);
         add(southPanel, BorderLayout.SOUTH);
-        setPreferredSize(new Dimension(320, 240));
+        setPreferredSize(new Dimension(640, 480));
     }
 
 

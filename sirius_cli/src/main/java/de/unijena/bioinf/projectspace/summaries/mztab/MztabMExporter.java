@@ -29,13 +29,15 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.AdditionalFields;
-import de.unijena.bioinf.ChemistryBase.ms.AnnotatedSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.TreeStatistics;
+import de.unijena.bioinf.ChemistryBase.ms.utils.AnnotatedSpectrum;
+import de.unijena.bioinf.ChemistryBase.ms.utils.SpectrumWithAdditionalFields;
 import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
+import de.unijena.bioinf.chemdb.DBLink;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.blast.FBCandidates;
@@ -166,7 +168,8 @@ public class MztabMExporter implements Summarizer {
 
 
                 List<String> ids = bestHit.getCandidate().getLinks().stream()
-                        .filter(dbLink -> dbLink.name.equals(DataSource.PUBCHEM.realName)).map(dbLink -> dbLink.id).collect(Collectors.toList());
+                        .filter(dbLink -> Objects.equals(dbLink.getName(), DataSource.PUBCHEM.name())).map(DBLink::getId)
+                        .toList();
 
                 smlItem.setDatabaseIdentifier(
                         ids.stream().map(dbLink -> "CID:" + dbLink)
@@ -377,6 +380,8 @@ public class MztabMExporter implements Summarizer {
         return specs.stream().map((it) -> {
             if (it instanceof AnnotatedSpectrum)
                 return (AdditionalFields) ((AnnotatedSpectrum) it).getAnnotationOrNull(AdditionalFields.class);
+            else if (it instanceof SpectrumWithAdditionalFields<?>)
+                return ((SpectrumWithAdditionalFields<?>) it).additionalFields();
 
             return null;
         }).filter(Objects::nonNull).map((it) -> {

@@ -39,9 +39,6 @@ import java.io.IOException;
 public abstract class Icons {
     //ICONS
 
-
-    public static final ImageIcon SPLASH = new ImageIcon(MainFrame.class.getResource("/icons/sirius_splash.gif"));
-
     public static final ImageIcon FILTER_LOADER = new ImageIcon(MainFrame.class.getResource("/icons/loaders/filterLoader.gif"));
     public static final ImageIcon FILTER_LOADER_60 = new ImageIcon(MainFrame.class.getResource("/icons/loaders/filterLoader_60.gif"));
     public static final ImageIcon FILTER_LOADER_120 = new ImageIcon(MainFrame.class.getResource("/icons/loaders/filterLoader_120.gif"));
@@ -77,9 +74,15 @@ public abstract class Icons {
     public static final Icon FOLDER_FILE_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-folder-file@0.5x.png"));
 
     public static final Icon DB_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-db@0.5x.png"));
+    public static final Icon DB_24 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-db-24px.png"));
     public static final Icon DB_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-db.png"));
 
+    public static final Icon DENOVO_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-denovo@0.5x.png"));
+    public static final Icon DENOVO_24 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-denovo-24px.png"));
+    public static final Icon DENOVO_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-denovo.png"));
+
     public static final Icon DB_LENS_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/db-lens@0.5x.png"));
+    public static final Icon DB_LENS_24 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/db-lens-24px.png"));
     public static final Icon DB_LENS_64 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/db-lens.png"));
 
     public static final Icon GEAR_32 = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/c-gear@0.5x.png"));
@@ -158,9 +161,10 @@ public abstract class Icons {
 
     public static final Icon DRAG_N_DROP_256 = new ImageIcon(Icons.class.getResource("/icons/circular-icons/c-dragndrop@4x.png"));
 
-    public static final Icon SIRIUS_SPLASH = new ImageIcon(AboutDialog.class.getResource("/icons/sirius.jpg"));
+    public static final Icon SIRIUS_SPLASH = new ImageIcon(AboutDialog.class.getResource("/icons/sirius.png"));
     public static final Icon SIRIUS_APP_ICON = new ImageIcon(Icons.class.getResource("/icons/sirius_icon.png"));
     public static final Image SIRIUS_APP_IMAGE = Toolkit.getDefaultToolkit().createImage(Icons.class.getResource("/icons/sirius_icon.png"));
+
     public static BufferedImage DRAG_N_DROP_IMAGE_160() {
         try {
             return ImageIO.read(Icons.class.getResource("/icons/circular-icons/c-dragNdrop-160px.png"));
@@ -177,6 +181,14 @@ public abstract class Icons {
             new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/yellow_l.png")),
             new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/green_l.png"))};
 
+    public static final Icon[] TRAFFIC_LIGHT_TINY = new Icon[]{new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/red_t.png")),
+            new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/yellow_t.png")),
+            new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/green_t.png"))};
+
+
+    public static final Icon TRAFFIC_LIGHT_MEDIUM_GRAY = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/gray_m.png"));
+    public static final Icon TRAFFIC_LIGHT_SMALL_GRAY = new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/gray_s.png"));
+    public static final Icon TRAFFIC_LIGHT_TINY_GRAY =  new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/gray_t.png"));
     public static final Icon[] TRAFFIC_LIGHT_MEDIUM = new Icon[]{new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/red_m.png")),
             new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/yellow_m.png")),
             new ImageIcon(MainFrame.class.getResource("/icons/circular-icons/green_m.png"))};

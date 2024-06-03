@@ -25,8 +25,6 @@ import de.unijena.bioinf.projectspace.InstanceImporter;
 import picocli.CommandLine;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -40,7 +38,7 @@ public class InputFilesOptions {
     public Stream<Path> getAllFilesStream() {
         if (msInput == null)
             return Stream.of();
-        return Stream.of(msInput.msParserfiles.keySet(), msInput.projects.keySet(), msInput.unknownFiles.keySet()).flatMap(Collection::stream);
+        return Stream.of(msInput.msParserfiles.keySet(), msInput.unknownFiles.keySet()).flatMap(Collection::stream);
     }
 
     public List<Path> getAllFiles() {
@@ -52,28 +50,33 @@ public class InputFilesOptions {
     }
 
     @CommandLine.ArgGroup(exclusive = false, heading = "@|bold Specify multi-compound inputs (.ms, .mgf, .mzML/.mzXml, .sirius):%n|@", order = 320)
-    public /*final*/ MsInput msInput;
+    public MsInput msInput;
 
 
     public static class MsInput {
-        public final Map<Path, Integer> msParserfiles, projects, unknownFiles;
+        public final Map<Path, Integer> msParserfiles, unknownFiles;
 
         public MsInput() {
-            this(new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>());
+            this(new LinkedHashMap<>(), new LinkedHashMap<>());
         }
 
-        public MsInput(Map<Path, Integer> msParserfiles, Map<Path, Integer> projects, Map<Path, Integer> unknownFiles) {
+        public MsInput(Map<Path, Integer> msParserfiles, Map<Path, Integer> unknownFiles) {
             this.msParserfiles = msParserfiles;
-            this.projects = projects;
             this.unknownFiles = unknownFiles;
         }
 
-        @CommandLine.Option(names = {"--input", "-i"}, description = "Specify the input in multi-compound input formats: Preprocessed mass spectra in .ms or .mgf file format, " +
-                "LC/MS runs in .mzML/.mzXml format or already existing SIRIUS project-spaces (uncompressed/compressed) but also any other file type e.g. to provide input for STANDALONE tools.", required = true, split = ",", order = 321)
+        protected List<Path> rawInputFiles;
+
+        public List<Path> getRawInputFiles() {
+            return rawInputFiles;
+        }
+
+        @CommandLine.Option(names = {"--input", "-i"}, description = "Specify the input in multi-compound input formats: Preprocessed mass spectra in .ms or .mgf file format or " +
+                "LC/MS runs in .mzML/.mzXml format but also any other file type e.g. to provide input for STANDALONE tools.", required = true, split = ",", order = 321)
         public void setInputPath(List<Path> files) {
             msParserfiles.clear();
-            projects.clear();
             unknownFiles.clear();
+            rawInputFiles = files;
             InstanceImporter.expandInput(files, this);
         }
 
@@ -99,16 +102,8 @@ public class InputFilesOptions {
             return allowMS1Only;
         }
 
-        public boolean hasProjectsOnly() {
-            return msParserfiles.isEmpty() && unknownFiles.isEmpty() && !projects.isEmpty();
-        }
-
-        public boolean isSingleProject() {
-            return hasProjectsOnly() && projects.size() == 1;
-        }
-
         public boolean isEmpty() {
-            return msParserfiles.isEmpty() && unknownFiles.isEmpty() && projects.isEmpty();
+            return msParserfiles.isEmpty() && unknownFiles.isEmpty();
         }
     }
 
@@ -147,13 +142,5 @@ public class InputFilesOptions {
         }
 
         public MolecularFormula formula = null;
-    }
-
-    public static InputFilesOptions createNonCompoundInput(List<Path> files) throws IOException {
-        InputFilesOptions input = new InputFilesOptions();
-        input.msInput = new InputFilesOptions.MsInput();
-        for (Path g : files)
-            input.msInput.unknownFiles.put(g, (int) Files.size(g));
-        return input;
     }
 }

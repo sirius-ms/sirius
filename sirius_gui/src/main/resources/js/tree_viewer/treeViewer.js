@@ -31,7 +31,19 @@ var styles = {'elegant': {'node-rect': {'stroke' : 'transparent'},
                           'node-rect-selected': {'stroke': 'black',
                                                 'stroke-width': 4,
                                                 'stroke-dasharray': '7,7'},
-                          'link-line': {'stroke-width': 2}},
+                          'link-line': {'stroke-width': 2},
+                          'link-text': {'fill': 'black'},
+                          'link-text-bg': {'stroke': 'black', 'fill': 'white'}},
+              'elegant-dark': {'node-rect': {'stroke' : 'transparent'},
+                               'node-rect-hovered': {'stroke': 'black',
+                                                     'stroke-width': 2,
+                                                     'stroke-dasharray': '7,7'},
+                               'node-rect-selected': {'stroke': 'black',
+                                                     'stroke-width': 4,
+                                                     'stroke-dasharray': '7,7'},
+                               'link-line': {'stroke': '#bbb', 'stroke-width': 2},
+                               'link-text': {'fill': '#bbb'},
+                               'link-text-bg': {'stroke': '#bbb', 'fill': '#3c3f41'}},
               'classic': {'node-rect': {'stroke' : 'black',
                                         'stroke-width': 1},
                           'node-rect-hovered': {'stroke': 'black',
@@ -40,8 +52,11 @@ var styles = {'elegant': {'node-rect': {'stroke' : 'transparent'},
                           'node-rect-selected': {'stroke': 'black',
                                                 'stroke-width': 4,
                                                 'stroke-dasharray': ''},
-                          'link-line': {'stroke-width': 1}}};
+                          'link-line': {'stroke-width': 1},
+                          'link-text': {'fill': 'black'},
+                          'link-text-bg': {'stroke': 'black', 'fill': 'white'}}};
 var theme = 'elegant';
+var common_losses = [];
 
 // utility functions
 Array.prototype.contains = function(obj) {
@@ -445,20 +460,20 @@ function colorLossByElements(loss){
 
 function* nextLossColor(scheme=interpolateHslHue){
     var t = 0;
-    var commonLosses_len = getCommonLosses().length;
+    var commonLosses_len = common_losses.length;
     while (t < commonLosses_len)
         yield scheme(t++/commonLosses_len);
-    yield "black";
+    yield styles[theme]['link-text']['fill'];
 }
 
 function colorLossSequentially(loss){
     if (!loss_colors_dict.hasOwnProperty("commonLosses_initialized")){
-        for (var loss of getCommonLosses())
+        for (var loss of common_losses)
             loss_colors_dict[loss] = colorGen.next().value;
         loss_colors_dict["commonLosses_initialized"] = true;
     }
     if (!loss_colors_dict.hasOwnProperty(loss))
-        loss_colors_dict[loss] = colorGen.next().value;
+        return styles[theme]['link-text']['fill'];
     return loss_colors_dict[loss];
 }
 
@@ -979,7 +994,8 @@ function colorCode(variant, scheme) {
                md_mz_abs: 'mass deviation in mz (absolute)',
                md_ppm: 'mass deviation in ppm',
                md_ppm_abs: 'mass deviation in ppm (absolute)',
-               rel_int: 'relative intensity'}[variant]);
+               rel_int: 'relative intensity'}[variant])
+        .style('fill', styles[theme]['link-text']['fill']);
     if (isXmas()){
 	cb_label.text('Merry Christmas! (dbl-click to deactivate)')
 	    .on('click', function () { console.log('deactivated xmas :('); });
@@ -1370,11 +1386,11 @@ function drawLinks(root) {
                         (function(d) { return getLossColor(
                             d.target.data.parentEdge.molecularFormula,
                             colorLossSequentially); })
-                        :'black'));
+                        : styles[theme]['link-text']['fill']));
     if (edge_label_boxes){
         link.selectAll('.link_text_bg')
-            .style('fill', 'white')
-            .style('stroke', 'black')
+            .style('fill', styles[theme]['link-text-bg']['fill'])
+            .style('stroke', styles[theme]['link-text-bg']['stroke'])
             .style('visibility', 'visible')
             .attr('bbox', function (d) { return d3.select(this).node().
                                          parentNode.children[2].getBBox();})

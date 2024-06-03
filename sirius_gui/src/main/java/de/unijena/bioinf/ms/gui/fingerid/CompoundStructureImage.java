@@ -20,11 +20,11 @@
 package de.unijena.bioinf.ms.gui.fingerid;
 
 import de.unijena.bioinf.ms.gui.configs.Fonts;
+import de.unijena.bioinf.ms.gui.utils.ThemedAtomColors;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.layout.StructureDiagramGenerator;
 import org.openscience.cdk.renderer.AtomContainerRenderer;
-import org.openscience.cdk.renderer.color.CDK2DAtomColors;
 import org.openscience.cdk.renderer.font.AWTFontManager;
 import org.openscience.cdk.renderer.generators.BasicSceneGenerator;
 import org.openscience.cdk.renderer.generators.IGenerator;
@@ -35,15 +35,13 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Locale;
 
-/**
- * Created by fleisch on 24.05.17.
- */
 class CompoundStructureImage extends JPanel {
 
     protected static final Font nameFont, rankFont, matchFont;
+    private static final DecimalFormat decimalFormat = new DecimalFormat("#0.000");
 
     static {
         //init fonts
@@ -51,7 +49,7 @@ class CompoundStructureImage extends JPanel {
         if (tempFont != null) {
             nameFont = tempFont.deriveFont(13f);
             matchFont = tempFont.deriveFont(18f);
-            rankFont = tempFont.deriveFont(32f);
+            rankFont = tempFont.deriveFont(18f);
         } else {
             nameFont = matchFont = rankFont = Font.getFont(Font.SANS_SERIF);
 
@@ -80,7 +78,7 @@ class CompoundStructureImage extends JPanel {
         renderer.getRenderer2DModel().set(StandardGenerator.Highlighting.class,
                 highlightStyle);
         renderer.getRenderer2DModel().set(StandardGenerator.AtomColor.class,
-                new CDK2DAtomColors());
+                new ThemedAtomColors());
         setVisible(true);
     }
 
@@ -101,30 +99,26 @@ class CompoundStructureImage extends JPanel {
             LoggerFactory.getLogger(this.getClass()).error(e.getMessage(), e);
         }
         renderer.getRenderer2DModel().set(BasicSceneGenerator.BackgroundColor.class, backgroundColor);
-        synchronized (molecule.candidate) {
+        synchronized (molecule.getCandidate()) {
             renderer.paint(molecule.getMolecule(), new AWTDrawVisitor(gg),
                     new Rectangle2D.Double(7, 14, 360, 185), true);
         }
-        if ((molecule.candidate.getName() != null) && (!molecule.candidate.getName().equalsIgnoreCase("null"))) {
-            gg.setFont(nameFont);
-            gg.drawString(molecule.candidate.getName(), 3, 16);
-        }
+
         gg.setFont(rankFont);
-        final String rankString = String.valueOf(molecule.rank);
-        final Rectangle2D bound = gg.getFontMetrics().getStringBounds(rankString, gg);
+        final String fromulaString = molecule.getMolecularFormula();
+        final Rectangle2D bound = gg.getFontMetrics().getStringBounds(fromulaString, gg);
         {
             final int x = 3;
             final int y = getHeight() - (int) (bound.getHeight());
             final int h = (int) (y + bound.getHeight());
-            gg.drawString(rankString, x, h - 2);
+            gg.drawString(fromulaString, x, h - 2);
         }
-//
 
         //todo change to gif
-        final String tanimotoText = molecule.getTanimotoScore() == null  ? "loading..." : String.format(Locale.US, "%.2f", molecule.getTanimotoScore() * 100d) + "%";
-        double tw = gg.getFontMetrics(matchFont).getStringBounds(tanimotoText, gg).getWidth();
+        final String scoreText = decimalFormat.format(molecule.getScore());
+        double tw = gg.getFontMetrics(matchFont).getStringBounds(scoreText, gg).getWidth();
 
         gg.setFont(matchFont);
-        gg.drawString(tanimotoText, (int) (getWidth() - (tw + 4)), getHeight() - 4);
+        gg.drawString(scoreText, (int) (getWidth() - (tw + 4)), getHeight() - 4);
     }
 }

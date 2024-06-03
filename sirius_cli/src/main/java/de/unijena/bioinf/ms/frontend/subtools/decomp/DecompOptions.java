@@ -27,7 +27,7 @@ import picocli.CommandLine;
 
 import java.nio.file.Path;
 
-@CommandLine.Command(name = "decomp", aliases = {}, description = {"<STANDALONE> Small tool to decompose masses with given deviation, ionization, chemical alphabet and chemical filter."},
+@CommandLine.Command(name = "decomp", aliases = {"mass-decomposition"}, description = "<STANDALONE> Small tool to decompose masses with given deviation, ionization, chemical alphabet and chemical filter. %n %n",
         versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
 public class DecompOptions implements StandaloneTool<DecompWorkflow> {
 
@@ -74,7 +74,7 @@ public class DecompOptions implements StandaloneTool<DecompWorkflow> {
     Path out;
 
     @Override
-    public DecompWorkflow makeWorkflow(RootOptions<?,?,?,?> rootOptions, ParameterConfig config) {
+    public DecompWorkflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
         return new DecompWorkflow(this, rootOptions.getInput());
     }
 }

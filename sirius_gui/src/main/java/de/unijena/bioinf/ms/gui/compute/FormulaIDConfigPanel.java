@@ -19,38 +19,31 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
-import de.unijena.bioinf.ChemistryBase.chem.*;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
-import de.unijena.bioinf.chemdb.annotations.FormulaSearchDB;
-import de.unijena.bioinf.chemdb.custom.CustomDataSources;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
-import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
-import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.sirius.Ms1Preprocessor;
-import de.unijena.bioinf.sirius.ProcessedInput;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
+import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Panel to configure SIRIUS Computations
@@ -59,7 +52,8 @@ import java.util.stream.Collectors;
  * @author Marcus Ludwig, Markus Fleischauer
  * @since 12.01.17
  */
-public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
+public class
+FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
     protected Logger logger = LoggerFactory.getLogger(FormulaIDConfigPanel.class);
 
     public enum Instrument {
@@ -89,240 +83,202 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         }
     }
 
-    protected final JCheckboxListPanel<String> ionizationList;
-    protected final JCheckboxListPanel<CustomDataSources.Source> searchDBList;
-    protected final JComboBox<Instrument> profileSelector;
-    protected final JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner, treeTimeout, comoundTimeout, mzHeuristic, mzHeuristicOnly;
+    protected JCheckboxListPanel<PrecursorIonType> adductList;
+    protected JToggleButton enforceAdducts;
+    protected JComboBox<Instrument> profileSelector;
+    protected JSpinner ppmSpinner, candidatesSpinner, candidatesPerIonSpinner, treeTimeout, comoundTimeout, mzHeuristic, mzHeuristicOnly;
 
-    enum Strategy {IGNORE, SCORE} //todo remove if Filter is implemented
+    public enum Strategy {IGNORE, SCORE} //todo remove if Filter is implemented
 
-    protected final JComboBox<Strategy> ms2IsotpeSetting;
-//    protected final JComboBox<IsotopeMs2Settings.Strategy> ms2IsotpeSetting;
+    protected JComboBox<Strategy> ms2IsotpeSetting;
 
-    //    protected final JCheckBox restrictToOrganics;
-    protected ElementsPanel elementPanel;
-//    protected JButton elementAutoDetect;
+    protected FormulaSearchStrategy formulaSearchStrategy;
 
 
     protected final List<InstanceBean> ecs;
 
 
     protected final Dialog owner;
+    protected final SiriusGui gui;
 
-    public FormulaIDConfigPanel(Dialog owner, List<InstanceBean> ecs, boolean ms2) {
-        super(SiriusOptions.class);
+    protected boolean hasMs2;
+
+
+    public FormulaIDConfigPanel(SiriusGui gui, Dialog owner, List<InstanceBean> ecs, boolean ms2, boolean displayAdvancedParameters) {
+        super(SiriusOptions.class, displayAdvancedParameters);
         this.ecs = ecs;
         this.owner = owner;
+        this.gui = gui;
+        this.hasMs2 = ms2;
 
+        createPanel();
+    }
+
+    private void createPanel() {
 
         setLayout(new BoxLayout(this, BoxLayout.PAGE_AXIS));
         final JPanel center = applyDefaultLayout(new JPanel());
         add(center);
+        add(Box.createRigidArea(new Dimension(0, GuiUtils.LARGE_GAP)));
+
+        parameterBindings.put("AdductSettings.prioritizeInputFileAdducts", () -> Boolean.toString(isBatchDialog()));
 
         // configure small stuff panel
-        final TwoColumnPanel smallParameters = new TwoColumnPanel();
-        center.add(new TextHeaderBoxPanel("General", smallParameters));
+        {
+            final TwoColumnPanel smallParameters = new TwoColumnPanel();
+            center.add(new TextHeaderBoxPanel("General", smallParameters));
 
-        profileSelector = makeParameterComboBox("AlgorithmProfile", List.of(Instrument.values()), Instrument::asProfile);
-        smallParameters.addNamed("Instrument", profileSelector);
+            profileSelector = makeParameterComboBox("AlgorithmProfile", List.of(Instrument.values()), Instrument::asProfile);
+            smallParameters.addNamed("Instrument", profileSelector);
 
-        smallParameters.addNamed("Filter by isotope pattern", makeParameterCheckBox("IsotopeSettings.filter"));
+            addAdvancedParameter(smallParameters, "Filter by isotope pattern", makeParameterCheckBox("IsotopeSettings.filter"));
 
-        ms2IsotpeSetting = makeParameterComboBox("IsotopeMs2Settings", Strategy.class);
-        ppmSpinner = makeParameterSpinner("MS2MassDeviation.allowedMassDeviation",
-                PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm(),
-                0.25, 50, 0.25, m -> m.getNumber().doubleValue() + "ppm");
+            ms2IsotpeSetting = makeParameterComboBox("IsotopeMs2Settings", Strategy.class);
+            ppmSpinner = makeParameterSpinner("MS2MassDeviation.allowedMassDeviation",
+                    PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm(),
+                    0.25, 50, 0.25, m -> m.getNumber().doubleValue() + "ppm");
+            parameterBindings.put("SpectralMatchingMassDeviation.allowedPeakDeviation", () -> ((SpinnerNumberModel) ppmSpinner.getModel()).getNumber().doubleValue() + "ppm");
+            parameterBindings.put("SpectralMatchingMassDeviation.allowedPrecursorDeviation", () -> ((SpinnerNumberModel) ppmSpinner.getModel()).getNumber().doubleValue() + "ppm");
 
-        if (ms2) {
-            smallParameters.addNamed("MS2 mass accuracy (ppm)", ppmSpinner);
-            smallParameters.addNamed("MS/MS isotope scorer", ms2IsotpeSetting);
+            if (hasMs2) {
+                smallParameters.addNamed("MS2 mass accuracy (ppm)", ppmSpinner);
+                addAdvancedParameter(smallParameters, "MS/MS isotope scorer", ms2IsotpeSetting);
+            }
+
+            candidatesSpinner = makeIntParameterSpinner("NumberOfCandidates", 1, 10000, 1);
+            addAdvancedParameter(smallParameters, "Candidates stored", candidatesSpinner);
+
+            candidatesPerIonSpinner = makeIntParameterSpinner("NumberOfCandidatesPerIonization", 0, 10000, 1);
+            addAdvancedParameter(smallParameters, "Min candidates per ionization stored", candidatesPerIonSpinner);
+
+            smallParameters.addNamed("Fix formula for detected lipid", makeParameterCheckBox("EnforceElGordoFormula")); //El Gordo detects lipids and by default fixes the formula
+
+
+            //sync profile with ppm spinner
+            profileSelector.addItemListener(e -> {
+                final Instrument i = (Instrument) e.getItem();
+                final double recommendedPPM = i.ppm;
+                ppmSpinner.setValue(recommendedPPM);
+            });
         }
 
-        candidatesSpinner = makeIntParameterSpinner("NumberOfCandidates", 1, 10000, 1);
-        smallParameters.addNamed("Candidates stored", candidatesSpinner);
+        //configure adduct panel
+        adductList = new JCheckboxListPanel<>(new JCheckBoxList<>(), isBatchDialog() ? "Fallback Adducts" : "Possible Adducts",
+                GuiUtils.formatToolTip("Set expected adduct for data with unknown adduct."));
+        adductList.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>(PrecursorIonType.fromString("[M + Na]+"), false));
+        center.add(adductList);
+        parameterBindings.put("AdductSettings.fallback", () -> getSelectedAdducts().toString());
 
-        candidatesPerIonSpinner = makeIntParameterSpinner("NumberOfCandidatesPerIon", 0, 10000, 1);
-        smallParameters.addNamed("Min candidates per Ion stored", candidatesPerIonSpinner);
+        enforceAdducts = new JToggleButton("enforce", false);
+        enforceAdducts.setToolTipText(GuiUtils.formatToolTip("Enforce the selected adducts instead of using them only as fallback only."));
+        if (isBatchDialog()) {
+            adductList.buttons.add(enforceAdducts);
+            parameterBindings.put("AdductSettings.enforced", () -> enforceAdducts.isSelected() ? getSelectedAdducts().toString() : PossibleAdducts.empty().toString());
+        } else {
+            //alway enforce adducts for single feature.
+            parameterBindings.put("AdductSettings.enforced", () -> getSelectedAdducts().toString());
+            parameterBindings.put("AdductSettings.detectable", () -> "");
+        }
 
-//        restrictToOrganics = new JCheckBox(); //todo implement parameter?? or as constraint?
-//        GuiUtils.assignParameterToolTip(restrictToOrganics, "RestrictToOrganics");
-//        parameterBindings.put("RestrictToOrganics", () -> String.valueOf(restrictToOrganics.isSelected()));
-//        smallParameters.addNamed("Restrict to organics", restrictToOrganics);
-
-        //sync profile with ppm spinner
-        profileSelector.addItemListener(e -> {
-            final Instrument i = (Instrument) e.getItem();
-            final double recommendedPPM = i.ppm;
-            ppmSpinner.setValue(recommendedPPM);
-        });
-
-        // configure database to search list
-        searchDBList = new JCheckboxListPanel<>(new DBSelectionList(), "Use DB formulas only");
-        GuiUtils.assignParameterToolTip(searchDBList.checkBoxList, "FormulaSearchDB");
-        center.add(searchDBList);
-        parameterBindings.put("FormulaSearchDB", () -> String.join(",", getFormulaSearchDBStrings()));
-        PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSearchDB.class).searchDBs
-                .forEach(s -> searchDBList.checkBoxList.check(CustomDataSources.getSourceFromName(s.name())));
-
-
-        //configure ionization panels
-        ionizationList = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Possible Ionizations",
-                GuiUtils.formatToolTip("Set possible ionisation for data with unknown ionization. SIRIUS will try to auto-detect adducts that can be derived from this ionizations"));
-        ionizationList.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>("[M + Na]+ ", false));
-        center.add(ionizationList);
-        parameterBindings.put("AdductSettings.detectable", () -> getDerivedDetectableAdducts().toString());
-        parameterBindings.put("AdductSettings.fallback", () -> getDerivedDetectableAdducts().toString());
-
-
-        // configure Element panel
-        makeElementPanel(ecs.size() > 1);
-        add(elementPanel);
-        parameterBindings.put("FormulaSettings.enforced", () -> {
-            return elementPanel.getElementConstraints().toString(); //todo check if this makes scence
-        });
-
-        parameterBindings.put("FormulaSettings.detectable", () -> {
-            final List<Element> elementsToAutoDetect = elementPanel.individualAutoDetect ? elementPanel.getElementsToAutoDetect() : Collections.emptyList();
-            return (elementsToAutoDetect.isEmpty() ? "," :
-                    elementsToAutoDetect.stream().map(Element::toString).collect(Collectors.joining(",")));
-        }); //todo check if this makes sense
-
+        formulaSearchStrategy = new FormulaSearchStrategy(gui, owner, ecs, hasMs2, isBatchDialog(), parameterBindings);
+        add(formulaSearchStrategy);
+        treeTimeout = makeIntParameterSpinner("Timeout.secondsPerTree", 0, Integer.MAX_VALUE, 1);
+        comoundTimeout = makeIntParameterSpinner("Timeout.secondsPerInstance", 0, Integer.MAX_VALUE, 1);
+        mzHeuristic = makeIntParameterSpinner("UseHeuristic.useHeuristicAboveMz", 0, 3000, 5);
+        mzHeuristicOnly = makeIntParameterSpinner("UseHeuristic.useOnlyHeuristicAboveMz", 0, 3000, 5);
 
         // ilp timeouts
-        final TwoColumnPanel ilpOptions = new TwoColumnPanel();
+        if (hasMs2) {
+            final TwoColumnPanel ilpOptions = new TwoColumnPanel();
 
-        treeTimeout = makeIntParameterSpinner("Timeout.secondsPerTree", 0, Integer.MAX_VALUE, 1);
-        ilpOptions.addNamed("Tree timeout", treeTimeout);
+            ilpOptions.addNamed("Tree timeout", treeTimeout);
 
-        comoundTimeout = makeIntParameterSpinner("Timeout.secondsPerInstance", 0, Integer.MAX_VALUE, 1);
-        ilpOptions.addNamed("Compound timeout", comoundTimeout);
+            ilpOptions.addNamed("Compound timeout", comoundTimeout);
 
-        mzHeuristic = makeIntParameterSpinner("UseHeuristic.mzToUseHeuristic", 0, 3000, 5);
-        ilpOptions.addNamed("Use heuristic above m/z", mzHeuristic);
+            ilpOptions.addNamed("Use heuristic above m/z", mzHeuristic);
 
-        mzHeuristicOnly = makeIntParameterSpinner("UseHeuristic.mzToUseHeuristicOnly", 0, 3000, 5);
-        ilpOptions.addNamed("Use heuristic only above m/z", mzHeuristicOnly);
+            ilpOptions.addNamed("Use heuristic only above m/z", mzHeuristicOnly);
 
-        if (ms2)
-            center.add(new TextHeaderBoxPanel("ILP", ilpOptions));
+            final JPanel technicalParameters = new JPanel();
+            RelativeLayout rl = new RelativeLayout(RelativeLayout.Y_AXIS, 0);
+            rl.setAlignment(RelativeLayout.LEADING);
+            technicalParameters.setLayout(rl);
+            technicalParameters.add(Box.createRigidArea(new Dimension(0, GuiUtils.LARGE_GAP)));
+            technicalParameters.add(new TextHeaderBoxPanel("Fragmentation tree computation", ilpOptions));
+            technicalParameters.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
+            add(technicalParameters);
+            addAdvancedComponent(technicalParameters);
+        }
 
         // add ionization's of selected compounds to default
-        refreshPossibleIonizations(ecs.stream().map(it -> it.getIonization().getIonization().toString()).collect(Collectors.toSet()), true);
+        refreshPossibleAdducts(ecs.stream().map(InstanceBean::getDetectedAdductsOrCharge).flatMap(Set::stream).collect(Collectors.toSet()), true);
     }
 
-    public void refreshPossibleIonizations(Set<String> ionTypes, boolean enabled) {
-        Set<String> ionizations = new HashSet<>();
-        Set<String> ionizationsEnabled = new HashSet<>();
+    protected boolean isBatchDialog() {
+        return ecs.size() > 1; //should never be 0
+    }
 
-        if (!ionTypes.isEmpty()) {
-            AdductSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class);
-            if (ionTypes.contains(PrecursorIonType.unknownPositive().getIonization().getName())) {
-                ionizations.addAll(PeriodicTable.getInstance().getPositiveIonizationsAsString());
-                ionizationsEnabled.addAll(settings.getDetectable().stream().filter(PrecursorIonType::isPositive)
-                        .map(PrecursorIonType::getIonization).distinct().map(Ionization::getName)
-                        .collect(Collectors.toSet()));
+    private void addAdvancedParameter(TwoColumnPanel panel, String name, Component control) {
+        JLabel label = new JLabel(name);
+        panel.add(label, control);
+
+        addAdvancedComponent(label);
+        addAdvancedComponent(control);
+    }
+
+    public void refreshPossibleAdducts(Set<PrecursorIonType> detectedAdductsOrCharge, boolean enabled) {
+        Set<PrecursorIonType> adducts = new HashSet<>();
+        Set<PrecursorIonType> adductsEnabled = new HashSet<>();
+        Set<PrecursorIonType> detectedAdducteWithoutCharge = detectedAdductsOrCharge.stream().filter(it -> !it.isIonizationUnknown()).collect(Collectors.toSet());
+
+        AdductSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class);
+        if (!detectedAdductsOrCharge.isEmpty()) {
+            if (detectedAdductsOrCharge.stream().anyMatch(PrecursorIonType::isPositive)) {
+                adducts.addAll(PeriodicTable.getInstance().getPositiveAdducts());
+                if (detectedAdductsOrCharge.contains(PrecursorIonType.unknownPositive())) {
+                    adductsEnabled.addAll(
+                            Stream.concat(settings.getFallback().stream().filter(PrecursorIonType::isPositive),
+                                            settings.getEnforced().stream().filter(PrecursorIonType::isPositive))
+                                    .collect(Collectors.toSet()));
+                }
             }
 
-            if (ionTypes.contains(PrecursorIonType.unknownNegative().getIonization().getName())) {
-                ionizations.addAll(PeriodicTable.getInstance().getNegativeIonizationsAsString());
-                ionizationsEnabled.addAll(settings.getDetectable().stream().filter(PrecursorIonType::isNegative)
-                        .map(PrecursorIonType::getIonization).distinct().map(Ionization::getName)
-                        .collect(Collectors.toSet()));
+            if (detectedAdductsOrCharge.stream().anyMatch(PrecursorIonType::isNegative)) {
+                adducts.addAll(PeriodicTable.getInstance().getNegativeAdducts());
+                if (detectedAdductsOrCharge.contains(PrecursorIonType.unknownNegative())) {
+                    adductsEnabled.addAll(
+                            Stream.concat(settings.getFallback().stream().filter(PrecursorIonType::isNegative),
+                                            settings.getEnforced().stream().filter(PrecursorIonType::isNegative))
+                                    .collect(Collectors.toSet()));
+                }
             }
-            ionizations.addAll(ionizationsEnabled);
+
+            adductsEnabled.addAll(detectedAdducteWithoutCharge);
+            adducts.addAll(adductsEnabled);
         }
 
-        if (ionizations.isEmpty()) {
-            ionizationList.checkBoxList.replaceElements(ionTypes.stream().sorted().collect(Collectors.toList()));
-            ionizationList.checkBoxList.checkAll();
-            ionizationList.setEnabled(false);
+
+        if (adducts.isEmpty()) {
+            adductList.checkBoxList.replaceElements(detectedAdductsOrCharge.stream().sorted(PrecursorIonTypeSelector.ionTypeComparator).collect(Collectors.toList()));
+            adductList.checkBoxList.checkAll();
+            adductList.setEnabled(false);
         } else {
-            ionizationList.checkBoxList.replaceElements(ionizations.stream().sorted().toList());
-            ionizationList.checkBoxList.uncheckAll();
-            ionizationsEnabled.forEach(ionizationList.checkBoxList::check);
-            ionizationList.setEnabled(enabled);
-        }
-
-        if (ecs.size() == 1 && isEnabled() && !ecs.get(0).getMs2Spectra().isEmpty())
-            detectPossibleAdducts(ecs.get(0));
-    }
-
-    protected void makeElementPanel(boolean multi) {
-        final FormulaSettings formulaSettings = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
-        List<Element> possDetectableElements = new ArrayList<>(ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor().getSetOfPredictableElements());
-
-        final JButton elementAutoDetect;
-        if (multi) {
-            elementAutoDetect = null;
-            elementPanel = new ElementsPanel(owner, 4, possDetectableElements, formulaSettings.getAutoDetectionElements(), formulaSettings.getEnforcedAlphabet());
-        } else {
-            /////////////Solo Element//////////////////////
-            elementPanel = new ElementsPanel(owner, 4, formulaSettings.getEnforcedAlphabet());
-            elementAutoDetect = new JButton("Auto detect");
-            elementAutoDetect.setToolTipText("Auto detectable element are: "
-                    + possDetectableElements.stream().map(Element::toString).collect(Collectors.joining(",")));
-            elementAutoDetect.addActionListener(e -> detectElements());
-            elementAutoDetect.setEnabled(true);
-            elementPanel.lowerPanel.add(elementAutoDetect);
-        }
-
-        ListSelectionListener listener = e -> {
-            final List<CustomDataSources.Source> source = getFormulaSearchDBs();
-            elementPanel.enableElementSelection(source == null || source.isEmpty());
-            if (elementAutoDetect != null)
-                elementAutoDetect.setEnabled(source == null || source.isEmpty());
-        };
-        listener.valueChanged(null);
-        //enable disable element panel if db is selected
-        searchDBList.checkBoxList.addListSelectionListener(listener);
-        elementPanel.setBorder(BorderFactory.createEmptyBorder(0, GuiUtils.LARGE_GAP, 0, 0));
-    }
-
-    protected void detectElements() {
-        String notWorkingMessage = "Element detection requires MS1 spectrum with isotope pattern.";
-        InstanceBean ec = ecs.get(0);
-        if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
-            Jobs.runInBackgroundAndLoad(owner, "Detecting Elements...", () -> {
-                final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
-                ProcessedInput pi = pp.preprocess(new MutableMs2Experiment(ec.getExperiment(), false));
-
-                pi.getAnnotation(FormulaConstraints.class).
-                        ifPresentOrElse(c -> {
-                                    for (Element element : c.getChemicalAlphabet()) {
-                                        if (c.getUpperbound(element) <= 0) {
-                                            c.setLowerbound(element, 0);
-                                            c.setUpperbound(element, 0);
-                                        }
-                                    }
-                                    elementPanel.setSelectedElements(c);
-                                },
-                                () -> new ExceptionDialog(owner, notWorkingMessage)
-                        );
-            }).getResult();
-        } else {
-            new ExceptionDialog(owner, notWorkingMessage);
+            adductList.checkBoxList.replaceElements(adducts.stream().sorted(PrecursorIonTypeSelector.ionTypeComparator).toList());
+            adductList.checkBoxList.uncheckAll();
+            if (!isBatchDialog()) {
+                if (detectedAdducteWithoutCharge.isEmpty())
+                    settings.getFallback().forEach(adductList.checkBoxList::check);
+                else
+                    detectedAdducteWithoutCharge.forEach(adductList.checkBoxList::check);
+            } else {
+                adductsEnabled.forEach(adductList.checkBoxList::check);
+            }
+            adductList.setEnabled(enabled);
         }
     }
 
-    protected void detectPossibleAdducts(InstanceBean ec) {
-        String notWorkingMessage = "Adduct detection requires MS1 spectrum.";
-        if (!ec.getMs1Spectra().isEmpty() || ec.getMergedMs1Spectrum() != null) {
-            Jobs.runInBackgroundAndLoad(owner, "Detecting adducts...", () -> {
-                final Ms1Preprocessor pp = ApplicationCore.SIRIUS_PROVIDER.sirius().getMs1Preprocessor();
-                ProcessedInput pi = pp.preprocess(new MutableMs2Experiment(ec.getExperiment(), false));
-
-                pi.getAnnotation(PossibleAdducts.class).
-                        ifPresentOrElse(pa -> {
-                                    //todo do we want to add adducts?
-                                    ionizationList.checkBoxList.uncheckAll();
-                                    pa.getIonModes().stream().map(IonMode::toString).forEach(ionizationList.checkBoxList::check);
-                                },
-                                () -> new ExceptionDialog(owner, "Failed to detect Adducts from MS1")
-                        );
-            }).getResult();
-        } else {
-            LoggerFactory.getLogger(getClass()).warn(notWorkingMessage);
-        }
+    public FormulaSearchStrategy getFormulaSearchStrategy() {
+        return formulaSearchStrategy;
     }
 
     public Instrument getInstrument() {
@@ -341,18 +297,15 @@ public class FormulaIDConfigPanel extends SubToolConfigPanel<SiriusOptions> {
         return ((SpinnerNumberModel) candidatesPerIonSpinner.getModel()).getNumber().intValue();
     }
 
-    public List<CustomDataSources.Source> getFormulaSearchDBs() {
-        return searchDBList.checkBoxList.getCheckedItems();
+    public PossibleAdducts getSelectedAdducts() {
+        return new PossibleAdducts(adductList.checkBoxList.getCheckedItems());
     }
 
-    public List<String> getFormulaSearchDBStrings() {
-        return getFormulaSearchDBs().stream().map(CustomDataSources.Source::id).filter(Objects::nonNull).collect(Collectors.toList());
+    public JCheckboxListPanel<SearchableDatabase> getSearchDBList() {
+        return formulaSearchStrategy.getSearchDBList();
     }
 
-    public PossibleAdducts getDerivedDetectableAdducts() {
-        Set<PrecursorIonType> det = new HashSet<>(PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable());
-        Set<Ionization> keep = ionizationList.checkBoxList.getCheckedItems().stream().map(PrecursorIonType::parsePrecursorIonType).flatMap(Optional::stream).map(PrecursorIonType::getIonization).collect(Collectors.toSet());
-        det.removeIf(s -> !keep.contains(s.getIonization()));
-        return new PossibleAdducts(det);
+    public List<SearchableDatabase> getFormulaSearchDBs() {
+        return formulaSearchStrategy.getFormulaSearchDBs();
     }
 }

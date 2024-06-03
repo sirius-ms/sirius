@@ -3,8 +3,9 @@ package de.unijena.bioinf.ms.gui.lcms_viewer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
-import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.utils.FxTaskList;
+import de.unijena.bioinf.ms.nightsky.sdk.model.TraceSet;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
@@ -12,15 +13,11 @@ import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 public class LCMSWebview extends JFXPanel {
-
-    private LCMSPeakInformation lcmsPeakInformation;
-    private int activeId;
 
     private FxTaskList taskList;
     private List<Consumer<JSObject>> delayAfterHTMLLoading;
@@ -32,12 +29,24 @@ public class LCMSWebview extends JFXPanel {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    private Console console = new Console();
+
     public LCMSWebview() {
         this.taskList = new FxTaskList();
         this.lock = new ReentrantLock();
         this.delayAfterHTMLLoading = new ArrayList<>();
         taskList.runJFXLater(()-> {
             this.webView = new WebView();
+            final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
+            final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
+            boolean DarkMode = theme.equals("Dark");
+            if (!DarkMode) {
+                this.webView.getEngine().setUserStyleSheetLocation(
+                        getClass().getResource("/js/" + "styles.css").toExternalForm());
+            } else {
+                this.webView.getEngine().setUserStyleSheetLocation(
+                        getClass().getResource("/js/" + "styles-dark.css").toExternalForm());
+            }
 //            System.out.println("A");
             setScene(new Scene(webView));
 //            System.out.println("B");
@@ -50,25 +59,34 @@ public class LCMSWebview extends JFXPanel {
             webView.getEngine().getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
 //                System.out.println(oldState + " -> " + newState);
                 if (newState == Worker.State.SUCCEEDED) {
+                    webView.getEngine().executeScript(loadJs());
                     lock.lock();
-                    ((JSObject)webView.getEngine().executeScript("window")).setMember("console", new Console());
-                    this.lcmsViewer = (JSObject)webView.getEngine().executeScript(
-                            "document.lcmsViewer = new LCMSViewer(\"#lcms\", \"#lcms_view\");"
-                    );
+                    ((JSObject)webView.getEngine().executeScript("window")).setMember("console", console);
+                    if (!DarkMode) {
+                        this.webView.getEngine().executeScript("document.setBright()");
+                    } else {
+                        this.webView.getEngine().executeScript("document.setDark()");
+                    }
+                    this.lcmsViewer = (JSObject)webView.getEngine().executeScript("document.drawPlot('#lc-plot')");
                     delayAfterHTMLLoading.forEach(x->x.accept(this.lcmsViewer));
                     delayAfterHTMLLoading.clear();
                     lock.unlock();
+                    System.out.println(lcmsViewer);
                 }
             });
         });
     }
 
-    public void setInstance(LCMSPeakInformation peakInformation) {
+    public void setInstance(TraceSet peakInformation, LCMSViewerPanel.Order order, LCMSViewerPanel.ViewType viewType, String featureId) {
         lcmsView(f->{
             try {
                 final String json = objectMapper.writeValueAsString(peakInformation);
-//                System.err.println(json);
-                f.call("bindStringData", json);
+                f.call("setOrder", order.name());
+                if (viewType== LCMSViewerPanel.ViewType.ALIGNMENT) {
+                    f.call("loadString", json);
+                } else {
+                    f.call("loadStringForCompound", json, Long.parseLong(featureId));
+                }
             } catch (Throwable e) {
                 e.printStackTrace();
                 throw new RuntimeException(e);
@@ -93,24 +111,25 @@ public class LCMSWebview extends JFXPanel {
     }
 
     private String getHTMLContent() {
-        return "<html><head><script>" + loadJs() +
-                "</script><body><div id=\"lcms\"><svg id=\"lcms_view\"></svg></div></body></html>";
-    }
-
-    private String loadJs() {
         try {
             return Resources.toString(LCMSWebview.class.getResource(
-                    "/js/lcms_viewer/d3.min.js"
-            ), Charsets.UTF_8) + "\n" + Resources.toString(LCMSWebview.class.getResource(
-                    "/js/lcms_viewer/lcms_viewer.js"
+                    "/js/lcms_viewer/index.html"
             ), Charsets.UTF_8);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void setSampleIndex(int activeIndex) {
-        lcmsView(x->x.call("setSample", activeIndex));
+    private String loadJs() {
+        try {
+            return Resources.toString(LCMSWebview.class.getResource(
+                    "/js/lcms_viewer/d3.v7.min.js"
+            ), Charsets.UTF_8) + "\n" + Resources.toString(LCMSWebview.class.getResource(
+                    "/js/lcms_viewer/lcms.js"
+            ), Charsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void reset() {
@@ -124,13 +143,16 @@ public class LCMSWebview extends JFXPanel {
         });
     }
 
-    private static class Console {
+    public static class Console {
 
+        public void log(Object msg) {
+            System.err.println(Objects.toString(msg));
+        }
         public void log(String msg) {
             System.err.println(msg);
         }
         public void log(JSObject msg) {
-            System.err.println(msg.toString());
+            System.err.println(String.valueOf(msg));
         }
 
     }

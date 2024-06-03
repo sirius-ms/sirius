@@ -19,7 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.settings;
 
-import de.unijena.bioinf.chemdb.SearchableDatabases;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
@@ -37,8 +37,6 @@ import java.util.Arrays;
 import java.util.Properties;
 import java.util.Vector;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
-
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
@@ -47,16 +45,26 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
     final JSpinner scalingSpinner;
     final int scaling;
 
-    final FileChooserPanel db;
-    final JComboBox<String> solver;
-    private boolean restartRequired = false;
+    final String theme;
 
-    final JCheckBox allowMS1Only, ignoreFormulas;
+    final JComboBox<String> themeBox;
+
+    final FileChooserPanel db;
+    final JComboBox<String> solver, confidenceDisplayMode;
+    private boolean restartRequired = false;
 
     public GerneralSettingsPanel(Properties properties) {
         super();
         this.props = properties;
         add(new JXTitledSeparator("Graphical User Interface"));
+
+        theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
+        String[] themes = new String[]{"Light", "Dark", "Classic"};
+        themeBox = new JComboBox<>(themes);
+        themeBox.setSelectedItem(theme);
+        themeBox.setToolTipText("Set theme of the Graphical User Interface");
+        addNamed("UI Theme", themeBox);
+
         scaling = Integer.parseInt(props.getProperty("sun.java2d.uiScale", System.getProperty("sun.java2d.uiScale", "1")));
 
         SpinnerNumberModel model = new SpinnerNumberModel(scaling, 1, 5, 1);
@@ -64,15 +72,13 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         scalingSpinner.setToolTipText(GuiUtils.formatToolTip("Set scaling factor of the Graphical User Interface"));
         addNamed("Scaling Factor", scalingSpinner);
 
-        add(new JXTitledSeparator("Data Import"));
-        allowMS1Only = new JCheckBox();
-        allowMS1Only.setSelected(Boolean.parseBoolean(props.getProperty("de.unijena.bioinf.sirius.ui.allowMs1Only","true")));
-        allowMS1Only.setToolTipText(GuiUtils.formatToolTip("If checked data without MS/MS spectra will be imported. Otherwise they will be skipped during import."));
-        addNamed("Import data without MS/MS", allowMS1Only);
-        ignoreFormulas = new JCheckBox();
-        ignoreFormulas.setSelected(Boolean.parseBoolean(props.getProperty("de.unijena.bioinf.sirius.ui.ignoreFormulas","false")));
-        ignoreFormulas.setToolTipText(GuiUtils.formatToolTip("If checked molecular formula and structure annotations will be ignored during import when  given in the input file."));
-        addNamed("Ignore formulas", ignoreFormulas);
+        add(new JXTitledSeparator("Display settings"));
+        Vector<String> modes =  new Vector<>(Arrays.asList("approximate (default)","exact"));
+        String selectedMode = props.getProperty("de.unijena.bioinf.sirius.ui.confidenceDisplayMode");
+        confidenceDisplayMode = new JComboBox<>(modes);
+        confidenceDisplayMode.setSelectedItem(selectedMode);
+        confidenceDisplayMode.setToolTipText(GuiUtils.formatToolTip("Select the confidence score display mode. \"exact\" will show confidences for the exact top hit structure to be correct. \"approximate\" will show confidences for the top hit or a sufficiently similar structure to be correct. Structure candidates that are within the similarity threshold are marked in green"));
+        add(new JLabel("Confidence score display mode"),confidenceDisplayMode);
 
         add(new JXTitledSeparator("ILP solver"));
         Vector<String> items = new Vector<>(Arrays.asList("clp,cplex,gurobi,glpk", "cplex,gurobi,clp,glpk", "cplex,clp,glpk", "gurobi,clp,glpk", "clp,glpk", "glpk,clp", "gurobi", "cplex", "clp", "glpk"));
@@ -90,13 +96,14 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
         db.setToolTipText(GuiUtils.formatToolTip("Specify the directory where CSI:FingerID should store the compound candidates."));
         add(new JLabel("Database cache:"), db);
         JButton clearDBCache = new JButton("Clear cache");
+        final JFrame mf = (JFrame) SwingUtilities.getWindowAncestor(this);
         clearDBCache.addActionListener(evt -> {
-            Jobs.runInBackgroundAndLoad(MF, "Clearing database cache...", () -> {
+            Jobs.runInBackgroundAndLoad(mf, "Clearing database cache...", () -> {
                 try {
-                    SearchableDatabases.getWebDatabaseCacheStorage().clear();
+                    CustomDataSources.getWebDatabaseCacheStorage().clear();
                 } catch (IOException e) {
                     LoggerFactory.getLogger(getClass()).error("Error when clearing DB cache", e);
-                    new StacktraceDialog(MF, "Error when clearing DB cache", e);
+                    new StacktraceDialog(mf, "Error when clearing DB cache", e);
                 }
             });
         });
@@ -110,10 +117,15 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
 
     @Override
     public void saveProperties() {
+        String selectedTheme = (String) themeBox.getSelectedItem();
+        if (!theme.equals(selectedTheme)) {
+            props.setProperty("de.unijena.bioinf.sirius.ui.theme", selectedTheme);
+            restartRequired = true;
+        }
         props.setProperty("de.unijena.bioinf.sirius.treebuilder.solvers", (String) solver.getSelectedItem());
-        props.setProperty("de.unijena.bioinf.sirius.ui.allowMs1Only", String.valueOf(allowMS1Only.isSelected()));
-        props.setProperty("de.unijena.bioinf.sirius.ui.ignoreFormulas", String.valueOf(ignoreFormulas.isSelected()));
+        props.setProperty("de.unijena.bioinf.sirius.ui.confidenceDisplayMode",String.valueOf(confidenceDisplayMode.getSelectedItem()));
 //        props.setProperty("de.unijena.bioinf.sirius.treebuilder.timeout", treeTimeout.getNumber().toString());
+
         final Path dir = Paths.get(db.getFilePath());
         if (Files.isDirectory(dir)) {
             props.setProperty("de.unijena.bioinf.sirius.fingerID.cache", dir.toAbsolutePath().toString());

@@ -28,7 +28,7 @@ import picocli.CommandLine;
 
 import java.nio.file.Path;
 
-@CommandLine.Command(name = "fingerprinter", aliases = {"FP"}, description = "Compute SIRIUS compatible fingerprints from PubChem standardized SMILES in tsv format.",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+@CommandLine.Command(name = "fingerprinter", aliases = {"FP"}, description = "<STANDALONE> Compute SIRIUS compatible fingerprints from PubChem standardized SMILES in tsv format. %n %n",  versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class FingerprinterOptions implements StandaloneTool<FingerprinterWorkflow> {
 
     @CommandLine.Option(names = {"--output", "-o"}, description = "Specify output tsv file.", required = true)
@@ -40,11 +40,11 @@ public class FingerprinterOptions implements StandaloneTool<FingerprinterWorkflo
     @CommandLine.Option(names = {"--version", "-v"}, description = "Specify file to write fingerprint version information to", required = false)
     private Path version;
 
-    @CommandLine.Option(names = {"--bufferSize", "-b"}, description = "Specify buffer size for memory usage", required = false)
+    @CommandLine.Option(names = {"--bufferSize", "-b"}, description = "Specify buffer size to adjust memory usage. If not given buffer size is set to 5x CPU threads.", required = false)
     private int bufferSize;
 
     @Override
-    public FingerprinterWorkflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
-        return new FingerprinterWorkflow(rootOptions, outputPath, charge, version, bufferSize);
+    public FingerprinterWorkflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
+        return new FingerprinterWorkflow(rootOptions, outputPath,charge,version, bufferSize);
     }
 }

@@ -19,18 +19,13 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.zodiac;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
-import de.unijena.bioinf.GibbsSampling.ZodiacScore;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.subtools.DataSetJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
-import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
-import de.unijena.bioinf.projectspace.FormulaScoring;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.FormulaResultRankingScore;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -46,7 +41,7 @@ import java.util.function.Consumer;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "zodiac", aliases = {"rerank-formulas"}, description = "<DATASET_TOOL> Identify Molecular formulas of all compounds in a dataset together using ZODIAC.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+@CommandLine.Command(name = "zodiac", aliases = {"rerank-formulas"}, description = "@|bold <DATASET TOOL>|@ Identify Molecular formulas of all compounds in a dataset together using ZODIAC. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSetJob.Factory<ZodiacSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
@@ -72,25 +67,19 @@ public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSet
     ///////////////////////
     //library hits     ///
     /////////////////////
-    @Option(names = "--min-cosine", descriptionKey = "ZodiacLibraryScoring.minCosine",
-            description = {"Spectral library hits must have at least this cosine or higher to be considered in scoring.","Value must be in [0,1]."})
-    public void setMinCosine(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("ZodiacLibraryScoring.minCosine", value);
-    }
+    //todo we want to include library hits from SIRIUS spectral library search as anchors. Not sure, if we will use these parameters or if the library search parameters are sufficient.
+//    @Option(names = "--min-cosine", descriptionKey = "ZodiacLibraryScoring.minCosine",
+//            description = {"Spectral library hits must have at least this cosine or higher to be considered in scoring.", "Value must be in [0,1]."})
+//    public void setMinCosine(DefaultParameter value) throws Exception {
+//        defaultConfigOptions.changeOption("ZodiacLibraryScoring.minCosine", value);
+//    }
+//
+//    @Option(names = "--lambda", descriptionKey = "ZodiacLibraryScoring.lambda",
+//            description = {"Lambda used in the scoring function of spectral library hits. The higher this value the higher are library hits weighted in ZODIAC scoring."})
+//    public void setLambda(DefaultParameter value) throws Exception {
+//        defaultConfigOptions.changeOption("ZodiacLibraryScoring.lambda", value);
+//    }
 
-    @Option(names = "--lambda", descriptionKey = "ZodiacLibraryScoring.lambda",
-            description = {"Lambda used in the scoring function of spectral library hits. The higher this value the higher are library hits weighted in ZODIAC scoring."})
-    public void setLambda(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("ZodiacLibraryScoring.lambda", value);
-    }
-
-    public Path libraryHitsFile;
-
-    @Option(names = "--library-hits",
-            description = {"CSV file containing spectral library hits. Library hits are used as anchors to improve ZODIAC scoring."})
-    public void setLibraryHits(String filePath) throws Exception {
-        libraryHitsFile = Paths.get(filePath);
-    }
 
     ///////////////////////
     //number of epochs///
@@ -151,6 +140,7 @@ public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSet
     }
 
     public Path bestMFSimilarityGraphFile;
+
     @Option(names = "--graph", hidden = true,
             description = {"Writes the similarity graph based on the top molecular formula annotations of each compound."})
     public void setSimilarityGraphFile(String filePath) throws Exception {
@@ -167,21 +157,11 @@ public class ZodiacOptions implements ToolChainOptions<ZodiacSubToolJob, DataSet
 
     @Override
     public Consumer<Instance> getInvalidator() {
-        return inst -> {
-            inst.loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate)
-                    .forEach(it -> it.getAnnotation(FormulaScoring.class).ifPresent(z -> {
-                        if (z.removeAnnotation(ZodiacScore.class) != null)
-                            inst.updateFormulaResult(it, FormulaScoring.class); //update only if there was something to remove
-                    }));
-            if (inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
-                inst.getID().getRankingScoreTypes().remove(ZodiacScore.class);
-                inst.updateCompoundID();
-            }
-        };
+        return Instance::deleteZodiacResult;
     }
 
     @Override
     public List<Class<? extends ToolChainOptions<?, ?>>> getDependentSubCommands() {
-        return List.of(PassatuttoOptions.class, FingerprintOptions.class);
+        return List.of(/*PassatuttoOptions.class, */FingerprintOptions.class);
     }
 }

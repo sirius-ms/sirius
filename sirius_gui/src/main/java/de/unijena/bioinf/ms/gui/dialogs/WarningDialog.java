@@ -19,6 +19,8 @@
 
 package de.unijena.bioinf.ms.gui.dialogs;
 
+import de.unijena.bioinf.ms.properties.PropertyManager;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.function.Supplier;
@@ -49,6 +51,8 @@ public class WarningDialog extends DoNotShowAgainDialog {
 
     protected WarningDialog(Window owner, String title, Supplier<String> messageProvider, String propertyKey, boolean setVisible) {
         super(owner, title, messageProvider, propertyKey);
+        if (propertyKey != null && PropertyManager.getBoolean(propertyKey, false))
+            return;
         setVisible(setVisible);
     }
 
@@ -66,6 +70,11 @@ public class WarningDialog extends DoNotShowAgainDialog {
         });
 
         boxedButtonPanel.add(ok);
+    }
+
+    @Override
+    protected String getResult() {
+        return Boolean.TRUE.toString();
     }
 
     @Override

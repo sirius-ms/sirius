@@ -20,16 +20,16 @@
 package de.unijena.bioinf.ms.gui.utils.jCheckboxList;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ItemListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Enumeration;
+import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 /**
  * An implementation of JCheckboxList, a JList with checkboxes
@@ -67,7 +67,7 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
                 Rectangle bounds = getCellBounds(index, index);
                 if (index != -1) {
                     JCheckBox checkbox = getModel().getElementAt(index);
-                    if (checkbox != null) {
+                    if (checkbox != null && checkbox.isEnabled()) {
                         //check if the click is on checkbox (including the label)
                         boolean inCheckbox = getComponentOrientation().isLeftToRight() ? e.getX() < bounds.x + checkbox.getPreferredSize().getWidth() : e.getX() > bounds.x + checkbox.getPreferredSize().getWidth();
                         //change the state of the checkbox on double click or if the click is on checkbox (including the label)
@@ -92,14 +92,12 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
      */
     public ArrayList<E> getCheckedItems() {
         ArrayList<E> list = new ArrayList<>();
-        Enumeration<CheckBoxListItem<E>> dlm = ((DefaultListModel<CheckBoxListItem<E>>) getModel()).elements();
 
-        while (dlm.hasMoreElements()) {
-            CheckBoxListItem<E> checkboxListItem = dlm.nextElement();
-            if (checkboxListItem.isSelected()) {
-                list.add(checkboxListItem.getValue());
+        forEachListItem(cb -> {
+            if (cb.isSelected()) {
+                list.add(cb.getValue());
             }
-        }
+        });
 
         return list;
     }
@@ -108,12 +106,7 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
      * Check all Items
      */
     private void setAllItemsChecked(boolean checked) {
-        Enumeration<CheckBoxListItem<E>> dlm = ((DefaultListModel<CheckBoxListItem<E>>) getModel()).elements();
-
-        while (dlm.hasMoreElements()) {
-            CheckBoxListItem<E> checkboxListItem = dlm.nextElement();
-            checkboxListItem.setSelected(checked);
-        }
+        forEachListItem(cb -> cb.setSelected(checked));
     }
 
     public void refresh() {
@@ -133,13 +126,38 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
     }
 
     private void setItemChecked(E item, boolean checked) {
+        CheckBoxListItem<E> checkboxListItem = getCheckboxListItem(item);
+        if (checkboxListItem != null) {
+            checkboxListItem.setSelected(checked);
+        }
+    }
+
+    @Nullable
+    private CheckBoxListItem<E> getCheckboxListItem(E item) {
         Enumeration<CheckBoxListItem<E>> dlm = ((DefaultListModel<CheckBoxListItem<E>>) getModel()).elements();
 
         while (dlm.hasMoreElements()) {
             CheckBoxListItem<E> checkboxListItem = dlm.nextElement();
             if (equals.apply(checkboxListItem.getValue(), item)) {
-                checkboxListItem.setSelected(checked);
+                return checkboxListItem;
             }
+        }
+        return null;
+    }
+
+    public void setItemEnabled(E item, boolean enabled) {
+        CheckBoxListItem<E> checkboxListItem = getCheckboxListItem(item);
+        if (checkboxListItem != null) {
+            checkboxListItem.setEnabled(enabled);
+        }
+        revalidate();
+        repaint();
+    }
+
+    public void setItemToolTip(E item, String tooltip) {
+        CheckBoxListItem<E> checkboxListItem = getCheckboxListItem(item);
+        if (checkboxListItem != null) {
+            checkboxListItem.setToolTipText(tooltip);
         }
     }
 
@@ -178,12 +196,7 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
     @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
-        final Enumeration<CheckBoxListItem<E>> dlm = ((DefaultListModel<CheckBoxListItem<E>>) getModel()).elements();
-
-        while (dlm.hasMoreElements()) {
-            dlm.nextElement().setEnabled(enabled);
-        }
-
+        forEachListItem(cb -> cb.setEnabled(enabled));
         setMouseListenerEnabled(enabled);
     }
 
@@ -195,5 +208,33 @@ public class JCheckBoxList<E> extends JList<CheckBoxListItem<E>> {
         } else {
             removeMouseListener(mouseAdapter);
         }
+    }
+
+    /**
+     * Adds the given listener to the checkboxes of all items.
+     */
+    public void addCheckBoxListener(ItemListener listener) {
+        forEachListItem(cb -> cb.addItemListener(listener));
+    }
+
+    /**
+     * Removes the given listener from the checkboxes of all items.
+     */
+    public void removeCheckBoxListener(ItemListener listener) {
+        forEachListItem(cb -> cb.removeItemListener(listener));
+    }
+
+    private void forEachListItem(Consumer<CheckBoxListItem<E>> action) {
+        Enumeration<CheckBoxListItem<E>> dlm = ((DefaultListModel<CheckBoxListItem<E>>) getModel()).elements();
+
+        while (dlm.hasMoreElements()) {
+            action.accept(dlm.nextElement());
+        }
+    }
+
+    public boolean isSelectionEqual(JCheckBoxList<E> other){
+        Set<E> checked1 = new HashSet<>(this.getCheckedItems());
+        Set<E> checked2 = new HashSet<>(other.getCheckedItems());
+        return checked1.equals(checked2);
     }
 }

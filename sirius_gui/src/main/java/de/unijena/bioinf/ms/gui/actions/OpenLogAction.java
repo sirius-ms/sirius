@@ -21,43 +21,27 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.logging.LogDialog;
-import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.WindowListener;
-import java.awt.event.WindowStateListener;
+import java.util.logging.Level;
 
 public class OpenLogAction extends AbstractAction {
 
     private final LogDialog source;
 
     public OpenLogAction() {
-        super("Log"); //todo add log icon
+        super("Log");
         putValue(Action.LARGE_ICON_KEY, Icons.CLIP_BOARD_32);
         putValue(Action.SHORT_DESCRIPTION, "Show SIRIUS logs in Popup Dialog.");
-        source = MainFrame.MF.getLogConsole();
+        source = new LogDialog(false, Level.INFO); //todo property for log level;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource() instanceof JToggleButton) {
-            source.setVisible(((JToggleButton) e.getSource()).isSelected());
-        } else {
-            source.setVisible(!source.isVisible());
-        }
-    }
 
-    public void addComponentListener(ComponentListener l) {
-        source.addComponentListener(l);
-    }
-
-    public void addWindowListener(WindowListener l) {
-        source.addWindowListener(l);
-    }
-
-    public void addWindowStateListener(WindowStateListener l) {
-        source.addWindowStateListener(l);
+        if (e.getSource() instanceof JComponent c)
+            source.setLocationRelativeTo(c.getRootPane());
+        source.setVisible(true);
     }
 }

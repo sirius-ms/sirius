@@ -27,33 +27,39 @@ import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-//this is a swing job wrapper that writes log output into a accociated text area instead into the console or the log file
+//this is a swing job wrapper that writes log output into a associated text area instead into the console or the log file
 public class TextAreaJJobContainer<R> extends SwingJJobContainer<R> {
     private JTextArea jobLog;
     private TextAreaHandler textAreaLogHandler;
 
-
-    public TextAreaJJobContainer(ProgressJJob<R> sourceJob, Supplier<String> jobName) {
-        super(sourceJob, jobName);
+    public TextAreaJJobContainer(ProgressJJob<R> sourceJob, String jobName, String projectId) {
+        super(sourceJob, jobName, projectId);
         jobLog = new JTextArea();
         textAreaLogHandler = connectJobLogToTextArea();
         registerJobLog();
     }
 
-    public TextAreaJJobContainer(ProgressJJob<R> sourceJob, Supplier<String> jobName, Supplier<String> jobCategory) {
-        super(sourceJob, jobName, jobCategory);
+    public TextAreaJJobContainer(ProgressJJob<R> sourceJob, Supplier<String> jobName, Supplier<String> projectId) {
+        super(sourceJob, jobName, projectId);
         jobLog = new JTextArea();
         textAreaLogHandler = connectJobLogToTextArea();
         registerJobLog();
     }
 
-    public TextAreaJJobContainer(ProgressJJob<R> sourceJob, String jobName) {
-        this(sourceJob, () -> jobName);
+    public TextAreaJJobContainer(ProgressJJob<R> sourceJob, String jobName, String jobCategory, String projectId) {
+        super(sourceJob, jobName, jobCategory, projectId);
+        jobLog = new JTextArea();
+        textAreaLogHandler = connectJobLogToTextArea();
+        registerJobLog();
     }
 
-    public TextAreaJJobContainer(ProgressJJob<R> sourceJob, String jobName, String jobCategory) {
-        this(sourceJob, () -> jobName, () -> jobCategory);
+    public TextAreaJJobContainer(ProgressJJob<R> sourceJob, Supplier<String> jobName, Supplier<String> projectId, Supplier<String> jobCategory) {
+        super(sourceJob, jobName, projectId, jobCategory);
+        jobLog = new JTextArea();
+        textAreaLogHandler = connectJobLogToTextArea();
+        registerJobLog();
     }
+
 
     public JTextArea getJobLog() {
         return jobLog;

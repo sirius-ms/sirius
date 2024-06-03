@@ -19,11 +19,17 @@
 
 package de.unijena.bioinf.ms.middleware.configuration;
 
+import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.middleware.SiriusContext;
+import de.unijena.bioinf.ms.middleware.model.events.BackgroundComputationsStateEvent;
+import de.unijena.bioinf.ms.middleware.model.events.ProjectChangeEvent;
+import io.swagger.v3.core.converter.AnnotatedType;
+import io.swagger.v3.core.converter.ModelConverters;
+import io.swagger.v3.core.converter.ResolvedSchema;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
-import io.swagger.v3.oas.models.info.License;
+import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -36,27 +42,38 @@ public class SwaggerConfig {
     }
 
     @Bean
-    public OpenAPI api() {
-        return new OpenAPI()
+    public OpenAPI api(OpenApiCustomizer openApiCustomiser) {
+        OpenAPI oapi = new OpenAPI()
                 .components(new Components())
                 .info(apiInfo());
+        openApiCustomiser.customise(oapi);
+        return oapi;
     }
 
     private Info apiInfo() {
-        License l = new License();
-        l.setUrl("https://www.gnu.org/licenses/agpl-3.0.txt");
-        l.setName("GNU Affero General Public License v3.0");
-        l.setIdentifier("AGPL-3.0-only");
         return new Info()
 
                 .title("SIRIUS Nightsky API")
                 .description(
-                        "OpenAPI REST API that provides the full functionality of SIRIUS and its web services as background service. " +
-                                "It is intended as entry-point for scripting languages and software integration SDKs." +
-                                "The provided OpenAPI specification allows to autogenerate clients for different programming languages."
+                        "REST API that provides the full functionality of SIRIUS and its web services as background service. " +
+                        "It is intended as entry-point for scripting languages and software integration SDKs." +
+                        "This API is exposed by " + ApplicationCore.VERSION_STRING()
                 )
 //                .termsOfServiceUrl("https://bio.informatik.uni-jena.de/software/sirius/")
-                .license(l)
+//                .license("GNU General Public License v3.0")
+//                .licenseUrl("https://github.com/sirius-ms/sirius_frontend/blob/release-4.4/LICENSE.txt")
                 .version(context.getApiVersion());
+
+    }
+
+    @Bean
+    public OpenApiCustomizer openApiCustomiser() {
+        ResolvedSchema projectChangeEvent = ModelConverters.getInstance()
+                .resolveAsResolvedSchema(new AnnotatedType(ProjectChangeEvent.class));
+        ResolvedSchema backgroundComputationsStateEvent = ModelConverters.getInstance()
+                .resolveAsResolvedSchema(new AnnotatedType(BackgroundComputationsStateEvent.class));
+        return openApi -> openApi
+                .schema(projectChangeEvent.schema.getName(), projectChangeEvent.schema)
+                .schema(backgroundComputationsStateEvent.schema.getName(), backgroundComputationsStateEvent.schema);
     }
 }

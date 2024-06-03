@@ -1,0 +1,160 @@
+/* Global style */
+body {
+    overflow-x: hidden;
+    overflow-y: hidden;
+    font-family: sans-serif;
+    font-size: 12px;
+    background-color: #3C3F41FF;
+    color: #bbb;
+}
+
+text {
+    color: #bbb;
+}
+
+.label, .legend {
+    font-size: 13px;
+    color: #bbb;
+}
+/* for svg we have to use the fill attribute instead of the color attribute */
+text.label, text.legend {
+    font-size: 13px;
+    fill:#bbb;
+}
+
+#tooltip, .popup {
+    color: black;
+    background-color: #bbb;
+    border: solid 1px;
+    border-radius:  5px;
+    padding:  5px;
+}
+
+/* SpectraViewer_v2 Basic: */
+#tooltip, #structureView, #spectrumView, .anno { position: absolute; }
+
+.spectrum_label, .spectrum_legend {
+    text-anchor: middle;
+    color: #bbb;
+    fill: #bbb;
+}
+
+#container {
+    vertical-align: top;
+    width: 100%;
+    position: relative;
+    display: inline-block;
+    margin: 0;
+}
+
+#spectrumView {
+    top: 0;
+    left: 0;
+}
+
+#structureView { top: 20px; }
+
+.anno {
+    white-space: pre-line;
+    left: 5px;
+}
+
+/* SpectraViewer_v2 Changeable: */
+.spectrum_legend { fill: #808080; }
+
+.peak { width: 2px;}
+.peak_1 { fill: #bbb; width: 2px; }
+.peak_2 { fill: #32CD32; width: 2px; }
+.peak_matched { fill: #045FB4; width: 2px; }
+.peak_structInfo { fill: #af7ac5; width: 2px; }
+.peak_hover { fill: red; width: 2px; }
+.peak_select {
+    fill: #4169E1;
+    width: 3px;
+}
+
+#str_border {
+    border: 0.5px solid #cfcfcf;
+    border-radius: 5px;
+    padding: 5px;
+}
+
+.highlight_bond { stroke: #4169E1; }
+.highlight_cut { stroke: red; }
+.highlight_atom { fill: #4169E1; }
+g.highlight_atom path { fill: #4169E1; }
+.rest_bond { stroke: #A9A9A9; }
+.rest_atom { fill: #A9A9A9; }
+.default_bond { fill: #bbb; }
+.default_atom { fill: #bbb; }
+
+.diff_ruler { stroke: #bbb; }
+.diff_label { fill: #bbb; }
+.diff_band { stroke: #32CD32; stroke-width: 2px}
+
+.intensity_1 { fill: #bbb; }
+.intensity_2 { fill: #bbb; }
+
+
+/*
+    LCMS-Viewer
+*/
+rect.lcfeatureBox {
+        fill:gray;
+        fill-opacity: 0.04;
+        stroke:gray;
+        stroke-width: 1px;
+}
+rect.lcfeatureBox:hover {
+        fill:gray;
+        fill-opacity: 0.08;
+        stroke:gray;
+        stroke-width: 1px;
+}
+.lccurve {
+        stroke-width: 1px;
+}
+.lccurve.lcfocused {
+        stroke-width: 4px;
+}
+.lclegend-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.lclegend-item {
+    display: flex;
+    align-items: center;
+    width: 48%;
+    margin: 0%;
+    box-sizing: border-box;
+    padding:9px;
+}
+.lclegend-item.lcfocused {
+    border: 1px solid black;
+    background-color: SlateBlue;
+}
+
+.lccolor-box {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+    margin-right: 10px;
+}
+
+.lcsample-name {
+    flex: 1;
+    color: white;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.lcintensity-value {
+    margin-left: 10px;
+    text-align: right;
+    min-width: 60px;
+}

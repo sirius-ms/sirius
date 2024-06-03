@@ -19,17 +19,27 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
+
 import java.awt.*;
 
 public class DatabaseLabel implements Comparable<DatabaseLabel> {
 
-    protected final String displayName;
-    protected final String sourceName;
-    protected final String[] values;
+    protected String displayName;
+    protected String sourceName;
+    protected String[] values;
     protected final Rectangle rect;
+
+    public DatabaseLabel(String name, String[] values) {
+        this(name, null, values);
+    }
 
     public DatabaseLabel(String name, String[] values, Rectangle rect) {
         this(name, null, values, rect);
+    }
+
+    public DatabaseLabel(String sourceName, String displayName, String[] values) {
+        this(sourceName, displayName, values, new Rectangle(0, 0, 0, 0));
     }
 
     public DatabaseLabel(String sourceName, String displayName, String[] values, Rectangle rect) {
@@ -39,7 +49,7 @@ public class DatabaseLabel implements Comparable<DatabaseLabel> {
         this.rect = rect;
     }
 
-    public String name(){
+    public String name() {
         if (displayName != null)
             return displayName;
         return sourceName;
@@ -48,5 +58,27 @@ public class DatabaseLabel implements Comparable<DatabaseLabel> {
     @Override
     public int compareTo(DatabaseLabel o) {
         return sourceName.compareTo(o.sourceName);
+    }
+
+    public boolean contains(Point point) {
+        return rect.contains(point);
+    }
+
+    public String getToolTipOrNull() {
+        return CustomDataSources.getSourceFromNameOpt(name())
+                .filter(CustomDataSources.Source::noCustomSource)
+                .map(s -> ((CustomDataSources.EnumSource) s).source())
+                .map(ds -> ds.publication).map(pub -> {
+                    String citation = pub.getCitationText();
+                    String doi = pub.getDoi();
+                    if (citation == null) return null;
+                    if (doi == null) return citation;
+                    return citation + "\ndoi: " + doi;
+                }).orElse(null);
+    }
+
+    public boolean hasLinks() {
+        return CustomDataSources.getSourceFromNameOpt(name()).map(s ->
+                !(values == null || values.length == 0 || s.URI() == null)).orElse(false);
     }
 }

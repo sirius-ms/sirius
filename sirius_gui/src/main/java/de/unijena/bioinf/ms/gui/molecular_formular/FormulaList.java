@@ -21,8 +21,6 @@ package de.unijena.bioinf.ms.gui.molecular_formular;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.GibbsSampling.ZodiacScore;
-import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
@@ -32,19 +30,19 @@ import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.table.list_stats.DoubleListStats;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
-import de.unijena.bioinf.sirius.scores.IsotopeScore;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
-import de.unijena.bioinf.sirius.scores.TreeScore;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
 public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
     public final FormulaScoreListStats zodiacScoreStats = new FormulaScoreListStats();
@@ -53,7 +51,6 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
     public final DoubleListStats treeScoreStats = new DoubleListStats();
     public final DoubleListStats explainedPeaks = new DoubleListStats();
     public final DoubleListStats explainedIntensity = new DoubleListStats();
-    public final DoubleListStats csiScoreStats = new DoubleListStats();
 
     public FormulaList(final CompoundList compoundList) {
         super(FormulaResultBean.class);
@@ -68,7 +65,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
         //this is the selection refresh, element changes are detected by eventlist
         compoundList.addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
+            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
                 if (!selection.isSelectionEmpty()) {
                     while (event.next()) {
                         if (selection.isSelectedIndex(event.getIndex())) {
@@ -80,7 +77,7 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
                 if (!selection.isSelectionEmpty())
                     changeData(selection.getSelected().get(0));
                 else
@@ -98,61 +95,42 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
             backgroundLoaderLock.lock();
             setData(ec);
             final JJob<Boolean> old = backgroundLoader;
-            backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<Boolean>() {
+            backgroundLoader = Jobs.runInBackground(new TinyBackgroundJJob<>() {
                 @Override
                 protected Boolean compute() throws Exception {
 
                     if (old != null && !old.isFinished()) {
-                        old.cancel(false);
+                        old.cancel(true);
                         old.getResult(); //await cancellation so that nothing strange can happen.
                     }
                     checkForInterruption();
-                    if (ec != null && ec.getResults() != null && !ec.getResults().isEmpty()) {
-                        checkForInterruption();
-                        if (!ec.getResults().equals(elementList)) {
-                            checkForInterruption();
-                            Jobs.runEDTAndWait(FormulaList.this::intiResultList);
-                        }
-                    } else {
-                        checkForInterruption();
-                        Jobs.runEDTAndWait(() -> {
-                            if (!elementList.isEmpty()) {
-                                elementList.forEach(FormulaResultBean::unregisterProjectSpaceListeners);
-                                elementListSelectionModel.clearSelection();
-                                refillElements(null);
-                            } else {
-                                // to have notification even if the list is already empty
-                                readDataByConsumer(data -> notifyListeners(data, null, elementList, elementListSelectionModel));
-                            }
-                            zodiacScoreStats.update(new double[0]);
-                            siriusScoreStats.update(new double[0]);
-                            isotopeScoreStats.update(new double[0]);
-                            treeScoreStats.update(new double[0]);
-                            csiScoreStats.update(new double[0]);
-                        });
-                    }
+                    //fetch data
+                    final List<FormulaResultBean> candidates = ec != null ? readDataByFunction(InstanceBean::getFormulaCandidates) : null;
+                    checkForInterruption();
+                    //loading data
+                    intiResultList(candidates);
+                    checkForInterruption();
 
-                        checkForInterruption();
-                        //refreshing selection
-                        if (!elementList.isEmpty()) {
-                            final AtomicInteger index = new AtomicInteger(0);
-                            final Function<FormulaResultBean, Boolean> f = getBestFunc();
-                            for (FormulaResultBean resultBean : elementList) {
-                                if (f.apply(resultBean))
-                                    break;
-                                index.incrementAndGet();
-                            }
-                            //set selection
-                            Jobs.runEDTAndWait(() -> {
-                                if (index.get() < elementList.size())
-                                    elementListSelectionModel.setSelectionInterval(index.get(), index.get());
-                                else
-                                    elementListSelectionModel.clearSelection();
-                            });
-                        }else {
-                            elementListSelectionModel.clearSelection();
+                    //refreshing selection
+                    if (!elementList.isEmpty()) {
+                        final AtomicInteger index = new AtomicInteger(0);
+                        final Function<FormulaResultBean, Boolean> f = getBestFunc();
+                        for (FormulaResultBean resultBean : elementList) {
+                            if (f.apply(resultBean))
+                                break;
+                            index.incrementAndGet();
                         }
-                        return true;
+                        //set selection
+                        Jobs.runEDTAndWait(() -> {
+                            if (index.get() < elementList.size())
+                                elementListSelectionModel.setSelectionInterval(index.get(), index.get());
+                            else
+                                elementListSelectionModel.clearSelection();
+                        });
+                    } else {
+                        elementListSelectionModel.clearSelection();
+                    }
+                    return true;
                 }
             });
         } finally {
@@ -160,44 +138,53 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
         }
     }
 
-    private void intiResultList() {
-        elementList.forEach(FormulaResultBean::unregisterProjectSpaceListeners);
-        elementListSelectionModel.clearSelection();
-//        elementList.clear();
+    private void intiResultList(List<FormulaResultBean> candidates) throws InterruptedException, InvocationTargetException {
+        Jobs.runEDTAndWait(() -> {
+            elementList.forEach(FormulaResultBean::unregisterProjectSpaceListeners); // todo can this be called outside ui thread
+            if (candidates != null && !candidates.isEmpty()) { //refill case
+                elementListSelectionModel.clearSelection();
 
-        final List<FormulaResultBean> r = readDataByFunction(InstanceBean::getResults);
-        if (r != null && !r.isEmpty()) {
-            double[] zscores = new double[r.size()];
-            double[] sscores = new double[r.size()];
-            double[] iScores = new double[r.size()];
-            double[] tScores = new double[r.size()];
-            double[] csiScores = new double[r.size()];
-            int i = 0;
+                double[] zscores = new double[candidates.size()];
+                double[] sscores = new double[candidates.size()];
+                double[] iScores = new double[candidates.size()];
+                double[] tScores = new double[candidates.size()];
+                int i = 0;
 
-            for (FormulaResultBean element : r) {
-                element.registerProjectSpaceListeners();
-                zscores[i] = element.getScoreValueIfNa(ZodiacScore.class, 0d);
-                sscores[i] = element.getScoreValue(SiriusScore.class);
-                iScores[i] = element.getScoreValue(IsotopeScore.class);
-                tScores[i] = element.getScoreValue(TreeScore.class);
-                csiScores[i++] = element.getScoreValue(TopCSIScore.class);
+
+                for (FormulaResultBean fc : candidates) {
+                    zscores[i] = fc.getZodiacScore().orElse(0d); //why do we want 0 here?
+                    sscores[i] = fc.getSiriusScore().orElse(Double.NEGATIVE_INFINITY);
+                    iScores[i] = fc.getIsotopeScore().orElse(Double.NEGATIVE_INFINITY);
+                    tScores[i] = fc.getTreeScore().orElse(Double.NEGATIVE_INFINITY);
+                    i++;
+                }
+                refillElements(candidates);
+
+                this.zodiacScoreStats.update(zscores);
+                this.siriusScoreStats.update(sscores);
+                this.isotopeScoreStats.update(iScores);
+                this.treeScoreStats.update(tScores);
+
+                this.explainedIntensity.setMinScoreValue(0).setMaxScoreValue(1)
+                        .setScoreSum(this.explainedIntensity.getMax());
+
+                this.explainedPeaks.setMinScoreValue(0).setMaxScoreValue(candidates.get(0).getNumOfExplainablePeaks().orElseThrow())
+                        .setScoreSum(this.explainedPeaks.getMax());
+            } else { //clear case
+
+                if (!elementList.isEmpty()) {
+                    elementListSelectionModel.clearSelection();
+                    refillElements(null);
+                } else {
+                    // to have notification even if the list is already empty
+                    readDataByConsumer(data -> notifyListeners(data, null, elementList, elementListSelectionModel));
+                }
+                zodiacScoreStats.update(new double[0]);
+                siriusScoreStats.update(new double[0]);
+                isotopeScoreStats.update(new double[0]);
+                treeScoreStats.update(new double[0]);
             }
-//            elementList.addAll(r);
-            refillElements(r);
-
-            this.zodiacScoreStats.update(zscores);
-            this.siriusScoreStats.update(sscores);
-            this.isotopeScoreStats.update(iScores);
-            this.treeScoreStats.update(tScores);
-            this.csiScoreStats.update(csiScores);
-
-            this.explainedIntensity.setMinScoreValue(0).setMaxScoreValue(1)
-                    .setScoreSum(this.explainedIntensity.getMax());
-
-            this.explainedPeaks.setMinScoreValue(0).setMaxScoreValue(r.get(0).getNumberOfExplainablePeaks())
-                    .setScoreSum(this.explainedPeaks.getMax());
-        }
-
+        });
     }
 
     public List<FormulaResultBean> getSelectedValues() {
@@ -210,33 +197,18 @@ public class FormulaList extends ActionList<FormulaResultBean, InstanceBean> {
         return selected;
     }
 
+    protected Function<FormulaResultBean, FormulaListTextCellRenderer.RenderScore> getRenderScoreFunc() {
+       return sre -> sre.getZodiacScore().map(s -> new FormulaListTextCellRenderer.RenderScore(s, "Zodiac"))
+                .orElse(new FormulaListTextCellRenderer.RenderScore(sre.getSiriusScore().
+                        map(s -> Math.exp(s - siriusScoreStats.getMax()) / siriusScoreStats.getExpScoreSum() * 100d)
+                        .orElse(Double.NaN), "SIRIUS"));
+    }
     protected Function<FormulaResultBean, Boolean> getBestFunc() {
-        return sre -> Double.isFinite(csiScoreStats.getMax()) && !Double.isNaN(csiScoreStats.getMax())
-                ? sre.getScoreValue(TopCSIScore.class) >= csiScoreStats.getMax()
-                : sre.getScore(ZodiacScore.class)
-                .map(it -> it.score() >= zodiacScoreStats.getMax())
-                .orElse(sre.getScoreValue(SiriusScore.class) >= siriusScoreStats.getMax());
-    }
-
-    protected Function<FormulaResultBean, RenderScore> getRenderScoreFunc() {
-        return sre -> sre.getScore(ZodiacScore.class)
-                .map(it -> RenderScore.of(it.score() * 100d, it.shortName()))
-                .orElse(RenderScore.of(
-                        Math.exp(sre.getScoreValue(SiriusScore.class) - siriusScoreStats.getMax()) / siriusScoreStats.getExpScoreSum() * 100d
-                        , sre.getScore(SiriusScore.class).map(SiriusScore::shortName).orElse("Formula Score")));
-    }
-
-    public static class RenderScore{
-        public final double score;
-        public final String name;
-
-        public RenderScore(double score, String name) {
-            this.score = score;
-            this.name = name;
-        }
-
-        public static RenderScore of(double score, String name){
-            return new RenderScore(score, name);
-        }
+        //top annotation corresponds to the best hit selected by sirius. so just check ID
+        return sre -> Optional.ofNullable(sre)
+                .map(FormulaResultBean::getParentInstance)
+                .flatMap(InstanceBean::getFormulaAnnotation)
+                .map(it -> Objects.equals(it.getFormulaId(), sre.getFormulaId()))
+                .orElse(false);
     }
 }

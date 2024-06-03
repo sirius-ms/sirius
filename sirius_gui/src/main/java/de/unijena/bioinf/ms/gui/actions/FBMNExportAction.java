@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ExecutionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
@@ -29,35 +30,51 @@ import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.nio.file.Path;
 import java.util.List;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
-public class FBMNExportAction extends AbstractAction {
+public class FBMNExportAction extends AbstractGuiAction {
 
-    public FBMNExportAction() {
-        super("FBMN Export");
+    public FBMNExportAction(SiriusGui gui) {
+        super("FBMN Export", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.FBMN_32);
         putValue(Action.SHORT_DESCRIPTION, "Export project for GNPS Feature Based Molecular Networking.");
         initListeners();
     }
 
-    protected void initListeners(){
-        setEnabled(SiriusActions.notComputingOrEmpty(MF.getCompoundList().getCompoundList()));
+    protected void initListeners() {
+        setEnabled(SiriusActions.notComputingOrEmpty(mainFrame.getCompoundList().getCompoundList()));
 
-        MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
+        mainFrame.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
+            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
                 setEnabled(SiriusActions.notComputingOrEmpty(event.getSourceList()));
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {}
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
+            }
         });
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        new ExecutionDialog<>(new MgfExporterConfigPanel(), List.copyOf(MF.getCompounds()), null, MF, "Export Project for GNPS FBMN", true).start();
+        String ps = gui.getProjectManager().getProjectLocation();
+
+        String p = null;
+        String n = null;
+        if (ps != null && !ps.isBlank()) {
+          Path path = Path.of(ps);
+          p = path.getParent().toString();
+          n = path.getFileName().toString();
+        }
+
+        ExecutionDialog<MgfExporterConfigPanel> exec = new ExecutionDialog<>(gui,
+                new MgfExporterConfigPanel(p, n),
+                List.copyOf(mainFrame.getCompounds()), mainFrame, //todo sublist of feature, fully in background?
+                "Export Project for GNPS FBMN", true, true);
+        exec.setIndeterminateProgress(true);
+        exec.start();
     }
 }

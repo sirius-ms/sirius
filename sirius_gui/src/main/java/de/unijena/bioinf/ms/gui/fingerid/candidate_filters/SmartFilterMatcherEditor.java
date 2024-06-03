@@ -21,33 +21,41 @@ package de.unijena.bioinf.ms.gui.fingerid.candidate_filters;
 
 import ca.odell.glazedlists.matchers.AbstractMatcherEditor;
 import ca.odell.glazedlists.matchers.Matcher;
+import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
-import org.openscience.cdk.DefaultChemObjectBuilder;
-import org.openscience.cdk.smiles.smarts.SMARTSQueryTool;
+import org.openscience.cdk.smarts.SmartsPattern;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.BooleanSupplier;
 
-/**
- * Created by tkoehl on 18.07.18.
- */
+
 public class SmartFilterMatcherEditor extends AbstractMatcherEditor<FingerprintCandidateBean> {
 
+    private final Color foreground;
+    private final BooleanSupplier isEnabled;
+
     public SmartFilterMatcherEditor(JTextField textField) {
+        this(textField, () -> true);
+    }
+    public SmartFilterMatcherEditor(JTextField textField, BooleanSupplier isEnabled) {
         super();
+        this.isEnabled = isEnabled;
+        foreground = textField.getForeground();
         textField.addActionListener(propertyChangeEvent -> fireChanged(new SmartMatcher(textField)));
     }
 
-    public static class SmartMatcher implements Matcher<FingerprintCandidateBean> {
-        final SMARTSQueryTool tool;
+    public class SmartMatcher implements Matcher<FingerprintCandidateBean> {
+        private SmartsPattern smartsPattern = null;
         boolean isValidSmartString;
 
         public SmartMatcher(JTextField textField) {
-            String smart = textField.getText();
-            textField.setForeground(Color.black);
-            textField.setToolTipText("");
+            textField.setForeground(foreground); //set neutral color if smart matching inactive
 
-            tool = new SMARTSQueryTool("CC", DefaultChemObjectBuilder.getInstance());
+            if (! isEnabled.getAsBoolean())
+                return;
+
+            String smart = textField.getText();
 
             if (smart == null) {
                 isValidSmartString = false;
@@ -59,21 +67,21 @@ public class SmartFilterMatcherEditor extends AbstractMatcherEditor<FingerprintC
             }
 
             try {
-                tool.setSmarts(smart);
+                smartsPattern = SmartsPattern.create(smart);
                 isValidSmartString = true;
-                textField.setForeground(Color.green);
+                textField.setForeground(Colors.ICON_GREEN);
             } catch (Exception e) {
                 isValidSmartString = false;
-                textField.setForeground(Color.red);
+                textField.setForeground(Colors.ICON_GREEN);
                 textField.setToolTipText("invalid SMART string.");
             }
         }
 
         @Override
         public boolean matches(FingerprintCandidateBean candidate) {
-            if (isValidSmartString) {
+            if (smartsPattern != null && isValidSmartString) {
                 try {
-                    return tool.matches(candidate.getMolecule());
+                    return smartsPattern.matches(candidate.getMolecule());
                 } catch (Exception e) {
                     return false;
                 }

@@ -71,6 +71,8 @@ public class FingerIdPropertyBean extends MolecularPropertyBean<MolecularPropert
                 return "custom made SMARTS";
             case RINGSYSTEMS:
                 return "ring systems";
+            case INSILICO:
+                return "combinatorial fragmenter";
             default:
                 return null;
         }

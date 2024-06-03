@@ -17,7 +17,7 @@
  */
 package de.unijena.bioinf.ms.frontend.subtools.sirius;
 
-import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.completion.DataSourceCandidates;
@@ -27,7 +27,6 @@ import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
 import de.unijena.bioinf.ms.frontend.subtools.fingerprint.FingerprintOptions;
-import de.unijena.bioinf.ms.frontend.subtools.passatutto.PassatuttoOptions;
 import de.unijena.bioinf.ms.frontend.subtools.zodiac.ZodiacOptions;
 import de.unijena.bioinf.projectspace.Instance;
 import org.slf4j.LoggerFactory;
@@ -46,9 +45,11 @@ import java.util.function.Consumer;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 
-@Command(name = "formula", aliases = {"tree", "sirius" }, description = "<COMPOUND_TOOL> Identify molecular formula for each compound individually using fragmentation trees and isotope patterns.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
+@Command(name = "formulas", aliases = {"trees", "formula", "sirius" }, description = "@|bold <COMPOUND TOOL>|@ Identify molecular formula for each compound individually using fragmentation trees and isotope patterns. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, sortOptions = false)
 public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, InstanceJob.Factory<SiriusSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
+
+    public enum BottomUpSearchOptions {CUSTOM, BOTTOM_UP_ONLY, DISABLED}
 
     public SiriusOptions(DefaultParameterConfigLoader defaultConfigOptions) {
         this.defaultConfigOptions = defaultConfigOptions;
@@ -87,14 +88,14 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     }
 
     // candidates
-    @Option(names = {"-c", "--candidates"}, descriptionKey ="NumberOfCandidates" , description = "Number of formula candidates in the output.")
+    @Option(names = {"-c", "--candidates"}, descriptionKey ="NumberOfCandidates" , description = "Number of precursor formula candidates in the output - each can correspond to  multiple adducts.")
     public void setNumberOfCandidates(DefaultParameter value) throws Exception {
         defaultConfigOptions.changeOption("NumberOfCandidates", value);
     }
 
-    @Option(names = "--candidates-per-ion", descriptionKey = "NumberOfCandidatesPerIon", description = "Minimum number of candidates in the output for each ionization. Set to force output of results for each possible ionization, even if not part of highest ranked results.")
-    public void setNumberOfCandidatesPerIon(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("NumberOfCandidatesPerIon", value);
+    @Option(names = "--candidates-per-ionization", descriptionKey = "NumberOfCandidatesPerIonization", description = "Minimum number of candidates in the output for each ionization. Set to force output of results for each possible ionization, even if not part of highest ranked results.")
+    public void setNumberOfCandidatesPerIonization(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("NumberOfCandidatesPerIonization", value);
     }
 
     // Elements
@@ -109,6 +110,15 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
         defaultConfigOptions.changeOption("FormulaSettings.enforced", elements);
     }
 
+    @Option(names = {"--elements-extended-organic"}, description = {"Use extended set of elements for molecular formula generation. DO NOT USE IN COMBINATION WITH DE NOVO FORMULA GENERATION!", " Enforced elements are: "+FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_ENFORCED_CHNOPFI_STRING, " Detectable elements are: "+FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrCl_STRING})
+    public void setEnforcedOrganicElements(boolean enabled) throws Exception {
+        if (enabled) {
+            defaultConfigOptions.changeOption("FormulaSettings.enforced", FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_ENFORCED_CHNOPFI_STRING);
+            defaultConfigOptions.changeOption("FormulaSettings.detectable", FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrCl_STRING);
+            defaultConfigOptions.changeOption("FormulaSettings.fallback", FormulaSettings.EXTENDED_ORGANIC_ELEMENT_FILTER_DETECTABLE_SBBrCl_STRING);
+        }
+    }
+
     @Option(names = {"--database", "-d", "--db"}, descriptionKey = "FormulaSearchDB" , paramLabel = DataSourceCandidates.PATAM_LABEL, completionCandidates = DataSourceCandidates.class,
             description = {"Search formulas in the Union of the given databases. If no database is given all possible molecular formulas will be respected (no database is used).", DataSourceCandidates.VALID_DATA_STRING})
     public void setDatabase(DefaultParameter dbList) throws Exception {
@@ -120,6 +130,10 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
         defaultConfigOptions.changeOption("CandidateFormulas", formulas);
     }
 
+    @Option(names = {"-l", "--fix-lipids", "--elgordo"}, descriptionKey = "EnforceElGordoFormula", description = {"Fix the single molecular formula determined by El Gordo if a lipid class is detected."})
+    public void setInjectElGordoCompounds(DefaultParameter value) throws Exception {
+        defaultConfigOptions.changeOption("EnforceElGordoFormula", value);
+    }
 
     @Option(names = {"--no-isotope-filter"}, description = "Disable molecular formula filter. When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.")
     public void disableIsotopeFilter(boolean disable) throws Exception {
@@ -133,27 +147,27 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
     }
 
     //Adducts
-    @Option(names = {"-i", "--ions-considered"}, descriptionKey = "AdductSettings.detectable" , description = "the iontype/adduct of the MS/MS data. Example: [M+H]+, [M-H]-, [M+Cl]-, [M+Na]+, [M]+. You can also provide a comma separated list of adducts.")
+    @Option(names = {"-i", "--adducts-considered"}, descriptionKey = "AdductSettings.detectable" , description = "Adducts which are considered during adduct detection. They are only used for further analyses if there is an indication in the MS1 scan. If none of them could be detected in MS1, all of them will be used as a fallback. Example: [M+H]+,[M-H]-,[M+Cl]-,[M+Na]+,[M]+,[M-H2O+H]+.")
     public void setIonsConsidered(DefaultParameter adductList) throws Exception {
         defaultConfigOptions.changeOption("AdductSettings.detectable", adductList);
         defaultConfigOptions.changeOption("AdductSettings.fallback", adductList);
     }
 
-    @Option(names = {"-I", "--ions-enforced"}, descriptionKey = "AdductSettings.enforced", description = "the iontype/adduct of the MS/MS data. Example: [M+H]+, [M-H]-, [M+Cl]-, [M+Na]+, [M]+. You can also provide a comma separated list of adducts.")
+    @Option(names = {"-I", "--adducts-enforced"}, descriptionKey = "AdductSettings.enforced", description = "Adducts that are always considered during the analysis. Example: [M+H]+,[M-H]-,[M+Cl]-,[M+Na]+,[M]+,[M-H2O+H]+.")
     public void setIonsEnforced(DefaultParameter adductList) throws Exception {
         defaultConfigOptions.changeOption("AdductSettings.enforced", adductList);
     }
 
 
     //heuristic thresholds
-    @Option(names = {"--heuristic"}, descriptionKey ="UseHeuristic.mzToUseHeuristic" , description = "Enable heuristic preprocessing for compounds >= the specified m/z.")
+    @Option(names = {"--heuristic"}, descriptionKey ="UseHeuristic.useHeuristicAboveMz" , description = "Enable heuristic preprocessing for compounds >= the specified m/z.")
     public void setMzToUseHeuristic(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("UseHeuristic.mzToUseHeuristic", value);
+        defaultConfigOptions.changeOption("UseHeuristic.useHeuristicAboveMz", value);
     }
 
-    @Option(names = {"--heuristic-only"}, descriptionKey ="UseHeuristic.mzToUseHeuristicOnly" , description = "Use only heuristic tree computation compounds >= the specified m/z.")
+    @Option(names = {"--heuristic-only"}, descriptionKey ="UseHeuristic.useOnlyHeuristicAboveMz" , description = "Use only heuristic tree computation compounds >= the specified m/z.")
     public void setMzToUseHeuristicOnly(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("UseHeuristic.mzToUseHeuristicOnly", value);
+        defaultConfigOptions.changeOption("UseHeuristic.useOnlyHeuristicAboveMz", value);
     }
 
 
@@ -194,18 +208,26 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
         }
     }
 
-    @Option(names = "--trust-ion-prediction", description = "By default we use MS1 information to select additional ionizations ([M+Na]+,[M+K]+,[M+Cl]-,[M+Br]-) for considerations. With this parameter we trust the MS1 prediction and only consider these found ionizations.", hidden = true)
-    public void setTrustGuessIonFromMS1(boolean trust) {
-        throw new IllegalArgumentException("Parameter not implemented!");
-        //todo manipulate adduct lists for marcus?????
-    }
-
     @Option(names = {"--mostintense-ms2"}, hidden = true,
             description = "Only use the fragmentation spectrum with the most intense precursor peak (for each compound).")
     public boolean mostIntenseMs2;
 
     @Option(names = "--disable-fast-mode", hidden = true)
     public boolean disableFastMode;
+
+    @Option(names = {"--bottom-up-search"}, description = "Valid values: ${COMPLETION-CANDIDATES}. Use DISABLED to deactivate bottom up search. Use BOTTOM_UP_ONLY to replace de novo computations with bottom up search for every compound. \nDefault: ${DEFAULT-VALUE}, which uses the predefined values from the config tool.", defaultValue = "CUSTOM")
+    public void setBottomUpSearchOptions(BottomUpSearchOptions selection) throws Exception {
+        switch (selection) {
+            case BOTTOM_UP_ONLY -> {
+                defaultConfigOptions.changeOption("FormulaSearchSettings.performBottomUpAboveMz", "0");
+                defaultConfigOptions.changeOption("FormulaSearchSettings.performDeNovoBelowMz", "0");
+            }
+            case DISABLED -> {
+                defaultConfigOptions.changeOption("FormulaSearchSettings.performBottomUpAboveMz", String.valueOf(Double.POSITIVE_INFINITY));
+                defaultConfigOptions.changeOption("FormulaSearchSettings.performDeNovoBelowMz", String.valueOf(Double.POSITIVE_INFINITY));
+            }
+        }
+    }
 
     @Override
     public InstanceJob.Factory<SiriusSubToolJob> call() throws Exception {
@@ -214,16 +236,11 @@ public class SiriusOptions implements ToolChainOptions<SiriusSubToolJob, Instanc
 
     @Override
     public Consumer<Instance> getInvalidator() {
-        return inst -> {
-            inst.deleteFormulaResults(); //this step creates the results, so we have to delete them before recompute
-            inst.getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> it.remove(DetectedAdducts.Keys.MS1_PREPROCESSOR.name()));
-            inst.getID().setDetectedAdducts(inst.getExperiment().getAnnotationOrNull(DetectedAdducts.class));
-            inst.updateCompoundID();
-        };
+        return Instance::deleteSiriusResult;
     }
 
     @Override
     public List<Class<? extends ToolChainOptions<?, ?>>> getDependentSubCommands() {
-        return List.of(PassatuttoOptions.class, ZodiacOptions.class, FingerprintOptions.class);
+        return List.of(/*PassatuttoOptions.class, */ZodiacOptions.class, FingerprintOptions.class);
     }
 }

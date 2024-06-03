@@ -34,7 +34,7 @@ import java.text.NumberFormat;
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
 public abstract class AbstractBarTableCellRenderer extends SiriusResultTableCellRenderer {
-    protected Color[] colors = {Colors.ICON_RED, Colors.ICON_YELLOW, Colors.ICON_GREEN};
+    protected Color[] colors = {Colors.GRADIENT_RED, Colors.GRADIENT_YELLOW, Colors.GRADIENT_GREEN};
     protected float[] fractions = {.1f, .5f, 1f};
     protected float[] fractionsTwoWay = {.3f, 1f};
 
@@ -106,17 +106,16 @@ public abstract class AbstractBarTableCellRenderer extends SiriusResultTableCell
         Graphics2D g2d = (Graphics2D) g;
         g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-
         g2d.setPaint(backColor);
         g2d.fillRect(0, 0, (getWidth()), getHeight());
 
         if (twoWayBar) {
             if (toFill > 0.5) {
-                LinearGradientPaint gp = new LinearGradientPaint((int) ((double)getWidth() / 2d), 0, getWidth() - 5, getHeight(), new float[]{0f,1}, new Color[]{backColor,Colors.ICON_GREEN}, MultipleGradientPaint.CycleMethod.NO_CYCLE);
+                LinearGradientPaint gp = new LinearGradientPaint((int) ((double)getWidth() / 2d), 0, getWidth() - 5, getHeight(), new float[]{0f,1}, new Color[]{backColor,Colors.GRADIENT_GREEN}, MultipleGradientPaint.CycleMethod.NO_CYCLE);
                 g2d.setPaint(gp);
                 g2d.fillRect(getWidth() / 2, 2, (int) (((double)getWidth() / 2d) * (toFill-0.5)/0.5) - 5, getHeight() - 4);
             } else {
-                LinearGradientPaint gp = new LinearGradientPaint(5, 0, (int) ((double)getWidth() / 2d), getHeight(), new float[]{0f,1}, new Color[]{Colors.ICON_RED,backColor}, MultipleGradientPaint.CycleMethod.NO_CYCLE);
+                LinearGradientPaint gp = new LinearGradientPaint(5, 0, (int) ((double)getWidth() / 2d), getHeight(), new float[]{0f,1}, new Color[]{Colors.GRADIENT_RED,backColor}, MultipleGradientPaint.CycleMethod.NO_CYCLE);
                 g2d.setPaint(gp);
                 double start = ((double)getWidth() / 2d * toFill/0.5);
                 g2d.fillRect(5 + (int)start, 2, (int) ((((double)getWidth() / 2d) - start)), getHeight() - 4);
@@ -135,13 +134,11 @@ public abstract class AbstractBarTableCellRenderer extends SiriusResultTableCell
         }
 
         if (selected) {
-            g2d.setPaint(new Color(backColor.getRed(), backColor.getGreen(), backColor.getBlue(), 200));
+            g2d.setPaint(new Color(backColor.getRed(), backColor.getGreen(), backColor.getBlue(), 100));
             g2d.fillRect(0, 0, getWidth(), getHeight());
-            g2d.setPaint(foreColor);
-        } else {
-            g2d.setPaint(Color.BLACK);
         }
 
+        g2d.setPaint(foreColor);
         int maxWord = g2d.getFontMetrics().stringWidth(max);
         String v = value;
         if (!Double.isNaN(percentageValue)) {

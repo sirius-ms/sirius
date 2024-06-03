@@ -38,10 +38,10 @@ import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 
-public class CompoundClassTableView extends ActionListDetailView<ClassyfirePropertyBean, FormulaResultBean, CompoundClassList> {
+public class CompoundClassTableView extends ActionListDetailView<CompoundClassBean, FormulaResultBean, CompoundClassList> {
 
-    protected SortedList<ClassyfirePropertyBean> sortedSource;
-    protected ActionTable<ClassyfirePropertyBean> actionTable;
+    protected SortedList<CompoundClassBean> sortedSource;
+    protected ActionTable<CompoundClassBean> actionTable;
     protected CompoundClassTableFormat format;
 
 
@@ -77,26 +77,26 @@ public class CompoundClassTableView extends ActionListDetailView<ClassyfirePrope
 
 
     @Override
-    protected FilterList<ClassyfirePropertyBean> configureFiltering(EventList<ClassyfirePropertyBean> source) {
+    protected FilterList<CompoundClassBean> configureFiltering(EventList<CompoundClassBean> source) {
         sortedSource = new SortedList<>(source);
         return super.configureFiltering(sortedSource);
     }
 
     @Override
-    protected EventList<MatcherEditor<ClassyfirePropertyBean>> getSearchFieldMatchers() {
+    protected EventList<MatcherEditor<CompoundClassBean>> getSearchFieldMatchers() {
         return GlazedLists.eventListOf(
-                new TextMatcher(searchField.textField)
+                new TextMatcher(searchField)
         );
     }
 
-    protected static class TextMatcher extends TextComponentMatcherEditor<ClassyfirePropertyBean> {
+    protected static class TextMatcher extends TextComponentMatcherEditor<CompoundClassBean> {
 
         public TextMatcher(JTextComponent textComponent) {
             super(textComponent, (baseList, element) -> {
-                baseList.add(element.getMolecularProperty().getName());
-                baseList.add(element.getMolecularProperty().getChemontIdentifier());
-                if (element.getMolecularProperty().getParent()!=null) baseList.add(element.getMolecularProperty().getParent().getChemontIdentifier());
-                baseList.add(element.getMolecularProperty().getDescription());
+                baseList.add(element.getSourceClass().getName());
+                baseList.add(element.getChemontIdentifier());
+                if (element.getParent()!=null) baseList.add(element.getParent().getChemontIdentifier());
+                baseList.add(element.getSourceClass().getDescription());
             });
         }
     }

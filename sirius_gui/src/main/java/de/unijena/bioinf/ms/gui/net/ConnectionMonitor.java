@@ -19,23 +19,13 @@
 
 package de.unijena.bioinf.ms.gui.net;
 
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.rest.NetUtils;
-import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.ms.rest.model.info.LicenseInfo;
-import de.unijena.bioinf.ms.rest.model.license.Subscription;
-import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
-import de.unijena.bioinf.ms.rest.model.worker.WorkerType;
-import de.unijena.bioinf.ms.rest.model.worker.WorkerWithCharge;
-import de.unijena.bioinf.rest.ProxyManager;
-import de.unijena.bioinf.webapi.Tokens;
-import de.unijena.bioinf.rest.ConnectionError;
+import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
+import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
+import de.unijena.bioinf.ms.nightsky.sdk.model.LicenseInfo;
+import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionError;
 import org.jdesktop.beans.AbstractBean;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,19 +35,12 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @ThreadSafe
 public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCloseable {
-    public static final Set<WorkerWithCharge> neededTypes =
-            Collections.unmodifiableSet(WorkerType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedWorkers")).stream()
-                    .flatMap(wt -> Stream.of(
-                            WorkerWithCharge.of(wt, PredictorType.CSI_FINGERID_POSITIVE),
-                            WorkerWithCharge.of(wt, PredictorType.CSI_FINGERID_NEGATIVE)))
-                    .collect(Collectors.toSet()));
+
+    private final NightSkyClient siriusClient;
+    //todo nightsky: use sse for connection events
 
     @Override
     public void close() {
@@ -66,17 +49,20 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         backgroundMonitorJob = null;
     }
 
-    private volatile ConnectionCheck checkResult = new ConnectionCheck(Multimaps.newSetMultimap(Map.of(), Set::of), null, new LicenseInfo());
+    private volatile ConnectionCheck checkResult;
     private volatile CheckJob checkJob = null;
-
     private ConnectionCheckMonitor backgroundMonitorJob = null;
 
-    public ConnectionMonitor() {
-        this(true);
+    public ConnectionMonitor(@NotNull NightSkyClient siriusClient) {
+        this(siriusClient, true);
     }
 
-    public ConnectionMonitor(boolean withBackgroundMonitorThread) {
+    public ConnectionMonitor(@NotNull NightSkyClient siriusClient, boolean withBackgroundMonitorThread) {
         super();
+        this.siriusClient = siriusClient;
+        checkResult = new ConnectionCheck();
+        checkResult.setLicenseInfo(new LicenseInfo());
+
         if (withBackgroundMonitorThread) {
             backgroundMonitorJob = new ConnectionCheckMonitor();
             Jobs.runInBackground(backgroundMonitorJob);
@@ -101,6 +87,14 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         checkJob = null;
     }
 
+    @Nullable
+    public synchronized ConnectionCheck getCurrentCheckResult(){
+        if (checkResult == null)
+            if (checkJob != null)
+                return checkJob.getResult();
+        return checkResult;
+    }
+
 
     // this method might block. You might want to run it in background to wait for the result.
     //e.g. Jobs.runInBackgroundAnLoad
@@ -119,9 +113,6 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         old = this.checkResult;
         this.checkResult = checkResult;
 
-        if (!old.isConnected() && (checkResult.isConnected() || checkResult.hasOnlyWarning()))
-            NetUtils.awakeAll();//awake waiting web connections
-
         firePropertyChange(new ConnectionUpdateEvent(checkResult));
         firePropertyChange(new ConnectionStateEvent(old, checkResult));
     }
@@ -138,58 +129,7 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
     private class CheckJob extends TinyBackgroundJJob<ConnectionCheck> {
         @Override
         protected ConnectionCheck compute() throws Exception {
-            ProxyManager.closeAllStaleConnections();
-
-            checkForInterruption();
-            Multimap<ConnectionError.Klass, ConnectionError> errors = Multimaps.newSetMultimap(new HashMap<>(), LinkedHashSet::new);
-
-            final @NotNull LicenseInfo ll = new LicenseInfo();
-            @Nullable WorkerList wl = null;
-
-            // offline data
-            ApplicationCore.WEB_API.getAuthService().getToken().ifPresent(token -> {
-                Tokens.getUserEmail(token).ifPresent(ll::setUserEmail);
-                Tokens.getUserId(token).ifPresent(ll::setUserId);
-            });
-            ll.setSubscription(ApplicationCore.WEB_API.getActiveSubscription());
-
-            checkForInterruption();
-            try {
-                //online connection check
-                wl = ApplicationCore.WEB_API.getWorkerInfo();
-                if (wl == null || !wl.supportsAllPredictorTypes(neededTypes)) {
-                    errors.put(ConnectionError.Klass.WORKER, new ConnectionError(10,
-                            "No all supported Worker Types are available.", ConnectionError.Klass.WORKER,
-                            null, ConnectionError.Type.WARNING));
-                }
-
-                checkForInterruption();
-                try {
-                    //enrich license info with consumables
-                    if (ll.subscription().map(Subscription::getCountQueries).orElse(false))
-                        ll.setConsumables(ApplicationCore.WEB_API.getConsumables(!ll.subscription().get().hasCompoundLimit())); //yearly if there is compound limit
-                } catch (Exception e) {
-                    errors.put(ConnectionError.Klass.APP_SERVER, new ConnectionError(93,
-                            "Error when requesting computation limits.",
-                            ConnectionError.Klass.APP_SERVER, e));
-                    errors.putAll(ApplicationCore.WEB_API.checkConnection());
-                }
-
-            } catch (Exception e) {
-                errors.put(ConnectionError.Klass.APP_SERVER, new ConnectionError(94,
-                        "Error when requesting worker information.",
-                        ConnectionError.Klass.APP_SERVER, e));
-                errors.putAll(ApplicationCore.WEB_API.checkConnection());
-            }
-
-            checkForInterruption();
-
-            ConnectionCheck result = new ConnectionCheck(errors, wl, ll);
-
-            if (result.isConnected() || result.hasOnlyWarning()) {
-                NetUtils.awakeAll();
-            }
-
+            ConnectionCheck result = siriusClient.infos().getConnectionCheck();
             return result;
         }
 
@@ -224,52 +164,6 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         }
     }
 
-    public static class ConnectionCheck {
-        @Nullable
-        public final WorkerList workerInfo;
-        @NotNull
-        public final LicenseInfo licenseInfo;
-        @NotNull
-        public final Multimap<ConnectionError.Klass, ConnectionError> errors;
-
-        public final ConnectionError.Klass state;
-
-        public ConnectionCheck(@NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerInfo, @NotNull LicenseInfo licenseInfo) {
-            this.errors = errors;
-            this.workerInfo = workerInfo;
-            this.licenseInfo = licenseInfo;
-            this.state = this.errors.keySet().stream().sorted().findFirst().orElse(ConnectionError.Klass.INTERNET);// getConnectionState(this.errors);
-        }
-
-
-        public boolean isLoggedIn() {
-            return licenseInfo.getUserEmail() != null;
-        }
-
-        public boolean isConnected() {
-            return errors.isEmpty();
-        }
-
-        public boolean isNotConnected() {
-            return !isConnected();
-        }
-
-        public boolean hasInternet() {
-            return isConnected() || errors.values().stream().filter(e -> e.getErrorKlass().equals(ConnectionError.Klass.INTERNET)).findAny().isEmpty();
-        }
-
-        public boolean hasWorkerWarning() {
-            return errors.containsKey(ConnectionError.Klass.WORKER) && errors.get(ConnectionError.Klass.WORKER).stream()
-                    .anyMatch(e -> e.getErrorType() == ConnectionError.Type.WARNING);
-        }
-
-        public boolean hasOnlyWarning() {
-            return !errors.isEmpty() && errors.values().stream()
-                    .map(ConnectionError::getErrorType)
-                    .filter(e -> !e.equals(ConnectionError.Type.WARNING))
-                    .findAny().isEmpty();
-        }
-    }
 
     public class ConnectionStateEvent extends PropertyChangeEvent {
         public static final String KEY = "connection-state";
@@ -277,18 +171,21 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
         private final ConnectionCheck newConnectionCheck;
 
         public ConnectionStateEvent(final ConnectionCheck oldCheck, final ConnectionCheck newCheck) {
-            super(ConnectionMonitor.this, KEY, oldCheck.state, newCheck.state);
+            super(ConnectionMonitor.this, KEY,
+                    oldCheck.getErrors().stream().findFirst().map(ConnectionError::getErrorKlass).orElse(null),
+                    newCheck.getErrors().stream().findFirst().map(ConnectionError::getErrorKlass).orElse(null)
+            );
             newConnectionCheck = newCheck;
         }
 
         @Override
-        public ConnectionError.Klass getNewValue() {
-            return (ConnectionError.Klass) super.getNewValue();
+        public ConnectionError.ErrorKlassEnum getNewValue() {
+            return (ConnectionError.ErrorKlassEnum) super.getNewValue();
         }
 
         @Override
-        public ConnectionError.Klass getOldValue() {
-            return (ConnectionError.Klass) super.getOldValue();
+        public ConnectionError.ErrorKlassEnum getOldValue() {
+            return (ConnectionError.ErrorKlassEnum) super.getOldValue();
         }
 
         public ConnectionCheck getConnectionCheck() {

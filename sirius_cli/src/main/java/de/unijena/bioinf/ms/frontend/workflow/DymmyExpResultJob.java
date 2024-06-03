@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.frontend.workflow;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.projectspace.Instance;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.util.concurrent.ExecutionException;
@@ -29,6 +30,12 @@ import java.util.function.Function;
 
 @FunctionalInterface
 public interface DymmyExpResultJob extends JJob<Instance> {
+
+    @Override
+    @Nullable
+    default Exception getException() {
+        return null;
+    }
 
     @Override
     default long getID() {

@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.frontend.io;
 
-import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.configs.Buttons;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 
@@ -75,6 +74,12 @@ public class FileChooserPanel extends JPanel {
         fileChooser.setDialogType(dialogMode);
         fileChooser.setFileSelectionMode(fileChooserMode);
 
+        switch (fileChooserMode) {
+            case JFileChooser.FILES_ONLY -> changeDir.setToolTipText("Choose a file");
+            case JFileChooser.DIRECTORIES_ONLY -> changeDir.setToolTipText("Choose a directory");
+            default -> {}
+        }
+
         field.setText(currentPathTextField);
 
         add(field);
@@ -104,6 +109,13 @@ public class FileChooserPanel extends JPanel {
         changeDir.setToolTipText(text);
     }
 
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        field.setEnabled(enabled);
+        changeDir.setEnabled(enabled);
+    }
+
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {
             try {
@@ -111,8 +123,6 @@ public class FileChooserPanel extends JPanel {
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
                 ex.printStackTrace();
             }
-
-            String s = ApplicationCore.VERSION_STRING();
             JFrame frame = new JFrame("Testing");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.add(new FileChooserPanel(System.getProperty("user.home"), 1));

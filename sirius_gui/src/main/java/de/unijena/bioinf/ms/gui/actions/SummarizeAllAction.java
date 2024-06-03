@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.actions;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ExecutionDialog;
 import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
@@ -30,42 +31,45 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
+public class SummarizeAllAction extends AbstractGuiAction {
 
-public class SummarizeAllAction extends AbstractAction {
-
-    public SummarizeAllAction() {
-        super("Summaries");
+    public SummarizeAllAction(SiriusGui gui) {
+        super("Summaries", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.EXPORT_32);
         putValue(Action.SMALL_ICON, Icons.EXPORT_16);
         putValue(Action.SHORT_DESCRIPTION, "Write/Export Summary .tsv files.");
-
         initListeners();
     }
 
     protected void initListeners(){
-        setEnabled(SiriusActions.notComputingOrEmpty(MF.getCompoundList().getCompoundList()));
-
-        MF.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
+        mainFrame.getCompoundList().addChangeListener(new ExperimentListChangeListener() {
             @Override
-            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection) {
+            public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {
                 setEnabled(SiriusActions.notComputingOrEmpty(event.getSourceList()));
             }
 
             @Override
-            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection) {}
+            public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {}
         });
+
+        setEnabled(SiriusActions.notComputingOrEmpty(mainFrame.getCompoundList().getCompoundList()));
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        run(List.copyOf(MF.getCompounds()), "Write Summaries for whole Project");
+        run(List.copyOf(mainFrame.getCompounds()), "Write Summaries for whole Project");
     }
 
     protected void run(@NotNull List<InstanceBean> compounds, String title) {
-        ExecutionDialog<SummaryConfigPanel> d = new ExecutionDialog<>(new SummaryConfigPanel(), compounds, null, MF, title, true);
+        String path = Optional.ofNullable(gui.getProjectManager().getProjectLocation())
+                .map(Path::of).map(Path::getParent).map(Path::normalize).map(Path::toString).orElse("");
+
+
+        ExecutionDialog<SummaryConfigPanel> d = new ExecutionDialog<>(gui, new SummaryConfigPanel(path), compounds, mainFrame, title, true, true);
         d.setIndeterminateProgress(false);
         d.start();
     }

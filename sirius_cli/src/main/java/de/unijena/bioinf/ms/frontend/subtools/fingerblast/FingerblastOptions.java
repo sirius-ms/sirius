@@ -19,21 +19,14 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.fingerblast;
 
-import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
-import de.unijena.bioinf.fingerid.ConfidenceScore;
-import de.unijena.bioinf.fingerid.blast.FBCandidateFingerprints;
-import de.unijena.bioinf.fingerid.blast.FBCandidates;
-import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.completion.DataSourceCandidates;
 import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainOptions;
-import de.unijena.bioinf.ms.frontend.subtools.canopus.CanopusOptions;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
-import de.unijena.bioinf.projectspace.FormulaScoring;
+import de.unijena.bioinf.ms.frontend.subtools.msnovelist.MsNovelistOptions;
 import de.unijena.bioinf.projectspace.Instance;
-import de.unijena.bioinf.projectspace.FormulaResultRankingScore;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -47,7 +40,7 @@ import java.util.function.Consumer;
  *
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-@CommandLine.Command(name = "structure", aliases = {"search-structure-db"}, description = "<COMPOUND_TOOL> Search in molecular structure db for each compound Individually using CSI:FingerID structure database search.", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
+@CommandLine.Command(name = "structures", aliases = {"structure-db-search", "structure"}, description = "@|bold <COMPOUND TOOL>|@ Search in molecular structure db for each compound Individually using CSI:FingerID structure database search. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJob, InstanceJob.Factory<FingerblastSubToolJob>> {
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
@@ -74,9 +67,10 @@ public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJo
         defaultConfigOptions.changeOption("StructurePredictors", predictors);
     }
 
-    @Option(names = {"-l", "tag-lipids", "flag-lipids", "--elgordo"}, descriptionKey = "InjectElGordoCompounds", description = {"Tag candidates that are matching lipid class determined by El Gordo in CSI:FingerID candidate list."})
-    public void setInjectElGordoCompounds(DefaultParameter value) throws Exception {
-        defaultConfigOptions.changeOption("InjectElGordoCompounds", value);
+    @Option(names = {"-e", "--exp"}, descriptionKey = "ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode",
+            description = {"Confidence mode that is used for expansive search. OFF -> no expansive search. EXACT -> Exact mode confidence score is used for expansive search. APPROXIMATE ->  Approximate mode confidence score is used for expansive search"})
+    public void setExpansiveSearchConfMode(String expansiveSearchConfMode) throws Exception {
+        defaultConfigOptions.changeOption("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", expansiveSearchConfMode);
     }
 
     @Override
@@ -89,22 +83,7 @@ public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJo
 
     @Override
     public Consumer<Instance> getInvalidator() {
-        return inst -> {
-            inst.deleteFromFormulaResults(FBCandidates.class, FBCandidateFingerprints.class);
-            inst.loadFormulaResults(FormulaScoring.class).stream().map(SScored::getCandidate)
-                    .forEach(it -> it.getAnnotation(FormulaScoring.class).ifPresent(z -> {
-                        if (z.removeAnnotation(TopCSIScore.class) != null || z.removeAnnotation(ConfidenceScore.class) != null)
-                            inst.updateFormulaResult(it, FormulaScoring.class); //update only if there was something to remove
-                    }));
-            if (inst.getExperiment().getAnnotation(FormulaResultRankingScore.class).orElse(FormulaResultRankingScore.AUTO).isAuto()) {
-                inst.getID().getRankingScoreTypes().removeAll(List.of(TopCSIScore.class, ConfidenceScore.class));
-                inst.getID().setConfidenceScore(null);
-                inst.updateCompoundID();
-            } else if (inst.getID().getConfidenceScore().isPresent()) {
-                inst.getID().setConfidenceScore(null);
-                inst.updateCompoundID();
-            }
-        };
+        return Instance::deleteStructureSearchResult;
     }
 
     @Override
@@ -114,6 +93,6 @@ public class FingerblastOptions implements ToolChainOptions<FingerblastSubToolJo
 
     @Override
     public List<Class<? extends ToolChainOptions<?, ?>>> getFollowupSubCommands() {
-        return List.of(CanopusOptions.class);
+        return List.of(MsNovelistOptions.class);
     }
 }

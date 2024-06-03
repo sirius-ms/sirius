@@ -18,110 +18,75 @@
  */
 
 package de.unijena.bioinf.ms.gui.molecular_formular;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 25.01.17.
- */
 
-import de.unijena.bioinf.GibbsSampling.ZodiacScore;
-import de.unijena.bioinf.elgordo.LipidSpecies;
 import de.unijena.bioinf.ms.gui.table.SiriusTableFormat;
+import de.unijena.bioinf.ms.nightsky.sdk.model.Deviation;
+import de.unijena.bioinf.ms.nightsky.sdk.model.LipidAnnotation;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
-import de.unijena.bioinf.sirius.scores.IsotopeScore;
-import de.unijena.bioinf.sirius.scores.SiriusScore;
-import de.unijena.bioinf.sirius.scores.TreeScore;
 
 import java.util.function.Function;
 
 /**
  * Display issues in a tabular form.
  *
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
 public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean> {
-    private static final int COL_COUNT = 12;
-
-    protected SiriusResultTableFormat(Function<FormulaResultBean,Boolean> isBest) {
+    protected SiriusResultTableFormat(Function<FormulaResultBean, Boolean> isBest) {
         super(isBest);
     }
 
     @Override
     public int highlightColumnIndex() {
-        return COL_COUNT;
+        return getColumnCount();
     }
 
     @Override
     public int getColumnCount() {
-        return COL_COUNT;
+        return columns.length - 1;
     }
+
+    protected static String[] columns = new String[]{
+            "Rank",
+//            "Precursor Formula",
+            "Molecular Formula",
+            "Adduct",
+            "Zodiac Score",
+            "Sirius Score",
+            "Isotope Score",
+            "Tree Score",
+            "Explained Peaks",
+            "Total Explained Intensity",
+            "Median Mass Error (ppm)",
+            "Median Absolute Mass Error (ppm)",
+            "Lipid Class",
+            "Best",
+    };
 
     @Override
     public String getColumnName(int column) {
-        switch (column) {
-            case 0:
-                return "Rank";
-            case 1:
-                return "Molecular Formula";
-            case 2:
-                return "Adduct";
-            case 3:
-                return "Zodiac Score";
-            case 4:
-                return "Sirius Score";
-            case 5:
-                return "Isotope Score";
-            case 6:
-                return "Tree Score";
-            case 7:
-                return "Explained Peaks";
-            case 8:
-                return "Total Explained Intensity";
-            case 9:
-                return "Median Mass Error (ppm)";
-            case 10:
-                return "Median Absolute Mass Error (ppm)";
-            case 11:
-                return "Lipid Class";
-            case 12:
-                return "Best";
-            default:
-                throw new IllegalStateException();
-        }
+        return columns[column];
     }
 
     @Override
     public Object getColumnValue(FormulaResultBean result, int column) {
-        switch (column) {
-            case 0:
-                return result.getRank();
-            case 1:
-                return result.getMolecularFormula().toString();
-            case 2:
-                return result.getPrecursorIonType().toString();
-            case 3:
-                return result.getScoreValue(ZodiacScore.class);
-            case 4:
-                return result.getScoreValue(SiriusScore.class);
-            case 5:
-                return result.getScoreValue(IsotopeScore.class);
-            case 6:
-                return result.getScoreValue(TreeScore.class);
-            case 7:
-                return result.getNumOfExplainedPeaks();
-            case 8:
-                return result.getExplainedIntensityRatio();
-            case 9:
-                return result.getMedianMassDevPPM();
-            case 10:
-                return result.getMedianAbsoluteMassDevPPM();
-            case 11:
-                return result.getFragTree().flatMap(t -> t.getAnnotation(LipidSpecies.class)).map(LipidSpecies::toString).orElse("None");
-            case 12:
-                return isBest.apply(result);
-            default:
-                throw new IllegalStateException();
-        }
+        int col = 0;
+        if (column == col++) return result.getRank().orElse(null);
+//        else if (column == col++) result.getPrecursorFormula();
+        else if (column == col++) return result.getMolecularFormula();
+        else if (column == col++) return result.getAdduct();
+        else if (column == col++) return result.getZodiacScore().orElse(Double.NaN);
+        else if (column == col++) return result.getSiriusScore().orElse(Double.NaN);
+        else if (column == col++) return result.getIsotopeScore().orElse(Double.NaN);
+        else if (column == col++) return result.getTreeScore().orElse(Double.NaN);
+        else if (column == col++) return result.getNumOfExplainedPeaks().stream().mapToDouble(v -> (double) v).findFirst().orElse(Double.NaN);
+        else if (column == col++) return result.getTotalExplainedIntensity().orElse(Double.NaN);
+        else if (column == col++) return result.getMedianMassDeviation().map(Deviation::getPpm).orElse(Double.NaN);
+        else if (column == col++) return result.getMedianMassDeviation().map(Deviation::getAbsolute).map(d -> d * 1000d).orElse(Double.NaN);
+        else if (column == col++) return result.getLipidAnnotation().map(LipidAnnotation::getLipidSpecies).orElse(""); //N/A or better empty?
+        else if (column == col++) return isBest.apply(result);
+
+        throw new IllegalStateException();
     }
 }
 

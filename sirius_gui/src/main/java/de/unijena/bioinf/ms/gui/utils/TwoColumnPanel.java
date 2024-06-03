@@ -18,17 +18,12 @@
  */
 
 package de.unijena.bioinf.ms.gui.utils;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 07.10.16.
- */
 
 import javax.swing.*;
 import java.awt.*;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
 public class TwoColumnPanel extends JPanel {
     public  final GridBagConstraints both, left, right;
@@ -62,19 +57,22 @@ public class TwoColumnPanel extends JPanel {
         both.gridx = 0;
         both.gridwidth = 2;
         both.fill = GridBagConstraints.HORIZONTAL;
-        right.weightx = 1;
-        right.weighty = 0;
         both.insets = new Insets(0, 0, 5, 0);
         setRow(0);
     }
 
-    public TwoColumnPanel(String leftLabel, JComponent right) {
+    public TwoColumnPanel(String leftLabel, Component right) {
         this(new JLabel(leftLabel), right);
     }
 
-    public TwoColumnPanel(JComponent left, JComponent right) {
+    public TwoColumnPanel(Component left, Component right) {
         this();
         add(left, right);
+    }
+
+    public TwoColumnPanel(Component center) {
+        this();
+        add(center);
     }
 
     public void setRow(int i) {
@@ -92,11 +90,23 @@ public class TwoColumnPanel extends JPanel {
 
 
     public void addNamed(String name, Component rightComp) {
-        add(new JLabel(name), rightComp);
+        addNamed(name, rightComp, null);
+    }
+    public void addNamed(String name, Component rightComp, String toolTip) {
+        addNamed(name, rightComp, toolTip, 0);
+    }
+    public void addNamed(String name, Component rightComp, String toolTip, int gap) {
+        JLabel l = new JLabel(name);
+        if (toolTip != null && ! toolTip.isBlank()) {
+            l.setToolTipText(toolTip);
+            if (rightComp instanceof JComponent)
+                ((JComponent)rightComp).setToolTipText(toolTip);
+        }
+
+        add(l, rightComp, gap, false);
     }
 
     public void add(Component leftComp, Component rightComp) {
-
         add(leftComp, rightComp, 0, false);
     }
 

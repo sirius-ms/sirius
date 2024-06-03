@@ -20,9 +20,11 @@
 package de.unijena.bioinf.ms.gui.dialogs;
 
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.actions.CheckConnectionAction;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.settings.AdductSettingsPanel;
 import de.unijena.bioinf.ms.gui.settings.GerneralSettingsPanel;
 import de.unijena.bioinf.ms.gui.settings.NetworkSettingsPanel;
@@ -35,6 +37,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Properties;
 
+import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
+
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
@@ -46,12 +50,15 @@ public class SettingsDialog extends JDialog implements ActionListener {
     private GerneralSettingsPanel genSettings;
     private JTabbedPane settingsPane;
 
-    public SettingsDialog(Frame owner) {
-        this(owner, -1);
+    private SiriusGui gui;
+
+    public SettingsDialog(SiriusGui gui) {
+        this(gui, -1);
     }
 
-    public SettingsDialog(Frame owner, int activeTab) {
-        super(owner, true);
+    public SettingsDialog(SiriusGui gui, int activeTab) {
+        super(gui.getMainFrame(), true);
+        this.gui = gui;
         setTitle("Settings");
         setLayout(new BorderLayout());
         nuProps = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
@@ -72,7 +79,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
         /*ilpSettings = new ILPSettings(nuProps);
         settingsPane.add(ilpSettings.name(),ilpSettings);*/
 
-        proxSettings = new NetworkSettingsPanel(nuProps);
+        proxSettings = new NetworkSettingsPanel(gui, nuProps);
         settingsPane.add(proxSettings.name(), proxSettings);
 
 //        accountSettings = new AccountSettingsPanel(nuProps, ApplicationCore.WEB_API.getAuthService());
@@ -122,18 +129,23 @@ public class SettingsDialog extends JDialog implements ActionListener {
         return restartMessage;
     }
 
+    private MainFrame mf(){
+        return (MainFrame) getOwner();
+    }
+
+
 
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == discard) {
             this.dispose();
         } else {
-            final boolean rm = Jobs.runInBackgroundAndLoad(this, "Applying Changes...", () ->  {
+            final boolean rm = Jobs.runInBackgroundAndLoad(mf(), "Applying Changes...", () ->  {
                 boolean restartMessage = collectChangedProps();
                 Jobs.runInBackground(() -> {
                     LoggerFactory.getLogger(this.getClass()).info("Saving settings to properties File");
                     SiriusProperties.SIRIUS_PROPERTIES_FILE().store();
-                    CheckConnectionAction.checkConnectionAndLoad().isConnected();
+                    isConnected(CheckConnectionAction.checkConnectionAndLoad(gui));
                 });
                 return restartMessage;
             }).getResult();

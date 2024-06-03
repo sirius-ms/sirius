@@ -20,99 +20,128 @@
 package de.unijena.bioinf.ms.gui.actions;
 
 import ca.odell.glazedlists.swing.AdvancedListSelectionModel;
+import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.awt.*;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.List;
 
 /**
- * @author Markus Fleischauer (markus.fleischauer@gmail.com)
+ * @author Markus Fleischauer
  */
 public enum SiriusActions {
 
     COMPUTE(ComputeAction.class),
-//    CANCEL_COMPUTE(CancelComputeAction.class),
     COMPUTE_ALL(ComputeAllAction.class),
-//    CANCEL_ALL(CancelComputeAllAction.class),
-    ORDER_BY_INDEX(OrderCompoundByIndex.class),
+    ORDER_BY_QUALITY(OrderCompoundByQuality.class),
+    ORDER_BY_ID(OrderCompoundById.class),
     ORDER_BY_RT(OrderCompoundByRT.class),
     ORDER_BY_MASS(OrderCompoundByMass.class),
     ORDER_BY_NAME(OrderCompoundByName.class),
     ORDER_BY_CONFIDENCE(OrderCompoundByConfidence.class),
 
+    TOOGLE_CONFIDENCE_MODE(SwitchConfidenceModeAction.class),
+
     TOOGLE_INVERT_FILTER(InvertFilterAction.class),
     RESET_FILTER(ResetFilterAction.class),
 
-//    COMPUTE_CSI(ComputeCSIAction.class),
-//    COMPUTE_CSI_LOCAL(ComputeCSILocalAction.class),
-
-    IMPORT_EXP(ImportCompoundAction.class),
     IMPORT_EXP_BATCH(ImportAction.class),
-    EDIT_EXP(EditExperimentAction.class),
     DELETE_EXP(DeleteExperimentAction.class),
-    REMOVE_FORMULA_EXP(RemoveFormulaAction.class),
     CHANGE_ADDCUCT_EXP(ChangeAdductAction.class),
     SUMMARIZE_EXP(SummarizeSelectedAction.class),
-
 
     NEW_WS(ProjectCreateAction.class),
     LOAD_WS(ProjectOpenAction.class),
     SAVE_WS(ProjectSaveAction.class),
-    EXPORT_WS(ProjectSaveCopyAction.class),
     SUMMARIZE_WS(SummarizeAllAction.class),
     EXPORT_FBMN(FBMNExportAction.class),
 
     SHOW_SETTINGS(ShowSettingsDialogAction.class),
-    OPEN_ONLINE_DOCUMENTATION(OpenOnlineDocumentationAction.class),
+    OPEN_ONLINE_DOCUMENTATION(OpenOnlineDocumentationAction.class), //frame
     SHOW_ABOUT(ShowAboutDialogAction.class),
     SHOW_JOBS(ShowJobsDialogAction.class),
     SHOW_DB(ShowDBDialogAction.class),
     SHOW_LOG(OpenLogAction.class),
 
+    REGISTER_EXPLORER(ExplorerLicRegisterAction.class),
+
     SHOW_ACCOUNT(ShowAccountDialog.class),
     SIGN_OUT(SignOutAction.class),
     SIGN_IN(SignInAction.class),
-    SIGN_UP(SignUpAction.class),
-    MANAGE_ACCOUNT(OpenPortalAction.class),
-    RESET_PWD(PasswdResetAction.class),
+    SIGN_UP(SignUpAction.class), //frame
+    MANAGE_ACCOUNT(OpenPortalAction.class), //frame
+    RESET_PWD(PasswdResetAction.class), //frame
     SELECT_SUBSCRIPTION(SelectActiveSubscriptionAction.class),
     ACCEPT_TERMS(AcceptTermsAction.class),
 
     CHECK_CONNECTION(CheckConnectionAction.class);
 
 
-    public static final ActionMap ROOT_MANAGER = new ActionMap();
     public final Class<? extends Action> actionClass;
 
-    public synchronized Action getInstance(final boolean createIfNull, final ActionMap map) {
+    SiriusActions(Class<? extends Action> action) {
+        this.actionClass = action;
+    }
+
+    public static final ActionMap SINGLETON_ACTIONS = new ActionMap();
+
+
+    private synchronized Action getInstance(@Nullable SiriusGui gui, final boolean createIfNull, final ActionMap map) {
         Action a = map.get(name());
         if (a == null && createIfNull) {
             try {
-                a = actionClass.getDeclaredConstructor().newInstance();
+                for (Constructor<?> constructor : actionClass.getDeclaredConstructors()) {
+                    List<Class<?>> paras = List.of(constructor.getParameterTypes());
+                    if (gui != null) {
+                        if (paras.size() == 1 && paras.contains(SiriusGui.class)) {
+                            a = (Action) constructor.newInstance(gui);
+                            break;
+                        } else if (paras.size() == 1 && (paras.contains(MainFrame.class) || paras.contains(Frame.class))) {
+                            a = (Action) constructor.newInstance(gui.getMainFrame());
+                            break;
+                        } else if (paras.isEmpty()) {
+                            a = actionClass.getDeclaredConstructor().newInstance();
+                            break;
+                        }
+                    } else if (paras.isEmpty()) {
+                        a = actionClass.getDeclaredConstructor().newInstance();
+                        break;
+                    }
+                }
+                if (a == null)
+                    throw new NullPointerException("Could not find valid constructor for Action!");
                 map.put(name(), a);
-            } catch ( InstantiationException | IllegalAccessException |NoSuchMethodException | InvocationTargetException e) {
+            } catch (InstantiationException | IllegalAccessException | NoSuchMethodException |
+                     InvocationTargetException e) {
                 LoggerFactory.getLogger(this.getClass()).error("Could not load following Sirius Action: " + name(), e);
             }
         }
         return a;
     }
 
-    public Action getInstance(final ActionMap map) {
-        return getInstance(false, map);
+    public Action getInstance(@NotNull SiriusGui gui, final boolean createIfNull) {
+        return getInstance(gui, createIfNull, gui.getMainFrame().getGlobalActions());
     }
 
-    public Action getInstance(boolean createIfNull) {
-        return getInstance(createIfNull, ROOT_MANAGER);
+
+    private Action getInstance(@Nullable SiriusGui gui, final ActionMap map) {
+        return getInstance(gui, false, map);
     }
 
-    public Action getInstance() {
-        return getInstance(true, ROOT_MANAGER);
+    public Action getInstance(@NotNull SiriusGui gui) {
+        return getInstance(gui, gui.getMainFrame().getGlobalActions());
     }
 
-    SiriusActions(Class<? extends Action> action) {
-        this.actionClass = action;
+    public Action getInstance(final boolean createIfNull) {
+        return getInstance(null, createIfNull, SINGLETON_ACTIONS);
     }
 
 

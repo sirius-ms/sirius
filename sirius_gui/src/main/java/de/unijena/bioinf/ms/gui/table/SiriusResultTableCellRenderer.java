@@ -21,12 +21,15 @@ package de.unijena.bioinf.ms.gui.table;
 
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.function.Function;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -40,12 +43,21 @@ public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
     protected String value;
     private final int highlightColumn;
 
+    private final Function<Object, String> toString;
 
-    public SiriusResultTableCellRenderer(int highlightColumn) {
-        this(highlightColumn,null);
+    public SiriusResultTableCellRenderer(int highlightColumn,  @NotNull Function<Object, String> toString) {
+        this(highlightColumn,null, toString);
     }
 
-    public SiriusResultTableCellRenderer(int highlightColumn, NumberFormat lableFormat) {
+    public SiriusResultTableCellRenderer(int highlightColumn) {
+        this(highlightColumn, (NumberFormat) null);
+    }
+
+    public SiriusResultTableCellRenderer(int highlightColumn, @Nullable NumberFormat lableFormat) {
+        this(highlightColumn, lableFormat, (v) -> v == null ? "" : v.toString());
+    }
+    public SiriusResultTableCellRenderer(int highlightColumn, @Nullable NumberFormat lableFormat, @NotNull Function<Object, String> toString) {
+        this.toString = toString;
         this.highlightColumn = highlightColumn;
         if (lableFormat != null)
             this.nf = lableFormat;
@@ -78,7 +90,7 @@ public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
         setBackground(backColor);
         setForeground(foreColor);
 
-        this.value = value == null ? "" : value.toString();
+        this.value = toString.apply(value);
         setHorizontalAlignment(SwingConstants.LEFT);
 
         if (value instanceof Number) {
@@ -92,9 +104,11 @@ public class SiriusResultTableCellRenderer extends DefaultTableCellRenderer {
             setHorizontalAlignment(SwingConstants.CENTER);
         }
 
+        setFont(table.getFont());
+        setValue(this.value);
         setToolTipText(GuiUtils.formatToolTip(Math.min(getFontMetrics(getFont()).stringWidth(this.value), GuiUtils.toolTipWidth), this.value));
 
-        return super.getTableCellRendererComponent(table, this.value, isSelected, hasFocus, row, column);
+        return this;
     }
 
     @Override

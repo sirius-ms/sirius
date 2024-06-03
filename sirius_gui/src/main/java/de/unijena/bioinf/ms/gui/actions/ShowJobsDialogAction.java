@@ -18,29 +18,35 @@
  */
 
 package de.unijena.bioinf.ms.gui.actions;
-/**
- * Created by Markus Fleischauer (markus.fleischauer@gmail.com)
- * as part of the sirius_frontend
- * 29.01.17.
- */
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.compute.JobDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
+import de.unijena.bioinf.ms.nightsky.sdk.model.BackgroundComputationsStateEvent;
+import de.unijena.bioinf.sse.DataEventType;
+import de.unijena.bioinf.sse.DataObjectEvent;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
-
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
  */
-public class ShowJobsDialogAction extends AbstractAction {
+public class ShowJobsDialogAction extends AbstractGuiAction {
 
-    public ShowJobsDialogAction() {
-        super("Jobs");
+    public ShowJobsDialogAction(SiriusGui gui) {
+        super("Jobs", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.FB_LOADER_STOP_32);
         putValue(Action.SHORT_DESCRIPTION, "Show background jobs and their status");
+
+        gui.acceptSiriusClient((client, pid) ->
+                client.addEventListener(evt -> setComputing(
+                ((DataObjectEvent<BackgroundComputationsStateEvent>) evt.getNewValue())
+                        .getData().getNumberOfRunningJobs() > 0
+        ), pid, DataEventType.BACKGROUND_COMPUTATIONS_STATE));
+
+        gui.acceptSiriusClient((client, pid) -> client.jobs().hasJobs(pid, false));
     }
 
 
@@ -56,6 +62,8 @@ public class ShowJobsDialogAction extends AbstractAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        MF.getJobDialog().setVisible(true);
+        if (e.getSource() instanceof JComponent c)
+            JobDialog.INSTANCE().setLocationRelativeTo(c.getRootPane());
+        JobDialog.INSTANCE().setVisible(true);
     }
 }

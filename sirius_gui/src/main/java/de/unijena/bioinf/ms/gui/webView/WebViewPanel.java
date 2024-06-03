@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.webView;
 
+import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
@@ -31,10 +32,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.FutureTask;
 
@@ -63,14 +61,21 @@ public abstract class WebViewPanel extends JFXPanel{
 
     private StringBuilder html_builder;
 
-	public WebViewPanel(){
+    public WebViewPanel(){
         this.html_builder = new StringBuilder("<html><head></head><body>\n");
         queueTaskInJFXThread(() -> {
                 this.webView = new WebView();
-				this.webView.getEngine().setUserStyleSheetLocation(
-					getClass().getResource("/js/" + "styles.css").toExternalForm());
+                final Properties props = SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties();
+                final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
+                if (!theme.equals("Dark")) {
+                    this.webView.getEngine().setUserStyleSheetLocation(
+                            getClass().getResource("/js/" + "styles.css").toExternalForm());
+                } else {
+                    this.webView.getEngine().setUserStyleSheetLocation(
+                            getClass().getResource("/js/" + "styles-dark.css").toExternalForm());
+                }
                 this.setScene(new Scene(this.webView));
-			});
+        });
     }
 
     public boolean addJSCode(String scriptTag) {
@@ -87,8 +92,8 @@ public abstract class WebViewPanel extends JFXPanel{
     public void addJS(String resource_name) {
         String res_html;
         try{
-			res_html = getJSResourceInHTML(getClass().getResourceAsStream(
-											   "/js/" + resource_name));
+            res_html = getJSResourceInHTML(getClass().getResourceAsStream(
+                    "/js/" + resource_name));
         } catch (IOException e){
             e.printStackTrace();
             res_html = "";

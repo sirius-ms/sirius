@@ -23,13 +23,13 @@ import de.unijena.bioinf.ChemistryBase.utils.ExFunctions;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.core.PasswordCrypter;
-import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.ms.rest.model.license.Subscription;
-import de.unijena.bioinf.webapi.Tokens;
 import de.unijena.bioinf.rest.ProxyManager;
+import de.unijena.bioinf.webapi.Tokens;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +43,6 @@ import java.net.URI;
 import java.util.Optional;
 import java.util.Properties;
 
-import static de.unijena.bioinf.ms.gui.mainframe.MainFrame.MF;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -59,14 +58,12 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
 
     private JTextField webserverURL;
 
-    public NetworkSettingsPanel(Properties properties) {
-        super();
-        this.props = properties;
-        buildPanel();
-        refreshValues();
-    }
+    private final SiriusGui gui;
 
-    private void buildPanel() {
+    public NetworkSettingsPanel(SiriusGui gui, Properties properties) {
+        super();
+        this.gui = gui;
+        this.props = properties;
         webserverURL = new JTextField(Optional.ofNullable(ApplicationCore.WEB_API.getActiveSubscription()).map(Subscription::getServiceUrl).orElse("<No subscription active>"));
         addNamed("Web service URL", webserverURL);
         webserverURL.setEditable(false);
@@ -120,8 +117,8 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
 
         addVerticalGlue();
 
+        refreshValues();
     }
-
 
     @Override
     public void actionPerformed(ActionEvent e) {
@@ -176,31 +173,12 @@ public class NetworkSettingsPanel extends TwoColumnPanel implements ActionListen
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).warn("Error when reconnecting after changing setting. Connections might have a unhealthy state. Please restart SIRIUS.", e);
         }finally {
-            MF.CONNECTION_MONITOR().checkConnectionInBackground();
+            gui.getConnectionMonitor().checkConnectionInBackground(); //todo hacki intermediate solution
         }
     }
 
     @Override
     public String name() {
         return "Network";
-    }
-
-
-    public static void main(String[] args) {
-        EventQueue.invokeLater(() -> {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
-                     UnsupportedLookAndFeelException ex) {
-                ex.printStackTrace();
-            }
-
-            JFrame frame = new JFrame("Testing");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.add(new NetworkSettingsPanel(SiriusProperties.SIRIUS_PROPERTIES_FILE().asProperties()));
-            frame.pack();
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
-        });
     }
 }

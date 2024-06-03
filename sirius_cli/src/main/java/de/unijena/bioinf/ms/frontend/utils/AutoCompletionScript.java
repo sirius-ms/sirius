@@ -9,12 +9,11 @@ import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoade
 import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressVisualizer;
 import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressbarDefaultCalculator;
 import de.unijena.bioinf.ms.frontend.utils.Progressbar.ProgressbarDefaultVisualizer;
-import de.unijena.bioinf.ms.frontend.workflow.SimpleInstanceBuffer;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import de.unijena.bioinf.projectspace.SiriusProjectSpaceManagerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import picocli.AutoComplete;
@@ -40,7 +39,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * generates and installs an Autocompletion-Script with all subcommands
  */
 @Command(name = "install-autocompletion", description = "<INSTALL> generates and installs an Autocompletion-Script with " +
-        "all subcommands. Default installation is for the current user", mixinStandardHelpOptions = true)
+        "all subcommands. Default installation is for the current user. %n %n", mixinStandardHelpOptions = true)
 public class AutoCompletionScript implements StandaloneTool<Workflow> {
 
     /**
@@ -120,8 +119,7 @@ public class AutoCompletionScript implements StandaloneTool<Workflow> {
     public Integer call() throws IOException, UnknownOSException, InvalidParameterException {
         System.setProperty("de.unijena.bioinf.ms.propertyLocations", "sirius_frontend.build.properties");
         FingerIDProperties.sirius_guiVersion();
-        final DefaultParameterConfigLoader configOptionLoader = new DefaultParameterConfigLoader(PropertyManager.DEFAULTS);
-        WorkflowBuilder<?> builder = new WorkflowBuilder<>(new CLIRootOptions<>(configOptionLoader, new ProjectSpaceManagerFactory.Default()), configOptionLoader, new SimpleInstanceBuffer.Factory());
+        WorkflowBuilder builder = new WorkflowBuilder(new CLIRootOptions(new DefaultParameterConfigLoader(PropertyManager.DEFAULTS), new SiriusProjectSpaceManagerFactory()));
         builder.initRootSpec();
         if((install.toInstall() || this.uninstall)&& this.OS == null) this.OS = detectOS();
         if (install.toInstall() || this.uninstall) System.out.println("Detected OS as " + OS);
@@ -609,7 +607,7 @@ public class AutoCompletionScript implements StandaloneTool<Workflow> {
     }
 
     @Override
-    public Workflow makeWorkflow(RootOptions<?, ?, ?, ?> rootOptions, ParameterConfig config) {
+    public Workflow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
         return () -> {
             try {
                 call();

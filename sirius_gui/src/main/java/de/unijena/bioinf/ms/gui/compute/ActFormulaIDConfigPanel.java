@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
@@ -26,17 +27,7 @@ import java.awt.*;
 
 public class ActFormulaIDConfigPanel extends ActivatableConfigPanel<FormulaIDConfigPanel> {
 
-
-    public ActFormulaIDConfigPanel(Dialog owner, java.util.List<InstanceBean> ecs, boolean ms2) {
-        super("SIRIUS", Icons.SIRIUS_32, false, () -> new FormulaIDConfigPanel(owner, ecs, ms2));
-    }
-
-    @Override
-    protected void setComponentsEnabled(boolean enabled) {
-        content.elementPanel.enableElementSelection(enabled);
-        content.ionizationList.setEnabled(enabled);
-        super.setComponentsEnabled(enabled);
-        if (enabled)
-            content.searchDBList.checkBoxList.refresh();
+    public ActFormulaIDConfigPanel(SiriusGui gui, Dialog owner, java.util.List<InstanceBean> ecs, boolean ms2, boolean displayAdvancedParameters) {
+        super(gui, "SIRIUS", Icons.SIRIUS_32, () -> new FormulaIDConfigPanel(gui, owner, ecs, ms2, displayAdvancedParameters));
     }
 }
