@@ -9,6 +9,9 @@
 |------------ | ------------- | ------------- | -------------|
 |**nightSkyApiVersion** | **String** | API version of the SIRIUS Nightsky API |  [optional] |
 |**siriusVersion** | **String** | Version of the SIRIUS application |  [optional] |
+|**latestSiriusVersion** | **String** | Latest available Version of the SIRIUS application |  [optional] |
+|**latestSiriusLink** | **String** | Link to the latest available Version of the SIRIUS application |  [optional] |
+|**updateAvailable** | **Boolean** | true if newer SIRIUS version is available |  [optional] |
 |**siriusLibVersion** | **String** | Version of the SIRIUS libraries |  [optional] |
 |**fingerIdLibVersion** | **String** | Version of the CSI:FingerID libraries |  [optional] |
 |**chemDbVersion** | **String** | Version of the Chemical Database available via SIRIUS web services |  [optional] |

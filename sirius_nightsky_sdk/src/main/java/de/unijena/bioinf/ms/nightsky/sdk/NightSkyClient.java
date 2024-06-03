@@ -73,9 +73,10 @@ public class NightSkyClient implements AutoCloseable {
     protected final ProjectsApi projects;
 
     protected final SearchableDatabasesApi databases;
-    private final ExecutorService asyncExecutor;
 
-    protected InfoApi infos;
+    protected final InfoApi infos;
+
+    private final ExecutorService asyncExecutor;
     private EnumSet<DataEventType> sseEventsToListenOn = null;
     private Disposable sseConnection;
     private FluxToFlowBroadcast sseBroadcast;

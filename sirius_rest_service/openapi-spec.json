@@ -7857,6 +7857,20 @@
             "description": "Version of the SIRIUS application",
             "nullable": true
           },
+          "latestSiriusVersion": {
+            "type": "string",
+            "description": "Latest available Version of the SIRIUS application",
+            "nullable": true
+          },
+          "latestSiriusLink": {
+            "type": "string",
+            "description": "Link to the latest available Version of the SIRIUS application",
+            "nullable": true
+          },
+          "updateAvailable": {
+            "type": "boolean",
+            "description": "true if newer SIRIUS version is available"
+          },
           "siriusLibVersion": {
             "type": "string",
             "description": "Version of the SIRIUS libraries",

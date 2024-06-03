@@ -34,6 +34,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonPropertyOrder({
   Info.JSON_PROPERTY_NIGHT_SKY_API_VERSION,
   Info.JSON_PROPERTY_SIRIUS_VERSION,
+  Info.JSON_PROPERTY_LATEST_SIRIUS_VERSION,
+  Info.JSON_PROPERTY_LATEST_SIRIUS_LINK,
+  Info.JSON_PROPERTY_UPDATE_AVAILABLE,
   Info.JSON_PROPERTY_SIRIUS_LIB_VERSION,
   Info.JSON_PROPERTY_FINGER_ID_LIB_VERSION,
   Info.JSON_PROPERTY_CHEM_DB_VERSION,
@@ -49,6 +52,15 @@ public class Info {
 
   public static final String JSON_PROPERTY_SIRIUS_VERSION = "siriusVersion";
   private String siriusVersion;
+
+  public static final String JSON_PROPERTY_LATEST_SIRIUS_VERSION = "latestSiriusVersion";
+  private String latestSiriusVersion;
+
+  public static final String JSON_PROPERTY_LATEST_SIRIUS_LINK = "latestSiriusLink";
+  private String latestSiriusLink;
+
+  public static final String JSON_PROPERTY_UPDATE_AVAILABLE = "updateAvailable";
+  private Boolean updateAvailable;
 
   public static final String JSON_PROPERTY_SIRIUS_LIB_VERSION = "siriusLibVersion";
   private String siriusLibVersion;
@@ -162,6 +174,84 @@ public class Info {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setSiriusVersion(String siriusVersion) {
     this.siriusVersion = siriusVersion;
+  }
+
+
+  public Info latestSiriusVersion(String latestSiriusVersion) {
+    
+    this.latestSiriusVersion = latestSiriusVersion;
+    return this;
+  }
+
+   /**
+   * Latest available Version of the SIRIUS application
+   * @return latestSiriusVersion
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_LATEST_SIRIUS_VERSION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getLatestSiriusVersion() {
+    return latestSiriusVersion;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_LATEST_SIRIUS_VERSION)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setLatestSiriusVersion(String latestSiriusVersion) {
+    this.latestSiriusVersion = latestSiriusVersion;
+  }
+
+
+  public Info latestSiriusLink(String latestSiriusLink) {
+    
+    this.latestSiriusLink = latestSiriusLink;
+    return this;
+  }
+
+   /**
+   * Link to the latest available Version of the SIRIUS application
+   * @return latestSiriusLink
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_LATEST_SIRIUS_LINK)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getLatestSiriusLink() {
+    return latestSiriusLink;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_LATEST_SIRIUS_LINK)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setLatestSiriusLink(String latestSiriusLink) {
+    this.latestSiriusLink = latestSiriusLink;
+  }
+
+
+  public Info updateAvailable(Boolean updateAvailable) {
+    
+    this.updateAvailable = updateAvailable;
+    return this;
+  }
+
+   /**
+   * true if newer SIRIUS version is available
+   * @return updateAvailable
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_UPDATE_AVAILABLE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isUpdateAvailable() {
+    return updateAvailable;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_UPDATE_AVAILABLE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setUpdateAvailable(Boolean updateAvailable) {
+    this.updateAvailable = updateAvailable;
   }
 
 
@@ -370,6 +460,9 @@ public class Info {
     Info info = (Info) o;
     return Objects.equals(this.nightSkyApiVersion, info.nightSkyApiVersion) &&
         Objects.equals(this.siriusVersion, info.siriusVersion) &&
+        Objects.equals(this.latestSiriusVersion, info.latestSiriusVersion) &&
+        Objects.equals(this.latestSiriusLink, info.latestSiriusLink) &&
+        Objects.equals(this.updateAvailable, info.updateAvailable) &&
         Objects.equals(this.siriusLibVersion, info.siriusLibVersion) &&
         Objects.equals(this.fingerIdLibVersion, info.fingerIdLibVersion) &&
         Objects.equals(this.chemDbVersion, info.chemDbVersion) &&
@@ -381,7 +474,7 @@ public class Info {
 
   @Override
   public int hashCode() {
-    return Objects.hash(nightSkyApiVersion, siriusVersion, siriusLibVersion, fingerIdLibVersion, chemDbVersion, fingerIdModelVersion, fingerprintId, availableILPSolvers, supportedILPSolvers);
+    return Objects.hash(nightSkyApiVersion, siriusVersion, latestSiriusVersion, latestSiriusLink, updateAvailable, siriusLibVersion, fingerIdLibVersion, chemDbVersion, fingerIdModelVersion, fingerprintId, availableILPSolvers, supportedILPSolvers);
   }
 
   @Override
@@ -390,6 +483,9 @@ public class Info {
     sb.append("class Info {\n");
     sb.append("    nightSkyApiVersion: ").append(toIndentedString(nightSkyApiVersion)).append("\n");
     sb.append("    siriusVersion: ").append(toIndentedString(siriusVersion)).append("\n");
+    sb.append("    latestSiriusVersion: ").append(toIndentedString(latestSiriusVersion)).append("\n");
+    sb.append("    latestSiriusLink: ").append(toIndentedString(latestSiriusLink)).append("\n");
+    sb.append("    updateAvailable: ").append(toIndentedString(updateAvailable)).append("\n");
     sb.append("    siriusLibVersion: ").append(toIndentedString(siriusLibVersion)).append("\n");
     sb.append("    fingerIdLibVersion: ").append(toIndentedString(fingerIdLibVersion)).append("\n");
     sb.append("    chemDbVersion: ").append(toIndentedString(chemDbVersion)).append("\n");

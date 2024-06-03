@@ -35,14 +35,14 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonPropertyOrder({
   PageSpectralLibraryMatch.JSON_PROPERTY_TOTAL_PAGES,
   PageSpectralLibraryMatch.JSON_PROPERTY_TOTAL_ELEMENTS,
-  PageSpectralLibraryMatch.JSON_PROPERTY_SORT,
-  PageSpectralLibraryMatch.JSON_PROPERTY_LAST,
-  PageSpectralLibraryMatch.JSON_PROPERTY_FIRST,
-  PageSpectralLibraryMatch.JSON_PROPERTY_NUMBER,
-  PageSpectralLibraryMatch.JSON_PROPERTY_NUMBER_OF_ELEMENTS,
-  PageSpectralLibraryMatch.JSON_PROPERTY_PAGEABLE,
   PageSpectralLibraryMatch.JSON_PROPERTY_SIZE,
   PageSpectralLibraryMatch.JSON_PROPERTY_CONTENT,
+  PageSpectralLibraryMatch.JSON_PROPERTY_NUMBER,
+  PageSpectralLibraryMatch.JSON_PROPERTY_SORT,
+  PageSpectralLibraryMatch.JSON_PROPERTY_FIRST,
+  PageSpectralLibraryMatch.JSON_PROPERTY_LAST,
+  PageSpectralLibraryMatch.JSON_PROPERTY_NUMBER_OF_ELEMENTS,
+  PageSpectralLibraryMatch.JSON_PROPERTY_PAGEABLE,
   PageSpectralLibraryMatch.JSON_PROPERTY_EMPTY
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
@@ -53,29 +53,29 @@ public class PageSpectralLibraryMatch {
   public static final String JSON_PROPERTY_TOTAL_ELEMENTS = "totalElements";
   private Long totalElements;
 
+  public static final String JSON_PROPERTY_SIZE = "size";
+  private Integer size;
+
+  public static final String JSON_PROPERTY_CONTENT = "content";
+  private List<SpectralLibraryMatch> content;
+
+  public static final String JSON_PROPERTY_NUMBER = "number";
+  private Integer number;
+
   public static final String JSON_PROPERTY_SORT = "sort";
   private SortObject sort;
-
-  public static final String JSON_PROPERTY_LAST = "last";
-  private Boolean last;
 
   public static final String JSON_PROPERTY_FIRST = "first";
   private Boolean first;
 
-  public static final String JSON_PROPERTY_NUMBER = "number";
-  private Integer number;
+  public static final String JSON_PROPERTY_LAST = "last";
+  private Boolean last;
 
   public static final String JSON_PROPERTY_NUMBER_OF_ELEMENTS = "numberOfElements";
   private Integer numberOfElements;
 
   public static final String JSON_PROPERTY_PAGEABLE = "pageable";
   private PageableObject pageable;
-
-  public static final String JSON_PROPERTY_SIZE = "size";
-  private Integer size;
-
-  public static final String JSON_PROPERTY_CONTENT = "content";
-  private List<SpectralLibraryMatch> content;
 
   public static final String JSON_PROPERTY_EMPTY = "empty";
   private Boolean empty;
@@ -132,162 +132,6 @@ public class PageSpectralLibraryMatch {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setTotalElements(Long totalElements) {
     this.totalElements = totalElements;
-  }
-
-
-  public PageSpectralLibraryMatch sort(SortObject sort) {
-    
-    this.sort = sort;
-    return this;
-  }
-
-   /**
-   * Get sort
-   * @return sort
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_SORT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public SortObject getSort() {
-    return sort;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_SORT)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setSort(SortObject sort) {
-    this.sort = sort;
-  }
-
-
-  public PageSpectralLibraryMatch last(Boolean last) {
-    
-    this.last = last;
-    return this;
-  }
-
-   /**
-   * Get last
-   * @return last
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_LAST)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Boolean isLast() {
-    return last;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_LAST)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setLast(Boolean last) {
-    this.last = last;
-  }
-
-
-  public PageSpectralLibraryMatch first(Boolean first) {
-    
-    this.first = first;
-    return this;
-  }
-
-   /**
-   * Get first
-   * @return first
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FIRST)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Boolean isFirst() {
-    return first;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_FIRST)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFirst(Boolean first) {
-    this.first = first;
-  }
-
-
-  public PageSpectralLibraryMatch number(Integer number) {
-    
-    this.number = number;
-    return this;
-  }
-
-   /**
-   * Get number
-   * @return number
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NUMBER)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Integer getNumber() {
-    return number;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_NUMBER)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNumber(Integer number) {
-    this.number = number;
-  }
-
-
-  public PageSpectralLibraryMatch numberOfElements(Integer numberOfElements) {
-    
-    this.numberOfElements = numberOfElements;
-    return this;
-  }
-
-   /**
-   * Get numberOfElements
-   * @return numberOfElements
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_ELEMENTS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Integer getNumberOfElements() {
-    return numberOfElements;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_NUMBER_OF_ELEMENTS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setNumberOfElements(Integer numberOfElements) {
-    this.numberOfElements = numberOfElements;
-  }
-
-
-  public PageSpectralLibraryMatch pageable(PageableObject pageable) {
-    
-    this.pageable = pageable;
-    return this;
-  }
-
-   /**
-   * Get pageable
-   * @return pageable
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_PAGEABLE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public PageableObject getPageable() {
-    return pageable;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_PAGEABLE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setPageable(PageableObject pageable) {
-    this.pageable = pageable;
   }
 
 
@@ -351,6 +195,162 @@ public class PageSpectralLibraryMatch {
   }
 
 
+  public PageSpectralLibraryMatch number(Integer number) {
+    
+    this.number = number;
+    return this;
+  }
+
+   /**
+   * Get number
+   * @return number
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_NUMBER)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Integer getNumber() {
+    return number;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_NUMBER)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setNumber(Integer number) {
+    this.number = number;
+  }
+
+
+  public PageSpectralLibraryMatch sort(SortObject sort) {
+    
+    this.sort = sort;
+    return this;
+  }
+
+   /**
+   * Get sort
+   * @return sort
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_SORT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public SortObject getSort() {
+    return sort;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SORT)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setSort(SortObject sort) {
+    this.sort = sort;
+  }
+
+
+  public PageSpectralLibraryMatch first(Boolean first) {
+    
+    this.first = first;
+    return this;
+  }
+
+   /**
+   * Get first
+   * @return first
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_FIRST)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isFirst() {
+    return first;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_FIRST)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setFirst(Boolean first) {
+    this.first = first;
+  }
+
+
+  public PageSpectralLibraryMatch last(Boolean last) {
+    
+    this.last = last;
+    return this;
+  }
+
+   /**
+   * Get last
+   * @return last
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_LAST)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isLast() {
+    return last;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_LAST)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setLast(Boolean last) {
+    this.last = last;
+  }
+
+
+  public PageSpectralLibraryMatch numberOfElements(Integer numberOfElements) {
+    
+    this.numberOfElements = numberOfElements;
+    return this;
+  }
+
+   /**
+   * Get numberOfElements
+   * @return numberOfElements
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_NUMBER_OF_ELEMENTS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Integer getNumberOfElements() {
+    return numberOfElements;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_NUMBER_OF_ELEMENTS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setNumberOfElements(Integer numberOfElements) {
+    this.numberOfElements = numberOfElements;
+  }
+
+
+  public PageSpectralLibraryMatch pageable(PageableObject pageable) {
+    
+    this.pageable = pageable;
+    return this;
+  }
+
+   /**
+   * Get pageable
+   * @return pageable
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_PAGEABLE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public PageableObject getPageable() {
+    return pageable;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_PAGEABLE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setPageable(PageableObject pageable) {
+    this.pageable = pageable;
+  }
+
+
   public PageSpectralLibraryMatch empty(Boolean empty) {
     
     this.empty = empty;
@@ -387,20 +387,20 @@ public class PageSpectralLibraryMatch {
     PageSpectralLibraryMatch pageSpectralLibraryMatch = (PageSpectralLibraryMatch) o;
     return Objects.equals(this.totalPages, pageSpectralLibraryMatch.totalPages) &&
         Objects.equals(this.totalElements, pageSpectralLibraryMatch.totalElements) &&
-        Objects.equals(this.sort, pageSpectralLibraryMatch.sort) &&
-        Objects.equals(this.last, pageSpectralLibraryMatch.last) &&
-        Objects.equals(this.first, pageSpectralLibraryMatch.first) &&
-        Objects.equals(this.number, pageSpectralLibraryMatch.number) &&
-        Objects.equals(this.numberOfElements, pageSpectralLibraryMatch.numberOfElements) &&
-        Objects.equals(this.pageable, pageSpectralLibraryMatch.pageable) &&
         Objects.equals(this.size, pageSpectralLibraryMatch.size) &&
         Objects.equals(this.content, pageSpectralLibraryMatch.content) &&
+        Objects.equals(this.number, pageSpectralLibraryMatch.number) &&
+        Objects.equals(this.sort, pageSpectralLibraryMatch.sort) &&
+        Objects.equals(this.first, pageSpectralLibraryMatch.first) &&
+        Objects.equals(this.last, pageSpectralLibraryMatch.last) &&
+        Objects.equals(this.numberOfElements, pageSpectralLibraryMatch.numberOfElements) &&
+        Objects.equals(this.pageable, pageSpectralLibraryMatch.pageable) &&
         Objects.equals(this.empty, pageSpectralLibraryMatch.empty);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(totalPages, totalElements, sort, last, first, number, numberOfElements, pageable, size, content, empty);
+    return Objects.hash(totalPages, totalElements, size, content, number, sort, first, last, numberOfElements, pageable, empty);
   }
 
   @Override
@@ -409,14 +409,14 @@ public class PageSpectralLibraryMatch {
     sb.append("class PageSpectralLibraryMatch {\n");
     sb.append("    totalPages: ").append(toIndentedString(totalPages)).append("\n");
     sb.append("    totalElements: ").append(toIndentedString(totalElements)).append("\n");
-    sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
-    sb.append("    last: ").append(toIndentedString(last)).append("\n");
-    sb.append("    first: ").append(toIndentedString(first)).append("\n");
-    sb.append("    number: ").append(toIndentedString(number)).append("\n");
-    sb.append("    numberOfElements: ").append(toIndentedString(numberOfElements)).append("\n");
-    sb.append("    pageable: ").append(toIndentedString(pageable)).append("\n");
     sb.append("    size: ").append(toIndentedString(size)).append("\n");
     sb.append("    content: ").append(toIndentedString(content)).append("\n");
+    sb.append("    number: ").append(toIndentedString(number)).append("\n");
+    sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
+    sb.append("    first: ").append(toIndentedString(first)).append("\n");
+    sb.append("    last: ").append(toIndentedString(last)).append("\n");
+    sb.append("    numberOfElements: ").append(toIndentedString(numberOfElements)).append("\n");
+    sb.append("    pageable: ").append(toIndentedString(pageable)).append("\n");
     sb.append("    empty: ").append(toIndentedString(empty)).append("\n");
     sb.append("}");
     return sb.toString();
