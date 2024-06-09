@@ -16,6 +16,7 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.interfaces.IAtomContainer;
+import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesGenerator;
 
@@ -49,16 +50,16 @@ public class SdfExperimentParser implements Parser<Ms2Experiment> {
 
     private ExperimentData extractData(IAtomContainer sdfData) {
         ExperimentData data = ExperimentData.builder()
-                .id(sdfData.getProperty("id") != null ? sdfData.getProperty("id") : sdfData.getProperty("name"))
-                .spectrum(parseSpectrum(sdfData.getProperty("mass spectral peaks")))
-                .spectrumLevel(sdfData.getProperty("spectrum type"))
-                .splash(sdfData.getProperty("splash"))
-                .precursorMz(sdfData.getProperty("precursor m/z"))
-                .precursorIonType(sdfData.getProperty("precursor type"))
-                .instrumentation(sdfData.getProperty("instrument") + " " + sdfData.getProperty("instrument type"))
-                .collisionEnergy(sdfData.getProperty("collision energy"))
-                .compoundName(sdfData.getProperty("name"))
-                .molecularFormula(sdfData.getProperty("formula"))
+                .id(sdfData.getProperty("ID") != null ? sdfData.getProperty("ID") : sdfData.getProperty("NAME"))
+                .spectrum(parseSpectrum(sdfData.getProperty("MASS SPECTRAL PEAKS")))
+                .spectrumLevel(sdfData.getProperty("SPECTRUM TYPE"))
+                .splash(sdfData.getProperty("SPLASH"))
+                .precursorMz(sdfData.getProperty("PRECURSOR M/Z"))
+                .precursorIonType(sdfData.getProperty("PRECURSOR TYPE"))
+                .instrumentation(sdfData.getProperty("INSTRUMENT") + " " + sdfData.getProperty("INSTRUMENT TYPE"))
+                .collisionEnergy(sdfData.getProperty("COLLISION ENERGY"))
+                .compoundName(sdfData.getProperty("NAME"))
+                .molecularFormula(sdfData.getProperty("FORMULA"))
                 .build();
 
         fillInchi(data, sdfData);
