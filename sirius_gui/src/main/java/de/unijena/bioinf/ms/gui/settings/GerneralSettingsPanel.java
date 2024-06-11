@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.settings;
 
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.frontend.io.FileChooserPanel;
+import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
@@ -29,7 +30,9 @@ import org.jdesktop.swingx.JXTitledSeparator;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -53,7 +56,7 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
     final JComboBox<String> solver, confidenceDisplayMode;
     private boolean restartRequired = false;
 
-    public GerneralSettingsPanel(Properties properties) {
+    public GerneralSettingsPanel(Properties properties, SiriusGui gui) {
         super();
         this.props = properties;
         add(new JXTitledSeparator("Graphical User Interface"));
@@ -108,6 +111,19 @@ public class GerneralSettingsPanel extends TwoColumnPanel implements SettingsPan
             });
         });
         addNamed("", clearDBCache);
+
+        add(new JXTitledSeparator("REST API"));
+        JButton openSwaggerInBrowser = new JButton("Open API in browser");
+        openSwaggerInBrowser.setToolTipText("Open URL of the REST API in the browser.");
+        addNamed("", openSwaggerInBrowser);
+        openSwaggerInBrowser.addActionListener(evt -> {
+            try {
+                Desktop.getDesktop().browse(URI.create(gui.getSiriusClient().getApiClient().getBasePath()));
+            } catch (IOException e) {
+                LoggerFactory.getLogger(getClass()).error("Cannot open API in browser.", e);
+            }
+        });
+
     }
 
     @Override
