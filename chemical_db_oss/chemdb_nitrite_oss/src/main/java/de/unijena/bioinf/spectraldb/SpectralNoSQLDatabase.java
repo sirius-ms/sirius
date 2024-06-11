@@ -133,7 +133,9 @@ public abstract class SpectralNoSQLDatabase<Doctype> implements SpectralLibrary,
     @Override
     public Ms2ReferenceSpectrum getReferenceSpectrum(long uuid) throws ChemicalDatabaseException {
         try {
-            return fillLibrary(this.storage.find(Filter.where("uuid").eq(uuid), Ms2ReferenceSpectrum.class).iterator().next());
+            Iterator<Ms2ReferenceSpectrum> specs = this.storage.find(Filter.where("uuid").eq(uuid), Ms2ReferenceSpectrum.class).iterator();
+            if (specs.hasNext()) return fillLibrary(specs.next());
+            else throw new ChemicalDatabaseException("No spectrum with uuid " + uuid + " found.");
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }
