@@ -81,6 +81,10 @@ public class PrecursorIonType implements TreeAnnotation {
         return multipleIons;
     }
 
+    public boolean isMultipleCharged(){
+        return Math.abs(getCharge()) > 1;
+    }
+
     protected static enum SPECIAL_TYPES {
         REGULAR, UNKNOWN, INTRINSICAL_CHARGED
     }
