@@ -102,9 +102,12 @@ public class StorageUtils {
 
         MSData.MSDataBuilder builder = MSData.builder()
                 .isotopePattern(isotopePattern != null ? new IsotopePattern(isotopePattern, IsotopePattern.Type.MERGED_APEX) : null)
-                .mergedMs1Spectrum(mergedMs1)
-                .mergedMSnSpectrum(Spectrums.from(sirius.getMs2Preprocessor().preprocess(exp).getMergedPeaks()))
-                .msnSpectra(exp.getMs2Spectra().stream().map(StorageUtils::msnSpectrumFrom).toList());
+                .mergedMs1Spectrum(mergedMs1);
+
+        if (exp.getMs2Spectra() != null && !exp.getMs2Spectra().isEmpty()) {
+            builder.mergedMSnSpectrum(Spectrums.from(sirius.getMs2Preprocessor().preprocess(exp).getMergedPeaks()));
+            builder.msnSpectra(exp.getMs2Spectra().stream().map(StorageUtils::msnSpectrumFrom).toList());
+        }
 
         MSData msData = builder.build();
 
@@ -120,7 +123,7 @@ public class StorageUtils {
         }
 
         int charge = exp.getPrecursorIonType().getCharge();
-        if (msData.getMsnSpectra()!=null) {
+        if (msData.getMsnSpectra() != null) {
             for (MergedMSnSpectrum spec : msData.getMsnSpectra()) {
                 spec.setCharge(charge);
             }
@@ -150,7 +153,7 @@ public class StorageUtils {
 
     private static MergedMSnSpectrum msnSpectrumFrom(Ms2Spectrum<Peak> ms2Spectrum) {
         final MergedMSnSpectrum msn = new MergedMSnSpectrum();
-        if (ms2Spectrum.getIonization()!=null) msn.setCharge(ms2Spectrum.getIonization().getCharge());
+        if (ms2Spectrum.getIonization() != null) msn.setCharge(ms2Spectrum.getIonization().getCharge());
         msn.setPeaks(new SimpleSpectrum(ms2Spectrum));
         msn.setMsLevel(ms2Spectrum.getMsLevel());
         msn.setMergedCollisionEnergy(ms2Spectrum.getCollisionEnergy());
