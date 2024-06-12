@@ -18,6 +18,7 @@ dependencies {
     // will be ported to sirius_cli later
     api "de.unijena.bioinf.ms:combinatorial_fragmenter:$siriusVersion"
 //external
+    implementation 'org.jdesktop:timingframework:0.55'
     api "net.sf.opencsv:opencsv:2.3"
     api "org.swinglabs.swingx:swingx-all:1.6.5-1"
 

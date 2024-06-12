@@ -19,6 +19,7 @@ package de.unijena.bioinf.ms.gui.utils;/*
  */
 
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.nightsky.sdk.model.DataQuality;
@@ -30,12 +31,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This model stores the filter criteria for a compound list
  */
 public class CompoundFilterModel implements SiriusPCS {
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
+
+    private static final Set<PrecursorIonType> DEFAULT_ADDUCTS = Collections.unmodifiableSet(PeriodicTable.getInstance().getAdductsAndUnKnowns()
+            .stream().filter(p -> !p.isMultipleCharged()).filter(p -> !p.isMultimere()).collect(Collectors.toSet()));
 
     /*
     currently selected values
@@ -74,12 +79,12 @@ public class CompoundFilterModel implements SiriusPCS {
     @Getter
     private boolean hasMs1 = false;
     @Getter
-    private boolean hasMsMs = false;
+    private boolean hasMsMs = true;
     @Getter
     private int currentMinIsotopePeaks;
 
     @Setter
-    private Set<PrecursorIonType> adducts = Set.of();
+    private Set<PrecursorIonType> adducts = DEFAULT_ADDUCTS;
     @Getter
     private LipidFilter lipidFilter = LipidFilter.KEEP_ALL_COMPOUNDS;
 
@@ -130,6 +135,8 @@ public class CompoundFilterModel implements SiriusPCS {
      * @param maxConfidence
      */
     public CompoundFilterModel(double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence, int minIsotopePeaks, int maxIsotopePeaks) {
+        this.featureQualityFilter.dataQualities.remove(DataQuality.BAD);
+        this.featureQualityFilter.dataQualities.remove(DataQuality.LOWEST);
         this.currentMinMz = minMz;
         this.currentMaxMz = maxMz;
         this.currentMinRt = minRt;
@@ -307,6 +314,26 @@ public class CompoundFilterModel implements SiriusPCS {
 
     public boolean isAdductFilterActive() {
         return adducts != null && !adducts.isEmpty();
+    }
+
+    public boolean isMultiAdductsAllowed() {
+        return !isAdductFilterActive() || adducts.stream().anyMatch(p -> p.isMultipleCharged() || p.isMultimere());
+    }
+
+    public void removeMultiAdducts() {
+        adducts = adducts.stream().filter(p -> !p.isMultipleCharged()).filter(p -> !p.isMultimere()).collect(Collectors.toSet());
+        if (adducts.isEmpty())
+            adducts = DEFAULT_ADDUCTS;
+    }
+
+    public void addMultiAdducts() {
+        if (!isAdductFilterActive())
+            return;
+
+        adducts = new HashSet<>(adducts);
+        PeriodicTable.getInstance().getAdductsAndUnKnowns().stream()
+                .filter(p -> p.isMultimere() || p.isMultipleCharged())
+                .forEach(a -> adducts.add(a));
     }
 
 
