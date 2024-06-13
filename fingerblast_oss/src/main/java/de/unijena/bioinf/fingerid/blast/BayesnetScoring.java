@@ -29,11 +29,12 @@ import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.hash.TIntHashSet;
+import lombok.Getter;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
@@ -50,19 +51,31 @@ public class BayesnetScoring implements FingerblastScoringMethod<BayesnetScoring
 
     private static final Logger Log = LoggerFactory.getLogger(BayesnetScoring.class);
 
+    @Getter
     protected final TIntObjectHashMap<AbstractCorrelationTreeNode> nodes;
+    @Getter
     protected final AbstractCorrelationTreeNode[] nodeList;
+    @Getter
     protected final AbstractCorrelationTreeNode[] forests;
+    @Getter
     protected final double alpha;
+    @Getter
     protected final FingerprintVersion fpVersion;
 
-    protected File file;
-
+    @Getter
     protected final PredictionPerformance[] performances;
 
+    @Getter
+    @Nullable
+    protected FingerprintStatistics statistics;
+
+    @Getter
     protected boolean allowOnlyNegativeScores;
 
     protected BayesnetScoring(TIntObjectHashMap<AbstractCorrelationTreeNode> nodes, AbstractCorrelationTreeNode[] nodeList, AbstractCorrelationTreeNode[] forests, double alpha, FingerprintVersion fpVersion, PredictionPerformance[] performances, boolean allowOnlyNegativeScores) {
+        this(nodes, nodeList, forests, alpha, fpVersion, performances, allowOnlyNegativeScores, null);
+    }
+    protected BayesnetScoring(TIntObjectHashMap<AbstractCorrelationTreeNode> nodes, AbstractCorrelationTreeNode[] nodeList, AbstractCorrelationTreeNode[] forests, double alpha, FingerprintVersion fpVersion, PredictionPerformance[] performances, boolean allowOnlyNegativeScores, @Nullable FingerprintStatistics statistics) {
         this.nodes = nodes;
         this.nodeList = nodeList;
         this.forests = forests;
@@ -72,6 +85,10 @@ public class BayesnetScoring implements FingerblastScoringMethod<BayesnetScoring
         this.allowOnlyNegativeScores = allowOnlyNegativeScores;
     }
 
+
+    void setStatistics(@Nullable FingerprintStatistics statistics) {
+        this.statistics = statistics;
+    }
 
     protected static final String SEP = "\t";
 
@@ -83,16 +100,16 @@ public class BayesnetScoring implements FingerblastScoringMethod<BayesnetScoring
             if (node.numberOfParents()==0) continue;
             int child = fpVersion.getAbsoluteIndexOf(node.getFingerprintIndex());
 
-            stringBuilder.append(String.valueOf(node.numberOfParents()));
+            stringBuilder.append(node.numberOfParents());
             stringBuilder.append(SEP);
             for (AbstractCorrelationTreeNode p : node.getParents()) {
-                stringBuilder.append(String.valueOf(fpVersion.getAbsoluteIndexOf(p.getFingerprintIndex())));
+                stringBuilder.append(fpVersion.getAbsoluteIndexOf(p.getFingerprintIndex()));
                 stringBuilder.append(SEP);
             }
-            stringBuilder.append(String.valueOf(child)); stringBuilder.append(SEP);
+            stringBuilder.append(child); stringBuilder.append(SEP);
             double[] covariances = node.getCovarianceArray();
             for (int i = 0; i < covariances.length; i++) {
-                stringBuilder.append(String.valueOf(covariances[i]));
+                stringBuilder.append(covariances[i]);
                 if (i<covariances.length-1) stringBuilder.append(SEP);
             }
 
@@ -145,28 +162,27 @@ public class BayesnetScoring implements FingerblastScoringMethod<BayesnetScoring
             addPlatt(getIdxRootPlatt(thisTrue, parentIdx, parentsTrue), platt);
         }
 
-        abstract protected void  addPlatt(int bin, double platt);
-
+        abstract protected void addPlatt(int bin, double platt);
 
         abstract void computeCovariance();
 
         abstract void setCovariance(double[] covariances);
 
-        abstract protected double getCovariance(int whichCovariance, boolean real, boolean... realParents);
+        public abstract double getCovariance(int whichCovariance, boolean real, boolean... realParents);
 
-        abstract protected double[] getCovarianceArray();
+        public abstract double[] getCovarianceArray();
 
-        abstract public AbstractCorrelationTreeNode[] getParents();
+        public abstract AbstractCorrelationTreeNode[] getParents();
 
-        abstract public int numberOfParents();
+        public abstract int numberOfParents();
 
         abstract void replaceParent(AbstractCorrelationTreeNode oldParent, AbstractCorrelationTreeNode newParent);
 
-        abstract List<AbstractCorrelationTreeNode> getChildren();
+        public abstract List<AbstractCorrelationTreeNode> getChildren();
 
         abstract boolean removeChild(AbstractCorrelationTreeNode child);
 
-        abstract public int getFingerprintIndex();
+        public abstract int getFingerprintIndex();
 
         abstract void setFingerprintIndex(int newIdx);
 
@@ -263,7 +279,7 @@ public class BayesnetScoring implements FingerblastScoringMethod<BayesnetScoring
         }
 
         @Override
-        protected double[] getCovarianceArray() {
+        public double[] getCovarianceArray() {
             return covariances;
         }
 
@@ -284,7 +300,7 @@ public class BayesnetScoring implements FingerblastScoringMethod<BayesnetScoring
         }
 
         @Override
-        List<AbstractCorrelationTreeNode> getChildren() {
+       public List<AbstractCorrelationTreeNode> getChildren() {
             return children;
         }
 
