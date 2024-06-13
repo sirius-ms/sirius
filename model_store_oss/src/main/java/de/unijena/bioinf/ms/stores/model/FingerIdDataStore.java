@@ -65,6 +65,13 @@ public interface FingerIdDataStore extends FingerIdClientDataStore {
     void writeBayesnetScoringTree(@NotNull PredictorType type, @Nullable MolecularFormula formula, IOFunctions.IOConsumer<OutputStream> consume) throws IOException;
 
     /**
+     * Write fingerprint statistics for given PredictorType and formula into the model Storage
+     * @param type Positive or negative predictor type. If null default tree will be written
+     * @param formula formula for which the tree should be added.
+     */
+    void writeBayesnetScoringStats(@NotNull PredictorType type, @Nullable MolecularFormula formula, IOFunctions.IOConsumer<OutputStream> consume) throws IOException;
+
+    /**
      * Add the given molecular formula to the bayesnet scoring tree exclusion list
      * @param formula formula for which the tree should be added.
      */

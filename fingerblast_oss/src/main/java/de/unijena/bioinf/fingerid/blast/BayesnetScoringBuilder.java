@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.fingerid.blast;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.fp.Fingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
@@ -58,7 +59,7 @@ public class BayesnetScoringBuilder {
         return new BayesnetScoringBuilder(performances, predicted, correct, covTreeEdges, false).buildScoring();
     }
 
-    public static BayesnetScoring createScoringMethod(PredictionPerformance[] performances, ProbabilityFingerprint[] predicted, Fingerprint[] correct, int[][] covTreeEdges){
+    public static BayesnetScoring createScoringMethod(PredictionPerformance[] performances, ProbabilityFingerprint[] predicted, Fingerprint[] correct, int[][] covTreeEdges) {
         return new BayesnetScoringBuilder(performances, predicted, correct, covTreeEdges, false).buildScoring();
     }
 
@@ -67,7 +68,7 @@ public class BayesnetScoringBuilder {
         return new BayesnetScoringBuilder(performances, predicted, correct, covTreeEdges, allowOnlyNegativeScores).buildScoring();
     }
 
-    public static BayesnetScoring createScoringMethod(PredictionPerformance[] performances, ProbabilityFingerprint[] predicted, Fingerprint[] correct, int[][] covTreeEdges, boolean allowOnlyNegativeScores){
+    public static BayesnetScoring createScoringMethod(PredictionPerformance[] performances, ProbabilityFingerprint[] predicted, Fingerprint[] correct, int[][] covTreeEdges, boolean allowOnlyNegativeScores) {
         return new BayesnetScoringBuilder(performances, predicted, correct, covTreeEdges, allowOnlyNegativeScores).buildScoring();
     }
 
@@ -82,13 +83,17 @@ public class BayesnetScoringBuilder {
     }
 
     @Nullable
-    public static BayesnetScoring readScoring(@Nullable BufferedReader reader, FingerprintVersion fpVersion, double alpha, boolean allowOnlyNegativeScores) throws IOException {
-        if (reader == null)
+    public static BayesnetScoring readScoring(@Nullable BufferedReader treeReader, FingerprintVersion fpVersion, double alpha, boolean allowOnlyNegativeScores) throws IOException {
+        return readScoring(treeReader, null, fpVersion, alpha, allowOnlyNegativeScores);
+    }
+
+    public static BayesnetScoring readScoring(@Nullable BufferedReader treeReader, @Nullable BufferedReader statisticsReader, FingerprintVersion fpVersion, double alpha, boolean allowOnlyNegativeScores) throws IOException {
+        if (treeReader == null)
             return null;
 
         final List<String> lines = new ArrayList<>();
         String l;
-        while ((l = reader.readLine()) != null) lines.add(l);
+        while ((l = treeReader.readLine()) != null) lines.add(l);
 
         if (lines.isEmpty())
             return null;
@@ -149,9 +154,11 @@ public class BayesnetScoringBuilder {
             throw new RuntimeException("bayes net contains cycles");
         }
 
-        return new BayesnetScoring(nodes, nodeList, forests, alpha, fpVersion, null, allowOnlyNegativeScores);
+        FingerprintStatistics statistics = null;
+        if (statisticsReader != null)
+            statistics = new ObjectMapper().readValue(statisticsReader, FingerprintStatistics.class);
 
-
+        return new BayesnetScoring(nodes, nodeList, forests, alpha, fpVersion, null, allowOnlyNegativeScores, statistics);
     }
 
 

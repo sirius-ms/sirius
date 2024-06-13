@@ -48,11 +48,11 @@ public interface FingerIdClientDataStore extends Compressible {
     Optional<InputStream> getBayesnetDefaultScoringTree(PredictorType type) throws IOException;
 
     /**
-     * Get a formula specific scoring tree if or Null if no specific tree exists specific tree
+     * Get a formula specific scoring tree or empty if no specific tree exists
      *
      * @param type    Positive or negative predictor type
      * @param formula Formula for the tree
-     * @return formula specific tree if it exists, default tree if formula is on exclusion list, NULL otherwise
+     * @return formula specific tree if it exists, empty otherwise
      */
     Optional<InputStream> getBayesnetScoringTree(PredictorType type, @Nullable MolecularFormula formula) throws IOException;
 
@@ -60,6 +60,24 @@ public interface FingerIdClientDataStore extends Compressible {
 
 
     boolean hasBayesnetScoringTree(PredictorType type, @NotNull MolecularFormula formula) throws IOException;
+
+
+    /**
+     * get fingerprints statistics for default scoring tree for the given predictor
+     *
+     * @param type Positive or negative predictor type
+     * @return fingerprints statistics for default scoring tree
+     */
+    Optional<InputStream> getBayesnetDefaultStats(PredictorType type) throws IOException;
+
+    /**
+     * Get formula specific fingerprints statistics for the corresponding scoring tree or empty if no specific tree exists
+     *
+     * @param type    Positive or negative predictor type
+     * @param formula Formula for the tree
+     * @return formula specific fingerprints statistics if corresponding tree exists, empty otherwise
+     */
+    Optional<InputStream> getBayesnetStats(PredictorType type, @Nullable MolecularFormula formula) throws IOException;
 
 
     /**
