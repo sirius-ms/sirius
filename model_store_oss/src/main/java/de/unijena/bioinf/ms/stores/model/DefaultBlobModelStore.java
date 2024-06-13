@@ -113,6 +113,18 @@ public class DefaultBlobModelStore<Storage extends BlobStorage> extends Abstract
     }
 
     @Override
+    public Optional<InputStream> getBayesnetDefaultStats(PredictorType type) throws IOException {
+        return getResource(Path.of("bayesnetScoring").resolve("stats").resolve("default.json"), type);
+    }
+
+    @Override
+    public Optional<InputStream> getBayesnetStats(PredictorType type, @Nullable MolecularFormula formula) throws IOException {
+        if (formula == null)
+            return getBayesnetDefaultStats(type);
+        return getResource(Path.of("bayesnetScoring").resolve("stats"), type, formula, "json");
+    }
+
+    @Override
     public Optional<InputStream> getConfidenceSVMs(PredictorType type) throws IOException {
         return getResource(Path.of("confidence.json"), type);
 
@@ -134,6 +146,14 @@ public class DefaultBlobModelStore<Storage extends BlobStorage> extends Abstract
             writeResource(Path.of("bayesnetScoring").resolve("trees").resolve("default.tsv"), type, consume);
         else
             writeResource(Path.of("bayesnetScoring").resolve("trees"), type, formula, "tsv", consume);
+    }
+
+    @Override
+    public void writeBayesnetScoringStats(@NotNull PredictorType type, @Nullable MolecularFormula formula, IOFunctions.IOConsumer<OutputStream> consume) throws IOException {
+        if (formula == null)
+            writeResource(Path.of("bayesnetScoring").resolve("stats").resolve("default.json"), type, consume);
+        else
+            writeResource(Path.of("bayesnetScoring").resolve("stats"), type, formula, "json", consume);
     }
 
     @Override
