@@ -5,7 +5,7 @@ buildscript {
     }
 
     dependencies {
-        classpath ("org.openapitools:openapi-generator-gradle-plugin:7.0.1"){
+        classpath("org.openapitools:openapi-generator-gradle-plugin:7.0.1") {
             exclude group: "com.fasterxml.jackson.core"
             exclude group: "com.fasterxml.jackson.dataformat"
             exclude group: "com.fasterxml.jackson.datatype"
@@ -24,7 +24,7 @@ buildscript {
     }
 }
 
-ext{
+ext {
     reactor_version = "3.4.3"
     reactor_netty_version = "1.0.4"
 }
@@ -46,5 +46,25 @@ openApiGenerate {
     apiPackage.set("de.unijena.bioinf.ms.nightsky.sdk.api")
     invokerPackage.set("de.unijena.bioinf.ms.nightsky.sdk.client")
     modelPackage.set("de.unijena.bioinf.ms.nightsky.sdk.model")
+    groupId.set("de.unijena.bioinf.ms")
+    version.set(project.version.toString())
     configFile.set("$projectDir/openapi-gen-config.json")
+}
+
+artifactory {
+    contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
+    publish {
+        repository {
+            if (version.toString().endsWith('-SNAPSHOT'))
+                repoKey = 'libs-snapshot-local'
+            else
+                repoKey = 'libs-release-local'
+
+            username = project.findProperty('de.unijena.bioinf.build.artifactory.username')
+            password = project.findProperty('de.unijena.bioinf.build.artifactory.password')
+        }
+        defaults {
+            publications('mavenJava')
+        }
+    }
 }

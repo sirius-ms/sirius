@@ -38,9 +38,9 @@ Add this dependency to your project's POM:
 
 ```xml
 <dependency>
-  <groupId>org.openapitools</groupId>
+  <groupId>de.unijena.bioinf.ms</groupId>
   <artifactId>sirius_nightsky_sdk</artifactId>
-  <version>2.1</version>
+  <version>6.0.1-SNAPSHOT</version>
   <scope>compile</scope>
 </dependency>
 ```
@@ -51,12 +51,17 @@ Add this dependency to your project's build file:
 
 ```groovy
   repositories {
-    mavenCentral()     // Needed if the 'sirius_nightsky_sdk' jar has been published to maven central.
-    mavenLocal()       // Needed if the 'sirius_nightsky_sdk' jar has been published to the local maven repo.
+    maven {
+      url "https://bio.informatik.uni-jena.de/repository/libs-oss"
+      metadataSources {
+        mavenPom()
+        artifact()
+      }
+    }
   }
 
   dependencies {
-     implementation "org.openapitools:sirius_nightsky_sdk:2.1"
+     implementation "de.unijena.bioinf.ms:sirius_nightsky_sdk:6.0.1-SNAPSHOT"
   }
 ```
 
@@ -70,7 +75,7 @@ mvn clean package
 
 Then manually install the following JARs:
 
-- `target/sirius_nightsky_sdk-2.1.jar`
+- `target/sirius_nightsky_sdk-6.0.1-SNAPSHOT.jar`
 - `target/lib/*.jar`
 
 ## Getting Started
