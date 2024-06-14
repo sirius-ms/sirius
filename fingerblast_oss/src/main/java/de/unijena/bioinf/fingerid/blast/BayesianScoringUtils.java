@@ -30,6 +30,7 @@ import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.utils.PrimsSpanningTree;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
+import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -207,25 +208,23 @@ public class BayesianScoringUtils {
      * @throws ChemicalDatabaseException  if a db exceptions happens
      */
     public BayesnetScoring computeDefaultScoring(ChemicalDatabase sqlChemDB) throws ChemicalDatabaseException {
-        List<int[]> treeStructure = computeDefaultTreeTopology(sqlChemDB);
-        if (treeStructure.size() < 10) //should never happen
-            throw new RuntimeException("Tree has less than 10 edges.");
-        BayesnetScoring scoring = estimateScoringDefaultScoring(treeStructure);
-        return scoring;
+        return SiriusJobs.getGlobalJobManager().submitJob(makeDefaultScoringJob(sqlChemDB)).getResult();
     }
 
     public MasterJJob<BayesnetScoring> makeDefaultScoringJob(ChemicalDatabase sqlChemDb) throws ChemicalDatabaseException {
-        return new BasicMasterJJob<BayesnetScoring>(JJob.JobType.CPU) {
+        return new BasicMasterJJob<>(JJob.JobType.CPU) {
             @Override
             protected BayesnetScoring compute() throws Exception {
                 Log.warn("retrieve fingerprints");
                 long startTime = System.currentTimeMillis();
-                List<FingerprintCandidate>  candidates = getFingerprints(DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP, sqlChemDb);
+                List<FingerprintCandidate> candidates = getFingerprints(DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP, sqlChemDb);
                 long endTime = System.currentTimeMillis();
-                Log.warn("retrieving "+candidates.size()+" structures took " + (endTime - startTime) / 1000 + " seconds");
+                Log.warn("retrieving {} structures took {} seconds", candidates.size(), (endTime - startTime) / 1000);
                 try {
-                    List<int[]> alist = computeTreeTopologyOrThrowParallel(candidates, MIN_NUM_INFORMATIVE_PROPERTIES_DEFAULT_SCORING, this, this.jobManager.getCPUThreads());
-                    return estimateScoringDefaultScoring(alist);
+                    List<int[]> treeStructure = computeTreeTopologyOrThrowParallel(candidates, MIN_NUM_INFORMATIVE_PROPERTIES_DEFAULT_SCORING, this, this.jobManager.getCPUThreads());
+                    if (treeStructure.size() < 10) //should never happen
+                        throw new RuntimeException("Tree has less than 10 edges.");
+                    return estimateScoringDefaultScoring(treeStructure, candidates);
                 } catch (InsufficientDataException e) {
                     throw new RuntimeException("Insufficient data to compute topology of default Bayesian Network Scoring", e);
                 }
@@ -239,15 +238,10 @@ public class BayesianScoringUtils {
      * @param formula for which the tree will be computed
      * @return BayesnetScoring with Covariance Tree
      * @throws ChemicalDatabaseException if a db exceptions happens
-     * @throws InsufficientDataException  if there are not enough candidates in the Database to compute the scoring
+     * @throws InsufficientDataException if there are not enough candidates in the Database to compute the scoring
      */
-    @Deprecated
     public BayesnetScoring computeScoring(MolecularFormula formula, @NotNull AbstractChemicalDatabase chemdb) throws InsufficientDataException, ChemicalDatabaseException {
-        //compute tree edges (relative indices)
-        List<int[]> treeStructure = computeTreeTopology(formula, minNumInformativePropertiesMfSpecificScoring, chemdb);
-        if (treeStructure.size() < 3)
-            throw new InsufficientDataException("Tree has less than 3 nodes.");
-        return estimateScoring(formula, treeStructure);
+        return SiriusJobs.getGlobalJobManager().submitJob(createScoringComputationJob(formula, chemdb, SiriusJobs.getCPUThreads())).getResult();
     }
 
     /**
@@ -255,90 +249,42 @@ public class BayesianScoringUtils {
      * @param formula for which the tree will be computed
      * @return BayesnetScoring with Covariance Tree
      * @throws ChemicalDatabaseException if a db exceptions happens
-     * @throws InsufficientDataException  if there are not enough candidates in the Database to compute the scoring
+     * @throws InsufficientDataException if there are not enough candidates in the Database to compute the scoring
      */
     public MasterJJob<BayesnetScoring> createScoringComputationJob(MolecularFormula formula, @NotNull AbstractChemicalDatabase chemdb, int numThreads) throws InsufficientDataException, ChemicalDatabaseException {
-        return new BasicMasterJJob<BayesnetScoring>(JJob.JobType.CPU) {
+        return new BasicMasterJJob<>(JJob.JobType.CPU) {
             @Override
             protected BayesnetScoring compute() throws Exception {
                 //compute tree edges (relative indices)
-                List<int[]> treeStructure = computeTreeTopologyParallel(formula, minNumInformativePropertiesMfSpecificScoring, chemdb, this, numThreads);
-                if (treeStructure.size() < 3)
+                Pair<List<int[]>, List<FingerprintCandidate>> treeStructureAndCandidates = computeTreeTopologyParallel(formula, minNumInformativePropertiesMfSpecificScoring, chemdb, this, numThreads);
+                if (treeStructureAndCandidates.first().size() < 3)
                     throw new InsufficientDataException("Tree has less than 3 nodes.");
-                return estimateScoring(formula, treeStructure);
+                return estimateScoring(formula, treeStructureAndCandidates.first(), treeStructureAndCandidates.second());
             }
         };
     }
 
-    @Deprecated
-    public List<int[]> computeTreeTopologyTest(MolecularFormula formula, int minNumInformativeProperties, @NotNull AbstractChemicalDatabase chemdb) throws ChemicalDatabaseException, InsufficientDataException {
-        return computeTreeTopology(formula, minNumInformativeProperties, chemdb);
-    }
-
-
     private final static boolean USE_BIOTRANSFORMATIONS_FOR_TREE_TOPOLOGY = true;
-    private List<int[]> computeTreeTopology(MolecularFormula formula, int minNumInformativeProperties, @NotNull AbstractChemicalDatabase chemdb) throws ChemicalDatabaseException, InsufficientDataException {
-        long startTime = System.currentTimeMillis();
-        List<FingerprintCandidate> candidates = chemdb.lookupStructuresAndFingerprintsByFormula(formula);
-        long endTime = System.currentTimeMillis();
-        Log.debug("retrieving candidates took "+(endTime-startTime)/1000+" seconds");
 
-        //1. if enough data, compute tree topology solely based on candidates with same MF
-        if (isSufficientDataToCreateTreeTopology(candidates)) {
-            try {
-                return computeTreeTopologyOrThrow(candidates, minNumInformativeProperties);
-            } catch (InsufficientDataException e) {
-                Log.info("Insufficient data to compute Bayesian scoring topology based only on candidates with the same molecular formula '" + formula + "'. Trying with additional biotransformations.");
-            }
-
-        }
-
-        //2. if it was insufficient data, compute tree topology based on candidates with same MF or biotransformations
-        if (USE_BIOTRANSFORMATIONS_FOR_TREE_TOPOLOGY && candidates.size()>=minNumStructuresTopologySameMf) {
-            startTime = System.currentTimeMillis();
-            Set<MolecularFormula> transformationMFs = applyBioTransformations(formula, false);
-            List<FingerprintCandidate> transformationCandidates = new ArrayList<>();
-            for (MolecularFormula transformationMF : transformationMFs) {
-                chemdb.lookupStructuresAndFingerprintsByFormula(transformationMF, transformationCandidates);
-            }
-            endTime = System.currentTimeMillis();
-            Log.debug("retrieving candidates with biotransformations took "+(endTime-startTime)/1000+" seconds");
-
-            if (!isSufficientDataToCreateTreeTopology(candidates, transformationCandidates)){
-                throw new InsufficientDataException("Insufficient data to compute Bayesian scoring topology for molecular formula "+formula);
-            }
-            try {
-                List<FingerprintCandidate> combined = combine(candidates, transformationCandidates, 1);
-                return computeTreeTopologyOrThrow(combined, minNumInformativeProperties);
-            } catch (InsufficientDataException e) {
-                throw new InsufficientDataException("Insufficient data to compute Bayesian scoring topology based only on candidates with the same molecular formula or biotransformations: "+formula, e);
-            }
-
-
-        } else {
-            throw new InsufficientDataException("Insufficient data to compute Bayesian scoring topology based only on candidates with the same molecular formula "+formula);
-        }
-    }
-
-    private List<int[]> computeTreeTopologyParallel(MolecularFormula formula, int minNumInformativeProperties, @NotNull AbstractChemicalDatabase chemdb, MasterJJob masterJJob, int numThreads) throws ChemicalDatabaseException, InsufficientDataException, ExecutionException {
+    private Pair<List<int[]>, List<FingerprintCandidate>> computeTreeTopologyParallel(MolecularFormula formula, int minNumInformativeProperties, @NotNull AbstractChemicalDatabase chemdb, MasterJJob masterJJob, int numThreads) throws ChemicalDatabaseException, InsufficientDataException, ExecutionException {
         long startTime = System.currentTimeMillis();
         List<FingerprintCandidate> candidates = new ArrayList<>();
         masterJJob.submitJob(new LookupStructuresAndFingerprintsByFormulaJob(chemdb, formula, candidates)).awaitResult();
         long endTime = System.currentTimeMillis();
-        Log.debug("retrieving candidates took "+(endTime-startTime)/1000+" seconds");
+        Log.debug("retrieving candidates took {} seconds", (endTime - startTime) / 1000);
 
         //1. if enough data, compute tree topology solely based on candidates with same MF
         if (isSufficientDataToCreateTreeTopology(candidates)) {
             try {
-                return computeTreeTopologyOrThrowParallel(candidates, minNumInformativeProperties, masterJJob, numThreads);
+                return Pair.of(computeTreeTopologyOrThrowParallel(candidates, minNumInformativeProperties, masterJJob, numThreads), candidates);
             } catch (InsufficientDataException e) {
                 Log.info("Insufficient data to compute Bayesian scoring topology based only on candidates with the same molecular formula '" + formula + "'. Trying with additional biotransformations.");
             }
 
         }
 
-        //2. if it is was insufficient data, compute tree topology based on candidates with same MF or biotransformations
-        if (USE_BIOTRANSFORMATIONS_FOR_TREE_TOPOLOGY && candidates.size()>=minNumStructuresTopologySameMf) {
+        //2. if insufficient data, compute tree topology based on candidates with same MF or biotransformations
+        if (USE_BIOTRANSFORMATIONS_FOR_TREE_TOPOLOGY && candidates.size() >= minNumStructuresTopologySameMf) {
             startTime = System.currentTimeMillis();
             Set<MolecularFormula> transformationMFs = applyBioTransformations(formula, false);
             List<FingerprintCandidate> transformationCandidates = new ArrayList<>();
@@ -346,21 +292,21 @@ public class BayesianScoringUtils {
                 masterJJob.submitJob(new LookupStructuresAndFingerprintsByFormulaJob(chemdb, transformationMF, transformationCandidates)).awaitResult();
             }
             endTime = System.currentTimeMillis();
-            Log.debug("retrieving candidates with biotransformations took "+(endTime-startTime)/1000+" seconds");
+            Log.debug("retrieving candidates with biotransformations took {} seconds", (endTime - startTime) / 1000);
 
-            if (!isSufficientDataToCreateTreeTopology(candidates, transformationCandidates)){
-                throw new InsufficientDataException("Insufficient data to compute Bayesian scoring topology for molecular formula "+formula);
+            if (!isSufficientDataToCreateTreeTopology(candidates, transformationCandidates)) {
+                throw new InsufficientDataException("Insufficient data to compute Bayesian scoring topology for molecular formula " + formula);
             }
             try {
                 List<FingerprintCandidate> combined = combine(candidates, transformationCandidates, 1);
-                return computeTreeTopologyOrThrowParallel(combined, minNumInformativeProperties, masterJJob, numThreads);
+                return Pair.of(computeTreeTopologyOrThrowParallel(combined, minNumInformativeProperties, masterJJob, numThreads), combined);
             } catch (InsufficientDataException e) {
-                throw new InsufficientDataException("Insufficient data to compute Bayesian scoring topology based only on candidates with the same molecular formula or biotransformations: "+formula, e);
+                throw new InsufficientDataException("Insufficient data to compute Bayesian scoring topology based only on candidates with the same molecular formula or biotransformations: " + formula, e);
             }
 
 
         } else {
-            throw new InsufficientDataException("Insufficient data to compute Bayesian scoring topology based only on candidates with the same molecular formula "+formula);
+            throw new InsufficientDataException("Insufficient data to compute Bayesian scoring topology based only on candidates with the same molecular formula " + formula);
         }
     }
 
@@ -369,19 +315,18 @@ public class BayesianScoringUtils {
     private final static long DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP = DataSource.BIO.flag();
 
     /**
-     *
      * @return list of edges of between molecular properties. Only properties from masedFingerprint version used but saved with absolute indices
      */
     private List<int[]> computeDefaultTreeTopology(ChemicalDatabase sqlChemDB) throws ChemicalDatabaseException {
-        Log.debug("database flag is "+DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP);
-        Log.debug("structures table "+ChemicalDatabase.STRUCTURES_TABLE);
-        Log.debug("fingerprints table "+ChemicalDatabase.FINGERPRINT_TABLE);
-        Log.debug("fingerprint id "+ChemicalDatabase.FINGERPRINT_ID);
+        Log.debug("database flag is {}", DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP);
+        Log.debug("structures table {}", ChemicalDatabase.STRUCTURES_TABLE);
+        Log.debug("fingerprints table {}", ChemicalDatabase.FINGERPRINT_TABLE);
+        Log.debug("fingerprint id {}", ChemicalDatabase.FINGERPRINT_ID);
         Log.warn("retrieve fingerprints");
         long startTime = System.currentTimeMillis();
-        List<FingerprintCandidate>  candidates = getFingerprints(DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP, sqlChemDB);
+        List<FingerprintCandidate> candidates = getFingerprints(DATABASE_FLAG_FOR_TREE_TOPOLOGY_COMP, sqlChemDB);
         long endTime = System.currentTimeMillis();
-        Log.warn("retrieving "+candidates.size()+" structures took " + (endTime - startTime) / 1000 + " seconds");
+        Log.warn("retrieving {} structures took {} seconds", candidates.size(), (endTime - startTime) / 1000);
         try {
             return computeTreeTopologyOrThrow(candidates, MIN_NUM_INFORMATIVE_PROPERTIES_DEFAULT_SCORING);
         } catch (InsufficientDataException e) {
@@ -390,7 +335,6 @@ public class BayesianScoringUtils {
     }
 
     /**
-     *
      * @param candidates
      * @param minNumInformativeProperties the candidate list needs at least this number of informative properties for a tree topology to be computed.
      * @return list of edges with relative fingerprint indices
@@ -404,7 +348,7 @@ public class BayesianScoringUtils {
         List<Fingerprint> maskedFingerprints = candidates.stream().map(c-> maskedFingerprintVersion.mask(c.getFingerprint())).collect(Collectors.toList());
         MutualInformationAndIndices mutualInformationAndIndices = mutualInfoBetweenProperties(maskedFingerprints, 1.0, minNumInformativeProperties);
         long endTime = System.currentTimeMillis();
-        Log.warn("computing mutual info took "+(endTime-startTime)/1000+" seconds");
+        Log.warn("computing mutual info took {} seconds", (endTime - startTime) / 1000);
         startTime = endTime;
 
         //edges are absolute indices
@@ -415,13 +359,12 @@ public class BayesianScoringUtils {
         //don't append properties to tree which are not informative. This are added as 'unconnected' nodes in BayesnetScoring anyways
 
         endTime = System.currentTimeMillis();
-        Log.warn("computing spanning tree  took "+(endTime-startTime)/1000+" seconds");
+        Log.warn("computing spanning tree  took {} seconds", (endTime - startTime) / 1000);
         return edges;
 
     }
 
     /**
-     *
      * @param candidates
      * @param minNumInformativeProperties the candidate list needs at least this number of informative properties for a tree topology to be computed.
      * @return list of edges with relative fingerprint indices
@@ -438,7 +381,7 @@ public class BayesianScoringUtils {
         MutualInformationAndIndices mutualInformationAndIndices = masterJJob.submitSubJob(mutualInfoJJob).awaitResult();
 
         long endTime = System.currentTimeMillis();
-        Log.debug("computing mutual info took "+(endTime-startTime)/1000+" seconds");
+        Log.debug("computing mutual info took {} seconds", (endTime - startTime) / 1000);
         startTime = endTime;
 
         //edges are absolute indices
@@ -449,7 +392,7 @@ public class BayesianScoringUtils {
         //don't append properties to tree which are not informative. This are added as 'unconnected' nodes in BayesnetScoring anyways
 
         endTime = System.currentTimeMillis();
-        Log.debug("computing spanning tree  took "+(endTime-startTime)/1000+" seconds");
+        Log.debug("computing spanning tree  took {} seconds", (endTime - startTime) / 1000);
         return edges;
     }
 
@@ -462,23 +405,22 @@ public class BayesianScoringUtils {
     }
 
 
-    private BayesnetScoring estimateScoring(MolecularFormula formula, List<int[]> treeStructure) {
+    private BayesnetScoring estimateScoring(MolecularFormula formula, List<int[]> treeStructure, List<FingerprintCandidate> candidates) {
         Fingerprint[] specificRefFPs;
         ProbabilityFingerprint[] specificPredFPs;
         long startTime = System.currentTimeMillis();
         if (useBiotransformations()){
             Set<MolecularFormula> biotransF = applyBioTransformations(formula, true);
-//            Log.info("formula: "+formula+" with transformations: "+Arrays.toString(biotransF.toArray()));
             specificRefFPs = getTrueReferenceFingerprintsByFormula(biotransF);
             specificPredFPs = getPredictedReferenceFingerprintsByFormula(biotransF);
-            Log.debug("extracted instances: "+specificRefFPs.length+" for formula "+formula);
+            Log.debug("extracted instances: {} for formula {}", specificRefFPs.length, formula);
         } else {
             Set<MolecularFormula> singletonSetMF = Collections.singleton(formula);
             specificRefFPs = getTrueReferenceFingerprintsByFormula(singletonSetMF);
             specificPredFPs = getPredictedReferenceFingerprintsByFormula(singletonSetMF);
         }
         long endTime = System.currentTimeMillis();
-        Log.debug("getting specific fingerprints took "+(endTime-startTime)/1000+" seconds");
+        Log.debug("getting specific fingerprints took {} seconds", (endTime - startTime) / 1000);
 
 
         double generalDataWeight = 10d;
@@ -488,15 +430,44 @@ public class BayesianScoringUtils {
         startTime = System.currentTimeMillis();
         BayesnetScoring scoringFormulaSpecific;
         if (useCorrelationScoring) {
-
             scoringFormulaSpecific = BayesnetScoringCorrelationFormulaSpecificBuilder.createScoringMethod(trainingData.predictionPerformances, specificPredFPs, specificRefFPs, trainingData.estimatedFingerprintsReferenceData, trainingData.trueFingerprintsReferenceData, edgeArray, allowNegativeScoresForBayesianNetScoringOnly(), generalDataWeight);
-
         } else {
             scoringFormulaSpecific = BayesnetScoringFormulaSpecificBuilder.createScoringMethod(trainingData.predictionPerformances, specificPredFPs, specificRefFPs, trainingData.estimatedFingerprintsReferenceData, trainingData.trueFingerprintsReferenceData, edgeArray, allowNegativeScoresForBayesianNetScoringOnly(), generalDataWeight);
         }
+        FingerprintStatistics statistics = makeFingerprintStatistics(scoringFormulaSpecific.nodeList, candidates);
+        scoringFormulaSpecific.setStatistics(statistics);
+
         endTime = System.currentTimeMillis();
-        Log.debug("creating scoring took "+(endTime-startTime)/1000+" seconds");
+        Log.debug("creating scoring took {} seconds", (endTime - startTime) / 1000);
         return scoringFormulaSpecific;
+    }
+
+    private FingerprintStatistics makeFingerprintStatistics(BayesnetScoring.AbstractCorrelationTreeNode[] nodes, List<FingerprintCandidate> candidates) {
+        if (candidates == null || candidates.isEmpty())
+            throw new IllegalStateException("Database candidates are empty, Should not be possible since tree topology has already been computed.");
+        final FingerprintVersion version = candidates.iterator().next().getFingerprint().getFingerprintVersion();
+        FingerprintStatistics statistics = new FingerprintStatistics(candidates.size(), version.size());
+
+        // count overall bits that are set
+        candidates.stream().map(FingerprintCandidate::getFingerprint).forEach(fp ->
+                fp.presentFingerprints().forEach(prop ->
+                        statistics.incrementPropertyAbundance(version.getRelativeIndexOf(prop.getIndex()))));
+
+        // count dependent bits that are set
+        for (BayesnetScoring.AbstractCorrelationTreeNode node : nodes) {
+            int childIndex = node.getFingerprintIndex();
+            if (node.numberOfParents() > 0) {
+                int parentIndex = node.getParents()[0].getFingerprintIndex();
+                statistics.setParentIndex(childIndex, parentIndex);
+                candidates.stream().map(FingerprintCandidate::getFingerprint).forEach(fp -> {
+                    if (fp.isSet(version.getAbsoluteIndexOf(childIndex))
+                            && fp.isSet(version.getAbsoluteIndexOf(parentIndex)))
+                        statistics.incrementPropertyAbundanceWithParent(childIndex);
+                });
+            }
+        }
+
+        return statistics;
     }
 
     private Fingerprint[] getTrueReferenceFingerprintsByFormula(Set<MolecularFormula> formulas) {
@@ -516,19 +487,19 @@ public class BayesianScoringUtils {
         return fingerprintList;
     }
 
-    private BayesnetScoring estimateScoringDefaultScoring(List<int[]> edges) {
-        //predictionPerformances = prediction.getFingerid().getPredictionPerformances(); //this is part of the CSI model
-        //        ProbabilityFingerprint[] predictedFPs = convertToFingerprints(plattsByProperty, fpversion);
-        //        BooleanFingerprint[] referenceFPs = convertToFingerprints(trueValues, fpversion);
-        // platt and true values are read from fingerid_cli working directory with help of configuration class. NOTE: be sure to parse the correct TRUE values!!!
-
+    private BayesnetScoring estimateScoringDefaultScoring(List<int[]> treeStrucutre, List<FingerprintCandidate> candidates) {
         //todo use better representation, so we do not have to parse this
-        int[][] edgeArray = convertEdgeRepresentation(edges, maskedFingerprintVersion);
-        if (useCorrelationScoring){
-            return BayesnetScoringCorrelationBuilder.createScoringMethod(trainingData.predictionPerformances, trainingData.estimatedFingerprintsReferenceData, trainingData.trueFingerprintsReferenceData, edgeArray, allowNegativeScoresForBayesianNetScoringOnly());
+        int[][] edgeArray = convertEdgeRepresentation(treeStrucutre, maskedFingerprintVersion);
+        BayesnetScoring scoringDefault;
+        if (useCorrelationScoring) {
+            scoringDefault = BayesnetScoringCorrelationBuilder.createScoringMethod(trainingData.predictionPerformances, trainingData.estimatedFingerprintsReferenceData, trainingData.trueFingerprintsReferenceData, edgeArray, allowNegativeScoresForBayesianNetScoringOnly());
         } else {
-            return BayesnetScoringBuilder.createScoringMethod(trainingData.predictionPerformances, trainingData.estimatedFingerprintsReferenceData, trainingData.trueFingerprintsReferenceData, edgeArray, allowNegativeScoresForBayesianNetScoringOnly());
+            scoringDefault = BayesnetScoringBuilder.createScoringMethod(trainingData.predictionPerformances, trainingData.estimatedFingerprintsReferenceData, trainingData.trueFingerprintsReferenceData, edgeArray, allowNegativeScoresForBayesianNetScoringOnly());
         }
+
+        FingerprintStatistics statistics = makeFingerprintStatistics(scoringDefault.nodeList, candidates);
+        scoringDefault.setStatistics(statistics);
+        return scoringDefault;
     }
 
 
@@ -686,7 +657,7 @@ public class BayesianScoringUtils {
 
         int[] informativePropertiesArray = informativeProperties.toArray();
 
-        Log.debug(informativePropertiesArray.length+" of "+numOfProperties+" properties are informative");
+        Log.debug("{} of {} properties are informative", informativePropertiesArray.length, numOfProperties);
         if (informativePropertiesArray.length<minNumInformativeProperties){
             throw new InsufficientDataException("to few informative properties: "+informativePropertiesArray.length);
         }
@@ -747,7 +718,7 @@ public class BayesianScoringUtils {
 
                 int[] informativePropertiesArray = informativeProperties.toArray();
 
-                Log.debug(informativePropertiesArray.length+" of "+numOfProperties+" properties are informative");
+                Log.debug("{} of {} properties are informative", informativePropertiesArray.length, numOfProperties);
                 if (informativePropertiesArray.length<minNumInformativeProperties){
                     throw new InsufficientDataException("to few informative properties: "+informativePropertiesArray.length);
                 }
@@ -815,8 +786,8 @@ public class BayesianScoringUtils {
             entropy[i] = -prob_ones*Math.log(prob_ones)-prob_zeros*Math.log(prob_zeros);
         }
 
-        Log.debug("warning: contains "+neverSet.size()+ "missing states. properties never set");
-        Log.debug("warning: contains "+alwaysSet.size()+"missing states. properties always set");
+        Log.debug("warning: contains {}missing states. properties never set", neverSet.size());
+        Log.debug("warning: contains {}missing states. properties always set", alwaysSet.size());
         return entropy;
     }
 
