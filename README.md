@@ -22,7 +22,7 @@ Main developers of SIRIUS are the [Böcker group](https://bio.informatik.uni-jen
 - [Online Documentation](https://v6.docs.sirius-ms.io/)
 - [Video tutorials](https://www.youtube.com/channel/UCIbW_ZFSADRUQ-T5nmgU4VA/featured)
 - [Bookchapter on using SIRIUS 4](https://doi.org/10.1007/978-1-0716-0239-3_11) ([Preprint](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2020/12/SIRIUS4_book_chapter_preprint-2.pdf)) -- does not cover the new LC-MS/MS processing option
-- [Demo data](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2015/05/demo.zip)
+- [Demo data](data/demo.zip)
 - [Logos for publications and presentations](https://bio.informatik.uni-jena.de/software/sirius/sirius-logos/)
 
 <!--begin download-->
@@ -62,6 +62,8 @@ may be required.
 ### [Sources on GitHub](https://github.com/sirius-ms)
 - [SIRIUS frontend](https://github.com/sirius-ms/sirius)
 - [SIRIUS library](https://github.com/sirius-ms/sirius-libs)
+- [SIRIUS-API Java SDK](sirius_nightsky_sdk/sirius_nightsky_sdk.openapi/README.md)
+- [SIRIUS-API SDKs](https://github.com/sirius-ms/sirius-client-openAPI)
 
 ### [Changelog](https://v6.docs.sirius-ms.io/changelog/)
 
