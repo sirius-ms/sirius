@@ -83,6 +83,7 @@ public class BayesnetScoring implements FingerblastScoringMethod<BayesnetScoring
         this.fpVersion = fpVersion;
         this.performances = performances;
         this.allowOnlyNegativeScores = allowOnlyNegativeScores;
+        this.statistics = statistics;
     }
 
 
