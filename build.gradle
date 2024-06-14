@@ -37,7 +37,7 @@ ext {
     glpk_version = props.getProperty('de.unijena.bioinf.sirius.build.glpk_version')
     gurobi_version = props.getProperty('de.unijena.bioinf.sirius.build.gurobi_version')
     cplex_version = props.getProperty('de.unijena.bioinf.sirius.build.cplex_version')
-    cdk_version = "2.8"
+    cdk_version = "2.9"
     jetbrains_version = "23.0.0"
     okhttp_version = "4.10.0"
     fastutil_version = '8.5.12' //replaces trove
