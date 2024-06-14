@@ -84,9 +84,9 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
         if (filterModel.isAdductFilterActive() && !filterModel.getAdducts().contains(item.getIonType()))
             return false;
 
-
-        if (filterModel.getFeatureQualityFilter().isEnabled() && !filterModel.getFeatureQualityFilter().isQualitySelected(item.getSourceFeature().getQuality()))
-            return false;
+        if (item.getSourceFeature().getQuality() != null) //always allow to pass the filter if now quality data is available
+            if (filterModel.getFeatureQualityFilter().isEnabled() && !filterModel.getFeatureQualityFilter().isQualitySelected(item.getSourceFeature().getQuality()))
+                return false;
 
         return anyIOIntenseFilterMatches(item, filterModel);
     }
@@ -94,12 +94,14 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     private boolean anyIOIntenseFilterMatches(InstanceBean item, CompoundFilterModel filterModel) {
         if (filterModel.getIoQualityFilters().stream().anyMatch(CompoundFilterModel.QualityFilter::isEnabled)) {
             AlignedFeatureQuality qualityReport = item.getQualityReport();
-            Map<String, Category> categories = qualityReport.getCategories();
-            for (CompoundFilterModel.QualityFilter filter : filterModel.getIoQualityFilters()) {
-                if (filter.isEnabled()) {
-                    Category q = categories.get(filter.getName());
-                    if (q != null && !filter.isQualitySelected(q.getOverallQuality()))
-                        return false;
+            if (qualityReport != null) { //always allow to pass the filter if now quality data is available
+                Map<String, Category> categories = qualityReport.getCategories();
+                for (CompoundFilterModel.QualityFilter filter : filterModel.getIoQualityFilters()) {
+                    if (filter.isEnabled()) {
+                        Category q = categories.get(filter.getName());
+                        if (q != null && !filter.isQualitySelected(q.getOverallQuality()))
+                            return false;
+                    }
                 }
             }
         }
