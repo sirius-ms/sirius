@@ -30,6 +30,8 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.dialogs.CompoundFilterOptionsDialog;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.matchers.BackgroundJJobMatcheEditor;
+import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
+import de.unijena.bioinf.ms.nightsky.sdk.model.DataQuality;
 import de.unijena.bioinf.projectspace.GuiProjectManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import lombok.Getter;
@@ -51,10 +53,16 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class CompoundList {
 
     final PlaceholderTextField searchField;
+    final JToggleSwitch adductToggleSwitch;
+    final JToggleSwitch qualityToggleSwitch;
+    final JToggleSwitch msMsToggleSwitch;
+
+
     final JButton openFilterPanelButton;
     final CompoundFilterModel compoundFilterModel;
     final ObservableElementList<InstanceBean> obsevableScource;
     final SortedList<InstanceBean> sortedSource;
+    @Getter
     final EventList<InstanceBean> compoundList;
     final DefaultEventSelectionModel<InstanceBean> compountListSelectionModel;
     final BackgroundJJobMatcheEditor<InstanceBean> backgroundFilterMatcher;
@@ -66,11 +74,19 @@ public class CompoundList {
 
     @Getter
     private @NotNull SiriusGui gui;
+
     public CompoundList(@NotNull SiriusGui gui) {
         this.gui = gui;
+        //additional filter based on specific parameters
+        compoundFilterModel = new CompoundFilterModel();
+        // filter based ion full text field
         searchField = new PlaceholderTextField();
         searchField.setPlaceholder("Type and hit enter to search");
         searchField.setToolTipText("Type text to perform a full text search on the data below. Hit enter to start searching.");
+
+        adductToggleSwitch = makeAdductToggleSwitch(compoundFilterModel);
+        qualityToggleSwitch = makeQualityToggleSwitch(compoundFilterModel);
+        msMsToggleSwitch = makeMsMsToggleSwitch(compoundFilterModel);
 
         obsevableScource = new ObservableElementList<>(gui.getProjectManager().INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
         sortedSource = new SortedList<>(obsevableScource, Comparator.comparing(InstanceBean::getRTOrMissing));
@@ -84,8 +100,6 @@ public class CompoundList {
             baseList.add(String.valueOf(element.getIonMass()));
         }, false));
 
-        //additional filter based on specific parameters
-        compoundFilterModel = new CompoundFilterModel();
         listOfFilters.add(new CompoundFilterMatcherEditor(new CompoundFilterMatcher(gui.getProperties(), compoundFilterModel)));
         //combined filters
         CompositeMatcherEditor<InstanceBean> compositeMatcherEditor = new CompositeMatcherEditor<>(listOfFilters);
@@ -98,10 +112,14 @@ public class CompoundList {
 
         //filter dialog
         openFilterPanelButton = new JButton("...");
+        openFilterPanelButton.setToolTipText("Open filter panel");
         defaultOpenFilterPanelButtonColor = openFilterPanelButton.getBackground();
 
         openFilterPanelButton.addActionListener(e -> new CompoundFilterOptionsDialog(gui, searchField, compoundFilterModel, this));
-        compositeMatcherEditor.addMatcherEditorListener(evt -> colorByActiveFilter(openFilterPanelButton, compoundFilterModel));
+        compositeMatcherEditor.addMatcherEditorListener(evt -> {
+            colorByActiveFilter();
+            updateTogglesByActiveFilter();
+        });
 
         compountListSelectionModel = new DefaultEventSelectionModel<>(compoundList);
 
@@ -112,18 +130,71 @@ public class CompoundList {
                 notifyListenerSelectionChange();
             }
         });
+
+        // data change listener needs to operate on unfiltered list as well to notice add or removal on filtered elements
+        sortedSource.addListEventListener(this::notifyListenerFullListDataChange);
         compoundList.addListEventListener(this::notifyListenerDataChange);
+
+        //init filters
+        fireFilterChanged();
     }
 
-    private void colorByActiveFilter(JButton openFilterPanelButton, CompoundFilterModel compoundFilterModel) {
+    private void colorByActiveFilter() {
         //is any filtering option active (despite the text filter which is visible all the time)
-        if (isFilterInverted()){
+        if (isFilterInverted()) {
             openFilterPanelButton.setBackground(new Color(235, 94, 85));
-        } else if (compoundFilterModel.isActive() || !searchField.getText().isEmpty()){
+        } else if (compoundFilterModel.isActive() || !searchField.getText().isEmpty()) {
             openFilterPanelButton.setBackground(new Color(49, 153, 187));
-        }else {
+        } else {
             openFilterPanelButton.setBackground(defaultOpenFilterPanelButtonColor);
         }
+    }
+
+    protected void updateTogglesByActiveFilter() {
+        msMsToggleSwitch.setSelected(!compoundFilterModel.isHasMsMs(), false, false);
+        adductToggleSwitch.setSelected(compoundFilterModel.isMultiAdductsAllowed(), false, false);
+        qualityToggleSwitch.setSelected(compoundFilterModel.getFeatureQualityFilter().isQualitySelected(DataQuality.BAD), false, false);
+    }
+
+    private static @NotNull JToggleSwitch makeAdductToggleSwitch(CompoundFilterModel model) {
+        JToggleSwitch tSwitch = new JToggleSwitch();
+        tSwitch.setSelected(model.isMultiAdductsAllowed(), false, false);
+        tSwitch.addEventToggleSelected(selected -> {
+            if (selected)
+                model.addMultiAdducts();
+            else
+                model.removeMultiAdducts();
+            model.fireUpdateCompleted();
+        });
+        return tSwitch;
+    }
+
+    private static @NotNull JToggleSwitch makeQualityToggleSwitch(CompoundFilterModel model) {
+        final CompoundFilterModel.QualityFilter fqFilter = model.getFeatureQualityFilter();
+        JToggleSwitch tSwitch = new JToggleSwitch();
+        tSwitch.setSelected(fqFilter.isQualitySelected(DataQuality.BAD), false, false); //initialize from model
+        tSwitch.addEventToggleSelected(selected -> {
+            if (selected) {
+                // we add only the bad ones when enabling
+                fqFilter.addQuality(DataQuality.BAD);
+            } else {
+                fqFilter.removeQuality(DataQuality.LOWEST);
+                fqFilter.removeQuality(DataQuality.BAD);
+            }
+            model.fireUpdateCompleted();
+        });
+        // ensure default value is propagated
+        return tSwitch;
+    }
+
+    private static @NotNull JToggleSwitch makeMsMsToggleSwitch(CompoundFilterModel model) {
+        JToggleSwitch tSwitch = new JToggleSwitch();
+        tSwitch.setSelected(!model.isHasMsMs(), false, false); ///initialize from model
+        tSwitch.addEventToggleSelected(selected -> {
+            model.setHasMsMs(!selected);
+            model.fireUpdateCompleted();
+        });
+        return tSwitch;
     }
 
     public void orderBy(@NotNull final Comparator<InstanceBean> comp) {
@@ -144,7 +215,19 @@ public class CompoundList {
         compoundListMatchEditor.setInverted(false);
         searchField.setText("");
         searchField.postActionEvent();
-        colorByActiveFilter(openFilterPanelButton, compoundFilterModel);
+        colorByActiveFilter();
+        updateTogglesByActiveFilter();
+    }
+
+    public void fireFilterChanged() {
+        compoundFilterModel.fireUpdateCompleted();
+    }
+
+    private void notifyListenerFullListDataChange(ListEvent<InstanceBean> event) {
+        for (ExperimentListChangeListener l : listeners) {
+            event.reset();//this is hell important to reset the iterator
+            l.fullListChanged(event, compountListSelectionModel, compoundList.size());
+        }
     }
 
     private void notifyListenerDataChange(ListEvent<InstanceBean> event) {
@@ -173,7 +256,7 @@ public class CompoundList {
         return compountListSelectionModel;
     }
 
-    public EventList<InstanceBean> getCompoundList() {
-        return compoundList;
+    public int getFullSize(){
+        return sortedSource.size();
     }
 }
