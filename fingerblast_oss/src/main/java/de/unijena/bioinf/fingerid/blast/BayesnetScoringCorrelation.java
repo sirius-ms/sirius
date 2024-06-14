@@ -24,6 +24,7 @@ import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import gnu.trove.map.hash.TIntObjectHashMap;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +40,9 @@ public class BayesnetScoringCorrelation extends BayesnetScoring {
         super(nodes, nodeList, forests, alpha, fpVersion, performances, allowOnlyNegativeScores);
     }
 
-
+    public BayesnetScoringCorrelation(TIntObjectHashMap<AbstractCorrelationTreeNode> nodes, AbstractCorrelationTreeNode[] nodeList, AbstractCorrelationTreeNode[] forests, double alpha, FingerprintVersion fpVersion, PredictionPerformance[] performances, boolean allowOnlyNegativeScores, @Nullable FingerprintStatistics statistics) {
+        super(nodes, nodeList, forests, alpha, fpVersion, performances, allowOnlyNegativeScores, statistics);
+    }
 
     protected static class CorrelationTreeNodeCorrelation extends CorrelationTreeNode{
         /**
