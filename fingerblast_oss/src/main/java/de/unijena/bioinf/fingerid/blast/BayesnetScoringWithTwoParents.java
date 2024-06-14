@@ -232,7 +232,7 @@ public class BayesnetScoringWithTwoParents extends BayesnetScoring {
         }
 
         @Override
-        protected double[] getCovarianceArray() {
+        public double[] getCovarianceArray() {
             //convert
 //            double[] covariances1D = new double[numberOfCombinations*numberOfCombinations-1-(parents.length-1)];
             double[] covariances1D = new double[numberOfCombinations*numberOfCombinations];
@@ -268,7 +268,7 @@ public class BayesnetScoringWithTwoParents extends BayesnetScoring {
         }
 
         @Override
-        List<AbstractCorrelationTreeNode> getChildren() {
+        public List<AbstractCorrelationTreeNode> getChildren() {
             return children;
         }
 

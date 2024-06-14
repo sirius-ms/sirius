@@ -185,44 +185,37 @@ public class BayesnetScoringFormulaSpecificBuilder extends BayesnetScoringBuilde
 
 
         //normalize
+        for (AbstractCorrelationTreeNode node : nodeList) {
+            final boolean isRoot = node.numberOfParents() == 0;
+            if (isRoot) continue;
+            double[][][] plattContingencyTables = nodeToPlattContingencyTables.get(node);
 
-        for (int i = 0; i < predictedSpecific.length; i++) {
-            for (AbstractCorrelationTreeNode node : nodeList) {
-                final boolean isRoot = node.numberOfParents()==0;
-                if (isRoot) continue;
-                double[][][] plattContingencyTables = nodeToPlattContingencyTables.get(node);
+            double[] covariances = new double[plattContingencyTables.length];
+            for (int j = 0; j < plattContingencyTables.length; j++) {
+                double[][] plattContingencyTable = plattContingencyTables[j];
 
-                double[] covariances = new double[plattContingencyTables.length];
-                for (int j = 0; j < plattContingencyTables.length; j++) {
-                    double[][] plattContingencyTable = plattContingencyTables[j];
-
-                    double sum = plattContingencyTable[ChildT][RootT] + plattContingencyTable[ChildT][RootF] + plattContingencyTable[ChildF][RootT] + plattContingencyTable[ChildF][RootF];
-                    plattContingencyTable[ChildT][RootT] /= sum;
-                    plattContingencyTable[ChildT][RootF] /= sum;
-                    plattContingencyTable[ChildF][RootT] /= sum;
-                    plattContingencyTable[ChildF][RootF] /= sum;
+                double sum = plattContingencyTable[ChildT][RootT] + plattContingencyTable[ChildT][RootF] + plattContingencyTable[ChildF][RootT] + plattContingencyTable[ChildF][RootF];
+                plattContingencyTable[ChildT][RootT] /= sum;
+                plattContingencyTable[ChildT][RootF] /= sum;
+                plattContingencyTable[ChildF][RootT] /= sum;
+                plattContingencyTable[ChildF][RootF] /= sum;
 
 
+                if (node instanceof BayesnetScoringCorrelation.CorrelationTreeNodeCorrelation) {
+                    //compute correlation, not covariance
+                    final double q11 = plattContingencyTable[ChildT][RootT];
+                    final double q01 = plattContingencyTable[ChildF][RootT];
+                    final double q10 = plattContingencyTable[ChildT][RootF];
+                    final double q00 = plattContingencyTable[ChildF][RootF];
 
-                    if (node instanceof BayesnetScoringCorrelation.CorrelationTreeNodeCorrelation) {
-//                        System.out.println("compute new correlation MF specific");
-                        //compute correlation, not covariance
-                         final double q11 = plattContingencyTable[ChildT][RootT];
-                        final double q01 = plattContingencyTable[ChildF][RootT];
-                        final double q10 = plattContingencyTable[ChildT][RootF];
-                        final double q00 = plattContingencyTable[ChildF][RootF];
-
-                        covariances[j] = ((q11 * q00) + (q10 * q01)) / Math.sqrt((q11 + q10) * (q11 + q01) * (q00 + q10) * (q00 + q01));
-                    } else {
-                        //todo compute inside treenode?
-                        //todo this has not n-1 correction;
-                        covariances[j] = plattContingencyTable[ChildT][RootT] - ((plattContingencyTable[ChildT][RootT]+plattContingencyTable[ChildT][RootF])*(plattContingencyTable[ChildT][RootT]+plattContingencyTable[ChildF][RootT]));
-                    }
+                    covariances[j] = ((q11 * q00) + (q10 * q01)) / Math.sqrt((q11 + q10) * (q11 + q01) * (q00 + q10) * (q00 + q01));
+                } else {
+                    //todo compute inside treenode?
+                    //todo this has not n-1 correction;
+                    covariances[j] = plattContingencyTable[ChildT][RootT] - ((plattContingencyTable[ChildT][RootT] + plattContingencyTable[ChildT][RootF]) * (plattContingencyTable[ChildT][RootT] + plattContingencyTable[ChildF][RootT]));
                 }
-                setCovariance(node, covariances);
-
             }
-
+            setCovariance(node, covariances);
         }
     }
 
