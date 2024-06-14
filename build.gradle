@@ -250,18 +250,18 @@ task refreshDownloadLinks {
                 "### SIRIUS+CSI:FingerID GUI and CLI - Version $version (${new Date().format('yyyy-MM-dd')})",
                 "##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
                 "- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-win64.msi) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-win64.zip) / " +
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-win64.zip)",
                 "- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-osx64.pkg) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-osx64.zip) / " +
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-osx64.zip)" ,
                 "- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-linux64.zip)",
 
                 "",
                 "### SIRIUS+CSI:FingerID Command-Line Interface only - Version $version (${new Date().format('yyyy-MM-dd')})",
                 "##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
                 "- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-win64-headless.msi) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-win64-headless.zip) / " +
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-win64-headless.zip)",
                 "- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-osx64-headless.pkg) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-osx64-headless.zip) / " +
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-osx64-headless.zip)",
                 "- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-linux64-headless.zip)",
                 ""
         ] as List
