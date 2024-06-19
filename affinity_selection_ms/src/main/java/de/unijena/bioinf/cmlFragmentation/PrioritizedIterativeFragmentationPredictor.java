@@ -11,8 +11,8 @@ import java.util.*;
  *
  * In every step, the fragment F with the most profitable path to the root is dequeued from the priority queue Q and
  * marked as predicted fragment. For this fragment F, every direct subfragment F' is generated and:
- * <li>if F' is novel, it's added to the graph G and to the priority queue Q</li>
- * <li>[two options: if F' is not novel, then do nothing or maybe replace the subtree under F' to F (I have to test that...)]</li>
+ * if F' is novel, it's added to the graph G and to the priority queue Q
+ * [two options: if F' is not novel, then do nothing or maybe replace the subtree under F' to F (I have to test that...)]
  * After a certain number of fragments were predicted, the remaining (unmarked) fragments in Q are removed from G.
  */
 public class PrioritizedIterativeFragmentationPredictor extends AbstractFragmentationPredictor{
