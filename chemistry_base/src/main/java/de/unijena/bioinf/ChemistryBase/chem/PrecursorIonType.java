@@ -26,8 +26,10 @@ import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.ms.annotations.TreeAnnotation;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -65,7 +67,7 @@ import java.util.Optional;
  */
 @JsonSerialize(using = ToStringSerializer.class)
 @JsonDeserialize(using = SimpleSerializers.PrecursorIonTypeDeserializer.class)
-public class PrecursorIonType implements TreeAnnotation {
+public class PrecursorIonType implements TreeAnnotation, Comparable<PrecursorIonType> {
 
 
     public boolean isApplicableToNeutralFormula(MolecularFormula neutralFormula) {
@@ -451,4 +453,23 @@ public class PrecursorIonType implements TreeAnnotation {
     public boolean isPlainProtonationOrDeprotonation() {
         return this.adduct.isEmpty() && this.inSourceFragmentation.isEmpty() && ((getCharge() > 0 && ionization.equals(PeriodicTable.getInstance().getProtonation())) || (getCharge() < 0 && ionization.equals(PeriodicTable.getInstance().getDeprotonation()))) && !isIntrinsicalCharged();
     }
+
+    @Override
+    public int compareTo(@NotNull PrecursorIonType o) {
+        return ionTypeComparator.compare(this, o);
+    }
+
+    //if changed, update in documentation
+    public static Comparator<PrecursorIonType> ionTypeComparator = Comparator.comparing(PrecursorIonType::isIonizationUnknown, Comparator.reverseOrder())
+            .thenComparing(p -> -Math.signum(p.getCharge()))
+            .thenComparing(PrecursorIonType::getMultimereCount)
+            .thenComparing(p -> !p.getModification().isEmpty())
+            .thenComparing(p -> !p.isPlainProtonationOrDeprotonation())
+            .thenComparing(PrecursorIonType::isIntrinsicalCharged)
+            .thenComparing(p -> !p.getAdduct().equals(MolecularFormula.parseOrNull("H3N")))
+            .thenComparing(p -> !p.getAdduct().isEmpty())
+            .thenComparing(p -> !p.getInSourceFragmentation().isEmpty())
+            .thenComparing(p -> p.getAdduct().getMass())
+            .thenComparing(p -> p.getInSourceFragmentation().getMass());
+
 }
