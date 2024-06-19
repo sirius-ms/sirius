@@ -53,10 +53,6 @@ Add this dependency to your project's build file:
   repositories {
     maven {
       url "https://bio.informatik.uni-jena.de/repository/libs-oss"
-      metadataSources {
-        mavenPom()
-        artifact()
-      }
     }
   }
 

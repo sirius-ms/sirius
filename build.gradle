@@ -1,7 +1,7 @@
-import java.nio.file.Files
-import java.nio.file.StandardOpenOption
 import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
+import java.nio.file.Files
+import java.nio.file.StandardOpenOption
 
 buildscript {
     repositories {
@@ -24,14 +24,14 @@ plugins {
 //this task is used to update the gradle wrapper properties to a new version
 // it also ensures that wrapper scripts and gradle-wrapper.jar are updates if necessary
 wrapper {
-    gradleVersion = '7.6'
+    gradleVersion = '8.8'
 }
 
 //Global Properties
 ext {
     junit_version = '5.10.0'
     jackson_version = "2.16.1"
-    spring_boot_version = "3.2.3"
+    spring_boot_version = "3.3.0"
     springdoc_version = "2.3.0"
     //version for external libraries
     slf4j_version = '1.7.36'
@@ -66,7 +66,7 @@ ext {
     excludeJFX = Boolean.parseBoolean((project.findProperty("build.sirius.native.openjfx.exclude") ?: "false") as String)
     System.out.println("----> excludeJFX: ${excludeJFX} | ${project.findProperty("build.sirius.native.openjfx.exclude")}")
 
-    jetbrains_version = "22.0.0"
+    jetbrains_version = "24.1.0"
 
     // mainly for IDE execution, ilp libs are not shipped with distributions anyways
     cplex_version = '12.7.1'
@@ -103,7 +103,7 @@ allprojects {
     apply plugin: 'java'
     apply plugin: 'maven-publish'
 
-    targetCompatibility = 17
+    targetCompatibility = 21
 
     compileJava.options.encoding = "UTF-8"
     compileTestJava.options.encoding = "UTF-8"
@@ -118,10 +118,6 @@ allprojects {
         mavenCentral()
         maven {//public libs only so anybody can build the frontend without login
             url "https://bio.informatik.uni-jena.de/repository/libs-oss"
-            metadataSources {
-                mavenPom()
-                artifact()
-            }
         }
         maven {
             url "https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
@@ -130,27 +126,21 @@ allprojects {
             url "https://repo1.maven.org/maven2/" //glazed lists
         }
         maven {
+            // only used for spectral hashs (Splash)
             url "http://gose.fiehnlab.ucdavis.edu:55000/content/groups/public"
             allowInsecureProtocol = true
-            // only used for spectral hashs (Splash)
         }
     }
 
     dependencies {
-
-        annotationProcessor "de.unijena.bioinf.ms:processor:$siriusVersion"
-        implementation 'net.sf.trove4j:core:3.1.0'
-
         implementation "org.jetbrains:annotations:$jetbrains_version"
-
-        implementation "org.slf4j:log4j-over-slf4j:$slf4j_version"
-        implementation "org.slf4j:jcl-over-slf4j:$slf4j_version"
         implementation "org.slf4j:slf4j-api:$slf4j_version"
-
         //NOTE: cannot be provided as transitive dependency
         implementation "jakarta.persistence:jakarta.persistence-api:$jakarta_version"
         implementation "org.glassfish.jaxb:jaxb-runtime:$jaxb_version"
-
+        // TEST DEPENDENCIES
+        testImplementation "org.slf4j:log4j-over-slf4j:$slf4j_version"
+        testImplementation "org.slf4j:jcl-over-slf4j:$slf4j_version"
         // Aggregator dependency that also brings JUnit 5 parameterized tests etc.
         testImplementation("org.junit.jupiter:junit-jupiter:$junit_version")
         testImplementation("org.junit.jupiter:junit-jupiter-params:$junit_version")
@@ -166,7 +156,7 @@ allprojects {
 
     //there are some outdated incompatible trove dependencies in some libs.
     // this is to exclude them and enforce the one we need.
-    configurations.all {
+    configurations.configureEach {
         //replaced by log4j-over-slf4j
         it.exclude group: "log4j", module: "log4j"
         //replaced by jcl-over-slf4j
@@ -181,62 +171,30 @@ allprojects {
     }
 }
 
-
 subprojects {
-    apply plugin: 'application'
-}
-
-
-task sourceJar(type: Jar) {
-    group = 'build'
-    archiveClassifier.set('sources')
-    from sourceSets.main.allSource
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    group = 'documentation'
-    archiveClassifier.set('javadoc')
-    from javadoc.destinationDir
-}
-
-def javaProjects() {
-    subprojects.findAll { new File(it.projectDir, 'src').directory }
-}
-
-allprojects {
-    configure(javaProjects()) {
+    java {
+        withJavadocJar()
+        withSourcesJar()
+    }
+    //do not build javadoc for snapshot version to reduce build time
+    components.java.withVariantsFromConfiguration(configurations.javadocElements) {
+        if (version.toString().endsWith('-SNAPSHOT'))
+            skip()
+    }
+    //build only artifacts from modules that contain code
+    if (new File(projectDir, "src").isDirectory()) {
+        println(new File(projectDir, "src"))
         publishing {
             publications {
                 mavenJava(MavenPublication) {
-                    if (version.toString().endsWith('-SNAPSHOT'))
-                        setArtifacts([jar, sourceJar])
-                    else
-                        setArtifacts([jar, sourceJar, javadocJar])
+                    from project.components.java
                 }
-            }
-        }
-    }
-
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                from project.components.java
-                //adding submodules to pom
-                pom.withXml {
-                    if (!project.subprojects.isEmpty()) {
-                        def modlules = asNode().appendNode('modules', '')
-                        project.subprojects.each {
-                            new Node(modlules, 'module', it.name)
-                        }
-                    }
-                }
-                setArtifacts([])
             }
         }
     }
 }
 
-task refreshDownloadLinks {
+tasks.register('refreshDownloadLinks') {
     File webPath = getBuildDir().toPath().resolve('tmp/webSite/').toFile()
     group = 'publishing'
     File outfile = new File(webPath, "sirius-download.md")
@@ -252,7 +210,7 @@ task refreshDownloadLinks {
                 "- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-win64.msi) / " +
                         "[zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-win64.zip)",
                 "- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-osx64.pkg) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-osx64.zip)" ,
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-osx64.zip)",
                 "- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-linux64.zip)",
 
                 "",
@@ -274,7 +232,7 @@ task refreshDownloadLinks {
 String cleanVersion = fingeridVersion.toString().replace('-SNAPSHOT', '')
 String minorVersion = "${cleanVersion.split('[.]')[0]}.${cleanVersion.split('[.]')[1]}"
 
-task refreshTrainingLinks {
+tasks.register('refreshTrainingLinks') {
     File webPath = getBuildDir().toPath().resolve('tmp/webSite/').toFile()
     group = 'publishing'
     File outfile = new File(webPath, "sirius-training.md")
@@ -292,7 +250,7 @@ task refreshTrainingLinks {
     }
 }
 
-task refreshReadMe {
+tasks.register('refreshReadMe') {
     inputs.files(refreshDownloadLinks.outputs.files.singleFile, refreshTrainingLinks.outputs.files.singleFile)
     outputs.file("${getRootDir()}/README.md")
     group = 'publishing'
@@ -342,6 +300,7 @@ task refreshReadMe {
 }
 refreshReadMe.dependsOn refreshTrainingLinks
 refreshReadMe.dependsOn refreshDownloadLinks
+
 // publication artifactory
 artifactory {
     contextUrl = 'https://bio.informatik.uni-jena.de/repository/'

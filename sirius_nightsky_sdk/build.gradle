@@ -20,23 +20,42 @@ buildscript {
         classpath "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.12.3"
         classpath "com.fasterxml.jackson.core:jackson-databind:2.12.3"
         classpath "com.fasterxml.jackson.core:jackson-annotations:2.12.3"
-
     }
-}
-
-ext {
-    reactor_version = "3.4.3"
-    reactor_netty_version = "1.0.4"
 }
 
 apply plugin: 'org.openapi.generator'
 apply plugin: 'java-library'
 
 
+allprojects {
+    ext {
+        reactor_version = "3.4.3"
+        reactor_netty_version = "1.1.20"
+    }
+
+    artifactory {
+        contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
+        publish {
+            repository {
+                if (version.toString().endsWith('-SNAPSHOT'))
+                    repoKey = 'libs-snapshot-local'
+                else
+                    repoKey = 'libs-release-local'
+
+                username = project.findProperty('de.unijena.bioinf.build.artifactory.username')
+                password = project.findProperty('de.unijena.bioinf.build.artifactory.password')
+            }
+            defaults {
+                publications('mavenJava')
+            }
+        }
+    }
+}
+
 dependencies {
     api project(":sirius_nightsky_sdk:sirius_nightsky_sdk.openapi")
     api "org.springframework.boot:spring-boot-starter-webflux:$spring_boot_version"
-    implementation "io.projectreactor.netty:reactor-netty-http:$reactor_netty_version"
+    api "io.projectreactor.netty:reactor-netty-http:$reactor_netty_version"
 }
 
 openApiGenerate {
@@ -49,22 +68,4 @@ openApiGenerate {
     groupId.set("de.unijena.bioinf.ms")
     version.set(project.version.toString())
     configFile.set("$projectDir/openapi-gen-config.json")
-}
-
-artifactory {
-    contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
-    publish {
-        repository {
-            if (version.toString().endsWith('-SNAPSHOT'))
-                repoKey = 'libs-snapshot-local'
-            else
-                repoKey = 'libs-release-local'
-
-            username = project.findProperty('de.unijena.bioinf.build.artifactory.username')
-            password = project.findProperty('de.unijena.bioinf.build.artifactory.password')
-        }
-        defaults {
-            publications('mavenJava')
-        }
-    }
 }

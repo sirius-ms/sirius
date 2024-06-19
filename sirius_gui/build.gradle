@@ -1,15 +1,29 @@
+buildscript {
+    repositories {
+        maven { url "https://plugins.gradle.org/m2/" }
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:${spring_boot_version}")
+    }
+}
+
 apply plugin: 'java-library'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
 
-mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
+bootJar {
+    enabled = false
+}
 
+jar {
+    enabled = true
+    archiveClassifier = ''
+}
 dependencies {
     compileOnly 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.projectlombok:lombok:1.18.30'
 //project
-    implementation(project(':sirius_cli')){
-//        exclude group: "de.unijena.bioinf.ms", module: "sirius_web_client"
-//        exclude group: "de.unijena.bioinf.ms", module: "web_core_oss"
-    }
+    implementation(project(':sirius_cli'))
     implementation project(':sirius_nightsky_sdk')
     implementation project(':sirius_nightsky_sdk:sirius_nightsky_sdk.jjobs')
 

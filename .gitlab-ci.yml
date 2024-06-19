@@ -3,7 +3,7 @@
 # https://github.com/gradle/gradle
 #image: gradle:alpine
 default:
-  image: azul/zulu-openjdk:17-latest
+  image: azul/zulu-openjdk:21-latest
   tags: [$RUNNER_TAGS]
 
 #  image: git.bio.informatik.uni-jena.de:5050/bioinf-mit/docker-images/ubuntu-zulu-fx-gradle:22.04-15.42.15-6.9.2-12

@@ -27,7 +27,6 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobProgress;
 import de.unijena.bioinf.sse.DataObjectEvent;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Optional;

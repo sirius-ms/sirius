@@ -41,26 +41,22 @@
 package de.unijena.bioinf.ms.nightsky.sdk.api;
 
 import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import jakarta.annotation.Generated;
-import org.springframework.http.codec.ServerSentEvent;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.web.reactive.function.client.WebClient.ResponseSpec;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-
-@Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
 public class ServerSentEventApi {
     private ApiClient apiClient;
 
@@ -85,7 +81,7 @@ public class ServerSentEventApi {
      * 
      * <p><b>200</b> - OK
      * @param eventsToListenOn The eventsToListenOn parameter
-     * @return ServerSentEvent<String>
+     * @return ServerSentEvent&ltString&gt
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     private ResponseSpec listenToEventsRequestCreation(List<String> eventsToListenOn) throws WebClientResponseException {
@@ -118,7 +114,7 @@ public class ServerSentEventApi {
      * 
      * <p><b>200</b> - OK
      * @param eventsToListenOn The eventsToListenOn parameter
-     * @return ServerSentEvent<String>
+     * @return ServerSentEvent&lt;String&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public ServerSentEvent<String> listenToEvents(List<String> eventsToListenOn) throws WebClientResponseException {
@@ -131,7 +127,7 @@ public class ServerSentEventApi {
      * 
      * <p><b>200</b> - OK
      * @param eventsToListenOn The eventsToListenOn parameter
-     * @return ResponseEntity&lt;ServerSentEvent<String>&gt;
+     * @return ResponseEntity&lt;ServerSentEvent&lt;String&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
     public ResponseEntity<ServerSentEvent<String>> listenToEventsWithHttpInfo(List<String> eventsToListenOn) throws WebClientResponseException {

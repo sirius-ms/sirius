@@ -1,4 +1,6 @@
+apply plugin: 'java-library'
+
 dependencies{
-    implementation project(":sirius_nightsky_sdk")
-    implementation "de.unijena.bioinf:jjobs-core:$jjobs_version"
+    api project(":sirius_nightsky_sdk")
+    api "de.unijena.bioinf:jjobs-core:$jjobs_version"
 }
