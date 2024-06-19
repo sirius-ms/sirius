@@ -13,11 +13,11 @@ buildscript {
         classpath 'commons-configuration:commons-configuration:1.10'
         classpath 'com.github.viswaramamoorthy:gradle-util-plugins:0.1.0-RELEASE'
         classpath 'org.yaml:snakeyaml:1.29'
+        classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:5.2.2'
     }
 }
 
 plugins {
-    id "com.jfrog.artifactory" version "4.25.1"
     id "de.undercouch.download" version "4.1.1"
 }
 
@@ -99,7 +99,7 @@ project.ext.set("distPath", file('dist').absolutePath)
 
 
 allprojects {
-    apply plugin: "com.jfrog.artifactory"
+    apply plugin: 'com.jfrog.artifactory'
     apply plugin: 'java'
     apply plugin: 'maven-publish'
 

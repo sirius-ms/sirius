@@ -14,7 +14,7 @@ buildscript {
 }
 
 plugins {
-    id "com.github.kkdad.dependency-license-report" version "1.16.6"
+    id 'com.github.jk1.dependency-license-report' version '2.8'
 }
 
 //apply plugin: "distribution"
@@ -194,9 +194,13 @@ installSiriusDist.dependsOn getRootProject().getChildProjects().get('sirius_rest
 siriusDistZip.dependsOn 'generateLicenseReport'
 siriusDistZip.dependsOn('launch4j')
 siriusDistZip.dependsOn('createGuiExe')
+siriusDistZip.dependsOn getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar')
+
 siriusDistTar.dependsOn('launch4j')
 siriusDistTar.dependsOn 'generateLicenseReport'
 siriusDistTar.dependsOn('createGuiExe')
+siriusDistTar.dependsOn getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar')
+
 installSiriusDist.dependsOn('launch4j')
 installSiriusDist.dependsOn('createGuiExe')
 installSiriusDist.dependsOn('generateLicenseReport')
