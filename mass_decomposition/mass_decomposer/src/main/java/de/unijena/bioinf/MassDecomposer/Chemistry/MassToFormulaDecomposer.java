@@ -120,7 +120,6 @@ public class MassToFormulaDecomposer extends RangeMassDecomposer<Element> {
      * knowing and not knowing the adduct emerge.
      * @param measuredMass
      * @param ionType
-     * @param deviation
      * @param constraints
      * @return molecular formulas decompotions for the measured mass
      */
