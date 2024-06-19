@@ -19,12 +19,10 @@
 
 package de.unijena.bioinf.ms.gui.utils;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 
 import javax.swing.*;
-import java.util.Comparator;
 import java.util.Optional;
 import java.util.Vector;
 import java.util.stream.Collectors;
@@ -38,15 +36,15 @@ public class PrecursorIonTypeSelector extends JComboBox<String> {
     }
 
     public PrecursorIonTypeSelector(String selected) {
-        this(new Vector<>(PeriodicTable.getInstance().getAdductsAndUnKnowns().stream().sorted(ionTypeComparator).map(PrecursorIonType::toString).collect(Collectors.toList())), selected);
+        this(new Vector<>(PeriodicTable.getInstance().getAdductsAndUnKnowns().stream().sorted().map(PrecursorIonType::toString).collect(Collectors.toList())), selected);
     }
 
     public PrecursorIonTypeSelector() {
-        this(new Vector<>(PeriodicTable.getInstance().getAdductsAndUnKnowns().stream().sorted(ionTypeComparator).map(PrecursorIonType::toString).collect(Collectors.toList())), PeriodicTable.getInstance().unknownPositivePrecursorIonType().getIonization().getName());
+        this(new Vector<>(PeriodicTable.getInstance().getAdductsAndUnKnowns().stream().sorted().map(PrecursorIonType::toString).collect(Collectors.toList())), PeriodicTable.getInstance().unknownPositivePrecursorIonType().getIonization().getName());
     }
 
     public void refresh() {
-        setModel(new DefaultComboBoxModel<>(new Vector<>(PeriodicTable.getInstance().getAdductsAndUnKnowns().stream().sorted(ionTypeComparator).map(PrecursorIonType::toString).collect(Collectors.toList()))));
+        setModel(new DefaultComboBoxModel<>(new Vector<>(PeriodicTable.getInstance().getAdductsAndUnKnowns().stream().sorted().map(PrecursorIonType::toString).collect(Collectors.toList()))));
     }
 
     public Optional<PrecursorIonType> getSelectedAdduct(){
@@ -58,16 +56,4 @@ public class PrecursorIonTypeSelector extends JComboBox<String> {
     public PrecursorIonType getSelectedAdductOrDefault(){
         return getSelectedAdduct().orElse(PeriodicTable.getInstance().getUnknownPrecursorIonType(1));
     }
-
-    public static Comparator<PrecursorIonType> ionTypeComparator = Comparator
-            .comparing(PrecursorIonType::isIonizationUnknown, Comparator.reverseOrder())
-            .thenComparing(p -> -Math.signum(p.getCharge()))
-            .thenComparing(p -> !p.getModification().isEmpty())
-            .thenComparing(p -> !p.isPlainProtonationOrDeprotonation())
-            .thenComparing(PrecursorIonType::isIntrinsicalCharged)
-            .thenComparing(p -> !p.getAdduct().equals(MolecularFormula.parseOrNull("H3N")))
-            .thenComparing(p -> !p.getAdduct().isEmpty())
-            .thenComparing(p -> !p.getInSourceFragmentation().isEmpty())
-            .thenComparing(p -> p.getAdduct().getMass());
-
 }
