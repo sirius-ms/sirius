@@ -3,13 +3,15 @@ import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 import java.nio.file.Files
 import java.nio.file.Paths
 
-plugins {
-    id "com.jfrog.artifactory" version "4.25.1"
+buildscript {
+    dependencies {
+        classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:5.2.2'
+    }
 }
 
 //this task is used to update the gradle wrapper properties to a new version
 // it also ensures that wrapper scripts and gradle-wrapper.jar are updates if necessary
-wrapper{
+wrapper {
     gradleVersion = '8.8'
 }
 
@@ -68,7 +70,7 @@ ext {
 }
 
 allprojects {
-    apply plugin: "com.jfrog.artifactory"
+    apply plugin: 'com.jfrog.artifactory'
     apply plugin: 'java'
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
@@ -124,11 +126,11 @@ allprojects {
 
         api 'com.googlecode.concurrent-locks:concurrent-locks:1.0.0'
 
-        api group: 'de.unijena.bioinf', name: 'jjobs-core', version:"$jjobs_version"
+        api group: 'de.unijena.bioinf', name: 'jjobs-core', version: "$jjobs_version"
         api group: 'org.slf4j', name: 'slf4j-api', version: "$slf4j_version"
 
         testImplementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
-        testImplementation group: 'de.unijena.bioinf', name: 'jjobs-swing', version:"$jjobs_version"
+        testImplementation group: 'de.unijena.bioinf', name: 'jjobs-swing', version: "$jjobs_version"
         // Aggregator dependency that also brings JUnit 5 parameterized tests etc.
         testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
         testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.0")
