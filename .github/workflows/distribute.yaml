@@ -29,7 +29,7 @@ jobs:
 #      - name: Set up Zulu JDK
 #        uses: actions/setup-java@v1
 #        with:
-#          java-version: '17' # The JDK version to make available on the path.
+#          java-version: '21' # The JDK version to make available on the path.
 #          java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
 #          architecture: x64 # (x64 or x86) - defaults to x64
 #      - name: Load Build properties
@@ -73,7 +73,7 @@ jobs:
 #        env:
 #          WIN_INSTALLER_CERTIFICATE_FILE: ${{ steps.generic_codesign_cert.outputs.filePath }}
 #        with:
-#          gradle-version: 7.6
+#          gradle-version: 8.8
 #          build-root-directory: sirius_dist/sirius_cli_single_os
 #          arguments: clean publishSiriusPublicationToMavenLocal -P "build.sirius.starter.jdk.include=true" -P "de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=${{ secrets.MACOS_APP_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_IDENTITY_ID=${{ secrets.MACOS_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID=${{ secrets.MACOS_APPLE_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID_PW=${{ secrets.MACOS_APPLE_ID_PW }}" -P "de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_FILE=${{ steps.generic_codesign_cert.outputs.filePath }}"  -P "de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_PW=${{ secrets.GENERIC_INSTALLER_CERTIFICATE_PW }}" -P "de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL=${{ secrets.GENERIC_INSTALLER_CERTIFICATE_TIMESTAMP_URL }}"
 #
@@ -214,7 +214,7 @@ jobs:
       - name: Set up Zulu JDK-FX
         uses: actions/setup-java@v1
         with:
-          java-version: '17' # The JDK version to make available on the path.
+          java-version: '21' # The JDK version to make available on the path.
           java-package: jdk # (jre, jdk, or jdk+fx) - defaults to jdk
           architecture: x64 # (x64 or x86) - defaults to x64
       - name: Load Build properties
@@ -258,7 +258,7 @@ jobs:
         env:
           WIN_INSTALLER_CERTIFICATE_FILE: ${{ steps.generic_codesign_cert.outputs.filePath }}
         with:
-          gradle-version: 7.6
+          gradle-version: 8.8
           build-root-directory: sirius_dist/sirius_gui_dist
           arguments: clean publishSiriusPublicationToMavenLocal  -P "build.sirius.native.openjfx.exclude=true" -P "build.sirius.starter.jdk.include=true" -P "de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=${{ secrets.MACOS_APP_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_IDENTITY_ID=${{ secrets.MACOS_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID=${{ secrets.MACOS_APPLE_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID_PW=${{ secrets.MACOS_APPLE_ID_PW }}" -P "de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_FILE=${{ steps.generic_codesign_cert.outputs.filePath }}"  -P "de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_PW=${{ secrets.GENERIC_INSTALLER_CERTIFICATE_PW }}" -P "de.unijena.bioinf.build.WIN_INSTALLER_CERTIFICATE_TIMESTAMP_URL=${{ secrets.GENERIC_INSTALLER_CERTIFICATE_TIMESTAMP_URL }}"
 
