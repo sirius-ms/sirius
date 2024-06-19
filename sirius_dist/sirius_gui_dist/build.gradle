@@ -9,7 +9,7 @@ buildscript {
         maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:2.6.8")
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:$spring_boot_version")
     }
 }
 
@@ -73,7 +73,7 @@ dependencies {
 
 mainClassName = 'org.springframework.boot.loader.launch.JarLauncher'
 //mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
-def mainJar = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName()
+def mainJar = getRootProject().getChildProjects().get('sirius_rest_service').tasks.named('bootJar').outputs.files.singleFile.getName()
 
 application {
     mainClass = project.mainClassName
@@ -95,7 +95,7 @@ launch4j {
 }
 
 //additional GUI win launcher
-task createGuiExe(type: Launch4jLibraryTask) {
+tasks.register('createGuiExe', Launch4jLibraryTask) {
     outfile = 'sirius-gui.exe'
     fileDescription = 'SIRIUS graphical user interface'
     headerType = "gui"
@@ -183,7 +183,7 @@ distributions {
             }
             if (includeJreFX){
                 into('runtime'){
-                    from getParent().tasks.getByName('extractRuntimeImageFX')
+                    from getParent().tasks.named('extractRuntimeImageFX')
                 }
             }
         }
@@ -201,7 +201,7 @@ installSiriusDist.dependsOn('launch4j')
 installSiriusDist.dependsOn('createGuiExe')
 installSiriusDist.dependsOn('generateLicenseReport')
 if (includeJreFX)
-    installSiriusDist.dependsOn getParent().tasks.getByName('extractRuntimeImageFX')
+    installSiriusDist.dependsOn getParent().tasks.named('extractRuntimeImageFX')
 distribution.dependsOn 'siriusDistZip'
 //distribution.dependsOn 'siriusDistTar'
 distribution.dependsOn 'createChecksums'
@@ -241,14 +241,14 @@ if (!siriusTargetPlatform.isLinux()) {
 
 publishing {
     publications {
-        siriusMS(org.gradle.api.publish.maven.MavenPublication) {
+        siriusMS(MavenPublication) {
             artifactId = "$name"
             groupId = "$group"
             artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: osName, extension: 'zip'
             if (!siriusTargetPlatform.isLinux())
                 artifact source: "${siriusTargetPlatform.isMac() ? distImage.getImageDir().absolutePath.replace('.app', installerAppendix) : distImage.getImageDir().absolutePath + installerAppendix}", classifier: osName, extension: installerNameType
         }
-        sirius(org.gradle.api.publish.maven.MavenPublication) {
+        sirius(MavenPublication) {
             artifactId = "$name"
             groupId = "$group"
             artifact source: "${distImage.getImageDir().absolutePath}.zip", classifier: osName, extension: 'zip'

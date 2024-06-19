@@ -15,21 +15,7 @@ apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 apply plugin: 'war'
 apply plugin: 'java-library'
-
-repositories {
-    mavenLocal()
-    mavenCentral()
-    maven {//public libs only so anybody can build the frontend without login
-        url "https://bio.informatik.uni-jena.de/repository/libs-oss"
-        metadataSources {
-            mavenPom()
-            artifact()
-        }
-    }
-    maven {
-        url "https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
-    }
-}
+apply plugin: 'application'
 
 ext['jna.version'] = '5.4.0' //force correct jna version -> springs is not compatible with ilp solver
 ext['slf4j.version'] = slf4j_version
@@ -135,24 +121,6 @@ openApi {
 
     customBootRun {
         args = ["rest", "-s", "-p", "8888"]
-    }
-}
-
-artifactory {
-    contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
-    publish {
-        repository {
-            if (version.toString().endsWith('-SNAPSHOT'))
-                repoKey = 'libs-snapshot-local'
-            else
-                repoKey = 'libs-release-local'
-
-            username = project.findProperty('de.unijena.bioinf.build.artifactory.username')
-            password = project.findProperty('de.unijena.bioinf.build.artifactory.password')
-        }
-        defaults {
-            publications('mavenJava')
-        }
     }
 }
 

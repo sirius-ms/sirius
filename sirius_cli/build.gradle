@@ -1,4 +1,6 @@
 apply plugin: 'java-library'
+apply plugin: 'application'
+
 dependencies {
     compileOnly 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.projectlombok:lombok:1.18.30'
@@ -62,22 +64,4 @@ dependencies {
     api("de.unijena.bioinf.ms:ft_cbc:$siriusVersion")
     api("de.unijena.bioinf.ms:ft_cplex:$siriusVersion")
     api("de.unijena.bioinf.ms:ft_gurobi:$siriusVersion")
-}
-
-artifactory {
-    contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
-    publish {
-        repository {
-            if (version.toString().endsWith('-SNAPSHOT'))
-                repoKey = 'libs-snapshot-local'
-            else
-                repoKey = 'libs-release-local'
-
-            username = project.findProperty('de.unijena.bioinf.build.artifactory.username')
-            password = project.findProperty('de.unijena.bioinf.build.artifactory.password')
-        }
-        defaults {
-            publications('mavenJava')
-        }
-    }
 }

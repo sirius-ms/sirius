@@ -32,7 +32,8 @@ import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
-import gnu.trove.map.hash.TIntIntHashMap;
+
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedWriter;
@@ -85,14 +86,14 @@ public class StructureSummaryWriter extends CandidateSummarizer {
                         fileWriter.write(StructureCSVExporter.HEADER);
 
                         int formulaRank = 0;
-                        TIntIntHashMap adductCounts = new TIntIntHashMap();
+                        Int2IntOpenHashMap adductCounts = new Int2IntOpenHashMap();
                         final AtomicInteger fpCounts = new AtomicInteger(0);
                         MolecularFormula preFormula = null;
                         for (SScored<FormulaResult, ? extends FormulaScore> result : results) {
                             if (preFormula == null || !result.getCandidate().getId().getPrecursorFormula().equals(preFormula))
                                 adductCounts.put(++formulaRank, 1);
                             else
-                                adductCounts.increment(formulaRank);
+                                adductCounts.addTo(formulaRank, 1);
 
                             preFormula = result.getCandidate().getId().getPrecursorFormula();
 

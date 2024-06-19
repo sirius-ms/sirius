@@ -41,7 +41,7 @@ ext {
     }
 }
 
-task downloadRuntimeImageFX(type: Download) {
+tasks.register('downloadRuntimeImageFX', Download) {
     String fname = "zulu${zulu_jre_version}-ca-fx-jre${jre_version}-${zosName}_x64${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
 
     src "https://cdn.azul.com/zulu/bin/${fname}"
@@ -50,11 +50,12 @@ task downloadRuntimeImageFX(type: Download) {
     overwrite false
 }
 
-task extractRuntimeImageFX(type: ExtractRuntime, dependsOn: downloadRuntimeImageFX) {
+tasks.register('extractRuntimeImageFX', ExtractRuntime) {
+    dependsOn downloadRuntimeImageFX
     inputArchive = downloadRuntimeImageFX.dest
 }
 
-task downloadRuntimeImageHeadless(type: Download) {
+tasks.register('downloadRuntimeImageHeadless', Download) {
     String fname = "zulu${zulu_jre_version}-ca-jre${jre_version}-${zosName}_x64${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
 
     src "https://cdn.azul.com/zulu/bin/${fname}"
@@ -63,11 +64,13 @@ task downloadRuntimeImageHeadless(type: Download) {
     overwrite false
 }
 
-task extractRuntimeImageHeadless(type: ExtractRuntime, dependsOn: downloadRuntimeImageHeadless) {
+tasks.register('extractRuntimeImageHeadless', ExtractRuntime) {
+    dependsOn downloadRuntimeImageHeadless
     inputArchive = downloadRuntimeImageHeadless.dest
 }
 
 subprojects {
+    apply plugin: 'application'
     apply plugin: 'edu.sc.seis.launch4j'
 
     jar {
@@ -89,7 +92,7 @@ subprojects {
     //###################################### Start Default values ##########################################
 
     //collect auto generated profiles and check them for null values
-    task collectProfiles() {
+    tasks.register('collectProfiles') {
         group = 'properties'
         outputs.dir("$buildDir/tmp/profiles/de.unijena.bioinf.ms.defaults")
         doLast {
@@ -109,7 +112,7 @@ subprojects {
     }
     collectProfiles.dependsOn('compileJava')
 
-    task makeProfileTemplate() {
+    tasks.register('makeProfileTemplate') {
         group = 'properties'
         outputs.file("$buildDir/tmp/profiles_concat/concat.profile")
         doLast {
@@ -128,7 +131,7 @@ subprojects {
     }
     makeProfileTemplate.dependsOn('collectProfiles')
 
-    task checkDefaultProfile() {
+    tasks.register('checkDefaultProfile') {
         group = 'properties'
         doLast {
             Properties defaultProfile = new Properties()
@@ -192,7 +195,7 @@ subprojects {
         bundledJrePath = launch4jJDKPath != null ? launch4jJDKPath : ".\\runtime"
     }
 
-    task distImage(type: AppImage, group: 'distribution') {
+    tasks.register('distImage', AppImage) {
         dependsOn installDist
         if (siriusTargetPlatform.isWin())
             dependsOn createAllExecutables
@@ -238,7 +241,7 @@ subprojects {
                 into(resourceTarget)
             }
 
-            if(!includeJreFX)
+            if (!includeJreFX)
                 delete runtimeTarget
 
             if (siriusTargetPlatform.isWin()) {
@@ -282,13 +285,13 @@ subprojects {
                 templateBinding.cplexHome = "/bin/x86-64_osx"
                 templateBinding.jvmOpts = "${Arrays.stream(jvmArgs).collect(Collectors.joining(' '))}"
                 templateBinding.javaCommand = "\$APP_HOME/runtime/Contents/Home/bin/java"
-                templateBinding.jarHome = libDir == null ?  "\$APP_HOME/app" : libDir
+                templateBinding.jarHome = libDir == null ? "\$APP_HOME/app" : libDir
             } else if (siriusTargetPlatform.isWin()) {
                 f = file("$appRootTarget/sirius.bat")
                 sf = file("${rootDir}/scripts/sirius.bat.templ")
                 templateBinding.classPath = "%JAR_HOME%\\*"
                 templateBinding.jvmOpts = "${Arrays.stream(jvmArgs).map({ s -> '"' + s + '"' }).collect(Collectors.joining(" "))}"
-                templateBinding.jarHome =  libDir == null ? "%APP_HOME%\\app" : libDir
+                templateBinding.jarHome = libDir == null ? "%APP_HOME%\\app" : libDir
                 templateBinding.gurobiJar = "%GUROBI_HOME%\\lib\\gurobi.jar"
                 templateBinding.cplexJar = "%CPLEX_HOME%\\lib\\cplex.jar"
             } else {
@@ -300,21 +303,22 @@ subprojects {
             f.setExecutable(true, false)
 
             println("----> DistImage")
-            appRootTarget.list().each {println it}
+            appRootTarget.list().each { println it }
             println()
             println("----> DistImage bin")
-            launcherTarget.list().each {println it}
+            launcherTarget.list().each { println it }
             println()
             println("----> DistImage lib")
-            new File(appRootTarget, 'lib').list().each {println it}
+            new File(appRootTarget, 'lib').list().each { println it }
             println()
             println("----> DistImage runtime")
-            runtimeTarget.list().each {println it}
+            runtimeTarget.list().each { println it }
 
         }
     }
 
-    task distImageTestLocal(dependsOn: distImage, type: Test, group: 'distribution') {
+    tasks.register('distImageTestLocal', Test) {
+        dependsOn distImage
         useJUnitPlatform()
         testClassesDirs = project(':sirius_dist').sourceSets.test.output
         filter.includeTestsMatching('*Local')
@@ -399,7 +403,7 @@ subprojects {
     }
 
 
-    task distImageTestCICD(type: Test, group: 'distribution') {
+    tasks.register('distImageTestCICD', Test) {
         useJUnitPlatform()
         testClassesDirs = project(':sirius_dist').sourceSets.test.output
         filter.includeTestsMatching('*Local')
@@ -465,7 +469,8 @@ subprojects {
     }
 
 
-    task signDistImage(dependsOn: distImage, group: 'distribution') {
+    tasks.register('signDistImage') {
+        dependsOn distImage
 
         inputs.dir(distImage.outputDir)
         doLast {
@@ -528,7 +533,8 @@ subprojects {
         }
     }
 
-    task distImageZip(dependsOn: distImage, group: 'distribution') {
+    tasks.register('distImageZip') {
+        dependsOn distImage
         doFirst {
             def imageDir = distImage.getImageDir()
             def parentPath = imageDir.parentFile.toPath()
@@ -545,7 +551,8 @@ subprojects {
     distImageZip.mustRunAfter(signDistImage)
 
 
-    task distInstaller(type: AppInstaller, dependsOn: distImage, group: 'distribution') {
+    tasks.register('distInstaller', AppInstaller) {
+        dependsOn distImage
         distImg = distImage
         types = [installerNameType]
         licenseFile = getRootProject().rootDir.toPath().resolve('jpackage').resolve('LICENSE-Full.txt').toFile()
@@ -560,7 +567,8 @@ subprojects {
     }
     distInstaller.mustRunAfter(signDistImage)
 
-    task signDistInstaller(dependsOn: distInstaller, group: 'distribution') {
+    tasks.register('signDistInstaller') {
+        dependsOn distInstaller
         inputs.dir(distImage.outputDir)
         doLast {
             def source
@@ -622,7 +630,8 @@ subprojects {
         }
     }
 
-    task macNotarize(dependsOn: signDistInstaller, group: 'distribution') {
+    tasks.register('macNotarize') {
+        dependsOn signDistInstaller
         inputs.dir(distImage.outputDir)
         doLast {
             if (siriusTargetPlatform.isMac()) {
@@ -692,7 +701,7 @@ subprojects {
         }
     }
 
-    task createChecksums(type: Checksum) {
+    tasks.register('createChecksums', Checksum) {
         mustRunAfter('distImageZip', 'distInstaller', 'macNotarize', 'signDistImage', 'signDistInstaller', 'distZip', 'distTar')
         inputFiles.setFrom(fileTree(dir: "$buildDir/distributions", includes: ['*.zip', '*.pkg', '*.deb', '*.msi']))
         outputDirectory.set(file("$buildDir/distributions"))
@@ -700,7 +709,7 @@ subprojects {
         appendFileNameToChecksum.set(true)
     }
 
-    task distribution { group = 'distribution' }
+    tasks.register('distribution') { group = 'distribution' }
     artifactoryPublish.dependsOn 'distribution'
 }
 
@@ -770,7 +779,7 @@ abstract class AppImage extends DefaultTask {
         jvmArgs = []
         version = project.siriusTargetPlatform.isLinux() ? project.version : project.version.replace('-SNAPSHOT', '')
         winConsole = false
-        inputDir = project.tasks.getByName('installDist').outputs.files.singleFile.toPath().resolve('lib').toFile()
+        inputDir = project.tasks.named('installDist').outputs.files.singleFile.toPath().resolve('lib').toFile()
     }
 
     @OutputDirectory

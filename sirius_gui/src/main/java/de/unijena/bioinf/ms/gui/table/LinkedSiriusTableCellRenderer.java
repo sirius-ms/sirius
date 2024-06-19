@@ -19,8 +19,9 @@
 
 package de.unijena.bioinf.ms.gui.table;
 
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
+
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -42,7 +43,7 @@ public class LinkedSiriusTableCellRenderer extends MouseAdapter implements Table
     private final LinkTextCreator texter;
     private final DefaultTableCellRenderer sourceRenderer;
     private JTable table;
-    private final TIntSet columns = new TIntHashSet();
+    private final IntSet columns = new IntOpenHashSet();
 
 
     public <T> LinkedSiriusTableCellRenderer(DefaultTableCellRenderer sourceRenderer, LinkCreator<T> linker) {
