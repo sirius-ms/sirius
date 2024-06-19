@@ -4,6 +4,10 @@ import java.nio.file.Files
 import java.nio.file.Paths
 
 buildscript {
+    repositories {
+        maven { url "https://plugins.gradle.org/m2/" }
+        mavenCentral()
+    }
     dependencies {
         classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:5.2.2'
     }
@@ -41,7 +45,7 @@ ext {
     cplex_version = props.getProperty('de.unijena.bioinf.sirius.build.cplex_version')
     cdk_version = "2.9"
     jetbrains_version = "24.1.0"
-    okhttp_version = "4.10.0"
+    okhttp_version = "4.12.0"
     fastutil_version = '8.5.12' //replaces trove
 
     jewelcli_version = '0.8.9'
