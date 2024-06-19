@@ -20,10 +20,8 @@ import java.util.List;
  * It extends the class {@link AtomContainerManipulator} and
  * provides the method {@link #removeSideChain(AtomContainerE, SideChain)} which allows
  * to remove every occurrence of a specified side chain in a given AtomContainer. For example:
- * <pre>
- *     {@code Pair<AtomContainerE, ArrayList<AtomE>> pair = MoleculeManipulator.removeSideChain(molecule, sideChain);}
- *     {@code molecule = pair.getObject1();}
- * </pre>
+ * {@code Pair<AtomContainerE, ArrayList<AtomE>> pair = MoleculeManipulator.removeSideChain(molecule, sideChain);}
+ * {@code molecule = pair.getObject1();}
  * </p>
  *
  */

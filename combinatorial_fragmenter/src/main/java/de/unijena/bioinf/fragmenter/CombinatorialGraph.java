@@ -208,7 +208,7 @@ public class CombinatorialGraph {
 
     /**
      * This method returns a hashmap which assigns each CombinatorialEdge in this graph a unique index with
-     * index >= 0 and index <= #Edges.<br>
+     * index &ge; 0 and index &le; #Edges.<br>
      * This hashmap can be used to transform a {@link CombinatorialSubtree} into a binary array denoting
      * which edges are contained and which are not contained in the subtree.
      *

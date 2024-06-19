@@ -75,8 +75,6 @@ public class DecomposerCache {
     /**
      * Gives a decomposer that also uses the elements of provided {@link PrecursorIonType}s with all adducts and in-source elements.
      * @param alphabet
-     * @param ionTypes
-     * @return
      */
     public MassToFormulaDecomposer getDecomposer(ChemicalAlphabet alphabet, PrecursorIonType ionType) {
         return getDecomposer(alphabet.extend(ionType.getAdduct().add(ionType.getInSourceFragmentation()).elementArray()));

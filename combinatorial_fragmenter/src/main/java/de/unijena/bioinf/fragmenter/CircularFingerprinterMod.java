@@ -43,7 +43,7 @@ import java.util.zip.CRC32;
 
 /**
  *  <p>Circular fingerprints: for generating fingerprints that are functionally equivalent to ECFP-2/4/6 and FCFP-2/4/6
- *  fingerprints, which are partially described by Rogers et al. {@cdk.cite Rogers2010}.
+ *  fingerprints, which are partially described by Rogers et al. {Rogers2010}.
  *
  *  <p>While the literature describes the method in detail, it does not disclose either the hashing technique for converting
  *  lists of integers into 32-bit codes, nor does it describe the scheme used to classify the atom types for creating
@@ -69,16 +69,11 @@ import java.util.zip.CRC32;
  *  binary compatibility with formerly identical implementations on other platforms.</p>
  *
  *  <p>For the FCFP class of fingerprints, atom typing is done using a scheme similar to that described by
- *  Green et al {@cdk.cite Green1994}.</p>
+ *  Green et al {Green1994}.</p>
  *  
- *  <p>The fingerprints and their uses have been described in Clark et al. {@cdk.cite Clark2014}.
+ *  <p>The fingerprints and their uses have been described in Clark et al. {Clark2014}.
  *
  * @author         am.clark
- * @cdk.created    2014-01-01
- * @cdk.keyword    fingerprint
- * @cdk.keyword    similarity
- * @cdk.module     standard
- * @cdk.githash
  */
 public class CircularFingerprinterMod extends AbstractFingerprinter implements IFingerprinter {
 
