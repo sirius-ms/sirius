@@ -41,22 +41,16 @@ import java.util.*;
 import java.util.stream.IntStream;
 
 /**
- * <p>
- *     A class to find and compute the significance of each peak in a list of values. Algorithm sourced from
- *     <a href="https://www.sthu.org/blog/13-perstopology-peakdetection/index.html">Stefan Huber, FH Salzburg</a>.
- * </p>
- * <p>
- *     The idea of the algorithm is:
- * <pre>
- *     Consider a water level starting above the global maximum that continuously lowers its level. Whenever the water
- *     level reaches a local maximum a new island is born. Whenever it reaches a local minimum two islands merge, and we
- *     consider the lower island to be merged into the higher island. This gives a precise notion of a lifespan of an
- *     island; it is the significance we mentioned above, or the so-called persistence in persistent homology.
- * </pre>
- * </p>
+ * <p>A class to find and compute the significance of each peak in a list of values. Algorithm sourced from
+ * <a href="https://www.sthu.org/blog/13-perstopology-peakdetection/index.html">Stefan Huber, FH Salzburg</a>.</p>
+ * <p> The idea of the algorithm is:
+ * Consider a water level starting above the global maximum that continuously lowers its level. Whenever the water
+ * level reaches a local maximum a new island is born. Whenever it reaches a local minimum two islands merge, and we
+ * consider the lower island to be merged into the higher island. This gives a precise notion of a lifespan of an
+ * island; it is the significance we mentioned above, or the so-called persistence in persistent homology.</p>
  *
- * @see <a href="https://www.math.uri.edu/~thoma/comp_top__2018/stag2016.pdf">Fugacci et al., 2016</a>
- * @see <a href="https://www.sthu.org/research/publications/files/Hub20.pdf">Huber, 2020</a>
+ * {@see <a href="https://www.math.uri.edu/~thoma/comp_top__2018/stag2016.pdf">Fugacci et al., 2016</a>}
+ * {@see <a href="https://www.sthu.org/research/publications/files/Hub20.pdf">Huber, 2020</a>}
  */
 public class PersistentHomology implements TraceSegmentationStrategy {
 
