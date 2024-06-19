@@ -779,7 +779,7 @@ abstract class AppImage extends DefaultTask {
         jvmArgs = []
         version = project.siriusTargetPlatform.isLinux() ? project.version : project.version.replace('-SNAPSHOT', '')
         winConsole = false
-        inputDir = project.tasks.named('installDist').outputs.files.singleFile.toPath().resolve('lib').toFile()
+        inputDir = project.tasks.getByName('installDist').outputs.files.singleFile.toPath().resolve('lib').toFile()
     }
 
     @OutputDirectory

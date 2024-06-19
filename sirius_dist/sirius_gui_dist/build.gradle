@@ -73,7 +73,7 @@ dependencies {
 
 mainClassName = 'org.springframework.boot.loader.launch.JarLauncher'
 //mainClassName = "de.unijena.bioinf.ms.frontend.SiriusGUIApplication"
-def mainJar = getRootProject().getChildProjects().get('sirius_rest_service').tasks.named('bootJar').outputs.files.singleFile.getName()
+def mainJar = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName()
 
 application {
     mainClass = project.mainClassName
@@ -183,7 +183,7 @@ distributions {
             }
             if (includeJreFX){
                 into('runtime'){
-                    from getParent().tasks.named('extractRuntimeImageFX')
+                    from getParent().tasks.getByName('extractRuntimeImageFX')
                 }
             }
         }
@@ -201,7 +201,7 @@ installSiriusDist.dependsOn('launch4j')
 installSiriusDist.dependsOn('createGuiExe')
 installSiriusDist.dependsOn('generateLicenseReport')
 if (includeJreFX)
-    installSiriusDist.dependsOn getParent().tasks.named('extractRuntimeImageFX')
+    installSiriusDist.dependsOn getParent().tasks.getByName('extractRuntimeImageFX')
 distribution.dependsOn 'siriusDistZip'
 //distribution.dependsOn 'siriusDistTar'
 distribution.dependsOn 'createChecksums'
