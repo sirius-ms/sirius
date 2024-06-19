@@ -429,7 +429,9 @@ public class NoSQLInstance implements Instance {
     @Override
     public void saveSiriusResult(List<FTree> treesSortedByScore) {
         try {
-            Comparator<Pair<FormulaCandidate, FTreeResult>> comp = Comparator.comparing(p -> p.first().getSiriusScore());
+            Comparator<Pair<FormulaCandidate, FTreeResult>> comp =
+                    Comparator.<Pair<FormulaCandidate, FTreeResult>>comparingDouble(p -> p.first().getSiriusScore()).reversed() //sort descending by siriusScore
+                            .thenComparing(p -> p.first().getAdduct());
             final AtomicInteger rank = new AtomicInteger(1);
 
             final List<Pair<FormulaCandidate, FTreeResult>> formulaResults = treesSortedByScore.stream()
@@ -448,7 +450,7 @@ public class NoSQLInstance implements Instance {
                         FTreeResult treeResult = FTreeResult.builder().fTree(tree).alignedFeatureId(id).build();
                         return Pair.of(fc, treeResult);
                     })
-                    .sorted(comp.reversed()) //sort descending by siriusScore
+                    .sorted(comp)
                     .peek(m -> m.first().setFormulaRank(rank.getAndIncrement())) //add rank to sorted candidates
                     .toList();
 
@@ -490,8 +492,10 @@ public class NoSQLInstance implements Instance {
     @SneakyThrows
     @Override
     public void saveZodiacResult(List<FCandidate<?>> zodiacScores) {
-        Comparator<FormulaCandidate> comp = Comparator.comparing(FormulaCandidate::getZodiacScore);
-        comp = comp.thenComparing(FormulaCandidate::getSiriusScore);
+        Comparator<FormulaCandidate> comp = Comparator.comparing(FormulaCandidate::getZodiacScore, Comparator.reverseOrder())
+                .thenComparing(FormulaCandidate::getSiriusScore, Comparator.reverseOrder())
+                .thenComparing(FormulaCandidate::getAdduct);
+
         final AtomicInteger rank = new AtomicInteger(1);
 
         List<FormulaCandidate> candidates = zodiacScores.stream().
@@ -501,7 +505,7 @@ public class NoSQLInstance implements Instance {
                     c.setZodiacScore(fc.getAnnotationOrThrow(ZodiacScore.class).score());
                     return c;
                 })
-                .sorted(comp.reversed())
+                .sorted(comp)
                 .peek(fc -> fc.setFormulaRank(rank.getAndIncrement()))
                 .toList();
 
