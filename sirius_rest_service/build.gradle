@@ -19,7 +19,7 @@ apply plugin: 'application'
 
 ext['jna.version'] = '5.4.0' //force correct jna version -> springs is not compatible with ilp solver
 ext['slf4j.version'] = slf4j_version
-ext['okhttp.version'] = '4.8.1'
+ext['okhttp.version'] = '4.12.0'
 
 dependencies {
 //    implementation("org.springframework.boot:spring-boot-properties-migrator")
@@ -71,7 +71,7 @@ dependencies {
 //    implementation 'io.micrometer:micrometer-core'
 //    implementation 'io.micrometer:micrometer-registry-prometheus'
     //must match minio version
-    implementation 'com.squareup.okhttp3:okhttp:4.10.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation "jakarta.servlet:jakarta.servlet-api"
 
     implementation 'com.google.jimfs:jimfs:1.3.0'
