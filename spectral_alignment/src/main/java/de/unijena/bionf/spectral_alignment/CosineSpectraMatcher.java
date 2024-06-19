@@ -89,7 +89,7 @@ public class CosineSpectraMatcher {
     /**
      * @param flatResult matches between a list of spectra
      * @return a nested list containing the upper triangle without diagonal of the matrix [i][j],
-     * where element[i][j] is a similarity between spectra[i] and spectra[j], i < j
+     * where element[i][j] is a similarity between spectra[i] and spectra[j], i &lt; j
      */
     public List<List<SpectralSimilarity>> unflattenMatchAllResult(List<SpectralSimilarity> flatResult) {
         if (!(flatResult instanceof ArrayList<SpectralSimilarity>))

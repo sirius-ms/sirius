@@ -10,7 +10,7 @@ plugins {
 //this task is used to update the gradle wrapper properties to a new version
 // it also ensures that wrapper scripts and gradle-wrapper.jar are updates if necessary
 wrapper{
-    gradleVersion = '6.9.3'
+    gradleVersion = '8.8'
 }
 
 //Global Properties
@@ -38,7 +38,7 @@ ext {
     gurobi_version = props.getProperty('de.unijena.bioinf.sirius.build.gurobi_version')
     cplex_version = props.getProperty('de.unijena.bioinf.sirius.build.cplex_version')
     cdk_version = "2.9"
-    jetbrains_version = "23.0.0"
+    jetbrains_version = "24.1.0"
     okhttp_version = "4.10.0"
     fastutil_version = '8.5.12' //replaces trove
 
@@ -73,8 +73,7 @@ allprojects {
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
 
-    sourceCompatibility = 17
-    targetCompatibility = 17
+    targetCompatibility = 21
 
     compileJava.options.encoding = "UTF-8"
     compileTestJava.options.encoding = "UTF-8"
@@ -88,16 +87,17 @@ allprojects {
         mavenCentral()
         maven {
             url "https://bio.informatik.uni-jena.de/repository/libs-oss"
-            metadataSources {
-                mavenPom()
-                artifact()
-            }
         }
         maven {
             url "https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/" //mzml parser
         }
         maven {
             url "http://eulergui.sourceforge.net/maven2/" //FTAlign stuff
+            allowInsecureProtocol = true
+        }
+        maven {
+            // only used for spectral hashs (Splash)
+            url "http://gose.fiehnlab.ucdavis.edu:55000/content/groups/public"
             allowInsecureProtocol = true
         }
     }
@@ -143,70 +143,44 @@ allprojects {
         maxHeapSize = "16G"
     }
 
-    task sourceJar(type: Jar) {
-        group = 'build'
-        classifier = 'sources'
-        from sourceSets.main.allSource
-    }
-
-    task javadocJar(type: Jar, dependsOn: javadoc) {
-        group = 'documentation'
-        classifier = 'javadoc'
-        from javadoc.destinationDir
-    }
-
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                from project.components.java
-                //adding submodules to pom
-                pom.withXml {
-                    if (!project.subprojects.isEmpty()) {
-                        def modlules = asNode().appendNode('modules', '')
-                        project.subprojects.each {
-                            new Node(modlules, 'module', it.name)
-                        }
-                    }
-                }
-//                artifacts = []
-            }
-        }
-    }
-}
-
-def javaProjects() {
-    subprojects.findAll { new File(it.projectDir, 'src').directory }
-}
-
-configure(javaProjects()) {
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-//                from project.components.java
+    artifactory {
+        contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
+        publish {
+            repository {
                 if (version.toString().endsWith('-SNAPSHOT'))
-                    artifacts =  [jar, sourceJar]
+                    repoKey = 'libs-snapshot-local'
                 else
-                    artifacts = [jar, sourceJar, javadocJar]
+                    repoKey = 'libs-release-local'
+
+                username = project.findProperty('de.unijena.bioinf.build.artifactory.username')
+                password = project.findProperty('de.unijena.bioinf.build.artifactory.password')
+            }
+            defaults {
+                publications('mavenJava')
             }
         }
     }
 }
 
-//artifactoryPublish.skip = true
-artifactory {
-    contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
-    publish {
-        repository {
-            if (version.toString().endsWith('-SNAPSHOT'))
-                repoKey = 'libs-snapshot-local'
-            else
-                repoKey = 'libs-release-local'
-
-            username = project.findProperty('de.unijena.bioinf.build.artifactory.username')
-            password = project.findProperty('de.unijena.bioinf.build.artifactory.password')
-        }
-        defaults {
-            publications('mavenJava')
+subprojects {
+    java {
+        withJavadocJar()
+        withSourcesJar()
+    }
+    //do not build javadoc for snapshot version to reduce build time
+    components.java.withVariantsFromConfiguration(configurations.javadocElements) {
+        if (version.toString().endsWith('-SNAPSHOT'))
+            skip()
+    }
+    //build only artifacts from modules that contain code
+    if (new File(projectDir, "src").isDirectory()) {
+        println(new File(projectDir, "src"))
+        publishing {
+            publications {
+                mavenJava(MavenPublication) {
+                    from project.components.java
+                }
+            }
         }
     }
 }
