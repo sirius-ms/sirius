@@ -221,7 +221,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             adductOptions.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>(PrecursorIonType.fromString("[M + H20 + Na]+"), false));
 
             List<PrecursorIonType> ionizations = new ArrayList<>(PeriodicTable.getInstance().getAdductsAndUnKnowns());
-            ionizations.sort(PrecursorIonTypeSelector.ionTypeComparator);
+            Collections.sort(ionizations);
 
             adductOptions.checkBoxList.replaceElements(ionizations);
             adductOptions.checkBoxList.uncheckAll();

@@ -259,11 +259,11 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
 
 
         if (adducts.isEmpty()) {
-            adductList.checkBoxList.replaceElements(detectedAdductsOrCharge.stream().sorted(PrecursorIonTypeSelector.ionTypeComparator).collect(Collectors.toList()));
+            adductList.checkBoxList.replaceElements(detectedAdductsOrCharge.stream().sorted().collect(Collectors.toList()));
             adductList.checkBoxList.checkAll();
             adductList.setEnabled(false);
         } else {
-            adductList.checkBoxList.replaceElements(adducts.stream().sorted(PrecursorIonTypeSelector.ionTypeComparator).toList());
+            adductList.checkBoxList.replaceElements(adducts.stream().sorted().toList());
             adductList.checkBoxList.uncheckAll();
             if (!isBatchDialog()) {
                 if (detectedAdducteWithoutCharge.isEmpty())
