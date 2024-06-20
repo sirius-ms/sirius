@@ -4,21 +4,23 @@ import de.unijena.bioinf.lcms.merge.MergedTrace;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.ProjectedTrace;
 import de.unijena.bioinf.lcms.trace.Trace;
-import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
-import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
+import de.unijena.bioinf.lcms.trace.segmentation.*;
 import de.unijena.bioinf.lcms.utils.AlignmentBeamSearch;
 import de.unijena.bioinf.lcms.statistics.SampleStats;
+import lombok.AllArgsConstructor;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
+@AllArgsConstructor
 public class SegmentMergedFeatures implements MergedFeatureExtractionStrategy {
+
+    private final TraceSegmentationStrategy traceSegmenter;
 
     @Override
     public TraceSegment[] extractMergedSegments(ProcessedSample mergedSample, MergedTrace mergedTrace) {
         SampleStats stats = mergedSample.getStorage().getStatistics();
-        // we use a lower noise threshold for segmentation because merge trace is already very smooth
-        return new PersistentHomology().detectSegments(mergedTrace, stats.noiseLevel(mergedTrace.apex())*0.25).stream().filter(x->mergedTrace.intensity(x.apex) > stats.noiseLevel(x.apex)  && x.leftEdge < x.rightEdge - 1).toArray(TraceSegment[]::new);
+        return traceSegmenter.detectSegments(stats, mergedTrace).toArray(TraceSegment[]::new);
     }
 
     @Override
