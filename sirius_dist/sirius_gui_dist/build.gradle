@@ -195,11 +195,13 @@ siriusDistZip.dependsOn 'generateLicenseReport'
 siriusDistZip.dependsOn('launch4j')
 siriusDistZip.dependsOn('createGuiExe')
 siriusDistZip.dependsOn getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar')
+siriusDistZip.mustRunAfter(signDistImage)
 
 siriusDistTar.dependsOn('launch4j')
 siriusDistTar.dependsOn 'generateLicenseReport'
 siriusDistTar.dependsOn('createGuiExe')
 siriusDistTar.dependsOn getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar')
+siriusDistTar.mustRunAfter(signDistImage)
 
 installSiriusDist.dependsOn('launch4j')
 installSiriusDist.dependsOn('createGuiExe')
