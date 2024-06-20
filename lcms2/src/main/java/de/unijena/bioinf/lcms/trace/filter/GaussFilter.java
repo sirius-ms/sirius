@@ -20,8 +20,6 @@
 
 package de.unijena.bioinf.lcms.trace.filter;
 
-import java.util.Arrays;
-
 /**
  * Gaussian convolution for one dimensional arrays.
  */
