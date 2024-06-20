@@ -8,7 +8,9 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.lcms.align.*;
-import de.unijena.bioinf.lcms.features.*;
+import de.unijena.bioinf.lcms.features.IsotopePatternExtractionStrategy;
+import de.unijena.bioinf.lcms.features.MergedApexIsotopePatternExtractor;
+import de.unijena.bioinf.lcms.features.SegmentMergedFeatures;
 import de.unijena.bioinf.lcms.io.LCMSImporter;
 import de.unijena.bioinf.lcms.isotopes.IsotopeDetectionByCorrelation;
 import de.unijena.bioinf.lcms.isotopes.IsotopeDetectionStrategy;
@@ -26,6 +28,7 @@ import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.statistics.*;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.*;
+import de.unijena.bioinf.lcms.trace.filter.WaveletFilter;
 import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
@@ -35,12 +38,8 @@ import de.unijena.bioinf.ms.persistence.model.core.run.*;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.math3.util.DoubleArray;
 import org.apache.commons.text.similarity.LongestCommonSubsequence;
 import org.slf4j.LoggerFactory;
 
@@ -96,8 +95,11 @@ public class LCMSProcessing {
 
     @Getter @Setter private SiriusDatabaseAdapter siriusDatabaseAdapter;
 
+    @Getter @Setter private TraceSegmentationStrategy mergedTraceSegmentationStrategy =
+        new PersistentHomology(new WaveletFilter(20, 10), 2.0, 0.1, 0.8);
+
     @Getter @Setter private ProjectSpaceImporter<?> importer = new PickFeaturesAndImportToSirius(
-            new SegmentMergedFeatures(), new MergedApexIsotopePatternExtractor(), new MergeGreedyStrategy()
+            new SegmentMergedFeatures(mergedTraceSegmentationStrategy), new MergedApexIsotopePatternExtractor(), new MergeGreedyStrategy()
     );
 
     @Getter @Setter private Ms2MergeStrategy ms2MergeStrategy = new MergeGreedyStrategy();
@@ -215,11 +217,6 @@ public class LCMSProcessing {
     }
 
     public void extractFeaturesAndExportToProjectSpace(ProcessedSample merged, AlignmentBackbone backbone) throws IOException {
-        final Int2ObjectMap<ProcessedSample> idx2sample = new Int2ObjectOpenHashMap<>();
-        for (ProcessedSample s : backbone.getSamples()) {
-            idx2sample.put(s.getUid(), s);
-        }
-
         LongestCommonSubsequence lcs = new LongestCommonSubsequence();
         String name = Arrays.stream(backbone.getSamples()).map(s -> s.getRun().getName()).reduce((a, b) -> lcs.longestCommonSubsequence(a, b).toString()).orElse("");
         if (name.isBlank())
@@ -285,8 +282,8 @@ public class LCMSProcessing {
                 st.getMs1MassDeviationWithinTraces(),
                 alignmentBackbone.getStatistics().getExpectedMassDeviationBetweenSamples(),
                 alignmentBackbone.getStatistics().getExpectedRetentionTimeDeviation(),
-                fwhms.getDouble(fwhms.size()/2),
-                heightDividedByfwhms.getDouble(heightDividedByfwhms.size()/2),
+                !fwhms.isEmpty() ? fwhms.getDouble(fwhms.size()/2) : 0,
+                !heightDividedByfwhms.isEmpty() ? heightDividedByfwhms.getDouble(heightDividedByfwhms.size()/2) : 0,
                 (int)alignmentBackbone.getStatistics().getMedianNumberOfAlignments(),
                 st.ms2NoiseLevel()
         );
