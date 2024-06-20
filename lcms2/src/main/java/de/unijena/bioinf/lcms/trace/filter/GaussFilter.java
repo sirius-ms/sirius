@@ -28,6 +28,8 @@ public class GaussFilter implements Filter {
     private final double[] kernel;
 
     public GaussFilter(double sigma) {
+        if (sigma <= 0)
+            throw new IllegalArgumentException("sigma must be > 0! (was " + sigma + ")");
         this.kernel = computeKernel(sigma);
     }
 
