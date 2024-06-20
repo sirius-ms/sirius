@@ -33,6 +33,21 @@ allprojects {
         reactor_netty_version = "1.1.20"
     }
 
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                pom {
+                    licenses {
+                        license {
+                            name = 'GNU Lesser General Public License, Version 3.0'
+                            url = 'https://www.gnu.org/licenses/lgpl-3.0.txt'
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     artifactory {
         contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
         publish {

@@ -182,12 +182,20 @@ subprojects {
             skip()
     }
     //build only artifacts from modules that contain code
-    if (new File(projectDir, "src").isDirectory()) {
-        println(new File(projectDir, "src"))
+    if (new File(projectDir, "src/main").isDirectory() && !"sirius_rest_service".equalsIgnoreCase(project.name) && !"buildSrc".equalsIgnoreCase(project.name)) {
         publishing {
             publications {
                 mavenJava(MavenPublication) {
                     from project.components.java
+
+                    pom {
+                        licenses {
+                            license {
+                                name = 'GNU Affero General Public License, Version 3.0'
+                                url = 'https://www.gnu.org/licenses/agpl-3.0.txt'
+                            }
+                        }
+                    }
                 }
             }
         }
