@@ -206,11 +206,18 @@ installSiriusDist.dependsOn('createGuiExe')
 installSiriusDist.dependsOn('generateLicenseReport')
 if (includeJreFX)
     installSiriusDist.dependsOn getParent().tasks.getByName('extractRuntimeImageFX')
+
 distribution.dependsOn 'siriusDistZip'
 //distribution.dependsOn 'siriusDistTar'
 distribution.dependsOn 'createChecksums'
-
-
+distribution.dependsOn 'signDistImage'
+if (siriusTargetPlatform.isMac())
+    distribution.dependsOn 'macNotarize'
+distribution.dependsOn 'distImageZip'
+if (!siriusTargetPlatform.isLinux()) {
+    distribution.dependsOn 'signDistInstaller'
+    distribution.dependsOn 'distInstaller'
+}
 
 // OS specific packaging
 distImage {
@@ -231,16 +238,6 @@ distImage {
 
 distInstaller {
     linuxShortcut = true
-}
-
-distribution.dependsOn 'signDistImage'
-if (siriusTargetPlatform.isMac())
-    distribution.dependsOn 'macNotarize'
-distribution.dependsOn 'createChecksums'
-distribution.dependsOn 'distImageZip'
-if (!siriusTargetPlatform.isLinux()) {
-    distribution.dependsOn 'signDistInstaller'
-    distribution.dependsOn 'distInstaller'
 }
 
 publishing {
