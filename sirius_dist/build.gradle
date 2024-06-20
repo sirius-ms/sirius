@@ -929,24 +929,24 @@ abstract class AppInstaller extends DefaultTask {
             if (winMenu)
                 paras += ['--win-menu'/*, winMenu ? '1' : '0'*/]
             if (winMenuGroup != null && !winMenuGroup.isBlank())
-                paras += ['--win-menu-group', "\"$winMenuGroup\""]
+                paras += ['--win-menu-group', "\"${winMenuGroup}\"".toString()]
             if (winShortcut)
                 paras += ['--win-shortcut']
             if (winPerUserInstall)
                 paras += ['--win-per-user-install']
             if (winUpdateUUID != null && !winUpdateUUID.isBlank())
-                paras += ['--win-upgrade-uuid', "$winUpdateUUID"]
+                paras += ['--win-upgrade-uuid', "${winUpdateUUID}".toString()]
         } else if (project.siriusTargetPlatform.isMac()) {
 
         } else if (project.siriusTargetPlatform.isLinux()) {
             if (linuxShortcut)
                 paras += ['--linux-shortcut']
             if (debPackageMaintaner != null && !debPackageMaintaner.isBlank())
-                paras += ['--linux-deb-maintainer', "\"$debPackageMaintaner\""]
+                paras += ['--linux-deb-maintainer', "\"${debPackageMaintaner}\"".toString()]
             if (linuxMenuGroup != null && linuxMenuGroup.length > 0)
-                paras += ['--linux-menu-group', "\"${linuxMenuGroup.join(';')}\""]
+                paras += ['--linux-menu-group', "\"${linuxMenuGroup.join(';')}\"".toString()]
             if (packageDeps != null && packageDeps.length > 0)
-                paras += ['--linux-deb-maintainer', "\"${packageDeps.join(',')}\""]
+                paras += ['--linux-deb-maintainer', "\"${packageDeps.join(',')}\"".toString()]
         } else {
             throw new IllegalArgumentException("Could not determine the OS to build on")
         }
