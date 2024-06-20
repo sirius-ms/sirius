@@ -62,8 +62,10 @@ public class MergeTracesWithoutGapFilling {
         }
         LoggerFactory.getLogger(MergeTracesWithoutGapFilling.class).debug("Average number of Alignmments in backbone: "  + alignment.getStatistics().getAverageNumberOfAlignments());
         LoggerFactory.getLogger(MergeTracesWithoutGapFilling.class).debug("Median number of Alignmments in backbone: " + alignment.getStatistics().getMedianNumberOfAlignments());
-        for (int k=0; k < mergedNoiseLevelPerScan.length; ++k) {
-            mergedNoiseLevelPerScan[k] /= alignment.getStatistics().getAverageNumberOfAlignments();
+        if (alignment.getStatistics().getAverageNumberOfAlignments() > 0) {
+            for (int k = 0; k < mergedNoiseLevelPerScan.length; ++k) {
+                mergedNoiseLevelPerScan[k] /= alignment.getStatistics().getAverageNumberOfAlignments();
+            }
         }
         merged.getStorage().setStatistics(merged.getStorage().getStatistics().withNoiseLevelPerScan(mergedNoiseLevelPerScan));
 
