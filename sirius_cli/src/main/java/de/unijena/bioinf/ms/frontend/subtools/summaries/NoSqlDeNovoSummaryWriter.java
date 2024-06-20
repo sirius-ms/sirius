@@ -49,6 +49,7 @@ class NoSqlDeNovoSummaryWriter implements AutoCloseable {
             // metadata for mapping
             "ionMass\t" +
             "retentionTimeInSeconds\t" +
+            "retentionTimeInMinutes\t" +
             "formulaId\t" +
             "alignedFeatureId\t" +
             "mappingFeatureId";
@@ -100,6 +101,8 @@ class NoSqlDeNovoSummaryWriter implements AutoCloseable {
         w.write(String.format(DOUBLE_FORMAT, f.getAverageMass()));
         writeSep();
         w.write(Optional.ofNullable(f.getRetentionTime()).map(rt -> String.format("%.0f", rt.getMiddleTime())).orElse(""));
+        writeSep();
+        w.write(Optional.ofNullable(f.getRetentionTime()).map(rt -> String.format("%.2f", rt.getMiddleTime() / 60d)).orElse(""));
         writeSep();
 
         w.write(String.format(LONG_FORMAT, fc.getFormulaId()));

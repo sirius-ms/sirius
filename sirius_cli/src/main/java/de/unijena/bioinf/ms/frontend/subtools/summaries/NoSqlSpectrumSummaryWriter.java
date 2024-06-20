@@ -40,7 +40,7 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
             "querySpectrumScanNumber\t" +
             "querySpectrumMsLevel\t" +
             "querySpectrumCE\t" +
-            "querySpectrumIonization\t" +
+            "querySpectrumAdduct\t" +
             "similarity\t" +
             "sharedPeaks\t" +
             "msLevel\t" +
@@ -49,13 +49,14 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
             "precursorMz\t" +
             "instrument\t" +
             "InChIKey\t" +
-            "SMILES\t" +
-            "SPLASH\t" +
+            "smiles\t" +
+            "splash\t" +
             "name\t" +
             "dbName\t" +
             // metadata for mapping
             "ionMass\t" +
             "retentionTimeInSeconds\t" +
+            "retentionTimeInMinutes\t" +
             "alignedFeatureId\t" +
             "providedFeatureId";
 
@@ -134,6 +135,8 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
         w.write(String.format(DOUBLE_FORMAT, f.getAverageMass()));
         writeSep();
         w.write(Optional.ofNullable(f.getRetentionTime()).map(rt -> String.format("%.0f", rt.getMiddleTime())).orElse(""));
+        writeSep();
+        w.write(Optional.ofNullable(f.getRetentionTime()).map(rt -> String.format("%.2f", rt.getMiddleTime() / 60d)).orElse(""));
         writeSep();
         w.write(String.format(LONG_FORMAT, match.getAlignedFeatureId()));
         writeSep();
