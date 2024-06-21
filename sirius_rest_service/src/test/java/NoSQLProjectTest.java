@@ -39,6 +39,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 public class NoSQLProjectTest {
 
@@ -48,7 +49,7 @@ public class NoSQLProjectTest {
         Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
-            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a,b) -> false);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
 
             BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
             BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
@@ -60,10 +61,11 @@ public class NoSQLProjectTest {
 
             List<CompoundImport> imports = List.of(CompoundImport.builder().name("foo").features(
                     List.of(FeatureImport.builder()
-                            .name("foo")
-                            .featureId("testFID")
+//                            .name("foo")
+                            .externalFeatureId("testFID")
                             .ionMass(42d)
-                            .adduct("M+H+")
+                            .charge(1)
+                            .detectedAdducts(Set.of("M+H+"))
                             .rtStartSeconds(6d)
                             .rtEndSeconds(12d)
                             .mergedMs1(ms1)
@@ -88,6 +90,64 @@ public class NoSQLProjectTest {
             AlignedFeature f2 = c2.getFeatures().get(0);
 
             Assert.assertTrue(EqualsBuilder.reflectionEquals(c1, c2, "features"));
+            Assert.assertTrue(EqualsBuilder.reflectionEquals(f1, f2, "msData"));
+
+            MsData d1 = f1.getMsData();
+            MsData d2 = f2.getMsData();
+
+            Assert.assertNotNull(d1);
+            Assert.assertNotNull(d2);
+
+            Assert.assertTrue(EqualsBuilder.reflectionEquals(d1.getMergedMs1(), d2.getMergedMs1()));
+            Assert.assertTrue(EqualsBuilder.reflectionEquals(d1.getMergedMs2(), d2.getMergedMs2()));
+            Assert.assertEquals(2, d1.getMs2Spectra().size());
+            Assert.assertEquals(2, d2.getMs2Spectra().size());
+
+            Assert.assertTrue(EqualsBuilder.reflectionEquals(d1.getMs2Spectra().get(0), d2.getMs2Spectra().get(0)));
+            Assert.assertTrue(EqualsBuilder.reflectionEquals(d1.getMs2Spectra().get(1), d2.getMs2Spectra().get(1)));
+
+        }
+    }
+
+    @Test
+    public void testFeatures() throws IOException {
+
+        Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
+        try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
+            NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
+
+            BasicSpectrum ms1 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
+            BasicSpectrum ms2 = new BasicSpectrum(new double[]{1, 2, 42}, new double[]{1, 2, 3}, 1d);
+
+            ms2.setCollisionEnergy(CollisionEnergy.fromString("20eV"));
+            ms2.setMsLevel(2);
+            ms2.setPrecursorMz(42d);
+            ms2.setScanNumber(5);
+
+            List<FeatureImport> imports = List.of(FeatureImport.builder()
+                            .name("foo")
+                            .externalFeatureId("testFID")
+                            .ionMass(42d)
+                            .charge(1)
+                            .detectedAdducts(Set.of("M+H+"))
+                            .rtStartSeconds(6d)
+                            .rtEndSeconds(12d)
+                            .mergedMs1(ms1)
+                            .ms1Spectra(List.of(ms1))
+                            .ms2Spectra(List.of(ms2, ms2))
+                            .build());
+
+            List<AlignedFeature> features = project.addAlignedFeatures(imports, EnumSet.of(AlignedFeature.OptField.msData));
+            List<AlignedFeature> features2 = project.findAlignedFeatures(Pageable.unpaged(), EnumSet.of(AlignedFeature.OptField.msData)).getContent();
+
+
+            Assert.assertEquals(1, features.size());
+            Assert.assertEquals(1, features2.size());
+
+            AlignedFeature f1 = features.get(0);
+            AlignedFeature f2 = features2.get(0);
+
             Assert.assertTrue(EqualsBuilder.reflectionEquals(f1, f2, "msData"));
 
             MsData d1 = f1.getMsData();

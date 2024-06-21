@@ -22,23 +22,34 @@ package de.unijena.bioinf.ms.middleware.model.features;
 
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
+import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static java.util.stream.Collectors.collectingAndThen;
+import static java.util.stream.Collectors.toList;
+
 public class FeatureImports {
 
     public static Ms2Experiment toExperiment(FeatureImport feature) {
         MutableMs2Experiment exp = new MutableMs2Experiment();
         exp.setIonMass(feature.getIonMass());
-        exp.setPrecursorIonType(PrecursorIonType.fromString(feature.getAdduct()));
         exp.setName(feature.getName());
-        exp.setFeatureId(feature.getFeatureId());
+        exp.setFeatureId(feature.getExternalFeatureId());
+        exp.setPrecursorIonType(PrecursorIonType.unknown(feature.getCharge()));
+
+        if (feature.getDetectedAdducts() != null && !feature.getDetectedAdducts().isEmpty()) {
+            PossibleAdducts possibleAdducts = feature.getDetectedAdducts().stream().map(PrecursorIonType::fromString)
+                    .distinct().collect(collectingAndThen(toList(), PossibleAdducts::new));
+
+            DetectedAdducts da = new DetectedAdducts();
+            da.put(DetectedAdducts.Source.INPUT_FILE, possibleAdducts);
+            exp.setAnnotation(DetectedAdducts.class, da);
+
+        }
 
         RetentionTime rt = null;
         if (feature.rtStartSeconds == null || feature.rtStartSeconds.isNaN()) {
