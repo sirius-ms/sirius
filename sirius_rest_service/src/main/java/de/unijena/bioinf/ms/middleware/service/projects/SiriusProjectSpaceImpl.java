@@ -769,6 +769,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
         final AlignedFeature id = AlignedFeature.builder()
                 .alignedFeatureId(cid.getDirectoryName())
                 .name(cid.getCompoundName())
+                .externalFeatureId(cid.getFeatureId().orElse(null))
                 .ionMass(cid.getIonMass().orElse(0d))
                 .computing(computeStateProvider.apply(this, cid.getDirectoryName()))
                 .build();

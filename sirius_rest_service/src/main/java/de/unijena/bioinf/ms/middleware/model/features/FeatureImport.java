@@ -26,22 +26,31 @@ import lombok.Builder;
 import lombok.Getter;
 
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Builder
 public class FeatureImport {
-    @Schema(nullable = true)
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     protected String name;
-    @Schema(nullable = true)
-    protected String featureId;
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-    protected Double ionMass;
     /**
-     * Adduct of this feature. If not know specify [M+?]+ or [M+?]- to define the charge
+     * Externally provided FeatureId (by some preprocessing tool). This FeatureId is NOT used by SIRIUS but is stored to ease mapping information back to the source.
      */
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-    protected String adduct;
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    protected String externalFeatureId;
+
+    @Schema(nullable = false, requiredMode = Schema.RequiredMode.REQUIRED)
+    protected Double ionMass;
+
+    @Schema(nullable = false, requiredMode = Schema.RequiredMode.REQUIRED)
+    protected int charge;
+
+    /**
+     * Detected adducts of this feature. Can be NULL or empty if no adducts are known.
+     */
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    protected Set<String> detectedAdducts;
 
     @Schema(nullable = true)
     protected Double rtStartSeconds;
