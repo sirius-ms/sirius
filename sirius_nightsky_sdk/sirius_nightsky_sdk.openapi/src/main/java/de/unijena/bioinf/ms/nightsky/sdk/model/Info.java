@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -45,7 +45,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Info.JSON_PROPERTY_AVAILABLE_I_L_P_SOLVERS,
   Info.JSON_PROPERTY_SUPPORTED_I_L_P_SOLVERS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class Info {
   public static final String JSON_PROPERTY_NIGHT_SKY_API_VERSION = "nightSkyApiVersion";
   private String nightSkyApiVersion;
@@ -150,7 +150,6 @@ public class Info {
     this.nightSkyApiVersion = nightSkyApiVersion;
   }
 
-
   public Info siriusVersion(String siriusVersion) {
     
     this.siriusVersion = siriusVersion;
@@ -175,7 +174,6 @@ public class Info {
   public void setSiriusVersion(String siriusVersion) {
     this.siriusVersion = siriusVersion;
   }
-
 
   public Info latestSiriusVersion(String latestSiriusVersion) {
     
@@ -202,7 +200,6 @@ public class Info {
     this.latestSiriusVersion = latestSiriusVersion;
   }
 
-
   public Info latestSiriusLink(String latestSiriusLink) {
     
     this.latestSiriusLink = latestSiriusLink;
@@ -227,7 +224,6 @@ public class Info {
   public void setLatestSiriusLink(String latestSiriusLink) {
     this.latestSiriusLink = latestSiriusLink;
   }
-
 
   public Info updateAvailable(Boolean updateAvailable) {
     
@@ -254,7 +250,6 @@ public class Info {
     this.updateAvailable = updateAvailable;
   }
 
-
   public Info siriusLibVersion(String siriusLibVersion) {
     
     this.siriusLibVersion = siriusLibVersion;
@@ -279,7 +274,6 @@ public class Info {
   public void setSiriusLibVersion(String siriusLibVersion) {
     this.siriusLibVersion = siriusLibVersion;
   }
-
 
   public Info fingerIdLibVersion(String fingerIdLibVersion) {
     
@@ -306,7 +300,6 @@ public class Info {
     this.fingerIdLibVersion = fingerIdLibVersion;
   }
 
-
   public Info chemDbVersion(String chemDbVersion) {
     
     this.chemDbVersion = chemDbVersion;
@@ -331,7 +324,6 @@ public class Info {
   public void setChemDbVersion(String chemDbVersion) {
     this.chemDbVersion = chemDbVersion;
   }
-
 
   public Info fingerIdModelVersion(String fingerIdModelVersion) {
     
@@ -358,7 +350,6 @@ public class Info {
     this.fingerIdModelVersion = fingerIdModelVersion;
   }
 
-
   public Info fingerprintId(String fingerprintId) {
     
     this.fingerprintId = fingerprintId;
@@ -383,7 +374,6 @@ public class Info {
   public void setFingerprintId(String fingerprintId) {
     this.fingerprintId = fingerprintId;
   }
-
 
   public Info availableILPSolvers(List<AvailableILPSolversEnum> availableILPSolvers) {
     
@@ -417,7 +407,6 @@ public class Info {
   public void setAvailableILPSolvers(List<AvailableILPSolversEnum> availableILPSolvers) {
     this.availableILPSolvers = availableILPSolvers;
   }
-
 
   public Info supportedILPSolvers(Map<String, String> supportedILPSolvers) {
     

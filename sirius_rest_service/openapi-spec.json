@@ -2,7 +2,7 @@
   "openapi": "3.0.1",
   "info": {
     "title": "SIRIUS Nightsky API",
-    "description": "REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.1-SNAPSHOT",
+    "description": "REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6",
     "version": "2.1"
   },
   "servers": [
@@ -6040,7 +6040,7 @@
           },
           "externalFeatureId": {
             "type": "string",
-            "description": "Externally provided FeatureId (by some preprocessing tool). This FeatureId is NOT used by SIRIUS but is stored to ease mapping information back to the source."
+            "description": "Externally provided FeatureId (e.g. by some preprocessing tool).\n This FeatureId is NOT used by SIRIUS but is stored to ease mapping information back to the source."
           },
           "ionMass": {
             "type": "number",

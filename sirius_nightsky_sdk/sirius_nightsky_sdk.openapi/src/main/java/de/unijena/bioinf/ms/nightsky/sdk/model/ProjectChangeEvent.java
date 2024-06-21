@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -34,7 +34,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ProjectChangeEvent.JSON_PROPERTY_FORMULA_ID,
   ProjectChangeEvent.JSON_PROPERTY_STRUCTURE_IN_CH_I_KEY
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class ProjectChangeEvent {
   /**
    * Gets or Sets eventType
@@ -131,7 +131,6 @@ public class ProjectChangeEvent {
     this.eventType = eventType;
   }
 
-
   public ProjectChangeEvent projectId(String projectId) {
     
     this.projectId = projectId;
@@ -156,7 +155,6 @@ public class ProjectChangeEvent {
   public void setProjectId(String projectId) {
     this.projectId = projectId;
   }
-
 
   public ProjectChangeEvent compoundId(String compoundId) {
     
@@ -183,7 +181,6 @@ public class ProjectChangeEvent {
     this.compoundId = compoundId;
   }
 
-
   public ProjectChangeEvent featuredId(String featuredId) {
     
     this.featuredId = featuredId;
@@ -209,7 +206,6 @@ public class ProjectChangeEvent {
     this.featuredId = featuredId;
   }
 
-
   public ProjectChangeEvent formulaId(String formulaId) {
     
     this.formulaId = formulaId;
@@ -234,7 +230,6 @@ public class ProjectChangeEvent {
   public void setFormulaId(String formulaId) {
     this.formulaId = formulaId;
   }
-
 
   public ProjectChangeEvent structureInChIKey(String structureInChIKey) {
     

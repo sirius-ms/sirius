@@ -11,6 +11,7 @@ The AlignedFeature contains the ID of a feature (aligned over runs) together wit
 |**alignedFeatureId** | **String** |  |  [optional] |
 |**compoundId** | **String** |  |  [optional] |
 |**name** | **String** |  |  [optional] |
+|**externalFeatureId** | **String** | Externally provided FeatureId (e.g. by some preprocessing tool).  This FeatureId is NOT used by SIRIUS but is stored to ease mapping information back to the source. |  [optional] |
 |**ionMass** | **Double** |  |  [optional] |
 |**charge** | **Integer** |  |  |
 |**detectedAdducts** | **Set&lt;String&gt;** |  |  |

@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -39,7 +39,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   QuantificationTable.JSON_PROPERTY_COLUMN_NAMES,
   QuantificationTable.JSON_PROPERTY_VALUES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class QuantificationTable {
   /**
    * Gets or Sets quantificationType
@@ -162,7 +162,7 @@ public class QuantificationTable {
   private List<String> columnNames;
 
   public static final String JSON_PROPERTY_VALUES = "values";
-  private List<List<Double>> values;
+  private List<List<Double>> values = new ArrayList<>();
 
   public QuantificationTable() {
   }
@@ -192,7 +192,6 @@ public class QuantificationTable {
     this.quantificationType = quantificationType;
   }
 
-
   public QuantificationTable rowType(RowTypeEnum rowType) {
     
     this.rowType = rowType;
@@ -218,7 +217,6 @@ public class QuantificationTable {
     this.rowType = rowType;
   }
 
-
   public QuantificationTable columnType(ColumnTypeEnum columnType) {
     
     this.columnType = columnType;
@@ -243,7 +241,6 @@ public class QuantificationTable {
   public void setColumnType(ColumnTypeEnum columnType) {
     this.columnType = columnType;
   }
-
 
   public QuantificationTable rowIds(List<Long> rowIds) {
     
@@ -278,7 +275,6 @@ public class QuantificationTable {
     this.rowIds = rowIds;
   }
 
-
   public QuantificationTable columnIds(List<Long> columnIds) {
     
     this.columnIds = columnIds;
@@ -311,7 +307,6 @@ public class QuantificationTable {
   public void setColumnIds(List<Long> columnIds) {
     this.columnIds = columnIds;
   }
-
 
   public QuantificationTable rowNames(List<String> rowNames) {
     
@@ -346,7 +341,6 @@ public class QuantificationTable {
     this.rowNames = rowNames;
   }
 
-
   public QuantificationTable columnNames(List<String> columnNames) {
     
     this.columnNames = columnNames;
@@ -379,7 +373,6 @@ public class QuantificationTable {
   public void setColumnNames(List<String> columnNames) {
     this.columnNames = columnNames;
   }
-
 
   public QuantificationTable values(List<List<Double>> values) {
     

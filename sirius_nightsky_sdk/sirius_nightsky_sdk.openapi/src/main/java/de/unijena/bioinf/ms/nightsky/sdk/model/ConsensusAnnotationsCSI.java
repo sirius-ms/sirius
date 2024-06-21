@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -41,7 +41,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ConsensusAnnotationsCSI.JSON_PROPERTY_CONFIDENCE_EXACT_MATCH,
   ConsensusAnnotationsCSI.JSON_PROPERTY_CONFIDENCE_APPROX_MATCH
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class ConsensusAnnotationsCSI {
   public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
   private String molecularFormula;
@@ -92,7 +92,6 @@ public class ConsensusAnnotationsCSI {
     this.molecularFormula = molecularFormula;
   }
 
-
   public ConsensusAnnotationsCSI compoundClasses(CompoundClasses compoundClasses) {
     
     this.compoundClasses = compoundClasses;
@@ -117,7 +116,6 @@ public class ConsensusAnnotationsCSI {
   public void setCompoundClasses(CompoundClasses compoundClasses) {
     this.compoundClasses = compoundClasses;
   }
-
 
   public ConsensusAnnotationsCSI supportingFeatureIds(List<String> supportingFeatureIds) {
     
@@ -152,7 +150,6 @@ public class ConsensusAnnotationsCSI {
     this.supportingFeatureIds = supportingFeatureIds;
   }
 
-
   public ConsensusAnnotationsCSI selectionCriterion(ConsensusCriterionCSI selectionCriterion) {
     
     this.selectionCriterion = selectionCriterion;
@@ -177,7 +174,6 @@ public class ConsensusAnnotationsCSI {
   public void setSelectionCriterion(ConsensusCriterionCSI selectionCriterion) {
     this.selectionCriterion = selectionCriterion;
   }
-
 
   public ConsensusAnnotationsCSI csiFingerIdStructure(StructureCandidate csiFingerIdStructure) {
     
@@ -204,7 +200,6 @@ public class ConsensusAnnotationsCSI {
     this.csiFingerIdStructure = csiFingerIdStructure;
   }
 
-
   public ConsensusAnnotationsCSI confidenceExactMatch(Double confidenceExactMatch) {
     
     this.confidenceExactMatch = confidenceExactMatch;
@@ -229,7 +224,6 @@ public class ConsensusAnnotationsCSI {
   public void setConfidenceExactMatch(Double confidenceExactMatch) {
     this.confidenceExactMatch = confidenceExactMatch;
   }
-
 
   public ConsensusAnnotationsCSI confidenceApproxMatch(Double confidenceApproxMatch) {
     

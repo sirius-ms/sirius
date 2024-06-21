@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -33,10 +33,10 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   BinaryFingerprint.JSON_PROPERTY_BITS_SET,
   BinaryFingerprint.JSON_PROPERTY_LENGTH
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class BinaryFingerprint {
   public static final String JSON_PROPERTY_BITS_SET = "bitsSet";
-  private List<Integer> bitsSet;
+  private List<Integer> bitsSet = new ArrayList<>();
 
   public static final String JSON_PROPERTY_LENGTH = "length";
   private Integer length;
@@ -76,7 +76,6 @@ public class BinaryFingerprint {
   public void setBitsSet(List<Integer> bitsSet) {
     this.bitsSet = bitsSet;
   }
-
 
   public BinaryFingerprint length(Integer length) {
     

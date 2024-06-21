@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -38,7 +38,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AccountInfo.JSON_PROPERTY_SUBSCRIPTIONS,
   AccountInfo.JSON_PROPERTY_ACTIVE_SUBSCRIPTION_ID
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class AccountInfo {
   public static final String JSON_PROPERTY_USER_I_D = "userID";
   private String userID;
@@ -53,7 +53,7 @@ public class AccountInfo {
   private String gravatarURL;
 
   public static final String JSON_PROPERTY_SUBSCRIPTIONS = "subscriptions";
-  private List<Subscription> subscriptions;
+  private List<Subscription> subscriptions = new ArrayList<>();
 
   public static final String JSON_PROPERTY_ACTIVE_SUBSCRIPTION_ID = "activeSubscriptionId";
   private String activeSubscriptionId;
@@ -86,7 +86,6 @@ public class AccountInfo {
     this.userID = userID;
   }
 
-
   public AccountInfo username(String username) {
     
     this.username = username;
@@ -111,7 +110,6 @@ public class AccountInfo {
   public void setUsername(String username) {
     this.username = username;
   }
-
 
   public AccountInfo userEmail(String userEmail) {
     
@@ -138,7 +136,6 @@ public class AccountInfo {
     this.userEmail = userEmail;
   }
 
-
   public AccountInfo gravatarURL(String gravatarURL) {
     
     this.gravatarURL = gravatarURL;
@@ -163,7 +160,6 @@ public class AccountInfo {
   public void setGravatarURL(String gravatarURL) {
     this.gravatarURL = gravatarURL;
   }
-
 
   public AccountInfo subscriptions(List<Subscription> subscriptions) {
     
@@ -197,7 +193,6 @@ public class AccountInfo {
   public void setSubscriptions(List<Subscription> subscriptions) {
     this.subscriptions = subscriptions;
   }
-
 
   public AccountInfo activeSubscriptionId(String activeSubscriptionId) {
     

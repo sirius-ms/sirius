@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -54,7 +54,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Sirius.JSON_PROPERTY_MIN_SCORE_TO_INJECT_SPEC_LIB_MATCH,
   Sirius.JSON_PROPERTY_MIN_PEAKS_TO_INJECT_SPEC_LIB_MATCH
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class Sirius {
   public static final String JSON_PROPERTY_ENABLED = "enabled";
   private Boolean enabled;
@@ -181,7 +181,6 @@ public class Sirius {
     this.enabled = enabled;
   }
 
-
   public Sirius profile(Instrument profile) {
     
     this.profile = profile;
@@ -206,7 +205,6 @@ public class Sirius {
   public void setProfile(Instrument profile) {
     this.profile = profile;
   }
-
 
   public Sirius numberOfCandidates(Integer numberOfCandidates) {
     
@@ -233,7 +231,6 @@ public class Sirius {
     this.numberOfCandidates = numberOfCandidates;
   }
 
-
   public Sirius numberOfCandidatesPerIonization(Integer numberOfCandidatesPerIonization) {
     
     this.numberOfCandidatesPerIonization = numberOfCandidatesPerIonization;
@@ -258,7 +255,6 @@ public class Sirius {
   public void setNumberOfCandidatesPerIonization(Integer numberOfCandidatesPerIonization) {
     this.numberOfCandidatesPerIonization = numberOfCandidatesPerIonization;
   }
-
 
   public Sirius massAccuracyMS2ppm(Double massAccuracyMS2ppm) {
     
@@ -285,7 +281,6 @@ public class Sirius {
     this.massAccuracyMS2ppm = massAccuracyMS2ppm;
   }
 
-
   public Sirius isotopeMs2Settings(IsotopeMs2SettingsEnum isotopeMs2Settings) {
     
     this.isotopeMs2Settings = isotopeMs2Settings;
@@ -310,7 +305,6 @@ public class Sirius {
   public void setIsotopeMs2Settings(IsotopeMs2SettingsEnum isotopeMs2Settings) {
     this.isotopeMs2Settings = isotopeMs2Settings;
   }
-
 
   public Sirius filterByIsotopePattern(Boolean filterByIsotopePattern) {
     
@@ -337,7 +331,6 @@ public class Sirius {
     this.filterByIsotopePattern = filterByIsotopePattern;
   }
 
-
   public Sirius enforceElGordoFormula(Boolean enforceElGordoFormula) {
     
     this.enforceElGordoFormula = enforceElGordoFormula;
@@ -362,7 +355,6 @@ public class Sirius {
   public void setEnforceElGordoFormula(Boolean enforceElGordoFormula) {
     this.enforceElGordoFormula = enforceElGordoFormula;
   }
-
 
   public Sirius performBottomUpSearch(Boolean performBottomUpSearch) {
     
@@ -389,7 +381,6 @@ public class Sirius {
     this.performBottomUpSearch = performBottomUpSearch;
   }
 
-
   public Sirius performDenovoBelowMz(Double performDenovoBelowMz) {
     
     this.performDenovoBelowMz = performDenovoBelowMz;
@@ -414,7 +405,6 @@ public class Sirius {
   public void setPerformDenovoBelowMz(Double performDenovoBelowMz) {
     this.performDenovoBelowMz = performDenovoBelowMz;
   }
-
 
   public Sirius formulaSearchDBs(List<String> formulaSearchDBs) {
     
@@ -449,7 +439,6 @@ public class Sirius {
     this.formulaSearchDBs = formulaSearchDBs;
   }
 
-
   public Sirius applyFormulaConstraintsToDBAndBottomUpSearch(Boolean applyFormulaConstraintsToDBAndBottomUpSearch) {
     
     this.applyFormulaConstraintsToDBAndBottomUpSearch = applyFormulaConstraintsToDBAndBottomUpSearch;
@@ -474,7 +463,6 @@ public class Sirius {
   public void setApplyFormulaConstraintsToDBAndBottomUpSearch(Boolean applyFormulaConstraintsToDBAndBottomUpSearch) {
     this.applyFormulaConstraintsToDBAndBottomUpSearch = applyFormulaConstraintsToDBAndBottomUpSearch;
   }
-
 
   public Sirius enforcedFormulaConstraints(String enforcedFormulaConstraints) {
     
@@ -501,7 +489,6 @@ public class Sirius {
     this.enforcedFormulaConstraints = enforcedFormulaConstraints;
   }
 
-
   public Sirius fallbackFormulaConstraints(String fallbackFormulaConstraints) {
     
     this.fallbackFormulaConstraints = fallbackFormulaConstraints;
@@ -526,7 +513,6 @@ public class Sirius {
   public void setFallbackFormulaConstraints(String fallbackFormulaConstraints) {
     this.fallbackFormulaConstraints = fallbackFormulaConstraints;
   }
-
 
   public Sirius detectableElements(List<String> detectableElements) {
     
@@ -561,7 +547,6 @@ public class Sirius {
     this.detectableElements = detectableElements;
   }
 
-
   public Sirius ilpTimeout(Timeout ilpTimeout) {
     
     this.ilpTimeout = ilpTimeout;
@@ -586,7 +571,6 @@ public class Sirius {
   public void setIlpTimeout(Timeout ilpTimeout) {
     this.ilpTimeout = ilpTimeout;
   }
-
 
   public Sirius useHeuristic(UseHeuristic useHeuristic) {
     
@@ -613,7 +597,6 @@ public class Sirius {
     this.useHeuristic = useHeuristic;
   }
 
-
   public Sirius injectSpecLibMatchFormulas(Boolean injectSpecLibMatchFormulas) {
     
     this.injectSpecLibMatchFormulas = injectSpecLibMatchFormulas;
@@ -639,7 +622,6 @@ public class Sirius {
     this.injectSpecLibMatchFormulas = injectSpecLibMatchFormulas;
   }
 
-
   public Sirius minScoreToInjectSpecLibMatch(Double minScoreToInjectSpecLibMatch) {
     
     this.minScoreToInjectSpecLibMatch = minScoreToInjectSpecLibMatch;
@@ -664,7 +646,6 @@ public class Sirius {
   public void setMinScoreToInjectSpecLibMatch(Double minScoreToInjectSpecLibMatch) {
     this.minScoreToInjectSpecLibMatch = minScoreToInjectSpecLibMatch;
   }
-
 
   public Sirius minPeaksToInjectSpecLibMatch(Integer minPeaksToInjectSpecLibMatch) {
     

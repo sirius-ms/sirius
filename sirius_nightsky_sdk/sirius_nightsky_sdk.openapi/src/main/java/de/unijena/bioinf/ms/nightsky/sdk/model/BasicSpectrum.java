@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -39,7 +39,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   BasicSpectrum.JSON_PROPERTY_PEAKS,
   BasicSpectrum.JSON_PROPERTY_ABS_INTENSITY_FACTOR
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class BasicSpectrum {
   public static final String JSON_PROPERTY_NAME = "name";
   private String name;
@@ -90,7 +90,6 @@ public class BasicSpectrum {
     this.name = name;
   }
 
-
   public BasicSpectrum msLevel(Integer msLevel) {
     
     this.msLevel = msLevel;
@@ -115,7 +114,6 @@ public class BasicSpectrum {
   public void setMsLevel(Integer msLevel) {
     this.msLevel = msLevel;
   }
-
 
   public BasicSpectrum collisionEnergy(String collisionEnergy) {
     
@@ -142,7 +140,6 @@ public class BasicSpectrum {
     this.collisionEnergy = collisionEnergy;
   }
 
-
   public BasicSpectrum precursorMz(Double precursorMz) {
     
     this.precursorMz = precursorMz;
@@ -168,7 +165,6 @@ public class BasicSpectrum {
     this.precursorMz = precursorMz;
   }
 
-
   public BasicSpectrum scanNumber(Integer scanNumber) {
     
     this.scanNumber = scanNumber;
@@ -193,7 +189,6 @@ public class BasicSpectrum {
   public void setScanNumber(Integer scanNumber) {
     this.scanNumber = scanNumber;
   }
-
 
   public BasicSpectrum peaks(List<SimplePeak> peaks) {
     
@@ -227,7 +222,6 @@ public class BasicSpectrum {
   public void setPeaks(List<SimplePeak> peaks) {
     this.peaks = peaks;
   }
-
 
   public BasicSpectrum absIntensityFactor(Double absIntensityFactor) {
     

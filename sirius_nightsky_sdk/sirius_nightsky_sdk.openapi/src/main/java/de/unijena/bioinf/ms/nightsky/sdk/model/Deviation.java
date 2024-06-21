@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -30,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Deviation.JSON_PROPERTY_PPM,
   Deviation.JSON_PROPERTY_ABSOLUTE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class Deviation {
   public static final String JSON_PROPERTY_PPM = "ppm";
   private Double ppm;
@@ -65,7 +65,6 @@ public class Deviation {
   public void setPpm(Double ppm) {
     this.ppm = ppm;
   }
-
 
   public Deviation absolute(Double absolute) {
     

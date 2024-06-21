@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   MsData.JSON_PROPERTY_MS1_SPECTRA,
   MsData.JSON_PROPERTY_MS2_SPECTRA
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class MsData {
   public static final String JSON_PROPERTY_MERGED_MS1 = "mergedMs1";
   private BasicSpectrum mergedMs1;
@@ -78,7 +78,6 @@ public class MsData {
     this.mergedMs1 = mergedMs1;
   }
 
-
   public MsData mergedMs2(BasicSpectrum mergedMs2) {
     
     this.mergedMs2 = mergedMs2;
@@ -103,7 +102,6 @@ public class MsData {
   public void setMergedMs2(BasicSpectrum mergedMs2) {
     this.mergedMs2 = mergedMs2;
   }
-
 
   public MsData ms1Spectra(List<BasicSpectrum> ms1Spectra) {
     
@@ -137,7 +135,6 @@ public class MsData {
   public void setMs1Spectra(List<BasicSpectrum> ms1Spectra) {
     this.ms1Spectra = ms1Spectra;
   }
-
 
   public MsData ms2Spectra(List<BasicSpectrum> ms2Spectra) {
     

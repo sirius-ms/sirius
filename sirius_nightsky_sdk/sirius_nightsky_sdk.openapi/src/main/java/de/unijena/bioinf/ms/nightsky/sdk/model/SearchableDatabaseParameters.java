@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SearchableDatabaseParameters.JSON_PROPERTY_LOCATION,
   SearchableDatabaseParameters.JSON_PROPERTY_MATCH_RT_OF_REFERENCE_SPECTRA
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class SearchableDatabaseParameters {
   public static final String JSON_PROPERTY_DISPLAY_NAME = "displayName";
   private String displayName;
@@ -70,7 +70,6 @@ public class SearchableDatabaseParameters {
     this.displayName = displayName;
   }
 
-
   public SearchableDatabaseParameters location(String location) {
     
     this.location = location;
@@ -95,7 +94,6 @@ public class SearchableDatabaseParameters {
   public void setLocation(String location) {
     this.location = location;
   }
-
 
   public SearchableDatabaseParameters matchRtOfReferenceSpectra(Boolean matchRtOfReferenceSpectra) {
     

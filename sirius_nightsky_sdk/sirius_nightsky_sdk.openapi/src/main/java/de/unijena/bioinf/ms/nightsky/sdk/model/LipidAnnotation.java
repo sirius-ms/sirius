@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -33,7 +33,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   LipidAnnotation.JSON_PROPERTY_HYPOTHETICAL_STRUCTURE,
   LipidAnnotation.JSON_PROPERTY_CHAINS_UNKNOWN
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class LipidAnnotation {
   public static final String JSON_PROPERTY_LIPID_SPECIES = "lipidSpecies";
   private String lipidSpecies;
@@ -78,7 +78,6 @@ public class LipidAnnotation {
     this.lipidSpecies = lipidSpecies;
   }
 
-
   public LipidAnnotation lipidMapsId(String lipidMapsId) {
     
     this.lipidMapsId = lipidMapsId;
@@ -103,7 +102,6 @@ public class LipidAnnotation {
   public void setLipidMapsId(String lipidMapsId) {
     this.lipidMapsId = lipidMapsId;
   }
-
 
   public LipidAnnotation lipidClassName(String lipidClassName) {
     
@@ -130,7 +128,6 @@ public class LipidAnnotation {
     this.lipidClassName = lipidClassName;
   }
 
-
   public LipidAnnotation hypotheticalStructure(String hypotheticalStructure) {
     
     this.hypotheticalStructure = hypotheticalStructure;
@@ -155,7 +152,6 @@ public class LipidAnnotation {
   public void setHypotheticalStructure(String hypotheticalStructure) {
     this.hypotheticalStructure = hypotheticalStructure;
   }
-
 
   public LipidAnnotation chainsUnknown(Boolean chainsUnknown) {
     

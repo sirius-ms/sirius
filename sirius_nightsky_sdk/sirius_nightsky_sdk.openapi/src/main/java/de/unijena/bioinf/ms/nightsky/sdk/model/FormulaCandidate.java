@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -57,7 +57,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FormulaCandidate.JSON_PROPERTY_COMPOUND_CLASSES,
   FormulaCandidate.JSON_PROPERTY_CANOPUS_PREDICTION
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class FormulaCandidate {
   public static final String JSON_PROPERTY_FORMULA_ID = "formulaId";
   private String formulaId;
@@ -144,7 +144,6 @@ public class FormulaCandidate {
     this.formulaId = formulaId;
   }
 
-
   public FormulaCandidate molecularFormula(String molecularFormula) {
     
     this.molecularFormula = molecularFormula;
@@ -169,7 +168,6 @@ public class FormulaCandidate {
   public void setMolecularFormula(String molecularFormula) {
     this.molecularFormula = molecularFormula;
   }
-
 
   public FormulaCandidate adduct(String adduct) {
     
@@ -196,7 +194,6 @@ public class FormulaCandidate {
     this.adduct = adduct;
   }
 
-
   public FormulaCandidate rank(Integer rank) {
     
     this.rank = rank;
@@ -221,7 +218,6 @@ public class FormulaCandidate {
   public void setRank(Integer rank) {
     this.rank = rank;
   }
-
 
   public FormulaCandidate siriusScore(Double siriusScore) {
     
@@ -248,7 +244,6 @@ public class FormulaCandidate {
     this.siriusScore = siriusScore;
   }
 
-
   public FormulaCandidate isotopeScore(Double isotopeScore) {
     
     this.isotopeScore = isotopeScore;
@@ -273,7 +268,6 @@ public class FormulaCandidate {
   public void setIsotopeScore(Double isotopeScore) {
     this.isotopeScore = isotopeScore;
   }
-
 
   public FormulaCandidate treeScore(Double treeScore) {
     
@@ -300,7 +294,6 @@ public class FormulaCandidate {
     this.treeScore = treeScore;
   }
 
-
   public FormulaCandidate zodiacScore(Double zodiacScore) {
     
     this.zodiacScore = zodiacScore;
@@ -325,7 +318,6 @@ public class FormulaCandidate {
   public void setZodiacScore(Double zodiacScore) {
     this.zodiacScore = zodiacScore;
   }
-
 
   public FormulaCandidate numOfExplainedPeaks(Integer numOfExplainedPeaks) {
     
@@ -352,7 +344,6 @@ public class FormulaCandidate {
     this.numOfExplainedPeaks = numOfExplainedPeaks;
   }
 
-
   public FormulaCandidate numOfExplainablePeaks(Integer numOfExplainablePeaks) {
     
     this.numOfExplainablePeaks = numOfExplainablePeaks;
@@ -377,7 +368,6 @@ public class FormulaCandidate {
   public void setNumOfExplainablePeaks(Integer numOfExplainablePeaks) {
     this.numOfExplainablePeaks = numOfExplainablePeaks;
   }
-
 
   public FormulaCandidate totalExplainedIntensity(Double totalExplainedIntensity) {
     
@@ -404,7 +394,6 @@ public class FormulaCandidate {
     this.totalExplainedIntensity = totalExplainedIntensity;
   }
 
-
   public FormulaCandidate medianMassDeviation(Deviation medianMassDeviation) {
     
     this.medianMassDeviation = medianMassDeviation;
@@ -429,7 +418,6 @@ public class FormulaCandidate {
   public void setMedianMassDeviation(Deviation medianMassDeviation) {
     this.medianMassDeviation = medianMassDeviation;
   }
-
 
   public FormulaCandidate fragmentationTree(FragmentationTree fragmentationTree) {
     
@@ -456,7 +444,6 @@ public class FormulaCandidate {
     this.fragmentationTree = fragmentationTree;
   }
 
-
   public FormulaCandidate annotatedSpectrum(AnnotatedSpectrum annotatedSpectrum) {
     
     this.annotatedSpectrum = annotatedSpectrum;
@@ -481,7 +468,6 @@ public class FormulaCandidate {
   public void setAnnotatedSpectrum(AnnotatedSpectrum annotatedSpectrum) {
     this.annotatedSpectrum = annotatedSpectrum;
   }
-
 
   public FormulaCandidate isotopePatternAnnotation(IsotopePatternAnnotation isotopePatternAnnotation) {
     
@@ -508,7 +494,6 @@ public class FormulaCandidate {
     this.isotopePatternAnnotation = isotopePatternAnnotation;
   }
 
-
   public FormulaCandidate lipidAnnotation(LipidAnnotation lipidAnnotation) {
     
     this.lipidAnnotation = lipidAnnotation;
@@ -533,7 +518,6 @@ public class FormulaCandidate {
   public void setLipidAnnotation(LipidAnnotation lipidAnnotation) {
     this.lipidAnnotation = lipidAnnotation;
   }
-
 
   public FormulaCandidate predictedFingerprint(List<Double> predictedFingerprint) {
     
@@ -568,7 +552,6 @@ public class FormulaCandidate {
     this.predictedFingerprint = predictedFingerprint;
   }
 
-
   public FormulaCandidate compoundClasses(CompoundClasses compoundClasses) {
     
     this.compoundClasses = compoundClasses;
@@ -593,7 +576,6 @@ public class FormulaCandidate {
   public void setCompoundClasses(CompoundClasses compoundClasses) {
     this.compoundClasses = compoundClasses;
   }
-
 
   public FormulaCandidate canopusPrediction(CanopusPrediction canopusPrediction) {
     

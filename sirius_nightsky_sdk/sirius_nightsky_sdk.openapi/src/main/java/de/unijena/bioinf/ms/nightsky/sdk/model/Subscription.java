@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -44,7 +44,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Subscription.JSON_PROPERTY_TOS,
   Subscription.JSON_PROPERTY_PP
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class Subscription {
   public static final String JSON_PROPERTY_SID = "sid";
   private String sid;
@@ -119,7 +119,6 @@ public class Subscription {
     this.sid = sid;
   }
 
-
   public Subscription subscriberId(String subscriberId) {
     
     this.subscriberId = subscriberId;
@@ -144,7 +143,6 @@ public class Subscription {
   public void setSubscriberId(String subscriberId) {
     this.subscriberId = subscriberId;
   }
-
 
   public Subscription subscriberName(String subscriberName) {
     
@@ -171,7 +169,6 @@ public class Subscription {
     this.subscriberName = subscriberName;
   }
 
-
   public Subscription expirationDate(Date expirationDate) {
     
     this.expirationDate = expirationDate;
@@ -196,7 +193,6 @@ public class Subscription {
   public void setExpirationDate(Date expirationDate) {
     this.expirationDate = expirationDate;
   }
-
 
   public Subscription startDate(Date startDate) {
     
@@ -223,7 +219,6 @@ public class Subscription {
     this.startDate = startDate;
   }
 
-
   public Subscription countQueries(Boolean countQueries) {
     
     this.countQueries = countQueries;
@@ -248,7 +243,6 @@ public class Subscription {
   public void setCountQueries(Boolean countQueries) {
     this.countQueries = countQueries;
   }
-
 
   public Subscription instanceLimit(Integer instanceLimit) {
     
@@ -275,7 +269,6 @@ public class Subscription {
     this.instanceLimit = instanceLimit;
   }
 
-
   public Subscription instanceHashRecordingTime(Integer instanceHashRecordingTime) {
     
     this.instanceHashRecordingTime = instanceHashRecordingTime;
@@ -300,7 +293,6 @@ public class Subscription {
   public void setInstanceHashRecordingTime(Integer instanceHashRecordingTime) {
     this.instanceHashRecordingTime = instanceHashRecordingTime;
   }
-
 
   public Subscription maxQueriesPerInstance(Integer maxQueriesPerInstance) {
     
@@ -327,7 +319,6 @@ public class Subscription {
     this.maxQueriesPerInstance = maxQueriesPerInstance;
   }
 
-
   public Subscription maxUserAccounts(Integer maxUserAccounts) {
     
     this.maxUserAccounts = maxUserAccounts;
@@ -352,7 +343,6 @@ public class Subscription {
   public void setMaxUserAccounts(Integer maxUserAccounts) {
     this.maxUserAccounts = maxUserAccounts;
   }
-
 
   public Subscription serviceUrl(String serviceUrl) {
     
@@ -379,7 +369,6 @@ public class Subscription {
     this.serviceUrl = serviceUrl;
   }
 
-
   public Subscription description(String description) {
     
     this.description = description;
@@ -404,7 +393,6 @@ public class Subscription {
   public void setDescription(String description) {
     this.description = description;
   }
-
 
   public Subscription name(String name) {
     
@@ -431,7 +419,6 @@ public class Subscription {
     this.name = name;
   }
 
-
   public Subscription tos(String tos) {
     
     this.tos = tos;
@@ -456,7 +443,6 @@ public class Subscription {
   public void setTos(String tos) {
     this.tos = tos;
   }
-
 
   public Subscription pp(String pp) {
     

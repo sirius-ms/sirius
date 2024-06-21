@@ -30,7 +30,7 @@ import org.springframework.http.ResponseEntity;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class ProjectsApi {
     private ApiClient apiClient;
 
@@ -156,7 +156,7 @@ public class ProjectsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "pathToCopiedProject", pathToCopiedProject));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "copyProjectId", copyProjectId));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -244,7 +244,7 @@ public class ProjectsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "pathToProject", pathToProject));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -331,7 +331,7 @@ public class ProjectsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "charge", charge));
-
+        
         final String[] localVarAccepts = { 
             "application/csv"
         };
@@ -415,7 +415,7 @@ public class ProjectsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "charge", charge));
-
+        
         final String[] localVarAccepts = { 
             "application/csv"
         };
@@ -499,7 +499,7 @@ public class ProjectsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "charge", charge));
-
+        
         final String[] localVarAccepts = { 
             "application/csv"
         };
@@ -579,7 +579,7 @@ public class ProjectsApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -726,7 +726,7 @@ public class ProjectsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignRuns", alignRuns));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "allowMs1Only", allowMs1Only));
-
+        
         if (inputFiles != null)
             formParams.addAll("inputFiles", inputFiles.stream().map(FileSystemResource::new).collect(Collectors.toList()));
 
@@ -822,7 +822,7 @@ public class ProjectsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignRuns", alignRuns));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "allowMs1Only", allowMs1Only));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         if (inputFiles != null)
             formParams.addAll("inputFiles", inputFiles.stream().map(FileSystemResource::new).collect(Collectors.toList()));
 
@@ -919,7 +919,7 @@ public class ProjectsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "ignoreFormulas", ignoreFormulas));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "allowMs1Only", allowMs1Only));
-
+        
         if (inputFiles != null)
             formParams.addAll("inputFiles", inputFiles.stream().map(FileSystemResource::new).collect(Collectors.toList()));
 
@@ -1015,7 +1015,7 @@ public class ProjectsApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "ignoreFormulas", ignoreFormulas));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "allowMs1Only", allowMs1Only));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         if (inputFiles != null)
             formParams.addAll("inputFiles", inputFiles.stream().map(FileSystemResource::new).collect(Collectors.toList()));
 
@@ -1111,7 +1111,7 @@ public class ProjectsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "pathToProject", pathToProject));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };

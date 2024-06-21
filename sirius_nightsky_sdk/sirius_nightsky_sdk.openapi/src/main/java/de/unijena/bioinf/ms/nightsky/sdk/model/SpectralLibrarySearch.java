@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -37,7 +37,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SpectralLibrarySearch.JSON_PROPERTY_PRECURSOR_DEVIATION_PPM,
   SpectralLibrarySearch.JSON_PROPERTY_SCORING
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class SpectralLibrarySearch {
   public static final String JSON_PROPERTY_ENABLED = "enabled";
   private Boolean enabled;
@@ -82,7 +82,6 @@ public class SpectralLibrarySearch {
     this.enabled = enabled;
   }
 
-
   public SpectralLibrarySearch spectraSearchDBs(List<String> spectraSearchDBs) {
     
     this.spectraSearchDBs = spectraSearchDBs;
@@ -116,7 +115,6 @@ public class SpectralLibrarySearch {
     this.spectraSearchDBs = spectraSearchDBs;
   }
 
-
   public SpectralLibrarySearch peakDeviationPpm(Double peakDeviationPpm) {
     
     this.peakDeviationPpm = peakDeviationPpm;
@@ -142,7 +140,6 @@ public class SpectralLibrarySearch {
     this.peakDeviationPpm = peakDeviationPpm;
   }
 
-
   public SpectralLibrarySearch precursorDeviationPpm(Double precursorDeviationPpm) {
     
     this.precursorDeviationPpm = precursorDeviationPpm;
@@ -167,7 +164,6 @@ public class SpectralLibrarySearch {
   public void setPrecursorDeviationPpm(Double precursorDeviationPpm) {
     this.precursorDeviationPpm = precursorDeviationPpm;
   }
-
 
   public SpectralLibrarySearch scoring(SpectralMatchingType scoring) {
     

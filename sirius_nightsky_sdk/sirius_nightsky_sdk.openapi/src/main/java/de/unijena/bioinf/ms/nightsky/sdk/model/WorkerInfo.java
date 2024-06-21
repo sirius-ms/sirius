@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -40,7 +40,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   WorkerInfo.JSON_PROPERTY_ALIVE,
   WorkerInfo.JSON_PROPERTY_SERVER_TIME
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class WorkerInfo {
   public static final String JSON_PROPERTY_ID = "id";
   private Long id;
@@ -173,7 +173,6 @@ public class WorkerInfo {
     this.id = id;
   }
 
-
   public WorkerInfo type(TypeEnum type) {
     
     this.type = type;
@@ -198,7 +197,6 @@ public class WorkerInfo {
   public void setType(TypeEnum type) {
     this.type = type;
   }
-
 
   public WorkerInfo supportedPredictors(List<SupportedPredictorsEnum> supportedPredictors) {
     
@@ -233,7 +231,6 @@ public class WorkerInfo {
     this.supportedPredictors = supportedPredictors;
   }
 
-
   public WorkerInfo version(String version) {
     
     this.version = version;
@@ -258,7 +255,6 @@ public class WorkerInfo {
   public void setVersion(String version) {
     this.version = version;
   }
-
 
   public WorkerInfo host(String host) {
     
@@ -285,7 +281,6 @@ public class WorkerInfo {
     this.host = host;
   }
 
-
   public WorkerInfo prefix(String prefix) {
     
     this.prefix = prefix;
@@ -310,7 +305,6 @@ public class WorkerInfo {
   public void setPrefix(String prefix) {
     this.prefix = prefix;
   }
-
 
   public WorkerInfo state(Integer state) {
     
@@ -337,7 +331,6 @@ public class WorkerInfo {
     this.state = state;
   }
 
-
   public WorkerInfo alive(Long alive) {
     
     this.alive = alive;
@@ -362,7 +355,6 @@ public class WorkerInfo {
   public void setAlive(Long alive) {
     this.alive = alive;
   }
-
 
   public WorkerInfo serverTime(Long serverTime) {
     

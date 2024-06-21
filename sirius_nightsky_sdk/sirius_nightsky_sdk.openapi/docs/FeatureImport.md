@@ -8,9 +8,10 @@
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
 |**name** | **String** |  |  [optional] |
-|**featureId** | **String** |  |  [optional] |
+|**externalFeatureId** | **String** | Externally provided FeatureId (by some preprocessing tool). This FeatureId is NOT used by SIRIUS but is stored to ease mapping information back to the source. |  [optional] |
 |**ionMass** | **Double** |  |  |
-|**adduct** | **String** | Adduct of this feature. If not know specify [M+?]+ or [M+?]- to define the charge |  |
+|**charge** | **Integer** |  |  |
+|**detectedAdducts** | **Set&lt;String&gt;** | Detected adducts of this feature. Can be NULL or empty if no adducts are known. |  [optional] |
 |**rtStartSeconds** | **Double** |  |  [optional] |
 |**rtEndSeconds** | **Double** |  |  [optional] |
 |**mergedMs1** | [**BasicSpectrum**](BasicSpectrum.md) |  |  [optional] |

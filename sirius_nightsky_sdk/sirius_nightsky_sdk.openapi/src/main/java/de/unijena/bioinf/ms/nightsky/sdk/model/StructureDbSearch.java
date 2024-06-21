@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StructureDbSearch.JSON_PROPERTY_TAG_STRUCTURES_WITH_LIPID_CLASS,
   StructureDbSearch.JSON_PROPERTY_EXPANSIVE_SEARCH_CONFIDENCE_MODE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class StructureDbSearch {
   public static final String JSON_PROPERTY_ENABLED = "enabled";
   private Boolean enabled;
@@ -78,7 +78,6 @@ public class StructureDbSearch {
     this.enabled = enabled;
   }
 
-
   public StructureDbSearch structureSearchDBs(List<String> structureSearchDBs) {
     
     this.structureSearchDBs = structureSearchDBs;
@@ -112,7 +111,6 @@ public class StructureDbSearch {
     this.structureSearchDBs = structureSearchDBs;
   }
 
-
   public StructureDbSearch tagStructuresWithLipidClass(Boolean tagStructuresWithLipidClass) {
     
     this.tagStructuresWithLipidClass = tagStructuresWithLipidClass;
@@ -137,7 +135,6 @@ public class StructureDbSearch {
   public void setTagStructuresWithLipidClass(Boolean tagStructuresWithLipidClass) {
     this.tagStructuresWithLipidClass = tagStructuresWithLipidClass;
   }
-
 
   public StructureDbSearch expansiveSearchConfidenceMode(ConfidenceMode expansiveSearchConfidenceMode) {
     

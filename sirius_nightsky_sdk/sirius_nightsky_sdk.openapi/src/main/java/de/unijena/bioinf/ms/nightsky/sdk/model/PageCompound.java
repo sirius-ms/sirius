@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -35,17 +35,17 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonPropertyOrder({
   PageCompound.JSON_PROPERTY_TOTAL_PAGES,
   PageCompound.JSON_PROPERTY_TOTAL_ELEMENTS,
+  PageCompound.JSON_PROPERTY_LAST,
+  PageCompound.JSON_PROPERTY_FIRST,
   PageCompound.JSON_PROPERTY_SIZE,
   PageCompound.JSON_PROPERTY_CONTENT,
   PageCompound.JSON_PROPERTY_NUMBER,
   PageCompound.JSON_PROPERTY_SORT,
-  PageCompound.JSON_PROPERTY_FIRST,
-  PageCompound.JSON_PROPERTY_LAST,
   PageCompound.JSON_PROPERTY_NUMBER_OF_ELEMENTS,
   PageCompound.JSON_PROPERTY_PAGEABLE,
   PageCompound.JSON_PROPERTY_EMPTY
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class PageCompound {
   public static final String JSON_PROPERTY_TOTAL_PAGES = "totalPages";
   private Integer totalPages;
@@ -53,23 +53,23 @@ public class PageCompound {
   public static final String JSON_PROPERTY_TOTAL_ELEMENTS = "totalElements";
   private Long totalElements;
 
+  public static final String JSON_PROPERTY_LAST = "last";
+  private Boolean last;
+
+  public static final String JSON_PROPERTY_FIRST = "first";
+  private Boolean first;
+
   public static final String JSON_PROPERTY_SIZE = "size";
   private Integer size;
 
   public static final String JSON_PROPERTY_CONTENT = "content";
-  private List<Compound> content;
+  private List<Compound> content = new ArrayList<>();
 
   public static final String JSON_PROPERTY_NUMBER = "number";
   private Integer number;
 
   public static final String JSON_PROPERTY_SORT = "sort";
   private SortObject sort;
-
-  public static final String JSON_PROPERTY_FIRST = "first";
-  private Boolean first;
-
-  public static final String JSON_PROPERTY_LAST = "last";
-  private Boolean last;
 
   public static final String JSON_PROPERTY_NUMBER_OF_ELEMENTS = "numberOfElements";
   private Integer numberOfElements;
@@ -108,7 +108,6 @@ public class PageCompound {
     this.totalPages = totalPages;
   }
 
-
   public PageCompound totalElements(Long totalElements) {
     
     this.totalElements = totalElements;
@@ -134,6 +133,55 @@ public class PageCompound {
     this.totalElements = totalElements;
   }
 
+  public PageCompound last(Boolean last) {
+    
+    this.last = last;
+    return this;
+  }
+
+   /**
+   * Get last
+   * @return last
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_LAST)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isLast() {
+    return last;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_LAST)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setLast(Boolean last) {
+    this.last = last;
+  }
+
+  public PageCompound first(Boolean first) {
+    
+    this.first = first;
+    return this;
+  }
+
+   /**
+   * Get first
+   * @return first
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_FIRST)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isFirst() {
+    return first;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_FIRST)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setFirst(Boolean first) {
+    this.first = first;
+  }
 
   public PageCompound size(Integer size) {
     
@@ -159,7 +207,6 @@ public class PageCompound {
   public void setSize(Integer size) {
     this.size = size;
   }
-
 
   public PageCompound content(List<Compound> content) {
     
@@ -194,7 +241,6 @@ public class PageCompound {
     this.content = content;
   }
 
-
   public PageCompound number(Integer number) {
     
     this.number = number;
@@ -219,7 +265,6 @@ public class PageCompound {
   public void setNumber(Integer number) {
     this.number = number;
   }
-
 
   public PageCompound sort(SortObject sort) {
     
@@ -246,59 +291,6 @@ public class PageCompound {
     this.sort = sort;
   }
 
-
-  public PageCompound first(Boolean first) {
-    
-    this.first = first;
-    return this;
-  }
-
-   /**
-   * Get first
-   * @return first
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FIRST)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Boolean isFirst() {
-    return first;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_FIRST)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFirst(Boolean first) {
-    this.first = first;
-  }
-
-
-  public PageCompound last(Boolean last) {
-    
-    this.last = last;
-    return this;
-  }
-
-   /**
-   * Get last
-   * @return last
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_LAST)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Boolean isLast() {
-    return last;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_LAST)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setLast(Boolean last) {
-    this.last = last;
-  }
-
-
   public PageCompound numberOfElements(Integer numberOfElements) {
     
     this.numberOfElements = numberOfElements;
@@ -324,7 +316,6 @@ public class PageCompound {
     this.numberOfElements = numberOfElements;
   }
 
-
   public PageCompound pageable(PageableObject pageable) {
     
     this.pageable = pageable;
@@ -349,7 +340,6 @@ public class PageCompound {
   public void setPageable(PageableObject pageable) {
     this.pageable = pageable;
   }
-
 
   public PageCompound empty(Boolean empty) {
     
@@ -387,12 +377,12 @@ public class PageCompound {
     PageCompound pageCompound = (PageCompound) o;
     return Objects.equals(this.totalPages, pageCompound.totalPages) &&
         Objects.equals(this.totalElements, pageCompound.totalElements) &&
+        Objects.equals(this.last, pageCompound.last) &&
+        Objects.equals(this.first, pageCompound.first) &&
         Objects.equals(this.size, pageCompound.size) &&
         Objects.equals(this.content, pageCompound.content) &&
         Objects.equals(this.number, pageCompound.number) &&
         Objects.equals(this.sort, pageCompound.sort) &&
-        Objects.equals(this.first, pageCompound.first) &&
-        Objects.equals(this.last, pageCompound.last) &&
         Objects.equals(this.numberOfElements, pageCompound.numberOfElements) &&
         Objects.equals(this.pageable, pageCompound.pageable) &&
         Objects.equals(this.empty, pageCompound.empty);
@@ -400,7 +390,7 @@ public class PageCompound {
 
   @Override
   public int hashCode() {
-    return Objects.hash(totalPages, totalElements, size, content, number, sort, first, last, numberOfElements, pageable, empty);
+    return Objects.hash(totalPages, totalElements, last, first, size, content, number, sort, numberOfElements, pageable, empty);
   }
 
   @Override
@@ -409,12 +399,12 @@ public class PageCompound {
     sb.append("class PageCompound {\n");
     sb.append("    totalPages: ").append(toIndentedString(totalPages)).append("\n");
     sb.append("    totalElements: ").append(toIndentedString(totalElements)).append("\n");
+    sb.append("    last: ").append(toIndentedString(last)).append("\n");
+    sb.append("    first: ").append(toIndentedString(first)).append("\n");
     sb.append("    size: ").append(toIndentedString(size)).append("\n");
     sb.append("    content: ").append(toIndentedString(content)).append("\n");
     sb.append("    number: ").append(toIndentedString(number)).append("\n");
     sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
-    sb.append("    first: ").append(toIndentedString(first)).append("\n");
-    sb.append("    last: ").append(toIndentedString(last)).append("\n");
     sb.append("    numberOfElements: ").append(toIndentedString(numberOfElements)).append("\n");
     sb.append("    pageable: ").append(toIndentedString(pageable)).append("\n");
     sb.append("    empty: ").append(toIndentedString(empty)).append("\n");

@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -45,7 +45,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StructureCandidateScored.JSON_PROPERTY_MCES_DIST_TO_TOP_HIT,
   StructureCandidateScored.JSON_PROPERTY_FINGERPRINT
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class StructureCandidateScored {
   public static final String JSON_PROPERTY_INCHI_KEY = "inchiKey";
   private String inchiKey;
@@ -108,7 +108,6 @@ public class StructureCandidateScored {
     this.inchiKey = inchiKey;
   }
 
-
   public StructureCandidateScored smiles(String smiles) {
     
     this.smiles = smiles;
@@ -133,7 +132,6 @@ public class StructureCandidateScored {
   public void setSmiles(String smiles) {
     this.smiles = smiles;
   }
-
 
   public StructureCandidateScored structureName(String structureName) {
     
@@ -160,7 +158,6 @@ public class StructureCandidateScored {
     this.structureName = structureName;
   }
 
-
   public StructureCandidateScored xlogP(Double xlogP) {
     
     this.xlogP = xlogP;
@@ -185,7 +182,6 @@ public class StructureCandidateScored {
   public void setXlogP(Double xlogP) {
     this.xlogP = xlogP;
   }
-
 
   public StructureCandidateScored dbLinks(List<DBLink> dbLinks) {
     
@@ -220,7 +216,6 @@ public class StructureCandidateScored {
     this.dbLinks = dbLinks;
   }
 
-
   public StructureCandidateScored spectralLibraryMatches(List<SpectralLibraryMatch> spectralLibraryMatches) {
     
     this.spectralLibraryMatches = spectralLibraryMatches;
@@ -254,7 +249,6 @@ public class StructureCandidateScored {
     this.spectralLibraryMatches = spectralLibraryMatches;
   }
 
-
   public StructureCandidateScored rank(Integer rank) {
     
     this.rank = rank;
@@ -279,7 +273,6 @@ public class StructureCandidateScored {
   public void setRank(Integer rank) {
     this.rank = rank;
   }
-
 
   public StructureCandidateScored csiScore(Double csiScore) {
     
@@ -306,7 +299,6 @@ public class StructureCandidateScored {
     this.csiScore = csiScore;
   }
 
-
   public StructureCandidateScored tanimotoSimilarity(Double tanimotoSimilarity) {
     
     this.tanimotoSimilarity = tanimotoSimilarity;
@@ -332,7 +324,6 @@ public class StructureCandidateScored {
     this.tanimotoSimilarity = tanimotoSimilarity;
   }
 
-
   public StructureCandidateScored mcesDistToTopHit(Double mcesDistToTopHit) {
     
     this.mcesDistToTopHit = mcesDistToTopHit;
@@ -357,7 +348,6 @@ public class StructureCandidateScored {
   public void setMcesDistToTopHit(Double mcesDistToTopHit) {
     this.mcesDistToTopHit = mcesDistToTopHit;
   }
-
 
   public StructureCandidateScored fingerprint(BinaryFingerprint fingerprint) {
     

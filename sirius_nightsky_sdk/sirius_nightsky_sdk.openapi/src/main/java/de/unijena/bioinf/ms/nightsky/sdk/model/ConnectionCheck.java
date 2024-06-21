@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -45,7 +45,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ConnectionCheck.JSON_PROPERTY_UN_AVAILABLE_WORKERS,
   ConnectionCheck.JSON_PROPERTY_SUPPORTS_ALL_PREDICTOR_TYPES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class ConnectionCheck {
   public static final String JSON_PROPERTY_WORKER_INFO = "workerInfo";
   private WorkerList workerInfo;
@@ -99,7 +99,6 @@ public class ConnectionCheck {
     this.workerInfo = workerInfo;
   }
 
-
   public ConnectionCheck licenseInfo(LicenseInfo licenseInfo) {
     
     this.licenseInfo = licenseInfo;
@@ -124,7 +123,6 @@ public class ConnectionCheck {
   public void setLicenseInfo(LicenseInfo licenseInfo) {
     this.licenseInfo = licenseInfo;
   }
-
 
   public ConnectionCheck errors(List<ConnectionError> errors) {
     
@@ -159,7 +157,6 @@ public class ConnectionCheck {
     this.errors = errors;
   }
 
-
   public ConnectionCheck supportsPosPredictorTypes(Boolean supportsPosPredictorTypes) {
     
     this.supportsPosPredictorTypes = supportsPosPredictorTypes;
@@ -185,7 +182,6 @@ public class ConnectionCheck {
     this.supportsPosPredictorTypes = supportsPosPredictorTypes;
   }
 
-
   public ConnectionCheck supportsNegPredictorTypes(Boolean supportsNegPredictorTypes) {
     
     this.supportsNegPredictorTypes = supportsNegPredictorTypes;
@@ -210,7 +206,6 @@ public class ConnectionCheck {
   public void setSupportsNegPredictorTypes(Boolean supportsNegPredictorTypes) {
     this.supportsNegPredictorTypes = supportsNegPredictorTypes;
   }
-
 
   public ConnectionCheck availableWorkers(Set<String> availableWorkers) {
     
@@ -246,7 +241,6 @@ public class ConnectionCheck {
     this.availableWorkers = availableWorkers;
   }
 
-
   public ConnectionCheck unAvailableWorkers(Set<String> unAvailableWorkers) {
     
     this.unAvailableWorkers = unAvailableWorkers;
@@ -280,7 +274,6 @@ public class ConnectionCheck {
   public void setUnAvailableWorkers(Set<String> unAvailableWorkers) {
     this.unAvailableWorkers = unAvailableWorkers;
   }
-
 
   public ConnectionCheck supportsAllPredictorTypes(Boolean supportsAllPredictorTypes) {
     

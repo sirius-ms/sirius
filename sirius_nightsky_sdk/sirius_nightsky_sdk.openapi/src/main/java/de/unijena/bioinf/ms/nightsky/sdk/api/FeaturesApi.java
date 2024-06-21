@@ -51,7 +51,7 @@ import org.springframework.http.ResponseEntity;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class FeaturesApi {
     private ApiClient apiClient;
 
@@ -103,7 +103,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -351,7 +351,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -434,7 +434,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -520,7 +520,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -882,7 +882,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -977,7 +977,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -1081,7 +1081,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -1188,7 +1188,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -1476,7 +1476,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "spectrumIndex", spectrumIndex));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -1574,7 +1574,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -1666,7 +1666,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -1761,7 +1761,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -2218,7 +2218,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "type", type));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -2407,7 +2407,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -2505,7 +2505,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSimilarity", minSimilarity));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "candidateInChiKey", candidateInChiKey));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -2615,7 +2615,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSimilarity", minSimilarity));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "candidateInChiKey", candidateInChiKey));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -2726,7 +2726,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSharedPeaks", minSharedPeaks));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSimilarity", minSimilarity));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "candidateInChiKey", candidateInChiKey));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -2934,7 +2934,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "spectrumIndex", spectrumIndex));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -3029,7 +3029,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -3124,7 +3124,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -3228,7 +3228,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -3335,7 +3335,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };

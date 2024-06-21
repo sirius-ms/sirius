@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -39,7 +39,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   LicenseInfo.JSON_PROPERTY_CONSUMABLES,
   LicenseInfo.JSON_PROPERTY_TERMS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class LicenseInfo {
   public static final String JSON_PROPERTY_USER_EMAIL = "userEmail";
   private String userEmail;
@@ -84,7 +84,6 @@ public class LicenseInfo {
     this.userEmail = userEmail;
   }
 
-
   public LicenseInfo userId(String userId) {
     
     this.userId = userId;
@@ -109,7 +108,6 @@ public class LicenseInfo {
   public void setUserId(String userId) {
     this.userId = userId;
   }
-
 
   public LicenseInfo subscription(Subscription subscription) {
     
@@ -136,7 +134,6 @@ public class LicenseInfo {
     this.subscription = subscription;
   }
 
-
   public LicenseInfo consumables(SubscriptionConsumables consumables) {
     
     this.consumables = consumables;
@@ -161,7 +158,6 @@ public class LicenseInfo {
   public void setConsumables(SubscriptionConsumables consumables) {
     this.consumables = consumables;
   }
-
 
   public LicenseInfo terms(List<Term> terms) {
     

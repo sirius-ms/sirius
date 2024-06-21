@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -20,10 +20,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import de.unijena.bioinf.ms.nightsky.sdk.model.BasicSpectrum;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -32,28 +35,32 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  */
 @JsonPropertyOrder({
   FeatureImport.JSON_PROPERTY_NAME,
-  FeatureImport.JSON_PROPERTY_FEATURE_ID,
+  FeatureImport.JSON_PROPERTY_EXTERNAL_FEATURE_ID,
   FeatureImport.JSON_PROPERTY_ION_MASS,
-  FeatureImport.JSON_PROPERTY_ADDUCT,
+  FeatureImport.JSON_PROPERTY_CHARGE,
+  FeatureImport.JSON_PROPERTY_DETECTED_ADDUCTS,
   FeatureImport.JSON_PROPERTY_RT_START_SECONDS,
   FeatureImport.JSON_PROPERTY_RT_END_SECONDS,
   FeatureImport.JSON_PROPERTY_MERGED_MS1,
   FeatureImport.JSON_PROPERTY_MS1_SPECTRA,
   FeatureImport.JSON_PROPERTY_MS2_SPECTRA
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class FeatureImport {
   public static final String JSON_PROPERTY_NAME = "name";
   private String name;
 
-  public static final String JSON_PROPERTY_FEATURE_ID = "featureId";
-  private String featureId;
+  public static final String JSON_PROPERTY_EXTERNAL_FEATURE_ID = "externalFeatureId";
+  private String externalFeatureId;
 
   public static final String JSON_PROPERTY_ION_MASS = "ionMass";
   private Double ionMass;
 
-  public static final String JSON_PROPERTY_ADDUCT = "adduct";
-  private String adduct;
+  public static final String JSON_PROPERTY_CHARGE = "charge";
+  private Integer charge;
+
+  public static final String JSON_PROPERTY_DETECTED_ADDUCTS = "detectedAdducts";
+  private Set<String> detectedAdducts;
 
   public static final String JSON_PROPERTY_RT_START_SECONDS = "rtStartSeconds";
   private Double rtStartSeconds;
@@ -98,32 +105,30 @@ public class FeatureImport {
     this.name = name;
   }
 
-
-  public FeatureImport featureId(String featureId) {
+  public FeatureImport externalFeatureId(String externalFeatureId) {
     
-    this.featureId = featureId;
+    this.externalFeatureId = externalFeatureId;
     return this;
   }
 
    /**
-   * Get featureId
-   * @return featureId
+   * Externally provided FeatureId (by some preprocessing tool). This FeatureId is NOT used by SIRIUS but is stored to ease mapping information back to the source.
+   * @return externalFeatureId
   **/
   @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FEATURE_ID)
+  @JsonProperty(JSON_PROPERTY_EXTERNAL_FEATURE_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public String getFeatureId() {
-    return featureId;
+  public String getExternalFeatureId() {
+    return externalFeatureId;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_FEATURE_ID)
+  @JsonProperty(JSON_PROPERTY_EXTERNAL_FEATURE_ID)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFeatureId(String featureId) {
-    this.featureId = featureId;
+  public void setExternalFeatureId(String externalFeatureId) {
+    this.externalFeatureId = externalFeatureId;
   }
-
 
   public FeatureImport ionMass(Double ionMass) {
     
@@ -150,32 +155,64 @@ public class FeatureImport {
     this.ionMass = ionMass;
   }
 
-
-  public FeatureImport adduct(String adduct) {
+  public FeatureImport charge(Integer charge) {
     
-    this.adduct = adduct;
+    this.charge = charge;
     return this;
   }
 
    /**
-   * Adduct of this feature. If not know specify [M+?]+ or [M+?]- to define the charge
-   * @return adduct
+   * Get charge
+   * @return charge
   **/
   @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_ADDUCT)
+  @JsonProperty(JSON_PROPERTY_CHARGE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
 
-  public String getAdduct() {
-    return adduct;
+  public Integer getCharge() {
+    return charge;
   }
 
 
-  @JsonProperty(JSON_PROPERTY_ADDUCT)
+  @JsonProperty(JSON_PROPERTY_CHARGE)
   @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setAdduct(String adduct) {
-    this.adduct = adduct;
+  public void setCharge(Integer charge) {
+    this.charge = charge;
   }
 
+  public FeatureImport detectedAdducts(Set<String> detectedAdducts) {
+    
+    this.detectedAdducts = detectedAdducts;
+    return this;
+  }
+
+  public FeatureImport addDetectedAdductsItem(String detectedAdductsItem) {
+    if (this.detectedAdducts == null) {
+      this.detectedAdducts = new LinkedHashSet<>();
+    }
+    this.detectedAdducts.add(detectedAdductsItem);
+    return this;
+  }
+
+   /**
+   * Detected adducts of this feature. Can be NULL or empty if no adducts are known.
+   * @return detectedAdducts
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_DETECTED_ADDUCTS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Set<String> getDetectedAdducts() {
+    return detectedAdducts;
+  }
+
+
+  @JsonDeserialize(as = LinkedHashSet.class)
+  @JsonProperty(JSON_PROPERTY_DETECTED_ADDUCTS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setDetectedAdducts(Set<String> detectedAdducts) {
+    this.detectedAdducts = detectedAdducts;
+  }
 
   public FeatureImport rtStartSeconds(Double rtStartSeconds) {
     
@@ -202,7 +239,6 @@ public class FeatureImport {
     this.rtStartSeconds = rtStartSeconds;
   }
 
-
   public FeatureImport rtEndSeconds(Double rtEndSeconds) {
     
     this.rtEndSeconds = rtEndSeconds;
@@ -228,7 +264,6 @@ public class FeatureImport {
     this.rtEndSeconds = rtEndSeconds;
   }
 
-
   public FeatureImport mergedMs1(BasicSpectrum mergedMs1) {
     
     this.mergedMs1 = mergedMs1;
@@ -253,7 +288,6 @@ public class FeatureImport {
   public void setMergedMs1(BasicSpectrum mergedMs1) {
     this.mergedMs1 = mergedMs1;
   }
-
 
   public FeatureImport ms1Spectra(List<BasicSpectrum> ms1Spectra) {
     
@@ -287,7 +321,6 @@ public class FeatureImport {
   public void setMs1Spectra(List<BasicSpectrum> ms1Spectra) {
     this.ms1Spectra = ms1Spectra;
   }
-
 
   public FeatureImport ms2Spectra(List<BasicSpectrum> ms2Spectra) {
     
@@ -332,9 +365,10 @@ public class FeatureImport {
     }
     FeatureImport featureImport = (FeatureImport) o;
     return Objects.equals(this.name, featureImport.name) &&
-        Objects.equals(this.featureId, featureImport.featureId) &&
+        Objects.equals(this.externalFeatureId, featureImport.externalFeatureId) &&
         Objects.equals(this.ionMass, featureImport.ionMass) &&
-        Objects.equals(this.adduct, featureImport.adduct) &&
+        Objects.equals(this.charge, featureImport.charge) &&
+        Objects.equals(this.detectedAdducts, featureImport.detectedAdducts) &&
         Objects.equals(this.rtStartSeconds, featureImport.rtStartSeconds) &&
         Objects.equals(this.rtEndSeconds, featureImport.rtEndSeconds) &&
         Objects.equals(this.mergedMs1, featureImport.mergedMs1) &&
@@ -344,7 +378,7 @@ public class FeatureImport {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, featureId, ionMass, adduct, rtStartSeconds, rtEndSeconds, mergedMs1, ms1Spectra, ms2Spectra);
+    return Objects.hash(name, externalFeatureId, ionMass, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, mergedMs1, ms1Spectra, ms2Spectra);
   }
 
   @Override
@@ -352,9 +386,10 @@ public class FeatureImport {
     StringBuilder sb = new StringBuilder();
     sb.append("class FeatureImport {\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
-    sb.append("    featureId: ").append(toIndentedString(featureId)).append("\n");
+    sb.append("    externalFeatureId: ").append(toIndentedString(externalFeatureId)).append("\n");
     sb.append("    ionMass: ").append(toIndentedString(ionMass)).append("\n");
-    sb.append("    adduct: ").append(toIndentedString(adduct)).append("\n");
+    sb.append("    charge: ").append(toIndentedString(charge)).append("\n");
+    sb.append("    detectedAdducts: ").append(toIndentedString(detectedAdducts)).append("\n");
     sb.append("    rtStartSeconds: ").append(toIndentedString(rtStartSeconds)).append("\n");
     sb.append("    rtEndSeconds: ").append(toIndentedString(rtEndSeconds)).append("\n");
     sb.append("    mergedMs1: ").append(toIndentedString(mergedMs1)).append("\n");

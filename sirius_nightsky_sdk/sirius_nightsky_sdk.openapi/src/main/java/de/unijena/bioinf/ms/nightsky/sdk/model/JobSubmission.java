@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -54,7 +54,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   JobSubmission.JSON_PROPERTY_MS_NOVELIST_PARAMS,
   JobSubmission.JSON_PROPERTY_CONFIG_MAP
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class JobSubmission {
   public static final String JSON_PROPERTY_COMPOUND_IDS = "compoundIds";
   private List<String> compoundIds;
@@ -134,7 +134,6 @@ public class JobSubmission {
     this.compoundIds = compoundIds;
   }
 
-
   public JobSubmission alignedFeatureIds(List<String> alignedFeatureIds) {
     
     this.alignedFeatureIds = alignedFeatureIds;
@@ -167,7 +166,6 @@ public class JobSubmission {
   public void setAlignedFeatureIds(List<String> alignedFeatureIds) {
     this.alignedFeatureIds = alignedFeatureIds;
   }
-
 
   public JobSubmission fallbackAdducts(List<String> fallbackAdducts) {
     
@@ -202,7 +200,6 @@ public class JobSubmission {
     this.fallbackAdducts = fallbackAdducts;
   }
 
-
   public JobSubmission enforcedAdducts(List<String> enforcedAdducts) {
     
     this.enforcedAdducts = enforcedAdducts;
@@ -235,7 +232,6 @@ public class JobSubmission {
   public void setEnforcedAdducts(List<String> enforcedAdducts) {
     this.enforcedAdducts = enforcedAdducts;
   }
-
 
   public JobSubmission detectableAdducts(List<String> detectableAdducts) {
     
@@ -270,7 +266,6 @@ public class JobSubmission {
     this.detectableAdducts = detectableAdducts;
   }
 
-
   public JobSubmission recompute(Boolean recompute) {
     
     this.recompute = recompute;
@@ -295,7 +290,6 @@ public class JobSubmission {
   public void setRecompute(Boolean recompute) {
     this.recompute = recompute;
   }
-
 
   public JobSubmission spectraSearchParams(SpectralLibrarySearch spectraSearchParams) {
     
@@ -322,7 +316,6 @@ public class JobSubmission {
     this.spectraSearchParams = spectraSearchParams;
   }
 
-
   public JobSubmission formulaIdParams(Sirius formulaIdParams) {
     
     this.formulaIdParams = formulaIdParams;
@@ -347,7 +340,6 @@ public class JobSubmission {
   public void setFormulaIdParams(Sirius formulaIdParams) {
     this.formulaIdParams = formulaIdParams;
   }
-
 
   public JobSubmission zodiacParams(Zodiac zodiacParams) {
     
@@ -374,7 +366,6 @@ public class JobSubmission {
     this.zodiacParams = zodiacParams;
   }
 
-
   public JobSubmission fingerprintPredictionParams(FingerprintPrediction fingerprintPredictionParams) {
     
     this.fingerprintPredictionParams = fingerprintPredictionParams;
@@ -399,7 +390,6 @@ public class JobSubmission {
   public void setFingerprintPredictionParams(FingerprintPrediction fingerprintPredictionParams) {
     this.fingerprintPredictionParams = fingerprintPredictionParams;
   }
-
 
   public JobSubmission canopusParams(Canopus canopusParams) {
     
@@ -426,7 +416,6 @@ public class JobSubmission {
     this.canopusParams = canopusParams;
   }
 
-
   public JobSubmission structureDbSearchParams(StructureDbSearch structureDbSearchParams) {
     
     this.structureDbSearchParams = structureDbSearchParams;
@@ -452,7 +441,6 @@ public class JobSubmission {
     this.structureDbSearchParams = structureDbSearchParams;
   }
 
-
   public JobSubmission msNovelistParams(MsNovelist msNovelistParams) {
     
     this.msNovelistParams = msNovelistParams;
@@ -477,7 +465,6 @@ public class JobSubmission {
   public void setMsNovelistParams(MsNovelist msNovelistParams) {
     this.msNovelistParams = msNovelistParams;
   }
-
 
   public JobSubmission configMap(Map<String, String> configMap) {
     

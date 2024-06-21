@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Zodiac.JSON_PROPERTY_EDGE_FILTER_THRESHOLDS,
   Zodiac.JSON_PROPERTY_GIBBS_SAMPLER_PARAMETERS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class Zodiac {
   public static final String JSON_PROPERTY_ENABLED = "enabled";
   private Boolean enabled;
@@ -84,7 +84,6 @@ public class Zodiac {
     this.enabled = enabled;
   }
 
-
   public Zodiac consideredCandidatesAt300Mz(Integer consideredCandidatesAt300Mz) {
     
     this.consideredCandidatesAt300Mz = consideredCandidatesAt300Mz;
@@ -109,7 +108,6 @@ public class Zodiac {
   public void setConsideredCandidatesAt300Mz(Integer consideredCandidatesAt300Mz) {
     this.consideredCandidatesAt300Mz = consideredCandidatesAt300Mz;
   }
-
 
   public Zodiac consideredCandidatesAt800Mz(Integer consideredCandidatesAt800Mz) {
     
@@ -136,7 +134,6 @@ public class Zodiac {
     this.consideredCandidatesAt800Mz = consideredCandidatesAt800Mz;
   }
 
-
   public Zodiac runInTwoSteps(Boolean runInTwoSteps) {
     
     this.runInTwoSteps = runInTwoSteps;
@@ -162,7 +159,6 @@ public class Zodiac {
     this.runInTwoSteps = runInTwoSteps;
   }
 
-
   public Zodiac edgeFilterThresholds(ZodiacEdgeFilterThresholds edgeFilterThresholds) {
     
     this.edgeFilterThresholds = edgeFilterThresholds;
@@ -187,7 +183,6 @@ public class Zodiac {
   public void setEdgeFilterThresholds(ZodiacEdgeFilterThresholds edgeFilterThresholds) {
     this.edgeFilterThresholds = edgeFilterThresholds;
   }
-
 
   public Zodiac gibbsSamplerParameters(ZodiacEpochs gibbsSamplerParameters) {
     

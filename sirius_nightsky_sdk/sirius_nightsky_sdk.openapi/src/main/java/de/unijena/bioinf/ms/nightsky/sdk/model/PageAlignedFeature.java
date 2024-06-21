@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -35,17 +35,17 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonPropertyOrder({
   PageAlignedFeature.JSON_PROPERTY_TOTAL_PAGES,
   PageAlignedFeature.JSON_PROPERTY_TOTAL_ELEMENTS,
+  PageAlignedFeature.JSON_PROPERTY_LAST,
+  PageAlignedFeature.JSON_PROPERTY_FIRST,
   PageAlignedFeature.JSON_PROPERTY_SIZE,
   PageAlignedFeature.JSON_PROPERTY_CONTENT,
   PageAlignedFeature.JSON_PROPERTY_NUMBER,
   PageAlignedFeature.JSON_PROPERTY_SORT,
-  PageAlignedFeature.JSON_PROPERTY_FIRST,
-  PageAlignedFeature.JSON_PROPERTY_LAST,
   PageAlignedFeature.JSON_PROPERTY_NUMBER_OF_ELEMENTS,
   PageAlignedFeature.JSON_PROPERTY_PAGEABLE,
   PageAlignedFeature.JSON_PROPERTY_EMPTY
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class PageAlignedFeature {
   public static final String JSON_PROPERTY_TOTAL_PAGES = "totalPages";
   private Integer totalPages;
@@ -53,23 +53,23 @@ public class PageAlignedFeature {
   public static final String JSON_PROPERTY_TOTAL_ELEMENTS = "totalElements";
   private Long totalElements;
 
+  public static final String JSON_PROPERTY_LAST = "last";
+  private Boolean last;
+
+  public static final String JSON_PROPERTY_FIRST = "first";
+  private Boolean first;
+
   public static final String JSON_PROPERTY_SIZE = "size";
   private Integer size;
 
   public static final String JSON_PROPERTY_CONTENT = "content";
-  private List<AlignedFeature> content;
+  private List<AlignedFeature> content = new ArrayList<>();
 
   public static final String JSON_PROPERTY_NUMBER = "number";
   private Integer number;
 
   public static final String JSON_PROPERTY_SORT = "sort";
   private SortObject sort;
-
-  public static final String JSON_PROPERTY_FIRST = "first";
-  private Boolean first;
-
-  public static final String JSON_PROPERTY_LAST = "last";
-  private Boolean last;
 
   public static final String JSON_PROPERTY_NUMBER_OF_ELEMENTS = "numberOfElements";
   private Integer numberOfElements;
@@ -108,7 +108,6 @@ public class PageAlignedFeature {
     this.totalPages = totalPages;
   }
 
-
   public PageAlignedFeature totalElements(Long totalElements) {
     
     this.totalElements = totalElements;
@@ -134,6 +133,55 @@ public class PageAlignedFeature {
     this.totalElements = totalElements;
   }
 
+  public PageAlignedFeature last(Boolean last) {
+    
+    this.last = last;
+    return this;
+  }
+
+   /**
+   * Get last
+   * @return last
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_LAST)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isLast() {
+    return last;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_LAST)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setLast(Boolean last) {
+    this.last = last;
+  }
+
+  public PageAlignedFeature first(Boolean first) {
+    
+    this.first = first;
+    return this;
+  }
+
+   /**
+   * Get first
+   * @return first
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_FIRST)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isFirst() {
+    return first;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_FIRST)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setFirst(Boolean first) {
+    this.first = first;
+  }
 
   public PageAlignedFeature size(Integer size) {
     
@@ -159,7 +207,6 @@ public class PageAlignedFeature {
   public void setSize(Integer size) {
     this.size = size;
   }
-
 
   public PageAlignedFeature content(List<AlignedFeature> content) {
     
@@ -194,7 +241,6 @@ public class PageAlignedFeature {
     this.content = content;
   }
 
-
   public PageAlignedFeature number(Integer number) {
     
     this.number = number;
@@ -219,7 +265,6 @@ public class PageAlignedFeature {
   public void setNumber(Integer number) {
     this.number = number;
   }
-
 
   public PageAlignedFeature sort(SortObject sort) {
     
@@ -246,59 +291,6 @@ public class PageAlignedFeature {
     this.sort = sort;
   }
 
-
-  public PageAlignedFeature first(Boolean first) {
-    
-    this.first = first;
-    return this;
-  }
-
-   /**
-   * Get first
-   * @return first
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_FIRST)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Boolean isFirst() {
-    return first;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_FIRST)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setFirst(Boolean first) {
-    this.first = first;
-  }
-
-
-  public PageAlignedFeature last(Boolean last) {
-    
-    this.last = last;
-    return this;
-  }
-
-   /**
-   * Get last
-   * @return last
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_LAST)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Boolean isLast() {
-    return last;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_LAST)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setLast(Boolean last) {
-    this.last = last;
-  }
-
-
   public PageAlignedFeature numberOfElements(Integer numberOfElements) {
     
     this.numberOfElements = numberOfElements;
@@ -324,7 +316,6 @@ public class PageAlignedFeature {
     this.numberOfElements = numberOfElements;
   }
 
-
   public PageAlignedFeature pageable(PageableObject pageable) {
     
     this.pageable = pageable;
@@ -349,7 +340,6 @@ public class PageAlignedFeature {
   public void setPageable(PageableObject pageable) {
     this.pageable = pageable;
   }
-
 
   public PageAlignedFeature empty(Boolean empty) {
     
@@ -387,12 +377,12 @@ public class PageAlignedFeature {
     PageAlignedFeature pageAlignedFeature = (PageAlignedFeature) o;
     return Objects.equals(this.totalPages, pageAlignedFeature.totalPages) &&
         Objects.equals(this.totalElements, pageAlignedFeature.totalElements) &&
+        Objects.equals(this.last, pageAlignedFeature.last) &&
+        Objects.equals(this.first, pageAlignedFeature.first) &&
         Objects.equals(this.size, pageAlignedFeature.size) &&
         Objects.equals(this.content, pageAlignedFeature.content) &&
         Objects.equals(this.number, pageAlignedFeature.number) &&
         Objects.equals(this.sort, pageAlignedFeature.sort) &&
-        Objects.equals(this.first, pageAlignedFeature.first) &&
-        Objects.equals(this.last, pageAlignedFeature.last) &&
         Objects.equals(this.numberOfElements, pageAlignedFeature.numberOfElements) &&
         Objects.equals(this.pageable, pageAlignedFeature.pageable) &&
         Objects.equals(this.empty, pageAlignedFeature.empty);
@@ -400,7 +390,7 @@ public class PageAlignedFeature {
 
   @Override
   public int hashCode() {
-    return Objects.hash(totalPages, totalElements, size, content, number, sort, first, last, numberOfElements, pageable, empty);
+    return Objects.hash(totalPages, totalElements, last, first, size, content, number, sort, numberOfElements, pageable, empty);
   }
 
   @Override
@@ -409,12 +399,12 @@ public class PageAlignedFeature {
     sb.append("class PageAlignedFeature {\n");
     sb.append("    totalPages: ").append(toIndentedString(totalPages)).append("\n");
     sb.append("    totalElements: ").append(toIndentedString(totalElements)).append("\n");
+    sb.append("    last: ").append(toIndentedString(last)).append("\n");
+    sb.append("    first: ").append(toIndentedString(first)).append("\n");
     sb.append("    size: ").append(toIndentedString(size)).append("\n");
     sb.append("    content: ").append(toIndentedString(content)).append("\n");
     sb.append("    number: ").append(toIndentedString(number)).append("\n");
     sb.append("    sort: ").append(toIndentedString(sort)).append("\n");
-    sb.append("    first: ").append(toIndentedString(first)).append("\n");
-    sb.append("    last: ").append(toIndentedString(last)).append("\n");
     sb.append("    numberOfElements: ").append(toIndentedString(numberOfElements)).append("\n");
     sb.append("    pageable: ").append(toIndentedString(pageable)).append("\n");
     sb.append("    empty: ").append(toIndentedString(empty)).append("\n");

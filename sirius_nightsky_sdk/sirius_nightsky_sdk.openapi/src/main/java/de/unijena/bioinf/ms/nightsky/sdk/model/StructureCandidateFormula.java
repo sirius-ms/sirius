@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -48,7 +48,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StructureCandidateFormula.JSON_PROPERTY_ADDUCT,
   StructureCandidateFormula.JSON_PROPERTY_FORMULA_ID
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class StructureCandidateFormula {
   public static final String JSON_PROPERTY_INCHI_KEY = "inchiKey";
   private String inchiKey;
@@ -120,7 +120,6 @@ public class StructureCandidateFormula {
     this.inchiKey = inchiKey;
   }
 
-
   public StructureCandidateFormula smiles(String smiles) {
     
     this.smiles = smiles;
@@ -145,7 +144,6 @@ public class StructureCandidateFormula {
   public void setSmiles(String smiles) {
     this.smiles = smiles;
   }
-
 
   public StructureCandidateFormula structureName(String structureName) {
     
@@ -172,7 +170,6 @@ public class StructureCandidateFormula {
     this.structureName = structureName;
   }
 
-
   public StructureCandidateFormula xlogP(Double xlogP) {
     
     this.xlogP = xlogP;
@@ -197,7 +194,6 @@ public class StructureCandidateFormula {
   public void setXlogP(Double xlogP) {
     this.xlogP = xlogP;
   }
-
 
   public StructureCandidateFormula dbLinks(List<DBLink> dbLinks) {
     
@@ -232,7 +228,6 @@ public class StructureCandidateFormula {
     this.dbLinks = dbLinks;
   }
 
-
   public StructureCandidateFormula spectralLibraryMatches(List<SpectralLibraryMatch> spectralLibraryMatches) {
     
     this.spectralLibraryMatches = spectralLibraryMatches;
@@ -266,7 +261,6 @@ public class StructureCandidateFormula {
     this.spectralLibraryMatches = spectralLibraryMatches;
   }
 
-
   public StructureCandidateFormula rank(Integer rank) {
     
     this.rank = rank;
@@ -291,7 +285,6 @@ public class StructureCandidateFormula {
   public void setRank(Integer rank) {
     this.rank = rank;
   }
-
 
   public StructureCandidateFormula csiScore(Double csiScore) {
     
@@ -318,7 +311,6 @@ public class StructureCandidateFormula {
     this.csiScore = csiScore;
   }
 
-
   public StructureCandidateFormula tanimotoSimilarity(Double tanimotoSimilarity) {
     
     this.tanimotoSimilarity = tanimotoSimilarity;
@@ -343,7 +335,6 @@ public class StructureCandidateFormula {
   public void setTanimotoSimilarity(Double tanimotoSimilarity) {
     this.tanimotoSimilarity = tanimotoSimilarity;
   }
-
 
   public StructureCandidateFormula mcesDistToTopHit(Double mcesDistToTopHit) {
     
@@ -370,7 +361,6 @@ public class StructureCandidateFormula {
     this.mcesDistToTopHit = mcesDistToTopHit;
   }
 
-
   public StructureCandidateFormula fingerprint(BinaryFingerprint fingerprint) {
     
     this.fingerprint = fingerprint;
@@ -395,7 +385,6 @@ public class StructureCandidateFormula {
   public void setFingerprint(BinaryFingerprint fingerprint) {
     this.fingerprint = fingerprint;
   }
-
 
   public StructureCandidateFormula molecularFormula(String molecularFormula) {
     
@@ -422,7 +411,6 @@ public class StructureCandidateFormula {
     this.molecularFormula = molecularFormula;
   }
 
-
   public StructureCandidateFormula adduct(String adduct) {
     
     this.adduct = adduct;
@@ -447,7 +435,6 @@ public class StructureCandidateFormula {
   public void setAdduct(String adduct) {
     this.adduct = adduct;
   }
-
 
   public StructureCandidateFormula formulaId(String formulaId) {
     

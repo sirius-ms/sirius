@@ -27,7 +27,7 @@ import org.springframework.http.ResponseEntity;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class LoginAndAccountApi {
     private ApiClient apiClient;
 
@@ -67,7 +67,7 @@ public class LoginAndAccountApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeSubs", includeSubs));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -342,7 +342,7 @@ public class LoginAndAccountApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "acceptTerms", acceptTerms));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "failWhenLoggedIn", failWhenLoggedIn));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeSubs", includeSubs));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -545,7 +545,7 @@ public class LoginAndAccountApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "sid", sid));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
