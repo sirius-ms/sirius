@@ -36,6 +36,11 @@ import de.unijena.bioinf.lcms.align.MoI;
 import de.unijena.bioinf.lcms.projectspace.SiriusProjectDocumentDbAdapter;
 import de.unijena.bioinf.lcms.quality.QualityAssessment;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
+import de.unijena.bioinf.lcms.trace.filter.GaussFilter;
+import de.unijena.bioinf.lcms.trace.filter.NoFilter;
+import de.unijena.bioinf.lcms.trace.filter.WaveletFilter;
+import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
+import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
@@ -50,6 +55,7 @@ import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
+import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.projectspace.NoSQLInstance;
@@ -74,11 +80,26 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     protected final List<NoSQLInstance> importedCompounds = new ArrayList<>();
     private final IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier;
 
-    private final Set<PrecursorIonType> ionTypes ;
+    private final Set<PrecursorIonType> ionTypes;
+
+    private final TraceSegmentationStrategy mergedTraceSegmenter;
 
 
     public LcmsAlignSubToolJobNoSql(InputFilesOptions input, @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier, LcmsAlignOptions options, Set<PrecursorIonType> ionTypes) {
-        this(input.msInput.msParserfiles.keySet().stream().sorted().collect(Collectors.toList()), projectSupplier, ionTypes);
+        this(input.msInput.msParserfiles.keySet().stream().sorted().collect(Collectors.toList()), projectSupplier, options, ionTypes);
+    }
+
+    public LcmsAlignSubToolJobNoSql(@NotNull List<Path> inputFiles, @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier, LcmsAlignOptions options, Set<PrecursorIonType> ionTypes) {
+        super();
+        this.inputFiles = inputFiles;
+        this.projectSupplier = projectSupplier;
+        this.ionTypes = ionTypes;
+        this.mergedTraceSegmenter = new PersistentHomology(switch (options.filter) {
+            case AUTO -> inputFiles.size() < 3 ? new WaveletFilter(20, 11) : new NoFilter();
+            case NOFILTER -> new NoFilter();
+            case GAUSSIAN -> new GaussFilter(options.sigma);
+            case WAVELET -> new WaveletFilter(options.scaleLevel, options.waveletWindow);
+        }, options.noiseCoefficient, options.persistenceCoefficient, options.mergeCoefficient);
     }
 
     public LcmsAlignSubToolJobNoSql(@NotNull List<Path> inputFiles, @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier, Set<PrecursorIonType> ionTypes) {
@@ -86,6 +107,10 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         this.inputFiles = inputFiles;
         this.projectSupplier = projectSupplier;
         this.ionTypes = ionTypes;
+        this.mergedTraceSegmenter = new PersistentHomology(
+                inputFiles.size() < 3 ? new WaveletFilter(20, 11) : new NoFilter(),
+             2.0, 0.1, 0.8
+        );
     }
 
     @Override
@@ -96,16 +121,17 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         Database<?> store = space.getProject().getStorage();
 
         LCMSProcessing processing = new LCMSProcessing(new SiriusProjectDocumentDbAdapter(ps));
+        processing.setMergedTraceSegmentationStrategy(mergedTraceSegmenter);
 
         {
 
-            List<BasicJJob<de.unijena.bioinf.lcms.trace.ProcessedSample>> jobs = new ArrayList<>();
+            List<BasicJJob<ProcessedSample>> jobs = new ArrayList<>();
             int atmost = Integer.MAX_VALUE;
             for (Path f : inputFiles) {
                 if (--atmost < 0) break;
-                jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<de.unijena.bioinf.lcms.trace.ProcessedSample>() {
+                jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<ProcessedSample>() {
                     @Override
-                    protected de.unijena.bioinf.lcms.trace.ProcessedSample compute() throws Exception {
+                    protected ProcessedSample compute() throws Exception {
                         ProcessedSample sample = processing.processSample(f);
                         int hasIsotopes = 0, hasNoIsotopes = 0;
                         for (MoI m : sample.getStorage().getAlignmentStorage()) {
@@ -130,10 +156,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         DoubleArrayList avgAl = new DoubleArrayList();
         System.out.println("AVERAGE = " + avgAl.doubleStream().sum() / avgAl.size());
         System.out.println("Good Traces = " + avgAl.doubleStream().filter(x -> x >= 5).sum());
-//            processing.exportFeaturesToFiles(merged, bac);
 
-        // TODO check intensity normalization in aligned features
-        // FIXME mz in aligned features is weird
         processing.extractFeaturesAndExportToProjectSpace(merged, bac);
 
         assert store.countAll(MergedLCMSRun.class) == 1;
@@ -241,9 +264,9 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                         Lowest Quality Al. Features: %d
                        \s""",
                 store.countAll(LCMSRun.class), store.countAll(Scan.class), store.countAll(MSMSScan.class),
-                store.countAll(SourceTrace.class), store.countAll(de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace.class),
-                store.countAll(de.unijena.bioinf.ms.persistence.model.core.feature.Feature.class), store.countAll(AlignedIsotopicFeatures.class), store.countAll(AlignedFeatures.class),
-                store.findAllStr(de.unijena.bioinf.ms.persistence.model.core.feature.Feature.class).map(Feature::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
+                store.countAll(SourceTrace.class), store.countAll(MergedTrace.class),
+                store.countAll(Feature.class), store.countAll(AlignedIsotopicFeatures.class), store.countAll(AlignedFeatures.class),
+                store.findAllStr(Feature.class).map(Feature::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
                 store.findAllStr(AlignedIsotopicFeatures.class).map(AlignedIsotopicFeatures::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
                 store.findAllStr(AlignedFeatures.class).map(AlignedFeatures::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
                 countMap.get(DataQuality.GOOD), countMap.get(DataQuality.DECENT), countMap.get(DataQuality.BAD), countMap.get(DataQuality.LOWEST)
