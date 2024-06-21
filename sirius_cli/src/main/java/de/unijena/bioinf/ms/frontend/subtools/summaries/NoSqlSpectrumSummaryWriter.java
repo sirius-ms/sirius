@@ -40,19 +40,19 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
             "querySpectrumScanNumber\t" +
             "querySpectrumMsLevel\t" +
             "querySpectrumCE\t" +
-            "querySpectrumAdduct\t" +
+            "querySpectrumIonization\t" + //todo this is proably just the charge?
             "similarity\t" +
             "sharedPeaks\t" +
-            "msLevel\t" +
-            "collisionEnergy\t" +
-            "precursorIonType\t" +
-            "precursorMz\t" +
-            "instrument\t" +
-            "InChIKey\t" +
-            "smiles\t" +
-            "splash\t" +
-            "name\t" +
-            "dbName\t" +
+            "referenceMsLevel\t" +
+            "referenceCE\t" +
+            "referenceAdduct\t" +
+            "referencePrecursorMz\t" +
+            "referenceInstrument\t" +
+            "referenceInChIKey\t" +
+            "referenceSmiles\t" +
+            "referenceSplash\t" +
+            "referenceName\t" +
+            "referenceDbName\t" +
             // metadata for mapping
             "ionMass\t" +
             "retentionTimeInSeconds\t" +
@@ -90,7 +90,7 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
         writeSep();
 
         if (query.getIonization() != null)
-            w.write(query.getIonization().toString());
+            w.write(query.getIonization().toString()); //todo this is proably just the charge?
         writeSep();
 
         w.write(String.format(DOUBLE_FORMAT, 100 * match.getSimilarity().similarity));
