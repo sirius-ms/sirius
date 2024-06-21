@@ -56,20 +56,47 @@ public class PersistentHomology implements TraceSegmentationStrategy {
 
     private final Filter filter;
 
-    private final boolean highPrecisionMode;
+    /**
+     * Feature intensity must be large than {@code noiseCoefficient * noiseLevel}
+     */
+    private final double noiseCoefficient;
+
+    /**
+     * Keep only features with more than {@code persistencecoefficent * max intensity} persistence
+     */
+    private final double persistenceCoefficient;
+
+    /**
+     * Merge neighboring features with less than {@code mergeCoefficient * feature intensity}.
+     */
+    private final double mergeCoefficient;
+
+    /**
+     * Trim features to {@code trim * standard deviation}. (Assumes features to be Gaussian-like.)
+     */
+    private final double trim = 3d;
 
     public PersistentHomology() {
-        this(new NoFilter());
+        this(new NoFilter(), 2.0, 0.1, 0.8);
     }
 
-    public PersistentHomology(Filter filter) {
+    public PersistentHomology(Filter filter, double noiseCoefficient, double persistenceCoefficient, double mergeCoefficient) {
         this.filter = filter;
-        this.highPrecisionMode = false;
+
+        if (noiseCoefficient < 0)
+            throw new IllegalArgumentException("noiseCoefficient must be >= 0! (was " + noiseCoefficient + ")");
+        if (persistenceCoefficient < 0 || persistenceCoefficient > 1)
+            throw new IllegalArgumentException("persistenceCoefficient must be >= 0 and <= 1! (was " + persistenceCoefficient + ")");
+        if (mergeCoefficient < 0 || mergeCoefficient > 1)
+            throw new IllegalArgumentException("mergeCoefficient must be >= 0 and <= 1! (was " + mergeCoefficient + ")");
+
+        this.noiseCoefficient = noiseCoefficient;
+        this.persistenceCoefficient = persistenceCoefficient;
+        this.mergeCoefficient = mergeCoefficient;
     }
 
     public PersistentHomology(boolean highPrecisionMode) {
-        this.highPrecisionMode = highPrecisionMode;
-        this.filter = new NoFilter();
+        this(new NoFilter(), highPrecisionMode ? 1.0 : 2.0, highPrecisionMode ? 0.01 : 0.1, highPrecisionMode ? 0.95 : 0.8);
     }
 
     @Getter
@@ -109,11 +136,22 @@ public class PersistentHomology implements TraceSegmentationStrategy {
         private final float[] intensities;
         private final int offset;
 
+        @Getter
+        private float apexIntensity;
+
         public TraceIntensityArray(Trace trace, Filter filter) {
             this.trace = trace;
             this.offset = trace.startId();
             this.filter = filter;
             this.intensities = filter();
+            if (intensities != null) {
+                this.apexIntensity = 0;
+                for (float i : intensities) {
+                    apexIntensity = Math.max(apexIntensity, i);
+                }
+            } else {
+                this.apexIntensity = trace.apexIntensity();
+            }
         }
 
         private float[] filter() {
@@ -125,6 +163,10 @@ public class PersistentHomology implements TraceSegmentationStrategy {
 
         public float get(int index) {
             if (intensities!=null) return intensities[index];
+            return trace.intensity(index+offset);
+        }
+
+        public float unfiltered(int index) {
             return trace.intensity(index+offset);
         }
 
@@ -178,16 +220,17 @@ public class PersistentHomology implements TraceSegmentationStrategy {
         }
     }
 
-    private static List<Segment> computePersistentHomology(Trace trace, Filter filter, double intensityThreshold, double persistenceThresholdValue, double noisePercentile, double slopeThreshold, double trim) {
-        if (trace.apexIntensity() < intensityThreshold) return Collections.emptyList();
+    private List<Segment> computePersistentHomology(Trace trace, Filter filter, double noiseLevel) {
+        if (trace.apexIntensity() < noiseCoefficient * noiseLevel) return Collections.emptyList();
+
         final TraceIntensityArray seq = new TraceIntensityArray(trace, filter);
+
         List<Segment> peaks = new ArrayList<>();
         int[] idx2Peak = new int[seq.size()];
         Arrays.fill(idx2Peak, -1);
         IntList indices = new IntArrayList(IntStream.range(0, seq.size()).toArray());
         indices.sort((a, b) -> Double.compare(seq.get(b), seq.get(a)));
-        // get 10% percentile
-        final double persistenceThreshold = Math.max(persistenceThresholdValue, seq.get(indices.getInt((int)Math.floor(indices.size()*(1-noisePercentile)))));
+
         for (int idx : indices) {
             boolean leftDone = (idx > 0 && idx2Peak[idx - 1] > -1);
             boolean rightDone = (idx < seq.size() - 1 && idx2Peak[idx + 1] > -1);
@@ -252,10 +295,10 @@ public class PersistentHomology implements TraceSegmentationStrategy {
             Segment last = merged.get(merged.size() - 1);
             // do not merge two consecutive peaks if:
             // 1. there is a gap between both peaks
-            // 2. the valley intensity is low (either below the int threshold or half max)
+            // 2. the valley intensity is low (either below the int threshold or mergeCoeff * max int)
             if (last.getRight() < current.getLeft() ||
-                    seq.get(current.getLeft()) < intensityThreshold ||
-                    seq.get(current.getLeft()) < slopeThreshold * seq.get(current.getBorn())
+                    seq.get(current.getLeft()) < noiseCoefficient * noiseLevel ||
+                    seq.get(current.getLeft()) < mergeCoefficient * seq.get(current.getBorn())
             ) {
                 merged.add(current);
             } else {
@@ -272,8 +315,11 @@ public class PersistentHomology implements TraceSegmentationStrategy {
         }
         // sort peaks by persistence
         merged.sort((a, b) -> Double.compare(getPersistence(b, seq), getPersistence(a, seq)));
-        // delete all peaks which have a persistence lower the threshold
-        if (persistenceThreshold > 0 && merged.size()>1) merged.removeIf(x->getPersistence(x, seq)<persistenceThreshold);
+        // delete all peaks which have a persistence lower the persistence threshold
+        if (merged.size()>1) merged.removeIf(x -> getPersistence(x, seq) < persistenceCoefficient * seq.get(indices.getInt(0)));
+        // delete all peaks below the intensity threshold
+        merged.removeIf(x -> IntStream.range(x.getLeft(), x.getRight() + 1).mapToDouble(seq::unfiltered).max().orElse(0) < noiseCoefficient * noiseLevel);
+
         return merged;
     }
 
@@ -286,10 +332,9 @@ public class PersistentHomology implements TraceSegmentationStrategy {
     }
 
     @Override
-    public List<TraceSegment> detectSegments(Trace trace, double intensityThreshold) {
+    public List<TraceSegment> detectSegments(Trace trace, double noiseLevel) {
         final int offset=trace.startId();
-        return computePersistentHomology(trace, filter, highPrecisionMode ? intensityThreshold : 2*intensityThreshold, highPrecisionMode ? 2*intensityThreshold : 5*intensityThreshold,
-                highPrecisionMode ? 0.01 : 0.1, highPrecisionMode ? 0.95 : 0.8, 3d).stream().map(seg->
+        return computePersistentHomology(trace, filter, noiseLevel).stream().map(seg->
                 TraceSegment.createSegmentFor(trace, seg.left+offset, seg.right+offset)
         ).toList();
     }
