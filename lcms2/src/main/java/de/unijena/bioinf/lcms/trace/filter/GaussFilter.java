@@ -20,8 +20,6 @@
 
 package de.unijena.bioinf.lcms.trace.filter;
 
-import java.util.Arrays;
-
 /**
  * Gaussian convolution for one dimensional arrays.
  */
@@ -30,6 +28,8 @@ public class GaussFilter implements Filter {
     private final double[] kernel;
 
     public GaussFilter(double sigma) {
+        if (sigma <= 0)
+            throw new IllegalArgumentException("sigma must be > 0! (was " + sigma + ")");
         this.kernel = computeKernel(sigma);
     }
 

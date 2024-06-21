@@ -96,18 +96,26 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
 
         // if there is no compound found in the trace...
         if (traceSegments.length==0) return new AlignedFeatures[0];
-        // now project these segments onto the raw sources
-        TraceSegment[][] rawSegments = segmentationStrategy.extractProjectedSegments(mergedSample, mergedTrace, traceSegments);
-        // remove merged segments that do not have a single supported segment
-        for (int i=0; i < traceSegments.length; ++i) {
-            int count=0;
-            for (int j=0; j < rawSegments.length; ++j) {
-                if (rawSegments[j][i]!=null) ++count;
-            }
-            if (count<=0) {
-                // delete trace segment
-                // todo: better join them instead of deleting them
-                traceSegments[i]=null;
+
+        TraceSegment[][] rawSegments;
+        if (mergedTrace.getSamples().length == 1) {
+            // do not project if samples.size == 1! -> just copy the trace segments
+            rawSegments = new TraceSegment[1][];
+            rawSegments[0] = Arrays.copyOf(traceSegments, traceSegments.length);
+        } else {
+            // now project these segments onto the raw sources
+            rawSegments = segmentationStrategy.extractProjectedSegments(mergedSample, mergedTrace, traceSegments);
+            // remove merged segments that do not have a single supported segment
+            for (int i = 0; i < traceSegments.length; ++i) {
+                int count = 0;
+                for (int j = 0; j < rawSegments.length; ++j) {
+                    if (rawSegments[j][i] != null) ++count;
+                }
+                if (count <= 0) {
+                    // delete trace segment
+                    // todo: better join them instead of deleting them
+                    traceSegments[i] = null;
+                }
             }
         }
 

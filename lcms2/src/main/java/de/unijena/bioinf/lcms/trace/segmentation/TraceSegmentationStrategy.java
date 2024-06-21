@@ -7,7 +7,7 @@ import java.util.List;
 
 public interface TraceSegmentationStrategy extends ApexDetection {
 
-    public List<TraceSegment> detectSegments(Trace trace, double intensityThreshold);
+    public List<TraceSegment> detectSegments(Trace trace, double noiseLevel);
 
     public default List<TraceSegment> detectSegments(SampleStats stats, Trace trace) {
         float intensityThreshold = stats.noiseLevel(trace.apex());
