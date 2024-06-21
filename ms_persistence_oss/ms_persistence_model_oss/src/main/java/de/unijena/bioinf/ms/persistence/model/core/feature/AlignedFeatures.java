@@ -68,7 +68,7 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
      */
     private String name;
     /**
-     * A feature id given some external tool. Not used internally but needs to be stored to make it easier to map outputs back.
+     * A feature id given by some external tool. Not used internally but needs to be stored to make it easier to map outputs back.
      */
     private String externalFeatureId;
 
@@ -98,7 +98,7 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
         return singleton(feature, msData1);
     }
     public static AlignedFeatures singleton(Feature feature, @Nullable MSData msData) {
-        return AlignedFeatures.builder()
+        AlignedFeaturesBuilder<?, ?> builder = AlignedFeatures.builder()
                 .features(List.of(feature))
                 .averageMass(feature.averageMass)
                 .apexMass(feature.apexMass)
@@ -107,8 +107,12 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
                 .detectedAdducts(new DetectedAdducts())
                 .charge(feature.getCharge())
                 .retentionTime(feature.retentionTime)
-                .msData(msData)
-                .build();
+                .msData(msData);
+        if (msData != null) {
+            builder.hasMs1(msData.getMergedMs1Spectrum() != null);
+            builder.hasMsMs((msData.getMsnSpectra() != null && !msData.getMsnSpectra().isEmpty()) || (msData.getMergedMSnSpectrum() != null));
+        }
+        return builder.build();
     }
 
 
