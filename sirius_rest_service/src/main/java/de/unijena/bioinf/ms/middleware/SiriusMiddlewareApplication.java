@@ -54,6 +54,7 @@ import org.springframework.boot.web.context.WebServerInitializedEvent;
 import org.springframework.boot.web.context.WebServerPortFileWriter;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
+import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import picocli.CommandLine;
 
 import java.io.BufferedReader;
@@ -64,6 +65,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+import static org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO;
+
+@EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)
 @SpringBootApplication
 @OpenAPIDefinition
 @Slf4j
