@@ -40,22 +40,23 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
             "querySpectrumScanNumber\t" +
             "querySpectrumMsLevel\t" +
             "querySpectrumCE\t" +
-            "querySpectrumIonization\t" +
+            "querySpectrumIonization\t" + //todo this is proably just the charge?
             "similarity\t" +
             "sharedPeaks\t" +
-            "msLevel\t" +
-            "collisionEnergy\t" +
-            "precursorIonType\t" +
-            "precursorMz\t" +
-            "instrument\t" +
-            "InChIKey\t" +
-            "SMILES\t" +
-            "SPLASH\t" +
-            "name\t" +
-            "dbName\t" +
+            "referenceMsLevel\t" +
+            "referenceCE\t" +
+            "referenceAdduct\t" +
+            "referencePrecursorMz\t" +
+            "referenceInstrument\t" +
+            "referenceInChIKey\t" +
+            "referenceSmiles\t" +
+            "referenceSplash\t" +
+            "referenceName\t" +
+            "referenceDbName\t" +
             // metadata for mapping
             "ionMass\t" +
             "retentionTimeInSeconds\t" +
+            "retentionTimeInMinutes\t" +
             "alignedFeatureId\t" +
             "providedFeatureId";
 
@@ -89,7 +90,7 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
         writeSep();
 
         if (query.getIonization() != null)
-            w.write(query.getIonization().toString());
+            w.write(query.getIonization().toString()); //todo this is proably just the charge?
         writeSep();
 
         w.write(String.format(DOUBLE_FORMAT, 100 * match.getSimilarity().similarity));
@@ -134,6 +135,8 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
         w.write(String.format(DOUBLE_FORMAT, f.getAverageMass()));
         writeSep();
         w.write(Optional.ofNullable(f.getRetentionTime()).map(rt -> String.format("%.0f", rt.getMiddleTime())).orElse(""));
+        writeSep();
+        w.write(Optional.ofNullable(f.getRetentionTime()).map(rt -> String.format("%.2f", rt.getMiddleTime() / 60d)).orElse(""));
         writeSep();
         w.write(String.format(LONG_FORMAT, match.getAlignedFeatureId()));
         writeSep();
