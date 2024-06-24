@@ -891,6 +891,205 @@ public class ProjectsApi {
         return importMsRunDataAsJobRequestCreation(projectId, alignRuns, allowMs1Only, optFields, inputFiles);
     }
     /**
+     * Import and Align full MS-Runs from various formats into the specified project as background job.
+     * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.   DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.
+     * <p><b>200</b> - the import job.
+     * @param projectId project-space to import into.
+     * @param requestBody The requestBody parameter
+     * @param alignRuns The alignRuns parameter
+     * @param allowMs1Only The allowMs1Only parameter
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return Job
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     * @deprecated
+     */
+    @Deprecated
+    private ResponseSpec importMsRunDataAsJobLocallyRequestCreation(String projectId, List<String> requestBody, Boolean alignRuns, Boolean allowMs1Only, List<JobOptField> optFields) throws WebClientResponseException {
+        Object postBody = requestBody;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling importMsRunDataAsJobLocally", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'requestBody' is set
+        if (requestBody == null) {
+            throw new WebClientResponseException("Missing the required parameter 'requestBody' when calling importMsRunDataAsJobLocally", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignRuns", alignRuns));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "allowMs1Only", allowMs1Only));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { 
+            "application/json"
+        };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/jobs/import/ms-data-local-files-job", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Import and Align full MS-Runs from various formats into the specified project as background job.
+     * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.   DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.
+     * <p><b>200</b> - the import job.
+     * @param projectId project-space to import into.
+     * @param requestBody The requestBody parameter
+     * @param alignRuns The alignRuns parameter
+     * @param allowMs1Only The allowMs1Only parameter
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return Job
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public Job importMsRunDataAsJobLocally(String projectId, List<String> requestBody, Boolean alignRuns, Boolean allowMs1Only, List<JobOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return importMsRunDataAsJobLocallyRequestCreation(projectId, requestBody, alignRuns, allowMs1Only, optFields).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Import and Align full MS-Runs from various formats into the specified project as background job.
+     * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.   DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.
+     * <p><b>200</b> - the import job.
+     * @param projectId project-space to import into.
+     * @param requestBody The requestBody parameter
+     * @param alignRuns The alignRuns parameter
+     * @param allowMs1Only The allowMs1Only parameter
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return ResponseEntity&lt;Job&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Job> importMsRunDataAsJobLocallyWithHttpInfo(String projectId, List<String> requestBody, Boolean alignRuns, Boolean allowMs1Only, List<JobOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return importMsRunDataAsJobLocallyRequestCreation(projectId, requestBody, alignRuns, allowMs1Only, optFields).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Import and Align full MS-Runs from various formats into the specified project as background job.
+     * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.   DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.
+     * <p><b>200</b> - the import job.
+     * @param projectId project-space to import into.
+     * @param requestBody The requestBody parameter
+     * @param alignRuns The alignRuns parameter
+     * @param allowMs1Only The allowMs1Only parameter
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec importMsRunDataAsJobLocallyWithResponseSpec(String projectId, List<String> requestBody, Boolean alignRuns, Boolean allowMs1Only, List<JobOptField> optFields) throws WebClientResponseException {
+        return importMsRunDataAsJobLocallyRequestCreation(projectId, requestBody, alignRuns, allowMs1Only, optFields);
+    }
+    /**
+     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.
+     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.   DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to import into.
+     * @param requestBody files to import into project
+     * @param alignRuns The alignRuns parameter
+     * @param allowMs1Only The allowMs1Only parameter
+     * @return ImportResult
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     * @deprecated
+     */
+    @Deprecated
+    private ResponseSpec importMsRunDataLocallyRequestCreation(String projectId, List<String> requestBody, Boolean alignRuns, Boolean allowMs1Only) throws WebClientResponseException {
+        Object postBody = requestBody;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling importMsRunDataLocally", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'requestBody' is set
+        if (requestBody == null) {
+            throw new WebClientResponseException("Missing the required parameter 'requestBody' when calling importMsRunDataLocally", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignRuns", alignRuns));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "allowMs1Only", allowMs1Only));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { 
+            "application/json"
+        };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/import/ms-local-data-files", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.
+     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.   DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to import into.
+     * @param requestBody files to import into project
+     * @param alignRuns The alignRuns parameter
+     * @param allowMs1Only The allowMs1Only parameter
+     * @return ImportResult
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ImportResult importMsRunDataLocally(String projectId, List<String> requestBody, Boolean alignRuns, Boolean allowMs1Only) throws WebClientResponseException {
+        ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
+        return importMsRunDataLocallyRequestCreation(projectId, requestBody, alignRuns, allowMs1Only).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.
+     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.   DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to import into.
+     * @param requestBody files to import into project
+     * @param alignRuns The alignRuns parameter
+     * @param allowMs1Only The allowMs1Only parameter
+     * @return ResponseEntity&lt;ImportResult&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<ImportResult> importMsRunDataLocallyWithHttpInfo(String projectId, List<String> requestBody, Boolean alignRuns, Boolean allowMs1Only) throws WebClientResponseException {
+        ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
+        return importMsRunDataLocallyRequestCreation(projectId, requestBody, alignRuns, allowMs1Only).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.
+     * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.   DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to import into.
+     * @param requestBody files to import into project
+     * @param alignRuns The alignRuns parameter
+     * @param allowMs1Only The allowMs1Only parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec importMsRunDataLocallyWithResponseSpec(String projectId, List<String> requestBody, Boolean alignRuns, Boolean allowMs1Only) throws WebClientResponseException {
+        return importMsRunDataLocallyRequestCreation(projectId, requestBody, alignRuns, allowMs1Only);
+    }
+    /**
      * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
      * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
      * <p><b>200</b> - OK
@@ -1082,6 +1281,205 @@ public class ProjectsApi {
      */
     public ResponseSpec importPreprocessedDataAsJobWithResponseSpec(String projectId, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
         return importPreprocessedDataAsJobRequestCreation(projectId, ignoreFormulas, allowMs1Only, optFields, inputFiles);
+    }
+    /**
+     * Import ms/ms data from the given format into the specified project-space as background job.
+     * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.   DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.
+     * <p><b>200</b> - the import job.
+     * @param projectId project-space to import into.
+     * @param requestBody The requestBody parameter
+     * @param ignoreFormulas The ignoreFormulas parameter
+     * @param allowMs1Only The allowMs1Only parameter
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return Job
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     * @deprecated
+     */
+    @Deprecated
+    private ResponseSpec importPreprocessedDataAsJobLocallyRequestCreation(String projectId, List<String> requestBody, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields) throws WebClientResponseException {
+        Object postBody = requestBody;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling importPreprocessedDataAsJobLocally", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'requestBody' is set
+        if (requestBody == null) {
+            throw new WebClientResponseException("Missing the required parameter 'requestBody' when calling importPreprocessedDataAsJobLocally", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "ignoreFormulas", ignoreFormulas));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "allowMs1Only", allowMs1Only));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { 
+            "application/json"
+        };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/import/preprocessed-local-data-files-job", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Import ms/ms data from the given format into the specified project-space as background job.
+     * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.   DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.
+     * <p><b>200</b> - the import job.
+     * @param projectId project-space to import into.
+     * @param requestBody The requestBody parameter
+     * @param ignoreFormulas The ignoreFormulas parameter
+     * @param allowMs1Only The allowMs1Only parameter
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return Job
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public Job importPreprocessedDataAsJobLocally(String projectId, List<String> requestBody, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return importPreprocessedDataAsJobLocallyRequestCreation(projectId, requestBody, ignoreFormulas, allowMs1Only, optFields).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Import ms/ms data from the given format into the specified project-space as background job.
+     * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.   DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.
+     * <p><b>200</b> - the import job.
+     * @param projectId project-space to import into.
+     * @param requestBody The requestBody parameter
+     * @param ignoreFormulas The ignoreFormulas parameter
+     * @param allowMs1Only The allowMs1Only parameter
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return ResponseEntity&lt;Job&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<Job> importPreprocessedDataAsJobLocallyWithHttpInfo(String projectId, List<String> requestBody, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields) throws WebClientResponseException {
+        ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
+        return importPreprocessedDataAsJobLocallyRequestCreation(projectId, requestBody, ignoreFormulas, allowMs1Only, optFields).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Import ms/ms data from the given format into the specified project-space as background job.
+     * Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.   DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.
+     * <p><b>200</b> - the import job.
+     * @param projectId project-space to import into.
+     * @param requestBody The requestBody parameter
+     * @param ignoreFormulas The ignoreFormulas parameter
+     * @param allowMs1Only The allowMs1Only parameter
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec importPreprocessedDataAsJobLocallyWithResponseSpec(String projectId, List<String> requestBody, Boolean ignoreFormulas, Boolean allowMs1Only, List<JobOptField> optFields) throws WebClientResponseException {
+        return importPreprocessedDataAsJobLocallyRequestCreation(projectId, requestBody, ignoreFormulas, allowMs1Only, optFields);
+    }
+    /**
+     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.
+     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.   DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to import into.
+     * @param requestBody files to import into project
+     * @param ignoreFormulas The ignoreFormulas parameter
+     * @param allowMs1Only The allowMs1Only parameter
+     * @return ImportResult
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     * @deprecated
+     */
+    @Deprecated
+    private ResponseSpec importPreprocessedDataLocallyRequestCreation(String projectId, List<String> requestBody, Boolean ignoreFormulas, Boolean allowMs1Only) throws WebClientResponseException {
+        Object postBody = requestBody;
+        // verify the required parameter 'projectId' is set
+        if (projectId == null) {
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling importPreprocessedDataLocally", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // verify the required parameter 'requestBody' is set
+        if (requestBody == null) {
+            throw new WebClientResponseException("Missing the required parameter 'requestBody' when calling importPreprocessedDataLocally", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        }
+        // create path and map variables
+        final Map<String, Object> pathParams = new HashMap<String, Object>();
+
+        pathParams.put("projectId", projectId);
+
+        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
+        final HttpHeaders headerParams = new HttpHeaders();
+        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
+        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "ignoreFormulas", ignoreFormulas));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "allowMs1Only", allowMs1Only));
+        
+        final String[] localVarAccepts = { 
+            "application/json"
+        };
+        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
+        final String[] localVarContentTypes = { 
+            "application/json"
+        };
+        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
+
+        String[] localVarAuthNames = new String[] {  };
+
+        ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/import/preprocessed-local-data-files", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+    }
+
+    /**
+     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.
+     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.   DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to import into.
+     * @param requestBody files to import into project
+     * @param ignoreFormulas The ignoreFormulas parameter
+     * @param allowMs1Only The allowMs1Only parameter
+     * @return ImportResult
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ImportResult importPreprocessedDataLocally(String projectId, List<String> requestBody, Boolean ignoreFormulas, Boolean allowMs1Only) throws WebClientResponseException {
+        ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
+        return importPreprocessedDataLocallyRequestCreation(projectId, requestBody, ignoreFormulas, allowMs1Only).bodyToMono(localVarReturnType).block();
+    }
+
+    /**
+     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.
+     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.   DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to import into.
+     * @param requestBody files to import into project
+     * @param ignoreFormulas The ignoreFormulas parameter
+     * @param allowMs1Only The allowMs1Only parameter
+     * @return ResponseEntity&lt;ImportResult&gt;
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseEntity<ImportResult> importPreprocessedDataLocallyWithHttpInfo(String projectId, List<String> requestBody, Boolean ignoreFormulas, Boolean allowMs1Only) throws WebClientResponseException {
+        ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
+        return importPreprocessedDataLocallyRequestCreation(projectId, requestBody, ignoreFormulas, allowMs1Only).toEntity(localVarReturnType).block();
+    }
+
+    /**
+     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.
+     * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.   DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.
+     * <p><b>200</b> - OK
+     * @param projectId project-space to import into.
+     * @param requestBody files to import into project
+     * @param ignoreFormulas The ignoreFormulas parameter
+     * @param allowMs1Only The allowMs1Only parameter
+     * @return ResponseSpec
+     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
+     */
+    public ResponseSpec importPreprocessedDataLocallyWithResponseSpec(String projectId, List<String> requestBody, Boolean ignoreFormulas, Boolean allowMs1Only) throws WebClientResponseException {
+        return importPreprocessedDataLocallyRequestCreation(projectId, requestBody, ignoreFormulas, allowMs1Only);
     }
     /**
      * Open an existing project-space and make it accessible via the given projectId.

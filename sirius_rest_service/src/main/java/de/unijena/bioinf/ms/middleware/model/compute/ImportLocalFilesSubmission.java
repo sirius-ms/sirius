@@ -40,8 +40,14 @@ public class ImportLocalFilesSubmission extends AbstractImportSubmission {
     @NotEmpty
     protected List<String> inputPaths;
 
+
     @Override
     public List<InputResource<?>> asInputResource() {
+        return inputPaths.stream().map(Path::of).map(PathInputResource::new).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<PathInputResource> asPathInputResource() {
         return inputPaths.stream().map(Path::of).map(PathInputResource::new).collect(Collectors.toList());
     }
 }
