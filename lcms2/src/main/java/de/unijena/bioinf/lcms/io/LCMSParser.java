@@ -46,7 +46,7 @@ public interface LCMSParser {
      * @param input Input location.
      * @param run  Initial {@link LCMSRun} isntance with default values for {@code Run.runType} and {@code Run.chromatography}.
      */
-    ProcessedSample parse(
+    default ProcessedSample parse(
             URI input,
             LCMSStorageFactory storageFactory,
             LCMSParser.IOThrowingConsumer<LCMSRun> runConsumer,
@@ -54,9 +54,12 @@ public interface LCMSParser {
             LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
             LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
             LCMSRun run
-    ) throws IOException;
+    ) throws IOException{
+        return parse(Path.of(input), storageFactory, runConsumer, runUpdateConsumer, scanConsumer, msmsScanConsumer, run);
 
-    default ProcessedSample parse(
+    }
+
+    ProcessedSample parse(
             Path input,
             LCMSStorageFactory storageFactory,
             LCMSParser.IOThrowingConsumer<LCMSRun> runConsumer,
@@ -64,7 +67,5 @@ public interface LCMSParser {
             LCMSParser.IOThrowingConsumer<Scan> scanConsumer,
             LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
             LCMSRun run
-    ) throws IOException{
-        return parse(input.toUri(), storageFactory, runConsumer, runUpdateConsumer, scanConsumer, msmsScanConsumer, run);
-    }
+    ) throws IOException;
 }
