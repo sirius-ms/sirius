@@ -75,7 +75,7 @@ public class ImportMultipartFilesSubmission extends AbstractImportSubmission {
                 try {
                     Path nuFile = tmpdir.resolve(Optional.ofNullable(f.getOriginalFilename()).orElse(TsidCreator.getTsid().toString()));
                     f.transferTo(nuFile);
-                    return new PathInputResource(nuFile);
+                    return new PathInputResource(nuFile, true); // mark as delete because it is a tmp file
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

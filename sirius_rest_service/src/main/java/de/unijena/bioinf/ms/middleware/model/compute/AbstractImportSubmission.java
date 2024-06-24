@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
+import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 import lombok.Setter;
@@ -44,4 +45,7 @@ public abstract class AbstractImportSubmission {
 
     @JsonIgnore
     public abstract List<InputResource<?>> asInputResource();
+    @JsonIgnore
+    public abstract List<PathInputResource> asPathInputResource();
+
 }

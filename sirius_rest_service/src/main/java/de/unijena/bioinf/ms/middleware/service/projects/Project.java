@@ -83,8 +83,8 @@ public interface Project<PSM extends ProjectSpaceManager> {
     }
 
     default ImportResult importMsRunData(Collection<PathInputResource> inputResources, boolean alignRuns, boolean allowMs1OnlyData) {
-        ImportMsFromResourceWorkflow importTask = new ImportMsFromResourceWorkflow(getProjectSpaceManager(), inputResources, allowMs1OnlyData, alignRuns, true);
-
+        ImportMsFromResourceWorkflow importTask = new ImportMsFromResourceWorkflow(getProjectSpaceManager(), inputResources, allowMs1OnlyData, alignRuns);
+        // todo marc tmp reasources for deletion
         importTask.run();
         return ImportResult.builder()
                 .affectedAlignedFeatureIds(importTask.getImportedInstancesStr()

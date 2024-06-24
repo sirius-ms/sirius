@@ -66,6 +66,7 @@ import de.unijena.bioinf.storage.db.nosql.Filter;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import lombok.Getter;
 import org.apache.commons.io.function.IOSupplier;
+import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -115,6 +116,9 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
     @Override
     protected NoSQLProjectSpaceManager compute() throws Exception {
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
+
         importedCompounds.clear();
         NoSQLProjectSpaceManager space = projectSupplier.get();
         SiriusProjectDatabaseImpl<? extends Database<?>> ps = space.getProject();
@@ -246,6 +250,10 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
         System.out.printf(
                 """
+                       
+                       -------- Preprocessing Summary ---------
+                        Preprocessed data in:      %s
+                       
                         # Run:                     %d
                         # Scan:                    %d
                         # MSMSScan:                %d
@@ -254,7 +262,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                         # Feature:                 %d
                         # AlignedIsotopicFeatures: %d
                         # AlignedFeatures:         %d
-                                                       \s
+                                                        \s
                         Feature                 SNR: %f
                         AlignedIsotopicFeatures SNR: %f
                         AlignedFeatures         SNR: %f
@@ -263,6 +271,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                         Bad Al. Features:            %d
                         Lowest Quality Al. Features: %d
                        \s""",
+                stopWatch,
                 store.countAll(LCMSRun.class), store.countAll(Scan.class), store.countAll(MSMSScan.class),
                 store.countAll(SourceTrace.class), store.countAll(MergedTrace.class),
                 store.countAll(Feature.class), store.countAll(AlignedIsotopicFeatures.class), store.countAll(AlignedFeatures.class),
@@ -271,7 +280,6 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                 store.findAllStr(AlignedFeatures.class).map(AlignedFeatures::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
                 countMap.get(DataQuality.GOOD), countMap.get(DataQuality.DECENT), countMap.get(DataQuality.BAD), countMap.get(DataQuality.LOWEST)
         );
-
         return space;
     }
 

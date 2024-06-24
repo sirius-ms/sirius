@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.backgroundruns;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
@@ -52,7 +53,7 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
     protected final JobProgressMerger progressSupport = new JobProgressMerger(this);
     private final boolean alignRuns;
     private final boolean allowMs1OnlyData;
-    private final boolean clearInput;
+    //    private final boolean clearInput;
     private Iterable<Instance> importedCompounds = null;
 
     public Iterable<Instance> getImportedInstances() {
@@ -67,12 +68,11 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
 
     private final Collection<PathInputResource> inputResources;
 
-    public ImportMsFromResourceWorkflow(ProjectSpaceManager psm, Collection<PathInputResource> inputResources, boolean allowMs1OnlyData, boolean alignRuns, boolean clearInput) {
+    public ImportMsFromResourceWorkflow(ProjectSpaceManager psm, Collection<PathInputResource> inputResources, boolean allowMs1OnlyData, boolean alignRuns) {
         this.psm = psm;
         this.inputResources = inputResources;
         this.alignRuns = alignRuns;
         this.allowMs1OnlyData = allowMs1OnlyData;
-        this.clearInput = clearInput;
     }
 
     @Override
@@ -127,39 +127,37 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
                     SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
                     importerJJob.addJobProgressListener(progressSupport);
                     importedCompounds = new ArrayList<>(importerJJob.getImportedCompounds());
-                }else {
+                } else {
                     throw new IllegalArgumentException("Unknown project space implementation. Cannot import!");
                 }
             }
         } catch (ExecutionException e) {
             throw new RuntimeException(e);
         } finally {
-            if (clearInput) {
-                try {
-                    if (workingDir != null)
-                        FileUtils.deleteRecursively(workingDir);
-                } catch (IOException e) {
-                    log.warn("Error when deleting lcms align working dir.", e);
-                }
-
-                inputResources.forEach(r -> {
-                    try {
-                        FileUtils.deleteRecursively(r.getResource());
-                    } catch (IOException e) {
-                        log.warn("Error when deleting lcms input data.", e);
-                    }
-                });
-
-                inputResources.stream().map(PathInputResource::getResource).map(Path::getFileSystem).distinct()
-                        .filter(it -> !Objects.equals(it, FileSystems.getDefault()))
-                        .forEach(fs -> {
-                            try {
-                                fs.close();
-                            } catch (IOException e) {
-                                log.warn("Error when closing non default file system of lcms input data.", e);
-                            }
-                        });
+            try {
+                if (workingDir != null)
+                    FileUtils.deleteRecursively(workingDir);
+            } catch (IOException e) {
+                log.warn("Error when deleting lcms align working dir.", e);
             }
+
+            inputResources.stream().filter(InputResource::isDeleteAfterImport).forEach(r -> {
+                try {
+                    FileUtils.deleteRecursively(r.getResource());
+                } catch (IOException e) {
+                    log.warn("Error when deleting lcms input data.", e);
+                }
+            });
+            //close non-local fs
+            inputResources.stream().map(PathInputResource::getResource).map(Path::getFileSystem).distinct()
+                    .filter(it -> !Objects.equals(it, FileSystems.getDefault()))
+                    .forEach(fs -> {
+                        try {
+                            fs.close();
+                        } catch (IOException e) {
+                            log.warn("Error when closing non default file system of lcms input data.", e);
+                        }
+                    });
         }
     }
 }
