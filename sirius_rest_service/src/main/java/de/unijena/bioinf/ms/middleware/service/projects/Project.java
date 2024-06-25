@@ -66,7 +66,7 @@ public interface Project<PSM extends ProjectSpaceManager> {
                                 @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures);
 
     default ImportResult importPreprocessedData(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData) {
-        ImportPeaksFomResourceWorkflow importTask = new ImportPeaksFomResourceWorkflow(getProjectSpaceManager(), inputResources, ignoreFormulas, allowMs1OnlyData, true);
+        ImportPeaksFomResourceWorkflow importTask = new ImportPeaksFomResourceWorkflow(getProjectSpaceManager(), inputResources, ignoreFormulas, allowMs1OnlyData);
 
         importTask.run();
 

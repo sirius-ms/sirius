@@ -258,7 +258,7 @@ public final class BackgroundRuns {
 
     public BackgroundRunJob runImportPeakData(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData
     ) {
-        Workflow computation = new ImportPeaksFomResourceWorkflow(psm, inputResources, ignoreFormulas, allowMs1OnlyData, true);
+        Workflow computation = new ImportPeaksFomResourceWorkflow(psm, inputResources, ignoreFormulas, allowMs1OnlyData);
         return submitRunAndLockInstances(
                 new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Peak list Importer", "Import"));
     }
@@ -390,7 +390,6 @@ public final class BackgroundRuns {
                 logInfo("Freeing up memory...");
                 computation = null;
                 System.gc(); //hint for the gc to collect som trash after computations
-                System.runFinalization();
                 logInfo("Memory freed!");
             } finally {
                 removeAndFinishRun(this, AUTOREMOVE.get());

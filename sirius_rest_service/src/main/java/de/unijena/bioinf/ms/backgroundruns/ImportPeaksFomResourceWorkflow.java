@@ -48,7 +48,6 @@ public class ImportPeaksFomResourceWorkflow implements Workflow, ProgressSupport
     protected final JobProgressMerger progressSupport = new JobProgressMerger(this);
     private final boolean ignoreFormulas;
     private final boolean allowMs1OnlyData;
-    private final boolean clearInput;
     private Iterable<Instance> importedCompounds = null;
 
     public Iterable<Instance> getImportedInstances() {
@@ -63,12 +62,11 @@ public class ImportPeaksFomResourceWorkflow implements Workflow, ProgressSupport
 
     private final Collection<InputResource<?>> inputResources;
 
-    public ImportPeaksFomResourceWorkflow(ProjectSpaceManager psm, Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData, boolean clearInput) {
+    public ImportPeaksFomResourceWorkflow(ProjectSpaceManager psm, Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData) {
         this.psm = psm;
         this.inputResources = inputResources;
         this.ignoreFormulas = ignoreFormulas;
         this.allowMs1OnlyData = allowMs1OnlyData;
-        this.clearInput = clearInput;
     }
 
     @Override
@@ -98,17 +96,17 @@ public class ImportPeaksFomResourceWorkflow implements Workflow, ProgressSupport
 
     @Override
     public void run() {
-        InstanceImporter.ImportInstancesJJob importerJJob = new InstanceImporter(psm, x -> true)
-                .makeImportJJob(inputResources, ignoreFormulas, allowMs1OnlyData);
-        importerJJob.addJobProgressListener(progressSupport);
+        if (inputResources != null && !inputResources.isEmpty()) {
+            InstanceImporter.ImportInstancesJJob importerJJob = new InstanceImporter(psm, x -> true)
+                    .makeImportJJob(inputResources, ignoreFormulas, allowMs1OnlyData);
+            importerJJob.addJobProgressListener(progressSupport);
 
-        try {
-            importedCompounds = SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
-        } catch (ExecutionException e) {
-            throw new RuntimeException(e);
-        } finally {
-            if (clearInput) {
-                inputResources.forEach(r -> {
+            try {
+                importedCompounds = SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
+            } catch (ExecutionException e) {
+                throw new RuntimeException(e);
+            } finally {
+                inputResources.stream().filter(InputResource::isDeleteAfterImport).forEach(r -> {
                     try {
                         if (r instanceof PathInputResource pr)
                             FileUtils.deleteRecursively(pr.getResource());
