@@ -94,7 +94,7 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
         view.sourceList.backgroundFilterMatcher.setLoadable(this);
 
         Box includeBox = Box.createHorizontalBox();
-        includeBox.add(new JLabel("Show"));
+        includeBox.add(new JLabel("Inlcude"));
         includeBox.add(Box.createHorizontalGlue());
 
         JLabel ms1onlyLabel = new JLabel("MS1-only:");
