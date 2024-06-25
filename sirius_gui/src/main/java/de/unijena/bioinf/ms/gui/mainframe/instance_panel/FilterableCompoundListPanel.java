@@ -102,7 +102,7 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
         JLabel badQualityLabel = new JLabel("Bad:");
         ms1onlyLabel.setToolTipText("Include features with overall quality 'Bad' and 'Lowest'.");
         JLabel mulimereLabel = new JLabel("Multi:");
-        ms1onlyLabel.setToolTipText("Include multimeres and multiple charged compounds.");
+        ms1onlyLabel.setToolTipText("Include multimeres and multiple charged features.");
 
         Box filterButtonPanel = Box.createHorizontalBox();
         filterButtonPanel.setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 0));
