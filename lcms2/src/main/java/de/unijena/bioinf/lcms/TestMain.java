@@ -1,10 +1,7 @@
 package de.unijena.bioinf.lcms;
 
-import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobManager;
@@ -15,9 +12,7 @@ import de.unijena.bioinf.lcms.adducts.assignment.OptimalAssignmentViaBeamSearch;
 import de.unijena.bioinf.lcms.align.AlignmentBackbone;
 import de.unijena.bioinf.lcms.align.MoI;
 import de.unijena.bioinf.lcms.projectspace.SiriusProjectDocumentDbAdapter;
-import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
-import de.unijena.bioinf.lcms.utils.MultipleCharges;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
@@ -103,7 +98,7 @@ public class TestMain {
         Path storeLocation = Files.createTempFile("nitrite", SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(storeLocation)) {
             Database<?> store = ps.getStorage();
-            LCMSProcessing processing = new LCMSProcessing(new SiriusProjectDocumentDbAdapter(ps));
+            LCMSProcessing processing = new LCMSProcessing(new SiriusProjectDocumentDbAdapter(ps), false, true);
             {
                 if (ops.cores >= 1) {
                     SiriusJobs.setGlobalJobManager(ops.cores);
