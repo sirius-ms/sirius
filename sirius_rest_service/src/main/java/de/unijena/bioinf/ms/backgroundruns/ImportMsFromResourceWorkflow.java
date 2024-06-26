@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.backgroundruns;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.jjobs.JobProgressEvent;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
@@ -30,7 +31,7 @@ import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.jjobs.ProgressSupport;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJobNoSql;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
-import de.unijena.bioinf.ms.middleware.model.compute.ImportMultipartFilesSubmission;
+import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
@@ -42,7 +43,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -52,9 +52,7 @@ import java.util.stream.Stream;
 public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
     protected final JobProgressMerger progressSupport = new JobProgressMerger(this);
 
-    private final ImportMultipartFilesSubmission submission;
-
-    private final boolean clearInput;
+    private final AbstractImportSubmission submission;
 
     private final LongList importedCompounds = new LongArrayList();
 
@@ -66,19 +64,13 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
 
     private final NoSQLProjectSpaceManager psm;
 
-    private final Collection<PathInputResource> inputResources;
-
-    // if the workflow is called as background computation, we get a NoSuchFile exception if the inputResources are wrapped in the submission.
-    // that is why we need an extra parameter (there is probably are more elegant solution to this issue?)
-    public ImportMsFromResourceWorkflow(ProjectSpaceManager psm, Collection<PathInputResource> inputResources, ImportMultipartFilesSubmission submission, boolean clearInput, boolean saveImportedCompounds) {
+    public ImportMsFromResourceWorkflow(ProjectSpaceManager psm, AbstractImportSubmission submission, boolean saveImportedCompounds) {
         if (!(psm instanceof NoSQLProjectSpaceManager)) {
             throw new IllegalArgumentException("Project space type not supported!");
         }
         this.psm = (NoSQLProjectSpaceManager) psm;
         this.submission = submission;
-        this.clearInput = clearInput;
         this.saveImportedCompounds = saveImportedCompounds;
-        this.inputResources = inputResources;
     }
 
     @Override
@@ -108,40 +100,41 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
 
     @Override
     public void run() {
-        try {
-            importedCompounds.clear();
-            List<Path> inputFiles = inputResources.stream().map(PathInputResource::getResource).toList();
-            LcmsAlignSubToolJobNoSql importerJJob = new LcmsAlignSubToolJobNoSql(
-                    inputFiles,
-                    () -> psm,
-                    submission.isAlignLCMSRuns(),
-                    submission.isAllowMs1OnlyData(),
-                    submission.getFilter(),
-                    submission.getSigma(),
-                    submission.getScale(),
-                    submission.getWindow(),
-                    submission.getNoise(),
-                    submission.getPersistence(),
-                    submission.getMerge(),
-                    PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable(),
-                    saveImportedCompounds
-            );
-            SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
-            importerJJob.addJobProgressListener(progressSupport);
-            importedCompounds.addAll(importerJJob.getImportedCompounds());
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        } finally {
-            if (clearInput) {
+        final List<PathInputResource> inputResources = submission.asPathInputResource();
+        if (inputResources != null && !inputResources.isEmpty()) {
+            try {
+                importedCompounds.clear();
+                List<Path> inputFiles = inputResources.stream().map(PathInputResource::getResource).toList();
+                LcmsAlignSubToolJobNoSql importerJJob = new LcmsAlignSubToolJobNoSql(
+                        inputFiles,
+                        () -> psm,
+                        submission.isAlignLCMSRuns(),
+                        submission.isAllowMs1OnlyData(),
+                        submission.getFilter(),
+                        submission.getSigma(),
+                        submission.getScale(),
+                        submission.getWindow(),
+                        submission.getNoise(),
+                        submission.getPersistence(),
+                        submission.getMerge(),
+                        PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable(),
+                        saveImportedCompounds
+                );
+                SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
+                importerJJob.addJobProgressListener(progressSupport);
+                importedCompounds.addAll(importerJJob.getImportedCompounds());
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            } finally {
                 try {
-                    inputResources.forEach(r -> {
+                    inputResources.stream().filter(InputResource::isDeleteAfterImport).forEach(r -> {
                         try {
                             FileUtils.deleteRecursively(r.getResource());
                         } catch (IOException e) {
                             log.warn("Error when deleting lcms input data.", e);
                         }
                     });
-
+                    //close non-local fs
                     inputResources.stream().map(PathInputResource::getResource).map(Path::getFileSystem).distinct()
                             .filter(it -> !Objects.equals(it, FileSystems.getDefault()))
                             .forEach(fs -> {

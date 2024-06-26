@@ -123,6 +123,7 @@ openApi {
         args = ["rest", "-s", "-p", "8888"]
     }
 }
+//generateOpenApiDocs.dependsOn 'bootJar'
 
 
 

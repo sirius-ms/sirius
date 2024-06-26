@@ -21,13 +21,12 @@
 package de.unijena.bioinf.ms.middleware.service.projects;
 
 import de.unijena.bioinf.babelms.inputresource.InputResource;
-import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.ms.backgroundruns.ImportMsFromResourceWorkflow;
 import de.unijena.bioinf.ms.backgroundruns.ImportPeaksFomResourceWorkflow;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
-import de.unijena.bioinf.ms.middleware.model.compute.ImportMultipartFilesSubmission;
+import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
@@ -67,7 +66,7 @@ public interface Project<PSM extends ProjectSpaceManager> {
                                 @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures);
 
     default ImportResult importPreprocessedData(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData) {
-        ImportPeaksFomResourceWorkflow importTask = new ImportPeaksFomResourceWorkflow(getProjectSpaceManager(), inputResources, ignoreFormulas, allowMs1OnlyData, true);
+        ImportPeaksFomResourceWorkflow importTask = new ImportPeaksFomResourceWorkflow(getProjectSpaceManager(), inputResources, ignoreFormulas, allowMs1OnlyData);
 
         importTask.run();
 
@@ -83,8 +82,8 @@ public interface Project<PSM extends ProjectSpaceManager> {
                 .build();
     }
 
-    default ImportResult importMsRunData(ImportMultipartFilesSubmission submission) {
-        ImportMsFromResourceWorkflow importTask = new ImportMsFromResourceWorkflow(getProjectSpaceManager(), submission.asPathInputResource(), submission, true, true);
+    default ImportResult importMsRunData(AbstractImportSubmission submission) {
+        ImportMsFromResourceWorkflow importTask = new ImportMsFromResourceWorkflow(getProjectSpaceManager(), submission, true);
 
         importTask.run();
         return ImportResult.builder()

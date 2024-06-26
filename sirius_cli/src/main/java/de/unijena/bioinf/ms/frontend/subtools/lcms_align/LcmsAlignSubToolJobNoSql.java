@@ -69,6 +69,7 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import lombok.Getter;
 import org.apache.commons.io.function.IOSupplier;
+import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -150,6 +151,9 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     }
 
     private void compute(NoSQLProjectSpaceManager space, SiriusProjectDatabaseImpl<? extends Database<?>> ps, Database<?> store, List<Path> files) throws IOException {
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
+
         LCMSProcessing processing = new LCMSProcessing(new SiriusProjectDocumentDbAdapter(ps), saveImportedCompounds, allowMs1Only);
         processing.setMergedTraceSegmentationStrategy(mergedTraceSegmenter);
 
@@ -301,6 +305,10 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         Filter filter = Filter.where("runId").eq(merged.getRun().getRunId());
         System.out.printf(
                 """
+                       
+                        -------- Preprocessing Summary ---------
+                        Preprocessed data in:      %s
+                       
                         # SourceTrace:             %d
                         # MergedTrace:             %d
                         # Feature:                 %d
@@ -316,6 +324,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                         # Bad Al. Features:            %d
                         # Lowest Quality Al. Features: %d
                        \s""",
+                stopWatch,
                 sourceTraceCount,
                 store.count(filter, MergedTrace.class),
                 featureCount,
