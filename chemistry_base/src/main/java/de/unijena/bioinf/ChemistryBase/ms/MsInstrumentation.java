@@ -92,10 +92,10 @@ public interface MsInstrumentation extends Ms2ExperimentAnnotation {
     };
 
     enum Instrument implements MsInstrumentation {
-        BRUKER_MAXIS("Bruker Q-ToF (LCMS)", "bruker_tof", new Deviation(10), true, "maxis|bruker|impact"),
+        BRUKER_MAXIS("Bruker Q-ToF (LCMS)", "qtof"/*"bruker_tof"*/, new Deviation(10), true, "maxis|bruker|impact"),
         QTOF("Q-ToF (LCMS)", "qtof", new Deviation(10), false, "tof"),
         ORBI("Orbitrap (LCMS)", "orbitrap", new Deviation(5), false, "orbi|(?:q-)?exactive|velos|Lumos"),
-        FTICR("FTICR (LCMS)", "fticr", new Deviation(5), false, "ft-?icr|Hybrid FT|LTQ-FTICR|ft"),
+        FTICR("FTICR (LCMS)", "orbitrap"/*"fticr"*/, new Deviation(5), false, "ft-?icr|Hybrid FT|LTQ-FTICR|ft"),
         IONTRAP("Ion Trap (LCMS)", "default", new Deviation(20), false, "ion\\s*trap|trap|lcq|QqIT|QqLIT|IT|LIT"),
         QQQ("Tripple-Quadrupole", "default", new Deviation(100,0.1), false, "QQQ|quadrupole|QQ|Q");
 
