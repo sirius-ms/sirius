@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
+import de.unijena.bioinf.ms.frontend.subtools.lcms_align.DataSmoothing;
 import de.unijena.bioinf.ms.middleware.model.MultipartInputResource;
 import de.unijena.bioinf.ms.middleware.model.compute.ImportMultipartFilesSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.Job;
@@ -128,8 +129,17 @@ public class ProjectController {
      * Import and Align full MS-Runs from various formats into the specified project as background job.
      * Possible formats (mzML, mzXML)
      *
-     * @param projectId project-space to import into.
-     * @param optFields set of optional fields to be included. Use 'none' only to override defaults.
+     * @param projectId    Project-space to import into.
+     * @param alignRuns    Align LC/MS runs.
+     * @param allowMs1Only Import data without MS/MS.
+     * @param filter       Filter algorithm to suppress noise.
+     * @param sigma        Sigma (kernel width) for Gaussian filter algorithm.
+     * @param scale        Number of coefficients for wavelet filter algorithm.
+     * @param window       Wavelet window size (%) for wavelet filter algorithm.
+     * @param noise        Features must be larger than <value> * detected noise level.
+     * @param persistence  Features must have larger persistence (intensity above valley) than <value> * max trace intensity.
+     * @param merge        Merge neighboring features with valley less than <value> * intensity.
+     * @param optFields    Set of optional fields to be included. Use 'none' only to override defaults.
      * @return the import job.
      */
     @PostMapping(value = "/{projectId}/jobs/import/ms-data-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -137,6 +147,13 @@ public class ProjectController {
                                     @RequestBody MultipartFile[] inputFiles,
                                     @RequestParam(defaultValue = "true") boolean alignRuns,
                                     @RequestParam(defaultValue = "true") boolean allowMs1Only,
+                                    @RequestParam(defaultValue = "AUTO") DataSmoothing filter,
+                                    @RequestParam(defaultValue = "3.0") double sigma,
+                                    @RequestParam(defaultValue = "20") int scale,
+                                    @RequestParam(defaultValue = "10") double window,
+                                    @RequestParam(defaultValue = "2.0") double noise,
+                                    @RequestParam(defaultValue = "0.1") double persistence,
+                                    @RequestParam(defaultValue = "0.8") double merge,
                                     @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) {
         Project<?> p = projectsProvider.getProjectOrThrow(projectId);
@@ -145,6 +162,13 @@ public class ProjectController {
             sub.setInputFiles(List.of(inputFiles));
             sub.setAlignLCMSRuns(alignRuns);
             sub.setAllowMs1OnlyData(allowMs1Only);
+            sub.setFilter(filter);
+            sub.setSigma(sigma);
+            sub.setScale(scale);
+            sub.setWindow(window);
+            sub.setNoise(noise);
+            sub.setPersistence(persistence);
+            sub.setMerge(merge);
             return computeService.createAndSubmitMsDataImportJob(p, sub, removeNone(optFields));
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error when loading lcms data.", e);
@@ -155,20 +179,44 @@ public class ProjectController {
      * Import and Align full MS-Runs from various formats into the specified project
      * Possible formats (mzML, mzXML)
      *
-     * @param projectId  project-space to import into.
-     * @param inputFiles files to import into project
+     * @param projectId    Project-space to import into.
+     * @param inputFiles   Files to import into project.
+     * @param alignRuns    Align LC/MS runs.
+     * @param allowMs1Only Import data without MS/MS.
+     * @param filter       Filter algorithm to suppress noise.
+     * @param sigma        Sigma (kernel width) for Gaussian filter algorithm.
+     * @param scale        Number of coefficients for wavelet filter algorithm.
+     * @param window       Wavelet window size (%) for wavelet filter algorithm.
+     * @param noise        Features must be larger than <value> * detected noise level.
+     * @param persistence  Features must have larger persistence (intensity above valley) than <value> * max trace intensity.
+     * @param merge        Merge neighboring features with valley less than <value> * intensity.
+
      */
     @PostMapping(value = "/{projectId}/import/ms-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ImportResult importMsRunData(@PathVariable String projectId,
                                 @RequestBody MultipartFile[] inputFiles,
                                 @RequestParam(defaultValue = "true") boolean alignRuns,
-                                @RequestParam(defaultValue = "true") boolean allowMs1Only
+                                @RequestParam(defaultValue = "true") boolean allowMs1Only,
+                                @RequestParam(defaultValue = "AUTO") DataSmoothing filter,
+                                @RequestParam(defaultValue = "3.0") double sigma,
+                                @RequestParam(defaultValue = "20") int scale,
+                                @RequestParam(defaultValue = "10") double window,
+                                @RequestParam(defaultValue = "2.0") double noise,
+                                @RequestParam(defaultValue = "0.1") double persistence,
+                                @RequestParam(defaultValue = "0.8") double merge
     ) {
         ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
         sub.setInputFiles(List.of(inputFiles));
         sub.setAlignLCMSRuns(alignRuns);
         sub.setAllowMs1OnlyData(allowMs1Only);
-        return projectsProvider.getProjectOrThrow(projectId).importMsRunData(sub.asPathInputResource(), alignRuns, allowMs1Only);
+        sub.setFilter(filter);
+        sub.setSigma(sigma);
+        sub.setScale(scale);
+        sub.setWindow(window);
+        sub.setNoise(noise);
+        sub.setPersistence(persistence);
+        sub.setMerge(merge);
+        return projectsProvider.getProjectOrThrow(projectId).importMsRunData(sub);
     }
 
 

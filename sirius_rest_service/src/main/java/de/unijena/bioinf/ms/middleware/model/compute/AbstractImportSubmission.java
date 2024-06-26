@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
-import io.swagger.v3.oas.annotations.media.Schema;
+import de.unijena.bioinf.ms.frontend.subtools.lcms_align.DataSmoothing;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -35,12 +35,17 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class AbstractImportSubmission {
-    @Schema(nullable = true)
+
     protected boolean allowMs1OnlyData;
-    @Schema(nullable = true)
     protected boolean ignoreFormulas;
-    @Schema(nullable = true)
     protected boolean alignLCMSRuns;
+    protected DataSmoothing filter;
+    protected double sigma;
+    protected int scale;
+    protected double window;
+    protected double noise;
+    protected double persistence;
+    protected double merge;
 
     @JsonIgnore
     public abstract List<InputResource<?>> asInputResource();

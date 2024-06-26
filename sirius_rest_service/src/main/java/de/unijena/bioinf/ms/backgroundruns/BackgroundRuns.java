@@ -32,6 +32,7 @@ import de.unijena.bioinf.ms.frontend.workflow.ToolChainWorkflow;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.middleware.model.compute.ImportMultipartFilesSubmission;
 import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.Instance;
@@ -249,9 +250,8 @@ public final class BackgroundRuns {
         return submitRunAndLockInstances(makeBackgroundRun(command, instances));
     }
 
-    public BackgroundRunJob runImportMsData(Collection<PathInputResource> inputResources, boolean allowMs1OnlyData, boolean alignRuns
-    ) {
-        Workflow computation = new ImportMsFromResourceWorkflow(psm, inputResources, allowMs1OnlyData, alignRuns, true);
+    public BackgroundRunJob runImportMsData(List<PathInputResource> inputResources, ImportMultipartFilesSubmission submission) {
+        Workflow computation = new ImportMsFromResourceWorkflow(psm, inputResources, submission, true, false);
         return submitRunAndLockInstances(
                 new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "LC-MS Importer", "Preprocessing"));
     }
