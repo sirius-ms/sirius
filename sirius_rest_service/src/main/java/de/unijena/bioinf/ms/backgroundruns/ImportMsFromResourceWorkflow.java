@@ -120,8 +120,8 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
                         PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable(),
                         saveImportedCompounds
                 );
-                SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
                 importerJJob.addJobProgressListener(progressSupport);
+                SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
                 importedCompounds.addAll(importerJJob.getImportedCompounds());
             } catch (Exception e) {
                 throw new RuntimeException(e);
