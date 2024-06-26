@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.backgroundruns.ImportPeaksFomResourceWorkflow;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
+import de.unijena.bioinf.ms.middleware.model.compute.ImportMultipartFilesSubmission;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
@@ -82,8 +83,8 @@ public interface Project<PSM extends ProjectSpaceManager> {
                 .build();
     }
 
-    default ImportResult importMsRunData(Collection<PathInputResource> inputResources, boolean alignRuns, boolean allowMs1OnlyData) {
-        ImportMsFromResourceWorkflow importTask = new ImportMsFromResourceWorkflow(getProjectSpaceManager(), inputResources, allowMs1OnlyData, alignRuns, true);
+    default ImportResult importMsRunData(ImportMultipartFilesSubmission submission) {
+        ImportMsFromResourceWorkflow importTask = new ImportMsFromResourceWorkflow(getProjectSpaceManager(), submission.asPathInputResource(), submission, true, true);
 
         importTask.run();
         return ImportResult.builder()

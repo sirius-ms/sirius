@@ -25,12 +25,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.StringInputResource;
-import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
-import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
 
@@ -48,7 +47,6 @@ public class ImportStringSubmission extends AbstractImportSubmission {
      * Name that specifies the data source. Can e.g. be a file path  or just a name.
      */
     @Nullable
-    @Schema(nullable = true)
     protected String sourceName;
     /**
      * Data format used in the data field.

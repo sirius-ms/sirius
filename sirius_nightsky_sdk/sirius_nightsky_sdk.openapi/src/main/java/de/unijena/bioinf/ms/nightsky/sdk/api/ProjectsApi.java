@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.nightsky.sdk.api;
 
 import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
 
+import de.unijena.bioinf.ms.nightsky.sdk.model.DataSmoothing;
 import java.io.File;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ImportResult;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
@@ -701,14 +702,21 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
      * <p><b>200</b> - OK
-     * @param projectId project-space to import into.
-     * @param alignRuns The alignRuns parameter
-     * @param allowMs1Only The allowMs1Only parameter
+     * @param projectId Project-space to import into.
+     * @param alignRuns Align LC/MS runs.
+     * @param allowMs1Only Import data without MS/MS.
+     * @param filter Filter algorithm to suppress noise.
+     * @param sigma Sigma (kernel width) for Gaussian filter algorithm.
+     * @param scale Number of coefficients for wavelet filter algorithm.
+     * @param window Wavelet window size (%) for wavelet filter algorithm.
+     * @param noise Features must be larger than &lt;value&gt; * detected noise level.
+     * @param persistence Features must have larger persistence (intensity above valley) than &lt;value&gt; * max trace intensity.
+     * @param merge Merge neighboring features with valley less than &lt;value&gt; * intensity.
      * @param inputFiles The inputFiles parameter
      * @return ImportResult
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec importMsRunDataRequestCreation(String projectId, Boolean alignRuns, Boolean allowMs1Only, List<File> inputFiles) throws WebClientResponseException {
+    private ResponseSpec importMsRunDataRequestCreation(String projectId, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<File> inputFiles) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -726,6 +734,13 @@ public class ProjectsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignRuns", alignRuns));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "allowMs1Only", allowMs1Only));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "filter", filter));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "sigma", sigma));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "scale", scale));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "window", window));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "noise", noise));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "persistence", persistence));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "merge", merge));
         
         if (inputFiles != null)
             formParams.addAll("inputFiles", inputFiles.stream().map(FileSystemResource::new).collect(Collectors.toList()));
@@ -749,61 +764,89 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
      * <p><b>200</b> - OK
-     * @param projectId project-space to import into.
-     * @param alignRuns The alignRuns parameter
-     * @param allowMs1Only The allowMs1Only parameter
+     * @param projectId Project-space to import into.
+     * @param alignRuns Align LC/MS runs.
+     * @param allowMs1Only Import data without MS/MS.
+     * @param filter Filter algorithm to suppress noise.
+     * @param sigma Sigma (kernel width) for Gaussian filter algorithm.
+     * @param scale Number of coefficients for wavelet filter algorithm.
+     * @param window Wavelet window size (%) for wavelet filter algorithm.
+     * @param noise Features must be larger than &lt;value&gt; * detected noise level.
+     * @param persistence Features must have larger persistence (intensity above valley) than &lt;value&gt; * max trace intensity.
+     * @param merge Merge neighboring features with valley less than &lt;value&gt; * intensity.
      * @param inputFiles The inputFiles parameter
      * @return ImportResult
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ImportResult importMsRunData(String projectId, Boolean alignRuns, Boolean allowMs1Only, List<File> inputFiles) throws WebClientResponseException {
+    public ImportResult importMsRunData(String projectId, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<File> inputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
-        return importMsRunDataRequestCreation(projectId, alignRuns, allowMs1Only, inputFiles).bodyToMono(localVarReturnType).block();
+        return importMsRunDataRequestCreation(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, inputFiles).bodyToMono(localVarReturnType).block();
     }
 
     /**
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
      * <p><b>200</b> - OK
-     * @param projectId project-space to import into.
-     * @param alignRuns The alignRuns parameter
-     * @param allowMs1Only The allowMs1Only parameter
+     * @param projectId Project-space to import into.
+     * @param alignRuns Align LC/MS runs.
+     * @param allowMs1Only Import data without MS/MS.
+     * @param filter Filter algorithm to suppress noise.
+     * @param sigma Sigma (kernel width) for Gaussian filter algorithm.
+     * @param scale Number of coefficients for wavelet filter algorithm.
+     * @param window Wavelet window size (%) for wavelet filter algorithm.
+     * @param noise Features must be larger than &lt;value&gt; * detected noise level.
+     * @param persistence Features must have larger persistence (intensity above valley) than &lt;value&gt; * max trace intensity.
+     * @param merge Merge neighboring features with valley less than &lt;value&gt; * intensity.
      * @param inputFiles The inputFiles parameter
      * @return ResponseEntity&lt;ImportResult&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<ImportResult> importMsRunDataWithHttpInfo(String projectId, Boolean alignRuns, Boolean allowMs1Only, List<File> inputFiles) throws WebClientResponseException {
+    public ResponseEntity<ImportResult> importMsRunDataWithHttpInfo(String projectId, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<File> inputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
-        return importMsRunDataRequestCreation(projectId, alignRuns, allowMs1Only, inputFiles).toEntity(localVarReturnType).block();
+        return importMsRunDataRequestCreation(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, inputFiles).toEntity(localVarReturnType).block();
     }
 
     /**
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
      * <p><b>200</b> - OK
-     * @param projectId project-space to import into.
-     * @param alignRuns The alignRuns parameter
-     * @param allowMs1Only The allowMs1Only parameter
+     * @param projectId Project-space to import into.
+     * @param alignRuns Align LC/MS runs.
+     * @param allowMs1Only Import data without MS/MS.
+     * @param filter Filter algorithm to suppress noise.
+     * @param sigma Sigma (kernel width) for Gaussian filter algorithm.
+     * @param scale Number of coefficients for wavelet filter algorithm.
+     * @param window Wavelet window size (%) for wavelet filter algorithm.
+     * @param noise Features must be larger than &lt;value&gt; * detected noise level.
+     * @param persistence Features must have larger persistence (intensity above valley) than &lt;value&gt; * max trace intensity.
+     * @param merge Merge neighboring features with valley less than &lt;value&gt; * intensity.
      * @param inputFiles The inputFiles parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importMsRunDataWithResponseSpec(String projectId, Boolean alignRuns, Boolean allowMs1Only, List<File> inputFiles) throws WebClientResponseException {
-        return importMsRunDataRequestCreation(projectId, alignRuns, allowMs1Only, inputFiles);
+    public ResponseSpec importMsRunDataWithResponseSpec(String projectId, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<File> inputFiles) throws WebClientResponseException {
+        return importMsRunDataRequestCreation(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, inputFiles);
     }
     /**
      * Import and Align full MS-Runs from various formats into the specified project as background job.
      * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
      * <p><b>200</b> - the import job.
-     * @param projectId project-space to import into.
-     * @param alignRuns The alignRuns parameter
-     * @param allowMs1Only The allowMs1Only parameter
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @param projectId Project-space to import into.
+     * @param alignRuns Align LC/MS runs.
+     * @param allowMs1Only Import data without MS/MS.
+     * @param filter Filter algorithm to suppress noise.
+     * @param sigma Sigma (kernel width) for Gaussian filter algorithm.
+     * @param scale Number of coefficients for wavelet filter algorithm.
+     * @param window Wavelet window size (%) for wavelet filter algorithm.
+     * @param noise Features must be larger than &lt;value&gt; * detected noise level.
+     * @param persistence Features must have larger persistence (intensity above valley) than &lt;value&gt; * max trace intensity.
+     * @param merge Merge neighboring features with valley less than &lt;value&gt; * intensity.
+     * @param optFields Set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param inputFiles The inputFiles parameter
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec importMsRunDataAsJobRequestCreation(String projectId, Boolean alignRuns, Boolean allowMs1Only, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
+    private ResponseSpec importMsRunDataAsJobRequestCreation(String projectId, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -821,6 +864,13 @@ public class ProjectsApi {
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignRuns", alignRuns));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "allowMs1Only", allowMs1Only));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "filter", filter));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "sigma", sigma));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "scale", scale));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "window", window));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "noise", noise));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "persistence", persistence));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "merge", merge));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         
         if (inputFiles != null)
@@ -845,50 +895,71 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project as background job.
      * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
      * <p><b>200</b> - the import job.
-     * @param projectId project-space to import into.
-     * @param alignRuns The alignRuns parameter
-     * @param allowMs1Only The allowMs1Only parameter
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @param projectId Project-space to import into.
+     * @param alignRuns Align LC/MS runs.
+     * @param allowMs1Only Import data without MS/MS.
+     * @param filter Filter algorithm to suppress noise.
+     * @param sigma Sigma (kernel width) for Gaussian filter algorithm.
+     * @param scale Number of coefficients for wavelet filter algorithm.
+     * @param window Wavelet window size (%) for wavelet filter algorithm.
+     * @param noise Features must be larger than &lt;value&gt; * detected noise level.
+     * @param persistence Features must have larger persistence (intensity above valley) than &lt;value&gt; * max trace intensity.
+     * @param merge Merge neighboring features with valley less than &lt;value&gt; * intensity.
+     * @param optFields Set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param inputFiles The inputFiles parameter
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job importMsRunDataAsJob(String projectId, Boolean alignRuns, Boolean allowMs1Only, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
+    public Job importMsRunDataAsJob(String projectId, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return importMsRunDataAsJobRequestCreation(projectId, alignRuns, allowMs1Only, optFields, inputFiles).bodyToMono(localVarReturnType).block();
+        return importMsRunDataAsJobRequestCreation(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields, inputFiles).bodyToMono(localVarReturnType).block();
     }
 
     /**
      * Import and Align full MS-Runs from various formats into the specified project as background job.
      * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
      * <p><b>200</b> - the import job.
-     * @param projectId project-space to import into.
-     * @param alignRuns The alignRuns parameter
-     * @param allowMs1Only The allowMs1Only parameter
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @param projectId Project-space to import into.
+     * @param alignRuns Align LC/MS runs.
+     * @param allowMs1Only Import data without MS/MS.
+     * @param filter Filter algorithm to suppress noise.
+     * @param sigma Sigma (kernel width) for Gaussian filter algorithm.
+     * @param scale Number of coefficients for wavelet filter algorithm.
+     * @param window Wavelet window size (%) for wavelet filter algorithm.
+     * @param noise Features must be larger than &lt;value&gt; * detected noise level.
+     * @param persistence Features must have larger persistence (intensity above valley) than &lt;value&gt; * max trace intensity.
+     * @param merge Merge neighboring features with valley less than &lt;value&gt; * intensity.
+     * @param optFields Set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param inputFiles The inputFiles parameter
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> importMsRunDataAsJobWithHttpInfo(String projectId, Boolean alignRuns, Boolean allowMs1Only, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
+    public ResponseEntity<Job> importMsRunDataAsJobWithHttpInfo(String projectId, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return importMsRunDataAsJobRequestCreation(projectId, alignRuns, allowMs1Only, optFields, inputFiles).toEntity(localVarReturnType).block();
+        return importMsRunDataAsJobRequestCreation(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields, inputFiles).toEntity(localVarReturnType).block();
     }
 
     /**
      * Import and Align full MS-Runs from various formats into the specified project as background job.
      * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
      * <p><b>200</b> - the import job.
-     * @param projectId project-space to import into.
-     * @param alignRuns The alignRuns parameter
-     * @param allowMs1Only The allowMs1Only parameter
-     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
+     * @param projectId Project-space to import into.
+     * @param alignRuns Align LC/MS runs.
+     * @param allowMs1Only Import data without MS/MS.
+     * @param filter Filter algorithm to suppress noise.
+     * @param sigma Sigma (kernel width) for Gaussian filter algorithm.
+     * @param scale Number of coefficients for wavelet filter algorithm.
+     * @param window Wavelet window size (%) for wavelet filter algorithm.
+     * @param noise Features must be larger than &lt;value&gt; * detected noise level.
+     * @param persistence Features must have larger persistence (intensity above valley) than &lt;value&gt; * max trace intensity.
+     * @param merge Merge neighboring features with valley less than &lt;value&gt; * intensity.
+     * @param optFields Set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @param inputFiles The inputFiles parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importMsRunDataAsJobWithResponseSpec(String projectId, Boolean alignRuns, Boolean allowMs1Only, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
-        return importMsRunDataAsJobRequestCreation(projectId, alignRuns, allowMs1Only, optFields, inputFiles);
+    public ResponseSpec importMsRunDataAsJobWithResponseSpec(String projectId, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
+        return importMsRunDataAsJobRequestCreation(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields, inputFiles);
     }
     /**
      * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
