@@ -557,7 +557,7 @@ No authorization required
 
 ## importMsRunData
 
-> ImportResult importMsRunData(projectId, alignRuns, allowMs1Only, inputFiles)
+> ImportResult importMsRunData(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, inputFiles)
 
 Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
 
@@ -579,12 +579,19 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8888");
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
-        String projectId = "projectId_example"; // String | project-space to import into.
-        Boolean alignRuns = true; // Boolean | 
-        Boolean allowMs1Only = true; // Boolean | 
+        String projectId = "projectId_example"; // String | Project-space to import into.
+        Boolean alignRuns = true; // Boolean | Align LC/MS runs.
+        Boolean allowMs1Only = true; // Boolean | Import data without MS/MS.
+        DataSmoothing filter = DataSmoothing.fromValue("AUTO"); // DataSmoothing | Filter algorithm to suppress noise.
+        Double sigma = 3.0D; // Double | Sigma (kernel width) for Gaussian filter algorithm.
+        Integer scale = 20; // Integer | Number of coefficients for wavelet filter algorithm.
+        Double window = 10.0D; // Double | Wavelet window size (%) for wavelet filter algorithm.
+        Double noise = 2.0D; // Double | Features must be larger than <value> * detected noise level.
+        Double persistence = 0.1D; // Double | Features must have larger persistence (intensity above valley) than <value> * max trace intensity.
+        Double merge = 0.8D; // Double | Merge neighboring features with valley less than <value> * intensity.
         List<File> inputFiles = Arrays.asList(); // List<File> | 
         try {
-            ImportResult result = apiInstance.importMsRunData(projectId, alignRuns, allowMs1Only, inputFiles);
+            ImportResult result = apiInstance.importMsRunData(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, inputFiles);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importMsRunData");
@@ -602,9 +609,16 @@ public class Example {
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| project-space to import into. | |
-| **alignRuns** | **Boolean**|  | [optional] [default to true] |
-| **allowMs1Only** | **Boolean**|  | [optional] [default to true] |
+| **projectId** | **String**| Project-space to import into. | |
+| **alignRuns** | **Boolean**| Align LC/MS runs. | [optional] [default to true] |
+| **allowMs1Only** | **Boolean**| Import data without MS/MS. | [optional] [default to true] |
+| **filter** | [**DataSmoothing**](.md)| Filter algorithm to suppress noise. | [optional] [enum: AUTO, NOFILTER, GAUSSIAN, WAVELET] |
+| **sigma** | **Double**| Sigma (kernel width) for Gaussian filter algorithm. | [optional] [default to 3.0] |
+| **scale** | **Integer**| Number of coefficients for wavelet filter algorithm. | [optional] [default to 20] |
+| **window** | **Double**| Wavelet window size (%) for wavelet filter algorithm. | [optional] [default to 10.0] |
+| **noise** | **Double**| Features must be larger than &lt;value&gt; * detected noise level. | [optional] [default to 2.0] |
+| **persistence** | **Double**| Features must have larger persistence (intensity above valley) than &lt;value&gt; * max trace intensity. | [optional] [default to 0.1] |
+| **merge** | **Double**| Merge neighboring features with valley less than &lt;value&gt; * intensity. | [optional] [default to 0.8] |
 | **inputFiles** | **List&lt;File&gt;**|  | [optional] |
 
 ### Return type
@@ -629,7 +643,7 @@ No authorization required
 
 ## importMsRunDataAsJob
 
-> Job importMsRunDataAsJob(projectId, alignRuns, allowMs1Only, optFields, inputFiles)
+> Job importMsRunDataAsJob(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields, inputFiles)
 
 Import and Align full MS-Runs from various formats into the specified project as background job.
 
@@ -651,13 +665,20 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8888");
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
-        String projectId = "projectId_example"; // String | project-space to import into.
-        Boolean alignRuns = true; // Boolean | 
-        Boolean allowMs1Only = true; // Boolean | 
-        List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
+        String projectId = "projectId_example"; // String | Project-space to import into.
+        Boolean alignRuns = true; // Boolean | Align LC/MS runs.
+        Boolean allowMs1Only = true; // Boolean | Import data without MS/MS.
+        DataSmoothing filter = DataSmoothing.fromValue("AUTO"); // DataSmoothing | Filter algorithm to suppress noise.
+        Double sigma = 3.0D; // Double | Sigma (kernel width) for Gaussian filter algorithm.
+        Integer scale = 20; // Integer | Number of coefficients for wavelet filter algorithm.
+        Double window = 10.0D; // Double | Wavelet window size (%) for wavelet filter algorithm.
+        Double noise = 2.0D; // Double | Features must be larger than <value> * detected noise level.
+        Double persistence = 0.1D; // Double | Features must have larger persistence (intensity above valley) than <value> * max trace intensity.
+        Double merge = 0.8D; // Double | Merge neighboring features with valley less than <value> * intensity.
+        List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | Set of optional fields to be included. Use 'none' only to override defaults.
         List<File> inputFiles = Arrays.asList(); // List<File> | 
         try {
-            Job result = apiInstance.importMsRunDataAsJob(projectId, alignRuns, allowMs1Only, optFields, inputFiles);
+            Job result = apiInstance.importMsRunDataAsJob(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields, inputFiles);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importMsRunDataAsJob");
@@ -675,10 +696,17 @@ public class Example {
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**| project-space to import into. | |
-| **alignRuns** | **Boolean**|  | [optional] [default to true] |
-| **allowMs1Only** | **Boolean**|  | [optional] [default to true] |
-| **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
+| **projectId** | **String**| Project-space to import into. | |
+| **alignRuns** | **Boolean**| Align LC/MS runs. | [optional] [default to true] |
+| **allowMs1Only** | **Boolean**| Import data without MS/MS. | [optional] [default to true] |
+| **filter** | [**DataSmoothing**](.md)| Filter algorithm to suppress noise. | [optional] [enum: AUTO, NOFILTER, GAUSSIAN, WAVELET] |
+| **sigma** | **Double**| Sigma (kernel width) for Gaussian filter algorithm. | [optional] [default to 3.0] |
+| **scale** | **Integer**| Number of coefficients for wavelet filter algorithm. | [optional] [default to 20] |
+| **window** | **Double**| Wavelet window size (%) for wavelet filter algorithm. | [optional] [default to 10.0] |
+| **noise** | **Double**| Features must be larger than &lt;value&gt; * detected noise level. | [optional] [default to 2.0] |
+| **persistence** | **Double**| Features must have larger persistence (intensity above valley) than &lt;value&gt; * max trace intensity. | [optional] [default to 0.1] |
+| **merge** | **Double**| Merge neighboring features with valley less than &lt;value&gt; * intensity. | [optional] [default to 0.8] |
+| **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| Set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 | **inputFiles** | **List&lt;File&gt;**|  | [optional] |
 
 ### Return type
