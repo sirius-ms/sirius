@@ -29,50 +29,56 @@ import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.jjobs.JobProgressMerger;
 import de.unijena.bioinf.jjobs.ProgressSupport;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJobNoSql;
-import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJobSiriusPs;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
+import de.unijena.bioinf.ms.middleware.model.compute.ImportMultipartFilesSubmission;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.Instance;
+import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
+import java.util.Optional;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 @Slf4j
 public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
     protected final JobProgressMerger progressSupport = new JobProgressMerger(this);
-    private final boolean alignRuns;
-    private final boolean allowMs1OnlyData;
-    private final boolean clearInput;
-    private Iterable<Instance> importedCompounds = null;
 
-    public Iterable<Instance> getImportedInstances() {
-        return importedCompounds;
-    }
+    private final ImportMultipartFilesSubmission submission;
+
+    private final boolean clearInput;
+
+    private final LongList importedCompounds = new LongArrayList();
+
+    private final boolean saveImportedCompounds;
 
     public Stream<Instance> getImportedInstancesStr() {
-        return StreamSupport.stream(importedCompounds.spliterator(), false);
+        return importedCompounds.longStream().mapToObj(psm::findInstance).filter(Optional::isPresent).map(Optional::get);
     }
 
-    private final ProjectSpaceManager psm;
+    private final NoSQLProjectSpaceManager psm;
 
     private final Collection<PathInputResource> inputResources;
 
-    public ImportMsFromResourceWorkflow(ProjectSpaceManager psm, Collection<PathInputResource> inputResources, boolean allowMs1OnlyData, boolean alignRuns, boolean clearInput) {
-        this.psm = psm;
-        this.inputResources = inputResources;
-        this.alignRuns = alignRuns;
-        this.allowMs1OnlyData = allowMs1OnlyData;
+    // if the workflow is called as background computation, we get a NoSuchFile exception if the inputResources are wrapped in the submission.
+    // that is why we need an extra parameter (there is probably are more elegant solution to this issue?)
+    public ImportMsFromResourceWorkflow(ProjectSpaceManager psm, Collection<PathInputResource> inputResources, ImportMultipartFilesSubmission submission, boolean clearInput, boolean saveImportedCompounds) {
+        if (!(psm instanceof NoSQLProjectSpaceManager)) {
+            throw new IllegalArgumentException("Project space type not supported!");
+        }
+        this.psm = (NoSQLProjectSpaceManager) psm;
+        this.submission = submission;
         this.clearInput = clearInput;
+        this.saveImportedCompounds = saveImportedCompounds;
+        this.inputResources = inputResources;
     }
 
     @Override
@@ -102,63 +108,52 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
 
     @Override
     public void run() {
-        Path workingDir = null;
         try {
-            if (!alignRuns) {
-                InstanceImporter.ImportInstancesJJob importerJJob = new InstanceImporter(psm, x -> true)
-                        .makeImportJJob(Collections.unmodifiableCollection(inputResources), true, allowMs1OnlyData);
-                importerJJob.addJobProgressListener(progressSupport);
-                importedCompounds = SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
-            } else {
-                //create working dir in same fs as input data. allows e.g. for in-memory fs for working dir.
-                if (psm instanceof SiriusProjectSpaceManager spsm) {
-                    workingDir = FileUtils.newTempFile("lcms-align-working-dir_", "", inputResources.iterator().next().getResource().getFileSystem());
-                    LcmsAlignSubToolJobSiriusPs importerJJob = new LcmsAlignSubToolJobSiriusPs(
-                            workingDir,
-                            inputResources.stream().map(PathInputResource::getResource).collect(Collectors.toList()),
-                            () -> spsm, null, null);
-                    SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
-                    importerJJob.addJobProgressListener(progressSupport);
-                    importedCompounds = new ArrayList<>(importerJJob.getImportedCompounds());
-                } else if (psm instanceof NoSQLProjectSpaceManager spsm) {
-                    LcmsAlignSubToolJobNoSql importerJJob = new LcmsAlignSubToolJobNoSql(
-                            inputResources.stream().map(PathInputResource::getResource).collect(Collectors.toList()),
-                            () -> spsm, PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable());
-                    SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
-                    importerJJob.addJobProgressListener(progressSupport);
-                    importedCompounds = new ArrayList<>(importerJJob.getImportedCompounds());
-                }else {
-                    throw new IllegalArgumentException("Unknown project space implementation. Cannot import!");
-                }
-            }
-        } catch (ExecutionException e) {
+            importedCompounds.clear();
+            List<Path> inputFiles = inputResources.stream().map(PathInputResource::getResource).toList();
+            LcmsAlignSubToolJobNoSql importerJJob = new LcmsAlignSubToolJobNoSql(
+                    inputFiles,
+                    () -> psm,
+                    submission.isAlignLCMSRuns(),
+                    submission.isAllowMs1OnlyData(),
+                    submission.getFilter(),
+                    submission.getSigma(),
+                    submission.getScale(),
+                    submission.getWindow(),
+                    submission.getNoise(),
+                    submission.getPersistence(),
+                    submission.getMerge(),
+                    PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable(),
+                    saveImportedCompounds
+            );
+            SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
+            importerJJob.addJobProgressListener(progressSupport);
+            importedCompounds.addAll(importerJJob.getImportedCompounds());
+        } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
             if (clearInput) {
                 try {
-                    if (workingDir != null)
-                        FileUtils.deleteRecursively(workingDir);
-                } catch (IOException e) {
-                    log.warn("Error when deleting lcms align working dir.", e);
+                    inputResources.forEach(r -> {
+                        try {
+                            FileUtils.deleteRecursively(r.getResource());
+                        } catch (IOException e) {
+                            log.warn("Error when deleting lcms input data.", e);
+                        }
+                    });
+
+                    inputResources.stream().map(PathInputResource::getResource).map(Path::getFileSystem).distinct()
+                            .filter(it -> !Objects.equals(it, FileSystems.getDefault()))
+                            .forEach(fs -> {
+                                try {
+                                    fs.close();
+                                } catch (IOException e) {
+                                    log.warn("Error when closing non default file system of lcms input data.", e);
+                                }
+                            });
+                } catch (Exception e) {
+                    log.warn("Error when clearing lcms input data.", e);
                 }
-
-                inputResources.forEach(r -> {
-                    try {
-                        FileUtils.deleteRecursively(r.getResource());
-                    } catch (IOException e) {
-                        log.warn("Error when deleting lcms input data.", e);
-                    }
-                });
-
-                inputResources.stream().map(PathInputResource::getResource).map(Path::getFileSystem).distinct()
-                        .filter(it -> !Objects.equals(it, FileSystems.getDefault()))
-                        .forEach(fs -> {
-                            try {
-                                fs.close();
-                            } catch (IOException e) {
-                                log.warn("Error when closing non default file system of lcms input data.", e);
-                            }
-                        });
             }
         }
     }
