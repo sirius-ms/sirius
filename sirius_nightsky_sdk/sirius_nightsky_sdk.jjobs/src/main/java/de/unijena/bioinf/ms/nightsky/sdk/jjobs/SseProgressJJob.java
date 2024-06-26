@@ -117,9 +117,9 @@ public class SseProgressJJob extends WaiterJJob<Job> {
 
         if (Optional.ofNullable(p.isIndeterminate())
                 .orElse(false) || p.getMaxProgress() == null || p.getCurrentProgress() == null) {
-            updateProgress(0, 1, wrappedJob.getId() + "|" + p.getMessage());
+            updateProgress(0, 1, p.getMessage());
         } else {
-            updateProgress(p.getMaxProgress(), p.getCurrentProgress(), wrappedJob.getId() + "|" + p.getMessage());
+            updateProgress(p.getMaxProgress(), p.getCurrentProgress(), p.getMessage());
         }
 
         setState(JobState.valueOf(p.getState().name()));
