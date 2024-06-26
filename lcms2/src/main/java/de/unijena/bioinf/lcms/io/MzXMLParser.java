@@ -32,13 +32,16 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class MzXMLParser implements LCMSParser {
 
     @Override
     public ProcessedSample parse(
-            URI input,
+            Path input,
             LCMSStorageFactory storageFactory,
             IOThrowingConsumer<LCMSRun> runConsumer,
             IOThrowingConsumer<LCMSRun> runUpdateConsumer,
@@ -47,51 +50,23 @@ public class MzXMLParser implements LCMSParser {
             LCMSRun run
     ) throws IOException {
         try {
-            String name = FileUtils.getFileName(input);
-            run.setSourceReference(new MsDataSourceReference(input, name, null, null));
+            String name = input.getFileName().toString();
+            run.setSourceReference(new MsDataSourceReference(input.toString(), name, null, null));
             runConsumer.consume(run);
             MzXMLSaxParser saxParser = new MzXMLSaxParser(
                     name,
                     storageFactory.createNewStorage(),
                     run, scanConsumer, msmsScanConsumer
             );
-            SAXParserFactory.newInstance().newSAXParser().parse(name, saxParser);
+
+            try (InputStream stream = Files.newInputStream(input)) {
+                SAXParserFactory.newInstance().newSAXParser().parse(stream, saxParser);
+            }
+
             runUpdateConsumer.consume(run);
             return saxParser.getProcessedSample();
         } catch (SAXException | ParserConfigurationException e) {
             throw new IOException(e);
         }
     }
-
-//    public static void main(String[] args) throws IOException {
-//        File f = new File("/home/mel/lcms-data/220331AliW_Mut_LytM.mzXML");
-//        List<Scan> scans = new ArrayList<>();
-//        List<MSMSScan> ms2scans = new ArrayList<>();
-////        AtomicInteger scans = new AtomicInteger(0);
-////        AtomicInteger ms2scans = new AtomicInteger(0);
-//        ProcessedSample sample = new MzXMLParser().parse(
-//                f,
-//                LCMSStorage.temporaryStorage(),
-//                System.out::println,
-//                System.out::println,
-//                ms -> {
-//                    ms.setScanId(new Random().nextLong());
-//                    scans.add(ms);
-//                },
-//                msms -> {
-//                    msms.setScanId(new Random().nextLong());
-//                    ms2scans.add(msms);
-//                },
-////                ms -> scans.addAndGet(1),
-////                msms -> ms2scans.addAndGet(1),
-//                Run.builder().runType(Run.Type.SAMPLE).chromatography(Chromatography.LC).build()
-//        );
-//        System.out.println(sample.getRtSpan());
-//        System.out.println(scans.size());
-//        System.out.println(ms2scans.size());
-//
-////        System.out.println(scans);
-////        System.out.println(ms2scans);
-//    }
-
 }

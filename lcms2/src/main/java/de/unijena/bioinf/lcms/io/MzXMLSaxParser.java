@@ -361,33 +361,37 @@ class MzXMLSaxParser extends DefaultHandler {
                             log.info("No valid spectrum data found in Spectrum with number: " + scanNumber + " Skipping!");
                         } else {
                             if (msLevel == 1) {
-                                Scan scan = Scan.builder()
-                                        .runId(run.getRunId())
-                                        .sourceScanId(Integer.toString(scanNumber))
-                                        .scanTime(retentionTime)
-                                        .peaks(peaks)
-                                        .build();
-                                scanConsumer.consume(scan);
-                                ms1Ids.put(scanNumber, scan.getScanId());
+                                if (scanConsumer != null) {
+                                    Scan scan = Scan.builder()
+                                            .runId(run.getRunId())
+                                            .sourceScanId(Integer.toString(scanNumber))
+                                            .scanTime(retentionTime)
+                                            .peaks(peaks)
+                                            .build();
+                                    scanConsumer.consume(scan);
+                                    ms1Ids.put(scanNumber, scan.getScanId());
 
-                                final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(),scanNumber, Integer.toString(scanNumber), polarity.charge, centroided);
-                                retentionTimes.add(retentionTime);
-                                idmap.put(scanNumber, scanids.size());
-                                scanids.add(scanNumber);
-                                storage.getSpectrumStorage().addSpectrum(header, peaks);
+                                    final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(),scanNumber, Integer.toString(scanNumber), polarity.charge, centroided);
+                                    retentionTimes.add(retentionTime);
+                                    idmap.put(scanNumber, scanids.size());
+                                    scanids.add(scanNumber);
+                                    storage.getSpectrumStorage().addSpectrum(header, peaks);
+                                }
                             } else {
-                                MSMSScan scan = MSMSScan.builder()
-                                        .runId(run.getRunId())
-                                        .scanNumber(Integer.toString(scanNumber))
-                                        .scanTime(retentionTime)
-                                        .peaks(peaks)
-                                        .msLevel(msLevel)
-                                        .collisionEnergy(collisionEnergy)
-                                        .mzOfInterest(precursorMz)
-                                        .isolationWindow(new IsolationWindow(0d, isolationWindowWidth))
-                                        .precursorScanId(ms1Ids.getOrDefault(precursorScanNumber, -1L))
-                                        .build();
-                                msmsScanConsumer.consume(scan);
+                                if (msmsScanConsumer != null) {
+                                    MSMSScan scan = MSMSScan.builder()
+                                            .runId(run.getRunId())
+                                            .scanNumber(Integer.toString(scanNumber))
+                                            .scanTime(retentionTime)
+                                            .peaks(peaks)
+                                            .msLevel(msLevel)
+                                            .collisionEnergy(collisionEnergy)
+                                            .mzOfInterest(precursorMz)
+                                            .isolationWindow(new IsolationWindow(0d, isolationWindowWidth))
+                                            .precursorScanId(ms1Ids.getOrDefault(precursorScanNumber, -1L))
+                                            .build();
+                                    msmsScanConsumer.consume(scan);
+                                }
 
                                 final Ms2SpectrumHeader header = new Ms2SpectrumHeader(
                                         Integer.toString(scanNumber),
