@@ -719,6 +719,163 @@
         }
       }
     },
+    "/api/projects/{projectId}/jobs/import/ms-data-local-files-job": {
+      "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Import and Align full MS-Runs from various formats into the specified project as background job",
+        "description": "Import and Align full MS-Runs from various formats into the specified project as background job.\n Possible formats (mzML, mzXML)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this\n API to allow for more flexible use cases. Use \u0027ms-data-files-job\u0027 instead.",
+        "operationId": "importMsRunDataAsJobLocally",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "Project-space to import into.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignRuns",
+            "in": "query",
+            "description": "Align LC/MS runs.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "allowMs1Only",
+            "in": "query",
+            "description": "Import data without MS/MS.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "Filter algorithm to suppress noise.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/DataSmoothing"
+            }
+          },
+          {
+            "name": "sigma",
+            "in": "query",
+            "description": "Sigma (kernel width) for Gaussian filter algorithm.",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "default": 3.0
+            }
+          },
+          {
+            "name": "scale",
+            "in": "query",
+            "description": "Number of coefficients for wavelet filter algorithm.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "window",
+            "in": "query",
+            "description": "Wavelet window size (%) for wavelet filter algorithm.",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "default": 10.0
+            }
+          },
+          {
+            "name": "noise",
+            "in": "query",
+            "description": "Features must be larger than \u003cvalue\u003e * detected noise level.",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "default": 2.0
+            }
+          },
+          {
+            "name": "persistence",
+            "in": "query",
+            "description": "Features must have larger persistence (intensity above valley) than \u003cvalue\u003e * max trace intensity.",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "default": 0.1
+            }
+          },
+          {
+            "name": "merge",
+            "in": "query",
+            "description": "Merge neighboring features with valley less than \u003cvalue\u003e * intensity.",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "default": 0.8
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "Set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/JobOptField"
+              },
+              "default": [
+                "progress"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "the import job.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      }
+    },
     "/api/projects/{projectId}/jobs/import/ms-data-files-job": {
       "post": {
         "tags": [
@@ -962,6 +1119,152 @@
         }
       }
     },
+    "/api/projects/{projectId}/import/preprocessed-local-data-files": {
+      "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats (ms, mgf, cef, msp)\n\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.",
+        "description": "Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats (ms, mgf, cef, msp)\n\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n\n DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this\n API to allow for more flexible use cases. Use \u0027preprocessed-data-files\u0027 instead.",
+        "operationId": "importPreprocessedDataLocally",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to import into.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ignoreFormulas",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "allowMs1Only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "files to import into project",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      }
+    },
+    "/api/projects/{projectId}/import/preprocessed-local-data-files-job": {
+      "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Import ms/ms data from the given format into the specified project-space as background job.",
+        "description": "Import ms/ms data from the given format into the specified project-space as background job.\n Possible formats (ms, mgf, cef, msp)\n\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n\n DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this\n API to allow for more flexible use cases. Use \u0027preprocessed-data-files-job\u0027 instead.",
+        "operationId": "importPreprocessedDataAsJobLocally",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to import into.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ignoreFormulas",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "allowMs1Only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/JobOptField"
+              },
+              "default": [
+                "progress"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "the import job.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      }
+    },
     "/api/projects/{projectId}/import/preprocessed-data-files": {
       "post": {
         "tags": [
@@ -1116,6 +1419,149 @@
             }
           }
         }
+      }
+    },
+    "/api/projects/{projectId}/import/ms-local-data-files": {
+      "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Import and Align full MS-Runs from various formats into the specified project\n Possible formats (mzML, mzXML)\n ",
+        "description": "Import and Align full MS-Runs from various formats into the specified project\n Possible formats (mzML, mzXML)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this\n API to allow for more flexible use cases. Use \u0027ms-data-files\u0027 instead.",
+        "operationId": "importMsRunDataLocally",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "Project to import into.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "alignRuns",
+            "in": "query",
+            "description": "Align LC/MS runs.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "allowMs1Only",
+            "in": "query",
+            "description": "Import data without MS/MS.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "description": "Filter algorithm to suppress noise.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/DataSmoothing"
+            }
+          },
+          {
+            "name": "sigma",
+            "in": "query",
+            "description": "Sigma (kernel width) for Gaussian filter algorithm.",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "default": 3.0
+            }
+          },
+          {
+            "name": "scale",
+            "in": "query",
+            "description": "Number of coefficients for wavelet filter algorithm.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "window",
+            "in": "query",
+            "description": "Wavelet window size (%) for wavelet filter algorithm.",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "default": 10.0
+            }
+          },
+          {
+            "name": "noise",
+            "in": "query",
+            "description": "Features must be larger than \u003cvalue\u003e * detected noise level.",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "default": 2.0
+            }
+          },
+          {
+            "name": "persistence",
+            "in": "query",
+            "description": "Features must have larger persistence (intensity above valley) than \u003cvalue\u003e * max trace intensity.",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "default": 0.1
+            }
+          },
+          {
+            "name": "merge",
+            "in": "query",
+            "description": "Merge neighboring features with valley less than \u003cvalue\u003e * intensity.",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "format": "double",
+              "default": 0.8
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Local files to import into project",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
       }
     },
     "/api/projects/{projectId}/import/ms-data-files": {

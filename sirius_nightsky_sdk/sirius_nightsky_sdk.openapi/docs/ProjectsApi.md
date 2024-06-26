@@ -14,8 +14,12 @@ All URIs are relative to *http://localhost:8888*
 | [**getProjectSpaces**](ProjectsApi.md#getProjectSpaces) | **GET** /api/projects | List opened project spaces. |
 | [**importMsRunData**](ProjectsApi.md#importMsRunData) | **POST** /api/projects/{projectId}/import/ms-data-files | Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML) |
 | [**importMsRunDataAsJob**](ProjectsApi.md#importMsRunDataAsJob) | **POST** /api/projects/{projectId}/jobs/import/ms-data-files-job | Import and Align full MS-Runs from various formats into the specified project as background job. |
+| [**importMsRunDataAsJobLocally**](ProjectsApi.md#importMsRunDataAsJobLocally) | **POST** /api/projects/{projectId}/jobs/import/ms-data-local-files-job | Import and Align full MS-Runs from various formats into the specified project as background job |
+| [**importMsRunDataLocally**](ProjectsApi.md#importMsRunDataLocally) | **POST** /api/projects/{projectId}/import/ms-local-data-files | Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)   |
 | [**importPreprocessedData**](ProjectsApi.md#importPreprocessedData) | **POST** /api/projects/{projectId}/import/preprocessed-data-files | Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp) |
 | [**importPreprocessedDataAsJob**](ProjectsApi.md#importPreprocessedDataAsJob) | **POST** /api/projects/{projectId}/import/preprocessed-data-files-job | Import ms/ms data from the given format into the specified project-space as background job. |
+| [**importPreprocessedDataAsJobLocally**](ProjectsApi.md#importPreprocessedDataAsJobLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files-job | Import ms/ms data from the given format into the specified project-space as background job. |
+| [**importPreprocessedDataLocally**](ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running. |
 | [**openProjectSpace**](ProjectsApi.md#openProjectSpace) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId. |
 
 
@@ -729,6 +733,180 @@ No authorization required
 | **200** | the import job. |  -  |
 
 
+## importMsRunDataAsJobLocally
+
+> Job importMsRunDataAsJobLocally(projectId, requestBody, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields)
+
+Import and Align full MS-Runs from various formats into the specified project as background job
+
+Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;ms-data-files-job&#39; instead.
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.ProjectsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        ProjectsApi apiInstance = new ProjectsApi(defaultClient);
+        String projectId = "projectId_example"; // String | Project-space to import into.
+        List<String> requestBody = Arrays.asList(); // List<String> | 
+        Boolean alignRuns = true; // Boolean | Align LC/MS runs.
+        Boolean allowMs1Only = true; // Boolean | Import data without MS/MS.
+        DataSmoothing filter = DataSmoothing.fromValue("AUTO"); // DataSmoothing | Filter algorithm to suppress noise.
+        Double sigma = 3.0D; // Double | Sigma (kernel width) for Gaussian filter algorithm.
+        Integer scale = 20; // Integer | Number of coefficients for wavelet filter algorithm.
+        Double window = 10.0D; // Double | Wavelet window size (%) for wavelet filter algorithm.
+        Double noise = 2.0D; // Double | Features must be larger than <value> * detected noise level.
+        Double persistence = 0.1D; // Double | Features must have larger persistence (intensity above valley) than <value> * max trace intensity.
+        Double merge = 0.8D; // Double | Merge neighboring features with valley less than <value> * intensity.
+        List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | Set of optional fields to be included. Use 'none' only to override defaults.
+        try {
+            Job result = apiInstance.importMsRunDataAsJobLocally(projectId, requestBody, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling ProjectsApi#importMsRunDataAsJobLocally");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| Project-space to import into. | |
+| **requestBody** | [**List&lt;String&gt;**](String.md)|  | |
+| **alignRuns** | **Boolean**| Align LC/MS runs. | [optional] [default to true] |
+| **allowMs1Only** | **Boolean**| Import data without MS/MS. | [optional] [default to true] |
+| **filter** | [**DataSmoothing**](.md)| Filter algorithm to suppress noise. | [optional] [enum: AUTO, NOFILTER, GAUSSIAN, WAVELET] |
+| **sigma** | **Double**| Sigma (kernel width) for Gaussian filter algorithm. | [optional] [default to 3.0] |
+| **scale** | **Integer**| Number of coefficients for wavelet filter algorithm. | [optional] [default to 20] |
+| **window** | **Double**| Wavelet window size (%) for wavelet filter algorithm. | [optional] [default to 10.0] |
+| **noise** | **Double**| Features must be larger than &lt;value&gt; * detected noise level. | [optional] [default to 2.0] |
+| **persistence** | **Double**| Features must have larger persistence (intensity above valley) than &lt;value&gt; * max trace intensity. | [optional] [default to 0.1] |
+| **merge** | **Double**| Merge neighboring features with valley less than &lt;value&gt; * intensity. | [optional] [default to 0.8] |
+| **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| Set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
+
+### Return type
+
+[**Job**](Job.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | the import job. |  -  |
+
+
+## importMsRunDataLocally
+
+> ImportResult importMsRunDataLocally(projectId, requestBody, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge)
+
+Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  
+
+Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  &lt;p&gt;  ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.  &lt;p&gt;  DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;ms-data-files&#39; instead.
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.ProjectsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        ProjectsApi apiInstance = new ProjectsApi(defaultClient);
+        String projectId = "projectId_example"; // String | Project to import into.
+        List<String> requestBody = Arrays.asList(); // List<String> | Local files to import into project
+        Boolean alignRuns = true; // Boolean | Align LC/MS runs.
+        Boolean allowMs1Only = true; // Boolean | Import data without MS/MS.
+        DataSmoothing filter = DataSmoothing.fromValue("AUTO"); // DataSmoothing | Filter algorithm to suppress noise.
+        Double sigma = 3.0D; // Double | Sigma (kernel width) for Gaussian filter algorithm.
+        Integer scale = 20; // Integer | Number of coefficients for wavelet filter algorithm.
+        Double window = 10.0D; // Double | Wavelet window size (%) for wavelet filter algorithm.
+        Double noise = 2.0D; // Double | Features must be larger than <value> * detected noise level.
+        Double persistence = 0.1D; // Double | Features must have larger persistence (intensity above valley) than <value> * max trace intensity.
+        Double merge = 0.8D; // Double | Merge neighboring features with valley less than <value> * intensity.
+        try {
+            ImportResult result = apiInstance.importMsRunDataLocally(projectId, requestBody, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling ProjectsApi#importMsRunDataLocally");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| Project to import into. | |
+| **requestBody** | [**List&lt;String&gt;**](String.md)| Local files to import into project | |
+| **alignRuns** | **Boolean**| Align LC/MS runs. | [optional] [default to true] |
+| **allowMs1Only** | **Boolean**| Import data without MS/MS. | [optional] [default to true] |
+| **filter** | [**DataSmoothing**](.md)| Filter algorithm to suppress noise. | [optional] [enum: AUTO, NOFILTER, GAUSSIAN, WAVELET] |
+| **sigma** | **Double**| Sigma (kernel width) for Gaussian filter algorithm. | [optional] [default to 3.0] |
+| **scale** | **Integer**| Number of coefficients for wavelet filter algorithm. | [optional] [default to 20] |
+| **window** | **Double**| Wavelet window size (%) for wavelet filter algorithm. | [optional] [default to 10.0] |
+| **noise** | **Double**| Features must be larger than &lt;value&gt; * detected noise level. | [optional] [default to 2.0] |
+| **persistence** | **Double**| Features must have larger persistence (intensity above valley) than &lt;value&gt; * max trace intensity. | [optional] [default to 0.1] |
+| **merge** | **Double**| Merge neighboring features with valley less than &lt;value&gt; * intensity. | [optional] [default to 0.8] |
+
+### Return type
+
+[**ImportResult**](ImportResult.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+
+
 ## importPreprocessedData
 
 > ImportResult importPreprocessedData(projectId, ignoreFormulas, allowMs1Only, inputFiles)
@@ -873,6 +1051,152 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | the import job. |  -  |
+
+
+## importPreprocessedDataAsJobLocally
+
+> Job importPreprocessedDataAsJobLocally(projectId, requestBody, ignoreFormulas, allowMs1Only, optFields)
+
+Import ms/ms data from the given format into the specified project-space as background job.
+
+Import ms/ms data from the given format into the specified project-space as background job.  Possible formats (ms, mgf, cef, msp)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.   DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;preprocessed-data-files-job&#39; instead.
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.ProjectsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        ProjectsApi apiInstance = new ProjectsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to import into.
+        List<String> requestBody = Arrays.asList(); // List<String> | 
+        Boolean ignoreFormulas = false; // Boolean | 
+        Boolean allowMs1Only = true; // Boolean | 
+        List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | set of optional fields to be included. Use 'none' only to override defaults.
+        try {
+            Job result = apiInstance.importPreprocessedDataAsJobLocally(projectId, requestBody, ignoreFormulas, allowMs1Only, optFields);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling ProjectsApi#importPreprocessedDataAsJobLocally");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to import into. | |
+| **requestBody** | [**List&lt;String&gt;**](String.md)|  | |
+| **ignoreFormulas** | **Boolean**|  | [optional] [default to false] |
+| **allowMs1Only** | **Boolean**|  | [optional] [default to true] |
+| **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
+
+### Return type
+
+[**Job**](Job.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | the import job. |  -  |
+
+
+## importPreprocessedDataLocally
+
+> ImportResult importPreprocessedDataLocally(projectId, requestBody, ignoreFormulas, allowMs1Only)
+
+Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.
+
+Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)   ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,  not on the system where the client SDK is running.  Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)  are running on the same host.   DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this  API to allow for more flexible use cases. Use &#39;preprocessed-data-files&#39; instead.
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.ProjectsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        ProjectsApi apiInstance = new ProjectsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to import into.
+        List<String> requestBody = Arrays.asList(); // List<String> | files to import into project
+        Boolean ignoreFormulas = false; // Boolean | 
+        Boolean allowMs1Only = true; // Boolean | 
+        try {
+            ImportResult result = apiInstance.importPreprocessedDataLocally(projectId, requestBody, ignoreFormulas, allowMs1Only);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling ProjectsApi#importPreprocessedDataLocally");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to import into. | |
+| **requestBody** | [**List&lt;String&gt;**](String.md)| files to import into project | |
+| **ignoreFormulas** | **Boolean**|  | [optional] [default to false] |
+| **allowMs1Only** | **Boolean**|  | [optional] [default to true] |
+
+### Return type
+
+[**ImportResult**](ImportResult.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
 
 
 ## openProjectSpace
