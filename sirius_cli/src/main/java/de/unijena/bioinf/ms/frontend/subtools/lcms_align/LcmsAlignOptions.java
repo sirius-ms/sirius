@@ -42,10 +42,6 @@ import java.util.Set;
 @CommandLine.Command(name = "lcms-align", aliases = {"A"}, description = "@|bold <PREPROCESSING>|@ Align and merge compounds of multiple LCMS Runs. Use this tool if you want to import from mzML/mzXml. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<ProjectSpaceManager>> {
 
-    public enum Filter {
-        AUTO, NOFILTER, GAUSSIAN, WAVELET
-    }
-
     @Override
     public PreprocessingJob<ProjectSpaceManager> makePreprocessingJob(@Nullable InputFilesOptions input, @NotNull OutputOptions outputProject, @NotNull ProjectSpaceManagerFactory<?> projectFactory, @Nullable ParameterConfig config) {
         Set<PrecursorIonType> detectable = config.createInstanceWithDefaults(AdductSettings.class).getDetectable();
@@ -62,25 +58,31 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<Proj
         return workflow;
     }
 
-    @CommandLine.Option(names={"--filter"}, defaultValue = "AUTO", description = "Filter algorithm to suppress noise. Valid values: ${COMPLETION-CANDIDATES}")
-    public Filter filter;
+    @CommandLine.Option(names={"--no-align"}, description = "Do not align and combine all LC/MS runs to one merged LC/MS run.")
+    public boolean noAlign;
 
-    @CommandLine.Option(names={"--sigma"}, defaultValue = "3.0", description = "Sigma (kernel width) for Gaussian filter algorithm. default: ${DEFAULT-VALUE}")
+    @CommandLine.Option(names="--ms1-only", description = "Allow features without MS/MS data")
+    public boolean allowMs1Only;
+
+    @CommandLine.Option(names={"--smoothing"}, defaultValue = "AUTO", description = "Filter algorithm to suppress noise.")
+    public DataSmoothing smoothing;
+
+    @CommandLine.Option(names={"--sigma"}, defaultValue = "3.0", description = "Sigma (kernel width) for Gaussian filter algorithm.")
     public double sigma;
 
-    @CommandLine.Option(names={"--scale"}, defaultValue = "20", description = "Number of coefficients for wavelet filter algorithm. default: ${DEFAULT-VALUE}")
+    @CommandLine.Option(names={"--scale"}, defaultValue = "20", description = "Number of coefficients for wavelet filter algorithm.")
     public int scaleLevel;
 
-    @CommandLine.Option(names={"--window"}, defaultValue = "11", description = "Wavelet window size (%) for wavelet filter algorithm. default: ${DEFAULT-VALUE}")
+    @CommandLine.Option(names={"--window"}, defaultValue = "10", description = "Wavelet window size (%) for wavelet filter algorithm.")
     public double waveletWindow;
 
-    @CommandLine.Option(names={"--noise"}, defaultValue = "2.0", description = "Features must be larger than <value> * detected noise level. default: ${DEFAULT-VALUE}")
+    @CommandLine.Option(names={"--noise"}, defaultValue = "2.0", description = "Features must be larger than <value> * detected noise level.")
     public double noiseCoefficient;
 
-    @CommandLine.Option(names={"--persistence"}, defaultValue = "0.1", description = "Features must have larger persistence (intensity above valley) than <value> * max trace intensity. default: ${DEFAULT-VALUE}")
+    @CommandLine.Option(names={"--persistence"}, defaultValue = "0.1", description = "Features must have larger persistence (intensity above valley) than <value> * max trace intensity.")
     public double persistenceCoefficient;
 
-    @CommandLine.Option(names={"--merge"}, defaultValue = "0.8", description = "Merge neighboring features with valley less than <value> * intensity. default: ${DEFAULT-VALUE}")
+    @CommandLine.Option(names={"--merge"}, defaultValue = "0.8", description = "Merge neighboring features with valley less than <value> * intensity.")
     public double mergeCoefficient;
 
     @CommandLine.Option(names={"--statistics"}, required = false, hidden = true)
