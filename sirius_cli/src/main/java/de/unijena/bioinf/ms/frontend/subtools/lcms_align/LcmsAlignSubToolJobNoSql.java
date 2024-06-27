@@ -49,16 +49,12 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
-import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
-import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
-import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
-import de.unijena.bioinf.projectspace.NoSQLInstance;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.storage.db.nosql.Database;
@@ -161,7 +157,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             updateProgress(totalProgress, progress, "Reading files");
             List<BasicJJob<ProcessedSample>> jobs = new ArrayList<>();
             int atmost = Integer.MAX_VALUE;
-            for (Path f : inputFiles) {
+            for (Path f : files) {
                 if (--atmost < 0) break;
                 jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<ProcessedSample>() {
                     @Override
@@ -346,17 +342,18 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
         progress = 0;
         if (alignRuns) {
-            totalProgress = inputFiles.size() + 3L;
+            totalProgress = inputFiles.size() + 5L;
             compute(space, ps, store, inputFiles);
         } else {
             // TODO parallelize
-            totalProgress = inputFiles.size() * 4L;
+            totalProgress = inputFiles.size() * 5L + 1;
             int atmost = Integer.MAX_VALUE;
             for (Path f : inputFiles) {
                 if (--atmost < 0) break;
                 compute(space, ps, store, List.of(f));
             }
         }
+        updateProgress(totalProgress, totalProgress, "Done");
 
         return space;
     }
