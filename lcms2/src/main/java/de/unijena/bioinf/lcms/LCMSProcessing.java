@@ -6,7 +6,6 @@ import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.jjobs.BasicJJob;
-import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.lcms.align.*;
 import de.unijena.bioinf.lcms.features.IsotopePatternExtractionStrategy;
 import de.unijena.bioinf.lcms.features.MergedApexIsotopePatternExtractor;
@@ -38,6 +37,8 @@ import de.unijena.bioinf.ms.persistence.model.core.run.*;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.text.similarity.LongestCommonSubsequence;
@@ -99,7 +100,7 @@ public class LCMSProcessing {
         new PersistentHomology(new WaveletFilter(20, 10), 2.0, 0.1, 0.8);
 
     @Getter @Setter private ProjectSpaceImporter<?> importer = new PickFeaturesAndImportToSirius(
-            new SegmentMergedFeatures(mergedTraceSegmentationStrategy), new MergedApexIsotopePatternExtractor(), new MergeGreedyStrategy()
+            new SegmentMergedFeatures(), new MergedApexIsotopePatternExtractor(), new MergeGreedyStrategy()
     );
 
     @Getter @Setter private Ms2MergeStrategy ms2MergeStrategy = new MergeGreedyStrategy();
@@ -109,8 +110,17 @@ public class LCMSProcessing {
     protected List<ProcessedSample> samples = new ArrayList<>();
     private HashMap<Integer, ProcessedSample> sampleByIdx = new HashMap<>();
 
-    public LCMSProcessing(SiriusDatabaseAdapter siriusDatabaseAdapter) {
+    private final boolean saveFeatureIds;
+
+    private final boolean allowMs1Only;
+
+    @Getter
+    private LongList importedFeatureIds = new LongArrayList();
+
+    public LCMSProcessing(SiriusDatabaseAdapter siriusDatabaseAdapter, boolean saveFeatureIds, boolean allowMs1Only) {
         this.siriusDatabaseAdapter = siriusDatabaseAdapter;
+        this.saveFeatureIds = saveFeatureIds;
+        this.allowMs1Only = allowMs1Only;
     }
 
     /**
@@ -216,7 +226,7 @@ public class LCMSProcessing {
         return merged;
     }
 
-    public void extractFeaturesAndExportToProjectSpace(ProcessedSample merged, AlignmentBackbone backbone) throws IOException {
+    public int extractFeaturesAndExportToProjectSpace(ProcessedSample merged, AlignmentBackbone backbone) throws IOException {
         LongestCommonSubsequence lcs = new LongestCommonSubsequence();
         String name = Arrays.stream(backbone.getSamples()).map(s -> s.getRun().getName()).reduce((a, b) -> lcs.longestCommonSubsequence(a, b).toString()).orElse("");
         if (name.isBlank())
@@ -237,6 +247,7 @@ public class LCMSProcessing {
             if (sample!=merged) importer.importRun(siriusDatabaseAdapter, obj, sample);
             else importer.importMergedRun(siriusDatabaseAdapter, obj, sample);
         }
+        int featureCount = 0;
         List<BasicJJob<long[]>> jobs = new ArrayList<>();
         for (final Rect r : merged.getStorage().getMergeStorage().getRectangleMap()) {
             jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<long[]>() {
@@ -244,18 +255,30 @@ public class LCMSProcessing {
                 protected long[] compute() throws Exception {
                     MergedTrace mergedTrace = collectMergedTrace(merged, r.id);
                     if (isSuitableForImport(mergedTrace)) {
-                        return Arrays.stream(importer.importMergedTrace(siriusDatabaseAdapter, obj,merged, mergedTrace)).mapToLong(AlignedFeatures::getAlignedFeatureId).toArray();
+                        return Arrays.stream(importer.importMergedTrace(mergedTraceSegmentationStrategy, siriusDatabaseAdapter, obj,merged, mergedTrace,allowMs1Only)).mapToLong(AlignedFeatures::getAlignedFeatureId).toArray();
                     }
                     return new long[0];
                 }
             }));
         }
-        jobs.forEach(JJob::takeResult);
+        for (BasicJJob<long[]> job : jobs) {
+            long[] ids = job.takeResult();
+            if (saveFeatureIds) {
+                for (long id : ids) {
+                    importedFeatureIds.add(id);
+                }
+            }
+            featureCount += ids.length;
+        }
 
-        mergedRun.setSampleStats(collectFinalStatistics(merged, backbone));
-        siriusDatabaseAdapter.updateMergedRun(mergedRun);
+        if (featureCount > 0) {
+            mergedRun.setSampleStats(collectFinalStatistics(merged, backbone));
+            siriusDatabaseAdapter.updateMergedRun(mergedRun);
+        } else {
+            siriusDatabaseAdapter.removeMergedRun(mergedRun);
+        }
 
-
+        return featureCount;
     }
 
     private SampleStatistics collectFinalStatistics(ProcessedSample merged, AlignmentBackbone alignmentBackbone) throws IOException {
@@ -264,9 +287,8 @@ public class LCMSProcessing {
          */
         DoubleArrayList fwhms = new DoubleArrayList();
         DoubleArrayList heightDividedByfwhms = new DoubleArrayList();
-        siriusDatabaseAdapter.getImportedFeatureStream(true)
-                .filter(x -> x.getRunId() == merged.getRun().getRunId())
-                .filter(x -> x.getMSData().get().getIsotopePattern() != null && x.getMSData().get().getIsotopePattern().size() >= 2)
+        siriusDatabaseAdapter.getImportedFeatureStream(merged.getRun().getRunId())
+                .filter(x -> x.getMSData().orElseThrow().getIsotopePattern() != null && x.getMSData().get().getIsotopePattern().size() >= 2)
                 .forEach(x->{
                     fwhms.add(x.getFwhm().doubleValue());
                     heightDividedByfwhms.add(x.getApexIntensity()/x.getFwhm());
