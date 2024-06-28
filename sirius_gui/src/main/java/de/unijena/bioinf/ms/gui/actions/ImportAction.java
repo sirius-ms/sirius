@@ -122,6 +122,7 @@ public class ImportAction extends AbstractGuiAction {
                 LCMSDialog dialog = new LCMSDialog(popupOwner, lcmsPaths.size() > 1);
                 if (dialog.isSuccess()) {
                     ParameterBinding binding = dialog.getParamterBinging();
+                    String runType = binding.getOrDefault("tag", () -> null).get();
                     boolean align = binding.getOrDefault("align", () -> "~true").get().equals("~true");
                     DataSmoothing filter = DataSmoothing.valueOf(binding.getOrDefault("filter", () -> "AUTO").get());
                     double sigma = Double.parseDouble(binding.getOrDefault("sigma", () -> "3.0").get());
@@ -134,6 +135,7 @@ public class ImportAction extends AbstractGuiAction {
                     task = gui.applySiriusClient((c, pid) -> {
                         Job job = c.projects().importMsRunDataAsJobLocally(pid,
                                 lcmsPaths.stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
+                                runType,
                                 align && lcmsPaths.size() > 1,
                                 PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", false),
                                 filter, sigma, scale, window, noise, persistence, merge,

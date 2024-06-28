@@ -148,6 +148,7 @@ public class ProjectController {
     @PostMapping(value = "/{projectId}/jobs/import/ms-data-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Job importMsRunDataAsJob(@PathVariable String projectId,
                                     @RequestBody MultipartFile[] inputFiles,
+                                    @RequestParam(defaultValue = "") String tag,
                                     @RequestParam(defaultValue = "true") boolean alignRuns,
                                     @RequestParam(defaultValue = "true") boolean allowMs1Only,
                                     @RequestParam(defaultValue = "AUTO") DataSmoothing filter,
@@ -163,6 +164,7 @@ public class ProjectController {
         try {
             ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
             sub.setInputFiles(List.of(inputFiles));
+            sub.setTag(tag);
             sub.setAlignLCMSRuns(alignRuns);
             sub.setAllowMs1OnlyData(allowMs1Only);
             sub.setFilter(filter);
@@ -198,6 +200,7 @@ public class ProjectController {
     @PostMapping(value = "/{projectId}/import/ms-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ImportResult importMsRunData(@PathVariable String projectId,
                                         @RequestBody MultipartFile[] inputFiles,
+                                        @RequestParam(defaultValue = "") String tag,
                                         @RequestParam(defaultValue = "true") boolean alignRuns,
                                         @RequestParam(defaultValue = "true") boolean allowMs1Only,
                                         @RequestParam(defaultValue = "AUTO") DataSmoothing filter,
@@ -210,6 +213,7 @@ public class ProjectController {
     ) {
         ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
         sub.setInputFiles(List.of(inputFiles));
+        sub.setTag(tag);
         sub.setAlignLCMSRuns(alignRuns);
         sub.setAllowMs1OnlyData(allowMs1Only);
         sub.setFilter(filter);
@@ -252,6 +256,7 @@ public class ProjectController {
     @PostMapping(value = "/{projectId}/jobs/import/ms-data-local-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public Job importMsRunDataAsJobLocally(@PathVariable String projectId,
                                            @RequestBody String[] localFilePaths,
+                                           @RequestParam(defaultValue = "") String tag,
                                            @RequestParam(defaultValue = "true") boolean alignRuns,
                                            @RequestParam(defaultValue = "true") boolean allowMs1Only,
                                            @RequestParam(defaultValue = "AUTO") DataSmoothing filter,
@@ -267,6 +272,7 @@ public class ProjectController {
         try {
             ImportLocalFilesSubmission sub = new ImportLocalFilesSubmission();
             sub.setInputPaths(List.of(localFilePaths));
+            sub.setTag(tag);
             sub.setAlignLCMSRuns(alignRuns);
             sub.setAllowMs1OnlyData(allowMs1Only);
             sub.setFilter(filter);
@@ -310,6 +316,7 @@ public class ProjectController {
     @PostMapping(value = "/{projectId}/import/ms-local-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ImportResult importMsRunDataLocally(@PathVariable String projectId,
                                                @RequestBody String[] localFilePaths,
+                                               @RequestParam(defaultValue = "") String tag,
                                                @RequestParam(defaultValue = "true") boolean alignRuns,
                                                @RequestParam(defaultValue = "true") boolean allowMs1Only,
                                                @RequestParam(defaultValue = "AUTO") DataSmoothing filter,
@@ -322,6 +329,7 @@ public class ProjectController {
     ) {
         ImportLocalFilesSubmission sub = new ImportLocalFilesSubmission();
         sub.setInputPaths(List.of(localFilePaths));
+        sub.setTag(tag);
         sub.setAlignLCMSRuns(alignRuns);
         sub.setAllowMs1OnlyData(allowMs1Only);
         sub.setFilter(filter);

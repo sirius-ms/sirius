@@ -118,6 +118,9 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
         if (filterModel.isDbFilterEnabled())
             if (!matchesDBFilter(item, filterModel)) return false;
 
+        if (filterModel.isTagHidingEnabled())
+            return !filterModel.featureSubtractionMatches(item);
+
         return true;
     }
 

@@ -108,6 +108,7 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
                 LcmsAlignSubToolJobNoSql importerJJob = new LcmsAlignSubToolJobNoSql(
                         inputFiles,
                         () -> psm,
+                        submission.getTag(),
                         submission.isAlignLCMSRuns(),
                         submission.isAllowMs1OnlyData(),
                         submission.getFilter(),

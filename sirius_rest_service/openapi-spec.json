@@ -738,6 +738,15 @@
             }
           },
           {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          {
             "name": "alignRuns",
             "in": "query",
             "description": "Align LC/MS runs.",
@@ -892,6 +901,15 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": ""
             }
           },
           {
@@ -1440,6 +1458,15 @@
             }
           },
           {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          {
             "name": "alignRuns",
             "in": "query",
             "description": "Align LC/MS runs.",
@@ -1580,6 +1607,15 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": ""
             }
           },
           {
@@ -6647,6 +6683,9 @@
           "name": {
             "type": "string"
           },
+          "tag": {
+            "type": "string"
+          },
           "externalFeatureId": {
             "type": "string",
             "description": "Externally provided FeatureId (e.g. by some preprocessing tool).\n This FeatureId is NOT used by SIRIUS but is stored to ease mapping information back to the source."
@@ -8579,6 +8618,12 @@
           "supportsPosPredictorTypes": {
             "type": "boolean"
           },
+          "supportsAllPredictorTypes": {
+            "type": "boolean"
+          },
+          "supportsNegPredictorTypes": {
+            "type": "boolean"
+          },
           "availableWorkers": {
             "uniqueItems": true,
             "type": "array",
@@ -8592,12 +8637,6 @@
             "items": {
               "type": "string"
             }
-          },
-          "supportsAllPredictorTypes": {
-            "type": "boolean"
-          },
-          "supportsNegPredictorTypes": {
-            "type": "boolean"
           }
         }
       },
