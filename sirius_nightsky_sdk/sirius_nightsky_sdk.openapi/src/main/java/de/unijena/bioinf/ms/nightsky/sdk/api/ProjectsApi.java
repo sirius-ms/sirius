@@ -703,6 +703,7 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
      * <p><b>200</b> - OK
      * @param projectId Project-space to import into.
+     * @param tag The tag parameter
      * @param alignRuns Align LC/MS runs.
      * @param allowMs1Only Import data without MS/MS.
      * @param filter Filter algorithm to suppress noise.
@@ -716,7 +717,7 @@ public class ProjectsApi {
      * @return ImportResult
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec importMsRunDataRequestCreation(String projectId, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<File> inputFiles) throws WebClientResponseException {
+    private ResponseSpec importMsRunDataRequestCreation(String projectId, String tag, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<File> inputFiles) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -732,6 +733,7 @@ public class ProjectsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "tag", tag));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignRuns", alignRuns));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "allowMs1Only", allowMs1Only));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "filter", filter));
@@ -765,6 +767,7 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
      * <p><b>200</b> - OK
      * @param projectId Project-space to import into.
+     * @param tag The tag parameter
      * @param alignRuns Align LC/MS runs.
      * @param allowMs1Only Import data without MS/MS.
      * @param filter Filter algorithm to suppress noise.
@@ -778,9 +781,9 @@ public class ProjectsApi {
      * @return ImportResult
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ImportResult importMsRunData(String projectId, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<File> inputFiles) throws WebClientResponseException {
+    public ImportResult importMsRunData(String projectId, String tag, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<File> inputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
-        return importMsRunDataRequestCreation(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, inputFiles).bodyToMono(localVarReturnType).block();
+        return importMsRunDataRequestCreation(projectId, tag, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, inputFiles).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -788,6 +791,7 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
      * <p><b>200</b> - OK
      * @param projectId Project-space to import into.
+     * @param tag The tag parameter
      * @param alignRuns Align LC/MS runs.
      * @param allowMs1Only Import data without MS/MS.
      * @param filter Filter algorithm to suppress noise.
@@ -801,9 +805,9 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;ImportResult&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<ImportResult> importMsRunDataWithHttpInfo(String projectId, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<File> inputFiles) throws WebClientResponseException {
+    public ResponseEntity<ImportResult> importMsRunDataWithHttpInfo(String projectId, String tag, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<File> inputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
-        return importMsRunDataRequestCreation(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, inputFiles).toEntity(localVarReturnType).block();
+        return importMsRunDataRequestCreation(projectId, tag, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, inputFiles).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -811,6 +815,7 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
      * <p><b>200</b> - OK
      * @param projectId Project-space to import into.
+     * @param tag The tag parameter
      * @param alignRuns Align LC/MS runs.
      * @param allowMs1Only Import data without MS/MS.
      * @param filter Filter algorithm to suppress noise.
@@ -824,14 +829,15 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importMsRunDataWithResponseSpec(String projectId, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<File> inputFiles) throws WebClientResponseException {
-        return importMsRunDataRequestCreation(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, inputFiles);
+    public ResponseSpec importMsRunDataWithResponseSpec(String projectId, String tag, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<File> inputFiles) throws WebClientResponseException {
+        return importMsRunDataRequestCreation(projectId, tag, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, inputFiles);
     }
     /**
      * Import and Align full MS-Runs from various formats into the specified project as background job.
      * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
      * <p><b>200</b> - the import job.
      * @param projectId Project-space to import into.
+     * @param tag The tag parameter
      * @param alignRuns Align LC/MS runs.
      * @param allowMs1Only Import data without MS/MS.
      * @param filter Filter algorithm to suppress noise.
@@ -846,7 +852,7 @@ public class ProjectsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec importMsRunDataAsJobRequestCreation(String projectId, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
+    private ResponseSpec importMsRunDataAsJobRequestCreation(String projectId, String tag, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -862,6 +868,7 @@ public class ProjectsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "tag", tag));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignRuns", alignRuns));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "allowMs1Only", allowMs1Only));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "filter", filter));
@@ -896,6 +903,7 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
      * <p><b>200</b> - the import job.
      * @param projectId Project-space to import into.
+     * @param tag The tag parameter
      * @param alignRuns Align LC/MS runs.
      * @param allowMs1Only Import data without MS/MS.
      * @param filter Filter algorithm to suppress noise.
@@ -910,9 +918,9 @@ public class ProjectsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job importMsRunDataAsJob(String projectId, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
+    public Job importMsRunDataAsJob(String projectId, String tag, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return importMsRunDataAsJobRequestCreation(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields, inputFiles).bodyToMono(localVarReturnType).block();
+        return importMsRunDataAsJobRequestCreation(projectId, tag, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields, inputFiles).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -920,6 +928,7 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
      * <p><b>200</b> - the import job.
      * @param projectId Project-space to import into.
+     * @param tag The tag parameter
      * @param alignRuns Align LC/MS runs.
      * @param allowMs1Only Import data without MS/MS.
      * @param filter Filter algorithm to suppress noise.
@@ -934,9 +943,9 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> importMsRunDataAsJobWithHttpInfo(String projectId, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
+    public ResponseEntity<Job> importMsRunDataAsJobWithHttpInfo(String projectId, String tag, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return importMsRunDataAsJobRequestCreation(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields, inputFiles).toEntity(localVarReturnType).block();
+        return importMsRunDataAsJobRequestCreation(projectId, tag, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields, inputFiles).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -944,6 +953,7 @@ public class ProjectsApi {
      * Import and Align full MS-Runs from various formats into the specified project as background job.  Possible formats (mzML, mzXML)
      * <p><b>200</b> - the import job.
      * @param projectId Project-space to import into.
+     * @param tag The tag parameter
      * @param alignRuns Align LC/MS runs.
      * @param allowMs1Only Import data without MS/MS.
      * @param filter Filter algorithm to suppress noise.
@@ -958,8 +968,8 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importMsRunDataAsJobWithResponseSpec(String projectId, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
-        return importMsRunDataAsJobRequestCreation(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields, inputFiles);
+    public ResponseSpec importMsRunDataAsJobWithResponseSpec(String projectId, String tag, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<JobOptField> optFields, List<File> inputFiles) throws WebClientResponseException {
+        return importMsRunDataAsJobRequestCreation(projectId, tag, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields, inputFiles);
     }
     /**
      * Import and Align full MS-Runs from various formats into the specified project as background job
@@ -967,6 +977,7 @@ public class ProjectsApi {
      * <p><b>200</b> - the import job.
      * @param projectId Project-space to import into.
      * @param requestBody The requestBody parameter
+     * @param tag The tag parameter
      * @param alignRuns Align LC/MS runs.
      * @param allowMs1Only Import data without MS/MS.
      * @param filter Filter algorithm to suppress noise.
@@ -982,7 +993,7 @@ public class ProjectsApi {
      * @deprecated
      */
     @Deprecated
-    private ResponseSpec importMsRunDataAsJobLocallyRequestCreation(String projectId, List<String> requestBody, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<JobOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec importMsRunDataAsJobLocallyRequestCreation(String projectId, List<String> requestBody, String tag, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<JobOptField> optFields) throws WebClientResponseException {
         Object postBody = requestBody;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1002,6 +1013,7 @@ public class ProjectsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "tag", tag));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignRuns", alignRuns));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "allowMs1Only", allowMs1Only));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "filter", filter));
@@ -1034,6 +1046,7 @@ public class ProjectsApi {
      * <p><b>200</b> - the import job.
      * @param projectId Project-space to import into.
      * @param requestBody The requestBody parameter
+     * @param tag The tag parameter
      * @param alignRuns Align LC/MS runs.
      * @param allowMs1Only Import data without MS/MS.
      * @param filter Filter algorithm to suppress noise.
@@ -1047,9 +1060,9 @@ public class ProjectsApi {
      * @return Job
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Job importMsRunDataAsJobLocally(String projectId, List<String> requestBody, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<JobOptField> optFields) throws WebClientResponseException {
+    public Job importMsRunDataAsJobLocally(String projectId, List<String> requestBody, String tag, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return importMsRunDataAsJobLocallyRequestCreation(projectId, requestBody, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields).bodyToMono(localVarReturnType).block();
+        return importMsRunDataAsJobLocallyRequestCreation(projectId, requestBody, tag, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -1058,6 +1071,7 @@ public class ProjectsApi {
      * <p><b>200</b> - the import job.
      * @param projectId Project-space to import into.
      * @param requestBody The requestBody parameter
+     * @param tag The tag parameter
      * @param alignRuns Align LC/MS runs.
      * @param allowMs1Only Import data without MS/MS.
      * @param filter Filter algorithm to suppress noise.
@@ -1071,9 +1085,9 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;Job&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Job> importMsRunDataAsJobLocallyWithHttpInfo(String projectId, List<String> requestBody, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<JobOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<Job> importMsRunDataAsJobLocallyWithHttpInfo(String projectId, List<String> requestBody, String tag, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<JobOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return importMsRunDataAsJobLocallyRequestCreation(projectId, requestBody, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields).toEntity(localVarReturnType).block();
+        return importMsRunDataAsJobLocallyRequestCreation(projectId, requestBody, tag, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -1082,6 +1096,7 @@ public class ProjectsApi {
      * <p><b>200</b> - the import job.
      * @param projectId Project-space to import into.
      * @param requestBody The requestBody parameter
+     * @param tag The tag parameter
      * @param alignRuns Align LC/MS runs.
      * @param allowMs1Only Import data without MS/MS.
      * @param filter Filter algorithm to suppress noise.
@@ -1095,8 +1110,8 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importMsRunDataAsJobLocallyWithResponseSpec(String projectId, List<String> requestBody, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<JobOptField> optFields) throws WebClientResponseException {
-        return importMsRunDataAsJobLocallyRequestCreation(projectId, requestBody, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields);
+    public ResponseSpec importMsRunDataAsJobLocallyWithResponseSpec(String projectId, List<String> requestBody, String tag, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge, List<JobOptField> optFields) throws WebClientResponseException {
+        return importMsRunDataAsJobLocallyRequestCreation(projectId, requestBody, tag, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields);
     }
     /**
      * Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  
@@ -1104,6 +1119,7 @@ public class ProjectsApi {
      * <p><b>200</b> - OK
      * @param projectId Project to import into.
      * @param requestBody Local files to import into project
+     * @param tag The tag parameter
      * @param alignRuns Align LC/MS runs.
      * @param allowMs1Only Import data without MS/MS.
      * @param filter Filter algorithm to suppress noise.
@@ -1118,7 +1134,7 @@ public class ProjectsApi {
      * @deprecated
      */
     @Deprecated
-    private ResponseSpec importMsRunDataLocallyRequestCreation(String projectId, List<String> requestBody, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge) throws WebClientResponseException {
+    private ResponseSpec importMsRunDataLocallyRequestCreation(String projectId, List<String> requestBody, String tag, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge) throws WebClientResponseException {
         Object postBody = requestBody;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -1138,6 +1154,7 @@ public class ProjectsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "tag", tag));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "alignRuns", alignRuns));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "allowMs1Only", allowMs1Only));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "filter", filter));
@@ -1169,6 +1186,7 @@ public class ProjectsApi {
      * <p><b>200</b> - OK
      * @param projectId Project to import into.
      * @param requestBody Local files to import into project
+     * @param tag The tag parameter
      * @param alignRuns Align LC/MS runs.
      * @param allowMs1Only Import data without MS/MS.
      * @param filter Filter algorithm to suppress noise.
@@ -1181,9 +1199,9 @@ public class ProjectsApi {
      * @return ImportResult
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ImportResult importMsRunDataLocally(String projectId, List<String> requestBody, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge) throws WebClientResponseException {
+    public ImportResult importMsRunDataLocally(String projectId, List<String> requestBody, String tag, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge) throws WebClientResponseException {
         ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
-        return importMsRunDataLocallyRequestCreation(projectId, requestBody, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge).bodyToMono(localVarReturnType).block();
+        return importMsRunDataLocallyRequestCreation(projectId, requestBody, tag, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -1192,6 +1210,7 @@ public class ProjectsApi {
      * <p><b>200</b> - OK
      * @param projectId Project to import into.
      * @param requestBody Local files to import into project
+     * @param tag The tag parameter
      * @param alignRuns Align LC/MS runs.
      * @param allowMs1Only Import data without MS/MS.
      * @param filter Filter algorithm to suppress noise.
@@ -1204,9 +1223,9 @@ public class ProjectsApi {
      * @return ResponseEntity&lt;ImportResult&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<ImportResult> importMsRunDataLocallyWithHttpInfo(String projectId, List<String> requestBody, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge) throws WebClientResponseException {
+    public ResponseEntity<ImportResult> importMsRunDataLocallyWithHttpInfo(String projectId, List<String> requestBody, String tag, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge) throws WebClientResponseException {
         ParameterizedTypeReference<ImportResult> localVarReturnType = new ParameterizedTypeReference<ImportResult>() {};
-        return importMsRunDataLocallyRequestCreation(projectId, requestBody, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge).toEntity(localVarReturnType).block();
+        return importMsRunDataLocallyRequestCreation(projectId, requestBody, tag, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -1215,6 +1234,7 @@ public class ProjectsApi {
      * <p><b>200</b> - OK
      * @param projectId Project to import into.
      * @param requestBody Local files to import into project
+     * @param tag The tag parameter
      * @param alignRuns Align LC/MS runs.
      * @param allowMs1Only Import data without MS/MS.
      * @param filter Filter algorithm to suppress noise.
@@ -1227,8 +1247,8 @@ public class ProjectsApi {
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec importMsRunDataLocallyWithResponseSpec(String projectId, List<String> requestBody, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge) throws WebClientResponseException {
-        return importMsRunDataLocallyRequestCreation(projectId, requestBody, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge);
+    public ResponseSpec importMsRunDataLocallyWithResponseSpec(String projectId, List<String> requestBody, String tag, Boolean alignRuns, Boolean allowMs1Only, DataSmoothing filter, Double sigma, Integer scale, Double window, Double noise, Double persistence, Double merge) throws WebClientResponseException {
+        return importMsRunDataLocallyRequestCreation(projectId, requestBody, tag, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge);
     }
     /**
      * Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)

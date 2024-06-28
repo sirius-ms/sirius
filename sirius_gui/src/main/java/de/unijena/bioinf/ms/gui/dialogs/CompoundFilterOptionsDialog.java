@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
+import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeature;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jdesktop.swingx.JXTitledSeparator;
@@ -71,6 +72,11 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     private final QualityFilterPanel overallQualityPanel;
     private final List<QualityFilterPanel> qualityPanels;
 
+    private JCheckBoxList<String> hideTagList;
+    private JCheckBox subtract;
+    private JSpinner subtractRatioSpinner;
+    private JSpinner subtractMzPPMSpinner;
+    private JSpinner subtractRTDevSpinner;
 
     final SiriusGui gui;
 
@@ -256,6 +262,62 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             }
         }
 
+        // subtraction filter
+        {
+            Set<String> tags = gui.applySiriusClient((client, pid) ->
+                    client.features().getAlignedFeatures(pid, List.of()).stream().map(AlignedFeature::getTag).filter(Objects::nonNull).filter(tag -> !tag.isEmpty() && !tag.isBlank()).collect(Collectors.toSet())
+            );
+
+            if (!tags.isEmpty()) {
+                generalParameters.add(Box.createVerticalStrut(5));
+
+                List<String> tagList = tags.stream().filter(tag -> !tag.isBlank()).sorted().toList();
+                hideTagList = new JCheckBoxList<>(tagList, String::equalsIgnoreCase);
+                for (String tag : filterModel.getHiddenTags()) {
+                    hideTagList.check(tag);
+                }
+                JCheckboxListPanel<String> hidePanel = new JCheckboxListPanel<>(hideTagList, "Hide tags", GuiUtils.formatToolTip("Select tagged compounds/features to hide."));
+
+                subtract = new JCheckBox();
+                subtract.setToolTipText(GuiUtils.formatToolTip("Hide all compounds with mass and retention time matching compounds/features with hidden tags."));
+
+                subtractRatioSpinner = makeSpinner(2, 1, 100, 1.0);
+                subtractMzPPMSpinner = makeSpinner(10, 0.1, 100, 1);
+                subtractRTDevSpinner = makeSpinner(2, 0.1, 100, 1);
+
+                subtract.setSelected(filterModel.isFeatureSubtractionEnabled());
+                subtractRatioSpinner.setEnabled(subtract.isSelected());
+                subtractMzPPMSpinner.setEnabled(subtract.isSelected());
+                subtractRTDevSpinner.setEnabled(subtract.isSelected());
+
+                subtract.addActionListener(evt -> {
+                    subtractRatioSpinner.setEnabled(subtract.isSelected());
+                    subtractMzPPMSpinner.setEnabled(subtract.isSelected());
+                    subtractRTDevSpinner.setEnabled(subtract.isSelected());
+                });
+
+                subtractMzPPMSpinner.setToolTipText(GuiUtils.formatToolTip("Max m/z deviation of matching features"));
+                subtractRTDevSpinner.setToolTipText(GuiUtils.formatToolTip("Max retention time deviation of matching features"));
+                subtractRatioSpinner.setToolTipText(GuiUtils.formatToolTip("Hide features with intensity <= ratio * intensity of the matched hidden feature"));
+
+                TwoColumnPanel subtractPanel = new TwoColumnPanel();
+                subtractPanel.add(new JXTitledSeparator("Hide matching compounds"));
+                subtractPanel.addNamed("Enabled", subtract);
+                subtractPanel.addNamed("MS1 m/z accuracy [ppm]", subtractMzPPMSpinner);
+                subtractPanel.addNamed("RT accuracy [sec]", subtractRTDevSpinner);
+                subtractPanel.addNamed("Max intensity ratio", subtractRatioSpinner);
+                subtractPanel.addVerticalGlue();
+
+                Box box = Box.createHorizontalBox();
+                box.add(hidePanel);
+                box.add(Box.createHorizontalStrut(50));
+                box.add(subtractPanel);
+                box.add(Box.createHorizontalStrut(10));
+
+                generalParameters.add(box);
+            }
+        }
+
         // filter modifiers
         {
             generalParameters.add(Box.createVerticalStrut(5));
@@ -370,6 +432,13 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         filterModel.setDbFilter(new CompoundFilterModel.DbFilter(searchDBList.checkBoxList.getCheckedItems(),
                 ((SpinnerNumberModel) candidateSpinner.getModel()).getNumber().intValue()));
 
+        filterModel.enableTagHiding(!hideTagList.getCheckedItems().isEmpty());
+        filterModel.setHiddenTags(new HashSet<>(hideTagList.getCheckedItems()));
+        filterModel.enableFeatureSubtraction(subtract.isSelected());
+        filterModel.setFeatureSubtractionMinRatio(((SpinnerNumberModel) subtractRatioSpinner.getModel()).getNumber().doubleValue());
+        filterModel.setFeatureSubtractionMzDev(((SpinnerNumberModel) subtractMzPPMSpinner.getModel()).getNumber().doubleValue());
+        filterModel.setFeatureSubtractionRtDev(((SpinnerNumberModel) subtractRTDevSpinner.getModel()).getNumber().doubleValue());
+
         saveTextFilter();
     }
 
@@ -393,7 +462,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     private void deleteSelectedCompoundsAndResetFilter() {
 
         // create deletion matcher
-        CompoundFilterModel tmpModel = new CompoundFilterModel();
+        CompoundFilterModel tmpModel = new CompoundFilterModel(gui);
         applyToModel(tmpModel);
         CompoundFilterMatcher matcher = new CompoundFilterMatcher(gui.getProperties(), tmpModel);
         boolean inverted = invertFilter.isSelected();
@@ -445,6 +514,11 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         deleteSelection.setSelected(false);
         hasMs1.setSelected(false);
         hasMsMs.setSelected(false);
+
+        subtract.setSelected(false);
+        hideTagList.uncheckAll();
+        hideTagList.check("blank");
+        hideTagList.check("control");
     }
 
     private void resetSpinnerValues() {
@@ -456,6 +530,10 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         maxConfidenceSpinner.setValue(filterModel.getMaxConfidence());
         minIsotopeSpinner.setValue(filterModel.getMinIsotopePeaks());
         candidateSpinner.setValue(1);
+
+        subtractMzPPMSpinner.setValue(10.0);
+        subtractRTDevSpinner.setValue(2.0);
+        subtractRatioSpinner.setValue(2.0);
     }
 
     public double getMinMz() {

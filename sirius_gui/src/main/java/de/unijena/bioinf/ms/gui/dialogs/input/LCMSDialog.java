@@ -35,6 +35,8 @@ import org.jdesktop.swingx.JXTitledSeparator;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
+import java.util.List;
+import java.util.function.Function;
 
 public class LCMSDialog extends DoNotShowAgainDialog {
 
@@ -51,6 +53,12 @@ public class LCMSDialog extends DoNotShowAgainDialog {
 
         public LCMSConfigPanel(TwoColumnPanel paras, JDialog parent) {
             super(LcmsAlignOptions.class);
+
+            JComboBox<String> tagBox = makeGenericOptionComboBox("tag", List.of("blank", "control", "sample"), Function.identity());
+            tagBox.setSelectedIndex(2);
+            tagBox.setEditable(true);
+            paras.addNamed("Data tag", tagBox);
+            paras.addVerticalGlue();
 
             paras.add(new JXTitledSeparator("Import Options"));
 

@@ -37,6 +37,7 @@ import java.util.List;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public abstract class AbstractImportSubmission {
 
+    protected String tag;
     protected boolean allowMs1OnlyData;
     protected boolean ignoreFormulas;
     protected boolean alignLCMSRuns;

@@ -561,7 +561,7 @@ No authorization required
 
 ## importMsRunData
 
-> ImportResult importMsRunData(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, inputFiles)
+> ImportResult importMsRunData(projectId, tag, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, inputFiles)
 
 Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
 
@@ -584,6 +584,7 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | Project-space to import into.
+        String tag = ""; // String | 
         Boolean alignRuns = true; // Boolean | Align LC/MS runs.
         Boolean allowMs1Only = true; // Boolean | Import data without MS/MS.
         DataSmoothing filter = DataSmoothing.fromValue("AUTO"); // DataSmoothing | Filter algorithm to suppress noise.
@@ -595,7 +596,7 @@ public class Example {
         Double merge = 0.8D; // Double | Merge neighboring features with valley less than <value> * intensity.
         List<File> inputFiles = Arrays.asList(); // List<File> | 
         try {
-            ImportResult result = apiInstance.importMsRunData(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, inputFiles);
+            ImportResult result = apiInstance.importMsRunData(projectId, tag, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, inputFiles);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importMsRunData");
@@ -614,6 +615,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| Project-space to import into. | |
+| **tag** | **String**|  | [optional] [default to ] |
 | **alignRuns** | **Boolean**| Align LC/MS runs. | [optional] [default to true] |
 | **allowMs1Only** | **Boolean**| Import data without MS/MS. | [optional] [default to true] |
 | **filter** | [**DataSmoothing**](.md)| Filter algorithm to suppress noise. | [optional] [enum: AUTO, NOFILTER, GAUSSIAN, WAVELET] |
@@ -647,7 +649,7 @@ No authorization required
 
 ## importMsRunDataAsJob
 
-> Job importMsRunDataAsJob(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields, inputFiles)
+> Job importMsRunDataAsJob(projectId, tag, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields, inputFiles)
 
 Import and Align full MS-Runs from various formats into the specified project as background job.
 
@@ -670,6 +672,7 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | Project-space to import into.
+        String tag = ""; // String | 
         Boolean alignRuns = true; // Boolean | Align LC/MS runs.
         Boolean allowMs1Only = true; // Boolean | Import data without MS/MS.
         DataSmoothing filter = DataSmoothing.fromValue("AUTO"); // DataSmoothing | Filter algorithm to suppress noise.
@@ -682,7 +685,7 @@ public class Example {
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | Set of optional fields to be included. Use 'none' only to override defaults.
         List<File> inputFiles = Arrays.asList(); // List<File> | 
         try {
-            Job result = apiInstance.importMsRunDataAsJob(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields, inputFiles);
+            Job result = apiInstance.importMsRunDataAsJob(projectId, tag, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields, inputFiles);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importMsRunDataAsJob");
@@ -701,6 +704,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| Project-space to import into. | |
+| **tag** | **String**|  | [optional] [default to ] |
 | **alignRuns** | **Boolean**| Align LC/MS runs. | [optional] [default to true] |
 | **allowMs1Only** | **Boolean**| Import data without MS/MS. | [optional] [default to true] |
 | **filter** | [**DataSmoothing**](.md)| Filter algorithm to suppress noise. | [optional] [enum: AUTO, NOFILTER, GAUSSIAN, WAVELET] |
@@ -735,7 +739,7 @@ No authorization required
 
 ## importMsRunDataAsJobLocally
 
-> Job importMsRunDataAsJobLocally(projectId, requestBody, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields)
+> Job importMsRunDataAsJobLocally(projectId, requestBody, tag, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields)
 
 Import and Align full MS-Runs from various formats into the specified project as background job
 
@@ -759,6 +763,7 @@ public class Example {
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | Project-space to import into.
         List<String> requestBody = Arrays.asList(); // List<String> | 
+        String tag = ""; // String | 
         Boolean alignRuns = true; // Boolean | Align LC/MS runs.
         Boolean allowMs1Only = true; // Boolean | Import data without MS/MS.
         DataSmoothing filter = DataSmoothing.fromValue("AUTO"); // DataSmoothing | Filter algorithm to suppress noise.
@@ -770,7 +775,7 @@ public class Example {
         Double merge = 0.8D; // Double | Merge neighboring features with valley less than <value> * intensity.
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | Set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            Job result = apiInstance.importMsRunDataAsJobLocally(projectId, requestBody, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields);
+            Job result = apiInstance.importMsRunDataAsJobLocally(projectId, requestBody, tag, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importMsRunDataAsJobLocally");
@@ -790,6 +795,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| Project-space to import into. | |
 | **requestBody** | [**List&lt;String&gt;**](String.md)|  | |
+| **tag** | **String**|  | [optional] [default to ] |
 | **alignRuns** | **Boolean**| Align LC/MS runs. | [optional] [default to true] |
 | **allowMs1Only** | **Boolean**| Import data without MS/MS. | [optional] [default to true] |
 | **filter** | [**DataSmoothing**](.md)| Filter algorithm to suppress noise. | [optional] [enum: AUTO, NOFILTER, GAUSSIAN, WAVELET] |
@@ -823,7 +829,7 @@ No authorization required
 
 ## importMsRunDataLocally
 
-> ImportResult importMsRunDataLocally(projectId, requestBody, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge)
+> ImportResult importMsRunDataLocally(projectId, requestBody, tag, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge)
 
 Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  
 
@@ -847,6 +853,7 @@ public class Example {
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | Project to import into.
         List<String> requestBody = Arrays.asList(); // List<String> | Local files to import into project
+        String tag = ""; // String | 
         Boolean alignRuns = true; // Boolean | Align LC/MS runs.
         Boolean allowMs1Only = true; // Boolean | Import data without MS/MS.
         DataSmoothing filter = DataSmoothing.fromValue("AUTO"); // DataSmoothing | Filter algorithm to suppress noise.
@@ -857,7 +864,7 @@ public class Example {
         Double persistence = 0.1D; // Double | Features must have larger persistence (intensity above valley) than <value> * max trace intensity.
         Double merge = 0.8D; // Double | Merge neighboring features with valley less than <value> * intensity.
         try {
-            ImportResult result = apiInstance.importMsRunDataLocally(projectId, requestBody, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge);
+            ImportResult result = apiInstance.importMsRunDataLocally(projectId, requestBody, tag, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importMsRunDataLocally");
@@ -877,6 +884,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| Project to import into. | |
 | **requestBody** | [**List&lt;String&gt;**](String.md)| Local files to import into project | |
+| **tag** | **String**|  | [optional] [default to ] |
 | **alignRuns** | **Boolean**| Align LC/MS runs. | [optional] [default to true] |
 | **allowMs1Only** | **Boolean**| Import data without MS/MS. | [optional] [default to true] |
 | **filter** | [**DataSmoothing**](.md)| Filter algorithm to suppress noise. | [optional] [enum: AUTO, NOFILTER, GAUSSIAN, WAVELET] |
