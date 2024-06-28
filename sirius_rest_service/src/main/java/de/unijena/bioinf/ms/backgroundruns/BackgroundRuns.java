@@ -23,7 +23,6 @@ package de.unijena.bioinf.ms.backgroundruns;
 import com.googlecode.concurentlocks.ReadWriteUpdateLock;
 import com.googlecode.concurentlocks.ReentrantReadWriteUpdateLock;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
-import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
@@ -32,6 +31,7 @@ import de.unijena.bioinf.ms.frontend.workflow.ToolChainWorkflow;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.frontend.workflow.WorkflowBuilder;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
 import de.unijena.bioinf.ms.properties.ConfigType;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.Instance;
@@ -249,16 +249,15 @@ public final class BackgroundRuns {
         return submitRunAndLockInstances(makeBackgroundRun(command, instances));
     }
 
-    public BackgroundRunJob runImportMsData(Collection<PathInputResource> inputResources, boolean allowMs1OnlyData, boolean alignRuns
-    ) {
-        Workflow computation = new ImportMsFromResourceWorkflow(psm, inputResources, allowMs1OnlyData, alignRuns, true);
+    public BackgroundRunJob runImportMsData(AbstractImportSubmission submission) {
+        Workflow computation = new ImportMsFromResourceWorkflow(psm, submission, true);
         return submitRunAndLockInstances(
                 new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "LC-MS Importer", "Preprocessing"));
     }
 
     public BackgroundRunJob runImportPeakData(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData
     ) {
-        Workflow computation = new ImportPeaksFomResourceWorkflow(psm, inputResources, ignoreFormulas, allowMs1OnlyData, true);
+        Workflow computation = new ImportPeaksFomResourceWorkflow(psm, inputResources, ignoreFormulas, allowMs1OnlyData);
         return submitRunAndLockInstances(
                 new BackgroundRunJob(computation, null, RUN_COUNTER.incrementAndGet(), null, "Peak list Importer", "Import"));
     }
@@ -390,7 +389,6 @@ public final class BackgroundRuns {
                 logInfo("Freeing up memory...");
                 computation = null;
                 System.gc(); //hint for the gc to collect som trash after computations
-                System.runFinalization();
                 logInfo("Memory freed!");
             } finally {
                 removeAndFinishRun(this, AUTOREMOVE.get());

@@ -214,16 +214,15 @@ public class ComputeServiceImpl implements ComputeService {
     }
 
     @Override
-    public Job createAndSubmitMsDataImportJob(@NotNull Project<?> project, ImportMultipartFilesSubmission importSubmission,
+    public Job createAndSubmitMsDataImportJob(@NotNull Project<?> project, AbstractImportSubmission importSubmission,
                                               @NotNull EnumSet<Job.OptField> optFields) {
-        BackgroundRuns.BackgroundRunJob run = backgroundRuns(project)
-                .runImportMsData(importSubmission.asPathInputResource(), importSubmission.isAllowMs1OnlyData(), importSubmission.isAlignLCMSRuns());
+        BackgroundRuns.BackgroundRunJob run = backgroundRuns(project).runImportMsData(importSubmission);
         registerServerEventListener(run, project.getProjectId());
         return extractJobId(run, optFields);
     }
 
     @Override
-    public Job createAndSubmitPeakListImportJob(@NotNull Project<?> project, ImportMultipartFilesSubmission importSubmission,
+    public Job createAndSubmitPeakListImportJob(@NotNull Project<?> project, AbstractImportSubmission importSubmission,
                                                 @NotNull EnumSet<Job.OptField> optFields) {
         BackgroundRuns.BackgroundRunJob run = backgroundRuns(project)
                 .runImportPeakData(importSubmission.asInputResource(), importSubmission.isIgnoreFormulas(), importSubmission.isAllowMs1OnlyData());

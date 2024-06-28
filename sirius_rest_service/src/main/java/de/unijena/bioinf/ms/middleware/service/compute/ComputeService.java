@@ -39,10 +39,10 @@ public interface ComputeService extends DisposableBean {
     Job createAndSubmitJob(@NotNull Project<?> psm, List<String> commandList, @Nullable Iterable<String> alignedFeatureIds,
                            @NotNull EnumSet<Job.OptField> optFields);
 
-    Job createAndSubmitMsDataImportJob(@NotNull Project<?> psm, ImportMultipartFilesSubmission importSubmission,
+    Job createAndSubmitMsDataImportJob(@NotNull Project<?> psm, AbstractImportSubmission importSubmission,
                                        @NotNull EnumSet<Job.OptField> optFields);
 
-    Job createAndSubmitPeakListImportJob(@NotNull Project<?> psm, ImportMultipartFilesSubmission importSubmission,
+    Job createAndSubmitPeakListImportJob(@NotNull Project<?> psm, AbstractImportSubmission importSubmission,
                                          @NotNull EnumSet<Job.OptField> optFields);
 
     Job createAndSubmitCommandJob(@NotNull Project<?> psm, CommandSubmission commandSubmission,

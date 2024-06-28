@@ -33,6 +33,7 @@ docs/ConsensusCriterionCSI.md
 docs/ConsensusCriterionDeNovo.md
 docs/DBLink.md
 docs/DataQuality.md
+docs/DataSmoothing.md
 docs/Deviation.md
 docs/ExperimentalApi.md
 docs/FeatureAnnotations.md
@@ -157,6 +158,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ConsensusCriterionCSI.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ConsensusCriterionDeNovo.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/DBLink.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/DataQuality.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/DataSmoothing.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Deviation.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FeatureAnnotations.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FeatureImport.java
