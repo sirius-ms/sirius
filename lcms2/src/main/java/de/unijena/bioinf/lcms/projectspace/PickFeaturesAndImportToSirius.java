@@ -79,7 +79,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
     }
 
     @Override
-    public AlignedFeatures[] importMergedTrace(TraceSegmentationStrategy traceSegmenter, SiriusDatabaseAdapter adapter, DbMapper dbMapper, ProcessedSample mergedSample, MergedTrace mergedTrace, boolean allowMs1Only) throws IOException {
+    public AlignedFeatures[] importMergedTrace(TraceSegmentationStrategy traceSegmenter, SiriusDatabaseAdapter adapter, DbMapper dbMapper, ProcessedSample mergedSample, MergedTrace mergedTrace, boolean allowMs1Only, String tag) throws IOException {
         // import each individual trace
         MergeTraceId tid = importMergedTraceWithoutIsotopes(adapter, dbMapper, mergedTrace);
         // now import isotopes
@@ -88,14 +88,14 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
             isotopes[k] = importMergedTraceWithoutIsotopes(adapter, dbMapper, mergedTrace.getIsotopes()[k]);
         }
         // now extract the compounds
-        AlignedFeatures[] features = extractCompounds(traceSegmenter, adapter, dbMapper, mergedSample, mergedTrace, tid, isotopes, allowMs1Only);
+        AlignedFeatures[] features = extractCompounds(traceSegmenter, adapter, dbMapper, mergedSample, mergedTrace, tid, isotopes, allowMs1Only, tag);
         if (features.length == 0) {
             removeMergedTrace(adapter, tid, isotopes);
         }
         return features;
     }
 
-    private AlignedFeatures[] extractCompounds(TraceSegmentationStrategy traceSegmenter, SiriusDatabaseAdapter adapter, DbMapper dbMapper, ProcessedSample mergedSample, MergedTrace mergedTrace, MergeTraceId dbId, MergeTraceId[] dbIsotopeIds, boolean allowMs1Only) {
+    private AlignedFeatures[] extractCompounds(TraceSegmentationStrategy traceSegmenter, SiriusDatabaseAdapter adapter, DbMapper dbMapper, ProcessedSample mergedSample, MergedTrace mergedTrace, MergeTraceId dbId, MergeTraceId[] dbIsotopeIds, boolean allowMs1Only, String tag) {
         // first we use segmentation to split the trace into segments
         // when then apply this segments to all traces and isotopes
         TraceSegment[] traceSegments = segmentationStrategy.extractMergedSegments(traceSegmenter, mergedSample, mergedTrace);
@@ -134,6 +134,8 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
             features[fid] = new AlignedFeatures();
             features[fid].setDetectedAdducts(new DetectedAdducts());
             features[fid].setFeatures(new ArrayList<>());
+            features[fid].setTag(tag);
+
             // assign segments
             int o = mergedTrace.startId();
             TraceSegment traceSegment = traceSegments[fid];

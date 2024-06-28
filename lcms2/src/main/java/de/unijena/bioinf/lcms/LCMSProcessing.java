@@ -33,7 +33,10 @@ import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.traceextractor.*;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
-import de.unijena.bioinf.ms.persistence.model.core.run.*;
+import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
+import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
+import de.unijena.bioinf.ms.persistence.model.core.run.SampleStatistics;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
@@ -128,22 +131,21 @@ public class LCMSProcessing {
      * stream later
      */
     public ProcessedSample processSample(Path file) throws IOException {
-        return processSample(file, false, LCMSRun.Type.SAMPLE, Chromatography.LC);
+        return processSample(file, false, Chromatography.LC);
     }
 
     public ProcessedSample processSample(URI input) throws IOException {
-        return processSample(input, false, LCMSRun.Type.SAMPLE, Chromatography.LC);
+        return processSample(input, false, Chromatography.LC);
     }
 
 
     public ProcessedSample processSample(
             Path file,
             boolean saveRawScans,
-            LCMSRun.Type runType,
             Chromatography chromatography
     ) throws IOException {
         ProcessedSample sample = LCMSImporter.importToProject(
-                file, storageFactory, siriusDatabaseAdapter, saveRawScans, runType, chromatography);
+                file, storageFactory, siriusDatabaseAdapter, saveRawScans, chromatography);
         processSample(sample);
         return sample;
     }
@@ -155,12 +157,11 @@ public class LCMSProcessing {
     public ProcessedSample processSample(
             URI input,
             boolean saveRawScans,
-            LCMSRun.Type runType,
             Chromatography chromatography
     ) throws IOException {
         // parse file and extract spectra
         ProcessedSample sample = LCMSImporter.importToProject(
-                input, storageFactory, siriusDatabaseAdapter, saveRawScans, runType, chromatography);
+                input, storageFactory, siriusDatabaseAdapter, saveRawScans, chromatography);
         processSample(sample);
         return sample;
     }
@@ -226,7 +227,7 @@ public class LCMSProcessing {
         return merged;
     }
 
-    public int extractFeaturesAndExportToProjectSpace(ProcessedSample merged, AlignmentBackbone backbone) throws IOException {
+    public int extractFeaturesAndExportToProjectSpace(ProcessedSample merged, AlignmentBackbone backbone, String tag) throws IOException {
         LongestCommonSubsequence lcs = new LongestCommonSubsequence();
         String name = Arrays.stream(backbone.getSamples()).map(s -> s.getRun().getName()).reduce((a, b) -> lcs.longestCommonSubsequence(a, b).toString()).orElse("");
         if (name.isBlank())
@@ -255,7 +256,7 @@ public class LCMSProcessing {
                 protected long[] compute() throws Exception {
                     MergedTrace mergedTrace = collectMergedTrace(merged, r.id);
                     if (isSuitableForImport(mergedTrace)) {
-                        return Arrays.stream(importer.importMergedTrace(mergedTraceSegmentationStrategy, siriusDatabaseAdapter, obj,merged, mergedTrace,allowMs1Only)).mapToLong(AlignedFeatures::getAlignedFeatureId).toArray();
+                        return Arrays.stream(importer.importMergedTrace(mergedTraceSegmentationStrategy, siriusDatabaseAdapter, obj,merged, mergedTrace,allowMs1Only,tag)).mapToLong(AlignedFeatures::getAlignedFeatureId).toArray();
                     }
                     return new long[0];
                 }

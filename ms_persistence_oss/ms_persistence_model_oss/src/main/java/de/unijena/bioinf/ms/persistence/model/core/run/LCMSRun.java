@@ -33,17 +33,6 @@ import java.util.List;
 @NoArgsConstructor
 @ToString
 public class LCMSRun extends AbstractLCMSRun {
-    //todo are there other types like validation or calibration???
-    // TODO: @kaidu: suggest to remove and solve via tagging system
-    public enum Type {
-        SAMPLE,
-        BLANK
-    }
-
-    /**
-     * indicated that this run is a Blank run
-     */
-    private Type runType;
 
     private Chromatography chromatography;
     private Ionization ionization;
