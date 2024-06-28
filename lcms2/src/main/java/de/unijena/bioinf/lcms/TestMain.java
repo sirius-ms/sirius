@@ -146,9 +146,7 @@ public class TestMain {
                 ProcessedSample merged = processing.merge(bac);
 //            processing.exportFeaturesToFiles(merged, bac);
 
-                // TODO check intensity normalization in aligned features
-                // FIXME mz in aligned features is weird
-                processing.extractFeaturesAndExportToProjectSpace(merged, bac);
+                processing.extractFeaturesAndExportToProjectSpace(merged, bac, "SAMPLE");
 
                 assert store.countAll(MergedLCMSRun.class) == 1;
                 for (MergedLCMSRun run : store.findAll(MergedLCMSRun.class)) {
