@@ -94,4 +94,8 @@ public interface InputResource<Resource> {
      * @return the size of the file, or 0 if empty
      */
     long getSize();
+
+    default boolean isDeleteAfterImport() {
+        return false;
+    }
 }

@@ -20,6 +20,9 @@
 
 package de.unijena.bioinf.babelms.inputresource;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,16 +31,23 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class PathInputResource implements InputResource<Path> {
-
+    @Getter
+    @Setter
+    private boolean deleteAfterImport;
     private final Path path;
 
     public PathInputResource(File file) {
         this(file.toPath());
     }
     public PathInputResource(Path file) {
+        this(file, false);
+    }
+
+    public PathInputResource(Path file, boolean deleteAfterImport) {
         if (!Files.isRegularFile(file))
             throw new IllegalArgumentException("Only Files are allowed");
         this.path = file;
+        this.deleteAfterImport = deleteAfterImport;
     }
 
     @Override

@@ -13,13 +13,14 @@ import de.unijena.bioinf.lcms.merge.MergedTrace;
 import de.unijena.bioinf.lcms.msms.MergedSpectrum;
 import de.unijena.bioinf.lcms.msms.Ms2MergeStrategy;
 import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
+import de.unijena.bioinf.lcms.statistics.SampleStats;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.ProjectedTrace;
 import de.unijena.bioinf.lcms.trace.Trace;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
+import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.utils.MultipleCharges;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
-import de.unijena.bioinf.lcms.statistics.SampleStats;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
@@ -34,7 +35,9 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Objects;
 
 public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickFeaturesAndImportToSirius.DbMapper>  {
 
@@ -76,7 +79,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
     }
 
     @Override
-    public AlignedFeatures[] importMergedTrace(SiriusDatabaseAdapter adapter, DbMapper dbMapper, ProcessedSample mergedSample, MergedTrace mergedTrace) throws IOException {
+    public AlignedFeatures[] importMergedTrace(TraceSegmentationStrategy traceSegmenter, SiriusDatabaseAdapter adapter, DbMapper dbMapper, ProcessedSample mergedSample, MergedTrace mergedTrace, boolean allowMs1Only) throws IOException {
         // import each individual trace
         MergeTraceId tid = importMergedTraceWithoutIsotopes(adapter, dbMapper, mergedTrace);
         // now import isotopes
@@ -85,14 +88,17 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
             isotopes[k] = importMergedTraceWithoutIsotopes(adapter, dbMapper, mergedTrace.getIsotopes()[k]);
         }
         // now extract the compounds
-        return extractCompounds(adapter, dbMapper, mergedSample, mergedTrace, tid, isotopes);
-
+        AlignedFeatures[] features = extractCompounds(traceSegmenter, adapter, dbMapper, mergedSample, mergedTrace, tid, isotopes, allowMs1Only);
+        if (features.length == 0) {
+            removeMergedTrace(adapter, tid, isotopes);
+        }
+        return features;
     }
 
-    private AlignedFeatures[] extractCompounds(SiriusDatabaseAdapter adapter, DbMapper dbMapper, ProcessedSample mergedSample, MergedTrace mergedTrace, MergeTraceId dbId, MergeTraceId[] dbIsotopeIds) {
+    private AlignedFeatures[] extractCompounds(TraceSegmentationStrategy traceSegmenter, SiriusDatabaseAdapter adapter, DbMapper dbMapper, ProcessedSample mergedSample, MergedTrace mergedTrace, MergeTraceId dbId, MergeTraceId[] dbIsotopeIds, boolean allowMs1Only) {
         // first we use segmentation to split the trace into segments
         // when then apply this segments to all traces and isotopes
-        TraceSegment[] traceSegments = segmentationStrategy.extractMergedSegments(mergedSample, mergedTrace);
+        TraceSegment[] traceSegments = segmentationStrategy.extractMergedSegments(traceSegmenter, mergedSample, mergedTrace);
 
         // if there is no compound found in the trace...
         if (traceSegments.length==0) return new AlignedFeatures[0];
@@ -149,6 +155,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                 int rapex = getAdjustedApex(subTrace.raw(S.getMapping()), ra, rb);
                 setGenericAttributes(subTrace.projected(mergedSample.getMapping()), r, rapex, sub, charge, S, mergedSample);
                 sub.setTraceRef(new RawTraceRef(dbId.rawTraces[j], o1, r.leftEdge-o1, r.apex-o1, r.rightEdge-o1, ra-o2, rapex-o2, rb-o2, o2));
+
                 features[fid].getFeatures().get().add(sub);
             }
         }
@@ -159,10 +166,14 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         // reassign charge
         reassignCharge(features);
         // store feature
-        for (AlignedFeatures f : features) {
-            if (f==null) continue;
+        for (int i = 0; i < features.length; i++) {
+            if (features[i]==null) continue;
+            if (!allowMs1Only && !features[i].isHasMsMs()) {
+                features[i] = null;
+                continue;
+            }
             try {
-                adapter.importAlignedFeature(f);
+                if (!adapter.importAlignedFeature(features[i])) features[i] = null;
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -422,6 +433,19 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         merged.setRunId(dbMapper.sampleIndizes.get(dbMapper.mergedUiD));
         adapter.importTrace(merged);
         return new MergeTraceId(merged.getMergedTraceId(), traceIds);
+    }
+
+    private void removeMergedTrace(SiriusDatabaseAdapter adapter, MergeTraceId tid, MergeTraceId[] isotopes) throws IOException {
+        adapter.removeMergedTrace(tid.mergeTrace);
+        for (long id : tid.rawTraces) {
+            adapter.removeSourceTrace(id);
+        }
+        for (MergeTraceId mergeTraceId : isotopes) {
+            adapter.removeMergedTrace(mergeTraceId.mergeTrace);
+            for (long id : mergeTraceId.rawTraces) {
+                adapter.removeSourceTrace(id);
+            }
+        }
     }
 
 

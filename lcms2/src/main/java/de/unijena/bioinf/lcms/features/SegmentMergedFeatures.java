@@ -1,24 +1,24 @@
 package de.unijena.bioinf.lcms.features;
 
 import de.unijena.bioinf.lcms.merge.MergedTrace;
+import de.unijena.bioinf.lcms.statistics.SampleStats;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.ProjectedTrace;
 import de.unijena.bioinf.lcms.trace.Trace;
-import de.unijena.bioinf.lcms.trace.segmentation.*;
+import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
+import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
+import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.utils.AlignmentBeamSearch;
-import de.unijena.bioinf.lcms.statistics.SampleStats;
 import lombok.AllArgsConstructor;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Arrays;
 
 @AllArgsConstructor
 public class SegmentMergedFeatures implements MergedFeatureExtractionStrategy {
 
-    private final TraceSegmentationStrategy traceSegmenter;
-
     @Override
-    public TraceSegment[] extractMergedSegments(ProcessedSample mergedSample, MergedTrace mergedTrace) {
+    public TraceSegment[] extractMergedSegments(TraceSegmentationStrategy traceSegmenter, ProcessedSample mergedSample, MergedTrace mergedTrace) {
         SampleStats stats = mergedSample.getStorage().getStatistics();
         return traceSegmenter.detectSegments(stats, mergedTrace).toArray(TraceSegment[]::new);
     }

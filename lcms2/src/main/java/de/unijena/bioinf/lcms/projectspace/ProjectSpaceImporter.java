@@ -2,12 +2,10 @@ package de.unijena.bioinf.lcms.projectspace;
 
 import de.unijena.bioinf.lcms.merge.MergedTrace;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
-import de.unijena.bioinf.lcms.trace.ProjectedTrace;
+import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
-import it.unimi.dsi.fastutil.Pair;
 
 import java.io.IOException;
-import java.util.Iterator;
 
 public interface ProjectSpaceImporter<Indexer> {
 
@@ -30,6 +28,6 @@ public interface ProjectSpaceImporter<Indexer> {
      * Imports the merged trace and extract all its compounds and isotopes. This is the central method for importing
      * features into the project space.
      */
-    public AlignedFeatures[] importMergedTrace(SiriusDatabaseAdapter adapter, Indexer indexer, ProcessedSample mergedSample, MergedTrace mergedTrace) throws IOException;
+    public AlignedFeatures[] importMergedTrace(TraceSegmentationStrategy traceSegmenter, SiriusDatabaseAdapter adapter, Indexer indexer, ProcessedSample mergedSample, MergedTrace mergedTrace, boolean allowMs1Only) throws IOException;
 
 }
