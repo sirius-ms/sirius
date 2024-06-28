@@ -23,18 +23,22 @@ import de.unijena.bioinf.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.compute.ParameterBinding;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.ImportPeakListDialog;
+import de.unijena.bioinf.ms.gui.dialogs.input.LCMSDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.MsBatchDataFormatFilter;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
 import de.unijena.bioinf.ms.nightsky.sdk.jjobs.SseProgressJJob;
+import de.unijena.bioinf.ms.nightsky.sdk.model.DataSmoothing;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceImporter;
+import org.apache.commons.lang3.time.StopWatch;
+import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,7 +47,9 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 /**
  * @author Markus Fleischauer
@@ -97,43 +103,68 @@ public class ImportAction extends AbstractGuiAction {
 
     //ATTENTION Synchronizing around background tasks that block gui thread is dangerous
     public synchronized void importOneExperimentPerLocation(@NotNull final InputFilesOptions input, Window popupOwner) {
-        boolean lcms = Jobs.runInBackgroundAndLoad(popupOwner, "Analyzing input...", () ->
-                        (!input.msInput.msParserfiles.isEmpty() && input.msInput.msParserfiles.keySet().stream().map(p -> p.getFileName().toString().toLowerCase()).allMatch(n -> n.endsWith(".mzml") || n.endsWith(".mzxml"))))
-                .getResult();
+        Map<Boolean, List<Path>> paths = Jobs.runInBackgroundAndLoad(
+                popupOwner, "Analyzing input...",
+                () -> input.msInput.msParserfiles.keySet().stream().collect(Collectors.partitioningBy(p -> {
+                    String fileName = p.getFileName().toString().toLowerCase();
+                    return fileName.endsWith(".mzml") || fileName.endsWith(".mzxml");
+                }))
+        ).getResult();
 
-        // todo this is hacky we need some real view for that at some stage.
-
+        StopWatch watch = new StopWatch();
+        watch.start();
 
         try {
             LoadingBackroundTask<Job> task = null;
-            if (lcms) {
-                boolean align = input.msInput.msParserfiles.size() > 1 && new QuestionDialog(popupOwner, "<html><body> You inserted multiple LC-MS/MS Runs. <br> Do you want to Align them during import?</br></body></html>").isSuccess();
-                task = gui.applySiriusClient((c, pid) -> {
-                    Job job = c.projects().importMsRunDataAsJob(pid,
-                            align,
-                            PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", true),
-                            List.of(JobOptField.PROGRESS),
-                            input.msInput.msParserfiles.keySet().stream().map(Path::toFile).toList()
-                    );
-                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Aligning LC-MS runs...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
-                });
-            } else {
+            // handle LC/MS files
+            if (paths.containsKey(true) && !paths.get(true).isEmpty()) {
+                List<Path> lcmsPaths = paths.get(true);
+                LCMSDialog dialog = new LCMSDialog(popupOwner, lcmsPaths.size() > 1);
+                if (dialog.isSuccess()) {
+                    ParameterBinding binding = dialog.getParamterBinging();
+                    boolean align = binding.getOrDefault("align", () -> "~true").get().equals("~true");
+                    DataSmoothing filter = DataSmoothing.valueOf(binding.getOrDefault("filter", () -> "AUTO").get());
+                    double sigma = Double.parseDouble(binding.getOrDefault("sigma", () -> "3.0").get());
+                    int scale = Integer.parseInt(binding.getOrDefault("scale", () -> "20").get());
+                    double window = Double.parseDouble(binding.getOrDefault("window", () -> "11").get());
+                    double noise = Double.parseDouble(binding.getOrDefault("noise", () -> "2.0").get());
+                    double persistence = Double.parseDouble(binding.getOrDefault("persistence", () -> "0.1").get());
+                    double merge = Double.parseDouble(binding.getOrDefault("merge", () -> "0.8").get());
+
+                    task = gui.applySiriusClient((c, pid) -> {
+                        Job job = c.projects().importMsRunDataAsJobLocally(pid,
+                                lcmsPaths.stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
+                                align && lcmsPaths.size() > 1,
+                                PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", false),
+                                filter, sigma, scale, window, noise, persistence, merge,
+                                List.of(JobOptField.PROGRESS)
+                        );
+                        return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Importing LC-MS runs...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
+                    });
+                }
+            }
+
+            // handle non-LC/MS files
+            if (paths.containsKey(false) && !paths.get(false).isEmpty()) {
                 if (new ImportPeakListDialog(gui.getMainFrame()).isSuccess()) {
                     task = gui.applySiriusClient((c, pid) -> {
-                        Job job = c.projects().importPreprocessedDataAsJob(pid,
+                        Job job = c.projects().importPreprocessedDataAsJobLocally(pid,
+                                paths.get(false).stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
                                 PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.ignoreFormulas", false),
                                 PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", true),
-                                List.of(JobOptField.PROGRESS),
-                                input.msInput.msParserfiles.keySet().stream().map(Path::toFile).toList()
+                                List.of(JobOptField.PROGRESS)
                         );
                         return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Importing...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
                     });
                 }
             }
+
             if (task != null)
                 task.awaitResult();
         } catch (ExecutionException e) {
             new StacktraceDialog(gui.getMainFrame(), "Error when importing data! Cause: " + e.getMessage(), e.getCause());
+        }finally {
+            System.out.println("=============> Importing took: " + watch);
         }
     }
 }

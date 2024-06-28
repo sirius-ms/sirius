@@ -49,23 +49,23 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
-import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
-import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
-import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
-import de.unijena.bioinf.projectspace.NoSQLInstance;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleList;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.longs.LongList;
 import lombok.Getter;
 import org.apache.commons.io.function.IOSupplier;
+import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -76,13 +76,24 @@ import java.util.stream.Collectors;
 public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManager> {
     List<Path> inputFiles;
 
-    @Getter
-    protected final List<NoSQLInstance> importedCompounds = new ArrayList<>();
     private final IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier;
 
     private final Set<PrecursorIonType> ionTypes;
 
     private final TraceSegmentationStrategy mergedTraceSegmenter;
+
+    private final boolean alignRuns;
+
+    private final boolean allowMs1Only;
+
+    @Getter
+    private LongList importedCompounds = new LongArrayList();
+
+    private final boolean saveImportedCompounds;
+
+    private long progress;
+
+    private long totalProgress;
 
 
     public LcmsAlignSubToolJobNoSql(InputFilesOptions input, @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier, LcmsAlignOptions options, Set<PrecursorIonType> ionTypes) {
@@ -94,40 +105,59 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         this.inputFiles = inputFiles;
         this.projectSupplier = projectSupplier;
         this.ionTypes = ionTypes;
-        this.mergedTraceSegmenter = new PersistentHomology(switch (options.filter) {
+        this.alignRuns = !options.noAlign;
+        this.allowMs1Only = options.allowMs1Only;
+        this.mergedTraceSegmenter = new PersistentHomology(switch (options.smoothing) {
             case AUTO -> inputFiles.size() < 3 ? new WaveletFilter(20, 11) : new NoFilter();
             case NOFILTER -> new NoFilter();
             case GAUSSIAN -> new GaussFilter(options.sigma);
             case WAVELET -> new WaveletFilter(options.scaleLevel, options.waveletWindow);
         }, options.noiseCoefficient, options.persistenceCoefficient, options.mergeCoefficient);
+        this.saveImportedCompounds = false;
     }
 
-    public LcmsAlignSubToolJobNoSql(@NotNull List<Path> inputFiles, @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier, Set<PrecursorIonType> ionTypes) {
+    public LcmsAlignSubToolJobNoSql(
+            @NotNull List<Path> inputFiles,
+            @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier,
+            boolean alignRuns,
+            boolean allowMs1Only,
+            DataSmoothing filter,
+            double sigma,
+            int scale,
+            double window,
+            double noise,
+            double persistence,
+            double merge,
+            Set<PrecursorIonType> ionTypes,
+            boolean saveImportedCompounds
+    ) {
         super();
         this.inputFiles = inputFiles;
         this.projectSupplier = projectSupplier;
         this.ionTypes = ionTypes;
-        this.mergedTraceSegmenter = new PersistentHomology(
-                inputFiles.size() < 3 ? new WaveletFilter(20, 11) : new NoFilter(),
-             2.0, 0.1, 0.8
-        );
+        this.alignRuns = alignRuns;
+        this.allowMs1Only = allowMs1Only;
+        this.mergedTraceSegmenter = new PersistentHomology(switch (filter) {
+            case AUTO -> inputFiles.size() < 3 ? new WaveletFilter(20, 11) : new NoFilter();
+            case NOFILTER -> new NoFilter();
+            case GAUSSIAN -> new GaussFilter(sigma);
+            case WAVELET -> new WaveletFilter(scale, window);
+        }, noise, persistence, merge);
+        this.saveImportedCompounds = saveImportedCompounds;
     }
 
-    @Override
-    protected NoSQLProjectSpaceManager compute() throws Exception {
-        importedCompounds.clear();
-        NoSQLProjectSpaceManager space = projectSupplier.get();
-        SiriusProjectDatabaseImpl<? extends Database<?>> ps = space.getProject();
-        Database<?> store = space.getProject().getStorage();
+    private void compute(NoSQLProjectSpaceManager space, SiriusProjectDatabaseImpl<? extends Database<?>> ps, Database<?> store, List<Path> files) throws IOException {
+        StopWatch stopWatch = new StopWatch();
+        stopWatch.start();
 
-        LCMSProcessing processing = new LCMSProcessing(new SiriusProjectDocumentDbAdapter(ps));
+        LCMSProcessing processing = new LCMSProcessing(new SiriusProjectDocumentDbAdapter(ps), saveImportedCompounds, allowMs1Only);
         processing.setMergedTraceSegmentationStrategy(mergedTraceSegmenter);
 
         {
-
+            updateProgress(totalProgress, progress, "Reading files");
             List<BasicJJob<ProcessedSample>> jobs = new ArrayList<>();
             int atmost = Integer.MAX_VALUE;
-            for (Path f : inputFiles) {
+            for (Path f : files) {
                 if (--atmost < 0) break;
                 jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<ProcessedSample>() {
                     @Override
@@ -148,21 +178,32 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             int count = 0;
             for (BasicJJob<ProcessedSample> job : jobs) {
                 System.out.println(job.takeResult().getUid() + " (" + ++count + " / " + jobs.size() + ")");
+                updateProgress(totalProgress, ++progress, "Reading files");
             }
         }
 
+        updateProgress(totalProgress, progress,"Aligning runs");
         AlignmentBackbone bac = processing.align();
+        updateProgress(totalProgress, ++progress, "Merging runs");
         ProcessedSample merged = processing.merge(bac);
         DoubleArrayList avgAl = new DoubleArrayList();
         System.out.println("AVERAGE = " + avgAl.doubleStream().sum() / avgAl.size());
         System.out.println("Good Traces = " + avgAl.doubleStream().filter(x -> x >= 5).sum());
 
-        processing.extractFeaturesAndExportToProjectSpace(merged, bac);
-
-        assert store.countAll(MergedLCMSRun.class) == 1;
-        for (MergedLCMSRun run : store.findAll(MergedLCMSRun.class)) {
-            System.out.printf("\nMerged Run: %s\n\n", run.getName());
+        updateProgress(totalProgress, ++progress, "Importing features");
+        if (processing.extractFeaturesAndExportToProjectSpace(merged, bac) == 0) {
+            if (!allowMs1Only) {
+                System.err.println("No features with MS/MS data found.");
+            } else {
+                System.err.println("No features found.");
+            }
+            progress += 2;
+            updateProgress(totalProgress, progress, "No features");
+            return;
         }
+
+        updateProgress(totalProgress, ++progress,"Detecting adducts");
+        System.out.printf("\nMerged Run: %s\n\n", merged.getRun().getName());
 
         AdductManager adductManager = new AdductManager();
         if (merged.getPolarity()>0){
@@ -175,7 +216,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
                             PrecursorIonType.getPrecursorIonType("[2M + Na]+"),
                             PrecursorIonType.getPrecursorIonType("[2M + H]+"),
-                    PrecursorIonType.getPrecursorIonType("[2M + K]+")
+                            PrecursorIonType.getPrecursorIonType("[2M + K]+")
                     )
             );
         } else {
@@ -184,14 +225,14 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                             PrecursorIonType.getPrecursorIonType("[2M + H]-"),
                             PrecursorIonType.getPrecursorIonType("[2M + Br]-"),
                             PrecursorIonType.getPrecursorIonType("[2M + Cl]-"),
-                    PrecursorIonType.fromString("[M+Na-2H]-"),
-                    PrecursorIonType.fromString("[M + CH2O2 - H]-"),
-                    PrecursorIonType.fromString("[M + C2H4O2 - H]-"),
-                    PrecursorIonType.fromString("[M + H2O - H]-"),
-                    PrecursorIonType.fromString("[M - H3N - H]-"),
-                    PrecursorIonType.fromString("[M - CO2 - H]-"),
-                    PrecursorIonType.fromString("[M - CH2O3 - H]-"),
-                    PrecursorIonType.fromString("[M - CH3 - H]-")
+                            PrecursorIonType.fromString("[M+Na-2H]-"),
+                            PrecursorIonType.fromString("[M + CH2O2 - H]-"),
+                            PrecursorIonType.fromString("[M + C2H4O2 - H]-"),
+                            PrecursorIonType.fromString("[M + H2O - H]-"),
+                            PrecursorIonType.fromString("[M - H3N - H]-"),
+                            PrecursorIonType.fromString("[M - CO2 - H]-"),
+                            PrecursorIonType.fromString("[M - CH2O3 - H]-"),
+                            PrecursorIonType.fromString("[M - CH3 - H]-")
                     )
             );
         }
@@ -209,6 +250,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             }
         });
 
+        updateProgress(totalProgress, ++progress, "Assessing data quality");
         // quality assessment
         HashMap<DataQuality, Integer> countMap = new HashMap<>();
         for (DataQuality q : DataQuality.values()) {
@@ -218,7 +260,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         ArrayList<BasicJJob<DataQuality>> jobs = new ArrayList<>();
         store.fetchChild(merged.getRun(), "runId", "retentionTimeAxis", RetentionTimeAxis.class);
         ps.fetchLCMSRuns((MergedLCMSRun) merged.getRun());
-        space.getProject().getAllAlignedFeatures().filter(x->x.getDataQuality()==DataQuality.NOT_APPLICABLE).forEach(feature -> {
+        store.findStr(Filter.where("runId").eq(merged.getRun().getRunId()), AlignedFeatures.class).filter(x->x.getDataQuality()==DataQuality.NOT_APPLICABLE).forEach(feature -> {
             jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<DataQuality>() {
                 @Override
                 protected DataQuality compute() throws Exception {
@@ -244,11 +286,25 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             countMap.put(q, countMap.get(q)+1);
         });
 
+        long sourceTraceCount = 0;
+        long featureCount = 0;
+        DoubleList featureSNR = new DoubleArrayList();
+        for (long runId : ((MergedLCMSRun) merged.getRun()).getRunIds()) {
+            sourceTraceCount += store.count(Filter.where("runId").eq(runId), SourceTrace.class);
+            featureCount += store.count(Filter.where("runId").eq(runId), Feature.class);
+            store.findStr(Filter.where("runId").eq(runId), Feature.class).forEach(feature -> {
+                if (feature.getSnr() != null)
+                    featureSNR.add((double) feature.getSnr());
+            });
+        }
+
+        Filter filter = Filter.where("runId").eq(merged.getRun().getRunId());
         System.out.printf(
                 """
-                        # Run:                     %d
-                        # Scan:                    %d
-                        # MSMSScan:                %d
+                       
+                        -------- Preprocessing Summary ---------
+                        Preprocessed data in:      %s
+                       
                         # SourceTrace:             %d
                         # MergedTrace:             %d
                         # Feature:                 %d
@@ -258,19 +314,46 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                         Feature                 SNR: %f
                         AlignedIsotopicFeatures SNR: %f
                         AlignedFeatures         SNR: %f
-                        Good Al. Features:           %d
-                        Decent Al. Features:         %d
-                        Bad Al. Features:            %d
-                        Lowest Quality Al. Features: %d
+                                                       \s
+                        # Good Al. Features:           %d
+                        # Decent Al. Features:         %d
+                        # Bad Al. Features:            %d
+                        # Lowest Quality Al. Features: %d
                        \s""",
-                store.countAll(LCMSRun.class), store.countAll(Scan.class), store.countAll(MSMSScan.class),
-                store.countAll(SourceTrace.class), store.countAll(MergedTrace.class),
-                store.countAll(Feature.class), store.countAll(AlignedIsotopicFeatures.class), store.countAll(AlignedFeatures.class),
-                store.findAllStr(Feature.class).map(Feature::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
-                store.findAllStr(AlignedIsotopicFeatures.class).map(AlignedIsotopicFeatures::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
-                store.findAllStr(AlignedFeatures.class).map(AlignedFeatures::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
+                stopWatch,
+                sourceTraceCount,
+                store.count(filter, MergedTrace.class),
+                featureCount,
+                store.count(filter, AlignedIsotopicFeatures.class),
+                store.count(filter, AlignedFeatures.class),
+                featureSNR.doubleStream().average().orElse(Double.NaN),
+                store.findStr(filter, AlignedIsotopicFeatures.class).map(AlignedIsotopicFeatures::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
+                store.findStr(filter, AlignedFeatures.class).map(AlignedFeatures::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
                 countMap.get(DataQuality.GOOD), countMap.get(DataQuality.DECENT), countMap.get(DataQuality.BAD), countMap.get(DataQuality.LOWEST)
         );
+    }
+
+    @Override
+    protected NoSQLProjectSpaceManager compute() throws Exception {
+        importedCompounds.clear();
+        NoSQLProjectSpaceManager space = projectSupplier.get();
+        SiriusProjectDatabaseImpl<? extends Database<?>> ps = space.getProject();
+        Database<?> store = space.getProject().getStorage();
+
+        progress = 0;
+        if (alignRuns) {
+            totalProgress = inputFiles.size() + 5L;
+            compute(space, ps, store, inputFiles);
+        } else {
+            // TODO parallelize
+            totalProgress = inputFiles.size() * 5L + 1;
+            int atmost = Integer.MAX_VALUE;
+            for (Path f : inputFiles) {
+                if (--atmost < 0) break;
+                compute(space, ps, store, List.of(f));
+            }
+        }
+        updateProgress(totalProgress, totalProgress, "Done");
 
         return space;
     }
