@@ -21,13 +21,16 @@
 package de.unijena.bioinf.lcms.projectspace;
 
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
-import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import de.unijena.bioinf.ms.persistence.model.core.trace.AbstractTrace;
+import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
+import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
+import de.unijena.bioinf.storage.db.nosql.Filter;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -70,6 +73,14 @@ public class SiriusProjectDocumentDbAdapter implements SiriusDatabaseAdapter {
     }
 
     @Override
+    public void removeMergedRun(MergedLCMSRun run) throws IOException {
+        for (long id : run.getRunIds()) {
+            store.getStorage().removeAll(Filter.where("runId").eq(id), LCMSRun.class);
+        }
+        store.getStorage().removeAll(Filter.where("runId").eq(run.getRunId()), MergedLCMSRun.class);
+    }
+
+    @Override
     public void importScan(Scan scan) throws IOException {
         store.getStorage().insert(scan);
     }
@@ -85,14 +96,25 @@ public class SiriusProjectDocumentDbAdapter implements SiriusDatabaseAdapter {
     }
 
     @Override
-    public void importAlignedFeature(AlignedFeatures alignedFeatures) throws IOException {
+    public void removeMergedTrace(long id) throws IOException {
+        store.getStorage().removeAll(Filter.where("mergedTraceId").eq(id), MergedTrace.class);
+    }
+
+    @Override
+    public void removeSourceTrace(long id) throws IOException {
+        store.getStorage().removeAll(Filter.where("sourceTraceId").eq(id), SourceTrace.class);
+    }
+
+    @Override
+    public boolean importAlignedFeature(AlignedFeatures alignedFeatures) throws IOException {
         if (Math.abs(alignedFeatures.getCharge()) > 1) {
             LoggerFactory.getLogger(SiriusProjectDocumentDbAdapter.class).warn(String.format(Locale.US,
                     "SIRIUS does not support multiple charged ions yet. This feature will be ignored: m/z = %.4f, rt = %.2f minutes",
                     alignedFeatures.getApexMass(), alignedFeatures.getRetentionTime().getMiddleTime()/60d));
-            return;
+            return false;
         }
         store.importAlignedFeatures(List.of(alignedFeatures));
+        return true;
     }
 
     @Override
@@ -105,8 +127,8 @@ public class SiriusProjectDocumentDbAdapter implements SiriusDatabaseAdapter {
     }
 
     @Override
-    public Stream<AlignedFeatures> getImportedFeatureStream(boolean msdata) throws IOException {
-        return store.getAllAlignedFeatures().map(x->store.fetchMsData(x));
+    public Stream<AlignedFeatures> getImportedFeatureStream(long runId) throws IOException {
+        return store.getStorage().findStr(Filter.where("runId").eq(runId), AlignedFeatures.class).map(x -> store.fetchMsData(x));
     }
 
 }
