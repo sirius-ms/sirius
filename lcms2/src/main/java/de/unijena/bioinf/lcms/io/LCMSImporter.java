@@ -37,7 +37,6 @@ public class LCMSImporter {
             LCMSStorageFactory storageFactory,
             SiriusDatabaseAdapter siriusDatabaseAdapter,
             boolean saveRawScans,
-            LCMSRun.Type runType,
             Chromatography chromatography
     ) throws IOException {
         LCMSParser parser;
@@ -48,7 +47,7 @@ public class LCMSImporter {
         } else {
             throw new IOException("Illegal file extension. Only .mzml and .mzxml are supported");
         }
-        LCMSRun run = LCMSRun.builder().runType(runType).chromatography(chromatography).build();
+        LCMSRun run = LCMSRun.builder().chromatography(chromatography).build();
         if (!saveRawScans) {
             return parser.parse(file, storageFactory, siriusDatabaseAdapter::importRun, siriusDatabaseAdapter::updateRun, null, null, run);
         } else {
@@ -61,7 +60,6 @@ public class LCMSImporter {
             LCMSStorageFactory storageFactory,
             SiriusDatabaseAdapter siriusDatabaseAdapter,
             boolean saveRawScans,
-            LCMSRun.Type runType,
             Chromatography chromatography
     ) throws IOException {
         LCMSParser parser;
@@ -72,7 +70,7 @@ public class LCMSImporter {
         } else {
             throw new IOException("Illegal file extension. Only .mzml and .mzxml are supported");
         }
-        LCMSRun run = LCMSRun.builder().runType(runType).chromatography(chromatography).build();
+        LCMSRun run = LCMSRun.builder().chromatography(chromatography).build();
         if (!saveRawScans) {
             return parser.parse(source, storageFactory, siriusDatabaseAdapter::importRun, siriusDatabaseAdapter::updateRun, null, null, run);
         } else {

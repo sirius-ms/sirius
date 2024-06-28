@@ -28,6 +28,6 @@ public interface ProjectSpaceImporter<Indexer> {
      * Imports the merged trace and extract all its compounds and isotopes. This is the central method for importing
      * features into the project space.
      */
-    public AlignedFeatures[] importMergedTrace(TraceSegmentationStrategy traceSegmenter, SiriusDatabaseAdapter adapter, Indexer indexer, ProcessedSample mergedSample, MergedTrace mergedTrace, boolean allowMs1Only) throws IOException;
+    public AlignedFeatures[] importMergedTrace(TraceSegmentationStrategy traceSegmenter, SiriusDatabaseAdapter adapter, Indexer indexer, ProcessedSample mergedSample, MergedTrace mergedTrace, boolean allowMs1Only, String tag) throws IOException;
 
 }

@@ -77,6 +77,9 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
      */
     private MolecularFormula molecularFormula;
 
+    // TODO: @kaidu: suggest to remove and solve via tagging system
+    private String tag;
+
     protected DataQuality dataQuality = DataQuality.NOT_APPLICABLE;
 
 
