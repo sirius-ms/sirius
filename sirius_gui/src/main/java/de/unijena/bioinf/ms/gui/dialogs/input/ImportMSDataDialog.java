@@ -78,6 +78,7 @@ public class ImportMSDataDialog extends DoNotShowAgainDialog {
             paras.add(ignoreFormulas);
 
             paras.addVerticalGlue();
+            paras.add(Box.createVerticalStrut(5));
 
             JXTitledSeparator lcmsSep = new JXTitledSeparator("LC/MS Import Options");
             lcmsComponents.add(lcmsSep);
@@ -156,6 +157,8 @@ public class ImportMSDataDialog extends DoNotShowAgainDialog {
                     }
                 }
             });
+
+            paras.add(Box.createVerticalStrut(5));
 
             JXTitledSeparator featSep = new JXTitledSeparator("LC/MS Feature Detection Options");
             lcmsComponents.add(featSep);
