@@ -1,7 +1,5 @@
 package de.unijena.bioinf.lcms.adducts;
 
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.babelms.cef.P;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 
 import java.util.ArrayList;
@@ -54,6 +52,8 @@ public class AdductNode {
     }
 
     public double getRetentionTime() {
+        if(features.getRetentionTime() == null)
+            return Double.NaN;
         return features.getRetentionTime().getRetentionTimeInSeconds();
     }
 
