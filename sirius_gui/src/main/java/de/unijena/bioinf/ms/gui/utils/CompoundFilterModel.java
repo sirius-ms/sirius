@@ -362,8 +362,8 @@ public class CompoundFilterModel implements SiriusPCS {
         featureSubtractionFilter.setMzDev(new Deviation(ppm));
     }
 
-    public void setFeatureSubtractionRtDev(double sec) {
-        featureSubtractionFilter.setRtDev(60 * sec);
+    public void setFeatureSubtractionRtDev(double min) {
+        featureSubtractionFilter.setRtDev(60 * min);
     }
 
     public void setFeatureSubtractionMinRatio(double ratio) {
@@ -585,6 +585,9 @@ public class CompoundFilterModel implements SiriusPCS {
         private boolean enabled = true;
 
         @Setter
+        private boolean settingsChanged = false;
+
+        @Setter
         @Getter
         private boolean subtractionEnabled = false;
 
@@ -637,6 +640,11 @@ public class CompoundFilterModel implements SiriusPCS {
             if (maxInt.isEmpty())
                 return false;
 
+            if (this.settingsChanged) {
+                resetStore();
+                this.settingsChanged = false;
+            }
+
             if (this.mvStore == null || this.mvRTree == null) {
                 setup();
             }
@@ -674,13 +682,23 @@ public class CompoundFilterModel implements SiriusPCS {
             return maxInt.getAsDouble() <= minRatio * nearestInt.getAsDouble();
         }
 
-        public void reset() {
+        private void resetStore() {
             if (this.mvStore != null) {
                 this.mvStore.close();
                 this.mvStore = null;
                 this.mvRTree = null;
             }
+        }
+
+        public void reset() {
+            resetStore();
             this.tags = new HashSet<>(List.of("blank", "control"));
+            this.mzDev = new Deviation(10);
+            this.rtDev = 120.0;
+            this.minRatio = 2.0;
+            this.enabled = true;
+            this.settingsChanged = true;
+            this.subtractionEnabled = false;
         }
 
         private void setup() {
