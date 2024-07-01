@@ -27,8 +27,7 @@ import de.unijena.bioinf.ms.gui.compute.ParameterBinding;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
-import de.unijena.bioinf.ms.gui.dialogs.input.ImportPeakListDialog;
-import de.unijena.bioinf.ms.gui.dialogs.input.LCMSDialog;
+import de.unijena.bioinf.ms.gui.dialogs.input.ImportMSDataDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.MsBatchDataFormatFilter;
 import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
 import de.unijena.bioinf.ms.nightsky.sdk.jjobs.SseProgressJJob;
@@ -37,7 +36,6 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceImporter;
-import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 
@@ -115,54 +113,62 @@ public class ImportAction extends AbstractGuiAction {
         watch.start();
 
         try {
-            LoadingBackroundTask<Job> task = null;
-            // handle LC/MS files
-            if (paths.containsKey(true) && !paths.get(true).isEmpty()) {
-                List<Path> lcmsPaths = paths.get(true);
-                LCMSDialog dialog = new LCMSDialog(popupOwner, lcmsPaths.size() > 1);
-                if (dialog.isSuccess()) {
-                    ParameterBinding binding = dialog.getParamterBinging();
-                    String runType = binding.getOrDefault("tag", () -> null).get();
-                    boolean align = binding.getOrDefault("align", () -> "~true").get().equals("~true");
-                    DataSmoothing filter = DataSmoothing.valueOf(binding.getOrDefault("filter", () -> "AUTO").get());
-                    double sigma = Double.parseDouble(binding.getOrDefault("sigma", () -> "3.0").get());
-                    int scale = Integer.parseInt(binding.getOrDefault("scale", () -> "20").get());
-                    double window = Double.parseDouble(binding.getOrDefault("window", () -> "11").get());
-                    double noise = Double.parseDouble(binding.getOrDefault("noise", () -> "2.0").get());
-                    double persistence = Double.parseDouble(binding.getOrDefault("persistence", () -> "0.1").get());
-                    double merge = Double.parseDouble(binding.getOrDefault("merge", () -> "0.8").get());
+            boolean hasLCMS = paths.containsKey(true) && !paths.get(true).isEmpty();
+            boolean hasPeakLists = paths.containsKey(false) && !paths.get(false).isEmpty();
 
-                    task = gui.applySiriusClient((c, pid) -> {
-                        Job job = c.projects().importMsRunDataAsJobLocally(pid,
-                                lcmsPaths.stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
-                                runType,
-                                align && lcmsPaths.size() > 1,
-                                PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", false),
-                                filter, sigma, scale, window, noise, persistence, merge,
-                                List.of(JobOptField.PROGRESS)
-                        );
-                        return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Importing LC-MS runs...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
-                    });
-                }
+            if (!hasLCMS && !hasPeakLists)
+                return;
+
+            // show dialog
+            ImportMSDataDialog dialog = new ImportMSDataDialog(popupOwner, hasLCMS, hasLCMS && paths.get(true).size() > 1, hasPeakLists);
+            if (!dialog.isSuccess())
+                return;
+
+            ParameterBinding binding = dialog.getParamterBinding();
+            String tag = binding.getOrDefault("tag", () -> null).get();
+            boolean allowMS1Only = PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", true);
+
+            // handle LC/MS files
+            if (hasLCMS) {
+                List<Path> lcmsPaths = paths.get(true);
+                boolean align = binding.getOrDefault("align", () -> "~true").get().equals("~true");
+                DataSmoothing filter = DataSmoothing.valueOf(binding.getOrDefault("filter", () -> "AUTO").get());
+                double sigma = Double.parseDouble(binding.getOrDefault("sigma", () -> "3.0").get());
+                int scale = Integer.parseInt(binding.getOrDefault("scale", () -> "20").get());
+                double window = Double.parseDouble(binding.getOrDefault("window", () -> "11").get());
+                double noise = Double.parseDouble(binding.getOrDefault("noise", () -> "2.0").get());
+                double persistence = Double.parseDouble(binding.getOrDefault("persistence", () -> "0.1").get());
+                double merge = Double.parseDouble(binding.getOrDefault("merge", () -> "0.8").get());
+
+                LoadingBackroundTask<Job> task = gui.applySiriusClient((c, pid) -> {
+                    Job job = c.projects().importMsRunDataAsJobLocally(pid,
+                            lcmsPaths.stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
+                            tag,
+                            align && lcmsPaths.size() > 1,
+                            allowMS1Only,
+                            filter, sigma, scale, window, noise, persistence, merge,
+                            List.of(JobOptField.PROGRESS)
+                    );
+                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Importing LC/MS data...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
+                });
+
+                task.awaitResult();
             }
 
             // handle non-LC/MS files
-            if (paths.containsKey(false) && !paths.get(false).isEmpty()) {
-                if (new ImportPeakListDialog(gui.getMainFrame()).isSuccess()) {
-                    task = gui.applySiriusClient((c, pid) -> {
-                        Job job = c.projects().importPreprocessedDataAsJobLocally(pid,
-                                paths.get(false).stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
-                                PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.ignoreFormulas", false),
-                                PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", true),
-                                List.of(JobOptField.PROGRESS)
-                        );
-                        return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Importing...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
-                    });
-                }
+            if (hasPeakLists) {
+                LoadingBackroundTask<Job> task  = gui.applySiriusClient((c, pid) -> {
+                    Job job = c.projects().importPreprocessedDataAsJobLocally(pid,
+                            paths.get(false).stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
+                            PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.ignoreFormulas", false),
+                            PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", true),
+                            List.of(JobOptField.PROGRESS)
+                    );
+                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Importing MS data...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
+                });
+                task.awaitResult();
             }
 
-            if (task != null)
-                task.awaitResult();
         } catch (ExecutionException e) {
             new StacktraceDialog(gui.getMainFrame(), "Error when importing data! Cause: " + e.getMessage(), e.getCause());
         }
