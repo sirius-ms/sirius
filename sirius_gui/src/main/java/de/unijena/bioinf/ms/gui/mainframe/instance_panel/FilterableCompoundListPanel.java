@@ -93,18 +93,29 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
         view.sourceList.addChangeListener(sizeListener);
         view.sourceList.backgroundFilterMatcher.setLoadable(this);
 
+        Box includeBox = Box.createHorizontalBox();
+        includeBox.add(new JLabel("Inlcude"));
+        includeBox.add(Box.createHorizontalGlue());
+
+        JLabel ms1onlyLabel = new JLabel("MS1-only:");
+        ms1onlyLabel.setToolTipText("Include features that have no MS/MS data.");
+        JLabel badQualityLabel = new JLabel("Bad:");
+        ms1onlyLabel.setToolTipText("Include features with overall quality 'Bad' and 'Lowest'.");
+        JLabel mulimereLabel = new JLabel("Multi:");
+        ms1onlyLabel.setToolTipText("Include multimeres and multiple charged features.");
+
         Box filterButtonPanel = Box.createHorizontalBox();
         filterButtonPanel.setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 0));
         filterButtonPanel.add(Box.createHorizontalStrut(2));
-        filterButtonPanel.add(new JLabel("No MS2:"));
+        filterButtonPanel.add(ms1onlyLabel);
         filterButtonPanel.add(Box.createHorizontalStrut(1));
         filterButtonPanel.add(view.sourceList.msMsToggleSwitch);
         filterButtonPanel.add(Box.createHorizontalStrut(2));
-        filterButtonPanel.add(new JLabel("Bad:"));
+        filterButtonPanel.add(badQualityLabel);
         filterButtonPanel.add(Box.createHorizontalStrut(1));
         filterButtonPanel.add(view.sourceList.qualityToggleSwitch);
         filterButtonPanel.add(Box.createHorizontalStrut(2));
-        filterButtonPanel.add(new JLabel("Multi:"));
+        filterButtonPanel.add(mulimereLabel);
         filterButtonPanel.add(Box.createHorizontalStrut(1));
         filterButtonPanel.add(view.sourceList.adductToggleSwitch);
         filterButtonPanel.add(Box.createHorizontalGlue());
@@ -116,6 +127,8 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
 
         Box searchPanel = Box.createVerticalBox();
         searchPanel.add(searchButtonPanel);
+        searchPanel.add(includeBox);
+        searchPanel.add(Box.createHorizontalGlue());
         searchPanel.add(filterButtonPanel);
         add(searchPanel, BorderLayout.NORTH);
         add(center, BorderLayout.CENTER);
