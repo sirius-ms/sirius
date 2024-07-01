@@ -89,17 +89,23 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
         setResizable(false);
+
+        final JTabbedPane centerTab = new JTabbedPane();
+        add(centerTab, BorderLayout.CENTER);
+
         final TwoColumnPanel generalParameters = new TwoColumnPanel();
-        add(generalParameters, BorderLayout.CENTER);
+        centerTab.addTab("General", generalParameters);
 
         {
             searchFieldDialogCopy = new JTextField(searchField.getText());
-            generalParameters.addNamed("Fulltext search", searchFieldDialogCopy);
+            final TwoColumnPanel fullTextPanel = new TwoColumnPanel();
+            fullTextPanel.addNamed("Fulltext search", searchFieldDialogCopy);
+            add(fullTextPanel, BorderLayout.NORTH);
         }
         //general filter
         {
             generalParameters.add(Box.createVerticalStrut(5));
-            generalParameters.add(new JXTitledSeparator("General"));
+            generalParameters.add(new JXTitledSeparator("Thresholds"));
 
             {
                 TwoColumnPanel min = new TwoColumnPanel();
@@ -135,6 +141,9 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             }
 
             {
+                generalParameters.add(Box.createVerticalStrut(5));
+                generalParameters.add(new JXTitledSeparator("Lipid Class Filter"));
+
                 //lipid filter
                 lipidFilterBox = new JComboBox<>();
                 java.util.List.copyOf(EnumSet.allOf(CompoundFilterModel.LipidFilter.class)).forEach(lipidFilterBox::addItem);
@@ -142,10 +151,13 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
                 lipidFilterBox.setSelectedItem(filterModel.getLipidFilter());
             }
 
+            final TwoColumnPanel dataParameters = new TwoColumnPanel();
+            centerTab.addTab("Input Data", dataParameters);
+
             //isotope peak filter
             {
-                generalParameters.add(Box.createVerticalStrut(5));
-                generalParameters.add(new JXTitledSeparator("MS Data"));
+                dataParameters.add(Box.createVerticalStrut(5));
+                dataParameters.add(new JXTitledSeparator("MS Data Quality"));
                 hasMs1 = new JCheckBox("MS1");
                 hasMs1.setToolTipText("Feature must have a least one MS1 Spectrum");
                 hasMs1.setSelected(filterModel.isHasMs1());
@@ -161,30 +173,36 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
                 box.add(Box.createHorizontalStrut(50));
                 box.add(new TwoColumnPanel("Min isotope peaks", minIsotopeSpinner));
                 box.add(Box.createHorizontalStrut(10));
-                generalParameters.add(box);
+                dataParameters.add(box);
             }
 
+            //quality filter
+            {
+                dataParameters.add(Box.createVerticalStrut(5));
+                dataParameters.add(new JXTitledSeparator("Feature Quality"));
+                overallQualityPanel = new QualityFilterPanel(filterModel.getFeatureQualityFilter());
+                dataParameters.addNamed("<html><b>Overall quality</b></html>", overallQualityPanel);
+                dataParameters.add(Box.createVerticalStrut(5));
+                qualityPanels = filterModel.getIoQualityFilters().stream().map(qf -> {
+                    QualityFilterPanel qfp = new QualityFilterPanel(qf);
+                    dataParameters.addNamed(qf.getName(), qfp);
+                    return qfp;
+                }).toList();
+            }
+
+            dataParameters.addVerticalGlue();
 
         }
-        //quality filter
-        {
-            generalParameters.add(Box.createVerticalStrut(5));
-            generalParameters.add(new JXTitledSeparator("Quality Filter"));
-            overallQualityPanel = new QualityFilterPanel(filterModel.getFeatureQualityFilter());
-            generalParameters.addNamed("<html><b>Overall quality</b></html>", overallQualityPanel);
-            generalParameters.add(Box.createVerticalStrut(5));
-            qualityPanels = filterModel.getIoQualityFilters().stream().map(qf -> {
-                QualityFilterPanel qfp = new QualityFilterPanel(qf);
-                generalParameters.addNamed(qf.getName(), qfp);
-                return qfp;
-            }).toList();
-        }
 
+        final JPanel resultParameters = new JPanel();
+        resultParameters.setLayout(new BoxLayout(resultParameters, BoxLayout.Y_AXIS));
+        resultParameters.setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 5));
+        centerTab.addTab("Results", resultParameters);
 
         // Element filter
         {
-            generalParameters.add(Box.createVerticalStrut(5));
-            generalParameters.add(new JXTitledSeparator("Elements"));
+            resultParameters.add(Box.createVerticalStrut(5));
+            resultParameters.add(new JXTitledSeparator("Elements"));
 
             JPanel elementSelector = new JPanel();
             elementSelector.setLayout(new BoxLayout(elementSelector, BoxLayout.X_AXIS));
@@ -216,13 +234,13 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             group.add(elementsMatchPrecursorFormula);
             group.add(Box.createHorizontalGlue());
 
-            generalParameters.add(elementSelector);
-            generalParameters.add(group);
+            resultParameters.add(elementSelector);
+            resultParameters.add(group);
         }
 
         // Adduct filter
         {
-            generalParameters.add(Box.createVerticalStrut(5));
+            resultParameters.add(Box.createVerticalStrut(5));
             adductOptions = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Adducts", GuiUtils.formatToolTip("Select adducts to  filter by. Selecting all or none mean every adducts can pass"));
             adductOptions.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>(PrecursorIonType.fromString("[M + H20 + Na]+"), false));
 
@@ -253,8 +271,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             box.add(searchDBList);
             box.add(Box.createHorizontalStrut(10));
 
-
-            generalParameters.add(box);
+            resultParameters.add(box);
+            resultParameters.add(Box.createVerticalBox());
 
             if (filterModel.isDbFilterEnabled()) { //null check
                 searchDBList.checkBoxList.checkAll(filterModel.getDbFilter().getDbs());
@@ -268,9 +286,13 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
                     client.features().getAlignedFeatures(pid, List.of()).stream().map(AlignedFeature::getTag).filter(Objects::nonNull).filter(tag -> !tag.isEmpty() && !tag.isBlank()).collect(Collectors.toSet())
             );
 
-            if (!tags.isEmpty()) {
-                generalParameters.add(Box.createVerticalStrut(5));
+            final JPanel tagParameters = new JPanel(new BorderLayout());
+            tagParameters.setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 5));
+            centerTab.addTab("Tags", tagParameters);
 
+            centerTab.setEnabledAt(3, !tags.isEmpty());
+
+            if (!tags.isEmpty()) {
                 List<String> tagList = tags.stream().filter(tag -> !tag.isBlank()).sorted().toList();
                 hideTagList = new JCheckBoxList<>(tagList, String::equalsIgnoreCase);
                 for (String tag : filterModel.getHiddenTags()) {
@@ -314,8 +336,10 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
                 box.add(subtractPanel);
                 box.add(Box.createHorizontalStrut(10));
 
-                generalParameters.add(box);
+                tagParameters.add(box);
             }
+
+
         }
 
         // filter modifiers
@@ -337,6 +361,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             generalParameters.add(group);
 
         }
+
+        generalParameters.addVerticalGlue();
 
         reset = new JButton("Reset");
         reset.addActionListener(this);
