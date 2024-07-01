@@ -20,7 +20,7 @@
 
 package de.unijena.bioinf.ms.persistence.model.core.feature;
 
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ms.persistence.model.core.DataSource;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
@@ -71,6 +71,11 @@ public abstract class AbstractFeature {
      * retention time (start, apex, end)
      */
     protected RetentionTime retentionTime;
+
+    @JsonIgnore
+    public boolean isRTInterval(){
+        return retentionTime != null && retentionTime.isInterval();
+    }
 
     /**
      * signal-to-noise ratio at the apex
