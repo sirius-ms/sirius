@@ -44,12 +44,14 @@ import de.unijena.bioinf.ms.gui.ms_viewer.SpectraViewerConnector;
 import de.unijena.bioinf.ms.gui.ms_viewer.WebViewSpectraViewer;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchBean;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
+import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.webView.WebViewIO;
 import de.unijena.bioinf.ms.nightsky.sdk.model.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
+import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntComparators;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -74,8 +76,10 @@ import java.io.File;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -83,6 +87,10 @@ import java.util.stream.Stream;
 
 
 public class SpectraVisualizationPanel extends JPanel implements ActionListener, ItemListener, PanelDescription {
+
+    protected final CardLayout centerCard = new CardLayout();
+    protected final JPanel centerCardPanel = new JPanel(centerCard);
+    protected final JLabel errorLabel;
 
     @Override
     public String getDescription() {
@@ -178,7 +186,15 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
         // Browser //
         /////////////
         this.browser = new WebViewSpectraViewer();
-        this.add(this.browser, BorderLayout.CENTER);
+
+        Pair<JPanel, JLabel> error = GuiUtils.newEmptyResultsPanelWithLabel(null);
+        this.errorLabel = error.right();
+
+        this.centerCardPanel.add("browser", this.browser);
+        this.centerCardPanel.add("error", error.left());
+        showBrowser();
+
+        this.add(centerCardPanel, BorderLayout.CENTER);
         this.setVisible(true);
     }
 
@@ -198,8 +214,18 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
         }
     }
 
+    private void showBrowser() {
+        this.centerCard.show(centerCardPanel, "browser");
+    }
+
+    private void showError(@NotNull String message) {
+        this.errorLabel.setText(message);
+        this.centerCard.show(centerCardPanel, "error");
+    }
+
     private void drawSpectra() {
         try {
+            showBrowser();
             browser.clear();
             String mode = (String) modesBox.getSelectedItem();
             if (mode == null)
@@ -230,6 +256,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                         if (isotopePatternAnnotation != null && isotopePatternAnnotation.getSimulatedPattern() != null) {
                             jsonSpectra = matchSpectra(spectrum, isotopePatternAnnotation.getSimulatedPattern());
                         } else {
+                            showError("No isotope pattern available!");
                             LoggerFactory.getLogger(getClass()).warn(MS1_MIRROR_DISPLAY + "was selected but no simulated pattern was available. Cannot show mirror plot!");
                         }
                     } else {
@@ -252,9 +279,15 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                         jsonSpectra = SpectraViewContainer.of(msData.getMs2Spectra().get(ce_index));
                 }
             } else if (mode.equals(MS2_MIRROR_DISPLAY)) {
-                jsonSpectra = SpectraViewContainer.of(List.of(msData.getMs2Spectra().get(queryIndices.getInt(ce_index)), selectedMatchBean.getReference().orElseThrow()));
+                if (selectedMatchBean.getReference().isEmpty()) {
+                    showError("Reference spectrum not found!");
+                    LoggerFactory.getLogger(getClass()).warn("Cannot draw spectra: Spectrum " + selectedMatchBean.getMatch().getDbId() + " not found!");
+                    return;
+                }
+                jsonSpectra = SpectraViewContainer.of(List.of(msData.getMs2Spectra().get(queryIndices.getInt(ce_index)), selectedMatchBean.getReference().get()));
                 smiles = selectedMatchBean.getMatch().getSmiles();
             } else {
+                showError("Mode not supported!");
                 LoggerFactory.getLogger(getClass()).warn("Cannot draw spectra: Mode " + mode + " not (yet) supported!");
                 return;
             }
@@ -273,6 +306,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                 browser.loadData(jsonSpectra, svg, diff, showMzTopK);
             }
         } catch (JsonProcessingException e) {
+            showError("Error when creating data json!");
             LoggerFactory.getLogger(getClass()).error("Error when creating data Json!", e);
         }
     }
@@ -354,6 +388,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                         old.cancel(true);
                         old.getResult(); //await cancellation so that nothing strange can happen.
                     }
+                    showBrowser();
                     clearData();
 
                     if (clear) {
