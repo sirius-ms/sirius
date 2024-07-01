@@ -45,10 +45,7 @@ import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
-import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
-import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
-import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
-import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
+import de.unijena.bioinf.ms.persistence.model.core.feature.*;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
@@ -151,7 +148,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         this.saveImportedCompounds = saveImportedCompounds;
     }
 
-    private void compute(NoSQLProjectSpaceManager space, SiriusProjectDatabaseImpl<? extends Database<?>> ps, Database<?> store, List<Path> files) throws IOException {
+    private void compute(SiriusProjectDatabaseImpl<? extends Database<?>> ps, Database<?> store, List<Path> files) throws IOException {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
 
@@ -245,15 +242,22 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         // Multimere in die AductSettings reinpacken, das zu debuggen wird die Hoelle. Machen wir ein andern Mal.
         adductManager.add(((merged.getPolarity()<0) ? PeriodicTable.getInstance().getNegativeAdducts() : PeriodicTable.getInstance().getPositiveAdducts()).stream().filter(PrecursorIonType::isMultimere).collect(Collectors.toSet()));
         ProjectSpaceTraceProvider provider = new ProjectSpaceTraceProvider(ps);
-        AdductNetwork network = new AdductNetwork(provider,  store.findAllStr(AlignedFeatures.class).toArray(AlignedFeatures[]::new), adductManager, bac.getStatistics().getExpectedRetentionTimeDeviation()/2d);
-        network.buildNetworkFromMassDeltas(SiriusJobs.getGlobalJobManager());
-        network.assign(SiriusJobs.getGlobalJobManager(), new OptimalAssignmentViaBeamSearch(), merged.getPolarity(), (compound)-> {
-            try {
-                groupFeaturesToCompound(store, compound);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        });
+        {
+            AdductNetwork network = new AdductNetwork(provider,
+                    store.findAllStr(AlignedFeatures.class)
+                            .filter(f -> f.getApexIntensity() != null)
+                            .filter(AbstractFeature::isRTInterval)
+                            .toArray(AlignedFeatures[]::new),
+                    adductManager, bac.getStatistics().getExpectedRetentionTimeDeviation() / 2d);
+            network.buildNetworkFromMassDeltas(SiriusJobs.getGlobalJobManager());
+            network.assign(SiriusJobs.getGlobalJobManager(), new OptimalAssignmentViaBeamSearch(), merged.getPolarity(), (compound) -> {
+                try {
+                    groupFeaturesToCompound(store, compound);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
 
         updateProgress(totalProgress, ++progress, "Assessing data quality");
         // quality assessment
@@ -348,14 +352,14 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         progress = 0;
         if (alignRuns) {
             totalProgress = inputFiles.size() + 5L;
-            compute(space, ps, store, inputFiles);
+            compute(ps, store, inputFiles);
         } else {
             // TODO parallelize
             totalProgress = inputFiles.size() * 5L + 1;
             int atmost = Integer.MAX_VALUE;
             for (Path f : inputFiles) {
                 if (--atmost < 0) break;
-                compute(space, ps, store, List.of(f));
+                compute(ps, store, List.of(f));
             }
         }
         updateProgress(totalProgress, totalProgress, "Done");
@@ -370,7 +374,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         }
         List<AlignedFeatures> adducts = compound.getAdductFeatures().get();
         for (AlignedFeatures f : adducts) {
-            if (f.getCompoundId()==null || f.getCompoundId()!=compound.getCompoundId()) {
+            if (f.getCompoundId() == null || f.getCompoundId() != compound.getCompoundId()) {
                 f.setCompoundId(compound.getCompoundId());
                 ps.upsert(f);
             }
@@ -379,7 +383,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         List<MSData> msDataList = new ArrayList<>();
         for (int f = 0; f < adducts.size(); ++f) {
             List<MSData> ms = ps.findStr(Filter.where("alignedFeatureId").eq(adducts.get(f).getAlignedFeatureId()), MSData.class).toList();
-            if (ms.size()>0) {
+            if (!ms.isEmpty()) {
                 MSData m = ms.get(0);
                 msDataList.add(m);
                 if (m.getIsotopePattern() != null) {
