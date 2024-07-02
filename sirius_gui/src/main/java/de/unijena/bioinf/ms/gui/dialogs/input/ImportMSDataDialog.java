@@ -61,12 +61,6 @@ public class ImportMSDataDialog extends DoNotShowAgainDialog {
 
             paras.add(new JXTitledSeparator("Import Options"));
 
-            JComboBox<String> tagBox = makeGenericOptionComboBox("tag", List.of("blank", "control", "sample"), Function.identity());
-            tagBox.setSelectedIndex(2);
-            tagBox.setEditable(true);
-            paras.addNamed("Data tag", tagBox);
-            paras.addVerticalGlue();
-
             allowMS1Only = new JCheckBox("Import data without MS/MS");
             allowMS1Only.setSelected(Boolean.parseBoolean(SiriusProperties.getProperty("de.unijena.bioinf.sirius.ui.allowMs1Only", null, "true")));
             allowMS1Only.setToolTipText(GuiUtils.formatToolTip("If checked, data without MS/MS spectra will be imported. Otherwise they will be skipped during import."));

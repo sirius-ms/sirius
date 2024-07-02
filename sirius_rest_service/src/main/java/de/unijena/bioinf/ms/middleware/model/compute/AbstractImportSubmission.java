@@ -31,11 +31,16 @@ import lombok.Setter;
 
 import java.util.List;
 
+/**
+ * Parameter set for Data import.
+ */
 @Getter
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public abstract class AbstractImportSubmission {
+public abstract class AbstractImportSubmission<S> {
+
+    protected List<S> inputSources;
 
     protected String tag;
     protected boolean allowMs1OnlyData;

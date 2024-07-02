@@ -582,7 +582,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         AlignedFeature.AlignedFeatureBuilder builder = AlignedFeature.builder()
                 .alignedFeatureId(fid)
                 .name(features.getName())
-                .tag(features.getTag())
                 .externalFeatureId(features.getExternalFeatureId())
                 .compoundId(features.getCompoundId() == null ? null : features.getCompoundId().toString())
                 .ionMass(features.getAverageMass())

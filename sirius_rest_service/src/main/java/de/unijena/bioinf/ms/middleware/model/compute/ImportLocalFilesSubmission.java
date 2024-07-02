@@ -36,18 +36,15 @@ import java.util.stream.Collectors;
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ImportLocalFilesSubmission extends AbstractImportSubmission {
-    @NotEmpty
-    protected List<String> inputPaths;
-
+public class ImportLocalFilesSubmission extends AbstractImportSubmission<String> {
 
     @Override
     public List<InputResource<?>> asInputResource() {
-        return inputPaths.stream().map(Path::of).map(PathInputResource::new).collect(Collectors.toList());
+        return inputSources.stream().map(Path::of).map(PathInputResource::new).collect(Collectors.toList());
     }
 
     @Override
     public List<PathInputResource> asPathInputResource() {
-        return inputPaths.stream().map(Path::of).map(PathInputResource::new).collect(Collectors.toList());
+        return inputSources.stream().map(Path::of).map(PathInputResource::new).collect(Collectors.toList());
     }
 }

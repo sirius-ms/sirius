@@ -738,15 +738,6 @@
             }
           },
           {
-            "name": "tag",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": ""
-            }
-          },
-          {
             "name": "alignRuns",
             "in": "query",
             "description": "Align LC/MS runs.",
@@ -901,15 +892,6 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
-          },
-          {
-            "name": "tag",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": ""
             }
           },
           {
@@ -1142,8 +1124,8 @@
         "tags": [
           "Projects"
         ],
-        "summary": "Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats (ms, mgf, cef, msp)\n\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.",
-        "description": "Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats (ms, mgf, cef, msp)\n\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n\n DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this\n API to allow for more flexible use cases. Use \u0027preprocessed-data-files\u0027 instead.",
+        "summary": "Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats (ms, mgf, cef, msp)\n ",
+        "description": "Import already preprocessed ms/ms data from various formats into the specified project\n Possible formats (ms, mgf, cef, msp)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this\n API to allow for more flexible use cases. Use \u0027preprocessed-data-files\u0027 instead.",
         "operationId": "importPreprocessedDataLocally",
         "parameters": [
           {
@@ -1208,8 +1190,8 @@
         "tags": [
           "Projects"
         ],
-        "summary": "Import ms/ms data from the given format into the specified project-space as background job.",
-        "description": "Import ms/ms data from the given format into the specified project-space as background job.\n Possible formats (ms, mgf, cef, msp)\n\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n\n DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this\n API to allow for more flexible use cases. Use \u0027preprocessed-data-files-job\u0027 instead.",
+        "summary": "Import ms/ms data from the given format into the specified project-space as background job",
+        "description": "Import ms/ms data from the given format into the specified project-space as background job.\n Possible formats (ms, mgf, cef, msp)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this\n API to allow for more flexible use cases. Use \u0027preprocessed-data-files-job\u0027 instead.",
         "operationId": "importPreprocessedDataAsJobLocally",
         "parameters": [
           {
@@ -1458,15 +1440,6 @@
             }
           },
           {
-            "name": "tag",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": ""
-            }
-          },
-          {
             "name": "alignRuns",
             "in": "query",
             "description": "Align LC/MS runs.",
@@ -1607,15 +1580,6 @@
             "required": true,
             "schema": {
               "type": "string"
-            }
-          },
-          {
-            "name": "tag",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "default": ""
             }
           },
           {
