@@ -152,7 +152,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             }
 
             final TwoColumnPanel dataParameters = new TwoColumnPanel();
-            centerTab.addTab("Input Data", dataParameters);
+            centerTab.addTab("Data Quality", dataParameters);
 
             //isotope peak filter
             {
