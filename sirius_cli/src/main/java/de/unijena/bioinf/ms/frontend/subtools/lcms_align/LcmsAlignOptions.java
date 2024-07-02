@@ -58,9 +58,6 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<Proj
         return workflow;
     }
 
-    @CommandLine.Option(names={"--tag"}, description = "Data type tag (e.g. \"blank\", \"control\", or \"sample\").")
-    public String tag;
-
     @CommandLine.Option(names={"--no-align"}, description = "Do not align and combine all LC/MS runs to one merged LC/MS run.")
     public boolean noAlign;
 

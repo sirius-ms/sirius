@@ -79,8 +79,6 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
     private final TraceSegmentationStrategy mergedTraceSegmenter;
 
-    private final String tag;
-
     private final boolean alignRuns;
 
     private final boolean allowMs1Only;
@@ -104,7 +102,6 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         this.inputFiles = inputFiles;
         this.projectSupplier = projectSupplier;
         this.ionTypes = ionTypes;
-        this.tag = options.tag;
         this.alignRuns = !options.noAlign;
         this.allowMs1Only = options.allowMs1Only;
         this.mergedTraceSegmenter = new PersistentHomology(switch (options.smoothing) {
@@ -119,7 +116,6 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     public LcmsAlignSubToolJobNoSql(
             @NotNull List<Path> inputFiles,
             @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier,
-            String tag,
             boolean alignRuns,
             boolean allowMs1Only,
             DataSmoothing filter,
@@ -136,7 +132,6 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         this.inputFiles = inputFiles;
         this.projectSupplier = projectSupplier;
         this.ionTypes = ionTypes;
-        this.tag = tag;
         this.alignRuns = alignRuns;
         this.allowMs1Only = allowMs1Only;
         this.mergedTraceSegmenter = new PersistentHomology(switch (filter) {
@@ -193,7 +188,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         System.out.println("Good Traces = " + avgAl.doubleStream().filter(x -> x >= 5).sum());
 
         updateProgress(totalProgress, ++progress, "Importing features");
-        if (processing.extractFeaturesAndExportToProjectSpace(merged, bac, tag) == 0) {
+        if (processing.extractFeaturesAndExportToProjectSpace(merged, bac) == 0) {
             if (!allowMs1Only) {
                 System.err.println("No features with MS/MS data found.");
             } else {

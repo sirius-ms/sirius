@@ -125,7 +125,6 @@ public class ImportAction extends AbstractGuiAction {
                 return;
 
             ParameterBinding binding = dialog.getParamterBinding();
-            String tag = binding.getOrDefault("tag", () -> null).get();
             boolean allowMS1Only = PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", true);
 
             // handle LC/MS files
@@ -143,7 +142,6 @@ public class ImportAction extends AbstractGuiAction {
                 LoadingBackroundTask<Job> task = gui.applySiriusClient((c, pid) -> {
                     Job job = c.projects().importMsRunDataAsJobLocally(pid,
                             lcmsPaths.stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
-                            tag,
                             align && lcmsPaths.size() > 1,
                             allowMS1Only,
                             filter, sigma, scale, window, noise, persistence, merge,
@@ -157,7 +155,7 @@ public class ImportAction extends AbstractGuiAction {
 
             // handle non-LC/MS files
             if (hasPeakLists) {
-                LoadingBackroundTask<Job> task  = gui.applySiriusClient((c, pid) -> {
+                LoadingBackroundTask<Job> task = gui.applySiriusClient((c, pid) -> {
                     Job job = c.projects().importPreprocessedDataAsJobLocally(pid,
                             paths.get(false).stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
                             PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.ignoreFormulas", false),

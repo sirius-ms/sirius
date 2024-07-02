@@ -21,20 +21,12 @@ package de.unijena.bioinf.ms.gui.utils;/*
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
-import de.unijena.bioinf.ms.gui.SiriusGui;
-import de.unijena.bioinf.ms.nightsky.sdk.model.*;
-import de.unijena.bioinf.projectspace.InstanceBean;
-import it.unimi.dsi.fastutil.Pair;
+import de.unijena.bioinf.ms.nightsky.sdk.model.DataQuality;
+import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.text.CaseUtils;
-import org.dizitart.no2.mvstore.MVSpatialKey;
-import org.h2.mvstore.MVStore;
-import org.h2.mvstore.rtree.MVRTreeMap;
-import org.h2.mvstore.rtree.Spatial;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,7 +94,6 @@ public class CompoundFilterModel implements SiriusPCS {
     @Nullable
     private DbFilter dbFilter;
 
-    private FeatureSubtractionFilter featureSubtractionFilter;
 
     /*
     min/max possible values
@@ -127,8 +118,8 @@ public class CompoundFilterModel implements SiriusPCS {
     private final double maxConfidence;
 
 
-    public CompoundFilterModel(SiriusGui gui) {
-        this(0, 5000d, 0, 10000d, 0, 1d, 0, Integer.MAX_VALUE, gui);
+    public CompoundFilterModel() {
+        this(0, 5000d, 0, 10000d, 0, 1d, 0, Integer.MAX_VALUE);
     }
 
 
@@ -143,7 +134,7 @@ public class CompoundFilterModel implements SiriusPCS {
      * @param minConfidence
      * @param maxConfidence
      */
-    public CompoundFilterModel(double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence, int minIsotopePeaks, int maxIsotopePeaks, SiriusGui gui) {
+    public CompoundFilterModel(double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence, int minIsotopePeaks, int maxIsotopePeaks) {
         this.featureQualityFilter.dataQualities.remove(DataQuality.BAD);
         this.featureQualityFilter.dataQualities.remove(DataQuality.LOWEST);
         this.currentMinMz = minMz;
@@ -162,8 +153,6 @@ public class CompoundFilterModel implements SiriusPCS {
         this.maxConfidence = maxConfidence;
         this.minIsotopePeaks = minIsotopePeaks;
         this.maxIsotopePeaks = maxIsotopePeaks;
-
-        this.featureSubtractionFilter = new FeatureSubtractionFilter(gui);
     }
 
     public void fireUpdateCompleted() {
@@ -298,7 +287,8 @@ public class CompoundFilterModel implements SiriusPCS {
         if (!adducts.isEmpty()) return true;
         if (getIoQualityFilters().stream().anyMatch(QualityFilter::isEnabled) || getFeatureQualityFilter().isEnabled() || isLipidFilterEnabled() || isElementFilterEnabled() || isDbFilterEnabled())
             return true;
-        return featureSubtractionFilter.isEnabled();
+
+        return false;
     }
 
     public boolean isMaxMzFilterActive() {
@@ -346,46 +336,6 @@ public class CompoundFilterModel implements SiriusPCS {
                 .forEach(a -> adducts.add(a));
     }
 
-    public void enableTagHiding(boolean enabled) {
-        featureSubtractionFilter.setEnabled(enabled);
-    }
-
-    public void enableFeatureSubtraction(boolean enabled) {
-        featureSubtractionFilter.setSubtractionEnabled(enabled);
-    }
-
-    public void setHiddenTags(Set<String> tags) {
-        featureSubtractionFilter.setTags(tags);
-    }
-
-    public void setFeatureSubtractionMzDev(double ppm) {
-        featureSubtractionFilter.setMzDev(new Deviation(ppm));
-    }
-
-    public void setFeatureSubtractionRtDev(double min) {
-        featureSubtractionFilter.setRtDev(60 * min);
-    }
-
-    public void setFeatureSubtractionMinRatio(double ratio) {
-        featureSubtractionFilter.setMinRatio(ratio);
-    }
-
-    public boolean isTagHidingEnabled() {
-        return featureSubtractionFilter.isEnabled();
-    }
-
-    public boolean isFeatureSubtractionEnabled() {
-        return featureSubtractionFilter.isSubtractionEnabled();
-    }
-
-    public boolean featureSubtractionMatches(InstanceBean item) {
-        return featureSubtractionFilter.matches(item);
-    }
-
-    public Set<String> getHiddenTags() {
-        return featureSubtractionFilter.getTags();
-    }
-
 
     @Override
     public HiddenChangeSupport pcs() {
@@ -408,7 +358,6 @@ public class CompoundFilterModel implements SiriusPCS {
         adducts = Set.of();
         setHasMs1(false);
         setHasMsMs(false);
-        featureSubtractionFilter.reset();
     }
 
     public enum LipidFilter {
@@ -564,167 +513,4 @@ public class CompoundFilterModel implements SiriusPCS {
         }
 
     }
-
-    public static class FeatureSubtractionFilter {
-
-        @Getter
-        @Setter
-        private Set<String> tags = new HashSet<>(List.of("blank", "control"));
-
-        @Setter
-        private Deviation mzDev = new Deviation(10);
-
-        @Setter
-        private double rtDev = 120.0;
-
-        @Setter
-        private double minRatio = 2.0;
-
-        @Setter
-        @Getter
-        private boolean enabled = true;
-
-        @Setter
-        private boolean settingsChanged = false;
-
-        @Setter
-        @Getter
-        private boolean subtractionEnabled = false;
-
-        private MVStore mvStore;
-
-        private MVRTreeMap<String> mvRTree;
-
-        private final SiriusGui gui;
-
-        public FeatureSubtractionFilter(SiriusGui gui) {
-            this.gui = gui;
-        }
-
-        private OptionalDouble getMaxIntensity(AlignedFeature feature) {
-            MsData msData = feature.getMsData();
-            if (msData == null) {
-                AlignedFeature fromClient = gui.applySiriusClient((client, pid) -> client.features().getAlignedFeature(pid, feature.getAlignedFeatureId(), List.of(AlignedFeatureOptField.MSDATA)));
-                if (fromClient.getMsData() == null)
-                    return OptionalDouble.empty();
-                else {
-                    feature.setMsData(fromClient.getMsData());
-                    msData = fromClient.getMsData();
-                }
-            }
-            BasicSpectrum spectrum = msData.getMergedMs1();
-            if (spectrum == null)
-                return OptionalDouble.empty();
-            return spectrum.getPeaks().stream().mapToDouble(peak -> peak.getIntensity() != null ? peak.getIntensity() : 0).max();
-        }
-
-        public boolean matches(InstanceBean instanceBean) {
-            if (!enabled)
-                return false;
-
-            if (tags.isEmpty())
-                return false;
-
-            if (tags.stream().anyMatch(tag -> tag.equalsIgnoreCase(instanceBean.getSourceFeature().getTag())))
-                return true;
-
-            if (!subtractionEnabled)
-                return false;
-
-            if (instanceBean.getRT().isEmpty())
-                return false;
-            if (Boolean.FALSE.equals(instanceBean.getSourceFeature().isHasMs1()))
-                return false;
-
-            OptionalDouble maxInt = getMaxIntensity(instanceBean.getSourceFeature());
-            if (maxInt.isEmpty())
-                return false;
-
-            if (this.settingsChanged) {
-                resetStore();
-                this.settingsChanged = false;
-            }
-
-            if (this.mvStore == null || this.mvRTree == null) {
-                setup();
-            }
-
-            Iterator<Spatial> intersection = this.mvRTree.findIntersectingKeys(new MVSpatialKey(0,
-                    (float) (instanceBean.getIonMass() - mzDev.absoluteFor(instanceBean.getIonMass())),
-                    (float) (instanceBean.getIonMass() + mzDev.absoluteFor(instanceBean.getIonMass())),
-                    (float) (instanceBean.getRT().get().getStartTime() - rtDev),
-                    (float) (instanceBean.getRT().get().getEndTime() + rtDev)
-            ));
-
-            Set<String> intersectingFeatureIds = new HashSet<>();
-            for (Spatial s; intersection.hasNext();) {
-                s = intersection.next();
-                intersectingFeatureIds.add(this.mvRTree.get(s));
-            }
-            if (intersectingFeatureIds.isEmpty())
-                return false;
-
-            Optional<AlignedFeature> nearest = gui.applySiriusClient(
-                    (client, pid) -> intersectingFeatureIds.stream()
-                            .map(fid -> client.features().getAlignedFeature(pid, fid, List.of(AlignedFeatureOptField.MSDATA)))
-                            .filter(f -> Boolean.TRUE.equals(f.isHasMs1()) && f.getIonMass() != null && f.getRtStartSeconds() != null && f.getRtEndSeconds() != null)
-                            .map(f -> Pair.of(Math.abs(instanceBean.getIonMass() - f.getIonMass()) + Math.abs(instanceBean.getRT().get().getMiddleTime() - new RetentionTime(f.getRtStartSeconds(), f.getRtEndSeconds()).getMiddleTime()), f))
-                            .min(Comparator.comparing(Pair::left)).map(Pair::right)
-            );
-
-            if (nearest.isEmpty())
-                return false;
-
-            OptionalDouble nearestInt = getMaxIntensity(nearest.get());
-            if (nearestInt.isEmpty())
-                return false;
-
-            return maxInt.getAsDouble() <= minRatio * nearestInt.getAsDouble();
-        }
-
-        private void resetStore() {
-            if (this.mvStore != null) {
-                this.mvStore.close();
-                this.mvStore = null;
-                this.mvRTree = null;
-            }
-        }
-
-        public void reset() {
-            resetStore();
-            this.tags = new HashSet<>(List.of("blank", "control"));
-            this.mzDev = new Deviation(10);
-            this.rtDev = 120.0;
-            this.minRatio = 2.0;
-            this.enabled = true;
-            this.settingsChanged = true;
-            this.subtractionEnabled = false;
-        }
-
-        private void setup() {
-            this.mvStore = MVStore.open(null);
-            this.mvRTree = mvStore.openMap("data", new MVRTreeMap.Builder<>());
-
-            gui.applySiriusClient((client, pid) -> {
-                int id = 0;
-                for (AlignedFeature feature : client.features().getAlignedFeatures(pid, List.of())) {
-                    if (Boolean.FALSE.equals(feature.isHasMs1()) || feature.getIonMass() == null || feature.getRtStartSeconds() == null || feature.getRtEndSeconds() == null)
-                        continue;
-
-                    if (tags.stream().anyMatch(tag -> tag.equalsIgnoreCase(feature.getTag()))) {
-                        mvRTree.add(new MVSpatialKey(id++,
-                                        (float) (feature.getIonMass() - mzDev.absoluteFor(feature.getIonMass())),
-                                        (float) (feature.getIonMass() + mzDev.absoluteFor(feature.getIonMass())),
-                                        (float) (feature.getRtStartSeconds() - rtDev),
-                                        (float) (feature.getRtEndSeconds() + rtDev)
-                                ),
-                                feature.getAlignedFeatureId());
-                    }
-                }
-                return null;
-            });
-        }
-
-    }
-
 }

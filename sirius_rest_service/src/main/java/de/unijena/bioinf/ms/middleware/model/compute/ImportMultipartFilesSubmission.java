@@ -27,14 +27,16 @@ import com.google.common.jimfs.Jimfs;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
-import jakarta.validation.constraints.NotEmpty;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -44,11 +46,9 @@ import java.util.stream.Stream;
 @Setter
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ImportMultipartFilesSubmission extends AbstractImportSubmission {
+public class ImportMultipartFilesSubmission extends AbstractImportSubmission<MultipartFile> {
     @Nullable
     protected String tmpDirNameClassifier;
-    @NotEmpty
-    protected List<MultipartFile> inputFiles;
 
     private List<Path> consumedResources;
 
@@ -68,7 +68,7 @@ public class ImportMultipartFilesSubmission extends AbstractImportSubmission {
     }
 
     public synchronized void consumeResources() {
-        FileSystem fs = (inputFiles.stream().mapToLong(MultipartFile::getSize).sum() < 4294967296L)
+        FileSystem fs = (inputSources.stream().mapToLong(MultipartFile::getSize).sum() < 4294967296L)
                 ? Jimfs.newFileSystem() : FileSystems.getDefault();
 
         try {
@@ -77,7 +77,7 @@ public class ImportMultipartFilesSubmission extends AbstractImportSubmission {
                     fs);
 
             Files.createDirectories(tmpdir);
-            consumedResources = inputFiles.stream().map(f -> {
+            consumedResources = inputSources.stream().map(f -> {
                 try {
                     Path nuFile = tmpdir.resolve(Optional.ofNullable(f.getOriginalFilename()).orElse(TsidCreator.getTsid().toString()));
                     f.transferTo(nuFile);

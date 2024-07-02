@@ -20,8 +20,8 @@
 
 package de.unijena.bioinf.ms.middleware.controller;
 
-import de.unijena.bioinf.ms.frontend.subtools.lcms_align.DataSmoothing;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
+import de.unijena.bioinf.ms.frontend.subtools.lcms_align.DataSmoothing;
 import de.unijena.bioinf.ms.middleware.model.MultipartInputResource;
 import de.unijena.bioinf.ms.middleware.model.compute.ImportLocalFilesSubmission;
 import de.unijena.bioinf.ms.middleware.model.compute.ImportMultipartFilesSubmission;
@@ -148,7 +148,6 @@ public class ProjectController {
     @PostMapping(value = "/{projectId}/jobs/import/ms-data-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Job importMsRunDataAsJob(@PathVariable String projectId,
                                     @RequestBody MultipartFile[] inputFiles,
-                                    @RequestParam(defaultValue = "") String tag,
                                     @RequestParam(defaultValue = "true") boolean alignRuns,
                                     @RequestParam(defaultValue = "true") boolean allowMs1Only,
                                     @RequestParam(defaultValue = "AUTO") DataSmoothing filter,
@@ -163,8 +162,7 @@ public class ProjectController {
         Project<?> p = projectsProvider.getProjectOrThrow(projectId);
         try {
             ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
-            sub.setInputFiles(List.of(inputFiles));
-            sub.setTag(tag);
+            sub.setInputSources(List.of(inputFiles));
             sub.setAlignLCMSRuns(alignRuns);
             sub.setAllowMs1OnlyData(allowMs1Only);
             sub.setFilter(filter);
@@ -200,7 +198,6 @@ public class ProjectController {
     @PostMapping(value = "/{projectId}/import/ms-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ImportResult importMsRunData(@PathVariable String projectId,
                                         @RequestBody MultipartFile[] inputFiles,
-                                        @RequestParam(defaultValue = "") String tag,
                                         @RequestParam(defaultValue = "true") boolean alignRuns,
                                         @RequestParam(defaultValue = "true") boolean allowMs1Only,
                                         @RequestParam(defaultValue = "AUTO") DataSmoothing filter,
@@ -212,8 +209,7 @@ public class ProjectController {
                                         @RequestParam(defaultValue = "0.8") double merge
     ) {
         ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
-        sub.setInputFiles(List.of(inputFiles));
-        sub.setTag(tag);
+        sub.setInputSources(List.of(inputFiles));
         sub.setAlignLCMSRuns(alignRuns);
         sub.setAllowMs1OnlyData(allowMs1Only);
         sub.setFilter(filter);
@@ -256,7 +252,6 @@ public class ProjectController {
     @PostMapping(value = "/{projectId}/jobs/import/ms-data-local-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public Job importMsRunDataAsJobLocally(@PathVariable String projectId,
                                            @RequestBody String[] localFilePaths,
-                                           @RequestParam(defaultValue = "") String tag,
                                            @RequestParam(defaultValue = "true") boolean alignRuns,
                                            @RequestParam(defaultValue = "true") boolean allowMs1Only,
                                            @RequestParam(defaultValue = "AUTO") DataSmoothing filter,
@@ -271,8 +266,7 @@ public class ProjectController {
         Project<?> p = projectsProvider.getProjectOrThrow(projectId);
         try {
             ImportLocalFilesSubmission sub = new ImportLocalFilesSubmission();
-            sub.setInputPaths(List.of(localFilePaths));
-            sub.setTag(tag);
+            sub.setInputSources(List.of(localFilePaths));
             sub.setAlignLCMSRuns(alignRuns);
             sub.setAllowMs1OnlyData(allowMs1Only);
             sub.setFilter(filter);
@@ -316,7 +310,6 @@ public class ProjectController {
     @PostMapping(value = "/{projectId}/import/ms-local-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ImportResult importMsRunDataLocally(@PathVariable String projectId,
                                                @RequestBody String[] localFilePaths,
-                                               @RequestParam(defaultValue = "") String tag,
                                                @RequestParam(defaultValue = "true") boolean alignRuns,
                                                @RequestParam(defaultValue = "true") boolean allowMs1Only,
                                                @RequestParam(defaultValue = "AUTO") DataSmoothing filter,
@@ -328,8 +321,7 @@ public class ProjectController {
                                                @RequestParam(defaultValue = "0.8") double merge
     ) {
         ImportLocalFilesSubmission sub = new ImportLocalFilesSubmission();
-        sub.setInputPaths(List.of(localFilePaths));
-        sub.setTag(tag);
+        sub.setInputSources(List.of(localFilePaths));
         sub.setAlignLCMSRuns(alignRuns);
         sub.setAllowMs1OnlyData(allowMs1Only);
         sub.setFilter(filter);
@@ -361,7 +353,7 @@ public class ProjectController {
 
         Project<?> p = projectsProvider.getProjectOrThrow(projectId);
         ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
-        sub.setInputFiles(List.of(inputFiles));
+        sub.setInputSources(List.of(inputFiles));
         sub.setIgnoreFormulas(ignoreFormulas);
         sub.setAllowMs1OnlyData(allowMs1Only);
         return computeService.createAndSubmitPeakListImportJob(p, sub, removeNone(optFields));
@@ -389,12 +381,12 @@ public class ProjectController {
     /**
      * Import ms/ms data from the given format into the specified project-space as background job.
      * Possible formats (ms, mgf, cef, msp)
-     *
+     * <p>
      * ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,
      * not on the system where the client SDK is running.
      * Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
      * are running on the same host.
-     *
+     * <p>
      * DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this
      * API to allow for more flexible use cases. Use 'preprocessed-data-files-job' instead.
      *
@@ -412,7 +404,7 @@ public class ProjectController {
     ) {
         Project<?> p = projectsProvider.getProjectOrThrow(projectId);
         ImportLocalFilesSubmission sub = new ImportLocalFilesSubmission();
-        sub.setInputPaths(List.of(localPaths));
+        sub.setInputSources(List.of(localPaths));
         sub.setIgnoreFormulas(ignoreFormulas);
         sub.setAllowMs1OnlyData(allowMs1Only);
         return computeService.createAndSubmitPeakListImportJob(p, sub, removeNone(optFields));
@@ -421,17 +413,16 @@ public class ProjectController {
     /**
      * Import already preprocessed ms/ms data from various formats into the specified project
      * Possible formats (ms, mgf, cef, msp)
-     *
+     * <p>
      * ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,
      * not on the system where the client SDK is running.
      * Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)
      * are running on the same host.
-     *
+     * <p>
      * DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this
      * API to allow for more flexible use cases. Use 'preprocessed-data-files' instead.
      *
-     *
-     * @param projectId  project-space to import into.
+     * @param projectId      project-space to import into.
      * @param localFilePaths files to import into project
      */
     @PostMapping(value = "/{projectId}/import/preprocessed-local-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
