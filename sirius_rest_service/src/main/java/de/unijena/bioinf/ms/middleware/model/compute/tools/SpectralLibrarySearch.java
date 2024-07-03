@@ -33,7 +33,6 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -80,7 +79,7 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
     @Override
     public Map<String, String> asConfigMap() {
         return new NullCheckMapBuilder()
-                .putIfNonNullObj("SpectralSearchDB", spectraSearchDBs, db -> String.join(",", db).toLowerCase(Locale.ROOT))
+                .putIfNonNullObj("SpectralSearchDB", spectraSearchDBs, db -> String.join(",", db))
                 .putIfNonNull("SpectralMatchingMassDeviation.allowedPeakDeviation", peakDeviationPpm, it -> it + " ppm")
                 .putIfNonNull("SpectralMatchingMassDeviation.allowedPrecursorDeviation", precursorDeviationPpm, it -> it + " ppm")
                 .putIfNonNull("SpectralMatchingScorer", scoring)
@@ -95,6 +94,7 @@ public class SpectralLibrarySearch extends Tool<SpectraSearchOptions> {
     public static SpectralLibrarySearch.SpectralLibrarySearchBuilder<?, ?> builderWithDefaults() {
         return SpectralLibrarySearch.builder()
                 .enabled(true)
+                .spectraSearchDBs(null)
                 .peakDeviationPpm(PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectralMatchingMassDeviation.class)
                         .allowedPeakDeviation.getPpm())
                 .precursorDeviationPpm(PropertyManager.DEFAULTS.createInstanceWithDefaults(SpectralMatchingMassDeviation.class)

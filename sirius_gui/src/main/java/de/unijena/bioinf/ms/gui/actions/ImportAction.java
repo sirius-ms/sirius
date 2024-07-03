@@ -34,6 +34,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.jjobs.SseProgressJJob;
 import de.unijena.bioinf.ms.nightsky.sdk.model.DataSmoothing;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
+import de.unijena.bioinf.ms.nightsky.sdk.model.LcmsSubmissionParameters;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceImporter;
 import org.apache.commons.lang3.time.StopWatch;
@@ -130,21 +131,22 @@ public class ImportAction extends AbstractGuiAction {
             // handle LC/MS files
             if (hasLCMS) {
                 List<Path> lcmsPaths = paths.get(true);
-                boolean align = binding.getOrDefault("align", () -> "~true").get().equals("~true");
-                DataSmoothing filter = DataSmoothing.valueOf(binding.getOrDefault("filter", () -> "AUTO").get());
-                double sigma = Double.parseDouble(binding.getOrDefault("sigma", () -> "3.0").get());
-                int scale = Integer.parseInt(binding.getOrDefault("scale", () -> "20").get());
-                double window = Double.parseDouble(binding.getOrDefault("window", () -> "11").get());
-                double noise = Double.parseDouble(binding.getOrDefault("noise", () -> "2.0").get());
-                double persistence = Double.parseDouble(binding.getOrDefault("persistence", () -> "0.1").get());
-                double merge = Double.parseDouble(binding.getOrDefault("merge", () -> "0.8").get());
+
+                final LcmsSubmissionParameters parameters = new LcmsSubmissionParameters();
+                binding.getOptBoolean("align").ifPresent(parameters::setAlignLCMSRuns);
+                binding.getOpt("filter").map(DataSmoothing::valueOf).ifPresent(parameters::setFilter);
+                binding.getOptDouble("sigma").ifPresent(parameters::setGaussianSigma);
+                binding.getOptInt("scale").ifPresent(parameters::setWaveletScale);
+                binding.getOptDouble("window").ifPresent(parameters::setWaveletWindow);
+                binding.getOptDouble("noise").ifPresent(parameters::setNoise);
+                binding.getOptDouble("persistence").ifPresent(parameters::setPersistence);
+                binding.getOptDouble("merge").ifPresent(parameters::setMerge);
 
                 LoadingBackroundTask<Job> task = gui.applySiriusClient((c, pid) -> {
                     Job job = c.projects().importMsRunDataAsJobLocally(pid,
+                            parameters,
                             lcmsPaths.stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
-                            align && lcmsPaths.size() > 1,
                             allowMS1Only,
-                            filter, sigma, scale, window, noise, persistence, merge,
                             List.of(JobOptField.PROGRESS)
                     );
                     return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Importing LC/MS data...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));

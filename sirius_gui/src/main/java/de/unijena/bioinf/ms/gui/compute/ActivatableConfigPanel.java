@@ -136,6 +136,7 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
         return content.asParameterList();
     }
 
+    @NotNull
     public Map<String, String> asConfigMap() {
         return content.asConfigMap();
     }
