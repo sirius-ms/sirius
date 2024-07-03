@@ -90,7 +90,7 @@ public class CustomDataSources {
         long b = 0L;
         for (DataSource s : DataSource.values()) {
             EnumSource en = new EnumSource(s);
-            SOURCE_MAP.put(s.name(), en);
+            SOURCE_MAP.put(s.name().toUpperCase(Locale.ROOT), en);
             b |= s.flag;
         }
         bits = BitSet.valueOf(new long[]{b});
@@ -121,11 +121,13 @@ public class CustomDataSources {
 
 
     static boolean removeCustomSource(String name) {
+        if (name == null || name.isBlank())
+            return false;
         synchronized (SOURCE_MAP) {
             Source s = getSourceFromName(name);
             if (s == null) return true;
             if (s.isCustomSource()) {
-                s = SOURCE_MAP.remove(name);
+                s = SOURCE_MAP.remove(name.toUpperCase(Locale.ROOT));
                 bits.andNot(BitSet.valueOf(new long[]{s.flag()}));
                 notifyListeners(s, true);
                 return true;
@@ -143,6 +145,8 @@ public class CustomDataSources {
     }
 
     static Source addCustomSourceIfAbsent(String name, String displayName, String bucketLocation) {
+        if (name == null || name.isBlank())
+            return null;
         synchronized (SOURCE_MAP) {
             Source existing = getSourceFromName(name);
             if (existing == null) {
@@ -150,7 +154,7 @@ public class CustomDataSources {
                 bits.set(bitIndex);
                 long flag = 1L << bitIndex;
                 Source created = new CustomSource(flag, name, displayName, bucketLocation);
-                SOURCE_MAP.put(created.name(), created);
+                SOURCE_MAP.put(created.name().toUpperCase(Locale.ROOT), created);
 
                 notifyListeners(created, false);
                 return created;
@@ -194,7 +198,9 @@ public class CustomDataSources {
     }
 
     public static boolean containsDB(String name) {
-        return SOURCE_MAP.containsKey(name);
+        if (name == null || name.isBlank())
+            return false;
+        return SOURCE_MAP.containsKey(name.toUpperCase(Locale.ROOT));
     }
 
     public static long removeCustomSourceFromFlag(long flagToChange) {
@@ -224,7 +230,9 @@ public class CustomDataSources {
 
     @Nullable
     public static Source getSourceFromName(String name) {
-        return SOURCE_MAP.get(name);
+        if (name == null || name.isBlank())
+            return null;
+        return SOURCE_MAP.get(name.toUpperCase(Locale.ROOT));
     }
 
     @NotNull
