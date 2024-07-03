@@ -22,6 +22,9 @@ package de.unijena.bioinf.ms.middleware.model.compute.tools;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import de.unijena.bioinf.chemdb.DataSource;
+import de.unijena.bioinf.chemdb.annotations.StructureSearchDB;
+import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.confidence_score.ExpansiveSearchConfidenceMode;
 import de.unijena.bioinf.elgordo.TagStructuresByElGordo;
 import de.unijena.bioinf.ms.frontend.subtools.fingerblast.FingerblastOptions;
@@ -33,8 +36,9 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * User/developer friendly parameter subset for the CSI:FingerID structure db search tool.
@@ -49,7 +53,7 @@ public class StructureDbSearch extends Tool<FingerblastOptions> {
     /**
      * Structure databases to search in, If expansive search is enabled this DB selection will be expanded to PubChem
      * if not high confidence hit was found in the selected databases.
-     *
+     * <p>
      * Defaults to BIO + Custom Databases. Possible values are available to Database API.
      */
     @Schema(nullable = true)
@@ -68,7 +72,7 @@ public class StructureDbSearch extends Tool<FingerblastOptions> {
      * Expansive search mode.
      * Expansive search will expand the search space to whole PubChem in case no hit with reasonable confidence was
      * found in one of the specified databases (structureSearchDBs).
-     *
+     * <p>
      * Possible Values
      * OFF - No expansive search is performed
      * EXACT - Use confidence score in exact mode: Only molecular structures identical to the true structure should count as correct identification.
@@ -86,20 +90,31 @@ public class StructureDbSearch extends Tool<FingerblastOptions> {
     @JsonIgnore
     @Override
     public Map<String, String> asConfigMap() {
+
         return new NullCheckMapBuilder()
                 .putIfNonNull("TagStructuresByElGordo", tagStructuresWithLipidClass)
-                .putIfNonNullObj("StructureSearchDB", structureSearchDBs, db -> String.join(",", db).toLowerCase(Locale.ROOT))
                 .putIfNonNull("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", expansiveSearchConfidenceMode)
-                .toUnmodifiableMap();
+                .putIfNonNullObj("StructureSearchDB", structureSearchDBs, db -> {
+                    //remove pubchem if expansive search is active (expectable configuration error)
+                    if (Optional.ofNullable(expansiveSearchConfidenceMode).orElse(PropertyManager.DEFAULTS.
+                            createInstanceWithDefaults(ExpansiveSearchConfidenceMode.class).confidenceScoreSimilarityMode) != ExpansiveSearchConfidenceMode.Mode.OFF)
+                        return db.stream()
+                                .filter(it -> !it.equalsIgnoreCase(DataSource.PUBCHEM.name()))
+                                .collect(Collectors.joining(","));
+                    else
+                        return String.join(",", db);
+                }).toUnmodifiableMap();
     }
 
     public static StructureDbSearch buildDefault() {
         return builderWithDefaults().build();
     }
-    public static StructureDbSearch.StructureDbSearchBuilder<?,?> builderWithDefaults() {
+
+    public static StructureDbSearch.StructureDbSearchBuilder<?, ?> builderWithDefaults() {
         return StructureDbSearch.builder()
                 .enabled(true)
-                .structureSearchDBs(List.of())
+                .structureSearchDBs(PropertyManager.DEFAULTS.
+                        createInstanceWithDefaults(StructureSearchDB.class).searchDBs.stream().map(CustomDataSources.Source::name).toList())
                 .tagStructuresWithLipidClass(PropertyManager.DEFAULTS.
                         createInstanceWithDefaults(TagStructuresByElGordo.class).value)
                 .expansiveSearchConfidenceMode(PropertyManager.DEFAULTS.

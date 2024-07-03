@@ -561,7 +561,7 @@ No authorization required
 
 ## importMsRunData
 
-> ImportResult importMsRunData(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, inputFiles)
+> ImportResult importMsRunData(projectId, parameters, allowMs1Only, inputFiles)
 
 Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
 
@@ -584,18 +584,11 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | Project-space to import into.
-        Boolean alignRuns = true; // Boolean | Align LC/MS runs.
+        LcmsSubmissionParameters parameters = new LcmsSubmissionParameters(); // LcmsSubmissionParameters | Parameters for feature alignment and feature finding.
         Boolean allowMs1Only = true; // Boolean | Import data without MS/MS.
-        DataSmoothing filter = DataSmoothing.fromValue("AUTO"); // DataSmoothing | Filter algorithm to suppress noise.
-        Double sigma = 3.0D; // Double | Sigma (kernel width) for Gaussian filter algorithm.
-        Integer scale = 20; // Integer | Number of coefficients for wavelet filter algorithm.
-        Double window = 10.0D; // Double | Wavelet window size (%) for wavelet filter algorithm.
-        Double noise = 2.0D; // Double | Features must be larger than <value> * detected noise level.
-        Double persistence = 0.1D; // Double | Features must have larger persistence (intensity above valley) than <value> * max trace intensity.
-        Double merge = 0.8D; // Double | Merge neighboring features with valley less than <value> * intensity.
         List<File> inputFiles = Arrays.asList(); // List<File> | 
         try {
-            ImportResult result = apiInstance.importMsRunData(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, inputFiles);
+            ImportResult result = apiInstance.importMsRunData(projectId, parameters, allowMs1Only, inputFiles);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importMsRunData");
@@ -614,15 +607,8 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| Project-space to import into. | |
-| **alignRuns** | **Boolean**| Align LC/MS runs. | [optional] [default to true] |
+| **parameters** | [**LcmsSubmissionParameters**](.md)| Parameters for feature alignment and feature finding. | |
 | **allowMs1Only** | **Boolean**| Import data without MS/MS. | [optional] [default to true] |
-| **filter** | [**DataSmoothing**](.md)| Filter algorithm to suppress noise. | [optional] [enum: AUTO, NOFILTER, GAUSSIAN, WAVELET] |
-| **sigma** | **Double**| Sigma (kernel width) for Gaussian filter algorithm. | [optional] [default to 3.0] |
-| **scale** | **Integer**| Number of coefficients for wavelet filter algorithm. | [optional] [default to 20] |
-| **window** | **Double**| Wavelet window size (%) for wavelet filter algorithm. | [optional] [default to 10.0] |
-| **noise** | **Double**| Features must be larger than &lt;value&gt; * detected noise level. | [optional] [default to 2.0] |
-| **persistence** | **Double**| Features must have larger persistence (intensity above valley) than &lt;value&gt; * max trace intensity. | [optional] [default to 0.1] |
-| **merge** | **Double**| Merge neighboring features with valley less than &lt;value&gt; * intensity. | [optional] [default to 0.8] |
 | **inputFiles** | **List&lt;File&gt;**|  | [optional] |
 
 ### Return type
@@ -647,7 +633,7 @@ No authorization required
 
 ## importMsRunDataAsJob
 
-> Job importMsRunDataAsJob(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields, inputFiles)
+> Job importMsRunDataAsJob(projectId, parameters, allowMs1Only, optFields, inputFiles)
 
 Import and Align full MS-Runs from various formats into the specified project as background job.
 
@@ -670,19 +656,12 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | Project-space to import into.
-        Boolean alignRuns = true; // Boolean | Align LC/MS runs.
+        LcmsSubmissionParameters parameters = new LcmsSubmissionParameters(); // LcmsSubmissionParameters | Parameters for feature alignment and feature finding.
         Boolean allowMs1Only = true; // Boolean | Import data without MS/MS.
-        DataSmoothing filter = DataSmoothing.fromValue("AUTO"); // DataSmoothing | Filter algorithm to suppress noise.
-        Double sigma = 3.0D; // Double | Sigma (kernel width) for Gaussian filter algorithm.
-        Integer scale = 20; // Integer | Number of coefficients for wavelet filter algorithm.
-        Double window = 10.0D; // Double | Wavelet window size (%) for wavelet filter algorithm.
-        Double noise = 2.0D; // Double | Features must be larger than <value> * detected noise level.
-        Double persistence = 0.1D; // Double | Features must have larger persistence (intensity above valley) than <value> * max trace intensity.
-        Double merge = 0.8D; // Double | Merge neighboring features with valley less than <value> * intensity.
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | Set of optional fields to be included. Use 'none' only to override defaults.
         List<File> inputFiles = Arrays.asList(); // List<File> | 
         try {
-            Job result = apiInstance.importMsRunDataAsJob(projectId, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields, inputFiles);
+            Job result = apiInstance.importMsRunDataAsJob(projectId, parameters, allowMs1Only, optFields, inputFiles);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importMsRunDataAsJob");
@@ -701,15 +680,8 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| Project-space to import into. | |
-| **alignRuns** | **Boolean**| Align LC/MS runs. | [optional] [default to true] |
+| **parameters** | [**LcmsSubmissionParameters**](.md)| Parameters for feature alignment and feature finding. | |
 | **allowMs1Only** | **Boolean**| Import data without MS/MS. | [optional] [default to true] |
-| **filter** | [**DataSmoothing**](.md)| Filter algorithm to suppress noise. | [optional] [enum: AUTO, NOFILTER, GAUSSIAN, WAVELET] |
-| **sigma** | **Double**| Sigma (kernel width) for Gaussian filter algorithm. | [optional] [default to 3.0] |
-| **scale** | **Integer**| Number of coefficients for wavelet filter algorithm. | [optional] [default to 20] |
-| **window** | **Double**| Wavelet window size (%) for wavelet filter algorithm. | [optional] [default to 10.0] |
-| **noise** | **Double**| Features must be larger than &lt;value&gt; * detected noise level. | [optional] [default to 2.0] |
-| **persistence** | **Double**| Features must have larger persistence (intensity above valley) than &lt;value&gt; * max trace intensity. | [optional] [default to 0.1] |
-| **merge** | **Double**| Merge neighboring features with valley less than &lt;value&gt; * intensity. | [optional] [default to 0.8] |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| Set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 | **inputFiles** | **List&lt;File&gt;**|  | [optional] |
 
@@ -735,7 +707,7 @@ No authorization required
 
 ## importMsRunDataAsJobLocally
 
-> Job importMsRunDataAsJobLocally(projectId, requestBody, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields)
+> Job importMsRunDataAsJobLocally(projectId, parameters, requestBody, allowMs1Only, optFields)
 
 Import and Align full MS-Runs from various formats into the specified project as background job
 
@@ -758,19 +730,12 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | Project-space to import into.
+        LcmsSubmissionParameters parameters = new LcmsSubmissionParameters(); // LcmsSubmissionParameters | Parameters for feature alignment and feature finding.
         List<String> requestBody = Arrays.asList(); // List<String> | 
-        Boolean alignRuns = true; // Boolean | Align LC/MS runs.
         Boolean allowMs1Only = true; // Boolean | Import data without MS/MS.
-        DataSmoothing filter = DataSmoothing.fromValue("AUTO"); // DataSmoothing | Filter algorithm to suppress noise.
-        Double sigma = 3.0D; // Double | Sigma (kernel width) for Gaussian filter algorithm.
-        Integer scale = 20; // Integer | Number of coefficients for wavelet filter algorithm.
-        Double window = 10.0D; // Double | Wavelet window size (%) for wavelet filter algorithm.
-        Double noise = 2.0D; // Double | Features must be larger than <value> * detected noise level.
-        Double persistence = 0.1D; // Double | Features must have larger persistence (intensity above valley) than <value> * max trace intensity.
-        Double merge = 0.8D; // Double | Merge neighboring features with valley less than <value> * intensity.
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | Set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            Job result = apiInstance.importMsRunDataAsJobLocally(projectId, requestBody, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge, optFields);
+            Job result = apiInstance.importMsRunDataAsJobLocally(projectId, parameters, requestBody, allowMs1Only, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importMsRunDataAsJobLocally");
@@ -789,16 +754,9 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| Project-space to import into. | |
+| **parameters** | [**LcmsSubmissionParameters**](.md)| Parameters for feature alignment and feature finding. | |
 | **requestBody** | [**List&lt;String&gt;**](String.md)|  | |
-| **alignRuns** | **Boolean**| Align LC/MS runs. | [optional] [default to true] |
 | **allowMs1Only** | **Boolean**| Import data without MS/MS. | [optional] [default to true] |
-| **filter** | [**DataSmoothing**](.md)| Filter algorithm to suppress noise. | [optional] [enum: AUTO, NOFILTER, GAUSSIAN, WAVELET] |
-| **sigma** | **Double**| Sigma (kernel width) for Gaussian filter algorithm. | [optional] [default to 3.0] |
-| **scale** | **Integer**| Number of coefficients for wavelet filter algorithm. | [optional] [default to 20] |
-| **window** | **Double**| Wavelet window size (%) for wavelet filter algorithm. | [optional] [default to 10.0] |
-| **noise** | **Double**| Features must be larger than &lt;value&gt; * detected noise level. | [optional] [default to 2.0] |
-| **persistence** | **Double**| Features must have larger persistence (intensity above valley) than &lt;value&gt; * max trace intensity. | [optional] [default to 0.1] |
-| **merge** | **Double**| Merge neighboring features with valley less than &lt;value&gt; * intensity. | [optional] [default to 0.8] |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| Set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 
 ### Return type
@@ -823,7 +781,7 @@ No authorization required
 
 ## importMsRunDataLocally
 
-> ImportResult importMsRunDataLocally(projectId, requestBody, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge)
+> ImportResult importMsRunDataLocally(projectId, parameters, requestBody, allowMs1Only)
 
 Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  
 
@@ -846,18 +804,11 @@ public class Example {
 
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | Project to import into.
+        LcmsSubmissionParameters parameters = new LcmsSubmissionParameters(); // LcmsSubmissionParameters | Parameters for feature alignment and feature finding.
         List<String> requestBody = Arrays.asList(); // List<String> | Local files to import into project
-        Boolean alignRuns = true; // Boolean | Align LC/MS runs.
         Boolean allowMs1Only = true; // Boolean | Import data without MS/MS.
-        DataSmoothing filter = DataSmoothing.fromValue("AUTO"); // DataSmoothing | Filter algorithm to suppress noise.
-        Double sigma = 3.0D; // Double | Sigma (kernel width) for Gaussian filter algorithm.
-        Integer scale = 20; // Integer | Number of coefficients for wavelet filter algorithm.
-        Double window = 10.0D; // Double | Wavelet window size (%) for wavelet filter algorithm.
-        Double noise = 2.0D; // Double | Features must be larger than <value> * detected noise level.
-        Double persistence = 0.1D; // Double | Features must have larger persistence (intensity above valley) than <value> * max trace intensity.
-        Double merge = 0.8D; // Double | Merge neighboring features with valley less than <value> * intensity.
         try {
-            ImportResult result = apiInstance.importMsRunDataLocally(projectId, requestBody, alignRuns, allowMs1Only, filter, sigma, scale, window, noise, persistence, merge);
+            ImportResult result = apiInstance.importMsRunDataLocally(projectId, parameters, requestBody, allowMs1Only);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importMsRunDataLocally");
@@ -876,16 +827,9 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| Project to import into. | |
+| **parameters** | [**LcmsSubmissionParameters**](.md)| Parameters for feature alignment and feature finding. | |
 | **requestBody** | [**List&lt;String&gt;**](String.md)| Local files to import into project | |
-| **alignRuns** | **Boolean**| Align LC/MS runs. | [optional] [default to true] |
 | **allowMs1Only** | **Boolean**| Import data without MS/MS. | [optional] [default to true] |
-| **filter** | [**DataSmoothing**](.md)| Filter algorithm to suppress noise. | [optional] [enum: AUTO, NOFILTER, GAUSSIAN, WAVELET] |
-| **sigma** | **Double**| Sigma (kernel width) for Gaussian filter algorithm. | [optional] [default to 3.0] |
-| **scale** | **Integer**| Number of coefficients for wavelet filter algorithm. | [optional] [default to 20] |
-| **window** | **Double**| Wavelet window size (%) for wavelet filter algorithm. | [optional] [default to 10.0] |
-| **noise** | **Double**| Features must be larger than &lt;value&gt; * detected noise level. | [optional] [default to 2.0] |
-| **persistence** | **Double**| Features must have larger persistence (intensity above valley) than &lt;value&gt; * max trace intensity. | [optional] [default to 0.1] |
-| **merge** | **Double**| Merge neighboring features with valley less than &lt;value&gt; * intensity. | [optional] [default to 0.8] |
 
 ### Return type
 

@@ -41,7 +41,6 @@ import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -278,7 +277,7 @@ public class Sirius extends Tool<SiriusOptions> {
                 .filterByIsotopePattern(PropertyManager.DEFAULTS.createInstanceWithDefaults(IsotopeSettings.class).isFiltering())
                 .performBottomUpSearch(true)
                 .performDenovoBelowMz(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSearchSettings.class).performDeNovoBelowMz)
-                .formulaSearchDBs(List.of())
+                .formulaSearchDBs(null)
                 .applyFormulaConstraintsToDBAndBottomUpSearch(false)
                 .enforcedFormulaConstraints(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class).getEnforcedAlphabet().toString())
                 .fallbackFormulaConstraints(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class).getFallbackAlphabet().toString())

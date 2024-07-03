@@ -19,6 +19,8 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -36,6 +38,27 @@ public class ParameterBinding extends HashMap<String, Supplier<String>> {
         super();
     }
 
+    public Optional<String> getOpt(@NotNull String key) {
+        return Optional.ofNullable(get(key)).map(Supplier::get);
+    }
+
+    public Optional<Boolean> getOptBoolean(@NotNull String key) {
+        return getOpt(key).map("~true"::equals);
+    }
+
+    public Optional<Integer> getOptInt(@NotNull String key) {
+        return getOpt(key).map(Integer::parseInt);
+    }
+
+    public Optional<Double> getOptDouble(@NotNull String key) {
+        return getOpt(key).map(Double::parseDouble);
+    }
+
+    public boolean getAsBoolean(@NotNull String key) {
+        return getOptBoolean(key).orElse(false);
+    }
+
+        @NotNull
     public Map<String, String> asConfigMap(){
         final Map<String, String> out = new LinkedHashMap<>(size() * 2);
         forEach((k, v) -> {

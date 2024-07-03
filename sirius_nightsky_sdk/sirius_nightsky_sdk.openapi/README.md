@@ -269,6 +269,7 @@ Class | Method | HTTP request | Description
  - [JobOptField](docs/JobOptField.md)
  - [JobProgress](docs/JobProgress.md)
  - [JobSubmission](docs/JobSubmission.md)
+ - [LcmsSubmissionParameters](docs/LcmsSubmissionParameters.md)
  - [LicenseInfo](docs/LicenseInfo.md)
  - [LipidAnnotation](docs/LipidAnnotation.md)
  - [LossEdge](docs/LossEdge.md)

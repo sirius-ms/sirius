@@ -51,8 +51,6 @@ public class AlignedFeature {
     // identifier source
     protected String name;
 
-    protected String tag;
-
     /**
      * Externally provided FeatureId (e.g. by some preprocessing tool).
      * This FeatureId is NOT used by SIRIUS but is stored to ease mapping information back to the source.

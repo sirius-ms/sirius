@@ -738,13 +738,12 @@
             }
           },
           {
-            "name": "alignRuns",
+            "name": "parameters",
             "in": "query",
-            "description": "Align LC/MS runs.",
-            "required": false,
+            "description": "Parameters for feature alignment and feature finding.",
+            "required": true,
             "schema": {
-              "type": "boolean",
-              "default": true
+              "$ref": "#/components/schemas/LcmsSubmissionParameters"
             }
           },
           {
@@ -755,81 +754,6 @@
             "schema": {
               "type": "boolean",
               "default": true
-            }
-          },
-          {
-            "name": "filter",
-            "in": "query",
-            "description": "Filter algorithm to suppress noise.",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/DataSmoothing"
-            }
-          },
-          {
-            "name": "sigma",
-            "in": "query",
-            "description": "Sigma (kernel width) for Gaussian filter algorithm.",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double",
-              "default": 3.0
-            }
-          },
-          {
-            "name": "scale",
-            "in": "query",
-            "description": "Number of coefficients for wavelet filter algorithm.",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 20
-            }
-          },
-          {
-            "name": "window",
-            "in": "query",
-            "description": "Wavelet window size (%) for wavelet filter algorithm.",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double",
-              "default": 10.0
-            }
-          },
-          {
-            "name": "noise",
-            "in": "query",
-            "description": "Features must be larger than \u003cvalue\u003e * detected noise level.",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double",
-              "default": 2.0
-            }
-          },
-          {
-            "name": "persistence",
-            "in": "query",
-            "description": "Features must have larger persistence (intensity above valley) than \u003cvalue\u003e * max trace intensity.",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double",
-              "default": 0.1
-            }
-          },
-          {
-            "name": "merge",
-            "in": "query",
-            "description": "Merge neighboring features with valley less than \u003cvalue\u003e * intensity.",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double",
-              "default": 0.8
             }
           },
           {
@@ -895,13 +819,12 @@
             }
           },
           {
-            "name": "alignRuns",
+            "name": "parameters",
             "in": "query",
-            "description": "Align LC/MS runs.",
-            "required": false,
+            "description": "Parameters for feature alignment and feature finding.",
+            "required": true,
             "schema": {
-              "type": "boolean",
-              "default": true
+              "$ref": "#/components/schemas/LcmsSubmissionParameters"
             }
           },
           {
@@ -912,81 +835,6 @@
             "schema": {
               "type": "boolean",
               "default": true
-            }
-          },
-          {
-            "name": "filter",
-            "in": "query",
-            "description": "Filter algorithm to suppress noise.",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/DataSmoothing"
-            }
-          },
-          {
-            "name": "sigma",
-            "in": "query",
-            "description": "Sigma (kernel width) for Gaussian filter algorithm.",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double",
-              "default": 3.0
-            }
-          },
-          {
-            "name": "scale",
-            "in": "query",
-            "description": "Number of coefficients for wavelet filter algorithm.",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 20
-            }
-          },
-          {
-            "name": "window",
-            "in": "query",
-            "description": "Wavelet window size (%) for wavelet filter algorithm.",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double",
-              "default": 10.0
-            }
-          },
-          {
-            "name": "noise",
-            "in": "query",
-            "description": "Features must be larger than \u003cvalue\u003e * detected noise level.",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double",
-              "default": 2.0
-            }
-          },
-          {
-            "name": "persistence",
-            "in": "query",
-            "description": "Features must have larger persistence (intensity above valley) than \u003cvalue\u003e * max trace intensity.",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double",
-              "default": 0.1
-            }
-          },
-          {
-            "name": "merge",
-            "in": "query",
-            "description": "Merge neighboring features with valley less than \u003cvalue\u003e * intensity.",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double",
-              "default": 0.8
             }
           },
           {
@@ -1440,13 +1288,12 @@
             }
           },
           {
-            "name": "alignRuns",
+            "name": "parameters",
             "in": "query",
-            "description": "Align LC/MS runs.",
-            "required": false,
+            "description": "Parameters for feature alignment and feature finding.",
+            "required": true,
             "schema": {
-              "type": "boolean",
-              "default": true
+              "$ref": "#/components/schemas/LcmsSubmissionParameters"
             }
           },
           {
@@ -1457,81 +1304,6 @@
             "schema": {
               "type": "boolean",
               "default": true
-            }
-          },
-          {
-            "name": "filter",
-            "in": "query",
-            "description": "Filter algorithm to suppress noise.",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/DataSmoothing"
-            }
-          },
-          {
-            "name": "sigma",
-            "in": "query",
-            "description": "Sigma (kernel width) for Gaussian filter algorithm.",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double",
-              "default": 3.0
-            }
-          },
-          {
-            "name": "scale",
-            "in": "query",
-            "description": "Number of coefficients for wavelet filter algorithm.",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 20
-            }
-          },
-          {
-            "name": "window",
-            "in": "query",
-            "description": "Wavelet window size (%) for wavelet filter algorithm.",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double",
-              "default": 10.0
-            }
-          },
-          {
-            "name": "noise",
-            "in": "query",
-            "description": "Features must be larger than \u003cvalue\u003e * detected noise level.",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double",
-              "default": 2.0
-            }
-          },
-          {
-            "name": "persistence",
-            "in": "query",
-            "description": "Features must have larger persistence (intensity above valley) than \u003cvalue\u003e * max trace intensity.",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double",
-              "default": 0.1
-            }
-          },
-          {
-            "name": "merge",
-            "in": "query",
-            "description": "Merge neighboring features with valley less than \u003cvalue\u003e * intensity.",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double",
-              "default": 0.8
             }
           }
         ],
@@ -1583,13 +1355,12 @@
             }
           },
           {
-            "name": "alignRuns",
+            "name": "parameters",
             "in": "query",
-            "description": "Align LC/MS runs.",
-            "required": false,
+            "description": "Parameters for feature alignment and feature finding.",
+            "required": true,
             "schema": {
-              "type": "boolean",
-              "default": true
+              "$ref": "#/components/schemas/LcmsSubmissionParameters"
             }
           },
           {
@@ -1600,81 +1371,6 @@
             "schema": {
               "type": "boolean",
               "default": true
-            }
-          },
-          {
-            "name": "filter",
-            "in": "query",
-            "description": "Filter algorithm to suppress noise.",
-            "required": false,
-            "schema": {
-              "$ref": "#/components/schemas/DataSmoothing"
-            }
-          },
-          {
-            "name": "sigma",
-            "in": "query",
-            "description": "Sigma (kernel width) for Gaussian filter algorithm.",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double",
-              "default": 3.0
-            }
-          },
-          {
-            "name": "scale",
-            "in": "query",
-            "description": "Number of coefficients for wavelet filter algorithm.",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "format": "int32",
-              "default": 20
-            }
-          },
-          {
-            "name": "window",
-            "in": "query",
-            "description": "Wavelet window size (%) for wavelet filter algorithm.",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double",
-              "default": 10.0
-            }
-          },
-          {
-            "name": "noise",
-            "in": "query",
-            "description": "Features must be larger than \u003cvalue\u003e * detected noise level.",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double",
-              "default": 2.0
-            }
-          },
-          {
-            "name": "persistence",
-            "in": "query",
-            "description": "Features must have larger persistence (intensity above valley) than \u003cvalue\u003e * max trace intensity.",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double",
-              "default": 0.1
-            }
-          },
-          {
-            "name": "merge",
-            "in": "query",
-            "description": "Merge neighboring features with valley less than \u003cvalue\u003e * intensity.",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "format": "double",
-              "default": 0.8
             }
           }
         ],
@@ -6436,12 +6132,62 @@
       },
       "DataSmoothing": {
         "type": "string",
+        "default": "AUTO",
         "enum": [
           "AUTO",
           "NOFILTER",
           "GAUSSIAN",
           "WAVELET"
         ]
+      },
+      "LcmsSubmissionParameters": {
+        "type": "object",
+        "properties": {
+          "alignLCMSRuns": {
+            "type": "boolean",
+            "description": "Specifies whether LC/MS runs should be aligned",
+            "default": true
+          },
+          "noise": {
+            "type": "number",
+            "description": "Features must be larger than \u003cvalue\u003e * detected noise level.",
+            "format": "double",
+            "default": 2.0
+          },
+          "persistence": {
+            "type": "number",
+            "description": "Features must have larger persistence (intensity above valley) than \u003cvalue\u003e * max trace intensity.",
+            "format": "double",
+            "default": 0.1
+          },
+          "merge": {
+            "type": "number",
+            "description": "Merge neighboring features with valley less than \u003cvalue\u003e * intensity.",
+            "format": "double",
+            "default": 0.8
+          },
+          "filter": {
+            "$ref": "#/components/schemas/DataSmoothing"
+          },
+          "gaussianSigma": {
+            "type": "number",
+            "description": "Sigma (kernel width) for gaussian filter algorithm.",
+            "format": "double",
+            "default": 3.0
+          },
+          "waveletScale": {
+            "type": "integer",
+            "description": "Number of coefficients for wavelet filter algorithm.",
+            "format": "int32",
+            "default": 20
+          },
+          "waveletWindow": {
+            "type": "number",
+            "description": "Wavelet window size (%) for wavelet filter algorithm.",
+            "format": "double",
+            "default": 11
+          }
+        }
       },
       "ImportResult": {
         "required": [
@@ -6645,9 +6391,6 @@
             "type": "string"
           },
           "name": {
-            "type": "string"
-          },
-          "tag": {
             "type": "string"
           },
           "externalFeatureId": {
