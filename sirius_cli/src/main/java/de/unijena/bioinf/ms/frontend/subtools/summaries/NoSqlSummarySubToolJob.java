@@ -52,7 +52,12 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implements Workflow {
     private final SummaryOptions options;
@@ -273,10 +278,23 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                         }
                     }
 
-                    if (options.topK > 0 || options.fullSummary) {// spectral match summary
+                    if (options.topK > 0 || options.fullSummary || options.topHitSummary) {// spectral match summary
                         List<MutableMs2Spectrum> queries = inst.getExperiment().getMs2Spectra();
                         int rank = 1;
-                        for (SpectraMatch match : project.getProject().getStorage().find(Filter.where("alignedFeatureId").eq(f.getAlignedFeatureId()), SpectraMatch.class, new String[]{"searchResult.similarity.similarity", "searchResult.similarity.sharedPeaks"}, new Database.SortOrder[]{Database.SortOrder.DESCENDING, Database.SortOrder.DESCENDING})) {
+
+                        Iterable<SpectraMatch> matches = project.getProject().getStorage().find(Filter.where("alignedFeatureId").eq(f.getAlignedFeatureId()), SpectraMatch.class, new String[]{"searchResult.similarity.similarity", "searchResult.similarity.sharedPeaks"}, new Database.SortOrder[]{Database.SortOrder.DESCENDING, Database.SortOrder.DESCENDING});
+                        Set<String> dbs = StreamSupport.stream(matches.spliterator(), false).map(SpectraMatch::getDbName).collect(Collectors.toSet());
+                        Map<String, CustomDataSources.Source> sources = new HashMap<>();
+                        dbs.forEach(name -> {
+                            CustomDataSources.Source source = CustomDataSources.getSourceFromName(name);
+                            if (source != null) {
+                                sources.put(name, source);
+                            } else {
+                                LoggerFactory.getLogger(this.getClass()).warn("Custom library " + name + " not found!");
+                            }
+                        });
+
+                        for (SpectraMatch match : matches) {
 
                             if (match.getQuerySpectrumIndex() >= queries.size())
                                 continue;
@@ -284,9 +302,11 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                             MutableMs2Spectrum query = queries.get(match.getQuerySpectrumIndex());
                             Ms2ReferenceSpectrum reference;
                             try {
-                                CustomDataSources.Source source = CustomDataSources.getSourceFromName(match.getDbName());
-                                if (source == null) continue;
-                                reference = ApplicationCore.WEB_API.getChemDB().getReferenceSpectrum(source , match.getUuid());
+                                if (sources.containsKey(match.getDbName())) {
+                                    reference = ApplicationCore.WEB_API.getChemDB().getReferenceSpectrum(sources.get(match.getDbName()), match.getUuid());
+                                } else {
+                                    reference = null;
+                                }
                             } catch (ChemicalDatabaseException e) {
                                 LoggerFactory.getLogger(this.getClass()).warn("Spectral match not written to summary file. Feature ID: " + f.getAlignedFeatureId() + ". Error: " + e.getMessage());
                                 continue;
@@ -295,17 +315,17 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                             boolean nothingWritten = true;
 
                             if (refSpectrum != null && rank == 1) {
-                                refSpectrum.writeSpectralMatch(f, match, query, reference);
+                                refSpectrum.writeSpectralMatch(rank, f, match, query, reference);
                                 nothingWritten = false;
                             }
 
                             if (refSpectrumAll != null) {
-                                refSpectrumAll.writeSpectralMatch(f, match, query, reference);
+                                refSpectrumAll.writeSpectralMatch(rank, f, match, query, reference);
                                 nothingWritten  = false;
                             }
 
                             if (refSpectrumTopK != null && rank <= options.getTopK()) {
-                                refSpectrumTopK.writeSpectralMatch(f, match, query, reference);
+                                refSpectrumTopK.writeSpectralMatch(rank, f, match, query, reference);
                                 nothingWritten = false;
                             }
 

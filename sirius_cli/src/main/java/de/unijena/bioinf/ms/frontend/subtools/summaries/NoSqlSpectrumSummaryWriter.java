@@ -71,8 +71,8 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
         w.newLine();
     }
 
-    public void writeSpectralMatch(AlignedFeatures f, SpectraMatch match, MutableMs2Spectrum query, Ms2ReferenceSpectrum reference) throws IOException {
-        w.write(String.format(LONG_FORMAT, match.getRank()));
+    public void writeSpectralMatch(int rank, AlignedFeatures f, SpectraMatch match, MutableMs2Spectrum query, Ms2ReferenceSpectrum reference) throws IOException {
+        w.write(String.format(LONG_FORMAT, rank));
         writeSep();
 
         w.write(String.format(LONG_FORMAT, match.getQuerySpectrumIndex()));
@@ -99,35 +99,61 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
         w.write(String.format(LONG_FORMAT, match.getSimilarity().sharedPeaks));
         writeSep();
 
-        w.write(String.format(LONG_FORMAT, reference.getMsLevel()));
+        if (reference == null)
+            w.write("N/A");
+        else
+            w.write(String.format(LONG_FORMAT, reference.getMsLevel()));
         writeSep();
 
-        if (reference.getCollisionEnergy() != null)
+        if (reference == null || reference.getCollisionEnergy() == null)
+            w.write("N/A");
+        else
             w.write(reference.getCollisionEnergy().toString());
         writeSep();
 
-        if (reference.getPrecursorIonType() != null)
+        if (reference == null || reference.getPrecursorIonType() == null)
+            w.write("N/A");
+        else
             w.write(reference.getPrecursorIonType().toString());
         writeSep();
 
-        w.write(String.format(DOUBLE_FORMAT, reference.getPrecursorMz()));
+        if (reference == null)
+            w.write("N/A");
+        else
+            w.write(String.format(DOUBLE_FORMAT, reference.getPrecursorMz()));
         writeSep();
 
-        if (reference.getInstrumentation() != null)
+        if (reference == null || reference.getInstrumentation() == null)
+            w.write("N/A");
+        else
             w.write(reference.getInstrumentation().description());
         writeSep();
 
-        w.write(reference.getCandidateInChiKey());
-        writeSep();
+        if (reference == null) {
+            w.write("N/A");
+            writeSep();
 
-        w.write(reference.getSmiles());
-        writeSep();
+            w.write("N/A");
+            writeSep();
 
-        w.write(reference.getSplash());
-        writeSep();
+            w.write("N/A");
+            writeSep();
 
-        w.write(reference.getName());
-        writeSep();
+            w.write("N/A");
+            writeSep();
+        } else {
+            w.write(reference.getCandidateInChiKey());
+            writeSep();
+
+            w.write(reference.getSmiles());
+            writeSep();
+
+            w.write(reference.getSplash());
+            writeSep();
+
+            w.write(reference.getName());
+            writeSep();
+        }
 
         w.write(match.getDbName());
         writeSep();

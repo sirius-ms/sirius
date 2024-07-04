@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ExceptionDialog;
 import de.unijena.bioinf.ms.gui.webView.WebViewBrowserDialog;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -275,12 +276,17 @@ public class GuiUtils {
     }
 
     public static JPanel newEmptyResultsPanel(@Nullable String message) {
+        return newEmptyResultsPanelWithLabel(message).left();
+    }
+
+    public static Pair<JPanel, JLabel> newEmptyResultsPanelWithLabel(@Nullable String message) {
         JPanel p = new JPanel(new BorderLayout());
         p.add(new JLabel(Icons.NO_MATCH_128), BorderLayout.CENTER);
         JPanel pp = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        pp.add(new JLabel(message == null ? "No results found!" : message));
+        JLabel label = new JLabel(message == null ? "No results found!" : message);
+        pp.add(label);
         p.add(pp, BorderLayout.SOUTH);
-        return p;
+        return Pair.of(p, label);
     }
 
     public static void openURL(@NotNull Frame owner, URI url) throws IOException {
