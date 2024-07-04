@@ -90,7 +90,7 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
             w.write(query.getCollisionEnergy().toString());
         writeSep();
 
-        w.write(String.format(DOUBLE_FORMAT, 100 * match.getSimilarity().similarity));
+        w.write(String.format(DOUBLE_FORMAT, match.getSimilarity().similarity)); //max cosine is 1.0. In the GUI we show percent. Here it is just the number.
         writeSep();
 
         w.write(String.format(LONG_FORMAT, match.getSimilarity().sharedPeaks));
