@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.sirius.SpectraMatch;
@@ -40,7 +42,6 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
             "querySpectrumScanNumber\t" +
             "querySpectrumMsLevel\t" +
             "querySpectrumCE\t" +
-            "querySpectrumIonization\t" + //todo this is proably just the charge?
             "similarity\t" +
             "sharedPeaks\t" +
             "referenceMsLevel\t" +
@@ -48,11 +49,11 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
             "referenceAdduct\t" +
             "referencePrecursorMz\t" +
             "referenceInstrument\t" +
-            "referenceInChIKey\t" +
             "referenceSmiles\t" +
             "referenceSplash\t" +
-            "referenceName\t" +
-            "referenceDbName\t" +
+            "referenceName\t" + //compound name
+            "referenceLinks\t" + //for user's custom DBs this is only one database+ID. However, from server-side we may provide "merged" libraries at some point, since GNPS, MoNa an co. share spectra.
+            "InChIkey2D\t" +
             // metadata for mapping
             "ionMass\t" +
             "retentionTimeInSeconds\t" +
@@ -87,10 +88,6 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
 
         if (query.getCollisionEnergy() != null)
             w.write(query.getCollisionEnergy().toString());
-        writeSep();
-
-        if (query.getIonization() != null)
-            w.write(query.getIonization().toString()); //todo this is proably just the charge?
         writeSep();
 
         w.write(String.format(DOUBLE_FORMAT, 100 * match.getSimilarity().similarity));
@@ -138,13 +135,7 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
 
             w.write("N/A");
             writeSep();
-
-            w.write("N/A");
-            writeSep();
         } else {
-            w.write(reference.getCandidateInChiKey());
-            writeSep();
-
             w.write(reference.getSmiles());
             writeSep();
 
@@ -155,7 +146,15 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
             writeSep();
         }
 
-        w.write(match.getDbName());
+        Multimap<String, String> dbMap = ArrayListMultimap.create();
+        dbMap.put(reference.getLibraryName(), reference.getLibraryId());
+        NoSqlStructureSummaryWriter.links(w, dbMap); //this ensures same output format as for 'links' in NoSqlStructureSummaryWriter. However, currently, there is only 1 link.
+        writeSep();
+
+        if (reference == null)
+            w.write("N/A");
+        else
+            w.write(reference.getCandidateInChiKey());
         writeSep();
 
         w.write(String.format(DOUBLE_FORMAT, f.getAverageMass()));
