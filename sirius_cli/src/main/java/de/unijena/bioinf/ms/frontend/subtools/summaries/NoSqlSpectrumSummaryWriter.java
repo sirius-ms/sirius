@@ -127,10 +127,16 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
         writeSep();
 
         if (reference == null) {
+            w.write(match.getSmiles());
+            writeSep();
+
             w.write("N/A");
             writeSep();
 
             w.write("N/A");
+            writeSep();
+
+            w.write(match.getDbName());
             writeSep();
 
             w.write("N/A");
@@ -144,18 +150,15 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
 
             w.write(reference.getName());
             writeSep();
-        }
 
-        Multimap<String, String> dbMap = ArrayListMultimap.create();
-        dbMap.put(reference.getLibraryName(), reference.getLibraryId());
-        NoSqlStructureSummaryWriter.links(w, dbMap); //this ensures same output format as for 'links' in NoSqlStructureSummaryWriter. However, currently, there is only 1 link.
-        writeSep();
+            Multimap<String, String> dbMap = ArrayListMultimap.create();
+            dbMap.put(reference.getLibraryName(), reference.getLibraryId());
+            NoSqlStructureSummaryWriter.links(w, dbMap); //this ensures same output format as for 'links' in NoSqlStructureSummaryWriter. However, currently, there is only 1 link.
+            writeSep();
 
-        if (reference == null)
-            w.write("N/A");
-        else
             w.write(reference.getCandidateInChiKey());
-        writeSep();
+            writeSep();
+        }
 
         w.write(String.format(DOUBLE_FORMAT, f.getAverageMass()));
         writeSep();
