@@ -321,7 +321,7 @@ public class SiriusProjectSpace implements IterableWithSize<CompoundContainerId>
         String featureId = exp != null ? exp.getFeatureId() : null;
 
         Optional<FeatureGroup> fg = Optional.ofNullable(exp).flatMap(e -> e.getAnnotation(FeatureGroup.class));
-        String groupId = fg.map(FeatureGroup::getGroupId).orElse(null);
+        String groupId = fg.map(FeatureGroup::getGroupId).map(String::valueOf).orElse(null);
         String groupName = fg.map(FeatureGroup::getGroupName).orElse(null);
         RetentionTime groupRt = fg.map(FeatureGroup::getGroupRt).orElse(null);
 

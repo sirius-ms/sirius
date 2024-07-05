@@ -29,6 +29,7 @@ import lombok.Getter;
 @Deprecated
 public class FeatureGroup implements Ms2ExperimentAnnotation {
     private final String groupName;
-    private final String groupId;
+    //ATTENTION: needs to be generated with TSID.fast().toLong() to work properly with NoSQL DB import
+    private final long groupId;
     private final RetentionTime groupRt;
 }

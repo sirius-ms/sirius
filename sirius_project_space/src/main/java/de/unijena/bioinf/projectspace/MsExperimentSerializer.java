@@ -44,7 +44,7 @@ public class MsExperimentSerializer implements ComponentSerializer<CompoundConta
             id.getDetectedAdducts().ifPresent(pa -> exp.setAnnotation(DetectedAdducts.class, pa));
             if (id.getGroupId().isPresent() || id.getGroupRt().isPresent()) {
                 exp.setAnnotation(FeatureGroup.class, FeatureGroup.builder()
-                        .groupId(id.getGroupId().orElse(null))
+                        .groupId(id.getGroupId().map(Long::parseLong).orElse(-1L))
                         .groupRt(id.getGroupRt().orElse(null))
                         .groupName(id.getGroupName().orElse(null))
                         .build());
@@ -65,7 +65,7 @@ public class MsExperimentSerializer implements ComponentSerializer<CompoundConta
         id.setDetectedAdducts(experiment.getAnnotationOrNull(DetectedAdducts.class));
         experiment.getAnnotation(FeatureGroup.class).ifPresent(fg -> {
             id.setGroupRt(fg.getGroupRt());
-            id.setGroupId(fg.getGroupId());
+            id.setGroupId(String.valueOf(fg.getGroupId()));
             id.setGroupName(fg.getGroupName());
         });
         //todo nightsky: serialize compound quality information
