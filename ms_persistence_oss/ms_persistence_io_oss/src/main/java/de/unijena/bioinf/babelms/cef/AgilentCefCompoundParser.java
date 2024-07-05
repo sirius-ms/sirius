@@ -23,6 +23,7 @@ package de.unijena.bioinf.babelms.cef;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
+import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
@@ -195,7 +196,7 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
                     .averageMass(p.getX().doubleValue())
                     .apexMass(p.getX().doubleValue())
                     .apexIntensity(p.getY().doubleValue())
-                    .charge((byte)ionType.getCharge())
+                    .charge((byte) ionType.getCharge())
                     .snr(p.getY().doubleValue() > 0 ? p.getX().doubleValue() / p.getY().doubleValue() : 0)
                     .build();
             parseRT(mfe).ifPresent(f::setRetentionTime);
@@ -207,6 +208,9 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
             siriusFeatures.add(al);
         });
 
+        // We are not sure what adduct it was, unlike when multiple adducts were detected
+        if (siriusFeatures.size() == 1)
+            siriusFeatures.iterator().next().setDetectedAdducts(null);
 
         return siriusFeatures;
     }
@@ -230,7 +234,7 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
                 .apexMass(apexMass)
                 .apexIntensity(apexInt)
                 .snr(apexInt > 0 ? apexMass / apexInt : 0)
-                .charge((byte)(ms.getMSDetails().p.equals("-") ? -1 : +1))
+                .charge((byte) (ms.getMSDetails().p.equals("-") ? -1 : +1))
                 .build();
         parseRT(ms).ifPresent(f::setRetentionTime);
 
@@ -255,7 +259,7 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
                 .apexMass(apexMass)
                 .apexIntensity(apexInt)
                 .snr(apexInt > 0 ? apexMass / apexInt : 0)
-                .charge((byte)(s.getMSDetails().p.equals("-") ? -1 : 1))
+                .charge((byte) (s.getMSDetails().p.equals("-") ? -1 : 1))
                 .build();
         parseRT(s).ifPresent(f::setRetentionTime);
 

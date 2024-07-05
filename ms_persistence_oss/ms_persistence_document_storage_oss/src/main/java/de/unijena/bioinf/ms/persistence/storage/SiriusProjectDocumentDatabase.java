@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.persistence.storage;
 
+import de.unijena.bioinf.ChemistryBase.chem.FeatureGroup;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintData;
 import de.unijena.bioinf.ChemistryBase.fp.StandardFingerprintData;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
@@ -39,6 +40,7 @@ import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.Index;
 import de.unijena.bioinf.storage.db.nosql.Metadata;
+import io.hypersistence.tsid.TSID;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -178,12 +180,29 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     @SneakyThrows
     default AlignedFeatures importMs2ExperimentAsAlignedFeature(Ms2Experiment exp) throws IOException {
         AlignedFeatures alignedFeature = StorageUtils.fromMs2Experiment(exp);
-        Compound compound = Compound.builder()
-                .name(alignedFeature.getName())
-                .rt(alignedFeature.getRetentionTime())
-                .adductFeatures(List.of(alignedFeature))
-                .build();
-        importCompounds(List.of(compound));
+
+        final FeatureGroup fg = exp.getAnnotationOrNull(FeatureGroup.class);
+        final long cuud;
+        if (fg == null || fg.getGroupId() < 0)
+            cuud = TSID.fast().toLong();
+        else
+            cuud = fg.getGroupId();
+
+        if (!getStorage().containsPrimaryKey(cuud, Compound.class)) {
+            //create new compound since compound does yet not exist.
+            Compound.CompoundBuilder builder = Compound.builder()
+                    .adductFeatures(List.of(alignedFeature))
+                    .compoundId(cuud);
+            // singleton feature
+            if (fg == null)
+                builder.name(alignedFeature.getName()).rt(alignedFeature.getRetentionTime());
+            else
+                builder.name(fg.getGroupName()).rt(fg.getGroupRt());
+
+            importCompounds(List.of(builder.build()));
+        } else {
+            importAlignedFeatures(List.of(alignedFeature), cuud);
+        }
         //add configs that might have been read from input file to project space
         Parameters config = exp.getAnnotation(InputFileConfig.class).map(InputFileConfig::config)
                 .map(c -> Parameters.of(c, ConfigType.INPUT_FILE, true)).orElse(null);
