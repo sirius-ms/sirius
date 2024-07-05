@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import io.hypersistence.tsid.TSID;
 import org.apache.commons.io.input.ReaderInputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,7 +126,7 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
     }
 
     private List<Ms2Experiment> experimentFromCompound(Compound compound) {
-        Tsid cuuid = TsidCreator.getTsid();
+        long cuuid = TSID.fast().toLong();
         RetentionTime rt = compound.getSpectrum().stream()
                 .filter(s -> s.getMSDetails().scanType.equals("Scan"))
                 .map(s -> parseRT(compound, s))
@@ -133,7 +134,7 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
                 .reduce(RetentionTime::merge).orElse(parseRT(compound).orElse(null));
 
         final FeatureGroup fg = FeatureGroup.builder()
-                .groupId(cuuid.toString())
+                .groupId(cuuid)
                 .groupRt(rt)
                 .build();
 
@@ -182,8 +183,8 @@ public class AgilentCefExperimentParser implements Parser<Ms2Experiment> {
             siriusCompounds.add(experimentFromCompound(compound, exp));
         });
 
+        // We are not sure what adduct it was, unlike when multiple adducts were detected
         if (siriusCompounds.size() == 1) {
-            // We are not sure what adduct it was, unlike when multiple adducts were detected
             MutableMs2Experiment exp = (MutableMs2Experiment) siriusCompounds.get(0);
             exp.setPrecursorIonType(PrecursorIonType.unknown(exp.getPrecursorIonType().getCharge()));
         }
