@@ -696,7 +696,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             builder.mergedMs2(Spectrums.createMergedMsMs(msData.getMergedMSnSpectrum(), msData.getMsnSpectra().get(0).getMergedPrecursorMz()));
 
         builder.ms2Spectra(msData.getMsnSpectra() != null ? msData.getMsnSpectra().stream().map(Spectrums::createMsMs).toList() : List.of());
-        builder.ms1Spectra(List.of());
+        //MS1Spectra are not set since they are not stored in default MSData object.
         return builder.build();
     }
 
