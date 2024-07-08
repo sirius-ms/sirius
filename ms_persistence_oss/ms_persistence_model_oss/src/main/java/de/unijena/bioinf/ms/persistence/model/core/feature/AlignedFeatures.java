@@ -80,6 +80,16 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
     protected DataQuality dataQuality = DataQuality.NOT_APPLICABLE;
 
     @JsonIgnore
+    public boolean hasDetectedAdducts(){
+        return detectedAdducts != null && detectedAdducts.hasAdduct();
+    }
+
+    @JsonIgnore
+    public boolean hasSingleAdduct(){
+        return detectedAdducts != null && detectedAdducts.hasSingleAdduct();
+    }
+
+    @JsonIgnore
     @ToString.Exclude
     private List<AlignedIsotopicFeatures> isotopicFeatures;
 
