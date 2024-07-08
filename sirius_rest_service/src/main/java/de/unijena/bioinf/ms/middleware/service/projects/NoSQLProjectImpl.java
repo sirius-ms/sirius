@@ -536,8 +536,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             builder.rt(new RetentionTime(start, end));
         }
 
-        //todo fix neutral mass -> is currently set to ion mass average Oo
-        features.stream().mapToDouble(AlignedFeatures::getAverageMass).average().ifPresent(builder::neutralMass);
+        features.stream()
+                .filter(AlignedFeatures::hasSingleAdduct)
+                .mapToDouble(af -> af.getDetectedAdducts().getAllAdducts().getFirst().precursorMassToMeasuredNeutralMass(af.getAverageMass()))
+                .average().ifPresent(builder::neutralMass);
 
         return builder.build();
     }
