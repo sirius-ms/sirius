@@ -13,6 +13,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.FeatureImport;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidate;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidateOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FragmentationTree;
+import de.unijena.bioinf.ms.nightsky.sdk.model.InstrumentProfile;
 import de.unijena.bioinf.ms.nightsky.sdk.model.IsotopePatternAnnotation;
 import de.unijena.bioinf.ms.nightsky.sdk.model.LipidAnnotation;
 import de.unijena.bioinf.ms.nightsky.sdk.model.MsData;
@@ -78,11 +79,12 @@ public class FeaturesApi {
      * <p><b>200</b> - the Features that have been imported with specified optional fields
      * @param projectId project-space to import into.
      * @param featureImport the feature data to be imported
+     * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; to override defaults.
      * @return List&lt;AlignedFeature&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec addAlignedFeaturesRequestCreation(String projectId, List<FeatureImport> featureImport, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec addAlignedFeaturesRequestCreation(String projectId, List<FeatureImport> featureImport, InstrumentProfile profile, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         Object postBody = featureImport;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -102,6 +104,7 @@ public class FeaturesApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "profile", profile));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         
         final String[] localVarAccepts = { 
@@ -125,13 +128,14 @@ public class FeaturesApi {
      * <p><b>200</b> - the Features that have been imported with specified optional fields
      * @param projectId project-space to import into.
      * @param featureImport the feature data to be imported
+     * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; to override defaults.
      * @return List&lt;AlignedFeature&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<AlignedFeature> addAlignedFeatures(String projectId, List<FeatureImport> featureImport, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public List<AlignedFeature> addAlignedFeatures(String projectId, List<FeatureImport> featureImport, InstrumentProfile profile, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<AlignedFeature> localVarReturnType = new ParameterizedTypeReference<AlignedFeature>() {};
-        return addAlignedFeaturesRequestCreation(projectId, featureImport, optFields).bodyToFlux(localVarReturnType).collectList().block();
+        return addAlignedFeaturesRequestCreation(projectId, featureImport, profile, optFields).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
@@ -140,13 +144,14 @@ public class FeaturesApi {
      * <p><b>200</b> - the Features that have been imported with specified optional fields
      * @param projectId project-space to import into.
      * @param featureImport the feature data to be imported
+     * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; to override defaults.
      * @return ResponseEntity&lt;List&lt;AlignedFeature&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<AlignedFeature>> addAlignedFeaturesWithHttpInfo(String projectId, List<FeatureImport> featureImport, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<List<AlignedFeature>> addAlignedFeaturesWithHttpInfo(String projectId, List<FeatureImport> featureImport, InstrumentProfile profile, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<AlignedFeature> localVarReturnType = new ParameterizedTypeReference<AlignedFeature>() {};
-        return addAlignedFeaturesRequestCreation(projectId, featureImport, optFields).toEntityList(localVarReturnType).block();
+        return addAlignedFeaturesRequestCreation(projectId, featureImport, profile, optFields).toEntityList(localVarReturnType).block();
     }
 
     /**
@@ -155,12 +160,13 @@ public class FeaturesApi {
      * <p><b>200</b> - the Features that have been imported with specified optional fields
      * @param projectId project-space to import into.
      * @param featureImport the feature data to be imported
+     * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; to override defaults.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec addAlignedFeaturesWithResponseSpec(String projectId, List<FeatureImport> featureImport, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
-        return addAlignedFeaturesRequestCreation(projectId, featureImport, optFields);
+    public ResponseSpec addAlignedFeaturesWithResponseSpec(String projectId, List<FeatureImport> featureImport, InstrumentProfile profile, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        return addAlignedFeaturesRequestCreation(projectId, featureImport, profile, optFields);
     }
     /**
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.

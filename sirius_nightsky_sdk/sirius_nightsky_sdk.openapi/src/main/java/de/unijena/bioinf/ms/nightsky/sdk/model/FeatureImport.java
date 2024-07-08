@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * FeatureImport
+ * Represents an (aligned) feature to be imported into a SIRIUS project.  At least one of the Mass Spec data sources (e.g. mergedMs1, ms1Spectra, ms2Spectra) needs to be given.  Otherwise, the import will fail.
  */
 @JsonPropertyOrder({
   FeatureImport.JSON_PROPERTY_NAME,
@@ -72,10 +72,10 @@ public class FeatureImport {
   private BasicSpectrum mergedMs1;
 
   public static final String JSON_PROPERTY_MS1_SPECTRA = "ms1Spectra";
-  private List<BasicSpectrum> ms1Spectra = new ArrayList<>();
+  private List<BasicSpectrum> ms1Spectra;
 
   public static final String JSON_PROPERTY_MS2_SPECTRA = "ms2Spectra";
-  private List<BasicSpectrum> ms2Spectra = new ArrayList<>();
+  private List<BasicSpectrum> ms2Spectra;
 
   public FeatureImport() {
   }
@@ -304,12 +304,12 @@ public class FeatureImport {
   }
 
    /**
-   * Get ms1Spectra
+   * List of MS1Spectra belonging to this feature. These spectra will be merged an only a representative  mergedMs1 spectrum will be stored in SIRIUS. At least one of these spectra should contain the  isotope pattern of the precursor ion.  Note: Will be ignored if &#39;mergedMs1&#39; is given.
    * @return ms1Spectra
   **/
-  @jakarta.annotation.Nonnull
+  @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MS1_SPECTRA)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<BasicSpectrum> getMs1Spectra() {
     return ms1Spectra;
@@ -317,7 +317,7 @@ public class FeatureImport {
 
 
   @JsonProperty(JSON_PROPERTY_MS1_SPECTRA)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMs1Spectra(List<BasicSpectrum> ms1Spectra) {
     this.ms1Spectra = ms1Spectra;
   }
@@ -337,12 +337,12 @@ public class FeatureImport {
   }
 
    /**
-   * Get ms2Spectra
+   * List of MS/MS spectra that belong to this feature.
    * @return ms2Spectra
   **/
-  @jakarta.annotation.Nonnull
+  @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MS2_SPECTRA)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<BasicSpectrum> getMs2Spectra() {
     return ms2Spectra;
@@ -350,7 +350,7 @@ public class FeatureImport {
 
 
   @JsonProperty(JSON_PROPERTY_MS2_SPECTRA)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMs2Spectra(List<BasicSpectrum> ms2Spectra) {
     this.ms2Spectra = ms2Spectra;
   }

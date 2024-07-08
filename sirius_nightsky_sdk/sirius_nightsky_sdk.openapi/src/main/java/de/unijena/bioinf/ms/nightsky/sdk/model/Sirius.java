@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import de.unijena.bioinf.ms.nightsky.sdk.model.Instrument;
+import de.unijena.bioinf.ms.nightsky.sdk.model.InstrumentProfile;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Timeout;
 import de.unijena.bioinf.ms.nightsky.sdk.model.UseHeuristic;
 import java.util.ArrayList;
@@ -60,7 +60,7 @@ public class Sirius {
   private Boolean enabled;
 
   public static final String JSON_PROPERTY_PROFILE = "profile";
-  private Instrument profile;
+  private InstrumentProfile profile;
 
   public static final String JSON_PROPERTY_NUMBER_OF_CANDIDATES = "numberOfCandidates";
   private Integer numberOfCandidates;
@@ -181,7 +181,7 @@ public class Sirius {
     this.enabled = enabled;
   }
 
-  public Sirius profile(Instrument profile) {
+  public Sirius profile(InstrumentProfile profile) {
     
     this.profile = profile;
     return this;
@@ -195,14 +195,14 @@ public class Sirius {
   @JsonProperty(JSON_PROPERTY_PROFILE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Instrument getProfile() {
+  public InstrumentProfile getProfile() {
     return profile;
   }
 
 
   @JsonProperty(JSON_PROPERTY_PROFILE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setProfile(Instrument profile) {
+  public void setProfile(InstrumentProfile profile) {
     this.profile = profile;
   }
 

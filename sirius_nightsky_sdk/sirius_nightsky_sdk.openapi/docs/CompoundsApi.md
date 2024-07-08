@@ -15,7 +15,7 @@ All URIs are relative to *http://localhost:8888*
 
 ## addCompounds
 
-> List&lt;Compound&gt; addCompounds(projectId, compoundImport, optFields, optFieldsFeatures)
+> List&lt;Compound&gt; addCompounds(projectId, compoundImport, profile, optFields, optFieldsFeatures)
 
 Import Compounds and its contained features.
 
@@ -39,10 +39,11 @@ public class Example {
         CompoundsApi apiInstance = new CompoundsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to import into.
         List<CompoundImport> compoundImport = Arrays.asList(); // List<CompoundImport> | the compound data to be imported
+        InstrumentProfile profile = InstrumentProfile.fromValue("QTOF"); // InstrumentProfile | profile describing the instrument used to measure the data. Used to merge spectra.
         List<CompoundOptField> optFields = Arrays.asList(); // List<CompoundOptField> | set of optional fields to be included. Use 'none' to override defaults.
         List<AlignedFeatureOptField> optFieldsFeatures = Arrays.asList(); // List<AlignedFeatureOptField> | set of optional fields of the nested features to be included. Use 'none' to override defaults.
         try {
-            List<Compound> result = apiInstance.addCompounds(projectId, compoundImport, optFields, optFieldsFeatures);
+            List<Compound> result = apiInstance.addCompounds(projectId, compoundImport, profile, optFields, optFieldsFeatures);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling CompoundsApi#addCompounds");
@@ -62,6 +63,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to import into. | |
 | **compoundImport** | [**List&lt;CompoundImport&gt;**](CompoundImport.md)| the compound data to be imported | |
+| **profile** | [**InstrumentProfile**](.md)| profile describing the instrument used to measure the data. Used to merge spectra. | [optional] [enum: QTOF, ORBITRAP] |
 | **optFields** | [**List&lt;CompoundOptField&gt;**](CompoundOptField.md)| set of optional fields to be included. Use &#39;none&#39; to override defaults. | [optional] |
 | **optFieldsFeatures** | [**List&lt;AlignedFeatureOptField&gt;**](AlignedFeatureOptField.md)| set of optional fields of the nested features to be included. Use &#39;none&#39; to override defaults. | [optional] |
 

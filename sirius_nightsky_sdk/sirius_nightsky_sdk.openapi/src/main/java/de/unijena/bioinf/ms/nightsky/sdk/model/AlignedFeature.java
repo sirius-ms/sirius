@@ -235,7 +235,7 @@ public class AlignedFeature {
   }
 
    /**
-   * Get charge
+   * Ion mode (charge) this feature has been measured in.
    * @return charge
   **/
   @jakarta.annotation.Nonnull
@@ -268,7 +268,7 @@ public class AlignedFeature {
   }
 
    /**
-   * Get detectedAdducts
+   * Adducts of this feature that have been detected during preprocessing.
    * @return detectedAdducts
   **/
   @jakarta.annotation.Nonnull

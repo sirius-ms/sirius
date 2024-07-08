@@ -45,7 +45,7 @@ All URIs are relative to *http://localhost:8888*
 
 ## addAlignedFeatures
 
-> List&lt;AlignedFeature&gt; addAlignedFeatures(projectId, featureImport, optFields)
+> List&lt;AlignedFeature&gt; addAlignedFeatures(projectId, featureImport, profile, optFields)
 
 Import (aligned) features into the project.
 
@@ -69,9 +69,10 @@ public class Example {
         FeaturesApi apiInstance = new FeaturesApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to import into.
         List<FeatureImport> featureImport = Arrays.asList(); // List<FeatureImport> | the feature data to be imported
+        InstrumentProfile profile = InstrumentProfile.fromValue("QTOF"); // InstrumentProfile | profile describing the instrument used to measure the data. Used to merge spectra.
         List<AlignedFeatureOptField> optFields = Arrays.asList(); // List<AlignedFeatureOptField> | set of optional fields to be included. Use 'none' to override defaults.
         try {
-            List<AlignedFeature> result = apiInstance.addAlignedFeatures(projectId, featureImport, optFields);
+            List<AlignedFeature> result = apiInstance.addAlignedFeatures(projectId, featureImport, profile, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#addAlignedFeatures");
@@ -91,6 +92,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to import into. | |
 | **featureImport** | [**List&lt;FeatureImport&gt;**](FeatureImport.md)| the feature data to be imported | |
+| **profile** | [**InstrumentProfile**](.md)| profile describing the instrument used to measure the data. Used to merge spectra. | [optional] [enum: QTOF, ORBITRAP] |
 | **optFields** | [**List&lt;AlignedFeatureOptField&gt;**](AlignedFeatureOptField.md)| set of optional fields to be included. Use &#39;none&#39; to override defaults. | [optional] |
 
 ### Return type

@@ -49,7 +49,7 @@ docs/GuiInfo.md
 docs/ImportResult.md
 docs/Info.md
 docs/InfoApi.md
-docs/Instrument.md
+docs/InstrumentProfile.md
 docs/IsotopePatternAnnotation.md
 docs/Item.md
 docs/Job.md
@@ -171,7 +171,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FragmentationTree.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/GuiInfo.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ImportResult.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Info.java
-src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Instrument.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/InstrumentProfile.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/IsotopePatternAnnotation.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Item.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Job.java
@@ -226,13 +226,3 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/WorkerList.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Zodiac.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ZodiacEdgeFilterThresholds.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ZodiacEpochs.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/ActuatorApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/CompoundsApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/ExperimentalApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/FeaturesApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/GuiApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/InfoApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/JobsApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/LoginAndAccountApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/ProjectsApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/SearchableDatabasesApiTest.java

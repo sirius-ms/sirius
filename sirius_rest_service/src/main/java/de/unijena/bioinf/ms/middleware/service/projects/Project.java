@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
+import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
@@ -62,6 +63,7 @@ public interface Project<PSM extends ProjectSpaceManager> {
                                  @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
 
     List<Compound> addCompounds(@NotNull List<CompoundImport> compounds,
+                                @Nullable InstrumentProfile profile,
                                 @NotNull EnumSet<Compound.OptField> optFields,
                                 @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures);
 
@@ -119,6 +121,7 @@ public interface Project<PSM extends ProjectSpaceManager> {
     Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields);
 
     List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features,
+                                            @Nullable InstrumentProfile profile,
                                             @NotNull EnumSet<AlignedFeature.OptField> optFields);
 
     default Page<AlignedFeature> findAlignedFeatures(Pageable pageable, AlignedFeature.OptField... optFields) {

@@ -6,6 +6,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeatureOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Compound;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundImport;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundOptField;
+import de.unijena.bioinf.ms.nightsky.sdk.model.InstrumentProfile;
 import de.unijena.bioinf.ms.nightsky.sdk.model.PageCompound;
 import de.unijena.bioinf.ms.nightsky.sdk.model.TraceSet;
 
@@ -57,12 +58,13 @@ public class CompoundsApi {
      * <p><b>200</b> - the Compounds that have been imported with specified optional fields
      * @param projectId project-space to import into.
      * @param compoundImport the compound data to be imported
+     * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; to override defaults.
      * @param optFieldsFeatures set of optional fields of the nested features to be included. Use &#39;none&#39; to override defaults.
      * @return List&lt;Compound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec addCompoundsRequestCreation(String projectId, List<CompoundImport> compoundImport, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    private ResponseSpec addCompoundsRequestCreation(String projectId, List<CompoundImport> compoundImport, InstrumentProfile profile, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         Object postBody = compoundImport;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -82,6 +84,7 @@ public class CompoundsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "profile", profile));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFieldsFeatures", optFieldsFeatures));
         
@@ -106,14 +109,15 @@ public class CompoundsApi {
      * <p><b>200</b> - the Compounds that have been imported with specified optional fields
      * @param projectId project-space to import into.
      * @param compoundImport the compound data to be imported
+     * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; to override defaults.
      * @param optFieldsFeatures set of optional fields of the nested features to be included. Use &#39;none&#39; to override defaults.
      * @return List&lt;Compound&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<Compound> addCompounds(String projectId, List<CompoundImport> compoundImport, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public List<Compound> addCompounds(String projectId, List<CompoundImport> compoundImport, InstrumentProfile profile, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
-        return addCompoundsRequestCreation(projectId, compoundImport, optFields, optFieldsFeatures).bodyToFlux(localVarReturnType).collectList().block();
+        return addCompoundsRequestCreation(projectId, compoundImport, profile, optFields, optFieldsFeatures).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
@@ -122,14 +126,15 @@ public class CompoundsApi {
      * <p><b>200</b> - the Compounds that have been imported with specified optional fields
      * @param projectId project-space to import into.
      * @param compoundImport the compound data to be imported
+     * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; to override defaults.
      * @param optFieldsFeatures set of optional fields of the nested features to be included. Use &#39;none&#39; to override defaults.
      * @return ResponseEntity&lt;List&lt;Compound&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<Compound>> addCompoundsWithHttpInfo(String projectId, List<CompoundImport> compoundImport, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+    public ResponseEntity<List<Compound>> addCompoundsWithHttpInfo(String projectId, List<CompoundImport> compoundImport, InstrumentProfile profile, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
         ParameterizedTypeReference<Compound> localVarReturnType = new ParameterizedTypeReference<Compound>() {};
-        return addCompoundsRequestCreation(projectId, compoundImport, optFields, optFieldsFeatures).toEntityList(localVarReturnType).block();
+        return addCompoundsRequestCreation(projectId, compoundImport, profile, optFields, optFieldsFeatures).toEntityList(localVarReturnType).block();
     }
 
     /**
@@ -138,13 +143,14 @@ public class CompoundsApi {
      * <p><b>200</b> - the Compounds that have been imported with specified optional fields
      * @param projectId project-space to import into.
      * @param compoundImport the compound data to be imported
+     * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; to override defaults.
      * @param optFieldsFeatures set of optional fields of the nested features to be included. Use &#39;none&#39; to override defaults.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec addCompoundsWithResponseSpec(String projectId, List<CompoundImport> compoundImport, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
-        return addCompoundsRequestCreation(projectId, compoundImport, optFields, optFieldsFeatures);
+    public ResponseSpec addCompoundsWithResponseSpec(String projectId, List<CompoundImport> compoundImport, InstrumentProfile profile, List<CompoundOptField> optFields, List<AlignedFeatureOptField> optFieldsFeatures) throws WebClientResponseException {
+        return addCompoundsRequestCreation(projectId, compoundImport, profile, optFields, optFieldsFeatures);
     }
     /**
      * Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.

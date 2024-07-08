@@ -13,8 +13,8 @@ The AlignedFeature contains the ID of a feature (aligned over runs) together wit
 |**name** | **String** |  |  [optional] |
 |**externalFeatureId** | **String** | Externally provided FeatureId (e.g. by some preprocessing tool).  This FeatureId is NOT used by SIRIUS but is stored to ease mapping information back to the source. |  [optional] |
 |**ionMass** | **Double** |  |  [optional] |
-|**charge** | **Integer** |  |  |
-|**detectedAdducts** | **Set&lt;String&gt;** |  |  |
+|**charge** | **Integer** | Ion mode (charge) this feature has been measured in. |  |
+|**detectedAdducts** | **Set&lt;String&gt;** | Adducts of this feature that have been detected during preprocessing. |  |
 |**rtStartSeconds** | **Double** |  |  [optional] |
 |**rtEndSeconds** | **Double** |  |  [optional] |
 |**quality** | **DataQuality** |  |  [optional] |

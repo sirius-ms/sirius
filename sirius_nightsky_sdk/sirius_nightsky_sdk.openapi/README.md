@@ -262,7 +262,7 @@ Class | Method | HTTP request | Description
  - [GuiInfo](docs/GuiInfo.md)
  - [ImportResult](docs/ImportResult.md)
  - [Info](docs/Info.md)
- - [Instrument](docs/Instrument.md)
+ - [InstrumentProfile](docs/InstrumentProfile.md)
  - [IsotopePatternAnnotation](docs/IsotopePatternAnnotation.md)
  - [Item](docs/Item.md)
  - [Job](docs/Job.md)
