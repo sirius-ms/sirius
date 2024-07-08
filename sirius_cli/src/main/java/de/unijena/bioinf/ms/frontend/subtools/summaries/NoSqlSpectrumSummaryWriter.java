@@ -71,8 +71,8 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
         w.newLine();
     }
 
-    public void writeSpectralMatch(int rank, AlignedFeatures f, SpectraMatch match, MutableMs2Spectrum query, Ms2ReferenceSpectrum reference) throws IOException {
-        w.write(String.format(LONG_FORMAT, rank));
+    public void writeSpectralMatch(AlignedFeatures f, SpectraMatch match, MutableMs2Spectrum query, Ms2ReferenceSpectrum reference) throws IOException {
+        w.write(String.format(LONG_FORMAT, match.getRank()));
         writeSep();
 
         w.write(String.format(LONG_FORMAT, match.getQuerySpectrumIndex()));
