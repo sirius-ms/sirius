@@ -129,8 +129,14 @@ public class DetectedAdducts {
         return false;
     }
 
+    @JsonIgnore
     public boolean hasAdduct() {
         return !detectedAdducts.isEmpty();
+    }
+
+    @JsonIgnore
+    public boolean hasSingleAdduct(){
+        return detectedAdducts.size() == 1;
     }
 
     @JsonInclude //getter just for serialization
