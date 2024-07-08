@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.middleware.controller;
 import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
+import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.TraceSet;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
@@ -97,16 +98,18 @@ public class CompoundController {
      * Otherwise, they will exist twice.
      * @param projectId project-space to import into.
      * @param compounds the compound data to be imported
+     * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
      * @param optFields set of optional fields to be included. Use 'none' to override defaults.
      * @param optFieldsFeatures set of optional fields of the nested features to be included. Use 'none' to override defaults.
      * @return the Compounds that have been imported with specified optional fields
      */
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Compound> addCompounds(@PathVariable String projectId, @Valid @RequestBody List<CompoundImport> compounds,
+                                       @RequestParam(required = false) InstrumentProfile profile,
                                        @RequestParam(defaultValue = "") EnumSet<Compound.OptField> optFields,
                                        @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFieldsFeatures
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).addCompounds(compounds, removeNone(optFields), removeNone(optFieldsFeatures));
+        return projectsProvider.getProjectOrThrow(projectId).addCompounds(compounds, profile, removeNone(optFields), removeNone(optFieldsFeatures));
     }
 
     /**

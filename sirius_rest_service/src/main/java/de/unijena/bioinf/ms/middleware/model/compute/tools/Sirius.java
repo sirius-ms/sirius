@@ -31,6 +31,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.UseHeuristic;
 import de.unijena.bioinf.elgordo.EnforceElGordoFormula;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
+import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.compute.NullCheckMapBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.spectraldb.InjectSpectralLibraryMatchFormulas;
@@ -57,19 +58,14 @@ public class Sirius extends Tool<SiriusOptions> {
     //Currently these profiles do not much, the orbitrap has lower ppm. but 'ppm' is set separately here.
     //However, the profile also stores fragtree scoring and therefore needs to be selected.
     //Further, we might need more different profiles in the future for different ionization and collision technologies.
-    /**
-     * Select the profile that is the closest to your instrumental setup. If nothing fits, use QTOF.
-     */
-    @Schema(enumAsRef = true, nullable = true)
-    enum Instrument {QTOF, ORBITRAP}
 
     //region General measurement parameters
     /**
      * Instrument specific profile for internal algorithms
      * Just select what comes closest to the instrument that was used for measuring the data.
      */
-    @Schema(nullable = true)
-    Instrument profile;
+    @Schema(enumAsRef = true, nullable = true)
+    InstrumentProfile profile;
     /**
      * Number of formula candidates to keep as result list (Formula Candidates).
      */
@@ -269,7 +265,7 @@ public class Sirius extends Tool<SiriusOptions> {
     // but probably on the workflow level instead of just formula generation -> see JobsSubmission
     public static Sirius.SiriusBuilder<?,?> builderWithDefaults() {
         return Sirius.builder()
-                .profile(Instrument.QTOF)
+                .profile(InstrumentProfile.QTOF)
                 .numberOfCandidates(PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfCandidates.class).value)
                 .numberOfCandidatesPerIonization(PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfCandidatesPerIonization.class).value)
                 .massAccuracyMS2ppm(PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm())

@@ -36,6 +36,7 @@ import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
+import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
@@ -54,11 +55,14 @@ import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
+import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
+import de.unijena.bioinf.sirius.ProcessedPeak;
+import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
@@ -515,8 +519,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return builder.build();
     }
 
-    private de.unijena.bioinf.ms.persistence.model.core.Compound convertCompound(CompoundImport compoundImport) {
-        List<AlignedFeatures> features = compoundImport.getFeatures().stream().map(this::convertToProjectFeature).toList();
+    private de.unijena.bioinf.ms.persistence.model.core.Compound convertCompound(CompoundImport compoundImport, @Nullable InstrumentProfile profile) {
+        List<AlignedFeatures> features = compoundImport.getFeatures().stream()
+                .map(f -> convertToProjectFeature(f, profile))
+                .toList();
 
         de.unijena.bioinf.ms.persistence.model.core.Compound.CompoundBuilder builder = de.unijena.bioinf.ms.persistence.model.core.Compound.builder()
                 .name(compoundImport.getName())
@@ -530,12 +536,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             builder.rt(new RetentionTime(start, end));
         }
 
+        //todo fix neutral mass -> is currently set to ion mass average Oo
         features.stream().mapToDouble(AlignedFeatures::getAverageMass).average().ifPresent(builder::neutralMass);
 
         return builder.build();
     }
 
-    private AlignedFeatures convertToProjectFeature(FeatureImport featureImport) {
+    private AlignedFeatures convertToProjectFeature(FeatureImport featureImport, @Nullable InstrumentProfile profile) {
 
         AlignedFeatures.AlignedFeaturesBuilder<?, ?> builder = AlignedFeatures.builder()
                 .name(featureImport.getName())
@@ -548,6 +555,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (featureImport.getMergedMs1() != null) {
             SimpleSpectrum mergedMs1 = new SimpleSpectrum(featureImport.getMergedMs1().getMasses(), featureImport.getMergedMs1().getIntensities());
             msDataBuilder.mergedMs1Spectrum(mergedMs1);
+        } else if (featureImport.getMs1Spectra() != null && !featureImport.getMs1Spectra().isEmpty()) {
+            Sirius sirius = StorageUtils.siriusProvider().sirius(profile != null ? profile.name() : MsInstrumentation.Unknown.getRecommendedProfile());
+            List<ProcessedPeak> mergeMSPeaks = sirius.getMs2Preprocessor().preprocess(FeatureImports.toExperiment(featureImport)).getMergedPeaks();
+            msDataBuilder.mergedMs1Spectrum(de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.from(mergeMSPeaks));
         }
 
         if (featureImport.getMs2Spectra() != null && !featureImport.getMs2Spectra().isEmpty()) {
@@ -616,6 +627,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             builder.detectedAdducts(features.getDetectedAdducts().getAllAdducts().stream()
                     .map(PrecursorIonType::toString)
                     .collect(Collectors.toSet()));
+        else
+            builder.detectedAdducts(Set.of());
 
         RetentionTime rt = features.getRetentionTime();
         if (rt != null) {
@@ -796,8 +809,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @SneakyThrows
     @Override
-    public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
-        List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream().map(this::convertCompound).toList();
+    public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, InstrumentProfile profile, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
+        List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream().map(ci -> convertCompound(ci, profile)).toList();
         project().importCompounds(dbc);
         return dbc.stream().map(c -> convertCompound(c, optFields, optFieldsFeatures)).toList();
     }
@@ -880,7 +893,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     @Override
-    public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+    public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @Nullable InstrumentProfile profile, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         LongestCommonSubsequence lcs = new LongestCommonSubsequence();
         String name = features.stream().map(FeatureImport::getName)
                 .filter(Objects::nonNull)
@@ -890,7 +903,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .orElse(null);
 
         CompoundImport ci = CompoundImport.builder().name(name).features(features).build();
-        Compound compound = addCompounds(List.of(ci), EnumSet.of(Compound.OptField.none), optFields).stream().findFirst().orElseThrow(
+        Compound compound = addCompounds(List.of(ci), profile, EnumSet.of(Compound.OptField.none), optFields).stream().findFirst().orElseThrow(
                 () -> new ResponseStatusException(NOT_FOUND, "Compound could not be imported to " + projectId + ".")
         );
         return compound.getFeatures();

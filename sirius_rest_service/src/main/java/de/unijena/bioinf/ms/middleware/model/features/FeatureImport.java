@@ -28,6 +28,11 @@ import lombok.Getter;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Represents an (aligned) feature to be imported into a SIRIUS project.
+ * At least one of the Mass Spec data sources (e.g. mergedMs1, ms1Spectra, ms2Spectra) needs to be given.
+ * Otherwise, the import will fail.
+ */
 @Getter
 @Builder
 public class FeatureImport {
@@ -57,13 +62,26 @@ public class FeatureImport {
     @Schema(nullable = true)
     protected Double rtEndSeconds;
 
+
     /**
-     * Mass Spec data of this feature (input data)
+     * Merged/Representative MS1 spectrum of this feature that contains the isotope pattern of the precursor ion.
+     * Note: 'ms1Spectra' will be ignored if given.
      */
-    @Schema(nullable = true)
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     protected BasicSpectrum mergedMs1;
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+
+    /**
+     * List of MS1Spectra belonging to this feature. These spectra will be merged an only a representative
+     * mergedMs1 spectrum will be stored in SIRIUS. At least one of these spectra should contain the
+     * isotope pattern of the precursor ion.
+     * Note: Will be ignored if 'mergedMs1' is given.
+     */
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     protected List<BasicSpectrum> ms1Spectra;
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+
+    /**
+     * List of MS/MS spectra that belong to this feature.
+     */
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     protected List<BasicSpectrum> ms2Spectra;
 }

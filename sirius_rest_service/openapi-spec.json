@@ -1551,6 +1551,15 @@
             }
           },
           {
+            "name": "profile",
+            "in": "query",
+            "description": "profile describing the instrument used to measure the data. Used to merge spectra.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/InstrumentProfile"
+            }
+          },
+          {
             "name": "optFields",
             "in": "query",
             "description": "set of optional fields to be included. Use \u0027none\u0027 to override defaults.",
@@ -1671,6 +1680,15 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "profile",
+            "in": "query",
+            "description": "profile describing the instrument used to measure the data. Used to merge spectra.",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/InstrumentProfile"
             }
           },
           {
@@ -5732,7 +5750,7 @@
         "description": "User/developer friendly parameter subset for the CSI:FingerID Fingerprint tool\n Needs results from Formula/SIRIUS Tool",
         "nullable": true
       },
-      "Instrument": {
+      "InstrumentProfile": {
         "type": "string",
         "description": "Select the profile that is the closest to your instrumental setup. If nothing fits, use QTOF.",
         "nullable": true,
@@ -5849,7 +5867,7 @@
             "description": "tags whether the tool is enabled"
           },
           "profile": {
-            "$ref": "#/components/schemas/Instrument"
+            "$ref": "#/components/schemas/InstrumentProfile"
           },
           "numberOfCandidates": {
             "type": "integer",
@@ -6013,7 +6031,7 @@
           },
           "structureSearchDBs": {
             "type": "array",
-            "description": "Structure databases to search in, If expansive search is enabled this DB selection will be expanded to PubChem\n if not high confidence hit was found in the selected databases.\n\n Defaults to BIO + Custom Databases. Possible values are available to Database API.",
+            "description": "Structure databases to search in, If expansive search is enabled this DB selection will be expanded to PubChem\n if not high confidence hit was found in the selected databases.\n \u003cp\u003e\n Defaults to BIO + Custom Databases. Possible values are available to Database API.",
             "nullable": true,
             "items": {
               "type": "string",
@@ -6259,7 +6277,8 @@
             "format": "double",
             "nullable": true
           }
-        }
+        },
+        "nullable": true
       },
       "CompoundImport": {
         "required": [
@@ -6284,9 +6303,7 @@
       "FeatureImport": {
         "required": [
           "charge",
-          "ionMass",
-          "ms1Spectra",
-          "ms2Spectra"
+          "ionMass"
         ],
         "type": "object",
         "properties": {
@@ -6332,17 +6349,22 @@
           },
           "ms1Spectra": {
             "type": "array",
+            "description": "List of MS1Spectra belonging to this feature. These spectra will be merged an only a representative\n mergedMs1 spectrum will be stored in SIRIUS. At least one of these spectra should contain the\n isotope pattern of the precursor ion.\n Note: Will be ignored if \u0027mergedMs1\u0027 is given.",
+            "nullable": true,
             "items": {
               "$ref": "#/components/schemas/BasicSpectrum"
             }
           },
           "ms2Spectra": {
             "type": "array",
+            "description": "List of MS/MS spectra that belong to this feature.",
+            "nullable": true,
             "items": {
               "$ref": "#/components/schemas/BasicSpectrum"
             }
           }
-        }
+        },
+        "description": "Represents an (aligned) feature to be imported into a SIRIUS project.\n At least one of the Mass Spec data sources (e.g. mergedMs1, ms1Spectra, ms2Spectra) needs to be given.\n Otherwise, the import will fail."
       },
       "SimplePeak": {
         "type": "object",
@@ -6403,11 +6425,13 @@
           },
           "charge": {
             "type": "integer",
+            "description": "Ion mode (charge) this feature has been measured in.",
             "format": "int32"
           },
           "detectedAdducts": {
             "uniqueItems": true,
             "type": "array",
+            "description": "Adducts of this feature that have been detected during preprocessing.",
             "items": {
               "type": "string"
             }
