@@ -83,7 +83,12 @@ public class SpectraMatchingJJob extends BasicMasterJJob<SpectralSearchResult> {
 
         Stream<SpectralSearchResult.SearchResult> results = jobs.stream()
                 .flatMap(j -> extractResults(j, references))
-                .sorted((a, b) -> Double.compare(b.getSimilarity().similarity, a.getSimilarity().similarity));
+                .sorted((a, b) -> {
+                    if (Math.abs(a.getSimilarity().similarity - b.getSimilarity().similarity) < 1E-3) {
+                        return Integer.compare(b.getSimilarity().sharedPeaks, a.getSimilarity().sharedPeaks);
+                    }
+                    return Double.compare(b.getSimilarity().similarity, a.getSimilarity().similarity);
+                });
 
         SpectralSearchResult searchResults = SpectralSearchResult.builder()
                 .precursorDeviation(precursorDev)
