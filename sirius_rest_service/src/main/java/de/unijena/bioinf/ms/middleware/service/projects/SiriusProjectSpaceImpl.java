@@ -65,6 +65,7 @@ import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
+import io.hypersistence.tsid.TSID;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -154,8 +155,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     @Override
     public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
         return compounds.stream().map(c -> {
-            Tsid cuuid = TsidCreator.getTsid();
-            FeatureGroup fg = FeatureGroup.builder().groupName(c.getName()).groupId(cuuid.toString()).build();
+            final FeatureGroup fg = FeatureGroup.builder().groupName(c.getName()).groupId(TSID.fast().toLong()).build();
             return FeatureImports.toExperimentsStr(c.getFeatures())
                     .peek(exp -> exp.annotate(fg))
                     .map(projectSpaceManager::importInstanceWithUniqueId)

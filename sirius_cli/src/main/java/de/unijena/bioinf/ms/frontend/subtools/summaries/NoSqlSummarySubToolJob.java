@@ -315,17 +315,17 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                             boolean nothingWritten = true;
 
                             if (refSpectrum != null && rank == 1) {
-                                refSpectrum.writeSpectralMatch(rank, f, match, query, reference);
+                                refSpectrum.writeSpectralMatch(f, match, query, reference);
                                 nothingWritten = false;
                             }
 
                             if (refSpectrumAll != null) {
-                                refSpectrumAll.writeSpectralMatch(rank, f, match, query, reference);
+                                refSpectrumAll.writeSpectralMatch(f, match, query, reference);
                                 nothingWritten  = false;
                             }
 
                             if (refSpectrumTopK != null && rank <= options.getTopK()) {
-                                refSpectrumTopK.writeSpectralMatch(rank, f, match, query, reference);
+                                refSpectrumTopK.writeSpectralMatch(f, match, query, reference);
                                 nothingWritten = false;
                             }
 

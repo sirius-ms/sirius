@@ -487,8 +487,30 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             }
         }
 
-        compound.getAdductFeatures().ifPresent(features -> builder.features(features.stream()
-                .map(f -> convertToApiFeature(f, optFeatureFields)).toList()));
+        // merge optional field config
+        final EnumSet<AlignedFeature.OptField> mergedFeatureFields = EnumSet.copyOf(optFeatureFields);
+        if (optFields.contains(Compound.OptField.consensusAnnotations))
+            mergedFeatureFields.add(AlignedFeature.OptField.topAnnotations);
+        if (optFields.contains(Compound.OptField.consensusAnnotationsDeNovo))
+            mergedFeatureFields.add(AlignedFeature.OptField.topAnnotationsDeNovo);
+
+        // features
+        List<AlignedFeature> features = compound.getAdductFeatures().stream().flatMap(featuresList-> featuresList.stream()
+                .map(f -> convertToApiFeature(f, mergedFeatureFields))).toList();
+        builder.features(features);
+
+        if (optFields.contains(Compound.OptField.consensusAnnotations))
+            builder.consensusAnnotations(AnnotationUtils.buildConsensusAnnotationsCSI(features));
+        if (optFields.contains(Compound.OptField.consensusAnnotationsDeNovo))
+            builder.consensusAnnotationsDeNovo(AnnotationUtils.buildConsensusAnnotationsDeNovo(features));
+        if (optFields.contains(Compound.OptField.customAnnotations))
+            builder.customAnnotations(ConsensusAnnotationsCSI.builder().build()); //todo implement custom annotations -> storage needed
+
+        //remove optionals if not requested
+        if (!optFeatureFields.contains(AlignedFeature.OptField.topAnnotations))
+            features.forEach(f -> f.setTopAnnotations(null));
+        if (!optFeatureFields.contains(AlignedFeature.OptField.topAnnotationsDeNovo))
+            features.forEach(f -> f.setTopAnnotationsDeNovo(null));
 
         return builder.build();
     }
@@ -672,8 +694,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             builder.mergedMs1(Spectrums.createMs1(msData.getMergedMs1Spectrum()));
         if (msData.getMergedMSnSpectrum() != null)
             builder.mergedMs2(Spectrums.createMergedMsMs(msData.getMergedMSnSpectrum(), msData.getMsnSpectra().get(0).getMergedPrecursorMz()));
-        if (msData.getMsnSpectra() != null)
-            builder.ms2Spectra(msData.getMsnSpectra().stream().map(Spectrums::createMsMs).toList());
+
+        builder.ms2Spectra(msData.getMsnSpectra() != null ? msData.getMsnSpectra().stream().map(Spectrums::createMsMs).toList() : List.of());
+        //MS1Spectra are not set since they are not stored in default MSData object.
         return builder.build();
     }
 
@@ -766,7 +789,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         List<Compound> compounds = stream.map(c -> convertCompound(c, optFields, optFeatureFields)).toList();
 
-        // TODO annotations
         long total = storage().countAll(de.unijena.bioinf.ms.persistence.model.core.Compound.class);
 
         return new PageImpl<>(compounds, pageable, total);
@@ -792,7 +814,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     }
                     return convertCompound(c, optFields, optFeatureFields);
                 })
-                // TODO annotations
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no compound '" + compoundId + "' in project " + projectId + "."));
     }
 

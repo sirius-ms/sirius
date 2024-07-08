@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * The MsData wraps all spectral input data belonging to a feature.  &lt;p&gt;  Each Feature has:  - One merged MS/MS spectrum (optional)  - One merged MS spectrum (optional)  - many MS/MS spectra  - many MS spectra  &lt;p&gt;  Each non-merged spectrum has an index which can be used to access the spectrum.  &lt;p&gt;  In the future we might add some additional information like chromatographic peak or something similar
+ * The MsData wraps all spectral input data belonging to a (aligned) feature. All spectra fields are optional.  However, at least one Spectrum field needs to be set to create a valid MsData Object.  The different types of spectra fields can be extended to adapt to other MassSpec measurement techniques not covered yet.  &lt;p&gt;  Each Feature can have:  - One merged MS/MS spectrum (optional)  - One merged MS spectrum (optional)  - many MS/MS spectra (optional)  - many MS spectra (optional)  &lt;p&gt;  Each non-merged spectrum has an index which can be used to access the spectrum.  &lt;p&gt;  In the future we might add some additional information like chromatographic peak or something similar
  */
 @JsonPropertyOrder({
   MsData.JSON_PROPERTY_MERGED_MS1,
@@ -121,9 +121,9 @@ public class MsData {
    * Get ms1Spectra
    * @return ms1Spectra
   **/
-  @jakarta.annotation.Nonnull
+  @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MS1_SPECTRA)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<BasicSpectrum> getMs1Spectra() {
     return ms1Spectra;
@@ -131,7 +131,7 @@ public class MsData {
 
 
   @JsonProperty(JSON_PROPERTY_MS1_SPECTRA)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMs1Spectra(List<BasicSpectrum> ms1Spectra) {
     this.ms1Spectra = ms1Spectra;
   }
@@ -154,9 +154,9 @@ public class MsData {
    * Get ms2Spectra
    * @return ms2Spectra
   **/
-  @jakarta.annotation.Nonnull
+  @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MS2_SPECTRA)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<BasicSpectrum> getMs2Spectra() {
     return ms2Spectra;
@@ -164,7 +164,7 @@ public class MsData {
 
 
   @JsonProperty(JSON_PROPERTY_MS2_SPECTRA)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMs2Spectra(List<BasicSpectrum> ms2Spectra) {
     this.ms2Spectra = ms2Spectra;
   }
