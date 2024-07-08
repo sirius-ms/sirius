@@ -206,7 +206,7 @@ public class NitriteCompoundSerializers {
                                 if ((jsonToken = p.nextToken()) != JsonToken.START_ARRAY)
                                     throw new IOException("malformed json. expected ids array. Found: " + jsonToken.name()); // array start
                                 while ((jsonToken = p.nextToken()) != JsonToken.END_ARRAY)
-                                    linkIds.add(p.getText());
+                                    if (p.currentToken() != JsonToken.VALUE_NULL) linkIds.add(p.getText());
                             }
                         }
 
