@@ -49,21 +49,20 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.*;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
-import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
-import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDatabaseImpl;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import it.unimi.dsi.fastutil.doubles.DoubleList;
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import lombok.Getter;
 import org.apache.commons.io.function.IOSupplier;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -202,7 +201,29 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         updateProgress(totalProgress, ++progress,"Detecting adducts");
         System.out.printf("\nMerged Run: %s\n\n", merged.getRun().getName());
 
-        AdductManager adductManager = new AdductManager();
+        final double allowedAdductRtDeviation;
+        if (bac.getSamples().length <= 3) {
+            FloatArrayList peakWidths = new FloatArrayList();
+            for (long fid : processing.getImportedFeatureIds()) {
+                ps.getStorage().getByPrimaryKey(fid, AlignedFeatures.class).ifPresent((feature)->{
+                    // here we can also obtain statistics if we need them
+                    Double v = feature.getFwhm();
+                    if (v!=null) peakWidths.add(v.floatValue());
+
+                });
+            }
+            float medianPeakWidth = 1;
+            if (!peakWidths.isEmpty()) {
+                peakWidths.sort(null);
+                medianPeakWidth = peakWidths.getFloat(peakWidths.size()/2);
+            }
+            allowedAdductRtDeviation = Math.max(1,medianPeakWidth);
+        } else {
+            allowedAdductRtDeviation = bac.getStatistics().getExpectedRetentionTimeDeviation();
+        }
+        LoggerFactory.getLogger(LcmsAlignSubToolJobNoSql.class).info("Use " + allowedAdductRtDeviation + " s as allowed deviation between adducts" );
+
+        AdductManager adductManager = new AdductManager(merged.getPolarity());
         if (merged.getPolarity()>0){
             adductManager.add(Set.of(PrecursorIonType.getPrecursorIonType("[M+H]+"), PrecursorIonType.getPrecursorIonType("[M+Na]+"),
                             PrecursorIonType.getPrecursorIonType("[M+K]+"),  PrecursorIonType.getPrecursorIonType("[M+NH3+H]+"),
@@ -233,6 +254,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                     )
             );
         }
+
         // -_- na toll, die Liste ist nicht identisch mit den Configs. Macht irgendwie auch Sinn. Ich will aber ungern
         // Multimere in die AductSettings reinpacken, das zu debuggen wird die Hoelle. Machen wir ein andern Mal.
         adductManager.add(((merged.getPolarity()<0) ? PeriodicTable.getInstance().getNegativeAdducts() : PeriodicTable.getInstance().getPositiveAdducts()).stream().filter(PrecursorIonType::isMultimere).collect(Collectors.toSet()));
@@ -243,7 +265,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                             .filter(f -> f.getApexIntensity() != null)
                             .filter(AbstractFeature::isRTInterval)
                             .toArray(AlignedFeatures[]::new),
-                    adductManager, bac.getStatistics().getExpectedRetentionTimeDeviation() / 2d);
+                    adductManager, allowedAdductRtDeviation);
             network.buildNetworkFromMassDeltas(SiriusJobs.getGlobalJobManager());
             network.assign(SiriusJobs.getGlobalJobManager(), new OptimalAssignmentViaBeamSearch(), merged.getPolarity(), (compound) -> {
                 try {
@@ -290,49 +312,17 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             countMap.put(q, countMap.get(q)+1);
         });
 
-        long sourceTraceCount = 0;
-        long featureCount = 0;
-        DoubleList featureSNR = new DoubleArrayList();
-        for (long runId : ((MergedLCMSRun) merged.getRun()).getRunIds()) {
-            sourceTraceCount += store.count(Filter.where("runId").eq(runId), SourceTrace.class);
-            featureCount += store.count(Filter.where("runId").eq(runId), Feature.class);
-            store.findStr(Filter.where("runId").eq(runId), Feature.class).forEach(feature -> {
-                if (feature.getSnr() != null)
-                    featureSNR.add((double) feature.getSnr());
-            });
-        }
-
-        Filter filter = Filter.where("runId").eq(merged.getRun().getRunId());
         System.out.printf(
                 """
                        
                         -------- Preprocessing Summary ---------
                         Preprocessed data in:      %s
-                       
-                        # SourceTrace:             %d
-                        # MergedTrace:             %d
-                        # Feature:                 %d
-                        # AlignedIsotopicFeatures: %d
-                        # AlignedFeatures:         %d
-                                                       \s
-                        Feature                 SNR: %f
-                        AlignedIsotopicFeatures SNR: %f
-                        AlignedFeatures         SNR: %f
-                                                       \s
                         # Good Al. Features:           %d
                         # Decent Al. Features:         %d
                         # Bad Al. Features:            %d
                         # Lowest Quality Al. Features: %d
                        \s""",
                 stopWatch,
-                sourceTraceCount,
-                store.count(filter, MergedTrace.class),
-                featureCount,
-                store.count(filter, AlignedIsotopicFeatures.class),
-                store.count(filter, AlignedFeatures.class),
-                featureSNR.doubleStream().average().orElse(Double.NaN),
-                store.findStr(filter, AlignedIsotopicFeatures.class).map(AlignedIsotopicFeatures::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
-                store.findStr(filter, AlignedFeatures.class).map(AlignedFeatures::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
                 countMap.get(DataQuality.GOOD), countMap.get(DataQuality.DECENT), countMap.get(DataQuality.BAD), countMap.get(DataQuality.LOWEST)
         );
     }
