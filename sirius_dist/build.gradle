@@ -913,6 +913,7 @@ abstract class AppInstaller extends DefaultTask {
         String[] paras = []//distImg.createParameters()
 
         paras += [
+                '--verbose',
                 '--name', distImg.imageName,
                 '--app-image', distImg.getImageDir().absolutePath,
                 '--license-file', licenseFile.absolutePath,
@@ -924,6 +925,10 @@ abstract class AppInstaller extends DefaultTask {
 
 
         if (project.siriusTargetPlatform.isWin()) {
+            //specify temp directory inside project
+            paras += ['--temp', "\"${project.layout.getBuildDirectory().asFile.get().toPath().resolve('tmp').resolve('wix').toAbsolutePath().toString()}\"".toString()]
+            //specify resource dir to allow for installer customization.
+            paras += ['--resource-dir',  "\"${project.getRootProject().rootDir.toPath().resolve('jpackage').resolve('wix-resources').toAbsolutePath().toString()}\"".toString()]
             if (winDirChooser)
                 paras += ['--win-dir-chooser'/*, winDirChooser ? '1' : '0'*/]
             if (winMenu)
