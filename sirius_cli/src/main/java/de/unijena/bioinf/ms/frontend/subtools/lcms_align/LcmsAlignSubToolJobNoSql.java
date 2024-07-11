@@ -312,49 +312,17 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             countMap.put(q, countMap.get(q)+1);
         });
 
-        long sourceTraceCount = 0;
-        long featureCount = 0;
-        DoubleList featureSNR = new DoubleArrayList();
-        for (long runId : ((MergedLCMSRun) merged.getRun()).getRunIds()) {
-            sourceTraceCount += store.count(Filter.where("runId").eq(runId), SourceTrace.class);
-            featureCount += store.count(Filter.where("runId").eq(runId), Feature.class);
-            store.findStr(Filter.where("runId").eq(runId), Feature.class).forEach(feature -> {
-                if (feature.getSnr() != null)
-                    featureSNR.add((double) feature.getSnr());
-            });
-        }
-
-        Filter filter = Filter.where("runId").eq(merged.getRun().getRunId());
         System.out.printf(
                 """
                        
                         -------- Preprocessing Summary ---------
                         Preprocessed data in:      %s
-                       
-                        # SourceTrace:             %d
-                        # MergedTrace:             %d
-                        # Feature:                 %d
-                        # AlignedIsotopicFeatures: %d
-                        # AlignedFeatures:         %d
-                                                       \s
-                        Feature                 SNR: %f
-                        AlignedIsotopicFeatures SNR: %f
-                        AlignedFeatures         SNR: %f
-                                                       \s
                         # Good Al. Features:           %d
                         # Decent Al. Features:         %d
                         # Bad Al. Features:            %d
                         # Lowest Quality Al. Features: %d
                        \s""",
                 stopWatch,
-                sourceTraceCount,
-                store.count(filter, MergedTrace.class),
-                featureCount,
-                store.count(filter, AlignedIsotopicFeatures.class),
-                store.count(filter, AlignedFeatures.class),
-                featureSNR.doubleStream().average().orElse(Double.NaN),
-                store.findStr(filter, AlignedIsotopicFeatures.class).map(AlignedIsotopicFeatures::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
-                store.findStr(filter, AlignedFeatures.class).map(AlignedFeatures::getSnr).filter(Objects::nonNull).mapToDouble(Double::doubleValue).average().orElse(Double.NaN),
                 countMap.get(DataQuality.GOOD), countMap.get(DataQuality.DECENT), countMap.get(DataQuality.BAD), countMap.get(DataQuality.LOWEST)
         );
     }
