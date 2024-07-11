@@ -242,7 +242,7 @@ public class TestMain {
                 }
                 System.out.println("MS2 = " + hasms2);
 
-                AdductManager manager = new AdductManager();
+                AdductManager manager = new AdductManager(1);
                 manager.add(Set.of(PrecursorIonType.getPrecursorIonType("[M+H]+"), PrecursorIonType.getPrecursorIonType("[M+Na]+"),
                         PrecursorIonType.getPrecursorIonType("[M+K]+"),  PrecursorIonType.getPrecursorIonType("[M+NH3+H]+"),
                         PrecursorIonType.getPrecursorIonType("[M + FA + H]+"),
