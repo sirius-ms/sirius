@@ -143,7 +143,7 @@ public class AdductNetwork {
 
                                         realEdges.add(adductEdge);
                                     }
-                                } if (decoyEdges.size() < 10 && adductManager.hasDecoy(massDelta)) {
+                                } else if (decoyEdges.size() < 10 && adductManager.hasDecoy(massDelta)) {
                                     final AdductEdge adductEdge = new AdductEdge(leftNode, rightNode, new KnownMassDelta[0]);
                                     scorer.computeScore(provider, adductEdge);
                                     decoyEdges.add(adductEdge);
@@ -168,13 +168,21 @@ public class AdductNetwork {
         assignPValues(pValueStats);
 
         BitSet visited = new BitSet(rtOrderedNodes.length);
+        int numberOfIonsWeCouldAnnotate = 0;
         for (int k=0; k < rtOrderedNodes.length; ++k) {
             if (!visited.get(rtOrderedNodes[k].index)) {
                 List<AdductNode> nodes = spread(rtOrderedNodes[k], visited);
-                if (nodes.size()>1) subgraphs.add(nodes);
+                if (nodes.size()>1) {
+                    subgraphs.add(nodes);
+                    long adducts = nodes.stream().filter(x -> x.edges.stream().anyMatch(AdductEdge::isAdductEdge)).count();
+                    if (adducts>0) {
+                        numberOfIonsWeCouldAnnotate+=nodes.size();
+                    }
+                }
                 else singletons.add(nodes.get(0));
             }
         }
+        System.out.println("Number of potentially annotatable adducts: " + numberOfIonsWeCouldAnnotate);
     }
 
     private MassMap<Peak> getPotentialInsourceFragments(List<MergedMSnSpectrum> data, AdductNode rightNode) {
@@ -384,6 +392,9 @@ public class AdductNetwork {
             maxRt = Math.max(maxRt, n.features.getRetentionTime().getEndTime());
         }
         rt /= intens;
+        // sometimes rt is < minRt or > maxRt
+        // this is probably just a floating point issue
+        rt = Math.min(Math.max(minRt+1e-8, rt), maxRt-1e-8);
         if (compound.size()==1) {
             // damned, have to look closer into that. But if a compound cannot be resolved properly, then
             // adduct detection is likely wrong
@@ -606,8 +617,11 @@ public class AdductNetwork {
         private int ratio2bin(double score) {
             return (int)Math.max(0,Math.round((score+0)/5));
         }
+        private static double[] corbins = new double[]{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.92, 0.94, 0.96, 0.97, 0.98, 0.99, 0.995};
         private int cor2bin(double score) {
-            return (int)Math.max(0,Math.round(score*10));
+            int index = Arrays.binarySearch(corbins, score);
+            if (index >= 0) return index;
+            else return -index +1;
         }
     }
 
