@@ -116,37 +116,44 @@ public class ImportAction extends AbstractGuiAction {
         try {
             boolean hasLCMS = paths.containsKey(true) && !paths.get(true).isEmpty();
             boolean hasPeakLists = paths.containsKey(false) && !paths.get(false).isEmpty();
+            boolean alignAllowed = paths.get(true).size() > 1;
 
             if (!hasLCMS && !hasPeakLists)
                 return;
 
-            // show dialog
-            ImportMSDataDialog dialog = new ImportMSDataDialog(popupOwner, hasLCMS, hasLCMS && paths.get(true).size() > 1, hasPeakLists);
-            if (!dialog.isSuccess())
-                return;
+            // LC/MS default parameters
+            LcmsSubmissionParameters parameters = new LcmsSubmissionParameters();
+            if (hasLCMS) {
+                parameters.setAlignLCMSRuns(false);
+                parameters.setFilter(DataSmoothing.AUTO);
+                parameters.setGaussianSigma(3.0);
+                parameters.setWaveletScale(20);
+                parameters.setWaveletWindow(10d);
+                parameters.setNoise(2.0);
+                parameters.setPersistence(0.1);
+                parameters.setMerge(0.8);
+            }
 
-            ParameterBinding binding = dialog.getParamterBinding();
-            boolean allowMS1Only = PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", true);
+            // show dialog
+            if (hasPeakLists || alignAllowed) {
+                ImportMSDataDialog dialog = new ImportMSDataDialog(popupOwner, hasLCMS, hasLCMS && paths.get(true).size() > 1, hasPeakLists);
+                if (!dialog.isSuccess())
+                    return;
+
+                if (hasLCMS) {
+                    ParameterBinding binding = dialog.getParamterBinding();
+                    binding.getOptBoolean("align").ifPresent(parameters::setAlignLCMSRuns);
+                }
+            }
 
             // handle LC/MS files
             if (hasLCMS) {
                 List<Path> lcmsPaths = paths.get(true);
-
-                final LcmsSubmissionParameters parameters = new LcmsSubmissionParameters();
-                binding.getOptBoolean("align").ifPresent(parameters::setAlignLCMSRuns);
-                binding.getOpt("filter").map(DataSmoothing::valueOf).ifPresent(parameters::setFilter);
-                binding.getOptDouble("sigma").ifPresent(parameters::setGaussianSigma);
-                binding.getOptInt("scale").ifPresent(parameters::setWaveletScale);
-                binding.getOptDouble("window").ifPresent(parameters::setWaveletWindow);
-                binding.getOptDouble("noise").ifPresent(parameters::setNoise);
-                binding.getOptDouble("persistence").ifPresent(parameters::setPersistence);
-                binding.getOptDouble("merge").ifPresent(parameters::setMerge);
-
                 LoadingBackroundTask<Job> task = gui.applySiriusClient((c, pid) -> {
                     Job job = c.projects().importMsRunDataAsJobLocally(pid,
                             parameters,
                             lcmsPaths.stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
-                            allowMS1Only,
+                            true,
                             List.of(JobOptField.PROGRESS)
                     );
                     return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Importing LC/MS data...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
@@ -161,7 +168,7 @@ public class ImportAction extends AbstractGuiAction {
                     Job job = c.projects().importPreprocessedDataAsJobLocally(pid,
                             paths.get(false).stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
                             PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.ignoreFormulas", false),
-                            PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", true),
+                            true,
                             List.of(JobOptField.PROGRESS)
                     );
                     return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Importing MS data...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
