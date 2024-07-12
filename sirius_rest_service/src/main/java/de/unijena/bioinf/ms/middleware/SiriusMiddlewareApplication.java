@@ -115,6 +115,10 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 //just store the sirius base dir
                 PropertyManager.setProperty("de.unijena.bioinf.sirius.homeDir", Path.of(new ApplicationHome().getDir().getAbsolutePath()).getParent().toString());
 
+                // remove old pid and port file as early as possible
+                Files.deleteIfExists(Workspace.PORT_FILE);
+                Files.deleteIfExists(Workspace.PID_FILE);
+
                 Splash splashScreen = null;
                 if (Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("--gui") || it.equalsIgnoreCase("-g"))) {
                     Path propsFile = Workspace.siriusPropsFile;
@@ -162,11 +166,8 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                         System.err.println("SIRIUS Service is running on port: " + event.getWebServer().getPort());
                         System.err.println("SIRIUS Service started successfully!");
                 });
-                app.addListeners(new ApplicationPidFileWriter(Workspace.GLOBAL_SIRIUS_WORKSPACE
-                        .resolve("sirius-" + ApplicationCore.VERSION_OBJ().getMajorVersion() + ".pid").toFile()));
-                app.addListeners(new WebServerPortFileWriter(Workspace.GLOBAL_SIRIUS_WORKSPACE
-                        .resolve("sirius-" + ApplicationCore.VERSION_OBJ().getMajorVersion() + ".port").toFile()));
-
+                app.addListeners(new ApplicationPidFileWriter(Workspace.PID_FILE.toFile()));
+                app.addListeners(new WebServerPortFileWriter(Workspace.PORT_FILE.toFile()));
 
                 app.run(args);
             } catch (IOException e) {

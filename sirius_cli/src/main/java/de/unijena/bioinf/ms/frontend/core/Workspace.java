@@ -31,6 +31,8 @@ import java.util.Map;
 public class Workspace {
     //this
     public static final Path GLOBAL_SIRIUS_WORKSPACE;
+    public static final Path PID_FILE;
+    public static final Path PORT_FILE;
     public static final Path WORKSPACE;
 
     public static final Path loggingPropFile;
@@ -53,6 +55,10 @@ public class Workspace {
                 defaultFolderName = defaultFolderName + "-" + versionParts[0] + "." + versionParts[1];
 
             GLOBAL_SIRIUS_WORKSPACE = home.resolve(".sirius");
+            PID_FILE = Workspace.GLOBAL_SIRIUS_WORKSPACE
+                    .resolve("sirius-" + ApplicationCore.VERSION_OBJ().getMajorVersion() + ".pid");
+            PORT_FILE = Workspace.GLOBAL_SIRIUS_WORKSPACE
+                    .resolve("sirius-" + ApplicationCore.VERSION_OBJ().getMajorVersion() + ".port");
             if(Files.notExists(GLOBAL_SIRIUS_WORKSPACE)){
                 Files.createDirectories(GLOBAL_SIRIUS_WORKSPACE);
                 try {
