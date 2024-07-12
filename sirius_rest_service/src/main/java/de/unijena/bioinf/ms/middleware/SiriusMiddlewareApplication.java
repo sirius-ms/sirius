@@ -162,8 +162,11 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                         System.err.println("SIRIUS Service is running on port: " + event.getWebServer().getPort());
                         System.err.println("SIRIUS Service started successfully!");
                 });
-                app.addListeners(new ApplicationPidFileWriter(Workspace.WORKSPACE.resolve("sirius.pid").toFile()));
-                app.addListeners(new WebServerPortFileWriter(Workspace.WORKSPACE.resolve("sirius.port").toFile()));
+                app.addListeners(new ApplicationPidFileWriter(Workspace.GLOBAL_SIRIUS_WORKSPACE
+                        .resolve("sirius-" + ApplicationCore.VERSION_OBJ().getMajorVersion() + ".pid").toFile()));
+                app.addListeners(new WebServerPortFileWriter(Workspace.GLOBAL_SIRIUS_WORKSPACE
+                        .resolve("sirius-" + ApplicationCore.VERSION_OBJ().getMajorVersion() + ".port").toFile()));
+
 
                 app.run(args);
             } catch (IOException e) {
