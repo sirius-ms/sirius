@@ -61,28 +61,28 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<Proj
     @CommandLine.Option(names={"--no-align"}, description = "Do not align and combine all LC/MS runs to one merged LC/MS run.")
     public boolean noAlign;
 
-    @CommandLine.Option(names="--ms1-only", description = "Allow features without MS/MS data")
-    public boolean allowMs1Only;
+    @CommandLine.Option(names="--no-ms1-only", description = "Do not import features without MS/MS data", hidden = true)
+    public boolean forbidMs1Only;
 
-    @CommandLine.Option(names={"--smoothing"}, defaultValue = "AUTO", description = "Filter algorithm to suppress noise.")
+    @CommandLine.Option(names={"--smoothing"}, defaultValue = "AUTO", description = "Filter algorithm to suppress noise.", hidden = true)
     public DataSmoothing smoothing;
 
-    @CommandLine.Option(names={"--sigma"}, defaultValue = "3.0", description = "Sigma (kernel width) for Gaussian filter algorithm.")
+    @CommandLine.Option(names={"--sigma"}, defaultValue = "3.0", description = "Sigma (kernel width) for Gaussian filter algorithm.", hidden = true)
     public double sigma;
 
-    @CommandLine.Option(names={"--scale"}, defaultValue = "20", description = "Number of coefficients for wavelet filter algorithm.")
+    @CommandLine.Option(names={"--scale"}, defaultValue = "20", description = "Number of coefficients for wavelet filter algorithm.", hidden = true)
     public int scaleLevel;
 
-    @CommandLine.Option(names={"--window"}, defaultValue = "10", description = "Wavelet window size (%) for wavelet filter algorithm.")
+    @CommandLine.Option(names={"--window"}, defaultValue = "10", description = "Wavelet window size (%) for wavelet filter algorithm.", hidden = true)
     public double waveletWindow;
 
-    @CommandLine.Option(names={"--noise"}, defaultValue = "2.0", description = "Features must be larger than <value> * detected noise level.")
+    @CommandLine.Option(names={"--noise"}, defaultValue = "2.0", description = "Features must be larger than <value> * detected noise level.", hidden = true)
     public double noiseCoefficient;
 
-    @CommandLine.Option(names={"--persistence"}, defaultValue = "0.1", description = "Features must have larger persistence (intensity above valley) than <value> * max trace intensity.")
+    @CommandLine.Option(names={"--persistence"}, defaultValue = "0.1", description = "Features must have larger persistence (intensity above valley) than <value> * max trace intensity.", hidden = true)
     public double persistenceCoefficient;
 
-    @CommandLine.Option(names={"--merge"}, defaultValue = "0.8", description = "Merge neighboring features with valley less than <value> * intensity.")
+    @CommandLine.Option(names={"--merge"}, defaultValue = "0.8", description = "Merge neighboring features with valley less than <value> * intensity.", hidden = true)
     public double mergeCoefficient;
 
     @CommandLine.Option(names={"--statistics"}, required = false, hidden = true)
