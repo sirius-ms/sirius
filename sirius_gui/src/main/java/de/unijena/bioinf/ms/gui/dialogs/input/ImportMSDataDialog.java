@@ -21,7 +21,6 @@
 package de.unijena.bioinf.ms.gui.dialogs.input;
 
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
-import de.unijena.bioinf.ms.frontend.subtools.lcms_align.DataSmoothing;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.gui.compute.ParameterBinding;
 import de.unijena.bioinf.ms.gui.compute.SubToolConfigPanel;
@@ -34,10 +33,6 @@ import org.jdesktop.swingx.JXTitledSeparator;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Function;
 
 public class ImportMSDataDialog extends DoNotShowAgainDialog {
 
@@ -50,140 +45,30 @@ public class ImportMSDataDialog extends DoNotShowAgainDialog {
 
         private final JCheckBox alignCheckBox;
 
-        private final JCheckBox allowMS1Only;
-
         private final JCheckBox ignoreFormulas;
-
-        private final List<JComponent> lcmsComponents = new ArrayList<>();
 
         public LCMSConfigPanel(TwoColumnPanel paras) {
             super(LcmsAlignOptions.class);
 
             paras.add(new JXTitledSeparator("Import Options"));
-
-            allowMS1Only = new JCheckBox("Import data without MS/MS");
-            allowMS1Only.setSelected(Boolean.parseBoolean(SiriusProperties.getProperty("de.unijena.bioinf.sirius.ui.allowMs1Only", null, "true")));
-            allowMS1Only.setToolTipText(GuiUtils.formatToolTip("If checked, data without MS/MS spectra will be imported. Otherwise they will be skipped during import."));
-            paras.add(allowMS1Only);
+            paras.add(Box.createVerticalStrut(5));
 
             ignoreFormulas = new JCheckBox("Ignore formulas");
             ignoreFormulas.setSelected(Boolean.parseBoolean(SiriusProperties.getProperty("de.unijena.bioinf.sirius.ui.ignoreFormulas", null, "false")));
             ignoreFormulas.setToolTipText(GuiUtils.formatToolTip("If checked, molecular formula and structure annotations will be ignored during peaklist import when  given in the input file."));
             paras.add(ignoreFormulas);
 
-            paras.addVerticalGlue();
-            paras.add(Box.createVerticalStrut(5));
-
-            JXTitledSeparator lcmsSep = new JXTitledSeparator("LC/MS Import Options");
-            lcmsComponents.add(lcmsSep);
-            paras.add(lcmsSep);
-
-            alignCheckBox = makeGenericOptionCheckBox("Align and merge runs", "align");
+            alignCheckBox = makeGenericOptionCheckBox("Align and merge LC/MS runs", "align");
             alignCheckBox.setToolTipText(GuiUtils.formatToolTip("If checked, all LC/MS runs will be aligned and combined to one merged LC/MS run."));
-            lcmsComponents.add(alignCheckBox);
             paras.add(alignCheckBox);
 
-            JLabel smoothLabel = new JLabel("Data smoothing");
-            JComboBox<DataSmoothing> smoothBox = makeGenericOptionComboBox("filter", DataSmoothing.class);
-
-            paras.add(smoothLabel, smoothBox);
-
-            lcmsComponents.add(smoothLabel);
-            lcmsComponents.add(smoothBox);
-
-            JSpinner sigmaSpinner = makeGenericOptionSpinner("sigma", 3.0, 0.1, 10.0, 0.1, (model) -> Double.toString(model.getNumber().doubleValue()));
-            JSpinner scaleSpinner = makeGenericOptionSpinner("scale", 20, 12, 100, 2, (model) -> Long.toString(Math.round(model.getNumber().doubleValue())));
-            JSpinner windowSpinner = makeGenericOptionSpinner("window", 10, 1, 100, 1, (model) -> Double.toString(model.getNumber().doubleValue()));
-
-            JLabel sigmaLabel = new JLabel("Sigma (kernel width)");
-            JLabel scaleLabel = new JLabel("Wavelet coefficients");
-            JLabel windowLabel = new JLabel("Window size [%]");
-
-            paras.add(sigmaLabel, sigmaSpinner);
-            paras.add(scaleLabel, scaleSpinner);
-            paras.add(windowLabel, windowSpinner);
-
-            lcmsComponents.addAll(List.of(sigmaLabel, scaleLabel, windowLabel, sigmaSpinner, scaleSpinner, windowSpinner));
-
-            sigmaLabel.setEnabled(false);
-            scaleLabel.setEnabled(false);
-            windowLabel.setEnabled(false);
-
-            sigmaSpinner.setEnabled(false);
-            scaleSpinner.setEnabled(false);
-            windowSpinner.setEnabled(false);
-
             paras.addVerticalGlue();
-
-            smoothBox.addItemListener((event) -> {
-                if (event.getStateChange() == ItemEvent.SELECTED) {
-                    Object item = event.getItem();
-                    if (item instanceof DataSmoothing filter) {
-                        switch (filter) {
-                            case GAUSSIAN -> SwingUtilities.invokeLater(() -> {
-                                sigmaLabel.setEnabled(true);
-                                scaleLabel.setEnabled(false);
-                                windowLabel.setEnabled(false);
-
-                                sigmaSpinner.setEnabled(true);
-                                scaleSpinner.setEnabled(false);
-                                windowSpinner.setEnabled(false);
-                            });
-                            case WAVELET -> SwingUtilities.invokeLater(() -> {
-                                sigmaLabel.setEnabled(false);
-                                scaleLabel.setEnabled(true);
-                                windowLabel.setEnabled(true);
-
-                                sigmaSpinner.setEnabled(false);
-                                scaleSpinner.setEnabled(true);
-                                windowSpinner.setEnabled(true);
-                            });
-                            default -> SwingUtilities.invokeLater(() -> {
-                                sigmaLabel.setEnabled(false);
-                                scaleLabel.setEnabled(false);
-                                windowLabel.setEnabled(false);
-
-                                sigmaSpinner.setEnabled(false);
-                                scaleSpinner.setEnabled(false);
-                                windowSpinner.setEnabled(false);
-                            });
-                        }
-                    }
-                }
-            });
-
-            paras.add(Box.createVerticalStrut(5));
-
-            JXTitledSeparator featSep = new JXTitledSeparator("LC/MS Feature Detection Options");
-            lcmsComponents.add(featSep);
-            paras.add(featSep);
-
-            JLabel noiseLabel = new JLabel("Min. noise ratio");
-            JSpinner noiseSpinner = makeGenericOptionSpinner("noise", 2.0, 0.01, 1000, 0.5, (model) -> Double.toString(model.getNumber().doubleValue()));
-            lcmsComponents.add(noiseLabel);
-            lcmsComponents.add(noiseSpinner);
-            paras.add(noiseLabel, noiseSpinner);
-
-            JLabel persistenceLabel = new JLabel("Min. baseline ratio");
-            JSpinner persistenceSpinner = makeGenericOptionSpinner("persistence", 0.1, 0.01, 1.0, 0.1, (model) -> Double.toString(model.getNumber().doubleValue()));
-            lcmsComponents.add(persistenceLabel);
-            lcmsComponents.add(persistenceSpinner);
-            paras.add(persistenceLabel, persistenceSpinner);
-
-            JLabel mergeLabel = new JLabel("Max valley ratio");
-            JSpinner mergeSpinner = makeGenericOptionSpinner("merge", 0.8, 0.1, 1.0, 0.1, (model) -> Double.toString(model.getNumber().doubleValue()));
-            lcmsComponents.add(mergeLabel);
-            lcmsComponents.add(mergeSpinner);
-            paras.add(mergeLabel, mergeSpinner);
         }
 
     }
 
     public ImportMSDataDialog(Window owner, boolean showLCMSOptions, boolean alignAllowed, boolean showPeakListOptions) {
         super(owner, TITLE, "Please select how your MS data should be imported.", null);
-
-        for (JComponent comp : panel.lcmsComponents)
-            comp.setVisible(showLCMSOptions);
 
         if (showLCMSOptions && alignAllowed) {
             panel.alignCheckBox.setSelected(true);
@@ -222,7 +107,7 @@ public class ImportMSDataDialog extends DoNotShowAgainDialog {
     protected void decorateButtonPanel(JPanel boxedButtonPanel) {
         final JButton ok = new JButton("Import");
         ok.addActionListener(e -> {
-            SiriusProperties.SIRIUS_PROPERTIES_FILE().setProperty("de.unijena.bioinf.sirius.ui.allowMs1Only", String.valueOf(panel.allowMS1Only.isSelected()));
+            SiriusProperties.SIRIUS_PROPERTIES_FILE().setProperty("de.unijena.bioinf.sirius.ui.ignoreFormulas", String.valueOf(panel.ignoreFormulas.isSelected()));
             rv = ReturnValue.Success;
             dispose();
         });
