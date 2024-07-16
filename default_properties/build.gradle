@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -17,5 +17,24 @@
  *
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
+allprojects {
+    version = '1.1.0'
 
-version =  parent.siriusVersion
+    artifactory {
+        contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
+        publish {
+            repository {
+                if (version.toString().endsWith('-SNAPSHOT'))
+                    repoKey = 'libs-snapshot-local'
+                else
+                    repoKey = 'libs-release-local'
+
+                username = project.findProperty('de.unijena.bioinf.build.artifactory.username')
+                password = project.findProperty('de.unijena.bioinf.build.artifactory.password')
+            }
+            defaults {
+                publications('mavenJava')
+            }
+        }
+    }
+}
