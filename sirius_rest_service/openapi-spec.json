@@ -4941,6 +4941,26 @@
           "Info"
         ],
         "operationId": "getInfo",
+        "parameters": [
+          {
+            "name": "serverInfo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "updateInfo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",

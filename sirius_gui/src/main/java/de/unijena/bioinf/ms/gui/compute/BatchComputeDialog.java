@@ -371,7 +371,7 @@ public class BatchComputeDialog extends JDialog {
                     double minMass = finalComps.stream().mapToDouble(InstanceBean::getIonMass).min().orElse(0);
                     if (((Double) formulaIDConfigPanel.getContent().mzHeuristicOnly.getValue()) > minMass) {
                         updateProgress(0, 100, 0, "Checking ILP solvers...");
-                        Info info = gui.getSiriusClient().infos().getInfo();
+                        Info info = gui.getSiriusClient().infos().getInfo(false, false);
                         if (info.getAvailableILPSolvers().isEmpty()) {
                             String noILPSolver = "Could not load a valid TreeBuilder (ILP solvers), tried '" +
                                     Arrays.toString(TreeBuilderFactory.getBuilderPriorities()) +
@@ -381,7 +381,7 @@ public class BatchComputeDialog extends JDialog {
                             dispose();
                             return false;
                         } else {
-                            LoggerFactory.getLogger(this.getClass()).info("Compute trees using " + info.getAvailableILPSolvers().get(0));
+                            LoggerFactory.getLogger(this.getClass()).info("Compute trees using " + info.getAvailableILPSolvers().getFirst());
                         }
                         updateProgress(0, 100, 1, "ILP solver check DONE!");
                     }
