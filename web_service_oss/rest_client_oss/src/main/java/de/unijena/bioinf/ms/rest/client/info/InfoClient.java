@@ -118,7 +118,8 @@ public class InfoClient extends AbstractCsiClient {
                 () -> {
                     HttpUrl.Builder builder = buildVersionSpecificWebapiURI("/consumed-resources")
                             .addQueryParameter("date", Long.toString(monthAndYear.getTime()))
-                            .addQueryParameter("byMonth", Boolean.toString(byMonth));
+                            .addQueryParameter("byMonth", Boolean.toString(byMonth))
+                            .addQueryParameter("includePendingJobs", Boolean.toString(true));
                     if (jobType != null)
                         builder.addQueryParameter("jobType", new ObjectMapper().writeValueAsString(jobType));
 
