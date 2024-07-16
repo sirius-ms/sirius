@@ -115,10 +115,12 @@ public class InfoApi {
      * 
      * 
      * <p><b>200</b> - OK
+     * @param serverInfo The serverInfo parameter
+     * @param updateInfo The updateInfo parameter
      * @return Info
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getInfoRequestCreation() throws WebClientResponseException {
+    private ResponseSpec getInfoRequestCreation(Boolean serverInfo, Boolean updateInfo) throws WebClientResponseException {
         Object postBody = null;
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -128,6 +130,9 @@ public class InfoApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "serverInfo", serverInfo));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "updateInfo", updateInfo));
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -145,34 +150,40 @@ public class InfoApi {
      * 
      * 
      * <p><b>200</b> - OK
+     * @param serverInfo The serverInfo parameter
+     * @param updateInfo The updateInfo parameter
      * @return Info
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Info getInfo() throws WebClientResponseException {
+    public Info getInfo(Boolean serverInfo, Boolean updateInfo) throws WebClientResponseException {
         ParameterizedTypeReference<Info> localVarReturnType = new ParameterizedTypeReference<Info>() {};
-        return getInfoRequestCreation().bodyToMono(localVarReturnType).block();
+        return getInfoRequestCreation(serverInfo, updateInfo).bodyToMono(localVarReturnType).block();
     }
 
     /**
      * 
      * 
      * <p><b>200</b> - OK
+     * @param serverInfo The serverInfo parameter
+     * @param updateInfo The updateInfo parameter
      * @return ResponseEntity&lt;Info&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Info> getInfoWithHttpInfo() throws WebClientResponseException {
+    public ResponseEntity<Info> getInfoWithHttpInfo(Boolean serverInfo, Boolean updateInfo) throws WebClientResponseException {
         ParameterizedTypeReference<Info> localVarReturnType = new ParameterizedTypeReference<Info>() {};
-        return getInfoRequestCreation().toEntity(localVarReturnType).block();
+        return getInfoRequestCreation(serverInfo, updateInfo).toEntity(localVarReturnType).block();
     }
 
     /**
      * 
      * 
      * <p><b>200</b> - OK
+     * @param serverInfo The serverInfo parameter
+     * @param updateInfo The updateInfo parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getInfoWithResponseSpec() throws WebClientResponseException {
-        return getInfoRequestCreation();
+    public ResponseSpec getInfoWithResponseSpec(Boolean serverInfo, Boolean updateInfo) throws WebClientResponseException {
+        return getInfoRequestCreation(serverInfo, updateInfo);
     }
 }
