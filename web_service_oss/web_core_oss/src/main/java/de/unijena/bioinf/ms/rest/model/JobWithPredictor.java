@@ -22,7 +22,11 @@ package de.unijena.bioinf.ms.rest.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
+import lombok.Getter;
+import lombok.Setter;
 
+@Setter
+@Getter
 public abstract class JobWithPredictor<O> extends Job<O> {
     protected Long predictors;
 
@@ -34,14 +38,6 @@ public abstract class JobWithPredictor<O> extends Job<O> {
         super(workerPrefix, jobId, state, table);
     }
 
-
-    public Long getPredictors() {
-        return predictors;
-    }
-
-    public void setPredictors(Long predictors) {
-        this.predictors = predictors;
-    }
 
     @JsonIgnore
     public boolean containsPredictor(PredictorType predictor) {
