@@ -50,11 +50,6 @@ public abstract class Job<O> extends JobBase {
         this.version = FingerIDProperties.fingeridMinorVersion();
     }
 
-    @JsonIgnore
-    public void setSubmissionTime(long submissionTime) {
-        this.submissionTime = new Timestamp(submissionTime);
-    }
-
     @Nullable
     @JsonIgnore
     public abstract O extractOutput();
