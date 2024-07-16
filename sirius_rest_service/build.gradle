@@ -65,8 +65,8 @@ dependencies {
     ////////////////////////////////////////////////////
 
     //getter setter constructor logger, save boilerplate
-    compileOnly'org.projectlombok:lombok:1.18.30'
-    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+    compileOnly 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
 
 //    implementation 'io.micrometer:micrometer-core'
 //    implementation 'io.micrometer:micrometer-registry-prometheus'

@@ -20,15 +20,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionError;
 import de.unijena.bioinf.ms.nightsky.sdk.model.LicenseInfo;
-import de.unijena.bioinf.ms.nightsky.sdk.model.WorkerList;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -36,67 +32,18 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * ConnectionCheck
  */
 @JsonPropertyOrder({
-  ConnectionCheck.JSON_PROPERTY_WORKER_INFO,
   ConnectionCheck.JSON_PROPERTY_LICENSE_INFO,
-  ConnectionCheck.JSON_PROPERTY_ERRORS,
-  ConnectionCheck.JSON_PROPERTY_SUPPORTS_POS_PREDICTOR_TYPES,
-  ConnectionCheck.JSON_PROPERTY_SUPPORTS_ALL_PREDICTOR_TYPES,
-  ConnectionCheck.JSON_PROPERTY_SUPPORTS_NEG_PREDICTOR_TYPES,
-  ConnectionCheck.JSON_PROPERTY_AVAILABLE_WORKERS,
-  ConnectionCheck.JSON_PROPERTY_UN_AVAILABLE_WORKERS
+  ConnectionCheck.JSON_PROPERTY_ERRORS
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class ConnectionCheck {
-  public static final String JSON_PROPERTY_WORKER_INFO = "workerInfo";
-  private WorkerList workerInfo;
-
   public static final String JSON_PROPERTY_LICENSE_INFO = "licenseInfo";
   private LicenseInfo licenseInfo;
 
   public static final String JSON_PROPERTY_ERRORS = "errors";
   private List<ConnectionError> errors = new ArrayList<>();
 
-  public static final String JSON_PROPERTY_SUPPORTS_POS_PREDICTOR_TYPES = "supportsPosPredictorTypes";
-  private Boolean supportsPosPredictorTypes;
-
-  public static final String JSON_PROPERTY_SUPPORTS_ALL_PREDICTOR_TYPES = "supportsAllPredictorTypes";
-  private Boolean supportsAllPredictorTypes;
-
-  public static final String JSON_PROPERTY_SUPPORTS_NEG_PREDICTOR_TYPES = "supportsNegPredictorTypes";
-  private Boolean supportsNegPredictorTypes;
-
-  public static final String JSON_PROPERTY_AVAILABLE_WORKERS = "availableWorkers";
-  private Set<String> availableWorkers = new LinkedHashSet<>();
-
-  public static final String JSON_PROPERTY_UN_AVAILABLE_WORKERS = "unAvailableWorkers";
-  private Set<String> unAvailableWorkers = new LinkedHashSet<>();
-
   public ConnectionCheck() {
-  }
-
-  public ConnectionCheck workerInfo(WorkerList workerInfo) {
-    
-    this.workerInfo = workerInfo;
-    return this;
-  }
-
-   /**
-   * Get workerInfo
-   * @return workerInfo
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_WORKER_INFO)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public WorkerList getWorkerInfo() {
-    return workerInfo;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_WORKER_INFO)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setWorkerInfo(WorkerList workerInfo) {
-    this.workerInfo = workerInfo;
   }
 
   public ConnectionCheck licenseInfo(LicenseInfo licenseInfo) {
@@ -157,149 +104,6 @@ public class ConnectionCheck {
     this.errors = errors;
   }
 
-  public ConnectionCheck supportsPosPredictorTypes(Boolean supportsPosPredictorTypes) {
-    
-    this.supportsPosPredictorTypes = supportsPosPredictorTypes;
-    return this;
-  }
-
-   /**
-   * Get supportsPosPredictorTypes
-   * @return supportsPosPredictorTypes
-  **/
-  @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_SUPPORTS_POS_PREDICTOR_TYPES)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-
-  public Boolean isSupportsPosPredictorTypes() {
-    return supportsPosPredictorTypes;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_SUPPORTS_POS_PREDICTOR_TYPES)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setSupportsPosPredictorTypes(Boolean supportsPosPredictorTypes) {
-    this.supportsPosPredictorTypes = supportsPosPredictorTypes;
-  }
-
-  public ConnectionCheck supportsAllPredictorTypes(Boolean supportsAllPredictorTypes) {
-    
-    this.supportsAllPredictorTypes = supportsAllPredictorTypes;
-    return this;
-  }
-
-   /**
-   * Get supportsAllPredictorTypes
-   * @return supportsAllPredictorTypes
-  **/
-  @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_SUPPORTS_ALL_PREDICTOR_TYPES)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-
-  public Boolean isSupportsAllPredictorTypes() {
-    return supportsAllPredictorTypes;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_SUPPORTS_ALL_PREDICTOR_TYPES)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setSupportsAllPredictorTypes(Boolean supportsAllPredictorTypes) {
-    this.supportsAllPredictorTypes = supportsAllPredictorTypes;
-  }
-
-  public ConnectionCheck supportsNegPredictorTypes(Boolean supportsNegPredictorTypes) {
-    
-    this.supportsNegPredictorTypes = supportsNegPredictorTypes;
-    return this;
-  }
-
-   /**
-   * Get supportsNegPredictorTypes
-   * @return supportsNegPredictorTypes
-  **/
-  @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_SUPPORTS_NEG_PREDICTOR_TYPES)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-
-  public Boolean isSupportsNegPredictorTypes() {
-    return supportsNegPredictorTypes;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_SUPPORTS_NEG_PREDICTOR_TYPES)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setSupportsNegPredictorTypes(Boolean supportsNegPredictorTypes) {
-    this.supportsNegPredictorTypes = supportsNegPredictorTypes;
-  }
-
-  public ConnectionCheck availableWorkers(Set<String> availableWorkers) {
-    
-    this.availableWorkers = availableWorkers;
-    return this;
-  }
-
-  public ConnectionCheck addAvailableWorkersItem(String availableWorkersItem) {
-    if (this.availableWorkers == null) {
-      this.availableWorkers = new LinkedHashSet<>();
-    }
-    this.availableWorkers.add(availableWorkersItem);
-    return this;
-  }
-
-   /**
-   * Get availableWorkers
-   * @return availableWorkers
-  **/
-  @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_AVAILABLE_WORKERS)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-
-  public Set<String> getAvailableWorkers() {
-    return availableWorkers;
-  }
-
-
-  @JsonDeserialize(as = LinkedHashSet.class)
-  @JsonProperty(JSON_PROPERTY_AVAILABLE_WORKERS)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setAvailableWorkers(Set<String> availableWorkers) {
-    this.availableWorkers = availableWorkers;
-  }
-
-  public ConnectionCheck unAvailableWorkers(Set<String> unAvailableWorkers) {
-    
-    this.unAvailableWorkers = unAvailableWorkers;
-    return this;
-  }
-
-  public ConnectionCheck addUnAvailableWorkersItem(String unAvailableWorkersItem) {
-    if (this.unAvailableWorkers == null) {
-      this.unAvailableWorkers = new LinkedHashSet<>();
-    }
-    this.unAvailableWorkers.add(unAvailableWorkersItem);
-    return this;
-  }
-
-   /**
-   * Get unAvailableWorkers
-   * @return unAvailableWorkers
-  **/
-  @jakarta.annotation.Nonnull
-  @JsonProperty(JSON_PROPERTY_UN_AVAILABLE_WORKERS)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-
-  public Set<String> getUnAvailableWorkers() {
-    return unAvailableWorkers;
-  }
-
-
-  @JsonDeserialize(as = LinkedHashSet.class)
-  @JsonProperty(JSON_PROPERTY_UN_AVAILABLE_WORKERS)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
-  public void setUnAvailableWorkers(Set<String> unAvailableWorkers) {
-    this.unAvailableWorkers = unAvailableWorkers;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -309,33 +113,21 @@ public class ConnectionCheck {
       return false;
     }
     ConnectionCheck connectionCheck = (ConnectionCheck) o;
-    return Objects.equals(this.workerInfo, connectionCheck.workerInfo) &&
-        Objects.equals(this.licenseInfo, connectionCheck.licenseInfo) &&
-        Objects.equals(this.errors, connectionCheck.errors) &&
-        Objects.equals(this.supportsPosPredictorTypes, connectionCheck.supportsPosPredictorTypes) &&
-        Objects.equals(this.supportsAllPredictorTypes, connectionCheck.supportsAllPredictorTypes) &&
-        Objects.equals(this.supportsNegPredictorTypes, connectionCheck.supportsNegPredictorTypes) &&
-        Objects.equals(this.availableWorkers, connectionCheck.availableWorkers) &&
-        Objects.equals(this.unAvailableWorkers, connectionCheck.unAvailableWorkers);
+    return Objects.equals(this.licenseInfo, connectionCheck.licenseInfo) &&
+        Objects.equals(this.errors, connectionCheck.errors);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(workerInfo, licenseInfo, errors, supportsPosPredictorTypes, supportsAllPredictorTypes, supportsNegPredictorTypes, availableWorkers, unAvailableWorkers);
+    return Objects.hash(licenseInfo, errors);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class ConnectionCheck {\n");
-    sb.append("    workerInfo: ").append(toIndentedString(workerInfo)).append("\n");
     sb.append("    licenseInfo: ").append(toIndentedString(licenseInfo)).append("\n");
     sb.append("    errors: ").append(toIndentedString(errors)).append("\n");
-    sb.append("    supportsPosPredictorTypes: ").append(toIndentedString(supportsPosPredictorTypes)).append("\n");
-    sb.append("    supportsAllPredictorTypes: ").append(toIndentedString(supportsAllPredictorTypes)).append("\n");
-    sb.append("    supportsNegPredictorTypes: ").append(toIndentedString(supportsNegPredictorTypes)).append("\n");
-    sb.append("    availableWorkers: ").append(toIndentedString(availableWorkers)).append("\n");
-    sb.append("    unAvailableWorkers: ").append(toIndentedString(unAvailableWorkers)).append("\n");
     sb.append("}");
     return sb.toString();
   }

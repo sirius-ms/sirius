@@ -27,14 +27,43 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * SubscriptionConsumables
  */
 @JsonPropertyOrder({
+  SubscriptionConsumables.JSON_PROPERTY_PENDING_JOBS,
   SubscriptionConsumables.JSON_PROPERTY_COUNTED_COMPOUNDS
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class SubscriptionConsumables {
+  public static final String JSON_PROPERTY_PENDING_JOBS = "pendingJobs";
+  private Integer pendingJobs;
+
   public static final String JSON_PROPERTY_COUNTED_COMPOUNDS = "countedCompounds";
   private Integer countedCompounds;
 
   public SubscriptionConsumables() {
+  }
+
+  public SubscriptionConsumables pendingJobs(Integer pendingJobs) {
+    
+    this.pendingJobs = pendingJobs;
+    return this;
+  }
+
+   /**
+   * Get pendingJobs
+   * @return pendingJobs
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_PENDING_JOBS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Integer getPendingJobs() {
+    return pendingJobs;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_PENDING_JOBS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setPendingJobs(Integer pendingJobs) {
+    this.pendingJobs = pendingJobs;
   }
 
   public SubscriptionConsumables countedCompounds(Integer countedCompounds) {
@@ -71,18 +100,20 @@ public class SubscriptionConsumables {
       return false;
     }
     SubscriptionConsumables subscriptionConsumables = (SubscriptionConsumables) o;
-    return Objects.equals(this.countedCompounds, subscriptionConsumables.countedCompounds);
+    return Objects.equals(this.pendingJobs, subscriptionConsumables.pendingJobs) &&
+        Objects.equals(this.countedCompounds, subscriptionConsumables.countedCompounds);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(countedCompounds);
+    return Objects.hash(pendingJobs, countedCompounds);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("class SubscriptionConsumables {\n");
+    sb.append("    pendingJobs: ").append(toIndentedString(pendingJobs)).append("\n");
     sb.append("    countedCompounds: ").append(toIndentedString(countedCompounds)).append("\n");
     sb.append("}");
     return sb.toString();

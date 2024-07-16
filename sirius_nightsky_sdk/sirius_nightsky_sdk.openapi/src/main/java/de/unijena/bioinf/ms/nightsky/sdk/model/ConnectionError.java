@@ -96,9 +96,7 @@ public class ConnectionError {
     
     TERMS("TERMS"),
     
-    APP_SERVER("APP_SERVER"),
-    
-    WORKER("WORKER");
+    APP_SERVER("APP_SERVER");
 
     private String value;
 

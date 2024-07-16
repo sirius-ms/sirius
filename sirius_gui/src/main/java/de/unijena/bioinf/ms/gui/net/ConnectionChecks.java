@@ -62,16 +62,6 @@ public class ConnectionChecks {
                 .findAny().isEmpty();
     }
 
-    public static boolean isWorkerWarning(@NotNull ConnectionCheck check) {
-        return isWorkerWarning(check.getErrors());
-    }
-
-    public static boolean isWorkerWarning(@NotNull List<ConnectionError> errors) {
-        return errors.stream()
-                .filter(c -> c.getErrorKlass() == ConnectionError.ErrorKlassEnum.WORKER)
-                .anyMatch(c -> c.getErrorType() == ConnectionError.ErrorTypeEnum.WARNING);
-    }
-
     public static boolean isWarningOnly(@NotNull ConnectionCheck check) {
         return isWarningOnly(check.getErrors());
     }

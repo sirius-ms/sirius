@@ -8319,19 +8319,11 @@
       },
       "ConnectionCheck": {
         "required": [
-          "availableWorkers",
           "errors",
-          "licenseInfo",
-          "supportsAllPredictorTypes",
-          "supportsNegPredictorTypes",
-          "supportsPosPredictorTypes",
-          "unAvailableWorkers"
+          "licenseInfo"
         ],
         "type": "object",
         "properties": {
-          "workerInfo": {
-            "$ref": "#/components/schemas/WorkerList"
-          },
           "licenseInfo": {
             "$ref": "#/components/schemas/LicenseInfo"
           },
@@ -8340,29 +8332,6 @@
             "description": "List of errors ordered by significance. first error should be reported and addressed first.\n Following errors might just be follow-up errors",
             "items": {
               "$ref": "#/components/schemas/ConnectionError"
-            }
-          },
-          "supportsPosPredictorTypes": {
-            "type": "boolean"
-          },
-          "supportsAllPredictorTypes": {
-            "type": "boolean"
-          },
-          "supportsNegPredictorTypes": {
-            "type": "boolean"
-          },
-          "availableWorkers": {
-            "uniqueItems": true,
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "unAvailableWorkers": {
-            "uniqueItems": true,
-            "type": "array",
-            "items": {
-              "type": "string"
             }
           }
         }
@@ -8394,8 +8363,7 @@
               "LOGIN",
               "LICENSE",
               "TERMS",
-              "APP_SERVER",
-              "WORKER"
+              "APP_SERVER"
             ]
           },
           "siriusErrorCode": {
@@ -8453,6 +8421,10 @@
       "SubscriptionConsumables": {
         "type": "object",
         "properties": {
+          "pendingJobs": {
+            "type": "integer",
+            "format": "int32"
+          },
           "countedCompounds": {
             "type": "integer",
             "format": "int32"
@@ -8469,87 +8441,6 @@
           "link": {
             "type": "string",
             "format": "uri"
-          }
-        },
-        "nullable": true
-      },
-      "WorkerInfo": {
-        "required": [
-          "alive",
-          "id",
-          "serverTime",
-          "state",
-          "supportedPredictors",
-          "type"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "FORMULA_ID",
-              "FINGER_ID",
-              "IOKR",
-              "CANOPUS",
-              "COVTREE"
-            ]
-          },
-          "supportedPredictors": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "enum": [
-                "CSI_FINGERID_POSITIVE",
-                "CSI_FINGERID_NEGATIVE"
-              ]
-            }
-          },
-          "version": {
-            "type": "string",
-            "nullable": true
-          },
-          "host": {
-            "type": "string",
-            "nullable": true
-          },
-          "prefix": {
-            "type": "string",
-            "nullable": true
-          },
-          "state": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "alive": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "serverTime": {
-            "type": "integer",
-            "format": "int64"
-          }
-        }
-      },
-      "WorkerList": {
-        "required": [
-          "pendingJobs",
-          "workerList"
-        ],
-        "type": "object",
-        "properties": {
-          "pendingJobs": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "workerList": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WorkerInfo"
-            }
           }
         },
         "nullable": true

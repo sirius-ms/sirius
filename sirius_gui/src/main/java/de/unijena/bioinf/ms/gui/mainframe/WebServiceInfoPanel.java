@@ -34,10 +34,9 @@ import java.beans.PropertyChangeListener;
 import java.util.Optional;
 
 public class WebServiceInfoPanel extends JToolBar implements PropertyChangeListener {
-    private static final String INF = Character.toString('\u221E');
+    private static final String INF = Character.toString('∞');
     private final JLabel license;
     private final JLabel consumedQueries;
-    //    private final JLabel connected = new JLabel("Connected: ?");
     private final JLabel pendingJobs;
 
     public WebServiceInfoPanel(ConnectionMonitor monitor) {
@@ -69,7 +68,7 @@ public class WebServiceInfoPanel extends JToolBar implements PropertyChangeListe
         if (check.getLicenseInfo().getSubscription() != null) {
             @Nullable Subscription sub = check.getLicenseInfo().getSubscription();
             license.setText("<html>License: <b>" + sub.getSubscriberName() + "</b>" + (check.getLicenseInfo().getSubscription() == null ? "" : " (" + check.getLicenseInfo().getSubscription().getName() + ")</html>"));
-            if (sub.isCountQueries()) {
+            if (Boolean.TRUE.equals(sub.isCountQueries())) {
                 final boolean hasLimit = sub.getInstanceLimit() != null && sub.getInstanceLimit() > 0;
                 String max = hasLimit ? String.valueOf(sub.getInstanceLimit()) : INF;
                 final int consumed = Optional.ofNullable(check.getLicenseInfo().getConsumables())
@@ -85,11 +84,9 @@ public class WebServiceInfoPanel extends JToolBar implements PropertyChangeListe
             consumedQueries.setText("Quota: '?'");
         }
 
-        if (check.getWorkerInfo() != null) {
-            pendingJobs.setText("<html>Jobs: <b>" + check.getWorkerInfo().getPendingJobs() + "</b></html>");
-        } else {
-            pendingJobs.setText("Jobs: ?");
-        }
+        Optional.ofNullable(check.getLicenseInfo().getConsumables()).map(SubscriptionConsumables::getPendingJobs)
+                .ifPresentOrElse(pj -> pendingJobs.setText("<html>Jobs: <b>" + pj + "</b></html>"),
+                        () -> pendingJobs.setText("Jobs: ?"));
 
         revalidate();
         repaint();

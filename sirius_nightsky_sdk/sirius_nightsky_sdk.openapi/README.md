@@ -312,8 +312,6 @@ Class | Method | HTTP request | Description
  - [Trace](docs/Trace.md)
  - [TraceSet](docs/TraceSet.md)
  - [UseHeuristic](docs/UseHeuristic.md)
- - [WorkerInfo](docs/WorkerInfo.md)
- - [WorkerList](docs/WorkerList.md)
  - [Zodiac](docs/Zodiac.md)
  - [ZodiacEdgeFilterThresholds](docs/ZodiacEdgeFilterThresholds.md)
  - [ZodiacEpochs](docs/ZodiacEpochs.md)

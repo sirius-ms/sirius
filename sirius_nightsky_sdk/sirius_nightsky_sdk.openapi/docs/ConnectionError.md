@@ -40,7 +40,6 @@
 | LICENSE | &quot;LICENSE&quot; |
 | TERMS | &quot;TERMS&quot; |
 | APP_SERVER | &quot;APP_SERVER&quot; |
-| WORKER | &quot;WORKER&quot; |
 
 
 

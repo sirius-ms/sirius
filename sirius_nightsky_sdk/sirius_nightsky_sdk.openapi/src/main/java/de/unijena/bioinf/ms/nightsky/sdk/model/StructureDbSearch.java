@@ -93,7 +93,7 @@ public class StructureDbSearch {
   }
 
    /**
-   * Structure databases to search in, If expansive search is enabled this DB selection will be expanded to PubChem  if not high confidence hit was found in the selected databases.   Defaults to BIO + Custom Databases. Possible values are available to Database API.
+   * Structure databases to search in, If expansive search is enabled this DB selection will be expanded to PubChem  if not high confidence hit was found in the selected databases.  &lt;p&gt;  Defaults to BIO + Custom Databases. Possible values are available to Database API.
    * @return structureSearchDBs
   **/
   @jakarta.annotation.Nullable
