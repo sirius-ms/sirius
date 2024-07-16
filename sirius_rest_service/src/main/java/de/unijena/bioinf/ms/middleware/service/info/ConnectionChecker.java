@@ -21,18 +21,12 @@
 package de.unijena.bioinf.ms.middleware.service.info;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.middleware.model.info.LicenseInfo;
 import de.unijena.bioinf.ms.middleware.model.login.Subscription;
-import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
-import de.unijena.bioinf.ms.rest.model.worker.WorkerType;
-import de.unijena.bioinf.ms.rest.model.worker.WorkerWithCharge;
 import de.unijena.bioinf.rest.ConnectionError;
 import de.unijena.bioinf.rest.NetUtils;
 import de.unijena.bioinf.rest.ProxyManager;
@@ -45,19 +39,11 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 
 @ThreadSafe
 public final class ConnectionChecker {
-    public static final Map<Boolean, Set<WorkerWithCharge>> neededTypes = WorkerType.parse(PropertyManager.getProperty("de.unijena.bioinf.fingerid.usedWorkers")).stream()
-            .flatMap(wt -> Stream.of(
-                    WorkerWithCharge.of(wt, PredictorType.CSI_FINGERID_POSITIVE),
-                    WorkerWithCharge.of(wt, PredictorType.CSI_FINGERID_NEGATIVE)))
-            .collect(Collectors.groupingBy(WorkerWithCharge::isPositive, Collectors.toSet()));
-
-    private volatile ConnectionCheck checkResult = new ConnectionCheck(Multimaps.newSetMultimap(Map.of(), Set::of), null, new LicenseInfo());
+    private volatile ConnectionCheck checkResult = new ConnectionCheck(Multimaps.newSetMultimap(Map.of(), Set::of), new LicenseInfo());
     private volatile CheckJob checkJob = null;
 
     private final WebAPI<?> webAPI;
@@ -116,7 +102,6 @@ public final class ConnectionChecker {
             Multimap<ConnectionError.Klass, ConnectionError> errors = Multimaps.newSetMultimap(new HashMap<>(), LinkedHashSet::new);
 
             final @NotNull LicenseInfo ll = new LicenseInfo();
-            @Nullable WorkerList wl = null;
 
             // offline data
             webAPI.getAuthService().getToken().ifPresent(token -> {
@@ -131,13 +116,6 @@ public final class ConnectionChecker {
             checkForInterruption();
             try {
                 //online connection check
-                wl = webAPI.getWorkerInfo();
-                if (wl == null || !wl.supportsAllPredictorTypes(neededTypes.get(true)) || !wl.supportsAllPredictorTypes(neededTypes.get(false))) {
-                    errors.put(ConnectionError.Klass.WORKER, new ConnectionError(10,
-                            "No all supported Worker Types are available.", ConnectionError.Klass.WORKER,
-                            null, ConnectionError.Type.WARNING));
-                }
-
                 checkForInterruption();
                 try {
                     //enrich license info with consumables
@@ -159,7 +137,7 @@ public final class ConnectionChecker {
 
             checkForInterruption();
 
-            ConnectionCheck result = new ConnectionCheck(errors, wl, ll);
+            ConnectionCheck result = new ConnectionCheck(errors, ll);
 
             if (result.isConnected() || result.isWarningOnly()) {
                 NetUtils.awakeAll();
@@ -188,10 +166,6 @@ public final class ConnectionChecker {
             isGetterVisibility = JsonAutoDetect.Visibility.NONE
     )
     public static class ConnectionCheck {
-        @Nullable
-        @Schema(nullable = true)
-        @Getter
-        private final WorkerList workerInfo;
         @NotNull
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
         @Getter
@@ -205,56 +179,14 @@ public final class ConnectionChecker {
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
         private final List<ConnectionError> errors;
 
-        public ConnectionCheck(@NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @Nullable WorkerList workerInfo, @NotNull LicenseInfo licenseInfo) {
-            this(errors.values().stream().sorted(Comparator.comparing(ConnectionError::getErrorKlass)).toList(),
-                    workerInfo, licenseInfo);
+        public ConnectionCheck(@NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @NotNull LicenseInfo licenseInfo) {
+            this(errors.values().stream().sorted(Comparator.comparing(ConnectionError::getErrorKlass)).toList(), licenseInfo);
         }
 
-        protected ConnectionCheck(@NotNull List<ConnectionError> errorsSorted, @Nullable WorkerList workerInfo, @NotNull LicenseInfo licenseInfo) {
+        protected ConnectionCheck(@NotNull List<ConnectionError> errorsSorted, @NotNull LicenseInfo licenseInfo) {
             this.errors = errorsSorted;
-            this.workerInfo = workerInfo;
             this.licenseInfo = licenseInfo;
 
-        }
-
-        @JsonProperty
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-        public Set<String> getAvailableWorkers() {
-            Set<WorkerWithCharge> av = workerInfo != null ? workerInfo.getActiveSupportedTypes() : Set.of();
-            return neededTypes.values().stream()
-                    .flatMap(Set::stream)
-                    .filter(av::contains)
-                    .map(WorkerWithCharge::toString)
-                    .collect(Collectors.toSet());
-        }
-
-        @JsonProperty
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-        public Set<String> getUnAvailableWorkers() {
-            Set<WorkerWithCharge> av = workerInfo != null ? workerInfo.getActiveSupportedTypes() : Set.of();
-            return neededTypes.values().stream()
-                    .flatMap(Set::stream)
-                    .filter(w -> !av.contains(w))
-                    .map(WorkerWithCharge::toString)
-                    .collect(Collectors.toSet());
-        }
-
-        @JsonProperty
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-        public boolean isSupportsAllPredictorTypes() {
-            return isSupportsPosPredictorTypes() && isSupportsNegPredictorTypes();
-        }
-
-        @JsonProperty
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-        public boolean isSupportsPosPredictorTypes() {
-            return workerInfo != null && workerInfo.supportsAllPredictorTypes(neededTypes.get(true));
-        }
-
-        @JsonProperty
-        @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
-        public boolean isSupportsNegPredictorTypes() {
-            return workerInfo != null && workerInfo.supportsAllPredictorTypes(neededTypes.get(false));
         }
 
         public boolean isLoggedIn() {
@@ -269,12 +201,6 @@ public final class ConnectionChecker {
             return isConnected() || errors.stream()
                     .filter(e -> e.getErrorKlass().equals(ConnectionError.Klass.INTERNET))
                     .findAny().isEmpty();
-        }
-
-        public boolean isWorkerWarning() {
-            return errors.stream()
-                    .filter(c -> c.getErrorKlass() == ConnectionError.Klass.WORKER)
-                    .anyMatch(c -> c.getErrorType() == ConnectionError.Type.WARNING);
         }
 
         public boolean isWarningOnly() {

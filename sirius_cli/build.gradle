@@ -2,8 +2,8 @@ apply plugin: 'java-library'
 apply plugin: 'application'
 
 dependencies {
-    compileOnly 'org.projectlombok:lombok:1.18.30'
-    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+    compileOnly 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
     // wrong place START (should be in dist) but IDEA does not recognize dependency from no code modules //todo find alternative
     implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "2.0.7"
     implementation("de.unijena.bioinf.cbc-java:cbc-java-jni:$cbc_version:${siriusTargetPlatform.jenaClassifier().orElseThrow()}")

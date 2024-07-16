@@ -20,8 +20,8 @@ jar {
     archiveClassifier = ''
 }
 dependencies {
-    compileOnly 'org.projectlombok:lombok:1.18.30'
-    annotationProcessor 'org.projectlombok:lombok:1.18.30'
+    compileOnly 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
 //project
     implementation(project(':sirius_cli'))
     implementation project(':sirius_nightsky_sdk')
