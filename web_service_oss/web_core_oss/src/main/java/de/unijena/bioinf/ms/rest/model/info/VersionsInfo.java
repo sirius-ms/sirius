@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -20,11 +20,11 @@
 
 package de.unijena.bioinf.ms.rest.model.info;
 
-import de.unijena.bioinf.ms.properties.PropertyManager;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 
 import java.sql.Timestamp;
-import java.util.*;
 
 public class VersionsInfo {
 
@@ -33,48 +33,27 @@ public class VersionsInfo {
      */
     public String databaseDate;
     public final DefaultArtifactVersion siriusGuiVersion;
+    @Setter
+    @Getter
     private DefaultArtifactVersion latestSiriusVersion = null;
+    @Setter
+    @Getter
     private String latestSiriusLink = null;
     //Expiry Dates
     public final boolean expired;
     public final Timestamp acceptJobs;
     public final Timestamp finishJobs;
 
-    //News
-    protected List<News> newsList;
-
     public VersionsInfo(String siriusGuiVersion, String databaseDate, boolean expired) {
-        this(siriusGuiVersion, databaseDate, expired, null, null, Collections.<News>emptyList());
+        this(siriusGuiVersion, databaseDate, expired, null, null);
     }
 
     public VersionsInfo(String siriusGuiVersion, String databaseDate, boolean expired, Timestamp acceptJobs, Timestamp finishJobs) {
-        this(siriusGuiVersion, databaseDate, expired, acceptJobs, finishJobs, Collections.<News>emptyList());
-    }
-
-    public VersionsInfo(String siriusGuiVersion, String databaseDate, boolean expired, Timestamp acceptJobs, Timestamp finishJobs, List<News> newsList) {
         this.siriusGuiVersion = new DefaultArtifactVersion(siriusGuiVersion);
         this.databaseDate = databaseDate;
         this.expired = expired;
         this.acceptJobs = acceptJobs;
         this.finishJobs = finishJobs;
-        this.newsList = filterNews(newsList);
-    }
-
-    /**
-     * filter already seen news
-     *
-     * @param newsList unfiltered news list
-     * @return filtered news list
-     */
-    private List<News> filterNews(List<News> newsList) {
-        List<News> filteredNews = new ArrayList<>();
-        final String property = News.PROPERTY_KEY;
-        final String propertyValue = PropertyManager.getProperty(property, null, "");
-        Set<String> knownNews = new HashSet<>(Arrays.asList(propertyValue.split(",")));
-        for (News news : newsList) {
-            if (!knownNews.contains(news.getId())) filteredNews.add(news);
-        }
-        return filteredNews;
     }
 
     public boolean outdated() {
@@ -95,33 +74,8 @@ public class VersionsInfo {
         return finishJobs.getTime() >= System.currentTimeMillis();
     }
 
-
-    public boolean hasNews() {
-        return (newsList != null && newsList.size() > 0);
-    }
-
-    public List<News> getNews() {
-        return newsList;
-    }
-
     public boolean databaseOutdated(String s) {
         return databaseDate.compareTo(s) > 0;
-    }
-
-    public DefaultArtifactVersion getLatestSiriusVersion() {
-        return latestSiriusVersion;
-    }
-
-    public void setLatestSiriusVersion(DefaultArtifactVersion latestSiriusVersion) {
-        this.latestSiriusVersion = latestSiriusVersion;
-    }
-
-    public String getLatestSiriusLink() {
-        return latestSiriusLink;
-    }
-
-    public void setLatestSiriusLink(String latestSiriusLink) {
-        this.latestSiriusLink = latestSiriusLink;
     }
 
     @Override
@@ -144,6 +98,4 @@ public class VersionsInfo {
     public static boolean areIncrementalEqual(DefaultArtifactVersion v1, DefaultArtifactVersion v2) {
         return areMinorEqual(v1, v2) && v1.getIncrementalVersion() == v2.getIncrementalVersion();
     }
-
-
 }

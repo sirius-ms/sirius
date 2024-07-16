@@ -5,7 +5,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -56,7 +56,6 @@ import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import de.unijena.bioinf.ms.rest.model.msnovelist.MsNovelistJobInput;
 import de.unijena.bioinf.ms.rest.model.msnovelist.MsNovelistJobOutput;
-import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.rest.ConnectionError;
 import de.unijena.bioinf.storage.blob.BlobStorage;
@@ -72,7 +71,6 @@ import java.util.Date;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import static de.unijena.bioinf.chemdb.custom.CustomDataSources.getWebDatabaseCacheDirectory;
 import static de.unijena.bioinf.chemdb.custom.CustomDataSources.getWebDatabaseCacheStorage;
 
 /**
@@ -136,8 +134,6 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
     }
 
     Multimap<ConnectionError.Klass, ConnectionError> checkConnection();
-
-    WorkerList getWorkerInfo() throws IOException;
 
 //    <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME) throws IOException;
     //endregion
