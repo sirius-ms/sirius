@@ -113,6 +113,9 @@ public class SiriusProjectDocumentDbAdapter implements SiriusDatabaseAdapter {
                     alignedFeatures.getApexMass(), alignedFeatures.getRetentionTime().getMiddleTime()/60d));
             return false;
         }
+        if (alignedFeatures.getCharge()==0) {
+            throw new IllegalArgumentException("Charge cannot be zero!");
+        }
         store.importAlignedFeatures(List.of(alignedFeatures));
         return true;
     }

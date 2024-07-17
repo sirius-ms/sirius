@@ -245,10 +245,10 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
         // decide for step size
         // should be at least 5% percentile of all step sizes of all samples
         stats.stepSizes.sort(null);
-        double stepSize = stats.stepSizes.getFloat((int)(stats.stepSizes.size()*0.1));
+        double stepSize = stats.stepSizes.getFloat((int)(stats.stepSizes.size()*0.05));
         // decide for length such that everything fits into the scale
-        double minRt = stats.minRt;
-        double maxRt = stats.maxRt;
+        double minRt = stats.minRt - (stats.maxRt-stats.minRt)*0.05;
+        double maxRt = stats.maxRt + (stats.maxRt-stats.minRt)*0.05;;
         int len = (int)Math.ceil((maxRt-minRt)/stepSize);
         // also check 10% of the largest scale lengths
         stats.mappingLengths.sort(null);
@@ -257,9 +257,9 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
         final int length = Math.max(len, len2)+1;
         final double[] rts = new double[length];
         final int[] scanpoints = new int[length];
-        rts[0] = stats.minRt;
-        rts[rts.length-1] = stats.maxRt;
-        stepSize = (stats.maxRt-stats.minRt)/rts.length;
+        rts[0] = minRt;
+        rts[rts.length-1] = maxRt;
+        stepSize = (maxRt-minRt)/rts.length;
         for (int k=1; k < rts.length-1; ++k) {
             rts[k] = rts[k-1]+stepSize;
         }
@@ -291,10 +291,12 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
             mzrel += st.getAverageDeviationWithinFwhm().getPpm();
             FloatArrayList stepSizes = new FloatArrayList();
             for (int k=1; k < M.length(); ++k) {
-                stepSizes.add((float)(M.getRetentionTimeAt(k)-M.getRetentionTimeAt(k-1)));
+                float stepsize = ((float)(M.getRetentionTimeAt(k)-M.getRetentionTimeAt(k-1)));
+                if (stepsize>0)
+                    stepSizes.add(stepsize);
             }
             stepSizes.sort(null);
-            stats.stepSizes.add(stepSizes.getFloat((int)(stepSizes.size()*0.1)));
+            stats.stepSizes.add(stepSizes.getFloat((int)(stepSizes.size()*0.05)));
         }
         mzabs /= samples.size();
         mzrel /= samples.size();
@@ -343,11 +345,6 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
             first.active();
             // transfer all mois to merge sample and recalibrate them
             for (MoI moi : first.getStorage().getAlignmentStorage()) {
-                {
-                    if (moi.getMz()>=236.1 && moi.getMz()<=236.2 && Range.closed(2.8,2.95).contains(moi.getRetentionTime()/60d)) {
-                        System.err.println("Ha!");
-                    }
-                }
                 storage.addMoI(AlignedMoI.merge(backbone, moi));
             }
             first.inactive();
@@ -364,15 +361,6 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
                         final MoI[] leftSet = storage.getMoIWithin(from, to).toArray(MoI[]::new);
                         final MoI[] rightSet = S.getStorage().getAlignmentStorage().getMoIWithin(from, to).stream().
                                 toArray(MoI[]::new);
-                        {
-                            for (MoI moi : rightSet) {
-                                {
-                                    if (moi.getMz()>=236.1 && moi.getMz()<=236.2 && Range.closed(2.8,2.95).contains(moi.getRetentionTime()/60d)) {
-                                        System.err.println("Ha!");
-                                    }
-                                }
-                            }
-                        }
                         if (leftSet.length>0 && rightSet.length > 0) {
                             algorithm.align(stats, scorer, backbone, leftSet, rightSet,
                                     (al, left, right, leftIndex, rightIndex) -> storage.mergeMoIs(al, left[leftIndex], right[rightIndex]),
