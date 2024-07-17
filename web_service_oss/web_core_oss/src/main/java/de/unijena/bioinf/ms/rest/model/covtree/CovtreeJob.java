@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -25,11 +25,15 @@ import de.unijena.bioinf.ms.rest.model.JobState;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
 import de.unijena.bioinf.ms.rest.model.JobWithPredictor;
+import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
+@Setter
+@Getter
 public class CovtreeJob extends JobWithPredictor<CovtreeJobOutput> {
 
     protected String covtree;
@@ -55,11 +59,6 @@ public class CovtreeJob extends JobWithPredictor<CovtreeJobOutput> {
         Optional.ofNullable(update.getData()).map(CovtreeJobOutput::getCovtree).ifPresent(this::setCovtree);
     }
 
-    public CovtreeJob(String workerPrefix, long lockedByWorker) {
-        this(workerPrefix, null);
-        setLockedByWorker(lockedByWorker);
-    }
-
     public CovtreeJob(String workerPrefix, JobState state) {
         this(workerPrefix, null, state);
     }
@@ -68,22 +67,6 @@ public class CovtreeJob extends JobWithPredictor<CovtreeJobOutput> {
         super(workerPrefix, jobId, state, JobTable.JOBS_COVTREE);
     }
 
-
-    public String getFormula() {
-        return formula;
-    }
-
-    public void setFormula(String formula) {
-        this.formula = formula;
-    }
-
-    public String getCovtree() {
-        return covtree;
-    }
-
-    public void setCovtree(String covtree) {
-        this.covtree = covtree;
-    }
 
     @Nullable
     @Override

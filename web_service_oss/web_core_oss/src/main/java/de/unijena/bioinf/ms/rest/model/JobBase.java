@@ -21,6 +21,8 @@
 package de.unijena.bioinf.ms.rest.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -28,10 +30,14 @@ import java.util.Optional;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JobBase {
     @NotNull
+    @Getter
     protected final JobTable jobTable;
-
+    @Setter
+    @Getter
     protected Long jobId;
     protected JobState state;
+    @Getter
+    @Setter
     protected String errorMessage;
 
 
@@ -67,27 +73,8 @@ public class JobBase {
         setStateEnum(state != null ? JobState.withId(state) : null);
     }
 
-    public String getErrorMessage() {
-        return errorMessage;
-    }
-
-    public void setErrorMessage(String errorMessage) {
-        this.errorMessage = errorMessage;
-    }
-
-    public @NotNull JobTable getJobTable() {
-        return jobTable;
-    }
-
     public JobId getID() {
         return new JobId(jobId,jobTable);
     }
 
-    public Long getJobId() {
-        return jobId;
-    }
-
-    public void setJobId(Long jobId) {
-        this.jobId = jobId;
-    }
 }
