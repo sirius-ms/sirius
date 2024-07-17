@@ -255,7 +255,7 @@ public class LCMSProcessing {
                 @Override
                 protected long[] compute() throws Exception {
                     MergedTrace mergedTrace = collectMergedTrace(merged, r.id);
-                    if (isSuitableForImport(mergedTrace)) {
+                    if (mergedTrace!=null && isSuitableForImport(mergedTrace)) {
                         return Arrays.stream(importer.importMergedTrace(mergedTraceSegmentationStrategy, siriusDatabaseAdapter, obj,merged, mergedTrace,allowMs1Only)).mapToLong(AlignedFeatures::getAlignedFeatureId).toArray();
                     }
                     return new long[0];
@@ -397,9 +397,6 @@ public class LCMSProcessing {
                 detectIsotopesForMoI(sample, trace, segment, moi);
 
                 moi.setConfidence(confidenceEstimatorStrategy.estimateConfidence(sample, trace, moi, null));
-                if (moi.getMz()>=236.1 && moi.getMz()<=236.2 && Range.closed(2.8,2.95).contains(moi.getRetentionTime()/60d)) {
-                    System.err.println("Ha!");
-                }
                 if (moi.getConfidence() >= 0) {
                     //System.out.println(moi + " intensity = " + moi.getIntensity() + ", isotopes = " + (moi.getIsotopes()==null ? 0 : moi.getIsotopes().isotopeIntensities.length) + ", confidence = "+ moi.getConfidence());
                     alignmentStorage.addMoI(moi);
@@ -421,6 +418,10 @@ public class LCMSProcessing {
         // collect all projectedTraces that have the given uid
         ProjectedTrace[] projectedTraces = merged.getStorage().getMergeStorage().getAllProjectedTracesOf(uid);
         ProjectedTrace[][] isotopes = merged.getStorage().getMergeStorage().getIsotopePatternFor(uid);
+        if (projectedTraces.length==0) {
+            LoggerFactory.getLogger(LCMSProcessing.class).error("Merged trace disappeared");
+            return null;
+        }
         return MergedTrace.collect(merged, sampleByIdx, projectedTraces, isotopes);
     }
 
