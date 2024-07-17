@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -28,10 +28,8 @@ import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
 import de.unijena.bioinf.ms.rest.client.AbstractCsiClient;
 import de.unijena.bioinf.ms.rest.model.JobTable;
-import de.unijena.bioinf.ms.rest.model.info.News;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
-import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -44,9 +42,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.net.URI;
 import java.sql.Timestamp;
-import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 
 public class InfoClient extends AbstractCsiClient {
     private static final String WEBAPI_VERSION_JSON = "/version.json";
@@ -96,11 +92,7 @@ public class InfoClient extends AbstractCsiClient {
                     }
                 }
 
-                List<News> newsList = Collections.emptyList();
-                if (o.has("news"))
-                    newsList = News.parseJsonNews(o.get("news"));
-
-                VersionsInfo v = new VersionsInfo(version, database, expired, accept, finish, newsList);
+                VersionsInfo v = new VersionsInfo(version, database, expired, accept, finish);
 
                 if (gui.has("latestVersion") && gui.get("latestVersion") != null)
                     v.setLatestSiriusVersion(new DefaultArtifactVersion(gui.get("latestVersion").asText()));
@@ -116,13 +108,6 @@ public class InfoClient extends AbstractCsiClient {
         return null;
     }
 
-    @Nullable
-    public WorkerList getWorkerInfo(@NotNull OkHttpClient client) throws IOException {
-        return executeFromJson(client,
-                () -> new Request.Builder().url(buildVersionSpecificWebapiURI(WEBAPI_WORKER_JSON).build()).get(),
-                new TypeReference<>() {}
-        );
-    }
 
     public SubscriptionConsumables getConsumables(@NotNull Date monthAndYear, boolean byMonth, @NotNull OkHttpClient client) throws IOException {
         return getConsumables(monthAndYear, null, byMonth, client);
@@ -133,7 +118,8 @@ public class InfoClient extends AbstractCsiClient {
                 () -> {
                     HttpUrl.Builder builder = buildVersionSpecificWebapiURI("/consumed-resources")
                             .addQueryParameter("date", Long.toString(monthAndYear.getTime()))
-                            .addQueryParameter("byMonth", Boolean.toString(byMonth));
+                            .addQueryParameter("byMonth", Boolean.toString(byMonth))
+                            .addQueryParameter("includePendingJobs", Boolean.toString(true));
                     if (jobType != null)
                         builder.addQueryParameter("jobType", new ObjectMapper().writeValueAsString(jobType));
 

@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -25,10 +25,14 @@ import de.unijena.bioinf.ms.rest.model.JobState;
 import de.unijena.bioinf.ms.rest.model.JobTable;
 import de.unijena.bioinf.ms.rest.model.JobUpdate;
 import de.unijena.bioinf.ms.rest.model.JobWithPredictor;
+import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
 
+@Setter
+@Getter
 public class FingerprintJob extends JobWithPredictor<FingerprintJobOutput> {
     protected byte[] inputJson;
     protected byte[] fingerprint; // LITTLE ENDIAN BINARY ENCODED PLATT PROBABILITIES
@@ -60,41 +64,12 @@ public class FingerprintJob extends JobWithPredictor<FingerprintJobOutput> {
     }
 
     //worker Constructor
-    public FingerprintJob(String workerPrefix, long lockedByWorker) {
-        this(workerPrefix, null);
-        setLockedByWorker(lockedByWorker);
-    }
-
     public FingerprintJob(String workerPrefix, JobState state) {
         this(workerPrefix, null, state);
     }
 
     public FingerprintJob(String workerPrefix, Long jobId, JobState state) {
         super(workerPrefix, jobId, state, JobTable.JOBS_FINGERID);
-    }
-
-    public byte[] getFingerprint() {
-        return fingerprint;
-    }
-
-    public byte[] getIokrVector() {
-        return iokrVector;
-    }
-
-    public void setIokrVector(byte[] iokrVector) {
-        this.iokrVector = iokrVector;
-    }
-
-    public void setFingerprint(byte[] fingerprints) {
-        this.fingerprint = fingerprints;
-    }
-
-    public byte[] getInputJson() {
-        return inputJson;
-    }
-
-    public void setInputJson(byte[] inputJson) {
-        this.inputJson = inputJson;
     }
 
     @Override

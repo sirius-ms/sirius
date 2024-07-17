@@ -4,7 +4,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -23,14 +23,19 @@ package de.unijena.bioinf.ms.rest.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import de.unijena.bioinf.fingerid.utils.FingerIDProperties;
+import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
 
 import java.sql.Timestamp;
 
+@Setter
+@Getter
 public abstract class Job<O> extends JobBase {
     protected String workerPrefix;
     protected Timestamp submissionTime;
-    protected Long lockedByWorker;
+    protected Timestamp lockedByWorker;
+    protected int numOfLocks;
     protected String cid;
     protected String userID;
     protected String version;
@@ -43,59 +48,6 @@ public abstract class Job<O> extends JobBase {
         super(jobId, state, table);
         this.workerPrefix = workerPrefix;
         this.version = FingerIDProperties.fingeridMinorVersion();
-    }
-
-    public String getWorkerPrefix() {
-        return workerPrefix;
-    }
-
-    public void setWorkerPrefix(String workerPrefix) {
-        this.workerPrefix = workerPrefix;
-    }
-
-    public Timestamp getSubmissionTime() {
-        return submissionTime;
-    }
-
-    public void setSubmissionTime(Timestamp submissionTime) {
-        this.submissionTime = submissionTime;
-    }
-
-    @JsonIgnore
-    public void setSubmissionTime(long submissionTime) {
-        this.submissionTime = new Timestamp(submissionTime);
-    }
-
-    public Long getLockedByWorker() {
-        return lockedByWorker;
-    }
-
-    public void setLockedByWorker(Long lockedByWorker) {
-        this.lockedByWorker = lockedByWorker;
-    }
-
-    public String getUserID() {
-        return userID;
-    }
-
-    public void setUserID(String userID) {
-        this.userID = userID;
-    }
-
-    public String getCid() {
-        return cid;
-    }
-
-    public void setCid(String cid) {
-        this.cid = cid;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
     }
 
     @Nullable
