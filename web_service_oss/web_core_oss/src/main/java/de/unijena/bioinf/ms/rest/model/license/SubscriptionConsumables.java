@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -21,17 +21,16 @@
 package de.unijena.bioinf.ms.rest.model.license;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.Getter;
+import lombok.Setter;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@Getter
+@Setter
 public class SubscriptionConsumables {
+    private Integer pendingJobs;
     //todo at the time frame of this values
     private int countedCompounds = -1;
-
-    public int getCountedCompounds() {
-        return countedCompounds;
-    }
-
-    public void setCountedCompounds(int countedCompounds) {
-        this.countedCompounds = countedCompounds;
-    }
 }

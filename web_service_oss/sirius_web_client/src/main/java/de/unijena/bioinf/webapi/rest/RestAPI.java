@@ -69,7 +69,6 @@ import de.unijena.bioinf.ms.rest.model.license.Subscription;
 import de.unijena.bioinf.ms.rest.model.license.SubscriptionConsumables;
 import de.unijena.bioinf.ms.rest.model.msnovelist.MsNovelistJobInput;
 import de.unijena.bioinf.ms.rest.model.msnovelist.MsNovelistJobOutput;
-import de.unijena.bioinf.ms.rest.model.worker.WorkerList;
 import de.unijena.bioinf.ms.webapi.WebJJob;
 import de.unijena.bioinf.rest.ConnectionError;
 import de.unijena.bioinf.rest.HttpErrorResponseException;
@@ -333,9 +332,6 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
         }
     }
 
-    public WorkerList getWorkerInfo() throws IOException {
-        return ProxyManager.applyClient(serverInfoClient::getWorkerInfo);
-    }
     //endregion
 
     //region Jobs
