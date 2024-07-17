@@ -250,6 +250,12 @@ subprojects {
                     }
                     into(appRootTarget)
                 }
+                copy {
+                    from(zipTree("${rootDir}/dist/ExplorerLicTester.zip"))
+                    into { //use closure to move path resolutiop to execution phase
+                        getImageDir()
+                    }
+                }
             } else if (siriusTargetPlatform.isLinux()) {
                 delete appRootTarget.toPath().resolve("lib/libapplauncher.so").toFile()
             }
