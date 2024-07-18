@@ -17,7 +17,13 @@ ext {
     jre_version = '21.0.3'
     zulu_jre_version = '21.34.19'
     jre_major = zulu_jre_version.split("[.]")[0]
-
+    siriusJvmArgs = ['-Xms1G',
+                     '-XX:MaxRAMPercentage=80',
+//                                 '-XX:+UseG1GC',
+//                                 '-XX:+UseStringDeduplication',
+                     '-XX:+UseZGC',
+                     '-XX:+ZGenerational',
+                     '-XX:+ExitOnOutOfMemoryError']
     OS = DefaultNativePlatform.currentOperatingSystem
 
     if (siriusTargetPlatform.isLinux()) {
@@ -172,13 +178,7 @@ subprojects {
         headerType = "console"
         outfile = "sirius.exe"
 
-        //todo replace
-        jvmOptions = [
-                '-Xms1G',
-                '-XX:MaxRAMPercentage=85',
-                '-XX:+UseG1GC',
-                '-XX:+UseStringDeduplication',
-                '-XX:+ExitOnOutOfMemoryError',
+        jvmOptions = project.siriusJvmArgs + [
                 '-Djava.library.path=.\\'
         ]
 
