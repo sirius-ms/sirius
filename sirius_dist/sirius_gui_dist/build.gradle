@@ -77,13 +77,7 @@ def mainJar = getRootProject().getChildProjects().get('sirius_rest_service').tas
 
 application {
     mainClass = project.mainClassName
-    applicationDefaultJvmArgs = ['-Xms1G',
-                                 '-XX:MaxRAMPercentage=60',
-                                 '-XX:+UseG1GC',
-//                                 '-XX:+UseShenandoahGC',
-//                                 '-XX:+UseZGC',
-                                 '-XX:+UseStringDeduplication',
-                                 '-XX:+ExitOnOutOfMemoryError']
+    applicationDefaultJvmArgs = project.siriusJvmArgs
     executableDir = 'bin'
 }
 
@@ -91,7 +85,7 @@ application {
 launch4j {
     mainClassName = project.mainClassName
     jar = getLibraryDir() + "\\$mainJar"
-    jvmOptions = application.applicationDefaultJvmArgs as Set
+    jvmOptions = project.siriusJvmArgs as Set
 }
 
 //additional GUI win launcher
@@ -106,7 +100,7 @@ createGuiExe.dependsOn 'launch4j'
 
 startScripts {
     applicationName = "sirius"
-    defaultJvmOpts = application.applicationDefaultJvmArgs
+    defaultJvmOpts = project.siriusJvmArgs
 
     doLast {
         // writer sh script
