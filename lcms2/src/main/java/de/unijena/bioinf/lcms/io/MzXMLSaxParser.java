@@ -370,15 +370,15 @@ class MzXMLSaxParser extends DefaultHandler {
                                             .build();
                                     scanConsumer.consume(scan);
                                     ms1Ids.put(scanNumber, scan.getScanId());
-
-                                    final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(),scanNumber, Integer.toString(scanNumber), polarity.charge, centroided);
-                                    retentionTimes.add(retentionTime);
-                                    idmap.put(scanNumber, scanids.size());
-                                    scanids.add(scanNumber);
-                                    storage.getSpectrumStorage().addSpectrum(header, peaks);
                                 }
+
+                                final Ms1SpectrumHeader header = new Ms1SpectrumHeader(scanids.size(),scanNumber, Integer.toString(scanNumber), polarity.charge, centroided);
+                                retentionTimes.add(retentionTime);
+                                idmap.put(scanNumber, scanids.size());
+                                scanids.add(scanNumber);
+                                storage.getSpectrumStorage().addSpectrum(header, peaks);
                             } else {
-                                if (msmsScanConsumer != null) {
+                                if (scanConsumer != null && msmsScanConsumer != null) {
                                     MSMSScan scan = MSMSScan.builder()
                                             .runId(run.getRunId())
                                             .scanNumber(Integer.toString(scanNumber))
