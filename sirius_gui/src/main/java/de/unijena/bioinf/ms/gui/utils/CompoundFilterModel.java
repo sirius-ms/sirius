@@ -80,8 +80,6 @@ public class CompoundFilterModel implements SiriusPCS {
     private boolean hasMs1 = false;
     @Getter
     private boolean hasMsMs = true;
-    @Getter
-    private int currentMinIsotopePeaks;
 
     @Setter
     private Set<PrecursorIonType> adducts = DEFAULT_ADDUCTS;
@@ -108,18 +106,13 @@ public class CompoundFilterModel implements SiriusPCS {
     private final double maxRt;
 
     @Getter
-    private final int minIsotopePeaks;
-    @Getter
-    private final int maxIsotopePeaks;
-
-    @Getter
     private final double minConfidence;
     @Getter
     private final double maxConfidence;
 
 
     public CompoundFilterModel() {
-        this(0, 5000d, 0, 10000d, 0, 1d, 0, Integer.MAX_VALUE);
+        this(0, 5000d, 0, 10000d, 0, 1d);
     }
 
 
@@ -134,7 +127,7 @@ public class CompoundFilterModel implements SiriusPCS {
      * @param minConfidence
      * @param maxConfidence
      */
-    public CompoundFilterModel(double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence, int minIsotopePeaks, int maxIsotopePeaks) {
+    public CompoundFilterModel(double minMz, double maxMz, double minRt, double maxRt, double minConfidence, double maxConfidence) {
         this.featureQualityFilter.dataQualities.remove(DataQuality.BAD);
         this.featureQualityFilter.dataQualities.remove(DataQuality.LOWEST);
         this.currentMinMz = minMz;
@@ -143,7 +136,7 @@ public class CompoundFilterModel implements SiriusPCS {
         this.currentMaxRt = maxRt;
         this.currentMinConfidence = minConfidence;
         this.currentMaxConfidence = maxConfidence;
-        this.currentMinIsotopePeaks = minIsotopePeaks;
+
 
         this.minMz = minMz;
         this.maxMz = maxMz;
@@ -151,8 +144,7 @@ public class CompoundFilterModel implements SiriusPCS {
         this.maxRt = maxRt;
         this.minConfidence = minConfidence;
         this.maxConfidence = maxConfidence;
-        this.minIsotopePeaks = minIsotopePeaks;
-        this.maxIsotopePeaks = maxIsotopePeaks;
+
     }
 
     public void fireUpdateCompleted() {
@@ -160,10 +152,6 @@ public class CompoundFilterModel implements SiriusPCS {
         pcs.firePropertyChange("filterUpdateCompleted", null, this);
     }
 
-
-    public boolean isMinIsotopePeaksFilterEnabled() {
-        return currentMinIsotopePeaks != minIsotopePeaks;
-    }
 
     public boolean isLipidFilterEnabled() {
         return lipidFilter != LipidFilter.KEEP_ALL_COMPOUNDS;
@@ -215,14 +203,7 @@ public class CompoundFilterModel implements SiriusPCS {
         pcs.firePropertyChange("setHasMsMs", old, hasMsMs);
     }
 
-    public void setCurrentMinIsotopePeaks(int currentMinIsotopePeaks) {
-        if (currentMinIsotopePeaks < minIsotopePeaks)
-            throw new IllegalArgumentException("current value out of range: " + currentMinMz);
-        int oldValue = this.currentMinIsotopePeaks;
-        this.currentMinIsotopePeaks = currentMinIsotopePeaks;
-        pcs.firePropertyChange("setMinIsotopePeaks", oldValue, currentMinIsotopePeaks);
 
-    }
 
     public void setCurrentMinMz(double currentMinMz) {
         if (currentMinMz < minMz) throw new IllegalArgumentException("current value out of range: " + currentMinMz);
