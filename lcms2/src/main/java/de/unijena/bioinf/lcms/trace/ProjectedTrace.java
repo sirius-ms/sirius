@@ -48,16 +48,29 @@ public class ProjectedTrace implements Serializable {
         for (int k=0; k < rawMz.length; ++k) {
             if (Double.isFinite(rawMz[k])) {
                 this.rawMz[k] = (float) (rawMz[k] - this.averagedMz);
-            } else rawMz[k] = 0f;
+            } else {
+                // this happens when a trace spans multiple peaks which are islands, i.e. there are zero intensity
+                // regions between them
+                // it is important to always check the intensity, which is 0 at these places
+                rawMz[k] = 0;
+            }
         }
         this.projectedMz = new float[projectedMz.length];
         for (int k=0; k < projectedMz.length; ++k) {
             if (Double.isFinite(projectedMz[k])) {
                 this.projectedMz[k] = (float) (projectedMz[k] - this.averagedMz);
-            } else projectedMz[k] = 0f;
+            } else {
+                // this happens when a trace spans multiple peaks which are islands, i.e. there are zero intensity
+                // regions between them
+                // it is important to always check the intensity, which is 0 at these places
+                projectedMz[k] = 0;
+            }
         }
         this.rawIntensities = rawIntensities;
         this.projectedIntensities = projectedIntensities;
+        if (projectedMz.length>= 100*rawMz.length) {
+            throw new RuntimeException("Something weird is going on here oO");
+        }
     }
 
     public int getSampleId() {

@@ -61,7 +61,13 @@ public final class RetentionTime implements Ms2ExperimentAnnotation, Comparable<
     @JsonCreator
     public RetentionTime(@JsonProperty("start") double start, @JsonProperty("end") double end, @JsonProperty("middle") double maximum) {
         if (!Double.isNaN(start)) {
-            if (start >= end)
+            /**
+             * This is really annoying, but:
+             * - the current implementation of the class seem to be not really friendly to using retention time ranges and single scalars interchangeably
+             * - it CAN happen during preprocessing, that a ion spans several scan ids that all match to the same retention time after recalibration. I don't think we can avoid that
+             * - so I allow for this edge case (which happens super rarely anyways): retention time ranges might have zero length.
+             */
+            if (start > end)
                 throw new IllegalArgumentException("No proper interval given: [" + start + ", " + end + "]" );
             if (maximum < start || maximum > end) {
                 throw new IllegalArgumentException("Given retention time middle is not in range: " + maximum + " is not in [" + start + ", " + end + "]" );
