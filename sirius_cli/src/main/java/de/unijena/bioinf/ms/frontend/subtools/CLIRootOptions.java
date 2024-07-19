@@ -106,7 +106,7 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
     public void setInitialInstanceBuffer(int initialInstanceBuffer) {
         this.instanceBuffer = initialInstanceBuffer;
         if (instanceBuffer == 0) {
-            instanceBuffer = 10 * SiriusJobs.getGlobalJobManager().getCPUThreads();
+            instanceBuffer = 5 * SiriusJobs.getGlobalJobManager().getCPUThreads();
         }
 
         PropertyManager.setProperty("de.unijena.bioinf.sirius.instanceBuffer", String.valueOf(instanceBuffer));
