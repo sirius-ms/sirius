@@ -170,7 +170,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 app.addListeners(new WebServerPortFileWriter(Workspace.PORT_FILE.toFile()));
 
                 app.run(args);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(1);// Zero because this is the help message case
             }
