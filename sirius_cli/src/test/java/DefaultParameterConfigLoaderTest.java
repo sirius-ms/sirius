@@ -26,7 +26,7 @@ public class DefaultParameterConfigLoaderTest {
         }
         final DefaultParameterConfigLoader builder = new DefaultParameterConfigLoader();
         final List<CommandLine.Model.OptionSpec> options = new ArrayList<>(builder.getOptions().values());
-        final CommandLine.Model.CommandSpec spec = CommandLine.Model.CommandSpec.forAnnotatedObject(new CLIRootOptions<>(builder, null));
+        final CommandLine.Model.CommandSpec spec = CommandLine.Model.CommandSpec.forAnnotatedObject(new CLIRootOptions(builder, null));
         for (CommandLine.Model.OptionSpec option : options) {
             spec.addOption(option);
         }
