@@ -108,7 +108,7 @@ public class SiriusProjectDocumentDbAdapter implements SiriusDatabaseAdapter {
     @Override
     public boolean importAlignedFeature(AlignedFeatures alignedFeatures) throws IOException {
         if (Math.abs(alignedFeatures.getCharge()) > 1) {
-            LoggerFactory.getLogger(SiriusProjectDocumentDbAdapter.class).warn(String.format(Locale.US,
+            LoggerFactory.getLogger(SiriusProjectDocumentDbAdapter.class).debug(String.format(Locale.US,
                     "SIRIUS does not support multiple charged ions yet. This feature will be ignored: m/z = %.4f, rt = %.2f minutes",
                     alignedFeatures.getApexMass(), alignedFeatures.getRetentionTime().getMiddleTime()/60d));
             return false;

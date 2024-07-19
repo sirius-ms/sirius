@@ -30,23 +30,44 @@ import java.util.Arrays;
 public class WaveletFilter implements Filter {
 
     /**
-     * Parameters of the wavelet, NPOINTS is the number of wavelet values to use The WAVELET_ESL &
-     * WAVELET_ESL indicates the Effective Support boundaries
+     * number of wavelet points
      */
     private static final double NPOINTS = 60000;
+    /**
+     * Left effective support boundary
+     */
     private static final int WAVELET_ESL = -5;
+    /**
+     * Right effective support boundary
+     */
     private static final int WAVELET_ESR = 5;
 
+    /**
+     * Scale level. The higher the scale level, the broader peaks will appear in the resulting convolution.
+     */
     private final int scaleLevel;
-    private final double waveletWindow;
 
-    public WaveletFilter(int scaleLevel, double waveletWindow) {
+    /**
+     * The wavelet
+     */
+    private final double[] W;
+
+
+    public WaveletFilter(int scaleLevel) {
         this.scaleLevel = scaleLevel;
-        this.waveletWindow = waveletWindow;
+
+        double wstep = ((WAVELET_ESR - WAVELET_ESL) / NPOINTS);
+        W = new double[(int) NPOINTS];
+        double waveletIndex = WAVELET_ESL;
+        for (int j = 0; j < NPOINTS; j++) {
+            // Pre calculate the values of the wavelet
+            W[j] = cwtMEXHATreal(waveletIndex);
+            waveletIndex += wstep;
+        }
     }
 
     /**
-     * Perform the CWT over raw data points in the selected scale level
+     * Perform the CWT over raw data points
      */
     @Override
     public double[] apply(double[] src) {
@@ -61,15 +82,6 @@ public class WaveletFilter implements Filter {
         norm /= 1d;
 
         double[] cwtDataPoints = new double[src.length];
-        double wstep = ((WAVELET_ESR - WAVELET_ESL) / NPOINTS);
-        double[] W = new double[(int) NPOINTS];
-
-        double waveletIndex = WAVELET_ESL;
-        for (int j = 0; j < NPOINTS; j++) {
-            // Pre calculate the values of the wavelet
-            W[j] = cwtMEXHATreal(waveletIndex, waveletWindow, 0.0);
-            waveletIndex += wstep;
-        }
 
         /*
          * We only perform Translation of the wavelet in the selected scale
@@ -116,21 +128,12 @@ public class WaveletFilter implements Filter {
     /**
      * This function calculates the wavelets's coefficients in Time domain
      *
-     * @param x Step of the wavelet
-     * @param a Window Width of the wavelet
-     * @param b Offset from the center of the peak
+     * @param x Step of the wavelett
      */
-    private double cwtMEXHATreal(double x, double a, double b) {
+    private static double cwtMEXHATreal(double x) {
         /* c = 2 / ( sqrt(3) * pi^(1/4) ) */
         double c = 0.8673250705840776;
-        double TINY = 1E-200;
-        double x2;
-
-        if (a == 0.0) {
-            a = TINY;
-        }
-        x = (x - b) / a;
-        x2 = x * x;
+        double x2 = x * x;
         return c * (1.0 - x2) * Math.exp(-x2 / 2);
     }
 

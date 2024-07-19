@@ -8,8 +8,10 @@ application {
     mainClass = "de.unijena.bioinf.lcms.TestMain"
     applicationDefaultJvmArgs = ['-Xms1G',
                                  '-XX:MaxRAMPercentage=85',
-                                 '-XX:+UseG1GC',
-                                 '-XX:+UseStringDeduplication',
+//                                 '-XX:+UseG1GC',
+//                                 '-XX:+UseStringDeduplication',
+                                 '-XX:+UseZGC',
+                                 '-XX:+ZGenerational',
                                  '-XX:+ExitOnOutOfMemoryError']
 }
 
