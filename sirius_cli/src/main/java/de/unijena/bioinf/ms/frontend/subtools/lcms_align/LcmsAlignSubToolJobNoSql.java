@@ -104,7 +104,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         this.alignRuns = !options.noAlign;
         this.allowMs1Only = !options.forbidMs1Only;
         this.mergedTraceSegmenter = new PersistentHomology(switch (options.smoothing) {
-            case AUTO -> inputFiles.size() < 3 ? new WaveletFilter(20, 10) : new NoFilter();
+            case AUTO -> inputFiles.size() < 3 ? new GaussFilter(0.5) : new NoFilter();
             case NOFILTER -> new NoFilter();
             case GAUSSIAN -> new GaussFilter(options.sigma);
             case WAVELET -> new WaveletFilter(options.scaleLevel, options.waveletWindow);
@@ -134,7 +134,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         this.alignRuns = alignRuns;
         this.allowMs1Only = allowMs1Only;
         this.mergedTraceSegmenter = new PersistentHomology(switch (filter) {
-            case AUTO -> inputFiles.size() < 3 ? new WaveletFilter(20, 10) : new NoFilter();
+            case AUTO -> inputFiles.size() < 3 ? new GaussFilter(0.5) : new NoFilter();
             case NOFILTER -> new NoFilter();
             case GAUSSIAN -> new GaussFilter(sigma);
             case WAVELET -> new WaveletFilter(scale, window);
