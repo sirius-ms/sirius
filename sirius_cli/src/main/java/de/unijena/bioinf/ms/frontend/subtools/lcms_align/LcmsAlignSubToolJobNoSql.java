@@ -107,7 +107,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             case AUTO -> inputFiles.size() < 3 ? new GaussFilter(0.5) : new NoFilter();
             case NOFILTER -> new NoFilter();
             case GAUSSIAN -> new GaussFilter(options.sigma);
-            case WAVELET -> new WaveletFilter(options.scaleLevel, options.waveletWindow);
+            case WAVELET -> new WaveletFilter(options.scaleLevel);
         }, options.noiseCoefficient, options.persistenceCoefficient, options.mergeCoefficient);
         this.saveImportedCompounds = false;
     }
@@ -120,7 +120,6 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             DataSmoothing filter,
             double sigma,
             int scale,
-            double window,
             double noise,
             double persistence,
             double merge,
@@ -137,7 +136,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             case AUTO -> inputFiles.size() < 3 ? new GaussFilter(0.5) : new NoFilter();
             case NOFILTER -> new NoFilter();
             case GAUSSIAN -> new GaussFilter(sigma);
-            case WAVELET -> new WaveletFilter(scale, window);
+            case WAVELET -> new WaveletFilter(scale);
         }, noise, persistence, merge);
         this.saveImportedCompounds = saveImportedCompounds;
     }

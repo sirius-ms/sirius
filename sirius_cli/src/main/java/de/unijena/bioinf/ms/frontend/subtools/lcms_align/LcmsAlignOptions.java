@@ -73,9 +73,6 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<Proj
     @CommandLine.Option(names={"--scale"}, defaultValue = "20", description = "Number of coefficients for wavelet filter algorithm.", hidden = true)
     public int scaleLevel;
 
-    @CommandLine.Option(names={"--window"}, defaultValue = "10", description = "Wavelet window size (%) for wavelet filter algorithm.", hidden = true)
-    public double waveletWindow;
-
     @CommandLine.Option(names={"--noise"}, defaultValue = "2.0", description = "Features must be larger than <value> * detected noise level.", hidden = true)
     public double noiseCoefficient;
 
