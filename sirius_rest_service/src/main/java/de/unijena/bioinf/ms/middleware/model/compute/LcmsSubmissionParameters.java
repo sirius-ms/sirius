@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.model.compute;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import de.unijena.bioinf.lcms.trace.filter.SavitzkyGolayFilter;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.DataSmoothing;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -77,8 +78,8 @@ public class LcmsSubmissionParameters {
     /**
      * Wavelet window size (%) for wavelet filter algorithm.
      */
-    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "11")
-    protected double waveletWindow;
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "AUTO", enumAsRef = true)
+    protected SavitzkyGolayFilter.SGF savitzyGolayType;
 
 
 }

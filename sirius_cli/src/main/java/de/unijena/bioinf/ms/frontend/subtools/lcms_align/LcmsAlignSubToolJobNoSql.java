@@ -38,6 +38,7 @@ import de.unijena.bioinf.lcms.quality.QualityAssessment;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.filter.GaussFilter;
 import de.unijena.bioinf.lcms.trace.filter.NoFilter;
+import de.unijena.bioinf.lcms.trace.filter.SavitzkyGolayFilter;
 import de.unijena.bioinf.lcms.trace.filter.WaveletFilter;
 import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
@@ -104,10 +105,11 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         this.alignRuns = !options.noAlign;
         this.allowMs1Only = !options.forbidMs1Only;
         this.mergedTraceSegmenter = new PersistentHomology(switch (options.smoothing) {
-            case AUTO -> inputFiles.size() < 3 ? new WaveletFilter(20, 10) : new NoFilter();
+            case AUTO -> inputFiles.size() < 3 ? new WaveletFilter(8) : new NoFilter();
             case NOFILTER -> new NoFilter();
             case GAUSSIAN -> new GaussFilter(options.sigma);
-            case WAVELET -> new WaveletFilter(options.scaleLevel, options.waveletWindow);
+            case WAVELET -> new WaveletFilter(options.scaleLevel);
+            case SAVITZKY_GOLAY -> new SavitzkyGolayFilter(options.savitzkyGolayType);
         }, options.noiseCoefficient, options.persistenceCoefficient, options.mergeCoefficient);
         this.saveImportedCompounds = false;
     }
@@ -120,7 +122,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             DataSmoothing filter,
             double sigma,
             int scale,
-            double window,
+            SavitzkyGolayFilter.SGF sgf,
             double noise,
             double persistence,
             double merge,
@@ -134,10 +136,11 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         this.alignRuns = alignRuns;
         this.allowMs1Only = allowMs1Only;
         this.mergedTraceSegmenter = new PersistentHomology(switch (filter) {
-            case AUTO -> inputFiles.size() < 3 ? new WaveletFilter(20, 10) : new NoFilter();
+            case AUTO -> inputFiles.size() < 3 ? new WaveletFilter(8) : new NoFilter();
             case NOFILTER -> new NoFilter();
             case GAUSSIAN -> new GaussFilter(sigma);
-            case WAVELET -> new WaveletFilter(scale, window);
+            case WAVELET -> new WaveletFilter(scale);
+            case SAVITZKY_GOLAY -> new SavitzkyGolayFilter(sgf);
         }, noise, persistence, merge);
         this.saveImportedCompounds = saveImportedCompounds;
     }

@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.workflows.LCMSWorkflow;
+import de.unijena.bioinf.lcms.trace.filter.SavitzkyGolayFilter;
 import de.unijena.bioinf.ms.frontend.subtools.*;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.NitriteProjectSpaceManagerFactory;
@@ -73,8 +74,8 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<Proj
     @CommandLine.Option(names={"--scale"}, defaultValue = "20", description = "Number of coefficients for wavelet filter algorithm.", hidden = true)
     public int scaleLevel;
 
-    @CommandLine.Option(names={"--window"}, defaultValue = "10", description = "Wavelet window size (%) for wavelet filter algorithm.", hidden = true)
-    public double waveletWindow;
+    @CommandLine.Option(names={"--sg"}, defaultValue = "AUTO", description = "Savitzky-Golay filter type.", hidden = true)
+    public SavitzkyGolayFilter.SGF savitzkyGolayType;
 
     @CommandLine.Option(names={"--noise"}, defaultValue = "2.0", description = "Features must be larger than <value> * detected noise level.", hidden = true)
     public double noiseCoefficient;
