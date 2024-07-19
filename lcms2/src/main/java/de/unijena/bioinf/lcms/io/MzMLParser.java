@@ -85,7 +85,9 @@ public class MzMLParser implements LCMSParser {
             @Nullable LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
             LCMSRun run
     ) throws IOException {
-        return parse(input, storageFactory, new MzMLUnmarshaller(input.toURL()), runConsumer, runUpdateConsumer, scanConsumer, msmsScanConsumer, run);
+        URI parent = input.getPath().endsWith("/") ? input.resolve("..") : input.resolve(".");
+        String fileName = parent.relativize(input).toString();
+        return parse(parent, fileName, storageFactory, new MzMLUnmarshaller(input.toURL()), runConsumer, runUpdateConsumer, scanConsumer, msmsScanConsumer, run);
     }
 
     @Override
@@ -98,11 +100,12 @@ public class MzMLParser implements LCMSParser {
             @Nullable LCMSParser.IOThrowingConsumer<MSMSScan> msmsScanConsumer,
             LCMSRun run
     ) throws IOException {
-        return parse(input.toUri(), storageFactory, new MzMLUnmarshaller(createTempFile(input)), runConsumer, runUpdateConsumer, scanConsumer, msmsScanConsumer, run);
+        return parse(input.getParent().toUri(), input.getFileName().toString(), storageFactory, new MzMLUnmarshaller(createTempFile(input)), runConsumer, runUpdateConsumer, scanConsumer, msmsScanConsumer, run);
     }
 
     private ProcessedSample parse(
-            URI input,
+            URI parent,
+            String fileName,
             LCMSStorageFactory storageFactory,
             MzMLUnmarshaller um,
             LCMSParser.IOThrowingConsumer<LCMSRun> runConsumer,
@@ -121,13 +124,10 @@ public class MzMLParser implements LCMSParser {
                 Map<String, String> runAtts = um.getSingleElementAttributes("/run");
                 final String runId = runAtts.get("id");
                 // get source location oO
-
-                URI parent = input.getPath().endsWith("/") ? input.resolve("..") : input.resolve(".");
-                String fileName = parent.relativize(input).toString();
                 reference = new MsDataSourceReference(parent, fileName, runId, mzMlId);
             }
 
-            run.setName(mzMlId != null && !mzMlId.isBlank() ? mzMlId : FileUtils.getFileName(input));
+            run.setName(mzMlId != null && !mzMlId.isBlank() ? mzMlId : fileName);
             run.setSourceReference(reference);
 
             final DoubleArrayList retentionTimes = new DoubleArrayList();
@@ -384,7 +384,7 @@ public class MzMLParser implements LCMSParser {
             }
 
             if (scanids.isEmpty()) {
-                throw new RuntimeException("No spectra imported from " + input);
+                throw new RuntimeException("No spectra imported from " + fileName);
             }
 
             if (fragmentation != null) {
