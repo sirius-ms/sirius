@@ -64,7 +64,6 @@ public class ImportAction extends AbstractGuiAction {
                 "<ul style=\"list-style-type:none;\">" +
                 "  <li>- Multiple compounds (e.g. .ms, .mgf)</li>" +
                 "  <li>- LC-MS/MS runs (.mzML, .mzXml)</li>" +
-                "  <li>- Projects (.sirius)</li>" +
                 "</ul>" +
                 "<p>into the current project-space. (Same as drag and drop)</p>" +
                 "</html>");
@@ -77,7 +76,6 @@ public class ImportAction extends AbstractGuiAction {
         chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         chooser.setMultiSelectionEnabled(true);
         chooser.addChoosableFileFilter(new MsBatchDataFormatFilter());
-        chooser.addChoosableFileFilter(new ProjectArchivedFilter());
         chooser.setAcceptAllFileFilterUsed(false);
         int returnVal = chooser.showDialog(mainFrame, "Import");
 
