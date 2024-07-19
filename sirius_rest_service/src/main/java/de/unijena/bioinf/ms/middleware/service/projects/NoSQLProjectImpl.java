@@ -665,7 +665,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     private FeatureAnnotations extractTopAnnotations(long longAFIf, Class<? extends StructureMatch> clzz) {
         final FeatureAnnotations cSum = new FeatureAnnotations();
 
-        StructureMatch structureMatch = project().findByFeatureIdStr(longAFIf, clzz)
+        StructureMatch structureMatch = project().findByFeatureIdStr(longAFIf, clzz, "structureRank", Database.SortOrder.ASCENDING)
                 .findFirst().orElse(null);
 
 
