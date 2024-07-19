@@ -147,7 +147,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             final TwoColumnPanel dataParameters = new TwoColumnPanel();
             centerTab.addTab("Data Quality", dataParameters);
 
-            //isotope peak filter
+            //MS data availability filter
             {
                 dataParameters.add(Box.createVerticalStrut(5));
                 dataParameters.add(new JXTitledSeparator("MS Data Quality"));
