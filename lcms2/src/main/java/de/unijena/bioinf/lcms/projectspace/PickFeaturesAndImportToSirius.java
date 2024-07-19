@@ -131,7 +131,6 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         AlignedFeatures[] features = new AlignedFeatures[traceSegments.length];
         for (int fid=0; fid < traceSegments.length; ++fid) {
             if (traceSegments[fid]==null) continue;
-            if (traceSegments[fid].leftEdge == traceSegments[fid].rightEdge) continue;
             features[fid] = new AlignedFeatures();
             features[fid].setDetectedAdducts(new DetectedAdducts());
             features[fid].setFeatures(new ArrayList<>());
