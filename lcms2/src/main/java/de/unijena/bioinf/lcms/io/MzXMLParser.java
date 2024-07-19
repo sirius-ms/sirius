@@ -51,7 +51,7 @@ public class MzXMLParser implements LCMSParser {
     ) throws IOException {
         try {
             String name = input.getFileName().toString();
-            run.setSourceReference(new MsDataSourceReference(input.toString(), name, null, null));
+            run.setSourceReference(new MsDataSourceReference(input.getParent().toUri(), name, null, null));
             runConsumer.consume(run);
             MzXMLSaxParser saxParser = new MzXMLSaxParser(
                     name,
