@@ -76,7 +76,9 @@ public class MergedTrace implements Trace {
             } else mz[k] = Double.NaN;
         }
         avgMz /= intSum;
-
+        if (!Double.isFinite(avgMz)) {
+            throw new IllegalArgumentException();
+        }
         return new MergedTrace(mz, avgMz, MatrixUtils.double2float(intensity), mergedMapping, mindex, maxdex, mindex+apexOffset, isotopes, samples.toArray(ProcessedSample[]::new), projectedTraces);
 
 

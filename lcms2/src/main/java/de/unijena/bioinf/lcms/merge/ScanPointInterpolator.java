@@ -113,22 +113,63 @@ public class ScanPointInterpolator {
         return (float)(srcArray[targetLeft]*(1-alpha) + (alpha)*srcArray[targetRight]);
     }
 
-    public float interpolateIntensity(Trace t, int k) {
+    public float interpolateIntensity(Trace t, int k, int leftEdge, int rightEdge) {
         float tg = k >= left2right.length ? Float.NEGATIVE_INFINITY : (left2right[k]);
         if (!Float.isFinite(tg)) return 0f;
         int targetLeft = (int)tg;
         int targetRight = (int)Math.ceil(tg);
+
+        if (targetLeft < leftEdge) {
+            if (targetRight < leftEdge) {
+                // this is a weird edge case when the projected trace has larger stepsize than the raw trace
+                // if this happens we use the maximum over all raw bins
+                float tg2 = k+1 >= left2right.length ? Float.NEGATIVE_INFINITY : (left2right[k+1]);
+                if (!Float.isFinite(tg2)) {
+                    targetLeft = targetRight = leftEdge;
+                } else {
+                    int k2 = Math.min(rightEdge, (int)(leftEdge + (tg2-leftEdge)/2));
+                    float mx = Float.NEGATIVE_INFINITY;
+                    for (int i=leftEdge; i <= k2; ++i) mx = Math.max(t.intensity(i),mx);
+                    return mx;
+                }
+            } else {
+                targetLeft = targetRight;
+            }
+        }
+        if (targetRight > rightEdge) {
+            if (targetLeft > rightEdge) {
+                // this is a weird edge case when the projected trace has larger stepsize than the raw trace
+                // if this happens we use the maximum over all raw bins
+                float tg2 = k-1 >= left2right.length ? Float.NEGATIVE_INFINITY : (left2right[k-1]);
+                if (!Float.isFinite(tg2)) {
+                    targetLeft = targetRight = rightEdge;
+                } else {
+                    int k2 = Math.max(leftEdge, (int)(rightEdge - (rightEdge-tg2)/2));
+                    float mx = Float.NEGATIVE_INFINITY;
+                    for (int i=k2; i <= rightEdge; ++i) mx = Math.max(t.intensity(i),mx);
+                    return mx;
+                }
+            } else {
+                targetRight = targetLeft;
+            }
+        }
+
         float intensityLeft = (targetLeft < t.startId() || targetLeft > t.endId()) ? 0f : t.intensity(targetLeft);
         float intensityRight = (targetRight < t.startId() || targetRight > t.endId()) ? 0 : t.intensity(targetRight);
         if (targetLeft==targetRight) return intensityLeft;
         double alpha = tg-targetLeft;
         return (float)( intensityLeft*(1-alpha) + (alpha)*intensityRight );
     }
-    public double interpolateMz(Trace t, int k) {
+    public double interpolateMz(Trace t, int k, int leftEdge, int rightEdge) {
         float tg = k >= left2right.length ? Float.NEGATIVE_INFINITY : (left2right[k]);
         if (!Float.isFinite(tg)) return Double.NaN;
         int targetLeft = (int)tg;
         int targetRight = (int)Math.ceil(tg);
+
+        targetLeft = Math.min(rightEdge, Math.max(targetLeft,leftEdge));
+        targetRight = Math.min(rightEdge, Math.max(targetRight,leftEdge));
+
+
         double mzLeft = (targetLeft < t.startId() || targetLeft > t.endId()) ? t.averagedMz() : t.mz(targetLeft);
         double mzRight = (targetRight < t.startId() || targetRight > t.endId()) ? t.averagedMz() : t.mz(targetRight);
         if (!Double.isFinite(mzLeft)) {
