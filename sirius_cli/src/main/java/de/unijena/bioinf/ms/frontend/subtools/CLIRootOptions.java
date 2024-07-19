@@ -53,6 +53,7 @@ import java.util.logging.LogManager;
 public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends ProjectSpaceManager>> {
     public static final Logger LOG = LoggerFactory.getLogger(CLIRootOptions.class);
 
+    @Getter
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
     @Getter
@@ -62,10 +63,6 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
     public CLIRootOptions(@NotNull DefaultParameterConfigLoader defaultConfigOptions, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory) {
         this.defaultConfigOptions = defaultConfigOptions;
         this.spaceManagerFactory = spaceManagerFactory;
-    }
-
-    public DefaultParameterConfigLoader getDefaultConfigOptions() {
-        return defaultConfigOptions;
     }
 
     public enum LogLevel {
