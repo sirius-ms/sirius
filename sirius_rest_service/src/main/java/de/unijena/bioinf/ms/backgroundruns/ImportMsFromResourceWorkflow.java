@@ -113,7 +113,6 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
                         submission.getFilter(),
                         submission.getGaussianSigma(),
                         submission.getWaveletScale(),
-                        submission.getWaveletWindow(),
                         submission.getNoise(),
                         submission.getPersistence(),
                         submission.getMerge(),
