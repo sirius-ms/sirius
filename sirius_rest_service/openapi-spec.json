@@ -6168,16 +6168,6 @@
         },
         "nullable": true
       },
-      "DataSmoothing": {
-        "type": "string",
-        "default": "AUTO",
-        "enum": [
-          "AUTO",
-          "NOFILTER",
-          "GAUSSIAN",
-          "WAVELET"
-        ]
-      },
       "LcmsSubmissionParameters": {
         "type": "object",
         "properties": {
@@ -6185,45 +6175,6 @@
             "type": "boolean",
             "description": "Specifies whether LC/MS runs should be aligned",
             "default": true
-          },
-          "noise": {
-            "type": "number",
-            "description": "Features must be larger than \u003cvalue\u003e * detected noise level.",
-            "format": "double",
-            "default": 2.0
-          },
-          "persistence": {
-            "type": "number",
-            "description": "Features must have larger persistence (intensity above valley) than \u003cvalue\u003e * max trace intensity.",
-            "format": "double",
-            "default": 0.1
-          },
-          "merge": {
-            "type": "number",
-            "description": "Merge neighboring features with valley less than \u003cvalue\u003e * intensity.",
-            "format": "double",
-            "default": 0.8
-          },
-          "filter": {
-            "$ref": "#/components/schemas/DataSmoothing"
-          },
-          "gaussianSigma": {
-            "type": "number",
-            "description": "Sigma (kernel width) for gaussian filter algorithm.",
-            "format": "double",
-            "default": 3.0
-          },
-          "waveletScale": {
-            "type": "integer",
-            "description": "Number of coefficients for wavelet filter algorithm.",
-            "format": "int32",
-            "default": 20
-          },
-          "waveletWindow": {
-            "type": "number",
-            "description": "Wavelet window size (%) for wavelet filter algorithm.",
-            "format": "double",
-            "default": 11
           }
         }
       },
