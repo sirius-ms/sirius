@@ -65,8 +65,8 @@ public class LcmsSubmissionParameters {
     /**
      * Sigma (kernel width) for gaussian filter algorithm.
      */
-    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "3.0", hidden = true)
-    protected double gaussianSigma = 3.0;
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "0.5", hidden = true)
+    protected double gaussianSigma = 0.5;
 
     /**
      * Number of coefficients for wavelet filter algorithm.
