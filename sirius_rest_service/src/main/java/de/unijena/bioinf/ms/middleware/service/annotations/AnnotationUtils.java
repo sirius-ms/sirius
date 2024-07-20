@@ -36,18 +36,19 @@ public class AnnotationUtils {
         // just to prevent instantiation
     }
 
-    public static  <T extends Enum<T>> EnumSet<T> removeNone(EnumSet<T> optFields) {
+    public static <T extends Enum<T>> EnumSet<T> removeNone(EnumSet<T> optFields) {
         optFields.removeIf(e -> e.name().equals("none"));
         return optFields;
     }
 
-    public static <T extends Enum<T>> EnumSet<T> toEnumSet(Class<T> clz, T... input){
+    public static <T extends Enum<T>> EnumSet<T> toEnumSet(Class<T> clz, T... input) {
         return input != null && input.length > 0
                 ? EnumSet.copyOf(List.of(input))
                 : EnumSet.noneOf(clz);
     }
 
     public static ConsensusAnnotationsDeNovo buildConsensusAnnotationsDeNovo(Collection<AlignedFeature> features) {
+        //todo structure based consensus for Denovo structures
         //formula based consensus
         Map<String, List<AlignedFeature>> formulaAnnotationAgreement = features.stream()
                 .collect(Collectors.groupingBy(f -> Optional.of(f)
@@ -134,13 +135,13 @@ public class AnnotationUtils {
         //prefer candidate with compound classes
         AlignedFeature top = features.stream()
                 .filter(f -> f.getTopAnnotations().getCompoundClassAnnotation() != null)
-                .min(Comparator.comparing(f -> f.getTopAnnotations().getFormulaAnnotation().getSiriusScore()))
+                .max(Comparator.comparing(f -> f.getTopAnnotations().getFormulaAnnotation().getSiriusScore()))
                 .orElse(null);
 
         // fallback to non compound class candidate
         if (top == null)
             top = features.stream()
-                    .min(Comparator.comparing(f -> f.getTopAnnotations().getFormulaAnnotation().getSiriusScore()))
+                    .max(Comparator.comparing(f -> f.getTopAnnotations().getFormulaAnnotation().getSiriusScore()))
                     .orElseThrow(() -> new IllegalStateException("No Formula Candidate Found!"));
 
         return ConsensusAnnotationsDeNovo.builder()
@@ -158,7 +159,7 @@ public class AnnotationUtils {
                                                                  ConsensusAnnotationsCSI.Criterion type) {
 
         AlignedFeature top = features.stream()
-                .min(Comparator.comparing(f -> f.getTopAnnotations().getFormulaAnnotation().getSiriusScore()))
+                .max(Comparator.comparing(f -> f.getTopAnnotations().getFormulaAnnotation().getSiriusScore()))
                 .orElseThrow(() -> new IllegalStateException("No Formula Candidate Found!"));
 
 
@@ -175,17 +176,39 @@ public class AnnotationUtils {
     private static ConsensusAnnotationsCSI consensusByStructureCSI(Collection<AlignedFeature> features,
                                                                    ConsensusAnnotationsCSI.Criterion type) {
         final boolean mixedStructures = ConsensusAnnotationsCSI.Criterion.CONFIDENCE_STRUCTURE == type;
-        //todo use approx confidence if available
-        AlignedFeature topConf = features.stream()
-                .min(Comparator.comparing(f -> f.getTopAnnotations().getConfidenceExactMatch()))
-                .orElseThrow(() -> new IllegalStateException("No Structure Candidate Found!"));
+        AlignedFeature topConf;
+        //prefer approx confidence if the same number of features have a valid value here.
+        if (features.stream().map(AlignedFeature::getTopAnnotations).map(FeatureAnnotations::getConfidenceApproxMatch)
+                .filter(c -> c != null && !Double.isNaN(c)).count() >=
+                features.stream().map(AlignedFeature::getTopAnnotations).map(FeatureAnnotations::getConfidenceExactMatch)
+                        .filter(c -> c != null && !Double.isNaN(c)).count())
+        {
+            topConf = features.stream()
+                    .filter(f -> f.getTopAnnotations() != null && f.getTopAnnotations().getConfidenceApproxMatch() != null && !Double.isNaN(f.getTopAnnotations().getConfidenceApproxMatch()))
+                    .max(Comparator.comparing(f -> f.getTopAnnotations().getConfidenceApproxMatch()))
+                    .orElseThrow(() -> new IllegalStateException("No Structure Candidate Found!"));
+        } else {
+            topConf = features.stream()
+                    .filter(f -> f.getTopAnnotations() != null && f.getTopAnnotations().getConfidenceExactMatch() != null && !Double.isNaN(f.getTopAnnotations().getConfidenceExactMatch()))
+                    .max(Comparator.comparing(f -> f.getTopAnnotations().getConfidenceExactMatch()))
+                    .orElseThrow(() -> new IllegalStateException("No Structure Candidate Found!"));
+        }
 
-        Double topConfExact = topConf.getTopAnnotations().getConfidenceExactMatch();
+        Double topConfExact = mixedStructures
+                ? topConf.getTopAnnotations().getConfidenceExactMatch()
+                : features.stream()
+                .map(AlignedFeature::getTopAnnotations)
+                .map(FeatureAnnotations::getConfidenceExactMatch)
+                .filter(c -> c != null && !Double.isNaN(c))
+                .max(Double::compareTo)
+                .orElse(null);
         Double topConfApprox = mixedStructures
                 ? topConf.getTopAnnotations().getConfidenceApproxMatch()
                 : features.stream()
-                .map(f -> f.getTopAnnotations().getConfidenceExactMatch())
-                .min(Double::compareTo)
+                .map(AlignedFeature::getTopAnnotations)
+                .map(FeatureAnnotations::getConfidenceApproxMatch)
+                .filter(c -> c != null && !Double.isNaN(c))
+                .max(Double::compareTo)
                 .orElse(null);
 
         return ConsensusAnnotationsCSI.builder()
@@ -201,7 +224,7 @@ public class AnnotationUtils {
                 ).build();
     }
 
-    public static BinaryFingerprint asBinaryFingerprint (Fingerprint fingerprint){
+    public static BinaryFingerprint asBinaryFingerprint(Fingerprint fingerprint) {
         BinaryFingerprint fp = new BinaryFingerprint();
         fp.setLength(fingerprint.getFingerprintVersion().size());
         short[] absIdx = fingerprint.toIndizesArray();
