@@ -9,6 +9,7 @@ import lombok.Setter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
 
 public class QualityReport {
 
@@ -30,8 +31,13 @@ public class QualityReport {
     private DataQuality overallQuality;
 
     public static QualityReport withDefaultCategories() {
+        return withDefaultCategories(true);
+    }
+    public static QualityReport withDefaultCategories(boolean includeAlignment) {
         QualityReport r = new QualityReport();
-        for (String d : DEFAULT_CATEGORIES) r.addCategory(new Category(d));
+        for (String d : DEFAULT_CATEGORIES)
+            if (includeAlignment || !Objects.equals(ALIGNMENT_QUALITY, d))
+                r.addCategory(new Category(d));
         return r;
     }
 
