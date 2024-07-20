@@ -52,6 +52,44 @@ public abstract class ToolChainJobImpl<R> extends BasicDependentMasterJJob<R> im
             invalidator.accept(inst);
     }
 
+
+    //todo this is a workaround to prevent thread interrupts on subtool jobs that perform database operations since they
+    // are likely causing that the db channel is closed. instead we perform controlled shutdown of the subtool
+    // maybe allow this to be configured in MasterJJob itself.
+    @Override
+    public void cancel(boolean mayInterruptIfRunning) {
+        this.stateLock.lock();
+
+        try {
+            if (this.future != null) {
+                this.logDebug("Try to Cancel Running Job. Sending interruption commands to the current job (and to all subjobs).");
+                this.forEachSubJobSynchronized((subJob) -> subJob.cancel(mayInterruptIfRunning));
+                if (mayInterruptIfRunning)
+                    logDebug("Prevent thread interruption, to protect DB channel!");
+                if (this.future.cancel(false) && this.getState().ordinal() <= JobState.RUNNING.ordinal())
+                    this.setState(JobState.CANCELED);
+            } else {
+                try {
+                    this.setState(JobState.CANCELED);
+                    this.logDebug("Canceled Waiting Job by interrupting the waiting thread.");
+                } finally {
+                    if (!this.isClean.getAndSet(true)) {
+                        try {
+                            this.cleanup();
+                        } catch (Exception var14) {
+                            Exception e = var14;
+                            this.logError("Unexpected Error during job Cleanup!", e);
+                        }
+                    }
+
+                }
+            }
+            this.waiter.countDown();
+        } finally {
+            this.stateLock.unlock();
+        }
+    }
+
     @Override
     public <Job extends JJob<Result>, Result> Job submitJob(Job job) {
         job.delegateLog(this);

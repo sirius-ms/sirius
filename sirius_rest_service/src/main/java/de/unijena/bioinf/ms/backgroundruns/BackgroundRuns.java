@@ -399,7 +399,9 @@ public final class BackgroundRuns {
 
         @Override
         public void cancel(boolean mayInterruptIfRunning) {
-            super.cancel(mayInterruptIfRunning);
+            if (mayInterruptIfRunning)
+                logDebug("Prevent hard interrupt in BackgroundRunJob to protect DB channel.");
+            super.cancel(false);
             if (computation != null)
                 computation.cancel();
         }
