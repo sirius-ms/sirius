@@ -207,9 +207,11 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
                 if (current instanceof DependentJJob)
                     deps.addAll(((DependentJJob<?>) current).getRequiredJobs());
                 toWaitOnCleanUp.add(current);
-                current.cancel();
+                current.cancel(mayInterruptIfRunning);
             }
-            super.cancel(mayInterruptIfRunning);
+            if (mayInterruptIfRunning)
+                logDebug("Prevent hard interrupt in SimpleInstanceBuffer to protect DB channel!");
+            super.cancel(false);
         }
 
 
@@ -251,11 +253,11 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
 
 
         @Override
-        protected String compute() {
+        protected String compute() throws InterruptedException {
             //cleanup is not really needed for CLI but for everything on top that might keep instances alive.
             if (invalidate)
                 instance.clearCompoundCache();
-
+            checkForInterruption();
             return instance.getId();
         }
 
