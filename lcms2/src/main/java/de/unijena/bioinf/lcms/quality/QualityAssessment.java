@@ -7,18 +7,25 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 public class QualityAssessment implements FeatureQualityChecker {
 
-    List<FeatureQualityChecker> checkerList = Arrays.asList(
-      new CheckPeakQuality(),
-      new CheckAlignmentQuality(),
-      new CheckIsotopeQuality(),
-      new CheckMs2Quality(),
-            new CheckAdductQuality()
-    );
+    protected List<FeatureQualityChecker> checkerList;
+
+    public QualityAssessment() {
+        this(List.of(
+                new CheckPeakQuality(),
+                new CheckAlignmentQuality(),
+                new CheckIsotopeQuality(),
+                new CheckMs2Quality(),
+                new CheckAdductQuality()
+        ));
+    }
+
+    public QualityAssessment(List<FeatureQualityChecker> checkerList) {
+        this.checkerList = checkerList;
+    }
 
     @Override
     public void addToReport(QualityReport report, MergedLCMSRun run, AlignedFeatures feature, TraceProvider traceProvider) throws IOException {
