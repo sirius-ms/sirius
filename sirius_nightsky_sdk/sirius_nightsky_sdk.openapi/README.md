@@ -250,7 +250,6 @@ Class | Method | HTTP request | Description
  - [ConsensusCriterionDeNovo](docs/ConsensusCriterionDeNovo.md)
  - [DBLink](docs/DBLink.md)
  - [DataQuality](docs/DataQuality.md)
- - [DataSmoothing](docs/DataSmoothing.md)
  - [Deviation](docs/Deviation.md)
  - [FeatureAnnotations](docs/FeatureAnnotations.md)
  - [FeatureImport](docs/FeatureImport.md)
