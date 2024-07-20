@@ -97,7 +97,6 @@ public class SimpleInstanceBuffer implements InstanceBuffer, JobSubmitter {
                 { //gc hint
                     if (instanceComputed.get() % bufferSize == 0) {
                         System.gc(); //hint for the gc to collect som trash after computations
-                        System.runFinalization();
                     }
                 }
 
