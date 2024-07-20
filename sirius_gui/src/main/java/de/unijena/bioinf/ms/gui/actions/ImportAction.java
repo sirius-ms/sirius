@@ -29,9 +29,7 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.ImportMSDataDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.MsBatchDataFormatFilter;
-import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
 import de.unijena.bioinf.ms.nightsky.sdk.jjobs.SseProgressJJob;
-import de.unijena.bioinf.ms.nightsky.sdk.model.DataSmoothing;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.LcmsSubmissionParameters;
@@ -121,16 +119,8 @@ public class ImportAction extends AbstractGuiAction {
 
             // LC/MS default parameters
             LcmsSubmissionParameters parameters = new LcmsSubmissionParameters();
-            if (hasLCMS) {
+            if (hasLCMS)
                 parameters.setAlignLCMSRuns(false);
-                parameters.setFilter(DataSmoothing.AUTO);
-                parameters.setGaussianSigma(3.0);
-                parameters.setWaveletScale(20);
-                parameters.setWaveletWindow(10d);
-                parameters.setNoise(2.0);
-                parameters.setPersistence(0.1);
-                parameters.setMerge(0.8);
-            }
 
             // show dialog
             if (hasPeakLists || alignAllowed) {
