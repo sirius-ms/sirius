@@ -162,7 +162,10 @@ distributions {
                 from("${buildDir}/launch4j") {
                     include("*.exe")
                 }
-                from(zipTree("${rootDir}/dist/ExplorerLicTester.zip"))
+                //from(zipTree("${rootDir}/dist/ExplorerLicTester.zip"))
+                into('ExplorerLicTester'){
+                    from("${rootDir}/dist/ExplorerLicTester")
+                }
             }else{
                 into('bin') {
                     from startScripts
