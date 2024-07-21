@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -38,7 +38,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FeatureAnnotations.JSON_PROPERTY_CONFIDENCE_APPROX_MATCH,
   FeatureAnnotations.JSON_PROPERTY_EXPANSIVE_SEARCH_STATE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class FeatureAnnotations {
   public static final String JSON_PROPERTY_FORMULA_ANNOTATION = "formulaAnnotation";
   private FormulaCandidate formulaAnnotation;
@@ -86,7 +86,6 @@ public class FeatureAnnotations {
     this.formulaAnnotation = formulaAnnotation;
   }
 
-
   public FeatureAnnotations structureAnnotation(StructureCandidateScored structureAnnotation) {
     
     this.structureAnnotation = structureAnnotation;
@@ -111,7 +110,6 @@ public class FeatureAnnotations {
   public void setStructureAnnotation(StructureCandidateScored structureAnnotation) {
     this.structureAnnotation = structureAnnotation;
   }
-
 
   public FeatureAnnotations compoundClassAnnotation(CompoundClasses compoundClassAnnotation) {
     
@@ -138,7 +136,6 @@ public class FeatureAnnotations {
     this.compoundClassAnnotation = compoundClassAnnotation;
   }
 
-
   public FeatureAnnotations confidenceExactMatch(Double confidenceExactMatch) {
     
     this.confidenceExactMatch = confidenceExactMatch;
@@ -164,7 +161,6 @@ public class FeatureAnnotations {
     this.confidenceExactMatch = confidenceExactMatch;
   }
 
-
   public FeatureAnnotations confidenceApproxMatch(Double confidenceApproxMatch) {
     
     this.confidenceApproxMatch = confidenceApproxMatch;
@@ -189,7 +185,6 @@ public class FeatureAnnotations {
   public void setConfidenceApproxMatch(Double confidenceApproxMatch) {
     this.confidenceApproxMatch = confidenceApproxMatch;
   }
-
 
   public FeatureAnnotations expansiveSearchState(ConfidenceMode expansiveSearchState) {
     

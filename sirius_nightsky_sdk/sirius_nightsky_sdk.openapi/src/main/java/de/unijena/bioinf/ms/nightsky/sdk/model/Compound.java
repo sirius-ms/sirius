@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -43,7 +43,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Compound.JSON_PROPERTY_CONSENSUS_ANNOTATIONS_DE_NOVO,
   Compound.JSON_PROPERTY_CUSTOM_ANNOTATIONS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class Compound {
   public static final String JSON_PROPERTY_COMPOUND_ID = "compoundId";
   private String compoundId;
@@ -61,7 +61,7 @@ public class Compound {
   private Double neutralMass;
 
   public static final String JSON_PROPERTY_FEATURES = "features";
-  private List<AlignedFeature> features;
+  private List<AlignedFeature> features = new ArrayList<>();
 
   public static final String JSON_PROPERTY_CONSENSUS_ANNOTATIONS = "consensusAnnotations";
   private ConsensusAnnotationsCSI consensusAnnotations;
@@ -100,7 +100,6 @@ public class Compound {
     this.compoundId = compoundId;
   }
 
-
   public Compound name(String name) {
     
     this.name = name;
@@ -125,7 +124,6 @@ public class Compound {
   public void setName(String name) {
     this.name = name;
   }
-
 
   public Compound rtStartSeconds(Double rtStartSeconds) {
     
@@ -152,7 +150,6 @@ public class Compound {
     this.rtStartSeconds = rtStartSeconds;
   }
 
-
   public Compound rtEndSeconds(Double rtEndSeconds) {
     
     this.rtEndSeconds = rtEndSeconds;
@@ -178,7 +175,6 @@ public class Compound {
     this.rtEndSeconds = rtEndSeconds;
   }
 
-
   public Compound neutralMass(Double neutralMass) {
     
     this.neutralMass = neutralMass;
@@ -203,7 +199,6 @@ public class Compound {
   public void setNeutralMass(Double neutralMass) {
     this.neutralMass = neutralMass;
   }
-
 
   public Compound features(List<AlignedFeature> features) {
     
@@ -238,7 +233,6 @@ public class Compound {
     this.features = features;
   }
 
-
   public Compound consensusAnnotations(ConsensusAnnotationsCSI consensusAnnotations) {
     
     this.consensusAnnotations = consensusAnnotations;
@@ -264,7 +258,6 @@ public class Compound {
     this.consensusAnnotations = consensusAnnotations;
   }
 
-
   public Compound consensusAnnotationsDeNovo(ConsensusAnnotationsDeNovo consensusAnnotationsDeNovo) {
     
     this.consensusAnnotationsDeNovo = consensusAnnotationsDeNovo;
@@ -289,7 +282,6 @@ public class Compound {
   public void setConsensusAnnotationsDeNovo(ConsensusAnnotationsDeNovo consensusAnnotationsDeNovo) {
     this.consensusAnnotationsDeNovo = consensusAnnotationsDeNovo;
   }
-
 
   public Compound customAnnotations(ConsensusAnnotationsCSI customAnnotations) {
     

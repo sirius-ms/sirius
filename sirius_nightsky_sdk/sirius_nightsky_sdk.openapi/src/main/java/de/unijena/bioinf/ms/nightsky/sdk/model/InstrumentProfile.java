@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 /**
  * Select the profile that is the closest to your instrumental setup. If nothing fits, use QTOF.
  */
-public enum Instrument {
+public enum InstrumentProfile {
   
   QTOF("QTOF"),
   
@@ -32,7 +32,7 @@ public enum Instrument {
 
   private String value;
 
-  Instrument(String value) {
+  InstrumentProfile(String value) {
     this.value = value;
   }
 
@@ -47,8 +47,8 @@ public enum Instrument {
   }
 
   @JsonCreator
-  public static Instrument fromValue(String value) {
-    for (Instrument b : Instrument.values()) {
+  public static InstrumentProfile fromValue(String value) {
+    for (InstrumentProfile b : InstrumentProfile.values()) {
       if (b.value.equals(value)) {
         return b;
       }

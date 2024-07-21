@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -39,7 +39,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   StructureCandidate.JSON_PROPERTY_DB_LINKS,
   StructureCandidate.JSON_PROPERTY_SPECTRAL_LIBRARY_MATCHES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class StructureCandidate {
   public static final String JSON_PROPERTY_INCHI_KEY = "inchiKey";
   private String inchiKey;
@@ -87,7 +87,6 @@ public class StructureCandidate {
     this.inchiKey = inchiKey;
   }
 
-
   public StructureCandidate smiles(String smiles) {
     
     this.smiles = smiles;
@@ -112,7 +111,6 @@ public class StructureCandidate {
   public void setSmiles(String smiles) {
     this.smiles = smiles;
   }
-
 
   public StructureCandidate structureName(String structureName) {
     
@@ -139,7 +137,6 @@ public class StructureCandidate {
     this.structureName = structureName;
   }
 
-
   public StructureCandidate xlogP(Double xlogP) {
     
     this.xlogP = xlogP;
@@ -164,7 +161,6 @@ public class StructureCandidate {
   public void setXlogP(Double xlogP) {
     this.xlogP = xlogP;
   }
-
 
   public StructureCandidate dbLinks(List<DBLink> dbLinks) {
     
@@ -198,7 +194,6 @@ public class StructureCandidate {
   public void setDbLinks(List<DBLink> dbLinks) {
     this.dbLinks = dbLinks;
   }
-
 
   public StructureCandidate spectralLibraryMatches(List<SpectralLibraryMatch> spectralLibraryMatches) {
     

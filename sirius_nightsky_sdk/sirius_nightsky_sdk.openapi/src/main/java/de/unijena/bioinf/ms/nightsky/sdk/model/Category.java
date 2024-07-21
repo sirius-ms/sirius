@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Category.JSON_PROPERTY_OVERALL_QUALITY,
   Category.JSON_PROPERTY_ITEMS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class Category {
   public static final String JSON_PROPERTY_CATEGORY_NAME = "categoryName";
   private String categoryName;
@@ -45,7 +45,7 @@ public class Category {
   private DataQuality overallQuality;
 
   public static final String JSON_PROPERTY_ITEMS = "items";
-  private List<Item> items;
+  private List<Item> items = new ArrayList<>();
 
   public Category() {
   }
@@ -75,7 +75,6 @@ public class Category {
     this.categoryName = categoryName;
   }
 
-
   public Category overallQuality(DataQuality overallQuality) {
     
     this.overallQuality = overallQuality;
@@ -100,7 +99,6 @@ public class Category {
   public void setOverallQuality(DataQuality overallQuality) {
     this.overallQuality = overallQuality;
   }
-
 
   public Category items(List<Item> items) {
     

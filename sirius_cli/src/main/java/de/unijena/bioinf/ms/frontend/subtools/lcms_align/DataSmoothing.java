@@ -2,8 +2,7 @@
  *
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
- *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Copyright (C) 2023 Bright Giant GmbH
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -15,14 +14,15 @@
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
  *  Lesser General Public License for more details.
  *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ *  You should have received a copy of the GNU General Public License along with SIRIUS.
+ *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.model.compute;
+package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 
-import java.util.List;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-public class DatabaseImportJobSubmission {
-    String databaseId;
-    List<String> inputPaths;
+@Schema(enumAsRef = true)
+public enum DataSmoothing {
+    AUTO, NOFILTER, GAUSSIAN, WAVELET
 }

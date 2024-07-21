@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -34,7 +34,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   CommandSubmission.JSON_PROPERTY_ALIGNED_FEATURE_IDS,
   CommandSubmission.JSON_PROPERTY_COMMAND
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class CommandSubmission {
   public static final String JSON_PROPERTY_COMPOUND_IDS = "compoundIds";
   private List<String> compoundIds;
@@ -81,7 +81,6 @@ public class CommandSubmission {
     this.compoundIds = compoundIds;
   }
 
-
   public CommandSubmission alignedFeatureIds(List<String> alignedFeatureIds) {
     
     this.alignedFeatureIds = alignedFeatureIds;
@@ -114,7 +113,6 @@ public class CommandSubmission {
   public void setAlignedFeatureIds(List<String> alignedFeatureIds) {
     this.alignedFeatureIds = alignedFeatureIds;
   }
-
 
   public CommandSubmission command(List<String> command) {
     

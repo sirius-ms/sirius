@@ -25,7 +25,10 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.workflows.LCMSWorkflow;
 import de.unijena.bioinf.ms.frontend.subtools.*;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.NitriteProjectSpaceManagerFactory;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import de.unijena.bioinf.projectspace.SiriusProjectSpaceManagerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -54,6 +57,30 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<Proj
     public Optional<LCMSWorkflow> getWorkflow() {
         return workflow;
     }
+
+    @CommandLine.Option(names={"--no-align"}, description = "Do not align and combine all LC/MS runs to one merged LC/MS run.")
+    public boolean noAlign;
+
+    @CommandLine.Option(names="--no-ms1-only", description = "Do not import features without MS/MS data", hidden = true)
+    public boolean forbidMs1Only;
+
+    @CommandLine.Option(names={"--smoothing"}, defaultValue = "AUTO", description = "Filter algorithm to suppress noise.", hidden = true)
+    public DataSmoothing smoothing;
+
+    @CommandLine.Option(names={"--sigma"}, defaultValue = "3.0", description = "Sigma (kernel width) for Gaussian filter algorithm.", hidden = true)
+    public double sigma;
+
+    @CommandLine.Option(names={"--scale"}, defaultValue = "20", description = "Number of coefficients for wavelet filter algorithm.", hidden = true)
+    public int scaleLevel;
+
+    @CommandLine.Option(names={"--noise"}, defaultValue = "2.0", description = "Features must be larger than <value> * detected noise level.", hidden = true)
+    public double noiseCoefficient;
+
+    @CommandLine.Option(names={"--persistence"}, defaultValue = "0.1", description = "Features must have larger persistence (intensity above valley) than <value> * max trace intensity.", hidden = true)
+    public double persistenceCoefficient;
+
+    @CommandLine.Option(names={"--merge"}, defaultValue = "0.8", description = "Merge neighboring features with valley less than <value> * intensity.", hidden = true)
+    public double mergeCoefficient;
 
     @CommandLine.Option(names={"--statistics"}, required = false, hidden = true)
     public File statistics;

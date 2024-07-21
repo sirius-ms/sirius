@@ -26,6 +26,7 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.nightsky.sdk.model.BackgroundComputationsStateEvent;
 import de.unijena.bioinf.sse.DataEventType;
 import de.unijena.bioinf.sse.DataObjectEvent;
+import lombok.SneakyThrows;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
@@ -38,10 +39,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @author Markus Fleischauer
  */
 public class ComputeAllAction extends AbstractGuiAction {
-    private final static AtomicBoolean isActive = new AtomicBoolean(false);
+    private final AtomicBoolean isActive;
 
     public ComputeAllAction(SiriusGui gui) {
         super(gui);
+        isActive = new AtomicBoolean(true);
         computationCanceled();
 
         //filtered Workspace Listener
@@ -59,17 +61,19 @@ public class ComputeAllAction extends AbstractGuiAction {
                 computationCanceled();
             }
         }, pid, DataEventType.BACKGROUND_COMPUTATIONS_STATE));
-        checkState();
+
+        Jobs.runInBackground(this::checkIfComputing);
     }
 
-    private void checkState() {
-        gui.acceptSiriusClient((client, pid) -> {
-            if (client.jobs().hasJobs(pid, false))
-                computationStarted();
-            else
-                computationCanceled();
-        });
+    private boolean checkIfComputing() {
 
+        Boolean computing = gui.applySiriusClient((client, pid) -> client.jobs().hasJobs(pid, false));
+
+        if (computing)
+            computationStarted();
+        else
+            computationCanceled();
+        return computing;
 
     }
 
@@ -78,7 +82,18 @@ public class ComputeAllAction extends AbstractGuiAction {
         if (isActive.get()) {
             Jobs.runInBackgroundAndLoad(mainFrame, "Canceling Jobs...", () -> {
                 gui.acceptSiriusClient((c, pid) -> c.jobs().deleteJobs(pid, true, true));
-                checkState();
+                //todo workaround to await callback of cancellation to gui. should finde a better solution for that!
+                for (int i = 0; i < 40; i++) { //wait up to 20sec
+                    boolean c = isActive.get();
+                    System.out.println("Computing check: " + i + "value: " + c);
+                    if (!c)
+                        break;
+                    try {
+                        Thread.sleep(500);
+                    } catch (InterruptedException ex) {
+                        //ignored;
+                    }
+                }
             });
 
         } else {
@@ -90,24 +105,33 @@ public class ComputeAllAction extends AbstractGuiAction {
         }
     }
 
+    @SneakyThrows
     private void computationCanceled() {
-        setEnabled(true);
-        isActive.set(false);
-        putValue(Action.NAME, "Compute All");
-        putValue(Action.LARGE_ICON_KEY, Icons.RUN_32);
-        putValue(Action.SMALL_ICON, Icons.RUN_16);
-        putValue(Action.SHORT_DESCRIPTION, "Compute all compounds");
-        setEnabled(!mainFrame.getCompoundList().getCompoundList().isEmpty());
+            Jobs.runEDTAndWait(() -> {
+                if (isActive.get()) {
+                    setEnabled(true);
+                    isActive.set(false);
+                    putValue(Action.NAME, "Compute All");
+                    putValue(Action.LARGE_ICON_KEY, Icons.RUN_32);
+                    putValue(Action.SMALL_ICON, Icons.RUN_16);
+                    putValue(Action.SHORT_DESCRIPTION, "Compute all compounds");
+                    setEnabled(!mainFrame.getCompoundList().getCompoundList().isEmpty());
+                }
+            });
     }
 
+    @SneakyThrows
     private void computationStarted() {
-        setEnabled(true);
-        isActive.set(true);
-        putValue(Action.NAME, "Cancel All");
-        putValue(Action.LARGE_ICON_KEY, Icons.CANCEL_32);
-        putValue(Action.SMALL_ICON, Icons.CANCEL_16);
-        putValue(Action.SHORT_DESCRIPTION, "Cancel all running computations");
-        setEnabled(!mainFrame.getCompoundList().getCompoundList().isEmpty());
+            Jobs.runEDTAndWait(() -> {
+                if (!isActive.get()) {
+                    setEnabled(true);
+                    isActive.set(true);
+                    putValue(Action.NAME, "Cancel All");
+                    putValue(Action.LARGE_ICON_KEY, Icons.CANCEL_32);
+                    putValue(Action.SMALL_ICON, Icons.CANCEL_16);
+                    putValue(Action.SHORT_DESCRIPTION, "Cancel all running computations");
+                    setEnabled(!mainFrame.getCompoundList().getCompoundList().isEmpty());
+                }
+            });
     }
-
 }

@@ -6,6 +6,6 @@ include ':sirius_dist'
 include ':sirius_gui'
 include ':sirius_rest_service'
 include ':sirius_nightsky_sdk'
-include ':sirius_nightsky_sdk:sirius_nightsky_sdk.openapi'
-include 'sirius_nightsky_sdk:sirius_nightsky_sdk.jjobs'
+    include ':sirius_nightsky_sdk:sirius_nightsky_sdk.openapi'
+    include ':sirius_nightsky_sdk:sirius_nightsky_sdk.jjobs'
 

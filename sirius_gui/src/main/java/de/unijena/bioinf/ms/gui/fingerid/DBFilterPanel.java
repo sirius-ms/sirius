@@ -40,8 +40,7 @@ public class DBFilterPanel extends JPanel implements ActiveElementChangedListene
     public final static Set<String> NON_FILTERABLE = Set.of(
             DataSource.ALL.name(),
             DataSource.PUBCHEMANNOTATIONBIO.name(), DataSource.PUBCHEMANNOTATIONDRUG.name(),
-            DataSource.PUBCHEMANNOTATIONFOOD.name(), DataSource.PUBCHEMANNOTATIONSAFETYANDTOXIC.name(),
-            DataSource.SUPERNATURAL.name()
+            DataSource.PUBCHEMANNOTATIONFOOD.name(), DataSource.PUBCHEMANNOTATIONSAFETYANDTOXIC.name()
     );
 
     private final Queue<FilterChangeListener> listeners = new ConcurrentLinkedQueue<>();

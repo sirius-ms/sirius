@@ -58,7 +58,6 @@ import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
-import gnu.trove.set.hash.TIntHashSet;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.LoggerFactory;
 

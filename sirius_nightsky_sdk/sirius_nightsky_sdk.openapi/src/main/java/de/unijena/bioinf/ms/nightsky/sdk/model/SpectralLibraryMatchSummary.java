@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -33,7 +33,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SpectralLibraryMatchSummary.JSON_PROPERTY_REFERENCE_SPECTRA_COUNT,
   SpectralLibraryMatchSummary.JSON_PROPERTY_DATABASE_COMPOUND_COUNT
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class SpectralLibraryMatchSummary {
   public static final String JSON_PROPERTY_BEST_MATCH = "bestMatch";
   private SpectralLibraryMatch bestMatch;
@@ -75,7 +75,6 @@ public class SpectralLibraryMatchSummary {
     this.bestMatch = bestMatch;
   }
 
-
   public SpectralLibraryMatchSummary spectralMatchCount(Long spectralMatchCount) {
     
     this.spectralMatchCount = spectralMatchCount;
@@ -101,7 +100,6 @@ public class SpectralLibraryMatchSummary {
     this.spectralMatchCount = spectralMatchCount;
   }
 
-
   public SpectralLibraryMatchSummary referenceSpectraCount(Integer referenceSpectraCount) {
     
     this.referenceSpectraCount = referenceSpectraCount;
@@ -126,7 +124,6 @@ public class SpectralLibraryMatchSummary {
   public void setReferenceSpectraCount(Integer referenceSpectraCount) {
     this.referenceSpectraCount = referenceSpectraCount;
   }
-
 
   public SpectralLibraryMatchSummary databaseCompoundCount(Integer databaseCompoundCount) {
     

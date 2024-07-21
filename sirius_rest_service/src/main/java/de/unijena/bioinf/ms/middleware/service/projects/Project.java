@@ -5,28 +5,29 @@
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
  *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
  *  version 3 of the License, or (at your option) any later version.
  *
- *  This library is distributed in the hope that it will be useful,
+ *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ *  Affero General Public License for more details.
  *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
 import de.unijena.bioinf.babelms.inputresource.InputResource;
-import de.unijena.bioinf.babelms.inputresource.PathInputResource;
 import de.unijena.bioinf.ms.backgroundruns.ImportMsFromResourceWorkflow;
 import de.unijena.bioinf.ms.backgroundruns.ImportPeaksFomResourceWorkflow;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
+import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
+import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
@@ -62,11 +63,12 @@ public interface Project<PSM extends ProjectSpaceManager> {
                                  @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
 
     List<Compound> addCompounds(@NotNull List<CompoundImport> compounds,
+                                @Nullable InstrumentProfile profile,
                                 @NotNull EnumSet<Compound.OptField> optFields,
                                 @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures);
 
     default ImportResult importPreprocessedData(Collection<InputResource<?>> inputResources, boolean ignoreFormulas, boolean allowMs1OnlyData) {
-        ImportPeaksFomResourceWorkflow importTask = new ImportPeaksFomResourceWorkflow(getProjectSpaceManager(), inputResources, ignoreFormulas, allowMs1OnlyData, true);
+        ImportPeaksFomResourceWorkflow importTask = new ImportPeaksFomResourceWorkflow(getProjectSpaceManager(), inputResources, ignoreFormulas, allowMs1OnlyData);
 
         importTask.run();
 
@@ -82,8 +84,8 @@ public interface Project<PSM extends ProjectSpaceManager> {
                 .build();
     }
 
-    default ImportResult importMsRunData(Collection<PathInputResource> inputResources, boolean alignRuns, boolean allowMs1OnlyData) {
-        ImportMsFromResourceWorkflow importTask = new ImportMsFromResourceWorkflow(getProjectSpaceManager(), inputResources, allowMs1OnlyData, alignRuns, true);
+    default ImportResult importMsRunData(AbstractImportSubmission submission) {
+        ImportMsFromResourceWorkflow importTask = new ImportMsFromResourceWorkflow(getProjectSpaceManager(), submission, true);
 
         importTask.run();
         return ImportResult.builder()
@@ -119,6 +121,7 @@ public interface Project<PSM extends ProjectSpaceManager> {
     Page<AlignedFeature> findAlignedFeatures(Pageable pageable, @NotNull EnumSet<AlignedFeature.OptField> optFields);
 
     List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features,
+                                            @Nullable InstrumentProfile profile,
                                             @NotNull EnumSet<AlignedFeature.OptField> optFields);
 
     default Page<AlignedFeature> findAlignedFeatures(Pageable pageable, AlignedFeature.OptField... optFields) {

@@ -14,7 +14,7 @@ All URIs are relative to *http://localhost:8888*
 
 Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
 
-Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
+Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.   EXPERIMENTAL: Endpoint is not part of the stable API specification and might change in minor updates.
 
 ### Example
 

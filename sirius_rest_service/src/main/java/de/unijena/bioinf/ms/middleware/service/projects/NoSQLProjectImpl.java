@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
+import de.unijena.bioinf.ChemistryBase.chem.Charge;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
@@ -35,6 +36,7 @@ import de.unijena.bioinf.ms.middleware.model.annotations.FormulaCandidate;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
+import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
@@ -53,11 +55,14 @@ import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
 import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
+import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
+import de.unijena.bioinf.sirius.ProcessedPeak;
+import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
@@ -86,6 +91,7 @@ import java.io.StringWriter;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -139,6 +145,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         storage.fetchAllChildren(feature, "alignedFeatureId", "features", Feature.class);
         // only use features with LC/MS information
         List<Feature> features = feature.getFeatures().stream().flatMap(List::stream).filter(x -> x.getApexIntensity() != null).toList();
+
         List<LCMSRun> samples = new ArrayList<>();
         for (Feature value : features) {
             samples.add(storage.getByPrimaryKey(value.getRunId(), LCMSRun.class).orElse(null));
@@ -151,9 +158,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         table.setRowIds(new long[]{feature.getAlignedFeatureId()});
         table.setRowNames(new String[]{feature.getName()});
         table.setColumnIds(features.stream().mapToLong(AbstractFeature::getRunId).toArray());
-        table.setColumnNames(samples.stream().map(x->x==null ? "unknown" : x.getName()).toArray(String[]::new));
+        table.setColumnNames(samples.stream().map(x -> x == null ? "unknown" : x.getName()).toArray(String[]::new));
         double[] vec = new double[samples.size()];
-        for (int k=0; k < features.size(); ++k) {
+        for (int k = 0; k < features.size(); ++k) {
             vec[k] = features.get(k).getApexIntensity();
         }
         table.setValues(new double[][]{vec});
@@ -169,17 +176,17 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         AlignedFeatures feature = maybeFeature.get();
         storage.fetchAllChildren(feature, "alignedFeatureId", "features", Feature.class);
         project().fetchMsData(feature);
-
         // only use features with LC/MS information
         List<Feature> features = feature.getFeatures().stream().flatMap(List::stream).filter(x -> x.getApexIntensity() != null).toList();
+
         List<LCMSRun> samples = new ArrayList<>();
-        for (int k=0; k < features.size(); ++k) {
+        for (int k = 0; k < features.size(); ++k) {
             samples.add(storage.getByPrimaryKey(features.get(k).getRunId(), LCMSRun.class).orElse(null));
             storage.fetchChild(samples.get(k), "runId", "retentionTimeAxis", RetentionTimeAxis.class);
         }
 
         MergedLCMSRun merged = storage.getByPrimaryKey(feature.getRunId(), MergedLCMSRun.class).orElse(null);
-        if (merged==null) return Optional.empty();
+        if (merged == null) return Optional.empty();
         storage.fetchChild(merged, "runId", "retentionTimeAxis", RetentionTimeAxis.class);
         if (merged.getRetentionTimeAxis().isEmpty()) return Optional.empty();
         RetentionTimeAxis mergedAxis = merged.getRetentionTimeAxis().get();
@@ -192,8 +199,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         Long2ObjectOpenHashMap<IntArrayList> ms2annotations = new Long2ObjectOpenHashMap<>();
 
-        feature.getMSData().ifPresent(x->{
-            if (x.getMsnSpectra()!=null) {
+        feature.getMSData().ifPresent(x -> {
+            if (x.getMsnSpectra() != null) {
                 for (MergedMSnSpectrum spec : x.getMsnSpectra()) {
                     long[] sampleIds = spec.getSampleIds();
                     int[][] scanIds = spec.getProjectedPrecursorScanIds();
@@ -220,11 +227,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     feature.getTraceRef().getApex(), feature.getTraceRef().getStart(), feature.getTraceRef().getEnd())});
             mergedtrace.setMerged(true);
             mergedtrace.setIntensities(mergedTrace.getIntensities().doubleStream().toArray());
-            mergedtrace.setNoiseLevel((double)(mergedAxis.getNoiseLevelPerScan()[feature.getTraceRef().getScanIndexOffsetOfTrace()+feature.getTraceRef().getApex()]));
+            mergedtrace.setNoiseLevel((double) (mergedAxis.getNoiseLevelPerScan()[feature.getTraceRef().getScanIndexOffsetOfTrace() + feature.getTraceRef().getApex()]));
             traces.add(mergedtrace);
         }
 
-        for (int k=0; k < features.size(); ++k) {
+        for (int k = 0; k < features.size(); ++k) {
             Optional<RawTraceRef> traceReference = features.get(k).getTraceReference();
             if (traceReference.isPresent()) {
                 RawTraceRef r = traceReference.get();
@@ -235,11 +242,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     int offset = sourceTrace.get().getScanIndexOffset();
 
                     int len = intensities.size();
-                    int startIdx=0, shift=0;
+                    int startIdx = 0, shift = 0;
                     // this should never happen. Just in case the single trace appears before the merged trace
                     // we cut it of
                     if (offset < firstTraceId) {
-                        startIdx = firstTraceId-offset;
+                        startIdx = firstTraceId - offset;
                         shift = 0;
                         len -= startIdx;
                     }
@@ -252,14 +259,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     }
 
                     double[] vec = new double[len];
-                    for (int i=startIdx; i < intensities.size(); ++i) {
-                        vec[i+shift] = intensities.getFloat(i);
+                    for (int i = startIdx; i < intensities.size(); ++i) {
+                        vec[i + shift] = intensities.getFloat(i);
                     }
 
                     TraceSet.Trace trace = new TraceSet.Trace();
                     trace.setId(features.get(k).getFeatureId());
                     trace.setSampleId(features.get(k).getRunId());
-                    trace.setSampleName(samples.get(k)==null ? "unknown" : samples.get(k).getName());
+                    trace.setSampleName(samples.get(k) == null ? "unknown" : samples.get(k).getName());
 
                     trace.setIntensities(vec);
                     trace.setLabel(trace.getSampleName());
@@ -273,8 +280,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
                     // ms2 annotations
                     IntArrayList scanIds = ms2annotations.get(features.get(k).getRunId());
-                    if (scanIds!=null) {
-                        for (int id : scanIds)  {
+                    if (scanIds != null) {
+                        for (int id : scanIds) {
                             annotations.add(new TraceSet.Annotation(TraceSet.AnnotationType.MS2, "",
                                     id - r.getScanIndexOffsetOfTrace() + shift));
 
@@ -283,7 +290,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     trace.setAnnotations(annotations.toArray(TraceSet.Annotation[]::new));
                     RetentionTimeAxis axis = samples.get(k).getRetentionTimeAxis().get();
                     trace.setNormalizationFactor(axis.getNormalizationFactor());
-                    trace.setNoiseLevel((double)axis.getNoiseLevelPerScan()[r.getRawScanIndexOfset()+r.getRawApex()]);
+                    trace.setNoiseLevel((double) axis.getNoiseLevelPerScan()[r.getRawScanIndexOfset() + r.getRawApex()]);
                     traces.add(trace);
                 }
             }
@@ -291,13 +298,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         traceSet.setTraces(traces.toArray(TraceSet.Trace[]::new));
 
         TraceSet.Axes axes = new TraceSet.Axes();
-        int traceTo = mergedTrace.getScanIndexOffset()+traces.stream().mapToInt(x->x.getIntensities().length).max().orElse(0);
+        int traceTo = mergedTrace.getScanIndexOffset() + traces.stream().mapToInt(x -> x.getIntensities().length).max().orElse(0);
         /*
             Merged traces do not have scan numbers....
          */
         //axes.setScanNumber(Arrays.copyOfRange(mergedAxis.getScanNumbers(), firstTraceId, traceTo));
         //axes.setScanIds(Arrays.copyOfRange(mergedAxis.getScanIdentifiers(), firstTraceId, traceTo));
-        traceTo = Math.max(traceTo, Math.min(mergedAxis.getRetentionTimes().length, firstTraceId + (int)Math.ceil(merged.getSampleStats().getMedianPeakWidthInSeconds()*4/(mergedAxis.getRetentionTimes()[1]-mergedAxis.getRetentionTimes()[0]))));
+        traceTo = Math.max(traceTo, Math.min(mergedAxis.getRetentionTimes().length, firstTraceId + (int) Math.ceil(merged.getSampleStats().getMedianPeakWidthInSeconds() * 4 / (mergedAxis.getRetentionTimes()[1] - mergedAxis.getRetentionTimes()[0]))));
         axes.setRetentionTimeInSeconds(Arrays.copyOfRange(mergedAxis.getRetentionTimes(), firstTraceId, traceTo));
         traceSet.setAxes(axes);
 
@@ -321,7 +328,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             if (f.getApexIntensity() == null) continue; // ignore features without lcms information
 
             String mainLabel;
-            if (f.getDetectedAdducts().getAllAdducts().size()==1) {
+            if (f.getDetectedAdducts().getAllAdducts().size() == 1) {
                 mainLabel = f.getDetectedAdducts().getAllAdducts().get(0).toString();
             } else mainLabel = "[M + ?]" + (f.getCharge() > 0 ? "+" : "-");
 
@@ -329,16 +336,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             allFeatures.add(f);
             labels.add(mainLabel + String.format(Locale.US, " (%.2f m/z) ", f.getAverageMass()));
             List<AlignedIsotopicFeatures> isotopes = f.getIsotopicFeatures().orElse(new ArrayList<>()).stream().filter(x -> x.getApexIntensity() != null).sorted(Comparator.comparingDouble(AbstractFeature::getAverageMass)).toList();
-            for (int k=0; k < isotopes.size(); ++k) {
+            for (int k = 0; k < isotopes.size(); ++k) {
                 allFeatures.add(isotopes.get(k));
-                labels.add(mainLabel + String.format(Locale.US, " (%.2f m/z) ", isotopes.get(k).getAverageMass()) + (k+1)+"-th isotope");
+                labels.add(mainLabel + String.format(Locale.US, " (%.2f m/z) ", isotopes.get(k).getAverageMass()) + (k + 1) + "-th isotope");
             }
         }
         if (allFeatures.isEmpty()) return Optional.empty();
 
         TraceSet traceSet = new TraceSet();
         MergedLCMSRun merged = storage.getByPrimaryKey(allFeatures.get(0).getRunId(), MergedLCMSRun.class).orElse(null);
-        if (merged==null) return Optional.empty();
+        if (merged == null) return Optional.empty();
         storage.fetchChild(merged, "runId", "retentionTimeAxis", RetentionTimeAxis.class);
         if (merged.getRetentionTimeAxis().isEmpty()) return Optional.empty();
 
@@ -352,12 +359,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         RetentionTimeAxis mergedAxis = merged.getRetentionTimeAxis().get();
         int maximumIndex = mergedAxis.getRetentionTimes().length;
         ArrayList<TraceSet.Trace> traces = new ArrayList<>();
-        for (int k=0; k < allFeatures.size(); ++k) {
+        for (int k = 0; k < allFeatures.size(); ++k) {
             AbstractAlignedFeatures f = allFeatures.get(k);
             String label = labels.get(k);
             TraceRef r = f.getTraceRef();
             MergedTrace mergedTrace = storage.getByPrimaryKey(r.getTraceId(), MergedTrace.class).orElse(null);
-            if (mergedTrace==null) continue;
+            if (mergedTrace == null) continue;
             maximumIndex = Math.min(maximumIndex, mergedTrace.getScanIndexOffset() + mergedTrace.getIntensities().size());
             TraceSet.Trace trace = new TraceSet.Trace();
             trace.setMz(f.getAverageMass());
@@ -368,8 +375,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             FloatList fs = mergedTrace.getIntensities();
             int len = fs.size() + shift;
             double[] vec = new double[len];
-            for (int i=0; i < fs.size(); ++i) {
-                vec[i+shift] = fs.getFloat(i);
+            for (int i = 0; i < fs.size(); ++i) {
+                vec[i + shift] = fs.getFloat(i);
             }
             trace.setIntensities(vec);
 
@@ -390,7 +397,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
          * axis to 4xwidth. It would be nicer doing this in the UI directly, but then we would have to add
          * another API endpoint which would be a bit stupid for such a single number...
          */
-        maximumIndex = Math.max(maximumIndex, Math.min(mergedAxis.getRetentionTimes().length, (startIndexOfTraces + (int)Math.ceil(merged.getSampleStats().getMedianPeakWidthInSeconds()*4/(mergedAxis.getRetentionTimes()[1]-mergedAxis.getRetentionTimes()[0])))));
+        maximumIndex = Math.max(maximumIndex, Math.min(mergedAxis.getRetentionTimes().length, (startIndexOfTraces + (int) Math.ceil(merged.getSampleStats().getMedianPeakWidthInSeconds() * 4 / (mergedAxis.getRetentionTimes()[1] - mergedAxis.getRetentionTimes()[0])))));
         axes.setRetentionTimeInSeconds(Arrays.copyOfRange(mergedAxis.getRetentionTimes(), startIndexOfTraces, maximumIndex));
         traceSet.setAxes(axes);
 
@@ -484,14 +491,38 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             }
         }
 
-        compound.getAdductFeatures().ifPresent(features -> builder.features(features.stream()
-                .map(f -> convertToApiFeature(f, optFeatureFields)).toList()));
+        // merge optional field config
+        final EnumSet<AlignedFeature.OptField> mergedFeatureFields = EnumSet.copyOf(optFeatureFields);
+        if (optFields.contains(Compound.OptField.consensusAnnotations))
+            mergedFeatureFields.add(AlignedFeature.OptField.topAnnotations);
+        if (optFields.contains(Compound.OptField.consensusAnnotationsDeNovo))
+            mergedFeatureFields.add(AlignedFeature.OptField.topAnnotationsDeNovo);
+
+        // features
+        List<AlignedFeature> features = compound.getAdductFeatures().stream().flatMap(featuresList-> featuresList.stream()
+                .map(f -> convertToApiFeature(f, mergedFeatureFields))).toList();
+        builder.features(features);
+
+        if (optFields.contains(Compound.OptField.consensusAnnotations))
+            builder.consensusAnnotations(AnnotationUtils.buildConsensusAnnotationsCSI(features));
+        if (optFields.contains(Compound.OptField.consensusAnnotationsDeNovo))
+            builder.consensusAnnotationsDeNovo(AnnotationUtils.buildConsensusAnnotationsDeNovo(features));
+        if (optFields.contains(Compound.OptField.customAnnotations))
+            builder.customAnnotations(ConsensusAnnotationsCSI.builder().build()); //todo implement custom annotations -> storage needed
+
+        //remove optionals if not requested
+        if (!optFeatureFields.contains(AlignedFeature.OptField.topAnnotations))
+            features.forEach(f -> f.setTopAnnotations(null));
+        if (!optFeatureFields.contains(AlignedFeature.OptField.topAnnotationsDeNovo))
+            features.forEach(f -> f.setTopAnnotationsDeNovo(null));
 
         return builder.build();
     }
 
-    private de.unijena.bioinf.ms.persistence.model.core.Compound convertCompound(CompoundImport compoundImport) {
-        List<AlignedFeatures> features = compoundImport.getFeatures().stream().map(this::convertToProjectFeature).toList();
+    private de.unijena.bioinf.ms.persistence.model.core.Compound convertCompound(CompoundImport compoundImport, @Nullable InstrumentProfile profile) {
+        List<AlignedFeatures> features = compoundImport.getFeatures().stream()
+                .map(f -> convertToProjectFeature(f, profile))
+                .toList();
 
         de.unijena.bioinf.ms.persistence.model.core.Compound.CompoundBuilder builder = de.unijena.bioinf.ms.persistence.model.core.Compound.builder()
                 .name(compoundImport.getName())
@@ -505,28 +536,35 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             builder.rt(new RetentionTime(start, end));
         }
 
-        features.stream().mapToDouble(AlignedFeatures::getAverageMass).average().ifPresent(builder::neutralMass);
+        features.stream()
+                .filter(AlignedFeatures::hasSingleAdduct)
+                .mapToDouble(af -> af.getDetectedAdducts().getAllAdducts().getFirst().precursorMassToMeasuredNeutralMass(af.getAverageMass()))
+                .average().ifPresent(builder::neutralMass);
 
         return builder.build();
     }
 
-    private AlignedFeatures convertToProjectFeature(FeatureImport featureImport) {
+    private AlignedFeatures convertToProjectFeature(FeatureImport featureImport, @Nullable InstrumentProfile profile) {
 
         AlignedFeatures.AlignedFeaturesBuilder<?, ?> builder = AlignedFeatures.builder()
                 .name(featureImport.getName())
-                .externalFeatureId(featureImport.getFeatureId())
+                .externalFeatureId(featureImport.getExternalFeatureId())
                 .averageMass(featureImport.getIonMass());
 
         MSData.MSDataBuilder msDataBuilder = MSData.builder();
+        builder.charge((byte) featureImport.getCharge());
 
         if (featureImport.getMergedMs1() != null) {
             SimpleSpectrum mergedMs1 = new SimpleSpectrum(featureImport.getMergedMs1().getMasses(), featureImport.getMergedMs1().getIntensities());
             msDataBuilder.mergedMs1Spectrum(mergedMs1);
+        } else if (featureImport.getMs1Spectra() != null && !featureImport.getMs1Spectra().isEmpty()) {
+            Sirius sirius = StorageUtils.siriusProvider().sirius(profile != null ? profile.name() : MsInstrumentation.Unknown.getRecommendedProfile());
+            List<ProcessedPeak> mergeMSPeaks = sirius.getMs2Preprocessor().preprocess(FeatureImports.toExperiment(featureImport)).getMergedPeaks();
+            msDataBuilder.mergedMs1Spectrum(de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.from(mergeMSPeaks));
         }
 
         if (featureImport.getMs2Spectra() != null && !featureImport.getMs2Spectra().isEmpty()) {
             List<MutableMs2Spectrum> msnSpectra = new ArrayList<>();
-            List<CollisionEnergy> ce = new ArrayList<>();
             DoubleList pmz = new DoubleArrayList();
             for (int i = 0; i < featureImport.getMs2Spectra().size(); i++) {
                 BasicSpectrum spectrum = featureImport.getMs2Spectra().get(i);
@@ -537,31 +575,39 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 }
                 if (spectrum.getCollisionEnergy() != null) {
                     mutableMs2.setCollisionEnergy(spectrum.getCollisionEnergy());
-                    ce.add(spectrum.getCollisionEnergy());
                 }
                 if (spectrum.getPrecursorMz() != null) {
                     mutableMs2.setPrecursorMz(spectrum.getPrecursorMz());
                     pmz.add(spectrum.getPrecursorMz());
                 }
                 msnSpectra.add(mutableMs2);
-                msDataBuilder.msnSpectra(msnSpectra.stream().map(MergedMSnSpectrum::fromMs2Spectrum).toList());
+                {
+                    final Charge c = new Charge(featureImport.getCharge());
+                    msDataBuilder.msnSpectra(msnSpectra.stream()
+                            .peek(spec -> spec.setIonization(c))
+                            .map(MergedMSnSpectrum::fromMs2Spectrum).toList());
+                }
             }
             SimpleSpectrum merged = de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.getNormalizedSpectrum(de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.mergeSpectra(new Deviation(10), true, false, msnSpectra), Normalization.Sum);
             msDataBuilder.mergedMSnSpectrum(merged);
         }
-        builder.msData(msDataBuilder.build());
+        MSData msData = msDataBuilder.build();
+        builder.msData(msData);
 
+        if (msData != null) {
+            builder.hasMs1(msData.getMergedMs1Spectrum() != null);
+            builder.hasMsMs((msData.getMsnSpectra() != null && !msData.getMsnSpectra().isEmpty()) || (msData.getMergedMSnSpectrum() != null));
+        }
 
         if (featureImport.getRtStartSeconds() != null && featureImport.getRtEndSeconds() != null) {
             builder.retentionTime(new RetentionTime(featureImport.getRtStartSeconds(), featureImport.getRtEndSeconds()));
         }
 
-        if (featureImport.getAdduct() != null) {
-            PrecursorIonType ionType = PrecursorIonType.fromString(featureImport.getAdduct());
-            builder.charge((byte)ionType.getCharge());
-            if (!ionType.isIonizationUnknown()) {
-                builder.detectedAdducts(de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts.singleton(DetectedAdducts.Source.INPUT_FILE, ionType));
-            }
+        if (featureImport.getDetectedAdducts() != null && !featureImport.getDetectedAdducts().isEmpty()) {
+            de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts da = new de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts();
+            featureImport.getDetectedAdducts().stream().map(PrecursorIonType::fromString).distinct().forEach(ionType ->
+                    da.add(DetectedAdduct.builder().adduct(ionType).source(DetectedAdducts.Source.INPUT_FILE).build()));
+            builder.detectedAdducts(da);
         }
         return builder.build();
     }
@@ -571,15 +617,20 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         AlignedFeature.AlignedFeatureBuilder builder = AlignedFeature.builder()
                 .alignedFeatureId(fid)
                 .name(features.getName())
-                .compoundId(features.getCompoundId()==null ? null : features.getCompoundId().toString())
+                .externalFeatureId(features.getExternalFeatureId())
+                .compoundId(features.getCompoundId() == null ? null : features.getCompoundId().toString())
                 .ionMass(features.getAverageMass())
                 .quality(features.getDataQuality())
                 .hasMs1(features.isHasMs1())
                 .hasMsMs(features.isHasMsMs())
                 .computing(computeStateProvider.apply(this, fid))
-                .charge(features.getCharge())
-                .detectedAdducts(features.getDetectedAdducts().getAllAdducts().stream().map(PrecursorIonType::toString)
-                        .collect(Collectors.toSet()));
+                .charge(features.getCharge());
+        if (features.getDetectedAdducts() != null)
+            builder.detectedAdducts(features.getDetectedAdducts().getAllAdducts().stream()
+                    .map(PrecursorIonType::toString)
+                    .collect(Collectors.toSet()));
+        else
+            builder.detectedAdducts(Set.of());
 
         RetentionTime rt = features.getRetentionTime();
         if (rt != null) {
@@ -614,7 +665,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     private FeatureAnnotations extractTopAnnotations(long longAFIf, Class<? extends StructureMatch> clzz) {
         final FeatureAnnotations cSum = new FeatureAnnotations();
 
-        StructureMatch structureMatch = project().findByFeatureIdStr(longAFIf, clzz)
+        StructureMatch structureMatch = project().findByFeatureIdStr(longAFIf, clzz, "structureRank", Database.SortOrder.ASCENDING)
                 .findFirst().orElse(null);
 
 
@@ -658,8 +709,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             builder.mergedMs1(Spectrums.createMs1(msData.getMergedMs1Spectrum()));
         if (msData.getMergedMSnSpectrum() != null)
             builder.mergedMs2(Spectrums.createMergedMsMs(msData.getMergedMSnSpectrum(), msData.getMsnSpectra().get(0).getMergedPrecursorMz()));
-        if (msData.getMsnSpectra() != null)
-            builder.ms2Spectra(msData.getMsnSpectra().stream().map(Spectrums::createMsMs).toList());
+
+        builder.ms2Spectra(msData.getMsnSpectra() != null ? msData.getMsnSpectra().stream().map(Spectrums::createMsMs).toList() : List.of());
+        //MS1Spectra are not set since they are not stored in default MSData object.
         return builder.build();
     }
 
@@ -752,16 +804,15 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         List<Compound> compounds = stream.map(c -> convertCompound(c, optFields, optFeatureFields)).toList();
 
-        // TODO annotations
-        long total =  storage().countAll(de.unijena.bioinf.ms.persistence.model.core.Compound.class);
+        long total = storage().countAll(de.unijena.bioinf.ms.persistence.model.core.Compound.class);
 
         return new PageImpl<>(compounds, pageable, total);
     }
 
     @SneakyThrows
     @Override
-    public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
-        List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream().map(this::convertCompound).toList();
+    public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, InstrumentProfile profile, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
+        List<de.unijena.bioinf.ms.persistence.model.core.Compound> dbc = compounds.stream().map(ci -> convertCompound(ci, profile)).toList();
         project().importCompounds(dbc);
         return dbc.stream().map(c -> convertCompound(c, optFields, optFieldsFeatures)).toList();
     }
@@ -778,7 +829,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                     }
                     return convertCompound(c, optFields, optFeatureFields);
                 })
-                // TODO annotations
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no compound '" + compoundId + "' in project " + projectId + "."));
     }
 
@@ -814,7 +864,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         return new PageImpl<>(features, pageable, total);
     }
 
-    private AlignedFeatureQuality convertToFeatureQuality(QualityReport report){
+    private AlignedFeatureQuality convertToFeatureQuality(QualityReport report) {
         return AlignedFeatureQuality.builder()
                 .alignedFeatureId(String.valueOf(report.getAlignedFeatureId()))
                 .overallQuality(report.getOverallQuality())
@@ -845,14 +895,17 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     }
 
     @Override
-    public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+    public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @Nullable InstrumentProfile profile, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         LongestCommonSubsequence lcs = new LongestCommonSubsequence();
-        String name = features.stream().map(FeatureImport::getName).reduce((a, b) -> lcs.longestCommonSubsequence(a, b).toString()).orElse("");
-        if (name.isBlank())
-            name = "Compound";
+        String name = features.stream().map(FeatureImport::getName)
+                .filter(Objects::nonNull)
+                .filter(Predicate.not(String::isBlank))
+                .reduce((a, b) -> lcs.longestCommonSubsequence(a, b).toString())
+                .filter(Predicate.not(String::isBlank))
+                .orElse(null);
 
         CompoundImport ci = CompoundImport.builder().name(name).features(features).build();
-        Compound compound = addCompounds(List.of(ci), EnumSet.of(Compound.OptField.none), optFields).stream().findFirst().orElseThrow(
+        Compound compound = addCompounds(List.of(ci), profile, EnumSet.of(Compound.OptField.none), optFields).stream().findFirst().orElseThrow(
                 () -> new ResponseStatusException(NOT_FOUND, "Compound could not be imported to " + projectId + ".")
         );
         return compound.getFeatures();
@@ -895,7 +948,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 bestMatch = match;
             } else if (
                     Math.abs(bestMatch.getSimilarity().similarity - match.getSimilarity().similarity) < 1E-3 &&
-                    bestMatch.getSimilarity().sharedPeaks < match.getSimilarity().sharedPeaks
+                            bestMatch.getSimilarity().sharedPeaks < match.getSimilarity().sharedPeaks
             ) {
                 bestMatch = match;
             } else if (bestMatch.getSimilarity().similarity < match.getSimilarity().similarity) {

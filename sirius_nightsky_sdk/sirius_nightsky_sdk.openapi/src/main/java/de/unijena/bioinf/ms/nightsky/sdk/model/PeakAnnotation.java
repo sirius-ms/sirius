@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -46,7 +46,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   PeakAnnotation.JSON_PROPERTY_SUBSTRUCTURE_SCORE,
   PeakAnnotation.JSON_PROPERTY_HYDROGEN_REARRANGEMENTS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class PeakAnnotation {
   public static final String JSON_PROPERTY_FRAGMENT_ID = "fragmentId";
   private Integer fragmentId;
@@ -118,7 +118,6 @@ public class PeakAnnotation {
     this.fragmentId = fragmentId;
   }
 
-
   public PeakAnnotation molecularFormula(String molecularFormula) {
     
     this.molecularFormula = molecularFormula;
@@ -143,7 +142,6 @@ public class PeakAnnotation {
   public void setMolecularFormula(String molecularFormula) {
     this.molecularFormula = molecularFormula;
   }
-
 
   public PeakAnnotation ionization(String ionization) {
     
@@ -170,7 +168,6 @@ public class PeakAnnotation {
     this.ionization = ionization;
   }
 
-
   public PeakAnnotation exactMass(Double exactMass) {
     
     this.exactMass = exactMass;
@@ -195,7 +192,6 @@ public class PeakAnnotation {
   public void setExactMass(Double exactMass) {
     this.exactMass = exactMass;
   }
-
 
   public PeakAnnotation massDeviationMz(Double massDeviationMz) {
     
@@ -222,7 +218,6 @@ public class PeakAnnotation {
     this.massDeviationMz = massDeviationMz;
   }
 
-
   public PeakAnnotation massDeviationPpm(Double massDeviationPpm) {
     
     this.massDeviationPpm = massDeviationPpm;
@@ -247,7 +242,6 @@ public class PeakAnnotation {
   public void setMassDeviationPpm(Double massDeviationPpm) {
     this.massDeviationPpm = massDeviationPpm;
   }
-
 
   public PeakAnnotation recalibratedMassDeviationMz(Double recalibratedMassDeviationMz) {
     
@@ -274,7 +268,6 @@ public class PeakAnnotation {
     this.recalibratedMassDeviationMz = recalibratedMassDeviationMz;
   }
 
-
   public PeakAnnotation recalibratedMassDeviationPpm(Double recalibratedMassDeviationPpm) {
     
     this.recalibratedMassDeviationPpm = recalibratedMassDeviationPpm;
@@ -300,7 +293,6 @@ public class PeakAnnotation {
     this.recalibratedMassDeviationPpm = recalibratedMassDeviationPpm;
   }
 
-
   public PeakAnnotation parentPeak(ParentPeak parentPeak) {
     
     this.parentPeak = parentPeak;
@@ -325,7 +317,6 @@ public class PeakAnnotation {
   public void setParentPeak(ParentPeak parentPeak) {
     this.parentPeak = parentPeak;
   }
-
 
   public PeakAnnotation substructureAtoms(List<Integer> substructureAtoms) {
     
@@ -360,7 +351,6 @@ public class PeakAnnotation {
     this.substructureAtoms = substructureAtoms;
   }
 
-
   public PeakAnnotation substructureBonds(List<Integer> substructureBonds) {
     
     this.substructureBonds = substructureBonds;
@@ -393,7 +383,6 @@ public class PeakAnnotation {
   public void setSubstructureBonds(List<Integer> substructureBonds) {
     this.substructureBonds = substructureBonds;
   }
-
 
   public PeakAnnotation substructureBondsCut(List<Integer> substructureBondsCut) {
     
@@ -428,7 +417,6 @@ public class PeakAnnotation {
     this.substructureBondsCut = substructureBondsCut;
   }
 
-
   public PeakAnnotation substructureScore(Float substructureScore) {
     
     this.substructureScore = substructureScore;
@@ -453,7 +441,6 @@ public class PeakAnnotation {
   public void setSubstructureScore(Float substructureScore) {
     this.substructureScore = substructureScore;
   }
-
 
   public PeakAnnotation hydrogenRearrangements(Integer hydrogenRearrangements) {
     

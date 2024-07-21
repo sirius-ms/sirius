@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -42,7 +42,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SearchableDatabase.JSON_PROPERTY_NUMBER_OF_FORMULAS,
   SearchableDatabase.JSON_PROPERTY_NUMBER_OF_REFERENCE_SPECTRA
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class SearchableDatabase {
   public static final String JSON_PROPERTY_DISPLAY_NAME = "displayName";
   private String displayName;
@@ -108,7 +108,6 @@ public class SearchableDatabase {
     this.displayName = displayName;
   }
 
-
   public SearchableDatabase location(String location) {
     
     this.location = location;
@@ -133,7 +132,6 @@ public class SearchableDatabase {
   public void setLocation(String location) {
     this.location = location;
   }
-
 
   public SearchableDatabase matchRtOfReferenceSpectra(Boolean matchRtOfReferenceSpectra) {
     
@@ -160,7 +158,6 @@ public class SearchableDatabase {
     this.matchRtOfReferenceSpectra = matchRtOfReferenceSpectra;
   }
 
-
   public SearchableDatabase databaseId(String databaseId) {
     
     this.databaseId = databaseId;
@@ -185,7 +182,6 @@ public class SearchableDatabase {
   public void setDatabaseId(String databaseId) {
     this.databaseId = databaseId;
   }
-
 
   public SearchableDatabase customDb(Boolean customDb) {
     
@@ -212,7 +208,6 @@ public class SearchableDatabase {
     this.customDb = customDb;
   }
 
-
   public SearchableDatabase searchable(Boolean searchable) {
     
     this.searchable = searchable;
@@ -237,7 +232,6 @@ public class SearchableDatabase {
   public void setSearchable(Boolean searchable) {
     this.searchable = searchable;
   }
-
 
   public SearchableDatabase dbDate(String dbDate) {
     
@@ -264,7 +258,6 @@ public class SearchableDatabase {
     this.dbDate = dbDate;
   }
 
-
   public SearchableDatabase dbVersion(Integer dbVersion) {
     
     this.dbVersion = dbVersion;
@@ -289,7 +282,6 @@ public class SearchableDatabase {
   public void setDbVersion(Integer dbVersion) {
     this.dbVersion = dbVersion;
   }
-
 
   public SearchableDatabase updateNeeded(Boolean updateNeeded) {
     
@@ -316,7 +308,6 @@ public class SearchableDatabase {
     this.updateNeeded = updateNeeded;
   }
 
-
   public SearchableDatabase numberOfStructures(Long numberOfStructures) {
     
     this.numberOfStructures = numberOfStructures;
@@ -342,7 +333,6 @@ public class SearchableDatabase {
     this.numberOfStructures = numberOfStructures;
   }
 
-
   public SearchableDatabase numberOfFormulas(Long numberOfFormulas) {
     
     this.numberOfFormulas = numberOfFormulas;
@@ -367,7 +357,6 @@ public class SearchableDatabase {
   public void setNumberOfFormulas(Long numberOfFormulas) {
     this.numberOfFormulas = numberOfFormulas;
   }
-
 
   public SearchableDatabase numberOfReferenceSpectra(Long numberOfReferenceSpectra) {
     

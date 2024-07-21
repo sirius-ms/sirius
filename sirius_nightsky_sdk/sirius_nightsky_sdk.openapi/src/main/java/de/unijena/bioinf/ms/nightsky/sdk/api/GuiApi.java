@@ -25,7 +25,7 @@ import org.springframework.http.ResponseEntity;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class GuiApi {
     private ApiClient apiClient;
 
@@ -72,7 +72,7 @@ public class GuiApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "closeProject", closeProject));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };

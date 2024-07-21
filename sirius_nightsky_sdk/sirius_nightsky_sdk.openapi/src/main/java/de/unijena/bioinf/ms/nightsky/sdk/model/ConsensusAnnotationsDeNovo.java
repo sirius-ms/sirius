@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -37,7 +37,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ConsensusAnnotationsDeNovo.JSON_PROPERTY_SUPPORTING_FEATURE_IDS,
   ConsensusAnnotationsDeNovo.JSON_PROPERTY_SELECTION_CRITERION
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class ConsensusAnnotationsDeNovo {
   public static final String JSON_PROPERTY_MOLECULAR_FORMULA = "molecularFormula";
   private String molecularFormula;
@@ -79,7 +79,6 @@ public class ConsensusAnnotationsDeNovo {
     this.molecularFormula = molecularFormula;
   }
 
-
   public ConsensusAnnotationsDeNovo compoundClasses(CompoundClasses compoundClasses) {
     
     this.compoundClasses = compoundClasses;
@@ -104,7 +103,6 @@ public class ConsensusAnnotationsDeNovo {
   public void setCompoundClasses(CompoundClasses compoundClasses) {
     this.compoundClasses = compoundClasses;
   }
-
 
   public ConsensusAnnotationsDeNovo supportingFeatureIds(List<String> supportingFeatureIds) {
     
@@ -138,7 +136,6 @@ public class ConsensusAnnotationsDeNovo {
   public void setSupportingFeatureIds(List<String> supportingFeatureIds) {
     this.supportingFeatureIds = supportingFeatureIds;
   }
-
 
   public ConsensusAnnotationsDeNovo selectionCriterion(ConsensusCriterionDeNovo selectionCriterion) {
     

@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -41,7 +41,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AnnotatedSpectrum.JSON_PROPERTY_ABS_INTENSITY_FACTOR,
   AnnotatedSpectrum.JSON_PROPERTY_SPECTRUM_ANNOTATION
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class AnnotatedSpectrum {
   public static final String JSON_PROPERTY_NAME = "name";
   private String name;
@@ -95,7 +95,6 @@ public class AnnotatedSpectrum {
     this.name = name;
   }
 
-
   public AnnotatedSpectrum msLevel(Integer msLevel) {
     
     this.msLevel = msLevel;
@@ -120,7 +119,6 @@ public class AnnotatedSpectrum {
   public void setMsLevel(Integer msLevel) {
     this.msLevel = msLevel;
   }
-
 
   public AnnotatedSpectrum collisionEnergy(String collisionEnergy) {
     
@@ -147,7 +145,6 @@ public class AnnotatedSpectrum {
     this.collisionEnergy = collisionEnergy;
   }
 
-
   public AnnotatedSpectrum precursorMz(Double precursorMz) {
     
     this.precursorMz = precursorMz;
@@ -173,7 +170,6 @@ public class AnnotatedSpectrum {
     this.precursorMz = precursorMz;
   }
 
-
   public AnnotatedSpectrum scanNumber(Integer scanNumber) {
     
     this.scanNumber = scanNumber;
@@ -198,7 +194,6 @@ public class AnnotatedSpectrum {
   public void setScanNumber(Integer scanNumber) {
     this.scanNumber = scanNumber;
   }
-
 
   public AnnotatedSpectrum peaks(List<AnnotatedPeak> peaks) {
     
@@ -233,7 +228,6 @@ public class AnnotatedSpectrum {
     this.peaks = peaks;
   }
 
-
   public AnnotatedSpectrum absIntensityFactor(Double absIntensityFactor) {
     
     this.absIntensityFactor = absIntensityFactor;
@@ -258,7 +252,6 @@ public class AnnotatedSpectrum {
   public void setAbsIntensityFactor(Double absIntensityFactor) {
     this.absIntensityFactor = absIntensityFactor;
   }
-
 
   public AnnotatedSpectrum spectrumAnnotation(SpectrumAnnotation spectrumAnnotation) {
     

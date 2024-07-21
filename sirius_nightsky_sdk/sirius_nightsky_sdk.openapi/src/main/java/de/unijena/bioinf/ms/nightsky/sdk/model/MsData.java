@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * The MsData wraps all spectral input data belonging to a feature.  &lt;p&gt;  Each Feature has:  - One merged MS/MS spectrum (optional)  - One merged MS spectrum (optional)  - many MS/MS spectra  - many MS spectra  &lt;p&gt;  Each non-merged spectrum has an index which can be used to access the spectrum.  &lt;p&gt;  In the future we might add some additional information like chromatographic peak or something similar
+ * The MsData wraps all spectral input data belonging to a (aligned) feature. All spectra fields are optional.  However, at least one Spectrum field needs to be set to create a valid MsData Object.  The different types of spectra fields can be extended to adapt to other MassSpec measurement techniques not covered yet.  &lt;p&gt;  Each Feature can have:  - One merged MS/MS spectrum (optional)  - One merged MS spectrum (optional)  - many MS/MS spectra (optional)  - many MS spectra (optional)  &lt;p&gt;  Each non-merged spectrum has an index which can be used to access the spectrum.  &lt;p&gt;  In the future we might add some additional information like chromatographic peak or something similar
  */
 @JsonPropertyOrder({
   MsData.JSON_PROPERTY_MERGED_MS1,
@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   MsData.JSON_PROPERTY_MS1_SPECTRA,
   MsData.JSON_PROPERTY_MS2_SPECTRA
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class MsData {
   public static final String JSON_PROPERTY_MERGED_MS1 = "mergedMs1";
   private BasicSpectrum mergedMs1;
@@ -78,7 +78,6 @@ public class MsData {
     this.mergedMs1 = mergedMs1;
   }
 
-
   public MsData mergedMs2(BasicSpectrum mergedMs2) {
     
     this.mergedMs2 = mergedMs2;
@@ -104,7 +103,6 @@ public class MsData {
     this.mergedMs2 = mergedMs2;
   }
 
-
   public MsData ms1Spectra(List<BasicSpectrum> ms1Spectra) {
     
     this.ms1Spectra = ms1Spectra;
@@ -123,9 +121,9 @@ public class MsData {
    * Get ms1Spectra
    * @return ms1Spectra
   **/
-  @jakarta.annotation.Nonnull
+  @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MS1_SPECTRA)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<BasicSpectrum> getMs1Spectra() {
     return ms1Spectra;
@@ -133,11 +131,10 @@ public class MsData {
 
 
   @JsonProperty(JSON_PROPERTY_MS1_SPECTRA)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMs1Spectra(List<BasicSpectrum> ms1Spectra) {
     this.ms1Spectra = ms1Spectra;
   }
-
 
   public MsData ms2Spectra(List<BasicSpectrum> ms2Spectra) {
     
@@ -157,9 +154,9 @@ public class MsData {
    * Get ms2Spectra
    * @return ms2Spectra
   **/
-  @jakarta.annotation.Nonnull
+  @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_MS2_SPECTRA)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
   public List<BasicSpectrum> getMs2Spectra() {
     return ms2Spectra;
@@ -167,7 +164,7 @@ public class MsData {
 
 
   @JsonProperty(JSON_PROPERTY_MS2_SPECTRA)
-  @JsonInclude(value = JsonInclude.Include.ALWAYS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setMs2Spectra(List<BasicSpectrum> ms2Spectra) {
     this.ms2Spectra = ms2Spectra;
   }

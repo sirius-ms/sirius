@@ -4,7 +4,7 @@ package de.unijena.bioinf.ms.gui.dialogs;
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2021 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -54,7 +54,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
     final PlaceholderTextField searchField;
     final JTextField searchFieldDialogCopy;
-    final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner, minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner, minIsotopeSpinner;
+    final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner, minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner;
     public final JCheckboxListPanel<PrecursorIonType> adductOptions;
     JButton discard, apply, reset;
     final JCheckBox invertFilter, deleteSelection, elementsMatchFormula, elementsMatchPrecursorFormula, hasMs1, hasMsMs;
@@ -71,7 +71,6 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
     private final QualityFilterPanel overallQualityPanel;
     private final List<QualityFilterPanel> qualityPanels;
 
-
     final SiriusGui gui;
 
     public CompoundFilterOptionsDialog(SiriusGui gui, PlaceholderTextField searchField, CompoundFilterModel filterModel, CompoundList compoundList) {
@@ -83,17 +82,23 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
         setLayout(new BorderLayout());
         setResizable(false);
+
+        final JTabbedPane centerTab = new JTabbedPane();
+        add(centerTab, BorderLayout.CENTER);
+
         final TwoColumnPanel generalParameters = new TwoColumnPanel();
-        add(generalParameters, BorderLayout.CENTER);
+        centerTab.addTab("General", generalParameters);
 
         {
             searchFieldDialogCopy = new JTextField(searchField.getText());
-            generalParameters.addNamed("Fulltext search", searchFieldDialogCopy);
+            final TwoColumnPanel fullTextPanel = new TwoColumnPanel();
+            fullTextPanel.addNamed("Fulltext search", searchFieldDialogCopy);
+            add(fullTextPanel, BorderLayout.NORTH);
         }
         //general filter
         {
             generalParameters.add(Box.createVerticalStrut(5));
-            generalParameters.add(new JXTitledSeparator("General"));
+            generalParameters.add(new JXTitledSeparator("Thresholds"));
 
             {
                 TwoColumnPanel min = new TwoColumnPanel();
@@ -129,6 +134,9 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             }
 
             {
+                generalParameters.add(Box.createVerticalStrut(5));
+                generalParameters.add(new JXTitledSeparator("Lipid Class Filter"));
+
                 //lipid filter
                 lipidFilterBox = new JComboBox<>();
                 java.util.List.copyOf(EnumSet.allOf(CompoundFilterModel.LipidFilter.class)).forEach(lipidFilterBox::addItem);
@@ -136,49 +144,55 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
                 lipidFilterBox.setSelectedItem(filterModel.getLipidFilter());
             }
 
-            //isotope peak filter
+            final TwoColumnPanel dataParameters = new TwoColumnPanel();
+            centerTab.addTab("Data Quality", dataParameters);
+
+            //MS data availability filter
             {
-                generalParameters.add(Box.createVerticalStrut(5));
-                generalParameters.add(new JXTitledSeparator("MS Data"));
+                dataParameters.add(Box.createVerticalStrut(5));
+                dataParameters.add(new JXTitledSeparator("MS Data Quality"));
                 hasMs1 = new JCheckBox("MS1");
                 hasMs1.setToolTipText("Feature must have a least one MS1 Spectrum");
                 hasMs1.setSelected(filterModel.isHasMs1());
                 hasMsMs = new JCheckBox("MS/MS");
                 hasMsMs.setToolTipText("Feature must have a least one MS/MS Spectrum");
                 hasMsMs.setSelected(filterModel.isHasMsMs());
-                minIsotopeSpinner = makeSpinner(filterModel.getCurrentMinIsotopePeaks(), filterModel.getMinIsotopePeaks(), filterModel.getMaxIsotopePeaks(), 1);
 
                 Box box = Box.createHorizontalBox();
                 box.add(hasMs1);
                 box.add(Box.createHorizontalStrut(50));
                 box.add(hasMsMs);
-                box.add(Box.createHorizontalStrut(50));
-                box.add(new TwoColumnPanel("Min isotope peaks", minIsotopeSpinner));
                 box.add(Box.createHorizontalStrut(10));
-                generalParameters.add(box);
+                dataParameters.add(box);
             }
 
+            //quality filter
+            {
+                dataParameters.add(Box.createVerticalStrut(5));
+                dataParameters.add(new JXTitledSeparator("Feature Quality"));
+                overallQualityPanel = new QualityFilterPanel(filterModel.getFeatureQualityFilter());
+                dataParameters.addNamed("<html><b>Overall quality</b></html>", overallQualityPanel);
+                dataParameters.add(Box.createVerticalStrut(5));
+                qualityPanels = filterModel.getIoQualityFilters().stream().map(qf -> {
+                    QualityFilterPanel qfp = new QualityFilterPanel(qf);
+                    dataParameters.addNamed(qf.getName(), qfp);
+                    return qfp;
+                }).toList();
+            }
+
+            dataParameters.addVerticalGlue();
 
         }
-        //quality filter
-        {
-            generalParameters.add(Box.createVerticalStrut(5));
-            generalParameters.add(new JXTitledSeparator("Quality Filter"));
-            overallQualityPanel = new QualityFilterPanel(filterModel.getFeatureQualityFilter());
-            generalParameters.addNamed("<html><b>Overall quality</b></html>", overallQualityPanel);
-            generalParameters.add(Box.createVerticalStrut(5));
-            qualityPanels = filterModel.getIoQualityFilters().stream().map(qf -> {
-                QualityFilterPanel qfp = new QualityFilterPanel(qf);
-                generalParameters.addNamed(qf.getName(), qfp);
-                return qfp;
-            }).toList();
-        }
 
+        final JPanel resultParameters = new JPanel();
+        resultParameters.setLayout(new BoxLayout(resultParameters, BoxLayout.Y_AXIS));
+        resultParameters.setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 5));
+        centerTab.addTab("Results", resultParameters);
 
         // Element filter
         {
-            generalParameters.add(Box.createVerticalStrut(5));
-            generalParameters.add(new JXTitledSeparator("Elements"));
+            resultParameters.add(Box.createVerticalStrut(5));
+            resultParameters.add(new JXTitledSeparator("Elements"));
 
             JPanel elementSelector = new JPanel();
             elementSelector.setLayout(new BoxLayout(elementSelector, BoxLayout.X_AXIS));
@@ -210,18 +224,18 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             group.add(elementsMatchPrecursorFormula);
             group.add(Box.createHorizontalGlue());
 
-            generalParameters.add(elementSelector);
-            generalParameters.add(group);
+            resultParameters.add(elementSelector);
+            resultParameters.add(group);
         }
 
         // Adduct filter
         {
-            generalParameters.add(Box.createVerticalStrut(5));
+            resultParameters.add(Box.createVerticalStrut(5));
             adductOptions = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Adducts", GuiUtils.formatToolTip("Select adducts to  filter by. Selecting all or none mean every adducts can pass"));
             adductOptions.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>(PrecursorIonType.fromString("[M + H20 + Na]+"), false));
 
             List<PrecursorIonType> ionizations = new ArrayList<>(PeriodicTable.getInstance().getAdductsAndUnKnowns());
-            ionizations.sort(PrecursorIonTypeSelector.ionTypeComparator);
+            Collections.sort(ionizations);
 
             adductOptions.checkBoxList.replaceElements(ionizations);
             adductOptions.checkBoxList.uncheckAll();
@@ -247,8 +261,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             box.add(searchDBList);
             box.add(Box.createHorizontalStrut(10));
 
-
-            generalParameters.add(box);
+            resultParameters.add(box);
+            resultParameters.add(Box.createVerticalBox());
 
             if (filterModel.isDbFilterEnabled()) { //null check
                 searchDBList.checkBoxList.checkAll(filterModel.getDbFilter().getDbs());
@@ -275,6 +289,8 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             generalParameters.add(group);
 
         }
+
+        generalParameters.addVerticalGlue();
 
         reset = new JButton("Reset");
         reset.addActionListener(this);
@@ -347,7 +363,6 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         filterModel.setCurrentMaxConfidence(getMaxConfidence());
         filterModel.setHasMs1(hasMs1.isSelected());
         filterModel.setHasMsMs(hasMsMs.isSelected());
-        filterModel.setCurrentMinIsotopePeaks(getMinIsotopePeaks());
         filterModel.setAdducts(new HashSet<>(adductOptions.checkBoxList.getCheckedItems()));
 
         overallQualityPanel.updateModel(filterModel.getFeatureQualityFilter());
@@ -369,7 +384,6 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
         filterModel.setDbFilter(new CompoundFilterModel.DbFilter(searchDBList.checkBoxList.getCheckedItems(),
                 ((SpinnerNumberModel) candidateSpinner.getModel()).getNumber().intValue()));
-
         saveTextFilter();
     }
 
@@ -454,7 +468,6 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         maxRtSpinner.setValue(filterModel.getMaxRt());
         minConfidenceSpinner.setValue(filterModel.getMinConfidence());
         maxConfidenceSpinner.setValue(filterModel.getMaxConfidence());
-        minIsotopeSpinner.setValue(filterModel.getMinIsotopePeaks());
         candidateSpinner.setValue(1);
     }
 
@@ -480,10 +493,6 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
     public double getMaxConfidence() {
         return getDoubleValue(maxConfidenceSpinner);
-    }
-
-    public int getMinIsotopePeaks() {
-        return getIntValue(minIsotopeSpinner);
     }
 
 

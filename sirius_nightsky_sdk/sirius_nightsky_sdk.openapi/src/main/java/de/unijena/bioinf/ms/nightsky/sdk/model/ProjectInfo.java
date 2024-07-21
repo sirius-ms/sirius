@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -35,7 +35,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   ProjectInfo.JSON_PROPERTY_NUM_OF_COMPOUNDS,
   ProjectInfo.JSON_PROPERTY_NUM_OF_BYTES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class ProjectInfo {
   public static final String JSON_PROPERTY_PROJECT_ID = "projectId";
   private String projectId;
@@ -86,7 +86,6 @@ public class ProjectInfo {
     this.projectId = projectId;
   }
 
-
   public ProjectInfo location(String location) {
     
     this.location = location;
@@ -111,7 +110,6 @@ public class ProjectInfo {
   public void setLocation(String location) {
     this.location = location;
   }
-
 
   public ProjectInfo description(String description) {
     
@@ -138,7 +136,6 @@ public class ProjectInfo {
     this.description = description;
   }
 
-
   public ProjectInfo compatible(Boolean compatible) {
     
     this.compatible = compatible;
@@ -163,7 +160,6 @@ public class ProjectInfo {
   public void setCompatible(Boolean compatible) {
     this.compatible = compatible;
   }
-
 
   public ProjectInfo numOfFeatures(Integer numOfFeatures) {
     
@@ -190,7 +186,6 @@ public class ProjectInfo {
     this.numOfFeatures = numOfFeatures;
   }
 
-
   public ProjectInfo numOfCompounds(Integer numOfCompounds) {
     
     this.numOfCompounds = numOfCompounds;
@@ -215,7 +210,6 @@ public class ProjectInfo {
   public void setNumOfCompounds(Integer numOfCompounds) {
     this.numOfCompounds = numOfCompounds;
   }
-
 
   public ProjectInfo numOfBytes(Long numOfBytes) {
     

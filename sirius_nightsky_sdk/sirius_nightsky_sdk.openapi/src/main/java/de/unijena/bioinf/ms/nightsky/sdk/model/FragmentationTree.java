@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -36,13 +36,13 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FragmentationTree.JSON_PROPERTY_LOSSES,
   FragmentationTree.JSON_PROPERTY_TREE_SCORE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class FragmentationTree {
   public static final String JSON_PROPERTY_FRAGMENTS = "fragments";
-  private List<FragmentNode> fragments;
+  private List<FragmentNode> fragments = new ArrayList<>();
 
   public static final String JSON_PROPERTY_LOSSES = "losses";
-  private List<LossEdge> losses;
+  private List<LossEdge> losses = new ArrayList<>();
 
   public static final String JSON_PROPERTY_TREE_SCORE = "treeScore";
   private Double treeScore;
@@ -83,7 +83,6 @@ public class FragmentationTree {
     this.fragments = fragments;
   }
 
-
   public FragmentationTree losses(List<LossEdge> losses) {
     
     this.losses = losses;
@@ -116,7 +115,6 @@ public class FragmentationTree {
   public void setLosses(List<LossEdge> losses) {
     this.losses = losses;
   }
-
 
   public FragmentationTree treeScore(Double treeScore) {
     

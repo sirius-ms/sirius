@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -34,7 +34,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   JobProgress.JSON_PROPERTY_MESSAGE,
   JobProgress.JSON_PROPERTY_ERROR_MESSAGE
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class JobProgress {
   public static final String JSON_PROPERTY_INDETERMINATE = "indeterminate";
   private Boolean indeterminate;
@@ -129,7 +129,6 @@ public class JobProgress {
     this.indeterminate = indeterminate;
   }
 
-
   public JobProgress state(StateEnum state) {
     
     this.state = state;
@@ -154,7 +153,6 @@ public class JobProgress {
   public void setState(StateEnum state) {
     this.state = state;
   }
-
 
   public JobProgress currentProgress(Long currentProgress) {
     
@@ -181,7 +179,6 @@ public class JobProgress {
     this.currentProgress = currentProgress;
   }
 
-
   public JobProgress maxProgress(Long maxProgress) {
     
     this.maxProgress = maxProgress;
@@ -207,7 +204,6 @@ public class JobProgress {
     this.maxProgress = maxProgress;
   }
 
-
   public JobProgress message(String message) {
     
     this.message = message;
@@ -232,7 +228,6 @@ public class JobProgress {
   public void setMessage(String message) {
     this.message = message;
   }
-
 
   public JobProgress errorMessage(String errorMessage) {
     

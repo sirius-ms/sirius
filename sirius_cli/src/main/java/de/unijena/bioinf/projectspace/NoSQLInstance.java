@@ -5,17 +5,17 @@
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
  *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
  *  version 3 of the License, or (at your option) any later version.
  *
- *  This library is distributed in the hope that it will be useful,
+ *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ *  Affero General Public License for more details.
  *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
 package de.unijena.bioinf.projectspace;
@@ -429,7 +429,9 @@ public class NoSQLInstance implements Instance {
     @Override
     public void saveSiriusResult(List<FTree> treesSortedByScore) {
         try {
-            Comparator<Pair<FormulaCandidate, FTreeResult>> comp = Comparator.comparing(p -> p.first().getSiriusScore());
+            Comparator<Pair<FormulaCandidate, FTreeResult>> comp =
+                    Comparator.<Pair<FormulaCandidate, FTreeResult>>comparingDouble(p -> p.first().getSiriusScore()).reversed() //sort descending by siriusScore
+                            .thenComparing(p -> p.first().getAdduct());
             final AtomicInteger rank = new AtomicInteger(1);
 
             final List<Pair<FormulaCandidate, FTreeResult>> formulaResults = treesSortedByScore.stream()
@@ -448,7 +450,7 @@ public class NoSQLInstance implements Instance {
                         FTreeResult treeResult = FTreeResult.builder().fTree(tree).alignedFeatureId(id).build();
                         return Pair.of(fc, treeResult);
                     })
-                    .sorted(comp.reversed()) //sort descending by siriusScore
+                    .sorted(comp)
                     .peek(m -> m.first().setFormulaRank(rank.getAndIncrement())) //add rank to sorted candidates
                     .toList();
 
@@ -490,8 +492,10 @@ public class NoSQLInstance implements Instance {
     @SneakyThrows
     @Override
     public void saveZodiacResult(List<FCandidate<?>> zodiacScores) {
-        Comparator<FormulaCandidate> comp = Comparator.comparing(FormulaCandidate::getZodiacScore);
-        comp = comp.thenComparing(FormulaCandidate::getSiriusScore);
+        Comparator<FormulaCandidate> comp = Comparator.comparing(FormulaCandidate::getZodiacScore, Comparator.reverseOrder())
+                .thenComparing(FormulaCandidate::getSiriusScore, Comparator.reverseOrder())
+                .thenComparing(FormulaCandidate::getAdduct);
+
         final AtomicInteger rank = new AtomicInteger(1);
 
         List<FormulaCandidate> candidates = zodiacScores.stream().
@@ -501,7 +505,7 @@ public class NoSQLInstance implements Instance {
                     c.setZodiacScore(fc.getAnnotationOrThrow(ZodiacScore.class).score());
                     return c;
                 })
-                .sorted(comp.reversed())
+                .sorted(comp)
                 .peek(fc -> fc.setFormulaRank(rank.getAndIncrement()))
                 .toList();
 

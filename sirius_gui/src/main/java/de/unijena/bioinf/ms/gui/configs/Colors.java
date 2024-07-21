@@ -51,6 +51,8 @@ public abstract class Colors {
 
     public final static Color BACKGROUND;
 
+    public final static Color SWITCH_FOREGROUND;
+    public final static Color SWITCH_BACKGROUND;
     public final static Color LIST_SELECTED_BACKGROUND;
     public final static Color LIST_SELECTED_FOREGROUND;
     public final static Color LIST_EVEN_BACKGROUND;
@@ -79,7 +81,7 @@ public abstract class Colors {
         final String theme = props.getProperty("de.unijena.bioinf.sirius.ui.theme", "Light");
 
         Color listSelectedBg, listSelectedFg, listEvenBg, listUnevenBg, listLightGreen, gradientGreen, gradientRed,
-                gradientYellow, fg, bg, classifierMain, classifierOther;
+                gradientYellow, fg, bg, classifierMain, classifierOther, switchForeground;
 
         switch (theme) {
             case "Dark":
@@ -96,6 +98,8 @@ public abstract class Colors {
 
                     fg = new Color(187, 187, 187);
                     bg = new Color(0x3c3f41);
+
+                    switchForeground = fg;
 
                     listSelectedBg = accent;
                     listSelectedFg = Color.WHITE;
@@ -126,6 +130,8 @@ public abstract class Colors {
 
                     fg = Color.BLACK;
                     bg = Color.WHITE;
+
+                    switchForeground = new Color(210, 210, 210);
 
                     listSelectedBg = accent;
                     listSelectedFg = Color.WHITE;
@@ -158,6 +164,7 @@ public abstract class Colors {
 
                 fg = Color.BLACK;
                 bg = Color.WHITE;
+                switchForeground = new Color(210, 210, 210);
 
                 listSelectedBg = new Color(38, 117, 191);
                 listSelectedFg = Color.WHITE;
@@ -188,6 +195,9 @@ public abstract class Colors {
 
         CLASSIFIER_MAIN = classifierMain;
         CLASSIFIER_OTHER = classifierOther;
+
+        SWITCH_FOREGROUND = switchForeground;
+        SWITCH_BACKGROUND = new JButton().getBackground(); //hacky
     }
 
 }

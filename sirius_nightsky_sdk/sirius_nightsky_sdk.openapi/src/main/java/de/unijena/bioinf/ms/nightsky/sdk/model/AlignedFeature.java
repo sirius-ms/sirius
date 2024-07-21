@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -36,6 +36,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AlignedFeature.JSON_PROPERTY_ALIGNED_FEATURE_ID,
   AlignedFeature.JSON_PROPERTY_COMPOUND_ID,
   AlignedFeature.JSON_PROPERTY_NAME,
+  AlignedFeature.JSON_PROPERTY_EXTERNAL_FEATURE_ID,
   AlignedFeature.JSON_PROPERTY_ION_MASS,
   AlignedFeature.JSON_PROPERTY_CHARGE,
   AlignedFeature.JSON_PROPERTY_DETECTED_ADDUCTS,
@@ -49,7 +50,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AlignedFeature.JSON_PROPERTY_TOP_ANNOTATIONS_DE_NOVO,
   AlignedFeature.JSON_PROPERTY_COMPUTING
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class AlignedFeature {
   public static final String JSON_PROPERTY_ALIGNED_FEATURE_ID = "alignedFeatureId";
   private String alignedFeatureId;
@@ -59,6 +60,9 @@ public class AlignedFeature {
 
   public static final String JSON_PROPERTY_NAME = "name";
   private String name;
+
+  public static final String JSON_PROPERTY_EXTERNAL_FEATURE_ID = "externalFeatureId";
+  private String externalFeatureId;
 
   public static final String JSON_PROPERTY_ION_MASS = "ionMass";
   private Double ionMass;
@@ -124,7 +128,6 @@ public class AlignedFeature {
     this.alignedFeatureId = alignedFeatureId;
   }
 
-
   public AlignedFeature compoundId(String compoundId) {
     
     this.compoundId = compoundId;
@@ -149,7 +152,6 @@ public class AlignedFeature {
   public void setCompoundId(String compoundId) {
     this.compoundId = compoundId;
   }
-
 
   public AlignedFeature name(String name) {
     
@@ -176,6 +178,30 @@ public class AlignedFeature {
     this.name = name;
   }
 
+  public AlignedFeature externalFeatureId(String externalFeatureId) {
+    
+    this.externalFeatureId = externalFeatureId;
+    return this;
+  }
+
+   /**
+   * Externally provided FeatureId (e.g. by some preprocessing tool).  This FeatureId is NOT used by SIRIUS but is stored to ease mapping information back to the source.
+   * @return externalFeatureId
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_EXTERNAL_FEATURE_ID)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getExternalFeatureId() {
+    return externalFeatureId;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_EXTERNAL_FEATURE_ID)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setExternalFeatureId(String externalFeatureId) {
+    this.externalFeatureId = externalFeatureId;
+  }
 
   public AlignedFeature ionMass(Double ionMass) {
     
@@ -202,7 +228,6 @@ public class AlignedFeature {
     this.ionMass = ionMass;
   }
 
-
   public AlignedFeature charge(Integer charge) {
     
     this.charge = charge;
@@ -210,7 +235,7 @@ public class AlignedFeature {
   }
 
    /**
-   * Get charge
+   * Ion mode (charge) this feature has been measured in.
    * @return charge
   **/
   @jakarta.annotation.Nonnull
@@ -228,7 +253,6 @@ public class AlignedFeature {
     this.charge = charge;
   }
 
-
   public AlignedFeature detectedAdducts(Set<String> detectedAdducts) {
     
     this.detectedAdducts = detectedAdducts;
@@ -244,7 +268,7 @@ public class AlignedFeature {
   }
 
    /**
-   * Get detectedAdducts
+   * Adducts of this feature that have been detected during preprocessing.
    * @return detectedAdducts
   **/
   @jakarta.annotation.Nonnull
@@ -262,7 +286,6 @@ public class AlignedFeature {
   public void setDetectedAdducts(Set<String> detectedAdducts) {
     this.detectedAdducts = detectedAdducts;
   }
-
 
   public AlignedFeature rtStartSeconds(Double rtStartSeconds) {
     
@@ -289,7 +312,6 @@ public class AlignedFeature {
     this.rtStartSeconds = rtStartSeconds;
   }
 
-
   public AlignedFeature rtEndSeconds(Double rtEndSeconds) {
     
     this.rtEndSeconds = rtEndSeconds;
@@ -314,7 +336,6 @@ public class AlignedFeature {
   public void setRtEndSeconds(Double rtEndSeconds) {
     this.rtEndSeconds = rtEndSeconds;
   }
-
 
   public AlignedFeature quality(DataQuality quality) {
     
@@ -341,7 +362,6 @@ public class AlignedFeature {
     this.quality = quality;
   }
 
-
   public AlignedFeature hasMs1(Boolean hasMs1) {
     
     this.hasMs1 = hasMs1;
@@ -366,7 +386,6 @@ public class AlignedFeature {
   public void setHasMs1(Boolean hasMs1) {
     this.hasMs1 = hasMs1;
   }
-
 
   public AlignedFeature hasMsMs(Boolean hasMsMs) {
     
@@ -393,7 +412,6 @@ public class AlignedFeature {
     this.hasMsMs = hasMsMs;
   }
 
-
   public AlignedFeature msData(MsData msData) {
     
     this.msData = msData;
@@ -418,7 +436,6 @@ public class AlignedFeature {
   public void setMsData(MsData msData) {
     this.msData = msData;
   }
-
 
   public AlignedFeature topAnnotations(FeatureAnnotations topAnnotations) {
     
@@ -445,7 +462,6 @@ public class AlignedFeature {
     this.topAnnotations = topAnnotations;
   }
 
-
   public AlignedFeature topAnnotationsDeNovo(FeatureAnnotations topAnnotationsDeNovo) {
     
     this.topAnnotationsDeNovo = topAnnotationsDeNovo;
@@ -470,7 +486,6 @@ public class AlignedFeature {
   public void setTopAnnotationsDeNovo(FeatureAnnotations topAnnotationsDeNovo) {
     this.topAnnotationsDeNovo = topAnnotationsDeNovo;
   }
-
 
   public AlignedFeature computing(Boolean computing) {
     
@@ -509,6 +524,7 @@ public class AlignedFeature {
     return Objects.equals(this.alignedFeatureId, alignedFeature.alignedFeatureId) &&
         Objects.equals(this.compoundId, alignedFeature.compoundId) &&
         Objects.equals(this.name, alignedFeature.name) &&
+        Objects.equals(this.externalFeatureId, alignedFeature.externalFeatureId) &&
         Objects.equals(this.ionMass, alignedFeature.ionMass) &&
         Objects.equals(this.charge, alignedFeature.charge) &&
         Objects.equals(this.detectedAdducts, alignedFeature.detectedAdducts) &&
@@ -525,7 +541,7 @@ public class AlignedFeature {
 
   @Override
   public int hashCode() {
-    return Objects.hash(alignedFeatureId, compoundId, name, ionMass, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, quality, hasMs1, hasMsMs, msData, topAnnotations, topAnnotationsDeNovo, computing);
+    return Objects.hash(alignedFeatureId, compoundId, name, externalFeatureId, ionMass, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, quality, hasMs1, hasMsMs, msData, topAnnotations, topAnnotationsDeNovo, computing);
   }
 
   @Override
@@ -535,6 +551,7 @@ public class AlignedFeature {
     sb.append("    alignedFeatureId: ").append(toIndentedString(alignedFeatureId)).append("\n");
     sb.append("    compoundId: ").append(toIndentedString(compoundId)).append("\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
+    sb.append("    externalFeatureId: ").append(toIndentedString(externalFeatureId)).append("\n");
     sb.append("    ionMass: ").append(toIndentedString(ionMass)).append("\n");
     sb.append("    charge: ").append(toIndentedString(charge)).append("\n");
     sb.append("    detectedAdducts: ").append(toIndentedString(detectedAdducts)).append("\n");

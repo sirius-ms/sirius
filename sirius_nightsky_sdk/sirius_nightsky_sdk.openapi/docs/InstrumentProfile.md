@@ -1,6 +1,6 @@
 
 
-# Instrument
+# InstrumentProfile
 
 ## Enum
 

@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -42,7 +42,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Trace.JSON_PROPERTY_NORMALIZATION_FACTOR,
   Trace.JSON_PROPERTY_NOISE_LEVEL
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class Trace {
   public static final String JSON_PROPERTY_ID = "id";
   private Long id;
@@ -57,10 +57,10 @@ public class Trace {
   private String label;
 
   public static final String JSON_PROPERTY_INTENSITIES = "intensities";
-  private List<Double> intensities;
+  private List<Double> intensities = new ArrayList<>();
 
   public static final String JSON_PROPERTY_ANNOTATIONS = "annotations";
-  private List<Annotation> annotations;
+  private List<Annotation> annotations = new ArrayList<>();
 
   public static final String JSON_PROPERTY_MZ = "mz";
   private Double mz;
@@ -102,7 +102,6 @@ public class Trace {
     this.id = id;
   }
 
-
   public Trace sampleId(Long sampleId) {
     
     this.sampleId = sampleId;
@@ -127,7 +126,6 @@ public class Trace {
   public void setSampleId(Long sampleId) {
     this.sampleId = sampleId;
   }
-
 
   public Trace sampleName(String sampleName) {
     
@@ -154,7 +152,6 @@ public class Trace {
     this.sampleName = sampleName;
   }
 
-
   public Trace label(String label) {
     
     this.label = label;
@@ -179,7 +176,6 @@ public class Trace {
   public void setLabel(String label) {
     this.label = label;
   }
-
 
   public Trace intensities(List<Double> intensities) {
     
@@ -214,7 +210,6 @@ public class Trace {
     this.intensities = intensities;
   }
 
-
   public Trace annotations(List<Annotation> annotations) {
     
     this.annotations = annotations;
@@ -248,7 +243,6 @@ public class Trace {
     this.annotations = annotations;
   }
 
-
   public Trace mz(Double mz) {
     
     this.mz = mz;
@@ -273,7 +267,6 @@ public class Trace {
   public void setMz(Double mz) {
     this.mz = mz;
   }
-
 
   public Trace merged(Boolean merged) {
     
@@ -300,7 +293,6 @@ public class Trace {
     this.merged = merged;
   }
 
-
   public Trace normalizationFactor(Double normalizationFactor) {
     
     this.normalizationFactor = normalizationFactor;
@@ -325,7 +317,6 @@ public class Trace {
   public void setNormalizationFactor(Double normalizationFactor) {
     this.normalizationFactor = normalizationFactor;
   }
-
 
   public Trace noiseLevel(Double noiseLevel) {
     

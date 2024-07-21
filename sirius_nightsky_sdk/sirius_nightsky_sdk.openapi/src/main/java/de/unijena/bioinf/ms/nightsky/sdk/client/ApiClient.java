@@ -3,8 +3,6 @@ package de.unijena.bioinf.ms.nightsky.sdk.client;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -67,7 +65,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.client.auth.HttpBasicAuth;
 import de.unijena.bioinf.ms.nightsky.sdk.client.auth.HttpBearerAuth;
 import de.unijena.bioinf.ms.nightsky.sdk.client.auth.ApiKeyAuth;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class ApiClient {
     public enum CollectionFormat {
         CSV(","), TSV("\t"), SSV(" "), PIPES("|"), MULTI(null);

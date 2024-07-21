@@ -3,7 +3,7 @@ package de.unijena.bioinf.ms.nightsky.sdk.client.auth;
 import org.springframework.http.HttpHeaders;
 import org.springframework.util.MultiValueMap;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class ApiKeyAuth implements Authentication {
     private final String location;
     private final String paramName;

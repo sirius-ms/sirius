@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstIterProvider;
 import de.unijena.bioinf.projectspace.Instance;
+import lombok.Getter;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,23 +48,16 @@ public class ToolChainWorkflow implements Workflow, ProgressSupport {
     protected final JobProgressMerger progressSupport = new JobProgressMerger(this);
     protected final static Logger LOG = LoggerFactory.getLogger(ToolChainWorkflow.class);
     protected final ParameterConfig parameters;
+    @Getter
     private final PreprocessingJob<?> preprocessingJob;
+    @Getter
     private final PostprocessingJob<?> postprocessingJob;
     private final InstanceBufferFactory<?> bufferFactory;
-
-    public PreprocessingJob<?> getPreprocessingJob() {
-        return preprocessingJob;
-    }
-
-    public PostprocessingJob<?> getPostprocessingJob() {
-        return postprocessingJob;
-    }
 
     protected List<ToolChainJob.Factory<?>> toolchain;
 
     private final AtomicBoolean canceled = new AtomicBoolean(false);
     private InstanceBuffer submitter = null;
-    private JobProgressEvent progress = null;
 
     public ToolChainWorkflow(@NotNull PreprocessingJob<?> preprocessingJob, @Nullable PostprocessingJob<?> postprocessingJob, @NotNull ParameterConfig parameters, @NotNull List<ToolChainJob.Factory<?>> toolchain, InstanceBufferFactory<?> bufferFactory) {
         this.preprocessingJob = preprocessingJob;
@@ -115,6 +109,7 @@ public class ToolChainWorkflow implements Workflow, ProgressSupport {
 
             // get buffer size
             final int bufferSize = PropertyManager.getInteger("de.unijena.bioinf.sirius.instanceBuffer", "de.unijena.bioinf.sirius.cpu.cores", 0);
+            LoggerFactory.getLogger(getClass()).info("Create Toolchain InstanceBuffer of size {}", bufferSize);
 
             //other jobs
 

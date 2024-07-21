@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -34,7 +34,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AnnotatedMsMsData.JSON_PROPERTY_MERGED_MS2,
   AnnotatedMsMsData.JSON_PROPERTY_MS2_SPECTRA
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class AnnotatedMsMsData {
   public static final String JSON_PROPERTY_MERGED_MS2 = "mergedMs2";
   private AnnotatedSpectrum mergedMs2;
@@ -69,7 +69,6 @@ public class AnnotatedMsMsData {
   public void setMergedMs2(AnnotatedSpectrum mergedMs2) {
     this.mergedMs2 = mergedMs2;
   }
-
 
   public AnnotatedMsMsData ms2Spectra(List<AnnotatedSpectrum> ms2Spectra) {
     

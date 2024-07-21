@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -31,7 +31,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SortObject.JSON_PROPERTY_SORTED,
   SortObject.JSON_PROPERTY_UNSORTED
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class SortObject {
   public static final String JSON_PROPERTY_EMPTY = "empty";
   private Boolean empty;
@@ -70,7 +70,6 @@ public class SortObject {
     this.empty = empty;
   }
 
-
   public SortObject sorted(Boolean sorted) {
     
     this.sorted = sorted;
@@ -95,7 +94,6 @@ public class SortObject {
   public void setSorted(Boolean sorted) {
     this.sorted = sorted;
   }
-
 
   public SortObject unsorted(Boolean unsorted) {
     

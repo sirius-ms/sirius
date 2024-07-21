@@ -4,7 +4,6 @@ import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
 
 import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeature;
 import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeatureOptField;
-import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeatureQuality;
 import de.unijena.bioinf.ms.nightsky.sdk.model.AnnotatedMsMsData;
 import de.unijena.bioinf.ms.nightsky.sdk.model.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.nightsky.sdk.model.CanopusPrediction;
@@ -13,6 +12,7 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.FeatureImport;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidate;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FormulaCandidateOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FragmentationTree;
+import de.unijena.bioinf.ms.nightsky.sdk.model.InstrumentProfile;
 import de.unijena.bioinf.ms.nightsky.sdk.model.IsotopePatternAnnotation;
 import de.unijena.bioinf.ms.nightsky.sdk.model.LipidAnnotation;
 import de.unijena.bioinf.ms.nightsky.sdk.model.MsData;
@@ -51,7 +51,7 @@ import org.springframework.http.ResponseEntity;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class FeaturesApi {
     private ApiClient apiClient;
 
@@ -78,11 +78,12 @@ public class FeaturesApi {
      * <p><b>200</b> - the Features that have been imported with specified optional fields
      * @param projectId project-space to import into.
      * @param featureImport the feature data to be imported
+     * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; to override defaults.
      * @return List&lt;AlignedFeature&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec addAlignedFeaturesRequestCreation(String projectId, List<FeatureImport> featureImport, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    private ResponseSpec addAlignedFeaturesRequestCreation(String projectId, List<FeatureImport> featureImport, InstrumentProfile profile, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         Object postBody = featureImport;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -102,8 +103,9 @@ public class FeaturesApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "profile", profile));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -125,13 +127,14 @@ public class FeaturesApi {
      * <p><b>200</b> - the Features that have been imported with specified optional fields
      * @param projectId project-space to import into.
      * @param featureImport the feature data to be imported
+     * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; to override defaults.
      * @return List&lt;AlignedFeature&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<AlignedFeature> addAlignedFeatures(String projectId, List<FeatureImport> featureImport, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public List<AlignedFeature> addAlignedFeatures(String projectId, List<FeatureImport> featureImport, InstrumentProfile profile, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<AlignedFeature> localVarReturnType = new ParameterizedTypeReference<AlignedFeature>() {};
-        return addAlignedFeaturesRequestCreation(projectId, featureImport, optFields).bodyToFlux(localVarReturnType).collectList().block();
+        return addAlignedFeaturesRequestCreation(projectId, featureImport, profile, optFields).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
@@ -140,13 +143,14 @@ public class FeaturesApi {
      * <p><b>200</b> - the Features that have been imported with specified optional fields
      * @param projectId project-space to import into.
      * @param featureImport the feature data to be imported
+     * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; to override defaults.
      * @return ResponseEntity&lt;List&lt;AlignedFeature&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<AlignedFeature>> addAlignedFeaturesWithHttpInfo(String projectId, List<FeatureImport> featureImport, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+    public ResponseEntity<List<AlignedFeature>> addAlignedFeaturesWithHttpInfo(String projectId, List<FeatureImport> featureImport, InstrumentProfile profile, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         ParameterizedTypeReference<AlignedFeature> localVarReturnType = new ParameterizedTypeReference<AlignedFeature>() {};
-        return addAlignedFeaturesRequestCreation(projectId, featureImport, optFields).toEntityList(localVarReturnType).block();
+        return addAlignedFeaturesRequestCreation(projectId, featureImport, profile, optFields).toEntityList(localVarReturnType).block();
     }
 
     /**
@@ -155,12 +159,13 @@ public class FeaturesApi {
      * <p><b>200</b> - the Features that have been imported with specified optional fields
      * @param projectId project-space to import into.
      * @param featureImport the feature data to be imported
+     * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
      * @param optFields set of optional fields to be included. Use &#39;none&#39; to override defaults.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec addAlignedFeaturesWithResponseSpec(String projectId, List<FeatureImport> featureImport, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
-        return addAlignedFeaturesRequestCreation(projectId, featureImport, optFields);
+    public ResponseSpec addAlignedFeaturesWithResponseSpec(String projectId, List<FeatureImport> featureImport, InstrumentProfile profile, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
+        return addAlignedFeaturesRequestCreation(projectId, featureImport, profile, optFields);
     }
     /**
      * Delete feature (aligned over runs) with the given identifier from the specified project-space.
@@ -351,7 +356,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -434,7 +439,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -520,7 +525,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -582,89 +587,6 @@ public class FeaturesApi {
      */
     public ResponseSpec getAlignedFeaturesPagedWithResponseSpec(String projectId, Integer page, Integer size, List<String> sort, List<AlignedFeatureOptField> optFields) throws WebClientResponseException {
         return getAlignedFeaturesPagedRequestCreation(projectId, page, size, sort, optFields);
-    }
-    /**
-     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
-     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
-     * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
-     * @param projectId project-space to read from.
-     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
-     * @return AlignedFeatureQuality
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    private ResponseSpec getAlignedFeaturesQualityRequestCreation(String projectId, String alignedFeatureId) throws WebClientResponseException {
-        Object postBody = null;
-        // verify the required parameter 'projectId' is set
-        if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getAlignedFeaturesQuality", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // verify the required parameter 'alignedFeatureId' is set
-        if (alignedFeatureId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getAlignedFeaturesQuality", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
-        }
-        // create path and map variables
-        final Map<String, Object> pathParams = new HashMap<String, Object>();
-
-        pathParams.put("projectId", projectId);
-        pathParams.put("alignedFeatureId", alignedFeatureId);
-
-        final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
-        final HttpHeaders headerParams = new HttpHeaders();
-        final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
-        final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
-
-        final String[] localVarAccepts = { 
-            "application/json"
-        };
-        final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { };
-        final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
-
-        String[] localVarAuthNames = new String[] {  };
-
-        ParameterizedTypeReference<AlignedFeatureQuality> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureQuality>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/aligned-features/{alignedFeatureId}/quality-report", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
-    }
-
-    /**
-     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
-     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
-     * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
-     * @param projectId project-space to read from.
-     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
-     * @return AlignedFeatureQuality
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public AlignedFeatureQuality getAlignedFeaturesQuality(String projectId, String alignedFeatureId) throws WebClientResponseException {
-        ParameterizedTypeReference<AlignedFeatureQuality> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureQuality>() {};
-        return getAlignedFeaturesQualityRequestCreation(projectId, alignedFeatureId).bodyToMono(localVarReturnType).block();
-    }
-
-    /**
-     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
-     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
-     * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
-     * @param projectId project-space to read from.
-     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
-     * @return ResponseEntity&lt;AlignedFeatureQuality&gt;
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseEntity<AlignedFeatureQuality> getAlignedFeaturesQualityWithHttpInfo(String projectId, String alignedFeatureId) throws WebClientResponseException {
-        ParameterizedTypeReference<AlignedFeatureQuality> localVarReturnType = new ParameterizedTypeReference<AlignedFeatureQuality>() {};
-        return getAlignedFeaturesQualityRequestCreation(projectId, alignedFeatureId).toEntity(localVarReturnType).block();
-    }
-
-    /**
-     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
-     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
-     * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
-     * @param projectId project-space to read from.
-     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
-     * @return ResponseSpec
-     * @throws WebClientResponseException if an error occurs while attempting to invoke the API
-     */
-    public ResponseSpec getAlignedFeaturesQualityWithResponseSpec(String projectId, String alignedFeatureId) throws WebClientResponseException {
-        return getAlignedFeaturesQualityRequestCreation(projectId, alignedFeatureId);
     }
     /**
      * Best matching compound classes,  Set of the highest scoring compound classes (CANOPUS) on each hierarchy level of  the ClassyFire and NPC ontology,
@@ -882,7 +804,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -977,7 +899,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -1081,7 +1003,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -1188,7 +1110,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -1476,7 +1398,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "spectrumIndex", spectrumIndex));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -1574,7 +1496,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -1666,7 +1588,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -1761,7 +1683,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -2218,7 +2140,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "type", type));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -2407,7 +2329,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -2505,7 +2427,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSimilarity", minSimilarity));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "candidateInChiKey", candidateInChiKey));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -2615,7 +2537,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSimilarity", minSimilarity));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "candidateInChiKey", candidateInChiKey));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -2726,7 +2648,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSharedPeaks", minSharedPeaks));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "minSimilarity", minSimilarity));
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "candidateInChiKey", candidateInChiKey));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -2934,7 +2856,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "spectrumIndex", spectrumIndex));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -3029,7 +2951,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -3124,7 +3046,7 @@ public class FeaturesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -3228,7 +3150,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -3335,7 +3257,7 @@ public class FeaturesApi {
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "size", size));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "sort", sort));
         queryParams.putAll(apiClient.parameterToMultiValueMap(ApiClient.CollectionFormat.valueOf("multi".toUpperCase(Locale.ROOT)), "optFields", optFields));
-
+        
         final String[] localVarAccepts = { 
             "application/json"
         };

@@ -27,7 +27,6 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobProgress;
 import de.unijena.bioinf.sse.DataObjectEvent;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Optional;
@@ -118,9 +117,9 @@ public class SseProgressJJob extends WaiterJJob<Job> {
 
         if (Optional.ofNullable(p.isIndeterminate())
                 .orElse(false) || p.getMaxProgress() == null || p.getCurrentProgress() == null) {
-            updateProgress(0, 1, wrappedJob.getId() + "|" + p.getMessage());
+            updateProgress(0, 1, p.getMessage());
         } else {
-            updateProgress(p.getMaxProgress(), p.getCurrentProgress(), wrappedJob.getId() + "|" + p.getMessage());
+            updateProgress(p.getMaxProgress(), p.getCurrentProgress(), p.getMessage());
         }
 
         setState(JobState.valueOf(p.getState().name()));

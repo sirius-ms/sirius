@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -34,16 +34,16 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   Axes.JSON_PROPERTY_SCAN_IDS,
   Axes.JSON_PROPERTY_RETENTION_TIME_IN_SECONDS
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class Axes {
   public static final String JSON_PROPERTY_SCAN_NUMBER = "scanNumber";
-  private List<Integer> scanNumber;
+  private List<Integer> scanNumber = new ArrayList<>();
 
   public static final String JSON_PROPERTY_SCAN_IDS = "scanIds";
-  private List<String> scanIds;
+  private List<String> scanIds = new ArrayList<>();
 
   public static final String JSON_PROPERTY_RETENTION_TIME_IN_SECONDS = "retentionTimeInSeconds";
-  private List<Double> retentionTimeInSeconds;
+  private List<Double> retentionTimeInSeconds = new ArrayList<>();
 
   public Axes() {
   }
@@ -81,7 +81,6 @@ public class Axes {
     this.scanNumber = scanNumber;
   }
 
-
   public Axes scanIds(List<String> scanIds) {
     
     this.scanIds = scanIds;
@@ -114,7 +113,6 @@ public class Axes {
   public void setScanIds(List<String> scanIds) {
     this.scanIds = scanIds;
   }
-
 
   public Axes retentionTimeInSeconds(List<Double> retentionTimeInSeconds) {
     

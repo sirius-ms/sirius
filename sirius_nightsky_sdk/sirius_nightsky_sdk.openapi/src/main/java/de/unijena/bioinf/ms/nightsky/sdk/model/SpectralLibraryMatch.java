@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -44,7 +44,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SpectralLibraryMatch.JSON_PROPERTY_CANDIDATE_IN_CHI_KEY,
   SpectralLibraryMatch.JSON_PROPERTY_REFERENCE_SPECTRUM
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class SpectralLibraryMatch {
   public static final String JSON_PROPERTY_SPEC_MATCH_ID = "specMatchId";
   private String specMatchId;
@@ -119,7 +119,6 @@ public class SpectralLibraryMatch {
     this.specMatchId = specMatchId;
   }
 
-
   public SpectralLibraryMatch rank(Integer rank) {
     
     this.rank = rank;
@@ -144,7 +143,6 @@ public class SpectralLibraryMatch {
   public void setRank(Integer rank) {
     this.rank = rank;
   }
-
 
   public SpectralLibraryMatch similarity(Double similarity) {
     
@@ -171,7 +169,6 @@ public class SpectralLibraryMatch {
     this.similarity = similarity;
   }
 
-
   public SpectralLibraryMatch sharedPeaks(Integer sharedPeaks) {
     
     this.sharedPeaks = sharedPeaks;
@@ -196,7 +193,6 @@ public class SpectralLibraryMatch {
   public void setSharedPeaks(Integer sharedPeaks) {
     this.sharedPeaks = sharedPeaks;
   }
-
 
   public SpectralLibraryMatch querySpectrumIndex(Integer querySpectrumIndex) {
     
@@ -223,7 +219,6 @@ public class SpectralLibraryMatch {
     this.querySpectrumIndex = querySpectrumIndex;
   }
 
-
   public SpectralLibraryMatch dbName(String dbName) {
     
     this.dbName = dbName;
@@ -248,7 +243,6 @@ public class SpectralLibraryMatch {
   public void setDbName(String dbName) {
     this.dbName = dbName;
   }
-
 
   public SpectralLibraryMatch dbId(String dbId) {
     
@@ -275,7 +269,6 @@ public class SpectralLibraryMatch {
     this.dbId = dbId;
   }
 
-
   public SpectralLibraryMatch uuid(Long uuid) {
     
     this.uuid = uuid;
@@ -300,7 +293,6 @@ public class SpectralLibraryMatch {
   public void setUuid(Long uuid) {
     this.uuid = uuid;
   }
-
 
   public SpectralLibraryMatch splash(String splash) {
     
@@ -327,7 +319,6 @@ public class SpectralLibraryMatch {
     this.splash = splash;
   }
 
-
   public SpectralLibraryMatch molecularFormula(String molecularFormula) {
     
     this.molecularFormula = molecularFormula;
@@ -352,7 +343,6 @@ public class SpectralLibraryMatch {
   public void setMolecularFormula(String molecularFormula) {
     this.molecularFormula = molecularFormula;
   }
-
 
   public SpectralLibraryMatch adduct(String adduct) {
     
@@ -379,7 +369,6 @@ public class SpectralLibraryMatch {
     this.adduct = adduct;
   }
 
-
   public SpectralLibraryMatch exactMass(String exactMass) {
     
     this.exactMass = exactMass;
@@ -404,7 +393,6 @@ public class SpectralLibraryMatch {
   public void setExactMass(String exactMass) {
     this.exactMass = exactMass;
   }
-
 
   public SpectralLibraryMatch smiles(String smiles) {
     
@@ -431,7 +419,6 @@ public class SpectralLibraryMatch {
     this.smiles = smiles;
   }
 
-
   public SpectralLibraryMatch candidateInChiKey(String candidateInChiKey) {
     
     this.candidateInChiKey = candidateInChiKey;
@@ -456,7 +443,6 @@ public class SpectralLibraryMatch {
   public void setCandidateInChiKey(String candidateInChiKey) {
     this.candidateInChiKey = candidateInChiKey;
   }
-
 
   public SpectralLibraryMatch referenceSpectrum(BasicSpectrum referenceSpectrum) {
     

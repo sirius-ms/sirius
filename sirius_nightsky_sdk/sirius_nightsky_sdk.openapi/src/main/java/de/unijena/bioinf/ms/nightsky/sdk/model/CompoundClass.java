@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -36,7 +36,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   CompoundClass.JSON_PROPERTY_PROBABILITY,
   CompoundClass.JSON_PROPERTY_INDEX
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class CompoundClass {
   public static final String JSON_PROPERTY_TYPE = "type";
   private CompoundClassType type;
@@ -87,7 +87,6 @@ public class CompoundClass {
     this.type = type;
   }
 
-
   public CompoundClass level(String level) {
     
     this.level = level;
@@ -112,7 +111,6 @@ public class CompoundClass {
   public void setLevel(String level) {
     this.level = level;
   }
-
 
   public CompoundClass name(String name) {
     
@@ -139,7 +137,6 @@ public class CompoundClass {
     this.name = name;
   }
 
-
   public CompoundClass description(String description) {
     
     this.description = description;
@@ -164,7 +161,6 @@ public class CompoundClass {
   public void setDescription(String description) {
     this.description = description;
   }
-
 
   public CompoundClass id(Integer id) {
     
@@ -191,7 +187,6 @@ public class CompoundClass {
     this.id = id;
   }
 
-
   public CompoundClass probability(Double probability) {
     
     this.probability = probability;
@@ -216,7 +211,6 @@ public class CompoundClass {
   public void setProbability(Double probability) {
     this.probability = probability;
   }
-
 
   public CompoundClass index(Integer index) {
     

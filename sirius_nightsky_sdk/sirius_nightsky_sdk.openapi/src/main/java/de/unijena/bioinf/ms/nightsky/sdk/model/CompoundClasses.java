@@ -1,6 +1,6 @@
 /*
  * SIRIUS Nightsky API
- * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6.0.0-SNAPSHOT
+ * REST API that provides the full functionality of SIRIUS and its web services as background service. It is intended as entry-point for scripting languages and software integration SDKs.This API is exposed by SIRIUS 6
  *
  * The version of the OpenAPI document: 2.1
  * 
@@ -37,7 +37,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   CompoundClasses.JSON_PROPERTY_CLASSY_FIRE_LINEAGE,
   CompoundClasses.JSON_PROPERTY_CLASSY_FIRE_ALTERNATIVES
 })
-@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class CompoundClasses {
   public static final String JSON_PROPERTY_NPC_PATHWAY = "npcPathway";
   private CompoundClass npcPathway;
@@ -82,7 +82,6 @@ public class CompoundClasses {
     this.npcPathway = npcPathway;
   }
 
-
   public CompoundClasses npcSuperclass(CompoundClass npcSuperclass) {
     
     this.npcSuperclass = npcSuperclass;
@@ -108,7 +107,6 @@ public class CompoundClasses {
     this.npcSuperclass = npcSuperclass;
   }
 
-
   public CompoundClasses npcClass(CompoundClass npcClass) {
     
     this.npcClass = npcClass;
@@ -133,7 +131,6 @@ public class CompoundClasses {
   public void setNpcClass(CompoundClass npcClass) {
     this.npcClass = npcClass;
   }
-
 
   public CompoundClasses classyFireLineage(List<CompoundClass> classyFireLineage) {
     
@@ -167,7 +164,6 @@ public class CompoundClasses {
   public void setClassyFireLineage(List<CompoundClass> classyFireLineage) {
     this.classyFireLineage = classyFireLineage;
   }
-
 
   public CompoundClasses classyFireAlternatives(List<CompoundClass> classyFireAlternatives) {
     
