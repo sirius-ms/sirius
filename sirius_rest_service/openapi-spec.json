@@ -13,6 +13,10 @@
   ],
   "tags": [
     {
+      "name": "EXPERIMENTAL",
+      "description": "All Endpoints are experimental and not part of the stable API specification. This endpoints can change at any time, even in minor updates."
+    },
+    {
       "name": "Info",
       "description": "Status und Information"
     },
@@ -3295,11 +3299,10 @@
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/quality-report": {
       "get": {
         "tags": [
-          "experimental",
-          "Features"
+          "EXPERIMENTAL"
         ],
         "summary": "Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.",
-        "description": "Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.",
+        "description": "Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.\n\n EXPERIMENTAL: Endpoint is not part of the stable API specification and might change in minor updates.",
         "operationId": "getAlignedFeaturesQuality",
         "parameters": [
           {
