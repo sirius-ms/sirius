@@ -173,7 +173,7 @@ public class JobController {
      * DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.
      */
     @Deprecated
-    @PostMapping(value = "/{projectId}/jobs/run-command", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/projects/{projectId}/jobs/run-command", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public Job startCommand(@PathVariable String projectId, @Valid @RequestBody CommandSubmission commandSubmission,
                             @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) {

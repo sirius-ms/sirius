@@ -175,7 +175,7 @@ Class | Method | HTTP request | Description
 *JobsApi* | [**getJobsPaged**](docs/JobsApi.md#getJobsPaged) | **GET** /api/projects/{projectId}/jobs/page | Get Page of jobs with information such as current state and progress (if available).
 *JobsApi* | [**hasJobs**](docs/JobsApi.md#hasJobs) | **GET** /api/projects/{projectId}/has-jobs | 
 *JobsApi* | [**saveJobConfig**](docs/JobsApi.md#saveJobConfig) | **POST** /api/job-configs/{name} | Add new job configuration with given name.
-*JobsApi* | [**startCommand**](docs/JobsApi.md#startCommand) | **POST** /api/{projectId}/jobs/run-command | Start computation for given command and input.
+*JobsApi* | [**startCommand**](docs/JobsApi.md#startCommand) | **POST** /api/projects/{projectId}/jobs/run-command | Start computation for given command and input.
 *JobsApi* | [**startJob**](docs/JobsApi.md#startJob) | **POST** /api/projects/{projectId}/jobs | Start computation for given compounds and with given parameters.
 *JobsApi* | [**startJobFromConfig**](docs/JobsApi.md#startJobFromConfig) | **POST** /api/projects/{projectId}/jobs/from-config | Start computation for given compounds and with parameters from a stored job-config.
 *LoginAndAccountApi* | [**getAccountInfo**](docs/LoginAndAccountApi.md#getAccountInfo) | **GET** /api/account/ | Get information about the account currently logged in.
@@ -196,8 +196,8 @@ Class | Method | HTTP request | Description
 *ProjectsApi* | [**getProjectSpace**](docs/ProjectsApi.md#getProjectSpace) | **GET** /api/projects/{projectId} | Get project space info by its projectId.
 *ProjectsApi* | [**getProjectSpaces**](docs/ProjectsApi.md#getProjectSpaces) | **GET** /api/projects | List opened project spaces.
 *ProjectsApi* | [**importMsRunData**](docs/ProjectsApi.md#importMsRunData) | **POST** /api/projects/{projectId}/import/ms-data-files | Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
-*ProjectsApi* | [**importMsRunDataAsJob**](docs/ProjectsApi.md#importMsRunDataAsJob) | **POST** /api/projects/{projectId}/jobs/import/ms-data-files-job | Import and Align full MS-Runs from various formats into the specified project as background job.
-*ProjectsApi* | [**importMsRunDataAsJobLocally**](docs/ProjectsApi.md#importMsRunDataAsJobLocally) | **POST** /api/projects/{projectId}/jobs/import/ms-data-local-files-job | Import and Align full MS-Runs from various formats into the specified project as background job
+*ProjectsApi* | [**importMsRunDataAsJob**](docs/ProjectsApi.md#importMsRunDataAsJob) | **POST** /api/projects/{projectId}/import/ms-data-files-job | Import and Align full MS-Runs from various formats into the specified project as background job.
+*ProjectsApi* | [**importMsRunDataAsJobLocally**](docs/ProjectsApi.md#importMsRunDataAsJobLocally) | **POST** /api/projects/{projectId}/import/ms-data-local-files-job | Import and Align full MS-Runs from various formats into the specified project as background job
 *ProjectsApi* | [**importMsRunDataLocally**](docs/ProjectsApi.md#importMsRunDataLocally) | **POST** /api/projects/{projectId}/import/ms-local-data-files | Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  
 *ProjectsApi* | [**importPreprocessedData**](docs/ProjectsApi.md#importPreprocessedData) | **POST** /api/projects/{projectId}/import/preprocessed-data-files | Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)
 *ProjectsApi* | [**importPreprocessedDataAsJob**](docs/ProjectsApi.md#importPreprocessedDataAsJob) | **POST** /api/projects/{projectId}/import/preprocessed-data-files-job | Import ms/ms data from the given format into the specified project-space as background job.

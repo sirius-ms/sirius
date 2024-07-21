@@ -35,8 +35,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 @JsonPropertyOrder({
   PageSpectralLibraryMatch.JSON_PROPERTY_TOTAL_PAGES,
   PageSpectralLibraryMatch.JSON_PROPERTY_TOTAL_ELEMENTS,
-  PageSpectralLibraryMatch.JSON_PROPERTY_LAST,
   PageSpectralLibraryMatch.JSON_PROPERTY_FIRST,
+  PageSpectralLibraryMatch.JSON_PROPERTY_LAST,
   PageSpectralLibraryMatch.JSON_PROPERTY_SIZE,
   PageSpectralLibraryMatch.JSON_PROPERTY_CONTENT,
   PageSpectralLibraryMatch.JSON_PROPERTY_NUMBER,
@@ -53,11 +53,11 @@ public class PageSpectralLibraryMatch {
   public static final String JSON_PROPERTY_TOTAL_ELEMENTS = "totalElements";
   private Long totalElements;
 
-  public static final String JSON_PROPERTY_LAST = "last";
-  private Boolean last;
-
   public static final String JSON_PROPERTY_FIRST = "first";
   private Boolean first;
+
+  public static final String JSON_PROPERTY_LAST = "last";
+  private Boolean last;
 
   public static final String JSON_PROPERTY_SIZE = "size";
   private Integer size;
@@ -133,31 +133,6 @@ public class PageSpectralLibraryMatch {
     this.totalElements = totalElements;
   }
 
-  public PageSpectralLibraryMatch last(Boolean last) {
-    
-    this.last = last;
-    return this;
-  }
-
-   /**
-   * Get last
-   * @return last
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_LAST)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Boolean isLast() {
-    return last;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_LAST)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setLast(Boolean last) {
-    this.last = last;
-  }
-
   public PageSpectralLibraryMatch first(Boolean first) {
     
     this.first = first;
@@ -181,6 +156,31 @@ public class PageSpectralLibraryMatch {
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
   public void setFirst(Boolean first) {
     this.first = first;
+  }
+
+  public PageSpectralLibraryMatch last(Boolean last) {
+    
+    this.last = last;
+    return this;
+  }
+
+   /**
+   * Get last
+   * @return last
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_LAST)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Boolean isLast() {
+    return last;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_LAST)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setLast(Boolean last) {
+    this.last = last;
   }
 
   public PageSpectralLibraryMatch size(Integer size) {
@@ -377,8 +377,8 @@ public class PageSpectralLibraryMatch {
     PageSpectralLibraryMatch pageSpectralLibraryMatch = (PageSpectralLibraryMatch) o;
     return Objects.equals(this.totalPages, pageSpectralLibraryMatch.totalPages) &&
         Objects.equals(this.totalElements, pageSpectralLibraryMatch.totalElements) &&
-        Objects.equals(this.last, pageSpectralLibraryMatch.last) &&
         Objects.equals(this.first, pageSpectralLibraryMatch.first) &&
+        Objects.equals(this.last, pageSpectralLibraryMatch.last) &&
         Objects.equals(this.size, pageSpectralLibraryMatch.size) &&
         Objects.equals(this.content, pageSpectralLibraryMatch.content) &&
         Objects.equals(this.number, pageSpectralLibraryMatch.number) &&
@@ -390,7 +390,7 @@ public class PageSpectralLibraryMatch {
 
   @Override
   public int hashCode() {
-    return Objects.hash(totalPages, totalElements, last, first, size, content, number, sort, numberOfElements, pageable, empty);
+    return Objects.hash(totalPages, totalElements, first, last, size, content, number, sort, numberOfElements, pageable, empty);
   }
 
   @Override
@@ -399,8 +399,8 @@ public class PageSpectralLibraryMatch {
     sb.append("class PageSpectralLibraryMatch {\n");
     sb.append("    totalPages: ").append(toIndentedString(totalPages)).append("\n");
     sb.append("    totalElements: ").append(toIndentedString(totalElements)).append("\n");
-    sb.append("    last: ").append(toIndentedString(last)).append("\n");
     sb.append("    first: ").append(toIndentedString(first)).append("\n");
+    sb.append("    last: ").append(toIndentedString(last)).append("\n");
     sb.append("    size: ").append(toIndentedString(size)).append("\n");
     sb.append("    content: ").append(toIndentedString(content)).append("\n");
     sb.append("    number: ").append(toIndentedString(number)).append("\n");

@@ -847,7 +847,7 @@ public class ProjectsApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/jobs/import/ms-data-files-job", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/import/ms-data-files-job", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
@@ -953,7 +953,7 @@ public class ProjectsApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/jobs/import/ms-data-local-files-job", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/import/ms-data-local-files-job", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
