@@ -19,10 +19,13 @@
 
 package de.unijena.bioinf.ms.gui.compute;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.List;
 import java.util.Map;
 
 public interface ParameterProvider {
+    @NotNull
     default Map<String, String> asConfigMap() {
         return getParameterBinding().asConfigMap();
     }

@@ -2,7 +2,7 @@
  *  This file is part of the SIRIUS Software for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer, Marvin Meusel and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This program is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Affero General Public License

@@ -27,7 +27,7 @@ import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.fingerid.Fingerprinter;
 import de.unijena.bioinf.fingerid.fingerprints.ECFPFingerprinter;
 import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
-import gnu.trove.list.array.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.fingerprint.CircularFingerprinter;
 import org.openscience.cdk.fingerprint.IBitFingerprint;
@@ -77,7 +77,7 @@ class FingerprintVisualization {
                     if (fp.get(i)) {
                         boolean aroma=false;
                         final CircularFingerprinter.FP x = details[i];
-                        final TIntArrayList inds = new TIntArrayList();
+                        final IntArrayList inds = new IntArrayList();
                         final BitSet ids = new BitSet(molecule.getAtomCount());
                         for (int atomi : x.atoms) {
                             if (ids.get(atomi)) continue;
@@ -88,11 +88,11 @@ class FingerprintVisualization {
                             addAromaticRings(molecule, matrix, atomi, atom, ids, inds);
                         }
                         if (substructures[i]==null || !aroma) {
-                            final String asmiles = SmilesGenerator.absolute().aromatic().create(AtomContainerManipulator.extractSubstructure(molecule, inds.toArray()));
+                            final String asmiles = SmilesGenerator.absolute().aromatic().create(AtomContainerManipulator.extractSubstructure(molecule, inds.toIntArray()));
                             substructures[i] = asmiles;
                             atomSizes[i+ECFP_OFFSET] = x.atoms.length;
                             addNeighbours(molecule, matrix, ids, inds);
-                            final String smart = SmilesGenerator.absolute().aromatic().create(AtomContainerManipulator.extractSubstructure(molecule, inds.toArray()));
+                            final String smart = SmilesGenerator.absolute().aromatic().create(AtomContainerManipulator.extractSubstructure(molecule, inds.toIntArray()));
                             smarts[i] = smart;
                         }
                     }
@@ -187,8 +187,8 @@ class FingerprintVisualization {
 
     }
 
-    private static void addNeighbours(IAtomContainer molecule, int[][] matrix, BitSet ids, TIntArrayList inds) {
-        for (int i : inds.toArray()) {
+    private static void addNeighbours(IAtomContainer molecule, int[][] matrix, BitSet ids, IntArrayList inds) {
+        for (int i : inds) {
             for (int j = 0; j < matrix.length; ++j) {
                 if (matrix[i][j] > 0 && !ids.get(j)) {
                     inds.add(j);
@@ -198,14 +198,14 @@ class FingerprintVisualization {
         }
     }
 
-    private static void addAromaticRings(IAtomContainer molecule, int[][] matrix, int atomId, IAtom atom, BitSet ids, TIntArrayList inds) {
+    private static void addAromaticRings(IAtomContainer molecule, int[][] matrix, int atomId, IAtom atom, BitSet ids, IntArrayList inds) {
         if (!atom.isAromatic()) return;
         // find the smallest aromatic ring
         final BitSet visited = new BitSet(molecule.getAtomCount());
-        final TIntArrayList stack = new TIntArrayList(molecule.getAtomCount());
+        final IntArrayList stack = new IntArrayList(molecule.getAtomCount());
         stack.add(atomId);
         while (!stack.isEmpty()) {
-            final int id = stack.removeAt(stack.size() - 1);
+            final int id = stack.removeInt(stack.size() - 1);
             for (int i = 0; i < matrix.length; ++i) {
                 if (matrix[id][i] > 0 && i != id) {
                     if (!visited.get(i) && molecule.getAtom(i).isAromatic() && molecule.getAtom(i).isAromatic()) {

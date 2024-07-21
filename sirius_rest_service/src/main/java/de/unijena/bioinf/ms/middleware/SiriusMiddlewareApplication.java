@@ -54,6 +54,7 @@ import org.springframework.boot.web.context.WebServerInitializedEvent;
 import org.springframework.boot.web.context.WebServerPortFileWriter;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
+import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import picocli.CommandLine;
 
 import java.io.BufferedReader;
@@ -64,6 +65,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
+import static org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO;
+
+@EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)
 @SpringBootApplication
 @OpenAPIDefinition
 @Slf4j
@@ -110,6 +114,10 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 PropertyManager.setProperty("de.unijena.bioinf.sirius.BackgroundRuns.autoremove", "false");
                 //just store the sirius base dir
                 PropertyManager.setProperty("de.unijena.bioinf.sirius.homeDir", Path.of(new ApplicationHome().getDir().getAbsolutePath()).getParent().toString());
+
+                // remove old pid and port file as early as possible
+                Files.deleteIfExists(Workspace.PORT_FILE);
+                Files.deleteIfExists(Workspace.PID_FILE);
 
                 Splash splashScreen = null;
                 if (Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("--gui") || it.equalsIgnoreCase("-g"))) {
@@ -158,11 +166,11 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                         System.err.println("SIRIUS Service is running on port: " + event.getWebServer().getPort());
                         System.err.println("SIRIUS Service started successfully!");
                 });
-                app.addListeners(new ApplicationPidFileWriter(Workspace.WORKSPACE.resolve("sirius.pid").toFile()));
-                app.addListeners(new WebServerPortFileWriter(Workspace.WORKSPACE.resolve("sirius.port").toFile()));
+                app.addListeners(new ApplicationPidFileWriter(Workspace.PID_FILE.toFile()));
+                app.addListeners(new WebServerPortFileWriter(Workspace.PORT_FILE.toFile()));
 
                 app.run(args);
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(1);// Zero because this is the help message case
             }

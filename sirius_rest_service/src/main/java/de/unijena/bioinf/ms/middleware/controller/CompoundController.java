@@ -5,17 +5,17 @@
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
  *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
  *  version 3 of the License, or (at your option) any later version.
  *
- *  This library is distributed in the hope that it will be useful,
+ *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ *  Affero General Public License for more details.
  *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
 package de.unijena.bioinf.ms.middleware.controller;
@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.middleware.controller;
 import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
+import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.TraceSet;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
@@ -97,16 +98,18 @@ public class CompoundController {
      * Otherwise, they will exist twice.
      * @param projectId project-space to import into.
      * @param compounds the compound data to be imported
+     * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
      * @param optFields set of optional fields to be included. Use 'none' to override defaults.
      * @param optFieldsFeatures set of optional fields of the nested features to be included. Use 'none' to override defaults.
      * @return the Compounds that have been imported with specified optional fields
      */
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Compound> addCompounds(@PathVariable String projectId, @Valid @RequestBody List<CompoundImport> compounds,
+                                       @RequestParam(required = false) InstrumentProfile profile,
                                        @RequestParam(defaultValue = "") EnumSet<Compound.OptField> optFields,
                                        @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFieldsFeatures
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).addCompounds(compounds, removeNone(optFields), removeNone(optFieldsFeatures));
+        return projectsProvider.getProjectOrThrow(projectId).addCompounds(compounds, profile, removeNone(optFields), removeNone(optFieldsFeatures));
     }
 
     /**

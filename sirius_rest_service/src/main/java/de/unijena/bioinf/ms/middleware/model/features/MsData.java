@@ -19,26 +19,27 @@
 
 package de.unijena.bioinf.ms.middleware.model.features;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.unijena.bioinf.ChemistryBase.ms.*;
-import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
+import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
-import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
+import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
-import org.h2.mvstore.DataUtils;
 
 import java.util.List;
 
 /**
- * The MsData wraps all spectral input data belonging to a feature.
+ * The MsData wraps all spectral input data belonging to a (aligned) feature. All spectra fields are optional.
+ * However, at least one Spectrum field needs to be set to create a valid MsData Object.
+ * The different types of spectra fields can be extended to adapt to other MassSpec measurement techniques not covered yet.
  * <p>
- * Each Feature has:
+ * Each Feature can have:
  * - One merged MS/MS spectrum (optional)
  * - One merged MS spectrum (optional)
- * - many MS/MS spectra
- * - many MS spectra
+ * - many MS/MS spectra (optional)
+ * - many MS spectra (optional)
  * <p>
  * Each non-merged spectrum has an index which can be used to access the spectrum.
  * <p>
@@ -47,14 +48,15 @@ import java.util.List;
 @Getter
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MsData {
-    @Schema(nullable = true)
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     protected BasicSpectrum mergedMs1;
-    @Schema(nullable = true)
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     protected BasicSpectrum mergedMs2;
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     protected List<BasicSpectrum> ms1Spectra;
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     protected List<BasicSpectrum> ms2Spectra;
 
     public static MsData of(Ms2Experiment exp) {

@@ -5,23 +5,21 @@
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
  *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
  *  version 3 of the License, or (at your option) any later version.
  *
- *  This library is distributed in the hope that it will be useful,
+ *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ *  Affero General Public License for more details.
  *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
 package de.unijena.bioinf.ms.middleware.service.projects;
 
-import com.github.f4b6a3.tsid.Tsid;
-import com.github.f4b6a3.tsid.TsidCreator;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
@@ -50,6 +48,7 @@ import de.unijena.bioinf.ms.middleware.controller.AlignedFeatureController;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
 import de.unijena.bioinf.ms.middleware.model.compounds.Compound;
 import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
+import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
@@ -65,6 +64,7 @@ import de.unijena.bioinf.sirius.scores.IsotopeScore;
 import de.unijena.bioinf.sirius.scores.SiriusScore;
 import de.unijena.bioinf.sirius.scores.TreeScore;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
+import io.hypersistence.tsid.TSID;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
@@ -152,10 +152,9 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
+    public List<Compound> addCompounds(@NotNull List<CompoundImport> compounds, InstrumentProfile profile, @NotNull EnumSet<Compound.OptField> optFields, @NotNull EnumSet<AlignedFeature.OptField> optFieldsFeatures) {
         return compounds.stream().map(c -> {
-            Tsid cuuid = TsidCreator.getTsid();
-            FeatureGroup fg = FeatureGroup.builder().groupName(c.getName()).groupId(cuuid.toString()).build();
+            final FeatureGroup fg = FeatureGroup.builder().groupName(c.getName()).groupId(TSID.fast().toLong()).build();
             return FeatureImports.toExperimentsStr(c.getFeatures())
                     .peek(exp -> exp.annotate(fg))
                     .map(projectSpaceManager::importInstanceWithUniqueId)
@@ -212,7 +211,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
+    public List<AlignedFeature> addAlignedFeatures(@NotNull List<FeatureImport> features, @Nullable InstrumentProfile profile, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         return FeatureImports.toExperimentsStr(features)
                 .map(projectSpaceManager::importInstanceWithUniqueId)
                 .map(SiriusProjectSpaceInstance::getCompoundContainerId).map(cid -> asAlignedFeature(cid, optFields))
@@ -769,8 +768,10 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
         final AlignedFeature id = AlignedFeature.builder()
                 .alignedFeatureId(cid.getDirectoryName())
                 .name(cid.getCompoundName())
+                .externalFeatureId(cid.getFeatureId().orElse(null))
                 .ionMass(cid.getIonMass().orElse(0d))
                 .computing(computeStateProvider.apply(this, cid.getDirectoryName()))
+                .detectedAdducts(Set.of())
                 .build();
 
         cid.getIonType().map(PrecursorIonType::getCharge).ifPresent(id::setCharge);

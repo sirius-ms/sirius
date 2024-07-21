@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.sirius.SpectraMatch;
@@ -40,22 +42,22 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
             "querySpectrumScanNumber\t" +
             "querySpectrumMsLevel\t" +
             "querySpectrumCE\t" +
-            "querySpectrumIonization\t" +
             "similarity\t" +
             "sharedPeaks\t" +
-            "msLevel\t" +
-            "collisionEnergy\t" +
-            "precursorIonType\t" +
-            "precursorMz\t" +
-            "instrument\t" +
-            "InChIKey\t" +
-            "SMILES\t" +
-            "SPLASH\t" +
-            "name\t" +
-            "dbName\t" +
+            "referenceMsLevel\t" +
+            "referenceCE\t" +
+            "referenceAdduct\t" +
+            "referencePrecursorMz\t" +
+            "referenceInstrument\t" +
+            "referenceSmiles\t" +
+            "referenceSplash\t" +
+            "referenceName\t" + //compound name
+            "referenceLinks\t" + //for user's custom DBs this is only one database+ID. However, from server-side we may provide "merged" libraries at some point, since GNPS, MoNa an co. share spectra.
+            "InChIkey2D\t" +
             // metadata for mapping
             "ionMass\t" +
             "retentionTimeInSeconds\t" +
+            "retentionTimeInMinutes\t" +
             "alignedFeatureId\t" +
             "providedFeatureId";
 
@@ -88,52 +90,81 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
             w.write(query.getCollisionEnergy().toString());
         writeSep();
 
-        if (query.getIonization() != null)
-            w.write(query.getIonization().toString());
-        writeSep();
-
-        w.write(String.format(DOUBLE_FORMAT, 100 * match.getSimilarity().similarity));
+        w.write(String.format(DOUBLE_FORMAT, match.getSimilarity().similarity)); //max cosine is 1.0. In the GUI we show percent. Here it is just the number.
         writeSep();
 
         w.write(String.format(LONG_FORMAT, match.getSimilarity().sharedPeaks));
         writeSep();
 
-        w.write(String.format(LONG_FORMAT, reference.getMsLevel()));
+        if (reference == null)
+            w.write("N/A");
+        else
+            w.write(String.format(LONG_FORMAT, reference.getMsLevel()));
         writeSep();
 
-        if (reference.getCollisionEnergy() != null)
+        if (reference == null || reference.getCollisionEnergy() == null)
+            w.write("N/A");
+        else
             w.write(reference.getCollisionEnergy().toString());
         writeSep();
 
-        if (reference.getPrecursorIonType() != null)
+        if (reference == null || reference.getPrecursorIonType() == null)
+            w.write("N/A");
+        else
             w.write(reference.getPrecursorIonType().toString());
         writeSep();
 
-        w.write(String.format(DOUBLE_FORMAT, reference.getPrecursorMz()));
+        if (reference == null)
+            w.write("N/A");
+        else
+            w.write(String.format(DOUBLE_FORMAT, reference.getPrecursorMz()));
         writeSep();
 
-        if (reference.getInstrumentation() != null)
+        if (reference == null || reference.getInstrumentation() == null)
+            w.write("N/A");
+        else
             w.write(reference.getInstrumentation().description());
         writeSep();
 
-        w.write(reference.getCandidateInChiKey());
-        writeSep();
+        if (reference == null) {
+            w.write(match.getSmiles());
+            writeSep();
 
-        w.write(reference.getSmiles());
-        writeSep();
+            w.write("N/A");
+            writeSep();
 
-        w.write(reference.getSplash());
-        writeSep();
+            w.write("N/A");
+            writeSep();
 
-        w.write(reference.getName());
-        writeSep();
+            w.write(match.getDbName());
+            writeSep();
 
-        w.write(match.getDbName());
-        writeSep();
+            w.write("N/A");
+            writeSep();
+        } else {
+            w.write(reference.getSmiles());
+            writeSep();
+
+            w.write(reference.getSplash());
+            writeSep();
+
+            w.write(reference.getName());
+            writeSep();
+
+            Multimap<String, String> dbMap = ArrayListMultimap.create();
+            dbMap.put(reference.getLibraryName(), reference.getLibraryId());
+            NoSqlStructureSummaryWriter.links(w, dbMap); //this ensures same output format as for 'links' in NoSqlStructureSummaryWriter. However, currently, there is only 1 link.
+            writeSep();
+
+            w.write(reference.getCandidateInChiKey());
+            writeSep();
+        }
 
         w.write(String.format(DOUBLE_FORMAT, f.getAverageMass()));
         writeSep();
         w.write(Optional.ofNullable(f.getRetentionTime()).map(rt -> String.format("%.0f", rt.getMiddleTime())).orElse(""));
+        writeSep();
+        w.write(Optional.ofNullable(f.getRetentionTime()).map(rt -> String.format("%.2f", rt.getMiddleTime() / 60d)).orElse(""));
         writeSep();
         w.write(String.format(LONG_FORMAT, match.getAlignedFeatureId()));
         writeSep();

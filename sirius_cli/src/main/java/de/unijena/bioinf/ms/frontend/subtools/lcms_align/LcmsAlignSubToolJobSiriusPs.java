@@ -53,7 +53,7 @@ import de.unijena.bioinf.networks.NetworkNode;
 import de.unijena.bioinf.networks.serialization.ConnectionTable;
 import de.unijena.bioinf.projectspace.*;
 import de.unijena.bioinf.sirius.validation.Ms2Validator;
-import gnu.trove.map.hash.TObjectFloatHashMap;
+import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap;
 import org.apache.commons.io.function.IOSupplier;
 import org.apache.commons.math3.distribution.RealDistribution;
 import org.jetbrains.annotations.NotNull;
@@ -351,7 +351,7 @@ public class LcmsAlignSubToolJobSiriusPs extends PreprocessingJob<ProjectSpaceMa
             for (Instance inst : feature2Instance.values()) {
                 network.addNode(inst.getId(), inst.getIonMass());
             }
-            final TObjectFloatHashMap<Instance> others = new TObjectFloatHashMap<>(5, 0.75f, 0f);
+            final Object2FloatOpenHashMap<Instance> others = new Object2FloatOpenHashMap<>();
             for (Map.Entry<ConsensusFeature, Instance> entry : feature2Instance.entrySet()) {
                 final NetworkNode left = network.getNode(entry.getValue().getId());
                 others.clear();
@@ -362,12 +362,11 @@ public class LcmsAlignSubToolJobSiriusPs extends PreprocessingJob<ProjectSpaceMa
                         others.put(other, Math.max(prev, connection.getWeight()));
                     }
                 }
-                others.forEachEntry((key, weight) -> {
+                others.forEach((key, weight) -> {
                     final NetworkNode right = network.getNode(key.getId());
                     if (left.getVertexId() < right.getVertexId()) {
                         network.addEdge(left.getVertexId(), right.getVertexId(), new Correlation(weight));
                     }
-                    return true;
                 });
 
             }

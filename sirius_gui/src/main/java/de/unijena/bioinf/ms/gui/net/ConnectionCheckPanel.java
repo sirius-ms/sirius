@@ -72,7 +72,6 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
     final BooleanJlabel licenseServer = new BooleanJlabel();
     final BooleanJlabel fingerID = new BooleanJlabel();
 
-    final BooleanJlabel fingerID_Worker = new BooleanJlabel();
     final BooleanJlabel auth = new BooleanJlabel();
     final BooleanJlabel authLicense = new BooleanJlabel();
     private final JDialog owner;
@@ -98,8 +97,6 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
 
 
         add(new JLabel("Connection to SIRIUS web service (" + sub.map(Subscription::getServiceUrl).orElse(NO_ACTIVE_SUB_MSG) + ")  "), fingerID, 5, false);
-
-        add(new JLabel("Workers availability:"), fingerID_Worker, 5, false);
 
         addVerticalGlue();
 
@@ -129,8 +126,6 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         }
 
 
-        fingerID_Worker.setState(!errorTypes.contains( WORKER) && check.getWorkerInfo() != null);
-
         if (resultPanel != null)
             remove(resultPanel);
 
@@ -156,47 +151,10 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
         final List<ConnectionError> errors = check.getErrors();
 
         if (errors.isEmpty()  || errors.stream().filter(i -> !i.getErrorType().equals(ConnectionError.ErrorTypeEnum.WARNING)).findAny().isEmpty()) {
-
             //case 0 NO ERROR
             resultPanel.add(new JLabel("<html>Connection to SIRIUS web services successfully established!</html>"), 5, false);
-
-            resultPanel.add(new JXTitledSeparator("Worker Information"), 15, false);
-
-            StringBuilder text = new StringBuilder("<html><p width=\"" + 350 + "\">");
-
-            if (check.getWorkerInfo() != null) {
-                int pendingJobs = check.getWorkerInfo().getPendingJobs();
-
-
-                String on = check.getAvailableWorkers().stream().sorted().collect(Collectors.joining(", "));
-
-                String off;
-                if (check.getAvailableWorkers().isEmpty()) {
-                    off = "<font color='green'>none</font>";
-                } else {
-                    off = check.getUnAvailableWorkers().stream().sorted().collect(Collectors.joining(", "));
-                }
-
-                text.append("<font color='green'>Worker instances available for:<br>")
-                        .append("<b>").append(on).append("</font></b><br><br>");
-                text.append("<font color='red'>Worker instances unavailable for:<br>")
-                        .append("<b>").append(off).append("</font></b><br><br>");
-
-                text.append("<font color='black'>Pending jobs on Server: <b>").append(pendingJobs < 0 ? "Unknown" : pendingJobs).append("</font></b>");
-
-                if (!fingerID_Worker.isTrue()) {
-                    text.append("<br><br>");
-                    text.append(WORKER_WARNING_MESSAGE);
-                }
-            } else {
-                LoggerFactory.getLogger(getClass()).error("Worker information list is null, but no error occurred! This should not be possible");
-                text.append("Worker information not available.");
-            }
-
-            text.append("</p></html>");
-            resultPanel.add(new JLabel(text.toString()), 5, false);
         } else {
-            ConnectionError err = errors.get(0);
+            ConnectionError err = errors.getFirst();
             ErrorKlassEnum mainError = err.getErrorKlass();
             //check if internet error is not just internet check unreachable
             if (mainError == INTERNET){
@@ -262,9 +220,6 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
                             "</ol>" + addHtmlErrorText(err));
 
 
-                    break;
-                case WORKER:
-                    addHTMLTextPanel(resultPanel, err.getSiriusMessage() + WORKER_INFO_MISSING_MESSAGE + addHtmlErrorText(err));
                     break;
                 default:
                     addHTMLTextPanel(resultPanel, err.getSiriusMessage() + "<br><b>An Unexpected Network Error has occurred! " +

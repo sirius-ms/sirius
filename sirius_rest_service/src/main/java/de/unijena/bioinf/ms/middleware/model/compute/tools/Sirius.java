@@ -3,19 +3,19 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public
- *  License as published by the Free Software Foundation; either
+ *  This program is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Affero General Public License
+ *  as published by the Free Software Foundation; either
  *  version 3 of the License, or (at your option) any later version.
  *
- *  This library is distributed in the hope that it will be useful,
+ *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ *  Affero General Public License for more details.
  *
- *  You should have received a copy of the GNU Lesser General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ *  You should have received a copy of the GNU Affero General Public License along with SIRIUS.  If not, see <https://www.gnu.org/licenses/agpl-3.0.txt>
  */
 
 package de.unijena.bioinf.ms.middleware.model.compute.tools;
@@ -31,6 +31,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.model.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.model.UseHeuristic;
 import de.unijena.bioinf.elgordo.EnforceElGordoFormula;
 import de.unijena.bioinf.ms.frontend.subtools.sirius.SiriusOptions;
+import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.compute.NullCheckMapBuilder;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.spectraldb.InjectSpectralLibraryMatchFormulas;
@@ -41,7 +42,6 @@ import lombok.experimental.SuperBuilder;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -58,19 +58,14 @@ public class Sirius extends Tool<SiriusOptions> {
     //Currently these profiles do not much, the orbitrap has lower ppm. but 'ppm' is set separately here.
     //However, the profile also stores fragtree scoring and therefore needs to be selected.
     //Further, we might need more different profiles in the future for different ionization and collision technologies.
-    /**
-     * Select the profile that is the closest to your instrumental setup. If nothing fits, use QTOF.
-     */
-    @Schema(enumAsRef = true, nullable = true)
-    enum Instrument {QTOF, ORBITRAP}
 
     //region General measurement parameters
     /**
      * Instrument specific profile for internal algorithms
      * Just select what comes closest to the instrument that was used for measuring the data.
      */
-    @Schema(nullable = true)
-    Instrument profile;
+    @Schema(enumAsRef = true, nullable = true)
+    InstrumentProfile profile;
     /**
      * Number of formula candidates to keep as result list (Formula Candidates).
      */
@@ -270,7 +265,7 @@ public class Sirius extends Tool<SiriusOptions> {
     // but probably on the workflow level instead of just formula generation -> see JobsSubmission
     public static Sirius.SiriusBuilder<?,?> builderWithDefaults() {
         return Sirius.builder()
-                .profile(Instrument.QTOF)
+                .profile(InstrumentProfile.QTOF)
                 .numberOfCandidates(PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfCandidates.class).value)
                 .numberOfCandidatesPerIonization(PropertyManager.DEFAULTS.createInstanceWithDefaults(NumberOfCandidatesPerIonization.class).value)
                 .massAccuracyMS2ppm(PropertyManager.DEFAULTS.createInstanceWithDefaults(MS2MassDeviation.class).allowedMassDeviation.getPpm())
@@ -278,7 +273,7 @@ public class Sirius extends Tool<SiriusOptions> {
                 .filterByIsotopePattern(PropertyManager.DEFAULTS.createInstanceWithDefaults(IsotopeSettings.class).isFiltering())
                 .performBottomUpSearch(true)
                 .performDenovoBelowMz(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSearchSettings.class).performDeNovoBelowMz)
-                .formulaSearchDBs(List.of())
+                .formulaSearchDBs(null)
                 .applyFormulaConstraintsToDBAndBottomUpSearch(false)
                 .enforcedFormulaConstraints(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class).getEnforcedAlphabet().toString())
                 .fallbackFormulaConstraints(PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class).getFallbackAlphabet().toString())

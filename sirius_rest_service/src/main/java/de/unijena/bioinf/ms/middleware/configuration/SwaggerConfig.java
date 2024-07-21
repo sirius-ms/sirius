@@ -57,7 +57,7 @@ public class SwaggerConfig {
                 .description(
                         "REST API that provides the full functionality of SIRIUS and its web services as background service. " +
                         "It is intended as entry-point for scripting languages and software integration SDKs." +
-                        "This API is exposed by " + ApplicationCore.VERSION_STRING()
+                        "This API is exposed by SIRIUS " + ApplicationCore.VERSION_OBJ().getMajorVersion()
                 )
 //                .termsOfServiceUrl("https://bio.informatik.uni-jena.de/software/sirius/")
 //                .license("GNU General Public License v3.0")

@@ -23,6 +23,7 @@ import de.unijena.bioinf.chemdb.ChemicalDatabaseException;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
 import de.unijena.bioinf.ms.middleware.configuration.GlobalConfig;
 import de.unijena.bioinf.ms.middleware.model.annotations.*;
+import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
@@ -112,14 +113,16 @@ public class AlignedFeatureController {
      *
      * @param projectId project-space to import into.
      * @param features  the feature data to be imported
+     * @param profile profile describing the instrument used to measure the data. Used to merge spectra.
      * @param optFields set of optional fields to be included. Use 'none' to override defaults.
      * @return the Features that have been imported with specified optional fields
      */
     @PostMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<AlignedFeature> addAlignedFeatures(@PathVariable String projectId, @Valid @RequestBody List<FeatureImport> features,
+                                                   @RequestParam(required = false) InstrumentProfile profile,
                                                    @RequestParam(defaultValue = "") EnumSet<AlignedFeature.OptField> optFields
     ) {
-        return projectsProvider.getProjectOrThrow(projectId).addAlignedFeatures(features, removeNone(optFields));
+        return projectsProvider.getProjectOrThrow(projectId).addAlignedFeatures(features, profile, removeNone(optFields));
     }
 
 
@@ -748,23 +751,6 @@ public class AlignedFeatureController {
         if (traceSet.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No trace information available for " + idString(projectId, alignedFeatureId) );
         else return traceSet.get();
     }
-
-
-    /**
-     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
-     *
-     * @param projectId      project-space to read from.
-     * @param alignedFeatureId identifier of feature (aligned over runs) to access.
-     * @return AlignedFeatureQuality quality information of the respective feature.
-     */
-    @Tag(name = "experimental")
-    @GetMapping(value = "/{alignedFeatureId}/quality-report", produces = MediaType.APPLICATION_JSON_VALUE)
-    public AlignedFeatureQuality getAlignedFeaturesQuality(
-            @PathVariable String projectId, @PathVariable String alignedFeatureId
-    ) {
-        return projectsProvider.getProjectOrThrow(projectId).findAlignedFeaturesQualityById(alignedFeatureId);
-    }
-
 
     protected static String idString(String pid, String fid) {
         return "'" + pid + "/" + fid + "'";

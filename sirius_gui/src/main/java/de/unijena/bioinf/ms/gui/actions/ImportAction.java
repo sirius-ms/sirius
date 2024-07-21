@@ -23,18 +23,19 @@ import de.unijena.bioinf.jjobs.LoadingBackroundTask;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.compute.ParameterBinding;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
-import de.unijena.bioinf.ms.gui.dialogs.input.ImportPeakListDialog;
+import de.unijena.bioinf.ms.gui.dialogs.input.ImportMSDataDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.MsBatchDataFormatFilter;
-import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
 import de.unijena.bioinf.ms.nightsky.sdk.jjobs.SseProgressJJob;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
+import de.unijena.bioinf.ms.nightsky.sdk.model.LcmsSubmissionParameters;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceImporter;
+import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -43,7 +44,9 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 /**
  * @author Markus Fleischauer
@@ -59,7 +62,6 @@ public class ImportAction extends AbstractGuiAction {
                 "<ul style=\"list-style-type:none;\">" +
                 "  <li>- Multiple compounds (e.g. .ms, .mgf)</li>" +
                 "  <li>- LC-MS/MS runs (.mzML, .mzXml)</li>" +
-                "  <li>- Projects (.sirius)</li>" +
                 "</ul>" +
                 "<p>into the current project-space. (Same as drag and drop)</p>" +
                 "</html>");
@@ -72,7 +74,6 @@ public class ImportAction extends AbstractGuiAction {
         chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         chooser.setMultiSelectionEnabled(true);
         chooser.addChoosableFileFilter(new MsBatchDataFormatFilter());
-        chooser.addChoosableFileFilter(new ProjectArchivedFilter());
         chooser.setAcceptAllFileFilterUsed(false);
         int returnVal = chooser.showDialog(mainFrame, "Import");
 
@@ -97,41 +98,72 @@ public class ImportAction extends AbstractGuiAction {
 
     //ATTENTION Synchronizing around background tasks that block gui thread is dangerous
     public synchronized void importOneExperimentPerLocation(@NotNull final InputFilesOptions input, Window popupOwner) {
-        boolean lcms = Jobs.runInBackgroundAndLoad(popupOwner, "Analyzing input...", () ->
-                        (!input.msInput.msParserfiles.isEmpty() && input.msInput.msParserfiles.keySet().stream().map(p -> p.getFileName().toString().toLowerCase()).allMatch(n -> n.endsWith(".mzml") || n.endsWith(".mzxml"))))
-                .getResult();
+        Map<Boolean, List<Path>> paths = Jobs.runInBackgroundAndLoad(
+                popupOwner, "Analyzing input...",
+                () -> input.msInput.msParserfiles.keySet().stream().collect(Collectors.partitioningBy(p -> {
+                    String fileName = p.getFileName().toString().toLowerCase();
+                    return fileName.endsWith(".mzml") || fileName.endsWith(".mzxml");
+                }))
+        ).getResult();
 
-        // todo this is hacky we need some real view for that at some stage.
-
+        StopWatch watch = new StopWatch();
+        watch.start();
 
         try {
-            LoadingBackroundTask<Job> task = null;
-            if (lcms) {
-                boolean align = input.msInput.msParserfiles.size() > 1 && new QuestionDialog(popupOwner, "<html><body> You inserted multiple LC-MS/MS Runs. <br> Do you want to Align them during import?</br></body></html>").isSuccess();
-                task = gui.applySiriusClient((c, pid) -> {
-                    Job job = c.projects().importMsRunDataAsJob(pid,
-                            align,
-                            PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", true),
-                            List.of(JobOptField.PROGRESS),
-                            input.msInput.msParserfiles.keySet().stream().map(Path::toFile).toList()
-                    );
-                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Aligning LC-MS runs...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
-                });
-            } else {
-                if (new ImportPeakListDialog(gui.getMainFrame()).isSuccess()) {
-                    task = gui.applySiriusClient((c, pid) -> {
-                        Job job = c.projects().importPreprocessedDataAsJob(pid,
-                                PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.ignoreFormulas", false),
-                                PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.allowMs1Only", true),
-                                List.of(JobOptField.PROGRESS),
-                                input.msInput.msParserfiles.keySet().stream().map(Path::toFile).toList()
-                        );
-                        return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Importing...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
-                    });
+            boolean hasLCMS = paths.containsKey(true) && !paths.get(true).isEmpty();
+            boolean hasPeakLists = paths.containsKey(false) && !paths.get(false).isEmpty();
+            boolean alignAllowed = paths.get(true).size() > 1;
+
+            if (!hasLCMS && !hasPeakLists)
+                return;
+
+            // LC/MS default parameters
+            LcmsSubmissionParameters parameters = new LcmsSubmissionParameters();
+            if (hasLCMS)
+                parameters.setAlignLCMSRuns(false);
+
+            // show dialog
+            if (hasPeakLists || alignAllowed) {
+                ImportMSDataDialog dialog = new ImportMSDataDialog(popupOwner, hasLCMS, hasLCMS && paths.get(true).size() > 1, hasPeakLists);
+                if (!dialog.isSuccess())
+                    return;
+
+                if (hasLCMS) {
+                    ParameterBinding binding = dialog.getParamterBinding();
+                    binding.getOptBoolean("align").ifPresent(parameters::setAlignLCMSRuns);
                 }
             }
-            if (task != null)
+
+            // handle LC/MS files
+            if (hasLCMS) {
+                List<Path> lcmsPaths = paths.get(true);
+                LoadingBackroundTask<Job> task = gui.applySiriusClient((c, pid) -> {
+                    Job job = c.projects().importMsRunDataAsJobLocally(pid,
+                            parameters,
+                            lcmsPaths.stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
+                            true,
+                            List.of(JobOptField.PROGRESS)
+                    );
+                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Importing LC/MS data...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
+                });
+
                 task.awaitResult();
+            }
+
+            // handle non-LC/MS files
+            if (hasPeakLists) {
+                LoadingBackroundTask<Job> task = gui.applySiriusClient((c, pid) -> {
+                    Job job = c.projects().importPreprocessedDataAsJobLocally(pid,
+                            paths.get(false).stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
+                            PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.ignoreFormulas", false),
+                            true,
+                            List.of(JobOptField.PROGRESS)
+                    );
+                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Importing MS data...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
+                });
+                task.awaitResult();
+            }
+
         } catch (ExecutionException e) {
             new StacktraceDialog(gui.getMainFrame(), "Error when importing data! Cause: " + e.getMessage(), e.getCause());
         }

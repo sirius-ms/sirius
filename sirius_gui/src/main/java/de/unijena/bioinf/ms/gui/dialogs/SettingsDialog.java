@@ -69,7 +69,7 @@ public class SettingsDialog extends JDialog implements ActionListener {
 
 //============= CENTER =================
         settingsPane = new JTabbedPane();
-        genSettings = new GerneralSettingsPanel(nuProps);
+        genSettings = new GerneralSettingsPanel(nuProps, gui);
         genSettings.addVerticalGlue();
         settingsPane.add(genSettings.name(), genSettings);
 
