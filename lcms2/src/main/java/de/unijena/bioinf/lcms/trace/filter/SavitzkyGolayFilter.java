@@ -22,32 +22,11 @@ package de.unijena.bioinf.lcms.trace.filter;
 
 import de.unijena.bioinf.lcms.Extrema;
 
-import java.util.Objects;
-
 public class SavitzkyGolayFilter implements Filter {
-
-    public enum SGF {
-        W1P1, W2P2, W3P2, W4P2, W8P2, W16P2, W32P2, AUTO
-    }
-
-    private final de.unijena.bioinf.lcms.SavitzkyGolayFilter filter;
-
-    public SavitzkyGolayFilter(SGF type) {
-        filter = switch (type) {
-            case W1P1 -> de.unijena.bioinf.lcms.SavitzkyGolayFilter.Window1Polynomial1;
-            case W2P2 -> de.unijena.bioinf.lcms.SavitzkyGolayFilter.Window2Polynomial2;
-            case W3P2 -> de.unijena.bioinf.lcms.SavitzkyGolayFilter.Window3Polynomial2;
-            case W4P2 -> de.unijena.bioinf.lcms.SavitzkyGolayFilter.Window4Polynomial2;
-            case W8P2 -> de.unijena.bioinf.lcms.SavitzkyGolayFilter.Window8Polynomial2;
-            case W16P2 -> de.unijena.bioinf.lcms.SavitzkyGolayFilter.Window16Polynomial2;
-            case W32P2 -> de.unijena.bioinf.lcms.SavitzkyGolayFilter.Window32Polynomial2;
-            case AUTO -> null;
-        };
-    }
 
     @Override
     public double[] apply(double[] src) {
-        de.unijena.bioinf.lcms.SavitzkyGolayFilter f = filter != null ? filter : Extrema.getProposedFilter3(src);
+        de.unijena.bioinf.lcms.SavitzkyGolayFilter f = Extrema.getProposedFilter3(src);
         if (f == null) {
             return src;
         } else {
