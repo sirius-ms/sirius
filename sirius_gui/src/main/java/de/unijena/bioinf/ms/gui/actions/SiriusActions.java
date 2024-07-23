@@ -52,6 +52,7 @@ public enum SiriusActions {
 
     TOOGLE_INVERT_FILTER(InvertFilterAction.class),
     RESET_FILTER(ResetFilterAction.class),
+    COPY_ID(CopyIDAction.class),
 
     IMPORT_EXP_BATCH(ImportAction.class),
     DELETE_EXP(DeleteExperimentAction.class),
