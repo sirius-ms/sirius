@@ -53,6 +53,7 @@ import java.util.logging.LogManager;
 public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends ProjectSpaceManager>> {
     public static final Logger LOG = LoggerFactory.getLogger(CLIRootOptions.class);
 
+    @Getter
     protected final DefaultParameterConfigLoader defaultConfigOptions;
 
     @Getter
@@ -62,10 +63,6 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
     public CLIRootOptions(@NotNull DefaultParameterConfigLoader defaultConfigOptions, ProjectSpaceManagerFactory<? extends ProjectSpaceManager> spaceManagerFactory) {
         this.defaultConfigOptions = defaultConfigOptions;
         this.spaceManagerFactory = spaceManagerFactory;
-    }
-
-    public DefaultParameterConfigLoader getDefaultConfigOptions() {
-        return defaultConfigOptions;
     }
 
     public enum LogLevel {
@@ -109,7 +106,7 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
     public void setInitialInstanceBuffer(int initialInstanceBuffer) {
         this.instanceBuffer = initialInstanceBuffer;
         if (instanceBuffer == 0) {
-            instanceBuffer = 10 * SiriusJobs.getGlobalJobManager().getCPUThreads();
+            instanceBuffer = 5 * SiriusJobs.getGlobalJobManager().getCPUThreads();
         }
 
         PropertyManager.setProperty("de.unijena.bioinf.sirius.instanceBuffer", String.valueOf(instanceBuffer));

@@ -13,6 +13,10 @@
   ],
   "tags": [
     {
+      "name": "EXPERIMENTAL",
+      "description": "All Endpoints are experimental and not part of the stable API specification. This endpoints can change at any time, even in minor updates."
+    },
+    {
       "name": "Info",
       "description": "Status und Information"
     },
@@ -508,66 +512,6 @@
         }
       }
     },
-    "/api/{projectId}/jobs/run-command": {
-      "post": {
-        "tags": [
-          "Jobs"
-        ],
-        "summary": "Start computation for given command and input.",
-        "description": "Start computation for given command and input.",
-        "operationId": "startCommand",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to perform the command for.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "optFields",
-            "in": "query",
-            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/JobOptField"
-              },
-              "default": [
-                "progress"
-              ]
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "the command and the input to be executed",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CommandSubmission"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Job of the command to be executed.\n\n DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Job"
-                }
-              }
-            }
-          }
-        },
-        "deprecated": true
-      }
-    },
     "/api/projects/{projectId}/jobs": {
       "get": {
         "tags": [
@@ -719,47 +663,28 @@
         }
       }
     },
-    "/api/projects/{projectId}/jobs/import/ms-data-local-files-job": {
+    "/api/projects/{projectId}/jobs/run-command": {
       "post": {
         "tags": [
-          "Projects"
+          "Jobs"
         ],
-        "summary": "Import and Align full MS-Runs from various formats into the specified project as background job",
-        "description": "Import and Align full MS-Runs from various formats into the specified project as background job.\n Possible formats (mzML, mzXML)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this\n API to allow for more flexible use cases. Use \u0027ms-data-files-job\u0027 instead.",
-        "operationId": "importMsRunDataAsJobLocally",
+        "summary": "Start computation for given command and input.",
+        "description": "Start computation for given command and input.",
+        "operationId": "startCommand",
         "parameters": [
           {
             "name": "projectId",
             "in": "path",
-            "description": "Project-space to import into.",
+            "description": "project-space to perform the command for.",
             "required": true,
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "parameters",
-            "in": "query",
-            "description": "Parameters for feature alignment and feature finding.",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/LcmsSubmissionParameters"
-            }
-          },
-          {
-            "name": "allowMs1Only",
-            "in": "query",
-            "description": "Import data without MS/MS.",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true
-            }
-          },
-          {
             "name": "optFields",
             "in": "query",
-            "description": "Set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
             "required": false,
             "schema": {
               "type": "array",
@@ -773,13 +698,11 @@
           }
         ],
         "requestBody": {
+          "description": "the command and the input to be executed",
           "content": {
             "application/json": {
               "schema": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
+                "$ref": "#/components/schemas/CommandSubmission"
               }
             }
           },
@@ -787,7 +710,7 @@
         },
         "responses": {
           "200": {
-            "description": "the import job.",
+            "description": "Job of the command to be executed.\n\n DEPRECATED: this endpoint is based on local file paths and will likely be removed in future versions of this API.",
             "content": {
               "application/json": {
                 "schema": {
@@ -798,92 +721,6 @@
           }
         },
         "deprecated": true
-      }
-    },
-    "/api/projects/{projectId}/jobs/import/ms-data-files-job": {
-      "post": {
-        "tags": [
-          "Projects"
-        ],
-        "summary": "Import and Align full MS-Runs from various formats into the specified project as background job.",
-        "description": "Import and Align full MS-Runs from various formats into the specified project as background job.\n Possible formats (mzML, mzXML)",
-        "operationId": "importMsRunDataAsJob",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "Project-space to import into.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "parameters",
-            "in": "query",
-            "description": "Parameters for feature alignment and feature finding.",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/LcmsSubmissionParameters"
-            }
-          },
-          {
-            "name": "allowMs1Only",
-            "in": "query",
-            "description": "Import data without MS/MS.",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true
-            }
-          },
-          {
-            "name": "optFields",
-            "in": "query",
-            "description": "Set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
-            "required": false,
-            "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/components/schemas/JobOptField"
-              },
-              "default": [
-                "progress"
-              ]
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "inputFiles": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "format": "binary"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "the import job.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Job"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/api/projects/{projectId}/jobs/from-config": {
@@ -1336,6 +1173,87 @@
         "deprecated": true
       }
     },
+    "/api/projects/{projectId}/import/ms-data-local-files-job": {
+      "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Import and Align full MS-Runs from various formats into the specified project as background job",
+        "description": "Import and Align full MS-Runs from various formats into the specified project as background job.\n Possible formats (mzML, mzXML)\n \u003cp\u003e\n ATTENTION: This is loading input files from the filesystem where the SIRIUS service is running,\n not on the system where the client SDK is running.\n Is more efficient than MultipartFile upload in cases where client (SDK) and server (SIRIUS service)\n are running on the same host.\n \u003cp\u003e\n DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this\n API to allow for more flexible use cases. Use \u0027ms-data-files-job\u0027 instead.",
+        "operationId": "importMsRunDataAsJobLocally",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "Project-space to import into.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "parameters",
+            "in": "query",
+            "description": "Parameters for feature alignment and feature finding.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/LcmsSubmissionParameters"
+            }
+          },
+          {
+            "name": "allowMs1Only",
+            "in": "query",
+            "description": "Import data without MS/MS.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "Set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/JobOptField"
+              },
+              "default": [
+                "progress"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "the import job.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          }
+        },
+        "deprecated": true
+      }
+    },
     "/api/projects/{projectId}/import/ms-data-files": {
       "post": {
         "tags": [
@@ -1401,6 +1319,92 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ImportResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/import/ms-data-files-job": {
+      "post": {
+        "tags": [
+          "Projects"
+        ],
+        "summary": "Import and Align full MS-Runs from various formats into the specified project as background job.",
+        "description": "Import and Align full MS-Runs from various formats into the specified project as background job.\n Possible formats (mzML, mzXML)",
+        "operationId": "importMsRunDataAsJob",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "Project-space to import into.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "parameters",
+            "in": "query",
+            "description": "Parameters for feature alignment and feature finding.",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/LcmsSubmissionParameters"
+            }
+          },
+          {
+            "name": "allowMs1Only",
+            "in": "query",
+            "description": "Import data without MS/MS.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "Set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/JobOptField"
+              },
+              "default": [
+                "progress"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "inputFiles": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "the import job.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
                 }
               }
             }
@@ -3295,11 +3299,10 @@
     "/api/projects/{projectId}/aligned-features/{alignedFeatureId}/quality-report": {
       "get": {
         "tags": [
-          "experimental",
-          "Features"
+          "EXPERIMENTAL"
         ],
         "summary": "Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.",
-        "description": "Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.",
+        "description": "Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.\n\n EXPERIMENTAL: Endpoint is not part of the stable API specification and might change in minor updates.",
         "operationId": "getAlignedFeaturesQuality",
         "parameters": [
           {
@@ -4941,6 +4944,26 @@
           "Info"
         ],
         "operationId": "getInfo",
+        "parameters": [
+          {
+            "name": "serverInfo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "updateInfo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -5589,126 +5612,6 @@
           }
         }
       },
-      "CommandSubmission": {
-        "required": [
-          "command"
-        ],
-        "type": "object",
-        "properties": {
-          "compoundIds": {
-            "type": "array",
-            "description": "Compounds that should be the input for this Job\n Will be converted to the respective alignedFeatureIds for computation.\n\n At least one compoundId or alignedFeatureId needs to be specified.",
-            "nullable": true,
-            "items": {
-              "type": "string",
-              "nullable": true
-            }
-          },
-          "alignedFeatureIds": {
-            "type": "array",
-            "description": "Features (aligned over runs) that should be the input for this Job\n\n At least one compoundId or alignedFeatureId needs to be specified.",
-            "nullable": true,
-            "items": {
-              "type": "string",
-              "nullable": true
-            }
-          },
-          "command": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          }
-        }
-      },
-      "JobOptField": {
-        "type": "string",
-        "nullable": true,
-        "enum": [
-          "none",
-          "command",
-          "progress",
-          "affectedIds"
-        ]
-      },
-      "Job": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Unique identifier to access the job via the API"
-          },
-          "command": {
-            "type": "string",
-            "description": "Command string of the executed Task"
-          },
-          "progress": {
-            "$ref": "#/components/schemas/JobProgress"
-          },
-          "affectedCompoundIds": {
-            "type": "array",
-            "description": "List of compoundIds that are affected by this job.\n This lis will also contain compoundIds where not all features of the compound are affected by the job.\n If this job is creating compounds (e.g. data import jobs) this value will be NULL until the jobs has finished",
-            "items": {
-              "type": "string"
-            }
-          },
-          "affectedAlignedFeatureIds": {
-            "type": "array",
-            "description": "List of alignedFeatureIds that are affected by this job.\n If this job is creating features (e.g. data import jobs) this value will be NULL until the jobs has finished",
-            "items": {
-              "type": "string"
-            }
-          }
-        },
-        "description": "Identifier created by the SIRIUS Nightsky API for a newly created Job.\n Object can be enriched with Job status/progress information ({@link JobProgress JobProgress}) and/or Job command information."
-      },
-      "JobProgress": {
-        "type": "object",
-        "properties": {
-          "indeterminate": {
-            "type": "boolean",
-            "description": "Is the progress indeterminate or not",
-            "nullable": true
-          },
-          "state": {
-            "type": "string",
-            "description": "Current state of the Jobs in the SIRIUS internal Job scheduler\n\n         WAITING: Waiting for submission to ExecutorService (e.g. due to dependent jobs)\n         READY: Ready for submission but not yet enqueued for submission to ExecutorService.\n         QUEUED: Enqueued for submission to ExecutorService.\n         SUBMITTED: Submitted and waiting to be executed.\n         RUNNING: Job is running.\n         CANCELED: Jobs is finished due to cancellation by user or dependent jobs.\n         FAILED: Job is finished but failed.\n         DONE: Job finished successfully.",
-            "enum": [
-              "WAITING",
-              "READY",
-              "QUEUED",
-              "SUBMITTED",
-              "RUNNING",
-              "CANCELED",
-              "FAILED",
-              "DONE"
-            ]
-          },
-          "currentProgress": {
-            "type": "integer",
-            "description": "Current progress value of the job.",
-            "format": "int64",
-            "nullable": true
-          },
-          "maxProgress": {
-            "type": "integer",
-            "description": "Progress value to reach (might also change during execution)",
-            "format": "int64",
-            "nullable": true
-          },
-          "message": {
-            "type": "string",
-            "description": "Progress information and warnings.",
-            "nullable": true
-          },
-          "errorMessage": {
-            "type": "string",
-            "description": "Error message if the job did not finish successfully failed.",
-            "nullable": true
-          }
-        },
-        "description": "Progress information of a computation job that has already been submitted to SIRIUS.\n if  currentProgress \u003d\u003d maxProgress job is finished and should change to state done soon.\n if a job is DONE all results can be accessed via the Project-Spaces api."
-      },
       "Canopus": {
         "type": "object",
         "properties": {
@@ -6148,62 +6051,123 @@
         },
         "nullable": true
       },
-      "DataSmoothing": {
+      "JobOptField": {
         "type": "string",
-        "default": "AUTO",
+        "nullable": true,
         "enum": [
-          "AUTO",
-          "NOFILTER",
-          "GAUSSIAN",
-          "WAVELET"
+          "none",
+          "command",
+          "progress",
+          "affectedIds"
         ]
       },
-      "LcmsSubmissionParameters": {
+      "Job": {
         "type": "object",
         "properties": {
-          "alignLCMSRuns": {
+          "id": {
+            "type": "string",
+            "description": "Unique identifier to access the job via the API"
+          },
+          "command": {
+            "type": "string",
+            "description": "Command string of the executed Task"
+          },
+          "progress": {
+            "$ref": "#/components/schemas/JobProgress"
+          },
+          "affectedCompoundIds": {
+            "type": "array",
+            "description": "List of compoundIds that are affected by this job.\n This lis will also contain compoundIds where not all features of the compound are affected by the job.\n If this job is creating compounds (e.g. data import jobs) this value will be NULL until the jobs has finished",
+            "items": {
+              "type": "string"
+            }
+          },
+          "affectedAlignedFeatureIds": {
+            "type": "array",
+            "description": "List of alignedFeatureIds that are affected by this job.\n If this job is creating features (e.g. data import jobs) this value will be NULL until the jobs has finished",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Identifier created by the SIRIUS Nightsky API for a newly created Job.\n Object can be enriched with Job status/progress information ({@link JobProgress JobProgress}) and/or Job command information."
+      },
+      "JobProgress": {
+        "type": "object",
+        "properties": {
+          "indeterminate": {
             "type": "boolean",
-            "description": "Specifies whether LC/MS runs should be aligned",
-            "default": true
+            "description": "Is the progress indeterminate or not",
+            "nullable": true
           },
-          "noise": {
-            "type": "number",
-            "description": "Features must be larger than \u003cvalue\u003e * detected noise level.",
-            "format": "double",
-            "default": 2.0
+          "state": {
+            "type": "string",
+            "description": "Current state of the Jobs in the SIRIUS internal Job scheduler\n\n         WAITING: Waiting for submission to ExecutorService (e.g. due to dependent jobs)\n         READY: Ready for submission but not yet enqueued for submission to ExecutorService.\n         QUEUED: Enqueued for submission to ExecutorService.\n         SUBMITTED: Submitted and waiting to be executed.\n         RUNNING: Job is running.\n         CANCELED: Jobs is finished due to cancellation by user or dependent jobs.\n         FAILED: Job is finished but failed.\n         DONE: Job finished successfully.",
+            "enum": [
+              "WAITING",
+              "READY",
+              "QUEUED",
+              "SUBMITTED",
+              "RUNNING",
+              "CANCELED",
+              "FAILED",
+              "DONE"
+            ]
           },
-          "persistence": {
-            "type": "number",
-            "description": "Features must have larger persistence (intensity above valley) than \u003cvalue\u003e * max trace intensity.",
-            "format": "double",
-            "default": 0.1
-          },
-          "merge": {
-            "type": "number",
-            "description": "Merge neighboring features with valley less than \u003cvalue\u003e * intensity.",
-            "format": "double",
-            "default": 0.8
-          },
-          "filter": {
-            "$ref": "#/components/schemas/DataSmoothing"
-          },
-          "gaussianSigma": {
-            "type": "number",
-            "description": "Sigma (kernel width) for gaussian filter algorithm.",
-            "format": "double",
-            "default": 3.0
-          },
-          "waveletScale": {
+          "currentProgress": {
             "type": "integer",
-            "description": "Number of coefficients for wavelet filter algorithm.",
-            "format": "int32",
-            "default": 20
+            "description": "Current progress value of the job.",
+            "format": "int64",
+            "nullable": true
           },
-          "waveletWindow": {
-            "type": "number",
-            "description": "Wavelet window size (%) for wavelet filter algorithm.",
-            "format": "double",
-            "default": 11
+          "maxProgress": {
+            "type": "integer",
+            "description": "Progress value to reach (might also change during execution)",
+            "format": "int64",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "description": "Progress information and warnings.",
+            "nullable": true
+          },
+          "errorMessage": {
+            "type": "string",
+            "description": "Error message if the job did not finish successfully failed.",
+            "nullable": true
+          }
+        },
+        "description": "Progress information of a computation job that has already been submitted to SIRIUS.\n if  currentProgress \u003d\u003d maxProgress job is finished and should change to state done soon.\n if a job is DONE all results can be accessed via the Project-Spaces api."
+      },
+      "CommandSubmission": {
+        "required": [
+          "command"
+        ],
+        "type": "object",
+        "properties": {
+          "compoundIds": {
+            "type": "array",
+            "description": "Compounds that should be the input for this Job\n Will be converted to the respective alignedFeatureIds for computation.\n\n At least one compoundId or alignedFeatureId needs to be specified.",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "alignedFeatureIds": {
+            "type": "array",
+            "description": "Features (aligned over runs) that should be the input for this Job\n\n At least one compoundId or alignedFeatureId needs to be specified.",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "command": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -6227,6 +6191,16 @@
             "items": {
               "type": "string"
             }
+          }
+        }
+      },
+      "LcmsSubmissionParameters": {
+        "type": "object",
+        "properties": {
+          "alignLCMSRuns": {
+            "type": "boolean",
+            "description": "Specifies whether LC/MS runs should be aligned",
+            "default": true
           }
         }
       },
@@ -7476,10 +7450,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "size": {
@@ -7689,10 +7663,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "size": {
@@ -7768,10 +7742,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "size": {
@@ -7984,10 +7958,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "size": {
@@ -8030,10 +8004,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "size": {
@@ -8149,10 +8123,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "size": {
@@ -8195,10 +8169,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "size": {

@@ -210,8 +210,8 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
             addAdvancedComponent(technicalParameters);
         }
 
-        // add ionization's of selected compounds to default
-        refreshPossibleAdducts(ecs.stream().map(InstanceBean::getDetectedAdductsOrCharge).flatMap(Set::stream).collect(Collectors.toSet()), true);
+        // add adducts, either detect adducts for single compound or fallback adducts for correct charge (pos / neg) in batch compute
+        refreshPossibleAdducts(isBatchDialog() ? ecs.stream().map(InstanceBean::getIonType).map(it -> it.getCharge()>0?PrecursorIonType.unknownPositive() : PrecursorIonType.unknownNegative()).distinct().collect(Collectors.toSet())  : ecs.stream().map(InstanceBean::getDetectedAdductsOrCharge).flatMap(Set::stream).collect(Collectors.toSet()), true);
     }
 
     protected boolean isBatchDialog() {

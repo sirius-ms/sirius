@@ -988,7 +988,7 @@ public class JobsApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<Job> localVarReturnType = new ParameterizedTypeReference<Job>() {};
-        return apiClient.invokeAPI("/api/{projectId}/jobs/run-command", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/jobs/run-command", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**

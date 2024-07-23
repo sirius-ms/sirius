@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.middleware.model.compute;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import de.unijena.bioinf.lcms.trace.filter.SavitzkyGolayFilter;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.DataSmoothing;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
@@ -37,49 +36,49 @@ public class LcmsSubmissionParameters {
      * Specifies whether LC/MS runs should be aligned
      */
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "true")
-    protected boolean alignLCMSRuns;
+    protected boolean alignLCMSRuns = true;
 
     /**
      * Features must be larger than <value> * detected noise level.
      */
-    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "2.0")
-    protected double noise;
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "2.0", hidden = true)
+    protected double noise = 2.0;
 
     /**
      * Features must have larger persistence (intensity above valley) than <value> * max trace intensity.
      */
-    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "0.1")
-    protected double persistence;
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "0.1", hidden = true)
+    protected double persistence = 0.1;
 
     /**
      * Merge neighboring features with valley less than <value> * intensity.
      */
-    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "0.8")
-    protected double merge;
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "0.8", hidden = true)
+    protected double merge = 0.8;
 
     /**
      * Specifies filter algorithm to suppress noise.
      */
-    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "AUTO", enumAsRef = true)
-    protected DataSmoothing filter;
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "AUTO", enumAsRef = true, hidden = true)
+    protected DataSmoothing filter = DataSmoothing.AUTO;
 
     /**
      * Sigma (kernel width) for gaussian filter algorithm.
      */
-    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "3.0")
-    protected double gaussianSigma;
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "0.5", hidden = true)
+    protected double gaussianSigma = 0.5;
 
     /**
      * Number of coefficients for wavelet filter algorithm.
      */
-    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "20")
-    protected int waveletScale;
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "8", hidden = true)
+    protected int waveletScale = 8;
 
     /**
      * Wavelet window size (%) for wavelet filter algorithm.
      */
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "AUTO", enumAsRef = true)
-    protected SavitzkyGolayFilter.SGF savitzyGolayType;
+    protected SavitzkyGolayFilter.SGF savitzyGolayType = SavitzkyGolayFilter.SGF.AUTO;
 
 
 }

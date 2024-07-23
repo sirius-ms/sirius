@@ -30,12 +30,10 @@ import de.unijena.bioinf.ms.middleware.service.info.ConnectionChecker;
 import de.unijena.bioinf.ms.rest.model.info.VersionsInfo;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
@@ -53,7 +51,7 @@ public class InfoController {
 
     @RequestMapping(value = "/api/info", method = RequestMethod.GET, produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.OK)
-    public Info getInfo() {
+    public Info getInfo(@RequestParam(defaultValue = "true") boolean serverInfo, @RequestParam(defaultValue = "true") boolean updateInfo) {
 
         Info.InfoBuilder b = Info.builder()
                 .chemDbVersion("N/A")
@@ -65,23 +63,28 @@ public class InfoController {
                 .fingerIdModelVersion("N/A") //todo add model version in a performant way.
                 .fingerprintId(ChemicalDatabase.FINGERPRINT_ID);
 
-        try {
-            VersionsInfo info = siriusContext.webAPI().getVersionInfo(true);
-            if (info != null){
-                b.chemDbVersion(info.databaseDate);
-                b.latestSiriusVersion(info.getLatestSiriusVersion().toString());
-                b.latestSiriusLink(info.getLatestSiriusLink());
-                b.updateAvailable(ApplicationCore.VERSION_OBJ().compareTo(info.getLatestSiriusVersion()) < 0);
-            } else {
-                try {
-                    String dbDate = Optional.ofNullable(siriusContext.webAPI().getChemDbDate()).orElse("N/A");
-                    b.chemDbVersion(dbDate);
-                } catch (Exception e) {
-                    log.warn("Could not get chemDbDate because of: {}", e.getMessage());
+        if (serverInfo) {
+            try {
+                VersionsInfo info = siriusContext.webAPI().getVersionInfo(updateInfo);
+                if (info != null){
+                    b.chemDbVersion(info.databaseDate);
+                    Optional.ofNullable(info.getLatestSiriusVersion()).map(DefaultArtifactVersion::toString)
+                            .ifPresent(b::latestSiriusVersion);
+                    Optional.ofNullable(info.getLatestSiriusLink())
+                            .ifPresent(b::latestSiriusLink);
+                    Optional.ofNullable(info.getLatestSiriusVersion())
+                            .ifPresent(v -> b.updateAvailable(ApplicationCore.VERSION_OBJ().compareTo(v) < 0));
+                } else {
+                    try {
+                        Optional.ofNullable(siriusContext.webAPI().getChemDbDate())
+                                .ifPresent(b::chemDbVersion);
+                    } catch (Exception e) {
+                        log.warn("Could not get chemDbDate because of: {}", e.getMessage());
+                    }
                 }
+            } catch (Exception e) {
+                log.warn("Could not get VersionsInfo because of: {}", e.getMessage());
             }
-        } catch (Exception e) {
-            log.warn("Could not get VersionsInfo because of: {}", e.getMessage());
         }
 
         return b.build();

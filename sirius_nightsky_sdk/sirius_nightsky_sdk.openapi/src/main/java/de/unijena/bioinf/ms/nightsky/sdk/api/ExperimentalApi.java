@@ -48,7 +48,7 @@ public class ExperimentalApi {
 
     /**
      * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
-     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
+     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.   EXPERIMENTAL: Endpoint is not part of the stable API specification and might change in minor updates.
      * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
      * @param projectId project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
@@ -91,7 +91,7 @@ public class ExperimentalApi {
 
     /**
      * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
-     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
+     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.   EXPERIMENTAL: Endpoint is not part of the stable API specification and might change in minor updates.
      * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
      * @param projectId project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
@@ -105,7 +105,7 @@ public class ExperimentalApi {
 
     /**
      * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
-     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
+     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.   EXPERIMENTAL: Endpoint is not part of the stable API specification and might change in minor updates.
      * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
      * @param projectId project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.
@@ -119,7 +119,7 @@ public class ExperimentalApi {
 
     /**
      * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
-     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
+     * Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.   EXPERIMENTAL: Endpoint is not part of the stable API specification and might change in minor updates.
      * <p><b>200</b> - AlignedFeatureQuality quality information of the respective feature.
      * @param projectId project-space to read from.
      * @param alignedFeatureId identifier of feature (aligned over runs) to access.

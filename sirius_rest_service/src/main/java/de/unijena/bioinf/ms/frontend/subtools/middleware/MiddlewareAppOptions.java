@@ -58,17 +58,24 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
 
     @CommandLine.Option(names = {"--port", "-p"}, description = "Specify the port on which the SIRIUS REST Service should run (Default: autodetect).")
     private void setPort(int port) {
-        System.getProperties().setProperty("server.port", String.valueOf(port));
+        System.setProperty("server.port", String.valueOf(port));
     }
 
     @CommandLine.Option(names = {"--enable-rest-shutdown", "-s"}, description = "Allows to shut down the SIRIUS REST Service via a rest api call (/actuator/shutdown)", defaultValue = "false")
     private void setShutdown(boolean enableRestShutdown) {
         if (enableRestShutdown)
-            System.getProperties().setProperty("management.endpoints.web.exposure.include", "health,shutdown");
+            System.setProperty("management.endpoints.web.exposure.include", "health,shutdown");
         else
-            System.getProperties().setProperty("management.endpoints.web.exposure.include", "health");
+            System.setProperty("management.endpoints.web.exposure.include", "health");
 
     }
+
+    @CommandLine.Option(names = {"--stableDocOnly"}, description = "Show only the stable und non deprecated api endpoints in swagger gui and openapi spec.", hidden = true, defaultValue = "false")
+    private void setStableDocOnly(boolean stableDocOnly) {
+        if (stableDocOnly)
+            System.setProperty("springdoc.pathsToExclude", "/api/projects/*/aligned-features/*/formulas/*/sirius-fragtree,/api/projects/*/jobs/run-command,/api/projects/*/import/ms-data-local-files-job,/api/projects/*/import/ms-local-data-files,/api/projects/*/import/preprocessed-local-data-files-job,/api/projects/*/import/preprocessed-local-data-files,/api/projects/*/copy,/api/databases/*/import/from-files-job,/api/databases/*/import/from-files-job");
+    }
+
 
     @CommandLine.Option(names = {"--gui", "-g"}, description = "Start GUI on specified project or on temporary project otherwise.")
     @Getter

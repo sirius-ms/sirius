@@ -79,7 +79,7 @@ public class SiriusGui {
 
         if (FIRST_START.getAndSet(false)) {
             Jobs.runInBackground(() -> {
-                Info info = siriusClient.infos().getInfo();
+                Info info = siriusClient.infos().getInfo(true, true);
                 if (info != null && info.isUpdateAvailable() != null && info.isUpdateAvailable())
                     if (!UpdateDialog.isDontAskMe())
                         Jobs.runEDTLater(() -> new UpdateDialog(mainFrame, info));

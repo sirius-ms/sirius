@@ -71,7 +71,7 @@ No authorization required
 
 ## getInfo
 
-> Info getInfo()
+> Info getInfo(serverInfo, updateInfo)
 
 
 
@@ -91,8 +91,10 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8888");
 
         InfoApi apiInstance = new InfoApi(defaultClient);
+        Boolean serverInfo = true; // Boolean | 
+        Boolean updateInfo = true; // Boolean | 
         try {
-            Info result = apiInstance.getInfo();
+            Info result = apiInstance.getInfo(serverInfo, updateInfo);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling InfoApi#getInfo");
@@ -107,7 +109,11 @@ public class Example {
 
 ### Parameters
 
-This endpoint does not need any parameter.
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **serverInfo** | **Boolean**|  | [optional] [default to true] |
+| **updateInfo** | **Boolean**|  | [optional] [default to true] |
 
 ### Return type
 
