@@ -71,7 +71,7 @@ public class LcmsSubmissionParameters {
     /**
      * Number of coefficients for wavelet filter algorithm.
      */
-    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "20", hidden = true)
+    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "8", hidden = true)
     protected int waveletScale = 8;
 
 
