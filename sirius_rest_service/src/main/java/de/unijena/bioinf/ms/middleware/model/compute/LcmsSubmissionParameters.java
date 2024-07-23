@@ -74,11 +74,5 @@ public class LcmsSubmissionParameters {
     @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "8", hidden = true)
     protected int waveletScale = 8;
 
-    /**
-     * Wavelet window size (%) for wavelet filter algorithm.
-     */
-    @Schema(requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "AUTO", enumAsRef = true)
-    protected SavitzkyGolayFilter.SGF savitzyGolayType = SavitzkyGolayFilter.SGF.AUTO;
-
 
 }

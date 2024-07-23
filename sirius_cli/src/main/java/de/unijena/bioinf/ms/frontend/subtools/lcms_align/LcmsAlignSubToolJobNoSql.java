@@ -46,7 +46,9 @@ import de.unijena.bioinf.ms.frontend.subtools.InputFilesOptions;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
-import de.unijena.bioinf.ms.persistence.model.core.feature.*;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AbstractFeature;
+import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
@@ -67,7 +69,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManager> {
@@ -109,7 +114,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             case NOFILTER -> new NoFilter();
             case GAUSSIAN -> new GaussFilter(options.sigma);
             case WAVELET -> new WaveletFilter(options.scaleLevel);
-            case SAVITZKY_GOLAY -> new SavitzkyGolayFilter(options.savitzkyGolayType);
+            case SAVITZKY_GOLAY -> new SavitzkyGolayFilter();
         }, options.noiseCoefficient, options.persistenceCoefficient, options.mergeCoefficient);
         this.saveImportedCompounds = false;
     }
@@ -122,7 +127,6 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             DataSmoothing filter,
             double sigma,
             int scale,
-            SavitzkyGolayFilter.SGF sgf,
             double noise,
             double persistence,
             double merge,
@@ -140,7 +144,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             case NOFILTER -> new NoFilter();
             case GAUSSIAN -> new GaussFilter(sigma);
             case WAVELET -> new WaveletFilter(scale);
-            case SAVITZKY_GOLAY -> new SavitzkyGolayFilter(sgf);
+            case SAVITZKY_GOLAY -> new SavitzkyGolayFilter();
         }, noise, persistence, merge);
         this.saveImportedCompounds = saveImportedCompounds;
     }

@@ -125,11 +125,8 @@ class LcmsAlignTest {
 
     static Stream<Arguments> provideSGArgs() {
         if (DATASETS.isEmpty())
-            return Stream.of(Arguments.arguments(null, SavitzkyGolayFilter.SGF.AUTO));
-        return DATASETS.stream()
-                .map(ds -> new Object[]{ds, SavitzkyGolayFilter.SGF.AUTO})
-//                .flatMap(ds -> Arrays.stream(SavitzkyGolayFilter.SGF.values()).map(sgf -> new Object[]{ds, sgf}))
-                .map(Arguments::arguments);
+            return Stream.of(Arguments.arguments(""));
+        return DATASETS.stream().map(Arguments::arguments);
     }
 
     private static final Deviation MZ_DEV = new Deviation(10);
@@ -188,7 +185,7 @@ class LcmsAlignTest {
     @ParameterizedTest
     @MethodSource("provideGaussArgs")
     void testGaussian(String dataset, double sigma) throws IOException, ExecutionException {
-        if (dataset == null)
+        if (dataset == null || dataset.isEmpty() || dataset.isBlank())
             return;
 
         final LcmsAlignOptions options = new LcmsAlignOptions();
@@ -214,7 +211,7 @@ class LcmsAlignTest {
     @ParameterizedTest
     @MethodSource("provideWaveletArgs")
     void testWavelet(String dataset, int scale) throws IOException, ExecutionException {
-        if (dataset == null)
+        if (dataset == null || dataset.isEmpty() || dataset.isBlank())
             return;
 
         final LcmsAlignOptions options = new LcmsAlignOptions();
@@ -239,15 +236,14 @@ class LcmsAlignTest {
 
     @ParameterizedTest
     @MethodSource("provideSGArgs")
-    void testSavitzkyGolay(String dataset, SavitzkyGolayFilter.SGF sgf) throws IOException, ExecutionException {
-        if (dataset == null)
+    void testSavitzkyGolay(String dataset) throws IOException, ExecutionException {
+        if (dataset == null || dataset.isEmpty() || dataset.isBlank())
             return;
 
         final LcmsAlignOptions options = new LcmsAlignOptions();
         options.noAlign = false;
         options.forbidMs1Only = false;
         options.smoothing = DataSmoothing.SAVITZKY_GOLAY;
-        options.savitzkyGolayType = sgf;
         options.noiseCoefficient = 2.0;
         options.persistenceCoefficient = 0.1;
         options.mergeCoefficient = 0.8;
@@ -257,8 +253,8 @@ class LcmsAlignTest {
             compareFeatures(
                     DEFAULT_PROJECTS.get(dataset), project,
                     runPreprocessing(project, options, dataset),
-                    new SavitzkyGolayFilter(sgf),
-                    dataset, "sg", sgf.toString()
+                    new SavitzkyGolayFilter(),
+                    dataset, "sg", ""
             );
         }
     }
