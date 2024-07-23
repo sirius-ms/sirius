@@ -25,6 +25,8 @@ import de.unijena.bioinf.chemdb.FingerprintCandidate;
 import org.apache.commons.math3.distribution.LogNormalDistribution;
 import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.distribution.ParetoDistribution;
+import org.openscience.cdk.tools.LoggingToolFactory;
+import org.slf4j.LoggerFactory;
 import umontreal.ssj.probdist.EmpiricalDist;
 import umontreal.ssj.randvar.KernelDensityGen;
 
@@ -288,7 +290,7 @@ public class PvalueScoreUtils {
         double bandwidth= 0.7764*KernelDensityGen.getBaseBandwidth(empdist);
 
         if (bandwidth==0){
-            System.out.println("Critical bandwidth estimation error, send input to Martin");
+            LoggerFactory.getLogger(PvalueScoreUtils.class).debug(String.format(Locale.US,"Bandwidth estimation error"));
             return 100;
         }
 

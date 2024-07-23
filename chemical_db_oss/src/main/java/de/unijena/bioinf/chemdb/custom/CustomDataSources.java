@@ -99,8 +99,8 @@ public class CustomDataSources {
         NON_SEARCHABLE_LIST = new HashSet<>(getSourcesFromNames(
                 DataSource.TRAIN.name(), DataSource.LIPID.name(), DataSource.ALL.name(),
                 DataSource.PUBCHEMANNOTATIONBIO.name(), DataSource.PUBCHEMANNOTATIONDRUG.name(),
-                DataSource.PUBCHEMANNOTATIONFOOD.name(), DataSource.PUBCHEMANNOTATIONSAFETYANDTOXIC.name(),
-                DataSource.SUPERNATURAL.name()));
+                DataSource.PUBCHEMANNOTATIONFOOD.name(), DataSource.PUBCHEMANNOTATIONSAFETYANDTOXIC.name()
+        ));
     }
 
     public static boolean isNonSearchable(@NotNull String name) {
