@@ -154,7 +154,7 @@ public class ConnectionCheckPanel extends TwoColumnPanel {
             //case 0 NO ERROR
             resultPanel.add(new JLabel("<html>Connection to SIRIUS web services successfully established!</html>"), 5, false);
         } else {
-            ConnectionError err = errors.get(0);
+            ConnectionError err = errors.getFirst();
             ErrorKlassEnum mainError = err.getErrorKlass();
             //check if internet error is not just internet check unreachable
             if (mainError == INTERNET){

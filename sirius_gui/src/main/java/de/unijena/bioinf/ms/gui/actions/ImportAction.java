@@ -29,9 +29,7 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.ImportMSDataDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.MsBatchDataFormatFilter;
-import de.unijena.bioinf.ms.gui.io.filefilter.ProjectArchivedFilter;
 import de.unijena.bioinf.ms.nightsky.sdk.jjobs.SseProgressJJob;
-import de.unijena.bioinf.ms.nightsky.sdk.model.DataSmoothing;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
 import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
 import de.unijena.bioinf.ms.nightsky.sdk.model.LcmsSubmissionParameters;
@@ -64,7 +62,6 @@ public class ImportAction extends AbstractGuiAction {
                 "<ul style=\"list-style-type:none;\">" +
                 "  <li>- Multiple compounds (e.g. .ms, .mgf)</li>" +
                 "  <li>- LC-MS/MS runs (.mzML, .mzXml)</li>" +
-                "  <li>- Projects (.sirius)</li>" +
                 "</ul>" +
                 "<p>into the current project-space. (Same as drag and drop)</p>" +
                 "</html>");
@@ -77,7 +74,6 @@ public class ImportAction extends AbstractGuiAction {
         chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
         chooser.setMultiSelectionEnabled(true);
         chooser.addChoosableFileFilter(new MsBatchDataFormatFilter());
-        chooser.addChoosableFileFilter(new ProjectArchivedFilter());
         chooser.setAcceptAllFileFilterUsed(false);
         int returnVal = chooser.showDialog(mainFrame, "Import");
 
@@ -123,16 +119,8 @@ public class ImportAction extends AbstractGuiAction {
 
             // LC/MS default parameters
             LcmsSubmissionParameters parameters = new LcmsSubmissionParameters();
-            if (hasLCMS) {
+            if (hasLCMS)
                 parameters.setAlignLCMSRuns(false);
-                parameters.setFilter(DataSmoothing.AUTO);
-                parameters.setGaussianSigma(3.0);
-                parameters.setWaveletScale(20);
-                parameters.setWaveletWindow(10d);
-                parameters.setNoise(2.0);
-                parameters.setPersistence(0.1);
-                parameters.setMerge(0.8);
-            }
 
             // show dialog
             if (hasPeakLists || alignAllowed) {

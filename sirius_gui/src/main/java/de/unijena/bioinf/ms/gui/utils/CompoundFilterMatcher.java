@@ -109,8 +109,6 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
         if (filterModel.isElementFilterEnabled())
             if (!matchesElementFilter(item, filterModel)) return false;
 
-        if (filterModel.isMinIsotopePeaksFilterEnabled())
-            if (!filterByMinIsotopePeaks(item, filterModel)) return false;
 
         if (filterModel.isLipidFilterEnabled())
             if (!matchesLipidFilter(item, filterModel)) return false;
@@ -119,20 +117,6 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
             if (!matchesDBFilter(item, filterModel)) return false;
 
         return true;
-    }
-
-
-    //todo maybe add directly to feature
-    private boolean filterByMinIsotopePeaks(InstanceBean item, CompoundFilterModel filterModel) {
-        return Optional.ofNullable(item.getMsData())
-                .map(MsData::getMergedMs1)
-                .map(ms1 -> WrapperSpectrum.of(ms1.getPeaks(), SimplePeak::getMz, SimplePeak::getIntensity))
-                .map(s -> Spectrums.extractIsotopePattern(s,
-                        PropertyManager.DEFAULTS.createInstanceWithDefaults(MS1MassDeviation.class),
-                        item.getIonMass(), item.getIonType().getCharge(), true))
-                .map(s -> s.size() >= filterModel.getCurrentMinIsotopePeaks())
-                .orElse(false);
-        //todo nightsky: -> add isotope pattern to MS/MS data to make such things easier?.
     }
 
     private boolean matchesLipidFilter(InstanceBean item, CompoundFilterModel filterModel) {

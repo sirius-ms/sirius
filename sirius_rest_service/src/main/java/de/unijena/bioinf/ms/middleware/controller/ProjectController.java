@@ -138,7 +138,7 @@ public class ProjectController {
      * @param optFields    Set of optional fields to be included. Use 'none' only to override defaults.
      * @return the import job.
      */
-    @PostMapping(value = "/{projectId}/jobs/import/ms-data-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/{projectId}/import/ms-data-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Job importMsRunDataAsJob(@PathVariable String projectId,
                                     @RequestBody MultipartFile[] inputFiles,
                                     LcmsSubmissionParameters parameters,
@@ -200,7 +200,7 @@ public class ProjectController {
      * @return the import job.
      */
     @Deprecated(forRemoval = true)
-    @PostMapping(value = "/{projectId}/jobs/import/ms-data-local-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/{projectId}/import/ms-data-local-files-job", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public Job importMsRunDataAsJobLocally(@PathVariable String projectId,
                                            @RequestBody String[] localFilePaths,
                                            LcmsSubmissionParameters parameters,

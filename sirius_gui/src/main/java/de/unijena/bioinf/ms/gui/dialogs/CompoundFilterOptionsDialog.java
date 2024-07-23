@@ -54,7 +54,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
     final PlaceholderTextField searchField;
     final JTextField searchFieldDialogCopy;
-    final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner, minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner, minIsotopeSpinner;
+    final JSpinner minMzSpinner, maxMzSpinner, minRtSpinner, maxRtSpinner, minConfidenceSpinner, maxConfidenceSpinner, candidateSpinner;
     public final JCheckboxListPanel<PrecursorIonType> adductOptions;
     JButton discard, apply, reset;
     final JCheckBox invertFilter, deleteSelection, elementsMatchFormula, elementsMatchPrecursorFormula, hasMs1, hasMsMs;
@@ -147,7 +147,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             final TwoColumnPanel dataParameters = new TwoColumnPanel();
             centerTab.addTab("Data Quality", dataParameters);
 
-            //isotope peak filter
+            //MS data availability filter
             {
                 dataParameters.add(Box.createVerticalStrut(5));
                 dataParameters.add(new JXTitledSeparator("MS Data Quality"));
@@ -157,14 +157,11 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
                 hasMsMs = new JCheckBox("MS/MS");
                 hasMsMs.setToolTipText("Feature must have a least one MS/MS Spectrum");
                 hasMsMs.setSelected(filterModel.isHasMsMs());
-                minIsotopeSpinner = makeSpinner(filterModel.getCurrentMinIsotopePeaks(), filterModel.getMinIsotopePeaks(), filterModel.getMaxIsotopePeaks(), 1);
 
                 Box box = Box.createHorizontalBox();
                 box.add(hasMs1);
                 box.add(Box.createHorizontalStrut(50));
                 box.add(hasMsMs);
-                box.add(Box.createHorizontalStrut(50));
-                box.add(new TwoColumnPanel("Min isotope peaks", minIsotopeSpinner));
                 box.add(Box.createHorizontalStrut(10));
                 dataParameters.add(box);
             }
@@ -366,7 +363,6 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         filterModel.setCurrentMaxConfidence(getMaxConfidence());
         filterModel.setHasMs1(hasMs1.isSelected());
         filterModel.setHasMsMs(hasMsMs.isSelected());
-        filterModel.setCurrentMinIsotopePeaks(getMinIsotopePeaks());
         filterModel.setAdducts(new HashSet<>(adductOptions.checkBoxList.getCheckedItems()));
 
         overallQualityPanel.updateModel(filterModel.getFeatureQualityFilter());
@@ -472,7 +468,6 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         maxRtSpinner.setValue(filterModel.getMaxRt());
         minConfidenceSpinner.setValue(filterModel.getMinConfidence());
         maxConfidenceSpinner.setValue(filterModel.getMaxConfidence());
-        minIsotopeSpinner.setValue(filterModel.getMinIsotopePeaks());
         candidateSpinner.setValue(1);
     }
 
@@ -498,10 +493,6 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
     public double getMaxConfidence() {
         return getDoubleValue(maxConfidenceSpinner);
-    }
-
-    public int getMinIsotopePeaks() {
-        return getIntValue(minIsotopeSpinner);
     }
 
 

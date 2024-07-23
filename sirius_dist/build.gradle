@@ -17,7 +17,13 @@ ext {
     jre_version = '21.0.3'
     zulu_jre_version = '21.34.19'
     jre_major = zulu_jre_version.split("[.]")[0]
-
+    siriusJvmArgs = ['-Xms1G',
+                     '-XX:MaxRAMPercentage=80',
+//                                 '-XX:+UseG1GC',
+//                                 '-XX:+UseStringDeduplication',
+                     '-XX:+UseZGC',
+                     '-XX:+ZGenerational',
+                     '-XX:+ExitOnOutOfMemoryError']
     OS = DefaultNativePlatform.currentOperatingSystem
 
     if (siriusTargetPlatform.isLinux()) {
@@ -172,13 +178,7 @@ subprojects {
         headerType = "console"
         outfile = "sirius.exe"
 
-        //todo replace
-        jvmOptions = [
-                '-Xms1G',
-                '-XX:MaxRAMPercentage=85',
-                '-XX:+UseG1GC',
-                '-XX:+UseStringDeduplication',
-                '-XX:+ExitOnOutOfMemoryError',
+        jvmOptions = project.siriusJvmArgs + [
                 '-Djava.library.path=.\\'
         ]
 
@@ -253,6 +253,12 @@ subprojects {
                     }
                     into(appRootTarget)
                 }
+                copy {
+                    from(zipTree("${rootDir}/dist/ExplorerLicTester.zip"))
+                    into { //use closure to move path resolutiop to execution phase
+                        getImageDir()
+                    }
+                }
             } else if (siriusTargetPlatform.isLinux()) {
                 delete appRootTarget.toPath().resolve("lib/libapplauncher.so").toFile()
             }
@@ -318,6 +324,7 @@ subprojects {
     }
 
     tasks.register('distImageTestLocal', Test) {
+        group 'verification'
         dependsOn distImage
         useJUnitPlatform()
         testClassesDirs = project(':sirius_dist').sourceSets.test.output
@@ -404,6 +411,7 @@ subprojects {
 
 
     tasks.register('distImageTestCICD', Test) {
+        group 'verification'
         useJUnitPlatform()
         testClassesDirs = project(':sirius_dist').sourceSets.test.output
         filter.includeTestsMatching('*Local')
@@ -470,6 +478,7 @@ subprojects {
 
 
     tasks.register('signDistImage') {
+        group 'distribution'
         dependsOn distImage
 
         inputs.dir(distImage.outputDir)
@@ -534,6 +543,7 @@ subprojects {
     }
 
     tasks.register('distImageZip') {
+        group 'distribution'
         dependsOn distImage
         doFirst {
             def imageDir = distImage.getImageDir()
@@ -567,7 +577,9 @@ subprojects {
     }
     distInstaller.mustRunAfter(signDistImage)
 
+
     tasks.register('signDistInstaller') {
+        group 'distribution'
         dependsOn distInstaller
         inputs.dir(distImage.outputDir)
         doLast {
@@ -631,6 +643,7 @@ subprojects {
     }
 
     tasks.register('macNotarize') {
+        group 'distribution'
         dependsOn signDistInstaller
         inputs.dir(distImage.outputDir)
         doLast {
@@ -702,6 +715,7 @@ subprojects {
     }
 
     tasks.register('createChecksums', Checksum) {
+        group 'distribution'
         mustRunAfter('distImageZip', 'distInstaller', 'macNotarize', 'signDistImage', 'signDistInstaller', 'distZip', 'distTar', 'siriusDistZip', 'siriusDistTar')
         inputFiles.setFrom(fileTree(dir: "$buildDir/distributions", includes: ['*.zip', '*.pkg', '*.deb', '*.msi']))
         outputDirectory.set(file("$buildDir/distributions"))
@@ -718,6 +732,10 @@ subprojects {
 abstract class ExtractRuntime extends DefaultTask {
     @InputFile
     File inputArchive
+
+    ExtractRuntime() {
+        group = "distribution"
+    }
 
     @OutputDirectory
     def getOutputDir() {
@@ -775,6 +793,7 @@ abstract class AppImage extends DefaultTask {
     public String macPackageName = null
 
     AppImage() {
+        group = "distribution"
         imageName = project.name
         jvmArgs = []
         version = project.siriusTargetPlatform.isLinux() ? project.version : project.version.replace('-SNAPSHOT', '')
@@ -883,6 +902,10 @@ abstract class AppInstaller extends DefaultTask {
           Maintainer for .deb package*/
     public String debPackageMaintaner = null
 
+    AppInstaller() {
+        group = "distribution"
+    }
+
     @InputDirectory
     File getInputDire() {
         return distImg.getImageDir()
@@ -928,7 +951,7 @@ abstract class AppInstaller extends DefaultTask {
             //specify temp directory inside project
             paras += ['--temp', "\"${project.layout.getBuildDirectory().asFile.get().toPath().resolve('tmp').resolve('wix').toAbsolutePath().toString()}\"".toString()]
             //specify resource dir to allow for installer customization.
-            paras += ['--resource-dir',  "\"${project.getRootProject().rootDir.toPath().resolve('jpackage').resolve('wix-resources').toAbsolutePath().toString()}\"".toString()]
+            paras += ['--resource-dir', "\"${project.getRootProject().rootDir.toPath().resolve('jpackage').resolve('wix-resources').toAbsolutePath().toString()}\"".toString()]
             if (winDirChooser)
                 paras += ['--win-dir-chooser'/*, winDirChooser ? '1' : '0'*/]
             if (winMenu)

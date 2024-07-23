@@ -34,7 +34,7 @@ import de.unijena.bioinf.lcms.adducts.assignment.OptimalAssignmentViaBeamSearch;
 import de.unijena.bioinf.lcms.align.AlignmentBackbone;
 import de.unijena.bioinf.lcms.align.MoI;
 import de.unijena.bioinf.lcms.projectspace.SiriusProjectDocumentDbAdapter;
-import de.unijena.bioinf.lcms.quality.QualityAssessment;
+import de.unijena.bioinf.lcms.quality.*;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.filter.GaussFilter;
 import de.unijena.bioinf.lcms.trace.filter.NoFilter;
@@ -105,7 +105,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         this.alignRuns = !options.noAlign;
         this.allowMs1Only = !options.forbidMs1Only;
         this.mergedTraceSegmenter = new PersistentHomology(switch (options.smoothing) {
-            case AUTO -> inputFiles.size() < 3 ? new WaveletFilter(8) : new NoFilter();
+            case AUTO -> inputFiles.size() < 3 ? new GaussFilter(0.5) : new NoFilter();
             case NOFILTER -> new NoFilter();
             case GAUSSIAN -> new GaussFilter(options.sigma);
             case WAVELET -> new WaveletFilter(options.scaleLevel);
@@ -136,7 +136,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         this.alignRuns = alignRuns;
         this.allowMs1Only = allowMs1Only;
         this.mergedTraceSegmenter = new PersistentHomology(switch (filter) {
-            case AUTO -> inputFiles.size() < 3 ? new WaveletFilter(8) : new NoFilter();
+            case AUTO -> inputFiles.size() < 3 ? new GaussFilter(0.5) : new NoFilter();
             case NOFILTER -> new NoFilter();
             case GAUSSIAN -> new GaussFilter(sigma);
             case WAVELET -> new WaveletFilter(scale);
@@ -285,7 +285,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         for (DataQuality q : DataQuality.values()) {
             countMap.put(q, 0);
         }
-        final QualityAssessment qa = new QualityAssessment();
+        final QualityAssessment qa = alignRuns ? new QualityAssessment(): new QualityAssessment(List.of(new CheckPeakQuality(), new CheckIsotopeQuality(), new CheckMs2Quality(), new CheckAdductQuality()));
         ArrayList<BasicJJob<DataQuality>> jobs = new ArrayList<>();
         store.fetchChild(merged.getRun(), "runId", "retentionTimeAxis", RetentionTimeAxis.class);
         ps.fetchLCMSRuns((MergedLCMSRun) merged.getRun());
@@ -293,7 +293,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             jobs.add(SiriusJobs.getGlobalJobManager().submitJob(new BasicJJob<DataQuality>() {
                 @Override
                 protected DataQuality compute() throws Exception {
-                    QualityReport report = QualityReport.withDefaultCategories();
+                    QualityReport report = QualityReport.withDefaultCategories(alignRuns);
                     ps.fetchFeatures(feature);
                     ps.fetchIsotopicFeatures(feature);
                     ps.fetchMsData(feature);

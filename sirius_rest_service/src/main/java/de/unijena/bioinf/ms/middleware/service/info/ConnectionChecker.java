@@ -109,29 +109,20 @@ public final class ConnectionChecker {
                 Tokens.getUserId(token).ifPresent(ll::setUserId);
             });
 
-            @Nullable
-            final de.unijena.bioinf.ms.rest.model.license.Subscription sub = webAPI.getActiveSubscription();
+            @Nullable final de.unijena.bioinf.ms.rest.model.license.Subscription sub = webAPI.getActiveSubscription();
             ll.setSubscription(Subscription.of(sub));
             ll.setTerms(Tokens.getActiveSubscriptionTerms(sub));
+            //online connection check
             checkForInterruption();
             try {
-                //online connection check
-                checkForInterruption();
-                try {
-                    //enrich license info with consumables
-                    if (ll.subscription().map(Subscription::isCountQueries).orElse(false))
-                        ll.setConsumables(webAPI.getConsumables(!ll.getSubscription().hasInstanceLimit())); //yearly if there is compound limit
-                } catch (Exception e) {
-                    errors.put(ConnectionError.Klass.APP_SERVER, new ConnectionError(93,
-                            "Error when requesting computation limits.",
-                            ConnectionError.Klass.APP_SERVER, e));
-                    errors.putAll(webAPI.checkConnection());
-                }
-
+                //enrich license info with consumables
+                if (ll.subscription().map(Subscription::isCountQueries).orElse(false))
+                    ll.setConsumables(webAPI.getConsumables(!ll.getSubscription().hasInstanceLimit())); //yearly if there is compound limit
             } catch (Exception e) {
-                errors.put(ConnectionError.Klass.APP_SERVER, new ConnectionError(94,
-                        "Error when requesting worker information.",
+                errors.put(ConnectionError.Klass.APP_SERVER, new ConnectionError(93,
+                        "Error when requesting computation limits.",
                         ConnectionError.Klass.APP_SERVER, e));
+            }finally {
                 errors.putAll(webAPI.checkConnection());
             }
 
