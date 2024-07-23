@@ -35,7 +35,7 @@ ext {
     //version for external libraries
     picocli_version = '4.7.5'
     jakarta_version = '3.1.0'
-    jjobs_version = '0.9.36-SNAPSHOT' //todo nightsky ->  stable jjobs release
+    jjobs_version = '0.9.36'
     slf4j_version = '1.7.36'
     jackson_version = '2.16.1'
     math3_version = '3.6.1'

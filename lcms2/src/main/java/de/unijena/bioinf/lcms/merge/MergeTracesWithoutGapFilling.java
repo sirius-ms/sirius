@@ -1,7 +1,6 @@
 package de.unijena.bioinf.lcms.merge;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
@@ -51,7 +50,7 @@ public class MergeTracesWithoutGapFilling {
                 jobs.add(globalJobManager.submitJob(new BasicJJob<Object>() {
                     @Override
                     protected Object compute() throws Exception {
-                        mergeAllMoIsForSampleẀithinRect(r, merged, sample);
+                        mergeAllMoIsForSampleWithinRect(r, merged, sample);
                         return true;
                     }
                 }));
@@ -107,7 +106,7 @@ public class MergeTracesWithoutGapFilling {
     ////////////////////////////////////////////////////////////////
 
 
-    private void mergeAllMoIsForSampleẀithinRect(Rect r, ProcessedSample merged, ProcessedSample sample) {
+    private void mergeAllMoIsForSampleWithinRect(Rect r, ProcessedSample merged, ProcessedSample sample) {
         // get all mois in this rectangle
         MoI[] mois = merged.getStorage().getAlignmentStorage().getMoIWithin(r.minMz, r.maxMz).stream().filter(x -> r.contains(x.getMz(), x.getRetentionTime())).toArray(MoI[]::new);
         MoI[] moisForSample = Arrays.stream(mois).flatMap(a->((AlignedMoI) a).forSampleIdx(sample.getUid()).stream()).toArray(MoI[]::new);
@@ -132,8 +131,20 @@ public class MergeTracesWithoutGapFilling {
                 intensities[k-startId] += trace.intensity(k);
             }
         }
+        double avgMz = 0d; double sumInt = 0d;
         for (int k=0; k < mz.length; ++k) {
-            mz[k] /= intensities[k];
+            if (intensities[k]>0) {
+                avgMz += mz[k];
+                mz[k] /= intensities[k];
+                sumInt += intensities[k];
+            }
+        }
+        avgMz/=sumInt;
+        // fill in missing values
+        for (int k=0; k < mz.length; ++k) {
+            if (intensities[k]<=0) {
+                mz[k] = avgMz;
+            }
         }
 
         // T is just for using the interpolate method later. We do not store T as ContigousTrace but as ProjectedTrace
@@ -152,15 +163,15 @@ public class MergeTracesWithoutGapFilling {
         // 2.) The trace from the original sample projected onto the retention time axis of
         //     the merged sample
         ScanPointInterpolator mapper = sample.getScanPointInterpolator();
-        final int newStartId = mapper.lowerIndex(startId);
-        final int newEndId = mapper.largerIndex(endId);
+        final int newStartId = mapper.roundIndex(startId);
+        final int newEndId = mapper.roundIndex(endId);
         final double[] mzP = new double[newEndId-newStartId+1];
         final float[] intensityP = new float[mzP.length];
         //mergedTrace.extend(newStartId, newEndId);
         int newApex = newStartId ;
         for (int k=newStartId; k <= newEndId; ++k) {
-            final double projInt = mapper.interpolateIntensity(T, k);
-            mzP[k - newStartId] = projInt<=0 ? Double.NaN : mapper.interpolateMz(T, k);
+            final double projInt = mapper.interpolateIntensity(T, k, startId, endId);
+            mzP[k - newStartId] = projInt<=0 ? Double.NaN : mapper.interpolateMz(T, k, startId, endId);
             intensityP[k - newStartId] = (float)projInt;
             if (intensityP[newApex - newStartId] < intensityP[k - newStartId]) newApex = k;
         }
@@ -202,11 +213,31 @@ public class MergeTracesWithoutGapFilling {
                         intensities[k-startId] += trace.intensity(k);
                     }
                 }
-                for (int k=0; k < mz.length; ++k) {
-                    mz[k] /= intensities[k];
+
+                // we might have to shorten the trace, as isotopes might be smaller than the monoisotopic
+                int shortenedStartId = startId;
+                while (shortenedStartId < endId && intensities[shortenedStartId-startId]<=0) ++shortenedStartId;
+                int shortenedEndId = endId;
+                while (shortenedEndId > startId && intensities[shortenedEndId-startId]<=0) --shortenedEndId;
+
+                if (shortenedStartId>shortenedEndId) {
+                    // the trace is empty, there is no such isotope peak
+                    LoggerFactory.getLogger(MergeTracesWithoutGapFilling.class).error("Isotope trace disappearded during merging.");
+                    break;
                 }
+
+                double[] mzShortened = new double[shortenedEndId-shortenedStartId+1];
+                float[] intensityShortened = new float[mzShortened.length];
+                for (int k=shortenedStartId; k <= shortenedEndId; ++k) {
+                    intensityShortened[k-shortenedStartId] = intensities[k-startId];
+                    mzShortened[k-shortenedStartId] = mz[k-startId]/intensities[k-startId];
+                    if (!Double.isFinite(mz[k-shortenedStartId])) {
+                        throw new RuntimeException("should not happen!");
+                    }
+                }
+
                 ContiguousTrace T = new ContiguousTrace(
-                        sample.getMapping(), startId, endId, mz, intensities
+                        sample.getMapping(), shortenedStartId, shortenedEndId, mzShortened, intensityShortened
                 );
 
                 // mergin trace
@@ -218,9 +249,9 @@ public class MergeTracesWithoutGapFilling {
                 final float[] intP = new float[mzP.length];
                 int newApex = newStartId;
                 for (int k=newStartId; k <= newEndId; ++k) {
-                    final double projInt = mapper.interpolateIntensity(T, k);
+                    final double projInt = mapper.interpolateIntensity(T, k, T.startId(), T.endId());
                     if (projInt > 0) {
-                        mzP[k - newStartId] = mapper.interpolateMz(T, k);
+                        mzP[k - newStartId] = mapper.interpolateMz(T, k, T.startId(), T.endId());
                         if (mzP[k-newStartId] <= 0) {
                             throw new RuntimeException("This should never happen!");
                         }
@@ -230,7 +261,7 @@ public class MergeTracesWithoutGapFilling {
                 }
 
                 ProjectedTrace projectedIsotopeTrace = new ProjectedTrace(sample.getUid(),
-                        T.startId(), T.endId(), T.apex(), newStartId, newEndId, newApex, mz, mzP, intensities, intP
+                        T.startId(), T.endId(), T.apex(), newStartId, newEndId, newApex, mzShortened, mzP, intensityShortened, intP
                 );
 
                 // add ms2 data

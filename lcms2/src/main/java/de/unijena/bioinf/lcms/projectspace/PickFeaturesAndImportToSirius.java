@@ -131,7 +131,6 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         AlignedFeatures[] features = new AlignedFeatures[traceSegments.length];
         for (int fid=0; fid < traceSegments.length; ++fid) {
             if (traceSegments[fid]==null) continue;
-            if (traceSegments[fid].leftEdge == traceSegments[fid].rightEdge) continue;
             features[fid] = new AlignedFeatures();
             features[fid].setDetectedAdducts(new DetectedAdducts());
             features[fid].setFeatures(new ArrayList<>());
@@ -327,7 +326,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                             // add intensity to isotope peak
                             final int originalApex = projectedSegmentsParent[parentSampleIndex][traceIndex].apex;
                             float peakIntensity, parentIntensity;
-                            if (mergedTraceParent.getTraces()[parentSampleIndex].inProjectedRange(adjustedMergedApex) && subTrace.inProjectedRange(originalApex)) {
+                            if (mergedTraceParent.getTraces()[parentSampleIndex].inProjectedRange(adjApexProj) && subTrace.inProjectedRange(originalApex)) {
                                 peakIntensity = subTrace.projectedIntensity(adjApexProj) + subTrace.projectedIntensity(originalApex);
                                 parentIntensity = mergedTraceParent.getTraces()[parentSampleIndex].projectedIntensity(adjApexProj) + mergedTraceParent.getTraces()[parentSampleIndex].projectedIntensity(originalApex);
                             } else {
@@ -338,8 +337,8 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
 
 
                             final double intensityRatio = peakIntensity / parentIntensity;
-                            weightedAverageIntensity += intensityRatio * peakIntensity;
-                            weighting += peakIntensity;
+                            weightedAverageIntensity += intensityRatio * parentIntensity;
+                            weighting += parentIntensity;
                         }
                     }
                     if (weighting>0) {
