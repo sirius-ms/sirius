@@ -107,7 +107,7 @@ public class ComputeAllAction extends AbstractGuiAction {
 
     @SneakyThrows
     private void computationCanceled() {
-            Jobs.runEDTAndWait(() -> {
+            Jobs.runEDTLater(() -> {
                 if (isActive.get()) {
                     setEnabled(true);
                     isActive.set(false);
@@ -122,7 +122,7 @@ public class ComputeAllAction extends AbstractGuiAction {
 
     @SneakyThrows
     private void computationStarted() {
-            Jobs.runEDTAndWait(() -> {
+            Jobs.runEDTLater(() -> {
                 if (!isActive.get()) {
                     setEnabled(true);
                     isActive.set(true);
