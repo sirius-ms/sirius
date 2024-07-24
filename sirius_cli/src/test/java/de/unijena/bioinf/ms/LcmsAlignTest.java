@@ -24,12 +24,7 @@ package de.unijena.bioinf.ms;
 import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
-import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.lcms.trace.filter.Filter;
-import de.unijena.bioinf.lcms.trace.filter.GaussFilter;
-import de.unijena.bioinf.lcms.trace.filter.SavitzkyGolayFilter;
-import de.unijena.bioinf.lcms.trace.filter.WaveletFilter;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.DataSmoothing;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJobNoSql;
@@ -43,31 +38,26 @@ import de.unijena.bioinf.utils.SiriusTestDataManager;
 import it.unimi.dsi.fastutil.doubles.DoubleList;
 import it.unimi.dsi.fastutil.floats.FloatList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2IntArrayMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.dizitart.no2.mvstore.MVSpatialKey;
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.rtree.MVRTreeMap;
-import org.h2.mvstore.rtree.Spatial;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 class LcmsAlignTest {
-
-    // TODO test against SIRIUS 5?
 
     private static class Feature {
         private final double rtstart;
@@ -136,6 +126,13 @@ class LcmsAlignTest {
 
     private static final Map<String, Map<Feature, MVSpatialKey>> NOFILTER_FEATURES = new HashMap<>();
 
+    private static final Object2IntMap<String> SIRIUS_5_FEATURES = new Object2IntArrayMap<>(
+            new String[]{"tomato", "polluted_citrus"}, new int[]{3151, 2636}
+    );
+    private static final Object2IntMap<String> SIRIUS_5_ADDUCTS = new Object2IntArrayMap<>(
+            new String[]{"tomato", "polluted_citrus"}, new int[]{1642, 678}
+    );
+
     @BeforeAll
     public static void setUp() throws IOException, ExecutionException {
         for (String dataset : DATASETS) {
@@ -165,7 +162,8 @@ class LcmsAlignTest {
         try (NitriteSirirusProject project = new NitriteSirirusProject(location)) {
             compareFeatures(
                     NOFILTER_FEATURES.get(dataset),
-                    runPreprocessing(project, options, dataset)
+                    runPreprocessing(project, options, dataset),
+                    dataset
             );
         }
     }
@@ -189,7 +187,8 @@ class LcmsAlignTest {
         try (NitriteSirirusProject project = new NitriteSirirusProject(location)) {
             compareFeatures(
                     NOFILTER_FEATURES.get(dataset),
-                    runPreprocessing(project, options, dataset)
+                    runPreprocessing(project, options, dataset),
+                    dataset
             );
         }
     }
@@ -212,7 +211,8 @@ class LcmsAlignTest {
         try (NitriteSirirusProject project = new NitriteSirirusProject(location)) {
             compareFeatures(
                     NOFILTER_FEATURES.get(dataset),
-                    runPreprocessing(project, options, dataset)
+                    runPreprocessing(project, options, dataset),
+                    dataset
             );
         }
     }
@@ -254,7 +254,8 @@ class LcmsAlignTest {
 
     private static void compareFeatures(
             Map<Feature, MVSpatialKey> noFilterFeatures,
-            Map<Feature, MVSpatialKey> features
+            Map<Feature, MVSpatialKey> features,
+            String dataset
     ) {
 
         // count changed features
@@ -313,6 +314,13 @@ class LcmsAlignTest {
                     totalAdducts++;
                 }
 
+            }
+
+            if (SIRIUS_5_FEATURES.containsKey(dataset)) {
+                Assertions.assertTrue((double) totalFeatures / (double) SIRIUS_5_FEATURES.getInt(dataset) > 1.5);
+            }
+            if (SIRIUS_5_ADDUCTS.containsKey(dataset)) {
+                Assertions.assertTrue((double) totalAdducts / (double) SIRIUS_5_ADDUCTS.getInt(dataset) > 0.33);
             }
 
             Assertions.assertTrue(totalAdducts > 0);
