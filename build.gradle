@@ -132,7 +132,7 @@ allprojects {
         }
         repositories {
             maven {
-                url "https://gitlab.example.com/api/v4/groups/bright-giant/-/packages/maven"
+                url "https://gitlab.com/api/v4/groups/bright-giant/-/packages/maven"
                 name "GitLab"
                 credentials(HttpHeaderCredentials) {
                     name = "Job-Token"
