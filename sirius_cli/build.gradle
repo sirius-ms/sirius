@@ -64,4 +64,8 @@ dependencies {
     api("de.unijena.bioinf.ms:ft_cbc:$siriusVersion")
     api("de.unijena.bioinf.ms:ft_cplex:$siriusVersion")
     api("de.unijena.bioinf.ms:ft_gurobi:$siriusVersion")
+
+    //test
+    testImplementation("de.unijena.bioinf.ms:utils:$siriusVersion")
+    testImplementation("com.bright_giant:sirius-test-data:1.0-SNAPSHOT")
 }

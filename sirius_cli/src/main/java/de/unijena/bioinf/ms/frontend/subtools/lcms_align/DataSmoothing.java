@@ -24,5 +24,5 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(enumAsRef = true)
 public enum DataSmoothing {
-    AUTO, NOFILTER, GAUSSIAN, WAVELET
+    AUTO, NOFILTER, GAUSSIAN, WAVELET, SAVITZKY_GOLAY
 }

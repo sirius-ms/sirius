@@ -130,6 +130,19 @@ allprojects {
             url "http://gose.fiehnlab.ucdavis.edu:55000/content/groups/public"
             allowInsecureProtocol = true
         }
+        repositories {
+            maven {
+                url "https://gitlab.com/api/v4/groups/bright-giant/-/packages/maven"
+                name "GitLab"
+                credentials(HttpHeaderCredentials) {
+                    name = "Job-Token"
+                    value = System.getenv("CI_JOB_TOKEN")
+                }
+                authentication {
+                    header(HttpHeaderAuthentication)
+                }
+            }
+        }
     }
 
     dependencies {
