@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.frontend.core;
 
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.apache.commons.lang3.SystemUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -59,10 +60,11 @@ public class Workspace {
                     .resolve("sirius-" + ApplicationCore.VERSION_OBJ().getMajorVersion() + ".pid");
             PORT_FILE = Workspace.GLOBAL_SIRIUS_WORKSPACE
                     .resolve("sirius-" + ApplicationCore.VERSION_OBJ().getMajorVersion() + ".port");
-            if(Files.notExists(GLOBAL_SIRIUS_WORKSPACE)){
+            if (Files.notExists(GLOBAL_SIRIUS_WORKSPACE)) {
                 Files.createDirectories(GLOBAL_SIRIUS_WORKSPACE);
                 try {
-                    Files.setAttribute(GLOBAL_SIRIUS_WORKSPACE, "dos:hidden", true); //make hidden on windows
+                    if (SystemUtils.IS_OS_WINDOWS)
+                        Files.setAttribute(GLOBAL_SIRIUS_WORKSPACE, "dos:hidden", true); //make hidden on windows
                 } catch (Exception e) {
                     System.err.println("WARNING: Could NOT set invisible property on SIRIUS global workspace directory.");
                 }
@@ -84,7 +86,8 @@ public class Workspace {
                     try {
                         Files.createDirectories(wsDir);
                         try {
-                            Files.setAttribute(wsDir, "dos:hidden", true); //make hidden on windows
+                            if (SystemUtils.IS_OS_WINDOWS)
+                                Files.setAttribute(wsDir, "dos:hidden", true); //make hidden on windows
                         } catch (Exception e) {
                             System.err.println("WARNING: Could NOT set invisible property on SIRIUS workspace directory.");
                         }
@@ -107,7 +110,8 @@ public class Workspace {
                 try {
                     Files.createDirectories(WORKSPACE);
                     try {
-                        Files.setAttribute(WORKSPACE, "dos:hidden", true); //make hidden on windows
+                        if (SystemUtils.IS_OS_WINDOWS)
+                            Files.setAttribute(WORKSPACE, "dos:hidden", true); //make hidden on windows
                     } catch (Exception e) {
                         System.err.println("WARNING: Could NOT set invisible property on SIRIUS workspace directory.");
                     }
