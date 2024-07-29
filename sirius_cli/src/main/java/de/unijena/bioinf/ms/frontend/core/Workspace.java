@@ -63,7 +63,7 @@ public class Workspace {
                 Files.createDirectories(GLOBAL_SIRIUS_WORKSPACE);
                 try {
                     Files.setAttribute(GLOBAL_SIRIUS_WORKSPACE, "dos:hidden", true); //make hidden on windows
-                } catch (IOException e) {
+                } catch (Exception e) {
                     System.err.println("WARNING: Could NOT set invisible property on SIRIUS global workspace directory.");
                 }
             }
@@ -85,7 +85,7 @@ public class Workspace {
                         Files.createDirectories(wsDir);
                         try {
                             Files.setAttribute(wsDir, "dos:hidden", true); //make hidden on windows
-                        } catch (IOException e) {
+                        } catch (Exception e) {
                             System.err.println("WARNING: Could NOT set invisible property on SIRIUS workspace directory.");
                         }
                     } catch (IOException e) {
@@ -108,7 +108,7 @@ public class Workspace {
                     Files.createDirectories(WORKSPACE);
                     try {
                         Files.setAttribute(WORKSPACE, "dos:hidden", true); //make hidden on windows
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         System.err.println("WARNING: Could NOT set invisible property on SIRIUS workspace directory.");
                     }
                 } catch (IOException e) {
