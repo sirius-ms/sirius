@@ -1,0 +1,85 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
+apply plugin: "application"
+version =  fingeridVersion
+mainClassName = "de.unijena.bioinf.canopus.Main"
+
+ext {
+    runtimeClasspath = '${GUROBI_HOME}/lib/gurobi.jar:${CPLEX_HOME}/lib/cplex.jar'
+}
+
+dependencies() {
+    //project
+    api project(':sirius_project_space')
+    api project(':fingerprinter_oss')
+    api project(':web_service_oss:web_core_oss')
+    api project(':chemistry_base')
+    api project(':io')
+    api project(':chemical_db_oss:chemdb_sql_oss')
+
+    // external
+    implementation group: 'org.ejml', name: 'ejml-fdense', version: '0.41'
+    implementation group: 'org.ejml', name: 'ejml-simple', version: '0.41'
+
+    // CDK
+    for (module in ["fingerprint", "qsarmolecular", "data", "inchi", "interfaces", "smiles", "core"]) {
+        api "org.openscience.cdk:cdk-$module:$cdk_version"
+    }
+}
+
+
+startScripts {
+    applicationName = "canopus"
+    doLast {
+        unixScript.text = unixScript.text.replace('CLASSPATH=', "CLASSPATH=${runtimeClasspath}:")
+        unixScript.text = unixScript.text.replace('DEFAULT_JVM_OPTS=""', 'DEFAULT_JVM_OPTS=""' + "${System.lineSeparator()}" + 'export LD_LIBRARY_PATH=$GUROBI_HOME/lib:$APP_HOME/lib:$LD_LIBRARY_PATH')
+    }
+}
+
+distributions {
+    linux64 {
+        contents {
+            into('lib') {
+                from("build/install/${project.name}/lib")
+            }
+
+            into('bin') {
+                from("build/install/${project.name}/bin") {
+                    exclude("*.bat")
+                }
+
+            }
+        }
+
+    }
+
+    getTasksByName("linux64DistTar", false).each {it.setEnabled(false)}
+    getTasksByName("linux64DistTar", false).each { it.setEnabled(false)}
+}
+
+linux64DistZip.dependsOn 'installDist'
+linux64DistTar.dependsOn 'installDist'
+installLinux64Dist.dependsOn 'installDist'
+
+task runCLI(type: Exec, dependsOn: installLinux64Dist, group: 'application') {
+    File command = project.tasks.installLinux64Dist.outputs.files.singleFile.toPath().resolve('bin/canopus').toFile()
+    commandLine([command.absolutePath])
+}
