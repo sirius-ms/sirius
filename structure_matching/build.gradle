@@ -1,0 +1,19 @@
+
+plugins {
+    id 'application'
+}
+
+dependencies{
+
+    api "org.openscience.cdk:cdk-bundle:$cdk_version"
+    implementation group: "de.unijena.bioinf.ms", name: "chemistry_base", version: "$siriusVersion"
+
+    testImplementation "org.openscience.cdk:cdk-bundle:$cdk_version"
+    testImplementation group: "de.unijena.bioinf.ms", name: "chemistry_base", version: "$siriusVersion"
+    testImplementation group: "de.unijena.bioinf.ms", name: "io", version: "$siriusVersion"
+    testImplementation group: "de.unijena.bioinf.ms", name: "sirius_api", version: "$siriusVersion"
+}
+
+application {
+    mainClass =  "evaluate.Main"
+}

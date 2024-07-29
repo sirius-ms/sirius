@@ -1,0 +1,11 @@
+dependencies {
+    api project(':chemistry_base')
+    api project(':fingerid_base_oss')
+    api project(':io')
+
+    api "com.squareup.okhttp3:okhttp:${okhttp_version}"
+
+    api 'com.github.scribejava:scribejava-apis:8.3.3'
+    api 'com.github.scribejava:scribejava-httpclient-okhttp:8.3.3'
+    api 'com.auth0:java-jwt:3.16.0' //jwt decoder
+}

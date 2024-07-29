@@ -1,0 +1,4 @@
+Files MoNA010759.msp, MoNA010759.json and MoNA020112.json are taken unchanged (except json formatting)
+from MoNA - MassBank of North America (https://mona.fiehnlab.ucdavis.edu/),
+and are licensed under Creative Commons Attribution 4.0 International License (CC BY 4.0)
+http://creativecommons.org/licenses/by/4.0/

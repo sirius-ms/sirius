@@ -1,0 +1,12 @@
+{
+    "D": {
+        "name": "Deuterium",
+        "valence": 1,
+        "average": 2.014102,
+        "isotopes": {
+            "mass": [2.014102],
+            "intmass": [2],
+            "abundance": [1.0]
+        }
+    }
+}
