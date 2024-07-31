@@ -20,11 +20,11 @@
 
 package de.unijena.bioinf.chemdb;
 
-import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.FingerprintVersion;
 import de.unijena.bioinf.chemdb.nitrite.ChemicalNitriteDatabase;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
+import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDBs;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import de.unijena.bioinf.storage.db.nosql.Database;
@@ -34,8 +34,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import static de.unijena.bioinf.chemdb.SpectralUtils.importSpectra;
 
@@ -72,10 +72,11 @@ public class ChemicalNoSQLDBs extends SpectralNoSQLDBs {
     }
 
     private static void importCandidates(@NotNull Database<?> database, @NotNull Map<MolecularFormula, ? extends Collection<FingerprintCandidate>> candidates, int chunkSize) {
-        Stream<FingerprintCandidateWrapper> candidateWrappers = candidates.entrySet().stream()
-                .flatMap(e -> e.getValue().stream().map(c -> FingerprintCandidateWrapper.of(e.getKey(), c)));
+        List<FingerprintCandidateWrapper> candidateWrappers = candidates.entrySet().stream()
+                .flatMap(e -> e.getValue().stream().map(c -> FingerprintCandidateWrapper.of(e.getKey(), c))).toList();
 
-        Iterators.partition(candidateWrappers.iterator(), chunkSize).forEachRemaining(
+
+        Partition.ofSize(candidateWrappers, chunkSize).forEach(
                 chunk -> {
                     try {
                         database.insertAll(chunk);

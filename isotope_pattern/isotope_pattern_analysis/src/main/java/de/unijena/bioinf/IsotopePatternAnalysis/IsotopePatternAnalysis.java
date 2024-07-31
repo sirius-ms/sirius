@@ -21,7 +21,6 @@
 
 package de.unijena.bioinf.IsotopePatternAnalysis;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.algorithm.Parameterized;
 import de.unijena.bioinf.ChemistryBase.chem.*;
@@ -41,6 +40,7 @@ import de.unijena.bioinf.IsotopePatternAnalysis.scoring.NormalDistributedIntensi
 import de.unijena.bioinf.MassDecomposer.Chemistry.AddDeNovoDecompositionsToWhiteset;
 import de.unijena.bioinf.MassDecomposer.Chemistry.DecomposerCache;
 import de.unijena.bioinf.sirius.ProcessedInput;
+import org.apache.commons.lang3.Range;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -170,8 +170,8 @@ public class IsotopePatternAnalysis implements Parameterized {
         // add additional peaks
         for (int k = 1; k <= 5; ++k) {
             final Range<Double> nextMz = PeriodicTable.getInstance().getIsotopicMassWindow(stdalphabet, deviation.allowedMassDeviation, spec.getMzAt(0), k);
-            final double a = nextMz.lowerEndpoint();
-            final double b = nextMz.upperEndpoint();
+            final double a = nextMz.getMinimum();
+            final double b = nextMz.getMaximum();
             final double startPoint = a - deviation.massDifferenceDeviation.absoluteFor(a);
             final double endPoint = b + deviation.massDifferenceDeviation.absoluteFor(b);
             final int nextIndex = Spectrums.indexOfFirstPeakWithin(massOrderedSpectrum, startPoint, endPoint);

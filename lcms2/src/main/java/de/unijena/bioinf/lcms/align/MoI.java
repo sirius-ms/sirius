@@ -7,8 +7,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.With;
 import org.h2.mvstore.WriteBuffer;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Locale;
 

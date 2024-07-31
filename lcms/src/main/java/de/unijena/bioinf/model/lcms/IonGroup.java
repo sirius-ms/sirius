@@ -47,7 +47,7 @@ public class IonGroup {
         this.peak = peak;
         this.isotopes = isotopes;
         this.otherMzValues = new SimpleMutableSpectrum();
-        this.segmentApexIndex = segment.apex;
+        this.segmentApexIndex = segment.apexIndex;
         assert peak.getSegmentWithApexId(segmentApexIndex).isPresent();
         }
 
@@ -113,7 +113,7 @@ public class IonGroup {
     }
 
     public double getMass() {
-        return peak.getMzAt(getSegment().apex);
+        return peak.getMzAt(getSegment().apexIndex);
     }
 
     protected void setMinMaxScanIndex(int[] scanIndex, int surrounding) {

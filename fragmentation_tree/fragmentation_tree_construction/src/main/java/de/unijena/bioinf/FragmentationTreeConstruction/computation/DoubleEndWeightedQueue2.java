@@ -20,46 +20,41 @@
 
 package de.unijena.bioinf.FragmentationTreeConstruction.computation;
 
-import com.google.common.collect.TreeMultimap;
 import gnu.trove.procedure.TObjectProcedure;
+import lombok.Getter;
+import lombok.Setter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.function.Function;
 
 /**
  * A queue that only keeps the n entries with largest weight
  */
 class DoubleEndWeightedQueue2<T> implements Iterable<T> {
 
-    protected TreeMultimap<Double, T> backingQueue;
+    protected TreeMap<Double, SortedSet<T>> backingQueue;
     protected int capacity;
     protected int size;
     protected double lowerbound;
+    @Setter
+    @Getter
     protected TObjectProcedure<T> callback;
 
+    private Function<Double, SortedSet<T>> sortedSetSupplier;
     public DoubleEndWeightedQueue2(int capacity, Comparator<T> comp) {
-        this.backingQueue = TreeMultimap.create(new Comparator<Double>() {
-            @Override
-            public int compare(Double o1, Double o2) {
-                return Double.compare(o1, o2);
-            }
-        },comp);
+        this.sortedSetSupplier = k -> new TreeSet<>(comp);
+        this.backingQueue = new TreeMap<>(Comparator.comparingDouble(o -> o));
         lowerbound = Double.NEGATIVE_INFINITY;
         size=0;
         this.capacity = capacity;
     }
 
-    public TObjectProcedure<T> getCallback() {
-        return callback;
-    }
-
-    public void setCallback(TObjectProcedure<T> callback) {
-        this.callback = callback;
-    }
-
     public void replace(T value, double score) {
         if (callback!=null) callback.execute(value);
-        backingQueue.remove(score, value);
-        backingQueue.put(score, value);
+        if (backingQueue.containsKey(score))
+            backingQueue.get(score).remove(value);
+        backingQueue.computeIfAbsent(score, sortedSetSupplier).add(value);
     }
 
     public double getWeightLowerbound() {
@@ -68,14 +63,14 @@ class DoubleEndWeightedQueue2<T> implements Iterable<T> {
 
     public boolean add(final T tree, final double score) {
         if (score > lowerbound) {
-            if (backingQueue.put(score, tree)) {
+            if (backingQueue.computeIfAbsent(score, sortedSetSupplier).add(tree)) {
                 ++size;
                 while (size > capacity) {
 
-                    Map.Entry<Double, Collection<T>> entry = backingQueue.asMap().firstEntry();
+                    Map.Entry<Double, SortedSet<T>> entry = backingQueue.firstEntry();
                     final int entrySize = entry.getValue().size();
                     if ((size - entrySize) >= capacity ) {
-                        Map.Entry<Double, Collection<T>> e =  backingQueue.asMap().pollFirstEntry();
+                        Map.Entry<Double, SortedSet<T>> e =  backingQueue.pollFirstEntry();
                         if (callback!=null)
                             for (T t : e.getValue()) callback.execute(t);
                         size -= entrySize;
@@ -84,7 +79,7 @@ class DoubleEndWeightedQueue2<T> implements Iterable<T> {
                     }
                 }
                 if (size >= capacity) {
-                    lowerbound = backingQueue.asMap().firstKey();
+                    lowerbound = backingQueue.firstKey();
                 } else {
                     lowerbound = Double.NEGATIVE_INFINITY;
                 }
@@ -103,14 +98,13 @@ class DoubleEndWeightedQueue2<T> implements Iterable<T> {
         size=0;
         lowerbound = Double.NEGATIVE_INFINITY;
         if (callback!=null)
-            for (T t : backingQueue.values())
-                callback.execute(t);
+            backingQueue.values().stream().flatMap(SortedSet::stream).forEach(t -> callback.execute(t));
         backingQueue.clear();
     }
 
     @Override
-    public Iterator<T> iterator() {
-        final Iterator<Collection<T>> iter = backingQueue.asMap().descendingMap().values().iterator();
+    public @NotNull Iterator<T> iterator() {
+        final Iterator<SortedSet<T>> iter = backingQueue.descendingMap().values().iterator();
         return new Iterator<T>() {
 
             private Iterator<T> innerIterator = null;

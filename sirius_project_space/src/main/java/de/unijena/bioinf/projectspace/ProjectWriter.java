@@ -24,14 +24,15 @@ import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
 import java.util.Optional;
 
-@NotThreadSafe
+/**
+ * NOT TREAD SAFE
+ */
 public interface ProjectWriter extends ProjectIO {
 
     public void textFile(String relativePath, IOFunctions.IOConsumer<BufferedWriter> func)  throws IOException;

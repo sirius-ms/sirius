@@ -1,6 +1,6 @@
 package de.unijena.bioinf.lcms.debuggui;
 
-import com.google.common.collect.Range;
+import org.apache.commons.lang3.Range;
 import de.unijena.bioinf.ChemistryBase.exceptions.InvalidInputData;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.babelms.ms.JenaMsWriter;
@@ -201,8 +201,8 @@ public class GUI extends JFrame implements KeyListener, ClipboardOwner {
                     final TDoubleArrayList as = new TDoubleArrayList(), bs = new TDoubleArrayList();
                     final Range<Integer> l = a.calculateFWHM(0.15);
                     final Range<Integer> r = b.calculateFWHM(0.15);
-                    int lenL = Math.min(a.getApexIndex()-l.lowerEndpoint(), b.getApexIndex()-r.lowerEndpoint());
-                    int lenR = Math.min(l.upperEndpoint()-a.getApexIndex(), r.upperEndpoint()-b.getApexIndex());
+                    int lenL = Math.min(a.getApexIndex()-l.getMinimum(), b.getApexIndex()-r.getMinimum());
+                    int lenR = Math.min(l.getMaximum()-a.getApexIndex(), r.getMaximum()-b.getApexIndex());
                     if (lenL>=1 && lenR >= 1 && (lenL+lenR)>=4) {
                         ++counter;
                         avgLen += (lenL+lenR);

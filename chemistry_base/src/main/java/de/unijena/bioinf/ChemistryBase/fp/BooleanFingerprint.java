@@ -20,10 +20,10 @@
 
 package de.unijena.bioinf.ChemistryBase.fp;
 
-import com.google.common.base.Joiner;
 import gnu.trove.list.array.TShortArrayList;
 
 import java.util.Iterator;
+import java.util.stream.Collectors;
 
 public class BooleanFingerprint extends Fingerprint {
 
@@ -88,7 +88,7 @@ public class BooleanFingerprint extends Fingerprint {
 
     @Override
     public String toTabSeparatedString() {
-        return Joiner.on('\t').join(this);
+        return stream().map(FPIter::toString).collect(Collectors.joining("\t"));
     }
 
     @Override

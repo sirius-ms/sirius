@@ -1,6 +1,6 @@
 package de.unijena.bioinf.lcms.align;
 
-import com.google.common.collect.Range;
+import org.apache.commons.lang3.Range;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.function.Identity;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
@@ -28,7 +28,7 @@ public class RecalibrationFunction implements UnivariateFunction {
         this.linearBackup = linearBackup;
         if (loessFunction!=null) {
             double[] knots = loessFunction.getKnots();
-            loessDomain = Range.closed(
+            loessDomain = Range.of(
                 knots[0], knots[knots.length-1]
             );
         } else loessDomain=null;

@@ -20,19 +20,18 @@
 
 package de.unijena.bioinf.lcms;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.model.lcms.*;
 import gnu.trove.list.array.TDoubleArrayList;
-import org.slf4j.LoggerFactory;
+import lombok.Getter;
+import lombok.Setter;
+import org.apache.commons.lang3.Range;
 
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class ChromatogramBuilder {
 
@@ -40,20 +39,14 @@ public class ChromatogramBuilder {
     protected final Deviation dev;
     protected final ChromatogramCache cache;
 
+    @Setter
+    @Getter
     protected boolean trimEdges=true;
 
     public ChromatogramBuilder(ProcessedSample sample) {
         this.sample = sample;
         this.dev = new Deviation(20);
         this.cache = new ChromatogramCache();
-    }
-
-    public boolean isTrimEdges() {
-        return trimEdges;
-    }
-
-    public void setTrimEdges(boolean trimEdges) {
-        this.trimEdges = trimEdges;
     }
 
     public Optional<ChromatographicPeak> detectExact(Scan startingPoint, double mz) {
@@ -100,7 +93,7 @@ public class ChromatogramBuilder {
         // pick most intensive peak in scan range
         ScanPoint best = null;
         SimpleSpectrum bestSpec = null;
-        for (Scan s : sample.run.getScans(scanRange.lowerEndpoint(), scanRange.upperEndpoint()).values()) {
+        for (Scan s : sample.run.getScans(scanRange.getMinimum(), scanRange.getMaximum()).values()) {
             if (!s.isMsMs() && scanRange.contains(s.getIndex())) {
                 final SimpleSpectrum spectrum = sample.storage.getScan(s);
                 int i = Spectrums.mostIntensivePeakWithin(spectrum, mz, dev);

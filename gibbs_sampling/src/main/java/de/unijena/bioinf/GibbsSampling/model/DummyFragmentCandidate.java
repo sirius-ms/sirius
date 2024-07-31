@@ -20,9 +20,10 @@
 
 package de.unijena.bioinf.GibbsSampling.model;
 
-import com.google.common.collect.Lists;
 import de.unijena.bioinf.ChemistryBase.chem.*;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
+
+import java.util.stream.StreamSupport;
 
 public class DummyFragmentCandidate extends FragmentsCandidate{
 
@@ -63,7 +64,7 @@ public class DummyFragmentCandidate extends FragmentsCandidate{
 
         @Override
         public TableSelection getTableSelection() {
-            return PeriodicTable.getInstance().getSelectionFor(Lists.newArrayList(PeriodicTable.getInstance().iterator()).toArray(new Element[0]));
+            return PeriodicTable.getInstance().getSelectionFor(StreamSupport.stream(PeriodicTable.getInstance().spliterator(), false).toArray(Element[]::new));
         }
 
         @Override

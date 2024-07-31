@@ -20,7 +20,7 @@
 
 package de.unijena.bioinf.ChemistryBase.fp;
 
-import com.google.common.collect.Lists;
+import lombok.Getter;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -28,20 +28,27 @@ import java.util.Locale;
 
 public class ClassyfireProperty extends MolecularProperty {
 
+    @Getter
     protected final int chemOntId;
+    @Getter
     protected final String name;
+    @Getter
     protected final String description;
+    @Getter
     protected final int parentId;
     /**
      * if a compound has two classes, it's main class is the class with higher priority,
      * while the other class becomes its alternative class
      */
+    @Getter
     protected final int priority;
     protected int fixedPriority;
     // altPriority is an geometric mean between priority ranks and frequency ranks. Thus, "large" compound
     // classes like peptides are ranked down because they are so frequent
     protected float altPriority;
+    @Getter
     protected int level;
+    @Getter
     protected ClassyfireProperty parent;
 
     public ClassyfireProperty(int chemOntId, String name, String description, int parentId, int priority, float altPriority) {
@@ -53,14 +60,6 @@ public class ClassyfireProperty extends MolecularProperty {
         this.fixedPriority=-1;
         this.level=-1;
         this.altPriority = altPriority;
-    }
-
-    public int getLevel() {
-        return level;
-    }
-
-    public int getPriority() {
-        return priority;
     }
 
     public int getFixedPriority() {
@@ -99,26 +98,6 @@ public class ClassyfireProperty extends MolecularProperty {
         return String.format(Locale.US, "CHEMONT:%07d", chemOntId);
     }
 
-    public int getChemOntId() {
-        return chemOntId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public int getParentId() {
-        return parentId;
-    }
-
-    public ClassyfireProperty getParent() {
-        return parent;
-    }
-
     /**
      *
      * @param includeChemicalEntity if true, includes the true root of the ontology, "chemical entity" which is not predicted by CANOPUS.
@@ -126,7 +105,7 @@ public class ClassyfireProperty extends MolecularProperty {
      */
     public ClassyfireProperty[] getLineageRootToNode(boolean includeChemicalEntity) {
         ArrayList<ClassyfireProperty> prop = getAncestorsList(true, includeChemicalEntity);
-        return Lists.reverse(prop).toArray(ClassyfireProperty[]::new);
+        return prop.reversed().toArray(ClassyfireProperty[]::new);
     }
 
     /**

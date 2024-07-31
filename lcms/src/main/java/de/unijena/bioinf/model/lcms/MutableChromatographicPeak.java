@@ -20,14 +20,13 @@
 
 package de.unijena.bioinf.model.lcms;
 
-import com.google.common.collect.Range;
 import gnu.trove.list.array.TIntArrayList;
+import org.apache.commons.lang3.Range;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
 import static java.util.Collections.binarySearch;
-import static java.util.Collections.min;
 
 public class MutableChromatographicPeak implements CorrelatedChromatographicPeak {
 
@@ -79,14 +78,14 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
     public Segment addSegment(int from, int apex, int to, boolean noise) {
         Segment newSegment = new Segment(this, from, apex, to, noise);
         // segments are not allowed to overlap
-        var ceiling = segments.ceilingEntry(newSegment.apex);
+        var ceiling = segments.ceilingEntry(newSegment.apexIndex);
         if (ceiling!=null && ceiling.getValue().startIndex < newSegment.endIndex)
             throw new IllegalArgumentException("Segments are not allowed to overlap: " + newSegment + " overlaps with " + ceiling.getValue() );
-        var floor = segments.floorEntry(newSegment.apex);
+        var floor = segments.floorEntry(newSegment.apexIndex);
         if (floor != null && floor.getValue().endIndex > newSegment.startIndex)
             throw new IllegalArgumentException("Segments are not allowed to overlap: " + newSegment + " overlaps with " + floor.getValue() );
 
-        this.segments.put(newSegment.apex, newSegment);
+        this.segments.put(newSegment.apexIndex, newSegment);
         if (maxtensity(from, to) > getIntensityAt(apex)) {
             LoggerFactory.getLogger(MutableChromatographicPeak.class).warn("Apex is not peak with highest intensity!");
         }
@@ -155,7 +154,7 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
     public void divideSegment(Segment segment, int minimum, int maximumLeft, int maximumRight) {
         try {
             final TreeMap<Integer,Segment> clone = (TreeMap<Integer, Segment>) segments.clone();
-            segments.remove(segment.apex);
+            segments.remove(segment.apexIndex);
             Segment s = addSegment(segment.startIndex, maximumLeft, minimum, segment.noise);
             s = addSegment(minimum, maximumRight, segment.endIndex, segment.noise);
             validate();
@@ -168,11 +167,11 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
 
     public Segment joinSegments(Segment left, Segment right) {
         int newApex;
-        if (getIntensityAt(left.apex) > getIntensityAt(right.apex))
-            newApex = left.apex;
-        else newApex = right.apex;
-        segments.remove(left.apex);
-        segments.remove(right.apex);
+        if (getIntensityAt(left.apexIndex) > getIntensityAt(right.apexIndex))
+            newApex = left.apexIndex;
+        else newApex = right.apexIndex;
+        segments.remove(left.apexIndex);
+        segments.remove(right.apexIndex);
         Segment segment = addSegment(Math.min(left.startIndex,right.startIndex),  newApex,Math.max(left.endIndex,right.endIndex), false);
         validate();
         return segment;
@@ -207,7 +206,7 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
     public Range<Long> getRetentionTime() {
         if (scanPoints.isEmpty())
             return null;
-        else return Range.closed(getRetentionTimeAt(0), getRetentionTimeAt(scanPoints.size()-1));
+        else return Range.of(getRetentionTimeAt(0), getRetentionTimeAt(scanPoints.size()-1));
     }
 
     @Override
@@ -356,9 +355,9 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
             }
         }
         if (mindex!=seg.startIndex) {
-            Segment newSeg = new Segment(this, mindex, seg.apex, seg.endIndex, seg.noise);
-            segments.remove(seg.apex);
-            segments.put(newSeg.apex, newSeg);
+            Segment newSeg = new Segment(this, mindex, seg.apexIndex, seg.endIndex, seg.noise);
+            segments.remove(seg.apexIndex);
+            segments.put(newSeg.apexIndex, newSeg);
         }
     }
     private void extendLastSegmentToRight() {
@@ -372,9 +371,9 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
             }
         }
         if (mindex!=seg.endIndex) {
-            Segment newSeg = new Segment(this, seg.startIndex, seg.apex, mindex, seg.noise);
-            segments.remove(seg.apex);
-            segments.put(newSeg.apex, newSeg);
+            Segment newSeg = new Segment(this, seg.startIndex, seg.apexIndex, mindex, seg.noise);
+            segments.remove(seg.apexIndex);
+            segments.put(newSeg.apexIndex, newSeg);
         }
     }
 
@@ -389,11 +388,11 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
         double apexInt = 0f;
         for (Segment s : segments.values()) {
             if ((a <= s.getEndScanNumber() && b >= s.getEndScanNumber())) {
-                segmentsToDelete.add(s.apex);
+                segmentsToDelete.add(s.apexIndex);
                 minA = Math.min(minA, s.getStartIndex());
                 maxB = Math.max(maxB, s.getEndIndex());
                 if (s.getApexIntensity()>apexInt) {
-                    maxApex = s.apex;
+                    maxApex = s.apexIndex;
                     apexInt = s.getApexIntensity();
                 }
             }
@@ -401,7 +400,7 @@ public class MutableChromatographicPeak implements CorrelatedChromatographicPeak
         if (segmentsToDelete.isEmpty()) return Optional.empty();
         segmentsToDelete.forEach(x->{segments.remove(x); return true;});
         final Segment s = new Segment(this, minA, maxApex, maxB, false);
-        segments.put(s.apex, s);
+        segments.put(s.apexIndex, s);
         validate();
         return Optional.of(s);
     }

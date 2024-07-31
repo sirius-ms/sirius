@@ -20,12 +20,12 @@
 
 package de.unijena.bioinf.lcms.peakshape;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.math.ExponentialDistribution;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.model.lcms.ChromatographicPeak;
 import de.unijena.bioinf.model.lcms.ScanPoint;
+import org.apache.commons.lang3.Range;
 
 public class CustomPeakShapeFitting implements PeakShapeFitting<CustomPeakShape> {
     @Override
@@ -59,8 +59,8 @@ public class CustomPeakShapeFitting implements PeakShapeFitting<CustomPeakShape>
 
     private double checkLength(ProcessedSample sample, ChromatographicPeak peak, ChromatographicPeak.Segment segment) {
         final Range<Integer> integerRange = segment.calculateFWHM(0.15);
-        int ndatapointsLeft = segment.getApexIndex() - integerRange.lowerEndpoint() + 1;
-        int ndatapointsRight = integerRange.upperEndpoint() - segment.getApexIndex() + 1;
+        int ndatapointsLeft = segment.getApexIndex() - integerRange.getMinimum() + 1;
+        int ndatapointsRight = integerRange.getMaximum() - segment.getApexIndex() + 1;
         final NormalDistribution distribution = new NormalDistribution(3, 4);
         return distribution.getCumulativeProbability(ndatapointsLeft) * distribution.getCumulativeProbability(ndatapointsRight);
     }
@@ -75,14 +75,14 @@ public class CustomPeakShapeFitting implements PeakShapeFitting<CustomPeakShape>
     private double checkMonotonicity(ProcessedSample sample, ChromatographicPeak peak, ChromatographicPeak.Segment segment) {
         double monotonicIntensity = 0d, nonMonotonicIntensity = 0d;
         Range<Integer> r = segment.calculateFWHM(0.15);
-        for (int k=r.lowerEndpoint()+1; k <= segment.getApexIndex(); ++k) {
+        for (int k=r.getMinimum()+1; k <= segment.getApexIndex(); ++k) {
             final double i2 = peak.getIntensityAt(k);
             final double i1 = peak.getIntensityAt(k-1);
             if (i2 > i1) {
                 monotonicIntensity += (i2-i1);
             } else nonMonotonicIntensity += (i1-i2);
         }
-        for (int k=segment.getApexIndex()+1; k <= r.upperEndpoint(); ++k) {
+        for (int k=segment.getApexIndex()+1; k <= r.getMaximum(); ++k) {
             final double i2 = peak.getIntensityAt(k);
             final double i1 = peak.getIntensityAt(k-1);
             if (i2 < i1) {

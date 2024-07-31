@@ -23,7 +23,7 @@ package de.unijena.bioinf.storage.db.nosql;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.util.Arrays;
 
 /**

@@ -21,7 +21,6 @@
 
 package de.unijena.bioinf.ChemistryBase.ms;
 
-import com.google.common.base.Joiner;
 import gnu.trove.list.array.TDoubleArrayList;
 
 import java.util.ArrayList;
@@ -56,7 +55,7 @@ public class RecalibrationFunction  {
             if (polynomialTerms[k]==0) continue;
             terms.add(k==0 ? String.valueOf(polynomialTerms[k]) : (k == 1 ? polynomialTerms[k]+"x" : polynomialTerms[k]+"x^"+k));
         }
-        return Joiner.on(" + ").join(terms);
+        return String.join(" + ", terms);
     }
 
     private static String DOUBLE_REG = "[-+]?[0-9]+\\.?[0-9]+([eE][-+]?[0-9]+)?";

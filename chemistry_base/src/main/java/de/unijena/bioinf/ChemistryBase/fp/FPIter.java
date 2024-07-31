@@ -32,6 +32,7 @@ public abstract class FPIter implements Iterable<FPIter>, Iterator<FPIter> {
     public Iterator<FPIter> iterator() {
         return clone();
     }
+
     public Iterator<Integer> asIndexIterator() {
         return new Iterator<Integer>() {
             @Override

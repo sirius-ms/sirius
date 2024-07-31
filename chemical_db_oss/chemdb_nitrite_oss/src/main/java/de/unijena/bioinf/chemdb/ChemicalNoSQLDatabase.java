@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.chemdb;
 
-import com.google.common.collect.Iterables;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
@@ -29,6 +28,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.chemdb.nitrite.serializers.FingerprintCandidateWrapperDeserializer;
 import de.unijena.bioinf.chemdb.nitrite.serializers.FingerprintCandidateWrapperSerializer;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
+import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.spectraldb.SpectralNoSQLDatabase;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
@@ -37,9 +37,9 @@ import de.unijena.bioinf.storage.db.nosql.Metadata;
 import jakarta.persistence.Id;
 import lombok.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -247,7 +247,8 @@ public abstract class ChemicalNoSQLDatabase<Doctype> extends SpectralNoSQLDataba
     @Override
     public void updateAllFingerprints(Consumer<FingerprintCandidate> updater) throws ChemicalDatabaseException {
         try {
-            Iterables.partition(this.storage.findAll(FingerprintCandidateWrapper.class, "fingerprint"), 50).forEach(chunk -> doUpdate(chunk, updater));
+           Partition.ofSize(this.storage.findAll(FingerprintCandidateWrapper.class, "fingerprint"), 50)
+                   .forEach(chunk -> doUpdate(chunk, updater));
         } catch (IOException e) {
             throw new ChemicalDatabaseException(e);
         }

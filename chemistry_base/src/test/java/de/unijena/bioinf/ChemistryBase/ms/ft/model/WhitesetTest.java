@@ -5,17 +5,13 @@ import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.jupiter.api.Test;
-import org.mockito.junit.MockitoJUnit;
-import org.mockito.junit.MockitoRule;
-import org.mockito.quality.Strictness;
+
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class WhitesetTest {
     Set<MolecularFormula> measuredFormulas = getFormulaSet("C6H12O6", "C9H12NO", "C6H10O5", "C6H14O4", "C6H8N5");

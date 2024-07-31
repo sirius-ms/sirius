@@ -16,9 +16,8 @@ application {
 }
 
 dependencies {
-    implementation 'it.unimi.dsi:fastutil:8.5.12'
 
-    implementation "org.apache.commons:commons-text:1.11.0"
+    implementation "org.apache.commons:commons-text:$commons_text_version"
 
     api project(':chemistry_base')
     api project(':spectral_alignment')

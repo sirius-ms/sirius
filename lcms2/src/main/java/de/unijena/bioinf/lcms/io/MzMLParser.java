@@ -43,12 +43,12 @@ import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 import org.jetbrains.annotations.NotNull;
 import uk.ac.ebi.jmzml.model.mzml.*;
 import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;

@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -20,25 +20,27 @@
 
 package de.unijena.bioinf.model.lcms;
 
-import com.google.common.collect.Range;
+
+import lombok.Getter;
+import org.apache.commons.lang3.Range;
 
 import java.util.*;
 
 public interface ChromatographicPeak {
 
-    public int numberOfScans();
+    int numberOfScans();
 
-    public double getMzAt(int k);
-    public double getIntensityAt(int k);
-    public long getRetentionTimeAt(int k);
-    public int getScanNumberAt(int k);
-    public Range<Long> getRetentionTime();
-    public NavigableMap<Integer, Segment> getSegments();
-    public ScanPoint getScanPointAt(int k);
+    double getMzAt(int k);
+    double getIntensityAt(int k);
+    long getRetentionTimeAt(int k);
+    int getScanNumberAt(int k);
+    Range<Long> getRetentionTime();
+    NavigableMap<Integer, Segment> getSegments();
+    ScanPoint getScanPointAt(int k);
 
     default public boolean samePeak(ChromatographicPeak other) {
         if (this==other) return true;
-        if (!getRetentionTime().isConnected(other.getRetentionTime())) return false;
+        if (!getRetentionTime().isOverlappedBy(other.getRetentionTime())) return false;
         ScanPoint u = getApexPeak();
         ScanPoint v = other.getApexPeak();
         return (u.getScanNumber()==v.getScanNumber() && Math.abs(u.getMass()-v.getMass())<0.001 && Math.abs(u.getIntensity()-v.getIntensity())< (u.getIntensity()*0.001) );
@@ -55,15 +57,15 @@ public interface ChromatographicPeak {
         return apex;
     }
 
-    public int findClosestIndexByRt(long rt);
+    int findClosestIndexByRt(long rt);
 
-    public Optional<Segment> getSegmentWithApexId(int apexId);
+    Optional<Segment> getSegmentWithApexId(int apexId);
 
-    public ScanPoint getScanPointForScanId(int scanId);
-    public default ScanPoint getRightEdge() {
+    ScanPoint getScanPointForScanId(int scanId);
+    default ScanPoint getRightEdge() {
         return getScanPointAt(numberOfScans()-1);
     }
-    public default ScanPoint getLeftEdge() {
+    default ScanPoint getLeftEdge() {
         return getScanPointAt(0);
     }
 
@@ -116,21 +118,25 @@ public interface ChromatographicPeak {
         return set;
     }
 
-    public default int index2scanNumber(int index) {
+    default int index2scanNumber(int index) {
         return getScanNumberAt(index);
     }
-    public default Range<Integer> index2scanNumber(Range<Integer> indizes) {
-        int from = getScanNumberAt(indizes.lowerEndpoint());
-        int to = getScanNumberAt(indizes.upperEndpoint());
-        return Range.closed(from, to);
+    default Range<Integer> index2scanNumber(Range<Integer> indizes) {
+        int from = getScanNumberAt(indizes.getMinimum());
+        int to = getScanNumberAt(indizes.getMaximum());
+        return Range.of(from, to);
     }
 
-    public static class Segment {
+    class Segment {
 
+        @Getter
         protected final ChromatographicPeak peak;
-        protected final int startIndex, endIndex, apex;
+
+        @Getter
+        protected final int startIndex, endIndex, apexIndex;
         protected final int fwhmStart, fwhmEnd;
 
+        @Getter
         protected boolean noise;
 
         @Override
@@ -138,27 +144,23 @@ public interface ChromatographicPeak {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Segment segment = (Segment) o;
-            return apex == segment.apex && peak.equals(segment.peak);
+            return apexIndex == segment.apexIndex && peak.equals(segment.peak);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(peak, apex);
+            return Objects.hash(peak, apexIndex);
         }
 
-        Segment(ChromatographicPeak peak, int startIndex, int apex, int endIndex, boolean noise) {
+        Segment(ChromatographicPeak peak, int startIndex, int apexIndex, int endIndex, boolean noise) {
             this.peak = peak;
             this.startIndex = startIndex;
             this.endIndex = endIndex;
-            this.apex = apex;
+            this.apexIndex = apexIndex;
             final Range<Integer> fwhm = calculateFWHM(0.5);
-            this.fwhmEnd = fwhm.upperEndpoint();
-            this.fwhmStart = fwhm.lowerEndpoint();
+            this.fwhmEnd = fwhm.getMaximum();
+            this.fwhmStart = fwhm.getMinimum();
             this.noise = noise;
-        }
-
-        public boolean isNoise() {
-            return noise;
         }
 
         void setMinMaxScanIndex(int[] scanIndex, int surrounding) {
@@ -169,15 +171,11 @@ public interface ChromatographicPeak {
         }
 
         public double getApexIntensity() {
-            return peak.getIntensityAt(apex);
-        }
-
-        public ChromatographicPeak getPeak() {
-            return peak;
+            return peak.getIntensityAt(apexIndex);
         }
 
         public String toString() {
-            return "Segment(" + peak.getScanNumberAt(startIndex) + " ... " + peak.getScanNumberAt(endIndex) + "), apex = " + peak.getScanNumberAt(apex)+  ", " + (endIndex-startIndex+1) + " spans from " + (retentionTimeSpan().lowerEndpoint()/60000d) + " .. " + (retentionTimeSpan().upperEndpoint()/60000d)  +  " min over " + retentionTimeWidth()/1000d + " seconds.";
+            return "Segment(" + peak.getScanNumberAt(startIndex) + " ... " + peak.getScanNumberAt(endIndex) + "), apex = " + peak.getScanNumberAt(apexIndex)+  ", " + (endIndex-startIndex+1) + " spans from " + (retentionTimeSpan().getMinimum()/60000d) + " .. " + (retentionTimeSpan().getMaximum()/60000d)  +  " min over " + retentionTimeWidth()/1000d + " seconds.";
         }
 
         public long fwhm() {
@@ -185,13 +183,13 @@ public interface ChromatographicPeak {
         }
         public long fwhm(double percentile) {
             Range<Integer> r = calculateFWHM(percentile);
-            if (r.lowerEndpoint().equals(r.upperEndpoint())) {
-                int a = Math.min(endIndex, r.upperEndpoint() + 1);
-                int b = Math.max(startIndex, r.lowerEndpoint() - 1);
-                return Math.min(peak.getRetentionTimeAt(r.upperEndpoint())-peak.getRetentionTimeAt(a),
-                        peak.getRetentionTimeAt(b)-peak.getRetentionTimeAt(r.lowerEndpoint()));
+            if (r.getMinimum().equals(r.getMaximum())) {
+                int a = Math.min(endIndex, r.getMaximum() + 1);
+                int b = Math.max(startIndex, r.getMinimum() - 1);
+                return Math.min(peak.getRetentionTimeAt(r.getMaximum())-peak.getRetentionTimeAt(a),
+                        peak.getRetentionTimeAt(b)-peak.getRetentionTimeAt(r.getMinimum()));
             }
-            return peak.getRetentionTimeAt(r.upperEndpoint())-peak.getRetentionTimeAt(r.lowerEndpoint());
+            return peak.getRetentionTimeAt(r.getMaximum())-peak.getRetentionTimeAt(r.getMinimum());
         }
 
         public int getFwhmStartIndex() {
@@ -204,7 +202,7 @@ public interface ChromatographicPeak {
 
         public Range<Integer> calculateFWHMMinPeaks(double threshold, int minPeaks) {
             Range<Integer> range = calculateFWHM(threshold);
-            int a = range.lowerEndpoint(), b = range.upperEndpoint();
+            int a = range.getMinimum(), b = range.getMaximum();
             if (b-a+1 >= minPeaks) return range;
             // extend range until it reaches minPeaks
             while (b-a+1 < minPeaks) {
@@ -214,25 +212,25 @@ public interface ChromatographicPeak {
                 else if (Double.isFinite(intRight)) ++b;
                 else break;
             }
-            return Range.closed(a,b);
+            return Range.of(a,b);
         }
 
         public Range<Integer> calculateFWHM(double threshold) {
-            double intApex = peak.getIntensityAt(apex);
+            double intApex = peak.getIntensityAt(apexIndex);
             double halveMaximum = intApex*threshold;
             int i,j;
-            for (i=apex; i >= startIndex; --i) {
+            for (i= apexIndex; i >= startIndex; --i) {
                 if (peak.getIntensityAt(i) < halveMaximum)
                     break;
             }
             ++i;
-            for (j=apex; j <= endIndex; ++j) {
+            for (j= apexIndex; j <= endIndex; ++j) {
                 if (peak.getIntensityAt(j) < halveMaximum)
                     break;
             }
             --j;
-            if (i>j) return Range.closed(apex,apex);
-            return Range.closed(i,j);
+            if (i>j) return Range.of(apexIndex, apexIndex);
+            return Range.of(i,j);
         }
 
         public int getStartScanNumber() {
@@ -244,19 +242,7 @@ public interface ChromatographicPeak {
         }
 
         public int getApexScanNumber() {
-            return peak.getScanNumberAt(apex);
-        }
-
-        public int getStartIndex() {
-            return startIndex;
-        }
-
-        public int getEndIndex() {
-            return endIndex;
-        }
-
-        public int getApexIndex() {
-            return apex;
+            return peak.getScanNumberAt(apexIndex);
         }
 
         public long retentionTimeWidth() {
@@ -264,7 +250,7 @@ public interface ChromatographicPeak {
         }
 
         public Range<Long> retentionTimeSpan() {
-            return Range.closed(peak.getRetentionTimeAt(startIndex), peak.getRetentionTimeAt(endIndex));
+            return Range.of(peak.getRetentionTimeAt(startIndex), peak.getRetentionTimeAt(endIndex));
         }
 
         public boolean samePeak(Segment other) {
@@ -272,11 +258,11 @@ public interface ChromatographicPeak {
         }
 
         public long getApexRt() {
-            return peak.getRetentionTimeAt(apex);
+            return peak.getRetentionTimeAt(apexIndex);
         }
 
         public double getApexMass() {
-            return peak.getMzAt(apex);
+            return peak.getMzAt(apexIndex);
         }
     }
 

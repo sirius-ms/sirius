@@ -1,11 +1,6 @@
 package de.unijena.bioinf.lcms.quality;
 
-import de.unijena.bioinf.ChemistryBase.chem.Isotopes;
-import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
-import de.unijena.bioinf.lcms.adducts.AdductEdge;
-import de.unijena.bioinf.lcms.adducts.AdductNode;
 import de.unijena.bioinf.lcms.adducts.Scorer;
 import de.unijena.bioinf.lcms.adducts.TraceProvider;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
@@ -14,20 +9,12 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedIsotopicFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
-import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.persistence.model.core.trace.MergedTrace;
-import de.unijena.bioinf.ms.persistence.model.core.trace.SourceTrace;
-import de.unijena.bioinf.ms.persistence.model.core.trace.TraceRef;
-import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.longs.Long2DoubleMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import org.checkerframework.checker.units.qual.A;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Optional;
 
 public class CheckIsotopeQuality implements FeatureQualityChecker{
     @Override

@@ -22,7 +22,6 @@ package de.unijena.bioinf.spectraldb;
 
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.List;
 import java.util.function.Consumer;
