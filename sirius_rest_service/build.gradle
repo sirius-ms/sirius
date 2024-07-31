@@ -13,17 +13,15 @@ plugins {
 
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
-apply plugin: 'war'
-apply plugin: 'java-library'
 apply plugin: 'application'
 
 ext['jna.version'] = '5.4.0' //force correct jna version -> springs is not compatible with ilp solver
 ext['slf4j.version'] = slf4j_version
-ext['okhttp.version'] = '4.12.0'
+ext['okhttp.version'] = okhttp_version
 
 dependencies {
 //    implementation("org.springframework.boot:spring-boot-properties-migrator")
-    api project(':sirius_cli')
+    implementation project(':sirius_cli')
     implementation project(':sirius_gui')
 
     //////////// configure logging ///////////////////
@@ -39,8 +37,8 @@ dependencies {
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
     }
 
-//    providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
-    providedRuntime 'org.springframework.boot:spring-boot-starter-jetty'
+//    implementation 'org.springframework.boot:spring-boot-starter-tomcat'
+    implementation 'org.springframework.boot:spring-boot-starter-jetty'
 
     //spring data for pagination and sorting
     implementation 'org.springframework.data:spring-data-commons'
@@ -65,6 +63,7 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation "jakarta.servlet:jakarta.servlet-api"
 
+    //todo replace with alternative to finally get rid ob guava
     implementation 'com.google.jimfs:jimfs:1.3.0'
 
     implementation "org.apache.commons:commons-text:$commons_text_version"
@@ -89,9 +88,6 @@ configurations.each {Configuration conf ->
 //    conf.exclude group: "org.slf4j", module: "slf4j-jdk14"
 }
 
-war {
-    enabled = false
-}
 jar {
     enabled = false
 }
@@ -114,15 +110,4 @@ openApi {
         args = ["rest", "-s", "-p", "8888"]
     }
 }
-generateOpenApiDocs.dependsOn('bootJar')
-forkedSpringBootRun.mustRunAfter(':sirius_cli:jar')
-forkedSpringBootRun.mustRunAfter(':sirius_gui:jar')
-forkedSpringBootRun.mustRunAfter(':sirius_nightsky_sdk:jar')
-forkedSpringBootRun.mustRunAfter(':sirius_nightsky_sdk:sirius_nightsky_sdk.jjobs:jar')
-
-
-
-
-
-
-
+forkedSpringBootRun.dependsOn(':sirius_rest_service:bootJar')
