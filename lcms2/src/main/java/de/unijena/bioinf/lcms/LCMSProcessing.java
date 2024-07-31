@@ -1,6 +1,5 @@
 package de.unijena.bioinf.lcms;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;

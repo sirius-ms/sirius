@@ -24,7 +24,6 @@ import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.google.common.collect.Iterables;
 import de.unijena.bioinf.storage.db.nosql.*;
 import de.unijena.bioinf.storage.db.nosql.nitrite.joining.JoinedReflectionIterable;
 import de.unijena.bioinf.storage.db.nosql.nitrite.projection.InjectedDocumentStream;
@@ -55,9 +54,9 @@ import org.dizitart.no2.index.IndexDescriptor;
 import org.dizitart.no2.index.IndexOptions;
 import org.dizitart.no2.mvstore.MVStoreModule;
 import org.dizitart.no2.repository.ObjectRepository;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -414,8 +413,9 @@ public class NitriteDatabase implements Database<Document> {
 
     @SuppressWarnings("unchecked")
     private <T> Triple<T[], ObjectRepository<T>, Class<T>> getRepository(Iterable<T> objects) throws IOException {
-        Collection<T> collection = new ArrayList<>();
-        Iterables.addAll(collection, objects);
+        List<T> collection = new ArrayList<>();
+        objects.forEach(collection::add);
+
         if (collection.isEmpty()) {
             return null;
         }
@@ -575,7 +575,7 @@ public class NitriteDatabase implements Database<Document> {
     public int insertAll(String collectionName, Iterable<Document> documents) throws IOException {
         return this.write(() -> {
             NitriteCollection collection = this.getCollection(collectionName);
-            Document[] docs = Iterables.toArray(documents, Document.class);
+            Document[] docs = StreamSupport.stream(documents.spliterator(),false).toArray(Document[]::new);
             WriteResult result = collection.insert(docs);
             List<String> ids = StreamSupport.stream(result.spliterator(), false).map(NitriteId::getIdValue).toList();
             if (ids.size() == docs.length) {

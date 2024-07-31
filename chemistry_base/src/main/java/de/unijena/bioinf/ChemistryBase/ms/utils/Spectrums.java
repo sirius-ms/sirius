@@ -21,7 +21,6 @@
 
 package de.unijena.bioinf.ChemistryBase.ms.utils;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
@@ -30,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import it.unimi.dsi.fastutil.Pair;
+import org.apache.commons.lang3.Range;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -506,8 +506,8 @@ public class Spectrums {
 
                 int offset = 1;
                 Range<Double> range = pt.getIsotopicMassWindow(alphabet, deviation, peak.getMass(), offset);
-                double lower = range.lowerEndpoint().doubleValue();
-                double upper = range.upperEndpoint().doubleValue();
+                double lower = range.getMinimum();
+                double upper = range.getMaximum();
 
                 boolean isotopePeakFound = false;
                 boolean atLeastOneIsotopePeakFound = false;
@@ -530,8 +530,8 @@ public class Spectrums {
                             //look for next isotope peak
                             ++offset;
                             range = pt.getIsotopicMassWindow(alphabet, deviation, peak.getMass(), offset);
-                            lower = range.lowerEndpoint().doubleValue();
-                            upper = range.upperEndpoint().doubleValue();
+                            lower = range.getMinimum();
+                            upper = range.getMaximum();
                             isotopePeakFound = false;
                         } else {
                             //end
@@ -590,9 +590,8 @@ public class Spectrums {
         for (int k = 1; k <= 5; ++k) {
             final Range<Double> nextMz = PeriodicTable.getInstance().getIsotopicMassWindow(stdalphabet, deviation.allowedMassDeviation, monoMass, k);
 
-            final double a = (nextMz.lowerEndpoint() - monoMass) / absCharge + monoMass;
-            final double b = (nextMz.upperEndpoint() - monoMass) / absCharge + monoMass;
-            final double m = a + (b - a) / 2d;
+            final double a = (nextMz.getMinimum() - monoMass) / absCharge + monoMass;
+            final double b = (nextMz.getMaximum() - monoMass) / absCharge + monoMass;
             final double startPoint = a - deviation.massDifferenceDeviation.absoluteFor(a);
             final double endPoint = b + deviation.massDifferenceDeviation.absoluteFor(b);
             final int nextIndex = Spectrums.indexOfFirstPeakWithin(massOrderedSpectrum, startPoint, endPoint);
@@ -1122,14 +1121,14 @@ public class Spectrums {
 
     public static <S extends Spectrum<P>, P extends Peak> Range<Double> getMassRange(S spectrum) {
         if (spectrum instanceof OrderedSpectrum<?>) {
-            return Range.closed(spectrum.getMzAt(0), spectrum.getMzAt(spectrum.size()-1));
+            return Range.of(spectrum.getMzAt(0), spectrum.getMzAt(spectrum.size()-1));
         } else {
             double minMass=Double.POSITIVE_INFINITY, maxMass=Double.NEGATIVE_INFINITY;
             for (int k=0; k < spectrum.size(); ++k) {
                 minMass = Math.min(spectrum.getMzAt(k), minMass);
                 maxMass = Math.max(spectrum.getMzAt(k), maxMass);
             }
-            return Range.closed(minMass, maxMass);
+            return Range.of(minMass, maxMass);
         }
     }
 
@@ -1139,7 +1138,7 @@ public class Spectrums {
             minIntensity = Math.min(spectrum.getIntensityAt(k), minIntensity);
             maxIntensity = Math.max(spectrum.getIntensityAt(k), maxIntensity);
         }
-        return Range.closed(minIntensity, maxIntensity);
+        return Range.of(minIntensity, maxIntensity);
     }
 
 

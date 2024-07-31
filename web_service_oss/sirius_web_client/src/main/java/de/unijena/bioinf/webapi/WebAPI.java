@@ -22,7 +22,6 @@
 
 package de.unijena.bioinf.webapi;
 
-import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
@@ -64,20 +63,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Date;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import static de.unijena.bioinf.chemdb.custom.CustomDataSources.getWebDatabaseCacheStorage;
 
 /**
  * Frontend WebAPI class, that represents the client to our backend rest api
+ * THREAD-SAFE
  */
 
-@ThreadSafe
 public interface WebAPI<D extends AbstractChemicalDatabase> {
 
     default void shutdown() throws IOException {
@@ -133,9 +132,7 @@ public interface WebAPI<D extends AbstractChemicalDatabase> {
         return getVersionInfo(false);
     }
 
-    Multimap<ConnectionError.Klass, ConnectionError> checkConnection();
-
-//    <T extends ErrorReport> String reportError(T report, String SOFTWARE_NAME) throws IOException;
+    Map<ConnectionError.Klass, Set<ConnectionError>> checkConnection();
     //endregion
 
     //region Jobs

@@ -1,6 +1,6 @@
 package de.unijena.bioinf.lcms.isotopes;
 
-import com.google.common.collect.Range;
+import org.apache.commons.lang3.Range;
 import de.unijena.bioinf.ChemistryBase.math.ExponentialDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+
+import static de.unijena.bioinf.ChemistryBase.utils.RangeUtils.isEmpty;
 
 public class IsotopeDetectionByCorrelation implements IsotopeDetectionStrategy{
 
@@ -152,7 +154,7 @@ public class IsotopeDetectionByCorrelation implements IsotopeDetectionStrategy{
             intensitiesRight[i] = rightIon.intensityOrZero(mainBegin+i);
         }
         Range<Integer> t25 = calculateFWHMMinPeaks(leftIon, leftSegment, 0.25f, 3);
-        t25 = Range.closed(t25.lowerEndpoint()-mainBegin, t25.upperEndpoint()-mainBegin);
+        t25 = Range.of(t25.getMinimum()-mainBegin, t25.getMaximum()-mainBegin);
 
         //////////////////////////////////////////////
         float[] completeX = intensitiesLeft, completeY = intensitiesRight;
@@ -235,7 +237,7 @@ public class IsotopeDetectionByCorrelation implements IsotopeDetectionStrategy{
                 break;
             }
         }
-        return Range.closed(left,right);
+        return Range.of(left,right);
     }
 
     private float cosine(float[] xs, float[] ys) {
@@ -284,12 +286,12 @@ public class IsotopeDetectionByCorrelation implements IsotopeDetectionStrategy{
     }
 
     private static float[][] extrArray(float[] xs, float[] ys, Range<Integer> range) {
-        if (range.isEmpty()) return new float[2][0];
-        int n = range.upperEndpoint()-range.lowerEndpoint()+1;
+        if (isEmpty(range)) return new float[2][0];
+        int n = range.getMaximum()-range.getMinimum()+1;
         float[] xs2 = new float[n], ys2= new float[n];
-        for (int i=range.lowerEndpoint(); i <= range.upperEndpoint(); ++i) {
-            xs2[i-range.lowerEndpoint()] = xs[i];
-            ys2[i-range.lowerEndpoint()] = ys[i];
+        for (int i=range.getMinimum(); i <= range.getMaximum(); ++i) {
+            xs2[i-range.getMinimum()] = xs[i];
+            ys2[i-range.getMinimum()] = ys[i];
         }
         return new float[][]{xs2,ys2};
     }

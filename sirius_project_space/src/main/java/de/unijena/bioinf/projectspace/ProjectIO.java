@@ -22,13 +22,14 @@ package de.unijena.bioinf.projectspace;
 
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 
-import javax.annotation.concurrent.NotThreadSafe;
+
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.Optional;
-
-@NotThreadSafe
+/**
+ * NOT TREAD SAFE
+ */
 public interface ProjectIO {
 
     /**

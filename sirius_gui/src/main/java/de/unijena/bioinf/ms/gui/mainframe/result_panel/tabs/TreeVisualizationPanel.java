@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs;
 
-import com.google.common.util.concurrent.AtomicDouble;
 import de.unijena.bioinf.babelms.dot.FTDotWriter;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.jjobs.JJob;
@@ -55,6 +54,7 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -217,18 +217,18 @@ public class TreeVisualizationPanel extends JPanel
                                     Jobs.runEDTAndWait(() -> setToolbarEnabled(true));
                                     checkForInterruption();
 
-                                    final AtomicDouble tScale = new AtomicDouble();
-                                    final AtomicDouble tScaleMin = new AtomicDouble();
+                                    final AtomicInteger tScale = new AtomicInteger();
+                                    final AtomicInteger tScaleMin = new AtomicInteger();
                                     //waiting ok because from generic background thread
                                     Jobs.runJFXAndWait(() -> {
-                                        tScaleMin.set(jsBridge.getTreeScaleMin());
-                                        tScale.set(jsBridge.getTreeScale());
+                                        tScaleMin.set(Float.floatToIntBits(jsBridge.getTreeScaleMin()));
+                                        tScale.set(Float.floatToIntBits(jsBridge.getTreeScale()));
                                     });
                                     //waiting ok because from generic background thread
                                     Jobs.runEDTAndWait(() -> {
                                         // adapt scale slider to tree scales
-                                        scaleSlider.setMaximum((int) (1 / tScaleMin.floatValue() * 100));
-                                        scaleSlider.setValue((int) (1 / tScale.floatValue() * 100));
+                                        scaleSlider.setMaximum((int) (1 / Float.intBitsToFloat(tScaleMin.get()) * 100));
+                                        scaleSlider.setValue((int) (1 / Float.intBitsToFloat(tScale.get()) * 100));
                                         scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
                                     });
 
@@ -266,15 +266,15 @@ public class TreeVisualizationPanel extends JPanel
             browser.loadTree(jsonTree);
             setToolbarEnabled(true);
 
-            final AtomicDouble tScale = new AtomicDouble();
-            final AtomicDouble tScaleMin = new AtomicDouble();
+            final AtomicInteger tScale = new AtomicInteger();
+            final AtomicInteger tScaleMin = new AtomicInteger();
             Jobs.runJFXLater(() -> {
-                tScaleMin.set(jsBridge.getTreeScaleMin());
-                tScale.set(jsBridge.getTreeScale());
+                tScaleMin.set(Float.floatToIntBits(jsBridge.getTreeScaleMin()));
+                tScale.set(Float.floatToIntBits(jsBridge.getTreeScale()));
                 Jobs.runEDTLater(() -> {
                     // adapt scale slider to tree scales
-                    scaleSlider.setMaximum((int) (1 / tScaleMin.floatValue() * 100));
-                    scaleSlider.setValue((int) (1 / tScale.floatValue() * 100));
+                    scaleSlider.setMaximum((int) (1 / Float.intBitsToFloat(tScaleMin.get()) * 100));
+                    scaleSlider.setValue((int) (1 / Float.intBitsToFloat(tScale.get()) * 100));
                     scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
                 });
             });
@@ -513,14 +513,14 @@ public class TreeVisualizationPanel extends JPanel
             browser.executeJS("update()");
             //this enusre the correct order without blocking
             Jobs.runJFXLater(() -> {
-                final AtomicDouble tScale = new AtomicDouble();
-                final AtomicDouble tScaleMin = new AtomicDouble();
-                tScaleMin.set(jsBridge.getTreeScaleMin());
-                tScale.set(jsBridge.getTreeScale());
+                final AtomicInteger tScale = new AtomicInteger();
+                final AtomicInteger tScaleMin = new AtomicInteger();
+                tScaleMin.set(Float.floatToIntBits(jsBridge.getTreeScaleMin()));
+                tScale.set(Float.floatToIntBits(jsBridge.getTreeScale()));
                 Jobs.runEDTLater(() -> {
                     // adapt scale slider to tree scales
-                    scaleSlider.setMaximum((int) (1 / tScaleMin.floatValue() * 100));
-                    scaleSlider.setValue((int) (1 / tScale.floatValue() * 100));
+                    scaleSlider.setMaximum((int) (1 / Float.intBitsToFloat(tScaleMin.get()) * 100));
+                    scaleSlider.setValue((int) (1 / Float.intBitsToFloat(tScale.get()) * 100));
                     scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
                 });
             });

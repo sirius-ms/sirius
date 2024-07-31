@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.lcms.align;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
@@ -28,6 +27,7 @@ import de.unijena.bioinf.lcms.*;
 import de.unijena.bioinf.lcms.peakshape.PeakShape;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.*;
+import org.apache.commons.lang3.Range;
 
 import java.io.IOException;
 import java.util.*;
@@ -85,10 +85,10 @@ public class GapFilling {
                 double highest = rets[(int)(0.75*rets.length)] + rtError;
                 final double middle = rets[(int)(rets.length*0.5)];
                 double avg = f.rt;
-                final Range<Double> tolerance = Range.closed(lowest,highest);
+                final Range<Double> tolerance = Range.of(lowest,highest);
                 //System.out.println(String.valueOf(lowest/1000d) + " ... " + (highest/1000d) + " seconds tolerance");
 
-                ArrayList<Scan> scans = new ArrayList<>(sample.findScansByRecalibratedRT(Range.closed(lowest,highest)).values());
+                ArrayList<Scan> scans = new ArrayList<>(sample.findScansByRecalibratedRT(Range.of(lowest,highest)).values());
                 if (scans.isEmpty())
                     continue;
 
@@ -97,11 +97,11 @@ public class GapFilling {
                 for (final double tol : new double[]{4,2,1}) {
                     final double LOW = middle - (middle-lowest)/tol;
                     final double HIGH = middle + (highest-middle)/tol;
-                    scans = new ArrayList<>(sample.findScansByRecalibratedRT(Range.closed(LOW,HIGH)).values());
+                    scans = new ArrayList<>(sample.findScansByRecalibratedRT(Range.of(LOW,HIGH)).values());
                     if (scans.isEmpty())
                         continue;
-                    Range<Long> rtRange = Range.closed(scans.get(0).getRetentionTime(),scans.get(scans.size()-1).getRetentionTime());
-                    final Optional<ChromatographicPeak> peak = sample.builder.detect(Range.closed(scans.get(0).getIndex(), scans.get(scans.size()-1).getIndex()), f.mass); // TODO: recalibrate mass, too?
+                    Range<Long> rtRange = Range.of(scans.getFirst().getRetentionTime(),scans.getLast().getRetentionTime());
+                    final Optional<ChromatographicPeak> peak = sample.builder.detect(Range.of(scans.getFirst().getIndex(), scans.getLast().getIndex()), f.mass); // TODO: recalibrate mass, too?
                     if (peak.isPresent()) {
                         final MutableChromatographicPeak P = peak.get().mutate();
                         if (alreadyTried.contains(peak.get()))
@@ -199,10 +199,10 @@ public class GapFilling {
         boolean isMinimum = (peak.getIntensityAt(start) <= peak.getIntensityAt(start+1));
         int regionStart = start, regionEnd = ende;
         for (int k=start+1; k < ende; ++k) {
-            if (rtRange.lowerEndpoint() >= peak.getRetentionTimeAt(k)) {
+            if (rtRange.getMinimum() >= peak.getRetentionTimeAt(k)) {
                 regionStart = k;
             }
-            if (rtRange.upperEndpoint() <= peak.getRetentionTimeAt(k)) {
+            if (rtRange.getMaximum() <= peak.getRetentionTimeAt(k)) {
                 regionEnd = k;
             }
             double a = peak.getIntensityAt(k-1), b = peak.getIntensityAt(k), c = peak.getIntensityAt(k+1);

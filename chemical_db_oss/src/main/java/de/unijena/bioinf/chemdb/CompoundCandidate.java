@@ -22,8 +22,6 @@
 
 package de.unijena.bioinf.chemdb;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.chemdb.custom.CustomDataSources;
@@ -33,10 +31,7 @@ import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -70,7 +65,7 @@ public class CompoundCandidate {
 
     public long getBitset() {
         if (bitset <= 0)
-            bitset = CustomDataSources.getDBFlagsFromNames(getLinkedDatabases().keys());
+            bitset = CustomDataSources.getDBFlagsFromNames(getLinkedDatabases().keySet());
         return bitset;
     }
 
@@ -158,16 +153,16 @@ public class CompoundCandidate {
         else this.links = new ArrayList<>(links);
     }
 
-    public @NotNull Multimap<String, String> getLinkedDatabases() {
+    public @NotNull Map<String, List<String>> getLinkedDatabases() {
         if (links != null) {
-            Multimap<String, String> databases = ArrayListMultimap.create(links.size(), 2);
-            for (DBLink link : links) {
-                databases.put(link.getName(), link.getId());
-            }
+            Map<String, List<String>> databases = new HashMap<>();
+            for (DBLink link : links)
+                databases.computeIfAbsent(link.getName(), k -> new ArrayList<>()).add(link.getId());
+
             return databases;
         }
 
-        return ArrayListMultimap.create();
+        return Map.of();
     }
 
     @Deprecated

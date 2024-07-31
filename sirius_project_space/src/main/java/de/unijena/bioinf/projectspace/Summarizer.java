@@ -25,7 +25,6 @@ import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
 import java.util.List;
 
@@ -33,9 +32,9 @@ import java.util.List;
  * A summarizer does not contain any "new" data, but summarizes or visualize the data of other components.
  * Summarizers can be written automatically with other components.
  * <p>
+ * ThreadSafe
  * Note: Summarizers might be called in parallel on different compounds and need to be TREAD SAFE!
  */
-@ThreadSafe
 public interface Summarizer {
     List<Class<? extends DataAnnotation>> requiredFormulaResultAnnotations();
 

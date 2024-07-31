@@ -21,7 +21,7 @@
 package de.unijena.bioinf.ChemistryBase.ms;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.Range;
+import org.apache.commons.lang3.Range;
 
 import java.io.Serializable;
 import java.util.Locale;
@@ -54,7 +54,7 @@ public class IsolationWindow implements Serializable {
     }
 
     public Range<Double> getWindowFor(double peak) {
-        return Range.closed(peak+windowOffset-windowWidth/2d, peak+windowOffset+windowWidth/2d);
+        return Range.of(peak+windowOffset-windowWidth/2d, peak+windowOffset+windowWidth/2d);
     }
 
     public static IsolationWindow fromOffsets(double lowerOffset, double higherOffset) {

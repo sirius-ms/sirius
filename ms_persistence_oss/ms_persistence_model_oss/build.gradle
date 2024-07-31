@@ -19,9 +19,7 @@
  */
 
 dependencies {
-    implementation 'org.xerial:sqlite-jdbc:3.43.0.0'
-    implementation 'org.apache.lucene:lucene-core:9.7.0'
-    implementation group: 'org.apache.commons', name: 'commons-configuration2', version: '2.9.0'
+    implementation "org.apache.commons:commons-configuration2:$commons_configuration_version"
 
 //todo maybe remove and separate dependencies.
     implementation project(':canopus_predict_oss')

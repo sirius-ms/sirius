@@ -23,13 +23,15 @@ package de.unijena.bioinf.projectspace;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 
-import javax.annotation.concurrent.NotThreadSafe;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.function.Consumer;
-@NotThreadSafe
+
+/**
+ * NOT TREAD SAFE
+ */
 public interface ProjectReader extends ProjectIO {
     public <A> A textFile(String relativePath, IOFunctions.IOFunction<BufferedReader, A> func)  throws IOException;
     public <A> A binaryFile(String relativePath, IOFunctions.IOFunction<InputStream, A> func)  throws IOException;

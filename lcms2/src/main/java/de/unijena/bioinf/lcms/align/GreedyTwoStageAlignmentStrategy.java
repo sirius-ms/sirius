@@ -1,6 +1,5 @@
 package de.unijena.bioinf.lcms.align;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.algorithm.Sorting;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;

@@ -37,9 +37,9 @@ import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import gnu.trove.set.hash.TIntHashSet;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -449,7 +449,7 @@ public class Ms2CosineSegmenter {
         return after / (before+after);
     }
 
-    public MergedSpectrum mergeViaClustering(@Nullable  ProcessedSample sample, CosineQuery[] cosines) {
+    public MergedSpectrum mergeViaClustering(@Nullable ProcessedSample sample, CosineQuery[] cosines) {
 
         final double[][] matrix = new double[cosines.length][cosines.length];
         for (int i=0; i < matrix.length; ++i) {

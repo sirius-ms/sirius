@@ -3,13 +3,14 @@ package de.unijena.bioinf.lcms.spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import lombok.Getter;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.io.Serializable;
 import java.util.Optional;
 
 public class Ms2SpectrumHeader extends Ms1SpectrumHeader implements Serializable {
-    @Nullable protected final CollisionEnergy energy;
+    @Nullable
+    protected final CollisionEnergy energy;
 
     @Nullable protected final IsolationWindow isolationWindow;
     @Getter protected final int parentId;

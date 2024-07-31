@@ -20,15 +20,14 @@
 
 package de.unijena.bioinf.model.lcms;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.data.DataSource;
 import de.unijena.bioinf.ChemistryBase.ms.MsInstrumentation;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
+import org.apache.commons.lang3.Range;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.*;
 
 public class LCMSRun implements Annotated<DataAnnotation>, Iterable<Scan>  {
@@ -61,7 +60,7 @@ public class LCMSRun implements Annotated<DataAnnotation>, Iterable<Scan>  {
     }
 
     public Range<Integer> scanRange() {
-        return Range.closed(scans.firstKey(), scans.lastKey());
+        return Range.of(scans.firstKey(), scans.lastKey());
     }
 
     @Deprecated
@@ -127,6 +126,6 @@ public class LCMSRun implements Annotated<DataAnnotation>, Iterable<Scan>  {
     }
 
     public Range<Long> retentionTimeRange() {
-        return Range.closed(scans.firstEntry().getValue().getRetentionTime(), scans.lastEntry().getValue().getRetentionTime());
+        return Range.of(scans.firstEntry().getValue().getRetentionTime(), scans.lastEntry().getValue().getRetentionTime());
     }
 }

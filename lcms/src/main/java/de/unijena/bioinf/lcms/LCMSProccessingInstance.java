@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.lcms;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
@@ -55,6 +54,7 @@ import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.map.hash.TObjectDoubleHashMap;
 import gnu.trove.map.hash.TObjectIntHashMap;
+import org.apache.commons.lang3.Range;
 import org.apache.commons.math3.distribution.LaplaceDistribution;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
@@ -707,7 +707,7 @@ public class LCMSProccessingInstance {
                 internalStatistics.featureFWHM.add(ion.getSegment().fwhm());
                 internalStatistics.featureHeights.add(ion.getSegment().getApexIntensity());
                 final Range<Integer> integerRange = ion.getSegment().calculateFWHM(0.25);
-                internalStatistics.scanPointsPerFeaturesAt25.add(integerRange.upperEndpoint()-integerRange.lowerEndpoint()+1);
+                internalStatistics.scanPointsPerFeaturesAt25.add(integerRange.getMaximum()-integerRange.getMinimum()+1);
                 if (peaks.containsKey(ion.getPeak())) {
                     internalStatistics.segmentsPerPeak.add(ion.getPeak().segments.size());
                 }

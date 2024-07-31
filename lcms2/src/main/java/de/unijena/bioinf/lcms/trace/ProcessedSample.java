@@ -1,6 +1,6 @@
 package de.unijena.bioinf.lcms.trace;
 
-import com.google.common.collect.Range;
+import org.apache.commons.lang3.Range;
 import de.unijena.bioinf.lcms.ScanPointMapping;
 import de.unijena.bioinf.lcms.align.RecalibrationFunction;
 import de.unijena.bioinf.lcms.merge.ScanPointInterpolator;
@@ -57,6 +57,6 @@ public class ProcessedSample {
     }
 
     public Range<Double> getRtSpan() {
-        return Range.closed(mapping.getRetentionTimeAt(0),mapping.getRetentionTimeAt(mapping.length()-1));
+        return Range.of(mapping.getRetentionTimeAt(0),mapping.getRetentionTimeAt(mapping.length()-1));
     }
 }

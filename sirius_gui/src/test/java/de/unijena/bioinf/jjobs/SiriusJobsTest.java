@@ -1,6 +1,6 @@
-package de.unijena.bioinf.ChemistryBase.jobs;
+package de.unijena.bioinf.jjobs;
 
-import de.unijena.bioinf.jjobs.*;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import org.junit.Test;
 
 import javax.swing.*;

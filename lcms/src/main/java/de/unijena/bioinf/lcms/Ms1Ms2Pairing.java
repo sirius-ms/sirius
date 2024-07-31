@@ -368,7 +368,7 @@ public class Ms1Ms2Pairing {
 
     private List<Target> extractTargets(ProcessedSample msms) {
         final List<Target> targets = new ArrayList<>();
-        final long retentionTimeThreshold = 10000;//(long)Math.ceil(msms.run.retentionTimeRange().upperEndpoint()*0.01);
+        final long retentionTimeThreshold = 10000;//(long)Math.ceil(msms.run.retentionTimeRange().getMaximum()*0.01);
         final Ms2CosineSegmenter cosiner = new Ms2CosineSegmenter();
         final MassMap<Scan> map = new MassMap<>(100);
         PriorityQueue<Scan> scans = new PriorityQueue<>(Comparator.comparingDouble(x->-x.getTIC()));

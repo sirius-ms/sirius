@@ -1,6 +1,6 @@
 package de.unijena.bioinf.lcms.traceextractor;
 
-import com.google.common.collect.Range;
+import org.apache.commons.lang3.Range;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -26,11 +26,11 @@ public class AdductAndIsotopeBasedDetectionStrategy implements TraceDetectionStr
 
     protected static final double MZ_ISO_ERRT = 0.002;
     protected static final Range<Double>[] ISO_RANGES = new Range[]{
-            Range.closed(0.99664664 - MZ_ISO_ERRT, 1.00342764 + MZ_ISO_ERRT),
-            Range.closed(1.99653883209004 - MZ_ISO_ERRT, 2.0067426280592295 + MZ_ISO_ERRT),
-            Range.closed(2.9950584 - MZ_ISO_ERRT, 3.00995027 + MZ_ISO_ERRT),
-            Range.closed(3.99359037 - MZ_ISO_ERRT, 4.01300058 + MZ_ISO_ERRT),
-            Range.closed(4.9937908 - MZ_ISO_ERRT, 5.01572941 + MZ_ISO_ERRT)
+            Range.of(0.99664664 - MZ_ISO_ERRT, 1.00342764 + MZ_ISO_ERRT),
+            Range.of(1.99653883209004 - MZ_ISO_ERRT, 2.0067426280592295 + MZ_ISO_ERRT),
+            Range.of(2.9950584 - MZ_ISO_ERRT, 3.00995027 + MZ_ISO_ERRT),
+            Range.of(3.99359037 - MZ_ISO_ERRT, 4.01300058 + MZ_ISO_ERRT),
+            Range.of(4.9937908 - MZ_ISO_ERRT, 5.01572941 + MZ_ISO_ERRT)
     };
 
 
@@ -84,7 +84,7 @@ public class AdductAndIsotopeBasedDetectionStrategy implements TraceDetectionStr
 
     private void detectIsotopes(ProcessedSample sample, Extract callback, SimpleSpectrum spec, int spectrumId, double mz) {
         for (int i=0; i < ISO_RANGES.length; ++i) {
-            int peakId = Spectrums.mostIntensivePeakWithin(spec, ISO_RANGES[i].lowerEndpoint() + mz, ISO_RANGES[i].upperEndpoint() + mz);
+            int peakId = Spectrums.mostIntensivePeakWithin(spec, ISO_RANGES[i].getMinimum() + mz, ISO_RANGES[i].getMaximum() + mz);
             if (peakId>=0) {
                 callback.extract(sample,spectrumId,peakId,spec);
             } else {

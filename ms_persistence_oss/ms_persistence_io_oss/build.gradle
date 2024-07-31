@@ -23,10 +23,5 @@ dependencies {
     api project(':io')
     api project(':document-storage')
 
-    implementation 'one.microstream:microstream-storage-embedded:08.01.01-MS-GA'
-    implementation 'one.microstream:microstream-afs-sql:08.01.01-MS-GA'
-    implementation 'org.xerial:sqlite-jdbc:3.43.0.0'
-    implementation 'org.apache.lucene:lucene-core:9.7.0'
-
     implementation "org.glassfish.jaxb:jaxb-runtime:$jaxb_version"
 }

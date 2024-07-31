@@ -26,7 +26,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nonnull;
 import java.net.URI;
 import java.util.Objects;
 import java.util.Optional;
@@ -50,7 +49,7 @@ public final class MsDataSourceReference {
     @JsonProperty @Nullable protected final String fileName;
     @JsonIgnore @Nullable protected final URI sourceLocation;
 
-    @Nonnull  private final int hashcode;
+    private final int hashcode;
 
     public MsDataSourceReference(@Nullable URI sourceLocation, @Nullable String fileName, @Nullable String lcmsRunId, @Nullable String mzmlId) {
         this.runId = lcmsRunId;

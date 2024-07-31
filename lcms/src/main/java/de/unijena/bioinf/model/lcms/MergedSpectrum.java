@@ -20,12 +20,12 @@
 
 package de.unijena.bioinf.model.lcms;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.*;
 import de.unijena.bioinf.lcms.quality.Quality;
+import org.apache.commons.lang3.Range;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -107,7 +107,7 @@ public final class MergedSpectrum extends PeaklistSpectrum<MergedPeak> implement
 
     public double totalTic() {
         if (Double.isFinite(tic)) return tic;
-        tic = Spectrums.calculateTIC(this, Range.closed(0d,precursor.getMass()-20), noiseLevel);
+        tic = Spectrums.calculateTIC(this, Range.of(0d, precursor.getMass() - 20), noiseLevel);
         return tic;
     }
 

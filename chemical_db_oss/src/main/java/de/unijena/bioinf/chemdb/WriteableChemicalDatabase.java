@@ -20,7 +20,8 @@
 
 package de.unijena.bioinf.chemdb;
 
-import javax.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.IOException;
 import java.util.function.Consumer;
 

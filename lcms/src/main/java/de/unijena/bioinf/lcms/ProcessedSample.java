@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.lcms;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.math.RealDistribution;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
@@ -38,6 +37,7 @@ import de.unijena.bioinf.model.lcms.Scan;
 import de.unijena.bioinf.ms.annotations.Annotated;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import gnu.trove.list.array.TDoubleArrayList;
+import org.apache.commons.lang3.Range;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.function.Identity;
 import org.slf4j.LoggerFactory;
@@ -303,7 +303,7 @@ public class ProcessedSample implements Annotated<DataAnnotation> {
                 break;
             }
         }
-        if (b == null) b = run.getScanByNumber(run.scanRange().upperEndpoint()).get();
+        if (b == null) b = run.getScanByNumber(run.scanRange().getMaximum()).get();
         return run.getScans(a.getIndex(), b.getIndex());
     }
     public NavigableMap<Integer,Scan> findScansByRecalibratedRT(Range<Double> rt) {
@@ -319,7 +319,7 @@ public class ProcessedSample implements Annotated<DataAnnotation> {
             }
         }
         if (a==null) return new TreeMap<>();
-        if (b == null) b = run.getScanByNumber(run.scanRange().upperEndpoint()).get();
+        if (b == null) b = run.getScanByNumber(run.scanRange().getMaximum()).get();
         return run.getScans(a.getIndex(), b.getIndex());
     }
 /*
@@ -335,9 +335,9 @@ public class ProcessedSample implements Annotated<DataAnnotation> {
                 break;
             }
         }
-        if (b == null) b = run.getScanByNumber(run.scanRange().upperEndpoint()).get();
+        if (b == null) b = run.getScanByNumber(run.scanRange().getMaximum()).get();
         if (a==null)
-            return run.getScansAfter(run.scanRange().upperEndpoint());
+            return run.getScansAfter(run.scanRange().getMaximum());
         return run.getScans(a.getScanNumber(), b.getScanNumber());
     }
 

@@ -21,13 +21,12 @@
 
 package de.unijena.bioinf.ChemistryBase.chem;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.utils.*;
 import de.unijena.bioinf.ChemistryBase.exceptions.MultimereException;
 import de.unijena.bioinf.ChemistryBase.exceptions.MultipleChargeException;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.apache.commons.lang3.Range;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -450,7 +449,7 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
                 .filter((ion) -> ion.getAtoms().atomCount() < 0).toArray(IonMode[]::new);
 
 
-        for (MolecularFormula possibleNewIonType : Lists.reverse(possibleNewIonTypes)) {
+        for (MolecularFormula possibleNewIonType : possibleNewIonTypes.reversed()) {
 
             if (adducts.contains(possibleNewIonType)) {
                 // search for adduct containing this ion
@@ -1185,7 +1184,7 @@ public final class PeriodicTable implements Iterable<Element>, Cloneable {
         }
         final double a = monomz + peakOffset + minmz;
         final double b = monomz + peakOffset + maxmz;
-        return Range.closed(a - deviation.absoluteFor(a), b + deviation.absoluteFor(b));
+        return Range.of(a - deviation.absoluteFor(a), b + deviation.absoluteFor(b));
     }
 
     /**

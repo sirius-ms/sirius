@@ -23,14 +23,12 @@ package de.unijena.bioinf.ChemistryBase.ms.lcms;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.collect.Iterators;
+import jakarta.annotation.Nonnull;
 import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /**
  * A compound has traces of adducts and in-source fragments
@@ -38,7 +36,8 @@ import java.util.function.Consumer;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class CompoundTrace extends IonTrace implements Iterable<IonTrace> {
 
-    @Nonnull @JsonProperty protected final IonTrace[] adducts;
+    @Nonnull
+    @JsonProperty protected final IonTrace[] adducts;
     @Nonnull @JsonProperty protected final IonTrace[] inSourceFragments;
 
     @JsonCreator
@@ -61,7 +60,7 @@ public class CompoundTrace extends IonTrace implements Iterable<IonTrace> {
     @NotNull
     @Override
     public Iterator<IonTrace> iterator() {
-        return Iterators.concat(Collections.singleton(this).iterator(), Arrays.asList(adducts).iterator(),Arrays.asList(inSourceFragments).iterator());
+        return Stream.concat(Stream.of(this), Stream.concat(Stream.of(adducts), Stream.of(inSourceFragments))).iterator();
     }
 
     @Override

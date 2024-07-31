@@ -23,7 +23,6 @@ package de.unijena.bioinf.babelms.cef;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation;
-import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.Parser;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
@@ -51,7 +50,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.net.URI;
-import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -99,8 +97,7 @@ public class AgilentCefCompoundParser implements Parser<de.unijena.bioinf.ms.per
                 if (secondChoice != null)
                     secondChoice.close();
             } else {
-                //todo how to handle charset.
-                currentStream = new ReaderInputStream(secondChoice, Charset.defaultCharset());
+                currentStream = ReaderInputStream.builder().setReader(secondChoice).get();
             }
             initXmlParser();
         }

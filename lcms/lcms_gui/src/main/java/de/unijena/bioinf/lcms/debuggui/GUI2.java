@@ -1,6 +1,5 @@
 package de.unijena.bioinf.lcms.debuggui;
 
-import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.exceptions.InvalidInputData;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
@@ -183,7 +182,9 @@ public class GUI2 extends JFrame implements KeyListener, ClipboardOwner {
                         final Set<PrecursorIonType> ionTypes = f.getPossibleAdductTypes();
                         if (!ionTypes.isEmpty()) {
                             ParameterConfig parameterConfig = PropertyManager.DEFAULTS.newIndependentInstance("LCMS-" + experiment.getName());
-                            parameterConfig.changeConfig("AdductSettings.enforced", Joiner.on(',').join(ionTypes));
+                            parameterConfig.changeConfig("AdductSettings.enforced", ionTypes.stream()
+                                    .map(PrecursorIonType::toString)
+                                    .collect(Collectors.joining(",")));
                             final InputFileConfig config = new InputFileConfig(parameterConfig);
                             experiment.setAnnotation(InputFileConfig.class, config);
                         }

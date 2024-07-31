@@ -20,12 +20,12 @@
 
 package de.unijena.bioinf.fingerid.fingerprints;
 
-import com.google.common.collect.ComparisonChain;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
+import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
@@ -247,8 +247,17 @@ public class SphericalFingerprint extends AbstractFingerprinter implements IFing
         }
 
         @Override
-        public int compareTo(AtomLabel o) {
-            return ComparisonChain.start().compare(distance,o.distance).compare(elementId, o.elementId).compare(degree, o.degree).compare(numberOfHydrogens, o.numberOfHydrogens).compare(hasTrippleBond, o.hasTrippleBond).compare(hasDoubleBond,o.hasDoubleBond).compare(hasAromaticBond,o.hasAromaticBond).compare(isInRing,o.isInRing).compare(isAromatic,o.isAromatic).result();
+        public int compareTo(@NotNull AtomLabel o) {
+            return Comparator.comparing(l -> ((AtomLabel)l).distance)
+                    .thenComparing(l -> ((AtomLabel)l).elementId)
+                    .thenComparing(l -> ((AtomLabel)l).degree)
+                    .thenComparing(l -> ((AtomLabel)l).numberOfHydrogens)
+                    .thenComparing(l -> ((AtomLabel)l).hasTrippleBond)
+                    .thenComparing(l -> ((AtomLabel)l).hasDoubleBond)
+                    .thenComparing(l -> ((AtomLabel)l).hasAromaticBond)
+                    .thenComparing(l -> ((AtomLabel)l).isInRing)
+                    .thenComparing(l -> ((AtomLabel)l).isAromatic)
+                    .compare(this, o);
         }
 
         private final static String ERRORMSG = "given string is no valid atom descriptor";

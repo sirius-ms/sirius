@@ -1,10 +1,9 @@
 package de.unijena.bioinf.lcms.adducts;
 
-import com.google.common.collect.Range;
+import org.apache.commons.lang3.Range;
 import de.unijena.bioinf.ChemistryBase.algorithm.BinarySearch;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
@@ -22,9 +21,7 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.CorrelatedIonPair;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
 import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
-import de.unijena.bioinf.sirius.Sirius;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
-import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 
 import java.util.*;
@@ -73,7 +70,7 @@ public class AdductNetwork {
                     final AdductNode rightNode = rtOrderedNodes[r];
                     final double thresholdStart = Math.min(rtOrderedNodes[r].getFeature().getRetentionTime().getMiddleTime() - retentionTimeTolerance, rtOrderedNodes[r].getFeature().getRetentionTime().getStartTime());
                     final double thresholdEnd = Math.max(rtOrderedNodes[r].getFeature().getRetentionTime().getMiddleTime() + retentionTimeTolerance, rtOrderedNodes[r].getFeature().getRetentionTime().getEndTime());
-                    final Range<Double> threshold = Range.closed(thresholdStart, thresholdEnd);
+                    final Range<Double> threshold = Range.of(thresholdStart, thresholdEnd);
 
                     // obtain potential fragment peaks
                     List<MergedMSnSpectrum> ms2Right = provider.getMs2SpectraOf(rightNode.getFeatures());
@@ -104,7 +101,7 @@ public class AdductNetwork {
                             RetentionTime rt = leftNode.getFeature().getRetentionTime();
                             final double thresholdStart2 = Math.min(rt.getStartTime(),  rt.getMiddleTime() - retentionTimeTolerance);
                             final double thresholdEnd2 = Math.max(rt.getEndTime(), rt.getMiddleTime() + retentionTimeTolerance);
-                            final Range<Double> threshold2 = Range.closed(thresholdStart2, thresholdEnd2);
+                            final Range<Double> threshold2 = Range.of(thresholdStart2, thresholdEnd2);
                             if (rightNode.getMass() > leftNode.getMass() && Math.abs(rightNode.getRetentionTime() - leftNode.getRetentionTime()) < retentionTimeTolerance &&  threshold2.contains(rightNode.getRetentionTime())) {
                                 final double massDelta = rightNode.getMass() - leftNode.getMass();
                                 List<KnownMassDelta> knownMassDeltas = adductManager.retrieveMassDeltas(massDelta, deviation);

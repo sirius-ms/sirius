@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.sirius.plugins;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.algorithm.Called;
 import de.unijena.bioinf.ChemistryBase.algorithm.ParameterHelper;
 import de.unijena.bioinf.ChemistryBase.chem.*;
@@ -46,6 +45,7 @@ import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.ProcessedPeak;
 import de.unijena.bioinf.sirius.deisotope.TargetedIsotopePatternDetection;
 import gnu.trove.map.hash.TIntIntHashMap;
+import org.apache.commons.lang3.Range;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -558,8 +558,8 @@ public class IsotopePatternInMs2Plugin extends SiriusPlugin {
                     ++isotopeIndex;
 
                     final Range<Double> nextMz = T.getIsotopicMassWindow(alphabet, allowedDev, targetMz, isotopeIndex);
-                    from = nextMz.lowerEndpoint() - abs;
-                    to = nextMz.upperEndpoint() + abs;
+                    from = nextMz.getMinimum() - abs;
+                    to = nextMz.getMaximum() + abs;
                     if (mz >= from && mz < to) {
                         merge.addPeak(mz, buf.getIntensityAt(peakIndex));
                     } else if (mz > to) break;

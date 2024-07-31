@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.lcms;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
@@ -41,6 +40,7 @@ import de.unijena.bionf.spectral_alignment.CosineQueryUtils;
 import de.unijena.bionf.spectral_alignment.IntensityWeightedSpectralAlignment;
 import gnu.trove.list.TDoubleList;
 import gnu.trove.list.array.TDoubleArrayList;
+import org.apache.commons.lang3.Range;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
@@ -72,10 +72,10 @@ public class Ms1Remapping {
                 jobs.add(globalJobManager.submitJob(new BasicJJob<Object>() {
                     @Override
                     protected Object compute() throws Exception {
-                        final NavigableMap<Integer, Scan> scansByRT = sample.findScansByRT(Range.closed(retentionTimes[I] - allowedDeviations[I], retentionTimes[I] + allowedDeviations[I]));
+                        final NavigableMap<Integer, Scan> scansByRT = sample.findScansByRT(Range.of(retentionTimes[I] - allowedDeviations[I], retentionTimes[I] + allowedDeviations[I]));
                         if (scansByRT.isEmpty()) return null;
                         int bestRt = scansByRT.values().stream().min(Comparator.comparingDouble(x->Math.abs(x.getRetentionTime()-retentionTimes[I]))).get().getIndex();
-                        final Optional<ChromatographicPeak> detect = sample.builder.detectFirst(Range.closed(scansByRT.firstEntry().getKey(), scansByRT.lastEntry().getKey()), bestRt, mzs[I]);
+                        final Optional<ChromatographicPeak> detect = sample.builder.detectFirst(Range.of(scansByRT.firstEntry().getKey(), scansByRT.lastEntry().getKey()), bestRt, mzs[I]);
                         if (detect.isPresent()) {
                             final ChromatographicPeak peak = detect.get();
                             Optional<ChromatographicPeak.Segment> s = peak.getSegmentForScanId(peak.getScanNumberAt(peak.findClosestIndexByRt(retentionTimes[I])));

@@ -20,10 +20,10 @@
 
 package de.unijena.bioinf.lcms.peakshape;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.model.lcms.ChromatographicPeak;
+import org.apache.commons.lang3.Range;
 
 public class GaussianFitting implements PeakShapeFitting<GaussianShape> {
     @Override
@@ -31,19 +31,18 @@ public class GaussianFitting implements PeakShapeFitting<GaussianShape> {
         // simple maximum likelihood estimator
         double mean = 0d; // use apex as mean
         double std = 0d;
-        final int apex = segment.getApexIndex();
         double totalInt = 0d, maxIntensity = 0d;
         final Range<Integer> integerRange = segment.calculateFWHM(0.25);
-        long rtA = peak.getRetentionTimeAt(integerRange.lowerEndpoint()), rtB = peak.getRetentionTimeAt(integerRange.upperEndpoint());
+        long rtA = peak.getRetentionTimeAt(integerRange.getMinimum()), rtB = peak.getRetentionTimeAt(integerRange.getMaximum());
 
-        for (int k=integerRange.lowerEndpoint(); k <= integerRange.upperEndpoint(); ++k) {
+        for (int k=integerRange.getMinimum(); k <= integerRange.getMaximum(); ++k) {
             final double intensity = peak.getIntensityAt(k);
             mean += peak.getRetentionTimeAt(k) * intensity;
             totalInt += intensity;
             maxIntensity = Math.max(intensity, maxIntensity);
         }
         mean /= totalInt;
-        for (int k=integerRange.lowerEndpoint(); k <= integerRange.upperEndpoint(); ++k) {
+        for (int k=integerRange.getMinimum(); k <= integerRange.getMaximum(); ++k) {
             final double intensity = peak.getIntensityAt(k);
             double diffFromMean = peak.getRetentionTimeAt(k) - mean;
             std += (diffFromMean*diffFromMean)*intensity;
@@ -53,9 +52,9 @@ public class GaussianFitting implements PeakShapeFitting<GaussianShape> {
         // now calculate score as absolute difference between integrals of the function
         final NormalDistribution distribution = new NormalDistribution(mean, std*std);
         double error = 0d;
-        double deltaRt = peak.getRetentionTimeAt(integerRange.upperEndpoint())-peak.getRetentionTimeAt(integerRange.lowerEndpoint());
+        double deltaRt = peak.getRetentionTimeAt(integerRange.getMaximum())-peak.getRetentionTimeAt(integerRange.getMinimum());
         double nonMonotonicIntensity = 0d;
-        for (int k=integerRange.lowerEndpoint(); k < integerRange.upperEndpoint(); ++k) {
+        for (int k=integerRange.getMinimum(); k < integerRange.getMaximum(); ++k) {
             final double r = peak.getRetentionTimeAt(k);
             final double expectedIntensity = distribution.getDensity(r)/distribution.getDensity(mean);
             final double measuredIntensity = peak.getIntensityAt(k)/maxIntensity;

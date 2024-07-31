@@ -31,12 +31,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.concurrent.ThreadSafe;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.Closeable;
 
-@ThreadSafe
+/**
+ * THREAD SAFE
+ */
 public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCloseable {
 
     private final NightSkyClient siriusClient;

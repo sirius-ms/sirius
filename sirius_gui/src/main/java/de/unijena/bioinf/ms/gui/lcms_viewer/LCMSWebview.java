@@ -1,8 +1,6 @@
 package de.unijena.bioinf.ms.gui.lcms_viewer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.utils.FxTaskList;
 import de.unijena.bioinf.ms.nightsky.sdk.model.TraceSet;
@@ -10,9 +8,11 @@ import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;
 import javafx.scene.web.WebView;
+import lombok.SneakyThrows;
 import netscape.javascript.JSObject;
 
-import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -110,30 +110,20 @@ public class LCMSWebview extends JFXPanel {
         taskList.runJFXLater(()->functor.accept(lcmsViewer));
     }
 
+    @SneakyThrows
     private String getHTMLContent() {
-        try {
-            return Resources.toString(LCMSWebview.class.getResource(
-                    "/js/lcms_viewer/index.html"
-            ), Charsets.UTF_8);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return Files.readString(Paths.get(LCMSWebview.class.getResource("/js/lcms_viewer/index.html").toURI()));
     }
 
+    @SneakyThrows
     private String loadJs() {
-        try {
-            return Resources.toString(LCMSWebview.class.getResource(
-                    "/js/lcms_viewer/d3.v7.min.js"
-            ), Charsets.UTF_8) + "\n" + Resources.toString(LCMSWebview.class.getResource(
-                    "/js/lcms_viewer/lcms.js"
-            ), Charsets.UTF_8);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        return Files.readString(Paths.get(LCMSWebview.class.getResource("/js/lcms_viewer/d3.v7.min.js").toURI()))
+                + "\n" +
+                Files.readString(Paths.get(LCMSWebview.class.getResource("/js/lcms_viewer/lcms.js").toURI()));
     }
 
     public void reset() {
-        lcmsView(f->{
+        lcmsView(f -> {
             try {
                 f.call("clear");
             } catch (Throwable e) {
@@ -146,13 +136,15 @@ public class LCMSWebview extends JFXPanel {
     public static class Console {
 
         public void log(Object msg) {
-            System.err.println(Objects.toString(msg));
+            System.err.println(msg);
         }
+
         public void log(String msg) {
             System.err.println(msg);
         }
+
         public void log(JSObject msg) {
-            System.err.println(String.valueOf(msg));
+            System.err.println(msg);
         }
 
     }

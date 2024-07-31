@@ -22,7 +22,6 @@ package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 import com.fasterxml.jackson.core.JsonEncoding;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.MappingJsonFactory;
-import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.exceptions.InvalidInputData;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.*;
@@ -150,7 +149,7 @@ public class LcmsAlignSubToolJobSiriusPs extends PreprocessingJob<ProjectSpaceMa
                         final int c = counter.incrementAndGet();
                         LcmsAlignSubToolJobSiriusPs.this.updateProgress(0, files.size(), c, "Parse LC/MS runs");
                         if (!align) {
-                            Iterator<FragmentedIon> ions = Iterators.filter(sample.ions.iterator(), i -> i != null && Math.abs(i.getChargeState()) <= 1 && i.getMsMsQuality().betterThan(Quality.BAD));
+                            Iterator<FragmentedIon> ions = sample.ions.stream().filter(i -> i != null && Math.abs(i.getChargeState()) <= 1 && i.getMsMsQuality().betterThan(Quality.BAD)).iterator();
                             while (ions.hasNext()) {
                                 final FragmentedIon ion = ions.next();
                                 AdductResolver.resolve(i, ion);

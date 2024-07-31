@@ -21,7 +21,8 @@
 package de.unijena.bioinf.ms;
 
 
-import com.google.common.collect.Range;
+import de.unijena.bioinf.ChemistryBase.utils.RangeUtils;
+import org.apache.commons.lang3.Range;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
@@ -276,25 +277,25 @@ class LcmsAlignTest {
 
                 boolean apexCovered = matches.stream().anyMatch(f -> f.rtstart <= feature.rtApex && feature.rtApex <= f.rtend);
 
-                Range<Double> rtNoFilter = Range.closed(feature.rtstart, feature.rtend);
+                Range<Double> rtNoFilter = Range.of(feature.rtstart, feature.rtend);
                 Deque<Range<Double>> intersections = new ArrayDeque<>(
                         matches.stream()
-                                .map(f -> Range.closed(f.rtstart, f.rtend).intersection(rtNoFilter))
-                                .sorted(Comparator.comparingDouble(Range::lowerEndpoint))
+                                .map(f -> Range.of(f.rtstart, f.rtend).intersectionWith(rtNoFilter))
+                                .sorted(Comparator.comparingDouble(Range::getMinimum))
                                 .toList());
                 double coverage = 0;
                 if (!intersections.isEmpty()) {
                     double covered = 0;
                     Range<Double> current = intersections.pollFirst();
                     while (!intersections.isEmpty()) {
-                        if (intersections.peekFirst().isConnected(current)) {
-                            current = current.span(intersections.pollFirst());
+                        if (intersections.peekFirst().isOverlappedBy(current)) {
+                            current = RangeUtils.span(current, intersections.pollFirst());
                         } else {
-                            covered += current.upperEndpoint() - current.lowerEndpoint();
+                            covered += current.getMaximum() - current.getMinimum();
                             current = intersections.pollFirst();
                         }
                     }
-                    covered += current.upperEndpoint() - current.lowerEndpoint();
+                    covered += current.getMaximum() - current.getMinimum();
                     if (covered > 0) {
                         coverage = (feature.rtend - feature.rtstart) / covered;
                     }

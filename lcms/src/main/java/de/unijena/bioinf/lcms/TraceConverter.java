@@ -20,17 +20,19 @@
 
 package de.unijena.bioinf.lcms;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.*;
 import de.unijena.bioinf.model.lcms.*;
 import gnu.trove.list.array.TFloatArrayList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.list.array.TLongArrayList;
+import org.apache.commons.lang3.Range;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static de.unijena.bioinf.ChemistryBase.utils.RangeUtils.span;
 
 /**
  * converts traces in the lcms module to the trace format in ChemistryBase API
@@ -78,11 +80,11 @@ class TraceConverter {
             final TIntArrayList scanids = new TIntArrayList();
             final TLongArrayList rets = new TLongArrayList();
             final TFloatArrayList levels = new TFloatArrayList();
-            for (Scan scan : sample.run.getScans(background.lowerEndpoint(), background.upperEndpoint()).values()) {
+            for (Scan scan : sample.run.getScans(background.getMinimum(), background.getMaximum()).values()) {
                 if (!scan.isMsMs()) {
                     scanids.add(scan.getIndex());
                     rets.add(scan.getRetentionTime());
-                    levels.add((float)sample.ms1NoiseModel.getNoiseLevel(scan.getIndex(),mainIon.getMass()));
+                    levels.add((float) sample.ms1NoiseModel.getNoiseLevel(scan.getIndex(), mainIon.getMass()));
                 }
             }
             scanIds = scanids.toArray();
@@ -122,6 +124,7 @@ class TraceConverter {
         }
         return scoring;
     }
+
     private double[] correlationScoring(FragmentedIon mainIon) {
         double[] scoring = new double[mainIon.getIsotopes().size()+1];
         scoring[0] = 1d;
@@ -219,13 +222,14 @@ class TraceConverter {
     }
 
     private Range<Integer> extendRangeForBackground(FragmentedIon mainIon, Range<Integer> range) {
-        int width = mainIon.getSegment().getEndIndex()-mainIon.getSegment().getStartIndex();
-        int extension = Math.max(width/2, 5);
-        return Range.closed(
-            mainIon.getPeak().getScanNumberAt(Math.max(mainIon.getSegment().getStartIndex()-extension, 0)),
-                mainIon.getPeak().getScanNumberAt(Math.min(mainIon.getSegment().getEndIndex()+extension, mainIon.getPeak().numberOfScans()-1))
-        ).span(range);
+        int width = mainIon.getSegment().getEndIndex() - mainIon.getSegment().getStartIndex();
+        int extension = Math.max(width / 2, 5);
+        return span(Range.of(
+                mainIon.getPeak().getScanNumberAt(Math.max(mainIon.getSegment().getStartIndex() - extension, 0)),
+                mainIon.getPeak().getScanNumberAt(Math.min(mainIon.getSegment().getEndIndex() + extension, mainIon.getPeak().numberOfScans() - 1))
+        ), range);
     }
+
 
     private Range<Integer> getCommonRange(ArrayList<ChromatographicPeak.Segment> segments) {
         int mindex=Integer.MAX_VALUE,maxdex=Integer.MIN_VALUE;
@@ -233,7 +237,7 @@ class TraceConverter {
             mindex = Math.min(mindex,s.getStartScanNumber());
             maxdex = Math.max(maxdex,s.getEndScanNumber());
         }
-        return Range.closed(mindex,maxdex);
+        return Range.of(mindex, maxdex);
     }
 
     public CoelutingTraceSet asLCMSSubtrace() {

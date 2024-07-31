@@ -20,12 +20,9 @@
 
 package de.unijena.bioinf.babelms.descriptor;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 
 /**
  *
@@ -80,16 +77,16 @@ public class DescriptorRegistry {
     private static class DescriptorMap {
 
         private HashMap<Class, Descriptor<DataAnnotation>> hashmap;
-        private Multimap<String, Descriptor<DataAnnotation>> keywordMap;
+        private Map<String, List<Descriptor<DataAnnotation>>> keywordMap;
 
         public DescriptorMap() {
-            this.hashmap = new HashMap<Class, Descriptor<DataAnnotation>>();
-            this.keywordMap = ArrayListMultimap.create(16, 4);
+            this.hashmap = new HashMap<>();
+            this.keywordMap = new HashMap<>(16);
         }
 
         private <Annotation extends DataAnnotation> void put(Class<Annotation> key, Descriptor<Annotation> descriptor, String[] keywords) {
             hashmap.put(key, (Descriptor<DataAnnotation>)descriptor);
-            for (String s : keywords) keywordMap.put(s, (Descriptor<DataAnnotation>)descriptor);
+            for (String s : keywords) keywordMap.computeIfAbsent(s, k -> new ArrayList<>(4)).add((Descriptor<DataAnnotation>)descriptor);
         }
 
         private <Annotation extends DataAnnotation> Descriptor<Annotation> get(Class<Annotation> annotationClass) {
@@ -97,9 +94,10 @@ public class DescriptorRegistry {
         }
 
         private Descriptor[] getByKeyword(String[] keywords) {
-            final HashSet<Descriptor> descriptors = new HashSet<Descriptor>();
+            final HashSet<Descriptor> descriptors = new HashSet<>();
             for (String k : keywords) {
-                descriptors.addAll(keywordMap.get(k));
+                if (keywordMap.containsKey(k))
+                    descriptors.addAll(keywordMap.get(k));
             }
             return descriptors.toArray(new Descriptor[descriptors.size()]);
         }

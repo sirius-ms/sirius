@@ -1,8 +1,8 @@
 package de.unijena.bioinf.lcms.spectrum;
 
 import lombok.Getter;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.io.Serializable;
 
 public class Ms1SpectrumHeader implements Serializable {

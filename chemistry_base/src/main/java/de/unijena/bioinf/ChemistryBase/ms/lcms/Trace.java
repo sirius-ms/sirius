@@ -23,8 +23,8 @@ package de.unijena.bioinf.ChemistryBase.ms.lcms;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.annotation.Nonnull;
 
-import javax.annotation.Nonnull;
 
 public final class Trace {
     /**

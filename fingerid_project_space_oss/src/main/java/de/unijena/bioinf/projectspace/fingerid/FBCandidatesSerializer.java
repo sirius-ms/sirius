@@ -145,7 +145,7 @@ public class FBCandidatesSerializer implements ComponentSerializer<FormulaResult
             row[6] = c.getSmiles();
             row[7] = Double.isNaN(c.getXlogp()) ? "N/A" : String.valueOf(c.getXlogp());
             row[8] = c.getPubmedIDs() != null ? c.getPubmedIDs().toString() : "";
-            row[9] = c.getLinkedDatabases().asMap().entrySet().stream().map((k) -> k.getValue().isEmpty() ? k.getKey() : k.getKey() + ":(" + String.join(", ", k.getValue()) + ")").collect(Collectors.joining("; "));
+            row[9] = c.getLinkedDatabases().entrySet().stream().map((k) -> k.getValue().isEmpty() ? k.getKey() : k.getKey() + ":(" + String.join(", ", k.getValue()) + ")").collect(Collectors.joining("; "));
             row[10] = c.getTanimoto() == null ? "N/A" : String.valueOf(c.getTanimoto());
             row[11] = c.getMcesToTopHit() == null ? "N/A": String.valueOf(c.getMcesToTopHit());
             row[12] = String.valueOf(CustomDataSources.removeCustomSourceFromFlag(c.getBitset())); //We remove custom db bits since they are only valid ad runtime and user dependent.

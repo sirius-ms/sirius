@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.spectraldb;
 
-import com.google.common.collect.Streams;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Spectrum;
@@ -81,46 +80,52 @@ public class SpectraMatchingJJob extends BasicMasterJJob<SpectralSearchResult> {
         if (jobs.isEmpty())
             return null;
 
-        Stream<SpectralSearchResult.SearchResult> results = jobs.stream()
+        List<SpectralSearchResult.SearchResult> results = jobs.stream()
                 .flatMap(j -> extractResults(j, references))
                 .sorted((a, b) -> {
                     if (Math.abs(a.getSimilarity().similarity - b.getSimilarity().similarity) < 1E-3) {
                         return Integer.compare(b.getSimilarity().sharedPeaks, a.getSimilarity().sharedPeaks);
                     }
                     return Double.compare(b.getSimilarity().similarity, a.getSimilarity().similarity);
-                });
+                }).toList();
 
-        SpectralSearchResult searchResults = SpectralSearchResult.builder()
+        {
+            int rank = 1;
+            for (SpectralSearchResult.SearchResult r : results)
+                r.setRank(rank++);
+        }
+
+        return SpectralSearchResult.builder()
                 .precursorDeviation(precursorDev)
                 .peakDeviation(peakDev)
                 .alignmentType(alignmentType)
-                .results(Streams.mapWithIndex(results, (r, index) -> {
-                    r.setRank((int) index + 1);
-                    return r;
-                }).toList())
+                .results(results)
                 .build();
-
-        return searchResults;
     }
 
     public static List<CosineQuerySpectrum> getCosineQueries(CosineQueryUtils utils, Deviation peakDev, double precursorMz, List<Ms2Spectrum<Peak>> queries) {
-        return Streams.mapWithIndex(queries.stream(), (q, index) -> {
+        List<CosineQuerySpectrum> r = new ArrayList<>(queries.size());
+        int index = 0;
+        for (Ms2Spectrum<Peak> q : queries) {
             CosineQuerySpectrum qs = utils.createQueryWithIntensityTransformation(
                     Spectrums.mergePeaksWithinSpectrum(Spectrums.getMassOrderedSpectrum(q), peakDev, true, false),
                     precursorMz, true);
-            qs.setIndex((int) index);
-            return qs;
-        }).toList();
+            qs.setIndex(index++);
+            r.add(qs);
+        }
+        return r;
     }
 
     public List<SpectralMatchMasterJJob> getAlignmentJJobs(CosineQueryUtils utils, List<CosineQuerySpectrum> queries, List<Ms2ReferenceSpectrum> references) {
-        List<CosineQuerySpectrum> referenceQueries = Streams.mapWithIndex(references.stream(), (r, index) -> {
+        List<CosineQuerySpectrum> referenceQueries = new ArrayList<>(references.size());
+        int index = 0;
+        for (Ms2ReferenceSpectrum r : references) {
             CosineQuerySpectrum q = utils.createQueryWithIntensityTransformation(
                     Spectrums.mergePeaksWithinSpectrum(Spectrums.getMassOrderedSpectrum(r.getSpectrum()), peakDev, true, false), precursorMz, true);
             r.setSpectrum(null);
-            q.setIndex((int) index);
-            return q;
-        }).toList();
+            q.setIndex(index++);
+            referenceQueries.add(q);
+        }
 
         return queries.stream().map(query -> {
             List<Pair<CosineQuerySpectrum, CosineQuerySpectrum>> pairs = referenceQueries.stream()

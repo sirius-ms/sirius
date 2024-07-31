@@ -23,11 +23,11 @@ package de.unijena.bioinf.ChemistryBase.fp;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.google.common.base.Joiner;
 
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ProbabilityFingerprint extends AbstractFingerprint {
 
@@ -70,7 +70,7 @@ public class ProbabilityFingerprint extends AbstractFingerprint {
 
     @Override
     public String toTabSeparatedString() {
-        return Joiner.on('\t').join(this);
+        return stream().map(FPIter::toString).collect(Collectors.joining("\t"));
     }
 
     @Override

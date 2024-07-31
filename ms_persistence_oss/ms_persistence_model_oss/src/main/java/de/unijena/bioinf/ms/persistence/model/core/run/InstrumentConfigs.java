@@ -23,7 +23,7 @@ package de.unijena.bioinf.ms.persistence.model.core.run;
 import de.unijena.bioinf.babelms.utils.CSVParser;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nonnull;
+import jakarta.annotation.Nonnull;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;

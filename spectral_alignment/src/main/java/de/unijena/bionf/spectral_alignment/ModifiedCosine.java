@@ -8,15 +8,14 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import lombok.Builder;
 import lombok.Getter;
 
-import javax.annotation.concurrent.ThreadSafe;
 import java.util.Arrays;
 import java.util.BitSet;
 
 /**
  * This algorithm requires that there is at most one pair of peaks (u,v) where the m/z of u
  * and v are within the allowed mass tolerance.
+ * TREAD-SAFE
  */
-@ThreadSafe
 public class ModifiedCosine extends AbstractSpectralMatching {
 
     public ModifiedCosine(Deviation deviation) {

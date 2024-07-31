@@ -20,9 +20,7 @@
 
 package de.unijena.bioinf.fingerid.blast.parameters;
 
-import com.google.common.math.Stats;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
-import de.unijena.bioinf.ChemistryBase.fp.PredictionPerformance;
 import de.unijena.bioinf.ChemistryBase.fp.ProbabilityFingerprint;
 
 import java.util.Collection;
