@@ -1,12 +1,12 @@
 package de.unijena.bioinf.lcms.utils;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.isotopes.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
+import org.apache.commons.lang3.Range;
 
 import java.util.List;
 
@@ -138,9 +138,9 @@ public class MultipleCharges {
 
     public static boolean noisySpectrum(SimpleSpectrum spec) {
         Range<Double> intSpan = Spectrums.getIntensityRange(spec);
-        if (intSpan.upperEndpoint() / intSpan.lowerEndpoint() < 10) return true;
+        if (intSpan.getMaximum() / intSpan.getMinimum() < 10) return true;
         int numberOfPeaks = 0;
-        final double threshold = Math.max(intSpan.upperEndpoint()*0.05, intSpan.lowerEndpoint()*5);
+        final double threshold = Math.max(intSpan.getMaximum()*0.05, intSpan.getMinimum()*5);
         for (int k=0; k < spec.size(); ++k) {
             if (spec.getIntensityAt(k)>=threshold) {
                 if (++numberOfPeaks >= 3) return false;

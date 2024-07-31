@@ -20,10 +20,10 @@
 
 package de.unijena.bioinf.lcms.peakshape;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.math.NormalDistribution;
 import de.unijena.bioinf.lcms.ProcessedSample;
 import de.unijena.bioinf.model.lcms.ChromatographicPeak;
+import org.apache.commons.lang3.Range;
 import org.apache.commons.math3.distribution.LaplaceDistribution;
 
 public class LaplaceFitting implements PeakShapeFitting<LaplaceShape> {
@@ -34,8 +34,8 @@ public class LaplaceFitting implements PeakShapeFitting<LaplaceShape> {
         final int apex = segment.getApexIndex();
         double totalInt = 0d, maxIntensity = 0d;
         final Range<Integer> integerRange = segment.calculateFWHM(0.25);
-        long rtA = peak.getRetentionTimeAt(integerRange.lowerEndpoint()), rtB = peak.getRetentionTimeAt(integerRange.upperEndpoint());
-        for (int k=integerRange.lowerEndpoint(); k <= integerRange.upperEndpoint(); ++k) {
+        long rtA = peak.getRetentionTimeAt(integerRange.getMinimum()), rtB = peak.getRetentionTimeAt(integerRange.getMaximum());
+        for (int k=integerRange.getMinimum(); k <= integerRange.getMaximum(); ++k) {
             final double intensity = peak.getIntensityAt(k);
             double diffFromMean = peak.getRetentionTimeAt(k) - median;
             std += Math.abs(diffFromMean*intensity);
@@ -47,9 +47,9 @@ public class LaplaceFitting implements PeakShapeFitting<LaplaceShape> {
         // now calculate score as absolute difference between integrals of the function
         final LaplaceDistribution distribution = new LaplaceDistribution(median, std);
         double error = 0d;
-        double deltaRt = peak.getRetentionTimeAt(integerRange.upperEndpoint())-peak.getRetentionTimeAt(integerRange.lowerEndpoint());
+        double deltaRt = peak.getRetentionTimeAt(integerRange.getMaximum())-peak.getRetentionTimeAt(integerRange.getMinimum());
         double nonMonotonicIntensity = 0d;
-        for (int k=integerRange.lowerEndpoint(); k < integerRange.upperEndpoint(); ++k) {
+        for (int k=integerRange.getMinimum(); k < integerRange.getMaximum(); ++k) {
             final double r = peak.getRetentionTimeAt(k);
             final double expectedIntensity = distribution.density(r)/distribution.density(median);
             final double measuredIntensity = peak.getIntensityAt(k)/maxIntensity;

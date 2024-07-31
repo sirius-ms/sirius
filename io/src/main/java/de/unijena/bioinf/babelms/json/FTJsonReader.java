@@ -24,7 +24,6 @@ package de.unijena.bioinf.babelms.json;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.collect.HashMultimap;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
@@ -38,6 +37,9 @@ import de.unijena.bioinf.babelms.descriptor.DescriptorRegistry;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import gnu.trove.map.hash.TIntIntHashMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,8 +63,8 @@ public class FTJsonReader implements Parser<FTree> {
         this.formulaCache = new HashMap<>();
     }
 
-    public FTJsonReader(@Nullable  HashMap<String, MolecularFormula> formulaCache) {
-        this.formulaCache = formulaCache==null ? new HashMap<>()  : formulaCache;
+    public FTJsonReader(@Nullable HashMap<String, MolecularFormula> formulaCache) {
+        this.formulaCache = formulaCache == null ? new HashMap<>() : formulaCache;
     }
 
     public MolecularFormula formula(String formula) {
@@ -121,11 +123,9 @@ public class FTJsonReader implements Parser<FTree> {
         treeFragmentIdToIdMap.put(tree.getRoot().getVertexId(), root.id); //todo is root always id 0??
 
 
-//        final HashMap<MolecularFormula, JsonObject> incomingLossMap = new HashMap<>();
         final HashMap<FragmentInfo, JsonNode> incomingLossMap = new HashMap<>();
-//        final HashMultimap<MolecularFormula, MolecularFormula> edges = HashMultimap.create();
-//        final HashMultimap<FragmentInfo, FragmentInfo> edges = HashMultimap.create();
-        final HashMultimap<Integer, Integer> edges = HashMultimap.create();
+
+        final Int2ObjectMap<IntArrayList> edges = new Int2ObjectOpenHashMap<>();
         final JsonNode losses = docRoot.get("losses");
         for (int k = 0; k < losses.size(); ++k) {
             final JsonNode loss = losses.get(k);
@@ -138,7 +138,7 @@ public class FTJsonReader implements Parser<FTree> {
                     final int a = loss.get("source").asInt();
                     final int b = loss.get("target").asInt();
                     final FragmentInfo bInfo = fragmentByIdMap.get(b);
-                    edges.put(fragmentByIdMap.get(a).id, bInfo.id);
+                    edges.computeIfAbsent(fragmentByIdMap.get(a).id, key -> new IntArrayList()).add(bInfo.id);
                     incomingLossMap.put(bInfo, loss);
                     byId = true;
                 }
@@ -150,7 +150,7 @@ public class FTJsonReader implements Parser<FTree> {
                         b = formula(loss.get("target").asText());
 
                 final FragmentInfo bInfo = fragmentByFormulaMap.get(b);
-                edges.put(fragmentByFormulaMap.get(a).id, bInfo.id);
+                edges.computeIfAbsent(fragmentByFormulaMap.get(a).id, key -> new IntArrayList()).add(bInfo.id);
                 incomingLossMap.put(bInfo, loss);
             }
 
@@ -162,34 +162,17 @@ public class FTJsonReader implements Parser<FTree> {
         while (!stack.isEmpty()) {
             final Fragment u = stack.pollFirst();
             final int id = treeFragmentIdToIdMap.get(u.getVertexId());
-//            for (MolecularFormula child : edges.get(u.getFormula())) {
-//                Ionization ion = (Ionization) fragmentByFormulaMap.get(child)[1];
-            for (int childId : edges.get(id)) {
-                FragmentInfo child = fragmentByIdMap.get(childId);
-                Ionization ion = child.ionization;
-                final Fragment v = tree.addFragment(u, child.formula, ion);
-                treeFragmentIdToIdMap.put(v.getVertexId(), childId);
-                stack.push(v);
-                if (incomingLossMap.get(child).has("score"))
-                    v.getIncomingEdge().setWeight(incomingLossMap.get(child).get("score").asDouble() + child.jsonObject.get("score").asDouble());
-            }
+            if (edges.containsKey(id))
+                edges.get(id).forEach(childId -> {
+                    FragmentInfo child = fragmentByIdMap.get(childId);
+                    Ionization ion = child.ionization;
+                    final Fragment v = tree.addFragment(u, child.formula, ion);
+                    treeFragmentIdToIdMap.put(v.getVertexId(), childId);
+                    stack.push(v);
+                    if (incomingLossMap.get(child).has("score"))
+                        v.getIncomingEdge().setWeight(incomingLossMap.get(child).get("score").asDouble() + child.jsonObject.get("score").asDouble());
+                });
         }
-
-//        final ArrayDeque<Fragment> stack = new ArrayDeque<Fragment>();
-//        stack.push(tree.getRoot());
-//        while (!stack.isEmpty()) {
-//            final Fragment u = stack.pollFirst();
-////            for (MolecularFormula child : edges.get(u.getFormula())) {
-////                Ionization ion = (Ionization) fragmentByFormulaMap.get(child)[1];
-//            for (int childId : edges.get(u.getVertexId())) {
-//                FragmentInfo child = fragmentByIdMap.get(childId);
-//                Ionization ion = child.ionization;
-//                final Fragment v = tree.addFragment(u, child.formula, ion);
-//                stack.push(v);
-//                if (incomingLossMap.get(child).has("score"))
-//                    v.getIncomingEdge().setWeight(incomingLossMap.get(child).get("score").getAsDouble());
-//            }
-//        }
 
         {
             final JsonNode treeAnnotations = docRoot.get("annotations");

@@ -20,8 +20,6 @@
 
 package de.unijena.bioinf.lcms;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.Normalization;
@@ -31,13 +29,13 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.lcms.ionidentity.AdductMassDifference;
-import de.unijena.bioinf.lcms.ionidentity.CorrelationGroupScorer;
 import de.unijena.bioinf.lcms.ionidentity.CorrelationGroupScorer2;
 import de.unijena.bioinf.lcms.quality.Quality;
 import de.unijena.bioinf.model.lcms.*;
 import de.unijena.bionf.spectral_alignment.CosineQuerySpectrum;
 import gnu.trove.list.array.TDoubleArrayList;
 import gnu.trove.list.array.TIntArrayList;
+import org.apache.commons.lang3.Range;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
@@ -48,11 +46,11 @@ public class CorrelatedPeakDetector {
 
     protected static final double MZ_ISO_ERRT = 0.002;
     protected static final Range<Double>[] ISO_RANGES = new Range[]{
-            Range.closed(0.99664664 - MZ_ISO_ERRT, 1.00342764 + MZ_ISO_ERRT),
-            Range.closed(1.99653883209004 - MZ_ISO_ERRT, 2.0067426280592295 + MZ_ISO_ERRT),
-            Range.closed(2.9950584 - MZ_ISO_ERRT, 3.00995027 + MZ_ISO_ERRT),
-            Range.closed(3.99359037 - MZ_ISO_ERRT, 4.01300058 + MZ_ISO_ERRT),
-            Range.closed(4.9937908 - MZ_ISO_ERRT, 5.01572941 + MZ_ISO_ERRT)
+            Range.of(0.99664664 - MZ_ISO_ERRT, 1.00342764 + MZ_ISO_ERRT),
+            Range.of(1.99653883209004 - MZ_ISO_ERRT, 2.0067426280592295 + MZ_ISO_ERRT),
+            Range.of(2.9950584 - MZ_ISO_ERRT, 3.00995027 + MZ_ISO_ERRT),
+            Range.of(3.99359037 - MZ_ISO_ERRT, 4.01300058 + MZ_ISO_ERRT),
+            Range.of(4.9937908 - MZ_ISO_ERRT, 5.01572941 + MZ_ISO_ERRT)
     };
 
     /*
@@ -262,7 +260,7 @@ public class CorrelatedPeakDetector {
                             detectedIonTypes.addAll(Arrays.asList(pair.getAllLeftTypes()));
                             //System.out.println(ion.toString() + " :: Found " + ionType.toString() + " -> " + other.toString() + " with correlation " + correlate);
                             alreadyAnnotatedMzs.add(peakMass);
-                            correlate.setAnnotation(Joiner.on(',').join(pair.getAllLeftTypes()));
+                            correlate.setAnnotation(Arrays.stream(pair.getAllLeftTypes()).map(PrecursorIonType::toString).collect(Collectors.joining(",")));
                         }
                         if (maybeCorrelate.isPresent() && correlate.score>=0.5) {
                             // just add as peak
@@ -366,8 +364,8 @@ public class CorrelatedPeakDetector {
         forEachIsotopePeak:
         for (int k = 0; k < 2; ++k) {
             // try to detect +k isotope peak
-            final double maxMz = mz + ISO_RANGES[k].upperEndpoint() / charge;
-            final int a = Spectrums.indexOfFirstPeakWithin(spectrum, mz + ISO_RANGES[k].lowerEndpoint() / charge, maxMz);
+            final double maxMz = mz + ISO_RANGES[k].getMaximum() / charge;
+            final int a = Spectrums.indexOfFirstPeakWithin(spectrum, mz + ISO_RANGES[k].getMinimum() / charge, maxMz);
             if (a < 0) break forEachIsotopePeak;
             boolean found = false;
             for (int i = a; i < spectrum.size(); ++i) {
@@ -412,8 +410,8 @@ public class CorrelatedPeakDetector {
         forEachIsotopePeak:
         for (int k = 0; k < ISO_RANGES.length; ++k) {
             // try to detect +k isotope peak
-            final double maxMz = mz + ISO_RANGES[k].upperEndpoint() / charge;
-            final int a = Spectrums.indexOfFirstPeakWithin(spectrum, mz + ISO_RANGES[k].lowerEndpoint() / charge, maxMz);
+            final double maxMz = mz + ISO_RANGES[k].getMaximum() / charge;
+            final int a = Spectrums.indexOfFirstPeakWithin(spectrum, mz + ISO_RANGES[k].getMinimum() / charge, maxMz);
             boolean anyCorrelatedPeak = false;
             if (a < 0) break forEachIsotopePeak;
             for (int i = a; i < spectrum.size(); ++i) {
@@ -513,7 +511,7 @@ public class CorrelatedPeakDetector {
         final Range<Integer> t25 = smallSegment.calculateFWHMMinPeaks(0.15d, 3);
         // if small segment is outside boundary of large segment, the peaks do not correlate
 
-        for (int i = t25.lowerEndpoint(); i <= t25.upperEndpoint(); ++i) {
+        for (int i = t25.getMinimum(); i <= t25.getMaximum(); ++i) {
             int j = large.findScanNumber(small.getScanNumberAt(i));
             if (j >= 0) a.add(large.getIntensityAt(j));
             else {
@@ -525,7 +523,7 @@ public class CorrelatedPeakDetector {
         if (a.size() < 3) return null;
         final double correlation = pearson(a, b);
         final double kl = kullbackLeibler(a, b, a.size());
-        final CorrelationGroup correlationGroup = new CorrelationGroup(large, small, largeSegment, smallSegment, smallSegment.getPeak().getScanNumberAt(t25.lowerEndpoint()), smallSegment.getPeak().getScanNumberAt(t25.upperEndpoint()), t25.upperEndpoint()-t25.lowerEndpoint()+1, correlation, kl, cosine(a, b), 0);
+        final CorrelationGroup correlationGroup = new CorrelationGroup(large, small, largeSegment, smallSegment, smallSegment.getPeak().getScanNumberAt(t25.getMinimum()), smallSegment.getPeak().getScanNumberAt(t25.getMaximum()), t25.getMaximum()-t25.getMinimum()+1, correlation, kl, cosine(a, b), 0);
         correlationGroup.score = new CorrelationGroupScorer2().predictProbability(correlationGroup.getLeftSegment(), correlationGroup.getRightSegment());
 
         return correlationGroup;

@@ -23,8 +23,6 @@
 package de.unijena.bioinf.webapi.rest;
 
 import com.github.scribejava.core.model.OAuthResponseException;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.ChemistryBase.fp.MaskedFingerprintVersion;
@@ -83,7 +81,6 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
 import java.net.URI;
 import java.util.*;
@@ -94,9 +91,9 @@ import static de.unijena.bioinf.chemdb.custom.CustomDataSources.getWebDatabaseCa
 
 /**
  * Frontend WebAPI class, that represents the client to our backend rest api
+ * ThreadSafe
  */
 
-@ThreadSafe
 public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabase>> {
     private static final Logger LOG = LoggerFactory.getLogger(RestAPI.class);
 
@@ -209,24 +206,27 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
     }
 
     @Override
-    public synchronized Multimap<ConnectionError.Klass, ConnectionError> checkConnection() {
-        final Multimap<ConnectionError.Klass, ConnectionError> errors = Multimaps.newSetMultimap(new HashMap<>(), LinkedHashSet::new);
+    public synchronized Map<ConnectionError.Klass, Set<ConnectionError>> checkConnection() {
+        final Map<ConnectionError.Klass, Set<ConnectionError>> errors = new HashMap<>();
 
         try {
             ProxyManager.consumeClient(client -> {
-                checkSecuredConnection(client).ifPresent(e -> errors.put(e.getErrorKlass(), e));
+                checkSecuredConnection(client).ifPresent(e ->
+                        errors.computeIfAbsent(e.getErrorKlass(), k -> new LinkedHashSet<>()).add(e));
                 //failed
                 if (!errors.isEmpty()) {
-                    checkLogin().ifPresent(e -> errors.put(e.getErrorKlass(), e));
-                    checkUnsecuredConnection(client).ifPresent(e -> errors.put(e.getErrorKlass(), e));
+                    checkLogin().ifPresent(e -> errors.computeIfAbsent(e.getErrorKlass(), k -> new LinkedHashSet<>()).add(e));
+                    checkUnsecuredConnection(client).ifPresent(e ->
+                            errors.computeIfAbsent(e.getErrorKlass(), k -> new LinkedHashSet<>()).add(e));
 
-                    ProxyManager.checkInternetConnection(client).ifPresent(es -> es.forEach(e -> errors.put(e.getErrorKlass(), e)));
+                    ProxyManager.checkInternetConnection(client).ifPresent(es ->
+                            es.forEach(e -> errors.computeIfAbsent(e.getErrorKlass(), k -> new LinkedHashSet<>()).add(e)));
                 }
             });
         } catch (Exception e) {
             ConnectionError c = new ConnectionError(100, "Unexpected error during connection check!", ConnectionError.Klass.UNKNOWN, e);
             LOG.error(c.getSiriusMessage(), e);
-            errors.put(c.getErrorKlass(), c);
+            errors.computeIfAbsent(c.getErrorKlass(), k -> new LinkedHashSet<>()).add(c);
         }
         return errors;
     }

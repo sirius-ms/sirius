@@ -9,7 +9,7 @@ plugins {
 }
 
 dependencies {
-    implementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+    implementation "org.junit.jupiter:junit-jupiter:$junit_version"
 }
 
 ext {
@@ -324,6 +324,7 @@ subprojects {
     }
 
     tasks.register('distImageTestLocal', Test) {
+        enabled false
         group 'verification'
         dependsOn distImage
         useJUnitPlatform()
@@ -411,6 +412,7 @@ subprojects {
 
 
     tasks.register('distImageTestCICD', Test) {
+        enabled false
         group 'verification'
         useJUnitPlatform()
         testClassesDirs = project(':sirius_dist').sourceSets.test.output

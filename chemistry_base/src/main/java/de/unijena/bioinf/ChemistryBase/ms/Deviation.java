@@ -21,8 +21,8 @@
 
 package de.unijena.bioinf.ChemistryBase.ms;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
+import org.apache.commons.lang3.Range;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -81,7 +81,7 @@ public class Deviation implements Cloneable, Ms2ExperimentAnnotation {
 
     public Range<Double> getRange(double mz) {
         final double abs = absoluteFor(mz);
-        return Range.closed(mz - abs, mz + abs);
+        return Range.of(mz - abs, mz + abs);
     }
 
     public double getPpm() {

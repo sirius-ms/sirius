@@ -20,13 +20,13 @@
 
 package de.unijena.bioinf.ChemistryBase.ms.ft.model;
 
-import com.google.common.collect.Streams;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import gnu.trove.set.hash.TCustomHashSet;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -70,11 +70,13 @@ public class Whiteset implements Ms2ExperimentAnnotation {
      * and the loss has to be removed afterwards.
      * This is typically for molecular formulas received from database search
      */
+    @Getter
     protected final Set<MolecularFormula> neutralFormulas;
 
     /**
      * these are formulas as they are derived from the MS. They contain the adduct (but not the ionization)
      */
+    @Getter
     protected final Set<MolecularFormula> measuredFormulas;
 
     /**
@@ -98,6 +100,7 @@ public class Whiteset implements Ms2ExperimentAnnotation {
      * ignores mass deviations when resolving the whiteset. This may be usefull testing a candidate set even if some candidatees have large mass errors.
      * Note: there is still some extremely large max mass error threshold
      */
+    @Getter
     protected final boolean ignoreMassDeviationToResolveIonType;
 
     /**
@@ -141,16 +144,8 @@ public class Whiteset implements Ms2ExperimentAnnotation {
         this(neutralFormulas, measuredFormulas, enforcedneutralFormulas, stillRequiresDeNovo, stillRequiresBottomUp, false, false, Collections.singletonList(provider));
     }
 
-    public Set<MolecularFormula> getNeutralFormulas() {
-        return neutralFormulas;
-    }
-
     public Set<MolecularFormula> getEnforcedNeutralFormulas() {
         return enforcedneutralFormulas;
-    }
-
-    public Set<MolecularFormula> getMeasuredFormulas() {
-        return measuredFormulas;
     }
 
     public Set<MolecularFormula> getAllNeutralFormulasIncludingEnforced() {
@@ -160,7 +155,7 @@ public class Whiteset implements Ms2ExperimentAnnotation {
     }
 
     protected Stream<MolecularFormula> getAllNeutralFormulasIncludingEnforcedAsStream() {
-        return Streams.concat(neutralFormulas.stream(), enforcedneutralFormulas.stream());
+        return Stream.concat(neutralFormulas.stream(), enforcedneutralFormulas.stream());
     }
 
     /**
@@ -183,10 +178,6 @@ public class Whiteset implements Ms2ExperimentAnnotation {
         return isFinalized;
     }
 
-
-    public boolean isIgnoreMassDeviationToResolveIonType() {
-        return ignoreMassDeviationToResolveIonType;
-    }
 
     public Whiteset addMeasured(@NotNull Set<MolecularFormula> measured, @NotNull Class provider) {
         if (warnIfFinalized()) return this;
@@ -346,7 +337,7 @@ public class Whiteset implements Ms2ExperimentAnnotation {
             ne = new HashSet<>(enforcedneutralFormulas);
             ne.addAll(this.enforcedneutralFormulas);
         }
-        return new Whiteset(n, m, ne, stillRequiresDeNovo, stillRequiresBottomUp, ignoreMassDeviationToResolveIonType, isFinalized, Streams.concat(this.providers.stream(), providers.stream()).collect(Collectors.toList()));
+        return new Whiteset(n, m, ne, stillRequiresDeNovo, stillRequiresBottomUp, ignoreMassDeviationToResolveIonType, isFinalized, Stream.concat(this.providers.stream(), providers.stream()).collect(Collectors.toList()));
     }
 
     /**

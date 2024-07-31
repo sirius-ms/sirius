@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.chemdb;
 
-import com.google.common.collect.Iterables;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.InChIs;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
@@ -30,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.MutableMs2SpectrumWithAdditionalFields;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.babelms.massbank.MassbankFormat;
+import de.unijena.bioinf.jjobs.Partition;
 import de.unijena.bioinf.spectraldb.WriteableSpectralLibrary;
 import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 import edu.ucdavis.fiehnlab.spectra.hash.core.SplashFactory;
@@ -45,7 +45,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -69,7 +68,7 @@ public class SpectralUtils {
 
     public static int importSpectra(WriteableSpectralLibrary library, Iterable<Ms2ReferenceSpectrum> spectra, int chunkSize) throws ChemicalDatabaseException {
         try {
-            return StreamSupport.stream(Iterables.partition(spectra, chunkSize).spliterator(), false).mapToInt(chunk -> {
+            return Partition.ofSize(spectra, chunkSize).stream().mapToInt(chunk -> {
                 try {
                     List<Ms2ReferenceSpectrum> data = SpectralUtils.validateSpectra(chunk);
                     return library.upsertSpectra(data);

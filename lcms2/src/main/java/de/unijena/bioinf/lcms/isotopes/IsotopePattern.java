@@ -1,6 +1,6 @@
 package de.unijena.bioinf.lcms.isotopes;
 
-import com.google.common.collect.Range;
+import org.apache.commons.lang3.Range;
 import de.unijena.bioinf.ChemistryBase.math.MatrixUtils;
 import de.unijena.bioinf.ChemistryBase.ms.utils.BasicSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -14,11 +14,11 @@ public class IsotopePattern extends SimpleSpectrum {
 
     protected static final double MZ_ISO_ERRT = 0.002;
     protected static final Range<Double>[] ISO_RANGES = new Range[]{
-            Range.closed(0.99664664 - MZ_ISO_ERRT, 1.00342764 + MZ_ISO_ERRT),
-            Range.closed(1.99653883209004 - MZ_ISO_ERRT, 2.0067426280592295 + MZ_ISO_ERRT),
-            Range.closed(2.9950584 - MZ_ISO_ERRT, 3.00995027 + MZ_ISO_ERRT),
-            Range.closed(3.99359037 - MZ_ISO_ERRT, 4.01300058 + MZ_ISO_ERRT),
-            Range.closed(4.9937908 - MZ_ISO_ERRT, 5.01572941 + MZ_ISO_ERRT)
+            Range.of(0.99664664 - MZ_ISO_ERRT, 1.00342764 + MZ_ISO_ERRT),
+            Range.of(1.99653883209004 - MZ_ISO_ERRT, 2.0067426280592295 + MZ_ISO_ERRT),
+            Range.of(2.9950584 - MZ_ISO_ERRT, 3.00995027 + MZ_ISO_ERRT),
+            Range.of(3.99359037 - MZ_ISO_ERRT, 4.01300058 + MZ_ISO_ERRT),
+            Range.of(4.9937908 - MZ_ISO_ERRT, 5.01572941 + MZ_ISO_ERRT)
     };
 
     protected static double maxStd = 0.0027340053758699856;
@@ -37,7 +37,7 @@ public class IsotopePattern extends SimpleSpectrum {
         if (isotopePeak > ISO_RANGES.length) {
             return (avg*isotopePeak - maxStd) / chargeState;
         } else {
-            return ionMass + (ISO_RANGES[isotopePeak-1].lowerEndpoint() / chargeState);
+            return ionMass + (ISO_RANGES[isotopePeak-1].getMinimum() / chargeState);
         }
     }
 
@@ -52,7 +52,7 @@ public class IsotopePattern extends SimpleSpectrum {
         if (isotopePeak > ISO_RANGES.length) {
             return (avg*isotopePeak + maxStd) / chargeState;
         } else {
-            return ionMass + (ISO_RANGES[isotopePeak-1].upperEndpoint() / chargeState);
+            return ionMass + (ISO_RANGES[isotopePeak-1].getMaximum() / chargeState);
         }
     }
 
@@ -109,10 +109,10 @@ public class IsotopePattern extends SimpleSpectrum {
         forEachIsotopePeak:
         for (int k = mzs.size()-1; k < ISO_RANGES.length; ++k) {
             // try to detect +k isotope peak
-            final double maxMz = mz + ISO_RANGES[k].upperEndpoint() / chargeState;
+            final double maxMz = mz + ISO_RANGES[k].getMaximum() / chargeState;
             double mergedIntensity = 0d;
             double mergedMass = 0d;
-            final int a = Spectrums.indexOfFirstPeakWithin(spectrum, mz + ISO_RANGES[k].lowerEndpoint() / chargeState, maxMz);
+            final int a = Spectrums.indexOfFirstPeakWithin(spectrum, mz + ISO_RANGES[k].getMinimum() / chargeState, maxMz);
             if (a < 0) break forEachIsotopePeak;
             for (int i = a; i < spectrum.size(); ++i) {
                 if (spectrum.getMzAt(i) > maxMz)
@@ -154,10 +154,10 @@ public class IsotopePattern extends SimpleSpectrum {
             forEachIsotopePeak:
             for (int k = 0; k < ISO_RANGES.length; ++k) {
                 // try to detect +k isotope peak
-                final double maxMz = mz + ISO_RANGES[k].upperEndpoint() / chargeState;
+                final double maxMz = mz + ISO_RANGES[k].getMaximum() / chargeState;
                 double mergedIntensity = 0d;
                 double mergedMass = 0d;
-                final int a = Spectrums.indexOfFirstPeakWithin(spectrum, mz + ISO_RANGES[k].lowerEndpoint() / chargeState, maxMz);
+                final int a = Spectrums.indexOfFirstPeakWithin(spectrum, mz + ISO_RANGES[k].getMinimum() / chargeState, maxMz);
                 if (a < 0) break forEachIsotopePeak;
                 for (int i = a; i < spectrum.size(); ++i) {
                     if (spectrum.getMzAt(i) > maxMz)

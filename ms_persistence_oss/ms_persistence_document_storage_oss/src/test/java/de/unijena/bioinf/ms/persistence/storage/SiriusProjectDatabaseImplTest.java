@@ -1,6 +1,5 @@
 package de.unijena.bioinf.ms.persistence.storage;
 
-import com.google.common.collect.Streams;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
@@ -51,11 +50,7 @@ import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -348,13 +343,15 @@ public class SiriusProjectDatabaseImplTest {
             //insert
             assertEquals(1, db.getStorage().insert(project1), "Insert project config");
             assertTrue(db.getStorage().getByPrimaryKey(project1.getParametersId(), project1.getClass()).isPresent(), "check if inserted config exists");
-            assertEquals(
-                    Streams.stream(project1.newParameterConfig().getConfigKeys()).collect(Collectors.toSet()),
-                    db.getStorage().getByPrimaryKey(project1.getParametersId(), project1.getClass())
-                            .map(Parameters::newParameterConfig).map(ParameterConfig::getConfigKeys).stream()
-                            .flatMap(Streams::stream).collect(Collectors.toSet()),
-                    "Check if content has been preserved"
-            );
+
+            Set<String> expected = new HashSet<>();
+            project1.newParameterConfig().getConfigKeys().forEachRemaining(expected::add);
+
+            Set<String> actual = new HashSet<>();
+            db.getStorage().getByPrimaryKey(project1.getParametersId(), project1.getClass())
+                    .map(Parameters::newParameterConfig).map(ParameterConfig::getConfigKeys)
+                    .ifPresent(it -> it.forEachRemaining(actual::add));
+            assertEquals(expected, actual, "Check if content has been preserved");
 
             //fail duplicate entry
             RuntimeException thrown = assertThrowsExactly(RuntimeException.class, () -> db.getStorage().insert(project2));

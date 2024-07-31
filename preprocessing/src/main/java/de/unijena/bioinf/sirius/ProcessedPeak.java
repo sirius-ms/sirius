@@ -4,7 +4,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -21,23 +21,33 @@
 
 package de.unijena.bioinf.sirius;
 
-import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.sirius.annotations.SpectralRecalibration;
+import lombok.Getter;
+import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 public class ProcessedPeak implements Peak {
 
     private final static Object[] EMPTY_ARRAY = new Object[0];
 
+    @Getter
+    @Setter
     private int index;
+    @Setter
     private List<MS2Peak> originalPeaks;
+    @Getter
+    @Setter
     private double relativeIntensity;
+    @Setter
+    @Getter
     private CollisionEnergy collisionEnergy;
+    @Setter
     private double mass;
 
     private Object[] annotations;
@@ -101,42 +111,16 @@ public class ProcessedPeak implements Peak {
         this.annotations = peak.annotations.clone();
     }
 
-    public CollisionEnergy getCollisionEnergy() {
-        return collisionEnergy;
-    }
-
-    public void setCollisionEnergy(CollisionEnergy collisionEnergy) {
-        this.collisionEnergy = collisionEnergy;
-    }
-
-    public void setIndex(int index) {
-        this.index = index;
-    }
-
-    public void setOriginalPeaks(List<MS2Peak> originalPeaks) {
-        this.originalPeaks = originalPeaks;
-    }
-
-    public void setMass(double mz) {
-        this.mass = mz;
-    }
-
-    public void setRelativeIntensity(double relativeIntensity) {
-        this.relativeIntensity = relativeIntensity;
+    public Stream<Ms2Spectrum> originalSpectraStream() {
+        return originalPeaks.stream().map(MS2Peak::getSpectrum);
     }
 
     public Iterator<Ms2Spectrum> originalSpectraIterator() {
-        return Iterators.transform(originalPeaks.iterator(), MS2Peak::getSpectrum);
-    }
-
-    public int getIndex() {
-        return index;
+        return originalSpectraStream().iterator();
     }
 
     public List<Ms2Spectrum> getOriginalSpectra() {
-        final List<Ms2Spectrum> spectrum = new ArrayList<>(originalPeaks.size());
-        Iterators.addAll(spectrum, originalSpectraIterator());
-        return spectrum;
+        return originalSpectraStream().toList();
     }
 
     public List<MS2Peak> getOriginalPeaks() {
@@ -157,10 +141,6 @@ public class ProcessedPeak implements Peak {
         for (Peak p : originalPeaks)
             sum += p.getIntensity();
         return sum;
-    }
-
-    public double getRelativeIntensity() {
-        return relativeIntensity;
     }
 
     public boolean isSynthetic() {

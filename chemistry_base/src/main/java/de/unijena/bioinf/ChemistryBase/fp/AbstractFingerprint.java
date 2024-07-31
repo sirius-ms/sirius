@@ -26,6 +26,8 @@ import gnu.trove.list.array.TShortArrayList;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Iterator;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public abstract class AbstractFingerprint implements Iterable<FPIter> {
 
@@ -34,6 +36,10 @@ public abstract class AbstractFingerprint implements Iterable<FPIter> {
     public AbstractFingerprint(FingerprintVersion fingerprintVersion) {
         if (fingerprintVersion == null) throw new NullPointerException();
         this.fingerprintVersion = fingerprintVersion;
+    }
+
+    public Stream<FPIter> stream() {
+        return StreamSupport.stream(this.spliterator(), false);
     }
 
     public abstract Fingerprint asDeterministic();

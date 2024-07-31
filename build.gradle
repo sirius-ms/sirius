@@ -2,7 +2,6 @@ import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 
 import java.nio.file.Files
 import java.nio.file.StandardOpenOption
-import java.nio.file.Paths
 
 buildscript {
     repositories {
@@ -51,7 +50,8 @@ ext {
     jjobs_version = '0.9.36'
     slf4j_version = '1.7.36'
     jackson_version = '2.16.1'
-    math3_version = '3.6.1'
+    lombok_version = '1.18.34'
+
     cbc_version = props.getProperty('de.unijena.bioinf.sirius.build.cbc_version')
     glpk_version = props.getProperty('de.unijena.bioinf.sirius.build.glpk_version')
     gurobi_version = props.getProperty('de.unijena.bioinf.sirius.build.gurobi_version')
@@ -59,13 +59,21 @@ ext {
     cdk_version = "2.9"
     jetbrains_version = "24.1.0"
     okhttp_version = "4.12.0"
+    trove_version = '3.1.0' //DEPRECATED -> user fast util instead
     fastutil_version = '8.5.12' //replaces trove
 
+    //not recommended anymore -> use pico cli instead
     jewelcli_version = '0.8.9'
-    //todo wenn wir die inhouse clis auch ind das frontend moven haben wir keinerlei distribution zeug mehr in sirius
 
-    commons_email_version = '1.5'
-    oshi_version = '6.1.5'
+    //apache commons
+    commons_math_version = '3.6.1'
+    commons_email_version = '1.6.0'
+    commons_text_version = '1.12.0'
+    commons_lang_version = '3.15.0'
+    commons_compress_version = '1.26.2'
+    commons_io_version = '2.16.1'//'2.11.0'
+    commons_configuration_version = '2.11.0'
+
     json_version = '1.0'
     json_impl_version = "1.0.4"
     psql_version = "42.2.1"
@@ -74,18 +82,18 @@ ext {
     liblinear_version = "1.95"
     libsvm_version = "3.20"
 
-    guava_version = '31.1-jre'
-
-    swagger_version = "2.2.18"
+    swagger_version = "2.2.22"
 
     jaxb_version = "2.3.9"
     picocli_version = '4.7.5'
     jakarta_version = '3.1.0'
+    jakarta_annotation_version = "3.0.0"
+
 
     spring_boot_version = "3.3.1"
     springdoc_version = "2.3.0"
 
-    junit_version = '5.10.0'
+    junit_version = '5.10.3'
 
     siriusTargetPlatform = SiriusPlatform.fromDescriptor((
             project.findProperty('build.sirius.platform') ?:
@@ -163,56 +171,73 @@ allprojects {
             maven {
                 url "https://gitlab.com/api/v4/groups/bright-giant/-/packages/maven"
                 name "GitLab"
-                credentials(HttpHeaderCredentials) {
-                    name = "Job-Token"
-                    value = System.getenv("CI_JOB_TOKEN")
-                }
-                authentication {
-                    header(HttpHeaderAuthentication)
+                if (System.getenv("CI_JOB_TOKEN") != null) {
+                    credentials(HttpHeaderCredentials) {
+                        name = "Job-Token"
+                        value = System.getenv("CI_JOB_TOKEN")
+                    }
+                    authentication {
+                        header(HttpHeaderAuthentication)
+                    }
+                }else{
+                    credentials(PasswordCredentials) {
+                        username = project.findProperty("com.bright-giant.build.gitlab.username") as String
+                        password = project.findProperty("com.bright-giant.build.gitlab.token") as String
+                        // the variable resides in $GRADLE_USER_HOME/gradle.properties
+                        // https://docs.gradle.org/current/userguide/directory_layout.html#dir:gradle_user_home
+                    }
+                    authentication {
+                        basic(BasicAuthentication)
+                    }
                 }
             }
         }
     }
 
     dependencies {
-        compileOnly 'org.projectlombok:lombok:1.18.34'
-        annotationProcessor 'org.projectlombok:lombok:1.18.34'
+        compileOnly "org.projectlombok:lombok:$lombok_version"
+        annotationProcessor "org.projectlombok:lombok:$lombok_version"
 
-        api "org.jetbrains:annotations:$jetbrains_version"
         api "it.unimi.dsi:fastutil:$fastutil_version"
 
-//        api 'org.apache.commons:commons-collections4:4.4'
-        //try to remove and replace with basic java or fastutil
-        api group: 'com.google.guava', name: 'guava', version: '31.1-jre'
-        api "org.apache.commons:commons-math3:$math3_version"
-        api 'org.apache.commons:commons-compress:1.21'
-        api 'org.apache.commons:commons-lang3:3.12.0'
-        api 'commons-io:commons-io:2.11.0' //maybe provide via io package?
-
-        api 'io.swagger.core.v3:swagger-annotations:2.2.20'
+        api "org.apache.commons:commons-lang3:$commons_lang_version"
+        api "org.apache.commons:commons-math3:$commons_math_version"
+        api "org.apache.commons:commons-compress:$commons_compress_version"
+        api "commons-io:commons-io:$commons_io_version"
 
         api "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
         api "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
 
         api 'com.googlecode.concurrent-locks:concurrent-locks:1.0.0'
 
-        api group: 'de.unijena.bioinf', name: 'jjobs-core', version: "$jjobs_version"
-        api group: 'org.slf4j', name: 'slf4j-api', version: "$slf4j_version"
+        api "de.unijena.bioinf:jjobs-core:$jjobs_version"
+        api "org.slf4j:slf4j-api:$slf4j_version"
 
-        implementation "org.jetbrains:annotations:$jetbrains_version"
-        implementation "org.slf4j:slf4j-api:$slf4j_version"
+        // Annotations
+        api "org.jetbrains:annotations:$jetbrains_version"
+        api "io.swagger.core.v3:swagger-annotations:$swagger_version"
+
         //NOTE: cannot be provided as transitive dependency
         implementation "jakarta.persistence:jakarta.persistence-api:$jakarta_version"
+        implementation "jakarta.annotation:jakarta.annotation-api:$jakarta_annotation_version"
+
         implementation "org.glassfish.jaxb:jaxb-runtime:$jaxb_version"
+
         // TEST DEPENDENCIES
+        testCompileOnly "org.projectlombok:lombok:$lombok_version"
+        testAnnotationProcessor "org.projectlombok:lombok:$lombok_version"
+
         testImplementation "org.slf4j:log4j-over-slf4j:$slf4j_version"
         testImplementation "org.slf4j:jcl-over-slf4j:$slf4j_version"
         // Aggregator dependency that also brings JUnit 5 parameterized tests etc.
-        testImplementation("org.junit.jupiter:junit-jupiter:$junit_version")
-        testImplementation("org.junit.jupiter:junit-jupiter-params:$junit_version")
+        testImplementation "org.junit.jupiter:junit-jupiter:$junit_version"
+        testImplementation "org.junit.jupiter:junit-jupiter-params:$junit_version"
+        testImplementation "org.mockito:mockito-junit-jupiter:5.12.0"
         // The Vintage engine is needed to be able to run JUnit 4 tests
-        testImplementation("org.junit.vintage:junit-vintage-engine:$junit_version")
+        testImplementation "org.junit.vintage:junit-vintage-engine:$junit_version"
         testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit_version"
+
+
     }
 
     test {

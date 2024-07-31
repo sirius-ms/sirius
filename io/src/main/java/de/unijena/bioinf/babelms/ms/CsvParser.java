@@ -21,7 +21,6 @@
 
 package de.unijena.bioinf.babelms.ms;
 
-import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
@@ -63,7 +62,7 @@ public class CsvParser extends SpectralParser {
             }
         }
         reader.close();
-        return Iterators.singletonIterator(spec);
+        return List.of(spec).iterator();
     }
 
 

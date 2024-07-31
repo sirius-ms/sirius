@@ -23,8 +23,8 @@ package de.unijena.bioinf.lcms.io;
 import de.unijena.bioinf.ChemistryBase.ms.IsolationWindow;
 import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import lombok.Getter;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 
 @Getter
 public class Precursor implements Peak {

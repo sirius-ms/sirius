@@ -21,7 +21,6 @@
 
 package de.unijena.bioinf.ChemistryBase.chem;
 
-import com.google.common.collect.Iterators;
 import de.unijena.bioinf.ChemistryBase.chem.utils.ElementMap;
 import de.unijena.bioinf.ChemistryBase.chem.utils.FormulaVisitor;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
@@ -241,6 +240,6 @@ public class ChemicalAlphabet implements Iterable<Element> {
 
     @Override
     public Iterator<Element> iterator() {
-        return Iterators.forArray(allowedElements);
+        return Arrays.asList(allowedElements).iterator();
     }
 }

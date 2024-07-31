@@ -23,7 +23,6 @@ package de.unijena.bioinf.ms.frontend.subtools.login;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Multimap;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.auth.LoginException;
@@ -47,10 +46,7 @@ import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import java.io.IOException;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.Scanner;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -202,7 +198,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
                         if (showProfile)
                             showProfile(token);
 
-                        Multimap<ConnectionError.Klass, ConnectionError> errors = determineAndCheckActiveSubscription(token);
+                        Map<ConnectionError.Klass, Set<ConnectionError>> errors = determineAndCheckActiveSubscription(token);
                         if (errors.isEmpty())
                             System.out.println("Login successful!");
 
@@ -308,7 +304,7 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
             System.out.println();
         }
 
-        private Multimap<ConnectionError.Klass, ConnectionError> determineAndCheckActiveSubscription(AuthService.Token token) throws IOException {
+        private Map<ConnectionError.Klass, Set<ConnectionError>> determineAndCheckActiveSubscription(AuthService.Token token) throws IOException {
             Subscription sub = null;
             @NotNull List<Subscription> subs = Tokens.getSubscriptions(token);
             if (sid != null)
@@ -322,8 +318,10 @@ public class LoginOptions implements StandaloneTool<LoginOptions.LoginWorkflow> 
             ApplicationCore.WEB_API.changeActiveSubscription(sub);
 
             //check connection
-            Multimap<ConnectionError.Klass, ConnectionError> errors = ApplicationCore.WEB_API.checkConnection();
-            LoggerFactory.getLogger(getClass()).debug("Connection check after login returned errors: {}", errors.values().stream().sorted(Comparator.comparing(ConnectionError::getSiriusErrorCode))
+            Map<ConnectionError.Klass, Set<ConnectionError>> errors = ApplicationCore.WEB_API.checkConnection();
+            LoggerFactory.getLogger(getClass()).debug("Connection check after login returned errors: {}",
+                    errors.values().stream().flatMap(Set::stream)
+                            .sorted(Comparator.comparing(ConnectionError::getSiriusErrorCode))
                     .map(ConnectionError::toString).collect(Collectors.joining(",\n")));
 
             if (errors.containsKey(ConnectionError.Klass.TERMS)) {

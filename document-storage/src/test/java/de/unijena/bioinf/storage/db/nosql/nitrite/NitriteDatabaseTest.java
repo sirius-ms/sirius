@@ -28,8 +28,6 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
 import de.unijena.bioinf.storage.db.nosql.Database;
 import de.unijena.bioinf.storage.db.nosql.Filter;
 import de.unijena.bioinf.storage.db.nosql.Index;
@@ -329,7 +327,7 @@ public class NitriteDatabaseTest {
             List<String> ascFindAllOffset1Limit1 = db.findAllStr(NitriteTestEntry.class, 1, 1, "name", Database.SortOrder.ASCENDING).map(e -> e.name).toList();
 
             assertEquals("ascending findAll", expected, ascFindAll);
-            assertEquals("descending findAll", Lists.reverse(expected), descFindAll);
+            assertEquals("descending findAll", expected.reversed(), descFindAll);
             assertEquals("ascending findAll offset 0 limit 2", expected.subList(0, 2), ascFindAllLimit2);
             assertEquals("ascending findAll offset 1 limit 2", expected.subList(1, 3), ascFindAllOffset1Limit2);
             assertEquals("ascending findAll offset 1 limit 1", expected.subList(1, 2), ascFindAllOffset1Limit1);
@@ -342,17 +340,17 @@ public class NitriteDatabaseTest {
             assertEquals("count all", 3, db.countAll(NitriteTestEntry.class));
 
             { //test upsert and modify
-                in.get(0).setName("E");
-                assertEquals("Update one", 1, db.upsert(in.get(0)));
-                assertEquals("Check Update Change", "E_D", db.getByPrimaryKey(in.get(0).primaryKey, NitriteTestEntry.class).map(NitriteTestEntry::getName).orElse(null));
+                in.getFirst().setName("E");
+                assertEquals("Update one", 1, db.upsert(in.getFirst()));
+                assertEquals("Check Update Change", "E_D", db.getByPrimaryKey(in.getFirst().primaryKey, NitriteTestEntry.class).map(NitriteTestEntry::getName).orElse(null));
             }
 
             {
-                assertEquals("Update one", 1, db.modify(in.get(0).getPrimaryKey(), NitriteTestEntry.class, entry -> {entry.setName("A");}));
-                assertEquals("Check Modify Change", "A_D", db.getByPrimaryKey(in.get(0).primaryKey, NitriteTestEntry.class).map(NitriteTestEntry::getName).orElse(null));
+                assertEquals("Update one", 1, db.modify(in.getFirst().getPrimaryKey(), NitriteTestEntry.class, entry -> {entry.setName("A");}));
+                assertEquals("Check Modify Change", "A_D", db.getByPrimaryKey(in.getFirst().primaryKey, NitriteTestEntry.class).map(NitriteTestEntry::getName).orElse(null));
             }
 
-            assertEquals("remove", 1, db.remove(in.get(0)));
+            assertEquals("remove", 1, db.remove(in.getFirst()));
             List<String> ascFindAllDel0 = db.findAllStr(NitriteTestEntry.class, "name", Database.SortOrder.ASCENDING).map(e -> e.name).toList();
             assertEquals("remove name == C", 1, db.removeAll(Filter.where("name").eq("C"), NitriteTestEntry.class));
             List<String> ascFindAllDel2 = db.findAllStr(NitriteTestEntry.class, "name", Database.SortOrder.ASCENDING).map(e -> e.name).toList();
@@ -368,7 +366,7 @@ public class NitriteDatabaseTest {
         Path file = Files.createTempFile("nitrite-test", "");
         file.toFile().deleteOnExit();
         try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addCollection("entries", Index.unique("name")))) {
-            List<Document> in = Lists.newArrayList(
+            List<Document> in = Arrays.asList(
                     Document.createDocument("name", "A"),
                     Document.createDocument("name", "B"),
                     Document.createDocument("name", "C")
@@ -386,7 +384,7 @@ public class NitriteDatabaseTest {
             List<String> ascFindAllOffset1Limit1 = db.findAllStr("entries", 1, 1, "name", Database.SortOrder.ASCENDING).map(e -> e.get("name", String.class)).toList();
 
             assertEquals("ascending findAll", expected, ascFindAll);
-            assertEquals("descending findAll", Lists.reverse(expected), descFindAll);
+            assertEquals("descending findAll", expected.reversed(), descFindAll);
             assertEquals("ascending findAll offset 0 limit 2", expected.subList(0, 2), ascFindAllLimit2);
             assertEquals("ascending findAll offset 1 limit 2", expected.subList(1, 3), ascFindAllOffset1Limit2);
             assertEquals("ascending findAll offset 1 limit 1", expected.subList(1, 2), ascFindAllOffset1Limit1);
@@ -418,7 +416,7 @@ public class NitriteDatabaseTest {
                 .addSerialization(NitriteTestEntry.class, new TestSerializer(), new TestDeserializer()))) {
             NitriteTestEntry in = NitriteTestEntry.builder().name("A").dlist(DoubleList.of(1, 2, 3)).darr(new double[]{1, 2, 3}).build();
             db.insert(in);
-            NitriteTestEntry[] out = Iterables.toArray(db.findAll(NitriteTestEntry.class), NitriteTestEntry.class);
+            NitriteTestEntry[] out = db.findAllStr(NitriteTestEntry.class).toArray(NitriteTestEntry[]::new);
             assertEquals("jackson db size", 1, out.length);
             assertEquals("jackson module used", in.name + "_S_D", out[0].name);
             assertEquals("id assignment", in.primaryKey, out[0].primaryKey);
@@ -432,7 +430,7 @@ public class NitriteDatabaseTest {
         try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addRepository(NitriteTestEntry.class, Index.unique("name")).addDeserializer(DoubleList.class, new DoubleArrayDeserializer()))) {
             NitriteTestEntry in = NitriteTestEntry.builder().name("A").dlist(DoubleList.of(1, 2, 3)).darr(new double[]{1, 2, 3}).build();
             db.insert(in);
-            NitriteTestEntry[] out = Iterables.toArray(db.findAll(NitriteTestEntry.class), NitriteTestEntry.class);
+            NitriteTestEntry[] out = db.findAllStr(NitriteTestEntry.class).toArray(NitriteTestEntry[]::new);
             assertEquals("jackson db size", 1, out.length);
             assertEquals("jackson module used", in.name, out[0].name);
             assertEquals("id assignment", in.primaryKey, out[0].primaryKey);
@@ -460,7 +458,7 @@ public class NitriteDatabaseTest {
 
             db.insert("entries", parent);
 
-            List<Document> children = Lists.newArrayList(
+            List<Document> children = Arrays.asList(
                     Document.createDocument("name", "A").put("parentId", parent.getId().getIdValue()),
                     Document.createDocument("name", "B").put("parentId", parent.getId().getIdValue()),
                     Document.createDocument("name", "C").put("parentId", parent.getId().getIdValue())
@@ -468,30 +466,30 @@ public class NitriteDatabaseTest {
 
             db.insertAll("children", children);
 
-            Iterable<Document> outParent = db.findAll("entries");
-            Iterable<Document> outChildren = db.findAll("children");
-            Iterable<Document> outChildrenF = db.find("children", Filter.or(Filter.where("name").eq("A"), Filter.where("name").eq("B")));
+            List<Document> outParent = db.findAllStr("entries").toList();
+            List<Document> outChildren = db.findAllStr("children").toList();
+            List<Document> outChildrenF = db.findStr("children", Filter.or(Filter.where("name").eq("A"), Filter.where("name").eq("B"))).toList();
 
-            assertEquals("1 parent", 1, Lists.newArrayList(outParent).size());
-            assertEquals("parent okay", parent.get("name", String.class), outParent.iterator().next().get("name", String.class));
+            assertEquals("1 parent", 1, outParent.size());
+            assertEquals("parent okay", parent.get("name", String.class), outParent.getFirst().get("name", String.class));
 
-            List<Document> results = Lists.newArrayList(db.joinAllChildren("children", outParent, "_id", "parentId", "children"));
+            List<Document> results = db.joinAllChildrenStr("children", outParent, "_id", "parentId", "children").toList();
 
             assertEquals("1 joined parent", 1, results.size());
 
-            assertEquals("joined parent okay", Lists.newArrayList(outParent).get(0).getId(), results.get(0).getId());
-            assertEquals("joined parent okay", Lists.newArrayList(outParent).get(0).get("name"), results.get(0).get("name"));
+            assertEquals("joined parent okay", outParent.getFirst().getId(), results.getFirst().getId());
+            assertEquals("joined parent okay", outParent.getFirst().get("name"), results.getFirst().get("name"));
 
-            List<Document> outJoinedChildren = Lists.newArrayList((Collection<Document>) results.get(0).get("children"));
+            List<Document> outJoinedChildren = new ArrayList<>((Collection<Document>) results.getFirst().get("children"));
             outJoinedChildren.sort(Comparator.comparing((Document d) -> ((String) d.get("name"))));
 
-            assertEquals("joined children okay", Lists.newArrayList(outChildren), outJoinedChildren);
+            assertEquals("joined children okay", outChildren, outJoinedChildren);
 
             Document parentB = Document.createDocument("name", "parentB");
 
             db.insert("entries", parentB);
 
-            List<Document> childrenB = Lists.newArrayList(
+            List<Document> childrenB = Arrays.asList(
                     Document.createDocument("name", "A").put("parentId", parentB.getId().getIdValue()),
                     Document.createDocument("name", "B").put("parentId", parentB.getId().getIdValue()),
                     Document.createDocument("name", "C").put("parentId", parentB.getId().getIdValue())
@@ -499,9 +497,9 @@ public class NitriteDatabaseTest {
 
             db.insertAll("children", childrenB);
 
-            outParent = db.findAll("entries");
+            outParent = db.findAllStr("entries").toList();
 
-            results = Lists.newArrayList(db.joinChildren("children", Filter.or(Filter.where("name").eq("A"), Filter.where("name").eq("B")), outParent, "_id", "parentId", "children"));
+            results = db.joinChildrenStr("children", Filter.or(Filter.where("name").eq("A"), Filter.where("name").eq("B")), outParent, "_id", "parentId", "children").toList();
 
             assertEquals("2 joined filtered parents", 2, results.size());
 
@@ -511,17 +509,17 @@ public class NitriteDatabaseTest {
             assertEquals("joined filtered parent okay", parentB.getId(), results.get(1).getId());
             assertEquals("joined filtered parent okay", parentB.get("name"), results.get(1).get("name"));
 
-            List<Document> outJoinedFChildren = Lists.newArrayList((Collection<Document>) results.get(0).get("children"));
+            List<Document> outJoinedFChildren = new ArrayList<>((Collection<Document>) results.get(0).get("children"));
             outJoinedFChildren.sort(Comparator.comparing((Document d) -> ((String) d.get("name"))));
-            List<Document> outJoinedFChildren1 = Lists.newArrayList((Collection<Document>) results.get(1).get("children"));
+            List<Document> outJoinedFChildren1 = new ArrayList<>((Collection<Document>) results.get(1).get("children"));
             outJoinedFChildren.sort(Comparator.comparing((Document d) -> ((String) d.get("name"))));
 
-            assertEquals("joined filtered children okay", StreamSupport.stream(outChildrenF.spliterator(), false).map(e -> e.get("name", String.class)).sorted().toList(), outJoinedFChildren.stream().map(e -> e.get("name", String.class)).sorted().toList());
-            assertEquals("joined filtered children okay", StreamSupport.stream(outChildrenF.spliterator(), false).map(e -> e.get("name", String.class)).sorted().toList(), outJoinedFChildren1.stream().map(e -> e.get("name", String.class)).sorted().toList());
+            assertEquals("joined filtered children okay", outChildrenF.stream().map(e -> e.get("name", String.class)).sorted().toList(), outJoinedFChildren.stream().map(e -> e.get("name", String.class)).sorted().toList());
+            assertEquals("joined filtered children okay", outChildrenF.stream().map(e -> e.get("name", String.class)).sorted().toList(), outJoinedFChildren1.stream().map(e -> e.get("name", String.class)).sorted().toList());
 
-            outParent = db.findAll("entries");
+            outParent = db.findAllStr("entries").toList();
 
-            results = Lists.newArrayList(db.joinChildren("children", Filter.and(Filter.where("name").eq("A"), Filter.where("name").eq("B")), outParent, "_id", "parentId", "children"));
+            results = db.joinChildrenStr("children", Filter.and(Filter.where("name").eq("A"), Filter.where("name").eq("B")), outParent, "_id", "parentId", "children").toList();
 
             assertEquals("2 joined filtered parents", 2, results.size());
 
@@ -564,21 +562,21 @@ public class NitriteDatabaseTest {
             List<NitriteChildTestEntry> outChildren = db.findAllStr(NitriteChildTestEntry.class).toList();
             List<NitriteChildTestEntry> outChildrenF = db.findStr(Filter.or(Filter.where("name").eq("A"), Filter.where("name").eq("B")), NitriteChildTestEntry.class).toList();
 
-            assertEquals("1 parent", 1, Lists.newArrayList(outParent).size());
-            assertEquals("parent okay", parent.primaryKey, outParent.iterator().next().primaryKey);
-            assertEquals("parent okay", parent.name, outParent.iterator().next().name);
+            assertEquals("1 parent", 1, new ArrayList<>(outParent).size());
+            assertEquals("parent okay", parent.primaryKey, outParent.getFirst().primaryKey);
+            assertEquals("parent okay", parent.name, outParent.getFirst().name);
 
             List<NitriteFamilyTestEntry> results = db.joinAllChildrenStr(
                     NitriteChildTestEntry.class,
-                    Lists.newArrayList(outParent),
+                    new ArrayList<>(outParent),
                     "primaryKey", "parentKey", "children").toList();
 
             assertEquals("1 joined parent", 1, results.size());
 
-            assertEquals("joined parent okay", parent.primaryKey, results.get(0).primaryKey);
-            assertEquals("joined parent okay", parent.name, results.get(0).name);
+            assertEquals("joined parent okay", parent.primaryKey, results.getFirst().primaryKey);
+            assertEquals("joined parent okay", parent.name, results.getFirst().name);
 
-            assertEquals("joined children okay", outChildren.stream().map(e -> e.name).collect(Collectors.toSet()), results.get(0).children.stream().map(e -> e.name).collect(Collectors.toSet()));
+            assertEquals("joined children okay", outChildren.stream().map(e -> e.name).collect(Collectors.toSet()), results.getFirst().children.stream().map(e -> e.name).collect(Collectors.toSet()));
 
             NitriteFamilyTestEntry parentB = NitriteFamilyTestEntry.builder().name("parentB").build();
 
@@ -592,11 +590,12 @@ public class NitriteDatabaseTest {
 
             db.insertAll(childrenB);
 
-            results = Lists.newArrayList(db.joinChildren(
-                    NitriteChildTestEntry.class,
-                    Filter.or(Filter.where("name").eq("A"), Filter.where("name").eq("B")),
-                    Lists.newArrayList(db.findAll(NitriteFamilyTestEntry.class)),
-                    "primaryKey", "parentKey", "children"));
+            results = db.joinChildrenStr(
+                            NitriteChildTestEntry.class,
+                            Filter.or(Filter.where("name").eq("A"), Filter.where("name").eq("B")),
+                            db.findAll(NitriteFamilyTestEntry.class),
+                            "primaryKey", "parentKey", "children")
+                    .collect(Collectors.toCollection(ArrayList::new));
             results.sort(Comparator.comparing(entry -> entry.name));
 
             assertEquals("2 joined filtered parents", 2, results.size());
@@ -610,11 +609,12 @@ public class NitriteDatabaseTest {
             assertEquals("joined filtered children okay", outChildrenF.stream().map(e -> e.name).collect(Collectors.toSet()), results.get(0).children.stream().map(e -> e.name).collect(Collectors.toSet()));
             assertEquals("joined filtered children okay", outChildrenF.stream().map(e -> e.name).collect(Collectors.toSet()), results.get(1).children.stream().map(e -> e.name).collect(Collectors.toSet()));
 
-            results = Lists.newArrayList(db.joinChildren(
+            results = db.joinChildrenStr(
                     NitriteChildTestEntry.class,
                     Filter.and(Filter.where("name").eq("A"), Filter.where("name").eq("B")),
-                    Lists.newArrayList(db.findAll(NitriteFamilyTestEntry.class)),
-                    "primaryKey", "parentKey", "children"));
+                    db.findAll(NitriteFamilyTestEntry.class),
+                    "primaryKey", "parentKey", "children")
+                    .collect(Collectors.toCollection(ArrayList::new));
             results.sort(Comparator.comparing(entry -> entry.name));
 
             assertEquals("2 joined filtered parents", 2, results.size());
@@ -646,16 +646,13 @@ public class NitriteDatabaseTest {
                 return null;
             }).collect(Collectors.toList());
 
-            ExecutorService executorService = Executors.newFixedThreadPool(10);
-            try {
+            try(ExecutorService executorService = Executors.newFixedThreadPool(10)) {
                 List<Future<Void>> futures = executorService.invokeAll(jobs);
                 for (Future<Void> future : futures) {
                     future.get();
                 }
             } catch (InterruptedException | ExecutionException e) {
                 throw new RuntimeException(e);
-            } finally {
-                executorService.shutdown();
             }
 
             List<String> out = db.findAllStr(NitriteTestEntry.class, "name").map(e -> e.name.substring(0, e.name.length() - 2)).sorted(Comparator.comparingInt(Integer::parseInt)).toList();
@@ -675,10 +672,10 @@ public class NitriteDatabaseTest {
             db.insert(object);
 
             NitriteTestEntry res1 = db.getByPrimaryKey(object.primaryKey, NitriteTestEntry.class).orElseThrow();
-            NitriteTestEntry res2 = db.getByPrimaryKey(object.primaryKey, NitriteTestEntry.class,"data").orElseThrow();
+            NitriteTestEntry res2 = db.getByPrimaryKey(object.primaryKey, NitriteTestEntry.class, "data").orElseThrow();
 
-            List<NitriteTestEntry> res3 = Lists.newArrayList(db.findAll(NitriteTestEntry.class));
-            List<NitriteTestEntry> res4 = Lists.newArrayList(db.findAll(NitriteTestEntry.class, "data"));
+            List<NitriteTestEntry> res3 = db.findAllStr(NitriteTestEntry.class).toList();
+            List<NitriteTestEntry> res4 = db.findAllStr(NitriteTestEntry.class, "data").toList();
 
             assertNotNull(res1);
             assertNotNull(res2);
@@ -687,14 +684,14 @@ public class NitriteDatabaseTest {
             assertEquals("1 document", 1, res4.size());
 
             assertNull("no data", res1.data);
-            assertNull("no data", res3.get(0).data);
+            assertNull("no data", res3.getFirst().data);
 
             assertNotNull("has data", res2.data);
-            assertNotNull("has data", res4.get(0).data);
+            assertNotNull("has data", res4.getFirst().data);
 
             NitriteTestEntry res5 = db.injectOptionalFields(res1, "data");
-            List<NitriteTestEntry> res6 = Lists.newArrayList(db.injectOptionalFields(NitriteTestEntry.class, db.findAll(NitriteTestEntry.class), "data"));
-            List<NitriteTestEntry> res7 = Lists.newArrayList(db.injectOptionalFields(NitriteTestEntry.class, Lists.newArrayList(db.findAll(NitriteTestEntry.class)), "data"));
+            List<NitriteTestEntry> res6 = db.injectOptionalFieldsStr(NitriteTestEntry.class, db.findAll(NitriteTestEntry.class), "data").toList();
+            List<NitriteTestEntry> res7 = db.injectOptionalFieldsStr(NitriteTestEntry.class, db.findAllStr(NitriteTestEntry.class).toList(), "data").toList();
 
             assertNotNull(res5);
 
@@ -702,8 +699,8 @@ public class NitriteDatabaseTest {
             assertEquals("1 document", 1, res7.size());
 
             assertNotNull("has data", res5.data);
-            assertNotNull("has data", res6.get(0).data);
-            assertNotNull("has data", res7.get(0).data);
+            assertNotNull("has data", res6.getFirst().data);
+            assertNotNull("has data", res7.getFirst().data);
 
         }
 
@@ -724,8 +721,8 @@ public class NitriteDatabaseTest {
             Document res1 = db.getByNitriteId("test", doc.getId()).orElseThrow();
             Document res2 = db.getByNitriteId("test", doc.getId(), "data").orElseThrow();
 
-            List<Document> res3 = Lists.newArrayList(db.findAll("test"));
-            List<Document> res4 = Lists.newArrayList(db.findAll("test", "data"));
+            List<Document> res3 = db.findAllStr("test").toList();
+            List<Document> res4 = db.findAllStr("test", "data").toList();
 
             assertNotNull(res1);
             assertNotNull(res2);
@@ -734,14 +731,14 @@ public class NitriteDatabaseTest {
             assertEquals("1 document", 1, res4.size());
 
             assertFalse("no data", res1.containsKey("data"));
-            assertFalse("no data", res3.get(0).containsKey("data"));
+            assertFalse("no data", res3.getFirst().containsKey("data"));
 
             assertTrue("has data", res2.containsKey("data"));
-            assertTrue("has data", res4.get(0).containsKey("data"));
+            assertTrue("has data", res4.getFirst().containsKey("data"));
 
             Document res5 = db.injectOptionalFields("test", res1, "data");
-            List<Document> res6 = Lists.newArrayList(db.injectOptionalFields("test", db.findAll("test"), "data"));
-            List<Document> res7 = Lists.newArrayList(db.injectOptionalFields("test", Lists.newArrayList(db.findAll("test")), "data"));
+            List<Document> res6 = db.injectOptionalFieldsStr("test", db.findAll("test"), "data").toList();
+            List<Document> res7 = db.injectOptionalFieldsStr("test", db.findAllStr("test").toList(), "data").toList();
 
             assertNotNull(res5);
 
@@ -749,8 +746,8 @@ public class NitriteDatabaseTest {
             assertEquals("1 document", 1, res7.size());
 
             assertTrue("has data", res5.containsKey("data"));
-            assertTrue("has data", res6.get(0).containsKey("data"));
-            assertTrue("has data", res7.get(0).containsKey("data"));
+            assertTrue("has data", res6.getFirst().containsKey("data"));
+            assertTrue("has data", res7.getFirst().containsKey("data"));
 
         }
 
@@ -829,7 +826,7 @@ public class NitriteDatabaseTest {
         final BlockingQueue<String> nameQueue = new ArrayBlockingQueue<>(3);
 
         try (NitriteDatabase db = new NitriteDatabase(file, Metadata.build().addCollection("entries", Index.unique("name")))) {
-            List<Document> in = Lists.newArrayList(
+            List<Document> in = Arrays.asList(
                     Document.createDocument("name", "A"),
                     Document.createDocument("name", "B"),
                     Document.createDocument("name", "C")
@@ -855,7 +852,7 @@ public class NitriteDatabaseTest {
             in.forEach(e -> e.put("name", e.get("name", String.class) + "_U"));
 
 
-            db.upsertAll("entries",in);
+            db.upsertAll("entries", in);
             for (int i = 0; i < 3; i++) {
                 updated.add(nameQueue.poll(1L, TimeUnit.SECONDS));
             }

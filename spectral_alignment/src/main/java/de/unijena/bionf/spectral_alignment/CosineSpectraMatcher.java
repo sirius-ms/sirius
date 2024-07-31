@@ -20,7 +20,6 @@
 
 package de.unijena.bionf.spectral_alignment;
 
-import com.google.common.collect.Lists;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
@@ -101,6 +100,6 @@ public class CosineSpectraMatcher {
         for (int k = flatResult.size(); k > 0; k -= sublistLen++)
             unflattend.add(flatResult.subList(k - sublistLen, k));
 
-        return Lists.reverse(unflattend);
+        return unflattend.reversed();
     }
 }

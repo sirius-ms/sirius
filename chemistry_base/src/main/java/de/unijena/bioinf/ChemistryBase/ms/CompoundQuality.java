@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.ChemistryBase.ms;
 
-import com.google.common.base.Joiner;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
@@ -29,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Keywords that can be assigned to a input spectrum to judge its quality. Available keywords are: Good, LowIntensity, NoMS1Peak, FewPeaks, Chimeric, NotMonoisotopicPeak, PoorlyExplained
@@ -96,7 +96,7 @@ public class CompoundQuality implements Ms2ExperimentAnnotation  {
     }
 
     public String toString() {
-        return Joiner.on(',').join(flags);
+        return flags.stream().map(Enum::toString).collect(Collectors.joining(","));
     }
 
     /**

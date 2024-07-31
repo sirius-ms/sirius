@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.ChemistryBase.ms;
 
-import com.google.common.collect.Sets;
 import de.unijena.bioinf.ChemistryBase.chem.IonMode;
 import de.unijena.bioinf.ChemistryBase.chem.Ionization;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
@@ -28,6 +27,7 @@ import de.unijena.bioinf.ms.annotations.ProcessedInputAnnotation;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Can be attached to a Ms2Experiment or ProcessedInput. If PrecursorIonType is unknown, CSI:FingerID will use this
@@ -124,19 +124,19 @@ public final class PossibleAdducts implements Iterable<PrecursorIonType>, Proces
     }
 
     public static PossibleAdducts union(PossibleAdducts p1, Set<PrecursorIonType> p2) {
-        return new PossibleAdducts(Sets.union(p1.value, p2));
+        return new PossibleAdducts(Stream.concat(p1.value.stream(),p2.stream()).collect(Collectors.toSet()));
     }
 
     public static PossibleAdducts union(PossibleAdducts p1, PossibleAdducts p2) {
-        return new PossibleAdducts(Sets.union(p1.value, p2.value));
+        return new PossibleAdducts(Stream.concat(p1.value.stream(),p2.value.stream()).collect(Collectors.toSet()));
     }
 
     public static PossibleAdducts intersection(PossibleAdducts p1, Set<PrecursorIonType> p2) {
-        return new PossibleAdducts(Sets.intersection(p1.value, p2));
+        return new PossibleAdducts(p1.value.stream().filter(p2::contains).collect(Collectors.toSet()));
     }
 
     public static PossibleAdducts intersection(PossibleAdducts p1, PossibleAdducts p2) {
-        return new PossibleAdducts(Sets.intersection(p1.value, p2.value));
+        return new PossibleAdducts(p1.value.stream().filter(p2::contains).collect(Collectors.toSet()));
     }
 
     public int size() {

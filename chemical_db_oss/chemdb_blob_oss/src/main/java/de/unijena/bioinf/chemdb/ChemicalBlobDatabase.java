@@ -22,8 +22,6 @@ package de.unijena.bioinf.chemdb;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
@@ -275,14 +273,14 @@ public class ChemicalBlobDatabase<Storage extends BlobStorage> extends AbstractC
     public List<FingerprintCandidate> lookupFingerprintsByInchi(Iterable<CompoundCandidate> compounds) throws ChemicalDatabaseException {
         final ArrayList<FingerprintCandidate> candidates = new ArrayList<>();
         final HashMap<String, CompoundCandidate> innerMap = new HashMap<>();
-        final Multimap<MolecularFormula, CompoundCandidate> formulas2Candidates = ArrayListMultimap.create();
+        final Map<MolecularFormula, List<CompoundCandidate>> formulas2Candidates = new HashMap<>();
         for (CompoundCandidate c : compounds) {
             final MolecularFormula f = c.getInchi().extractFormulaOrThrow();
-            formulas2Candidates.put(f, c);
+            formulas2Candidates.computeIfAbsent(f, k -> new ArrayList<>()).add(c);
             innerMap.put(c.getInchiKey2D(), c);
         }
 
-        for (Map.Entry<MolecularFormula, Collection<CompoundCandidate>> entry : formulas2Candidates.asMap().entrySet()) {
+        for (Map.Entry<MolecularFormula, List<CompoundCandidate>> entry : formulas2Candidates.entrySet()) {
             final MolecularFormula f = entry.getKey();
             final Collection<FingerprintCandidate> pseudoQueue = new AbstractCollection<>() {
 

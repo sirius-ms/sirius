@@ -22,8 +22,7 @@ package de.unijena.bioinf.ChemistryBase.ms.lcms;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import javax.annotation.Nonnull;
+import jakarta.annotation.Nonnull;
 
 /**
  * A mass trace of an ion consists of the mass traces of its isotope peaks
@@ -34,7 +33,8 @@ public class IonTrace {
      * traces of the isotopes. The monoisotopic peak has index 0.
      */
     @JsonProperty
-    @Nonnull protected final Trace[] isotopes;
+    @Nonnull
+    protected final Trace[] isotopes;
 
     @JsonProperty
     @Nonnull protected final double[] correlationScores;

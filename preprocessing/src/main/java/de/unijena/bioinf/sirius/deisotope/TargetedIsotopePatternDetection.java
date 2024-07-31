@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.sirius.deisotope;
 
-import com.google.common.collect.Range;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
@@ -34,6 +33,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ms.annotations.Provides;
 import de.unijena.bioinf.ms.annotations.Requires;
 import de.unijena.bioinf.sirius.ProcessedInput;
+import org.apache.commons.lang3.Range;
 
 import java.util.ArrayList;
 
@@ -65,8 +65,8 @@ public class TargetedIsotopePatternDetection implements IsotopePatternDetection 
         final PeriodicTable T = PeriodicTable.getInstance();
         for (int k=1; k <= 5; ++k) {
             final Range<Double> nextMz = T.getIsotopicMassWindow(stdalphabet, dev.allowedMassDeviation, spec.getMzAt(0), k);
-            final double a = nextMz.lowerEndpoint();
-            final double b = nextMz.upperEndpoint();
+            final double a = nextMz.getMinimum();
+            final double b = nextMz.getMaximum();
             final double startPoint = a - dev.massDifferenceDeviation.absoluteFor(a);
             final double endPoint = b + dev.massDifferenceDeviation.absoluteFor(b);
             final int nextIndex = Spectrums.indexOfFirstPeakWithin(massOrderedSpectrum, startPoint, endPoint);

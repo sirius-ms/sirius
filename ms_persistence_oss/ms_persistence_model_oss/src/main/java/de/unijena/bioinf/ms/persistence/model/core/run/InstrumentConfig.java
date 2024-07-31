@@ -23,8 +23,8 @@ package de.unijena.bioinf.ms.persistence.model.core.run;
 import com.fasterxml.jackson.databind.util.StdConverter;
 import lombok.*;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import java.util.regex.Pattern;
 
 /**
