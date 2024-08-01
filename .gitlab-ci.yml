@@ -23,11 +23,13 @@ before_script:
   - VSNAP=$(head -2 sirius_cli/src/main/resources/sirius_frontend.build.properties | tail -1 | cut -d '=' -f 2)
 
 test:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   stage: test-libs
   script:
     - apt-get update
     - apt-get install -y liblapack3
-    - ./gradlew test
+    - ./gradlew test --stacktrace
   artifacts:
     when: always
     reports:
