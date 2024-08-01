@@ -1,0 +1,21 @@
+Name: m-Aminobenzoic acid
+Synon: $:00in-source
+DB#: MoNA010759
+InChIKey: XFDUHJPVQKIXHO-UHFFFAOYSA-N
+Precursor_type: [M+H]+
+Spectrum_type: MS1
+PrecursorMZ: 138.054962158203
+Instrument_type: LC-ESI-QTOF
+Instrument: Agilent 6550 iFunnel
+Ion_mode: P
+Collision_energy: 0
+Formula: C7H7NO2
+MW: 137
+ExactMass: 137.047678464
+Comments: "computed SMILES=O=C(O)C=1C=CC=C(N)C1" "SMILES=c1cc(cc(c1)N)C(=O)O" "InChI=InChI=1S/C7H7NO2/c8-6-3-1-2-5(4-6)7(9)10/h1-4H,8H2,(H,9,10)" "computed [2M+H-H2O]+=257.087986928" "computed [2M+K]+=313.193656928" "computed [M+H]+=138.055648464" "computed [2M+Na]+=297.085126928" "computed [2M+Cl]-=309.548356928" "computed [2M+HAc-H]-=333.139386928" "computed [M-H20-H]-=118.029288464" "computed [M-H]-=136.040402464" "computed [2M-H]-=273.088080928" "computed [M+Na]+=160.037448464" "computed [M+H-H2O]+=120.04030846399999" "computed [2M+NH4]+=292.133936928" "computed [M+Cl]-=172.500678464" "computed [M+NH4]+=155.086258464" "computed [M+K]+=176.145978464" "computed [2M+H]+=275.103326928" "computed [M+HAc-H]-=196.091708464" "retention time=2.087279" "author=Ipputa Tada, Hiroshi Tsugawa, Isabel Meister, Pei Zhang, Rie Shu, Riho Katsumi, Craig E. Wheelock, Masanori Arita, Romanas Chaleckis" "license=CC-BY" "aquisition type=AIF" "column=Merck SeQuant ZIC HILIC (2.1 x 100 mm, 3.5 µm particle size) with Merck SeQuant ZIC HILIC Guard column (2.1 mm x 2 mm, 3.5 µm particle size)" "flow gradient=5/95 at 0-1.5 min, 60/40 at 12-14 min, 75/25 at 14.2-17 min; 5/95 at 18-25 min" "flow rate=0.3ml/min" "solvent a=water with 0.1% formic acid (pH2.7)" "solvent b=acetonitrile with 0.1% formic acid" "comment=MS2 deconvoluted using CorrDec from all ion fragmentation data, MetaboLights identifier MTBLS1040" "comment=Spectrum acquired as described in Naz et al 2017 PMID 28641411. Preparation and submission to MassBank of North America by Chaleckis R. and Tada I." "origin=KI GIAR zic-HILIC Pos v0.92.msp.txt" "acquisition type=DDA QTOF" "chromatography type=DI (direct infusion)" "computed spectral entropy=0.5082319753906649" "computed normalized entropy=0.36661187525865696" "computed mass accuracy=4.971250480681786" "computed mass error=-6.863057969894726E-4" "SPLASH=splash10-000i-0900000000-efdee90e857bd8d0327c" "submitter=submitter = romanas chaleckis (gunma university)" "MoNA Rating=4.545454545454546"
+Num Peaks: 4
+42.03298 3
+110.0605 3.8
+138.0553 100
+139.0585 7.7
+

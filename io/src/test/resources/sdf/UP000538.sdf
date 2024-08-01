@@ -1,0 +1,166 @@
+
+  CDK     01292301342D
+
+ 25 24  0  0  0  0  0  0  0  0999 V2000
+    6.4952   14.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -22.0836   14.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    5.1962   13.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -20.7846   13.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.5981   13.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -18.1865   13.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.2990   14.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -16.8875   14.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -1.2990   14.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -14.2894   14.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -2.5981   13.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -12.9904   13.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -5.1962   13.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+  -10.3923   13.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -6.4952   14.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+   -9.0933   14.2500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    7.7942   13.5000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  -23.3827   13.5000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    3.8971   14.2500    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  -19.4856   14.2500    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+    0.0000   13.5000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  -15.5885   13.5000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -3.8971   14.2500    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  -11.6913   14.2500    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+   -7.7942   13.5000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  3  1  1  0  0  0  0
+  4  2  1  0  0  0  0
+  7  5  1  0  0  0  0
+  8  6  1  0  0  0  0
+ 11  9  1  0  0  0  0
+ 12 10  1  0  0  0  0
+ 15 13  1  0  0  0  0
+ 16 14  1  0  0  0  0
+ 17  1  1  0  0  0  0
+ 18  2  1  0  0  0  0
+ 19  3  1  0  0  0  0
+ 19  5  1  0  0  0  0
+ 20  4  1  0  0  0  0
+ 20  6  1  0  0  0  0
+ 21  7  1  0  0  0  0
+ 21  9  1  0  0  0  0
+ 22  8  1  0  0  0  0
+ 22 10  1  0  0  0  0
+ 23 11  1  0  0  0  0
+ 23 13  1  0  0  0  0
+ 24 12  1  0  0  0  0
+ 24 14  1  0  0  0  0
+ 25 15  1  0  0  0  0
+ 25 16  1  0  0  0  0
+M  END
+
+>  <NAME>
+Octaethylene glycol
+
+>  <SYNONYMS>
+3,6,9,12,15,18,21-Heptaoxatricosane-1,23-diol
+2-[2-[2-[2-[2-[2-[2-(2-hydroxyethoxy)ethoxy]ethoxy]ethoxy]ethoxy]ethoxy]ethoxy]ethanol
+
+>  <PRECURSOR TYPE>
+[M+Na]+
+
+>  <SPECTRUM TYPE>
+MS2
+
+>  <PRECURSOR M/Z>
+393.2095
+
+>  <INSTRUMENT TYPE>
+LC-ESI-ITFT
+
+>  <INSTRUMENT>
+LTQ Orbitrap XL Thermo Scientific
+
+>  <COLLISION ENERGY>
+90 % (nominal)
+
+>  <ION MODE>
+P
+
+>  <INCHIKEY>
+GLZWNFNQMJAZGY-UHFFFAOYSA-N
+
+>  <FORMULA>
+C16H34O9
+
+>  <EXACT MASS>
+370.220282668
+
+>  <MW>
+370
+
+>  <ID>
+UP000538
+
+>  <CONTRIBUTOR>
+Tobias Schulze, {Helmholtz Centre for Environmental Research, UFZ
+
+>  <COMMENT>
+cas=5117-19-1
+SMILES=OCCOCCOCCOCCOCCOCCOCCOCCO
+chebi=44794
+pubchem cid=78798
+chemspider=71135
+InChI=InChI=1S/C16H34O9/c17-1-3-19-5-7-21-9-11-23-13-15-25-16-14-24-12-10-22-8-6-20-4-2-18/h17-18H,1-16H2
+computed SMILES=OCCOCCOCCOCCOCCOCCOCCOCCO
+computed [2M+H-H2O]+=723.4331953359999
+computed [2M+K]+=779.538865336
+computed [M+H]+=371.228252668
+computed [2M+Na]+=763.430335336
+computed [2M+Cl]-=775.8935653359999
+computed [2M+HAc-H]-=799.484595336
+computed [M-H20-H]-=351.20189266799997
+computed [M-H]-=369.213006668
+computed [2M-H]-=739.4332893359999
+computed [M+Na]+=393.210052668
+computed [M+H-H2O]+=353.212912668
+computed [2M+NH4]+=758.479145336
+computed [M+Cl]-=405.67328266799996
+computed [M+NH4]+=388.258862668
+computed [M+K]+=409.318582668
+computed [2M+H]+=741.448535336
+computed [M+HAc-H]-=429.264312668
+accession=UP000538
+date=2019.07.31
+author=Liza-Marie Beckers, Werner Brack, Janek-Paul Dann, Martin Krauss, Erik Mueller, Tobias Schulze, Helmholtz Centre for Environmental Research GmbH - UFZ, Leipzig, Germany
+license=CC0
+copyright=Copyright (C) 2019
+publication=Beckers L-M, Brack W, Dann JP, Krauss M, Mueller E, Schulze T, 2020. Unraveling longitudinal pollution patterns of organic micropollutants in a river by non-target screening and cluster analysis. Science of The Total Environment, https://doi.org/10.1016/j.scitotenv.2020.138388
+comment=CONFIDENCE Reference Standard (Level 1)
+comment=INTERNAL_ID 11
+exact mass=370.2203
+ionization=ESI
+fragmentation mode=CID
+resolution=15000
+column=Kinetex Evo C18 2.6 um 50 x 2.1 mm
+flow gradient=95/5 at 0 min, 95/5 at 1 min, 0/100 at 13 min, 0/100 at 24 min, 95/5 at 24.3 min, 95/5/0 at 32 min
+flow rate=300 uL/min
+retention time=6.762 min
+SOLVENT A=water with 0.1% formic acid
+SOLVENT B=methanol with 0.1% formic acid
+recalibrate=loess on assigned fragments and MS1
+reanalyze=Peaks with additional N2/O included
+whole=RMassBank 2.12.0
+computed spectral entropy=0.0
+computed normalized entropy=NaN
+computed mass accuracy=1.4055306395487286
+computed mass error=-5.526680000116357E-4
+SPLASH=splash10-0002-0009000000-d849df50ad373f4c881c
+submitter=submitter = Tobias Schulze (Helmholtz Centre for Environmental Research, UFZ)
+MoNA Rating=4.333333333333334
+
+>  <NUM PEAKS>
+1
+
+>  <MASS SPECTRAL PEAKS>
+349.1844 100.000000
+
+> <SPLASH>
+splash10-0002-0009000000-d849df50ad373f4c881c
+
+$$$$
+

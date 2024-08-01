@@ -20,8 +20,6 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.sirius.SpectraMatch;
@@ -29,8 +27,7 @@ import de.unijena.bioinf.spectraldb.entities.Ms2ReferenceSpectrum;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
 
@@ -151,8 +148,8 @@ public class NoSqlSpectrumSummaryWriter implements AutoCloseable {
             w.write(reference.getName());
             writeSep();
 
-            Multimap<String, String> dbMap = ArrayListMultimap.create();
-            dbMap.put(reference.getLibraryName(), reference.getLibraryId());
+            Map<String, List<String>> dbMap = new HashMap<>();
+            dbMap.computeIfAbsent(reference.getLibraryName(), k -> new ArrayList<>()).add(reference.getLibraryId());
             NoSqlStructureSummaryWriter.links(w, dbMap); //this ensures same output format as for 'links' in NoSqlStructureSummaryWriter. However, currently, there is only 1 link.
             writeSep();
 

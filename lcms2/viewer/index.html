@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>LCMS Viewer</title>
+	<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+	<script src="./data.js"></script>
+	<script src="./viewer.js" defer></script>
+	<style>
+svg, svg * {
+  pointer-events: none;
+}
+rect.region:hover {
+fill-opacity:30%;
+};
+#title {
+color:black;
+}
+#title:hover{
+color:green;
+}
+rect {
+	pointer-events: visibleFill;
+}
+path.child {
+	pointer-events:stroke;
+}
+path.child:hover{
+stroke-width:5;
+}
+	</style>
+
+</head>
+<body>
+	<div id="chart"></div>
+	<div>
+  	<input type="range" id="mzslider" name="mzslider" min="0" max="0" onchange="updateSlider(this)" />
+  	<label for="mzslider">m/z</label>
+	</div>
+	<div id="title"><b>m/z = </b><span id="mz">???</span>, <b>rt = </b><span id="rt">???</span></div>
+	<div id="buttons">
+		<button onclick="left()">&larr;</button>
+		<button onclick="right()">	&rarr;</button>
+		<input type="checkbox" id="displayMerged" name="displayMerged" value="display" checked="checked" onchange="changeMergeDisplay(this)">
+		<label for="displayMerged">Display merged line</label><br>
+		<input type="number" id="mznum"></input><button onclick="search()">go</button><label>Search m/z</label> <br />
+		<fieldset id="isotopeSelection">
+
+		</fieldset>
+	</div>
+
+</body>
+</html>

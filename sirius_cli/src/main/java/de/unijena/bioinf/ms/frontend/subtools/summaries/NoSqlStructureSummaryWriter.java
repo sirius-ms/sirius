@@ -20,14 +20,12 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Multimap;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureMatch;
 import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureSearchResult;
 import de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -69,10 +67,6 @@ class NoSqlStructureSummaryWriter implements AutoCloseable {
         this.w = writer;
     }
 
-    private NoSqlStructureSummaryWriter(Writer w) {
-        this.w = new BufferedWriter(w);
-    }
-
     public void writeHeader() throws IOException {
         w.write(HEADER);
         w.newLine();
@@ -112,7 +106,7 @@ class NoSqlStructureSummaryWriter implements AutoCloseable {
         w.write(Double.isNaN(match.getCandidate().getXlogp()) ? "" : String.format(DOUBLE_FORMAT, match.getCandidate().getXlogp()));
         writeSep();
 
-        final Multimap<String, String> dbMap = match.getCandidate().getLinkedDatabases();
+        @NotNull final Map<String, List<String>> dbMap = match.getCandidate().getLinkedDatabases();
         list(w, dbMap.get(DataSource.PUBCHEM.name()).stream().filter(Objects::nonNull).collect(Collectors.toList())); //is this a hack or ok?
         writeSep();
         links(w, dbMap);
@@ -146,7 +140,7 @@ class NoSqlStructureSummaryWriter implements AutoCloseable {
 
     public static void list(Writer writer, Collection<String> pubchemIds) throws IOException {
 
-        if (pubchemIds == null || pubchemIds.size() == 0) {
+        if (pubchemIds == null || pubchemIds.isEmpty()) {
             writer.write("\"\"");
         } else {
             final Iterator<String> it = pubchemIds.iterator();
@@ -158,18 +152,18 @@ class NoSqlStructureSummaryWriter implements AutoCloseable {
         }
     }
 
-    public static void links(Writer w, Multimap<String, String> databases) throws IOException {
-        final Iterator<Map.Entry<String, Collection<String>>> iter = databases.asMap().entrySet().iterator();
+    public static void links(Writer w, Map<String, List<String>> databases) throws IOException {
+        final Iterator<Map.Entry<String, List<String>>> iter = databases.entrySet().iterator();
         if (!iter.hasNext()) {
             w.write("\"\"");
             return;
         }
-        Map.Entry<String, Collection<String>> x = iter.next();
+        Map.Entry<String, List<String>> x = iter.next();
         w.write(x.getKey());
         Collection<String> col = withoutNulls(x.getValue());
-        if (col.size() > 0) {
+        if (!col.isEmpty()) {
             w.write(":(");
-            w.write(escape(Joiner.on(' ').join(col)));
+            w.write(escape(String.join(" ", col)));
             w.write(")");
         }
         while (iter.hasNext()) {
@@ -177,9 +171,9 @@ class NoSqlStructureSummaryWriter implements AutoCloseable {
             x = iter.next();
             w.write(x.getKey());
             col = withoutNulls(x.getValue());
-            if (col.size() > 0) {
+            if (!col.isEmpty()) {
                 w.write(":(");
-                w.write(escape(Joiner.on(' ').join(col)));
+                w.write(escape(String.join(" ", col)));
                 w.write(")");
             }
         }
@@ -190,7 +184,7 @@ class NoSqlStructureSummaryWriter implements AutoCloseable {
         return name.replace('\t', ' ').replace('"', '\'');
     }
 
-    public static Collection<String> withoutNulls(Collection<String> in) {
-        return Collections2.filter(in, Objects::nonNull);
+   public static List<String> withoutNulls(List<String> in) {
+        return in.stream().filter(Objects::nonNull).toList();
     }
 }

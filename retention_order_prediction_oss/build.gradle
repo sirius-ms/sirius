@@ -1,0 +1,34 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
+allprojects {
+    dependencies {
+        // deprecated for removal ->  use fastutil instead
+        implementation 'net.sf.trove4j:core:3.1.0'
+        api project(':chemistry_base')
+        api project(':fingerprinter_oss')
+        api project(':chemical_db_oss:chemdb_utils_oss')
+
+        for (module in ["depict", "inchi", "qsarbond", "qsarmolecular", "silent"])
+            api "org.openscience.cdk:cdk-$module:$cdk_version"
+
+        testImplementation "org.slf4j:slf4j-jdk14:$slf4j_version"
+    }
+}

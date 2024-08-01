@@ -1,0 +1,6 @@
+dependencies {
+    // deprecated for removal ->  use fastutil instead
+    implementation 'net.sf.trove4j:core:3.1.0'
+    api project(':io')
+    implementation group: 'org.slf4j', name: 'slf4j-jdk14', version: "$slf4j_version"
+}
