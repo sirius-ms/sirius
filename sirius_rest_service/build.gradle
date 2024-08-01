@@ -19,6 +19,8 @@ ext['jna.version'] = '5.4.0' //force correct jna version -> springs is not compa
 ext['slf4j.version'] = slf4j_version
 ext['okhttp.version'] = okhttp_version
 
+version =  parent.siriusFrontendVersion
+
 dependencies {
 //    implementation("org.springframework.boot:spring-boot-properties-migrator")
     implementation project(':sirius_cli')
