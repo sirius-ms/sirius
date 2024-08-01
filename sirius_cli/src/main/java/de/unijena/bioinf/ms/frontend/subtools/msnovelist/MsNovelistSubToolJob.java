@@ -131,6 +131,7 @@ public class MsNovelistSubToolJob extends InstanceJob {
             final MsNovelistFingerblastJJob job = new MsNovelistFingerblastJJob(
                     csi,
                     ApplicationCore.WEB_API,
+                    ApplicationCore.IFP_CACHE(),
                     formRes.getAnnotationOrThrow(FingerIdResult.class),
                     msnJobResults.get(formRes).getCandidates());
 
