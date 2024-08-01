@@ -237,7 +237,9 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                 dbjob = CustomDatabaseImporter.makeImportToDatabaseJob(
                         spectrumFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
                         structureFiles.stream().map(PathInputResource::new).collect(Collectors.toList()),
-                        listener,(NoSQLCustomDatabase<?, ?>) db, ApplicationCore.WEB_API, mode.importParas.writeBuffer
+                        listener,(NoSQLCustomDatabase<?, ?>) db, ApplicationCore.WEB_API,
+                        ApplicationCore.IFP_CACHE(),
+                        mode.importParas.writeBuffer
                 );
                 checkForInterruption();
                 submitJob(dbjob).awaitResult();

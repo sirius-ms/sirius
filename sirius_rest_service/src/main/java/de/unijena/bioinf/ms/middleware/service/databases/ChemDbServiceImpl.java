@@ -26,6 +26,7 @@ import de.unijena.bioinf.babelms.MsExperimentParser;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.chemdb.WebWithCustomDatabase;
 import de.unijena.bioinf.chemdb.custom.*;
+import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
 import de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabase;
 import de.unijena.bioinf.ms.middleware.model.databases.SearchableDatabaseParameters;
@@ -56,11 +57,13 @@ import static de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions.w
 @Slf4j
 public class ChemDbServiceImpl implements ChemDbService {
     private final WebAPI<?> webAPI;
+    private final IFingerprinterCache iFPCache;
     private CdkFingerprintVersion version;
 
 
-    public ChemDbServiceImpl(WebAPI<?> webAPI) {
+    public ChemDbServiceImpl(@NotNull WebAPI<?> webAPI, @Nullable IFingerprinterCache iFPCache) {
         this.webAPI = webAPI;
+        this.iFPCache = iFPCache;
         log.info("Scanning for custom databases...");
         try {
             //request fingerprint version to init db and check compatibility
@@ -94,7 +97,8 @@ public class ChemDbServiceImpl implements ChemDbService {
         Map<Boolean, List<InputResource<?>>> split = inputResources.stream()
                 .collect(Collectors.partitioningBy(p -> MsExperimentParser.isSupportedFileName(p.getFilename())));
 
-        SiriusJobs.runInBackground(CustomDatabaseImporter.makeImportToDatabaseJob(split.get(true), split.get(false), null, (NoSQLCustomDatabase<?, ?>) db, webAPI, bufferSize))
+        SiriusJobs.runInBackground(CustomDatabaseImporter.makeImportToDatabaseJob(
+                split.get(true), split.get(false), null, (NoSQLCustomDatabase<?, ?>) db, webAPI, iFPCache, bufferSize))
                 .takeResult();
 
         return SearchableDatabases.of(db);

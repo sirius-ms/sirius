@@ -34,6 +34,7 @@ import de.unijena.bioinf.babelms.inputresource.InputResourceParsingIterator;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.chemdb.nitrite.wrappers.FingerprintCandidateWrapper;
 import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
+import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
@@ -84,16 +85,17 @@ public class CustomDatabaseImporter {
     protected SmilesParser smilesParser;
     protected CdkFingerprintVersion fingerprintVersion;
     protected final WebAPI<?> api;
-
+    protected final IFingerprinterCache ifpCache;
     // a magic number of bytes that represent the number of bytes in the input that correspond to on compound.
     //todo we should estimate this based on the file format instead.
     private static final int BYTE_EQUIVALENTS = 52428;
 
     // todo make abstract and implement different versions for blob and document storage
-    private CustomDatabaseImporter(@NotNull NoSQLCustomDatabase<?, ?> database, CdkFingerprintVersion version, WebAPI<?> api, int bufferSize) {
+    private CustomDatabaseImporter(@NotNull NoSQLCustomDatabase<?, ?> database, CdkFingerprintVersion version, WebAPI<?> api, @Nullable IFingerprinterCache ifpCache, int bufferSize) {
         this.api = api;
         this.database = database;
         this.fingerprintVersion = version;
+        this.ifpCache = ifpCache == null ? IFingerprinterCache.NOOP_CACHE : ifpCache;
 
         this.molBufferSize = bufferSize;
         this.specBufferSize = bufferSize;
@@ -479,7 +481,7 @@ public class CustomDatabaseImporter {
     private FingerprintCalculator getFingerprintCalculator() {
         FingerprintCalculator calc = freeFingerprinter.poll();
         if (calc == null)
-            calc = new FingerprintCalculator(fingerprintVersion);
+            calc = new FingerprintCalculator(fingerprintVersion, ifpCache);
         return calc;
     }
 
@@ -588,8 +590,8 @@ public class CustomDatabaseImporter {
         private final FixedFingerprinter fingerprinter;
         private final LogPEstimator logPEstimator;
 
-        public FingerprintCalculator(CdkFingerprintVersion version) {
-            this.fingerprinter = new FixedFingerprinter(version);
+        public FingerprintCalculator(CdkFingerprintVersion version, IFingerprinterCache cache) {
+            this.fingerprinter = new FixedFingerprinter(version, cache);
             this.logPEstimator = new LogPEstimator();
         }
 
@@ -661,7 +663,9 @@ public class CustomDatabaseImporter {
             List<InputResource<?>> spectrumFiles,
             List<InputResource<?>> structureFiles,
             @Nullable CustomDatabaseImporter.Listener listener,
-            @NotNull NoSQLCustomDatabase<?, ?> database, WebAPI<?> api, int bufferSize
+            @NotNull NoSQLCustomDatabase<?, ?> database, WebAPI<?> api,
+            @Nullable IFingerprinterCache ifpCache,
+            int bufferSize
 
     ) {
         return new BasicJJob<Boolean>() {
@@ -670,7 +674,7 @@ public class CustomDatabaseImporter {
 
             @Override
             protected Boolean compute() throws Exception {
-                importer = new CustomDatabaseImporter(database, api.getCDKChemDBFingerprintVersion(), api, bufferSize);
+                importer = new CustomDatabaseImporter(database, api.getCDKChemDBFingerprintVersion(), api, ifpCache, bufferSize);
                 if (listener != null)
                     importer.addListener(listener);
                 importToDatabase(spectrumFiles, structureFiles, importer);
