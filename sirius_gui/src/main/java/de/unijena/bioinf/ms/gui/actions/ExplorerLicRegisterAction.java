@@ -33,11 +33,9 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Slf4j
@@ -76,18 +74,18 @@ public class ExplorerLicRegisterAction extends AbstractAction {
                     GuiUtils.openURL(popupOwner, UserPortal.explorerLicURL(licenseInfo), "Register Explorer License", true);
                     return new ResultMessage(true);
                 } else {
-                    return new ResultMessage(false, Stream.of(Stream.of(
-                            "Explorer license validation could not read license information.",
-                                    finished ? "Finished with exit value: "+exitValue : "License validation did not finish.",
-                                    "Provided information:"),
+                    return new ResultMessage(false, Stream.of(
+                                    Stream.of("Explorer license validation could not read license information.",
+                                            finished ? "Finished with exit value: " + exitValue : "License validation did not finish.",
+                                            "Provided information: "),
                                     info.stream(),
-                                    errorOutput.size() > 0 ? Stream.of("Error output:") : Stream.empty(),
+                                    !errorOutput.isEmpty() ? Stream.of("Error output: ") : Stream.empty(),
                                     errorOutput.stream())
-                            .reduce(Stream::concat).get().toArray(l -> new String[l]));
+                            .flatMap(s -> (Stream<String>) s).toArray(String[]::new));
                 }
             }).awaitResult();
-            if (!resultMessage.success){
-                log.warn(Arrays.stream(resultMessage.message).collect(Collectors.joining("\n")));
+            if (!resultMessage.success) {
+                log.warn(String.join(" | ", resultMessage.message));
                 new WarningDialog(popupOwner, GuiUtils.formatToolTip("No valid MassHunter Explorer license found on you system. Please ensure that MassHunter Explorer is installed and activated.", "For details, please see the 'Log' in the top-right corner."));
             }
         } catch (ExecutionException ex) {
@@ -99,7 +97,7 @@ public class ExplorerLicRegisterAction extends AbstractAction {
     /**
      * if license retrieval is not successful, this provides an error message.
      */
-    private class ResultMessage {
+    private static class ResultMessage {
         boolean success;
         String[] message;
 
