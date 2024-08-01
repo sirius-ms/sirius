@@ -368,8 +368,8 @@ jobs:
 #      - name: Sirius Run Cleanup
 #        run: |
 #          rm -r sirius_cli/build/test/temp_results
-
-      - name: Azure Trusted Signing for Widows MSI
+      - if: matrix.os == 'windows-latest'
+        name: Azure Trusted Signing for Widows MSI
         uses: azure/trusted-signing-action@v0.3.16
         with:
           azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
