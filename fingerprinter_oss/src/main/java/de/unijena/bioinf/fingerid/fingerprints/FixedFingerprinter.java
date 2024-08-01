@@ -26,16 +26,15 @@ import de.unijena.bioinf.ChemistryBase.fp.ArrayFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.BooleanFingerprint;
 import de.unijena.bioinf.ChemistryBase.fp.CdkFingerprintVersion;
 import de.unijena.bioinf.chemdb.InChISMILESUtils;
-import de.unijena.bioinf.fingerid.Fingerprinter;
+import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
 import gnu.trove.set.hash.TIntHashSet;
-import io.github.dan2097.jnainchi.InchiStatus;
+import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.graph.CycleFinder;
 import org.openscience.cdk.graph.Cycles;
-import org.openscience.cdk.inchi.InChIGeneratorFactory;
-import org.openscience.cdk.inchi.InChIToStructure;
 import org.openscience.cdk.interfaces.IAtom;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IBond;
@@ -54,22 +53,26 @@ import static org.openscience.cdk.CDKConstants.ISAROMATIC;
 
 public class FixedFingerprinter {
 
-    protected CdkFingerprintVersion cdkFingerprintVersion;
+    private final IFingerprinterCache iFpCache;
+    protected final CdkFingerprintVersion cdkFingerprintVersion;
 
+    @Getter
     protected boolean useFastMode;
     protected FastCdkFingerprinter fastCdkFingerprinter;
 
     public FixedFingerprinter(CdkFingerprintVersion cdkFingerprintVersion) {
+        this(cdkFingerprintVersion, IFingerprinterCache.NOOP_CACHE);
+    }
+    public FixedFingerprinter(CdkFingerprintVersion cdkFingerprintVersion, @NotNull IFingerprinterCache cache) {
         this.cdkFingerprintVersion = cdkFingerprintVersion;
+        this.iFpCache = cache;
         useFastMode=false;
     }
+
     public FixedFingerprinter(CdkFingerprintVersion cdkFingerprintVersion, boolean useFastMode) {
         this.cdkFingerprintVersion = cdkFingerprintVersion;
+        this.iFpCache = IFingerprinterCache.NOOP_CACHE;
         setFastMode(useFastMode);
-    }
-
-    public boolean isUseFastMode() {
-        return useFastMode;
     }
 
     public void setFastMode(boolean useFastMode) {
@@ -163,7 +166,7 @@ public class FixedFingerprinter {
             try {
                 if (fingerprintType.requiresAromaticityPerception)
                     perceiveAromaticity();
-                this.fingerprints[k] = Fingerprinter.getFingerprinter(fingerprintType).getFingerprint(molecule);
+                this.fingerprints[k] = iFpCache.applyFingerprinter(fingerprintType, ifp -> ifp.getFingerprint(molecule));
             } catch (CDKException e) {
                 throw new RuntimeException(e);
             }
