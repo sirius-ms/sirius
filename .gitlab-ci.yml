@@ -53,6 +53,7 @@ buildLinux64:
 
 buildCLI:
   stage: build-app
+  when: never
   script:
     - ./gradlew :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal -P "build.sirius.starter.jdk.include=true"
     - mkdir maven_artifacts
@@ -71,6 +72,7 @@ buildCLI:
 
 buildGUI:
   stage: build-app
+  when: never
   script:
     - ./gradlew :sirius_dist:sirius_gui_dist:publishSiriusMSPublicationToMavenLocal -P "build.sirius.native.openjfx.exclude=true" -P "build.sirius.starter.jdk.include=true"
     - mkdir maven_artifacts
@@ -89,6 +91,7 @@ buildGUI:
 
 testCLI:
   stage: test-app
+  when: never
   script:
     - mkdir unzipped
     - unzip maven_artifacts/$VSNAP/siriusMS-$VSNAP-linux64-headless.zip -d unzipped
@@ -107,6 +110,7 @@ testCLI:
 
 testGUI:
   stage: test-app
+  when: never
   script:
     - mkdir unzipped
     - unzip maven_artifacts/$VSNAP/siriusMS-$VSNAP-linux64.zip -d unzipped
@@ -127,6 +131,7 @@ publishCLI:
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   stage: publish-app
+  when: never
   script:
     - cd maven_artifacts/$VSNAP
     - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/siriusMS/$VSNAP/siriusMS-$VSNAP-linux64-headless.zip" -T siriusMS-$VSNAP-linux64-headless.zip
@@ -146,6 +151,7 @@ publishGUI:
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
   stage: publish-app
+  when: never
   script:
     - cd maven_artifacts/$VSNAP
     - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/siriusMS/$VSNAP/siriusMS-$VSNAP-linux64.zip" -T siriusMS-$VSNAP-linux64.zip
@@ -164,6 +170,7 @@ publishGUI:
 #push to github to build for multiple OSs
 pushToGitHub:
   stage: publish-app
+  when: never
   script:
     - git config --global user.email "${GITLAB_GITHUB_SIRIUS_USERNAME}"
     - git config --global user.name "boeckergitlab"
