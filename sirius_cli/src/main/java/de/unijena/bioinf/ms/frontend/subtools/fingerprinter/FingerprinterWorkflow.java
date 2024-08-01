@@ -141,7 +141,7 @@ public class FingerprinterWorkflow implements Workflow {
         return new BasicJJob<>() {
             @Override
             protected Void compute() {
-                FixedFingerprinter printer = new FixedFingerprinter(cdkVersion);
+                FixedFingerprinter printer = new FixedFingerprinter(cdkVersion, ApplicationCore.IFP_CACHE());
                 try {
                     // computing fingerprint
                     SmilesFpt smilesFpt = new SmilesFpt(smiles, mask.mask(printer.computeFingerprintFromSMILES(smiles).toIndizesArray()));
