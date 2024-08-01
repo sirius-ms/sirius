@@ -35,6 +35,7 @@ import de.unijena.bioinf.fingerid.blast.BayesnetScoring;
 import de.unijena.bioinf.fingerid.blast.Fingerblast;
 import de.unijena.bioinf.fingerid.blast.parameters.ParameterStore;
 import de.unijena.bioinf.fingerid.fingerprints.FixedFingerprinter;
+import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
 import de.unijena.bioinf.fingerid.predictor_types.PredictorType;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
@@ -66,23 +67,17 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
 
     private final WebAPI<?> webAPI;
     private final CSIPredictor predictor;
+    private final IFingerprinterCache cache;
     // input data
     private FingerIdResult idResult;
     private List<MsNovelistCandidate> candidates;
 
-    public MsNovelistFingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI) {
-        this(predictor, webAPI, null);
-    }
-
-    public MsNovelistFingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable FingerIdResult idResult) {
-        this(predictor, webAPI, idResult, null);
-    }
-
-    public MsNovelistFingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable FingerIdResult idResult, @Nullable List<MsNovelistCandidate> candidates) {
+    public MsNovelistFingerblastJJob(@NotNull CSIPredictor predictor, @NotNull WebAPI<?> webAPI, @Nullable IFingerprinterCache cache, @Nullable FingerIdResult idResult, @Nullable List<MsNovelistCandidate> candidates) {
         super(JobType.SCHEDULER);
         this.predictor = predictor;
         this.idResult = idResult;
         this.webAPI = webAPI;
+        this.cache = cache == null ? IFingerprinterCache.NOOP_CACHE : cache;
         this.candidates = candidates;
     }
 
@@ -117,15 +112,14 @@ public class MsNovelistFingerblastJJob extends BasicMasterJJob<List<Scored<Finge
         if (candidates.isEmpty())
             return null;
 
-
         //filter 2d duplicates
-
         // needed for fingerprinting and FingerprintCandidate generation
-        final FixedFingerprinter fixedFingerprinter = new FixedFingerprinter(NetUtils.tryAndWait(webAPI::getCDKChemDBFingerprintVersion, this::checkForInterruption));
         final FingerIdData fingerIdData = idResult.getPrecursorIonType().getCharge() > 0
                 ? NetUtils.tryAndWait(() -> webAPI.getFingerIdData(PredictorType.CSI_FINGERID_POSITIVE), this::checkForInterruption)
                 : NetUtils.tryAndWait(() -> webAPI.getFingerIdData(PredictorType.CSI_FINGERID_NEGATIVE), this::checkForInterruption);
         final MaskedFingerprintVersion fpMask = fingerIdData.getFingerprintVersion();
+
+        final FixedFingerprinter fixedFingerprinter = new FixedFingerprinter(fingerIdData.getCdkFingerprintVersion(), cache);
 
         // needed to perceive aromaticity
         final CDKHydrogenAdder hydrogenAdder = CDKHydrogenAdder.getInstance(DefaultChemObjectBuilder.getInstance());
