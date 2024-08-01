@@ -19,9 +19,12 @@
 
 package de.unijena.bioinf.ms.frontend.core;
 
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.tree.TreeBuilderFactory;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
+import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
+import de.unijena.bioinf.fingerid.fingerprints.cache.NonBlockingIFingerprinterCache;
 import de.unijena.bioinf.ms.frontend.bibtex.BibtexManager;
 import de.unijena.bioinf.ms.persistence.storage.StorageUtils;
 import de.unijena.bioinf.ms.properties.ConfigType;
@@ -70,6 +73,13 @@ public abstract class ApplicationCore {
 
 
     public static final Path TOKEN_FILE;
+
+    private static IFingerprinterCache IFP_CACHE = null;
+    public synchronized static IFingerprinterCache IFP_CACHE() {
+        if (IFP_CACHE == null)
+            IFP_CACHE = new NonBlockingIFingerprinterCache(3 * SiriusJobs.getCPUThreads());
+        return IFP_CACHE;
+    }
 
     public static final SiriusFactory SIRIUS_PROVIDER = StorageUtils.siriusProvider();
     public static final WebAPI<?> WEB_API;
