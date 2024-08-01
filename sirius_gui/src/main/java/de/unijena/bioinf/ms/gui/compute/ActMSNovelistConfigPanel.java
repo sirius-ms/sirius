@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.nightsky.sdk.model.AccountInfo;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Subscription;
@@ -74,7 +75,7 @@ public class ActMSNovelistConfigPanel extends ActivatableConfigPanel<SubToolConf
                     GuiUtils.formatToolTip("Please note that de novo structure elucidation from MS data remains challenging. For most applications, searching in a molecular structure database with CSI:FingerID should be default.",
                             "Additionally, please note that MSNovelist may increase overall running time considerably.",
                             "", "Do you wish to continue anyways?"),
-                    adviceKey).isCancel()) {
+                    adviceKey, ReturnValue.Success).isCancel()) {
                 super.setComponentsEnabled(false);
                 super.activationButton.setSelected(false);
                 return;
