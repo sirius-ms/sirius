@@ -1,0 +1,800 @@
+{
+  "compound": [
+    {
+      "kind": "biological",
+      "tags": [],
+      "inchi": "InChI=1S/C20H23N7O7/c21-20-25-16-15(18(32)26-20)27(9-28)12(8-23-16)7-22-11-3-1-10(2-4-11)17(31)24-13(19(33)34)5-6-14(29)30/h1-4,9,12-13,22H,5-8H2,(H,24,31)(H,29,30)(H,33,34)(H4,21,23,25,26,32)/t12?,13-/m0/s1",
+      "names": [
+        {
+          "computed": false,
+          "name": "Folinic acid; LC-tDDA; CE40",
+          "score": 0
+        }
+      ],
+      "molFile": "\n  CDK     01292303102D\n\n 34 36  0  0  1  0  0  0  0  0999 V2000\n   -9.0970    1.5006    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -7.7970    3.7506    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -7.7970    0.7506    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -6.4970    3.0006    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n  -14.2931    3.0015    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n  -15.5921    3.7517    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -3.8989    1.5002    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -2.6000   -0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -1.3000    3.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -9.0970    3.0006    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -6.4970    1.5006    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n   -2.6000    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n  -12.9940    3.7512    0.0000 C   0  0  1  0  0  0  0  0  0  0  0  0\n  -16.8912    3.0019    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    0.0000    0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    0.0000   -0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n  -10.3959    3.7508    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    1.3000    1.5000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n  -12.9937    5.2512    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    2.6000   -0.7500    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0\n    3.8989   -1.5002    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n   -5.1981    0.7504    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n   -1.3000   -1.5000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n  -11.6951    3.0010    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n    1.3000   -1.5000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n    2.6000    0.7500    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n   -1.3000    1.5000    0.0000 N   0  0  0  0  0  0  0  0  0  0  0  0\n   -0.0010    3.7500    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n  -16.8915    1.5019    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n  -18.1901    3.7521    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n  -10.3957    5.2508    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n    1.3000    3.0000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n  -11.6946    6.0010    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n  -14.2927    6.0015    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0\n  3  1  1  0  0  0  0\n  4  2  2  0  0  0  0\n  6  5  1  0  0  0  0\n 10  1  2  0  0  0  0\n 10  2  1  0  0  0  0\n 11  3  2  0  0  0  0\n 11  4  1  0  0  0  0\n 12  7  1  0  0  0  0\n 12  8  1  0  0  0  0\n 13  5  1  0  0  0  0\n 14  6  1  0  0  0  0\n 16 15  2  0  0  0  0\n 17 10  1  0  0  0  0\n 18 15  1  0  0  0  0\n 19 13  1  0  0  0  0\n 21 20  2  0  0  0  0\n 22  7  1  0  0  0  0\n 22 11  1  0  0  0  0\n 23  8  1  0  0  0  0\n 23 16  1  0  0  0  0\n 13 24  1  1  0  0  0\n 24 17  1  0  0  0  0\n 25 16  1  0  0  0  0\n 25 20  1  0  0  0  0\n 26 18  2  0  0  0  0\n 26 20  1  0  0  0  0\n 27  9  1  0  0  0  0\n 27 12  1  0  0  0  0\n 27 15  1  0  0  0  0\n 28  9  2  0  0  0  0\n 29 14  2  0  0  0  0\n 30 14  1  0  0  0  0\n 31 17  2  0  0  0  0\n 32 18  1  0  0  0  0\n 33 19  2  0  0  0  0\n 34 19  1  0  0  0  0\nM  END\n",
+      "computed": false,
+      "inchiKey": "VVIAGPKUTFNRDU-ABLWVSNPSA-N",
+      "metaData": [
+        {
+          "name": "InChI",
+          "value": "InChI=1S/C20H23N7O7/c21-20-25-16-15(18(32)26-20)27(9-28)12(8-23-16)7-22-11-3-1-10(2-4-11)17(31)24-13(19(33)34)5-6-14(29)30/h1-4,9,12-13,22H,5-8H2,(H,24,31)(H,29,30)(H,33,34)(H4,21,23,25,26,32)/t12?,13-/m0/s1",
+          "hidden": false,
+          "category": "none",
+          "computed": false
+        },
+        {
+          "name": "InChIKey",
+          "value": "VVIAGPKUTFNRDU-ABLWVSNPSA-N",
+          "hidden": false,
+          "category": "none",
+          "computed": false
+        },
+        {
+          "name": "molecular formula",
+          "value": "C20H23N7O7",
+          "hidden": false,
+          "category": "computed",
+          "computed": true
+        },
+        {
+          "name": "total exact mass",
+          "value": "473.16589607599997",
+          "hidden": false,
+          "category": "computed",
+          "computed": true
+        },
+        {
+          "name": "SMILES",
+          "value": "O=CN1C=2C(O)=NC(=N)NC2NCC1CNC3=CC=C(C=C3)C(=O)NC(C(=O)O)CCC(=O)O",
+          "hidden": false,
+          "category": "computed",
+          "computed": true
+        },
+        {
+          "name": "[2M+H-H2O]+",
+          "value": "929.3244221519999",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[2M+K]+",
+          "value": "985.4300921519999",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[M+H]+",
+          "value": "474.17386607599997",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[2M+Na]+",
+          "value": "969.321562152",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[2M+Cl]-",
+          "value": "981.7847921519999",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[2M+HAc-H]-",
+          "value": "1005.375822152",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[M-H20-H]-",
+          "value": "454.14750607599996",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[M-H]-",
+          "value": "472.158620076",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[2M-H]-",
+          "value": "945.3245161519999",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[M+Na]+",
+          "value": "496.155666076",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[M+H-H2O]+",
+          "value": "456.158526076",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[2M+NH4]+",
+          "value": "964.370372152",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[M+Cl]-",
+          "value": "508.61889607599994",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[M+NH4]+",
+          "value": "491.204476076",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[M+K]+",
+          "value": "512.264196076",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[2M+H]+",
+          "value": "947.3397621519999",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        },
+        {
+          "name": "[M+HAc-H]-",
+          "value": "532.209926076",
+          "hidden": true,
+          "category": "theoretical adduct",
+          "computed": true
+        }
+      ],
+      "classification": [
+        {
+          "name": "kingdom",
+          "value": "Organic compounds",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "superclass",
+          "value": "Organic acids and derivatives",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "class",
+          "value": "Carboxylic acids and derivatives",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "subclass",
+          "value": "Amino acids, peptides, and analogues",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "direct parent level 1",
+          "value": "Amino acids and derivatives",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "direct parent level 2",
+          "value": "Alpha amino acids and derivatives",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "direct parent",
+          "value": "Glutamic acid and derivatives",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "N-acyl-alpha amino acids",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Hippuric acids",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Pterins and derivatives",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Aminobenzamides",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Phenylalkylamines",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Aniline and substituted anilines",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Benzoyl derivatives",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Secondary alkylarylamines",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Hydroxypyrimidines",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Dicarboxylic acids and derivatives",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Tertiary carboxylic acid amides",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Heteroaromatic compounds",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Secondary carboxylic acid amides",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Amino acids",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Carboxylic acids",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Azacyclic compounds",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Carbonyl compounds",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Hydrocarbon derivatives",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Organic oxides",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        },
+        {
+          "name": "alternative parent",
+          "value": "Organopnictogen compounds",
+          "hidden": false,
+          "category": "classification",
+          "computed": true
+        }
+      ]
+    }
+  ],
+  "id": "MoNA020112",
+  "metaData": [
+    {
+      "name": "ionization",
+      "value": "ESI",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "retention time",
+      "value": "5.94",
+      "hidden": false,
+      "category": "spectral properties",
+      "computed": false
+    },
+    {
+      "name": "collision energy",
+      "value": "40",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "formula",
+      "value": "C20H23N7O7",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "spectrumtype",
+      "value": "Centroid",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "author",
+      "value": "Isabel Meister, Romanas Chaleckis",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "instrument",
+      "value": "Agilent 6550 iFunnel",
+      "hidden": false,
+      "category": "acquisition properties",
+      "computed": false
+    },
+    {
+      "name": "instrument type",
+      "value": "LC-ESI-QTOF",
+      "hidden": false,
+      "category": "acquisition properties",
+      "computed": false
+    },
+    {
+      "name": "license",
+      "value": "CC-BY",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "ms level",
+      "value": "MS2",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "acquisitiontype",
+      "value": "DDA",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "column",
+      "value": "Merck SeQuant ZIC HILIC (2.1 x 100 mm, 3.5 µm particle size) with Merck SeQuant ZIC HILIC Guard column (2.1 mm x 2 mm, 3.5 µm particle size)",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "flowgradient",
+      "value": "5/95 at 0-1.5 min, 60/40 at 12-14 min, 75/25 at 14.2-17 min; 5/95 at 18-25 min",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "flow rate",
+      "value": "0.3ml/min",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "solventa",
+      "value": "water with 0.1% formic acid (pH2.7)",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "solventb",
+      "value": "acetonitrile with 0.1% formic acid",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 93.044723, mass diff 0 (4.54 ppm), smiles *c=1ncc(n(*)c1*)c*, annotation [c5h10n2-5h]+, rule of hr true",
+      "value": "93.0443",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 105.033489, mass diff 0.002 (15.34 ppm), smiles *c1=cc=c(c=c1)c(*)=o, annotation [c7h6o-h]+, rule of hr true",
+      "value": "105.0351",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 106.065128, mass diff 0.003 (24.25 ppm), smiles *c1=cc=c(c=c1)nc*, annotation [c7h9n-h]+, rule of hr true",
+      "value": "106.0677",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 113.045785, mass diff 0.002 (18.71 ppm), smiles *nc(=o)c(=c(n*)n(*)*)n(*)*, annotation [c3h8n4o-3h]+, rule of hr true",
+      "value": "113.0479",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 120.044391, mass diff 0.002 (14.23 ppm), smiles *nc1=cc=c(c=c1)c(*)=o, annotation [c7h7no-h]+, rule of hr true",
+      "value": "120.0461",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "isotopic ion, m+1, linkedmz 120.0461",
+      "value": "121.0435",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 134.060047, mass diff 0 (2.63 ppm), smiles *c(=o)c1=cc=c(c=c1)nc*, annotation [c8h9no-h]+, rule of hr true",
+      "value": "134.0604",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 138.066181, mass diff 0.003 (21.14 ppm), smiles *c1=nc(ncc(*)*)=c(*)c(=o)n1, annotation [c6h9n3o-h]+, rule of hr true",
+      "value": "138.0691",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 140.05669, mass diff 0 (0.79 ppm), smiles *nc=1n=c(n)nc(=o)c1n(*)*, annotation [c4h7n5o-h]+, rule of hr true",
+      "value": "140.0568",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 151.061441, mass diff 0.003 (20.25 ppm), smiles *c=1c(=o)nc(=nc1ncc(*)*)n, annotation [c6h10n4o-3h]+, rule of hr true",
+      "value": "151.0645",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 152.05668, mass diff 0.003 (18.55 ppm), smiles *n(*)c=1c(=o)nc(=nc1nc*)n, annotation [c5h9n5o-3h]+, rule of hr true",
+      "value": "152.0595",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 158.060042, mass diff 0.003 (21.24 ppm), smiles *c(=o)c1=cc=c(c=c1)ncc(*)c*, annotation [c10h13no-5h]+, rule of hr true",
+      "value": "158.0634",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 163.061441, mass diff 0.004 (26.73 ppm), smiles *c1=nc=2ncc(n(*)c2c(=o)n1)c*, annotation [c7h10n4o-3h]+, rule of hr true",
+      "value": "163.0658",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 165.064505, mass diff 0.001 (6.63 ppm), smiles *n1c=2c(=o)nc(=nc2ncc1*)n, annotation [c6h9n5o-2h]+, rule of hr false",
+      "value": "165.0656",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 166.07233, mass diff 0.002 (12.46 ppm), smiles *n1c=2c(=o)nc(=nc2ncc1*)n, annotation [c6h9n5o-h]+, rule of hr true",
+      "value": "166.0744",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 167.043768, mass diff 0.002 (14.56 ppm), smiles *nc=1n=c(n)nc(=o)c1n(*)c=o, annotation [c5h7n5o2-2h]+, rule of hr false",
+      "value": "167.0462",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 178.072336, mass diff 0.002 (13.84 ppm), smiles *n1c=2c(=o)nc(=nc2ncc1c*)n, annotation [c7h11n5o-3h]+, rule of hr true",
+      "value": "178.0748",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 180.087986, mass diff 0.002 (11.19 ppm), smiles *n1c=2c(=o)nc(=nc2ncc1c*)n, annotation [c7h11n5o-h]+, rule of hr true",
+      "value": "180.09",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 208.082904, mass diff 0.004 (19.2 ppm), smiles *cc1n(c=o)c=2c(=o)nc(=nc2nc1)n, annotation [c8h11n5o2-h]+, rule of hr true",
+      "value": "208.0869",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 271.130176, mass diff 0.005 (16.68 ppm), smiles *c1=cc=c(c=c1)ncc2n(*)c=3c(=o)nc(=nc3nc2)n, annotation [c13h16n6o-h]+, rule of hr true",
+      "value": "271.1347",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 284.114185, mass diff 0.003 (10.61 ppm), smiles *c1=cc=c(c=c1)ncc2n(c=o)c=3c(=o)nc(*)=nc3nc2, annotation [c14h15n5o2-h]+, rule of hr true",
+      "value": "284.1172",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 299.12511, mass diff 0.002 (6.99 ppm), smiles *c1=cc=c(c=c1)ncc2n(c=o)c=3c(=o)nc(=nc3nc2)n, annotation [c14h16n6o2-h]+, rule of hr true",
+      "value": "299.1272",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "isotopic ion, m+1, linkedmz 299.1272",
+      "value": "300.1317",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 327.120014, mass diff 0.005 (15.55 ppm), smiles *c(=o)c1=cc=c(c=c1)ncc2n(c=o)c=3c(=o)nc(=nc3nc2)n, annotation [c15h16n6o3-h]+, rule of hr true",
+      "value": "327.1251",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "theoretical m/z 412.172779, mass diff 0.004 (10.48 ppm), smiles *c(=o)ccc(*)nc(=o)c1=cc=c(c=c1)ncc2n(c=o)c=3c(=o)nc(=nc3nc2)n, annotation [c19h23n7o4-h]+, rule of hr true",
+      "value": "412.1771",
+      "hidden": false,
+      "category": "annotation",
+      "computed": false
+    },
+    {
+      "name": "origin",
+      "value": "POS_2020-06-11_V01_RCH_LC02_tDDA_ChemSTD_Meister2020_OPEN.msp",
+      "hidden": false,
+      "computed": false
+    },
+    {
+      "name": "ionization mode",
+      "value": "positive",
+      "hidden": false,
+      "category": "acquisition properties",
+      "computed": false
+    },
+    {
+      "name": "spectral entropy",
+      "value": "2.3018320034456905",
+      "hidden": false,
+      "category": "computed",
+      "computed": true
+    },
+    {
+      "name": "normalized entropy",
+      "value": "0.7151043186140742",
+      "hidden": false,
+      "category": "computed",
+      "computed": true
+    },
+    {
+      "name": "precursor m/z",
+      "value": "474.173187255859",
+      "hidden": false,
+      "category": "acquisition properties",
+      "computed": false
+    },
+    {
+      "name": "precursor type",
+      "value": "[M+H]+",
+      "hidden": false,
+      "category": "none",
+      "computed": false
+    },
+    {
+      "name": "mass accuracy",
+      "value": "1.4315869375046002",
+      "hidden": false,
+      "category": "mass spectrometry",
+      "computed": true,
+      "unit": "ppm"
+    },
+    {
+      "name": "mass error",
+      "value": "-6.788201409904104E-4",
+      "hidden": false,
+      "category": "mass spectrometry",
+      "computed": true,
+      "unit": "Da"
+    }
+  ],
+  "annotations": [],
+  "score": {
+    "impacts": [
+      {
+        "value": 2,
+        "reason": "Valid molecular structure(s) provided for biological compound"
+      },
+      {
+        "value": 1,
+        "reason": "Chromatography identified as LC-MS"
+      },
+      {
+        "value": 1,
+        "reason": "Ionization mode/type provided"
+      },
+      {
+        "value": 1,
+        "reason": "MS type/level identified"
+      },
+      {
+        "value": 1,
+        "reason": "Instrument information provided"
+      },
+      {
+        "value": 1,
+        "reason": "Collision energy provided"
+      },
+      {
+        "value": 1,
+        "reason": "Retention time/index provided"
+      },
+      {
+        "value": 1,
+        "reason": "Column information provided"
+      },
+      {
+        "value": 1,
+        "reason": "Precursor type provided"
+      },
+      {
+        "value": 1,
+        "reason": "Precursor m/z provided"
+      },
+      {
+        "value": 1,
+        "reason": "Precursor information and provided compound validated"
+      },
+      {
+        "value": 1,
+        "reason": "Mass accuracy of 1.432 ppm"
+      }
+    ],
+    "score": 5,
+    "relativeScore": 0,
+    "scaledScore": 0
+  },
+  "spectrum": "93.0443:1.718277 105.0351:1.044425 106.0677:3.336562 113.0479:2.538189 120.0461:58.473785 121.0435:1.113131 134.0604:9.845860 138.0691:1.430876 140.0568:2.776380 151.0645:1.190012 152.0595:4.734578 158.0634:1.828333 163.0658:4.919471 165.0656:7.345247 166.0744:63.933156 167.0462:5.555276 178.0748:2.892882 180.09:22.657709 208.0869:74.291716 271.1347:13.161196 284.1172:1.700511 299.1272:100.000000 300.1317:1.303055 327.1251:44.482143 412.1771:1.826603",
+  "lastUpdated": 1658016000000,
+  "dateCreated": 1608681600000,
+  "lastCurated": 1674950400000,
+  "splash": {
+    "block1": "splash10",
+    "block2": "05tb",
+    "block3": "0982000000",
+    "block4": "57ade4ddc7031781a24e",
+    "splash": "splash10-05tb-0982000000-57ade4ddc7031781a24e"
+  },
+  "submitter": {
+    "emailAddress": "romanas.chaleckis@gmail.com",
+    "firstName": "romanas",
+    "lastName": "chaleckis",
+    "institution": "gunma university"
+  },
+  "tags": [
+    {
+      "text": "Agilent_6550_Q-TOF_DDA",
+      "ruleBased": false
+    },
+    {
+      "text": "KI-GIAR_zicHILIC_POS",
+      "ruleBased": false
+    },
+    {
+      "text": "LC-MS",
+      "ruleBased": true
+    }
+  ]
+}

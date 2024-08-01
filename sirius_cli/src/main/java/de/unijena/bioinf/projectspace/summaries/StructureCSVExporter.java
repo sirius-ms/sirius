@@ -18,16 +18,11 @@
 
 package de.unijena.bioinf.projectspace.summaries;
 
-import com.google.common.base.Joiner;
-import com.google.common.collect.Collections2;
-import com.google.common.collect.Multimap;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.Scored;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.DataSource;
-import de.unijena.bioinf.fingerid.blast.FBCandidates;
 import de.unijena.bioinf.fingerid.blast.TopCSIScore;
 import de.unijena.bioinf.projectspace.FormulaResultId;
-import de.unijena.bioinf.projectspace.FormulaResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,30 +35,8 @@ public class StructureCSVExporter {
     public static final List<String> HEADER_LIST = List.of(new TopCSIScore(0).name(), "molecularFormula", "adduct", "InChIkey2D", "InChI", "name", "smiles", "xlogp", "pubchemids", "links", "dbflags");
     public static final String HEADER = String.join("\t", HEADER_LIST);
 
-    public void exportFingerIdResults(Writer writer, FormulaResult formulaResult) throws IOException {
-        List<Scored<CompoundCandidate>> candidates = formulaResult.getAnnotationOrThrow(FBCandidates.class).getResults();
-        List<FormulaResultId> ids = candidates.stream().map(c -> formulaResult.getId()).collect(Collectors.toList());
-        exportFingerIdResults(writer, candidates, ids);
-    }
-
-    public void exportFingerIdResults(Writer writer, List<? extends Scored<? extends CompoundCandidate>> candidates, List<FormulaResultId> ids) throws IOException {
-        exportFingerIdResults(writer, candidates, ids, true);
-    }
-
-    public void exportFingerIdResults(Writer writer, List<? extends Scored<? extends CompoundCandidate>> candidates, List<FormulaResultId> ids, boolean writeHeader) throws IOException {
-        if (writeHeader) {
-            writer.write(HEADER);
-            writer.write("\n");
-        }
-
-        int rank = 0;
-        Iterator<FormulaResultId> idIt = ids.iterator();
-        for (Scored<? extends CompoundCandidate> r : candidates)
-            exportFingerIdResult(writer, r, idIt.next(), false, ++rank);
-    }
-
     public void exportFingerIdResult(Writer writer, Scored<? extends CompoundCandidate> r, @NotNull FormulaResultId id, boolean writeHeader, @Nullable Integer rank) throws IOException {
-        final Multimap<String, String> dbMap = r.getCandidate().getLinkedDatabases();
+        @NotNull Map<String, List<String>> dbMap = r.getCandidate().getLinkedDatabases();
 
 
         if (writeHeader) {
@@ -106,7 +79,7 @@ public class StructureCSVExporter {
 
     public static void list(Writer writer, Collection<String> pubchemIds) throws IOException {
 
-        if (pubchemIds == null || pubchemIds.size() == 0) {
+        if (pubchemIds == null || pubchemIds.isEmpty()) {
             writer.write("\"\"");
         } else {
             final Iterator<String> it = pubchemIds.iterator();
@@ -118,18 +91,18 @@ public class StructureCSVExporter {
         }
     }
 
-    public static void links(Writer w, Multimap<String, String> databases) throws IOException {
-        final Iterator<Map.Entry<String, Collection<String>>> iter = databases.asMap().entrySet().iterator();
+    public static void links(Writer w, Map<String, List<String>> databases) throws IOException {
+        final Iterator<Map.Entry<String, List<String>>> iter = databases.entrySet().iterator();
         if (!iter.hasNext()) {
             w.write("\"\"");
             return;
         }
-        Map.Entry<String, Collection<String>> x = iter.next();
+        Map.Entry<String, List<String>> x = iter.next();
         w.write(x.getKey());
         Collection<String> col = withoutNulls(x.getValue());
-        if (col.size() > 0) {
+        if (!col.isEmpty()) {
             w.write(":(");
-            w.write(escape(Joiner.on(' ').join(col)));
+            w.write(escape(String.join(" ", col)));
             w.write(")");
         }
         while (iter.hasNext()) {
@@ -137,9 +110,9 @@ public class StructureCSVExporter {
             x = iter.next();
             w.write(x.getKey());
             col = withoutNulls(x.getValue());
-            if (col.size() > 0) {
+            if (!col.isEmpty()) {
                 w.write(":(");
-                w.write(escape(Joiner.on(' ').join(col)));
+                w.write(escape(String.join(" ", col)));
                 w.write(")");
             }
         }
@@ -150,8 +123,8 @@ public class StructureCSVExporter {
         return name.replace('\t', ' ').replace('"', '\'');
     }
 
-    public static Collection<String> withoutNulls(Collection<String> in) {
-        return Collections2.filter(in, Objects::nonNull);
+    public static List<String> withoutNulls(List<String> in) {
+        return in.stream().filter(Objects::nonNull).toList();
     }
 
 }

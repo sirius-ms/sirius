@@ -28,15 +28,16 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.concurrent.ThreadSafe;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isWarningOnly;
 
-
-@ThreadSafe
+/**
+ * THREAD SAFE
+ */
 public class CheckConnectionAction extends AbstractGuiAction {
 
     protected CheckConnectionAction(SiriusGui gui) {
