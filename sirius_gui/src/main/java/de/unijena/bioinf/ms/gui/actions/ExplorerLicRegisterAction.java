@@ -33,7 +33,12 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.BufferedReader;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 public class ExplorerLicRegisterAction extends AbstractAction {
@@ -48,27 +53,61 @@ public class ExplorerLicRegisterAction extends AbstractAction {
     @Override
     public void actionPerformed(ActionEvent e) {
         try {
-            boolean success = Jobs.runInBackgroundAndLoad(popupOwner, "Checking for Explorer license...", () -> {
+            ResultMessage resultMessage = Jobs.runInBackgroundAndLoad(popupOwner, "Checking for Explorer license...", () -> {
                 Path siriusHone = Path.of(PropertyManager.getProperty("de.unijena.bioinf.sirius.homeDir"));
                 Path checkerExe = Path.of(PropertyManager.getProperty("de.unijena.bioinf.sirius.explorer.licenseChecker", null, "ExplorerLicTester/ExplorerLicTester.exe"));
 
                 Process proc = Runtime.getRuntime().exec(siriusHone.resolve(checkerExe).toAbsolutePath().toString());
+                List<String> info;
                 try (BufferedReader reader = proc.inputReader()) {
-                    String licenseInfo = reader.lines().filter(l -> l.startsWith("LicenseInfo:")).findFirst()
-                            .map(k -> k.split(":")[1]).orElse(null);
-                    if (licenseInfo != null) {
-                        GuiUtils.openURL(popupOwner, UserPortal.explorerLicURL(licenseInfo), "Register Explorer License", true);
-                        return true;
-                    } else {
-                        return false;
-                    }
+                    info = reader.lines().toList();
+                }
+                List<String> errorOutput;
+                try (BufferedReader reader = proc.errorReader()) {
+                    errorOutput = reader.lines().toList();
+                }
+                boolean finished = proc.waitFor(30, TimeUnit.SECONDS);
+                int exitValue = proc.exitValue();
+
+                String licenseInfo = info.stream().filter(l -> l.startsWith("LicenseInfo:")).findFirst()
+                        .map(k -> k.split(":")[1]).orElse(null);
+
+                if (licenseInfo != null && licenseInfo.length() > 20) { //information should be much longer than 20 chars.
+                    GuiUtils.openURL(popupOwner, UserPortal.explorerLicURL(licenseInfo), "Register Explorer License", true);
+                    return new ResultMessage(true);
+                } else {
+                    return new ResultMessage(false, Stream.of(Stream.of(
+                            "Explorer license validation could not read license information.",
+                                    finished ? "Finished with exit value: "+exitValue : "License validation did not finish.",
+                                    "Provided information:"),
+                                    info.stream(),
+                                    errorOutput.size() > 0 ? Stream.of("Error output:") : Stream.empty(),
+                                    errorOutput.stream())
+                            .reduce(Stream::concat).get().toArray(l -> new String[l]));
                 }
             }).awaitResult();
-            if (!success)
-                new WarningDialog(popupOwner, GuiUtils.formatToolTip("No valid MassHunter Explorer license found on you system. Please ensure that MassHunter Explorer is installed and activated."));
+            if (!resultMessage.success){
+                log.warn(Arrays.stream(resultMessage.message).collect(Collectors.joining("\n")));
+                new WarningDialog(popupOwner, GuiUtils.formatToolTip("No valid MassHunter Explorer license found on you system. Please ensure that MassHunter Explorer is installed and activated.", "For details, please see the 'Log' in the top-right corner."));
+            }
         } catch (ExecutionException ex) {
             log.error("Error when checking for MassHunter Explorer license.", ex);
-            new ExceptionDialog(popupOwner, GuiUtils.formatToolTip("Error when checking for MassHunter Explorer license. Error: " + ex.getMessage()));
+            new ExceptionDialog(popupOwner, GuiUtils.formatToolTip("Error when checking for MassHunter Explorer license. Error: " + ex.getMessage(), " For details, please see the 'Log' in the top-right corner."));
         }
+    }
+
+    /**
+     * if license retrieval is not successful, this provides an error message.
+     */
+    private class ResultMessage {
+        boolean success;
+        String[] message;
+
+        public ResultMessage(boolean success, String... message) {
+            this.success = success;
+            this.message = message;
+        }
+
+
     }
 }
