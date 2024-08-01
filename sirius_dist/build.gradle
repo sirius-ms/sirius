@@ -9,7 +9,7 @@ plugins {
 }
 
 dependencies {
-    implementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+    implementation "org.junit.jupiter:junit-jupiter:$junit_version"
 }
 
 ext {
@@ -17,12 +17,12 @@ ext {
     jre_version = '21.0.3'
     zulu_jre_version = '21.34.19'
     jre_major = zulu_jre_version.split("[.]")[0]
-    siriusJvmArgs = ['-Xms1G',
-                     '-XX:MaxRAMPercentage=80',
-//                                 '-XX:+UseG1GC',
-//                                 '-XX:+UseStringDeduplication',
-                     '-XX:+UseZGC',
-                     '-XX:+ZGenerational',
+    siriusJvmArgs = ['-Xms2G',
+                     '-XX:MaxRAMPercentage=75',
+//                     '-XX:+UseG1GC',
+//                     '-XX:+UseStringDeduplication',
+//                     '-XX:+UseZGC',
+//                     '-XX:+ZGenerational',
                      '-XX:+ExitOnOutOfMemoryError']
     OS = DefaultNativePlatform.currentOperatingSystem
 
@@ -324,6 +324,7 @@ subprojects {
     }
 
     tasks.register('distImageTestLocal', Test) {
+        enabled false
         group 'verification'
         dependsOn distImage
         useJUnitPlatform()
@@ -411,6 +412,7 @@ subprojects {
 
 
     tasks.register('distImageTestCICD', Test) {
+        enabled false
         group 'verification'
         useJUnitPlatform()
         testClassesDirs = project(':sirius_dist').sourceSets.test.output

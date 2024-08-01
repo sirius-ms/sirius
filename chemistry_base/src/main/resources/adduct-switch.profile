@@ -1,0 +1,1 @@
+AlgorithmProfile = adduct-switch

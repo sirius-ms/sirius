@@ -1,0 +1,40 @@
+/*
+ *
+ *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
+ *
+ *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
+ *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public
+ *  License as published by the Free Software Foundation; either
+ *  version 3 of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
+ */
+
+dependencies {
+    // deprecated for removal ->  use fastutil instead
+    implementation 'net.sf.trove4j:core:3.1.0'
+    // TODO: remove replace with jackson
+    implementation group: "org.json", name:"json", version: "1.0"
+
+    api project(":fragmentation_tree:FastFragmentationTreeAlign")
+    api project(":fragmentation_tree:FastFragmentationTreeAlign:FTAlignmentTool")
+    implementation "org.jfree:jfreechart:1.0.19"
+    implementation "java3d:vecmath:1.3.1"
+    api "org.openscience.cdk:cdk-fingerprint:$cdk_version"
+    api "org.openscience.cdk:cdk-data:$cdk_version"
+    api "org.openscience.cdk:cdk-io:$cdk_version"
+    api "org.openscience.cdk:cdk-interfaces:$cdk_version"
+    api "org.openscience.cdk:cdk-core:$cdk_version"
+    api "org.openscience.cdk:cdk-inchi:$cdk_version"
+    implementation "batik:batik-swing:1.6-1"
+    implementation "org.jdom:jdom:2.0.2"
+    implementation "com.miglayout:miglayout:3.7.4"
+}

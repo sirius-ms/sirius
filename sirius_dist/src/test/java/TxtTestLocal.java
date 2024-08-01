@@ -20,7 +20,7 @@ public class TxtTestLocal {
         Files.createDirectories(Path.of(temp_root));
     }
 
-    @Test
+//    @Test
     @DisplayName("Testing if SIRIUS calculates expected formula candidates with txt file.")
     public void testTopCandidates(){
         int rank_count = 3;

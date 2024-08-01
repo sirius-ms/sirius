@@ -20,18 +20,13 @@ jar {
     archiveClassifier = ''
 }
 dependencies {
-    compileOnly 'org.projectlombok:lombok:1.18.34'
-    annotationProcessor 'org.projectlombok:lombok:1.18.34'
-//project
+    //project
     implementation(project(':sirius_cli'))
     implementation project(':sirius_nightsky_sdk')
     implementation project(':sirius_nightsky_sdk:sirius_nightsky_sdk.jjobs')
-
-//internal
+    //internal
     api "de.unijena.bioinf:jjobs-swing:$jjobs_version"
-    // will be ported to sirius_cli later
-    api "de.unijena.bioinf.ms:combinatorial_fragmenter:$siriusVersion"
-//external
+    //external
     implementation 'org.jdesktop:timingframework:0.55'
     api "net.sf.opencsv:opencsv:2.3"
     api "org.swinglabs.swingx:swingx-all:1.6.5-1"
@@ -47,13 +42,13 @@ dependencies {
 
     api 'com.formdev:flatlaf:3.1'
 
-    api 'org.apache.commons:commons-text:1.12.0'
+    api "org.apache.commons:commons-text:$commons_text_version"
     if (excludeJFX)
         for (m in javaFX_modules) //define jfx as compile only, so that we can decide during build to either package for one or all platforms.
             compileOnly "org.openjfx:$m:$targetCompatibility.+:${siriusTargetPlatform.jfxClassifier().get()}"
     else
         for (m in javaFX_modules) //define jfx as compile only, so that we can decide during build to either package for one or all platforms.
-           implementation "org.openjfx:$m:$targetCompatibility.+:${siriusTargetPlatform.jfxClassifier().get()}"
+            implementation "org.openjfx:$m:$targetCompatibility.+:${siriusTargetPlatform.jfxClassifier().get()}"
 }
 
 artifactory {

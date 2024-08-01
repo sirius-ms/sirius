@@ -20,7 +20,6 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
-import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.sirius.CanopusPrediction;
@@ -33,6 +32,7 @@ import java.io.Writer;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 class NoSqlCanopusSummaryWriter implements AutoCloseable {
     final static String DOUBLE_FORMAT = "%.3f";
@@ -181,7 +181,10 @@ class NoSqlCanopusSummaryWriter implements AutoCloseable {
             writeSep();
             w.write(String.format(DOUBLE_FORMAT, cfClassification.getProbability(CLF.getIndexOfMolecularProperty(primaryClass))));
             writeSep();
-            w.write(Joiner.on("; ").join(cfClassification.asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator()));
+            w.write(StreamSupport.stream(cfClassification.asDeterministic().asArray().presentFingerprints().spliterator(), false)
+                    .map(FPIter::getMolecularProperty)
+                    .map(MolecularProperty::toString)
+                    .collect(Collectors.joining("; ")));
         }
     }
 }

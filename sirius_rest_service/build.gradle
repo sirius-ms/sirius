@@ -13,19 +13,16 @@ plugins {
 
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
-apply plugin: 'war'
-apply plugin: 'java-library'
 apply plugin: 'application'
 
 ext['jna.version'] = '5.4.0' //force correct jna version -> springs is not compatible with ilp solver
 ext['slf4j.version'] = slf4j_version
-ext['okhttp.version'] = '4.12.0'
+ext['okhttp.version'] = okhttp_version
 
 dependencies {
 //    implementation("org.springframework.boot:spring-boot-properties-migrator")
-    api project(':sirius_cli')
+    implementation project(':sirius_cli')
     implementation project(':sirius_gui')
-    //implementation 'me.friwi:jcefmaven:116.0.19.1'
 
     //////////// configure logging ///////////////////
     //logging bridges
@@ -34,15 +31,14 @@ dependencies {
     implementation("org.slf4j:jul-to-slf4j:$slf4j_version")
     ////////////////////////////////////////////////////
 
-
     //////////// Spring (boot) ////////////////////////
     // Default bootJar config
     implementation("org.springframework.boot:spring-boot-starter-web"){
         exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
     }
-//    implementation("org.springframework.boot:spring-boot-starter-jul")
-//    providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
-    providedRuntime 'org.springframework.boot:spring-boot-starter-jetty'
+
+//    implementation 'org.springframework.boot:spring-boot-starter-tomcat'
+    implementation 'org.springframework.boot:spring-boot-starter-jetty'
 
     //spring data for pagination and sorting
     implementation 'org.springframework.data:spring-data-commons'
@@ -50,7 +46,7 @@ dependencies {
 
     // expose operational information about the running application via /actuator
     implementation("org.springframework.boot:spring-boot-starter-actuator")
-    implementation 'it.unimi.dsi:fastutil:8.5.8' //replaces old spring version
+    implementation "it.unimi.dsi:fastutil:$fastutil_version" //replaces old spring version
     ////////////////////////////////////////////////////
 
     ////////////////////// API DOC ///////////////////
@@ -58,25 +54,19 @@ dependencies {
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-api:${springdoc_version}"
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdoc_version}"
 
-
     //process javadoc for swagger/openapi
     annotationProcessor 'com.github.therapi:therapi-runtime-javadoc-scribe:0.15.0'
     implementation 'com.github.therapi:therapi-runtime-javadoc:0.15.0'
     ////////////////////////////////////////////////////
 
-    //getter setter constructor logger, save boilerplate
-    compileOnly 'org.projectlombok:lombok:1.18.34'
-    annotationProcessor 'org.projectlombok:lombok:1.18.34'
-
-//    implementation 'io.micrometer:micrometer-core'
-//    implementation 'io.micrometer:micrometer-registry-prometheus'
     //must match minio version
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation "jakarta.servlet:jakarta.servlet-api"
 
+    //todo replace with alternative to finally get rid ob guava
     implementation 'com.google.jimfs:jimfs:1.3.0'
 
-    implementation "org.apache.commons:commons-text:1.11.0"
+    implementation "org.apache.commons:commons-text:$commons_text_version"
 }
 //todo use logback instead of java util logging! => needs support in jjobs
 configurations.each {Configuration conf ->
@@ -98,9 +88,6 @@ configurations.each {Configuration conf ->
 //    conf.exclude group: "org.slf4j", module: "slf4j-jdk14"
 }
 
-war {
-    enabled = false
-}
 jar {
     enabled = false
 }
@@ -123,15 +110,4 @@ openApi {
         args = ["rest", "-s", "-p", "8888"]
     }
 }
-generateOpenApiDocs.dependsOn('bootJar')
-forkedSpringBootRun.mustRunAfter(':sirius_cli:jar')
-forkedSpringBootRun.mustRunAfter(':sirius_gui:jar')
-forkedSpringBootRun.mustRunAfter(':sirius_nightsky_sdk:jar')
-forkedSpringBootRun.mustRunAfter(':sirius_nightsky_sdk:sirius_nightsky_sdk.jjobs:jar')
-
-
-
-
-
-
-
+forkedSpringBootRun.dependsOn(':sirius_rest_service:bootJar')

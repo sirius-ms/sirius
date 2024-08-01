@@ -1,0 +1,16 @@
+apply plugin: 'java-library'
+
+dependencies {
+    //internal
+    api project(':io')
+    api project(':fingerid_base_oss')
+    api project(':sirius_api')
+    api project(':chemical_db_oss:chemdb_utils_oss')
+
+    api group: "org.openscience.cdk", name: "cdk-inchi", version: "$cdk_version"
+    // maven version number parsing
+    api group: 'org.apache.maven', name: 'maven-artifact', version: '3.5.0'
+    // jason marshalling
+    api "com.squareup.okhttp3:okhttp:$okhttp_version"
+    api "org.jdbi:jdbi3-jackson2:$jdbi_version"
+}

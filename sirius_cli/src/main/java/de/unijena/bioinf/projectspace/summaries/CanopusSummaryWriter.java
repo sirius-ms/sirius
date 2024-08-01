@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.projectspace.summaries;
 
-import com.google.common.base.Joiner;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.SScored;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
@@ -43,6 +42,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class CanopusSummaryWriter extends CandidateSummarizer {
 
@@ -309,9 +310,10 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
                     cols[i++] = "";
                 }
 
-                cols[i++] = Joiner.on("; ").join(row.cfClassifications[0].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
-//                cols[i++] = Joiner.on("; ").join(row.npcClassifications[row.best].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
-
+                cols[i++] = StreamSupport.stream(row.cfClassifications[0].asDeterministic().asArray().presentFingerprints().spliterator(), false)
+                        .map(FPIter::getMolecularProperty)
+                        .map(MolecularProperty::toString)
+                        .collect(Collectors.joining("; "));
                 cols[i++] = row.featureId;
                 ++k;
                 return cols;
@@ -395,8 +397,10 @@ public class CanopusSummaryWriter extends CandidateSummarizer {
                     cols[i++] = "";
                 }
 
-                cols[i++] = Joiner.on("; ").join(row.cfClassifications[j].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
-//                cols[i++] = Joiner.on("; ").join(row.npcClassifications[j].asDeterministic().asArray().presentFingerprints().asMolecularPropertyIterator());
+                cols[i++] = StreamSupport.stream(row.cfClassifications[j].asDeterministic().asArray().presentFingerprints().spliterator(), false)
+                        .map(FPIter::getMolecularProperty)
+                         .map(MolecularProperty::toString)
+                        .collect(Collectors.joining("; "));
 
                 cols[i++] = row.featureId;
 

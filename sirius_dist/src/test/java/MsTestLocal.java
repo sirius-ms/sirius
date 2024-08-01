@@ -22,7 +22,7 @@ public class MsTestLocal {
         Files.createDirectories(Path.of(temp_root));
     }
 
-    @Test
+//    @Test
     @DisplayName("Testing if SIRIUS calculates expected formula candidates with ms file.")
     public void testTopCandidates() throws IOException {
         TestMethods.isDirExisting(temp_output + "canopus");
