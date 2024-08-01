@@ -14,8 +14,8 @@ dependencies {
 
 ext {
     // version for bundeled JRE
-    jre_version = '21.0.3'
-    zulu_jre_version = '21.34.19'
+    jre_version = '21.0.4'
+    zulu_jre_version = '21.36.17'
     jre_major = zulu_jre_version.split("[.]")[0]
     siriusJvmArgs = ['-Xms2G',
                      '-XX:MaxRAMPercentage=75',

@@ -40,7 +40,7 @@ dependencies {
     api 'org.apache.xmlgraphics:batik-rasterizer:1.16'
     api 'org.apache.xmlgraphics:fop:2.7'
 
-    api 'com.formdev:flatlaf:3.1'
+    implementation 'com.formdev:flatlaf:3.5'
 
     api "org.apache.commons:commons-text:$commons_text_version"
     if (excludeJFX)
