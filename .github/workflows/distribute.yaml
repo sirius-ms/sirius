@@ -449,4 +449,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Actions on sirius-client-openAPI
-        run: curl -X POST -H "Authorization:Bearer ${{ secrets.CLIENT_API_REPO_TOKEN }}" -H "Accept:application/vnd.github.v3+json" ${{ secrets.CLIENT_API_REPO_URL }} -d '{"ref":"master"}'
+        run: curl -X POST -H "Authorization:Bearer ${{ secrets.CLIENT_API_REPO_TOKEN }}" -H "Accept:application/vnd.github.v3+json" ${{ vars.CLIENT_API_REPO_URL }} -d '{"ref":"master"}'
