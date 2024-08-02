@@ -301,25 +301,26 @@ tasks.register('refreshDownloadLinks') {
 
     doLast {
         webPath.mkdirs()
-        def repoKey = "${project.version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}"
 
         List<String> lines = [
-                "### SIRIUS+CSI:FingerID GUI and CLI - Version $version (${new Date().format('yyyy-MM-dd')})",
+                "### SIRIUS+CSI:FingerID GUI and CLI - Version $siriusFrontendVersion (${new Date().format('yyyy-MM-dd')})",
                 "##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
-                "- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-win64.msi) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-win64.zip)",
-                "- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-osx64.pkg) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-osx64.zip)",
-                "- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-linux64.zip)",
+                "- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win64.msi) / " +
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win64.zip)",
+                "- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-osx64.pkg) / " +
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-osx64.zip)",
+                "- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-linux64.zip)",
 
                 "",
-                "### SIRIUS+CSI:FingerID Command-Line Interface only - Version $version (${new Date().format('yyyy-MM-dd')})",
+                "<!--", //DISABLED ->  enable if needed
+                "### SIRIUS+CSI:FingerID Command-Line Interface only - Version $siriusFrontendVersion (${new Date().format('yyyy-MM-dd')})",
                 "##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
-                "- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-win64-headless.msi) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-win64-headless.zip)",
-                "- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-osx64-headless.pkg) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-osx64-headless.zip)",
-                "- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-linux64-headless.zip)",
+                "- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win64-headless.msi) / " +
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win64-headless.zip)",
+                "- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-osx64-headless.pkg) / " +
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-osx64-headless.zip)",
+                "- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-linux64-headless.zip)",
+                "-->", //DISABLED ->  enable if needed
                 ""
         ] as List
 
@@ -373,7 +374,7 @@ tasks.register('refreshReadMe') {
 
         lines.each { String line ->
             if (line.startsWith("[![Generic badge](https://img.shields.io/badge/Version-")) {
-                nuLines.add("[![Generic badge](https://img.shields.io/badge/Version-${project.version.replace("-", "--")}-informational.svg)](https://shields.io/)")
+                nuLines.add("[![Generic badge](https://img.shields.io/badge/Version-${siriusFrontendVersion.replace("-", "--")}-informational.svg)](https://shields.io/)")
             } else if (keyword == null) {
                 keywordEnd = keywords.get(line)
                 nuLines.add(line)
