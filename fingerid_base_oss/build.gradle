@@ -19,7 +19,7 @@
  */
 
 allprojects {
-    version =  parent.fingeridVersion
+    version =  fingeridVersion
 }
 dependencies {
     // deprecated for removal ->  use fastutil instead
