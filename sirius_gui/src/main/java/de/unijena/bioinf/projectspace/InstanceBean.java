@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.projectspace;
 
-import com.google.common.collect.Streams;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
@@ -119,10 +118,11 @@ public class InstanceBean implements SiriusPCS {
         registerProjectSpaceListener();
     }
 
-    void clearCache(){
+    void clearCache() {
         clearCache(null);
     }
-    void clearCache(@Nullable ProjectChangeEvent pce){
+
+    void clearCache(@Nullable ProjectChangeEvent pce) {
         synchronized (InstanceBean.this) { //todo nighsky: check if this makes sense or if this needs to change on selection only
             InstanceBean.this.spectralMatchingCache = null;
             InstanceBean.this.sourceFeature = null;
@@ -204,7 +204,7 @@ public class InstanceBean implements SiriusPCS {
     public String getFeatureId() {
         return featureId;
     }
-    
+
     public String getName() {
         return getSourceFeature().getName(); //todo nightsky: check if this is the correct name
     }
@@ -215,7 +215,7 @@ public class InstanceBean implements SiriusPCS {
         return getFeatureId();
     }
 
-    public @Nullable DataQuality getQuality(){
+    public @Nullable DataQuality getQuality() {
         return getSourceFeature().getQuality();
     }
 
@@ -231,7 +231,7 @@ public class InstanceBean implements SiriusPCS {
         return PrecursorIonType.unknown(getSourceFeature().getCharge());
     }
 
-    public Set<PrecursorIonType> getDetectedAdducts(){
+    public Set<PrecursorIonType> getDetectedAdducts() {
         return getSourceFeature().getDetectedAdducts().stream()
                 .map(PrecursorIonType::parsePrecursorIonType)
                 .flatMap(Optional::stream)
@@ -269,7 +269,7 @@ public class InstanceBean implements SiriusPCS {
         return Optional.empty();
     }
 
-    public RetentionTime getRTOrMissing(){
+    public RetentionTime getRTOrMissing() {
         return getRT().orElseGet(RetentionTime::NA);
     }
 
@@ -302,14 +302,15 @@ public class InstanceBean implements SiriusPCS {
 
     /**
      * retrieves database and de novo structure candidates and merges identical structures
+     *
      * @param topK
      * @param fp
      * @return
      */
     public List<FingerprintCandidateBean> getBothStructureCandidates(int topK, boolean fp, boolean loadDatabaseHits, boolean loadDenovo) {
         final List<FingerprintCandidateBean> database = !loadDatabaseHits ? Collections.emptyList() : toFingerprintCandidateBeans(getStructureCandidatesPage(topK, fp), true, false);
-        final List<FingerprintCandidateBean> deNovo = !loadDenovo ? Collections.emptyList() : toFingerprintCandidateBeans(getDeNovoStructureCandidatesPage(topK,fp), false, true);
-        final List<FingerprintCandidateBean> merged =  mergeIdenticalStructures(database, deNovo);
+        final List<FingerprintCandidateBean> deNovo = !loadDenovo ? Collections.emptyList() : toFingerprintCandidateBeans(getDeNovoStructureCandidatesPage(topK, fp), false, true);
+        final List<FingerprintCandidateBean> merged = mergeIdenticalStructures(database, deNovo);
         return addDeNovoDatabaseLabels(merged);
     }
 
@@ -317,8 +318,8 @@ public class InstanceBean implements SiriusPCS {
         if (database.isEmpty()) return deNovo;
         if (deNovo.isEmpty()) return database;
 
-        database = database.stream().sorted(Comparator.comparing(a-> a.getCandidate().getInchiKey())).toList();
-        deNovo = deNovo.stream().sorted(Comparator.comparing(a-> a.getCandidate().getInchiKey())).toList();
+        database = database.stream().sorted(Comparator.comparing(a -> a.getCandidate().getInchiKey())).toList();
+        deNovo = deNovo.stream().sorted(Comparator.comparing(a -> a.getCandidate().getInchiKey())).toList();
 
         List<FingerprintCandidateBean> merged = new ArrayList<>();
         int i = 0, j = 0;
@@ -338,14 +339,19 @@ public class InstanceBean implements SiriusPCS {
                 ++j;
             }
         }
-        while (i < database.size()){
+        while (i < database.size()) {
             merged.add(database.get(i++));
         }
-        while (j < deNovo.size()){
+        while (j < deNovo.size()) {
             merged.add(deNovo.get(j++));
         }
         //recalculate ranks
-        merged =  Streams.mapWithIndex(merged.stream().sorted(Comparator.comparing(a-> -a.getCandidate().getCsiScore())), (fpc, idx) -> {fpc.getCandidate().setRank((int)idx+1); return fpc;}).toList();
+        {
+            merged.sort(Comparator.comparing(a -> ((FingerprintCandidateBean)a).getCandidate().getCsiScore()).reversed());
+            int rank = 1;
+            for (FingerprintCandidateBean fc : merged)
+                fc.getCandidate().setRank(rank++);
+        }
         return merged;
     }
 
@@ -364,12 +370,12 @@ public class InstanceBean implements SiriusPCS {
     public PageStructureCandidateFormula getStructureCandidatesPage(int pageNum, int pageSize, boolean fp) {
         return withIds((pid, fid) -> getClient().features()
                 .getStructureCandidatesPaged(pid, fid, pageNum, pageSize, null,
-                        fp ? List.of(StructureCandidateOptField.DBLINKS, StructureCandidateOptField.FINGERPRINT): List.of(StructureCandidateOptField.DBLINKS)));
+                        fp ? List.of(StructureCandidateOptField.DBLINKS, StructureCandidateOptField.FINGERPRINT) : List.of(StructureCandidateOptField.DBLINKS)));
     }
 
 
     public List<FingerprintCandidateBean> getDeNovoStructureCandidates(int topK, boolean fp) {
-        return toFingerprintCandidateBeans(getDeNovoStructureCandidatesPage(topK,fp), false, true);
+        return toFingerprintCandidateBeans(getDeNovoStructureCandidatesPage(topK, fp), false, true);
     }
 
 
@@ -380,7 +386,7 @@ public class InstanceBean implements SiriusPCS {
     public PageStructureCandidateFormula getDeNovoStructureCandidatesPage(int pageNum, int pageSize, boolean fp) {
         return withIds((pid, fid) -> getClient().features()
                 .getDeNovoStructureCandidatesPaged(pid, fid, pageNum, pageSize, null,
-                        fp ? List.of(StructureCandidateOptField.DBLINKS, StructureCandidateOptField.FINGERPRINT): List.of(StructureCandidateOptField.DBLINKS)));
+                        fp ? List.of(StructureCandidateOptField.DBLINKS, StructureCandidateOptField.FINGERPRINT) : List.of(StructureCandidateOptField.DBLINKS)));
     }
 
     @Nullable
@@ -468,7 +474,7 @@ public class InstanceBean implements SiriusPCS {
     }
 
     synchronized boolean changeComputeStateOfCache(boolean computeState) {
-        if (sourceFeature != null){
+        if (sourceFeature != null) {
             sourceFeature.setComputing(computeState);
             return true;
         }

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<CEF version="1.0.0.0">
+  <CompoundList instrumentConfiguration="">
+    <Compound algo="FindByFormula">
+      <Location m="220.05192" rt="0.574" a="69644" y="21260" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <MatchScores>
+            <Match algo="tgt" score="0.00" />
+          </MatchScores>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Spectrum type="FbF" cpdAlgo="FindByFormula">
+        <MSDetails scanType="Scan" p="+" />
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p x="221.05914" y="16095.09" z="1" s="M+H" />
+          <p x="222.06168" y="1882.93" z="1" s="M+H+1" />
+          <p x="223.05618" y="5165.06" z="1" s="M+H+2" />
+          <p x="224.05677" y="719.75" z="1" s="M+H+3" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+  </CompoundList>
+</CEF>

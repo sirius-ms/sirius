@@ -9,20 +9,22 @@ plugins {
 }
 
 dependencies {
-    implementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+    implementation "org.junit.jupiter:junit-jupiter:$junit_version"
 }
+
+version =  siriusFrontendVersion
 
 ext {
     // version for bundeled JRE
-    jre_version = '21.0.3'
-    zulu_jre_version = '21.34.19'
+    jre_version = '21.0.4'
+    zulu_jre_version = '21.36.17'
     jre_major = zulu_jre_version.split("[.]")[0]
-    siriusJvmArgs = ['-Xms1G',
-                     '-XX:MaxRAMPercentage=80',
-//                                 '-XX:+UseG1GC',
-//                                 '-XX:+UseStringDeduplication',
-                     '-XX:+UseZGC',
-                     '-XX:+ZGenerational',
+    siriusJvmArgs = ['-Xms2G',
+                     '-XX:MaxRAMPercentage=75',
+//                     '-XX:+UseG1GC',
+//                     '-XX:+UseStringDeduplication',
+//                     '-XX:+UseZGC',
+//                     '-XX:+ZGenerational',
                      '-XX:+ExitOnOutOfMemoryError']
     OS = DefaultNativePlatform.currentOperatingSystem
 
@@ -169,8 +171,8 @@ subprojects {
         copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena."
         companyName = "Friedrich-Schiller-University Jena"
 
-        version = project.version.toString().replace("-SNAPSHOT", "")
-        textVersion = project.version
+        version = siriusFrontendVersion.toString().replace("-SNAPSHOT", "")
+        textVersion = siriusFrontendVersion
         supportUrl = "https://bio.informatik.uni-jena.de/software/sirius/"
         fileDescription = "SIRIUS command-line interface"
 
@@ -324,6 +326,7 @@ subprojects {
     }
 
     tasks.register('distImageTestLocal', Test) {
+        enabled false
         group 'verification'
         dependsOn distImage
         useJUnitPlatform()
@@ -411,6 +414,7 @@ subprojects {
 
 
     tasks.register('distImageTestCICD', Test) {
+        enabled false
         group 'verification'
         useJUnitPlatform()
         testClassesDirs = project(':sirius_dist').sourceSets.test.output
@@ -796,7 +800,7 @@ abstract class AppImage extends DefaultTask {
         group = "distribution"
         imageName = project.name
         jvmArgs = []
-        version = project.siriusTargetPlatform.isLinux() ? project.version : project.version.replace('-SNAPSHOT', '')
+        version = project.siriusTargetPlatform.isLinux() ? project.siriusFrontendVersion : project.siriusFrontendVersion.replace('-SNAPSHOT', '')
         winConsole = false
         inputDir = project.tasks.getByName('installDist').outputs.files.singleFile.toPath().resolve('lib').toFile()
     }

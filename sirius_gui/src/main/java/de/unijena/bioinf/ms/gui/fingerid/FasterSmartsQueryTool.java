@@ -21,6 +21,7 @@
 
 package de.unijena.bioinf.ms.gui.fingerid;
 
+import lombok.Getter;
 import org.openscience.cdk.aromaticity.Aromaticity;
 import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.exception.CDKException;
@@ -38,7 +39,6 @@ import org.openscience.cdk.smiles.smarts.parser.TokenMgrError;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 
 /**
  * This class provides a easy to use wrapper around SMARTS matching functionality. <p> User code that wants to do
@@ -273,7 +273,7 @@ public class FasterSmartsQueryTool {
      * @see Cycles
      */
     public void setAromaticity(Aromaticity aromaticity) {
-        this.aromaticity = checkNotNull(aromaticity, "aromaticity was not provided");
+        this.aromaticity = Objects.requireNonNull(aromaticity, "aromaticity was not provided");
     }
 
     /**

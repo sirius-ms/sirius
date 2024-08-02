@@ -67,10 +67,10 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<Proj
     @CommandLine.Option(names={"--smoothing"}, defaultValue = "AUTO", description = "Filter algorithm to suppress noise.", hidden = true)
     public DataSmoothing smoothing;
 
-    @CommandLine.Option(names={"--sigma"}, defaultValue = "3.0", description = "Sigma (kernel width) for Gaussian filter algorithm.", hidden = true)
+    @CommandLine.Option(names={"--sigma"}, defaultValue = "0.5", description = "Sigma (kernel width) for Gaussian filter algorithm.", hidden = true)
     public double sigma;
 
-    @CommandLine.Option(names={"--scale"}, defaultValue = "20", description = "Number of coefficients for wavelet filter algorithm.", hidden = true)
+    @CommandLine.Option(names={"--scale"}, defaultValue = "8", description = "Number of coefficients for wavelet filter algorithm.", hidden = true)
     public int scaleLevel;
 
     @CommandLine.Option(names={"--noise"}, defaultValue = "2.0", description = "Features must be larger than <value> * detected noise level.", hidden = true)
