@@ -800,7 +800,7 @@ abstract class AppImage extends DefaultTask {
         group = "distribution"
         imageName = project.name
         jvmArgs = []
-        version = project.siriusTargetPlatform.isLinux() ? project.version : project.version.replace('-SNAPSHOT', '')
+        version = project.siriusTargetPlatform.isLinux() ? project.siriusFrontendVersion : project.siriusFrontendVersion.replace('-SNAPSHOT', '')
         winConsole = false
         inputDir = project.tasks.getByName('installDist').outputs.files.singleFile.toPath().resolve('lib').toFile()
     }
