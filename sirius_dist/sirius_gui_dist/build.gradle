@@ -22,7 +22,7 @@ apply plugin: "application"
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
 
-version =  parent.siriusFrontendVersion
+version =  siriusFrontendVersion
 
 licenseReport {
     // Set output directory for the report data.

@@ -12,7 +12,7 @@ dependencies {
     implementation "org.junit.jupiter:junit-jupiter:$junit_version"
 }
 
-version =  parent.siriusFrontendVersion
+version =  siriusFrontendVersion
 
 ext {
     // version for bundeled JRE
@@ -171,8 +171,8 @@ subprojects {
         copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena."
         companyName = "Friedrich-Schiller-University Jena"
 
-        version = project.version.toString().replace("-SNAPSHOT", "")
-        textVersion = project.version
+        version = siriusFrontendVersion.toString().replace("-SNAPSHOT", "")
+        textVersion = siriusFrontendVersion
         supportUrl = "https://bio.informatik.uni-jena.de/software/sirius/"
         fileDescription = "SIRIUS command-line interface"
 
