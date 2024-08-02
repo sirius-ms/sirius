@@ -1,0 +1,5 @@
+version =  fingeridVersion
+dependencies {
+    api project(":blob-storage")
+    api project(':fingerid_base_oss')
+}

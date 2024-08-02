@@ -1,0 +1,15 @@
+MS1MassDeviation=de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation
+MS2MassDeviation=de.unijena.bioinf.ChemistryBase.ms.MS2MassDeviation
+MedianNoiseIntensity=de.unijena.bioinf.ChemistryBase.ms.MedianNoiseIntensity
+Timeout=de.unijena.bioinf.ChemistryBase.ms.ft.model.Timeout
+AdductSettings=de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings
+CandidateFormulas=de.unijena.bioinf.ChemistryBase.ms.ft.model.CandidateFormulas
+FormulaSearchSettings=de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSearchSettings
+CompoundQuality=de.unijena.bioinf.ChemistryBase.ms.CompoundQuality
+PossibleAdductSwitches=de.unijena.bioinf.ChemistryBase.ms.PossibleAdductSwitches
+IsotopeSettings=de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeSettings
+IsotopeMs2Settings=de.unijena.bioinf.ChemistryBase.ms.ft.model.IsotopeMs2Settings
+NumberOfCandidatesPerIonization=de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidatesPerIonization
+ForbidRecalibration=de.unijena.bioinf.ChemistryBase.ms.ft.model.ForbidRecalibration
+FormulaSettings=de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings
+NumberOfCandidates=de.unijena.bioinf.ChemistryBase.ms.NumberOfCandidates

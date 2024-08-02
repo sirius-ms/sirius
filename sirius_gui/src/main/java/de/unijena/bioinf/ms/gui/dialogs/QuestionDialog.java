@@ -21,6 +21,7 @@ package de.unijena.bioinf.ms.gui.dialogs;
 
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,7 +41,11 @@ public class QuestionDialog extends DoNotShowAgainDialog {
      * @param propertyKey name of the property with which the 'don't ask' flag is saved persistently
      */
     public QuestionDialog(Window owner, String question, String propertyKey) {
-        this(owner, "", () -> question, propertyKey);
+        this(owner, question, propertyKey, (ReturnValue) null);
+    }
+
+    public QuestionDialog(Window owner, String question, String propertyKey, @Nullable ReturnValue dontShowAgainReturn) {
+        this(owner, "", () -> question, propertyKey, dontShowAgainReturn);
     }
 
     /**
@@ -50,7 +55,11 @@ public class QuestionDialog extends DoNotShowAgainDialog {
      * @param title       Title of the dialog
      */
     public QuestionDialog(Window owner, String title, String question, String propertyKey) {
-        this(owner, title, () -> question, propertyKey);
+        this(owner, title, () -> question, propertyKey, null);
+    }
+
+    public QuestionDialog(Window owner, String title, String question, String propertyKey, @Nullable ReturnValue dontShowAgainReturn) {
+        this(owner, title, () -> question, propertyKey, dontShowAgainReturn);
     }
 
 
@@ -61,11 +70,18 @@ public class QuestionDialog extends DoNotShowAgainDialog {
      * @param title            Title of the dialog
      */
     public QuestionDialog(Window owner, String title, Supplier<String> questionSupplier, String propertyKey) {
+        this(owner, title, () -> questionSupplier.get(), propertyKey, null);
+    }
+
+    public QuestionDialog(Window owner, String title, Supplier<String> questionSupplier, String propertyKey, @Nullable ReturnValue dontShowAgainReturn) {
         super(owner, title, questionSupplier, propertyKey);
-        if (propertyKey != null){
+        if (propertyKey != null) {
             rv = PropertyManager.getEnum(propertyKey, ReturnValue.class);
-            if (rv != null)
+            if (rv != null) {
+                if (dontShowAgainReturn != null)
+                    rv = dontShowAgainReturn;
                 return;
+            }
         }
         rv = ReturnValue.Cancel;
         this.setVisible(true);

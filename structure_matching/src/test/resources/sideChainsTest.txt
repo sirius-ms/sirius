@@ -1,0 +1,32 @@
+# Test-Datei zum Testen der Klasse SideChainListReader:
+#
+# Ueberpruefe, ob der SideChainListReader alle definierten Seitenketten korrekt ausliest,
+# auch wenn Formatierungsfehler in dieser Datei enthalten sind.
+
+>Seitenkette 1: c1ccc(C(=O)O)cc1
+[c]1
+[c]
+([H])
+	[c]
+([H])
+	[c]
+		(C(=[O])
+[O][H])[c]
+
+([H])[c]1([H])
+			>Seitenkette 2: [C](=[O])[O][H]
+			[C]
+
+(=[O])[O][H]
+
+
+
+>Seitenkette 3: [O][H]
+
+[O][H]
+
+>Seitenkette 4: [H]
+[H]
+
+
+		

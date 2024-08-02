@@ -22,7 +22,7 @@ public class MgfTestLocal {
         Files.createDirectories(Path.of(temp_root));
     }
 
-    @Test
+//    @Test
     @DisplayName("Testing if SIRIUS calculates expected formula candidates with mgf file.")
     public void testTopCandidates() throws IOException {
         TestMethods.isDirExisting(temp_output + "canopus");

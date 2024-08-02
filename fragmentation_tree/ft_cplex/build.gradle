@@ -1,0 +1,5 @@
+dependencies {
+    api project(':fragmentation_tree:fragmentation_tree_construction')
+    //intellij igmores other scopes than compile => remove for publication
+    implementation group: 'cplex', name: 'cplex', version: "$cplex_version"
+}

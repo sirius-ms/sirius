@@ -21,8 +21,6 @@
 package de.unijena.bioinf.ms.middleware.service.info;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.middleware.model.info.LicenseInfo;
@@ -37,13 +35,14 @@ import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.concurrent.ThreadSafe;
 import java.util.*;
 
 
-@ThreadSafe
+/**
+ * TREAD SAFE
+ */
 public final class ConnectionChecker {
-    private volatile ConnectionCheck checkResult = new ConnectionCheck(Multimaps.newSetMultimap(Map.of(), Set::of), new LicenseInfo());
+    private volatile ConnectionCheck checkResult = new ConnectionCheck(new HashMap<>(), new LicenseInfo());
     private volatile CheckJob checkJob = null;
 
     private final WebAPI<?> webAPI;
@@ -99,7 +98,7 @@ public final class ConnectionChecker {
             ProxyManager.closeAllStaleConnections();
 
             checkForInterruption();
-            Multimap<ConnectionError.Klass, ConnectionError> errors = Multimaps.newSetMultimap(new HashMap<>(), LinkedHashSet::new);
+            Map<ConnectionError.Klass, Set<ConnectionError>> errors = new HashMap<>();
 
             final @NotNull LicenseInfo ll = new LicenseInfo();
 
@@ -119,11 +118,12 @@ public final class ConnectionChecker {
                 if (ll.subscription().map(Subscription::isCountQueries).orElse(false))
                     ll.setConsumables(webAPI.getConsumables(!ll.getSubscription().hasInstanceLimit())); //yearly if there is compound limit
             } catch (Exception e) {
-                errors.put(ConnectionError.Klass.APP_SERVER, new ConnectionError(93,
-                        "Error when requesting computation limits.",
-                        ConnectionError.Klass.APP_SERVER, e));
-            }finally {
-                errors.putAll(webAPI.checkConnection());
+                errors.computeIfAbsent(ConnectionError.Klass.APP_SERVER, k -> new LinkedHashSet<>())
+                        .add(new ConnectionError(93,
+                                "Error when requesting computation limits.",
+                                ConnectionError.Klass.APP_SERVER, e));
+            } finally {
+                webAPI.checkConnection().forEach((k,v) -> errors.computeIfAbsent(k, k2 -> new LinkedHashSet<>()).addAll(v));
             }
 
             checkForInterruption();
@@ -170,8 +170,8 @@ public final class ConnectionChecker {
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED)
         private final List<ConnectionError> errors;
 
-        public ConnectionCheck(@NotNull Multimap<ConnectionError.Klass, ConnectionError> errors, @NotNull LicenseInfo licenseInfo) {
-            this(errors.values().stream().sorted(Comparator.comparing(ConnectionError::getErrorKlass)).toList(), licenseInfo);
+        public ConnectionCheck(@NotNull Map<ConnectionError.Klass, Set<ConnectionError>> errors, @NotNull LicenseInfo licenseInfo) {
+            this(errors.values().stream().flatMap(Set::stream).sorted(Comparator.comparing(ConnectionError::getErrorKlass)).toList(), licenseInfo);
         }
 
         protected ConnectionCheck(@NotNull List<ConnectionError> errorsSorted, @NotNull LicenseInfo licenseInfo) {

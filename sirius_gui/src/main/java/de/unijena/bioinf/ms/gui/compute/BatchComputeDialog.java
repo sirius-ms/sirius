@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
+import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.nightsky.sdk.model.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -120,7 +121,7 @@ public class BatchComputeDialog extends JDialog {
                         if (enabled) {
                             if (new QuestionDialog(mf(), "Low number of Compounds",
                                     GuiUtils.formatToolTip("Please note that ZODIAC is meant to improve molecular formula annotations on complete LC-MS/MS datasets. Using a low number of compounds may not result in improvements.", "", "Do you wish to continue anyways?"),
-                                    DO_NOT_SHOW_AGAIN_KEY_Z_COMP).isCancel()) {
+                                    DO_NOT_SHOW_AGAIN_KEY_Z_COMP, ReturnValue.Success).isCancel()) {
                                 zodiacConfigs.activationButton.setSelected(false);
                                 return;
                             }
@@ -129,7 +130,7 @@ public class BatchComputeDialog extends JDialog {
                             if ((compoundsToProcess.size() > 2000 && (Runtime.getRuntime().maxMemory() / 1024 / 1024 / 1024) < 8)) {
                                 if (new QuestionDialog(mf(), "High Memory Consumption",
                                         GuiUtils.formatToolTip("Your ZODIAC analysis contains `" + compoundsToProcess.size() + "` compounds and may therefore consume more system memory than available.", "", "Do you wish to continue anyways?"),
-                                        DO_NOT_SHOW_AGAIN_KEY_Z_MEM).isCancel()) {
+                                        DO_NOT_SHOW_AGAIN_KEY_Z_MEM, ReturnValue.Success).isCancel()) {
                                     zodiacConfigs.activationButton.setSelected(false);
                                 }
                             }
@@ -312,7 +313,7 @@ public class BatchComputeDialog extends JDialog {
 
         if (this.recomputeBox.isSelected()) {
             if (this.compoundsToProcess.size() > 1) {
-                QuestionDialog questionDialog = new QuestionDialog(this, "Recompute?", "<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", DONT_ASK_RECOMPUTE_KEY);
+                QuestionDialog questionDialog = new QuestionDialog(this, "Recompute?", "<html><body>Do you really want to recompute already computed experiments? <br> All existing results will be lost!</body></html>", DONT_ASK_RECOMPUTE_KEY, ReturnValue.Success);
                 this.recomputeBox.setSelected(questionDialog.isSuccess());
             }
         }

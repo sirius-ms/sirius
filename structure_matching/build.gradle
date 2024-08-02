@@ -1,0 +1,18 @@
+
+plugins {
+    id 'application'
+}
+
+dependencies{
+    api "org.openscience.cdk:cdk-bundle:$cdk_version"
+    implementation project(":chemistry_base")
+
+    testImplementation "org.openscience.cdk:cdk-bundle:$cdk_version"
+    testImplementation project(":chemistry_base")
+    testImplementation project(":io")
+    testImplementation project(":sirius_api")
+}
+
+application {
+    mainClass =  "evaluate.Main"
+}

@@ -20,6 +20,7 @@
 package de.unijena.bioinf.ms.middleware;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
+import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.JobSubmitter;
@@ -75,8 +76,14 @@ public class SiriusContext{
     }
 
     @Bean
-    ChemDbService chemDbService(WebAPI<?> webAPI){
-        return new ChemDbServiceImpl(webAPI);
+    ChemDbService chemDbService(WebAPI<?> webAPI, IFingerprinterCache iFPCache){
+        return new ChemDbServiceImpl(webAPI, iFPCache);
+    }
+
+    @Bean
+    @DependsOn({"jobManager"})
+    IFingerprinterCache iFPCache(){
+        return ApplicationCore.IFP_CACHE();
     }
 
     @Bean(destroyMethod = "shutdown")

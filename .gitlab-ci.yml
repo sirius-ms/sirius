@@ -6,27 +6,54 @@ default:
   image: azul/zulu-openjdk:21-latest
   tags: [$RUNNER_TAGS]
 
-#  image: git.bio.informatik.uni-jena.de:5050/bioinf-mit/docker-images/ubuntu-zulu-fx-gradle:22.04-15.42.15-6.9.2-12
 # Disable the Gradle daemon for Continuous Integration servers as correctness
 # is usually a priority over speed in CI environments. Using a fresh
 # runtime for each build is more reliable since the runtime is completely
 # isolated from any previous builds.
 stages:
-  - clean
-  - prepare
-  - build
-  - test
-  - publish
+  - test-libs
+  - build-publish-libs
+  - build-app
+  - test-app
+  - publish-app
 
 before_script:
   - rm /etc/apt/sources.list.d/zulu-openjdk.list
   - 'command -v ssh-agent >/dev/null || ( apt-get update -y && apt-get install openssh-client wget gnupg unzip liblapack-dev curl git -y )'
   - VSNAP=$(head -2 sirius_cli/src/main/resources/sirius_frontend.build.properties | tail -1 | cut -d '=' -f 2)
 
+test:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  stage: test-libs
+  script:
+    - apt-get update
+    - apt-get install -y liblapack3
+    - ./gradlew test --stacktrace
+  artifacts:
+    when: always
+    reports:
+      junit: "**/build/test-results/test/**/TEST-*.xml"
 
+buildLinux64:
+  variables:
+    GRADLE_OPTS: "-Dorg.gradle.daemon=false"
+  stage: build-publish-libs
+  script:
+    - ./gradlew clean artifactoryPublish --refresh-dependencies -P "de.unijena.bioinf.build.artifactory.username=$ARTIFACTORY_USERNAME" -P "de.unijena.bioinf.build.artifactory.password=$ARTIFACTORY_TOKEN"
+  cache:
+    key: "$CI_COMMIT_REF_NAME"
+    policy: push
+  rules:
+    - if: $ARTIFACTORY_USERNAME && ($CI_COMMIT_BRANCH == "master" || $CI_COMMIT_BRANCH == "stable")
+      changes:
+        # exclude README only changes from pipeline
+        - "**/*.{java,gradle,properties,yml,tex,png,ico,json,xml,html,csv,tsv,py}"
+        - "**/src/main/java/**/*"
 
 buildCLI:
-  stage: build
+  stage: build-app
+  when: manual
   script:
     - ./gradlew :sirius_dist:sirius_cli_single_os:publishSiriusMSPublicationToMavenLocal -P "build.sirius.starter.jdk.include=true"
     - mkdir maven_artifacts
@@ -44,7 +71,8 @@ buildCLI:
       - stable
 
 buildGUI:
-  stage: build
+  stage: build-app
+  when: manual
   script:
     - ./gradlew :sirius_dist:sirius_gui_dist:publishSiriusMSPublicationToMavenLocal -P "build.sirius.native.openjfx.exclude=true" -P "build.sirius.starter.jdk.include=true"
     - mkdir maven_artifacts
@@ -62,7 +90,8 @@ buildGUI:
       - stable
 
 testCLI:
-  stage: test
+  stage: test-app
+  when: manual
   script:
     - mkdir unzipped
     - unzip maven_artifacts/$VSNAP/siriusMS-$VSNAP-linux64-headless.zip -d unzipped
@@ -80,7 +109,8 @@ testCLI:
       - stable
 
 testGUI:
-  stage: test
+  stage: test-app
+  when: manual
   script:
     - mkdir unzipped
     - unzip maven_artifacts/$VSNAP/siriusMS-$VSNAP-linux64.zip -d unzipped
@@ -100,7 +130,8 @@ testGUI:
 publishCLI:
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-  stage: publish
+  stage: publish-app
+  when: manual
   script:
     - cd maven_artifacts/$VSNAP
     - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/siriusMS/$VSNAP/siriusMS-$VSNAP-linux64-headless.zip" -T siriusMS-$VSNAP-linux64-headless.zip
@@ -119,7 +150,8 @@ publishCLI:
 publishGUI:
   variables:
     GRADLE_OPTS: "-Dorg.gradle.daemon=false"
-  stage: publish
+  stage: publish-app
+  when: manual
   script:
     - cd maven_artifacts/$VSNAP
     - curl -u $ARTIFACTORY_USERNAME:$ARTIFACTORY_TOKEN -X PUT "https://bio.informatik.uni-jena.de/repository/dist-snapshot-local/de/unijena/bioinf/ms/siriusMS/$VSNAP/siriusMS-$VSNAP-linux64.zip" -T siriusMS-$VSNAP-linux64.zip
@@ -137,7 +169,8 @@ publishGUI:
 
 #push to github to build for multiple OSs
 pushToGitHub:
-  stage: publish
+  stage: publish-app
+  when: manual
   script:
     - git config --global user.email "${GITLAB_GITHUB_SIRIUS_USERNAME}"
     - git config --global user.name "boeckergitlab"

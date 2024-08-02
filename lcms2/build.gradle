@@ -1,0 +1,54 @@
+apply plugin: "application"
+
+
+version =  siriusVersion
+
+
+application {
+    mainClass = "de.unijena.bioinf.lcms.TestMain"
+    applicationDefaultJvmArgs = ['-Xms2G',
+                                 '-XX:MaxRAMPercentage=75',
+//                                 '-XX:+UseG1GC',
+//                                 '-XX:+UseStringDeduplication',
+//                                 '-XX:+UseZGC',
+//                                 '-XX:+ZGenerational',
+                                 '-XX:+ExitOnOutOfMemoryError']
+}
+
+dependencies {
+
+    implementation "org.apache.commons:commons-text:$commons_text_version"
+
+    api project(':chemistry_base')
+    api project(':spectral_alignment')
+    api project(':mass_decomposition:mass_decomposer')
+    api project(':lcms')
+    api project(':isotope_pattern:isotope_pattern_analysis')
+    api project(":ms_persistence_oss:ms_persistence_model_oss")
+    api project(':ms_persistence_oss:ms_persistence_document_storage_oss')
+    api project(':document-storage')
+    //internal
+    api group: 'de.unijena.bioinf.ms', name: 'Recalibration', version: '1.0'
+    // external
+    implementation ('uk.ac.ebi.jmzml:jmzml:1.7.11') {
+        exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-logging' //pom dependency that does not work
+        exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-xml-handling' //pom dependency that does not work
+        exclude group: 'commons-codec', module: 'commons-codec' //pom dependency that does not work
+        exclude group: 'net.sourceforge.cpdetector', module: 'cpdetector'
+
+    }
+    implementation ('psidev.psi.tools:xxindex:0.23'){
+        exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-logging' //pom dependency that does not work
+        exclude group: 'net.sourceforge.cpdetector', module: 'cpdetector'
+
+    } //jmzml dep. from excluded pom dep
+
+
+    implementation group: 'commons-codec', name: 'commons-codec', version:  '1.15'
+    implementation group: 'com.github.jiangxincode', name: 'cpdetector', version:  '1.0.10'
+    implementation "org.glassfish.jaxb:jaxb-runtime:$jaxb_version"
+
+    //just for testmain
+    implementation "info.picocli:picocli:$picocli_version"
+    implementation"org.slf4j:slf4j-jdk14:$slf4j_version"
+}
