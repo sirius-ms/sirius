@@ -99,6 +99,10 @@ public class FingerprintSubToolJob extends InstanceJob {
 
         // do computation and await results
         @NotNull List<SScored<FTree, FormulaScore>> filteredResults = submitSubJob(fpPreproJob).awaitResult();
+        if (filteredResults.isEmpty()) {
+            logInfo("Skipping instance \"" + inst.getName() + "\" because there is not suitable fragmentation tree left after FingerprintPreprocessingJob.");
+            return;
+        }
 
         updateProgress(30);
         checkForInterruption();

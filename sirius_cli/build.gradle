@@ -59,6 +59,6 @@ dependencies {
     api 'org.jbibtex:jbibtex:1.0.17'
 
     //test
-    testImplementation "de.unijena.bioinf.ms:utils:$siriusVersion"
+    testImplementation project(":utils")
     testImplementation "com.bright_giant:sirius-test-data:1.0-SNAPSHOT"
 }
