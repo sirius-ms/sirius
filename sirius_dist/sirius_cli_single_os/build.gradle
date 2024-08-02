@@ -1,3 +1,4 @@
+version =  siriusFrontendVersion
 dependencies {
     implementation 'org.junit.jupiter:junit-jupiter:5.8.2'
     implementation project(':sirius_cli')

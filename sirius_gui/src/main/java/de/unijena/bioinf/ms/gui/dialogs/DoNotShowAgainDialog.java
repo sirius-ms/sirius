@@ -19,7 +19,6 @@
 
 package de.unijena.bioinf.ms.gui.dialogs;
 
-import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import org.slf4j.LoggerFactory;
@@ -109,10 +108,8 @@ public abstract class DoNotShowAgainDialog extends JDialog {
     }
 
     protected void saveDoNotAskMeAgain() {
-        if (dontAsk != null && property != null && !property.isBlank() && dontAsk.isSelected()){
-            SiriusProperties.setProperty(property, getResult());
-            SiriusJobs.runInBackground(() -> SiriusProperties.SIRIUS_PROPERTIES_FILE().store());
-        }
+        if (dontAsk != null && property != null && !property.isBlank() && dontAsk.isSelected())
+            SiriusProperties.setAndStoreInBackground(property, getResult());
     }
 
     protected abstract String getResult();

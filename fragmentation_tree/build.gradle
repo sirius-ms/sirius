@@ -1,0 +1,24 @@
+allprojects {
+    version =  siriusVersion
+    dependencies {
+        annotationProcessor project(':default_properties:processor')
+    }
+}
+
+subprojects {
+    dependencies {
+//project
+        api project(':chemistry_base')
+        api project(':isotope_pattern:isotope_pattern_analysis')
+        api project(':mass_decomposition:mass_decomposer')
+        api project(':elgordo')
+//internal
+        api group: 'de.unijena.bioinf.ms', name: 'Recalibration', version: '1.0'
+//external
+        implementation 'net.java.dev.jna:jna:5.4.0'
+//test
+        testImplementation project(':io')
+    }
+}
+
+

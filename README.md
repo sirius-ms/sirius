@@ -111,7 +111,7 @@ command-line tool.
 <!--begin cite-->
 ## Main citations
 
-Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Alexander A. Aksenov, Alexey V. Melnik, Marvin Meusel, Pieter C. Dorrestein, Juho Rousu, and Sebastian Böcker, 
+Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Alexander A. Aksenov, Alexey V. Melnik, Marvin Meusel, Pieter C. Dorrestein, Juho Rousu, and Sebastian Böcker,
 [SIRIUS 4: Turning tandem mass spectra into metabolite structure information.](https://doi.org/10.1038/s41592-019-0344-8)
 *Nature Methods* 16, 299–302, 2019.
 
@@ -151,15 +151,15 @@ Sebastian Böcker, Matthias C. Letzel, Zsuzsanna Lipták and Anton Pervukhin.
 ### Additional citations
 
 Marcus Ludwig, Kai Dührkop and Sebastian and Böcker.
-[Bayesian networks for mass spectrometric metabolite identification via molecular fingerprints.](http://doi.org/10.1093/bioinformatics/bty245) 
-*Bioinformatics*, 34(13): i333-i340. 2018. Proc. of Intelligent Systems for Molecular Biology (ISMB 2018). (Cite for CSI:FingerID Scoring) 
+[Bayesian networks for mass spectrometric metabolite identification via molecular fingerprints.](http://doi.org/10.1093/bioinformatics/bty245)
+*Bioinformatics*, 34(13): i333-i340. 2018. Proc. of Intelligent Systems for Molecular Biology (ISMB 2018). (Cite for CSI:FingerID Scoring)
 
 W. Timothy J. White, Stephan Beyer, Kai Dührkop, Markus Chimani and
 Sebastian Böcker. [Speedy Colorful
 Subtrees.](http://dx.doi.org/10.1007/978-3-319-16706-0_10) In *Proc. of
 Computing and Combinatorics Conference (COCOON 2015)*, volume 9198 of
 *Lect Notes Comput Sci*, pages 310-322. Springer, Berlin, 2015. (cite
-this on *why computations are swift*, even on a laptop computer) 
+this on *why computations are swift*, even on a laptop computer)
 
 Huibin Shen, Kai Dührkop, Sebastian Böcker and Juho Rousu. [Metabolite
 Identification through Multiple Kernel Learning on Fragmentation

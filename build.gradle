@@ -9,7 +9,6 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-//        classpath 'edu.sc.seis.gradle:launch4j:2.4.9'
         classpath 'commons-configuration:commons-configuration:1.10'
         classpath 'com.github.viswaramamoorthy:gradle-util-plugins:0.1.0-RELEASE'
         classpath 'org.yaml:snakeyaml:1.29'
@@ -29,22 +28,78 @@ wrapper {
 
 //Global Properties
 ext {
-    junit_version = '5.10.0'
-    jackson_version = "2.16.1"
+    logger.lifecycle('reading build properties file...')
+    props = new Properties()
+    file("${projectDir}/chemistry_base/src/main/resources/sirius.build.properties").withReader("UTF8", {
+        props.load(it)
+    })
+    file("${projectDir}/fingerid_base_oss/src/main/resources/csi_fingerid.build.properties").withReader("UTF8", {
+        props.load(it)
+    })
+    file("${projectDir}/sirius_cli/src/main/resources/sirius_frontend.build.properties").withReader("UTF8", {
+        props.load(it)
+    })
+
+    siriusVersion = props.getProperty('de.unijena.bioinf.sirius.version')
+    fingeridVersion = props.getProperty('de.unijena.bioinf.fingerid.version')
+    siriusFrontendVersion = props.getProperty('de.unijena.bioinf.siriusFrontend.version')
+    appName = props.getProperty('de.unijena.bioinf.utils.errorReport.softwareName').toLowerCase()
+    mztabm_version = props.getProperty('de.unijena.bioinf.mztabm.version')
+
+    //version for external libraries
+    jjobs_version = '0.9.36'
+    slf4j_version = '1.7.36'
+    jackson_version = '2.16.1'
+    lombok_version = '1.18.34'
+
+    cbc_version = props.getProperty('de.unijena.bioinf.sirius.build.cbc_version')
+    glpk_version = props.getProperty('de.unijena.bioinf.sirius.build.glpk_version')
+    gurobi_version = props.getProperty('de.unijena.bioinf.sirius.build.gurobi_version')
+    cplex_version = props.getProperty('de.unijena.bioinf.sirius.build.cplex_version')
+    cdk_version = "2.9"
+    jetbrains_version = "24.1.0"
+    okhttp_version = "4.12.0"
+    trove_version = '3.1.0' //DEPRECATED -> user fast util instead
+    fastutil_version = '8.5.12' //replaces trove
+
+    //not recommended anymore -> use pico cli instead
+    jewelcli_version = '0.8.9'
+
+    //apache commons
+    commons_math_version = '3.6.1'
+    commons_email_version = '1.6.0'
+    commons_text_version = '1.12.0'
+    commons_lang_version = '3.15.0'
+    commons_compress_version = '1.26.2'
+    commons_io_version = '2.16.1'//'2.11.0'
+    commons_configuration_version = '2.11.0'
+
+    json_version = '1.0'
+    json_impl_version = "1.0.4"
+    psql_version = "42.2.1"
+    jdbi_version = '3.34.0'
+
+    liblinear_version = "1.95"
+    libsvm_version = "3.20"
+
+    swagger_version = "2.2.22"
+
+    jaxb_version = "2.3.9"
+    picocli_version = '4.7.5'
+    jakarta_version = '3.1.0'
+    jakarta_annotation_version = "3.0.0"
+
+
     spring_boot_version = "3.3.1"
     springdoc_version = "2.3.0"
-    //version for external libraries
-    slf4j_version = '1.7.36'
-    jjobs_version = '0.9.36'
-    jaxb_version = "2.3.9"
-    cdk_version = "2.8"
 
-    picocli_version = '4.7.5'//'3.9.5'
+    junit_version = '5.10.3'
 
     siriusTargetPlatform = SiriusPlatform.fromDescriptor((
             project.findProperty('build.sirius.platform') ?:
                     "${DefaultNativePlatform.getCurrentOperatingSystem().getName()}-${DefaultNativePlatform.getCurrentArchitecture().getName()}"
     ) as String)
+
     System.out.println("----> Following platform detected: " + siriusTargetPlatform)
 
     javaFX_modules = ['javafx-base', 'javafx-controls', 'javafx-swing', 'javafx-web', 'javafx-graphics', 'javafx-fxml', 'javafx-media']
@@ -65,30 +120,9 @@ ext {
     System.out.println("----> excludeCbcNative: " + excludeCbcNative)
     excludeJFX = Boolean.parseBoolean((project.findProperty("build.sirius.native.openjfx.exclude") ?: "false") as String)
     System.out.println("----> excludeJFX: ${excludeJFX} | ${project.findProperty("build.sirius.native.openjfx.exclude")}")
-
-    jetbrains_version = "24.1.0"
-
-    // mainly for IDE execution, ilp libs are not shipped with distributions anyways
-    cplex_version = '12.7.1'
-//    cplex_version = '20.1.0'
-    gurobi_version = '9.1.1'
-    cbc_version = '2.10.8.1'
-    jakarta_version = '3.1.0'
-
-    logger.lifecycle('reading build properties file...')
-    props = new Properties()
-    File propertiesFileIn = new File("${projectDir}/sirius_cli/src/main/resources/sirius_frontend.build.properties")
-    propertiesFileIn.withReader("UTF8", {
-        props.load(it)
-    })
-
-    // edit all these versions in sirius_cli/src/main/resources/....build.properties
-    appName = props.getProperty('de.unijena.bioinf.utils.errorReport.softwareName').toLowerCase()
-    siriusFrontendVersion = props.getProperty('de.unijena.bioinf.siriusFrontend.version')
-    siriusVersion = props.getProperty('de.unijena.bioinf.sirius.version')
-    fingeridVersion = props.getProperty('de.unijena.bioinf.fingerid.version')
-    mztabm_version = props.getProperty('de.unijena.bioinf.mztabm.version')
 }
+
+
 
 /*################### DISTRIBUTION STUFF ################### */
 project.ext.set("linSuffix", "linux")
@@ -101,6 +135,7 @@ project.ext.set("distPath", file('dist').absolutePath)
 allprojects {
     apply plugin: 'com.jfrog.artifactory'
     apply plugin: 'java'
+    apply plugin: 'java-library'
     apply plugin: 'maven-publish'
 
     targetCompatibility = 21
@@ -109,8 +144,6 @@ allprojects {
     compileTestJava.options.encoding = "UTF-8"
     javadoc.options.encoding = 'UTF-8'
 
-
-    version = "$siriusFrontendVersion"
     group = 'de.unijena.bioinf.ms'
 
     repositories {
@@ -126,27 +159,85 @@ allprojects {
             url "https://repo1.maven.org/maven2/" //glazed lists
         }
         maven {
+            url "http://eulergui.sourceforge.net/maven2/" //FTAlign stuff
+            allowInsecureProtocol = true
+        }
+        maven {
             // only used for spectral hashs (Splash)
             url "http://gose.fiehnlab.ucdavis.edu:55000/content/groups/public"
             allowInsecureProtocol = true
         }
+        repositories {
+            maven {
+                url "https://gitlab.com/api/v4/groups/bright-giant/-/packages/maven"
+                name "GitLab"
+                if (System.getenv("CI_JOB_TOKEN") != null) {
+                    credentials(HttpHeaderCredentials) {
+                        name = "Job-Token"
+                        value = System.getenv("CI_JOB_TOKEN")
+                    }
+                    authentication {
+                        header(HttpHeaderAuthentication)
+                    }
+                }else{
+                    credentials(PasswordCredentials) {
+                        username = project.findProperty("com.bright-giant.build.gitlab.username") as String
+                        password = project.findProperty("com.bright-giant.build.gitlab.token") as String
+                        // the variable resides in $GRADLE_USER_HOME/gradle.properties
+                        // https://docs.gradle.org/current/userguide/directory_layout.html#dir:gradle_user_home
+                    }
+                    authentication {
+                        basic(BasicAuthentication)
+                    }
+                }
+            }
+        }
     }
 
     dependencies {
-        implementation "org.jetbrains:annotations:$jetbrains_version"
-        implementation "org.slf4j:slf4j-api:$slf4j_version"
+        compileOnly "org.projectlombok:lombok:$lombok_version"
+        annotationProcessor "org.projectlombok:lombok:$lombok_version"
+
+        api "it.unimi.dsi:fastutil:$fastutil_version"
+
+        api "org.apache.commons:commons-lang3:$commons_lang_version"
+        api "org.apache.commons:commons-math3:$commons_math_version"
+        api "org.apache.commons:commons-compress:$commons_compress_version"
+        api "commons-io:commons-io:$commons_io_version"
+
+        api "com.fasterxml.jackson.core:jackson-databind:$jackson_version"
+        api "com.fasterxml.jackson.core:jackson-annotations:$jackson_version"
+
+        api 'com.googlecode.concurrent-locks:concurrent-locks:1.0.0'
+
+        api "de.unijena.bioinf:jjobs-core:$jjobs_version"
+        api "org.slf4j:slf4j-api:$slf4j_version"
+
+        // Annotations
+        api "org.jetbrains:annotations:$jetbrains_version"
+        api "io.swagger.core.v3:swagger-annotations:$swagger_version"
+
         //NOTE: cannot be provided as transitive dependency
         implementation "jakarta.persistence:jakarta.persistence-api:$jakarta_version"
+        implementation "jakarta.annotation:jakarta.annotation-api:$jakarta_annotation_version"
+
         implementation "org.glassfish.jaxb:jaxb-runtime:$jaxb_version"
+
         // TEST DEPENDENCIES
+        testCompileOnly "org.projectlombok:lombok:$lombok_version"
+        testAnnotationProcessor "org.projectlombok:lombok:$lombok_version"
+
         testImplementation "org.slf4j:log4j-over-slf4j:$slf4j_version"
         testImplementation "org.slf4j:jcl-over-slf4j:$slf4j_version"
         // Aggregator dependency that also brings JUnit 5 parameterized tests etc.
-        testImplementation("org.junit.jupiter:junit-jupiter:$junit_version")
-        testImplementation("org.junit.jupiter:junit-jupiter-params:$junit_version")
+        testImplementation "org.junit.jupiter:junit-jupiter:$junit_version"
+        testImplementation "org.junit.jupiter:junit-jupiter-params:$junit_version"
+        testImplementation "org.mockito:mockito-junit-jupiter:5.12.0"
         // The Vintage engine is needed to be able to run JUnit 4 tests
-        testImplementation("org.junit.vintage:junit-vintage-engine:$junit_version")
+        testImplementation "org.junit.vintage:junit-vintage-engine:$junit_version"
         testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit_version"
+
+
     }
 
     test {
@@ -210,25 +301,26 @@ tasks.register('refreshDownloadLinks') {
 
     doLast {
         webPath.mkdirs()
-        def repoKey = "${project.version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}"
 
         List<String> lines = [
-                "### SIRIUS+CSI:FingerID GUI and CLI - Version $version (${new Date().format('yyyy-MM-dd')})",
+                "### SIRIUS+CSI:FingerID GUI and CLI - Version $siriusFrontendVersion (${new Date().format('yyyy-MM-dd')})",
                 "##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
-                "- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-win64.msi) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-win64.zip)",
-                "- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-osx64.pkg) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-osx64.zip)",
-                "- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-linux64.zip)",
+                "- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win64.msi) / " +
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win64.zip)",
+                "- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-osx64.pkg) / " +
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-osx64.zip)",
+                "- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-linux64.zip)",
 
                 "",
-                "### SIRIUS+CSI:FingerID Command-Line Interface only - Version $version (${new Date().format('yyyy-MM-dd')})",
+                "<!--", //DISABLED ->  enable if needed
+                "### SIRIUS+CSI:FingerID Command-Line Interface only - Version $siriusFrontendVersion (${new Date().format('yyyy-MM-dd')})",
                 "##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.",
-                "- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-win64-headless.msi) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-win64-headless.zip)",
-                "- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-osx64-headless.pkg) / " +
-                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-osx64-headless.zip)",
-                "- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v$version/sirius-$version-linux64-headless.zip)",
+                "- for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win64-headless.msi) / " +
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-win64-headless.zip)",
+                "- for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-osx64-headless.pkg) / " +
+                        "[zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-osx64-headless.zip)",
+                "- for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v$siriusFrontendVersion/sirius-$siriusFrontendVersion-linux64-headless.zip)",
+                "-->", //DISABLED ->  enable if needed
                 ""
         ] as List
 
@@ -282,7 +374,7 @@ tasks.register('refreshReadMe') {
 
         lines.each { String line ->
             if (line.startsWith("[![Generic badge](https://img.shields.io/badge/Version-")) {
-                nuLines.add("[![Generic badge](https://img.shields.io/badge/Version-${project.version.replace("-", "--")}-informational.svg)](https://shields.io/)")
+                nuLines.add("[![Generic badge](https://img.shields.io/badge/Version-${siriusFrontendVersion.replace("-", "--")}-informational.svg)](https://shields.io/)")
             } else if (keyword == null) {
                 keywordEnd = keywords.get(line)
                 nuLines.add(line)
