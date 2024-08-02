@@ -193,7 +193,9 @@ installSiriusDist.dependsOn getRootProject().getChildProjects().get('sirius_rest
 siriusDistZip.dependsOn 'generateLicenseReport'
 siriusDistZip.dependsOn('launch4j')
 siriusDistZip.dependsOn('createGuiExe')
-siriusDistZip.dependsOn getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar')
+siriusDistZip.dependsOn ':sirius_rest_service:bootJar'
+siriusDistZip.dependsOn ':sirius_rest_service:sourcesJar'
+siriusDistZip.dependsOn ':sirius_rest_service:javadocJar'
 siriusDistZip.mustRunAfter('signDistImage')
 siriusDistZip.mustRunAfter('signDistInstaller')
 siriusDistZip.mustRunAfter('macNotarize')
@@ -201,7 +203,9 @@ siriusDistZip.mustRunAfter('macNotarize')
 siriusDistTar.dependsOn('launch4j')
 siriusDistTar.dependsOn 'generateLicenseReport'
 siriusDistTar.dependsOn('createGuiExe')
-siriusDistTar.dependsOn getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar')
+siriusDistTar.dependsOn ':sirius_rest_service:bootJar'
+siriusDistTar.dependsOn ':sirius_rest_service:sourcesJar'
+siriusDistTar.dependsOn ':sirius_rest_service:javadocJar'
 siriusDistTar.mustRunAfter('signDistImage')
 siriusDistTar.mustRunAfter('signDistInstaller')
 siriusDistTar.mustRunAfter('macNotarize')
