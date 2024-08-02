@@ -116,7 +116,7 @@ public class FileChooserPanel extends JPanel {
         changeDir.setEnabled(enabled);
     }
 
-    public static void main(String[] args) {
+    public static void test_main(String[] args) {
         EventQueue.invokeLater(() -> {
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());

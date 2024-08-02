@@ -12,7 +12,7 @@ import java.util.function.Function;
  * a JList with custom cell renderer when clicking on it.
  *
  * This class is a really dirty hack and might make trouble as soon as we change
- * anything in the look&feel
+ * anything in the look and feel
  */
 public class CompactComboBox<T> extends JComboBox<T> {
 
