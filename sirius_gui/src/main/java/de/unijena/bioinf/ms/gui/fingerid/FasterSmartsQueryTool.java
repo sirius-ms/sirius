@@ -58,21 +58,23 @@ import java.util.stream.Collectors;
  *    }
  * }
  * </pre>
- * <h3>Unsupported Features</h3> <ul> <li>Component level grouping <li>Stereochemistry <li>Reaction support </ul>
- * <h3>SMARTS Extensions</h3>
+ * <h2>Unsupported Features</h2> <ul> <li>Component level grouping <li>Stereochemistry <li>Reaction support </ul>
+ * <h2>SMARTS Extensions</h2>
  * <p>
  * Currently the CDK supports the following SMARTS symbols, that are not described in the Daylight specification.
  * However they are supported by other packages and are noted as such.
  * <p>
- * <resultElementTable border=1 cellpadding=3 summary=""> <thead> <tr> <th>Symbol</th><th>Meaning</th><th>Default</th><th>Notes</th> </tr>
+ * <table border=1>
+ * <caption>Supported SMARTS symbols</caption>
+ * <thead> <tr> <th>Symbol</th><th>Meaning</th><th>Default</th><th>Notes</th> </tr>
  * </thead> <tbody> <tr> <td>Gx</td><td>Periodic group number</td><td>None</td><td>x must be specified and must be a
  * number between 1 and 18. This symbol is supported by the MOE SMARTS implementation</td> <tr> <td>#X</td><td>Any
  * non-carbon heavy element</td><td>None</td><td>This symbol is supported by the MOE SMARTS implementation</td> </tr>
  * <tr> <td>^x</td><td>Any atom with the a specified hybridization state</td><td>None</td><td>x must be specified and
  * should be between 1 and 8 (inclusive), corresponding to SP1, SP2, SP3, SP3D1, SP3D2 SP3D3, SP3D4 and SP3D5. Supported
- * by the OpenEye SMARTS implementation</td> </tr> </tbody> </resultElementTable>
+ * by the OpenEye SMARTS implementation</td> </tr> </tbody> </table>
  * <p>
- * <h3>Notes</h3> <ul> <li>As <a href="http://sourceforge.net/mailarchive/message.php?msg_name=4964F605.1070502%40emolecules.com">described</a>
+ * <h2>Notes</h2> <ul> <li>As <a href="http://sourceforge.net/mailarchive/message.php?msg_name=4964F605.1070502%40emolecules.com">described</a>
  * by Craig James the <code>h&lt;n&gt;</code> SMARTS pattern should not be used. It was included in the Daylight spec
  * for backwards compatibility. To match hydrogens, use the <code>H&lt;n&gt;</code> pattern.</li> <li>The wild card
  * pattern (<code>*</code>) will not match hydrogens (explicit or implicit) unless an isotope is specified. In other
