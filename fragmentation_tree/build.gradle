@@ -1,5 +1,5 @@
 allprojects {
-    version =  parent.siriusVersion
+    version =  siriusVersion
     dependencies {
         annotationProcessor project(':default_properties:processor')
     }

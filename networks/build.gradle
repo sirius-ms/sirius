@@ -19,7 +19,7 @@
  */
 
 allprojects {
-    version =  parent.siriusVersion
+    version =  siriusVersion
 
     dependencies {
         api project(':chemistry_base')

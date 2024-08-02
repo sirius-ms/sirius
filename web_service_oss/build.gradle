@@ -19,5 +19,5 @@
  */
 
 allprojects {
-    version =  parent.fingeridVersion
+    version =  fingeridVersion
 }

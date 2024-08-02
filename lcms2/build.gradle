@@ -1,7 +1,7 @@
 apply plugin: "application"
 
 
-version =  parent.siriusVersion
+version =  siriusVersion
 
 
 application {

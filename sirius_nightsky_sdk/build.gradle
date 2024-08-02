@@ -28,7 +28,7 @@ apply plugin: 'java-library'
 
 
 allprojects {
-    version =  parent.siriusFrontendVersion
+    version =  siriusFrontendVersion
 
     ext {
         reactor_version = "3.4.3"
