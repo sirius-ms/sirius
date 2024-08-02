@@ -180,7 +180,7 @@ public interface SiriusPCS {
      * <p>
      * <pre>
      * PropertyChangeListener[] listeners = bean.getPropertyChangeListeners();
-     * for (int i = 0; i < listeners.length; i++) {
+     * for (int i = 0; i &lt; listeners.length; i++) {
      *     if (listeners[i] instanceof PropertyChangeListenerProxy) {
      *     PropertyChangeListenerProxy proxy =
      *                    (PropertyChangeListenerProxy)listeners[i];
