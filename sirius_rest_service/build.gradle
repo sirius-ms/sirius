@@ -113,3 +113,8 @@ openApi {
     }
 }
 forkedSpringBootRun.dependsOn(':sirius_rest_service:bootJar')
+
+// Javadoc cannot recognize lombok builder
+javadoc {
+    failOnError = false
+}
