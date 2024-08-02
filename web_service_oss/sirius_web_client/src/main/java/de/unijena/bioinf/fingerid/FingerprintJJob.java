@@ -83,8 +83,9 @@ public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
     @Override
     protected List<FingerIdResult> compute() throws Exception {
         logDebug("Instance '" + experiment.getName() + "': Starting CSI:FingerID fingerprint prediction.");
-        if ((experiment.getPrecursorIonType().getCharge() > 0) != (predictor.predictorType.isPositive()))
-            throw new IllegalArgumentException("Charges of predictor and instance are not equal");
+        if ((experiment.getPrecursorIonType().getCharge() > 0) != (predictor.predictorType.isPositive())){
+            throw new IllegalArgumentException("Charges of predictor and instance are not equal. Instance IonType = " + experiment.getPrecursorIonType() + " | Selected Predictor = " + predictor.predictorType);
+        }
 
         if (this.idResult == null || this.idResult.isEmpty()) {
             logWarn("No suitable input trees found.");
