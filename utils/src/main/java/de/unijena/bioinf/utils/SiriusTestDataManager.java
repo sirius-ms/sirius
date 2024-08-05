@@ -38,7 +38,7 @@ import java.util.stream.Stream;
 
 public class SiriusTestDataManager implements Closeable, AutoCloseable {
 
-    private static final String RES_ROOT = "com/bright_giant/resources";
+    private static final String RES_ROOT = "com/brightgiant/resources";
 
     private FileSystem fileSystem;
     private final Path root;
