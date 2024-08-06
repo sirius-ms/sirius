@@ -17,6 +17,16 @@ public class MostIntensivePeakInIsolationWindowAssignmentStrategy implements Ms2
     @Override
     public int getTraceFor(ProcessedSample sample, Ms2SpectrumHeader ms2) {
         int parentId = ms2.getParentId();
+
+        /*
+        for some reason the MSMS scan has no reference to its parent spectrum
+        in this case we search the closest MS1 spectrum
+         */
+        if (parentId<0) {
+            parentId = sample.getMapping().idForRetentionTime(ms2.getRetentionTime());
+            sample.getStorage().getSpectrumStorage().updateMs2Header(ms2.withParentId(parentId));
+        }
+
         final SimpleSpectrum spectrum = sample.getStorage().getSpectrumStorage().getSpectrum(parentId);
         if (spectrum==null) return -1;
         final IsolationWindow window = ms2.getIsolationWindow().orElse(defaultWindow);
