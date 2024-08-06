@@ -43,6 +43,7 @@ import de.unijena.bioinf.webapi.WebAPI;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.web.context.WebServerApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -54,6 +55,9 @@ public class SiriusContext{
     @Value("${de.unijena.bioinf.siriusNightsky.version}")
     @Getter
     private String apiVersion;
+    @Value("${de.unijena.bioinf.sirius.headless:false}")
+    @Getter
+    private boolean headless;
 
     @Bean
     public EventService<?> eventService(@Value("${de.unijena.bioinf.siriusNightsky.sse.timeout:#{120000}}") long emitterTimeout){
@@ -65,7 +69,9 @@ public class SiriusContext{
     public ComputeService computeService(EventService<?> eventService, InstanceBufferFactory<?> instanceBufferFactory) {
         return new ComputeServiceImpl(eventService, instanceBufferFactory);
     }
+
     @Bean(destroyMethod = "shutdown")
+    @ConditionalOnExpression("!${de.unijena.bioinf.sirius.headless:false}")
     public GuiService guiService(EventService<?> eventService, WebServerApplicationContext applicationContext){
         return new GuiServiceImpl(eventService, applicationContext);
     }
