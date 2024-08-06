@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.auth.AuthService;
 import de.unijena.bioinf.auth.AuthServices;
+import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.ms.annotations.PrintCitations;
 import de.unijena.bioinf.ms.frontend.Run;
@@ -57,6 +58,7 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import picocli.CommandLine;
 
+import java.awt.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -83,27 +85,44 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
 
     public static void main(String[] args) {
         System.setProperty("de.unijena.bioinf.sirius.springSupport", "true");
-        measureTime("Init Swing Job Manager");
+
+
+        measureTime("Init Job Manager");
         // The spring app classloader seems not to be correctly inherited to sub thread
         // So we need to ensure that the apache.configuration2 libs gets access otherwise.
-        // SwingJobManager is needed to show loading screens in GUI
-        SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(
-                cpuThreads,
-                2,
-                Thread.currentThread().getContextClassLoader()
-        ));
+        boolean headless = GraphicsEnvironment.isHeadless() || Arrays.stream(args).anyMatch("--headless"::equalsIgnoreCase);
+        Properties baseProperties = new Properties();
+        baseProperties.put("de.unijena.bioinf.sirius.headless", String.valueOf(headless));
 
-        //start gui as default if no command is given
-        if (args == null || args.length == 0)
-            args = new String[]{"rest", "-s", "--gui"};
+        if (headless){
+            System.err.println("SIRIUS is running in headless mode. GUI feature are not available!");
+            // use non-swing is to prevent errors on headless systems
+            SiriusJobs.setJobManagerFactory((cpuThreads) -> new JobManager(
+                    cpuThreads,
+                    2,
+                    Thread.currentThread().getContextClassLoader()
+            ));
+        } else {
+            // SwingJobManager is needed to show loading screens in GUI
+            SiriusJobs.setJobManagerFactory((cpuThreads) -> new SwingJobManager(
+                    cpuThreads,
+                    2,
+                    Thread.currentThread().getContextClassLoader()
+            ));
+            //start gui as default if no command is given and headless mode is not enabled
+            if (args == null || args.length == 0)
+                args = new String[]{"rest", "-s", "--gui"};
+        }
+
+
 
         //check if service mode is used before command line is really parsed to decide whether we need to
         //configure a spring app or not.
-        if (Arrays.stream(args).anyMatch(it ->
+        if (args.length == 0 || Arrays.stream(args).anyMatch(it ->
                 it.equalsIgnoreCase(MiddlewareAppOptions.class.getAnnotation(CommandLine.Command.class).name())
                         || Arrays.stream(MiddlewareAppOptions.class.getAnnotation(CommandLine.Command.class).aliases())
                         .anyMatch(cmd -> cmd.equalsIgnoreCase(it))
-                        || it.equalsIgnoreCase("-h") || it.equalsIgnoreCase("--help") // just to get Middleware help.
+                        || it.equalsIgnoreCase("-h") || it.equalsIgnoreCase("--help")  // just to get Middleware help.
         )) {
             try {
 
@@ -120,23 +139,25 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 Files.deleteIfExists(Workspace.PID_FILE);
 
                 Splash splashScreen = null;
-                if (Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("--gui") || it.equalsIgnoreCase("-g"))) {
-                    Path propsFile = Workspace.siriusPropsFile;
-                    //override VM defaults from OS
-                    if (!System.getProperties().containsKey("sun.java2d.uiScale"))
-                        System.setProperty("sun.java2d.uiScale", "1");
-                    //override with stored value if available
-                    if (Files.exists(propsFile)) {
-                        Properties props = new Properties();
-                        try (BufferedReader r = Files.newBufferedReader(propsFile)) {
-                            props.load(r);
-                            if (props.containsKey("sun.java2d.uiScale"))
-                                System.setProperty("sun.java2d.uiScale", props.getProperty("sun.java2d.uiScale"));
-                        } catch (IOException e) {
-                            log.error("Error when initializing Splash.", e);
+                if (!headless) { // ignore gui option if headless is enabled
+                    if (Arrays.stream(args).anyMatch(it -> it.equalsIgnoreCase("--gui") || it.equalsIgnoreCase("-g"))) {
+                        Path propsFile = Workspace.siriusPropsFile;
+                        //override VM defaults from OS
+                        if (!System.getProperties().containsKey("sun.java2d.uiScale"))
+                            System.setProperty("sun.java2d.uiScale", "1");
+                        //override with stored value if available
+                        if (Files.exists(propsFile)) {
+                            Properties props = new Properties();
+                            try (BufferedReader r = Files.newBufferedReader(propsFile)) {
+                                props.load(r);
+                                if (props.containsKey("sun.java2d.uiScale"))
+                                    System.setProperty("sun.java2d.uiScale", props.getProperty("sun.java2d.uiScale"));
+                            } catch (IOException e) {
+                                log.error("Error when initializing Splash.", e);
+                            }
                         }
+                        splashScreen = new Splash(true);
                     }
-                    splashScreen = new Splash(true);
                 }
 
 
@@ -156,6 +177,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 measureTime("Configure Boot Environment");
                 //configure boot app
                 final SpringApplicationBuilder appBuilder = new SpringApplicationBuilder(SiriusMiddlewareApplication.class)
+                        .properties(baseProperties)
                         .web(webType)
                         .headless(webType.equals(WebApplicationType.NONE))
                         .bannerMode(Banner.Mode.OFF);
@@ -183,7 +205,8 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
     @Override
     public void run(String... args) {
         middlewareOpts.setProjectsProvider(appContext.getBean(ProjectsProvider.class));
-        middlewareOpts.setGuiService(appContext.getBean(GuiService.class));
+        if (appContext.containsBean("guiService"))
+            middlewareOpts.setGuiService(appContext.getBean(GuiService.class));
         rootOptions.setSpaceManagerFactory(appContext.getBean(ProjectSpaceManagerFactory.class));
 
         successfulParsed = RUN.makeWorkflow(appContext.getBean(InstanceBufferFactory.class)) != null;
