@@ -73,10 +73,34 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
 
     }
 
-    @CommandLine.Option(names = {"--stableDocOnly"}, description = "Show only the stable und non deprecated api endpoints in swagger gui and openapi spec.", hidden = true, defaultValue = "false")
+    public enum ApiDocMode{STABLE, BASIC, STABLE_ADVANCED, ADVANCED }
+    private final static String STABLE_EXCLUSIONS = "/api/projects/*/aligned-features/*/formulas/*/sirius-fragtree,/api/projects/*/jobs/run-command,/api/projects/*/import/ms-data-local-files-job,/api/projects/*/import/ms-local-data-files,/api/projects/*/import/preprocessed-local-data-files-job,/api/projects/*/import/preprocessed-local-data-files,/api/projects/*/copy,/api/databases/*/import/from-files-job,/api/databases/*/import/from-files-job";
+    @CommandLine.Option(names = {"--api-doc-mode","--stableDocOnly"}, description = "Show only the stable und non deprecated api endpoints in swagger gui and openapi spec.", hidden = true)
     private void setStableDocOnly(boolean stableDocOnly) {
         if (stableDocOnly)
-            System.setProperty("springdoc.pathsToExclude", "/api/projects/*/aligned-features/*/formulas/*/sirius-fragtree,/api/projects/*/jobs/run-command,/api/projects/*/import/ms-data-local-files-job,/api/projects/*/import/ms-local-data-files,/api/projects/*/import/preprocessed-local-data-files-job,/api/projects/*/import/preprocessed-local-data-files,/api/projects/*/copy,/api/databases/*/import/from-files-job,/api/databases/*/import/from-files-job");
+            setApiDocMode(ApiDocMode.STABLE);
+    }
+
+    @CommandLine.Option(names = {"--api-mode"}, description = "Specify api endpoints shown in swagger gui and openapi spec.", hidden = true)
+    private void setApiDocMode(ApiDocMode apiDocMode) {
+        switch (apiDocMode) {
+            case STABLE -> {
+                System.setProperty("sirius.middleware.controller.gui.advanced", "false");
+                System.setProperty("springdoc.pathsToExclude", STABLE_EXCLUSIONS);
+            }
+            case BASIC -> {
+                System.setProperty("sirius.middleware.controller.gui.advanced", "false");
+                System.getProperties().remove("springdoc.pathsToExclude");
+            }
+            case STABLE_ADVANCED -> {
+                System.setProperty("sirius.middleware.controller.gui.advanced", "true");
+                System.setProperty("springdoc.pathsToExclude", STABLE_EXCLUSIONS);
+            }
+            case ADVANCED -> {
+                System.setProperty("sirius.middleware.controller.gui.advanced", "true");
+                System.getProperties().remove("springdoc.pathsToExclude");
+            }
+        }
     }
 
     public boolean isStartGui() {
@@ -97,7 +121,7 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
         private boolean startGui;
 
         @CommandLine.Option(names = {"--headless"}, description = "Set SIRIUS service to headless mode. Prevents loading features that are not available on headless systems. This is usually auto-detected but in case this fails this parameter can be used.", defaultValue = "false", order = 1000)
-        private boolean headless ;
+        private boolean headless;
     }
 
     @Override
@@ -147,7 +171,7 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
                             splash.setVisible(false);
                             splash.dispose();
                         }
-                    }else {
+                    } else {
                         log.info("No GUI service found. Skipping GUI startup, likely due to headless mode!");
                     }
                     Jobs.runEDTLater(() -> Thread.currentThread().setPriority(9));
