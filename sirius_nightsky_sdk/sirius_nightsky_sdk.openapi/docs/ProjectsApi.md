@@ -561,7 +561,7 @@ No authorization required
 
 ## importMsRunData
 
-> ImportResult importMsRunData(projectId, parameters, allowMs1Only, inputFiles)
+> ImportResult importMsRunData(projectId, parameters, inputFiles)
 
 Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)
 
@@ -585,10 +585,9 @@ public class Example {
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | Project-space to import into.
         LcmsSubmissionParameters parameters = new LcmsSubmissionParameters(); // LcmsSubmissionParameters | Parameters for feature alignment and feature finding.
-        Boolean allowMs1Only = true; // Boolean | Import data without MS/MS.
         List<File> inputFiles = Arrays.asList(); // List<File> | 
         try {
-            ImportResult result = apiInstance.importMsRunData(projectId, parameters, allowMs1Only, inputFiles);
+            ImportResult result = apiInstance.importMsRunData(projectId, parameters, inputFiles);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importMsRunData");
@@ -608,7 +607,6 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| Project-space to import into. | |
 | **parameters** | [**LcmsSubmissionParameters**](.md)| Parameters for feature alignment and feature finding. | |
-| **allowMs1Only** | **Boolean**| Import data without MS/MS. | [optional] [default to true] |
 | **inputFiles** | **List&lt;File&gt;**|  | [optional] |
 
 ### Return type
@@ -633,7 +631,7 @@ No authorization required
 
 ## importMsRunDataAsJob
 
-> Job importMsRunDataAsJob(projectId, parameters, allowMs1Only, optFields, inputFiles)
+> Job importMsRunDataAsJob(projectId, parameters, optFields, inputFiles)
 
 Import and Align full MS-Runs from various formats into the specified project as background job.
 
@@ -657,11 +655,10 @@ public class Example {
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | Project-space to import into.
         LcmsSubmissionParameters parameters = new LcmsSubmissionParameters(); // LcmsSubmissionParameters | Parameters for feature alignment and feature finding.
-        Boolean allowMs1Only = true; // Boolean | Import data without MS/MS.
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | Set of optional fields to be included. Use 'none' only to override defaults.
         List<File> inputFiles = Arrays.asList(); // List<File> | 
         try {
-            Job result = apiInstance.importMsRunDataAsJob(projectId, parameters, allowMs1Only, optFields, inputFiles);
+            Job result = apiInstance.importMsRunDataAsJob(projectId, parameters, optFields, inputFiles);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importMsRunDataAsJob");
@@ -681,7 +678,6 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| Project-space to import into. | |
 | **parameters** | [**LcmsSubmissionParameters**](.md)| Parameters for feature alignment and feature finding. | |
-| **allowMs1Only** | **Boolean**| Import data without MS/MS. | [optional] [default to true] |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| Set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 | **inputFiles** | **List&lt;File&gt;**|  | [optional] |
 
@@ -707,7 +703,7 @@ No authorization required
 
 ## importMsRunDataAsJobLocally
 
-> Job importMsRunDataAsJobLocally(projectId, parameters, requestBody, allowMs1Only, optFields)
+> Job importMsRunDataAsJobLocally(projectId, parameters, requestBody, optFields)
 
 Import and Align full MS-Runs from various formats into the specified project as background job
 
@@ -731,11 +727,10 @@ public class Example {
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | Project-space to import into.
         LcmsSubmissionParameters parameters = new LcmsSubmissionParameters(); // LcmsSubmissionParameters | Parameters for feature alignment and feature finding.
-        List<String> requestBody = Arrays.asList(); // List<String> | 
-        Boolean allowMs1Only = true; // Boolean | Import data without MS/MS.
+        List<String> requestBody = Arrays.asList(); // List<String> | Local files to import into project.
         List<JobOptField> optFields = Arrays.asList(); // List<JobOptField> | Set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            Job result = apiInstance.importMsRunDataAsJobLocally(projectId, parameters, requestBody, allowMs1Only, optFields);
+            Job result = apiInstance.importMsRunDataAsJobLocally(projectId, parameters, requestBody, optFields);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importMsRunDataAsJobLocally");
@@ -755,8 +750,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| Project-space to import into. | |
 | **parameters** | [**LcmsSubmissionParameters**](.md)| Parameters for feature alignment and feature finding. | |
-| **requestBody** | [**List&lt;String&gt;**](String.md)|  | |
-| **allowMs1Only** | **Boolean**| Import data without MS/MS. | [optional] [default to true] |
+| **requestBody** | [**List&lt;String&gt;**](String.md)| Local files to import into project. | |
 | **optFields** | [**List&lt;JobOptField&gt;**](JobOptField.md)| Set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 
 ### Return type
@@ -781,7 +775,7 @@ No authorization required
 
 ## importMsRunDataLocally
 
-> ImportResult importMsRunDataLocally(projectId, parameters, requestBody, allowMs1Only)
+> ImportResult importMsRunDataLocally(projectId, parameters, requestBody)
 
 Import and Align full MS-Runs from various formats into the specified project  Possible formats (mzML, mzXML)  
 
@@ -805,10 +799,9 @@ public class Example {
         ProjectsApi apiInstance = new ProjectsApi(defaultClient);
         String projectId = "projectId_example"; // String | Project to import into.
         LcmsSubmissionParameters parameters = new LcmsSubmissionParameters(); // LcmsSubmissionParameters | Parameters for feature alignment and feature finding.
-        List<String> requestBody = Arrays.asList(); // List<String> | Local files to import into project
-        Boolean allowMs1Only = true; // Boolean | Import data without MS/MS.
+        List<String> requestBody = Arrays.asList(); // List<String> | Local files to import into project.
         try {
-            ImportResult result = apiInstance.importMsRunDataLocally(projectId, parameters, requestBody, allowMs1Only);
+            ImportResult result = apiInstance.importMsRunDataLocally(projectId, parameters, requestBody);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling ProjectsApi#importMsRunDataLocally");
@@ -828,8 +821,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| Project to import into. | |
 | **parameters** | [**LcmsSubmissionParameters**](.md)| Parameters for feature alignment and feature finding. | |
-| **requestBody** | [**List&lt;String&gt;**](String.md)| Local files to import into project | |
-| **allowMs1Only** | **Boolean**| Import data without MS/MS. | [optional] [default to true] |
+| **requestBody** | [**List&lt;String&gt;**](String.md)| Local files to import into project. | |
 
 ### Return type
 
