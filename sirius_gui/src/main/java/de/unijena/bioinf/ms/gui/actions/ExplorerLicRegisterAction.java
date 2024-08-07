@@ -86,7 +86,7 @@ public class ExplorerLicRegisterAction extends AbstractAction {
             }).awaitResult();
             if (!resultMessage.success) {
                 log.warn(String.join(" | ", resultMessage.message));
-                new WarningDialog(popupOwner, GuiUtils.formatToolTip("No valid MassHunter Explorer license found on you system. Please ensure that MassHunter Explorer is installed and activated.", "For details, please see the 'Log' in the top-right corner."));
+                new WarningDialog(popupOwner, GuiUtils.formatToolTip("No valid MassHunter Explorer license found on your system. Please ensure that MassHunter Explorer is installed and activated.", "For details, please see the 'Log' in the top-right corner."));
             }
         } catch (ExecutionException ex) {
             log.error("Error when checking for MassHunter Explorer license.", ex);

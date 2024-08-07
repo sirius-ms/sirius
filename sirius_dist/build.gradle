@@ -230,10 +230,13 @@ subprojects {
             }
 
             copy {
+                //this also loads lic tester
                 from(inputDir.getParentFile()) {
                     exclude "app/**"
                     exclude "lib/**"
                     exclude "runtime/**"
+                    exclude "*.bat"
+                    exclude "*.exe"
                 }
                 into(resourceTarget)
                 includeEmptyDirs = false
@@ -250,11 +253,6 @@ subprojects {
                         include("*.exe")
                     }
                     into(appRootTarget)
-                }
-                copy {
-                    into(getImageDir().toPath().resolve('ExplorerLicTester').toFile()) {
-                        from("${rootDir}/dist/ExplorerLicTester")
-                    }
                 }
             } else if (siriusTargetPlatform.isLinux()) {
                 delete appRootTarget.toPath().resolve("lib/libapplauncher.so").toFile()
