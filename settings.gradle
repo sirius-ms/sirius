@@ -86,7 +86,6 @@ include ':structure_matching'
 
 include ':sirius_cli'
 include ':sirius_dist'
-    include ':sirius_dist:sirius_cli_single_os'
     include ':sirius_dist:sirius_gui_dist'
 include ':sirius_gui'
 include ':sirius_rest_service'

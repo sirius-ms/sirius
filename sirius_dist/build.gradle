@@ -12,13 +12,14 @@ dependencies {
     implementation "org.junit.jupiter:junit-jupiter:$junit_version"
 }
 
-version =  siriusFrontendVersion
+version = siriusFrontendVersion
 
 ext {
     // version for bundeled JRE
     jre_version = '21.0.4'
-    zulu_jre_version = '21.36.17'
-    jre_major = zulu_jre_version.split("[.]")[0]
+    jre_dist_version = '21.36.17'
+    jre_major = jre_dist_version.split("[.]")[0]
+
     siriusJvmArgs = ['-Xms2G',
                      '-XX:MaxRAMPercentage=75',
 //                     '-XX:+UseG1GC',
@@ -32,49 +33,39 @@ ext {
         nativeLibs = 'l64'
         osName = 'linux64'
         zosName = 'linux'
+        msName = 'linux'
         installerNameType = 'deb'
         installerAppendix = "_${version}-1_amd64.$installerNameType"
     } else if (siriusTargetPlatform.isWin()) {
         nativeLibs = 'w64'
         osName = 'win64'
         zosName = 'win'
+        msName = 'windows'
         installerNameType = 'msi'
-        installerAppendix = "-${version.replace('-SNAPSHOT', '')}.$installerNameType"
+        installerAppendix = "-${version.replace('-SNAPSHOT', '')}.$installerNameType".toString()
     } else if (siriusTargetPlatform.isMac()) {
         nativeLibs = 'osx'
         osName = 'osx64'
         zosName = 'macosx'
+        msName = 'macos'
         installerNameType = 'pkg'
-        installerAppendix = "-${version.replace('-SNAPSHOT', '')}.$installerNameType"
+        installerAppendix = "-${version.replace('-SNAPSHOT', '')}.$installerNameType".toString()
     }
 }
 
-tasks.register('downloadRuntimeImageFX', Download) {
-    String fname = "zulu${zulu_jre_version}-ca-fx-jre${jre_version}-${zosName}_x64${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
+tasks.register('downloadRuntimeImage', Download) {
+    String fname = "microsoft-jdk-${jre_version}-${msName}-x64${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
 
-    src "https://cdn.azul.com/zulu/bin/${fname}"
+    src "https://aka.ms/download-jdk/${fname}"
     dest getBuildDir().toPath().resolve('runtime').resolve(fname).toFile()
     onlyIfModified true
     overwrite false
 }
 
-tasks.register('extractRuntimeImageFX', ExtractRuntime) {
-    dependsOn downloadRuntimeImageFX
-    inputArchive = downloadRuntimeImageFX.dest
-}
-
-tasks.register('downloadRuntimeImageHeadless', Download) {
-    String fname = "zulu${zulu_jre_version}-ca-jre${jre_version}-${zosName}_x64${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
-
-    src "https://cdn.azul.com/zulu/bin/${fname}"
-    dest getBuildDir().toPath().resolve('runtime').resolve(fname).toFile()
-    onlyIfModified true
-    overwrite false
-}
-
-tasks.register('extractRuntimeImageHeadless', ExtractRuntime) {
-    dependsOn downloadRuntimeImageHeadless
-    inputArchive = downloadRuntimeImageHeadless.dest
+tasks.register('extractRuntimeImage', ExtractRuntime) {
+    dependsOn downloadRuntimeImage
+    inputArchive = downloadRuntimeImage.dest
+    outputDir = file(downloadRuntimeImage.dest.absolutePath.replace((project.siriusTargetPlatform.isWin() ? '.zip' : '.tar.gz'), ''))
 }
 
 subprojects {
@@ -169,11 +160,11 @@ subprojects {
     //###################################### END Default values ##########################################
     launch4j {
         copyright = "Chair of Bioinformatics, Friedrich-Schiller-University Jena."
-        companyName = "Friedrich-Schiller-University Jena"
+        companyName = "Bright Giant GmbH"
 
         version = siriusFrontendVersion.toString().replace("-SNAPSHOT", "")
         textVersion = siriusFrontendVersion
-        supportUrl = "https://bio.informatik.uni-jena.de/software/sirius/"
+        supportUrl = "https://github.com/sirius-ms/sirius/"
         fileDescription = "SIRIUS command-line interface"
 
         icon = "${rootProject.projectDir}/icons/sirius-icon.ico"
@@ -198,7 +189,7 @@ subprojects {
     }
 
     tasks.register('distImage', AppImage) {
-        dependsOn installDist
+        enabled = false
         if (siriusTargetPlatform.isWin())
             dependsOn createAllExecutables
 
@@ -209,7 +200,7 @@ subprojects {
 
 
         doLast {
-            if (!includeJreFX)
+            if (!includeRuntime)
                 throw new IllegalArgumentException("OS specific App images need to include java runtime. Please run with `-P build.sirius.starter.jdk.include=true`")
             File appRootTarget
             File launcherTarget
@@ -236,14 +227,16 @@ subprojects {
             }
 
             copy {
-                from("${rootDir}") {
-                    include('COPYING.txt')
-                    include('LICENSE.txt')
+                from(inputDir.getParentFile()){
+                    exclude "app/**"
+                    exclude "lib/**"
+                    exclude "runtime/**"
                 }
                 into(resourceTarget)
+                includeEmptyDirs = false
             }
 
-            if (!includeJreFX)
+            if (!includeRuntime)
                 delete runtimeTarget
 
             if (siriusTargetPlatform.isWin()) {
@@ -256,9 +249,8 @@ subprojects {
                     into(appRootTarget)
                 }
                 copy {
-                    from(zipTree("${rootDir}/dist/ExplorerLicTester.zip"))
-                    into { //use closure to move path resolutiop to execution phase
-                        getImageDir()
+                    into(getImageDir().toPath().resolve('ExplorerLicTester').toFile()) {
+                        from("${rootDir}/dist/ExplorerLicTester")
                     }
                 }
             } else if (siriusTargetPlatform.isLinux()) {
@@ -277,7 +269,7 @@ subprojects {
                 sf = file("${rootDir}/scripts/sirius.sh.templ")
                 templateBinding.shell = "sh"
                 templateBinding.classPath = "\\\"\$JAR_HOME/*\\\":\\\"\$GUROBI_HOME/lib/gurobi.jar\\\":\\\"\$CPLEX_HOME/lib/cplex.jar\\\""
-                templateBinding.javaLibPath = ""//includeJreFX ? "\$APP_HOME/lib/runtime/lib" : ""
+                templateBinding.javaLibPath = ""//includeRuntime ? "\$APP_HOME/lib/runtime/lib" : ""
                 templateBinding.gurobiHome = "/lib"
                 templateBinding.cplexHome = "/bin/x86-64_linux"
                 templateBinding.jvmOpts = "${Arrays.stream(jvmArgs).collect(Collectors.joining(' '))}"
@@ -288,7 +280,7 @@ subprojects {
                 sf = file("${rootDir}/scripts/sirius.sh.templ")
                 templateBinding.shell = "zsh"
                 templateBinding.classPath = "\\\"\$JAR_HOME/*\\\":\\\"\$GUROBI_HOME/lib/gurobi.jar\\\":\\\"\$CPLEX_HOME/lib/cplex.jar\\\""
-                templateBinding.javaLibPath = ""//includeJreFX ? "\$APP_HOME/runtime/Contents/Home/lib" : ""
+                templateBinding.javaLibPath = ""//includeRuntime ? "\$APP_HOME/runtime/Contents/Home/lib" : ""
                 templateBinding.gurobiHome = "/lib"
                 templateBinding.cplexHome = "/bin/x86-64_osx"
                 templateBinding.jvmOpts = "${Arrays.stream(jvmArgs).collect(Collectors.joining(' '))}"
@@ -728,7 +720,6 @@ subprojects {
     }
 
     tasks.register('distribution') { group = 'distribution' }
-    artifactoryPublish.dependsOn 'distribution'
 }
 
 
@@ -737,38 +728,50 @@ abstract class ExtractRuntime extends DefaultTask {
     @InputFile
     File inputArchive
 
+    @OutputDirectory
+    File outputDir
+
     ExtractRuntime() {
         group = "distribution"
-    }
-
-    @OutputDirectory
-    def getOutputDir() {
-        return new File(inputArchive.absolutePath.replace((project.siriusTargetPlatform.isWin() ? '.zip' : '.tar.gz'), ''))
     }
 
     @TaskAction
     def execute() {
         //stupid hack to delete write protected files on nix
         getLogger().lifecycle("Unpacking runtime image $inputArchive...")
-        if (project.siriusTargetPlatform.isWin()) {
-            getOutputDir().deleteDir()
-            project.copy {
-                from project.zipTree(inputArchive)
-                into getOutputDir().getParentFile()
-            }
-        } else if (project.siriusTargetPlatform.isLinux()) {
-            project.exec { commandLine(['rm', '-rf', getOutputDir().absolutePath]) }
-            project.exec { commandLine(['tar', 'zxf', inputArchive.absolutePath, '-C', getOutputDir().getParentFile().absolutePath]) }
-//            project.exec { commandLine(['unzip', '-q', inputArchive.absolutePath, '-d', getOutputDir().getParentFile().absolutePath]) }
-        } else {
-            def tmpPath = getOutputDir().getParentFile().absolutePath + "/mac"
-            Files.createDirectories(Paths.get(tmpPath))
-            project.exec { commandLine(['rm', '-rf', tmpPath]) }
-            Files.createDirectories(Paths.get(tmpPath))
-            project.exec { commandLine(['tar', 'zxf', inputArchive.absolutePath, '-C', tmpPath]) }
-            project.copy {
-                from "${tmpPath}/${getOutputDir().getName()}/zulu-${project.jre_major}.jre/Contents/Home"
-                into getOutputDir()
+        outputDir.deleteDir()
+        Files.createDirectories(outputDir.toPath())
+        project.copy {
+            includeEmptyDirs = false
+            if (project.siriusTargetPlatform.isWin()) {
+                from(project.zipTree(inputArchive)) {
+                    eachFile { FileCopyDetails fcd ->
+                        fcd.relativePath = new RelativePath(true, fcd.relativePath.segments.drop(1))
+                    }
+                }
+                into outputDir
+            } else if (project.siriusTargetPlatform.isLinux()) {
+                from(project.tarTree(inputArchive)) {
+                    eachFile { FileCopyDetails fcd ->
+                        fcd.relativePath = new RelativePath(true, fcd.relativePath.segments.drop(1))
+                    }
+                }
+                into outputDir
+            } else {
+                from(project.tarTree(inputArchive)) {
+                    eachFile { FileCopyDetails fcd ->
+                        def path = new RelativePath(true, fcd.relativePath.segments.drop(1))
+                        println(path)
+                        if (path.startsWithAny("Contents/Home/"))
+                            fcd.relativePath = new RelativePath(true, path.segments.drop(2))
+                        else
+                            fcd.exclude()
+                        println(fcd.relativePath)
+                        println()
+                        println()
+                    }
+                }
+                into outputDir
             }
         }
     }
@@ -802,7 +805,6 @@ abstract class AppImage extends DefaultTask {
         jvmArgs = []
         version = project.siriusTargetPlatform.isLinux() ? project.siriusFrontendVersion : project.siriusFrontendVersion.replace('-SNAPSHOT', '')
         winConsole = false
-        inputDir = project.tasks.getByName('installDist').outputs.files.singleFile.toPath().resolve('lib').toFile()
     }
 
     @OutputDirectory
