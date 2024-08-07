@@ -48,7 +48,10 @@ public class ContigousTraceDatatype extends CustomDataType<ContiguousTrace> {
             int[] bf = readFixedLenInt(buff, segs.length * 3);
             int j = 0;
             for (int k = 0; k < segs.length; ++k) {
-                segs[k] = new TraceSegment(bf[j++], bf[j++], bf[j]++);
+                final int apex = bf[j++];
+                final int leftEdge = bf[j++];
+                final int rightEdge = bf[j++];
+                segs[k] = new TraceSegment(apex, leftEdge, rightEdge);
             }
         }
         return new ContiguousTrace(null, ints[0], ints[1], ints[2], ints[3], doubles[0], doubles[1], doubles[2], mz, intenss, segs);

@@ -139,7 +139,7 @@ public class ContiguousTrace implements Trace, Serializable {
         return i;
     }
 
-    protected ScanPointMapping getMapping() {
+    public ScanPointMapping getMapping() {
         return mapping;
     }
 
@@ -179,4 +179,7 @@ public class ContiguousTrace implements Trace, Serializable {
     public void setSegments(TraceSegment[] segments) {
         this.segments = segments;
     }
+
+
+
 }
