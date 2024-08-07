@@ -87,7 +87,7 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
         return guiSupport.headless;
     }
 
-    @CommandLine.ArgGroup(multiplicity = "1")
+    @CommandLine.ArgGroup
     private GuiSupport guiSupport = new GuiSupport(false, false);
 
     @NoArgsConstructor
@@ -96,7 +96,7 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
         @CommandLine.Option(names = {"--gui", "-g"}, description = "Start GUI on specified project or on temporary project otherwise.")
         private boolean startGui;
 
-        @CommandLine.Option(names = {"--headless"}, description = "Set SIRIUS to headless mode. Prevents loading features that are not available on headless systems. This is usually auto-detected but in case this fails this parameter can be used.", defaultValue = "false", order = 1000)
+        @CommandLine.Option(names = {"--headless"}, description = "Set SIRIUS service to headless mode. Prevents loading features that are not available on headless systems. This is usually auto-detected but in case this fails this parameter can be used.", defaultValue = "false", order = 1000)
         private boolean headless ;
     }
 
