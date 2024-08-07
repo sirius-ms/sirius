@@ -239,11 +239,11 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
             for (int traceIndex=0; traceIndex < traceSegmentsParent.length; ++traceIndex) {
                 if (featuresParent[traceIndex]==null) continue;
                 // check if there IS something in this segment
-                TraceSegment s = traceSegmentsParent[traceIndex];
+                TraceSegment mergedSegment = traceSegmentsParent[traceIndex];
                 double sum=0d;
-                int adjustedMergedApex = s.apex;
+                int adjustedMergedApex = mergedSegment.apex;
                 double apexInt = Double.NEGATIVE_INFINITY;
-                for (int i=s.leftEdge; i <= s.rightEdge; ++i) {
+                for (int i=mergedSegment.leftEdge; i <= mergedSegment.rightEdge; ++i) {
                     if (isotope.inRange(i)) {
                         sum += isotope.intensity(i);
                         if (isotope.intensity(i)>apexInt) {
@@ -253,11 +253,11 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                     }
                 }
 
-                if (sum >= stats.noiseLevel(s.apex)) {
+                if (sum >= stats.noiseLevel(mergedSegment.apex)) {
                     // generate isotope segment
                     AlignedIsotopicFeatures iso = new AlignedIsotopicFeatures();
                     iso.setFeatures(new ArrayList<>());
-                    final TraceSegment t = new TraceSegment(adjustedMergedApex, Math.max(isotope.startId(), s.leftEdge), Math.min(isotope.endId(), s.rightEdge));
+                    final TraceSegment t = new TraceSegment(adjustedMergedApex, Math.max(isotope.startId(), mergedSegment.leftEdge), Math.min(isotope.endId(), mergedSegment.rightEdge));
                     if (t.rightEdge-t.leftEdge<=1) continue;
                     {
                         int o=isotope.startId();
@@ -282,9 +282,11 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                         TraceSegment projectedSegment = projectedSegmentsParent[parentSampleIndex][traceIndex];
                         ProjectedTrace subTrace = isotope.getTraces()[isotopeSampleIndex];
                         ProcessedSample subSample = isotope.getSamples()[isotopeSampleIndex];
-                        if (projectedSegment!=null) {
-
-                            projectedSegment = new TraceSegment(projectedSegment.apex, Math.max(subTrace.getProjectedStartId(), s.leftEdge), Math.min(subTrace.getProjectedEndId(), s.rightEdge));
+                        // mergedSegment is the part of the merged trace that we are looking at currently
+                        // projectedSegment is the part of the RAW trace that belongs to the current sample and mergedSegment
+                        // subTrace is the part of the RAW trace of the ISOTOPE that belongs to the current sample and mergedSegment
+                        if (projectedSegment!=null && projectedSegment.overlaps(mergedSegment) && projectedSegment.overlaps(subTrace.projected(isotope.getMapping()))) {
+                            projectedSegment = new TraceSegment(Math.max(subTrace.getProjectedStartId(), projectedSegment.leftEdge), Math.max(subTrace.getProjectedStartId(), projectedSegment.leftEdge), Math.min(subTrace.getProjectedEndId(), projectedSegment.rightEdge));
 
                             int adjApexProj=0;
                             double apexIntensity = Double.NEGATIVE_INFINITY;
