@@ -109,7 +109,6 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
                         inputFiles,
                         () -> psm,
                         submission.isAlignLCMSRuns(),
-                        submission.isAllowMs1OnlyData(),
                         submission.getFilter(),
                         submission.getGaussianSigma(),
                         submission.getWaveletScale(),

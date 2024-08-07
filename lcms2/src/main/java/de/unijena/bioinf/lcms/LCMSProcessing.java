@@ -114,15 +114,12 @@ public class LCMSProcessing {
 
     private final boolean saveFeatureIds;
 
-    private final boolean allowMs1Only;
-
     @Getter
     private LongList importedFeatureIds = new LongArrayList();
 
-    public LCMSProcessing(SiriusDatabaseAdapter siriusDatabaseAdapter, boolean saveFeatureIds, boolean allowMs1Only) {
+    public LCMSProcessing(SiriusDatabaseAdapter siriusDatabaseAdapter, boolean saveFeatureIds) {
         this.siriusDatabaseAdapter = siriusDatabaseAdapter;
         this.saveFeatureIds = saveFeatureIds;
-        this.allowMs1Only = allowMs1Only;
     }
 
     /**
@@ -255,7 +252,7 @@ public class LCMSProcessing {
                 protected long[] compute() throws Exception {
                     MergedTrace mergedTrace = collectMergedTrace(merged, r.id);
                     if (mergedTrace!=null && isSuitableForImport(mergedTrace)) {
-                        return Arrays.stream(importer.importMergedTrace(mergedTraceSegmentationStrategy, siriusDatabaseAdapter, obj,merged, mergedTrace,allowMs1Only)).mapToLong(AlignedFeatures::getAlignedFeatureId).toArray();
+                        return Arrays.stream(importer.importMergedTrace(mergedTraceSegmentationStrategy, siriusDatabaseAdapter, obj,merged, mergedTrace)).mapToLong(AlignedFeatures::getAlignedFeatureId).toArray();
                     }
                     return new long[0];
                 }
