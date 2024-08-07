@@ -78,7 +78,7 @@ jobs:
         with:
           gradle-version: 8.8
           build-root-directory: sirius_dist/sirius_gui_dist
-          arguments: --stacktrace clean publishSiriusPublicationToMavenLocal  -P "build.sirius.native.openjfx.exclude=false" -P "build.sirius.starter.jdk.include=true" -P "de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=${{ secrets.MACOS_APP_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_IDENTITY_ID=${{ secrets.MACOS_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID=${{ secrets.MACOS_APPLE_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID_PW=${{ secrets.MACOS_APPLE_ID_PW }}"
+          arguments: --stacktrace clean buildJpDists -P "build.sirius.native.openjfx.exclude=false" -P "build.sirius.starter.jdk.include=true" -P "de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=${{ secrets.MACOS_APP_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_IDENTITY_ID=${{ secrets.MACOS_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID=${{ secrets.MACOS_APPLE_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID_PW=${{ secrets.MACOS_APPLE_ID_PW }}"
 
 #      - name: Sirius Run
 #        run: |
@@ -196,7 +196,7 @@ jobs:
           certificate-profile-name: ${{ secrets.AZURE_CERT_PROFILE_NAME }}
 
           # Sign all exes inside the folder
-          files-folder: ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/
+          files-folder: ./sirius_dist/sirius_gui_dist/build/jpDists/
           files-folder-filter: msi
           file-digest: SHA256
 
@@ -206,11 +206,11 @@ jobs:
           retention-days: 1
           name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ runner.os }}-x86-64"
           path: |
-            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.zip
-            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.msi
-            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.pkg
-            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.deb
-            ~/.m2/repository/de/unijena/bioinf/ms/sirius/${{ steps.sirius_version.outputs.value }}/*.sha256
+            ./sirius_dist/sirius_gui_dist/build/jpDists/*.zip
+            ./sirius_dist/sirius_gui_dist/build/jpDists/*.msi
+            ./sirius_dist/sirius_gui_dist/build/jpDists/*.pkg
+            ./sirius_dist/sirius_gui_dist/build/jpDists/*.deb
+            ./sirius_dist/sirius_gui_dist/build/jpDists/*.sha256
 
   dockergen:
     needs: [ distGUI ]

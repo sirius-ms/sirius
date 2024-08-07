@@ -17,8 +17,7 @@ version = siriusFrontendVersion
 ext {
     // version for bundeled JRE
     jre_version = '21.0.4'
-    jre_dist_version = '21.36.17'
-    jre_major = jre_dist_version.split("[.]")[0]
+    jre_major = jre_version.split("[.]")[0]
 
     siriusJvmArgs = ['-Xms2G',
                      '-XX:MaxRAMPercentage=75',
@@ -54,6 +53,7 @@ ext {
 }
 
 tasks.register('downloadRuntimeImage', Download) {
+    group = "runtime"
     String fname = "microsoft-jdk-${jre_version}-${msName}-x64${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
 
     src "https://aka.ms/download-jdk/${fname}"
@@ -71,7 +71,10 @@ tasks.register('extractRuntimeImage', ExtractRuntime) {
 subprojects {
     apply plugin: 'application'
     apply plugin: 'edu.sc.seis.launch4j'
-
+    ext{
+        // jpackage based distribution output dir
+        jpDistDir = getLayout().getBuildDirectory().file("jpDists")
+    }
     jar {
         enabled = false
     }
@@ -195,7 +198,7 @@ subprojects {
 
         jpackagerBin = Paths.get(System.getProperty("java.home")).resolve('bin').resolve(OS.isWindows() ? 'jpackage.exe' : 'jpackage').toFile()
         mainClass = mainClassName
-        outputDir = buildDir.toPath().resolve('distributions').toFile()
+        outputDir = jpDistDir.get().getAsFile()
         winConsole = true
 
 
@@ -227,10 +230,13 @@ subprojects {
             }
 
             copy {
-                from(inputDir.getParentFile()){
+                //this also loads lic tester
+                from(inputDir.getParentFile()) {
                     exclude "app/**"
                     exclude "lib/**"
                     exclude "runtime/**"
+                    exclude "*.bat"
+                    exclude "*.exe"
                 }
                 into(resourceTarget)
                 includeEmptyDirs = false
@@ -247,11 +253,6 @@ subprojects {
                         include("*.exe")
                     }
                     into(appRootTarget)
-                }
-                copy {
-                    into(getImageDir().toPath().resolve('ExplorerLicTester').toFile()) {
-                        from("${rootDir}/dist/ExplorerLicTester")
-                    }
                 }
             } else if (siriusTargetPlatform.isLinux()) {
                 delete appRootTarget.toPath().resolve("lib/libapplauncher.so").toFile()
@@ -317,7 +318,7 @@ subprojects {
         }
     }
 
-    tasks.register('distImageTestLocal', Test) {
+    /*tasks.register('distImageTestLocal', Test) {
         enabled false
         group 'verification'
         dependsOn distImage
@@ -470,11 +471,11 @@ subprojects {
             project.delete(abs_path + 'sirius_frontend/sirius_cli/build/test/temp_results')
             project.delete(abs_path + 'sirius_frontend/unzipped')
         }
-    }
+    }*/
 
 
     tasks.register('signDistImage') {
-        group 'distribution'
+        group 'jpDist'
         dependsOn distImage
 
         inputs.dir(distImage.outputDir)
@@ -539,7 +540,7 @@ subprojects {
     }
 
     tasks.register('distImageZip') {
-        group 'distribution'
+        group 'jpDist'
         dependsOn distImage
         doFirst {
             def imageDir = distImage.getImageDir()
@@ -575,7 +576,7 @@ subprojects {
 
 
     tasks.register('signDistInstaller') {
-        group 'distribution'
+        group 'jpDist'
         dependsOn distInstaller
         inputs.dir(distImage.outputDir)
         doLast {
@@ -639,7 +640,7 @@ subprojects {
     }
 
     tasks.register('macNotarize') {
-        group 'distribution'
+        group 'jpDist'
         dependsOn signDistInstaller
         inputs.dir(distImage.outputDir)
         doLast {
@@ -711,15 +712,15 @@ subprojects {
     }
 
     tasks.register('createChecksums', Checksum) {
-        group 'distribution'
+        group 'jpDist'
         mustRunAfter('distImageZip', 'distInstaller', 'macNotarize', 'signDistImage', 'signDistInstaller', 'distZip', 'distTar', 'siriusDistZip', 'siriusDistTar')
-        inputFiles.setFrom(fileTree(dir: "$buildDir/distributions", includes: ['*.zip', '*.pkg', '*.deb', '*.msi']))
-        outputDirectory.set(file("$buildDir/distributions"))
+        inputFiles.setFrom(fileTree(dir: jpDistDir.get().getAsFile(), includes: ['*.zip', '*.pkg', '*.deb', '*.msi']))
+        outputDirectory.set(jpDistDir.get().getAsFile())
         checksumAlgorithm.set(Checksum.Algorithm.SHA256)
         appendFileNameToChecksum.set(true)
     }
 
-    tasks.register('distribution') { group = 'distribution' }
+    tasks.register('buildJpDists') { group = 'jpDist' }
 }
 
 
@@ -732,7 +733,7 @@ abstract class ExtractRuntime extends DefaultTask {
     File outputDir
 
     ExtractRuntime() {
-        group = "distribution"
+        group = "runtime"
     }
 
     @TaskAction
@@ -800,7 +801,7 @@ abstract class AppImage extends DefaultTask {
     public String macPackageName = null
 
     AppImage() {
-        group = "distribution"
+        group = "jpDist"
         imageName = project.name
         jvmArgs = []
         version = project.siriusTargetPlatform.isLinux() ? project.siriusFrontendVersion : project.siriusFrontendVersion.replace('-SNAPSHOT', '')
@@ -909,7 +910,7 @@ abstract class AppInstaller extends DefaultTask {
     public String debPackageMaintaner = null
 
     AppInstaller() {
-        group = "distribution"
+        group = "jpDist"
     }
 
     @InputDirectory

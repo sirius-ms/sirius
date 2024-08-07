@@ -109,7 +109,7 @@ openApi {
     waitTimeInSeconds.set(20)
 
     customBootRun {
-        args = ["rest", "-s", "--headless", "-p", "8888"]
+        args = ["rest", "-s", "-p", "8888", "--api-mode", "BASIC"]
     }
 }
 forkedSpringBootRun.dependsOn(':sirius_rest_service:bootJar')
