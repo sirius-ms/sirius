@@ -1132,20 +1132,10 @@
             "schema": {
               "$ref": "#/components/schemas/LcmsSubmissionParameters"
             }
-          },
-          {
-            "name": "allowMs1Only",
-            "in": "query",
-            "description": "Import data without MS/MS.",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true
-            }
           }
         ],
         "requestBody": {
-          "description": "Local files to import into project",
+          "description": "Local files to import into project.",
           "content": {
             "application/json": {
               "schema": {
@@ -1201,16 +1191,6 @@
             }
           },
           {
-            "name": "allowMs1Only",
-            "in": "query",
-            "description": "Import data without MS/MS.",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true
-            }
-          },
-          {
             "name": "optFields",
             "in": "query",
             "description": "Set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
@@ -1227,6 +1207,7 @@
           }
         ],
         "requestBody": {
+          "description": "Local files to import into project.",
           "content": {
             "application/json": {
               "schema": {
@@ -1279,16 +1260,6 @@
             "required": true,
             "schema": {
               "$ref": "#/components/schemas/LcmsSubmissionParameters"
-            }
-          },
-          {
-            "name": "allowMs1Only",
-            "in": "query",
-            "description": "Import data without MS/MS.",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true
             }
           }
         ],
@@ -1354,16 +1325,6 @@
             }
           },
           {
-            "name": "allowMs1Only",
-            "in": "query",
-            "description": "Import data without MS/MS.",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": true
-            }
-          },
-          {
             "name": "optFields",
             "in": "query",
             "description": "Set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
@@ -1380,6 +1341,7 @@
           }
         ],
         "requestBody": {
+          "description": "Files to import into project.",
           "content": {
             "multipart/form-data": {
               "schema": {
