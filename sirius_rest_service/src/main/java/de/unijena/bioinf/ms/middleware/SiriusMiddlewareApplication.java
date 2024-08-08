@@ -91,7 +91,8 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
         measureTime("Init Job Manager");
         // The spring app classloader seems not to be correctly inherited to sub thread
         // So we need to ensure that the apache.configuration2 libs gets access otherwise.
-        boolean headless = GraphicsEnvironment.isHeadless() || Arrays.stream(args).anyMatch("--headless"::equalsIgnoreCase);
+        boolean headless = (GraphicsEnvironment.isHeadless() || Arrays.stream(args).anyMatch("--headless"::equalsIgnoreCase))
+                && Arrays.stream(args).noneMatch("--no-headless"::equalsIgnoreCase); //enforce headless of in case detection does detect false positive
         Properties baseProperties = new Properties();
         baseProperties.put("de.unijena.bioinf.sirius.headless", String.valueOf(headless));
 
