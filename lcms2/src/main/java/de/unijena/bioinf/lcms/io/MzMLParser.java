@@ -130,7 +130,7 @@ public class MzMLParser implements LCMSParser {
 
                 if (runId != null && !runId.isEmpty() && !runId.isBlank()) {
                     run.setName(runId);
-                } if (mzMlId != null && !mzMlId.isEmpty() && !mzMlId.isBlank()) {
+                } else if (mzMlId != null && !mzMlId.isEmpty() && !mzMlId.isBlank()) {
                     run.setName(mzMlId);
                 } else {
                     Matcher matcher = SUFFIX.matcher(fileName);
