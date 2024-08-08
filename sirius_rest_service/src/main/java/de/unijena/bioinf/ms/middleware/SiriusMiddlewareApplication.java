@@ -25,6 +25,7 @@ import de.unijena.bioinf.auth.AuthServices;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.jjobs.SwingJobManager;
 import de.unijena.bioinf.ms.annotations.PrintCitations;
+import de.unijena.bioinf.ms.frontend.DefaultParameter;
 import de.unijena.bioinf.ms.frontend.Run;
 import de.unijena.bioinf.ms.frontend.SiriusCLIApplication;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -90,11 +91,12 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
         measureTime("Init Job Manager");
         // The spring app classloader seems not to be correctly inherited to sub thread
         // So we need to ensure that the apache.configuration2 libs gets access otherwise.
-        boolean headless = GraphicsEnvironment.isHeadless() || Arrays.stream(args).anyMatch("--headless"::equalsIgnoreCase);
+        boolean headless = (GraphicsEnvironment.isHeadless() || Arrays.stream(args).anyMatch("--headless"::equalsIgnoreCase))
+                && Arrays.stream(args).noneMatch("--no-headless"::equalsIgnoreCase); //enforce headless of in case detection does detect false positive
         Properties baseProperties = new Properties();
         baseProperties.put("de.unijena.bioinf.sirius.headless", String.valueOf(headless));
 
-        if (headless){
+        if (headless) {
             System.err.println("SIRIUS is running in headless mode. GUI feature are not available!");
             // use non-swing is to prevent errors on headless systems
             SiriusJobs.setJobManagerFactory((cpuThreads) -> new JobManager(
@@ -115,17 +117,37 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
         }
 
 
-
-        //check if service mode is used before command line is really parsed to decide whether we need to
-        //configure a spring app or not.
+        //hacky shortcut to print help fast without loading spring!
         if (args.length == 0 || Arrays.stream(args).anyMatch(it ->
+                it.equalsIgnoreCase("-h") || it.equalsIgnoreCase("--help")
+                || it.equalsIgnoreCase("--h") || it.equalsIgnoreCase("-help")
+        )) {
+            try {
+                rootOptions = new CLIRootOptions(new DefaultParameterConfigLoader(), null);
+                if (args.length < 1)
+                    args = new String[]{"--help"};
+
+                WorkflowBuilder builder = new WorkflowBuilder(rootOptions, List.of(new MiddlewareAppOptions<>(null)));
+                builder.initRootSpec();
+                final CommandLine commandline = new CommandLine(builder.getRootSpec());
+                commandline.setUnmatchedArgumentsAllowed(true);
+                commandline.setCaseInsensitiveEnumValuesAllowed(true);
+                commandline.registerConverter(DefaultParameter.class, new DefaultParameter.Converter());
+                CommandLine.ParseResult parseResult = commandline.parseArgs(args);
+                CommandLine.printHelpIfRequested(parseResult);
+                System.exit(0);// Zero because this is the help message case
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.exit(1);// Zero because this is the help message case
+            }
+            //check if service mode is used before command line is really parsed to decide whether we need to
+            //configure a spring app or not.
+        } else if (Arrays.stream(args).anyMatch(it ->
                 it.equalsIgnoreCase(MiddlewareAppOptions.class.getAnnotation(CommandLine.Command.class).name())
                         || Arrays.stream(MiddlewareAppOptions.class.getAnnotation(CommandLine.Command.class).aliases())
                         .anyMatch(cmd -> cmd.equalsIgnoreCase(it))
-                        || it.equalsIgnoreCase("-h") || it.equalsIgnoreCase("--help")  // just to get Middleware help.
         )) {
             try {
-
                 System.setProperty(APP_TYPE_PROPERTY_KEY, "SERVICE");
 
 
@@ -184,9 +206,9 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
 
                 measureTime("Start Workflow");
                 SpringApplication app = appBuilder.application();
-                app.addListeners((ApplicationListener<WebServerInitializedEvent>) event ->{
-                        System.err.println("SIRIUS Service is running on port: " + event.getWebServer().getPort());
-                        System.err.println("SIRIUS Service started successfully!");
+                app.addListeners((ApplicationListener<WebServerInitializedEvent>) event -> {
+                    System.err.println("SIRIUS Service is running on port: " + event.getWebServer().getPort());
+                    System.err.println("SIRIUS Service started successfully!");
                 });
                 app.addListeners(new ApplicationPidFileWriter(Workspace.PID_FILE.toFile()));
                 app.addListeners(new WebServerPortFileWriter(Workspace.PORT_FILE.toFile()));

@@ -165,7 +165,6 @@ distributions {
                 from("${buildDir}/launch4j") {
                     include("*.exe")
                 }
-                //from(zipTree("${rootDir}/dist/ExplorerLicTester.zip"))
                 into('ExplorerLicTester') {
                     from("${rootDir}/dist/ExplorerLicTester")
                 }
@@ -192,44 +191,38 @@ distributions {
     }
 }
 
-installSiriusDist.dependsOn getRootProject().getChildProjects().get('sirius_rest_service').tasks.named('bootJar')
-siriusDistZip.dependsOn 'generateLicenseReport'
-siriusDistZip.dependsOn('launch4j')
-siriusDistZip.dependsOn('createGuiExe')
+installSiriusDist.dependsOn ':sirius_rest_service:bootJar'
 siriusDistZip.dependsOn ':sirius_rest_service:bootJar'
-siriusDistZip.dependsOn ':sirius_rest_service:sourcesJar'
-siriusDistZip.dependsOn ':sirius_rest_service:javadocJar'
-siriusDistZip.mustRunAfter('signDistImage')
-siriusDistZip.mustRunAfter('signDistInstaller')
-siriusDistZip.mustRunAfter('macNotarize')
-
-siriusDistTar.dependsOn('launch4j')
-siriusDistTar.dependsOn 'generateLicenseReport'
-siriusDistTar.dependsOn('createGuiExe')
 siriusDistTar.dependsOn ':sirius_rest_service:bootJar'
-siriusDistTar.dependsOn ':sirius_rest_service:sourcesJar'
-siriusDistTar.dependsOn ':sirius_rest_service:javadocJar'
-siriusDistTar.mustRunAfter('signDistImage')
-siriusDistTar.mustRunAfter('signDistInstaller')
-siriusDistTar.mustRunAfter('macNotarize')
+
+installSiriusDist.dependsOn('generateLicenseReport')
+siriusDistZip.dependsOn 'generateLicenseReport'
+siriusDistTar.dependsOn 'generateLicenseReport'
 
 installSiriusDist.dependsOn('launch4j')
-installSiriusDist.dependsOn('createGuiExe')
-installSiriusDist.dependsOn('generateLicenseReport')
-if (includeRuntime)
-    installSiriusDist.dependsOn parent.tasks.named('extractRuntimeImage')
+siriusDistZip.dependsOn('launch4j')
+siriusDistTar.dependsOn('launch4j')
 
-distribution.dependsOn 'siriusDistZip'
-//distribution.dependsOn 'siriusDistTar'
-distribution.dependsOn 'createChecksums'
-distribution.dependsOn 'signDistImage'
-distribution.dependsOn 'distImageZip'
+installSiriusDist.dependsOn('createGuiExe')
+siriusDistZip.dependsOn('createGuiExe')
+siriusDistTar.dependsOn('createGuiExe')
+
+if (includeRuntime){
+    installSiriusDist.dependsOn parent.tasks.named('extractRuntimeImage')
+    siriusDistZip.dependsOn parent.tasks.named('extractRuntimeImage')
+    siriusDistTar.dependsOn parent.tasks.named('extractRuntimeImage')
+}
+
+
+buildJpDists.dependsOn 'createChecksums'
+buildJpDists.dependsOn 'signDistImage'
+buildJpDists.dependsOn 'distImageZip'
 if (siriusTargetPlatform.isMac()) {
-    distribution.dependsOn 'macNotarize'
+    buildJpDists.dependsOn 'macNotarize'
 }
 if (!siriusTargetPlatform.isLinux()) {
-    distribution.dependsOn 'signDistInstaller'
-    distribution.dependsOn 'distInstaller'
+    buildJpDists.dependsOn 'signDistInstaller'
+    buildJpDists.dependsOn 'distInstaller'
 }
 
 // OS specific packaging

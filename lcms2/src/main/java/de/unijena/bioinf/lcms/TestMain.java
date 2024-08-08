@@ -98,7 +98,7 @@ public class TestMain {
         Path storeLocation = Files.createTempFile("nitrite", SIRIUS_PROJECT_SUFFIX);
         try (NitriteSirirusProject ps = new NitriteSirirusProject(storeLocation)) {
             Database<?> store = ps.getStorage();
-            LCMSProcessing processing = new LCMSProcessing(new SiriusProjectDocumentDbAdapter(ps), false, true);
+            LCMSProcessing processing = new LCMSProcessing(new SiriusProjectDocumentDbAdapter(ps), false);
             {
                 if (ops.cores >= 1) {
                     SiriusJobs.setGlobalJobManager(ops.cores);

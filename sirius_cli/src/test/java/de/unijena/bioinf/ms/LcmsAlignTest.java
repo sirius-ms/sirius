@@ -118,7 +118,6 @@ class LcmsAlignTest {
 
     static {
         DEFAULT_OPTIONS.noAlign = false;
-        DEFAULT_OPTIONS.forbidMs1Only = false;
         DEFAULT_OPTIONS.smoothing = DataSmoothing.NOFILTER;
         DEFAULT_OPTIONS.noiseCoefficient = 2.0;
         DEFAULT_OPTIONS.persistenceCoefficient = 0.1;
@@ -152,7 +151,6 @@ class LcmsAlignTest {
 
         final LcmsAlignOptions options = new LcmsAlignOptions();
         options.noAlign = false;
-        options.forbidMs1Only = false;
         options.smoothing = DataSmoothing.GAUSSIAN;
         options.sigma = sigma;
         options.noiseCoefficient = 2.0;
@@ -177,7 +175,6 @@ class LcmsAlignTest {
 
         final LcmsAlignOptions options = new LcmsAlignOptions();
         options.noAlign = false;
-        options.forbidMs1Only = false;
         options.smoothing = DataSmoothing.WAVELET;
         options.scaleLevel = scale;
         options.noiseCoefficient = 2.0;
@@ -202,7 +199,6 @@ class LcmsAlignTest {
 
         final LcmsAlignOptions options = new LcmsAlignOptions();
         options.noAlign = false;
-        options.forbidMs1Only = false;
         options.smoothing = DataSmoothing.SAVITZKY_GOLAY;
         options.noiseCoefficient = 2.0;
         options.persistenceCoefficient = 0.1;
