@@ -30,8 +30,8 @@ import de.unijena.bioinf.lcms.spectrum.Ms2SpectrumHeader;
 import de.unijena.bioinf.lcms.trace.LCMSStorage;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.ms.persistence.model.core.run.Ionization;
-import de.unijena.bioinf.ms.persistence.model.core.run.MassAnalyzer;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
+import de.unijena.bioinf.ms.persistence.model.core.run.MassAnalyzer;
 import de.unijena.bioinf.ms.persistence.model.core.scan.MSMSScan;
 import de.unijena.bioinf.ms.persistence.model.core.scan.Scan;
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
@@ -51,10 +51,11 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
-import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Calendar;
+import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
@@ -220,14 +221,6 @@ class MzXMLSaxParser extends DefaultHandler {
                     break;
                 case "scan":
                     push(new ScanHandler(attrs));
-                    break;
-                case "parentFile":
-                    String parentName = Path.of(get(attrs, "fileName", sourcePath)).getFileName().toString();
-                    if (parentName.contains(".")) {
-                        String[] components = parentName.split("\\.");
-                        parentName = Arrays.stream(components).limit(components.length - 1).collect(Collectors.joining());
-                    }
-                    run.setName(parentName);
                     break;
             }
         }
