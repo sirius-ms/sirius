@@ -20,9 +20,9 @@ ext {
     jre_major = jre_version.split("[.]")[0]
 
     siriusJvmArgs = ['-Xms2G',
-                     '-XX:MaxRAMPercentage=75',
+                     '-XX:MaxRAMPercentage=60',
+                     '-XX:+UseStringDeduplication',
 //                     '-XX:+UseG1GC',
-//                     '-XX:+UseStringDeduplication',
 //                     '-XX:+UseZGC',
 //                     '-XX:+ZGenerational',
                      '-XX:+ExitOnOutOfMemoryError']
