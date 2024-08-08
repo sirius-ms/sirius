@@ -241,7 +241,18 @@ public class BayesianScoringUtils {
      * @throws InsufficientDataException if there are not enough candidates in the Database to compute the scoring
      */
     public BayesnetScoring computeScoring(MolecularFormula formula, @NotNull AbstractChemicalDatabase chemdb) throws InsufficientDataException, ChemicalDatabaseException {
-        return SiriusJobs.getGlobalJobManager().submitJob(createScoringComputationJob(formula, chemdb, SiriusJobs.getCPUThreads())).getResult();
+        try {
+            return SiriusJobs.getGlobalJobManager().submitJob(createScoringComputationJob(formula, chemdb, SiriusJobs.getCPUThreads())).takeResult();
+        } catch (RuntimeException r) {
+            Throwable cause = r.getCause();
+            if (cause instanceof InsufficientDataException) {
+                throw (InsufficientDataException) cause;
+            } else if (cause instanceof ChemicalDatabaseException) {
+                throw (ChemicalDatabaseException) cause;
+            } else {
+                throw r;
+            }
+        }
     }
 
     /**
