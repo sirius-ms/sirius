@@ -120,7 +120,7 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
         @CommandLine.Option(names = {"--gui", "-g"}, description = "Start GUI on specified project or on temporary project otherwise.")
         private boolean startGui;
 
-        @CommandLine.Option(names = {"--headless"}, description = "Set SIRIUS service to headless mode. Prevents loading features that are not available on headless systems. This is usually auto-detected but in case this fails this parameter can be used.", defaultValue = "false", order = 1000)
+        @CommandLine.Option(names = {"--headless"}, description = {"Enforce headless or gui mode (default) for SIRIUS service.", "Headless mode Prevents loading features that are not available on headless systems. This is usually auto-detected but in case this gives not the expected behavior this parameter can be used to enforce it."}, defaultValue = "false", order = 1000, negatable = true)
         private boolean headless;
     }
 
