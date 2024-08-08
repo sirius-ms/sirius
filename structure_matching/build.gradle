@@ -2,7 +2,7 @@
 plugins {
     id 'application'
 }
-
+version =  siriusVersion
 dependencies{
     api "org.openscience.cdk:cdk-bundle:$cdk_version"
     implementation project(":chemistry_base")

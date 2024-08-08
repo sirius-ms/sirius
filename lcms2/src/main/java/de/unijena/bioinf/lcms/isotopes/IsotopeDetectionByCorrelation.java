@@ -110,14 +110,8 @@ public class IsotopeDetectionByCorrelation implements IsotopeDetectionStrategy{
         if (!matching.isEmpty()) {
             isoSegment = matching.get(0);
         } else {
-            isoSegment = new TraceSegment(traceSegment.leftEdge, Math.max(iso.startId(), traceSegment.leftEdge), Math.min(
+            isoSegment = TraceSegment.createSegmentFor(iso, Math.max(iso.startId(), traceSegment.leftEdge), Math.min(
                     iso.endId(), traceSegment.rightEdge));
-            isoSegment.apex = isoSegment.leftEdge;
-            for (int k=isoSegment.leftEdge; k <= isoSegment.rightEdge; ++k) {
-                if (iso.intensity(k) > iso.intensity(isoSegment.apex)) {
-                    isoSegment.apex = k;
-                }
-            }
         }
 
 

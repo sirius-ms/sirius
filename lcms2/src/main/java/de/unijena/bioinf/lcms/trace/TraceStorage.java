@@ -171,7 +171,7 @@ public abstract class TraceStorage implements Iterable<ContiguousTrace>  {
                     k = it.next();
                     ContiguousTrace contiguousTrace = traceMap.get((int)k.getId());
                     if (contiguousTrace.apex() == trace.apex()) {
-                        return contiguousTrace;
+                        return contiguousTrace.withMapping(mapping);
                     } else {
                         LoggerFactory.getLogger(LCMSStorage.class).warn("Overlapping traces found!");
                     }
@@ -180,7 +180,7 @@ public abstract class TraceStorage implements Iterable<ContiguousTrace>  {
                     ContiguousTrace value = trace.withUID((int)key.getId());
                     spatialTraceMap.add(key, (int)key.getId());
                     traceMap.put((int)key.getId(), value);
-                    return value;
+                    return value.withMapping(mapping);
                 }
             }
         }
@@ -189,7 +189,18 @@ public abstract class TraceStorage implements Iterable<ContiguousTrace>  {
         @NotNull
         @Override
         public Iterator<ContiguousTrace> iterator() {
-            return traceMap.values().iterator();
+            Iterator<ContiguousTrace> iterator = traceMap.values().iterator();
+            return new Iterator<ContiguousTrace>() {
+                @Override
+                public boolean hasNext() {
+                    return iterator.hasNext();
+                }
+
+                @Override
+                public ContiguousTrace next() {
+                    return iterator.next().withMapping(mapping);
+                }
+            };
         }
     }
 
