@@ -132,8 +132,8 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 commandline.setUnmatchedArgumentsAllowed(true);
                 commandline.setCaseInsensitiveEnumValuesAllowed(true);
                 commandline.registerConverter(DefaultParameter.class, new DefaultParameter.Converter());
-                commandline.parseArgs(args);
-                commandline.usage(System.err);
+                CommandLine.ParseResult parseResult = commandline.parseArgs(args);
+                CommandLine.printHelpIfRequested(parseResult);
                 System.exit(0);// Zero because this is the help message case
             } catch (Exception e) {
                 e.printStackTrace();
