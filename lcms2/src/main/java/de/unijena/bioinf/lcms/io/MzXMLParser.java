@@ -21,7 +21,6 @@
 package de.unijena.bioinf.lcms.io;
 
 import de.unijena.bioinf.ChemistryBase.ms.lcms.MsDataSourceReference;
-import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.lcms.LCMSStorageFactory;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
@@ -33,11 +32,14 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MzXMLParser implements LCMSParser {
+
+    private static final Pattern SUFFIX = Pattern.compile("\\.mzxml$", Pattern.CASE_INSENSITIVE);
 
     @Override
     public ProcessedSample parse(
@@ -51,6 +53,8 @@ public class MzXMLParser implements LCMSParser {
     ) throws IOException {
         try {
             String name = input.getFileName().toString();
+            Matcher matcher = SUFFIX.matcher(name);
+            run.setName(matcher.replaceAll(""));
             run.setSourceReference(new MsDataSourceReference(input.getParent().toUri(), name, null, null));
             runConsumer.consume(run);
             MzXMLSaxParser saxParser = new MzXMLSaxParser(
