@@ -545,7 +545,8 @@ subprojects {
         doFirst {
             def imageDir = distImage.getImageDir()
             def parentPath = imageDir.parentFile.toPath()
-            def zipFile = parentPath.resolve("${imageDir.getName()}.zip")
+            def zipFileName = "${distImage.imageName}-${project.version}-${project.osName}.zip"
+            def zipFile = parentPath.resolve(zipFileName)
             project.ant.zip(destfile: zipFile, duplicate: 'fail') {
                 imageDir.eachFileRecurse { f ->
                     int mode = f.canExecute() ? 755 : 644
@@ -566,7 +567,7 @@ subprojects {
 
         //linux
         linuxMenuGroup = ['Applications', 'Science']
-        debPackageMaintaner = 'sirius@uni-jena.de'
+        debPackageMaintaner = 'info@bright-giant.com'
 
         //win
         winUpdateUUID = '5e660105-397c-4ab7-8d7e-69b4ce2c9564'
@@ -580,14 +581,14 @@ subprojects {
         dependsOn distInstaller
         inputs.dir(distImage.outputDir)
         doLast {
-            def source
-            def target
+            Path source
+            Path target
             if (siriusTargetPlatform.isMac()) {
                 def macInstallerIdentity = project.findProperty('de.unijena.bioinf.build.MACOS_IDENTITY_ID')
                 //just to check whether a certificate was given
                 if (macInstallerIdentity != null && !macInstallerIdentity.isBlank()) {
-                    source = Path.of(distImage.getImageDir().absolutePath.replace('.app', installerAppendix))
-                    target = Path.of(distImage.getImageDir().absolutePath.replace('.app', "-SIGNED") + installerAppendix)
+                    source = distInstaller.getOutputFile().toPath()
+                    target = source.getParent().resolve(source.getFileName().toString().replace(".$installerNameType", "-SIGNED.$installerNameType"))
                     getLogger().lifecycle("Signing INSTALLER '$source'")
                     project.exec {
                         commandLine(["/usr/bin/productsign", "--timestamp", "--sign", "${macInstallerIdentity}",
@@ -920,7 +921,7 @@ abstract class AppInstaller extends DefaultTask {
 
     @OutputFile
     File getOutputFile() {
-        return distImg.outputDir.toPath().resolve(distImg.imageName + project.installerAppendix).toFile()
+        return distImg.outputDir.toPath().resolve("${distImg.imageName}-${project.version}-${project.osName}.${project.installerNameType}").toFile()
     }
 
     @TaskAction
@@ -932,6 +933,8 @@ abstract class AppInstaller extends DefaultTask {
             println c
             commandLine(c)
         }
+
+        Files.move(distImg.outputDir.toPath().resolve(distImg.imageName + project.installerAppendix), getOutputFile().toPath())
     }
 
     @Internal
