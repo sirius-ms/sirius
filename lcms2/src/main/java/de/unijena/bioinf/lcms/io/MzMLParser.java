@@ -43,9 +43,9 @@ import it.unimi.dsi.fastutil.ints.Int2IntMap;
 import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
-import org.jetbrains.annotations.NotNull;
 import uk.ac.ebi.jmzml.model.mzml.*;
 import uk.ac.ebi.jmzml.xml.io.MzMLUnmarshaller;
 
@@ -62,6 +62,8 @@ import java.util.stream.Collectors;
 
 @Slf4j
 public class MzMLParser implements LCMSParser {
+
+    private static final Pattern SUFFIX = Pattern.compile("\\.mzml$", Pattern.CASE_INSENSITIVE);
 
     private File createTempFile(@NotNull Path input) throws IOException {
         if (input.getFileSystem().equals(FileSystems.getDefault())) {
@@ -125,9 +127,17 @@ public class MzMLParser implements LCMSParser {
                 final String runId = runAtts.get("id");
                 // get source location oO
                 reference = new MsDataSourceReference(parent, fileName, runId, mzMlId);
-            }
 
-            run.setName(mzMlId != null && !mzMlId.isBlank() ? mzMlId : fileName);
+                if (runId != null && !runId.isEmpty() && !runId.isBlank()) {
+                    run.setName(runId);
+                } else if (mzMlId != null && !mzMlId.isEmpty() && !mzMlId.isBlank()) {
+                    run.setName(mzMlId);
+                } else {
+                    Matcher matcher = SUFFIX.matcher(fileName);
+                    run.setName(matcher.replaceAll(""));
+                }
+
+            }
             run.setSourceReference(reference);
 
             final DoubleArrayList retentionTimes = new DoubleArrayList();
