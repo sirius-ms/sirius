@@ -28,7 +28,7 @@ public class MostIntensivePeakInIsolationWindowAssignmentStrategy implements Ms2
             parentId = sample.getMapping().idForRetentionTime(ms2.getRetentionTime());
             for (int k=parentId; k >= parentId-10 && k >= 0; --k) {
                 SimpleSpectrum ms1Spectrum = sample.getStorage().getSpectrumStorage().getSpectrum(k);
-                if (Spectrums.mostIntensivePeakWithin(ms1Spectrum, ms2.getPrecursorMz(), new Deviation(10))>sample.getStorage().getStatistics().noiseLevel(k)) {
+                if (ms1Spectrum.getIntensityAt(Spectrums.mostIntensivePeakWithin(ms1Spectrum, ms2.getPrecursorMz(), new Deviation(10)))>sample.getStorage().getStatistics().noiseLevel(k)) {
                     parentId = k;
                     break;
                 }
