@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - stable
+      - stable-codesign
       - master
     #      - stable-service-api
     paths-ignore:
@@ -13,7 +14,7 @@ jobs:
   distGUI:
     strategy:
       matrix:
-        os: [ ubuntu-latest, windows-latest, macos-latest ]
+        os: [macos-latest ]
     runs-on: ${{ matrix.os }}
     env:
       GENERIC_INSTALLER_CERTIFICATE: ${{ secrets.GENERIC_INSTALLER_CERTIFICATE }}
@@ -212,10 +213,10 @@ jobs:
             ./sirius_dist/sirius_gui_dist/build/jpDists/*.deb
             ./sirius_dist/sirius_gui_dist/build/jpDists/*.sha256
 
-  dockergen:
-    needs: [ distGUI ]
-    uses: ./.github/workflows/dockergen.yaml
-    secrets: inherit
+#  dockergen:
+#    needs: [ distGUI ]
+#    uses: ./.github/workflows/dockergen.yaml
+#    secrets: inherit
 
   release:
     needs: [distGUI]
