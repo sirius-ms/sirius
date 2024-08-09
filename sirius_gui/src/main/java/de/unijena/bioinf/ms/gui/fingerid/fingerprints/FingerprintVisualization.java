@@ -49,7 +49,7 @@ import java.util.List;
 
 class FingerprintVisualization {
 
-    public static void main(String[] args) throws IOException {
+    public static void test_main(String[] args) throws IOException {
         final PrintStream stream = new PrintStream("feature_examples.tsv");
         final CdkFingerprintVersion version = CdkFingerprintVersion.getComplete();
         final List<String> lines = Files.readAllLines(new File("summary.csv").toPath(), Charset.forName("UTF-8"));

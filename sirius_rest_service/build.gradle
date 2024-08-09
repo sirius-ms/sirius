@@ -109,7 +109,13 @@ openApi {
     waitTimeInSeconds.set(20)
 
     customBootRun {
-        args = ["rest", "-s", "-p", "8888"]
+        args = ["rest", "-s", "-p", "8888", "--api-mode", "BASIC"]
     }
 }
 forkedSpringBootRun.dependsOn(':sirius_rest_service:bootJar')
+
+// Javadoc cannot recognize lombok builder
+javadoc {
+    failOnError = false
+    enabled = false
+}

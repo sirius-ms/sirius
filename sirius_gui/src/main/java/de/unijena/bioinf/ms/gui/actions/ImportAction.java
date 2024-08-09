@@ -141,7 +141,6 @@ public class ImportAction extends AbstractGuiAction {
                     Job job = c.projects().importMsRunDataAsJobLocally(pid,
                             parameters,
                             lcmsPaths.stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
-                            true,
                             List.of(JobOptField.PROGRESS)
                     );
                     return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Importing LC/MS data...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
