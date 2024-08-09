@@ -74,7 +74,7 @@ public class LoggingPanel extends JPanel {
     }
 
 
-    public static void main(String[] args) {
+    public static void test_main(String[] args) {
         final Logger logger = Logger.getLogger("testlogger");
         logger.setUseParentHandlers(false);
         logger.setLevel(Level.ALL);

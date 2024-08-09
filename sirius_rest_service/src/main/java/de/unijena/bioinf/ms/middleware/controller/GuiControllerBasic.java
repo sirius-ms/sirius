@@ -23,7 +23,7 @@ package de.unijena.bioinf.ms.middleware.controller;
 import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @Tag(name = "Gui", description = "Basic GUI Control: Open and close SIRIUS Graphical User Interface (GUI) on specified projects.")
-@ConditionalOnProperty(name = "sirius.middleware.controller.gui.advanced", matchIfMissing = true, havingValue = "false")
+@ConditionalOnExpression("!${sirius.middleware.controller.gui.advanced:false} && !${de.unijena.bioinf.sirius.headless:false}")
 public class GuiControllerBasic extends GuiController {
 
     public GuiControllerBasic(ProjectsProvider<?> projectsProvider, GuiService guiService) {

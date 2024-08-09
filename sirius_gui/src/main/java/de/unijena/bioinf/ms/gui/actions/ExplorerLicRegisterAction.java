@@ -52,10 +52,10 @@ public class ExplorerLicRegisterAction extends AbstractAction {
     public void actionPerformed(ActionEvent e) {
         try {
             ResultMessage resultMessage = Jobs.runInBackgroundAndLoad(popupOwner, "Checking for Explorer license...", () -> {
-                Path siriusHone = Path.of(PropertyManager.getProperty("de.unijena.bioinf.sirius.homeDir"));
+                Path siriusHome = Path.of(PropertyManager.getProperty("de.unijena.bioinf.sirius.homeDir"));
                 Path checkerExe = Path.of(PropertyManager.getProperty("de.unijena.bioinf.sirius.explorer.licenseChecker", null, "ExplorerLicTester/ExplorerLicTester.exe"));
 
-                Process proc = Runtime.getRuntime().exec(siriusHone.resolve(checkerExe).toAbsolutePath().toString());
+                Process proc = Runtime.getRuntime().exec(siriusHome.resolve(checkerExe).toAbsolutePath().toString());
                 List<String> info;
                 try (BufferedReader reader = proc.inputReader()) {
                     info = reader.lines().toList();
@@ -86,7 +86,7 @@ public class ExplorerLicRegisterAction extends AbstractAction {
             }).awaitResult();
             if (!resultMessage.success) {
                 log.warn(String.join(" | ", resultMessage.message));
-                new WarningDialog(popupOwner, GuiUtils.formatToolTip("No valid MassHunter Explorer license found on you system. Please ensure that MassHunter Explorer is installed and activated.", "For details, please see the 'Log' in the top-right corner."));
+                new WarningDialog(popupOwner, GuiUtils.formatToolTip("No valid MassHunter Explorer license found on your system. Please ensure that MassHunter Explorer is installed and activated.", "For details, please see the 'Log' in the top-right corner."));
             }
         } catch (ExecutionException ex) {
             log.error("Error when checking for MassHunter Explorer license.", ex);

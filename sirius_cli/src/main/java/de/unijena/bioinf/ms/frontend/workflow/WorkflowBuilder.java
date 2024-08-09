@@ -62,7 +62,7 @@ import java.util.stream.Stream;
  * In the Constructor it needs to be defined how the different Subtools depend on each other and
  * in which order they have to be executed.
  * <p>
- * This class is also intended to be used from the GUI but with a different {@link RootOptions) class.
+ * This class is also intended to be used from the GUI but with a different {@link RootOptions} class.
  * <p>
  * Buy using this class we do not need to write new Workflows every time we add a new tool.
  * We just have to define its parameters in h

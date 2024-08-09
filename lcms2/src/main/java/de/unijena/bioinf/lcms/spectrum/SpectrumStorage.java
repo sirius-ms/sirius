@@ -18,6 +18,8 @@ public abstract class SpectrumStorage {
     public abstract Ms1SpectrumHeader ms1SpectrumHeader(int id);
     public abstract SimpleSpectrum getMs2Spectrum(int id);
 
+    public abstract Ms2SpectrumHeader updateMs2Header(Ms2SpectrumHeader ms2SpectrumHeader);
+
 
     public static class MvSpectrumStorage extends SpectrumStorage {
         private MVMap<Integer, SimpleSpectrum> spectraMap, ms2SpectraMap;
@@ -81,6 +83,12 @@ public abstract class SpectrumStorage {
         @Override
         public SimpleSpectrum getMs2Spectrum(int id) {
             return this.ms2SpectraMap.get(id);
+        }
+
+        @Override
+        public Ms2SpectrumHeader updateMs2Header(Ms2SpectrumHeader ms2SpectrumHeader) {
+            ms2headers.put(ms2SpectrumHeader.getUid(), ms2SpectrumHeader);
+            return ms2SpectrumHeader;
         }
 
     }
