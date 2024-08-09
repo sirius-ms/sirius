@@ -115,15 +115,14 @@ public final class ConnectionChecker {
             checkForInterruption();
             try {
                 //enrich license info with consumables
-                if (ll.subscription().map(Subscription::isCountQueries).orElse(false))
-                    ll.setConsumables(webAPI.getConsumables(!ll.getSubscription().hasInstanceLimit())); //yearly if there is compound limit
+                ll.setConsumables(webAPI.getConsumables(!ll.getSubscription().hasInstanceLimit())); //yearly if there is compound limit
             } catch (Exception e) {
                 errors.computeIfAbsent(ConnectionError.Klass.APP_SERVER, k -> new LinkedHashSet<>())
                         .add(new ConnectionError(93,
                                 "Error when requesting computation limits.",
                                 ConnectionError.Klass.APP_SERVER, e));
             } finally {
-                webAPI.checkConnection().forEach((k,v) -> errors.computeIfAbsent(k, k2 -> new LinkedHashSet<>()).addAll(v));
+                webAPI.checkConnection().forEach((k, v) -> errors.computeIfAbsent(k, k2 -> new LinkedHashSet<>()).addAll(v));
             }
 
             checkForInterruption();
