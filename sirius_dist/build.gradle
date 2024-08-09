@@ -15,10 +15,6 @@ dependencies {
 version = siriusFrontendVersion
 
 ext {
-    // version for bundeled JRE
-    jre_version = '21.0.4'
-    jre_major = jre_version.split("[.]")[0]
-
     siriusJvmArgs = ['-Xms2G',
                      '-XX:MaxRAMPercentage=60',
                      '-XX:+UseStringDeduplication',
@@ -50,14 +46,33 @@ ext {
         installerNameType = 'pkg'
         installerAppendix = "-${version.replace('-SNAPSHOT', '')}.$installerNameType".toString()
     }
+
+    // configure infos for bundled JRE
+    jre_version = '21.0.4'
+    jre_major = jre_version.split("[.]")[0]
+
+    // zulu config
+//    jre_distributor_version = '21.36.17'
+//    jre_mac_prefix = "zulu-${jre_major}.jre/Contents/Home/"
+//    jre_fname = "zulu${jre_distributor_version}-ca-fx-jre${jre_version}-${zosName}_x64${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
+//    jre_download_link = "https://cdn.azul.com/zulu/bin/"
+
+    // ms config
+//    jre_fname = "microsoft-jdk-${jre_version}-${msName}-x64${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
+//    jre_download_link = "https://aka.ms/download-jdk/"
+
+    // liberica config
+    jre_distributor_version = '21.0.4+9'
+    jre_mac_prefix = null
+    jre_fname = "bellsoft-jre${jre_distributor_version}-${msName}-amd64-full${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
+    jre_download_link = "https://download.bell-sw.com/java/${jre_distributor_version}/"
+//
 }
 
 tasks.register('downloadRuntimeImage', Download) {
     group = "runtime"
-    String fname = "microsoft-jdk-${jre_version}-${msName}-x64${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
-
-    src "https://aka.ms/download-jdk/${fname}"
-    dest getBuildDir().toPath().resolve('runtime').resolve(fname).toFile()
+    src "${jre_download_link}${jre_fname}"
+    dest getBuildDir().toPath().resolve('runtime').resolve("$jre_fname").toFile()
     onlyIfModified true
     overwrite false
 }
@@ -71,7 +86,7 @@ tasks.register('extractRuntimeImage', ExtractRuntime) {
 subprojects {
     apply plugin: 'application'
     apply plugin: 'edu.sc.seis.launch4j'
-    ext{
+    ext {
         // jpackage based distribution output dir
         jpDistDir = getLayout().getBuildDirectory().file("jpDists")
     }
@@ -234,6 +249,7 @@ subprojects {
                 from(inputDir.getParentFile()) {
                     exclude "app/**"
                     exclude "lib/**"
+                    exclude "bin/**"
                     exclude "runtime/**"
                     exclude "*.bat"
                     exclude "*.exe"
@@ -483,49 +499,71 @@ subprojects {
             if (siriusTargetPlatform.isMac()) {
                 def signID = project.findProperty("de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID")
                 if (signID != null && !signID.isBlank()) {
+                    getLogger().lifecycle("")
+                    getLogger().lifecycle("")
+                    getLogger().lifecycle("Signing with ID: " + signID)
                     def entitlementsFile = getRootProject().getProjectDir().toPath().resolve("dist").resolve("macos.entitlements").toFile()
-                    def additionalLibs = [new File(distImage.getImageDir(), "Contents/runtime/Contents/MacOS/libjli.dylib")]
-                    def jarNestedLibs = [
-                            FileSystems.newFileSystem(distImage.getImageDir().toPath().resolve("Contents").resolve("app").resolve("jna-inchi-darwin-x86-64-1.1.jar"))
-                                    .getPath("darwin-x86-64/libjnainchi.dylib")
-                    ]
 
-                    getLogger().lifecycle("extract libs nested in the following jars ${Arrays.toString(jarNestedLibs)}")
+                    def siriusBootJarName = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName();
+                    def bootJar = distImage.getImageDir().toPath().resolve("Contents").resolve("app").resolve(siriusBootJarName).toAbsolutePath()
+                    getLogger().lifecycle("Boot Jar Path: " + bootJar)
+//                    def bootJar = Path.of("/home/fleisch/Downloads/sirius-6.0.4-SNAPSHOT-osx64/sirius.app/Contents/app/sirius_rest_service-6.0.4-SNAPSHOT-boot.jar").toAbsolutePath()
+
+                    def extractedJars = getBuildDir().toPath().resolve("tmp").resolve("jars")
                     def extractedLibs = getBuildDir().toPath().resolve("tmp").resolve("jarLibs")
+                    Files.createDirectories(extractedJars)
                     Files.createDirectories(extractedLibs)
-                    for (def inJar : jarNestedLibs) {
-                        getLogger().lifecycle("Extracting from jar '${inJar}'")
-                        Files.copy(inJar, extractedLibs.resolve(inJar.getFileName().toString()), StandardCopyOption.REPLACE_EXISTING)
-                    }
 
-                    getLogger().lifecycle("Signing native libs dir")
-                    for (File f : distImage.getImageDir().toPath().resolve("Contents").resolve("native").toFile().listFiles() + additionalLibs + extractedLibs.toFile().listFiles()) {
-                        getLogger().lifecycle("Signing native lib '$f'")
-                        project.exec {
-                            commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
-                                         "${f.getAbsolutePath()}"])
+                    try (def bootJarFs = FileSystems.newFileSystem(bootJar)) {
+                        for (def inJar : Files.list(bootJarFs.getPath("/BOOT-INF/lib/")).toList()) {
+
+                            Path copiedInJar = extractedJars.resolve(inJar.getFileName().toString())
+                            Files.copy(inJar, copiedInJar, StandardCopyOption.REPLACE_EXISTING)
+
+                            try (def copiedInJarFs = FileSystems.newFileSystem(copiedInJar, [:])) {
+                                Files.walk(copiedInJarFs.getPath("/"))
+                                        .filter { inLib -> inLib.toString().toLowerCase().endsWith(".dylib") || inLib.toString().toLowerCase().endsWith(".jnilib") }
+                                        .forEach { inLib ->
+                                            Path copiedInLib = extractedLibs.resolve(inLib.getFileName().toString())
+                                            Files.copy(inLib, copiedInLib, StandardCopyOption.REPLACE_EXISTING)
+
+                                            getLogger().lifecycle("Remove (old) signatures from native lib '${copiedInLib.toFile().getAbsolutePath()}'")
+                                            project.exec {
+                                                commandLine(["codesign", "--remove-signature", "${copiedInLib.toFile().getAbsolutePath()}"])
+                                            }
+                                            getLogger().lifecycle("  (Re-)Signing lib: " + inLib.getFileName().toString())
+                                            project.exec {
+                                                commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
+                                                             "${copiedInLib.toFile().getAbsolutePath()}"])
+                                            }
+                                            Files.copy(copiedInLib, inLib, StandardCopyOption.REPLACE_EXISTING)
+                                            Files.delete(copiedInLib)
+                                        }
+                            }
+                            getLogger().lifecycle("Remove (old) signatures from nested jars '${copiedInJar.toFile().getAbsolutePath()}'")
+                            project.exec {
+                                commandLine(["codesign", "--remove-signature", "${copiedInJar.toFile().getAbsolutePath()}"])
+                            }
+                            getLogger().lifecycle("Signing nested jars: " + inJar.getFileName().toString())
+                            project.exec {
+                                commandLine(["codesign", "--timestamp", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
+                                             "${copiedInJar.toFile().getAbsolutePath()}"])
+                            }
+                            Files.copy(copiedInJar, inJar, StandardCopyOption.REPLACE_EXISTING)
+                            Files.delete(copiedInJar)
                         }
                     }
-
-                    getLogger().lifecycle("Reinsert libs nested in jars")
-                    for (def inJar : jarNestedLibs) {
-                        getLogger().lifecycle("Reinserting into jar '${inJar}'")
-                        Files.copy(extractedLibs.resolve(inJar.getFileName().toString()), inJar, StandardCopyOption.REPLACE_EXISTING)
-                        inJar.fileSystem.close()
-                    }
-
-                    getLogger().lifecycle("Signing jars dir")
-                    for (File f : distImage.getImageDir().toPath().resolve("Contents").resolve("app").toFile().listFiles({ file -> file.getName().endsWith(".jar") } as FileFilter)) {
-                        getLogger().lifecycle("Signing jar '$f'")
-                        project.exec {
-                            commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
-                                         "${f.getAbsolutePath()}"])
-                        }
-                    }
-
-                    println "Signing .app dir"
+                    getLogger().lifecycle("")
+                    getLogger().lifecycle("Signing boot jar: " + bootJar.getFileName().toString())
                     project.exec {
-                        commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
+                        commandLine(["codesign", "--timestamp", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
+                                     "${bootJar.toFile().getAbsolutePath()}"])
+                    }
+
+                    getLogger().lifecycle("")
+                    getLogger().lifecycle("Signing .app dir: ${distImage.getImageDir().getAbsolutePath()}")
+                    project.exec {
+                        commandLine(["codesign", "--timestamp", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
                                      "${distImage.getImageDir()}"])
                     }
                 } else {
@@ -590,6 +628,7 @@ subprojects {
                     source = distInstaller.getOutputFile().toPath()
                     target = source.getParent().resolve(source.getFileName().toString().replace(".$installerNameType", "-SIGNED.$installerNameType"))
                     getLogger().lifecycle("Signing INSTALLER '$source'")
+
                     project.exec {
                         commandLine(["/usr/bin/productsign", "--timestamp", "--sign", "${macInstallerIdentity}",
                                      "$source", "$target"
@@ -646,11 +685,12 @@ subprojects {
         inputs.dir(distImage.outputDir)
         doLast {
             if (siriusTargetPlatform.isMac()) {
+                def teamId = project.findProperty('de.unijena.bioinf.build.MACOS_TEAM_ID')
                 def appleId = project.findProperty('de.unijena.bioinf.build.MACOS_APPLE_ID')
                 def appleIdPw = project.findProperty('de.unijena.bioinf.build.MACOS_APPLE_ID_PW')
 
                 if (appleId != null && appleIdPw != null && !appleId.isBlank() && !appleIdPw.isBlank()) {
-                    def pkg = Path.of(distImage.getImageDir().absolutePath.replace('.app', installerAppendix))
+                    def pkg = distInstaller.getOutputFile().getAbsolutePath()
                     getLogger().lifecycle("Showing available providers")
                     project.exec {
                         commandLine(["xcrun", "altool", "--list-providers",
@@ -658,52 +698,44 @@ subprojects {
                                      "-p", "$appleIdPw"])
                     }
 
-                    getLogger().lifecycle("Submit for  notarization")
+                    getLogger().lifecycle("Notarizing $pkg...")
+
                     String uuid = null
-                    new ByteArrayOutputStream().withStream { os ->
-                        project.exec {
-                            commandLine(["xcrun", "altool", "--notarize-app", "--primary-bundle-id", "app.${distImage.imageName}-$version",
-                                         "-u", "$appleId",
-                                         "-p", "$appleIdPw",
-                                         "--file", "$pkg"])
-                            standardOutput = os
-                        }
-                        uuid = (os.toString().split(System.lineSeparator()) as List).stream().filter({ s -> s.contains("RequestUUID = ") }).findFirst() map({ s -> s.split("RequestUUID = ")[1].strip() }).orElseThrow()
-                        println("Submitted Notarization Job with RequestUUID: $uuid")
+                    def so = new ByteArrayOutputStream()
+                    def eo = new ByteArrayOutputStream()
+                    ExecResult execResult = exec {
+                        commandLine(["xcrun", "notarytool", "submit", "--wait", "--apple-id", "${appleId}", "--team-id", "${teamId}",
+                                     "--password", "${appleIdPw}", "${pkg}"])
+                        standardOutput so
+                        errorOutput eo
+                    }
+                    uuid = (so.toString().split(System.lineSeparator()) as List).stream().filter({ s -> s.contains("id: ") }).findFirst() map({ s -> s.split(":")[1].strip() }).orElseThrow()
+                    getLogger().lifecycle("Submitted Notarization Job with RequestUUID: $uuid")
+
+                    int returnCode = execResult.getExitValue()
+                    if (returnCode != 0) {
+                        throw new GradleException("Error ${returnCode} during notarization.")
                     }
 
-                    Map<String, String> states = ["Status": "in progress"]
-                    getLogger().lifecycle("Waiting  for  notarization")
-                    while ("in progress" == states.get("Status")) {
-                        new ByteArrayOutputStream().withStream { os ->
-                            def c = ["xcrun", "altool", "--notarization-info", "${uuid}", "-u", "$appleId", "-p", "$appleIdPw"]
-                            println(Arrays.toString(c))
-                            project.exec {
-                                commandLine(c)
-                                standardOutput = os
-                            }
-
-                            states = (os.toString().split(System.lineSeparator()) as List).stream().map({ s -> s.split("\\s*[:]\\s*") as List })
-                                    .collect(Collectors.toMap({ k -> k.get(0).strip() }, { v -> v.size() > 1 ? String.join(':', v.subList(1, v.size())).strip() : "N/A" }))
-                            println(states)
-                            println("Waiting 30s before retry...")
-                        }
-                        sleep(30000)
+                    getLogger().lifecycle("Requesting Log of $uuid...")
+                    execResult = exec {
+                        commandLine(["xcrun", "notarytool", "log", "--apple-id", "${appleId}", "--team-id", "${teamId}",
+                                     "--password", "${appleIdPw}", "$uuid"])
                     }
 
-                    if (states.get("Status Code") == "0" && states.get("Status") == "success") {
-                        new ByteArrayOutputStream().withStream { os ->
-                            project.exec {
-                                commandLine(["xcrun", "stapler", "staple", "${pkg}"])
-                                standardOutput = os
-                            }.assertNormalExitValue()
-                            getLogger().lifecycle(os.toString())
-                        }
-                    } else {
-                        getLogger().lifecycle("Status Code: " + states.get("Status Code"))
-                        getLogger().lifecycle("Status: " + states.get("Status"))
-                        getLogger().lifecycle("Status Message: " + states.get("Status Message"))
-                        throw new GradleException("Error during notarization")
+                    returnCode = execResult.getExitValue()
+                    if (returnCode != 0) {
+                        throw new GradleException("Error ${returnCode} during notarization log request.")
+                    }
+
+
+                    getLogger().lifecycle("Stapling  $pkg...")
+                    execResult = exec {
+                        commandLine(["xcrun", "stapler", "staple", "${pkg}"])
+                    }
+                    returnCode = execResult.getExitValue()
+                    if (returnCode != 0) {
+                        throw new GradleException("Error ${returnCode} during stapling.")
                     }
                 } else {
                     getLogger().warn("Could not find apple id for notarization. Skipping notarization step")
@@ -752,20 +784,20 @@ abstract class ExtractRuntime extends DefaultTask {
                     }
                 }
                 into outputDir
-            } else if (project.siriusTargetPlatform.isLinux()) {
+            } else if (project.siriusTargetPlatform.isLinux() || (project.siriusTargetPlatform.isMac() && project.jre_mac_prefix == null)) {
                 from(project.tarTree(inputArchive)) {
                     eachFile { FileCopyDetails fcd ->
                         fcd.relativePath = new RelativePath(true, fcd.relativePath.segments.drop(1))
                     }
                 }
                 into outputDir
-            } else {
+            } else if(project.siriusTargetPlatform.isMac()){
                 from(project.tarTree(inputArchive)) {
                     eachFile { FileCopyDetails fcd ->
                         def path = new RelativePath(true, fcd.relativePath.segments.drop(1))
                         println(path)
-                        if (path.startsWithAny("Contents/Home/"))
-                            fcd.relativePath = new RelativePath(true, path.segments.drop(2))
+                        if (path.startsWithAny(project.jre_mac_prefix))
+                            fcd.relativePath = new RelativePath(true, path.segments.drop(Path.of(project.jre_mac_prefix).getNameCount()))
                         else
                             fcd.exclude()
                         println(fcd.relativePath)
@@ -874,6 +906,15 @@ abstract class AppImage extends DefaultTask {
             paras += ["--icon", "${iconDir.resolve('sirius-icon.icns').toString()}"]
             if (macPackageName != null && !macPackageName.isBlank())
                 paras += ['--mac-package-name', "\"$macPackageName\""]
+            def signID = project.findProperty("de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID")
+            if (signID != null && !signID.isBlank()) {
+                paras += ['--mac-sign',
+                        '--mac-package-signing-prefix', "\"com.brightgiant\"",
+//                          '--mac-signing-keychain', "",
+                          '--mac-signing-key-user-name', "\"$signID\"",
+                          '--mac-entitlements', "\"${project.getRootProject().getProjectDir().toPath().resolve("dist").resolve("macos.entitlements").toFile().getAbsolutePath()}\"",
+                ]
+            }
         } else if (project.siriusTargetPlatform.isLinux()) {
             paras += ["--icon", "${iconDir.resolve('sirius-icon.png').toString()}"]
         } else {

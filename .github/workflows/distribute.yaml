@@ -78,7 +78,7 @@ jobs:
         with:
           gradle-version: 8.8
           build-root-directory: sirius_dist/sirius_gui_dist
-          arguments: --stacktrace clean buildJpDists -P "build.sirius.native.openjfx.exclude=false" -P "build.sirius.starter.jdk.include=true" -P "de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=${{ secrets.MACOS_APP_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_IDENTITY_ID=${{ secrets.MACOS_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID=${{ secrets.MACOS_APPLE_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID_PW=${{ secrets.MACOS_APPLE_ID_PW }}"
+          arguments: --stacktrace clean buildJpDists -P "build.sirius.native.openjfx.exclude=true" -P "build.sirius.starter.jdk.include=true" -P "de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID=${{ secrets.MACOS_APP_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_IDENTITY_ID=${{ secrets.MACOS_IDENTITY_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID=${{ secrets.MACOS_APPLE_ID }}" -P "de.unijena.bioinf.build.MACOS_APPLE_ID_PW=${{ secrets.MACOS_APPLE_ID_PW }}" -P "de.unijena.bioinf.build.MACOS_TEAM_ID=${{ secrets.MACOS_TEAM_ID }}"
 
 #      - name: Sirius Run
 #        run: |
@@ -212,10 +212,10 @@ jobs:
             ./sirius_dist/sirius_gui_dist/build/jpDists/*.deb
             ./sirius_dist/sirius_gui_dist/build/jpDists/*.sha256
 
-  dockergen:
-    needs: [ distGUI ]
-    uses: ./.github/workflows/dockergen.yaml
-    secrets: inherit
+#  dockergen:
+#    needs: [ distGUI ]
+#    uses: ./.github/workflows/dockergen.yaml
+#    secrets: inherit
 
   release:
     needs: [distGUI]
