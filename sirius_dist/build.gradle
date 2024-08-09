@@ -485,9 +485,29 @@ subprojects {
                 if (signID != null && !signID.isBlank()) {
                     def entitlementsFile = getRootProject().getProjectDir().toPath().resolve("dist").resolve("macos.entitlements").toFile()
                     def additionalLibs = [new File(distImage.getImageDir(), "Contents/runtime/Contents/MacOS/libjli.dylib")]
+                    def siriusBootJarName = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName();
+                    def libPath = "jar:file/${distImage.getImageDir().toPath().resolve("Contents").resolve("app").resolve(siriusBootJarName)}!/BOOT-INF/lib/"
+                    println("Sirius Boot Jar name: ${siriusBootJarName}")
                     def jarNestedLibs = [
-                            FileSystems.newFileSystem(distImage.getImageDir().toPath().resolve("Contents").resolve("app").resolve("jna-inchi-darwin-x86-64-1.1.jar"))
-                                    .getPath("darwin-x86-64/libjnainchi.dylib")
+                            FileSystems.getFileSystem(new URI(libPath + "jna-inchi-darwin-x86-64-1.2.jar!"))
+                                    .getPath("darwin-x86-64/libjnainchi.dylib"),
+                            FileSystems.getFileSystem(new URI(libPath + "netty-resolver-dns-native-macos-4.1.111.Final-osx-x86_64.jar!"))
+                                    .getPath("/META-INF/native/libnetty_resolver_dns_native_macos_x86_64.jnilib"),
+
+                            FileSystems.getFileSystem(new URI(libPath + "cbc-java-native-2.10.8.2-mac-x86-64.jar!"))
+                                    .getPath("/mac-x86-64/libOsiClp.1.dylib"),
+                            FileSystems.getFileSystem(new URI(libPath + "cbc-java-native-2.10.8.2-mac-x86-64.jar!"))
+                                    .getPath("/mac-x86-64/libOsi.1.dylib"),
+                            FileSystems.getFileSystem(new URI(libPath + "cbc-java-native-2.10.8.2-mac-x86-64.jar!"))
+                                    .getPath("/mac-x86-64/libCoinUtils.3.dylib"),
+                            FileSystems.getFileSystem(new URI(libPath + "cbc-java-native-2.10.8.2-mac-x86-64.jar!"))
+                                    .getPath("/mac-x86-64/libClpSolver.1.dylib"),
+                            FileSystems.getFileSystem(new URI(libPath + "cbc-java-native-2.10.8.2-mac-x86-64.jar!"))
+                                    .getPath("/mac-x86-64/libClp.1.dylib"),
+                            FileSystems.getFileSystem(new URI(libPath + "cbc-java-native-2.10.8.2-mac-x86-64.jar!"))
+                                    .getPath("/mac-x86-64/libCgl.1.dylib"),
+                            FileSystems.getFileSystem(new URI(libPath + "cbc-java-native-2.10.8.2-mac-x86-64.jar!"))
+                                    .getPath("/mac-x86-64/libCbc.3.dylib"),
                     ]
 
                     getLogger().lifecycle("extract libs nested in the following jars ${Arrays.toString(jarNestedLibs)}")
@@ -498,8 +518,9 @@ subprojects {
                         Files.copy(inJar, extractedLibs.resolve(inJar.getFileName().toString()), StandardCopyOption.REPLACE_EXISTING)
                     }
 
-                    getLogger().lifecycle("Signing native libs dir")
-                    for (File f : distImage.getImageDir().toPath().resolve("Contents").resolve("native").toFile().listFiles() + additionalLibs + extractedLibs.toFile().listFiles()) {
+                    getLogger().lifecycle("Signing native libs dirs")
+                    /*distImage.getImageDir().toPath().resolve("Contents").resolve("native").toFile().listFiles() + */
+                    for (File f :  extractedLibs.toFile().listFiles() + additionalLibs) {
                         getLogger().lifecycle("Signing native lib '$f'")
                         project.exec {
                             commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
