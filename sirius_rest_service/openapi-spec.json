@@ -1786,7 +1786,7 @@
           "200": {
             "description": "Probably modified name of the config (to ensure filesystem path compatibility).",
             "content": {
-              "application/json": {
+              "text/plain": {
                 "schema": {
                   "type": "string"
                 }
