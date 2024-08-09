@@ -171,10 +171,10 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
                             splash.setVisible(false);
                             splash.dispose();
                         }
+                        Jobs.runEDTLater(() -> Thread.currentThread().setPriority(9));
                     } else {
                         log.info("No GUI service found. Skipping GUI startup, likely due to headless mode!");
                     }
-                    Jobs.runEDTLater(() -> Thread.currentThread().setPriority(9));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
