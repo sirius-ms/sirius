@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.backgroundruns;
 
 import com.googlecode.concurentlocks.ReadWriteUpdateLock;
 import com.googlecode.concurentlocks.ReentrantReadWriteUpdateLock;
+import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.Run;
@@ -287,7 +288,10 @@ public final class BackgroundRuns {
                 if (instances != null)
                     instances.forEach(i -> computingInstances.add(i.getId()));
                 log.info("...All instances locked!");
-                Jobs.submit(runToSubmit, runToSubmit::getName, psm::getName, runToSubmit::getDescription);
+                if (SiriusJobs.getGlobalJobManager() instanceof SwingJobManager) //todo hacky. get rid of this swing job dependency by solving job progress via api
+                    Jobs.submit(runToSubmit, runToSubmit::getName, psm::getName, runToSubmit::getDescription);
+                else
+                    SiriusJobs.getGlobalJobManager().submitJob(runToSubmit);
                 return runToSubmit;
             } catch (Exception e) {
                 // just in case something goes wrong during submission, then  we do not want to have locked instances
