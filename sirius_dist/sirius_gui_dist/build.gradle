@@ -156,9 +156,7 @@ distributions {
     sirius {
         contents {
             into('app') {
-                from("${getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getParent()}"){
-                    include "*-boot.jar"
-                }
+                from(getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile)
             }
             if (siriusTargetPlatform.isWin()) {
                 from startScripts
