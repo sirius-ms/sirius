@@ -7,9 +7,9 @@ version =  siriusVersion
 application {
     mainClass = "de.unijena.bioinf.lcms.TestMain"
     applicationDefaultJvmArgs = ['-Xms2G',
-                                 '-XX:MaxRAMPercentage=75',
+                                 '-XX:MaxRAMPercentage=60',
+                                 '-XX:+UseStringDeduplication',
 //                                 '-XX:+UseG1GC',
-//                                 '-XX:+UseStringDeduplication',
 //                                 '-XX:+UseZGC',
 //                                 '-XX:+ZGenerational',
                                  '-XX:+ExitOnOutOfMemoryError']

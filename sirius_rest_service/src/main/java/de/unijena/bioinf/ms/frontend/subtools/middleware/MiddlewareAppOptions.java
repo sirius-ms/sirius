@@ -32,8 +32,10 @@ import de.unijena.bioinf.ms.middleware.service.gui.GuiService;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.SiriusProjectSpaceInstance;
-import lombok.Getter;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 import java.io.IOException;
@@ -43,6 +45,7 @@ import java.util.Optional;
 
 import static de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX;
 
+@Slf4j
 @CommandLine.Command(name = "service", aliases = {"rest", "REST"}, description = "@|bold <STANDALONE>|@ Starts SIRIUS as a background (REST) service that can be requested via a REST-API. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true)
 public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implements StandaloneTool<MiddlewareAppOptions<I>.Flow> {
     @Setter
@@ -70,16 +73,56 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
 
     }
 
-    @CommandLine.Option(names = {"--stableDocOnly"}, description = "Show only the stable und non deprecated api endpoints in swagger gui and openapi spec.", hidden = true, defaultValue = "false")
+    public enum ApiDocMode{STABLE, BASIC, STABLE_ADVANCED, ADVANCED }
+    private final static String STABLE_EXCLUSIONS = "/api/projects/*/aligned-features/*/formulas/*/sirius-fragtree,/api/projects/*/jobs/run-command,/api/projects/*/import/ms-data-local-files-job,/api/projects/*/import/ms-local-data-files,/api/projects/*/import/preprocessed-local-data-files-job,/api/projects/*/import/preprocessed-local-data-files,/api/projects/*/copy,/api/databases/*/import/from-files-job,/api/databases/*/import/from-files-job";
+    @CommandLine.Option(names = {"--api-doc-mode","--stableDocOnly"}, description = "Show only the stable und non deprecated api endpoints in swagger gui and openapi spec.", hidden = true)
     private void setStableDocOnly(boolean stableDocOnly) {
         if (stableDocOnly)
-            System.setProperty("springdoc.pathsToExclude", "/api/projects/*/aligned-features/*/formulas/*/sirius-fragtree,/api/projects/*/jobs/run-command,/api/projects/*/import/ms-data-local-files-job,/api/projects/*/import/ms-local-data-files,/api/projects/*/import/preprocessed-local-data-files-job,/api/projects/*/import/preprocessed-local-data-files,/api/projects/*/copy,/api/databases/*/import/from-files-job,/api/databases/*/import/from-files-job");
+            setApiDocMode(ApiDocMode.STABLE);
     }
 
+    @CommandLine.Option(names = {"--api-mode"}, description = "Specify api endpoints shown in swagger gui and openapi spec.", hidden = true)
+    private void setApiDocMode(ApiDocMode apiDocMode) {
+        switch (apiDocMode) {
+            case STABLE -> {
+                System.setProperty("sirius.middleware.controller.gui.advanced", "false");
+                System.setProperty("springdoc.pathsToExclude", STABLE_EXCLUSIONS);
+            }
+            case BASIC -> {
+                System.setProperty("sirius.middleware.controller.gui.advanced", "false");
+                System.getProperties().remove("springdoc.pathsToExclude");
+            }
+            case STABLE_ADVANCED -> {
+                System.setProperty("sirius.middleware.controller.gui.advanced", "true");
+                System.setProperty("springdoc.pathsToExclude", STABLE_EXCLUSIONS);
+            }
+            case ADVANCED -> {
+                System.setProperty("sirius.middleware.controller.gui.advanced", "true");
+                System.getProperties().remove("springdoc.pathsToExclude");
+            }
+        }
+    }
 
-    @CommandLine.Option(names = {"--gui", "-g"}, description = "Start GUI on specified project or on temporary project otherwise.")
-    @Getter
-    private boolean startGui;
+    public boolean isStartGui() {
+        return guiSupport.startGui;
+    }
+
+    public boolean isHeadless() {
+        return guiSupport.headless;
+    }
+
+    @CommandLine.ArgGroup
+    private GuiSupport guiSupport = new GuiSupport(false, false);
+
+    @NoArgsConstructor
+    @AllArgsConstructor
+    private static class GuiSupport {
+        @CommandLine.Option(names = {"--gui", "-g"}, description = "Start GUI on specified project or on temporary project otherwise.")
+        private boolean startGui;
+
+        @CommandLine.Option(names = {"--headless"}, description = {"Enforce headless or gui mode (default) for SIRIUS service.", "Headless mode Prevents loading features that are not available on headless systems. This is usually auto-detected but in case this gives not the expected behavior this parameter can be used to enforce it."}, defaultValue = "false", order = 1000, negatable = true)
+        private boolean headless;
+    }
 
     @Override
     public Flow makeWorkflow(RootOptions<?> rootOptions, ParameterConfig config) {
@@ -120,12 +163,16 @@ public class MiddlewareAppOptions<I extends SiriusProjectSpaceInstance> implemen
                                 EnumSet.noneOf(ProjectInfo.OptField.class), false);
                     }
 
-                    if (isStartGui())
-                        guiService.createGuiInstance(startPs.getProjectId());
+                    if (guiService != null) {
+                        if (isStartGui())
+                            guiService.createGuiInstance(startPs.getProjectId());
 
-                    if (splash != null) {
-                        splash.setVisible(false);
-                        splash.dispose();
+                        if (splash != null) {
+                            splash.setVisible(false);
+                            splash.dispose();
+                        }
+                    } else {
+                        log.info("No GUI service found. Skipping GUI startup, likely due to headless mode!");
                     }
                     Jobs.runEDTLater(() -> Thread.currentThread().setPriority(9));
                 } catch (IOException e) {

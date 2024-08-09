@@ -11,11 +11,14 @@ import javafx.scene.web.WebView;
 import lombok.SneakyThrows;
 import netscape.javascript.JSObject;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class LCMSWebview extends JFXPanel {
 
@@ -47,17 +50,11 @@ public class LCMSWebview extends JFXPanel {
                 this.webView.getEngine().setUserStyleSheetLocation(
                         getClass().getResource("/js/" + "styles-dark.css").toExternalForm());
             }
-//            System.out.println("A");
             setScene(new Scene(webView));
-//            System.out.println("B");
             final String htmlContent = getHTMLContent();
-//            System.out.println("C");
             webView.getEngine().setJavaScriptEnabled(true);
-//            System.out.println("D");
             webView.getEngine().loadContent(htmlContent,"text/html");
-//            System.out.println("E");
             webView.getEngine().getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
-//                System.out.println(oldState + " -> " + newState);
                 if (newState == Worker.State.SUCCEEDED) {
                     webView.getEngine().executeScript(loadJs());
                     lock.lock();
@@ -71,7 +68,6 @@ public class LCMSWebview extends JFXPanel {
                     delayAfterHTMLLoading.forEach(x->x.accept(this.lcmsViewer));
                     delayAfterHTMLLoading.clear();
                     lock.unlock();
-                    System.out.println(lcmsViewer);
                 }
             });
         });
@@ -112,14 +108,26 @@ public class LCMSWebview extends JFXPanel {
 
     @SneakyThrows
     private String getHTMLContent() {
-        return Files.readString(Paths.get(LCMSWebview.class.getResource("/js/lcms_viewer/index.html").toURI()));
+        return readResource("/js/lcms_viewer/index.html");
+    }
+
+    @SneakyThrows
+    private String readResource(String name) {
+        ArrayList<String> document = new ArrayList<>();
+        try (final BufferedReader r = new BufferedReader(new InputStreamReader(LCMSWebview.class.getResourceAsStream(name)))) {
+            String line = null;
+            while ((line=r.readLine())!=null) {
+                document.add(line);
+            }
+        }
+        return document.stream().collect(Collectors.joining("\n"));
     }
 
     @SneakyThrows
     private String loadJs() {
-        return Files.readString(Paths.get(LCMSWebview.class.getResource("/js/lcms_viewer/d3.v7.min.js").toURI()))
+        return readResource("/js/lcms_viewer/d3.v7.min.js")
                 + "\n" +
-                Files.readString(Paths.get(LCMSWebview.class.getResource("/js/lcms_viewer/lcms.js").toURI()));
+                readResource("/js/lcms_viewer/lcms.js");
     }
 
     public void reset() {

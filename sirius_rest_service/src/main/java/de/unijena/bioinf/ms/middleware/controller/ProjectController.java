@@ -133,7 +133,7 @@ public class ProjectController {
      * Possible formats (mzML, mzXML)
      *
      * @param projectId    Project-space to import into.
-     * @param allowMs1Only Import data without MS/MS.
+     * @param inputFiles   Files to import into project.
      * @param parameters   Parameters for feature alignment and feature finding.
      * @param optFields    Set of optional fields to be included. Use 'none' only to override defaults.
      * @return the import job.
@@ -142,14 +142,12 @@ public class ProjectController {
     public Job importMsRunDataAsJob(@PathVariable String projectId,
                                     @RequestBody MultipartFile[] inputFiles,
                                     LcmsSubmissionParameters parameters,
-                                    @RequestParam(defaultValue = "true") boolean allowMs1Only,
                                     @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) {
         Project<?> p = projectsProvider.getProjectOrThrow(projectId);
         try {
             ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
             sub.setInputSources(List.of(inputFiles));
-            sub.setAllowMs1OnlyData(allowMs1Only);
             sub.setLcmsParameters(parameters);
             sub.consumeResources(); //consume multipart resource withing this thread because its gone when moved to background thread.
             return computeService.createAndSubmitMsDataImportJob(p, sub, removeNone(optFields));
@@ -164,18 +162,15 @@ public class ProjectController {
      *
      * @param projectId    Project-space to import into.
      * @param inputFiles   Files to import into project.
-     * @param allowMs1Only Import data without MS/MS.
      * @param parameters   Parameters for feature alignment and feature finding.
      */
     @PostMapping(value = "/{projectId}/import/ms-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ImportResult importMsRunData(@PathVariable String projectId,
                                         @RequestBody MultipartFile[] inputFiles,
-                                        LcmsSubmissionParameters parameters,
-                                        @RequestParam(defaultValue = "true") boolean allowMs1Only
+                                        LcmsSubmissionParameters parameters
     ) {
         ImportMultipartFilesSubmission sub = new ImportMultipartFilesSubmission();
         sub.setInputSources(List.of(inputFiles));
-        sub.setAllowMs1OnlyData(allowMs1Only);
         sub.setLcmsParameters(parameters);
         return projectsProvider.getProjectOrThrow(projectId).importMsRunData(sub);
     }
@@ -193,10 +188,10 @@ public class ProjectController {
      * DEPRECATED: This endpoint relies on the local filesystem and will likely be removed in later versions of this
      * API to allow for more flexible use cases. Use 'ms-data-files-job' instead.
      *
-     * @param projectId    Project-space to import into.
-     * @param allowMs1Only Import data without MS/MS.
-     * @param parameters   Parameters for feature alignment and feature finding.
-     * @param optFields    Set of optional fields to be included. Use 'none' only to override defaults.
+     * @param projectId      Project-space to import into.
+     * @param localFilePaths Local files to import into project.
+     * @param parameters     Parameters for feature alignment and feature finding.
+     * @param optFields      Set of optional fields to be included. Use 'none' only to override defaults.
      * @return the import job.
      */
     @Deprecated(forRemoval = true)
@@ -204,14 +199,12 @@ public class ProjectController {
     public Job importMsRunDataAsJobLocally(@PathVariable String projectId,
                                            @RequestBody String[] localFilePaths,
                                            LcmsSubmissionParameters parameters,
-                                           @RequestParam(defaultValue = "true") boolean allowMs1Only,
                                            @RequestParam(defaultValue = "progress") EnumSet<Job.OptField> optFields
     ) {
         Project<?> p = projectsProvider.getProjectOrThrow(projectId);
         try {
             ImportLocalFilesSubmission sub = new ImportLocalFilesSubmission();
             sub.setInputSources(List.of(localFilePaths));
-            sub.setAllowMs1OnlyData(allowMs1Only);
             sub.setLcmsParameters(parameters);
             return computeService.createAndSubmitMsDataImportJob(p, sub, removeNone(optFields));
         } catch (Exception e) {
@@ -232,20 +225,17 @@ public class ProjectController {
      * API to allow for more flexible use cases. Use 'ms-data-files' instead.
      *
      * @param projectId      Project to import into.
-     * @param localFilePaths Local files to import into project
-     * @param allowMs1Only Import data without MS/MS.
-     * @param parameters   Parameters for feature alignment and feature finding.
+     * @param localFilePaths Local files to import into project.
+     * @param parameters     Parameters for feature alignment and feature finding.
      */
     @Deprecated(forRemoval = true)
     @PostMapping(value = "/{projectId}/import/ms-local-data-files", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ImportResult importMsRunDataLocally(@PathVariable String projectId,
                                                @RequestBody String[] localFilePaths,
-                                               LcmsSubmissionParameters parameters,
-                                               @RequestParam(defaultValue = "true") boolean allowMs1Only
-                                               ) {
+                                               LcmsSubmissionParameters parameters
+    ) {
         ImportLocalFilesSubmission sub = new ImportLocalFilesSubmission();
         sub.setInputSources(List.of(localFilePaths));
-        sub.setAllowMs1OnlyData(allowMs1Only);
         sub.setLcmsParameters(parameters);
         return projectsProvider.getProjectOrThrow(projectId).importMsRunData(sub);
     }

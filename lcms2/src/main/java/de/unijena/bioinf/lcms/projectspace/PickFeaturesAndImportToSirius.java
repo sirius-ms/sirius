@@ -79,7 +79,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
     }
 
     @Override
-    public AlignedFeatures[] importMergedTrace(TraceSegmentationStrategy traceSegmenter, SiriusDatabaseAdapter adapter, DbMapper dbMapper, ProcessedSample mergedSample, MergedTrace mergedTrace, boolean allowMs1Only) throws IOException {
+    public AlignedFeatures[] importMergedTrace(TraceSegmentationStrategy traceSegmenter, SiriusDatabaseAdapter adapter, DbMapper dbMapper, ProcessedSample mergedSample, MergedTrace mergedTrace) throws IOException {
         // import each individual trace
         MergeTraceId tid = importMergedTraceWithoutIsotopes(adapter, dbMapper, mergedTrace);
         // now import isotopes
@@ -88,14 +88,14 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
             isotopes[k] = importMergedTraceWithoutIsotopes(adapter, dbMapper, mergedTrace.getIsotopes()[k]);
         }
         // now extract the compounds
-        AlignedFeatures[] features = extractCompounds(traceSegmenter, adapter, dbMapper, mergedSample, mergedTrace, tid, isotopes, allowMs1Only);
+        AlignedFeatures[] features = extractCompounds(traceSegmenter, adapter, dbMapper, mergedSample, mergedTrace, tid, isotopes);
         if (features.length == 0) {
             removeMergedTrace(adapter, tid, isotopes);
         }
         return features;
     }
 
-    private AlignedFeatures[] extractCompounds(TraceSegmentationStrategy traceSegmenter, SiriusDatabaseAdapter adapter, DbMapper dbMapper, ProcessedSample mergedSample, MergedTrace mergedTrace, MergeTraceId dbId, MergeTraceId[] dbIsotopeIds, boolean allowMs1Only) {
+    private AlignedFeatures[] extractCompounds(TraceSegmentationStrategy traceSegmenter, SiriusDatabaseAdapter adapter, DbMapper dbMapper, ProcessedSample mergedSample, MergedTrace mergedTrace, MergeTraceId dbId, MergeTraceId[] dbIsotopeIds) {
         // first we use segmentation to split the trace into segments
         // when then apply this segments to all traces and isotopes
         TraceSegment[] traceSegments = segmentationStrategy.extractMergedSegments(traceSegmenter, mergedSample, mergedTrace);
@@ -169,10 +169,6 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         // store feature
         for (int i = 0; i < features.length; i++) {
             if (features[i]==null) continue;
-            if (!allowMs1Only && !features[i].isHasMsMs()) {
-                features[i] = null;
-                continue;
-            }
             try {
                 if (!adapter.importAlignedFeature(features[i])) features[i] = null;
             } catch (IOException e) {
@@ -236,14 +232,14 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
             MergedTrace isotope = mergedTraceParent.getIsotopes()[isotopePeak];
             // we have multiple options here, we can just keep the segments we have from monoisotopic, or we again
             // use microalignments. I would first go for keeping the segments and see how it goes.
-            for (int traceIndex=0; traceIndex < traceSegmentsParent.length; ++traceIndex) {
-                if (featuresParent[traceIndex]==null) continue;
+            for (int segmentIndex=0; segmentIndex < traceSegmentsParent.length; ++segmentIndex) {
+                if (featuresParent[segmentIndex]==null) continue;
                 // check if there IS something in this segment
-                TraceSegment s = traceSegmentsParent[traceIndex];
+                TraceSegment mergedSegment = traceSegmentsParent[segmentIndex];
                 double sum=0d;
-                int adjustedMergedApex = s.apex;
+                int adjustedMergedApex = mergedSegment.apex;
                 double apexInt = Double.NEGATIVE_INFINITY;
-                for (int i=s.leftEdge; i <= s.rightEdge; ++i) {
+                for (int i=mergedSegment.leftEdge; i <= mergedSegment.rightEdge; ++i) {
                     if (isotope.inRange(i)) {
                         sum += isotope.intensity(i);
                         if (isotope.intensity(i)>apexInt) {
@@ -253,18 +249,18 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                     }
                 }
 
-                if (sum >= stats.noiseLevel(s.apex)) {
+                if (sum >= stats.noiseLevel(mergedSegment.apex)) {
                     // generate isotope segment
                     AlignedIsotopicFeatures iso = new AlignedIsotopicFeatures();
                     iso.setFeatures(new ArrayList<>());
-                    final TraceSegment t = new TraceSegment(adjustedMergedApex, Math.max(isotope.startId(), s.leftEdge), Math.min(isotope.endId(), s.rightEdge));
+                    final TraceSegment t = new TraceSegment(adjustedMergedApex, Math.max(isotope.startId(), mergedSegment.leftEdge), Math.min(isotope.endId(), mergedSegment.rightEdge));
                     if (t.rightEdge-t.leftEdge<=1) continue;
                     {
                         int o=isotope.startId();
                         iso.setTraceRef(new TraceRef(dbIsotopeIds[isotopePeak].mergeTrace, o, t.leftEdge-o, adjustedMergedApex-o, t.rightEdge-o));
                     }
-                    featuresParent[traceIndex].getIsotopicFeatures().get().add(iso);
-                    setGenericAttributes(isotope, t, adjustedMergedApex, iso, featuresParent[traceIndex].getCharge(), mergedSample, mergedSample);
+                    featuresParent[segmentIndex].getIsotopicFeatures().get().add(iso);
+                    setGenericAttributes(isotope, t, adjustedMergedApex, iso, featuresParent[segmentIndex].getCharge(), mergedSample, mergedSample);
 
                     double weightedAverageIntensity = 0d;
                     double weighting = 0d;
@@ -279,12 +275,17 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                             continue;
                         }
 
-                        TraceSegment projectedSegment = projectedSegmentsParent[parentSampleIndex][traceIndex];
+                        TraceSegment projectedSegment = projectedSegmentsParent[parentSampleIndex][segmentIndex];
                         ProjectedTrace subTrace = isotope.getTraces()[isotopeSampleIndex];
                         ProcessedSample subSample = isotope.getSamples()[isotopeSampleIndex];
-                        if (projectedSegment!=null) {
-
-                            projectedSegment = new TraceSegment(projectedSegment.apex, Math.max(subTrace.getProjectedStartId(), s.leftEdge), Math.min(subTrace.getProjectedEndId(), s.rightEdge));
+                        // mergedSegment is the part of the merged trace that we are looking at currently
+                        // projectedSegment is the part of the RAW trace that belongs to the current sample and mergedSegment
+                        // subTrace is the part of the RAW trace of the ISOTOPE that belongs to the current sample and mergedSegment
+                        // basically we say here that:
+                        // - we only look for an isotope in sample X if we also see the monoisotopic peak in sample X
+                        // - also, the trace of the isotope has to overlap with merged segment of the monoisotopic peak
+                        if (projectedSegment!=null && projectedSegment.overlaps(mergedSegment) && projectedSegment.overlaps(subTrace.projected(isotope.getMapping()))) {
+                            projectedSegment = new TraceSegment(Math.max(subTrace.getProjectedStartId(), projectedSegment.leftEdge), Math.max(subTrace.getProjectedStartId(), projectedSegment.leftEdge), Math.min(subTrace.getProjectedEndId(), projectedSegment.rightEdge));
 
                             int adjApexProj=0;
                             double apexIntensity = Double.NEGATIVE_INFINITY;
@@ -310,7 +311,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                             int newRawApex = getAdjustedApex(subTrace.raw(subSample.getMapping()), from, to);
                             int off = subTrace.getRawStartId();
                             int off2 = subTrace.getProjectedStartId();
-                            setGenericAttributes(subTrace.projected(mergedSample.getMapping()), projectedSegment, newRawApex, feature, featuresParent[traceIndex].getCharge(), subSample, mergedSample);
+                            setGenericAttributes(subTrace.projected(mergedSample.getMapping()), projectedSegment, newRawApex, feature, featuresParent[segmentIndex].getCharge(), subSample, mergedSample);
                             feature.setTraceRef(new RawTraceRef(
                                     dbIsotopeIds[isotopePeak].rawTraces[isotopeSampleIndex],
                                     off2,
@@ -324,7 +325,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                                     ));
 
                             // add intensity to isotope peak
-                            final int originalApex = projectedSegmentsParent[parentSampleIndex][traceIndex].apex;
+                            final int originalApex = projectedSegmentsParent[parentSampleIndex][segmentIndex].apex;
                             float peakIntensity, parentIntensity;
                             if (mergedTraceParent.getTraces()[parentSampleIndex].inProjectedRange(adjApexProj) && subTrace.inProjectedRange(originalApex)) {
                                 peakIntensity = subTrace.projectedIntensity(adjApexProj) + subTrace.projectedIntensity(originalApex);
@@ -343,7 +344,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                     }
                     if (weighting>0) {
                         weightedAverageIntensity /= weighting;
-                        isotopePatterns[traceIndex].addPeak(isotope.averagedMz(), weightedAverageIntensity);
+                        isotopePatterns[segmentIndex].addPeak(isotope.averagedMz(), weightedAverageIntensity);
                     }
 
                 }

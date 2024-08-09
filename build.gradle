@@ -106,14 +106,13 @@ ext {
 
     //locations of runtime libraries
     //jre path relative tu app home
-    jre_path = 'zulu'
     lib_path = 'lib'
     native_path = 'native'
 
     libDir = project.findProperty("build.sirius.location.lib")
     System.out.println("----> LibDir: " + libDir)
-    includeJreFX = Boolean.parseBoolean((project.findProperty("build.sirius.starter.jdk.include") ?: "false") as String)
-    System.out.println("----> includeJreFX:  ${includeJreFX} | ${project.findProperty("build.sirius.starter.jdk.include")}")
+    includeRuntime = Boolean.parseBoolean((project.findProperty("build.sirius.starter.jdk.include") ?: "true") as String)
+    System.out.println("----> includeRuntime:  ${includeRuntime} | ${project.findProperty("build.sirius.starter.jdk.include")}")
     launch4jJDKPath = project.findProperty("build.sirius.starter.jdk.location")
     System.out.println("----> launch4jJDKPath:  ${launch4jJDKPath}")
     excludeCbcNative = project.findProperty("build.sirius.native.cbc.exclude")
@@ -133,7 +132,6 @@ project.ext.set("distPath", file('dist').absolutePath)
 
 
 allprojects {
-    apply plugin: 'com.jfrog.artifactory'
     apply plugin: 'java'
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
@@ -289,6 +287,32 @@ subprojects {
                     }
                 }
             }
+
+            repositories {
+                maven {
+                    url = project.findProperty("io.sirius-ms.build.artifactory.url") as String
+                    name "GitLab"
+                    if (System.getenv("CI_JOB_TOKEN") != null) {
+                        credentials(HttpHeaderCredentials) {
+                            name = "Job-Token"
+                            value = System.getenv("CI_JOB_TOKEN")
+                        }
+                        authentication {
+                            header(HttpHeaderAuthentication)
+                        }
+                    }else{
+                        credentials(PasswordCredentials) {
+                            username = project.findProperty("io.sirius-ms.build.artifactory.username") as String
+                            password = project.findProperty("io.sirius-ms.build.artifactory.token") as String
+                            // the variable resides in $GRADLE_USER_HOME/gradle.properties
+                            // https://docs.gradle.org/current/userguide/directory_layout.html#dir:gradle_user_home
+                        }
+                        authentication {
+                            basic(BasicAuthentication)
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -400,23 +424,3 @@ tasks.register('refreshReadMe') {
 }
 refreshReadMe.dependsOn refreshTrainingLinks
 refreshReadMe.dependsOn refreshDownloadLinks
-
-// publication artifactory
-artifactory {
-    contextUrl = 'https://bio.informatik.uni-jena.de/repository/'
-    publish {
-        repository {
-            repoKey = "${project.version.toString().endsWith('-SNAPSHOT') ? 'dist-snapshot-local' : 'dist-release-local'}"
-            username = project.findProperty('de.unijena.bioinf.build.artifactory.username')
-            password = project.findProperty('de.unijena.bioinf.build.artifactory.password')
-        }
-        defaults {
-            //Publish every distribution to Artifactory
-            publications("siriusMS")
-            publications("manual")
-        }
-    }
-}
-
-artifactoryPublish.dependsOn 'refreshDownloadLinks'
-artifactoryPublish.dependsOn 'refreshReadMe'
