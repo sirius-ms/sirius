@@ -21,10 +21,7 @@ package de.unijena.bioinf.ms.middleware;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.fingerid.fingerprints.cache.IFingerprinterCache;
-import de.unijena.bioinf.jjobs.JJob;
-import de.unijena.bioinf.jjobs.JobManager;
-import de.unijena.bioinf.jjobs.JobSubmitter;
-import de.unijena.bioinf.jjobs.ProgressJJob;
+import de.unijena.bioinf.jjobs.*;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.ToolChainJob;
 import de.unijena.bioinf.ms.frontend.workflow.InstanceBufferFactory;
@@ -104,18 +101,23 @@ public class SiriusContext{
     }
 
     @Bean
-    public InstanceBufferFactory<?> instanceBufferFactory() {
-        return (bufferSize, instances, tasks, dependJob, progressSupport) ->
-                new SimpleInstanceBuffer(bufferSize, instances, tasks, dependJob, progressSupport, new JobSubmitter() {
-                    @Override
-                    public <Job extends JJob<Result>, Result> Job submitJob(Job j) {
-                        if (j instanceof ToolChainJob<?> tj) {
-                            Jobs.submit((ProgressJJob<?>) j, j::identifier, tj::getProjectName, tj::getToolName);
-                            return j;
-                        } else {
-                            return Jobs.MANAGER().submitJob(j);
+    public InstanceBufferFactory<?> instanceBufferFactory(JobManager jobManager) {
+        //todo hacky. get rid of this swing job dependency by solving job progress via api
+        if (jobManager instanceof SwingJobManager) {
+            return (bufferSize, instances, tasks, dependJob, progressSupport) ->
+                    new SimpleInstanceBuffer(bufferSize, instances, tasks, dependJob, progressSupport, new JobSubmitter() {
+                        @Override
+                        public <Job extends JJob<Result>, Result> Job submitJob(Job j) {
+                            if (j instanceof ToolChainJob<?> tj) {
+                                Jobs.submit((ProgressJJob<?>) j, j::identifier, tj::getProjectName, tj::getToolName);
+                                return j;
+                            } else {
+                                return Jobs.MANAGER().submitJob(j);
+                            }
                         }
-                    }
-                });
+                    });
+        }else {
+           return new SimpleInstanceBuffer.Factory();
+        }
     }
 }
