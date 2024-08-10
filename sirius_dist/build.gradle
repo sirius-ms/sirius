@@ -498,48 +498,48 @@ subprojects {
                     try (def bootJarFs = FileSystems.newFileSystem(bootJar)) {
                         for (def inJar : Files.list(bootJarFs.getPath("/BOOT-INF/lib/")).toList()) {
 
-                            def copiedInJar = extractedJars.resolve(inJar.getFileName().toString())
+                            Path copiedInJar = extractedJars.resolve(inJar.getFileName())
                             Files.copy(inJar, copiedInJar, StandardCopyOption.REPLACE_EXISTING)
 
                             try (def inJarFs = FileSystems.newFileSystem(inJar, [:])) {
                                 Files.walk(inJarFs.getPath("/"))
                                         .filter { inLib -> inLib.toString().toLowerCase().endsWith(".dylib") || inLib.toString().toLowerCase().endsWith(".jnilib") }
                                         .forEach { inLib ->
-                                            Path copiedInLib = extractedLibs.resolve(inLib.getFileName().toString())
+                                            Path copiedInLib = extractedLibs.resolve(inLib.getFileName())
                                             Files.copy(inLib, copiedInLib, StandardCopyOption.REPLACE_EXISTING)
-                                            getLogger().lifecycle("Signing native libs: " + inLib.getFileName().toString())
+                                            getLogger().lifecycle("Signing native libs: " + inLib.getFileName())
                                             project.exec {
                                                 commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
-                                                             "${copiedInLib.getAbsolutePath()}"])
+                                                             "${copiedInLib.toFile().getAbsolutePath()}"])
                                             }
                                             Files.copy(copiedInLib, inLib, StandardCopyOption.REPLACE_EXISTING)
                                             Files.delete(copiedInLib)
                                         }
                             }
-                            getLogger().lifecycle("Signing nested jars: " + inJar.getFileName().toString())
+                            getLogger().lifecycle("Signing nested jars: " + inJar.getFileName())
                             project.exec {
                                 commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
-                                             "${copiedInJar.getAbsolutePath()}"])
+                                             "${copiedInJar.toFile().getAbsolutePath()}"])
                             }
                             Files.copy(copiedInJar, inJar, StandardCopyOption.REPLACE_EXISTING)
                             Files.delete(copiedInJar)
                         }
                     }
-                    getLogger().lifecycle("Signing boot jar: " + bootJar.getFileName().toString())
+                    getLogger().lifecycle("Signing boot jar: " + bootJar.getFileName())
                     project.exec {
                         commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
-                                     "${bootJar.getAbsolutePath()}"])
+                                     "${bootJar.toFile().getAbsolutePath()}"])
                     }
 
                     getLogger().lifecycle("Signing .additional libs")
                     for (def addLib : additionalLibs) {
                         if (Files.exists(addLib)) {
-                            def copiedAddLib = extractedJars.resolve(addLib.getFileName().toString())
+                            def copiedAddLib = extractedLibs.resolve(addLib.getFileName())
                             Files.copy(addLib, copiedAddLib, StandardCopyOption.REPLACE_EXISTING)
-                            getLogger().lifecycle("Signing additional lib: " + addLib.getFileName().toString())
+                            getLogger().lifecycle("Signing additional lib: " + addLib.getFileName())
                             project.exec {
                                 commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
-                                             "${copiedAddLib.getAbsolutePath()}"])
+                                             "${copiedAddLib.toFile().getAbsolutePath()}"])
                             }
                             Files.copy(copiedAddLib, addLib, StandardCopyOption.REPLACE_EXISTING)
                             Files.delete(copiedAddLib)
