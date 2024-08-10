@@ -534,7 +534,7 @@ subprojects {
                             }
                             getLogger().lifecycle("Signing nested jars: " + inJar.getFileName().toString())
                             project.exec {
-                                commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
+                                commandLine(["codesign", "--timestamp", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
                                              "${copiedInJar.toFile().getAbsolutePath()}"])
                             }
                             Files.copy(copiedInJar, inJar, StandardCopyOption.REPLACE_EXISTING)
@@ -544,18 +544,18 @@ subprojects {
                     getLogger().lifecycle("")
                     getLogger().lifecycle("Signing boot jar: " + bootJar.getFileName().toString())
                     project.exec {
-                        commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
+                        commandLine(["codesign", "--timestamp", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
                                      "${bootJar.toFile().getAbsolutePath()}"])
                     }
 
-                    /*getLogger().lifecycle("")
+                    getLogger().lifecycle("")
                     getLogger().lifecycle("Crawl and sign runtime...")
                     Files.walk(distImage.getImageDir().toPath().resolve("Contents/runtime"))
                             .filter { lib -> lib.toString().toLowerCase().endsWith(".dylib") }
                             .forEach {lib ->
                                 getLogger().lifecycle("  Signing runtime lib: " + lib.toFile().getName())
                                 project.exec {
-                                    commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
+                                    commandLine(["codesign", "--timestamp", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
                                                  "${lib.toFile().getAbsolutePath()}"])
                                 }
                             }
@@ -567,15 +567,16 @@ subprojects {
                         if (addLib.exists()) {
                             getLogger().lifecycle("  Signing lib: " + addLib.getName())
                             project.exec {
-                                commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
+                                commandLine(["codesign", "--timestamp", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
                                              "${addLib.getAbsolutePath()}"])
                             }
                         }
-                    }*/
+                    }
+
                     getLogger().lifecycle("")
                     getLogger().lifecycle("Signing .app dir: ${distImage.getImageDir().getAbsolutePath()}")
                     project.exec {
-                        commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
+                        commandLine(["codesign", "--timestamp", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
                                      "${distImage.getImageDir()}"])
                     }
                 } else {
