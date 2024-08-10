@@ -694,11 +694,13 @@ subprojects {
                                      "--password", "${appleIdPw}", "${pkg}"])
                         standardOutput so
                         errorOutput    eo
+                    }
+                    uuid = (so.toString().split(System.lineSeparator()) as List).stream().filter({ s -> s.contains("id: ") }).findFirst() map({ s -> s.split(":")[1].strip() }).orElseThrow()
+                    getLogger().lifecycle("Submitted Notarization Job with RequestUUID: $uuid")
 
-                        doLast{
-                            uuid = (so.toString().split(System.lineSeparator()) as List).stream().filter({ s -> s.contains("id: ") }).findFirst() map({ s -> s.split(":")[1].strip() }).orElseThrow()
-                            getLogger().lifecycle("Submitted Notarization Job with RequestUUID: $uuid")
-                        }
+                    int returnCode = execResult.getExitValue()
+                    if (returnCode != 0) {
+                        throw new GradleException("Error ${returnCode} during notarization.")
                     }
 
                     getLogger().lifecycle("Requesting Log of $uuid...")
@@ -707,13 +709,13 @@ subprojects {
                                      "--password", "${appleIdPw}",  "$uuid"])
                     }
 
-                    int returnCode = execResult.getExitValue()
+                    returnCode = execResult.getExitValue()
                     if (returnCode != 0) {
-                        throw new GradleException("Error ${returnCode} during notarization.")
+                        throw new GradleException("Error ${returnCode} during notarization log request.")
                     }
 
-                    getLogger().lifecycle("Stapling  $pkg...")
 
+                    getLogger().lifecycle("Stapling  $pkg...")
                     execResult = exec {
                         commandLine(["xcrun", "stapler", "staple", "${pkg}"])
                     }
