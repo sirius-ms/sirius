@@ -686,10 +686,27 @@ subprojects {
 
                     getLogger().lifecycle("Notarizing $pkg...")
 
+                    String uuid = null
+                    def so =new ByteArrayOutputStream()
+                    def eo =new ByteArrayOutputStream()
                     ExecResult execResult = exec {
                         commandLine(["xcrun", "notarytool", "submit", "--wait", "--apple-id", "${appleId}", "--team-id", "${teamId}",
                                      "--password", "${appleIdPw}", "${pkg}"])
+                        standardOutput so
+                        errorOutput    eo
+
+                        doLast{
+                            uuid = (so.toString().split(System.lineSeparator()) as List).stream().filter({ s -> s.contains("id: ") }).findFirst() map({ s -> s.split(":")[1].strip() }).orElseThrow()
+                            getLogger().lifecycle("Submitted Notarization Job with RequestUUID: $uuid")
+                        }
                     }
+
+                    getLogger().lifecycle("Requesting Log of $uuid...")
+                    execResult = exec {
+                        commandLine(["xcrun", "notarytool", "log", "--apple-id", "${appleId}", "--team-id", "${teamId}",
+                                     "--password", "${appleIdPw}",  "$uuid"])
+                    }
+
                     int returnCode = execResult.getExitValue()
                     if (returnCode != 0) {
                         throw new GradleException("Error ${returnCode} during notarization.")
