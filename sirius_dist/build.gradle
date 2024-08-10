@@ -675,7 +675,7 @@ subprojects {
                 def appleIdPw = project.findProperty('de.unijena.bioinf.build.MACOS_APPLE_ID_PW')
 
                 if (appleId != null && appleIdPw != null && !appleId.isBlank() && !appleIdPw.isBlank()) {
-                    def pkg = Path.of(distImage.getImageDir().absolutePath.replace('.app', installerAppendix))
+                    def pkg = distInstaller.getOutputFile().getAbsolutePath()
                     getLogger().lifecycle("Showing available providers")
                     project.exec {
                         commandLine(["xcrun", "altool", "--list-providers",
@@ -683,7 +683,7 @@ subprojects {
                                      "-p", "$appleIdPw"])
                     }
 
-                    getLogger().lifecycle("Notarizing .PKG...")
+                    getLogger().lifecycle("Notarizing $pkg...")
 
                     ExecResult execResult = exec {
                         commandLine(["xcrun", "notarytool", "submit", "--wait", "--apple-id", "${appleId}",
@@ -694,7 +694,7 @@ subprojects {
                         throw new GradleException("Error ${returnCode} during notarization.")
                     }
 
-                    getLogger().lifecycle("Stapling .PKG...")
+                    getLogger().lifecycle("Stapling  $pkg...")
 
                     execResult = exec {
                         commandLine(["xcrun", "stapler", "staple", "${pkg}"])
