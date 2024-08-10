@@ -541,7 +541,7 @@ subprojects {
 
                     getLogger().lifecycle("")
                     getLogger().lifecycle("Crawl and sign runtime...")
-                    Files.walk(Path.of(distImage.getImageDir(), "Contents/runtime"))
+                    Files.walk(distImage.getImageDir().toPath().resolve("Contents/runtime"))
                             .filter { lib -> lib.toString().toLowerCase().endsWith(".dylib") }
                             .forEach {lib ->
                                 getLogger().lifecycle("  Signing runtime lib: " + lib.toFile().getName())
