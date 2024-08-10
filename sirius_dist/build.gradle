@@ -792,7 +792,7 @@ abstract class ExtractRuntime extends DefaultTask {
                         def path = new RelativePath(true, fcd.relativePath.segments.drop(1))
                         println(path)
                         if (path.startsWithAny(project.jre_mac_prefix))
-                            fcd.relativePath = new RelativePath(true, path.segments.drop(2))
+                            fcd.relativePath = new RelativePath(true, path.segments.drop(Path.of(project.jre_mac_prefix).getNameCount()))
                         else
                             fcd.exclude()
                         println(fcd.relativePath)
