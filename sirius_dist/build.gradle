@@ -491,7 +491,7 @@ subprojects {
                     getLogger().lifecycle("")
                     getLogger().lifecycle("Signing with ID: " + signID)
                     def entitlementsFile = getRootProject().getProjectDir().toPath().resolve("dist").resolve("macos.entitlements").toFile()
-                    def additionalLibs = [new File(distImage.getImageDir(), "Contents/runtime/Contents/MacOS/libjli.dylib").toPath()]
+                    def additionalLibs = new File(distImage.getImageDir(), "Contents/runtime/bin").listFiles().toList()
                     def siriusBootJarName = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName();
                     def bootJar = distImage.getImageDir().toPath().resolve("Contents").resolve("app").resolve(siriusBootJarName).toAbsolutePath()
                     getLogger().lifecycle("Boot Jar Path: " + bootJar)
@@ -540,19 +540,27 @@ subprojects {
                     }
 
                     getLogger().lifecycle("")
+                    getLogger().lifecycle("Crawl and sign runtime...")
+                    Files.walk(Path.of(distImage.getImageDir(), "Contents/runtime"))
+                            .filter { lib -> lib.toString().toLowerCase().endsWith(".dylib") }
+                            .forEach {lib ->
+                                getLogger().lifecycle("  Signing runtime lib: " + lib.toFile().getName())
+                                project.exec {
+                                    commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
+                                                 "${lib.toFile().getAbsolutePath()}"])
+                                }
+                            }
+
+                    getLogger().lifecycle("")
                     getLogger().lifecycle("Signing additional libs...")
 
-                    for (def addLib : additionalLibs) {
-                        if (Files.exists(addLib)) {
-                            def copiedAddLib = extractedLibs.resolve(addLib.getFileName().toString())
-                            Files.copy(addLib, copiedAddLib, StandardCopyOption.REPLACE_EXISTING)
-                            getLogger().lifecycle("  Signing lib: " + addLib.getFileName().toString())
+                    for (File addLib : additionalLibs) {
+                        if (addLib.exists()) {
+                            getLogger().lifecycle("  Signing lib: " + addLib.getName())
                             project.exec {
                                 commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
-                                             "${copiedAddLib.toFile().getAbsolutePath()}"])
+                                             "${addLib.getAbsolutePath()}"])
                             }
-                            Files.copy(copiedAddLib, addLib, StandardCopyOption.REPLACE_EXISTING)
-                            Files.delete(copiedAddLib)
                         }
                     }
 
@@ -696,13 +704,13 @@ subprojects {
                     getLogger().lifecycle("Notarizing $pkg...")
 
                     String uuid = null
-                    def so =new ByteArrayOutputStream()
-                    def eo =new ByteArrayOutputStream()
+                    def so = new ByteArrayOutputStream()
+                    def eo = new ByteArrayOutputStream()
                     ExecResult execResult = exec {
                         commandLine(["xcrun", "notarytool", "submit", "--wait", "--apple-id", "${appleId}", "--team-id", "${teamId}",
                                      "--password", "${appleIdPw}", "${pkg}"])
                         standardOutput so
-                        errorOutput    eo
+                        errorOutput eo
                     }
                     uuid = (so.toString().split(System.lineSeparator()) as List).stream().filter({ s -> s.contains("id: ") }).findFirst() map({ s -> s.split(":")[1].strip() }).orElseThrow()
                     getLogger().lifecycle("Submitted Notarization Job with RequestUUID: $uuid")
@@ -715,7 +723,7 @@ subprojects {
                     getLogger().lifecycle("Requesting Log of $uuid...")
                     execResult = exec {
                         commandLine(["xcrun", "notarytool", "log", "--apple-id", "${appleId}", "--team-id", "${teamId}",
-                                     "--password", "${appleIdPw}",  "$uuid"])
+                                     "--password", "${appleIdPw}", "$uuid"])
                     }
 
                     returnCode = execResult.getExitValue()
