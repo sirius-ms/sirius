@@ -524,7 +524,7 @@ subprojects {
                                             Path copiedInLib = extractedLibs.resolve(inLib.getFileName().toString())
                                             Files.copy(inLib, copiedInLib, StandardCopyOption.REPLACE_EXISTING)
 
-                                            getLogger().lifecycle("Remove (old) signatures from native lib '$f'")
+                                            getLogger().lifecycle("Remove (old) signatures from native lib '${copiedInLib.toFile().getAbsolutePath()}'")
                                             project.exec {
                                                 commandLine(["codesign", "--remove-signature", "${copiedInLib.toFile().getAbsolutePath()}"])
                                             }
