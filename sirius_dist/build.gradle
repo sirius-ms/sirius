@@ -491,7 +491,7 @@ subprojects {
                     getLogger().lifecycle("")
                     getLogger().lifecycle("Signing with ID: " + signID)
                     def entitlementsFile = getRootProject().getProjectDir().toPath().resolve("dist").resolve("macos.entitlements").toFile()
-                    def additionalLibs = new File(distImage.getImageDir(), "Contents/runtime/bin").listFiles().toList()
+                    def additionalLibs = new File(distImage.getImageDir(), "Contents/runtime/Contents/Home/bin/").listFiles().toList()
                     def siriusBootJarName = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName();
                     def bootJar = distImage.getImageDir().toPath().resolve("Contents").resolve("app").resolve(siriusBootJarName).toAbsolutePath()
                     getLogger().lifecycle("Boot Jar Path: " + bootJar)
