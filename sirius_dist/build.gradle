@@ -71,7 +71,7 @@ tasks.register('extractRuntimeImage', ExtractRuntime) {
 subprojects {
     apply plugin: 'application'
     apply plugin: 'edu.sc.seis.launch4j'
-    ext{
+    ext {
         // jpackage based distribution output dir
         jpDistDir = getLayout().getBuildDirectory().file("jpDists")
     }
@@ -484,67 +484,68 @@ subprojects {
                 def signID = project.findProperty("de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID")
                 if (signID != null && !signID.isBlank()) {
                     def entitlementsFile = getRootProject().getProjectDir().toPath().resolve("dist").resolve("macos.entitlements").toFile()
-                    def additionalLibs = [new File(distImage.getImageDir(), "Contents/runtime/Contents/MacOS/libjli.dylib")]
+                    def additionalLibs = [new File(distImage.getImageDir(), "Contents/runtime/Contents/MacOS/libjli.dylib").toPath()]
                     def siriusBootJarName = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName();
-                    def libPath = "jar:file/${distImage.getImageDir().toPath().resolve("Contents").resolve("app").resolve(siriusBootJarName)}!/BOOT-INF/lib/"
-                    println("Sirius Boot Jar name: ${siriusBootJarName}")
-                    def jarNestedLibs = [
-                            FileSystems.getFileSystem(new URI(libPath + "jna-inchi-darwin-x86-64-1.2.jar!"))
-                                    .getPath("darwin-x86-64/libjnainchi.dylib"),
-                            FileSystems.getFileSystem(new URI(libPath + "netty-resolver-dns-native-macos-4.1.111.Final-osx-x86_64.jar!"))
-                                    .getPath("/META-INF/native/libnetty_resolver_dns_native_macos_x86_64.jnilib"),
+                    def bootJar = distImage.getImageDir().toPath().resolve("Contents").resolve("app").resolve(siriusBootJarName)
+//                    def bootJar = Path.of("/home/fleisch/Downloads/sirius-6.0.4-SNAPSHOT-osx64/sirius.app/Contents/app/sirius_rest_service-6.0.4-SNAPSHOT-boot.jar")
 
-                            FileSystems.getFileSystem(new URI(libPath + "cbc-java-native-2.10.8.2-mac-x86-64.jar!"))
-                                    .getPath("/mac-x86-64/libOsiClp.1.dylib"),
-                            FileSystems.getFileSystem(new URI(libPath + "cbc-java-native-2.10.8.2-mac-x86-64.jar!"))
-                                    .getPath("/mac-x86-64/libOsi.1.dylib"),
-                            FileSystems.getFileSystem(new URI(libPath + "cbc-java-native-2.10.8.2-mac-x86-64.jar!"))
-                                    .getPath("/mac-x86-64/libCoinUtils.3.dylib"),
-                            FileSystems.getFileSystem(new URI(libPath + "cbc-java-native-2.10.8.2-mac-x86-64.jar!"))
-                                    .getPath("/mac-x86-64/libClpSolver.1.dylib"),
-                            FileSystems.getFileSystem(new URI(libPath + "cbc-java-native-2.10.8.2-mac-x86-64.jar!"))
-                                    .getPath("/mac-x86-64/libClp.1.dylib"),
-                            FileSystems.getFileSystem(new URI(libPath + "cbc-java-native-2.10.8.2-mac-x86-64.jar!"))
-                                    .getPath("/mac-x86-64/libCgl.1.dylib"),
-                            FileSystems.getFileSystem(new URI(libPath + "cbc-java-native-2.10.8.2-mac-x86-64.jar!"))
-                                    .getPath("/mac-x86-64/libCbc.3.dylib"),
-                    ]
-
-                    getLogger().lifecycle("extract libs nested in the following jars ${Arrays.toString(jarNestedLibs)}")
+                    def extractedJars = getBuildDir().toPath().resolve("tmp").resolve("jars")
                     def extractedLibs = getBuildDir().toPath().resolve("tmp").resolve("jarLibs")
+                    Files.createDirectories(extractedJars)
                     Files.createDirectories(extractedLibs)
-                    for (def inJar : jarNestedLibs) {
-                        getLogger().lifecycle("Extracting from jar '${inJar}'")
-                        Files.copy(inJar, extractedLibs.resolve(inJar.getFileName().toString()), StandardCopyOption.REPLACE_EXISTING)
+
+                    try (def bootJarFs = FileSystems.newFileSystem(bootJar)) {
+                        for (def inJar : Files.list(bootJarFs.getPath("/BOOT-INF/lib/")).toList()) {
+
+                            def copiedInJar = extractedJars.resolve(inJar.getFileName().toString())
+                            Files.copy(inJar, copiedInJar, StandardCopyOption.REPLACE_EXISTING)
+
+                            try (def inJarFs = FileSystems.newFileSystem(inJar, [:])) {
+                                Files.walk(inJarFs.getPath("/"))
+                                        .filter { inLib -> inLib.toString().toLowerCase().endsWith(".dylib") || inLib.toString().toLowerCase().endsWith(".jnilib") }
+                                        .forEach { inLib ->
+                                            Path copiedInLib = extractedLibs.resolve(inLib.getFileName().toString())
+                                            Files.copy(inLib, copiedInLib, StandardCopyOption.REPLACE_EXISTING)
+                                            getLogger().lifecycle("Signing native libs: " + inLib.getFileName().toString())
+                                            project.exec {
+                                                commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
+                                                             "${copiedInLib.getAbsolutePath()}"])
+                                            }
+                                            Files.copy(copiedInLib, inLib, StandardCopyOption.REPLACE_EXISTING)
+                                            Files.delete(copiedInLib)
+                                        }
+                            }
+                            getLogger().lifecycle("Signing nested jars: " + inJar.getFileName().toString())
+                            project.exec {
+                                commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
+                                             "${copiedInJar.getAbsolutePath()}"])
+                            }
+                            Files.copy(copiedInJar, inJar, StandardCopyOption.REPLACE_EXISTING)
+                            Files.delete(copiedInJar)
+                        }
+                    }
+                    getLogger().lifecycle("Signing boot jar: " + bootJar.getFileName().toString())
+                    project.exec {
+                        commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
+                                     "${bootJar.getAbsolutePath()}"])
                     }
 
-                    getLogger().lifecycle("Signing native libs dirs")
-                    /*distImage.getImageDir().toPath().resolve("Contents").resolve("native").toFile().listFiles() + */
-                    for (File f :  extractedLibs.toFile().listFiles() + additionalLibs) {
-                        getLogger().lifecycle("Signing native lib '$f'")
-                        project.exec {
-                            commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
-                                         "${f.getAbsolutePath()}"])
+                    getLogger().lifecycle("Signing .additional libs")
+                    for (def addLib : additionalLibs) {
+                        if (Files.exists(addLib)) {
+                            def copiedAddLib = extractedJars.resolve(addLib.getFileName().toString())
+                            Files.copy(addLib, copiedAddLib, StandardCopyOption.REPLACE_EXISTING)
+                            getLogger().lifecycle("Signing additional lib: " + addLib.getFileName().toString())
+                            project.exec {
+                                commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
+                                             "${copiedAddLib.getAbsolutePath()}"])
+                            }
+                            Files.copy(copiedAddLib, addLib, StandardCopyOption.REPLACE_EXISTING)
+                            Files.delete(copiedAddLib)
                         }
                     }
 
-                    getLogger().lifecycle("Reinsert libs nested in jars")
-                    for (def inJar : jarNestedLibs) {
-                        getLogger().lifecycle("Reinserting into jar '${inJar}'")
-                        Files.copy(extractedLibs.resolve(inJar.getFileName().toString()), inJar, StandardCopyOption.REPLACE_EXISTING)
-                        inJar.fileSystem.close()
-                    }
-
-                    getLogger().lifecycle("Signing jars dir")
-                    for (File f : distImage.getImageDir().toPath().resolve("Contents").resolve("app").toFile().listFiles({ file -> file.getName().endsWith(".jar") } as FileFilter)) {
-                        getLogger().lifecycle("Signing jar '$f'")
-                        project.exec {
-                            commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
-                                         "${f.getAbsolutePath()}"])
-                        }
-                    }
-
-                    println "Signing .app dir"
+                    getLogger().lifecycle("Signing .app dir")
                     project.exec {
                         commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
                                      "${distImage.getImageDir()}"])
