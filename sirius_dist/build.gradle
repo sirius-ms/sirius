@@ -17,6 +17,7 @@ version = siriusFrontendVersion
 ext {
     // version for bundeled JRE
     jre_version = '21.0.4'
+    jre_distributor_version = '21.36.17'
     jre_major = jre_version.split("[.]")[0]
 
     siriusJvmArgs = ['-Xms2G',
@@ -54,9 +55,11 @@ ext {
 
 tasks.register('downloadRuntimeImage', Download) {
     group = "runtime"
-    String fname = "microsoft-jdk-${jre_version}-${msName}-x64${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
+//    String fname = "microsoft-jdk-${jre_version}-${msName}-x64${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
+    String fname = "zulu${jre_distributor_version}-ca-fx-jre${jre_version}-${zosName}_x64${siriusTargetPlatform.isWin() ? ".zip" : ".tar.gz"}"
 
-    src "https://aka.ms/download-jdk/${fname}"
+//    src "https://aka.ms/download-jdk/${fname}"
+    src "https://cdn.azul.com/zulu/bin/${fname}"
     dest getBuildDir().toPath().resolve('runtime').resolve(fname).toFile()
     onlyIfModified true
     overwrite false
@@ -483,6 +486,8 @@ subprojects {
             if (siriusTargetPlatform.isMac()) {
                 def signID = project.findProperty("de.unijena.bioinf.build.MACOS_APP_IDENTITY_ID")
                 if (signID != null && !signID.isBlank()) {
+                    getLogger().lifecycle("")
+                    getLogger().lifecycle("")
                     getLogger().lifecycle("Signing with ID: " + signID)
                     def entitlementsFile = getRootProject().getProjectDir().toPath().resolve("dist").resolve("macos.entitlements").toFile()
                     def additionalLibs = [new File(distImage.getImageDir(), "Contents/runtime/Contents/MacOS/libjli.dylib").toPath()]
@@ -502,13 +507,13 @@ subprojects {
                             Path copiedInJar = extractedJars.resolve(inJar.getFileName().toString())
                             Files.copy(inJar, copiedInJar, StandardCopyOption.REPLACE_EXISTING)
 
-                            try (def inJarFs = FileSystems.newFileSystem(inJar, [:])) {
-                                Files.walk(inJarFs.getPath("/"))
+                            try (def copiedInJarFs = FileSystems.newFileSystem(copiedInJar, [:])) {
+                                Files.walk(copiedInJarFs.getPath("/"))
                                         .filter { inLib -> inLib.toString().toLowerCase().endsWith(".dylib") || inLib.toString().toLowerCase().endsWith(".jnilib") }
                                         .forEach { inLib ->
                                             Path copiedInLib = extractedLibs.resolve(inLib.getFileName().toString())
                                             Files.copy(inLib, copiedInLib, StandardCopyOption.REPLACE_EXISTING)
-                                            getLogger().lifecycle("Signing native libs: " + inLib.getFileName().toString())
+                                            getLogger().lifecycle("  Signing lib: " + inLib.getFileName().toString())
                                             project.exec {
                                                 commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
                                                              "${copiedInLib.toFile().getAbsolutePath()}"])
@@ -526,18 +531,21 @@ subprojects {
                             Files.delete(copiedInJar)
                         }
                     }
+                    getLogger().lifecycle("")
                     getLogger().lifecycle("Signing boot jar: " + bootJar.getFileName().toString())
                     project.exec {
                         commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
                                      "${bootJar.toFile().getAbsolutePath()}"])
                     }
 
-                    getLogger().lifecycle("Signing .additional libs")
+                    getLogger().lifecycle("")
+                    getLogger().lifecycle("Signing additional libs...")
+
                     for (def addLib : additionalLibs) {
                         if (Files.exists(addLib)) {
                             def copiedAddLib = extractedLibs.resolve(addLib.getFileName().toString())
                             Files.copy(addLib, copiedAddLib, StandardCopyOption.REPLACE_EXISTING)
-                            getLogger().lifecycle("Signing additional lib: " + addLib.getFileName().toString())
+                            getLogger().lifecycle("  Signing lib: " + addLib.getFileName().toString())
                             project.exec {
                                 commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
                                              "${copiedAddLib.toFile().getAbsolutePath()}"])
