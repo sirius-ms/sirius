@@ -486,8 +486,9 @@ subprojects {
                     def entitlementsFile = getRootProject().getProjectDir().toPath().resolve("dist").resolve("macos.entitlements").toFile()
                     def additionalLibs = [new File(distImage.getImageDir(), "Contents/runtime/Contents/MacOS/libjli.dylib").toPath()]
                     def siriusBootJarName = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName();
-                    def bootJar = distImage.getImageDir().toPath().resolve("Contents").resolve("app").resolve(siriusBootJarName)
-//                    def bootJar = Path.of("/home/fleisch/Downloads/sirius-6.0.4-SNAPSHOT-osx64/sirius.app/Contents/app/sirius_rest_service-6.0.4-SNAPSHOT-boot.jar")
+                    def bootJar = distImage.getImageDir().toPath().resolve("Contents").resolve("app").resolve(siriusBootJarName).toAbsolutePath()
+                    getLogger().lifecycle("Boot Jar Path: " + bootJar)
+//                    def bootJar = Path.of("/home/fleisch/Downloads/sirius-6.0.4-SNAPSHOT-osx64/sirius.app/Contents/app/sirius_rest_service-6.0.4-SNAPSHOT-boot.jar").toAbsolutePath()
 
                     def extractedJars = getBuildDir().toPath().resolve("tmp").resolve("jars")
                     def extractedLibs = getBuildDir().toPath().resolve("tmp").resolve("jarLibs")
