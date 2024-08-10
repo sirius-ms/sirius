@@ -523,7 +523,12 @@ subprojects {
                                         .forEach { inLib ->
                                             Path copiedInLib = extractedLibs.resolve(inLib.getFileName().toString())
                                             Files.copy(inLib, copiedInLib, StandardCopyOption.REPLACE_EXISTING)
-                                            getLogger().lifecycle("  Signing lib: " + inLib.getFileName().toString())
+
+                                            getLogger().lifecycle("Remove (old) signatures from native lib '$f'")
+                                            project.exec {
+                                                commandLine(["codesign", "--remove-signature", "${copiedInLib.toFile().getAbsolutePath()}"])
+                                            }
+                                            getLogger().lifecycle("  (Re-)Signing lib: " + inLib.getFileName().toString())
                                             project.exec {
                                                 commandLine(["codesign", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
                                                              "${copiedInLib.toFile().getAbsolutePath()}"])
@@ -531,6 +536,10 @@ subprojects {
                                             Files.copy(copiedInLib, inLib, StandardCopyOption.REPLACE_EXISTING)
                                             Files.delete(copiedInLib)
                                         }
+                            }
+                            getLogger().lifecycle("Remove (old) signatures from nested jars '${copiedInJar.toFile().getAbsolutePath()}'")
+                            project.exec {
+                                commandLine(["codesign", "--remove-signature", "${copiedInJar.toFile().getAbsolutePath()}"])
                             }
                             getLogger().lifecycle("Signing nested jars: " + inJar.getFileName().toString())
                             project.exec {
@@ -553,6 +562,10 @@ subprojects {
                     Files.walk(distImage.getImageDir().toPath().resolve("Contents/runtime"))
                             .filter { lib -> lib.toString().toLowerCase().endsWith(".dylib") }
                             .forEach {lib ->
+                                getLogger().lifecycle("Remove (old) signatures from runtime lib '${lib.toFile().getAbsolutePath()}'")
+                                project.exec {
+                                    commandLine(["codesign", "--remove-signature", "${lib.toFile().getAbsolutePath()}"])
+                                }
                                 getLogger().lifecycle("  Signing runtime lib: " + lib.toFile().getName())
                                 project.exec {
                                     commandLine(["codesign", "--timestamp", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
@@ -565,6 +578,10 @@ subprojects {
 
                     for (File addLib : additionalLibs) {
                         if (addLib.exists()) {
+                            getLogger().lifecycle("Remove (old) signatures from lib '${addLib.toFile().getAbsolutePath()}'")
+                            project.exec {
+                                commandLine(["codesign", "--remove-signature", "${addLib.toFile().getAbsolutePath()}"])
+                            }
                             getLogger().lifecycle("  Signing lib: " + addLib.getName())
                             project.exec {
                                 commandLine(["codesign", "--timestamp", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
