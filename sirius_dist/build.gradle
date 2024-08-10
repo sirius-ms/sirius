@@ -671,6 +671,7 @@ subprojects {
         inputs.dir(distImage.outputDir)
         doLast {
             if (siriusTargetPlatform.isMac()) {
+                def teamId = project.findProperty('de.unijena.bioinf.build.MACOS_TEAM_ID')
                 def appleId = project.findProperty('de.unijena.bioinf.build.MACOS_APPLE_ID')
                 def appleIdPw = project.findProperty('de.unijena.bioinf.build.MACOS_APPLE_ID_PW')
 
@@ -686,7 +687,7 @@ subprojects {
                     getLogger().lifecycle("Notarizing $pkg...")
 
                     ExecResult execResult = exec {
-                        commandLine(["xcrun", "notarytool", "submit", "--wait", "--apple-id", "${appleId}",
+                        commandLine(["xcrun", "notarytool", "submit", "--wait", "--apple-id", "${appleId}", "--team-id", "${teamId}",
                                      "--password", "${appleIdPw}", "${pkg}"])
                     }
                     int returnCode = execResult.getExitValue()
