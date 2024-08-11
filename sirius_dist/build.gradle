@@ -578,9 +578,9 @@ subprojects {
 
                     for (File addLib : additionalLibs) {
                         if (addLib.exists()) {
-                            getLogger().lifecycle("Remove (old) signatures from lib '${addLib.toFile().getAbsolutePath()}'")
+                            getLogger().lifecycle("Remove (old) signatures from lib '${addLib.getAbsolutePath()}'")
                             project.exec {
-                                commandLine(["codesign", "--remove-signature", "${addLib.toFile().getAbsolutePath()}"])
+                                commandLine(["codesign", "--remove-signature", "${addLib.getAbsolutePath()}"])
                             }
                             getLogger().lifecycle("  Signing lib: " + addLib.getName())
                             project.exec {
