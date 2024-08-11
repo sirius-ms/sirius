@@ -247,6 +247,7 @@ subprojects {
                 from(inputDir.getParentFile()) {
                     exclude "app/**"
                     exclude "lib/**"
+                    exclude "bin/**"
                     exclude "runtime/**"
                     exclude "*.bat"
                     exclude "*.exe"
