@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - stable
-      - stable-codesign
       - master
     #      - stable-service-api
     paths-ignore:
