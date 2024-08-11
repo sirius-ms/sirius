@@ -500,7 +500,14 @@ subprojects {
                     getLogger().lifecycle("")
                     getLogger().lifecycle("Signing with ID: " + signID)
                     def entitlementsFile = getRootProject().getProjectDir().toPath().resolve("dist").resolve("macos.entitlements").toFile()
-                    def additionalLibs = Files.list(distImage.getImageDir().toPath().resolve("Contents/runtime/Contents/Home/bin/")).map(Path::toFile).toList()
+
+                    List<Path> additionalLibs = new ArrayList<>();
+                    {
+                        Path runtimeBin = distImage.getImageDir().toPath().resolve("Contents/runtime/Contents/Home/bin/")
+                        if(Files.isDirectory(runtimeBin))
+                            Files.list(runtimeBin).map(Path::toFile).forEach {additionalLibs::add}
+                    }
+
                     def siriusBootJarName = getRootProject().getChildProjects().get('sirius_rest_service').tasks.getByName('bootJar').outputs.files.singleFile.getName();
                     def bootJar = distImage.getImageDir().toPath().resolve("Contents").resolve("app").resolve(siriusBootJarName).toAbsolutePath()
                     getLogger().lifecycle("Boot Jar Path: " + bootJar)
@@ -557,35 +564,38 @@ subprojects {
                                      "${bootJar.toFile().getAbsolutePath()}"])
                     }
 
-                    getLogger().lifecycle("")
-                    getLogger().lifecycle("Crawl and sign runtime...")
-                    Files.walk(distImage.getImageDir().toPath().resolve("Contents/runtime"))
-                            .filter { lib -> lib.toString().toLowerCase().endsWith(".dylib") }
-                            .forEach {lib ->
-                                getLogger().lifecycle("Remove (old) signatures from runtime lib '${lib.toFile().getAbsolutePath()}'")
-                                project.exec {
-                                    commandLine(["codesign", "--remove-signature", "${lib.toFile().getAbsolutePath()}"])
+                    if (Files.isDirectory(distImage.getImageDir().toPath().resolve("Contents/runtime"))) {
+                        getLogger().lifecycle("")
+                        getLogger().lifecycle("Crawl and sign runtime...")
+                        Files.walk(distImage.getImageDir().toPath().resolve("Contents/runtime"))
+                                .filter { lib -> lib.toString().toLowerCase().endsWith(".dylib") }
+                                .forEach {lib ->
+                                    getLogger().lifecycle("Remove (old) signatures from runtime lib '${lib.toFile().getAbsolutePath()}'")
+                                    project.exec {
+                                        commandLine(["codesign", "--remove-signature", "${lib.toFile().getAbsolutePath()}"])
+                                    }
+                                    getLogger().lifecycle("  Signing runtime lib: " + lib.toFile().getName())
+                                    project.exec {
+                                        commandLine(["codesign", "--timestamp", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
+                                                     "${lib.toFile().getAbsolutePath()}"])
+                                    }
                                 }
-                                getLogger().lifecycle("  Signing runtime lib: " + lib.toFile().getName())
+                    }
+
+                    if (additionalLibs != null && !additionalLibs.isEmpty()) {
+                        getLogger().lifecycle("")
+                        getLogger().lifecycle("Signing additional libs...")
+                        for (File addLib : additionalLibs) {
+                            if (addLib.exists()) {
+                                getLogger().lifecycle("Remove (old) signatures from lib '${addLib.getAbsolutePath()}'")
+                                project.exec {
+                                    commandLine(["codesign", "--remove-signature", "${addLib.getAbsolutePath()}"])
+                                }
+                                getLogger().lifecycle("  Signing lib: " + addLib.getName())
                                 project.exec {
                                     commandLine(["codesign", "--timestamp", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
-                                                 "${lib.toFile().getAbsolutePath()}"])
+                                                 "${addLib.getAbsolutePath()}"])
                                 }
-                            }
-
-                    getLogger().lifecycle("")
-                    getLogger().lifecycle("Signing additional libs...")
-
-                    for (File addLib : additionalLibs) {
-                        if (addLib.exists()) {
-                            getLogger().lifecycle("Remove (old) signatures from lib '${addLib.getAbsolutePath()}'")
-                            project.exec {
-                                commandLine(["codesign", "--remove-signature", "${addLib.getAbsolutePath()}"])
-                            }
-                            getLogger().lifecycle("  Signing lib: " + addLib.getName())
-                            project.exec {
-                                commandLine(["codesign", "--timestamp", "-s", "${signID}", "--options", "runtime", "--entitlements", "${entitlementsFile.getAbsolutePath()}", "-f", "-v",
-                                             "${addLib.getAbsolutePath()}"])
                             }
                         }
                     }
