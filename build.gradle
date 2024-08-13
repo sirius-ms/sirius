@@ -117,7 +117,7 @@ ext {
     System.out.println("----> launch4jJDKPath:  ${launch4jJDKPath}")
     excludeCbcNative = project.findProperty("build.sirius.native.cbc.exclude")
     System.out.println("----> excludeCbcNative: " + excludeCbcNative)
-    excludeJFX = Boolean.parseBoolean((project.findProperty("build.sirius.native.openjfx.exclude") ?: "true") as String)
+    excludeJFX = Boolean.parseBoolean((project.findProperty("build.sirius.native.openjfx.exclude") ?: "false") as String)
     System.out.println("----> excludeJFX: ${excludeJFX} | ${project.findProperty("build.sirius.native.openjfx.exclude")}")
 }
 
