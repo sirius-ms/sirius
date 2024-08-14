@@ -27,14 +27,14 @@ Main developers of SIRIUS are the [Böcker group](https://bio.informatik.uni-jen
 
 <!--begin download-->
 
-### SIRIUS+CSI:FingerID GUI and CLI - Version 6.0.4 (2024-08-11)
+### SIRIUS+CSI:FingerID GUI and CLI - Version 6.0.4 (2024-08-14)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
 - for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v6.0.4/sirius-6.0.4-win64.msi) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.4/sirius-6.0.4-win64.zip)
 - for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v6.0.4/sirius-6.0.4-osx64.pkg) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.4/sirius-6.0.4-osx64.zip)
 - for Linux (64bit): [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.4/sirius-6.0.4-linux64.zip)
 
 <!--
-### SIRIUS+CSI:FingerID Command-Line Interface only - Version 6.0.4 (2024-08-11)
+### SIRIUS+CSI:FingerID Command-Line Interface only - Version 6.0.4 (2024-08-14)
 ##### These versions include the Java Runtime Environment, so there is no need to install Java separately! Just download, install/unpack and execute.
 - for Windows (64bit): [msi](https://github.com/sirius-ms/sirius/releases/download/v6.0.4/sirius-6.0.4-win64-headless.msi) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.4/sirius-6.0.4-win64-headless.zip)
 - for Mac (64bit): [pkg](https://github.com/sirius-ms/sirius/releases/download/v6.0.4/sirius-6.0.4-osx64-headless.pkg) / [zip](https://github.com/sirius-ms/sirius/releases/download/v6.0.4/sirius-6.0.4-osx64-headless.zip)
