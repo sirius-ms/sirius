@@ -108,7 +108,7 @@ startScripts {
         if (!siriusTargetPlatform.isWin()) {
             def templateBinding = [
                     toolName : "SIRIUS",
-                    mainClass: mainClassName
+                    mainClass: project.mainClassName
             ]
             def sf = file("${rootDir}/scripts/sirius.sh.templ")
             templateBinding.shell = "sh"
@@ -132,7 +132,7 @@ startScripts {
             //reset binding and create windows bat
             def templateBinding = [
                     toolName : "SIRIUS",
-                    mainClass: mainClassName
+                    mainClass: project.mainClassName
             ]
             // write bat
             def sf = file("${rootDir}/scripts/sirius.bat.templ")
@@ -197,13 +197,16 @@ installSiriusDist.dependsOn('generateLicenseReport')
 siriusDistZip.dependsOn 'generateLicenseReport'
 siriusDistTar.dependsOn 'generateLicenseReport'
 
-installSiriusDist.dependsOn('launch4j')
-siriusDistZip.dependsOn('launch4j')
-siriusDistTar.dependsOn('launch4j')
+if(siriusTargetPlatform.isWin()){
+    installSiriusDist.dependsOn('launch4j')
+    siriusDistZip.dependsOn('launch4j')
+    siriusDistTar.dependsOn('launch4j')
 
-installSiriusDist.dependsOn('createGuiExe')
-siriusDistZip.dependsOn('createGuiExe')
-siriusDistTar.dependsOn('createGuiExe')
+    installSiriusDist.dependsOn('createGuiExe')
+    siriusDistZip.dependsOn('createGuiExe')
+    siriusDistTar.dependsOn('createGuiExe')
+}
+
 
 if (includeRuntime){
     installSiriusDist.dependsOn parent.tasks.named('extractRuntimeImage')
@@ -230,7 +233,7 @@ distImage {
     runtimeImageDirectory = installSiriusDist.outputs.files.singleFile.toPath().resolve("runtime").toFile()
     inputDir = installSiriusDist.outputs.files.singleFile.toPath().resolve("app").toFile()
     imageName = 'sirius'
-    mainClass = mainClassName
+    mainClass = project.mainClassName
     jvmArgs = application.applicationDefaultJvmArgs
     mainJarName = mainJar
     winConsole = true
