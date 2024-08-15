@@ -107,7 +107,7 @@ class NoSqlStructureSummaryWriter implements AutoCloseable {
         writeSep();
 
         @NotNull final Map<String, List<String>> dbMap = match.getCandidate().getLinkedDatabases();
-        list(w, dbMap.get(DataSource.PUBCHEM.name()).stream().filter(Objects::nonNull).collect(Collectors.toList())); //is this a hack or ok?
+        list(w, Optional.ofNullable(dbMap.get(DataSource.PUBCHEM.name())).map(ids -> ids.stream().filter(Objects::nonNull).collect(Collectors.toList())).orElse(null)); //is this a hack or ok?
         writeSep();
         links(w, dbMap);
         writeSep();
