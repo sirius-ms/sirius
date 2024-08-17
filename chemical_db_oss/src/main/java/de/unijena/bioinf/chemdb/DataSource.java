@@ -55,10 +55,10 @@ public enum DataSource {
     BloodExposome("Blood Exposome", 4194304,  "pubchem_cid", "bloodexposome", "https://bloodexposome.org/#/description?qcid=%s", new Publication("Barupal DK and Fiehn O, Generating the Blood Exposome Database Using a Comprehensive Text Mining and Database Fusion Approach. Environ Health Perspect. 2019", "10.1289/EHP4713")),
     TeroMol("TeroMOL", 8388608,  "mol_id", "teromol", "http://terokit.qmclab.com/molecule.html?MolId=%s", new Publication("Zeng T et al.,Chemotaxonomic Investigation of Plant Terpenoids with an Established Database (TeroMOL). New Phytol. 2022", "10.1111/nph.18133")),
 
-    PUBCHEMANNOTATIONBIO("PubChem class - bio and metabolites", 16777216,  null,null,null, 0, false, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")), //2**24; Pubchem Annotations now have a separate flag
-    PUBCHEMANNOTATIONDRUG("PubChem class - drug", 33554432,  null,null,null, 0, false, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
-    PUBCHEMANNOTATIONSAFETYANDTOXIC("PubChem class - safety and toxic", 67108864,  null,null,null, 0, false, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
-    PUBCHEMANNOTATIONFOOD("PubChem class - food", 134217728,  null,null,null, 0, false, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
+    PUBCHEMANNOTATIONBIO("PubChem class - bio and metabolites", 16777216,  null, null, null, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")), //2**24; Pubchem Annotations now have a separate flag
+    PUBCHEMANNOTATIONDRUG("PubChem class - drug", 33554432,  null,null,null, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
+    PUBCHEMANNOTATIONSAFETYANDTOXIC("PubChem class - safety and toxic", 67108864,  null,null,null, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
+    PUBCHEMANNOTATIONFOOD("PubChem class - food", 134217728,  null,null,null, new Publication("Kim S et al., PubChem in 2021: new data content and improved web interfaces. Nucleic Acids Res. 2021", "10.1093/nar/gkaa971")),
 
     LOTUS("LOTUS", 268435456,  "id", "lotus", "https://lotus.naturalproducts.net/search/simple/%s", new Publication("Rutz A et al., The LOTUS initiative for open knowledge management in natural products research. eLife. 2022", "10.7554/eLife.70780")),
     FooDB("FooDB", 536870912, "fooddb_id", "foodDB", "https://foodb.ca/compounds/%s", new Publication("www.foodb.ca", null)),//todo not published yet?
@@ -87,24 +87,16 @@ public enum DataSource {
     public final String realName;
     public final String sqlIdColumn;
     public final String sqlRefTable;
-    public final long searchFlag;
     public final String URI;
 
     public final Publication publication;
-    public final boolean mines;
 
     DataSource(String realName, long flag, String sqlIdColumn, String sqlRefTable, String uri, Publication publication) {
-        this(realName, flag, sqlIdColumn, sqlRefTable, uri, flag, false, publication);
-    }
-
-    DataSource(String realName, long flag, String sqlIdColumn, String sqlRefTable, String uri, long searchFlag, boolean mines, Publication publication) {
         this.realName = realName;
         this.flag = flag;
         this.sqlIdColumn = sqlIdColumn;
         this.sqlRefTable = sqlRefTable;
         this.URI = uri;
-        this.searchFlag = searchFlag;
-        this.mines = mines;
         this.publication = publication;
     }
 
@@ -147,12 +139,16 @@ public enum DataSource {
         return Arrays.stream(DataSource.values()).filter(DataSource::isBioOnly).toArray(DataSource[]::new);
     }
 
-    public static DataSource[] valuesNoALL() {
-        return Arrays.stream(DataSource.values()).filter(it -> it != ALL).toArray(DataSource[]::new);
+    /**
+     *
+     * @return all actual @{@link DataSource}s excluding the 'meta' sources ALL and BIO which represent a combination of individual sources.
+     */
+    public static DataSource[] valuesNoMetaSources() {
+        return Arrays.stream(DataSource.values()).filter(it -> (it != ALL) && (it != BIO) ).toArray(DataSource[]::new);
     }
 
 
-    private final static DataSource[] BIO_DATABASES = new DataSource[] {MESH, HMDB, KNAPSACK,CHEBI,KEGG,HSDB,MACONDA,METACYC,GNPS,TRAIN,YMDB,PLANTCYC,NORMAN,SUPERNATURAL,COCONUT,BloodExposome,TeroMol,PUBCHEMANNOTATIONBIO,PUBCHEMANNOTATIONDRUG,PUBCHEMANNOTATIONSAFETYANDTOXIC,PUBCHEMANNOTATIONFOOD,LOTUS,FooDB,MiMeDB,LIPIDMAPS,LIPID};
+    private final static DataSource[] BIO_DATABASES = new DataSource[] {MESH, HMDB, KNAPSACK,CHEBI,KEGG,HSDB,MACONDA,METACYC,GNPS,TRAIN,YMDB,PLANTCYC,NORMAN,SUPERNATURAL,COCONUT,BloodExposome,TeroMol,PUBCHEMANNOTATIONBIO,PUBCHEMANNOTATIONDRUG,PUBCHEMANNOTATIONSAFETYANDTOXIC,PUBCHEMANNOTATIONFOOD,LOTUS,FooDB,MiMeDB,LIPIDMAPS};
 
     // 4294401852
     private static long makeBIOFLAG() {
@@ -166,7 +162,7 @@ public enum DataSource {
 
     public static long makeALLFLAG(){
         long allflag=0L;
-        for(int i = 1; i < 32; i++ ){
+        for(int i = 1; i <= 32; i++ ){ //<= 32 instead of < 32 to include LIPID flag (32). however, I don't know if this even has some influence, because these are not in the database.
             if (i==7 || i==13 || i==15 ||i==19) continue;
             allflag |=(1L << i);
         }
