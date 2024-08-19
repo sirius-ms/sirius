@@ -24,29 +24,30 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 //@Slf4j
 public enum SiriusPlatform {
-    WIN_x86_64("win", "win32-x86-64", "win-x86-64"),
-    WIN_x86_32(null, "win32-x86", null),
-    WIN_ARM64(null, null, null),
-    WIN_ARM32(null, null, null),
-    LINUX_x86_64("linux", "linux-x86-64", "linux-x86-64"),
-    LINUX_x86_32(null, "linux-x86", null),
-    LINUX_ARM64("linux-aarch64", "linux-aarch64", ""),
-    LINUX_ARM32(null, "linux-arm", null),
-    MAC_x86_64("mac", "darwin-x86-64", "mac-x86-64"),
-    MAC_ARM64("mac-aarch64", "darwin-aarch64", "mac-arm64");
+    WIN_x86_64("win", "win32-x86-64", "win-x86-64", "windows-amd64"),
+    WIN_x86_32(null, "win32-x86", null, null),
+    WIN_ARM64(null, null, "win-arm64", "windows-aarch64"),
+    WIN_ARM32(null, null, null, null),
+    LINUX_x86_64("linux", "linux-x86-64", "linux-x86-64", "linux-amd64"),
+    LINUX_x86_32(null, "linux-x86", null, null),
+    LINUX_ARM64("linux-aarch64", "linux-aarch64", "mac-arm64", "linux-aarch64"),
+    LINUX_ARM32(null, "linux-arm", null, null),
+    MAC_x86_64("mac", "darwin-x86-64", "mac-x86-64", "macos-amd64"),
+    MAC_ARM64("mac-aarch64", "darwin-aarch64", "mac-arm64", "macos-aarch64"),;
 
     private final String jfxClassifier;
     private final String inchiClassifier;
     private final String jenaClassifier;
+    private final String bellClassifier;
 
-    SiriusPlatform(String jfxClassifier, String inchiClassifier, String jenaClassifier) {
+    SiriusPlatform(String jfxClassifier, String inchiClassifier, String jenaClassifier, String bellClassifier) {
         this.jfxClassifier = jfxClassifier;
         this.inchiClassifier = inchiClassifier;
         this.jenaClassifier = jenaClassifier;
+        this.bellClassifier = bellClassifier;
     }
 
     public boolean isMac() {
@@ -78,6 +79,12 @@ public enum SiriusPlatform {
 //        if (jenaClassifier == null || jenaClassifier.isBlank())
 //            throw new IllegalArgumentException(name() + " is a supported by Jena bioinf native libs.");
         return Optional.ofNullable(jenaClassifier);
+    }
+
+    public Optional<String> bellsoftClassifier() {
+//        if (jenaClassifier == null || jenaClassifier.isBlank())
+//            throw new IllegalArgumentException(name() + " is a supported by Jena bioinf native libs.");
+        return Optional.ofNullable(bellClassifier);
     }
 
     public static List<SiriusPlatform> allBut(SiriusPlatform exclude) {

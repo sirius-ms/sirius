@@ -81,8 +81,8 @@ public class ChemicalDatabaseTest {
             assertEquals("InChI does not match. Standardization changed?", inChI, candidate.getInchi().in2D);
             assertEquals("SMILES does not match. Standardization changed?", smiles, candidate.getSmiles());
             assertEquals("Different name expected", name, candidate.getName());
-            assertTrue("Structure should be contained in Chebi.", (candidate.getBitset() & DataSource.CHEBI.searchFlag) > 0);
-            assertTrue("Structure should be contained in PubChem.", (candidate.getBitset() & DataSource.PUBCHEM.searchFlag) > 0);
+            assertTrue("Structure should be contained in Chebi.", (candidate.getBitset() & DataSource.CHEBI.flag()) > 0);
+            assertTrue("Structure should be contained in PubChem.", (candidate.getBitset() & DataSource.PUBCHEM.flag()) > 0);
 
             //test annotation
             candidate.setBitset(makeCompleteFlag()); //modify to test all available reference tables
