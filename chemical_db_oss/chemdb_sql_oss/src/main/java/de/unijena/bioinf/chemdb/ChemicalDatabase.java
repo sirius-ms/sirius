@@ -549,7 +549,7 @@ public class ChemicalDatabase implements FilterableChemicalDatabase, PooledDB<Co
     @Override
     public void annotateCompounds(List<? extends CompoundCandidate> sublist) throws ChemicalDatabaseException {
         try (final PooledConnection<Connection> c = connection.orderConnection()) {
-            final DataSource[] sources = DataSource.valuesNoALL();
+            final DataSource[] sources = DataSource.valuesNoMetaSources();
             final PreparedStatement[] statements = new PreparedStatement[sources.length];
             int k = 0;
             for (DataSource source : sources) {

@@ -100,7 +100,7 @@ public class WebWithCustomDatabase {
 
     private static OptionalLong extractFilterBits(Collection<CustomDataSources.Source> dbs) {
         return dbs.stream().filter(CustomDataSources.Source::noCustomSource)
-                .mapToLong(s -> ((CustomDataSources.EnumSource) s).source().searchFlag) //todo nightsky: why is searchFlag used here I think it is only of interest for dbs that cannot be searched
+                .mapToLong(s -> ((CustomDataSources.EnumSource) s).source().flag())
                 .reduce((a, b) -> a | b);
     }
 
@@ -156,7 +156,12 @@ public class WebWithCustomDatabase {
             if (requestFilter >= 0 || includeRestAllDb) {
                 final long searchFilter = includeRestAllDb ? 0 : requestFilter;
                 result = api.applyStructureDB(searchFilter, restCache, restDb -> new CandidateResult(
-                        restDb.lookupStructuresAndFingerprintsByFormula(formula).stream().filter(s -> DataSource.isInAll(s.getBitset())).toList(), searchFilter, requestFilter));
+                        restDb.lookupStructuresAndFingerprintsByFormula(formula)
+                                .stream()
+                                .filter(s -> DataSource.isInAll(s.getBitset()))
+                                .peek(CompoundCandidate::ensureSelfContainedLinks)
+                                .toList(),
+                        searchFilter, requestFilter));
             } else {
                 logger.warn("No filter for Rest DBs found bits in DB list: '" + dbs.stream().map(CustomDataSources.Source::name).collect(Collectors.joining(",")) + "'. Returning empty search list from REST DB");
                 result = new CandidateResult();
@@ -193,6 +198,7 @@ public class WebWithCustomDatabase {
             }
         });
     }
+
     public List<Ms2ReferenceSpectrum> lookupSpectra(double precursorMz, Deviation deviation, boolean withData, Collection<CustomDataSources.Source> dbs) throws ChemicalDatabaseException {
         //todo spectlib: add remote db support
         return lookupSpectraStr(precursorMz, deviation, withData, dbs).toList();
@@ -345,12 +351,12 @@ public class WebWithCustomDatabase {
      */
     private static List<FingerprintCandidate> mergeCompounds(Collection<FingerprintCandidate> compounds, Set<String> customNames, boolean onlyContained) {
         HashMap<String, FingerprintCandidate> it = new HashMap<>();
-        mergeCompounds(compounds, it, customNames,  onlyContained,false);
+        mergeCompounds(compounds, it, customNames, onlyContained, false);
         return new ArrayList<>(it.values());
     }
 
     private static Set<FingerprintCandidate> mergeCompounds(Collection<FingerprintCandidate> compounds, final HashMap<String, FingerprintCandidate> mergeMap, Set<String> customNames) {
-        return mergeCompounds(compounds, mergeMap, customNames, false,false);
+        return mergeCompounds(compounds, mergeMap, customNames, false, false);
     }
 
     private static Set<FingerprintCandidate> mergeCompounds(Collection<FingerprintCandidate> compounds, final HashMap<String, FingerprintCandidate> mergeMap, Set<String> customNames, boolean onlyContained, boolean fromCustomDB) {
@@ -365,21 +371,21 @@ public class WebWithCustomDatabase {
                 x.setQLayer(x.getQLayer() | c.getQLayer());
                 x.mergeDBLinks(c.links);
                 x.mergeBits(c.bitset);
-                if (customNames.contains(key)){
+                if (customNames.contains(key)) {
                     if (fromCustomDB)
                         //search the shortest name among custom names
                         x.mergeCompoundName(c.getName());
-                    else if (c.getName()!=null && !c.getName().isBlank())
+                    else if (c.getName() != null && !c.getName().isBlank())
                         //replace remote name with custom name
                         x.setName(c.getName());
-                }else {
-                    if (fromCustomDB){
+                } else {
+                    if (fromCustomDB) {
                         //replace remote name with custom name
-                        if (c.getName()!=null && !c.getName().isBlank()){
+                        if (c.getName() != null && !c.getName().isBlank()) {
                             x.setName(c.getName());
                             customNames.add(key);
                         }
-                    }else {
+                    } else {
                         //search the shortest name among remote names
                         x.mergeCompoundName(c.getName());
                     }
@@ -430,7 +436,7 @@ public class WebWithCustomDatabase {
         private void addRequestedCustom(String name, List<FingerprintCandidate> compounds) {
             if (customInChIs.containsKey(name))
                 throw new IllegalArgumentException("Custom db already exists: '" + name + "'");
-            customInChIs.put(name, mergeCompounds(compounds, cs, customNames, false,true));
+            customInChIs.put(name, mergeCompounds(compounds, cs, customNames, false, true));
         }
 
         private void addAdditionalCustom(String name, List<FingerprintCandidate> compounds) {
@@ -438,7 +444,7 @@ public class WebWithCustomDatabase {
                 throw new IllegalArgumentException("Custom db already exists: '" + name + "'");
             HashMap<String, FingerprintCandidate> candidates = new HashMap<>(cs);
             candidates.keySet().retainAll(getReqCandidatesInChIs());
-            customInChIs.put(name, mergeCompounds(compounds, candidates, customNames, true,false));
+            customInChIs.put(name, mergeCompounds(compounds, candidates, customNames, true, false));
         }
 
         public Set<String> getCombCandidatesInChIs() {
@@ -510,7 +516,7 @@ public class WebWithCustomDatabase {
 
         //Filtering for this happens earlier in loadCompoundsByFormula, not sure how useful this part still is
         public boolean containsAllDb() {
-            return restFilter == 0 || restFilter == DataSource.ALL.searchFlag;
+            return restFilter == 0 || restFilter == DataSource.ALL.flag();
         }
 
         public void merge(@NotNull CandidateResult other) {
