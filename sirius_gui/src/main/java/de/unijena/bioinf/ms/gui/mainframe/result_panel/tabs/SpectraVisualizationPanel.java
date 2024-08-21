@@ -429,13 +429,13 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                                 selectedMatchBean = matchBean;
                                 similarities = new SpectralSimilarity[msData.getMs2Spectra().size()];
                                 queryIndices = new IntArrayList();
-                                matchList.getMatchBeanGroup(matchBean.getMatch().getUuid()).forEach(match -> {
+                                for (SpectralMatchBean match : matchList.getMatchBeanGroup(matchBean.getMatch().getUuid())) {
                                     similarities[match.getMatch().getQuerySpectrumIndex()] = new SpectralSimilarity(
                                             match.getMatch().getSimilarity(),
                                             match.getMatch().getSharedPeaks() != null ? match.getMatch().getSharedPeaks() : 0
                                     );
                                     queryIndices.add((int) match.getMatch().getQuerySpectrumIndex());
-                                });
+                                }
                                 queryIndices.sort(IntComparators.NATURAL_COMPARATOR);
                             }
 
