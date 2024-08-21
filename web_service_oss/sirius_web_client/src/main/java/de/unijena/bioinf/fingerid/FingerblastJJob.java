@@ -316,7 +316,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
              */
 
             if (expansiveSearchConfidenceMode.confidenceScoreSimilarityMode.equals(ExpansiveSearchConfidenceMode.Mode.EXACT)) {
-                if (confidenceResultAll.score.score() * expansiveSearchConfidenceMode.confPubChemFactor > confidenceResultRequested.score.score() || requestedMergedCandidates.isEmpty() && !allMergedCandidates.isEmpty()) {
+                if ((confidenceResultAll.score.score() * expansiveSearchConfidenceMode.confPubChemFactor > confidenceResultRequested.score.score()) || (requestedMergedCandidates.isEmpty() && !allMergedCandidates.isEmpty())) {
                     //All wins over requested
                     structureSearchResult = StructureSearchResult.of(confidenceResultAll, expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
                     finalConfidenceResult = confidenceResultAll;
@@ -325,7 +325,7 @@ public class FingerblastJJob extends BasicMasterJJob<List<FingerIdResult>> {
                     finalConfidenceResult = confidenceResultRequested;
                 }
             } else if (expansiveSearchConfidenceMode.confidenceScoreSimilarityMode.equals(ExpansiveSearchConfidenceMode.Mode.APPROXIMATE)) {
-                if (confidenceResultAll.scoreApproximate.score() * expansiveSearchConfidenceMode.confPubChemFactor > confidenceResultRequested.scoreApproximate.score() || requestedMergedCandidates.isEmpty() && !allMergedCandidates.isEmpty()) {
+                if ((confidenceResultAll.scoreApproximate.score() * expansiveSearchConfidenceMode.confPubChemFactor > confidenceResultRequested.scoreApproximate.score()) || (requestedMergedCandidates.isEmpty() && !allMergedCandidates.isEmpty())) {
                     //All wins over requested
                     structureSearchResult = StructureSearchResult.of(confidenceResultAll, expansiveSearchConfidenceMode.confidenceScoreSimilarityMode);
                     finalConfidenceResult = confidenceResultAll;
