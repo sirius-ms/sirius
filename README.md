@@ -151,6 +151,10 @@ Sebastian Böcker, Matthias C. Letzel, Zsuzsanna Lipták and Anton Pervukhin.
 
 ### Additional citations
 
+Shipei Xing, Sam Shen, Banghua Xu, Xiaoxiao Li and Tao Huan.
+[BUDDY: molecular formula discovery via bottom-up MS/MS interrogation.](https://doi.org/10.1038/s41592-023-01850-x)
+*Nature Methods* 20, 881–890, 2023. (Cite if you are using: Bottom-up molecular formula generation)
+
 Marcus Ludwig, Kai Dührkop and Sebastian and Böcker.
 [Bayesian networks for mass spectrometric metabolite identification via molecular fingerprints.](http://doi.org/10.1093/bioinformatics/bty245)
 *Bioinformatics*, 34(13): i333-i340. 2018. Proc. of Intelligent Systems for Molecular Biology (ISMB 2018). (Cite for CSI:FingerID Scoring)
