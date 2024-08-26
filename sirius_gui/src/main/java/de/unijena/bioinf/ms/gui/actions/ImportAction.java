@@ -44,9 +44,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 /**
  * @author Markus Fleischauer
@@ -98,21 +96,13 @@ public class ImportAction extends AbstractGuiAction {
 
     //ATTENTION Synchronizing around background tasks that block gui thread is dangerous
     public synchronized void importOneExperimentPerLocation(@NotNull final InputFilesOptions input, Window popupOwner) {
-        Map<Boolean, List<Path>> paths = Jobs.runInBackgroundAndLoad(
-                popupOwner, "Analyzing input...",
-                () -> input.msInput.msParserfiles.keySet().stream().collect(Collectors.partitioningBy(p -> {
-                    String fileName = p.getFileName().toString().toLowerCase();
-                    return fileName.endsWith(".mzml") || fileName.endsWith(".mzxml");
-                }))
-        ).getResult();
-
         StopWatch watch = new StopWatch();
         watch.start();
 
         try {
-            boolean hasLCMS = paths.containsKey(true) && !paths.get(true).isEmpty();
-            boolean hasPeakLists = paths.containsKey(false) && !paths.get(false).isEmpty();
-            boolean alignAllowed = paths.get(true).size() > 1;
+            boolean hasLCMS = !input.msInput.lcmsFiles.isEmpty();
+            boolean hasPeakLists = !input.msInput.msParserfiles.isEmpty();
+            boolean alignAllowed = input.msInput.lcmsFiles.size() > 1;
 
             if (!hasLCMS && !hasPeakLists)
                 return;
@@ -124,7 +114,7 @@ public class ImportAction extends AbstractGuiAction {
 
             // show dialog
             if (hasPeakLists || alignAllowed) {
-                ImportMSDataDialog dialog = new ImportMSDataDialog(popupOwner, hasLCMS, hasLCMS && paths.get(true).size() > 1, hasPeakLists);
+                ImportMSDataDialog dialog = new ImportMSDataDialog(popupOwner, hasLCMS, alignAllowed, hasPeakLists);
                 if (!dialog.isSuccess())
                     return;
 
@@ -136,11 +126,10 @@ public class ImportAction extends AbstractGuiAction {
 
             // handle LC/MS files
             if (hasLCMS) {
-                List<Path> lcmsPaths = paths.get(true);
                 LoadingBackroundTask<Job> task = gui.applySiriusClient((c, pid) -> {
                     Job job = c.projects().importMsRunDataAsJobLocally(pid,
                             parameters,
-                            lcmsPaths.stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
+                            input.msInput.lcmsFiles.keySet().stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
                             List.of(JobOptField.PROGRESS)
                     );
                     return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Importing LC/MS data...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
@@ -153,7 +142,7 @@ public class ImportAction extends AbstractGuiAction {
             if (hasPeakLists) {
                 LoadingBackroundTask<Job> task = gui.applySiriusClient((c, pid) -> {
                     Job job = c.projects().importPreprocessedDataAsJobLocally(pid,
-                            paths.get(false).stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
+                            input.msInput.msParserfiles.keySet().stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
                             PropertyManager.getBoolean("de.unijena.bioinf.sirius.ui.ignoreFormulas", false),
                             true,
                             List.of(JobOptField.PROGRESS)
