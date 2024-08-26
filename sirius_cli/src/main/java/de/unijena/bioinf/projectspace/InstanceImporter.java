@@ -245,7 +245,11 @@ public class InstanceImporter {
                     try {
                         final String name = g.getFileName().toString();
                         if (MsExperimentParser.isSupportedFileName(name)) {
-                            inputFiles.msParserfiles.put(g, (int) Files.size(g));
+                            if (MsExperimentParser.isLCMSFile(name)) {
+                                inputFiles.lcmsFiles.put(g, (int) Files.size(g));
+                            } else {
+                                inputFiles.msParserfiles.put(g, (int) Files.size(g));
+                            }
                         } else {
                             inputFiles.unknownFiles.put(g, (int) Files.size(g));
                         }
