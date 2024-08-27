@@ -66,10 +66,13 @@ public class SummaryOptions implements PostprocessingTool<NoSqlSummarySubToolJob
 //    protected int topKSpectra = -1;
 
     @CommandLine.Option(names = {"--output", "-o"}, description = "Specify location (outside the project) for writing summary files. Per default summaries are written to the project-space")
-    Path location;
+    protected Path location;
 
     @CommandLine.Option(names = {"--format"}, description = "Output format for summaries. Valid values: ${COMPLETION-CANDIDATES}. ZIP produces zipped TSV files.", defaultValue = "tsv")
-    Format format;
+    protected Format format;
+
+    @CommandLine.Option(names = {"--quote-strings"}, description = {"Enclose all strings in quotation marks (only for TSV files)."})
+    protected boolean quoteStrings;
 
     @CommandLine.ArgGroup(exclusive = false, heading = "Include Predictions Table")
     @Nullable
