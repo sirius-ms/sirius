@@ -24,110 +24,71 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.sirius.DenovoStructureMatch;
 import de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.Writer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-class NoSqlDeNovoSummaryWriter implements AutoCloseable {
-    final static String DOUBLE_FORMAT = "%.3f";
-    final static String LONG_FORMAT = "%d";
-    final static String HEADER = "structurePerIdRank\t" +
-            "formulaRank\t" +
-            "CSI:FingerIDScore\t" +
-            "ModelScore\t" +
-            "ZodiacScore\t" +
-            "SiriusScore\t" +
-            "molecularFormula\t" +
-            "adduct\t" +
-            "precursorFormula\t" +
-            "InChIkey2D\t" +
-            "InChI\t" +
-            "name\t" +
-            "smiles\t" +
+class NoSqlDeNovoSummaryWriter extends SummaryTable {
+
+    final static List<String> HEADER = List.of(
+            "structurePerIdRank",
+            "formulaRank",
+            "CSI:FingerIDScore",
+            "ModelScore",
+            "ZodiacScore",
+            "SiriusScore",
+            "molecularFormula",
+            "adduct",
+            "precursorFormula",
+            "InChIkey2D",
+            "InChI",
+            "name",
+            "smiles",
             // metadata for mapping
-            "ionMass\t" +
-            "retentionTimeInSeconds\t" +
-            "retentionTimeInMinutes\t" +
-            "formulaId\t" +
-            "alignedFeatureId\t" +
-            "mappingFeatureId";
-    final BufferedWriter w;
+            "ionMass",
+            "retentionTimeInSeconds",
+            "retentionTimeInMinutes",
+            "formulaId",
+            "alignedFeatureId",
+            "mappingFeatureId");
 
-    NoSqlDeNovoSummaryWriter(BufferedWriter writer) {
-        this.w = writer;
-    }
-
-    private NoSqlDeNovoSummaryWriter(Writer w) {
-        this.w = new BufferedWriter(w);
+    public NoSqlDeNovoSummaryWriter(SummaryTableWriter writer) {
+        super(writer);
     }
 
     public void writeHeader() throws IOException {
-        w.write(HEADER);
-        w.newLine();
+        writer.writeHeader(HEADER);
     }
 
     public void writeStructureCandidate(AlignedFeatures f, FormulaCandidate fc, DenovoStructureMatch match) throws IOException {
-        w.write(String.valueOf(match.getStructureRank()));
-        writeSep();
-        w.write(String.valueOf(fc.getFormulaRank()));
-        writeSep();
+        List<Object> row = new ArrayList<>();
 
-        w.write(String.valueOf(match.getCsiScore()));
-        writeSep();
-        w.write(String.valueOf(match.getModelScore()));
-        writeSep();
-        w.write(String.format(DOUBLE_FORMAT, fc.getZodiacScore()));
-        writeSep();
-        w.write(String.format(DOUBLE_FORMAT, fc.getSiriusScore()));
-        writeSep();
-        w.write(fc.getMolecularFormula().toString());
-        writeSep();
-        w.write(fc.getAdduct().toString());
-        writeSep();
-        w.write(fc.getPrecursorFormulaWithCharge());
-        writeSep();
+        row.add(match.getStructureRank());
+        row.add(fc.getFormulaRank());
 
-        w.write(match.getCandidateInChiKey());
-        writeSep();
-        w.write(match.getCandidate().getInchi().in2D);
-        writeSep();
-        w.write(Objects.requireNonNullElse(match.getCandidate().getName(), ""));
-        writeSep();
-        w.write(match.getCandidate().getSmiles());
-        writeSep();
+        row.add(match.getCsiScore());
+        row.add(match.getModelScore());
+        row.add(fc.getZodiacScore());
+        row.add(fc.getSiriusScore());
+        row.add(fc.getMolecularFormula().toString());
+        row.add(fc.getAdduct().toString());
+        row.add(fc.getPrecursorFormulaWithCharge());
 
-        w.write(String.format(DOUBLE_FORMAT, f.getAverageMass()));
-        writeSep();
-        w.write(Optional.ofNullable(f.getRetentionTime()).map(rt -> String.format("%.0f", rt.getMiddleTime())).orElse(""));
-        writeSep();
-        w.write(Optional.ofNullable(f.getRetentionTime()).map(rt -> String.format("%.2f", rt.getMiddleTime() / 60d)).orElse(""));
-        writeSep();
+        row.add(match.getCandidateInChiKey());
+        row.add(match.getCandidate().getInchi().in2D);
+        row.add(match.getCandidate().getName());
+        row.add(match.getCandidate().getSmiles());
 
-        w.write(String.format(LONG_FORMAT, fc.getFormulaId()));
-        writeSep();
-        w.write(String.format(LONG_FORMAT, f.getAlignedFeatureId()));
-        writeSep();
-        w.write(Objects.requireNonNullElse(f.getExternalFeatureId(), String.format(LONG_FORMAT, f.getAlignedFeatureId())));
-        w.newLine();
+        row.add(f.getAverageMass());
+        row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> Math.round(rt.getMiddleTime())).orElse(null));
+        row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> rt.getMiddleTime() / 60d).orElse(null));
+
+        row.add(String.valueOf(fc.getFormulaId()));
+        row.add(String.valueOf(f.getAlignedFeatureId()));
+        row.add(Objects.requireNonNullElse(f.getExternalFeatureId(), String.valueOf(f.getAlignedFeatureId())));
+
+        writer.writeRow(row);
     }
-
-    private void writeSep() throws IOException {
-        w.write('\t');
-    }
-
-    @Override
-    public void close() throws Exception {
-        w.close();
-    }
-
-
-
-
-    public static String escape(String name) {
-        if (name == null) return "\"\"";
-        return name.replace('\t', ' ').replace('"', '\'');
-    }
-
 }
