@@ -2853,6 +2853,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "includeAll",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
