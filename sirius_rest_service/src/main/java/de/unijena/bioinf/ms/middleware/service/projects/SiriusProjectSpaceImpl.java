@@ -127,7 +127,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public Optional<TraceSet> getTraceSetForAlignedFeature(String alignedFeatureId) {
+    public Optional<TraceSet> getTraceSetForAlignedFeature(String alignedFeatureId, boolean includeAll) {
         throw new UnsupportedOperationException();
     }
 

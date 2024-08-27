@@ -3329,10 +3329,11 @@ public class FeaturesApi {
      * <p><b>200</b> - OK
      * @param projectId The projectId parameter
      * @param alignedFeatureId The alignedFeatureId parameter
+     * @param includeAll The includeAll parameter
      * @return TraceSet
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getTraces1RequestCreation(String projectId, String alignedFeatureId) throws WebClientResponseException {
+    private ResponseSpec getTraces1RequestCreation(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -3353,6 +3354,8 @@ public class FeaturesApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeAll", includeAll));
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -3372,12 +3375,13 @@ public class FeaturesApi {
      * <p><b>200</b> - OK
      * @param projectId The projectId parameter
      * @param alignedFeatureId The alignedFeatureId parameter
+     * @param includeAll The includeAll parameter
      * @return TraceSet
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public TraceSet getTraces1(String projectId, String alignedFeatureId) throws WebClientResponseException {
+    public TraceSet getTraces1(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
         ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
-        return getTraces1RequestCreation(projectId, alignedFeatureId).bodyToMono(localVarReturnType).block();
+        return getTraces1RequestCreation(projectId, alignedFeatureId, includeAll).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -3386,12 +3390,13 @@ public class FeaturesApi {
      * <p><b>200</b> - OK
      * @param projectId The projectId parameter
      * @param alignedFeatureId The alignedFeatureId parameter
+     * @param includeAll The includeAll parameter
      * @return ResponseEntity&lt;TraceSet&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<TraceSet> getTraces1WithHttpInfo(String projectId, String alignedFeatureId) throws WebClientResponseException {
+    public ResponseEntity<TraceSet> getTraces1WithHttpInfo(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
         ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
-        return getTraces1RequestCreation(projectId, alignedFeatureId).toEntity(localVarReturnType).block();
+        return getTraces1RequestCreation(projectId, alignedFeatureId, includeAll).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -3400,10 +3405,11 @@ public class FeaturesApi {
      * <p><b>200</b> - OK
      * @param projectId The projectId parameter
      * @param alignedFeatureId The alignedFeatureId parameter
+     * @param includeAll The includeAll parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getTraces1WithResponseSpec(String projectId, String alignedFeatureId) throws WebClientResponseException {
-        return getTraces1RequestCreation(projectId, alignedFeatureId);
+    public ResponseSpec getTraces1WithResponseSpec(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
+        return getTraces1RequestCreation(projectId, alignedFeatureId, includeAll);
     }
 }

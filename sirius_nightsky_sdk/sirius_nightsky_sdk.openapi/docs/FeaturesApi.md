@@ -2490,7 +2490,7 @@ No authorization required
 
 ## getTraces1
 
-> TraceSet getTraces1(projectId, alignedFeatureId)
+> TraceSet getTraces1(projectId, alignedFeatureId, includeAll)
 
 
 
@@ -2512,8 +2512,9 @@ public class Example {
         FeaturesApi apiInstance = new FeaturesApi(defaultClient);
         String projectId = "projectId_example"; // String | 
         String alignedFeatureId = "alignedFeatureId_example"; // String | 
+        Boolean includeAll = false; // Boolean | 
         try {
-            TraceSet result = apiInstance.getTraces1(projectId, alignedFeatureId);
+            TraceSet result = apiInstance.getTraces1(projectId, alignedFeatureId, includeAll);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling FeaturesApi#getTraces1");
@@ -2533,6 +2534,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**|  | |
 | **alignedFeatureId** | **String**|  | |
+| **includeAll** | **Boolean**|  | [optional] [default to false] |
 
 ### Return type
 
