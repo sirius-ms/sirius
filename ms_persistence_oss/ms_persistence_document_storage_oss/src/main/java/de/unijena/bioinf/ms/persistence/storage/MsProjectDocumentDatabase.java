@@ -87,7 +87,8 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                 .addRepository(AlignedFeatures.class,
                         Index.nonUnique("compoundId"),
                         Index.nonUnique("averageMass"),
-                        Index.nonUnique("retentionTime.middle")
+                        Index.nonUnique("retentionTime.middle"),
+                        Index.nonUnique("traceRef.traceId")
                 )
 
                 .addRepository(AlignedIsotopicFeatures.class,
