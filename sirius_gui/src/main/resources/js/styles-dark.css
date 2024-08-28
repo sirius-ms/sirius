@@ -127,6 +127,12 @@ rect.mainFeatureBox:hover {
 rect.terribleQualityFeatureBox {
     stroke-dasharray: 3;
 }
+.noiselevel {
+    stroke-width: 1px;
+    stroke:black;
+    stroke-dasharray: 3;
+
+}
 .lccurve {
         stroke-width: 1px;
 }
