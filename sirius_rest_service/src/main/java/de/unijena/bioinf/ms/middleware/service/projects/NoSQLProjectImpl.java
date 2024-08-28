@@ -353,11 +353,12 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         HashMap<Long, LCMSRun> samples = new HashMap<>();
         HashMap<Long, SourceTrace> sources = new HashMap<>();
         HashMap<Long, Set<Long>> sample2sources = new HashMap<>();
-        HashMap<Long,List<AlignedFeatures>> sample2Featue = new HashMap<>();
+
+        HashMap<Long,List<Feature>> sample2Feature = new HashMap<>();
         for (int k = 0; k < allMergedFeatures.size(); ++k) {
             for (Feature sampleFeature : allMergedFeatures.get(k).getFeatures().orElse(Collections.emptyList())) {
                 if (sampleFeature.getRunId() != null) {
-                    sample2Featue.computeIfAbsent(sampleFeature.getRunId(), (x)->new ArrayList<>()).add(allMergedFeatures.get(k));
+                    sample2Feature.computeIfAbsent(sampleFeature.getRunId(), (x)->new ArrayList<>()).add(sampleFeature);
                     samples.computeIfAbsent(sampleFeature.getRunId(), (key) -> {
                         try {
                             return storage.getByPrimaryKey(key, LCMSRun.class).orElse(null);
@@ -455,11 +456,16 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             // add annotations
             ArrayList<TraceSet.Annotation> annotations = new ArrayList<>();
             // feature annotation
-            for (AlignedFeatures features : sample2Featue.get(sampleKey)) {
-                int startLocation = features.getTraceRef().getScanIndexOffsetOfTrace() - mergedTrace.getScanIndexOffset();
+            for (Feature features : sample2Feature.get(sampleKey)) {
+                if (features.getTraceReference().isEmpty()) continue;
+                RawTraceRef reference = features.getTraceReference().get();
+                int apex = (reference.getApex()+ reference.getScanIndexOffsetOfTrace())-mergedTrace.getScanIndexOffset();
+                int left = (reference.getStart()+ reference.getScanIndexOffsetOfTrace())-mergedTrace.getScanIndexOffset();
+                int right = (reference.getEnd()+ reference.getScanIndexOffsetOfTrace())-mergedTrace.getScanIndexOffset();
+
                 annotations.add(new TraceSet.Annotation(TraceSet.AnnotationType.FEATURE,
-                        (features==mainFeature) ? "[MAIN]"+String.valueOf(features.getAlignedFeatureId()) : String.valueOf(features.getAlignedFeatureId()),
-                        features.getTraceRef().getApex() + startLocation, features.getTraceRef().getStart() + startLocation, features.getTraceRef().getEnd() + startLocation));
+                        (features.getAlignedFeatureId()==mainFeature.getAlignedFeatureId()) ? "[MAIN]"+String.valueOf(features.getAlignedFeatureId()) : String.valueOf(features.getAlignedFeatureId()),
+                        apex, left, right));
             }
 
             // ms2 annotations
