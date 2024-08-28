@@ -75,9 +75,13 @@ public abstract class SubToolConfigPanel<C> extends ConfigPanel {
         return Optional.ofNullable(commandSpec.findOption(name)).map(CommandLine.Model.ArgSpec::defaultValue);
     }
 
+    protected Optional<String> getOptionTooltip(String name) {
+        return getOptionDescriptionByName(name).map(GuiUtils::formatToolTip);
+    }
+
     public JSpinner makeGenericOptionSpinner(@NotNull String name, double value, double minimum, double maximum, double stepSize, Function<SpinnerNumberModel, String> result) {
         JSpinner spinner = makeBindedSpinner(name, value, minimum, maximum, stepSize, result);
-        getOptionDescriptionByName(name).ifPresent(des -> spinner.setToolTipText(GuiUtils.formatToolTip(des)));
+        getOptionTooltip(name).ifPresent(spinner::setToolTipText);
         return spinner;
     }
 
@@ -89,7 +93,7 @@ public abstract class SubToolConfigPanel<C> extends ConfigPanel {
         JComboBox<T> box = new JComboBox<>();
         values.forEach(box::addItem);
 
-        getOptionDescriptionByName(name).ifPresent(des -> box.setToolTipText(GuiUtils.formatToolTip(des)));
+        getOptionTooltip(name).ifPresent(box::setToolTipText);
         getOptionDefaultByName(name)
                 .flatMap(dv -> values.stream().filter(v -> result.apply(v).equalsIgnoreCase(dv)).findFirst())
                 .ifPresent(box::setSelectedItem);
@@ -105,7 +109,7 @@ public abstract class SubToolConfigPanel<C> extends ConfigPanel {
     public JCheckBox makeGenericOptionCheckBox(String text, String optionKey, boolean selected) {
         JCheckBox checkBox = new JCheckBox(text, selected);
         parameterBindings.put(optionKey, () -> "~" + checkBox.isSelected());
-        getOptionDescriptionByName(optionKey).ifPresent(it -> checkBox.setToolTipText(GuiUtils.formatToolTip(it)));
+        getOptionTooltip(optionKey).ifPresent(checkBox::setToolTipText);
         return checkBox;
     }
 }
