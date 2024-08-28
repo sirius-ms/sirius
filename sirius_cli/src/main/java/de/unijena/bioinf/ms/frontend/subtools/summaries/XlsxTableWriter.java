@@ -2,6 +2,7 @@ package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 import java.io.IOException;
@@ -17,8 +18,8 @@ public class XlsxTableWriter implements SummaryTableWriter {
     public final static String INTEGER_PATTERN = "#";
 
     private final OutputStream out;
-    private final Workbook workBook;
-    private final Sheet sheet;
+    private final SXSSFWorkbook workBook;
+    private final SXSSFSheet sheet;
     private CellStyle doubleStyle;
     private CellStyle integerStyle;
 
@@ -32,11 +33,15 @@ public class XlsxTableWriter implements SummaryTableWriter {
 
     @Override
     public void writeHeader(List<String> columns) throws IOException {
+        sheet.trackAllColumnsForAutoSizing();
         Row r = sheet.createRow(0);
         for (int i = 0; i < columns.size(); i++) {
             Cell cell = r.createCell(i, CellType.STRING);
             cell.setCellValue(columns.get(i));
+            sheet.autoSizeColumn(i);
         }
+        sheet.createFreezePane(0, 1);
+        sheet.untrackAllColumnsForAutoSizing();
     }
 
     @Override

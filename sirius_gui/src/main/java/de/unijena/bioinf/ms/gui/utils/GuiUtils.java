@@ -44,6 +44,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -342,17 +343,21 @@ public class GuiUtils {
     public static <T extends DescriptiveOptions> JComboBox<T> makeParameterComboBoxFromDescriptiveValues(T[] options) {
         return makeParameterComboBoxFromDescriptiveValues(options, null);
     }
+
     public static <T extends DescriptiveOptions> JComboBox<T> makeParameterComboBoxFromDescriptiveValues(T[] options, @Nullable T defaultSelection) {
+        return makeComboBoxWithTooltips(options, defaultSelection, DescriptiveOptions::getDescription);
+    }
+
+    public static <T> JComboBox<T> makeComboBoxWithTooltips(T[] options, @Nullable T defaultSelection, Function<T, String> toolTipProvider) {
         JComboBox<T> box = new JComboBox<>(options);
         if (options.length > 0) {
-            box.setToolTipText(options[0].getDescription());
+            box.setToolTipText(toolTipProvider.apply(options[0]));
         }
         box.addItemListener(e -> {
             if (e.getStateChange() != ItemEvent.SELECTED) {
                 return;
             }
-            final DescriptiveOptions source = (DescriptiveOptions) e.getItem();
-            box.setToolTipText(source.getDescription());
+            box.setToolTipText(toolTipProvider.apply((T) e.getItem()));
         });
 
         if (defaultSelection != null && Arrays.asList(options).contains(defaultSelection))
