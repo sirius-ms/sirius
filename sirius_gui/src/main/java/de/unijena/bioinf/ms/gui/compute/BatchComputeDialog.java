@@ -187,6 +187,7 @@ public class BatchComputeDialog extends JDialog {
                 showCommand.addActionListener(e -> {
                     final String commandString = String.join(" ", makeCommand(new ArrayList<>()));
                     if (warnNoMethodIsSelected()) return;
+                    if (warnNoAdductSelected()) return;
                     new InfoDialog(gui.getMainFrame(), "Command", GuiUtils.formatToolTip(commandString), null) {
                         @Override
                         protected void decorateButtonPanel(JPanel boxedButtonPanel) {
@@ -310,6 +311,7 @@ public class BatchComputeDialog extends JDialog {
     private void startComputing() {
         checkResult = null;
         if (warnNoMethodIsSelected()) return;
+        if (warnNoAdductSelected()) return;
 
         if (this.recomputeBox.isSelected()) {
             if (this.compoundsToProcess.size() > 1) {
@@ -508,6 +510,19 @@ public class BatchComputeDialog extends JDialog {
             if (configPanel != null && configPanel.isToolSelected()) return true;
         }
         return false;
+    }
+
+    private boolean warnNoAdductSelected() {
+        if (formulaIDConfigPanel != null && formulaIDConfigPanel.isToolSelected() && !isAnyAdductSelected(formulaIDConfigPanel)) {
+            new WarningDialog(this, "Please select at least one adduct.");
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private boolean isAnyAdductSelected(ActFormulaIDConfigPanel configPanel) {
+        return !configPanel.getContent().getSelectedAdducts().isEmpty();
     }
 
     //todo reenable in the future?
