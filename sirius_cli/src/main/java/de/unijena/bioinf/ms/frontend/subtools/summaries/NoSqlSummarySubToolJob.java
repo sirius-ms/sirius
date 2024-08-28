@@ -398,8 +398,8 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
 
     private SummaryTableWriter makeTableWriter(Path location, String filename) throws IOException {
         return switch (options.format) {
-            case TSV -> new TsvTableWriter(location, filename);
-            case ZIP -> new ZipTableWriter(location, filename);
+            case TSV -> new TsvTableWriter(location, filename, options.quoteStrings);
+            case ZIP -> new ZipTableWriter(location, filename, options.quoteStrings);
             case XLSX -> new XlsxTableWriter(location, filename);
         };
     }
