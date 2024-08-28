@@ -22,7 +22,7 @@ Main developers of SIRIUS are the [Böcker group](https://bio.informatik.uni-jen
 - [Online Documentation](https://v6.docs.sirius-ms.io/)
 - [Video tutorials](https://www.youtube.com/channel/UCIbW_ZFSADRUQ-T5nmgU4VA/featured)
 - [Bookchapter on using SIRIUS 4](https://doi.org/10.1007/978-1-0716-0239-3_11) ([Preprint](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2020/12/SIRIUS4_book_chapter_preprint-2.pdf)) -- does not cover the new LC-MS/MS processing option
-- [Demo data](data/demo.zip)
+- [Demo data](data/demo-data.zip)
 - [Logos for publications and presentations](https://bio.informatik.uni-jena.de/software/sirius/sirius-logos/)
 
 <!--begin download-->
@@ -112,18 +112,18 @@ command-line tool.
 <!--begin cite-->
 ## Main citations
 
-Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Alexander A. Aksenov, Alexey V. Melnik, Marvin Meusel, Pieter C. Dorrestein, Juho Rousu, and Sebastian Böcker,
+Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Alexander A. Aksenov, Alexey V. Melnik, Marvin Meusel, Pieter C. Dorrestein, Juho Rousu and Sebastian Böcker.
 [SIRIUS 4: Turning tandem mass spectra into metabolite structure information.](https://doi.org/10.1038/s41592-019-0344-8)
 *Nature Methods* 16, 299–302, 2019.
 
 ---
-Stravs, Michael A. and Dührkop, Kai and Böcker, Sebastian and Zamboni, Nicola
-[MSNovelist: De novo structure generation from mass spectra](https://doi.org/10.1101/2021.07.06.450875)
-bioRxiv, 2021. (Cite if you are using: MSNovelist)
+Michael A. Stravs and Kai Dührkop, Sebastian Böcker and Nicola Zamboni.
+[MSNovelist: De novo structure generation from mass spectra.](https://doi.org/10.1038/s41592-022-01486-3)
+*Nature Methods* 19, 865–870, 2022. (Cite if you are using: MSNovelist)
 
-Martin A. Hoffmann and Louis-Félix Nothias and Marcus Ludwig and Markus Fleischauer and Emily C. Gentry and Michael Witting and Pieter C. Dorrestein and Kai Dührkop and Sebastian Böcker
-[Assigning confidence to structural annotations from mass spectra with COSMIC](https://doi.org/10.1101/2021.03.18.435634)
-bioRxiv, 2021. (Cite if you are using: *CSI:FingerID*, *COSMIC*)
+Martin A. Hoffmann, Louis-Félix Nothias, Marcus Ludwig, Markus Fleischauer, Emily C. Gentry, Michael Witting, Pieter C. Dorrestein, Kai Dührkop and Sebastian Böcker.
+[High-confidence structural annotation of metabolites absent from spectral libraries.](https://doi.org/10.1038/s41587-021-01045-9)
+*Nature Biotechnology* 40, 411–421, 2022. (Cite if you are using: *CSI:FingerID*, *COSMIC*)
 
 Kai Dührkop, Louis-Félix Nothias, Markus Fleischauer, Raphael Reher, Marcus Ludwig, Martin A. Hoffmann, Daniel Petras, William H. Gerwick, Juho Rousu, Pieter C. Dorrestein and Sebastian Böcker.
 [Systematic classification of unknown metabolites using high-resolution fragmentation mass spectra.](https://doi.org/10.1038/s41587-020-0740-8)
@@ -150,6 +150,10 @@ Sebastian Böcker, Matthias C. Letzel, Zsuzsanna Lipták and Anton Pervukhin.
 *Bioinformatics* 25(2), 218-224, 2009. (Cite this for *isotope pattern analysis*)
 
 ### Additional citations
+
+Shipei Xing, Sam Shen, Banghua Xu, Xiaoxiao Li and Tao Huan.
+[BUDDY: molecular formula discovery via bottom-up MS/MS interrogation.](https://doi.org/10.1038/s41592-023-01850-x)
+*Nature Methods* 20, 881–890, 2023. (Cite if you are using: Bottom-up molecular formula generation)
 
 Marcus Ludwig, Kai Dührkop and Sebastian and Böcker.
 [Bayesian networks for mass spectrometric metabolite identification via molecular fingerprints.](http://doi.org/10.1093/bioinformatics/bty245)

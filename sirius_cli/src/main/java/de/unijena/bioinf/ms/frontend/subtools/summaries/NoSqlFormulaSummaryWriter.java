@@ -26,109 +26,75 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate;
 import de.unijena.bioinf.sirius.FTreeMetricsHelper;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.Writer;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-class NoSqlFormulaSummaryWriter implements AutoCloseable {
-    final static String DOUBLE_FORMAT = "%.3f";
-    final static String LONG_FORMAT = "%d";
-    final static String HEADER = "formulaRank\t" +
-            "molecularFormula\t" +
-            "adduct\t" +
-            "precursorFormula\t" +
-            "SiriusScore\t" +
-            "TreeScore\t" +
-            "IsotopeScore\t" +
-            "numExplainedPeaks\t" +
-            "explainedIntensity\t" +
+class NoSqlFormulaSummaryWriter extends SummaryTable {
 
-            "medianMassErrorFragmentPeaks(ppm)\t" +
-            "medianAbsoluteMassErrorFragmentPeaks(ppm)\t" +
+    final static List<String> HEADER = List.of(
+            "formulaRank",
+            "molecularFormula",
+            "adduct",
+            "precursorFormula",
+            "SiriusScore",
+            "TreeScore",
+            "IsotopeScore",
+            "numExplainedPeaks",
+            "explainedIntensity",
 
-            "massErrorPrecursor(ppm)\t" +
+            "medianMassErrorFragmentPeaks(ppm)",
+            "medianAbsoluteMassErrorFragmentPeaks(ppm)",
 
-            "lipidClass\t" +
+            "massErrorPrecursor(ppm)",
+
+            "lipidClass",
             // metadata for mapping
-            "ionMass\t" +
-            "retentionTimeInSeconds\t" +
-            "retentionTimeInMinutes\t" +
-            "formulaId\t" +
-            "alignedFeatureId\t" +
-            "mappingFeatureId";
-
-    private final BufferedWriter w;
+            "ionMass",
+            "retentionTimeInSeconds",
+            "retentionTimeInMinutes",
+            "formulaId",
+            "alignedFeatureId",
+            "mappingFeatureId");
 
 
-
-
-
-    NoSqlFormulaSummaryWriter(BufferedWriter writer) {
-        this.w = writer;
-    }
-
-    private NoSqlFormulaSummaryWriter(Writer w) {
-        this.w = new BufferedWriter(w);
+    public NoSqlFormulaSummaryWriter(SummaryTableWriter writer) {
+        super(writer);
     }
 
     public void writeHeader() throws IOException {
-        w.write(HEADER);
-        w.newLine();
+        writer.writeHeader(HEADER);
     }
 
     public void writeFormulaCandidate(AlignedFeatures f, FormulaCandidate fc, FTree tree) throws IOException {
+        List<Object> row = new ArrayList<>();
+
         FTreeMetricsHelper scores = new FTreeMetricsHelper(tree);
-        w.write(String.valueOf(fc.getFormulaRank()));
-        writeSep();
-        w.write(fc.getMolecularFormula().toString());
-        writeSep();
-        w.write(fc.getAdduct().toString());
-        writeSep();
-        w.write(fc.getPrecursorFormulaWithCharge());
-        writeSep();
-        w.write(String.format(DOUBLE_FORMAT, fc.getSiriusScore()));
-        writeSep();
-        w.write(String.format(DOUBLE_FORMAT, fc.getTreeScore()));
-        writeSep();
-        w.write(String.format(DOUBLE_FORMAT, fc.getIsotopeScore()));
-        writeSep();
-        w.write(String.format(LONG_FORMAT, scores.getNumOfExplainedPeaks()));
-        writeSep();
-        w.write(String.format(DOUBLE_FORMAT, scores.getExplainedIntensityRatio()));
-        writeSep();
-        w.write(String.format(DOUBLE_FORMAT, scores.getMedianMassDeviation().getPpm()));
-        writeSep();
-        w.write(String.format(DOUBLE_FORMAT, scores.getMedianAbsoluteMassDeviation().getPpm()));
-        writeSep();
+        row.add(fc.getFormulaRank());
+        row.add(fc.getMolecularFormula().toString());
+        row.add(fc.getAdduct().toString());
+        row.add(fc.getPrecursorFormulaWithCharge());
+        row.add(fc.getSiriusScore());
+        row.add(fc.getTreeScore());
+        row.add(fc.getIsotopeScore());
+        row.add(scores.getNumOfExplainedPeaks());
+        row.add(scores.getExplainedIntensityRatio());
+        row.add(scores.getMedianMassDeviation().getPpm());
+        row.add(scores.getMedianAbsoluteMassDeviation().getPpm());
 
-        w.write(String.format(DOUBLE_FORMAT, tree.getMassErrorTo(tree.getRoot(), f.getAverageMass()).getPpm()));
-        writeSep();
+        row.add(tree.getMassErrorTo(tree.getRoot(), f.getAverageMass()).getPpm());
 
-        w.write(tree.getAnnotation(LipidSpecies.class).map(LipidSpecies::toString).orElse(""));
-        writeSep();
+        row.add(tree.getAnnotation(LipidSpecies.class).map(LipidSpecies::toString).orElse(""));
 
-        w.write(String.format(DOUBLE_FORMAT, f.getAverageMass()));
-        writeSep();
-        w.write(Optional.ofNullable(f.getRetentionTime()).map(rt -> String.format("%.0f", rt.getMiddleTime())).orElse(""));
-        writeSep();
-        w.write(Optional.ofNullable(f.getRetentionTime()).map(rt -> String.format("%.2f", rt.getMiddleTime() / 60d)).orElse(""));
-        writeSep();
-        w.write(String.format(LONG_FORMAT, fc.getFormulaId()));
-        writeSep();
-        w.write(String.format(LONG_FORMAT, fc.getAlignedFeatureId()));
-        writeSep();
-        w.write(Objects.requireNonNullElse(f.getExternalFeatureId(), String.format(LONG_FORMAT, fc.getAlignedFeatureId())));
-        w.newLine();
-    }
+        row.add(f.getAverageMass());
+        row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> Math.round(rt.getMiddleTime())).orElse(null));
+        row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> rt.getMiddleTime() / 60d).orElse(null));
+        row.add(String.valueOf(fc.getFormulaId()));
+        row.add(String.valueOf(fc.getAlignedFeatureId()));
+        row.add(Objects.requireNonNullElse(f.getExternalFeatureId(), String.valueOf(fc.getAlignedFeatureId())));
 
-    private void writeSep() throws IOException {
-        w.write('\t');
-    }
-
-    @Override
-    public void close() throws Exception {
-        w.close();
+        writer.writeRow(row);
     }
 }
