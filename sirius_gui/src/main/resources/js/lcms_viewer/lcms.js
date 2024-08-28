@@ -196,6 +196,8 @@ class LiquidChromatographyPlot {
             .x(d => this.xScale(d.rt))
             .y(d => this.yScale(d.intensity));
 
+        this.noiseLevel = this.mainPlot.append("path").datum(this.data.noiseLevel).attr("class", "noiselevel").attr("d", this.line).attr("id","noise-curve").style("fill","none")
+
 
         this.traces=[];
         // add all other traces
@@ -346,6 +348,10 @@ class AbstractLiquidChromatographyData {
 
     setSpecialTrace(trace) {
         this.specialTrace = trace;
+        let dom = this.retentionTimeDomain();
+        this.noiseLevel = trace.noiseLevel;
+        this.noiseLevel[0].rt = dom[0];
+        this.noiseLevel[1].rt = dom[1];
     }
 
     finishDefinition() {
@@ -486,6 +492,11 @@ class Trace {
                 this.data_.push(new DataPoint(this, rts[i], json.intensities[i], json.intensities[i]*json.normFactor));
             }
         }
+        this.noiseLevel = [
+            new DataPoint(this, rts[0], m ? this.json.noiseLevel/norm : this.json.noiseLevel, m ? this.json.noiseLevel : this.json.noiseLevel*json.normFactor ),
+            new DataPoint(this, rts[len-1], m ? this.json.noiseLevel/norm : this.json.noiseLevel, m ? this.json.noiseLevel : this.json.noiseLevel*json.normFactor )
+
+        ];
         this.ms2Annotations = [];
         this.featureAnnotations = [];
         this.mainFeatureId = -1;
