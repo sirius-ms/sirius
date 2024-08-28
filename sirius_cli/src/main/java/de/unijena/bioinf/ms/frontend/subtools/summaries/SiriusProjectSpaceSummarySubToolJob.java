@@ -112,7 +112,7 @@ public class SiriusProjectSpaceSummarySubToolJob extends PostprocessingJob<Boole
             }
 
             SiriusProjectSpace.SummarizerJob job = project.getProjectSpaceImpl()
-                    .makeSummarizerJob(options.location, options.compress, ids, SiriusProjectSpaceManager
+                    .makeSummarizerJob(options.location, options.format == SummaryOptions.Format.ZIP, ids, SiriusProjectSpaceManager
                             .defaultSummarizer(
                                     options.isTopHitSummary(),
                                     options.isTopHitWithAdductsSummary(),
@@ -124,7 +124,7 @@ public class SiriusProjectSpaceSummarySubToolJob extends PostprocessingJob<Boole
 
             if (options.isAnyPredictionOptionSet()) { // this includes options.predictionsOptions null check
                 boolean writeIntoProjectSpace = (options.location == null);
-                Path root = options.compress
+                Path root = options.format == SummaryOptions.Format.ZIP
                         ? FileUtils.asZipFSPath(options.location, false, true, ZipCompressionMethod.DEFLATED)
                         : options.location;
                 try {
@@ -132,7 +132,7 @@ public class SiriusProjectSpaceSummarySubToolJob extends PostprocessingJob<Boole
                     BasicJJob posJob;
                     if (writeIntoProjectSpace) {
                         posJob = project.getProjectSpaceImpl()
-                                .makeSummarizerJob(options.location, options.compress, ids, new PredictionsSummarizer(listener, instances, 1, SummaryLocations.PREDICTIONS, options.predictionsOptions));
+                                .makeSummarizerJob(options.location, options.format == SummaryOptions.Format.ZIP, ids, new PredictionsSummarizer(listener, instances, 1, SummaryLocations.PREDICTIONS, options.predictionsOptions));
                     } else {
                         posJob = new ExportPredictionsOptions.ExportPredictionJJob(
                                 options.predictionsOptions, 1, instances,
@@ -146,7 +146,7 @@ public class SiriusProjectSpaceSummarySubToolJob extends PostprocessingJob<Boole
                     BasicJJob negJob;
                     if (writeIntoProjectSpace) {
                         negJob = project.getProjectSpaceImpl()
-                                .makeSummarizerJob(options.location, options.compress, ids, new PredictionsSummarizer(listener, instances, -1, SummaryLocations.PREDICTIONS_NEG, options.predictionsOptions));
+                                .makeSummarizerJob(options.location, options.format == SummaryOptions.Format.ZIP, ids, new PredictionsSummarizer(listener, instances, -1, SummaryLocations.PREDICTIONS_NEG, options.predictionsOptions));
                     } else {
                         negJob = new ExportPredictionsOptions.ExportPredictionJJob(
                                 options.predictionsOptions, -1, instances,
