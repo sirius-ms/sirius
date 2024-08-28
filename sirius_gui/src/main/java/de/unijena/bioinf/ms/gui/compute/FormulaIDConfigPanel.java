@@ -34,6 +34,7 @@ import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
+import it.unimi.dsi.fastutil.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,6 +96,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
     protected FormulaSearchStrategy formulaSearchStrategy;
 
 
+    protected final List<InstanceBean> allInstances;
     protected final List<InstanceBean> ecs;
 
 
@@ -106,6 +108,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
 
     public FormulaIDConfigPanel(SiriusGui gui, Dialog owner, List<InstanceBean> ecs, boolean ms2, boolean displayAdvancedParameters) {
         super(SiriusOptions.class, displayAdvancedParameters);
+        this.allInstances = gui.getMainFrame().getCompounds();
         this.ecs = ecs;
         this.owner = owner;
         this.gui = gui;
@@ -210,8 +213,8 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
             addAdvancedComponent(technicalParameters);
         }
 
-        // add adducts, either detect adducts for single compound or fallback adducts for correct charge (pos / neg) in batch compute
-        refreshPossibleAdducts(isBatchDialog() ? ecs.stream().map(InstanceBean::getIonType).map(it -> it.getCharge()>0?PrecursorIonType.unknownPositive() : PrecursorIonType.unknownNegative()).distinct().collect(Collectors.toSet())  : ecs.stream().map(InstanceBean::getDetectedAdductsOrCharge).flatMap(Set::stream).collect(Collectors.toSet()), true);
+        Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> possibleAndSelected = getAdducts(ecs);
+        refreshAdducts(possibleAndSelected.left(), possibleAndSelected.right());
     }
 
     protected boolean isBatchDialog() {
@@ -226,55 +229,39 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         addAdvancedComponent(control);
     }
 
-    public void refreshPossibleAdducts(Set<PrecursorIonType> detectedAdductsOrCharge, boolean enabled) {
-        Set<PrecursorIonType> adducts = new HashSet<>();
-        Set<PrecursorIonType> adductsEnabled = new HashSet<>();
-        Set<PrecursorIonType> detectedAdducteWithoutCharge = detectedAdductsOrCharge.stream().filter(it -> !it.isIonizationUnknown()).collect(Collectors.toSet());
+    private Pair<Set<PrecursorIonType>, Set<PrecursorIonType>> getAdducts(List<InstanceBean> ecs) {
+        Set<PrecursorIonType> detectedAdductsOrCharge = ecs.stream().map(InstanceBean::getDetectedAdductsOrCharge).flatMap(Set::stream).collect(Collectors.toSet());
+        Set<PrecursorIonType> detectedUnknowns = detectedAdductsOrCharge.stream().filter(PrecursorIonType::isIonizationUnknown).collect(Collectors.toSet());
+        Set<PrecursorIonType> detectedAdductsNoMulti = detectedAdductsOrCharge.stream().filter(ion -> !ion.isIonizationUnknown() && !ion.isMultimere() && !ion.isMultipleCharged()).collect(Collectors.toSet());
+
+        Set<PrecursorIonType> possibleAdducts = gui.getMainFrame().getCompounds().stream().map(InstanceBean::getDetectedAdducts).flatMap(Set::stream).filter(ion -> !ion.isIonizationUnknown() && !ion.isMultimere() && !ion.isMultipleCharged()).collect(Collectors.toSet());
+        Set<PrecursorIonType> selectedAdducts = new HashSet<>(detectedAdductsNoMulti);
 
         AdductSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class);
-        if (!detectedAdductsOrCharge.isEmpty()) {
-            if (detectedAdductsOrCharge.stream().anyMatch(PrecursorIonType::isPositive)) {
-                adducts.addAll(PeriodicTable.getInstance().getPositiveAdducts());
-                if (detectedAdductsOrCharge.contains(PrecursorIonType.unknownPositive())) {
-                    adductsEnabled.addAll(
-                            Stream.concat(settings.getFallback().stream().filter(PrecursorIonType::isPositive),
-                                            settings.getEnforced().stream().filter(PrecursorIonType::isPositive))
-                                    .collect(Collectors.toSet()));
-                }
+        if (detectedAdductsOrCharge.stream().anyMatch(PrecursorIonType::isPositive)) {
+            PeriodicTable.getInstance().getPositiveAdducts().stream().filter(ion -> !ion.isMultimere() && !ion.isMultipleCharged()).forEach(possibleAdducts::add);
+            if (detectedAdductsNoMulti.isEmpty() || detectedUnknowns.contains(PrecursorIonType.unknownPositive())) {
+                settings.getFallback().stream().filter(PrecursorIonType::isPositive).filter(possibleAdducts::contains).forEach(selectedAdducts::add);
+                settings.getEnforced().stream().filter(PrecursorIonType::isPositive).filter(possibleAdducts::contains).forEach(selectedAdducts::add);
             }
-
-            if (detectedAdductsOrCharge.stream().anyMatch(PrecursorIonType::isNegative)) {
-                adducts.addAll(PeriodicTable.getInstance().getNegativeAdducts());
-                if (detectedAdductsOrCharge.contains(PrecursorIonType.unknownNegative())) {
-                    adductsEnabled.addAll(
-                            Stream.concat(settings.getFallback().stream().filter(PrecursorIonType::isNegative),
-                                            settings.getEnforced().stream().filter(PrecursorIonType::isNegative))
-                                    .collect(Collectors.toSet()));
-                }
-            }
-
-            adductsEnabled.addAll(detectedAdducteWithoutCharge);
-            adducts.addAll(adductsEnabled);
         }
 
-
-        if (adducts.isEmpty()) {
-            adductList.checkBoxList.replaceElements(detectedAdductsOrCharge.stream().sorted().collect(Collectors.toList()));
-            adductList.checkBoxList.checkAll();
-            adductList.setEnabled(false);
-        } else {
-            adductList.checkBoxList.replaceElements(adducts.stream().sorted().toList());
-            adductList.checkBoxList.uncheckAll();
-            if (!isBatchDialog()) {
-                if (detectedAdducteWithoutCharge.isEmpty())
-                    settings.getFallback().forEach(adductList.checkBoxList::check);
-                else
-                    detectedAdducteWithoutCharge.forEach(adductList.checkBoxList::check);
-            } else {
-                adductsEnabled.forEach(adductList.checkBoxList::check);
+        if (detectedAdductsOrCharge.stream().anyMatch(PrecursorIonType::isNegative)) {
+            PeriodicTable.getInstance().getNegativeAdducts().stream().filter(ion -> !ion.isMultimere() && !ion.isMultipleCharged()).forEach(possibleAdducts::add);
+            if (detectedAdductsNoMulti.isEmpty() || detectedUnknowns.contains(PrecursorIonType.unknownNegative())) {
+                settings.getFallback().stream().filter(PrecursorIonType::isNegative).filter(possibleAdducts::contains).forEach(selectedAdducts::add);
+                settings.getEnforced().stream().filter(PrecursorIonType::isNegative).filter(possibleAdducts::contains).forEach(selectedAdducts::add);
             }
-            adductList.setEnabled(enabled);
         }
+
+        return Pair.of(possibleAdducts, selectedAdducts);
+    }
+
+    private void refreshAdducts(Set<PrecursorIonType> possibleAdducts, Set<PrecursorIonType> selectedAdducts) {
+        adductList.checkBoxList.replaceElements(possibleAdducts.stream().sorted().toList());
+        adductList.checkBoxList.uncheckAll();
+        selectedAdducts.forEach(adductList.checkBoxList::check);
+        adductList.setEnabled(true);
     }
 
     public FormulaSearchStrategy getFormulaSearchStrategy() {
