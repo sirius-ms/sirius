@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.DefaultIndexedColorMap;
+import org.apache.poi.xssf.usermodel.XSSFColor;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -33,11 +35,13 @@ public class XlsxTableWriter implements SummaryTableWriter {
 
     @Override
     public void writeHeader(List<String> columns) throws IOException {
+        CellStyle style = createHeaderStyle();
         sheet.trackAllColumnsForAutoSizing();
         Row r = sheet.createRow(0);
         for (int i = 0; i < columns.size(); i++) {
             Cell cell = r.createCell(i, CellType.STRING);
             cell.setCellValue(columns.get(i));
+            cell.setCellStyle(style);
             sheet.autoSizeColumn(i);
         }
         sheet.createFreezePane(0, 1);
@@ -95,4 +99,19 @@ public class XlsxTableWriter implements SummaryTableWriter {
         iStyle.setDataFormat(format.getFormat(INTEGER_PATTERN));
         integerStyle = iStyle;
     }
+
+    private CellStyle createHeaderStyle() {
+        CellStyle style = workBook.createCellStyle();
+
+        XSSFColor bgColor = new XSSFColor(new java.awt.Color(245, 187, 201), new DefaultIndexedColorMap());  // TODO streamline with other colors
+        style.setFillForegroundColor(bgColor);
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        Font font = workBook.createFont();
+        font.setBold(true);
+        style.setFont(font);
+
+        return style;
+    }
+
 }
