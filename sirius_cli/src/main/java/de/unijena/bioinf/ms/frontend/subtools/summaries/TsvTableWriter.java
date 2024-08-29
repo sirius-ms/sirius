@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
+import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedWriter;
@@ -45,7 +46,7 @@ public class TsvTableWriter implements SummaryTableWriter {
 
     private String getString(Object val) {
         if (val == null || val.equals(Double.NaN)) return "";
-        if (val instanceof String) return String.format(stringFormat, val);
+        if (val instanceof String || val instanceof DataQuality) return String.format(stringFormat, val);
         if (val instanceof Double) return String.format(DOUBLE_FORMAT, val);
         if (val instanceof Integer) return String.format(LONG_FORMAT, val);
         if (val instanceof Long) return String.format(LONG_FORMAT, val);
