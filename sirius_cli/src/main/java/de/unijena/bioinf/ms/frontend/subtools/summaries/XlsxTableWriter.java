@@ -17,7 +17,7 @@ import java.util.List;
 public class XlsxTableWriter implements SummaryTableWriter {
 
     public final static String DOUBLE_PATTERN = "0.###";
-    public final static String INTEGER_PATTERN = "#";
+    public final static String INTEGER_PATTERN = "0";
 
     private final OutputStream out;
     private final SXSSFWorkbook workBook;
