@@ -36,6 +36,8 @@ import java.nio.file.Path;
 @CommandLine.Command(name = "summaries", aliases = {"write-summaries", "W"}, description = "@|bold <STANDALONE, POSTPROCESSING>|@ Write Summary files from a given project-space into the given project-space or a custom location. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class SummaryOptions implements PostprocessingTool<NoSqlSummarySubToolJob>, StandaloneTool<Workflow> {
 
+    public enum Format { TSV, ZIP, XLSX }
+
     //specify negated  name since default is true ->  special picocli behavior
     //https://picocli.info/#_negatable_options
     @Getter
@@ -64,11 +66,13 @@ public class SummaryOptions implements PostprocessingTool<NoSqlSummarySubToolJob
 //    protected int topKSpectra = -1;
 
     @CommandLine.Option(names = {"--output", "-o"}, description = "Specify location (outside the project) for writing summary files. Per default summaries are written to the project-space")
-    Path location;
+    protected Path location;
 
-    @CommandLine.Option(names = {"--compress", "--zip", "-c"}, description = "Summaries will be written into a compressed zip archive. This parameter will be ignored if the summary is written into the project-space.")
-    boolean compress;
+    @CommandLine.Option(names = {"--format"}, description = "Output format for summaries. Valid values: ${COMPLETION-CANDIDATES}. ZIP produces zipped TSV files.", defaultValue = "tsv")
+    protected Format format;
 
+    @CommandLine.Option(names = {"--quote-strings"}, description = {"Enclose all strings in quotation marks (only for TSV files)."})
+    protected boolean quoteStrings;
 
     @CommandLine.ArgGroup(exclusive = false, heading = "Include Predictions Table")
     @Nullable
