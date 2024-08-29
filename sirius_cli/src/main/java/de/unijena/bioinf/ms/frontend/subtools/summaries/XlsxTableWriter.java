@@ -1,5 +1,6 @@
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
+import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
@@ -12,6 +13,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 public class XlsxTableWriter implements SummaryTableWriter {
@@ -24,12 +26,14 @@ public class XlsxTableWriter implements SummaryTableWriter {
     private final SXSSFSheet sheet;
     private CellStyle doubleStyle;
     private CellStyle integerStyle;
+    private Map<DataQuality, CellStyle> qualityStyles;
 
     public XlsxTableWriter(Path location, String filenameWithoutExtension) throws IOException {
         out = Files.newOutputStream(location.resolve(filenameWithoutExtension + ".xlsx"));
 
         workBook = new SXSSFWorkbook();
         createNumericStyles();
+        createQualityStyles();
         sheet = workBook.createSheet();
     }
 
@@ -67,7 +71,13 @@ public class XlsxTableWriter implements SummaryTableWriter {
                 Cell cell = r.createCell(i, CellType.NUMERIC);
                 cell.setCellValue(n.doubleValue());
                 cell.setCellStyle(val instanceof Double ? doubleStyle : integerStyle);
-            } else {
+            }
+            else if (val instanceof DataQuality q) {
+                Cell cell = r.createCell(i, CellType.STRING);
+                cell.setCellValue(q.toString());
+                cell.setCellStyle(qualityStyles.get(q));
+            }
+            else {
                 log.warn("XLSX writer encountered a value of an unexpected type {} {}", val, val.getClass());
                 r.createCell(i, CellType.STRING).setCellValue(val.toString());
             }
@@ -112,6 +122,33 @@ public class XlsxTableWriter implements SummaryTableWriter {
         style.setFont(font);
 
         return style;
+    }
+
+    private void createQualityStyles() {
+        // TODO streamline with other colors
+        CellStyle redStyle = workBook.createCellStyle();
+        redStyle.setFillForegroundColor(IndexedColors.RED.index);
+        redStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        CellStyle yellowStyle = workBook.createCellStyle();
+        yellowStyle.setFillForegroundColor(IndexedColors.YELLOW.index);
+        yellowStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        CellStyle greenStyle = workBook.createCellStyle();
+        greenStyle.setFillForegroundColor(IndexedColors.BRIGHT_GREEN.index);
+        greenStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        CellStyle greyStyle = workBook.createCellStyle();
+        greyStyle.setFillForegroundColor(IndexedColors.GREY_25_PERCENT.index);
+        greyStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        qualityStyles = Map.of(
+                DataQuality.GOOD, greenStyle,
+                DataQuality.DECENT, yellowStyle,
+                DataQuality.BAD, redStyle,
+                DataQuality.LOWEST, greyStyle,
+                DataQuality.NOT_APPLICABLE, greyStyle
+        );
     }
 
 }
