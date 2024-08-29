@@ -29,6 +29,7 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.ms.utils.WrapperSpectrum;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.fragmenter.MolecularGraph;
+import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
@@ -80,8 +81,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -361,43 +360,45 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
     }
 
     private volatile JJob<Boolean> backgroundLoader = null;
-    private final Lock backgroundLoaderLock = new ReentrantLock();
 
 
     public void clear() {
-        resultsChanged(null, null, null, null, null, true);
+        synchronized (this) {
+            if (backgroundLoader != null && !backgroundLoader.isFinished()) {
+                backgroundLoader.cancel(true);
+                backgroundLoader.getResult();
+            }
+            backgroundLoader = Jobs.runInBackground(new BasicJJob<>(JJob.JobType.TINY_BACKGROUND) {
+                @Override
+                protected Boolean compute() throws Exception {
+                    checkForInterruption();
+                    clearData();
+                    Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
+                    browser.clear();
+                    return true;
+                }
+            });
+        }
     }
 
     public void resultsChanged(InstanceBean instance, @Nullable String formulaCandidateId, @Nullable String smiles) {
-        resultsChanged(instance, formulaCandidateId, smiles, null, null, false);
+        resultsChanged(instance, formulaCandidateId, smiles, null, null);
     }
 
     public void resultsChanged(InstanceBean instance, @Nullable SpectralMatchList matchList, @Nullable SpectralMatchBean selectedMatchBean) {
-        resultsChanged(instance, null, null, matchList, selectedMatchBean, matchList == null || selectedMatchBean == null);
+        resultsChanged(instance, null, null, matchList, selectedMatchBean);
     }
 
-    private void resultsChanged(InstanceBean instance, @Nullable String formulaCandidateId, @Nullable String smiles, @Nullable SpectralMatchList matchList, @Nullable SpectralMatchBean matchBean, boolean clear) {
-        try {
-            backgroundLoaderLock.lock();
-            final JJob<Boolean> old = backgroundLoader;
+    private void resultsChanged(InstanceBean instance, @Nullable String formulaCandidateId, @Nullable String smiles, @Nullable SpectralMatchList matchList, @Nullable SpectralMatchBean matchBean) {
+        synchronized (this) {
+            if (backgroundLoader != null && !backgroundLoader.isFinished()) {
+                backgroundLoader.cancel(true);
+                backgroundLoader.getResult();
+            }
             backgroundLoader = Jobs.runInBackground(new BasicMasterJJob<>(JJob.JobType.TINY_BACKGROUND) {
                 @Override
                 protected Boolean compute() throws Exception {
-                    //cancel running job if not finished to not waist resources for fetching data that is not longer needed.
-                    if (old != null) {
-                        old.cancel(true);
-                        old.getResult(); //await cancellation so that nothing strange can happen.
-                    }
                     showBrowser();
-                    clearData();
-
-                    if (clear) {
-                        clearData();
-                        Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
-                        browser.clear();
-                        return true;
-                    }
-
                     checkForInterruption();
                     //todo check if data is unchanged and prevent re-rendering
                     if (instance != null) {
@@ -429,13 +430,13 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                                 selectedMatchBean = matchBean;
                                 similarities = new SpectralSimilarity[msData.getMs2Spectra().size()];
                                 queryIndices = new IntArrayList();
-                                matchList.getMatchBeanGroup(matchBean.getMatch().getUuid()).forEach(match -> {
+                                for (SpectralMatchBean match : matchList.getMatchBeanGroup(matchBean.getMatch().getUuid())) {
                                     similarities[match.getMatch().getQuerySpectrumIndex()] = new SpectralSimilarity(
                                             match.getMatch().getSimilarity(),
                                             match.getMatch().getSharedPeaks() != null ? match.getMatch().getSharedPeaks() : 0
                                     );
                                     queryIndices.add((int) match.getMatch().getQuerySpectrumIndex());
-                                });
+                                }
                                 queryIndices.sort(IntComparators.NATURAL_COMPARATOR);
                             }
 
@@ -443,17 +444,17 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                             {
                                 final List<String> items = new ArrayList<>(5);
 
-                            Jobs.runEDTAndWait(() -> setToolbarEnabled(true));
-                            if (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null)
-                                items.add(MS1_DISPLAY);
-                            if (isotopePatternAnnotation != null) {
-                                if (isotopePatternAnnotation.getSimulatedPattern() != null)
-                                    items.add(MS1_MIRROR_DISPLAY);
-                            }
-                            if (!msData.getMs2Spectra().isEmpty())
-                                items.add(MS2_DISPLAY);
-                            if (ms2MirrorEnabled && !msData.getMs2Spectra().isEmpty())
-                                items.add(MS2_MIRROR_DISPLAY);
+                                Jobs.runEDTAndWait(() -> setToolbarEnabled(true));
+                                if (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null)
+                                    items.add(MS1_DISPLAY);
+                                if (isotopePatternAnnotation != null) {
+                                    if (isotopePatternAnnotation.getSimulatedPattern() != null)
+                                        items.add(MS1_MIRROR_DISPLAY);
+                                }
+                                if (!msData.getMs2Spectra().isEmpty())
+                                    items.add(MS2_DISPLAY);
+                                if (ms2MirrorEnabled && !msData.getMs2Spectra().isEmpty())
+                                    items.add(MS2_MIRROR_DISPLAY);
 
                                 checkForInterruption();
 
@@ -506,14 +507,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
                     }
                     return true;
                 }
-
-                @Override
-                public void cancel(boolean mayInterruptIfRunning) {
-                    super.cancel(mayInterruptIfRunning);
-                }
             });
-        } finally {
-            backgroundLoaderLock.unlock();
         }
     }
 
