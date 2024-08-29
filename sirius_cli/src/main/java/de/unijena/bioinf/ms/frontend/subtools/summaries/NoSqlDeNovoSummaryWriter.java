@@ -52,7 +52,8 @@ class NoSqlDeNovoSummaryWriter extends SummaryTable {
             "retentionTimeInMinutes",
             "formulaId",
             "alignedFeatureId",
-            "mappingFeatureId");
+            "mappingFeatureId",
+            "dataQuality");
 
     public NoSqlDeNovoSummaryWriter(SummaryTableWriter writer) {
         super(writer);
@@ -88,6 +89,7 @@ class NoSqlDeNovoSummaryWriter extends SummaryTable {
         row.add(String.valueOf(fc.getFormulaId()));
         row.add(String.valueOf(f.getAlignedFeatureId()));
         row.add(Objects.requireNonNullElse(f.getExternalFeatureId(), String.valueOf(f.getAlignedFeatureId())));
+        row.add(f.getDataQuality());
 
         writer.writeRow(row);
     }

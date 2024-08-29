@@ -57,7 +57,8 @@ class NoSqlFormulaSummaryWriter extends SummaryTable {
             "retentionTimeInMinutes",
             "formulaId",
             "alignedFeatureId",
-            "mappingFeatureId");
+            "mappingFeatureId",
+            "dataQuality");
 
 
     public NoSqlFormulaSummaryWriter(SummaryTableWriter writer) {
@@ -94,6 +95,7 @@ class NoSqlFormulaSummaryWriter extends SummaryTable {
         row.add(String.valueOf(fc.getFormulaId()));
         row.add(String.valueOf(fc.getAlignedFeatureId()));
         row.add(Objects.requireNonNullElse(f.getExternalFeatureId(), String.valueOf(fc.getAlignedFeatureId())));
+        row.add(f.getDataQuality());
 
         writer.writeRow(row);
     }
