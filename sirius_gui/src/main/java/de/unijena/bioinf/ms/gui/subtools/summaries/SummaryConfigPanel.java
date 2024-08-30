@@ -42,6 +42,8 @@ public class SummaryConfigPanel extends SubToolConfigPanel<SummaryOptions> {
         JComboBox<Hits> hitsComboBox = GuiUtils.makeComboBoxWithTooltips(Hits.values(), null, option -> getOptionTooltip(option.getOptionName()).orElseThrow());
         paras.addNamed("Hits", hitsComboBox);
 
+        paras.addNamed("", makeGenericOptionCheckBox("Data quality summary", "data-quality-summary"));
+
         parameterBindings.put(Hits.TOP.optionName, () -> String.valueOf(Hits.TOP.equals(hitsComboBox.getSelectedItem())));
         parameterBindings.put(Hits.ADDUCT.optionName, () -> "~" + Hits.ADDUCT.equals(hitsComboBox.getSelectedItem()));
         parameterBindings.put(Hits.ALL.optionName, () -> "~" + Hits.ALL.equals(hitsComboBox.getSelectedItem()));

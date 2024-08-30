@@ -41,7 +41,7 @@ public class SummarizeAllAction extends AbstractGuiAction {
         super("Summaries", gui);
         putValue(Action.LARGE_ICON_KEY, Icons.EXPORT_32);
         putValue(Action.SMALL_ICON, Icons.EXPORT_16);
-        putValue(Action.SHORT_DESCRIPTION, "Write/Export Summary .tsv files.");
+        putValue(Action.SHORT_DESCRIPTION, "Write/Export Summary files.");
         initListeners();
     }
 
