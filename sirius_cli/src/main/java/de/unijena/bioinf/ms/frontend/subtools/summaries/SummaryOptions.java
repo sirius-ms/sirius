@@ -41,20 +41,23 @@ public class SummaryOptions implements PostprocessingTool<NoSqlSummarySubToolJob
     //specify negated  name since default is true ->  special picocli behavior
     //https://picocli.info/#_negatable_options
     @Getter
-    @CommandLine.Option(names = {"--no-top-hit-summary"}, description = "Write project wide summary files with all Top Hits.", defaultValue = "true", negatable = true)
+    @CommandLine.Option(names = {"--no-top-hit-summary"}, description = "Write summary files with all Top Hits.", defaultValue = "true", negatable = true)
     protected boolean topHitSummary;
 
     @Getter
-    @CommandLine.Option(names = {"--top-hit-adduct-summary"}, description = "Write project wide summary files with all Top Hits and their adducts", defaultValue = "false", negatable = true)
+    @CommandLine.Option(names = {"--top-hit-adduct-summary"}, description = "Write summary files with all Top Hits and their adducts", defaultValue = "false", negatable = true)
     protected boolean topHitWithAdductsSummary;
 
     @Getter
-    @CommandLine.Option(names = {"--full-summary"}, description = {"Write project wide summary files with ALL Hits. ", "(Use with care! Might create large files and consume large amounts of memory for large projects.)"}, defaultValue = "false", negatable = true)
+    @CommandLine.Option(names = {"--full-summary"}, description = {"Write summary files with ALL Hits. ", "(Use with care! Might create large files and consume large amounts of memory for large projects.)"}, defaultValue = "false", negatable = true)
     protected boolean fullSummary;
 
     @Getter
-    @CommandLine.Option(names = {"--top-k-summary"}, description = {"Write project wide summary files with top k hits . ", "(Use with care! Using large 'k' might create large files and consume large amounts of memory for large projects.)"})
+    @CommandLine.Option(names = {"--top-k-summary"}, description = {"Write summary files with top k hits . ", "(Use with care! Using large 'k' might create large files and consume large amounts of memory for large projects.)"})
     protected int topK = -1;
+
+    @CommandLine.Option(names = {"--data-quality-summary"}, description = "Write a summary file with data quality metrics.", defaultValue = "false")
+    protected boolean qualitySummary;
 
     //todo enable when implementing spectral match export, per compound candidate
 //    @Getter
