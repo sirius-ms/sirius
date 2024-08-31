@@ -76,6 +76,8 @@ public class AlignedFeature {
     protected Double rtStartSeconds;
     @Schema(nullable = true)
     protected Double rtEndSeconds;
+    @Schema(nullable = true)
+    protected Double rtApexSeconds;
 
     /**
      * Quality of this feature.
