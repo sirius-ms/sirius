@@ -25,166 +25,92 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureMatch;
 import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureSearchResult;
 import de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate;
-import org.jetbrains.annotations.NotNull;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.Writer;
 import java.util.*;
 import java.util.stream.Collectors;
 
-class NoSqlStructureSummaryWriter implements AutoCloseable {
-    final static String DOUBLE_FORMAT = "%.3f";
-    final static String LONG_FORMAT = "%d";
-    final static String HEADER = "structurePerIdRank\t" +
-            "formulaRank\t" +
-            "ConfidenceScoreExact\t" +
-            "ConfidenceScoreApproximate\t" +
-            "CSI:FingerIDScore\t" +
-            "ZodiacScore\t" +
-            "SiriusScore\t" +
-            "molecularFormula\t" +
-            "adduct\t" +
-            "precursorFormula\t" +
-            "InChIkey2D\t" +
-            "InChI\t" +
-            "name\t" +
-            "smiles\t" +
-            "xlogp\t" +
-            "pubchemids\t" +
-            "links\t" +
-            "dbflags\t" +
-            // metadata for mapping
-            "ionMass\t" +
-            "retentionTimeInSeconds\t" +
-            "retentionTimeInMinutes\t" +
-            "formulaId\t" +
-            "alignedFeatureId\t" +
-            "mappingFeatureId";
-    final BufferedWriter w;
+class NoSqlStructureSummaryWriter extends SummaryTable {
 
-    NoSqlStructureSummaryWriter(BufferedWriter writer) {
-        this.w = writer;
+    final static List<String> HEADER = List.of(
+            "structurePerIdRank",
+            "formulaRank",
+            "ConfidenceScoreExact",
+            "ConfidenceScoreApproximate",
+            "CSI:FingerIDScore",
+            "ZodiacScore",
+            "SiriusScore",
+            "molecularFormula",
+            "adduct",
+            "precursorFormula",
+            "InChIkey2D",
+            "InChI",
+            "name",
+            "smiles",
+            "xlogp",
+            "pubchemids",
+            "links",
+            "dbflags",
+            // metadata for mapping
+            "ionMass",
+            "retentionTimeInSeconds",
+            "retentionTimeInMinutes",
+            "formulaId",
+            "alignedFeatureId",
+            "mappingFeatureId",
+            "overallFeatureQuality");
+
+    NoSqlStructureSummaryWriter(SummaryTableWriter writer) {
+        super(writer);
     }
 
     public void writeHeader() throws IOException {
-        w.write(HEADER);
-        w.newLine();
+        writer.writeHeader(HEADER);
     }
 
     public void writeStructureCandidate(AlignedFeatures f, FormulaCandidate fc, CsiStructureMatch match, CsiStructureSearchResult searchResult) throws IOException {
-        w.write(String.valueOf(match.getStructureRank()));
-        writeSep();
-        w.write(String.valueOf(fc.getFormulaRank()));
-        writeSep();
+        List<Object> row = new ArrayList<>();
 
-        w.write(String.valueOf(searchResult.getConfidenceExact()));
-        writeSep();
-        w.write(String.valueOf(searchResult.getConfidenceApprox()));
-        writeSep();
-        w.write(String.valueOf(match.getCsiScore()));
-        writeSep();
-        w.write(String.format(DOUBLE_FORMAT, fc.getZodiacScore()));
-        writeSep();
-        w.write(String.format(DOUBLE_FORMAT, fc.getSiriusScore()));
-        writeSep();
-        w.write(fc.getMolecularFormula().toString());
-        writeSep();
-        w.write(fc.getAdduct().toString());
-        writeSep();
-        w.write(fc.getPrecursorFormulaWithCharge());
-        writeSep();
+        row.add(match.getStructureRank());
+        row.add(fc.getFormulaRank());
 
-        w.write(match.getCandidateInChiKey());
-        writeSep();
-        w.write(match.getCandidate().getInchi().in2D);
-        writeSep();
-        w.write(Objects.requireNonNullElse(match.getCandidate().getName(), ""));
-        writeSep();
-        w.write(match.getCandidate().getSmiles());
-        writeSep();
-        w.write(Double.isNaN(match.getCandidate().getXlogp()) ? "" : String.format(DOUBLE_FORMAT, match.getCandidate().getXlogp()));
-        writeSep();
+        row.add(searchResult.getConfidenceExact());
+        row.add(searchResult.getConfidenceApprox());
+        row.add(match.getCsiScore());
+        row.add(fc.getZodiacScore());
+        row.add(fc.getSiriusScore());
+        row.add(fc.getMolecularFormula().toString());
+        row.add(fc.getAdduct().toString());
+        row.add(fc.getPrecursorFormulaWithCharge());
 
-        @NotNull final Map<String, List<String>> dbMap = match.getCandidate().getLinkedDatabases();
-        list(w, dbMap.get(DataSource.PUBCHEM.name()).stream().filter(Objects::nonNull).collect(Collectors.toList())); //is this a hack or ok?
-        writeSep();
-        links(w, dbMap);
-        writeSep();
-        w.write(String.valueOf(match.getCandidate().getBitset()));
-        writeSep();
-        w.write(String.format(DOUBLE_FORMAT, f.getAverageMass()));
-        writeSep();
-        w.write(Optional.ofNullable(f.getRetentionTime()).map(rt -> String.format("%.0f", rt.getMiddleTime())).orElse(""));
-        writeSep();
-        w.write(Optional.ofNullable(f.getRetentionTime()).map(rt -> String.format("%.2f", rt.getMiddleTime() / 60d)).orElse(""));
-        writeSep();
+        row.add(match.getCandidateInChiKey());
+        row.add(match.getCandidate().getInchi().in2D);
+        row.add(match.getCandidate().getName());
+        row.add(match.getCandidate().getSmiles());
+        row.add(match.getCandidate().getXlogp());
 
-        w.write(String.format(LONG_FORMAT, fc.getFormulaId()));
-        writeSep();
-        w.write(String.format(LONG_FORMAT, f.getAlignedFeatureId()));
-        writeSep();
-        w.write(Objects.requireNonNullElse(f.getExternalFeatureId(), String.format(LONG_FORMAT, f.getAlignedFeatureId())));
-        w.newLine();
+        final Map<String, List<String>> dbMap = match.getCandidate().getLinkedDatabases();
+        row.add(dbMap.getOrDefault(DataSource.PUBCHEM.name(), List.of("")).stream().filter(Objects::nonNull).collect(Collectors.joining(";")));
+        row.add(links(dbMap));
+        row.add(String.valueOf(match.getCandidate().getBitset()));
+        row.add(f.getAverageMass());
+        row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> Math.round(rt.getMiddleTime())).orElse(null));
+        row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> rt.getMiddleTime() / 60d).orElse(null));
+
+        row.add(String.valueOf(fc.getFormulaId()));
+        row.add(String.valueOf(f.getAlignedFeatureId()));
+        row.add(Objects.requireNonNullElse(f.getExternalFeatureId(), String.valueOf(f.getAlignedFeatureId())));
+        row.add(f.getDataQuality());
+
+        writer.writeRow(row);
     }
 
-    private void writeSep() throws IOException {
-        w.write('\t');
+    public static String links(Map<String, List<String>> databases) throws IOException {
+        return databases.entrySet().stream().map(e -> e.getKey() + joinDBLinks(e.getValue())).collect(Collectors.joining(";"));
     }
 
-    @Override
-    public void close() throws Exception {
-        w.close();
-    }
-
-
-    public static void list(Writer writer, Collection<String> pubchemIds) throws IOException {
-
-        if (pubchemIds == null || pubchemIds.isEmpty()) {
-            writer.write("\"\"");
-        } else {
-            final Iterator<String> it = pubchemIds.iterator();
-            writer.write(it.next());
-            while (it.hasNext()) {
-                writer.write(';');
-                writer.write(it.next());
-            }
-        }
-    }
-
-    public static void links(Writer w, Map<String, List<String>> databases) throws IOException {
-        final Iterator<Map.Entry<String, List<String>>> iter = databases.entrySet().iterator();
-        if (!iter.hasNext()) {
-            w.write("\"\"");
-            return;
-        }
-        Map.Entry<String, List<String>> x = iter.next();
-        w.write(x.getKey());
-        Collection<String> col = withoutNulls(x.getValue());
-        if (!col.isEmpty()) {
-            w.write(":(");
-            w.write(escape(String.join(" ", col)));
-            w.write(")");
-        }
-        while (iter.hasNext()) {
-            w.write(';');
-            x = iter.next();
-            w.write(x.getKey());
-            col = withoutNulls(x.getValue());
-            if (!col.isEmpty()) {
-                w.write(":(");
-                w.write(escape(String.join(" ", col)));
-                w.write(")");
-            }
-        }
-    }
-
-    public static String escape(String name) {
-        if (name == null) return "\"\"";
-        return name.replace('\t', ' ').replace('"', '\'');
-    }
-
-   public static List<String> withoutNulls(List<String> in) {
-        return in.stream().filter(Objects::nonNull).toList();
+    private static String joinDBLinks(List<String> links) {
+        String joined = links.stream().filter(s -> s != null && !s.isBlank()).collect(Collectors.joining(" "));
+        return joined.isEmpty() ? "" : ":(" + joined + ")";
     }
 }

@@ -778,9 +778,11 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
         cid.getRt().ifPresent(rt -> {
             if (rt.isInterval()) {
                 id.setRtStartSeconds(rt.getStartTime());
+                id.setRtApexSeconds(rt.getMiddleTime());
                 id.setRtEndSeconds(rt.getEndTime());
             } else {
                 id.setRtStartSeconds(rt.getRetentionTimeInSeconds());
+                id.setRtApexSeconds(rt.getRetentionTimeInSeconds());
                 id.setRtEndSeconds(rt.getRetentionTimeInSeconds());
             }
         });

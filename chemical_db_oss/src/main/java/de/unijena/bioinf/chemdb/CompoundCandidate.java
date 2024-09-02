@@ -133,6 +133,17 @@ public class CompoundCandidate {
         this.inchikey = (inchi != null) ? inchi.key2D() : null;
     }
 
+    /**
+     * checks if the list of links contains all @{@link DataSource}s that are specified via the bitset.
+     * If incomplete, the list of links is completed by adding links with 'null' IDs for each missing @{@link DataSource}.
+     */
+    public void ensureSelfContainedLinks() {
+        Arrays.stream(DataSource.valuesNoMetaSources())
+                .filter(ds -> (ds.flag() & bitset) > 0)
+                .filter(ds -> links.stream().noneMatch(dbLink -> dbLink.getName().equals(ds.name())))
+                .forEach(ds -> links.add(new DBLink(ds.name(), null)));
+    }
+
     public String getInchiKey2D() {
         return inchikey;
     }
