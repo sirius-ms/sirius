@@ -63,7 +63,7 @@ class NoSqlCanopusSummaryWriter extends SummaryTable {
             "formulaId",
             "alignedFeatureId",
             "mappingFeatureId",
-            "dataQuality");
+            "overallFeatureQuality");
 
     NoSqlCanopusSummaryWriter(SummaryTableWriter writer) {
         super(writer);
