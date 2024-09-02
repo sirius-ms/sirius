@@ -54,13 +54,14 @@ public class InputFilesOptions {
 
 
     public static class MsInput {
-        public final Map<Path, Integer> msParserfiles, unknownFiles;
+        public final Map<Path, Integer> lcmsFiles, msParserfiles, unknownFiles;
 
         public MsInput() {
-            this(new LinkedHashMap<>(), new LinkedHashMap<>());
+            this(new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>());
         }
 
-        public MsInput(Map<Path, Integer> msParserfiles, Map<Path, Integer> unknownFiles) {
+        public MsInput(Map<Path, Integer> lcmsFiles, Map<Path, Integer> msParserfiles, Map<Path, Integer> unknownFiles) {
+            this.lcmsFiles = lcmsFiles;
             this.msParserfiles = msParserfiles;
             this.unknownFiles = unknownFiles;
         }
@@ -74,6 +75,7 @@ public class InputFilesOptions {
         @CommandLine.Option(names = {"--input", "-i"}, description = "Specify the input in multi-compound input formats: Preprocessed mass spectra in .ms or .mgf file format or " +
                 "LC/MS runs in .mzML/.mzXml format but also any other file type e.g. to provide input for STANDALONE tools.", required = true, split = ",", order = 321)
         public void setInputPath(List<Path> files) {
+            lcmsFiles.clear();
             msParserfiles.clear();
             unknownFiles.clear();
             rawInputFiles = files;
