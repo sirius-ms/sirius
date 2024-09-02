@@ -26,99 +26,72 @@ import de.unijena.bioinf.ms.persistence.model.sirius.CanopusPrediction;
 import de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.Writer;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-class NoSqlCanopusSummaryWriter implements AutoCloseable {
-    final static String DOUBLE_FORMAT = "%.3f";
-    final static String LONG_FORMAT = "%d";
-    final static String HEADER =
-            "formulaRank\t" +
-                    "molecularFormula\t" +
-                    "adduct\t" +
-                    "precursorFormula\t" +
-                    "NPC#pathway\t" +
-                    "NPC#pathway Probability\t" +
-                    "NPC#superclass\t" +
-                    "NPC#superclass Probability\t" +
-                    "NPC#class\t" +
-                    "NPC#class Probability\t" +
-                    "ClassyFire#superclass\t" +
-                    "ClassyFire#superclass probability\t" +
-                    "ClassyFire#class\t" +
-                    "ClassyFire#class Probability\t" +
-                    "ClassyFire#subclass\t" +
-                    "ClassyFire#subclass Probability\t" +
-                    "ClassyFire#level 5\t" +
-                    "ClassyFire#level 5 Probability\t" +
-                    "ClassyFire#most specific class\t" +
-                    "ClassyFire#most specific class Probability\t" +
-                    "ClassyFire#all classifications\t" +
-                    // metadata for mapping
-                    "ionMass\t" +
-                    "retentionTimeInSeconds\t" +
-                    "retentionTimeInMinutes\t" +
-                    "formulaId\t" +
-                    "alignedFeatureId\t" +
-                    "mappingFeatureId";
+class NoSqlCanopusSummaryWriter extends SummaryTable {
 
-    private final BufferedWriter w;
+    final static List<String> HEADER = List.of(
+            "formulaRank",
+            "molecularFormula",
+            "adduct",
+            "precursorFormula",
+            "NPC#pathway",
+            "NPC#pathway Probability",
+            "NPC#superclass",
+            "NPC#superclass Probability",
+            "NPC#class",
+            "NPC#class Probability",
+            "ClassyFire#superclass",
+            "ClassyFire#superclass probability",
+            "ClassyFire#class",
+            "ClassyFire#class Probability",
+            "ClassyFire#subclass",
+            "ClassyFire#subclass Probability",
+            "ClassyFire#level 5",
+            "ClassyFire#level 5 Probability",
+            "ClassyFire#most specific class",
+            "ClassyFire#most specific class Probability",
+            "ClassyFire#all classifications",
+            // metadata for mapping
+            "ionMass",
+            "retentionTimeInSeconds",
+            "retentionTimeInMinutes",
+            "formulaId",
+            "alignedFeatureId",
+            "mappingFeatureId",
+            "overallFeatureQuality");
 
-
-    NoSqlCanopusSummaryWriter(BufferedWriter writer) {
-        this.w = writer;
-    }
-
-    private NoSqlCanopusSummaryWriter(Writer w) {
-        this.w = new BufferedWriter(w);
+    NoSqlCanopusSummaryWriter(SummaryTableWriter writer) {
+        super(writer);
     }
 
     public void writeHeader() throws IOException {
-        w.write(HEADER);
-        w.newLine();
+        writer.writeHeader(HEADER);
     }
 
     public void writeCanopusPredictions(AlignedFeatures f, FormulaCandidate fc, CanopusPrediction cp) throws IOException {
-        w.write(String.valueOf(fc.getFormulaRank()));
-        writeSep();
-        w.write(fc.getMolecularFormula().toString());
-        writeSep();
-        w.write(fc.getAdduct().toString());
-        writeSep();
-        w.write(fc.getPrecursorFormulaWithCharge());
-        writeSep();
-        writeCanopus(cp);
-        writeSep();
-        w.write(String.format(DOUBLE_FORMAT, f.getAverageMass()));
-        writeSep();
-        w.write(Optional.ofNullable(f.getRetentionTime()).map(rt -> String.format("%.0f", rt.getMiddleTime())).orElse(""));
-        writeSep();
-        w.write(Optional.ofNullable(f.getRetentionTime()).map(rt -> String.format("%.2f", rt.getMiddleTime() / 60d)).orElse(""));
-        writeSep();
-        w.write(String.format(LONG_FORMAT, fc.getFormulaId()));
-        writeSep();
-        w.write(String.format(LONG_FORMAT, f.getAlignedFeatureId()));
-        writeSep();
-        w.write(Objects.requireNonNullElse(f.getExternalFeatureId(), String.format(LONG_FORMAT, f.getAlignedFeatureId())));
-        w.newLine();
+        List<Object> row = new ArrayList<>();
+        row.add(fc.getFormulaRank());
+        row.add(fc.getMolecularFormula().toString());
+        row.add(fc.getAdduct().toString());
+        row.add(fc.getPrecursorFormulaWithCharge());
+        writeCanopus(row, cp);
+        row.add(f.getAverageMass());
+        row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> Math.round(rt.getMiddleTime())).orElse(null));
+        row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> rt.getMiddleTime() / 60d).orElse(null));
+        row.add(String.valueOf(fc.getFormulaId()));
+        row.add(String.valueOf(f.getAlignedFeatureId()));
+        row.add(Objects.requireNonNullElse(f.getExternalFeatureId(), String.valueOf(f.getAlignedFeatureId())));
+        row.add(f.getDataQuality());
+
+        writer.writeRow(row);
     }
 
-    private void writeSep() throws IOException {
-        w.write('\t');
-    }
-
-    @Override
-    public void close() throws Exception {
-        w.close();
-    }
-
-
-    private void writeCanopus(CanopusPrediction cp) throws IOException {
+    private void writeCanopus(List<Object> row, CanopusPrediction cp) {
         @Nullable ProbabilityFingerprint npcClassification = cp.getNpcFingerprint();
         if (npcClassification != null) {
             double[] perLevelProp = new double[NPCFingerprintVersion.NPCLevel.values().length];
@@ -134,18 +107,12 @@ class NoSqlCanopusSummaryWriter implements AutoCloseable {
                 }
             }
 
-            w.write(perLevelProps[0].getName());
-            writeSep();
-            w.write(String.format(DOUBLE_FORMAT, perLevelProp[0]));
-            writeSep();
-            w.write(perLevelProps[1].getName());
-            writeSep();
-            w.write(String.format(DOUBLE_FORMAT, perLevelProp[1]));
-            writeSep();
-            w.write(perLevelProps[2].getName());
-            writeSep();
-            w.write(String.format(DOUBLE_FORMAT, perLevelProp[2]));
-            writeSep();
+            row.add(perLevelProps[0].getName());
+            row.add(perLevelProp[0]);
+            row.add(perLevelProps[1].getName());
+            row.add(perLevelProp[1]);
+            row.add(perLevelProps[2].getName());
+            row.add(perLevelProp[2]);
         }
 
         @Nullable ProbabilityFingerprint cfClassification = cp.getCfFingerprint();
@@ -166,22 +133,18 @@ class NoSqlCanopusSummaryWriter implements AutoCloseable {
                 for (int i = 0; i < 4; i++) {
                     if (lineageIterator.hasNext()){
                         ClassyfireProperty cfc = lineageIterator.next();
-                        w.write(cfc.getName());
-                        writeSep();
-                        w.write(String.format(DOUBLE_FORMAT, cfClassification.getProbability(CLF.getIndexOfMolecularProperty(cfc))));
-                        writeSep();
+                        row.add(cfc.getName());
+                        row.add(cfClassification.getProbability(CLF.getIndexOfMolecularProperty(cfc)));
                     }else {
-                        writeSep();
-                        writeSep();
+                        row.add(null);
+                        row.add(null);
                     }
 
                 }
             }
-            w.write(primaryClass.getName());
-            writeSep();
-            w.write(String.format(DOUBLE_FORMAT, cfClassification.getProbability(CLF.getIndexOfMolecularProperty(primaryClass))));
-            writeSep();
-            w.write(StreamSupport.stream(cfClassification.asDeterministic().asArray().presentFingerprints().spliterator(), false)
+            row.add(primaryClass.getName());
+            row.add(cfClassification.getProbability(CLF.getIndexOfMolecularProperty(primaryClass)));
+            row.add(StreamSupport.stream(cfClassification.asDeterministic().asArray().presentFingerprints().spliterator(), false)
                     .map(FPIter::getMolecularProperty)
                     .map(MolecularProperty::toString)
                     .collect(Collectors.joining("; ")));

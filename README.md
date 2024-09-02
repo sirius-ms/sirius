@@ -1,18 +1,19 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blueviolet.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Generic badge](https://img.shields.io/badge/Version-6.0.4-informational.svg)](https://shields.io/)
 [![Build and Publish](https://github.com/sirius-ms/sirius/actions/workflows/distribute.yaml/badge.svg?branch=release-4-pre)](https://github.com/sirius-ms/sirius/actions/workflows/distribute.yaml)
+[![Join community chat at https://gitter.im/sirius-ms/general](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sirius-ms/general?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 *<span style="color: #808080;">Our methods are offered to the scientific community as freely available resources. (Re-)distribution of the
 methods, in whole or in part, for commercial purposes is prohibited.
-CSI:FingerID and CANOPUS web services hosted by the [Böcker group](https://bio.informatik.uni-jena.de/) are for academic research and education use only.
+The SIRIUS web services (CSI:FingerID, CANOPUS, MSNovelist and others) hosted by the [Böcker group](https://bio.informatik.uni-jena.de/) are for academic research and education use only.
 Please review the [terms of service](https://bio.informatik.uni-jena.de/terms-of-service-fsu-csi) of the academic version for details.
 For non-academic users, the [Bright Giant GmbH](https://bright-giant.com) provides licenses and all related services.
 We ask that users of our tools cite the corresponding papers in any resulting publications.</span>*
 
 SIRIUS is a java-based software framework for the analysis of LC-MS/MS data of metabolites and other "small molecules of biological interest".
-SIRIUS integrates a collection of our tools, including CSI:FingerID (with [COSMIC](https://bio.informatik.uni-jena.de/software/cosmic/)), [ZODIAC](https://bio.informatik.uni-jena.de/software/zodiac/) and
+SIRIUS integrates a collection of our tools, including CSI:FingerID (with [COSMIC](https://bio.informatik.uni-jena.de/software/cosmic/)), [ZODIAC](https://bio.informatik.uni-jena.de/software/zodiac/),
 [CANOPUS](https://bio.informatik.uni-jena.de/software/canopus/). In particular, both the
-graphical user interface and the command line version of SIRIUS seamlessly integrate the CSI:FingerID and CANOPUS web services.
+graphical user interface and the command line version of SIRIUS seamlessly integrate the CSI:FingerID, CANOPUS and MSNovelist web services.
 
 Main developers of SIRIUS are the [Böcker group](https://bio.informatik.uni-jena.de/) and the [Bright Giant GmbH](https://bright-giant.com)
 
@@ -22,7 +23,7 @@ Main developers of SIRIUS are the [Böcker group](https://bio.informatik.uni-jen
 - [Online Documentation](https://v6.docs.sirius-ms.io/)
 - [Video tutorials](https://www.youtube.com/channel/UCIbW_ZFSADRUQ-T5nmgU4VA/featured)
 - [Bookchapter on using SIRIUS 4](https://doi.org/10.1007/978-1-0716-0239-3_11) ([Preprint](https://bio.informatik.uni-jena.de/wp/wp-content/uploads/2020/12/SIRIUS4_book_chapter_preprint-2.pdf)) -- does not cover the new LC-MS/MS processing option
-- [Demo data](data/demo.zip)
+- [Demo data](data/demo-data.zip)
 - [Logos for publications and presentations](https://bio.informatik.uni-jena.de/software/sirius/sirius-logos/)
 
 <!--begin download-->
@@ -72,6 +73,10 @@ may be required.
 
 ### [Changelog](https://v6.docs.sirius-ms.io/changelog/)
 
+### Contact
+- To get news, help or ask questions please join our [Gitter Community `#sirius-ms:gitter.im`](https://matrix.to/#/#sirius-ms:gitter.im).
+- For bug reports or feature request please use the issues on our [GitHub](https://github.com/sirius-ms/sirius). Or check the [documentation](https://v6.docs.sirius-ms.io/bugs/) for further information about this topic.
+
 ### Integration of CSI:FingerID, CANOPUS and MSNovelist
 
 Fragmentation trees and spectra can be directly uploaded from SIRIUS to the CSI:FingerID, CANOPUS and MSNovelist web services.
@@ -79,7 +84,7 @@ Results are retrieved from the web service and can be displayed in the SIRIUS gr
 also available for the SIRIUS command-line tool. Training structures for CSI:FingerID's predictors are available through the CSI:FingerID web API:
 <!--begin training-->
 
-- https://www.csi-fingerid.uni-jena.de/v3.0/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)
+- https://csi-fingerid.uni-jena.de/v3.0/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)
 - https://www.csi-fingerid.uni-jena.de/v3.0/api/fingerid/trainingstructures?predictor=2 (training structures for negative ion mode)
 
 <!--end training-->
@@ -112,18 +117,18 @@ command-line tool.
 <!--begin cite-->
 ## Main citations
 
-Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Alexander A. Aksenov, Alexey V. Melnik, Marvin Meusel, Pieter C. Dorrestein, Juho Rousu, and Sebastian Böcker,
+Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Alexander A. Aksenov, Alexey V. Melnik, Marvin Meusel, Pieter C. Dorrestein, Juho Rousu and Sebastian Böcker.
 [SIRIUS 4: Turning tandem mass spectra into metabolite structure information.](https://doi.org/10.1038/s41592-019-0344-8)
 *Nature Methods* 16, 299–302, 2019.
 
 ---
-Stravs, Michael A. and Dührkop, Kai and Böcker, Sebastian and Zamboni, Nicola
-[MSNovelist: De novo structure generation from mass spectra](https://doi.org/10.1101/2021.07.06.450875)
-bioRxiv, 2021. (Cite if you are using: MSNovelist)
+Michael A. Stravs and Kai Dührkop, Sebastian Böcker and Nicola Zamboni.
+[MSNovelist: De novo structure generation from mass spectra.](https://doi.org/10.1038/s41592-022-01486-3)
+*Nature Methods* 19, 865–870, 2022. (Cite if you are using: MSNovelist)
 
-Martin A. Hoffmann and Louis-Félix Nothias and Marcus Ludwig and Markus Fleischauer and Emily C. Gentry and Michael Witting and Pieter C. Dorrestein and Kai Dührkop and Sebastian Böcker
-[Assigning confidence to structural annotations from mass spectra with COSMIC](https://doi.org/10.1101/2021.03.18.435634)
-bioRxiv, 2021. (Cite if you are using: *CSI:FingerID*, *COSMIC*)
+Martin A. Hoffmann, Louis-Félix Nothias, Marcus Ludwig, Markus Fleischauer, Emily C. Gentry, Michael Witting, Pieter C. Dorrestein, Kai Dührkop and Sebastian Böcker.
+[High-confidence structural annotation of metabolites absent from spectral libraries.](https://doi.org/10.1038/s41587-021-01045-9)
+*Nature Biotechnology* 40, 411–421, 2022. (Cite if you are using: *CSI:FingerID*, *COSMIC*)
 
 Kai Dührkop, Louis-Félix Nothias, Markus Fleischauer, Raphael Reher, Marcus Ludwig, Martin A. Hoffmann, Daniel Petras, William H. Gerwick, Juho Rousu, Pieter C. Dorrestein and Sebastian Böcker.
 [Systematic classification of unknown metabolites using high-resolution fragmentation mass spectra.](https://doi.org/10.1038/s41587-020-0740-8)
@@ -150,6 +155,10 @@ Sebastian Böcker, Matthias C. Letzel, Zsuzsanna Lipták and Anton Pervukhin.
 *Bioinformatics* 25(2), 218-224, 2009. (Cite this for *isotope pattern analysis*)
 
 ### Additional citations
+
+Shipei Xing, Sam Shen, Banghua Xu, Xiaoxiao Li and Tao Huan.
+[BUDDY: molecular formula discovery via bottom-up MS/MS interrogation.](https://doi.org/10.1038/s41592-023-01850-x)
+*Nature Methods* 20, 881–890, 2023. (Cite if you are using: Bottom-up molecular formula generation)
 
 Marcus Ludwig, Kai Dührkop and Sebastian and Böcker.
 [Bayesian networks for mass spectrometric metabolite identification via molecular fingerprints.](http://doi.org/10.1093/bioinformatics/bty245)
