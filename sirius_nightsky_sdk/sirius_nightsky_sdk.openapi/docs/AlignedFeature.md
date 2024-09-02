@@ -17,6 +17,7 @@ The AlignedFeature contains the ID of a feature (aligned over runs) together wit
 |**detectedAdducts** | **Set&lt;String&gt;** | Adducts of this feature that have been detected during preprocessing. |  |
 |**rtStartSeconds** | **Double** |  |  [optional] |
 |**rtEndSeconds** | **Double** |  |  [optional] |
+|**rtApexSeconds** | **Double** |  |  [optional] |
 |**quality** | **DataQuality** |  |  [optional] |
 |**hasMs1** | **Boolean** | If true, the feature has at lease one MS1 spectrum |  [optional] |
 |**hasMsMs** | **Boolean** | If true, the feature has at lease one MS/MS spectrum |  [optional] |
