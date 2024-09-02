@@ -58,7 +58,7 @@ class NoSqlStructureSummaryWriter extends SummaryTable {
             "formulaId",
             "alignedFeatureId",
             "mappingFeatureId",
-            "dataQuality");
+            "overallFeatureQuality");
 
     NoSqlStructureSummaryWriter(SummaryTableWriter writer) {
         super(writer);
