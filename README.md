@@ -1,5 +1,5 @@
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blueviolet.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Generic badge](https://img.shields.io/badge/Version-6.0.4-informational.svg)](https://shields.io/)
+[![Generic badge](https://img.shields.io/badge/Version-6.0.5-informational.svg)](https://shields.io/)
 [![Build and Publish](https://github.com/sirius-ms/sirius/actions/workflows/distribute.yaml/badge.svg?branch=release-4-pre)](https://github.com/sirius-ms/sirius/actions/workflows/distribute.yaml)
 [![Join community chat at https://gitter.im/sirius-ms/general](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sirius-ms/general?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -75,7 +75,7 @@ may be required.
 
 ### Contact
 - To get news, help or ask questions please join our [Gitter Community `#sirius-ms:gitter.im`](https://matrix.to/#/#sirius-ms:gitter.im).
-- For bug reports or feature request please use the issues on our [GitHub](https://github.com/sirius-ms/sirius). Or check the [documentation](https://v6.docs.sirius-ms.io/bugs/) for further information about this topic.
+- For bug reports or feature request please use the issues on our [GitHub](https://github.com/sirius-ms/sirius/issues). Or check the [documentation](https://v6.docs.sirius-ms.io/bugs/) for further information about this topic.
 
 ### Integration of CSI:FingerID, CANOPUS and MSNovelist
 
@@ -84,7 +84,7 @@ Results are retrieved from the web service and can be displayed in the SIRIUS gr
 also available for the SIRIUS command-line tool. Training structures for CSI:FingerID's predictors are available through the CSI:FingerID web API:
 <!--begin training-->
 
-- https://csi-fingerid.uni-jena.de/v3.0/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)
+- https://www.csi-fingerid.uni-jena.de/v3.0/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)
 - https://www.csi-fingerid.uni-jena.de/v3.0/api/fingerid/trainingstructures?predictor=2 (training structures for negative ion mode)
 
 <!--end training-->
