@@ -503,7 +503,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
     @Override
     @SneakyThrows
-    public Optional<TraceSet> getTraceSetForCompound(String compoundId) {
+    public Optional<TraceSet> getTraceSetForCompound(String compoundId, Optional<String> currentFeatureId) {
         Database<?> storage = storage();
         Optional<de.unijena.bioinf.ms.persistence.model.core.Compound> maybeCompound = storage.getByPrimaryKey(Long.parseLong(compoundId), de.unijena.bioinf.ms.persistence.model.core.Compound.class);
         if (maybeCompound.isEmpty()) return Optional.empty();
@@ -511,13 +511,17 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         storage.fetchAllChildren(compound, "compoundId", "adductFeatures", AlignedFeatures.class);
         ArrayList<AbstractAlignedFeatures> allFeatures = new ArrayList<>();
         List<String> labels = new ArrayList<>();
+        Long fid = currentFeatureId.map(Long::valueOf).orElse(null);
         for (AlignedFeatures f : compound.getAdductFeatures().stream().flatMap(Collection::stream).toList()) {
             if (f.getApexIntensity() == null) continue; // ignore features without lcms information
-
+            String prefix = "[CORRELATED]";
+            if (fid!=null && fid==f.getAlignedFeatureId()) {
+                prefix = "[MAIN]";
+            }
             String mainLabel;
             if (f.getDetectedAdducts().getAllAdducts().size() == 1) {
-                mainLabel = f.getDetectedAdducts().getAllAdducts().get(0).toString();
-            } else mainLabel = "[M + ?]" + (f.getCharge() > 0 ? "+" : "-");
+                mainLabel = prefix + f.getDetectedAdducts().getAllAdducts().get(0).toString();
+            } else mainLabel = prefix + "[M + ?]" + (f.getCharge() > 0 ? "+" : "-");
 
             storage.fetchAllChildren(f, "alignedFeatureId", "isotopicFeatures", AlignedIsotopicFeatures.class);
             allFeatures.add(f);

@@ -515,10 +515,11 @@ public class CompoundsApi {
      * <p><b>200</b> - OK
      * @param projectId The projectId parameter
      * @param compoundId The compoundId parameter
+     * @param featureId The featureId parameter
      * @return TraceSet
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getTracesRequestCreation(String projectId, String compoundId) throws WebClientResponseException {
+    private ResponseSpec getTracesRequestCreation(String projectId, String compoundId, String featureId) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
@@ -539,6 +540,8 @@ public class CompoundsApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "featureId", featureId));
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -558,12 +561,13 @@ public class CompoundsApi {
      * <p><b>200</b> - OK
      * @param projectId The projectId parameter
      * @param compoundId The compoundId parameter
+     * @param featureId The featureId parameter
      * @return TraceSet
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public TraceSet getTraces(String projectId, String compoundId) throws WebClientResponseException {
+    public TraceSet getTraces(String projectId, String compoundId, String featureId) throws WebClientResponseException {
         ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
-        return getTracesRequestCreation(projectId, compoundId).bodyToMono(localVarReturnType).block();
+        return getTracesRequestCreation(projectId, compoundId, featureId).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -572,12 +576,13 @@ public class CompoundsApi {
      * <p><b>200</b> - OK
      * @param projectId The projectId parameter
      * @param compoundId The compoundId parameter
+     * @param featureId The featureId parameter
      * @return ResponseEntity&lt;TraceSet&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<TraceSet> getTracesWithHttpInfo(String projectId, String compoundId) throws WebClientResponseException {
+    public ResponseEntity<TraceSet> getTracesWithHttpInfo(String projectId, String compoundId, String featureId) throws WebClientResponseException {
         ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
-        return getTracesRequestCreation(projectId, compoundId).toEntity(localVarReturnType).block();
+        return getTracesRequestCreation(projectId, compoundId, featureId).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -586,10 +591,11 @@ public class CompoundsApi {
      * <p><b>200</b> - OK
      * @param projectId The projectId parameter
      * @param compoundId The compoundId parameter
+     * @param featureId The featureId parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getTracesWithResponseSpec(String projectId, String compoundId) throws WebClientResponseException {
-        return getTracesRequestCreation(projectId, compoundId);
+    public ResponseSpec getTracesWithResponseSpec(String projectId, String compoundId, String featureId) throws WebClientResponseException {
+        return getTracesRequestCreation(projectId, compoundId, featureId);
     }
 }
