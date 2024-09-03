@@ -56,7 +56,7 @@ public class SummaryOptions implements PostprocessingTool<NoSqlSummarySubToolJob
     @CommandLine.Option(names = {"--top-k-summary"}, description = {"Write summary files with top k hits . ", "(Use with care! Using large 'k' might create large files and consume large amounts of memory for large projects.)"})
     protected int topK = -1;
 
-    @CommandLine.Option(names = {"--data-quality-summary"}, description = "Write a summary file with data quality metrics.", defaultValue = "false")
+    @CommandLine.Option(names = {"--feature-quality-summary"}, description = "Write a summary file with feature quality metrics.", defaultValue = "false")
     protected boolean qualitySummary;
 
     //todo enable when implementing spectral match export, per compound candidate
