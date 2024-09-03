@@ -235,7 +235,7 @@ jobs:
         with:
           path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
           property: 'de.unijena.bioinf.siriusFrontend.version'
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4.1.7
         with:
           path: sirius_dist/build/tmp/artifacts/
       - name: Display downloaded artifact files
