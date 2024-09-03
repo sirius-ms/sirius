@@ -132,7 +132,7 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public Optional<TraceSet> getTraceSetForCompound(String compoundId) {
+    public Optional<TraceSet> getTraceSetForCompound(String compoundId, Optional<String> featureId) {
         throw new UnsupportedOperationException();
     }
 
