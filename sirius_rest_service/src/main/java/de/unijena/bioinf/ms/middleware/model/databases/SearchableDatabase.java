@@ -89,4 +89,10 @@ public class SearchableDatabase extends SearchableDatabaseParameters {
      */
     @Schema(nullable = true)
     protected Long numberOfReferenceSpectra;
+
+    /**
+     * Error message if the database could not be loaded
+     */
+    @Schema(nullable = true)
+    protected String errorMessage;
 }
