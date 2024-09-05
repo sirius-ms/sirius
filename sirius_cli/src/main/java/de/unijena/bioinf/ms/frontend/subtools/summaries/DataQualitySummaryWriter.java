@@ -20,77 +20,71 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
+import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
-import de.unijena.bioinf.ms.persistence.model.sirius.DenovoStructureMatch;
-import de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Stream;
 
-class NoSqlDeNovoSummaryWriter extends SummaryTable {
+class DataQualitySummaryWriter extends SummaryTable {
 
-    final static List<String> HEADER = List.of(
-            "structurePerIdRank",
-            "formulaRank",
-            "CSI:FingerIDScore",
-            "ModelScore",
-            "ZodiacScore",
-            "SiriusScore",
-            "molecularFormula",
-            "adduct",
-            "precursorFormula",
-            "InChIkey2D",
-            "InChI",
-            "name",
-            "smiles",
-            // metadata for mapping
+    final static List<String> CATEGORIES = List.of(
+            QualityReport.PEAK_QUALITY,
+            QualityReport.ALIGNMENT_QUALITY,
+            QualityReport.ISOTOPE_QUALITY,
+            QualityReport.MS2_QUALITY,
+            QualityReport.ADDUCT_QUALITY
+    );
+
+    final static List<String> SHARED_COLUMNS = List.of(
             "ionMass",
             "retentionTimeInSeconds",
             "retentionTimeInMinutes",
-            "formulaId",
             "alignedFeatureId",
             "mappingFeatureId",
-            "dataQuality");
+            "overallQuality");
 
-    public NoSqlDeNovoSummaryWriter(SummaryTableWriter writer) {
+    DataQualitySummaryWriter(SummaryTableWriter writer) {
         super(writer);
     }
 
     public void writeHeader() throws IOException {
-        writer.writeHeader(HEADER);
+        List<String> header = Stream.concat(SHARED_COLUMNS.stream(), CATEGORIES.stream()).toList();
+        writer.writeHeader(header);
     }
 
-    public void writeStructureCandidate(AlignedFeatures f, FormulaCandidate fc, DenovoStructureMatch match) throws IOException {
+    public void writeFeatureQuality(AlignedFeatures f, QualityReport qualityReport) throws IOException {
         List<Object> row = new ArrayList<>();
 
-        row.add(match.getStructureRank());
-        row.add(fc.getFormulaRank());
+        addCommonColumns(row, f);
+        addCategoryColumns(row, qualityReport);
 
-        row.add(match.getCsiScore());
-        row.add(match.getModelScore());
-        row.add(fc.getZodiacScore());
-        row.add(fc.getSiriusScore());
-        row.add(fc.getMolecularFormula().toString());
-        row.add(fc.getAdduct().toString());
-        row.add(fc.getPrecursorFormulaWithCharge());
+        writer.writeRow(row);
+    }
 
-        row.add(match.getCandidateInChiKey());
-        row.add(match.getCandidate().getInchi().in2D);
-        row.add(match.getCandidate().getName());
-        row.add(match.getCandidate().getSmiles());
-
+    private void addCommonColumns(List<Object> row, AlignedFeatures f) {
         row.add(f.getAverageMass());
         row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> Math.round(rt.getMiddleTime())).orElse(null));
         row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> rt.getMiddleTime() / 60d).orElse(null));
 
-        row.add(String.valueOf(fc.getFormulaId()));
         row.add(String.valueOf(f.getAlignedFeatureId()));
         row.add(Objects.requireNonNullElse(f.getExternalFeatureId(), String.valueOf(f.getAlignedFeatureId())));
         row.add(f.getDataQuality());
+    }
 
-        writer.writeRow(row);
+    private void addCategoryColumns(List<Object> row, QualityReport qualityReport) {
+        if (qualityReport == null) {
+            row.addAll(CATEGORIES.stream().map(c -> null).toList());
+            return;
+        }
+
+        for (String cName : CATEGORIES) {
+            QualityReport.Category c = qualityReport.getCategories().get(cName);
+            row.add(c == null ? null : c.getOverallQuality());
+        }
     }
 }
