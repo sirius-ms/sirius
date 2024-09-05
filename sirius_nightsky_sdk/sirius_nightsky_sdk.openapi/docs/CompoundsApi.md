@@ -374,7 +374,7 @@ No authorization required
 
 ## getTraces
 
-> TraceSet getTraces(projectId, compoundId)
+> TraceSet getTraces(projectId, compoundId, featureId)
 
 
 
@@ -396,8 +396,9 @@ public class Example {
         CompoundsApi apiInstance = new CompoundsApi(defaultClient);
         String projectId = "projectId_example"; // String | 
         String compoundId = "compoundId_example"; // String | 
+        String featureId = ""; // String | 
         try {
-            TraceSet result = apiInstance.getTraces(projectId, compoundId);
+            TraceSet result = apiInstance.getTraces(projectId, compoundId, featureId);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling CompoundsApi#getTraces");
@@ -417,6 +418,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**|  | |
 | **compoundId** | **String**|  | |
+| **featureId** | **String**|  | [optional] [default to ] |
 
 ### Return type
 

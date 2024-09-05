@@ -57,7 +57,7 @@ public interface Project<PSM extends ProjectSpaceManager> {
     Optional<QuantificationTable> getQuantificationForAlignedFeature(String alignedFeatureId, QuantificationTable.QuantificationType type);
 
     Optional<TraceSet> getTraceSetForAlignedFeature(String alignedFeatureId, boolean includeAll);
-    Optional<TraceSet> getTraceSetForCompound(String compoundId);
+    Optional<TraceSet> getTraceSetForCompound(String compoundId, Optional<String> featureId);
 
     Page<Compound> findCompounds(Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields,
                                  @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
