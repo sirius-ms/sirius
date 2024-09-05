@@ -7,14 +7,17 @@ assignees: ''
 
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+Feature Description: 
+>Provide a concise description of the feature you are requesting. Be as specific as possible about what the feature should do and how it will improve the current functionality of SIRIUS.
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+**Use Case / Problem Description** 
+>Is your feature request related to a problem or a specific use case? Explain how this feature will be used in your workflow or research. Provide examples to illustrate the importance and utility of the feature.
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+**Benefits** 
+>List the benefits that the requested feature will bring to the users. Consider aspects such as time savings, improved accuracy, and enhanced functionality.
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+**Related Issues** 
+>Does this new feature address or improve any existing issues?
+
+**Additional Information** 
+> Include any additional information that might be relevant to the feature request. This can include references to scientific literature, links to similar features in other software, screenshots or mockups that could help illustrate the feature, or feedback from other users.
