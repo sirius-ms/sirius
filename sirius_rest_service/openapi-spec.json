@@ -2595,6 +2595,15 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "featureId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": ""
+            }
           }
         ],
         "responses": {
@@ -7421,10 +7430,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
           "size": {
@@ -7634,10 +7643,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
           "size": {
@@ -7713,10 +7722,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
           "size": {
@@ -7929,10 +7938,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
           "size": {
@@ -7975,10 +7984,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
           "size": {
@@ -8094,10 +8103,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
           "size": {
@@ -8140,10 +8149,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
           "size": {
