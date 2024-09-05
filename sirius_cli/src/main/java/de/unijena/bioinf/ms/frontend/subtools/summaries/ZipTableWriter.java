@@ -14,11 +14,11 @@ public class ZipTableWriter implements SummaryTableWriter {
     private final ZipOutputStream zipOutputStream;
     private final TsvTableWriter tsvWriter;
 
-    public ZipTableWriter(Path location, String filenameWithoutExtension) throws IOException {
+    public ZipTableWriter(Path location, String filenameWithoutExtension, boolean quoteStrings) throws IOException {
         zipOutputStream = new ZipOutputStream(Files.newOutputStream(location.resolve(filenameWithoutExtension + ".tsv.zip")));
         ZipEntry entry = new ZipEntry(filenameWithoutExtension + ".tsv");
         zipOutputStream.putNextEntry(entry);
-        tsvWriter = new TsvTableWriter(new BufferedWriter(new OutputStreamWriter(zipOutputStream)));
+        tsvWriter = new TsvTableWriter(new BufferedWriter(new OutputStreamWriter(zipOutputStream)), quoteStrings);
     }
 
 
