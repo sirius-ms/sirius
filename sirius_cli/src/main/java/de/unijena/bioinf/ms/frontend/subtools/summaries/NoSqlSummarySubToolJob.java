@@ -30,6 +30,7 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.PostprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
+import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -146,8 +147,10 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                     NoSqlSpectrumSummaryWriter refSpectrumAll = options.fullSummary
                             ? initSpectrumSummaryWriter(location, "spectral_matches_all") : null;
                     NoSqlSpectrumSummaryWriter refSpectrumTopK = options.topK > 0
-                            ? initSpectrumSummaryWriter(location, "spectral_matches_top-" + options.topK) : null
+                            ? initSpectrumSummaryWriter(location, "spectral_matches_top-" + options.topK) : null;
 
+                    DataQualitySummaryWriter qualityWriter = options.qualitySummary
+                            ? initQualitySummaryWriter(location, "data_quality") : null
             ) {
                 //we load all data on demand from project db without manual caching or re-usage.
                 //if this turns out to be too slow we can cache e.g. the formula candidates.
@@ -333,6 +336,12 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                             rank++;
                         }
                     }
+
+                    // data quality summary
+                    if (qualityWriter != null) {
+                        QualityReport qr = project.getProject().findByFeatureIdStr(f.getAlignedFeatureId(), QualityReport.class).findFirst().orElse(null);
+                        qualityWriter.writeFeatureQuality(f, qr);
+                    }
                 }
 
                 if (formulaTopHit != null) formulaTopHit.flush();
@@ -354,6 +363,8 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                 if (refSpectrum != null) refSpectrum.flush();
                 if (refSpectrumAll != null) refSpectrumAll.flush();
                 if (refSpectrumTopK != null) refSpectrumTopK.flush();
+
+                if (qualityWriter != null) qualityWriter.flush();
 
                 w.stop();
                 log.info("Summaries written in: {}", w);
@@ -396,10 +407,16 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
         return spectrumSummaryWriter;
     }
 
+    DataQualitySummaryWriter initQualitySummaryWriter(Path location, String filename) throws IOException {
+        DataQualitySummaryWriter writer = new DataQualitySummaryWriter(makeTableWriter(location, filename));
+        writer.writeHeader();
+        return writer;
+    }
+
     private SummaryTableWriter makeTableWriter(Path location, String filename) throws IOException {
         return switch (options.format) {
-            case TSV -> new TsvTableWriter(location, filename);
-            case ZIP -> new ZipTableWriter(location, filename);
+            case TSV -> new TsvTableWriter(location, filename, options.quoteStrings);
+            case ZIP -> new ZipTableWriter(location, filename, options.quoteStrings);
             case XLSX -> new XlsxTableWriter(location, filename);
         };
     }
