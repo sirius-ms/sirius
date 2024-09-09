@@ -22,8 +22,12 @@ package de.unijena.bioinf.ms.frontend.subtools;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.subtools.config.DefaultParameterConfigLoader;
+import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.*;
+import de.unijena.bioinf.projectspace.InstanceImporter;
+import de.unijena.bioinf.projectspace.ProjectSpaceManager;
+import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import de.unijena.bioinf.projectspace.ZipProvider;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
@@ -177,14 +181,21 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
 
     @Override
     public @NotNull PreprocessingJob<? extends ProjectSpaceManager> makeDefaultPreprocessingJob() {
+        LcmsAlignOptions defaultLCMSAlignOptions = new CommandLine(new LcmsAlignOptions()).parseArgs().commandSpec().commandLine().getCommand();
+        return makeDefaultPreprocessingJob(defaultLCMSAlignOptions);
+    }
+
+    public PreprocessingJob<? extends ProjectSpaceManager> makeDefaultPreprocessingJob(LcmsAlignOptions lcmsAlignOptions) {
         return new PreprocessingJob<>() {
             @Override
             protected ProjectSpaceManager compute() throws Exception {
                 ProjectSpaceManager space = spaceManagerFactory.createOrOpen(psOpts.getOutputProjectLocation());;
                 InputFilesOptions input = getInput();
                 if (space != null) {
-                    if (input != null)
-                        SiriusJobs.getGlobalJobManager().submitJob(new InstanceImporter(space, (exp) -> exp.getIonMass() < maxMz).makeImportJJob(input)).awaitResult();
+                    if (input != null) {
+                        submitSubJob(lcmsAlignOptions.makePreprocessingJob(input, space, defaultConfigOptions.config)).awaitResult();
+                        submitSubJob(new InstanceImporter(space, (exp) -> exp.getIonMass() < maxMz).makeImportJJob(input)).awaitResult();
+                    }
                     if (space.size() < 1)
                         logInfo("No Input has been imported to Project-Space. Starting application without input data.");
                     return space;
@@ -193,4 +204,5 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
             }
         };
     }
+
 }

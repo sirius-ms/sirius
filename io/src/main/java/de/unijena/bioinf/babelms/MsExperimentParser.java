@@ -41,12 +41,15 @@ import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 public class MsExperimentParser {
 
     protected static final Map<String, Class<? extends Parser<Ms2Experiment>>> KNOWN_ENDINGS = addKnownEndings();
+
+    protected static final Set<String> LCMS_ENDINGS = Set.of(".mzml", ".mzxml");
 
     // there is no good solution without writing the endings here explicitly (otherwise DESCRIPTION can not be used in annotations)
     public static final String DESCRIPTION = ".ms, .mgf, .mzxml, .mzml, .cef, .msp, .mat, .mb, .mblib, .txt (MassBank), .json (GNPS, MoNA), .zip";
@@ -104,8 +107,19 @@ public class MsExperimentParser {
         return isSupportedEnding(fileName.substring(index));
     }
 
+    public static boolean isLCMSFile(final @NotNull String fileName) {
+        int index = fileName.lastIndexOf('.');
+        if (index < 0)
+            return false;
+        return isLCMSEnding(fileName.substring(index));
+    }
+
     public static boolean isSupportedEnding(final @NotNull String fileEnding) {
         return KNOWN_ENDINGS.containsKey(fileEnding.toLowerCase());
+    }
+
+    public static boolean isLCMSEnding(final @NotNull String fileEnding) {
+        return LCMS_ENDINGS.contains(fileEnding.toLowerCase());
     }
 
     private static Map<String, Class<? extends Parser<Ms2Experiment>>> addKnownEndings() {

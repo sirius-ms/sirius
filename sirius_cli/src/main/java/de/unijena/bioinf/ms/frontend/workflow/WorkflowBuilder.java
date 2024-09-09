@@ -283,7 +283,7 @@ public class WorkflowBuilder {
                     if (spaceManagerFactory == null)
                         throw new IllegalStateException("Preprocessing tool requires a ProjectSpaceManagerFactory!");
                     preproJob = ((PreprocessingTool<?>) parseResult.commandSpec().commandLine().getCommand())
-                            .makePreprocessingJob(rootOptions.getInput(), rootOptions.getOutput(), spaceManagerFactory, configOptionLoader.config);
+                            .makePreprocessingJob(rootOptions, spaceManagerFactory, configOptionLoader.config);
                 } else {
                     execute(parseResult.commandSpec().commandLine(), toolchain, toolchainOptions);
                 }

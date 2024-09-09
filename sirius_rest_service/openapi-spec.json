@@ -6400,6 +6400,11 @@
             "format": "double",
             "nullable": true
           },
+          "rtApexSeconds": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
           "quality": {
             "$ref": "#/components/schemas/DataQuality"
           },

@@ -150,7 +150,7 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                             ? initSpectrumSummaryWriter(location, "spectral_matches_top-" + options.topK) : null;
 
                     DataQualitySummaryWriter qualityWriter = options.qualitySummary
-                            ? initQualitySummaryWriter(location, "data_quality") : null
+                            ? initQualitySummaryWriter(location, "feature_quality") : null
             ) {
                 //we load all data on demand from project db without manual caching or re-usage.
                 //if this turns out to be too slow we can cache e.g. the formula candidates.

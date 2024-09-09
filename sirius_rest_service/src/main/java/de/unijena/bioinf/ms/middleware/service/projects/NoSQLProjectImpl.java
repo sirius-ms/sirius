@@ -827,9 +827,11 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (rt != null) {
             if (rt.isInterval() && Double.isFinite(rt.getStartTime()) && Double.isFinite(rt.getEndTime())) {
                 builder.rtStartSeconds(rt.getStartTime());
+                builder.rtApexSeconds(rt.getMiddleTime());
                 builder.rtEndSeconds(rt.getEndTime());
             } else {
                 builder.rtStartSeconds(rt.getMiddleTime());
+                builder.rtApexSeconds(rt.getMiddleTime());
                 builder.rtEndSeconds(rt.getMiddleTime());
             }
         }

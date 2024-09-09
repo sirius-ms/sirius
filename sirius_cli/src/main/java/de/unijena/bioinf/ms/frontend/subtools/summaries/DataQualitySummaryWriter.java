@@ -46,7 +46,7 @@ class DataQualitySummaryWriter extends SummaryTable {
             "retentionTimeInMinutes",
             "alignedFeatureId",
             "mappingFeatureId",
-            "overallQuality");
+            "overallFeatureQuality");
 
     DataQualitySummaryWriter(SummaryTableWriter writer) {
         super(writer);

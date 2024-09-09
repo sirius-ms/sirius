@@ -42,6 +42,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AlignedFeature.JSON_PROPERTY_DETECTED_ADDUCTS,
   AlignedFeature.JSON_PROPERTY_RT_START_SECONDS,
   AlignedFeature.JSON_PROPERTY_RT_END_SECONDS,
+  AlignedFeature.JSON_PROPERTY_RT_APEX_SECONDS,
   AlignedFeature.JSON_PROPERTY_QUALITY,
   AlignedFeature.JSON_PROPERTY_HAS_MS1,
   AlignedFeature.JSON_PROPERTY_HAS_MS_MS,
@@ -78,6 +79,9 @@ public class AlignedFeature {
 
   public static final String JSON_PROPERTY_RT_END_SECONDS = "rtEndSeconds";
   private Double rtEndSeconds;
+
+  public static final String JSON_PROPERTY_RT_APEX_SECONDS = "rtApexSeconds";
+  private Double rtApexSeconds;
 
   public static final String JSON_PROPERTY_QUALITY = "quality";
   private DataQuality quality;
@@ -337,6 +341,31 @@ public class AlignedFeature {
     this.rtEndSeconds = rtEndSeconds;
   }
 
+  public AlignedFeature rtApexSeconds(Double rtApexSeconds) {
+    
+    this.rtApexSeconds = rtApexSeconds;
+    return this;
+  }
+
+   /**
+   * Get rtApexSeconds
+   * @return rtApexSeconds
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_RT_APEX_SECONDS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getRtApexSeconds() {
+    return rtApexSeconds;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_RT_APEX_SECONDS)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setRtApexSeconds(Double rtApexSeconds) {
+    this.rtApexSeconds = rtApexSeconds;
+  }
+
   public AlignedFeature quality(DataQuality quality) {
     
     this.quality = quality;
@@ -530,6 +559,7 @@ public class AlignedFeature {
         Objects.equals(this.detectedAdducts, alignedFeature.detectedAdducts) &&
         Objects.equals(this.rtStartSeconds, alignedFeature.rtStartSeconds) &&
         Objects.equals(this.rtEndSeconds, alignedFeature.rtEndSeconds) &&
+        Objects.equals(this.rtApexSeconds, alignedFeature.rtApexSeconds) &&
         Objects.equals(this.quality, alignedFeature.quality) &&
         Objects.equals(this.hasMs1, alignedFeature.hasMs1) &&
         Objects.equals(this.hasMsMs, alignedFeature.hasMsMs) &&
@@ -541,7 +571,7 @@ public class AlignedFeature {
 
   @Override
   public int hashCode() {
-    return Objects.hash(alignedFeatureId, compoundId, name, externalFeatureId, ionMass, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, quality, hasMs1, hasMsMs, msData, topAnnotations, topAnnotationsDeNovo, computing);
+    return Objects.hash(alignedFeatureId, compoundId, name, externalFeatureId, ionMass, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, rtApexSeconds, quality, hasMs1, hasMsMs, msData, topAnnotations, topAnnotationsDeNovo, computing);
   }
 
   @Override
@@ -557,6 +587,7 @@ public class AlignedFeature {
     sb.append("    detectedAdducts: ").append(toIndentedString(detectedAdducts)).append("\n");
     sb.append("    rtStartSeconds: ").append(toIndentedString(rtStartSeconds)).append("\n");
     sb.append("    rtEndSeconds: ").append(toIndentedString(rtEndSeconds)).append("\n");
+    sb.append("    rtApexSeconds: ").append(toIndentedString(rtApexSeconds)).append("\n");
     sb.append("    quality: ").append(toIndentedString(quality)).append("\n");
     sb.append("    hasMs1: ").append(toIndentedString(hasMs1)).append("\n");
     sb.append("    hasMsMs: ").append(toIndentedString(hasMsMs)).append("\n");
