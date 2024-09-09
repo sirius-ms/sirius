@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.frontend.subtools;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.projectspace.InstanceImporter;
+import lombok.Getter;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -54,26 +55,25 @@ public class InputFilesOptions {
 
 
     public static class MsInput {
-        public final Map<Path, Integer> msParserfiles, unknownFiles;
+        public final Map<Path, Integer> lcmsFiles, msParserfiles, unknownFiles;
 
         public MsInput() {
-            this(new LinkedHashMap<>(), new LinkedHashMap<>());
+            this(new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>());
         }
 
-        public MsInput(Map<Path, Integer> msParserfiles, Map<Path, Integer> unknownFiles) {
+        public MsInput(Map<Path, Integer> lcmsFiles, Map<Path, Integer> msParserfiles, Map<Path, Integer> unknownFiles) {
+            this.lcmsFiles = lcmsFiles;
             this.msParserfiles = msParserfiles;
             this.unknownFiles = unknownFiles;
         }
 
+        @Getter
         protected List<Path> rawInputFiles;
-
-        public List<Path> getRawInputFiles() {
-            return rawInputFiles;
-        }
 
         @CommandLine.Option(names = {"--input", "-i"}, description = "Specify the input in multi-compound input formats: Preprocessed mass spectra in .ms or .mgf file format or " +
                 "LC/MS runs in .mzML/.mzXml format but also any other file type e.g. to provide input for STANDALONE tools.", required = true, split = ",", order = 321)
         public void setInputPath(List<Path> files) {
+            lcmsFiles.clear();
             msParserfiles.clear();
             unknownFiles.clear();
             rawInputFiles = files;
@@ -85,25 +85,19 @@ public class InputFilesOptions {
             this.ignoreFormula = ignoreFormula;
         }
 
+        @Getter
         private boolean ignoreFormula;
-
-        public boolean isIgnoreFormula() {
-            return ignoreFormula;
-        }
 
         @CommandLine.Option(names = {"--allow-ms1-only"}, description = "Allow MS1 only data to be imported.", defaultValue = "false", order = 323)
         public void setAllowMS1Only(boolean allowMS1Only) {
             this.allowMS1Only = allowMS1Only;
         }
 
+        @Getter
         private boolean allowMS1Only;
 
-        public boolean isAllowMS1Only() {
-            return allowMS1Only;
-        }
-
         public boolean isEmpty() {
-            return msParserfiles.isEmpty() && unknownFiles.isEmpty();
+            return msParserfiles.isEmpty() && lcmsFiles.isEmpty() && unknownFiles.isEmpty();
         }
     }
 

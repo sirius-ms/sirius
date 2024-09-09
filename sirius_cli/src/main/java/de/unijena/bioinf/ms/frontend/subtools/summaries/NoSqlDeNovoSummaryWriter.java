@@ -53,7 +53,7 @@ class NoSqlDeNovoSummaryWriter extends SummaryTable {
             "formulaId",
             "alignedFeatureId",
             "mappingFeatureId",
-            "dataQuality");
+            "overallFeatureQuality");
 
     public NoSqlDeNovoSummaryWriter(SummaryTableWriter writer) {
         super(writer);
