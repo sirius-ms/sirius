@@ -55,7 +55,7 @@ public class NoSqlSpectrumSummaryWriter extends SummaryTable {
             "retentionTimeInMinutes",
             "alignedFeatureId",
             "providedFeatureId",
-            "dataQuality");
+            "overallFeatureQuality");
 
     public NoSqlSpectrumSummaryWriter(SummaryTableWriter writer) {
         super(writer);
