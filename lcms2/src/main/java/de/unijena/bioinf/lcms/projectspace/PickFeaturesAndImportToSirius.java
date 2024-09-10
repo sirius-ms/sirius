@@ -20,6 +20,7 @@ import de.unijena.bioinf.lcms.trace.Trace;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.utils.MultipleCharges;
+import de.unijena.bioinf.lcms.utils.Tracker;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
@@ -79,7 +80,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
     }
 
     @Override
-    public AlignedFeatures[] importMergedTrace(TraceSegmentationStrategy traceSegmenter, SiriusDatabaseAdapter adapter, DbMapper dbMapper, ProcessedSample mergedSample, MergedTrace mergedTrace) throws IOException {
+    public AlignedFeatures[] importMergedTrace(TraceSegmentationStrategy traceSegmenter, SiriusDatabaseAdapter adapter, DbMapper dbMapper, ProcessedSample mergedSample, MergedTrace mergedTrace, Tracker tracker) throws IOException {
         // import each individual trace
         MergeTraceId tid = importMergedTraceWithoutIsotopes(adapter, dbMapper, mergedTrace);
         // now import isotopes
@@ -91,6 +92,9 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         AlignedFeatures[] features = extractCompounds(traceSegmenter, adapter, dbMapper, mergedSample, mergedTrace, tid, isotopes);
         if (features.length == 0) {
             removeMergedTrace(adapter, tid, isotopes);
+            tracker.noFeatureFound(mergedTrace);
+        } else {
+            tracker.importFeatures(mergedTrace, features);
         }
         return features;
     }
