@@ -9,8 +9,8 @@
 |------------ | ------------- | ------------- | -------------|
 |**totalPages** | **Integer** |  |  [optional] |
 |**totalElements** | **Long** |  |  [optional] |
-|**last** | **Boolean** |  |  [optional] |
 |**first** | **Boolean** |  |  [optional] |
+|**last** | **Boolean** |  |  [optional] |
 |**size** | **Integer** |  |  [optional] |
 |**content** | [**List&lt;FormulaCandidate&gt;**](FormulaCandidate.md) |  |  [optional] |
 |**number** | **Integer** |  |  [optional] |

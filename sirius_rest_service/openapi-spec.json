@@ -7435,10 +7435,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "size": {
@@ -7648,10 +7648,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "size": {
@@ -7727,10 +7727,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "size": {
@@ -7943,10 +7943,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "size": {
@@ -7989,10 +7989,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "size": {
@@ -8108,10 +8108,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "size": {
@@ -8154,10 +8154,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
           "size": {

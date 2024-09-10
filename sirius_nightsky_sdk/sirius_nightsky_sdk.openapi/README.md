@@ -42,7 +42,7 @@ Add this dependency to your project's POM:
 <dependency>
   <groupId>de.unijena.bioinf.ms</groupId>
   <artifactId>sirius_nightsky_sdk</artifactId>
-  <version>6.0.5-SNAPSHOT</version>
+  <version>6.0.6-SNAPSHOT</version>
   <scope>compile</scope>
 </dependency>
 ```
@@ -58,7 +58,7 @@ Add this dependency to your project's build file:
   }
 
   dependencies {
-     implementation "de.unijena.bioinf.ms:sirius_nightsky_sdk:6.0.5-SNAPSHOT"
+     implementation "de.unijena.bioinf.ms:sirius_nightsky_sdk:6.0.6-SNAPSHOT"
   }
 ```
 
@@ -72,7 +72,7 @@ mvn clean package
 
 Then manually install the following JARs:
 
-- `target/sirius_nightsky_sdk-6.0.5-SNAPSHOT.jar`
+- `target/sirius_nightsky_sdk-6.0.6-SNAPSHOT.jar`
 - `target/lib/*.jar`
 
 ## Getting Started
