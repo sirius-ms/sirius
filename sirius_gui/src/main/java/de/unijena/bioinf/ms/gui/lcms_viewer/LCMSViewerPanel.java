@@ -59,7 +59,10 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         this.add(lcmsWebview, BorderLayout.CENTER);
 
         summaryPanel = new LCMSCompoundSummaryPanel();
-        this.add(new ToggableSidePanel("quality report", summaryPanel), BorderLayout.EAST);
+        JScrollPane scrollpanel = new JScrollPane(summaryPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollpanel.setPreferredSize(new Dimension(400, 320));
+        scrollpanel.setMaximumSize(new Dimension(400, Integer.MAX_VALUE));
+        this.add(new ToggableSidePanel("quality report", scrollpanel), BorderLayout.EAST);
 
         {
             JLabel label = new JLabel("Show ");
