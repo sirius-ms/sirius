@@ -26,8 +26,9 @@ public class LCMSCompoundSummaryPanel extends JPanel {
     private AlignedFeatureQuality report;
 
     public LCMSCompoundSummaryPanel() {
+
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
-        setPreferredSize(new Dimension(400,1024));
+        //setPreferredSize(new Dimension(400,320));
     }
 
     public void reset() {
@@ -96,5 +97,13 @@ public class LCMSCompoundSummaryPanel extends JPanel {
                 return Icons.TRAFFIC_LIGHT_MEDIUM_GRAY;
         }
         return Icons.TRAFFIC_LIGHT_MEDIUM_GRAY;
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+        // Get the preferred height based on current content
+        int preferredHeight = super.getPreferredSize().height;
+        // Return a fixed width of 400, but allow height to grow dynamically
+        return new Dimension(400, preferredHeight);
     }
 }
