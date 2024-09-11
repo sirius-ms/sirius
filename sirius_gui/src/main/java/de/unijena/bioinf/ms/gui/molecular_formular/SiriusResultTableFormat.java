@@ -58,7 +58,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
             "Explained Peaks",
             "Total Explained Intensity",
             "Median Mass Error (ppm)",
-            "Median Absolute Mass Error (ppm)",
+            "Median Absolute Mass Error (mDa)",
             "Lipid Class",
             "Best",
     };
