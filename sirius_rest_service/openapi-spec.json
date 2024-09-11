@@ -2578,7 +2578,7 @@
         "tags": [
           "Compounds"
         ],
-        "operationId": "getTraces",
+        "operationId": "getCompoundTraces",
         "parameters": [
           {
             "name": "projectId",
@@ -2594,6 +2594,15 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "featureId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": ""
             }
           }
         ],
@@ -2836,7 +2845,7 @@
         "tags": [
           "Features"
         ],
-        "operationId": "getTraces_1",
+        "operationId": "getTraces",
         "parameters": [
           {
             "name": "projectId",
@@ -2852,6 +2861,15 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "includeAll",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
