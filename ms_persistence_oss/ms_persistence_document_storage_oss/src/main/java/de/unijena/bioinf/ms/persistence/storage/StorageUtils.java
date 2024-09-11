@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -20,8 +20,10 @@
 
 package de.unijena.bioinf.ms.persistence.storage;
 
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -35,6 +37,7 @@ import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.sirius.ProcessedPeak;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.SiriusCachedFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -105,7 +108,22 @@ public class StorageUtils {
                 .mergedMs1Spectrum(mergedMs1);
 
         if (exp.getMs2Spectra() != null && !exp.getMs2Spectra().isEmpty()) {
-            builder.mergedMSnSpectrum(Spectrums.from(sirius.getMs2Preprocessor().preprocess(exp).getMergedPeaks()));
+            List<ProcessedPeak> tmpSpec = null;
+            try {
+                tmpSpec = sirius.getMs2Preprocessor().preprocess(exp).getMergedPeaks();
+            } catch (Exception e) {
+                // when we get data from third party tools it sometimes happens that adduct/mass/formula are
+                // contradictory usually due to a false formula annotation. instead of throwing the data away we try
+                // to import it without formula an unknown adduct.
+                log.warn("Error preprocessing feature at rt={}, mz={}, name={}. Retry without formula and with unknown adduct. Cause: {}",
+                        exp.getAnnotation(RetentionTime.class).map(Objects::toString).orElse("N/A"), Math.round(exp.getIonMass()), exp.getName(), e.getMessage());
+                ((MutableMs2Experiment) exp).setPrecursorIonType(PrecursorIonType.unknown(exp.getPrecursorIonType().getCharge()));
+                ((MutableMs2Experiment) exp).setMolecularFormula(null);
+                exp.removeAnnotation(InChI.class);
+                exp.removeAnnotation(Smiles.class);
+                tmpSpec = sirius.getMs2Preprocessor().preprocess(exp).getMergedPeaks();
+            }
+            builder.mergedMSnSpectrum(Spectrums.from(tmpSpec));
             builder.msnSpectra(exp.getMs2Spectra().stream().map(StorageUtils::msnSpectrumFrom).toList());
         }
 
