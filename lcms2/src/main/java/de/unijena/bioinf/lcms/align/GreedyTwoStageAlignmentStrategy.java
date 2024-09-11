@@ -11,6 +11,7 @@ import de.unijena.bioinf.lcms.ScanPointMapping;
 import de.unijena.bioinf.lcms.statistics.TraceStats;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.traceextractor.MassOfInterestConfidenceEstimatorStrategy;
+import de.unijena.bioinf.lcms.utils.Tracker;
 import de.unijena.bioinf.recal.MzRecalibration;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
@@ -222,7 +223,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
         return mean;
     }
 
-    protected void cleanupOldMoIs(ProcessedSample sample, List<ProcessedSample> samples, int currentIdx, int deleteLast) {
+    protected void cleanupOldMoIs(ProcessedSample sample, List<ProcessedSample> samples, int currentIdx, int deleteLast, Tracker tracker) {
         final IntOpenHashSet map = new IntOpenHashSet();
         for (int k=0; k < currentIdx-deleteLast; ++k) {
             map.add(samples.get(k).getUid());
@@ -231,7 +232,9 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
             if (moi instanceof AlignedMoI) {
                 if (((AlignedMoI) moi).getAligned().length>1) return false;
                 MoI key = ((AlignedMoI) moi).getAligned()[0];
-                return map.contains(key.getSampleIdx()) && key.getConfidence()<MassOfInterestConfidenceEstimatorStrategy.KEEP_FOR_ALIGNMENT;
+                final boolean delete = map.contains(key.getSampleIdx()) && key.getConfidence()<MassOfInterestConfidenceEstimatorStrategy.KEEP_FOR_ALIGNMENT;
+                if (delete) tracker.moiDeleted(moi);
+                return delete;
             } else return true;
         });
     }
@@ -330,7 +333,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
     }
 
     @Override
-    public AlignmentBackbone align(ProcessedSample merge, AlignmentBackbone backbone, List<ProcessedSample> samples, AlignmentAlgorithm algorithm, AlignmentScorer scorer) {
+    public AlignmentBackbone align(ProcessedSample merge, AlignmentBackbone backbone, List<ProcessedSample> samples, AlignmentAlgorithm algorithm, AlignmentScorer scorer, Tracker tracker) {
         AlignmentStorage storage = merge.getStorage().getAlignmentStorage();
         List<BasicJJob<Object>> todo = new ArrayList<>();
         // sort samples by number of confident annotations
@@ -362,13 +365,22 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
                                 toArray(MoI[]::new);
                         if (leftSet.length>0 && rightSet.length > 0) {
                             algorithm.align(stats, scorer, backbone, leftSet, rightSet,
-                                    (al, left, right, leftIndex, rightIndex) -> storage.mergeMoIs(al, left[leftIndex], right[rightIndex]),
-                                    (al, right, rightIndex) -> storage.addMoI(
-                                            AlignedMoI.merge(al, right[rightIndex])
-                                    )
+                                    (al, left, right, leftIndex, rightIndex) -> {
+                                        storage.mergeMoIs(al, left[leftIndex], right[rightIndex]);
+                                        tracker.alignMois(S, left[leftIndex], right[rightIndex]);
+                                    },
+                                    (al, right, rightIndex) -> {
+                                        storage.addMoI(
+                                                AlignedMoI.merge(al, right[rightIndex])
+                                        );
+                                        tracker.unalignedMoI(S, right[rightIndex]);
+                                    }
                             );
                         } else {
-                            for (MoI m : rightSet) storage.addMoI(AlignedMoI.merge(backbone, m));
+                            for (MoI m : rightSet) {
+                                storage.addMoI(AlignedMoI.merge(backbone, m));
+                                tracker.unalignedMoI(S, m);
+                            }
                         }
                         return true;
                     };
@@ -376,7 +388,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
             }
             todo.forEach(JJob::takeResult);
             todo.clear();
-            if (k > 10 && (k % 5 == 0)) cleanupOldMoIs(merge, samples, k, 5);
+            if (k > 10 && (k % 5 == 0)) cleanupOldMoIs(merge, samples, k, 5, tracker);
             S.inactive();
         }
         final long[] backboneMois;
@@ -435,7 +447,7 @@ public class GreedyTwoStageAlignmentStrategy implements AlignmentStrategy{
         }
         stats.setExpectedRetentionTimeDeviation((3*Statistics.robustAverage(rtErrors.toDoubleArray())+stats.getExpectedRetentionTimeDeviation())/4d);
         stats.setExpectedMassDeviationBetweenSamples(new Deviation(Statistics.robustAverage(ppmErrors.toDoubleArray()),Statistics.robustAverage(mzErrors.toDoubleArray())));
-        cleanupOldMoIs(merge, samples, samples.size(), samples.size());
+        cleanupOldMoIs(merge, samples, samples.size(), samples.size(), tracker);
 
         System.out.println("Stage 2: average alignment error is " + stats.getExpectedRetentionTimeDeviation());
         return AlignmentBackbone.builder().statistics(stats).samples(samples.toArray(ProcessedSample[]::new)).build();

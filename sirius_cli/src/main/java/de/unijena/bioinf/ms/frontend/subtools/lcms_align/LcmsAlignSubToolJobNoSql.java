@@ -271,7 +271,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            });
+            }, true);
         }
 
         updateProgress(totalProgress, ++progress, "Assessing data quality");
