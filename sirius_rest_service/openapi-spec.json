@@ -2578,7 +2578,7 @@
         "tags": [
           "Compounds"
         ],
-        "operationId": "getTraces",
+        "operationId": "getCompoundTraces",
         "parameters": [
           {
             "name": "projectId",
@@ -2845,7 +2845,7 @@
         "tags": [
           "Features"
         ],
-        "operationId": "getTraces_1",
+        "operationId": "getTraces",
         "parameters": [
           {
             "name": "projectId",
