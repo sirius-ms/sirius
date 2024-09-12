@@ -51,17 +51,7 @@ public class FeatureImports {
 
         }
 
-        RetentionTime rt = null;
-        if (feature.rtStartSeconds == null || feature.rtStartSeconds.isNaN()) {
-            if (feature.rtEndSeconds != null && !feature.rtEndSeconds.isNaN())
-                rt = new RetentionTime(feature.rtEndSeconds);
-        } else {
-            if (feature.rtEndSeconds == null || feature.rtEndSeconds.isNaN())
-                rt = new RetentionTime(feature.rtStartSeconds);
-            else
-                rt = new RetentionTime(feature.rtStartSeconds, feature.rtEndSeconds);
-        }
-        exp.setAnnotation(RetentionTime.class, rt);
+        exp.setAnnotation(RetentionTime.class, RetentionTime.of(feature.rtStartSeconds, feature.rtEndSeconds, feature.rtApexSeconds));
 
         exp.setMs1Spectra(feature.getMs1Spectra().stream().map(SimpleSpectrum::new).toList());
         exp.setMs2Spectra(feature.getMs2Spectra().stream().map(s ->
