@@ -44,7 +44,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.URI;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -78,9 +78,9 @@ public class StorageUtils {
 
         feature.getDataSource().ifPresent(s -> {
             if (s.getFormat() == DataSource.Format.JENA_MS)
-                exp.setSource(new MsFileSource(URI.create(s.getSource())));
+                exp.setSource(new MsFileSource(Path.of(s.getSource()).toUri()));
             else
-                exp.setSource(new SpectrumFileSource(URI.create(s.getSource())));
+                exp.setSource(new SpectrumFileSource(Path.of(s.getSource()).toUri()));
         });
         exp.setAnnotation(RetentionTime.class, feature.getRetentionTime());
         exp.setAnnotation(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.class, toMs2ExpAnnotation(feature.getDetectedAdducts()));
@@ -148,7 +148,6 @@ public class StorageUtils {
         }
 
         Feature feature = Feature.builder()
-                .dataSource(DataSource.fromPath(exp.getSourceString()))
                 .retentionTime(exp.getAnnotation(RetentionTime.class).orElse(null))
                 .averageMass(exp.getMs2Spectra().stream().mapToDouble(Ms2Spectrum::getPrecursorMz).average().orElse(Double.NaN))
                 .charge((byte) charge)
@@ -159,6 +158,7 @@ public class StorageUtils {
                 .build();
 
         AlignedFeatures alignedFeature = AlignedFeatures.singleton(feature, msData);
+        alignedFeature.setDataSource(DataSource.fromPath(exp.getSourceString()));
         alignedFeature.setName(exp.getName());
         alignedFeature.setExternalFeatureId(exp.getFeatureId());
         alignedFeature.setMolecularFormula(exp.getMolecularFormula());
