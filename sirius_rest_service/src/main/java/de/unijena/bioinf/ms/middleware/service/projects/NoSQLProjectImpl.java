@@ -41,9 +41,13 @@ import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
+import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
+import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
+import de.unijena.bioinf.ms.persistence.model.core.run.InstrumentConfig;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.RetentionTimeAxis;
@@ -94,7 +98,9 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
 
 
@@ -624,7 +630,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .hasMs1(features.isHasMs1())
                 .hasMsMs(features.isHasMsMs())
                 .computing(computeStateProvider.apply(this, fid))
-                .charge(features.getCharge());
+                .rtFWHM(features.getFwhm())
+                .charge(features.getCharge())
+                .apexIntensity(features.getApexIntensity())
+                .areaUnderCurve(features.getAreaUnderCurve());
         if (features.getDetectedAdducts() != null)
             builder.detectedAdducts(features.getDetectedAdducts().getAllAdducts().stream()
                     .map(PrecursorIonType::toString)
@@ -645,14 +654,106 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             }
         }
 
-        features.getMSData().map(this::convertMSData).ifPresent(builder::msData);
-
+        if (optFields.contains(AlignedFeature.OptField.msData)) {
+            project().fetchMsData(features);
+            features.getMSData().map(this::convertMSData).ifPresent(builder::msData);
+        }
+        if (optFields.contains(AlignedFeature.OptField.features)) {
+            project().fetchFeatures(features);
+            features.getFeatures().map(f -> f.stream().map(this::convertToApiFeature0).toList()).ifPresent(builder::features);
+        }
         if (optFields.contains(AlignedFeature.OptField.topAnnotations))
             builder.topAnnotations(extractTopCsiNovoAnnotations(features.getAlignedFeatureId()));
         if (optFields.contains(AlignedFeature.OptField.topAnnotationsDeNovo))
             builder.topAnnotationsDeNovo(extractTopDeNovoAnnotations(features.getAlignedFeatureId()));
 
         return builder.build();
+    }
+
+    private de.unijena.bioinf.ms.middleware.model.features.Feature convertToApiFeature0(Feature feature) {
+        de.unijena.bioinf.ms.middleware.model.features.Feature.FeatureBuilder builder = de.unijena.bioinf.ms.middleware.model.features.Feature.builder()
+                .featureId(Long.toString(feature.getFeatureId()))
+                .alignedFeatureId(Long.toString(feature.getAlignedFeatureId()))
+                .runId(Long.toString(feature.getRunId()))
+                .averageMz(feature.getAverageMass())
+                .rtFWHM(feature.getFwhm())
+                .apexIntensity(feature.getApexIntensity())
+                .areaUnderCurve(feature.getAreaUnderCurve());
+
+        RetentionTime rt = feature.getRetentionTime();
+        if (rt != null) {
+            if (rt.isInterval() && Double.isFinite(rt.getStartTime()) && Double.isFinite(rt.getEndTime())) {
+                builder.rtStartSeconds(rt.getStartTime());
+                builder.rtApexSeconds(rt.getMiddleTime());
+                builder.rtEndSeconds(rt.getEndTime());
+            } else {
+                builder.rtStartSeconds(rt.getMiddleTime());
+                builder.rtApexSeconds(rt.getMiddleTime());
+                builder.rtEndSeconds(rt.getMiddleTime());
+            }
+        }
+
+        return builder.build();
+    }
+
+    @SneakyThrows
+    private Run convertToApiRun(LCMSRun run, EnumSet<Run.OptField> optFields, @Nullable Long2ObjectMap<de.unijena.bioinf.ms.persistence.model.core.TagCategory> categories) {
+        Run.RunBuilder builder = Run.builder()
+                .runId(Long.toString(run.getRunId()))
+                .name(run.getName())
+                .chromatography(run.getChromatography().getFullName())
+                .fragmentation(run.getFragmentation().getFullName())
+                .ionization(run.getIonization().getFullName())
+                .massAnalyzers(run.getMassAnalyzers().stream().map(InstrumentConfig::getFullName).toList());
+
+        if (optFields.contains(Run.OptField.tags) && categories != null) {
+            builder.tags(storage().findStr(Filter.where("taggedObjectId").eq(run.getRunId()), de.unijena.bioinf.ms.persistence.model.core.Tag.class)
+                    .filter(tag -> categories.containsKey(tag.getCategoryId()))
+                    .map(tag -> convertToApiTag(tag, categories.get(tag.getCategoryId())))
+                    .collect(Collectors.toMap(Tag::getCategoryName, Function.identity())));
+        }
+
+        return builder.build();
+    }
+
+    private Tag convertToApiTag(de.unijena.bioinf.ms.persistence.model.core.Tag tag, de.unijena.bioinf.ms.persistence.model.core.TagCategory category) {
+        if (!tag.getValue().getClass().equals(category.getValueType().getValueClass())) {
+            throw new IllegalStateException("Unexpected value: " + tag.getValue().getClass());
+        }
+        return Tag.builder()
+                .categoryName(category.getName())
+                .value(tag.getValue())
+                .build();
+    }
+
+    private de.unijena.bioinf.ms.persistence.model.core.Tag convertToProjectTag(Tag tag, long taggedObjectId, long categoryId) {
+        return de.unijena.bioinf.ms.persistence.model.core.Tag.builder()
+                .taggedObjectId(taggedObjectId)
+                .categoryId(categoryId)
+                .value(tag.getValue())
+                .build();
+    }
+
+    private TagCategory convertToApiCategory(de.unijena.bioinf.ms.persistence.model.core.TagCategory category) {
+        return TagCategory.builder().name(category.getName()).valueType(switch (category.getValueType()) {
+            case STRING -> TagCategory.ValueType.STRING;
+            case DOUBLE -> TagCategory.ValueType.DOUBLE;
+            case INT -> TagCategory.ValueType.INTEGER;
+            case BOOL -> TagCategory.ValueType.BOOLEAN;
+        }).build();
+    }
+
+    private de.unijena.bioinf.ms.persistence.model.core.TagCategory convertToProjectCategory(String taggedObjectClass, TagCategory category) {
+        return de.unijena.bioinf.ms.persistence.model.core.TagCategory.builder()
+                .name(category.getName())
+                .taggedObjectClass(taggedObjectClass)
+                .valueType(switch (category.getValueType()) {
+                    case STRING -> de.unijena.bioinf.ms.persistence.model.core.TagCategory.ValueType.STRING;
+                    case DOUBLE -> de.unijena.bioinf.ms.persistence.model.core.TagCategory.ValueType.DOUBLE;
+                    case INTEGER -> de.unijena.bioinf.ms.persistence.model.core.TagCategory.ValueType.INT;
+                    case BOOLEAN -> de.unijena.bioinf.ms.persistence.model.core.TagCategory.ValueType.BOOL;
+                })
+                .build();
     }
 
     private FeatureAnnotations extractTopCsiNovoAnnotations(long longAFIf) {
@@ -885,10 +986,6 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             stream = storage().findAllStr(AlignedFeatures.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight());
         }
 
-        if (optFields.contains(AlignedFeature.OptField.msData))
-            stream = stream.peek(project()::fetchMsData);
-
-
         List<AlignedFeature> features = stream.map(alf -> convertToApiFeature(alf, optFields)).toList();
 
         long total = storage().countAll(AlignedFeatures.class);
@@ -918,12 +1015,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     public AlignedFeature findAlignedFeaturesById(String alignedFeatureId, @NotNull EnumSet<AlignedFeature.OptField> optFields) {
         long id = Long.parseLong(alignedFeatureId);
         return storage().getByPrimaryKey(id, AlignedFeatures.class)
-                .map(a -> {
-                    if (optFields.contains(AlignedFeature.OptField.msData)) {
-                        project().fetchMsData(a);
-                    }
-                    return convertToApiFeature(a, optFields);
-                }).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no aligned feature '" + alignedFeatureId + "' in project " + projectId + "."));
+                .map(a -> convertToApiFeature(a, optFields)).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no aligned feature '" + alignedFeatureId + "' in project " + projectId + "."));
     }
 
     @SneakyThrows
@@ -936,6 +1028,178 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     public void deleteAlignedFeaturesByIds(List<String> alignedFeatureIds) {
         project().cascadeDeleteAlignedFeatures(alignedFeatureIds.stream().map(Long::parseLong).sorted().toList());
+    }
+
+    @SneakyThrows
+    @Override
+    public Page<Run> findRuns(Pageable pageable, @NotNull EnumSet<Run.OptField> optFields) {
+        long total;
+        List<Run> objects;
+        final Long2ObjectMap<de.unijena.bioinf.ms.persistence.model.core.TagCategory> categories;
+        if (optFields.contains(Run.OptField.tags)) {
+            categories = new Long2ObjectOpenHashMap<>();
+            storage().findStr(Filter.where("taggedObjectClass").eq(LCMSRun.class.toString()), de.unijena.bioinf.ms.persistence.model.core.TagCategory.class).forEach(category -> categories.put(category.getCategoryId(), category));
+        } else {
+            categories = null;
+        }
+        if (pageable.isUnpaged() && pageable.getSort().isUnsorted()) {
+            objects = storage().findAllStr(LCMSRun.class).map(run -> convertToApiRun(run, optFields, categories)).toList();
+            total = objects.size();
+        } else {
+            Pair<String[], Database.SortOrder[]> sort = sortFeature(pageable.getSort());
+            objects = storage().findAllStr(LCMSRun.class, pageable.getOffset(), pageable.getPageSize(), sort.getLeft(), sort.getRight()).map(run -> convertToApiRun(run, optFields, categories)).toList();
+            total = storage().countAll(LCMSRun.class);
+        }
+        return new PageImpl<>(objects, pageable, total);
+    }
+
+    @SneakyThrows
+    @Override
+    public Run findRunById(String runId, @NotNull EnumSet<Run.OptField> optFields) {
+        final Long2ObjectMap<de.unijena.bioinf.ms.persistence.model.core.TagCategory> categories;
+        if (optFields.contains(Run.OptField.tags)) {
+            categories = new Long2ObjectOpenHashMap<>();
+            storage().findStr(Filter.where("taggedObjectClass").eq(LCMSRun.class.toString()), de.unijena.bioinf.ms.persistence.model.core.TagCategory.class).forEach(category -> categories.put(category.getCategoryId(), category));
+        } else {
+            categories = null;
+        }
+        return storage().getByPrimaryKey(Long.parseLong(runId), LCMSRun.class)
+                .map(run -> convertToApiRun(run, optFields, categories))
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no run '" + runId + "' in project " + projectId + "."));
+    }
+
+    @SneakyThrows
+    @Override
+    public List<Tag> addTagsToObject(Taggable taggable, String objectId, List<Tag> tags) {
+        Class<?> taggedObjectClass = switch (taggable) {
+            case Taggable.RUN -> LCMSRun.class;
+            default -> throw new IllegalStateException("Unknown taggable: " + taggable);
+        };
+        long objId = Long.parseLong(objectId);
+        if (storage().getByPrimaryKey(objId, taggedObjectClass).isEmpty())
+            throw new ResponseStatusException(NOT_FOUND, "There is no object '" + objectId + "' in project " + projectId + ".");
+
+        final Map<String, de.unijena.bioinf.ms.persistence.model.core.TagCategory> categories = new HashMap<>();
+        final Long2ObjectMap<de.unijena.bioinf.ms.persistence.model.core.TagCategory> categories2 = new Long2ObjectOpenHashMap<>();
+        storage().findStr(Filter.where("taggedObjectClass").eq(taggedObjectClass.toString()), de.unijena.bioinf.ms.persistence.model.core.TagCategory.class).forEach(category -> {
+            categories.put(category.getName(), category);
+            categories2.put(category.getCategoryId(), category);
+        });
+
+        Optional<Tag> unkownCategory = tags.stream().filter(tag -> !categories.containsKey(tag.getCategoryName())).findFirst();
+        if (unkownCategory.isPresent()) {
+            throw new ResponseStatusException(NOT_FOUND, "There is no category '" + unkownCategory.get().getCategoryName() + "' in project " + projectId + ".");
+        }
+
+        Optional<Tag> mismatchingCategory = tags.stream().filter(tag -> categories.get(tag.getCategoryName()).getValueType().getValueClass() != tag.getValue().getClass()).findFirst();
+        if (mismatchingCategory.isPresent()) {
+            throw new ResponseStatusException(BAD_REQUEST, "Mismatching value type '" + mismatchingCategory.get().getValue().getClass() + ".");
+        }
+
+        Map<String, de.unijena.bioinf.ms.persistence.model.core.Tag> existingTags = storage().findStr(Filter.where("taggedObjectId").eq(objId), de.unijena.bioinf.ms.persistence.model.core.Tag.class)
+                .collect(Collectors.toMap(tag -> categories2.get(tag.getCategoryId()).getName(), Function.identity()));
+        List<de.unijena.bioinf.ms.persistence.model.core.Tag> upsertTags = new ArrayList<>();
+        List<de.unijena.bioinf.ms.persistence.model.core.Tag> insertTags = new ArrayList<>();
+
+        for (Tag tag : tags) {
+            if (existingTags.containsKey(tag.getCategoryName())) {
+                de.unijena.bioinf.ms.persistence.model.core.Tag old = existingTags.get(tag.getCategoryName());
+                if (!Objects.equals(old.getValue(), tag.getValue())) {
+                    old.setValue(tag.getValue());
+                    upsertTags.add(old);
+                }
+            } else {
+                insertTags.add(convertToProjectTag(tag, objId, categories.get(tag.getCategoryName()).getCategoryId()));
+            }
+        }
+
+        storage().upsertAll(upsertTags);
+        storage().insertAll(insertTags);
+
+        return Stream.concat(upsertTags.stream(), insertTags.stream()).map(tag -> convertToApiTag(tag, categories2.get(tag.getCategoryId()))).toList();
+    }
+
+    @SneakyThrows
+    @Override
+    public void deleteTagsFromObject(Taggable taggable, String objectId, List<String> categoryNames) {
+        String taggedObjectClass = switch (taggable) {
+            case Taggable.RUN -> LCMSRun.class.toString();
+            default -> throw new IllegalStateException("Unknown taggable: " + taggable);
+        };
+        for (de.unijena.bioinf.ms.persistence.model.core.TagCategory category : storage ().find(Filter.where("taggedObjectClass").eq(taggedObjectClass), de.unijena.bioinf.ms.persistence.model.core.TagCategory.class)) {
+            if (categoryNames.contains(category.getName())) {
+                storage().removeAll(Filter.and(
+                        Filter.where("taggedObjectId").eq(Long.parseLong(objectId)),
+                        Filter.where("categoryId").eq(category.getCategoryId())
+                ), de.unijena.bioinf.ms.persistence.model.core.Tag.class);
+            }
+        }
+    }
+
+    @SneakyThrows
+    @Override
+    public List<TagCategory> findCategories(Taggable taggable) {
+        String taggedObjectClass = switch (taggable) {
+            case Taggable.RUN -> LCMSRun.class.toString();
+            default -> throw new IllegalStateException("Unknown taggable: " + taggable);
+        };
+        return storage().findStr(Filter.where("taggedObjectClass").eq(taggedObjectClass), de.unijena.bioinf.ms.persistence.model.core.TagCategory.class)
+                .map(this::convertToApiCategory).toList();
+    }
+
+    @SneakyThrows
+    @Override
+    public TagCategory findCategoryByName(Taggable taggable, String categoryName) {
+        String taggedObjectClass = switch (taggable) {
+            case Taggable.RUN -> LCMSRun.class.toString();
+            default -> throw new IllegalStateException("Unknown taggable: " + taggable);
+        };
+        return storage().findStr(Filter.and(
+                        Filter.where("taggedObjectClass").eq(taggedObjectClass),
+                        Filter.where("name").eq(categoryName)
+                ), de.unijena.bioinf.ms.persistence.model.core.TagCategory.class)
+                .findFirst()
+                .map(this::convertToApiCategory)
+                .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no tag category '" + categoryName + "' in project " + projectId + "."));
+    }
+
+    @SneakyThrows
+    @Override
+    public List<TagCategory> addCategories(Taggable taggable, List<TagCategory> categories) {
+        String taggedObjectClass = switch (taggable) {
+            case Taggable.RUN -> LCMSRun.class.toString();
+            default -> throw new IllegalStateException("Unknown taggable: " + taggable);
+        };
+        Set<String> existingNames = storage().findStr(Filter.where("taggedObjectClass").eq(taggedObjectClass), de.unijena.bioinf.ms.persistence.model.core.TagCategory.class)
+                .map(de.unijena.bioinf.ms.persistence.model.core.TagCategory::getName)
+                .collect(Collectors.toSet());
+        List<de.unijena.bioinf.ms.persistence.model.core.TagCategory> filtered = categories.stream()
+                .filter(category -> !existingNames.contains(category.getName()))
+                .map(category -> convertToProjectCategory(LCMSRun.class.toString(), category)).toList();
+        storage().insertAll(filtered);
+        return filtered.stream().map(this::convertToApiCategory).toList();
+    }
+
+    @SneakyThrows
+    @Override
+    public void deleteCategories(Taggable taggable, List<String> categoryNames) {
+        String taggedObjectClass = switch (taggable) {
+            case Taggable.RUN -> LCMSRun.class.toString();
+            default -> throw new IllegalStateException("Unknown taggable: " + taggable);
+        };
+        for (String name : categoryNames) {
+            List<de.unijena.bioinf.ms.persistence.model.core.TagCategory> categories = storage().findStr(Filter.and(
+                    Filter.where("taggedObjectClass").eq(taggedObjectClass),
+                    Filter.where("name").eq(name)
+            ), de.unijena.bioinf.ms.persistence.model.core.TagCategory.class).toList();
+            for (de.unijena.bioinf.ms.persistence.model.core.TagCategory category : categories) {
+                storage().removeAll(Filter.and(
+                        Filter.where("name").eq(name),
+                        Filter.where("categoryId").eq(category.getCategoryId())
+                ), de.unijena.bioinf.ms.persistence.model.core.Tag.class);
+            }
+            storage().removeAll(categories);
+        }
     }
 
     private SpectralLibraryMatchSummary summarize(Filter filter) throws IOException {

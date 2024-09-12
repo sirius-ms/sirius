@@ -31,6 +31,8 @@ import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
+import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +49,10 @@ import java.util.stream.Collectors;
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.toEnumSet;
 
 public interface Project<PSM extends ProjectSpaceManager> {
+
+    enum Taggable {
+        RUN
+    }
 
     @NotNull
     String getProjectId();
@@ -136,6 +142,32 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     void deleteAlignedFeaturesById(String alignedFeatureId);
     void deleteAlignedFeaturesByIds(List<String> alignedFeatureId);
+
+    Page<Run> findRuns(Pageable pageable, @NotNull EnumSet<Run.OptField> optFields);
+
+    default Page<Run> findRuns(Pageable pageable, Run.OptField... optFields) {
+        return findRuns(pageable, toEnumSet(Run.OptField.class, optFields));
+    }
+
+    Run findRunById(String runId, @NotNull EnumSet<Run.OptField> optFields);
+
+    default Run findRunById(String runId, Run.OptField... optFields) {
+        return findRunById(runId, toEnumSet(Run.OptField.class, optFields));
+    }
+
+    List<Tag> addTagsToObject(Taggable taggable, String objectId, List<Tag> tags);
+
+    void deleteTagsFromObject(Taggable taggable, String objectId, List<String> categoryNames);
+
+    List<TagCategory> findCategories(Taggable taggable);
+
+    TagCategory findCategoryByName(Taggable taggable, String categoryName);
+
+    List<TagCategory> addCategories(Taggable taggable, List<TagCategory> categories);
+
+    void deleteCategories(Taggable taggable, List<String> categoryNames);
+
+    // tags: add/delete category, add tag to run
 
     SpectralLibraryMatchSummary summarizeLibraryMatchesByFeatureId(String alignedFeatureId, int minSharedPeaks, double minSimilarity);
 

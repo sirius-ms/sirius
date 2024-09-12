@@ -52,6 +52,8 @@ import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.*;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
+import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
@@ -240,6 +242,46 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     @Override
     public void deleteAlignedFeaturesByIds(List<String> alignedFeatureId) {
         throw new UnsupportedOperationException("NOT IMPLEMENTED");
+    }
+
+    @Override
+    public Page<Run> findRuns(Pageable pageable, @NotNull EnumSet<Run.OptField> optFields) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Run findRunById(String runId, @NotNull EnumSet<Run.OptField> optFields) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<Tag> addTagsToObject(Taggable taggable, String objectId, List<Tag> tags) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void deleteTagsFromObject(Taggable taggable, String objectId, List<String> categoryNames) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<TagCategory> findCategories(Taggable taggable) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public TagCategory findCategoryByName(Taggable taggable, String categoryName) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<TagCategory> addCategories(Taggable taggable, List<TagCategory> categories) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void deleteCategories(Taggable taggable, List<String> categoryNames) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
