@@ -22,23 +22,17 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /**
- * Gets or Sets AlignedFeatureOptField
+ * Gets or Sets RunOptField
  */
-public enum AlignedFeatureOptField {
+public enum RunOptField {
   
   NONE("none"),
   
-  MSDATA("msData"),
-  
-  FEATURES("features"),
-  
-  TOPANNOTATIONS("topAnnotations"),
-  
-  TOPANNOTATIONSDENOVO("topAnnotationsDeNovo");
+  TAGS("tags");
 
   private String value;
 
-  AlignedFeatureOptField(String value) {
+  RunOptField(String value) {
     this.value = value;
   }
 
@@ -53,8 +47,8 @@ public enum AlignedFeatureOptField {
   }
 
   @JsonCreator
-  public static AlignedFeatureOptField fromValue(String value) {
-    for (AlignedFeatureOptField b : AlignedFeatureOptField.values()) {
+  public static RunOptField fromValue(String value) {
+    for (RunOptField b : RunOptField.values()) {
       if (b.value.equals(value)) {
         return b;
       }

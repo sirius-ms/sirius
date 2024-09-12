@@ -9,6 +9,8 @@
 
 * `MSDATA` (value: `"msData"`)
 
+* `FEATURES` (value: `"features"`)
+
 * `TOPANNOTATIONS` (value: `"topAnnotations"`)
 
 * `TOPANNOTATIONSDENOVO` (value: `"topAnnotationsDeNovo"`)

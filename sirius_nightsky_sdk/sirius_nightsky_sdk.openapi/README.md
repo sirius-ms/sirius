@@ -42,7 +42,7 @@ Add this dependency to your project's POM:
 <dependency>
   <groupId>de.unijena.bioinf.ms</groupId>
   <artifactId>sirius_nightsky_sdk</artifactId>
-  <version>6.0.3</version>
+  <version>6.0.6-SNAPSHOT</version>
   <scope>compile</scope>
 </dependency>
 ```
@@ -58,7 +58,7 @@ Add this dependency to your project's build file:
   }
 
   dependencies {
-     implementation "de.unijena.bioinf.ms:sirius_nightsky_sdk:6.0.3"
+     implementation "de.unijena.bioinf.ms:sirius_nightsky_sdk:6.0.6-SNAPSHOT"
   }
 ```
 
@@ -72,7 +72,7 @@ mvn clean package
 
 Then manually install the following JARs:
 
-- `target/sirius_nightsky_sdk-6.0.3.jar`
+- `target/sirius_nightsky_sdk-6.0.6-SNAPSHOT.jar`
 - `target/lib/*.jar`
 
 ## Getting Started
@@ -203,6 +203,14 @@ Class | Method | HTTP request | Description
 *ProjectsApi* | [**importPreprocessedDataAsJobLocally**](docs/ProjectsApi.md#importPreprocessedDataAsJobLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files-job | Import ms/ms data from the given format into the specified project-space as background job
 *ProjectsApi* | [**importPreprocessedDataLocally**](docs/ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
 *ProjectsApi* | [**openProjectSpace**](docs/ProjectsApi.md#openProjectSpace) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId.
+*RunsApi* | [**addCategories**](docs/RunsApi.md#addCategories) | **POST** /api/projects/{projectId}/runs/categories/add | Add tag category to the project.
+*RunsApi* | [**addTags**](docs/RunsApi.md#addTags) | **POST** /api/projects/{projectId}/runs/tags/add/{objectId} | Add tags to a run in the project.
+*RunsApi* | [**deleteCategories**](docs/RunsApi.md#deleteCategories) | **PUT** /api/projects/{projectId}/runs/categories/delete | Delete tag categories with the given names from the specified project-space.
+*RunsApi* | [**deleteTags**](docs/RunsApi.md#deleteTags) | **PUT** /api/projects/{projectId}/runs/tags/delete/{objectId} | Delete tags with the given IDs from the specified project-space.
+*RunsApi* | [**getCategories**](docs/RunsApi.md#getCategories) | **GET** /api/projects/{projectId}/runs/categories | Get all tag categories in the given project-space.
+*RunsApi* | [**getCategoryByName**](docs/RunsApi.md#getCategoryByName) | **GET** /api/projects/{projectId}/runs/categories/{categoryName} | Get tag category by name in the given project-space.
+*RunsApi* | [**getRun**](docs/RunsApi.md#getRun) | **GET** /api/projects/{projectId}/runs/{runId} | Get run with the given identifier from the specified project-space.
+*RunsApi* | [**getRunsPaged**](docs/RunsApi.md#getRunsPaged) | **GET** /api/projects/{projectId}/runs/page | Get all available runs in the given project-space.
 *SearchableDatabasesApi* | [**addDatabases**](docs/SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases | 
 *SearchableDatabasesApi* | [**createDatabase**](docs/SearchableDatabasesApi.md#createDatabase) | **POST** /api/databases/{databaseId} | 
 *SearchableDatabasesApi* | [**getCustomDatabases**](docs/SearchableDatabasesApi.md#getCustomDatabases) | **GET** /api/databases/custom | 
@@ -250,6 +258,7 @@ Class | Method | HTTP request | Description
  - [DBLink](docs/DBLink.md)
  - [DataQuality](docs/DataQuality.md)
  - [Deviation](docs/Deviation.md)
+ - [Feature](docs/Feature.md)
  - [FeatureAnnotations](docs/FeatureAnnotations.md)
  - [FeatureImport](docs/FeatureImport.md)
  - [FingerprintPrediction](docs/FingerprintPrediction.md)
@@ -287,6 +296,8 @@ Class | Method | HTTP request | Description
  - [ProjectInfo](docs/ProjectInfo.md)
  - [ProjectInfoOptField](docs/ProjectInfoOptField.md)
  - [QuantificationTable](docs/QuantificationTable.md)
+ - [Run](docs/Run.md)
+ - [RunOptField](docs/RunOptField.md)
  - [SearchableDatabase](docs/SearchableDatabase.md)
  - [SearchableDatabaseParameters](docs/SearchableDatabaseParameters.md)
  - [SimplePeak](docs/SimplePeak.md)
@@ -305,6 +316,7 @@ Class | Method | HTTP request | Description
  - [StructureDbSearch](docs/StructureDbSearch.md)
  - [Subscription](docs/Subscription.md)
  - [SubscriptionConsumables](docs/SubscriptionConsumables.md)
+ - [TagCategory](docs/TagCategory.md)
  - [Term](docs/Term.md)
  - [Timeout](docs/Timeout.md)
  - [Trace](docs/Trace.md)

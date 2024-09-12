@@ -35,6 +35,7 @@ docs/DBLink.md
 docs/DataQuality.md
 docs/Deviation.md
 docs/ExperimentalApi.md
+docs/Feature.md
 docs/FeatureAnnotations.md
 docs/FeatureImport.md
 docs/FeaturesApi.md
@@ -78,6 +79,9 @@ docs/ProjectInfo.md
 docs/ProjectInfoOptField.md
 docs/ProjectsApi.md
 docs/QuantificationTable.md
+docs/Run.md
+docs/RunOptField.md
+docs/RunsApi.md
 docs/SearchableDatabase.md
 docs/SearchableDatabaseParameters.md
 docs/SearchableDatabasesApi.md
@@ -97,6 +101,7 @@ docs/StructureCandidateScored.md
 docs/StructureDbSearch.md
 docs/Subscription.md
 docs/SubscriptionConsumables.md
+docs/TagCategory.md
 docs/Term.md
 docs/Timeout.md
 docs/Trace.md
@@ -114,6 +119,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/InfoApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/JobsApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/LoginAndAccountApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/ProjectsApi.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/RunsApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/api/SearchableDatabasesApi.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/client/ApiClient.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/client/RFC3339DateFormat.java
@@ -157,6 +163,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ConsensusCriterionDeNovo.j
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/DBLink.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/DataQuality.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Deviation.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Feature.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FeatureAnnotations.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FeatureImport.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FingerprintPrediction.java
@@ -194,6 +201,8 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ProjectChangeEvent.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ProjectInfo.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ProjectInfoOptField.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/QuantificationTable.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Run.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/RunOptField.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SearchableDatabase.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SearchableDatabaseParameters.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SimplePeak.java
@@ -212,6 +221,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/StructureCandidateScored.j
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/StructureDbSearch.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Subscription.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SubscriptionConsumables.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/TagCategory.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Term.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Timeout.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Trace.java
@@ -220,13 +230,3 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/UseHeuristic.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Zodiac.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ZodiacEdgeFilterThresholds.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ZodiacEpochs.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/ActuatorApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/CompoundsApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/ExperimentalApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/FeaturesApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/GuiApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/InfoApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/JobsApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/LoginAndAccountApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/ProjectsApiTest.java
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/api/SearchableDatabasesApiTest.java

@@ -22,9 +22,13 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import de.unijena.bioinf.ms.nightsky.sdk.model.DataQuality;
+import de.unijena.bioinf.ms.nightsky.sdk.model.Feature;
 import de.unijena.bioinf.ms.nightsky.sdk.model.FeatureAnnotations;
 import de.unijena.bioinf.ms.nightsky.sdk.model.MsData;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
@@ -43,10 +47,14 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   AlignedFeature.JSON_PROPERTY_RT_START_SECONDS,
   AlignedFeature.JSON_PROPERTY_RT_END_SECONDS,
   AlignedFeature.JSON_PROPERTY_RT_APEX_SECONDS,
+  AlignedFeature.JSON_PROPERTY_RT_F_W_H_M,
+  AlignedFeature.JSON_PROPERTY_APEX_INTENSITY,
+  AlignedFeature.JSON_PROPERTY_AREA_UNDER_CURVE,
   AlignedFeature.JSON_PROPERTY_QUALITY,
   AlignedFeature.JSON_PROPERTY_HAS_MS1,
   AlignedFeature.JSON_PROPERTY_HAS_MS_MS,
   AlignedFeature.JSON_PROPERTY_MS_DATA,
+  AlignedFeature.JSON_PROPERTY_FEATURES,
   AlignedFeature.JSON_PROPERTY_TOP_ANNOTATIONS,
   AlignedFeature.JSON_PROPERTY_TOP_ANNOTATIONS_DE_NOVO,
   AlignedFeature.JSON_PROPERTY_COMPUTING
@@ -83,6 +91,15 @@ public class AlignedFeature {
   public static final String JSON_PROPERTY_RT_APEX_SECONDS = "rtApexSeconds";
   private Double rtApexSeconds;
 
+  public static final String JSON_PROPERTY_RT_F_W_H_M = "rtFWHM";
+  private Double rtFWHM;
+
+  public static final String JSON_PROPERTY_APEX_INTENSITY = "apexIntensity";
+  private Double apexIntensity;
+
+  public static final String JSON_PROPERTY_AREA_UNDER_CURVE = "areaUnderCurve";
+  private Double areaUnderCurve;
+
   public static final String JSON_PROPERTY_QUALITY = "quality";
   private DataQuality quality;
 
@@ -94,6 +111,9 @@ public class AlignedFeature {
 
   public static final String JSON_PROPERTY_MS_DATA = "msData";
   private MsData msData;
+
+  public static final String JSON_PROPERTY_FEATURES = "features";
+  private List<Feature> features;
 
   public static final String JSON_PROPERTY_TOP_ANNOTATIONS = "topAnnotations";
   private FeatureAnnotations topAnnotations;
@@ -366,6 +386,81 @@ public class AlignedFeature {
     this.rtApexSeconds = rtApexSeconds;
   }
 
+  public AlignedFeature rtFWHM(Double rtFWHM) {
+    
+    this.rtFWHM = rtFWHM;
+    return this;
+  }
+
+   /**
+   * Full width at half maximum of the feature on the retention time axis in seconds
+   * @return rtFWHM
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_RT_F_W_H_M)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getRtFWHM() {
+    return rtFWHM;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_RT_F_W_H_M)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setRtFWHM(Double rtFWHM) {
+    this.rtFWHM = rtFWHM;
+  }
+
+  public AlignedFeature apexIntensity(Double apexIntensity) {
+    
+    this.apexIntensity = apexIntensity;
+    return this;
+  }
+
+   /**
+   * Intensity of the apex of the feature
+   * @return apexIntensity
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_APEX_INTENSITY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getApexIntensity() {
+    return apexIntensity;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_APEX_INTENSITY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setApexIntensity(Double apexIntensity) {
+    this.apexIntensity = apexIntensity;
+  }
+
+  public AlignedFeature areaUnderCurve(Double areaUnderCurve) {
+    
+    this.areaUnderCurve = areaUnderCurve;
+    return this;
+  }
+
+   /**
+   * Area under curve of the whole feature
+   * @return areaUnderCurve
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_AREA_UNDER_CURVE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public Double getAreaUnderCurve() {
+    return areaUnderCurve;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_AREA_UNDER_CURVE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setAreaUnderCurve(Double areaUnderCurve) {
+    this.areaUnderCurve = areaUnderCurve;
+  }
+
   public AlignedFeature quality(DataQuality quality) {
     
     this.quality = quality;
@@ -466,6 +561,39 @@ public class AlignedFeature {
     this.msData = msData;
   }
 
+  public AlignedFeature features(List<Feature> features) {
+    
+    this.features = features;
+    return this;
+  }
+
+  public AlignedFeature addFeaturesItem(Feature featuresItem) {
+    if (this.features == null) {
+      this.features = new ArrayList<>();
+    }
+    this.features.add(featuresItem);
+    return this;
+  }
+
+   /**
+   * List of the aligned features
+   * @return features
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_FEATURES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public List<Feature> getFeatures() {
+    return features;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_FEATURES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setFeatures(List<Feature> features) {
+    this.features = features;
+  }
+
   public AlignedFeature topAnnotations(FeatureAnnotations topAnnotations) {
     
     this.topAnnotations = topAnnotations;
@@ -560,10 +688,14 @@ public class AlignedFeature {
         Objects.equals(this.rtStartSeconds, alignedFeature.rtStartSeconds) &&
         Objects.equals(this.rtEndSeconds, alignedFeature.rtEndSeconds) &&
         Objects.equals(this.rtApexSeconds, alignedFeature.rtApexSeconds) &&
+        Objects.equals(this.rtFWHM, alignedFeature.rtFWHM) &&
+        Objects.equals(this.apexIntensity, alignedFeature.apexIntensity) &&
+        Objects.equals(this.areaUnderCurve, alignedFeature.areaUnderCurve) &&
         Objects.equals(this.quality, alignedFeature.quality) &&
         Objects.equals(this.hasMs1, alignedFeature.hasMs1) &&
         Objects.equals(this.hasMsMs, alignedFeature.hasMsMs) &&
         Objects.equals(this.msData, alignedFeature.msData) &&
+        Objects.equals(this.features, alignedFeature.features) &&
         Objects.equals(this.topAnnotations, alignedFeature.topAnnotations) &&
         Objects.equals(this.topAnnotationsDeNovo, alignedFeature.topAnnotationsDeNovo) &&
         Objects.equals(this.computing, alignedFeature.computing);
@@ -571,7 +703,7 @@ public class AlignedFeature {
 
   @Override
   public int hashCode() {
-    return Objects.hash(alignedFeatureId, compoundId, name, externalFeatureId, ionMass, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, rtApexSeconds, quality, hasMs1, hasMsMs, msData, topAnnotations, topAnnotationsDeNovo, computing);
+    return Objects.hash(alignedFeatureId, compoundId, name, externalFeatureId, ionMass, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, rtApexSeconds, rtFWHM, apexIntensity, areaUnderCurve, quality, hasMs1, hasMsMs, msData, features, topAnnotations, topAnnotationsDeNovo, computing);
   }
 
   @Override
@@ -588,10 +720,14 @@ public class AlignedFeature {
     sb.append("    rtStartSeconds: ").append(toIndentedString(rtStartSeconds)).append("\n");
     sb.append("    rtEndSeconds: ").append(toIndentedString(rtEndSeconds)).append("\n");
     sb.append("    rtApexSeconds: ").append(toIndentedString(rtApexSeconds)).append("\n");
+    sb.append("    rtFWHM: ").append(toIndentedString(rtFWHM)).append("\n");
+    sb.append("    apexIntensity: ").append(toIndentedString(apexIntensity)).append("\n");
+    sb.append("    areaUnderCurve: ").append(toIndentedString(areaUnderCurve)).append("\n");
     sb.append("    quality: ").append(toIndentedString(quality)).append("\n");
     sb.append("    hasMs1: ").append(toIndentedString(hasMs1)).append("\n");
     sb.append("    hasMsMs: ").append(toIndentedString(hasMsMs)).append("\n");
     sb.append("    msData: ").append(toIndentedString(msData)).append("\n");
+    sb.append("    features: ").append(toIndentedString(features)).append("\n");
     sb.append("    topAnnotations: ").append(toIndentedString(topAnnotations)).append("\n");
     sb.append("    topAnnotationsDeNovo: ").append(toIndentedString(topAnnotationsDeNovo)).append("\n");
     sb.append("    computing: ").append(toIndentedString(computing)).append("\n");

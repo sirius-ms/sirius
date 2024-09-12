@@ -55,6 +55,10 @@
     {
       "name": "Projects",
       "description": "Manage SIRIUS projects."
+    },
+    {
+      "name": "Runs",
+      "description": "This API allows accessing LC/MS runs."
     }
   ],
   "paths": {
@@ -226,6 +230,95 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/runs/tags/delete/{objectId}": {
+      "put": {
+        "tags": [
+          "Runs"
+        ],
+        "summary": "Delete tags with the given IDs from the specified project-space.",
+        "description": "Delete tags with the given IDs from the specified project-space.",
+        "operationId": "deleteTags",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to delete from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "objectId",
+            "in": "path",
+            "description": "object to delete tags from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Category names of the tags to delete.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/runs/categories/delete": {
+      "put": {
+        "tags": [
+          "Runs"
+        ],
+        "summary": "Delete tag categories with the given names from the specified project-space.",
+        "description": "Delete tag categories with the given names from the specified project-space.",
+        "operationId": "deleteCategories",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to delete from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "names of categories to delete.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "OK"
@@ -505,6 +598,115 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AccountInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/runs/tags/add/{objectId}": {
+      "post": {
+        "tags": [
+          "Runs"
+        ],
+        "summary": "Add tags to a run in the project.",
+        "description": "Add tags to a run in the project. Tags with the same category name will be overwritten.",
+        "operationId": "addTags",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to add to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "objectId",
+            "in": "path",
+            "description": "object to tag.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "tags to add.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Tag"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "the tags that have been added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Tag"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/runs/categories/add": {
+      "post": {
+        "tags": [
+          "Runs"
+        ],
+        "summary": "Add tag category to the project.",
+        "description": "Add tag category to the project. Category name must not exist in the project.",
+        "operationId": "addCategories",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to add to.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "the tag categories to be added",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TagCategory"
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "the tag categories that have been added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TagCategory"
+                  }
                 }
               }
             }
@@ -2157,6 +2359,219 @@
                   "items": {
                     "$ref": "#/components/schemas/ProjectInfo"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/runs/{runId}": {
+      "get": {
+        "tags": [
+          "Runs"
+        ],
+        "summary": "Get run with the given identifier from the specified project-space.",
+        "description": "Get run with the given identifier from the specified project-space.",
+        "operationId": "getRun",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "runId",
+            "in": "path",
+            "description": "identifier of run to access.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/RunOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Run with tags (if specified).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Run"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/runs/page": {
+      "get": {
+        "tags": [
+          "Runs"
+        ],
+        "summary": "Get all available runs in the given project-space.",
+        "description": "Get all available runs in the given project-space.",
+        "operationId": "getRunsPaged",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Zero-based page index (0..N)",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "description": "The size of the page to be returned",
+            "required": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "default": 20
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "description": "Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "optFields",
+            "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/RunOptField"
+              },
+              "default": []
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Runs with tags (if specified).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageAlignedFeature"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/runs/categories": {
+      "get": {
+        "tags": [
+          "Runs"
+        ],
+        "summary": "Get all tag categories in the given project-space.",
+        "description": "Get all tag categories in the given project-space.",
+        "operationId": "getCategories",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tag categories.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TagCategory"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/projects/{projectId}/runs/categories/{categoryName}": {
+      "get": {
+        "tags": [
+          "Runs"
+        ],
+        "summary": "Get tag category by name in the given project-space.",
+        "description": "Get tag category by name in the given project-space.",
+        "operationId": "getCategoryByName",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryName",
+            "in": "path",
+            "description": "name of the category",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tag categories.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagCategory"
                 }
               }
             }
@@ -5574,6 +5989,26 @@
           }
         }
       },
+      "Tag": {
+        "type": "object"
+      },
+      "TagCategory": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "valueType": {
+            "type": "string",
+            "enum": [
+              "STRING",
+              "DOUBLE",
+              "INTEGER",
+              "BOOLEAN"
+            ]
+          }
+        }
+      },
       "Canopus": {
         "type": "object",
         "properties": {
@@ -6331,6 +6766,7 @@
         "enum": [
           "none",
           "msData",
+          "features",
           "topAnnotations",
           "topAnnotationsDeNovo"
         ]
@@ -6387,6 +6823,24 @@
             "format": "double",
             "nullable": true
           },
+          "rtFWHM": {
+            "type": "number",
+            "description": "Full width at half maximum of the feature on the retention time axis in seconds",
+            "format": "double",
+            "nullable": true
+          },
+          "apexIntensity": {
+            "type": "number",
+            "description": "Intensity of the apex of the feature",
+            "format": "double",
+            "nullable": true
+          },
+          "areaUnderCurve": {
+            "type": "number",
+            "description": "Area under curve of the whole feature",
+            "format": "double",
+            "nullable": true
+          },
           "quality": {
             "$ref": "#/components/schemas/DataQuality"
           },
@@ -6400,6 +6854,14 @@
           },
           "msData": {
             "$ref": "#/components/schemas/MsData"
+          },
+          "features": {
+            "type": "array",
+            "description": "List of the aligned features",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/Feature"
+            }
           },
           "topAnnotations": {
             "$ref": "#/components/schemas/FeatureAnnotations"
@@ -6780,6 +7242,67 @@
             "format": "double"
           }
         },
+        "nullable": true
+      },
+      "Feature": {
+        "type": "object",
+        "properties": {
+          "featureId": {
+            "type": "string",
+            "description": "Identifier"
+          },
+          "alignedFeatureId": {
+            "type": "string",
+            "description": "ID of the AlignedFeature this feature belongs to"
+          },
+          "runId": {
+            "type": "string",
+            "description": "ID of the run this feature belongs to"
+          },
+          "averageMz": {
+            "type": "number",
+            "description": "Average m/z over the whole feature",
+            "format": "double",
+            "nullable": true
+          },
+          "rtStartSeconds": {
+            "type": "number",
+            "description": "Start of the feature on the retention time axis in seconds",
+            "format": "double",
+            "nullable": true
+          },
+          "rtEndSeconds": {
+            "type": "number",
+            "description": "End of the feature on the retention time axis in seconds",
+            "format": "double",
+            "nullable": true
+          },
+          "rtApexSeconds": {
+            "type": "number",
+            "description": "Apex of the feature on the retention time axis in seconds",
+            "format": "double",
+            "nullable": true
+          },
+          "rtFWHM": {
+            "type": "number",
+            "description": "Full width at half maximum of the feature on the retention time axis in seconds",
+            "format": "double",
+            "nullable": true
+          },
+          "apexIntensity": {
+            "type": "number",
+            "description": "Intensity of the apex of the feature",
+            "format": "double",
+            "nullable": true
+          },
+          "areaUnderCurve": {
+            "type": "number",
+            "description": "Area under curve of the whole feature",
+            "format": "double",
+            "nullable": true
+          }
+        },
+        "description": "The AlignedFeature contains the ID of a feature (aligned over runs) together with some read-only information\n that might be displayed in some summary view.",
         "nullable": true
       },
       "FeatureAnnotations": {
@@ -7405,6 +7928,55 @@
           }
         },
         "description": "Simple object to hold account credentials, e.g. to perform login operations.\n If refreshToken is given, it is usually preferred over password based authentication.\n But in the end this is up to the respective web service."
+      },
+      "RunOptField": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "none",
+          "tags"
+        ]
+      },
+      "Run": {
+        "type": "object",
+        "properties": {
+          "runId": {
+            "type": "string",
+            "description": "Identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Informative, human-readable name of this run"
+          },
+          "chromatography": {
+            "type": "string",
+            "nullable": true
+          },
+          "ionization": {
+            "type": "string",
+            "nullable": true
+          },
+          "fragmentation": {
+            "type": "string",
+            "nullable": true
+          },
+          "massAnalyzers": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "type": "string",
+              "nullable": true
+            }
+          },
+          "tags": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/Tag"
+            },
+            "description": "Key: tag category, value: tag",
+            "nullable": true
+          }
+        }
       },
       "PageJob": {
         "type": "object",

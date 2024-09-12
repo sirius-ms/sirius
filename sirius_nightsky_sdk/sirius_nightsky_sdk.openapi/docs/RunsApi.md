@@ -1,0 +1,568 @@
+# RunsApi
+
+All URIs are relative to *http://localhost:8888*
+
+| Method | HTTP request | Description |
+|------------- | ------------- | -------------|
+| [**addCategories**](RunsApi.md#addCategories) | **POST** /api/projects/{projectId}/runs/categories/add | Add tag category to the project. |
+| [**addTags**](RunsApi.md#addTags) | **POST** /api/projects/{projectId}/runs/tags/add/{objectId} | Add tags to a run in the project. |
+| [**deleteCategories**](RunsApi.md#deleteCategories) | **PUT** /api/projects/{projectId}/runs/categories/delete | Delete tag categories with the given names from the specified project-space. |
+| [**deleteTags**](RunsApi.md#deleteTags) | **PUT** /api/projects/{projectId}/runs/tags/delete/{objectId} | Delete tags with the given IDs from the specified project-space. |
+| [**getCategories**](RunsApi.md#getCategories) | **GET** /api/projects/{projectId}/runs/categories | Get all tag categories in the given project-space. |
+| [**getCategoryByName**](RunsApi.md#getCategoryByName) | **GET** /api/projects/{projectId}/runs/categories/{categoryName} | Get tag category by name in the given project-space. |
+| [**getRun**](RunsApi.md#getRun) | **GET** /api/projects/{projectId}/runs/{runId} | Get run with the given identifier from the specified project-space. |
+| [**getRunsPaged**](RunsApi.md#getRunsPaged) | **GET** /api/projects/{projectId}/runs/page | Get all available runs in the given project-space. |
+
+
+
+## addCategories
+
+> List&lt;TagCategory&gt; addCategories(projectId, tagCategory)
+
+Add tag category to the project.
+
+Add tag category to the project. Category name must not exist in the project.
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.RunsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        RunsApi apiInstance = new RunsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to add to.
+        List<TagCategory> tagCategory = Arrays.asList(); // List<TagCategory> | the tag categories to be added
+        try {
+            List<TagCategory> result = apiInstance.addCategories(projectId, tagCategory);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling RunsApi#addCategories");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to add to. | |
+| **tagCategory** | [**List&lt;TagCategory&gt;**](TagCategory.md)| the tag categories to be added | |
+
+### Return type
+
+[**List&lt;TagCategory&gt;**](TagCategory.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | the tag categories that have been added |  -  |
+
+
+## addTags
+
+> List&lt;Object&gt; addTags(projectId, objectId, requestBody)
+
+Add tags to a run in the project.
+
+Add tags to a run in the project. Tags with the same category name will be overwritten.
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.RunsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        RunsApi apiInstance = new RunsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to add to.
+        String objectId = "objectId_example"; // String | object to tag.
+        List<Object> requestBody = null; // List<Object> | tags to add.
+        try {
+            List<Object> result = apiInstance.addTags(projectId, objectId, requestBody);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling RunsApi#addTags");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to add to. | |
+| **objectId** | **String**| object to tag. | |
+| **requestBody** | [**List&lt;Object&gt;**](Object.md)| tags to add. | |
+
+### Return type
+
+**List&lt;Object&gt;**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | the tags that have been added |  -  |
+
+
+## deleteCategories
+
+> deleteCategories(projectId, requestBody)
+
+Delete tag categories with the given names from the specified project-space.
+
+Delete tag categories with the given names from the specified project-space.
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.RunsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        RunsApi apiInstance = new RunsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to delete from.
+        List<String> requestBody = Arrays.asList(); // List<String> | names of categories to delete.
+        try {
+            apiInstance.deleteCategories(projectId, requestBody);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling RunsApi#deleteCategories");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to delete from. | |
+| **requestBody** | [**List&lt;String&gt;**](String.md)| names of categories to delete. | |
+
+### Return type
+
+null (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: Not defined
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+
+
+## deleteTags
+
+> deleteTags(projectId, objectId, requestBody)
+
+Delete tags with the given IDs from the specified project-space.
+
+Delete tags with the given IDs from the specified project-space.
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.RunsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        RunsApi apiInstance = new RunsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to delete from.
+        String objectId = "objectId_example"; // String | object to delete tags from.
+        List<String> requestBody = Arrays.asList(); // List<String> | Category names of the tags to delete.
+        try {
+            apiInstance.deleteTags(projectId, objectId, requestBody);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling RunsApi#deleteTags");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to delete from. | |
+| **objectId** | **String**| object to delete tags from. | |
+| **requestBody** | [**List&lt;String&gt;**](String.md)| Category names of the tags to delete. | |
+
+### Return type
+
+null (empty response body)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: Not defined
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | OK |  -  |
+
+
+## getCategories
+
+> List&lt;TagCategory&gt; getCategories(projectId)
+
+Get all tag categories in the given project-space.
+
+Get all tag categories in the given project-space.
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.RunsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        RunsApi apiInstance = new RunsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        try {
+            List<TagCategory> result = apiInstance.getCategories(projectId);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling RunsApi#getCategories");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+
+### Return type
+
+[**List&lt;TagCategory&gt;**](TagCategory.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Tag categories. |  -  |
+
+
+## getCategoryByName
+
+> TagCategory getCategoryByName(projectId, categoryName)
+
+Get tag category by name in the given project-space.
+
+Get tag category by name in the given project-space.
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.RunsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        RunsApi apiInstance = new RunsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String categoryName = "categoryName_example"; // String | name of the category
+        try {
+            TagCategory result = apiInstance.getCategoryByName(projectId, categoryName);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling RunsApi#getCategoryByName");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **categoryName** | **String**| name of the category | |
+
+### Return type
+
+[**TagCategory**](TagCategory.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Tag categories. |  -  |
+
+
+## getRun
+
+> Run getRun(projectId, runId, optFields)
+
+Get run with the given identifier from the specified project-space.
+
+Get run with the given identifier from the specified project-space.
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.RunsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        RunsApi apiInstance = new RunsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String runId = "runId_example"; // String | identifier of run to access.
+        List<RunOptField> optFields = Arrays.asList(); // List<RunOptField> | set of optional fields to be included. Use 'none' only to override defaults.
+        try {
+            Run result = apiInstance.getRun(projectId, runId, optFields);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling RunsApi#getRun");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **runId** | **String**| identifier of run to access. | |
+| **optFields** | [**List&lt;RunOptField&gt;**](RunOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
+
+### Return type
+
+[**Run**](Run.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Run with tags (if specified). |  -  |
+
+
+## getRunsPaged
+
+> PageAlignedFeature getRunsPaged(projectId, page, size, sort, optFields)
+
+Get all available runs in the given project-space.
+
+Get all available runs in the given project-space.
+
+### Example
+
+```java
+// Import classes:
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
+import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
+import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
+import de.unijena.bioinf.ms.nightsky.sdk.api.RunsApi;
+
+public class Example {
+    public static void main(String[] args) {
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath("http://localhost:8888");
+
+        RunsApi apiInstance = new RunsApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        Integer page = 0; // Integer | Zero-based page index (0..N)
+        Integer size = 20; // Integer | The size of the page to be returned
+        List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
+        List<RunOptField> optFields = Arrays.asList(); // List<RunOptField> | set of optional fields to be included. Use 'none' only to override defaults.
+        try {
+            PageAlignedFeature result = apiInstance.getRunsPaged(projectId, page, size, sort, optFields);
+            System.out.println(result);
+        } catch (ApiException e) {
+            System.err.println("Exception when calling RunsApi#getRunsPaged");
+            System.err.println("Status code: " + e.getCode());
+            System.err.println("Reason: " + e.getResponseBody());
+            System.err.println("Response headers: " + e.getResponseHeaders());
+            e.printStackTrace();
+        }
+    }
+}
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **projectId** | **String**| project-space to read from. | |
+| **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
+| **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
+| **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
+| **optFields** | [**List&lt;RunOptField&gt;**](RunOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
+
+### Return type
+
+[**PageAlignedFeature**](PageAlignedFeature.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Runs with tags (if specified). |  -  |
+

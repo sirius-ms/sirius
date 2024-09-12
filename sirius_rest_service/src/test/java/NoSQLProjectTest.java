@@ -25,8 +25,13 @@ import de.unijena.bioinf.ms.middleware.model.compounds.CompoundImport;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.FeatureImport;
 import de.unijena.bioinf.ms.middleware.model.features.MsData;
+import de.unijena.bioinf.ms.middleware.model.features.Run;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
+import de.unijena.bioinf.ms.middleware.model.tags.Tag;
+import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
+import de.unijena.bioinf.ms.middleware.service.projects.Project;
+import de.unijena.bioinf.ms.persistence.model.core.run.*;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
@@ -34,12 +39,16 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class NoSQLProjectTest {
 
@@ -165,6 +174,142 @@ public class NoSQLProjectTest {
             Assert.assertTrue(EqualsBuilder.reflectionEquals(d1.getMs2Spectra().get(1), d2.getMs2Spectra().get(1)));
 
         }
+    }
+
+    @Test
+    public void testRuns() throws IOException {
+
+        Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
+        try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
+            NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
+
+            LCMSRun runIn = LCMSRun.builder()
+                    .name("run1")
+                    .chromatography(Chromatography.LC)
+                    .fragmentation(Fragmentation.byValue("CID").orElseThrow())
+                    .ionization(Ionization.byValue("ESI").orElseThrow())
+                    .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
+                    .build();
+
+            ps.getStorage().insert(runIn);
+            Run runOut = project.findRunById(Long.toString(runIn.getRunId()));
+
+            Assert.assertEquals(1, project.findRuns(Pageable.unpaged()).getTotalElements());
+            Assert.assertEquals(runIn.getRunId(), Long.parseLong(runOut.getRunId()));
+            Assert.assertEquals(runIn.getName(), runOut.getName());
+            Assert.assertEquals(runIn.getChromatography().getFullName(), runOut.getChromatography());
+            Assert.assertEquals(runIn.getIonization().getFullName(), runOut.getIonization());
+            Assert.assertEquals(runIn.getFragmentation().getFullName(), runOut.getFragmentation());
+            Assert.assertEquals(1, runOut.getMassAnalyzers().size());
+            Assert.assertEquals(runIn.getMassAnalyzers().getFirst().getFullName(), runOut.getMassAnalyzers().getFirst());
+        }
+
+    }
+
+    @Test
+    public void testCategories() throws IOException {
+
+        Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
+        try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
+            NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
+
+            Map<String, TagCategory.ValueType> catIn = Map.of(
+                    "c0", TagCategory.ValueType.BOOLEAN,
+                    "c1", TagCategory.ValueType.INTEGER,
+                    "c2", TagCategory.ValueType.DOUBLE,
+                    "c3", TagCategory.ValueType.STRING
+            );
+
+            Map<String, TagCategory.ValueType> cats0 = project.addCategories(Project.Taggable.RUN, catIn.keySet().stream().map(name -> TagCategory.builder().name(name).valueType(catIn.get(name)).build()).toList()).stream().collect(Collectors.toMap(TagCategory::getName, TagCategory::getValueType));
+            Map<String, TagCategory.ValueType> cats1 = project.findCategories(Project.Taggable.RUN).stream().collect(Collectors.toMap(TagCategory::getName, TagCategory::getValueType));
+            Map<String, TagCategory.ValueType> cats2 = catIn.keySet().stream().map(name -> project.findCategoryByName(Project.Taggable.RUN, name)).collect(Collectors.toMap(TagCategory::getName, TagCategory::getValueType));
+
+            Assert.assertEquals(0, project.addCategories(Project.Taggable.RUN, List.of(TagCategory.builder().name("c0").valueType(catIn.get("foo")).build())).size());
+            Assert.assertThrows(ResponseStatusException.class, () -> project.findCategoryByName(Project.Taggable.RUN, "foo"));
+
+            Assert.assertEquals(catIn.size(), cats0.size());
+            Assert.assertEquals(catIn.size(), cats1.size());
+            Assert.assertEquals(catIn.size(), cats2.size());
+
+            for (String name : catIn.keySet()) {
+                Assert.assertEquals(catIn.get(name), cats0.get(name));
+                Assert.assertEquals(catIn.get(name), cats1.get(name));
+                Assert.assertEquals(catIn.get(name), cats2.get(name));
+            }
+
+        }
+
+    }
+
+    @Test
+    public void testTags() throws IOException {
+
+        Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
+        try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
+            NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
+
+            LCMSRun runIn = LCMSRun.builder()
+                    .name("run1")
+                    .chromatography(Chromatography.LC)
+                    .fragmentation(Fragmentation.byValue("CID").orElseThrow())
+                    .ionization(Ionization.byValue("ESI").orElseThrow())
+                    .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
+                    .build();
+
+            ps.getStorage().insert(runIn);
+            Run run = project.findRunById(Long.toString(runIn.getRunId()));
+
+            project.addCategories(Project.Taggable.RUN, List.of(TagCategory.builder().name("c1").valueType(TagCategory.ValueType.BOOLEAN).build()));
+
+            project.addTagsToObject(Project.Taggable.RUN, run.getRunId(), List.of(Tag.builder().categoryName("c1").value(true).build()));
+            Map<String, Tag> tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
+            Assert.assertEquals(1, tags.size());
+            Assert.assertEquals(true, tags.get("c1").getValue());
+
+            project.addTagsToObject(Project.Taggable.RUN, run.getRunId(), List.of(Tag.builder().categoryName("c1").value(false).build()));
+            tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
+            Assert.assertEquals(1, tags.size());
+            Assert.assertEquals(false, tags.get("c1").getValue());
+
+            Assert.assertThrows(ResponseStatusException.class, () -> project.addTagsToObject(Project.Taggable.RUN, run.getRunId(), List.of(Tag.builder().categoryName("c2").value(false).build())));
+            Assert.assertThrows(ResponseStatusException.class, () -> project.addTagsToObject(Project.Taggable.RUN, run.getRunId(), List.of(Tag.builder().categoryName("c1").value(2.0).build())));
+
+            project.addCategories(Project.Taggable.RUN, List.of(
+                    TagCategory.builder().name("c2").valueType(TagCategory.ValueType.INTEGER).build(),
+                    TagCategory.builder().name("c3").valueType(TagCategory.ValueType.DOUBLE).build(),
+                    TagCategory.builder().name("c4").valueType(TagCategory.ValueType.STRING).build()
+            ));
+
+            project.addTagsToObject(Project.Taggable.RUN, run.getRunId(), List.of(
+                    Tag.builder().categoryName("c2").value(42).build(),
+                    Tag.builder().categoryName("c3").value(42.0).build(),
+                    Tag.builder().categoryName("c4").value("42").build()
+            ));
+
+            project.addTagsToObject(Project.Taggable.RUN, run.getRunId(), List.of(Tag.builder().categoryName("c1").value(false).build()));
+            tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
+            Assert.assertEquals(4, tags.size());
+            Assert.assertEquals(false, tags.get("c1").getValue());
+            Assert.assertEquals(42, tags.get("c2").getValue());
+            Assert.assertEquals(42.0, tags.get("c3").getValue());
+            Assert.assertEquals("42", tags.get("c4").getValue());
+
+            project.deleteTagsFromObject(Project.Taggable.RUN, run.getRunId(), List.of("c3", "c4"));
+            tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
+            Assert.assertEquals(2, tags.size());
+            Assert.assertEquals(false, tags.get("c1").getValue());
+            Assert.assertEquals(42, tags.get("c2").getValue());
+
+            project.deleteCategories(Project.Taggable.RUN, List.of("c2", "c3"));
+            tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
+            Assert.assertEquals(1, tags.size());
+            Assert.assertEquals(false, tags.get("c1").getValue());
+
+        }
+
     }
 
 }
