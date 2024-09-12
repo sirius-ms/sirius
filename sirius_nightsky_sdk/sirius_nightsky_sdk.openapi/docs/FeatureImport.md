@@ -15,6 +15,7 @@ Represents an (aligned) feature to be imported into a SIRIUS project.  At least 
 |**detectedAdducts** | **Set&lt;String&gt;** | Detected adducts of this feature. Can be NULL or empty if no adducts are known. |  [optional] |
 |**rtStartSeconds** | **Double** |  |  [optional] |
 |**rtEndSeconds** | **Double** |  |  [optional] |
+|**rtApexSeconds** | **Double** |  |  [optional] |
 |**mergedMs1** | [**BasicSpectrum**](BasicSpectrum.md) |  |  [optional] |
 |**ms1Spectra** | [**List&lt;BasicSpectrum&gt;**](BasicSpectrum.md) | List of MS1Spectra belonging to this feature. These spectra will be merged an only a representative  mergedMs1 spectrum will be stored in SIRIUS. At least one of these spectra should contain the  isotope pattern of the precursor ion.  Note: Will be ignored if &#39;mergedMs1&#39; is given. |  [optional] |
 |**ms2Spectra** | [**List&lt;BasicSpectrum&gt;**](BasicSpectrum.md) | List of MS/MS spectra that belong to this feature. |  [optional] |
