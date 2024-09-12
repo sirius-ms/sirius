@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -50,10 +51,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -100,6 +98,10 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
             else {
                 throw new IllegalArgumentException("This summary job only supports the SIRIUS NoSQL projectSpace!");
             }
+        }
+
+        if (instances instanceof List<? extends Instance> il) {
+            il.sort(Comparator.comparing(i -> i.getRT().orElse(RetentionTime.NA())));
         }
 
         try {
