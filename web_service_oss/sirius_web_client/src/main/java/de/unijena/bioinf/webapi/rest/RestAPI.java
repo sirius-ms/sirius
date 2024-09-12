@@ -468,10 +468,11 @@ public final class RestAPI extends AbstractWebAPI<FilteredChemicalDB<RESTDatabas
     //region FingerprintVersions
 
     /**
-     * @return The Fingerprint version used by the rest Database --  not really needed but for sanity checks
+     * @return The Fingerprint version used by the rest Database --  not really needed but for sanity checks.
+     *         Returns null if server URL is not set
      * @throws IOException if connection error happens
      */
-    public CdkFingerprintVersion getCDKChemDBFingerprintVersion() throws IOException {
+    public @Nullable CdkFingerprintVersion getCDKChemDBFingerprintVersion() throws IOException {
         return ProxyManager.applyClient(chemDBClient::getCDKFingerprintVersion);
     }
     //endregion
