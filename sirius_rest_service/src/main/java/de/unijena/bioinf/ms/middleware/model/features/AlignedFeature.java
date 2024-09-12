@@ -28,6 +28,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -39,8 +40,9 @@ import java.util.Set;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AlignedFeature {
+
     @Schema(enumAsRef = true, name = "AlignedFeatureOptField", nullable = true)
-    public enum OptField {none, msData, topAnnotations, topAnnotationsDeNovo}
+    public enum OptField {none, msData, features, topAnnotations, topAnnotationsDeNovo}
 
     // identifier
     @NotNull
@@ -80,6 +82,25 @@ public class AlignedFeature {
     protected Double rtApexSeconds;
 
     /**
+     * Full width at half maximum of the feature on the retention time axis in seconds
+     */
+    @Schema(nullable = true)
+    protected Double rtFWHM;
+
+    /**
+     * Intensity of the apex of the feature
+     */
+    @Schema(nullable = true)
+    protected Double apexIntensity;
+
+    /**
+     * Area under curve of the whole feature
+     */
+    @Schema(nullable = true)
+    protected Double areaUnderCurve;
+
+
+    /**
      * Quality of this feature.
      */
     protected DataQuality quality;
@@ -97,6 +118,12 @@ public class AlignedFeature {
      */
     @Schema(nullable = true)
     protected MsData msData;
+
+    /**
+     * List of the aligned features
+     */
+    @Schema(nullable = true)
+    protected List<Feature> features;
 
     /**
      * Top annotations of this feature.
@@ -125,4 +152,5 @@ public class AlignedFeature {
      * True if any computation is modifying this feature or its results
      */
     protected boolean computing;
+
 }
