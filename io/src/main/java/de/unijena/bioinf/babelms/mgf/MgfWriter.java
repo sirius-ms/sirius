@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -33,8 +33,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MgfWriter implements DataWriter<Ms2Experiment> {
+import static de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.FOUR_DIGITS;
+import static de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums.THREE_DIGITS;
 
+public class MgfWriter implements DataWriter<Ms2Experiment> {
     private final boolean writeMs1;
     private final boolean mergedMs2;
     private final Deviation mergeMs2Deviation;
@@ -108,7 +110,7 @@ public class MgfWriter implements DataWriter<Ms2Experiment> {
         experiment.getAnnotation(Smiles.class).ifPresent(sm -> info.add("SMILES=" + sm.smiles));
 
         experiment.getAnnotation(RetentionTime.class).ifPresent(retentionTime ->
-                info.add("RTINSECONDS=" + retentionTime.getMiddleTime()));
+                info.add("RTINSECONDS=" +  THREE_DIGITS.format(retentionTime.getMiddleTime())));
 
         return info;
     }
@@ -120,7 +122,7 @@ public class MgfWriter implements DataWriter<Ms2Experiment> {
             writer.newLine();
             writer.write("FEATURE_ID=" + featureId);
             writer.newLine();
-            writer.write("PEPMASS=" + String.valueOf(precursorMass));
+            writer.write("PEPMASS=" +  FOUR_DIGITS.format(precursorMass));
             writer.newLine();
             writer.write("MSLEVEL=1");
             writer.newLine();
@@ -128,7 +130,7 @@ public class MgfWriter implements DataWriter<Ms2Experiment> {
                 writer.write("SPECTYPE=CORRELATED MS");
                 writer.newLine();
             }
-            writer.write("CHARGE=" + String.valueOf(charge)); //todo +1 vs 1+
+            writer.write("CHARGE=" + charge + (charge > 0 ? "+" :"-"));
             writer.newLine();
             if (adduct != null) {
                 writer.write("ION=" + adduct);
@@ -153,11 +155,11 @@ public class MgfWriter implements DataWriter<Ms2Experiment> {
             writer.newLine();
             writer.write("FEATURE_ID=" + featureId);
             writer.newLine();
-            writer.write("PEPMASS=" + String.valueOf(precursorMass));
+            writer.write("PEPMASS=" + FOUR_DIGITS.format(precursorMass));
             writer.newLine();
             writer.write("MSLEVEL=2");
             writer.newLine();
-            writer.write("CHARGE=" + String.valueOf(charge)); //todo +1 vs 1+
+            writer.write("CHARGE=" + charge + (charge > 0 ? "+" :"-"));
             writer.newLine();
             if (adduct != null) {
                 writer.write("ION=" + adduct);
@@ -170,12 +172,8 @@ public class MgfWriter implements DataWriter<Ms2Experiment> {
                 }
             }
 
-            for (int k = 0; k < spec.size(); ++k) {
-                writer.write(String.valueOf(spec.getMzAt(k)));
-                writer.write(" ");
-                writer.write(String.valueOf(spec.getIntensityAt(k)));
-                writer.newLine();
-            }
+            Spectrums.writePeaks(writer, spec);
+
             writer.write("END IONS");
             writer.newLine();
             writer.newLine();

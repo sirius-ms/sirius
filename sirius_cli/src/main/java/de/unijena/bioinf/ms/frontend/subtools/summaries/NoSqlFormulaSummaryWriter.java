@@ -96,7 +96,7 @@ class NoSqlFormulaSummaryWriter extends SummaryTable {
         row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> rt.getMiddleTime() / 60d).orElse(null));
         row.add(String.valueOf(fc.getFormulaId()));
         row.add(String.valueOf(fc.getAlignedFeatureId()));
-        row.add(Objects.requireNonNullElse(f.getExternalFeatureId(), String.valueOf(fc.getAlignedFeatureId())));
+        row.add(getMappingIdOrFallback(f));
         row.add(f.getDataQuality());
 
         writer.writeRow(row);

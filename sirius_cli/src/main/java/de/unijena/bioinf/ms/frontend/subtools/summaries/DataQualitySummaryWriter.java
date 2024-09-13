@@ -26,7 +26,6 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -72,7 +71,7 @@ class DataQualitySummaryWriter extends SummaryTable {
         row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> rt.getMiddleTime() / 60d).orElse(null));
 
         row.add(String.valueOf(f.getAlignedFeatureId()));
-        row.add(Objects.requireNonNullElse(f.getExternalFeatureId(), String.valueOf(f.getAlignedFeatureId())));
+        row.add(getMappingIdOrFallback(f));
         row.add(f.getDataQuality());
     }
 
