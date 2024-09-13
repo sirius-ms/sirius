@@ -19,7 +19,7 @@
 
 package de.unijena.bioinf.ms.frontend.subtools;
 
-import de.unijena.bioinf.jjobs.BasicJJob;
+import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.projectspace.Instance;
 
 /**
@@ -28,7 +28,7 @@ import de.unijena.bioinf.projectspace.Instance;
  * The default here is to write summaries. So changing the default here can be used to change summary writing
  * behavior
  */
-public abstract class PreprocessingJob<P extends Iterable<Instance>> extends BasicJJob<P> {
+public abstract class PreprocessingJob<P extends Iterable<Instance>> extends BasicMasterJJob<P> {
 
     public PreprocessingJob() {
         super(JobType.SCHEDULER);

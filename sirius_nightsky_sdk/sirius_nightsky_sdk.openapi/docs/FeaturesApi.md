@@ -38,7 +38,7 @@ All URIs are relative to *http://localhost:8888*
 | [**getStructureCandidatesByFormula**](FeaturesApi.md#getStructureCandidatesByFormula) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures | List of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information. |
 | [**getStructureCandidatesByFormulaPaged**](FeaturesApi.md#getStructureCandidatesByFormulaPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures/page | Page of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information. |
 | [**getStructureCandidatesPaged**](FeaturesApi.md#getStructureCandidatesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/db-structures/page | Page of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information. |
-| [**getTraces1**](FeaturesApi.md#getTraces1) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces |  |
+| [**getTraces**](FeaturesApi.md#getTraces) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces |  |
 
 
 
@@ -2488,9 +2488,9 @@ No authorization required
 | **200** | StructureCandidate of this feature (aligned over runs) candidate with specified optional fields. |  -  |
 
 
-## getTraces1
+## getTraces
 
-> TraceSet getTraces1(projectId, alignedFeatureId)
+> TraceSet getTraces(projectId, alignedFeatureId, includeAll)
 
 
 
@@ -2512,11 +2512,12 @@ public class Example {
         FeaturesApi apiInstance = new FeaturesApi(defaultClient);
         String projectId = "projectId_example"; // String | 
         String alignedFeatureId = "alignedFeatureId_example"; // String | 
+        Boolean includeAll = false; // Boolean | 
         try {
-            TraceSet result = apiInstance.getTraces1(projectId, alignedFeatureId);
+            TraceSet result = apiInstance.getTraces(projectId, alignedFeatureId, includeAll);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#getTraces1");
+            System.err.println("Exception when calling FeaturesApi#getTraces");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -2533,6 +2534,7 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**|  | |
 | **alignedFeatureId** | **String**|  | |
+| **includeAll** | **Boolean**|  | [optional] [default to false] |
 
 ### Return type
 

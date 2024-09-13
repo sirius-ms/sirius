@@ -39,6 +39,7 @@ class NoSqlFormulaSummaryWriter extends SummaryTable {
             "molecularFormula",
             "adduct",
             "precursorFormula",
+            "ZodiacScore",
             "SiriusScore",
             "TreeScore",
             "IsotopeScore",
@@ -57,7 +58,8 @@ class NoSqlFormulaSummaryWriter extends SummaryTable {
             "retentionTimeInMinutes",
             "formulaId",
             "alignedFeatureId",
-            "mappingFeatureId");
+            "mappingFeatureId",
+            "overallFeatureQuality");
 
 
     public NoSqlFormulaSummaryWriter(SummaryTableWriter writer) {
@@ -76,6 +78,7 @@ class NoSqlFormulaSummaryWriter extends SummaryTable {
         row.add(fc.getMolecularFormula().toString());
         row.add(fc.getAdduct().toString());
         row.add(fc.getPrecursorFormulaWithCharge());
+        row.add(fc.getZodiacScore());
         row.add(fc.getSiriusScore());
         row.add(fc.getTreeScore());
         row.add(fc.getIsotopeScore());
@@ -94,6 +97,7 @@ class NoSqlFormulaSummaryWriter extends SummaryTable {
         row.add(String.valueOf(fc.getFormulaId()));
         row.add(String.valueOf(fc.getAlignedFeatureId()));
         row.add(Objects.requireNonNullElse(f.getExternalFeatureId(), String.valueOf(fc.getAlignedFeatureId())));
+        row.add(f.getDataQuality());
 
         writer.writeRow(row);
     }

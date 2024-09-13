@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -30,6 +31,7 @@ import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.frontend.subtools.PostprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
+import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.sirius.*;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
@@ -49,10 +51,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -101,6 +100,10 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
             }
         }
 
+        if (instances instanceof List<? extends Instance> il) {
+            il.sort(Comparator.comparing(i -> i.getRT().orElse(RetentionTime.NA())));
+        }
+
         try {
             int maxProgress = (int) Math.ceil(project.countFeatures() * 1.01d); //upper bound on number of features. selected instances could be much lower. but iterator has no count
             logInfo("Writing summary files...");
@@ -146,8 +149,10 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                     NoSqlSpectrumSummaryWriter refSpectrumAll = options.fullSummary
                             ? initSpectrumSummaryWriter(location, "spectral_matches_all") : null;
                     NoSqlSpectrumSummaryWriter refSpectrumTopK = options.topK > 0
-                            ? initSpectrumSummaryWriter(location, "spectral_matches_top-" + options.topK) : null
+                            ? initSpectrumSummaryWriter(location, "spectral_matches_top-" + options.topK) : null;
 
+                    DataQualitySummaryWriter qualityWriter = options.qualitySummary
+                            ? initQualitySummaryWriter(location, "feature_quality") : null
             ) {
                 //we load all data on demand from project db without manual caching or re-usage.
                 //if this turns out to be too slow we can cache e.g. the formula candidates.
@@ -333,6 +338,12 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                             rank++;
                         }
                     }
+
+                    // data quality summary
+                    if (qualityWriter != null) {
+                        QualityReport qr = project.getProject().findByFeatureIdStr(f.getAlignedFeatureId(), QualityReport.class).findFirst().orElse(null);
+                        qualityWriter.writeFeatureQuality(f, qr);
+                    }
                 }
 
                 if (formulaTopHit != null) formulaTopHit.flush();
@@ -354,6 +365,8 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                 if (refSpectrum != null) refSpectrum.flush();
                 if (refSpectrumAll != null) refSpectrumAll.flush();
                 if (refSpectrumTopK != null) refSpectrumTopK.flush();
+
+                if (qualityWriter != null) qualityWriter.flush();
 
                 w.stop();
                 log.info("Summaries written in: {}", w);
@@ -394,6 +407,12 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
         NoSqlSpectrumSummaryWriter spectrumSummaryWriter = new NoSqlSpectrumSummaryWriter(makeTableWriter(location, filename));
         spectrumSummaryWriter.writeHeader();
         return spectrumSummaryWriter;
+    }
+
+    DataQualitySummaryWriter initQualitySummaryWriter(Path location, String filename) throws IOException {
+        DataQualitySummaryWriter writer = new DataQualitySummaryWriter(makeTableWriter(location, filename));
+        writer.writeHeader();
+        return writer;
     }
 
     private SummaryTableWriter makeTableWriter(Path location, String filename) throws IOException {

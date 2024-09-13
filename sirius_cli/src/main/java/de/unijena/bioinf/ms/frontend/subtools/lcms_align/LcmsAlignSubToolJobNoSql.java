@@ -19,6 +19,8 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 
+import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleMutableSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -70,12 +72,15 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManager> {
     List<Path> inputFiles;
 
     private final IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier;
+
+    private final Set<PrecursorIonType> ionTypes;
 
     private final TraceSegmentationStrategy mergedTraceSegmenter;
 
@@ -91,14 +96,15 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     private long totalProgress;
 
 
-    public LcmsAlignSubToolJobNoSql(InputFilesOptions input, @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier, LcmsAlignOptions options) {
-        this(input.msInput.msParserfiles.keySet().stream().sorted().collect(Collectors.toList()), projectSupplier, options);
+    public LcmsAlignSubToolJobNoSql(InputFilesOptions input, @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier, LcmsAlignOptions options, Set<PrecursorIonType> ionTypes) {
+        this(input.msInput.lcmsFiles.keySet().stream().sorted().collect(Collectors.toList()), projectSupplier, options, ionTypes);
     }
 
     public LcmsAlignSubToolJobNoSql(@NotNull List<Path> inputFiles, @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier, LcmsAlignOptions options) {
         super();
         this.inputFiles = inputFiles;
         this.projectSupplier = projectSupplier;
+        this.ionTypes = ionTypes;
         this.alignRuns = !options.noAlign;
         this.mergedTraceSegmenter = new PersistentHomology(switch (options.smoothing) {
             case AUTO -> inputFiles.size() < 3 ? new GaussFilter(0.5) : new NoFilter();
@@ -120,11 +126,13 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             double noise,
             double persistence,
             double merge,
+            Set<PrecursorIonType> ionTypes,
             boolean saveImportedCompounds
     ) {
         super();
         this.inputFiles = inputFiles;
         this.projectSupplier = projectSupplier;
+        this.ionTypes = ionTypes;
         this.alignRuns = alignRuns;
         this.mergedTraceSegmenter = new PersistentHomology(switch (filter) {
             case AUTO -> inputFiles.size() < 3 ? new GaussFilter(0.5) : new NoFilter();
@@ -214,7 +222,40 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         LoggerFactory.getLogger(LcmsAlignSubToolJobNoSql.class).info("Use " + allowedAdductRtDeviation + " s as allowed deviation between adducts" );
 
         AdductManager adductManager = new AdductManager(merged.getPolarity());
+        if (merged.getPolarity()>0){
+            adductManager.add(Set.of(PrecursorIonType.getPrecursorIonType("[M+H]+"), PrecursorIonType.getPrecursorIonType("[M+Na]+"),
+                            PrecursorIonType.getPrecursorIonType("[M+K]+"),  PrecursorIonType.getPrecursorIonType("[M+NH3+H]+"),
+                            PrecursorIonType.getPrecursorIonType("[M + FA + H]+"),
+                            PrecursorIonType.getPrecursorIonType("[M + ACN + H]+"),
 
+                            PrecursorIonType.getPrecursorIonType("[M - H2O + H]+"),
+
+                            PrecursorIonType.getPrecursorIonType("[2M + Na]+"),
+                            PrecursorIonType.getPrecursorIonType("[2M + H]+"),
+                            PrecursorIonType.getPrecursorIonType("[2M + K]+")
+                    )
+            );
+        } else {
+            adductManager.add(Set.of(PrecursorIonType.getPrecursorIonType("[M-H]-"), PrecursorIonType.getPrecursorIonType("[M+Cl]-"),
+                            PrecursorIonType.getPrecursorIonType("[M+Br]-"),
+                            PrecursorIonType.getPrecursorIonType("[2M + H]-"),
+                            PrecursorIonType.getPrecursorIonType("[2M + Br]-"),
+                            PrecursorIonType.getPrecursorIonType("[2M + Cl]-"),
+                            PrecursorIonType.fromString("[M+Na-2H]-"),
+                            PrecursorIonType.fromString("[M + CH2O2 - H]-"),
+                            PrecursorIonType.fromString("[M + C2H4O2 - H]-"),
+                            PrecursorIonType.fromString("[M + H2O - H]-"),
+                            PrecursorIonType.fromString("[M - H3N - H]-"),
+                            PrecursorIonType.fromString("[M - CO2 - H]-"),
+                            PrecursorIonType.fromString("[M - CH2O3 - H]-"),
+                            PrecursorIonType.fromString("[M - CH3 - H]-")
+                    )
+            );
+        }
+
+        // -_- na toll, die Liste ist nicht identisch mit den Configs. Macht irgendwie auch Sinn. Ich will aber ungern
+        // Multimere in die AductSettings reinpacken, das zu debuggen wird die Hoelle. Machen wir ein andern Mal.
+        adductManager.add(((merged.getPolarity()<0) ? PeriodicTable.getInstance().getNegativeAdducts() : PeriodicTable.getInstance().getPositiveAdducts()).stream().filter(PrecursorIonType::isMultimere).collect(Collectors.toSet()));
         ProjectSpaceTraceProvider provider = new ProjectSpaceTraceProvider(ps);
         {
             AdductNetwork network = new AdductNetwork(provider,
