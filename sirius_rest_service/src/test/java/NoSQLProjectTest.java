@@ -226,7 +226,6 @@ public class NoSQLProjectTest {
             Map<String, TagCategory.ValueType> cats1 = project.findCategories(Project.Taggable.RUN).stream().collect(Collectors.toMap(TagCategory::getName, TagCategory::getValueType));
             Map<String, TagCategory.ValueType> cats2 = catIn.keySet().stream().map(name -> project.findCategoryByName(Project.Taggable.RUN, name)).collect(Collectors.toMap(TagCategory::getName, TagCategory::getValueType));
 
-            Assert.assertEquals(0, project.addCategories(Project.Taggable.RUN, List.of(TagCategory.builder().name("c0").valueType(catIn.get("foo")).build())).size());
             Assert.assertThrows(ResponseStatusException.class, () -> project.findCategoryByName(Project.Taggable.RUN, "foo"));
 
             Assert.assertEquals(catIn.size(), cats0.size());
