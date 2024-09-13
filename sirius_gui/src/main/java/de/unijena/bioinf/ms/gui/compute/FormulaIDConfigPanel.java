@@ -234,7 +234,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         Set<PrecursorIonType> detectedUnknowns = detectedAdductsOrCharge.stream().filter(PrecursorIonType::isIonizationUnknown).collect(Collectors.toSet());
         Set<PrecursorIonType> detectedAdductsNoMulti = detectedAdductsOrCharge.stream().filter(ion -> !ion.isIonizationUnknown() && !ion.isMultimere() && !ion.isMultipleCharged()).collect(Collectors.toSet());
 
-        Set<PrecursorIonType> possibleAdducts = gui.getMainFrame().getCompounds().stream().map(InstanceBean::getDetectedAdducts).flatMap(Set::stream).filter(ion -> !ion.isIonizationUnknown() && !ion.isMultimere() && !ion.isMultipleCharged()).collect(Collectors.toSet());
+        Set<PrecursorIonType> possibleAdducts = gui.getProjectManager().INSTANCE_LIST.stream().map(InstanceBean::getDetectedAdducts).flatMap(Set::stream).filter(ion -> !ion.isIonizationUnknown() && !ion.isMultimere() && !ion.isMultipleCharged()).collect(Collectors.toSet());
         Set<PrecursorIonType> selectedAdducts = new HashSet<>(detectedAdductsNoMulti);
 
         AdductSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class);
