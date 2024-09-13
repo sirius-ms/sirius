@@ -1068,13 +1068,17 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "There is no run '" + runId + "' in project " + projectId + "."));
     }
 
-    @SneakyThrows
-    @Override
-    public List<Tag> addTagsToObject(Taggable taggable, String objectId, List<Tag> tags) {
-        Class<?> taggedObjectClass = switch (taggable) {
+    private Class<?> getTaggedObjectClass(Taggable taggable) {
+        return switch (taggable) {
             case Taggable.RUN -> LCMSRun.class;
             default -> throw new IllegalStateException("Unknown taggable: " + taggable);
         };
+    }
+
+    @SneakyThrows
+    @Override
+    public List<Tag> addTagsToObject(Taggable taggable, String objectId, List<Tag> tags) {
+        Class<?> taggedObjectClass = getTaggedObjectClass(taggable);
         long objId = Long.parseLong(objectId);
         if (storage().getByPrimaryKey(objId, taggedObjectClass).isEmpty())
             throw new ResponseStatusException(NOT_FOUND, "There is no object '" + objectId + "' in project " + projectId + ".");
@@ -1122,11 +1126,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public void deleteTagsFromObject(Taggable taggable, String objectId, List<String> categoryNames) {
-        String taggedObjectClass = switch (taggable) {
-            case Taggable.RUN -> LCMSRun.class.toString();
-            default -> throw new IllegalStateException("Unknown taggable: " + taggable);
-        };
-        for (de.unijena.bioinf.ms.persistence.model.core.TagCategory category : storage ().find(Filter.where("taggedObjectClass").eq(taggedObjectClass), de.unijena.bioinf.ms.persistence.model.core.TagCategory.class)) {
+        Class<?> taggedObjectClass = getTaggedObjectClass(taggable);
+        for (de.unijena.bioinf.ms.persistence.model.core.TagCategory category : storage ().find(Filter.where("taggedObjectClass").eq(taggedObjectClass.toString()), de.unijena.bioinf.ms.persistence.model.core.TagCategory.class)) {
             if (categoryNames.contains(category.getName())) {
                 storage().removeAll(Filter.and(
                         Filter.where("taggedObjectId").eq(Long.parseLong(objectId)),
@@ -1139,23 +1140,17 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public List<TagCategory> findCategories(Taggable taggable) {
-        String taggedObjectClass = switch (taggable) {
-            case Taggable.RUN -> LCMSRun.class.toString();
-            default -> throw new IllegalStateException("Unknown taggable: " + taggable);
-        };
-        return storage().findStr(Filter.where("taggedObjectClass").eq(taggedObjectClass), de.unijena.bioinf.ms.persistence.model.core.TagCategory.class)
+        Class<?> taggedObjectClass = getTaggedObjectClass(taggable);
+        return storage().findStr(Filter.where("taggedObjectClass").eq(taggedObjectClass.toString()), de.unijena.bioinf.ms.persistence.model.core.TagCategory.class)
                 .map(this::convertToApiCategory).toList();
     }
 
     @SneakyThrows
     @Override
     public TagCategory findCategoryByName(Taggable taggable, String categoryName) {
-        String taggedObjectClass = switch (taggable) {
-            case Taggable.RUN -> LCMSRun.class.toString();
-            default -> throw new IllegalStateException("Unknown taggable: " + taggable);
-        };
+        Class<?> taggedObjectClass = getTaggedObjectClass(taggable);
         return storage().findStr(Filter.and(
-                        Filter.where("taggedObjectClass").eq(taggedObjectClass),
+                        Filter.where("taggedObjectClass").eq(taggedObjectClass.toString()),
                         Filter.where("name").eq(categoryName)
                 ), de.unijena.bioinf.ms.persistence.model.core.TagCategory.class)
                 .findFirst()
@@ -1166,16 +1161,13 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public List<TagCategory> addCategories(Taggable taggable, List<TagCategory> categories) {
-        String taggedObjectClass = switch (taggable) {
-            case Taggable.RUN -> LCMSRun.class.toString();
-            default -> throw new IllegalStateException("Unknown taggable: " + taggable);
-        };
-        Set<String> existingNames = storage().findStr(Filter.where("taggedObjectClass").eq(taggedObjectClass), de.unijena.bioinf.ms.persistence.model.core.TagCategory.class)
+        Class<?> taggedObjectClass = getTaggedObjectClass(taggable);
+        Set<String> existingNames = storage().findStr(Filter.where("taggedObjectClass").eq(taggedObjectClass.toString()), de.unijena.bioinf.ms.persistence.model.core.TagCategory.class)
                 .map(de.unijena.bioinf.ms.persistence.model.core.TagCategory::getName)
                 .collect(Collectors.toSet());
         List<de.unijena.bioinf.ms.persistence.model.core.TagCategory> filtered = categories.stream()
                 .filter(category -> !existingNames.contains(category.getName()))
-                .map(category -> convertToProjectCategory(LCMSRun.class.toString(), category)).toList();
+                .map(category -> convertToProjectCategory(taggedObjectClass.toString(), category)).toList();
         storage().insertAll(filtered);
         return filtered.stream().map(this::convertToApiCategory).toList();
     }
@@ -1183,13 +1175,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
     @SneakyThrows
     @Override
     public void deleteCategories(Taggable taggable, List<String> categoryNames) {
-        String taggedObjectClass = switch (taggable) {
-            case Taggable.RUN -> LCMSRun.class.toString();
-            default -> throw new IllegalStateException("Unknown taggable: " + taggable);
-        };
+        Class<?> taggedObjectClass = getTaggedObjectClass(taggable);
         for (String name : categoryNames) {
             List<de.unijena.bioinf.ms.persistence.model.core.TagCategory> categories = storage().findStr(Filter.and(
-                    Filter.where("taggedObjectClass").eq(taggedObjectClass),
+                    Filter.where("taggedObjectClass").eq(taggedObjectClass.toString()),
                     Filter.where("name").eq(name)
             ), de.unijena.bioinf.ms.persistence.model.core.TagCategory.class).toList();
             for (de.unijena.bioinf.ms.persistence.model.core.TagCategory category : categories) {
