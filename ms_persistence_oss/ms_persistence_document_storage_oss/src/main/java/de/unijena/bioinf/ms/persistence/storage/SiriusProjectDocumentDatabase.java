@@ -178,7 +178,7 @@ public interface SiriusProjectDocumentDatabase<Storage extends Database<?>> exte
     }
 
     @SneakyThrows
-    default AlignedFeatures importMs2ExperimentAsAlignedFeature(Ms2Experiment exp) throws IOException {
+    default AlignedFeatures importMs2ExperimentAsAlignedFeature(Ms2Experiment exp) {
         AlignedFeatures alignedFeature = StorageUtils.fromMs2Experiment(exp);
 
         final FeatureGroup fg = exp.getAnnotationOrNull(FeatureGroup.class);
