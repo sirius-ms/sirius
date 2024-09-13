@@ -6298,6 +6298,11 @@
             "format": "double",
             "nullable": true
           },
+          "rtApexSeconds": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
           "mergedMs1": {
             "$ref": "#/components/schemas/BasicSpectrum"
           },

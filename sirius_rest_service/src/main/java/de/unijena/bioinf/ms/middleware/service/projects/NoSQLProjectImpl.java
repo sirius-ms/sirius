@@ -790,9 +790,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             builder.hasMsMs((msData.getMsnSpectra() != null && !msData.getMsnSpectra().isEmpty()) || (msData.getMergedMSnSpectrum() != null));
         }
 
-        if (featureImport.getRtStartSeconds() != null && featureImport.getRtEndSeconds() != null) {
-            builder.retentionTime(new RetentionTime(featureImport.getRtStartSeconds(), featureImport.getRtEndSeconds()));
-        }
+        builder.retentionTime(RetentionTime.of(featureImport.getRtStartSeconds(),featureImport.getRtEndSeconds(),featureImport.getRtApexSeconds()));
 
         if (featureImport.getDetectedAdducts() != null && !featureImport.getDetectedAdducts().isEmpty()) {
             de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts da = new de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts();

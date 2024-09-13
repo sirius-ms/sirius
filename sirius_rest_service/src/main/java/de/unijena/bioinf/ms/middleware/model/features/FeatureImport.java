@@ -61,6 +61,8 @@ public class FeatureImport {
     protected Double rtStartSeconds;
     @Schema(nullable = true)
     protected Double rtEndSeconds;
+    @Schema(nullable = true)
+    protected Double rtApexSeconds;
 
 
     /**
