@@ -21,12 +21,8 @@ package de.unijena.bioinf.ms.gui.utils;/*
 import ca.odell.glazedlists.matchers.Matcher;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
-import de.unijena.bioinf.ChemistryBase.ms.MS1MassDeviation;
-import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
-import de.unijena.bioinf.ChemistryBase.ms.utils.WrapperSpectrum;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.nightsky.sdk.model.*;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +30,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     final CompoundFilterModel filterModel;
@@ -81,7 +76,7 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
         if (filterModel.isHasMsMs() && !item.getSourceFeature().isHasMsMs())
             return false;
 
-        if (filterModel.isAdductFilterActive() && !filterModel.getAdducts().contains(item.getIonType()))
+        if (filterModel.isAdductFilterActive() && !filterModel.getSelectedAdducts().contains(item.getIonType()))
             return false;
 
         if (item.getSourceFeature().getQuality() != null) //always allow to pass the filter if now quality data is available
