@@ -523,8 +523,6 @@ class Trace {
     }
 
     mainFeature() {
-        console.log(this.mainFeatureId);
-        console.log(this.featureAnnotations);
         if (this.mainFeatureId>=0) return this.featureAnnotations[this.mainFeatureId];
         else return null;
     }
