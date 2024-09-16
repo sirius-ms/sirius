@@ -77,15 +77,7 @@ public class SummaryOptions implements PostprocessingTool<NoSqlSummarySubToolJob
     @CommandLine.Option(names = {"--quote-strings"}, description = {"Enclose all strings in quotation marks (only for TSV)."})
     protected boolean quoteStrings;
 
-    @CommandLine.ArgGroup(exclusive = false, heading = "Include Predictions Table")
-    @Nullable
-    protected PredictionsOptions predictionsOptions;
 
-    public boolean isAnyPredictionOptionSet() {
-        if (predictionsOptions == null)
-            return false;
-        return predictionsOptions.isAnyPredictionSet();
-    }
 
     @Override
     public NoSqlSummarySubToolJob makePostprocessingJob() {
