@@ -20,7 +20,6 @@ package de.unijena.bioinf.ms.gui.dialogs;
  */
 
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.SiriusGui;
@@ -234,20 +233,18 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             adductOptions = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Adducts", GuiUtils.formatToolTip("Select adducts to  filter by. Selecting all or none mean every adducts can pass"));
             adductOptions.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>(PrecursorIonType.fromString("[M + H20 + Na]+"), false));
 
-            List<PrecursorIonType> ionizations = new ArrayList<>(PeriodicTable.getInstance().getAdductsAndUnKnowns());
+            List<PrecursorIonType> ionizations = new ArrayList<>(filterModel.getPossibleAdducts());
             Collections.sort(ionizations);
 
             adductOptions.checkBoxList.replaceElements(ionizations);
             adductOptions.checkBoxList.uncheckAll();
             adductOptions.setEnabled(true);
 
-//            generalParameters.add(adductOptions);
-            adductOptions.checkBoxList.checkAll(filterModel.getAdducts());
+            adductOptions.checkBoxList.checkAll(filterModel.getSelectedAdducts());
 
 
             // db filter
             searchDBList = new JCheckboxListPanel<>(DBSelectionList.fromSearchableDatabases(gui.getSiriusClient()), "Hit in structure DB");
-//            generalParameters.add(searchDBList);
             searchDBList.remove(searchDBList.buttons);
             searchDBList.checkBoxList.uncheckAll();
 
