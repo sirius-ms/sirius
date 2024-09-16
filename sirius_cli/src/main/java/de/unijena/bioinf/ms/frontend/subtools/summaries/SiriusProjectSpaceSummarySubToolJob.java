@@ -21,25 +21,16 @@
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
-import de.unijena.bioinf.ChemistryBase.utils.ZipCompressionMethod;
-import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JobProgressEventListener;
 import de.unijena.bioinf.ms.frontend.subtools.PostprocessingJob;
 import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
-import de.unijena.bioinf.ms.frontend.subtools.export.tables.ExportPredictionsOptions;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import de.unijena.bioinf.projectspace.*;
-import de.unijena.bioinf.projectspace.summaries.PredictionsSummarizer;
-import de.unijena.bioinf.projectspace.summaries.SummaryLocations;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
