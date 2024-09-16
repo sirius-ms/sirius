@@ -49,12 +49,11 @@ public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? ex
         return ((CLIRootOptions) rootOptions).makeDefaultPreprocessingJob(this);
     }
 
-    public PreprocessingJob<ProjectSpaceManager> makePreprocessingJob(@Nullable InputFilesOptions input, @NotNull ProjectSpaceManager psm, @Nullable ParameterConfig config) {
+    public PreprocessingJob<ProjectSpaceManager> makePreprocessingJob(@Nullable InputFilesOptions input, @NotNull ProjectSpaceManager psm) {
         if (!(psm instanceof NoSQLProjectSpaceManager)) {
             throw new IllegalArgumentException("Unsupported project space.");
         }
-        Set<PrecursorIonType> detectable = config.createInstanceWithDefaults(AdductSettings.class).getDetectable();
-        return new LcmsAlignSubToolJobNoSql(input, () -> (NoSQLProjectSpaceManager) psm, this, detectable);
+        return new LcmsAlignSubToolJobNoSql(input, () -> (NoSQLProjectSpaceManager) psm, this);
     }
 
     protected Optional<LCMSWorkflow> workflow = Optional.empty();

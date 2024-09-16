@@ -21,7 +21,6 @@
 package de.unijena.bioinf.ms.backgroundruns;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
@@ -32,7 +31,6 @@ import de.unijena.bioinf.jjobs.ProgressSupport;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJobNoSql;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
-import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import it.unimi.dsi.fastutil.longs.LongList;
@@ -116,7 +114,6 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
                         submission.getNoise(),
                         submission.getPersistence(),
                         submission.getMerge(),
-                        PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable(),
                         saveImportedCompounds
                 );
                 importerJJob.addJobProgressListener(progressSupport);
