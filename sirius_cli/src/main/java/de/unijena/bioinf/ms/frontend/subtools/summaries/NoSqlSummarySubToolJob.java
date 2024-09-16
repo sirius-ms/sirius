@@ -419,6 +419,7 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
         return switch (options.format) {
             case TSV -> new TsvTableWriter(location, filename, options.quoteStrings);
             case ZIP -> new ZipTableWriter(location, filename, options.quoteStrings);
+            case CSV -> new CsvTableWriter(location, filename, options.quoteStrings);
             case XLSX -> new XlsxTableWriter(location, filename);
         };
     }
