@@ -420,14 +420,14 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         List<InstanceBean> toDelete = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Filtering...", new TinyBackgroundJJob<List<InstanceBean>>() {
                     @Override
                     protected List<InstanceBean> compute() {
-                        final int max = compoundList.getCompoundList().size();
+                        final int max = compoundList.getSortedSource().size();
                         AtomicInteger progress = new AtomicInteger(0);
                         if (inverted) {
-                            return compoundList.getCompoundList().stream()
+                            return compoundList.getSortedSource().stream()
                                     .peek(i -> updateProgress(max, progress.getAndIncrement(), i.getGUIName()))
                                     .filter(matcher::matches).collect(Collectors.toList());
                         } else {
-                            return compoundList.getCompoundList().stream()
+                            return compoundList.getSortedSource().stream()
                                     .peek(i -> updateProgress(max, progress.getAndIncrement(), i.getGUIName()))
                                     .filter(i -> !matcher.matches(i)).collect(Collectors.toList());
                         }
