@@ -21,11 +21,10 @@
 package de.unijena.bioinf.ms;
 
 
-import de.unijena.bioinf.ChemistryBase.utils.RangeUtils;
-import org.apache.commons.lang3.Range;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
+import de.unijena.bioinf.ChemistryBase.utils.RangeUtils;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.DataSmoothing;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignOptions;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJobNoSql;
@@ -41,6 +40,7 @@ import it.unimi.dsi.fastutil.floats.FloatList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.Object2IntArrayMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import org.apache.commons.lang3.Range;
 import org.dizitart.no2.mvstore.MVSpatialKey;
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.rtree.MVRTreeMap;
@@ -219,7 +219,7 @@ class LcmsAlignTest {
         List<Path> inputFiles = DATA_MANAGER.getPaths(dataset);
         int counter = 0;
 
-        SiriusJobs.getGlobalJobManager().submitJob(new LcmsAlignSubToolJobNoSql(inputFiles, () -> new NoSQLProjectSpaceManager(project), options, new HashSet<>())).awaitResult();
+        SiriusJobs.getGlobalJobManager().submitJob(new LcmsAlignSubToolJobNoSql(inputFiles, () -> new NoSQLProjectSpaceManager(project), options)).awaitResult();
 
         for (AlignedFeatures f : project.getStorage().findAll(AlignedFeatures.class)) {
             float mzd = (float) MZ_DEV.absoluteFor(f.getAverageMass());
