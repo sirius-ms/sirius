@@ -730,7 +730,7 @@ public class Spectrums {
             if (ionTypes[k].isIntrinsicalCharged()) {
                 intrinsic = k;
                 intrinsicType = ionTypes[k];
-            } else if (ionTypes[k].isPlainProtonationOrDeprotonation()) {
+            } else if (ionTypes[k].isPlainProtonationOrDeprotonation() && !ionTypes[k].isMultimere()) {
                 protonated = k;
                 protonation = ionTypes[k];
             }
@@ -743,17 +743,19 @@ public class Spectrums {
 
         HashMap<PrecursorIonType, Set<PrecursorIonType>> adductDiffs = new HashMap<>();
         for (int i = 0; i < numberOfIons; i++) {
-            final PrecursorIonType removedIT = ionTypes[i];
+            final PrecursorIonType possiblePrecursorAdduct = ionTypes[i];
             for (int j = 0; j < numberOfIons; j++) {
-                final PrecursorIonType addedIT = ionTypes[j];
+                final PrecursorIonType possibleRelatedAdduct = ionTypes[j];
                 if (i == j) continue;
-                if (removedIT.equals(lighterType) && addedIT.equals(heavierType))
+                if (possiblePrecursorAdduct.equals(lighterType) && possibleRelatedAdduct.equals(heavierType))
                     continue; //probably just +1 isotope peak
-                double diffAdductMass = addedIT.getModificationMass() - (removedIT.getModificationMass());
-                int idx = Spectrums.binarySearch(spectrum, ionMass + diffAdductMass, deviation);
+                double possibleRelatedAdductMass = possibleRelatedAdduct.neutralMassToPrecursorMass(possiblePrecursorAdduct.precursorMassToNeutralMass(ionMass));
+                if (Math.abs(possibleRelatedAdductMass - ionMass) < 1e-3)
+                    continue;
+                int idx = Spectrums.binarySearch(spectrum, possibleRelatedAdductMass, deviation);
                 if (idx < 0) continue; // no corresponding mass found;
-                Set<PrecursorIonType> addedList = adductDiffs.computeIfAbsent(removedIT, k -> new HashSet<>());
-                addedList.add(addedIT);
+                Set<PrecursorIonType> addedList = adductDiffs.computeIfAbsent(possiblePrecursorAdduct, k -> new HashSet<>());
+                addedList.add(possibleRelatedAdduct);
             }
         }
 
