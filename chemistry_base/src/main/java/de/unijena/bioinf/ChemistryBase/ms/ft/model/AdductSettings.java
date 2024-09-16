@@ -41,22 +41,24 @@ public class AdductSettings implements Ms2ExperimentAnnotation {
     @NotNull protected final Set<PrecursorIonType> detectable;
     @NotNull protected final Set<PrecursorIonType> fallback;
     @NotNull protected final boolean prioritizeInputFileAdducts;
+    @NotNull protected final boolean ignoreDetectedAdducts;
 
     /**
      * @param enforced   Enforced ion modes that are always considered.
      * @param detectable Detectable ion modes which are only considered if there is an indication in the MS1 scan (e.g. correct mass delta).
      * @param fallback   Fallback ion modes which are considered if the auto detection did not find any indication for an ion mode.
      * @param prioritizeInputFileAdducts Adducts specified in the input file are used as is independent of what enforced/detectable/fallback adducts are set.
+     * @param ignoreDetectedAdducts if true ignores detected adducts from all sources (except input files) and uses fallback plus enforced adducts instead
      */
     @DefaultInstanceProvider
-    public static AdductSettings newInstance(@DefaultProperty(propertyKey = "enforced") Set<PrecursorIonType> enforced, @DefaultProperty(propertyKey = "detectable") Set<PrecursorIonType> detectable, @DefaultProperty(propertyKey = "fallback") Set<PrecursorIonType> fallback, @DefaultProperty(propertyKey = "prioritizeInputFileAdducts") boolean prioritizeInputFileAdducts) {
-        return new AdductSettings(enforced, detectable, fallback, prioritizeInputFileAdducts);
+    public static AdductSettings newInstance(@DefaultProperty(propertyKey = "enforced") Set<PrecursorIonType> enforced, @DefaultProperty(propertyKey = "detectable") Set<PrecursorIonType> detectable, @DefaultProperty(propertyKey = "fallback") Set<PrecursorIonType> fallback, @DefaultProperty(propertyKey = "prioritizeInputFileAdducts") boolean prioritizeInputFileAdducts, @DefaultProperty(propertyKey = "ignoreDetectedAdducts") boolean ignoreDetectedAdducts) {
+        return new AdductSettings(enforced, detectable, fallback, prioritizeInputFileAdducts, ignoreDetectedAdducts);
     }
 
     public AdductSettings withEnforced(Set<PrecursorIonType> enforced) {
         final HashSet<PrecursorIonType> enforcedJoin = new HashSet<>(this.enforced);
         enforcedJoin.addAll(enforced);
-        return new AdductSettings(enforcedJoin, detectable, fallback, prioritizeInputFileAdducts);
+        return new AdductSettings(enforcedJoin, detectable, fallback, prioritizeInputFileAdducts, ignoreDetectedAdducts);
     }
 
 
@@ -65,13 +67,15 @@ public class AdductSettings implements Ms2ExperimentAnnotation {
         this.detectable = new HashSet<>();
         this.fallback = new HashSet<>();
         this.prioritizeInputFileAdducts = true;
+        this.ignoreDetectedAdducts = false;
     }
 
-    public AdductSettings(@NotNull Set<PrecursorIonType> enforced, @NotNull Set<PrecursorIonType> detectable, @NotNull Set<PrecursorIonType> fallback, @NotNull boolean prioritizeInputFileAdducts) {
+    public AdductSettings(@NotNull Set<PrecursorIonType> enforced, @NotNull Set<PrecursorIonType> detectable, @NotNull Set<PrecursorIonType> fallback, @NotNull boolean prioritizeInputFileAdducts, @NotNull boolean ignoreDetectedAdducts) {
         this.enforced = enforced;
         this.detectable = detectable;
         this.fallback = fallback;
         this.prioritizeInputFileAdducts = prioritizeInputFileAdducts;
+        this.ignoreDetectedAdducts = ignoreDetectedAdducts;
     }
 
     public Set<PrecursorIonType> getEnforced() {
@@ -131,5 +135,10 @@ public class AdductSettings implements Ms2ExperimentAnnotation {
     @NotNull
     public boolean isPrioritizeInputFileAdducts() {
         return prioritizeInputFileAdducts;
+    }
+
+    @NotNull
+    public boolean isIgnoreDetectedAdducts() {
+        return ignoreDetectedAdducts;
     }
 }
