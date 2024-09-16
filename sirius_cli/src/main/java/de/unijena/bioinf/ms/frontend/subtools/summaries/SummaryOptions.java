@@ -24,11 +24,9 @@ import de.unijena.bioinf.ms.frontend.subtools.PostprocessingTool;
 import de.unijena.bioinf.ms.frontend.subtools.Provide;
 import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.frontend.subtools.StandaloneTool;
-import de.unijena.bioinf.ms.frontend.subtools.export.tables.PredictionsOptions;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
 import lombok.Getter;
-import org.jetbrains.annotations.Nullable;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
@@ -80,15 +78,7 @@ public class SummaryOptions implements PostprocessingTool<NoSqlSummarySubToolJob
     @CommandLine.Option(names = {"--quote-strings"}, description = {"Enclose all strings in quotation marks (for TSV and CSV)."})
     protected boolean quoteStrings;
 
-    @CommandLine.ArgGroup(exclusive = false, heading = "Include Predictions Table")
-    @Nullable
-    protected PredictionsOptions predictionsOptions;
 
-    public boolean isAnyPredictionOptionSet() {
-        if (predictionsOptions == null)
-            return false;
-        return predictionsOptions.isAnyPredictionSet();
-    }
 
     @Override
     public NoSqlSummarySubToolJob makePostprocessingJob() {
