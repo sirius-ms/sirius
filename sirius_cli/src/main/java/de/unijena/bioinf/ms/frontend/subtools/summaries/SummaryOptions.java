@@ -59,6 +59,9 @@ public class SummaryOptions implements PostprocessingTool<NoSqlSummarySubToolJob
     @CommandLine.Option(names = {"--feature-quality-summary"}, description = "Write a summary file with feature quality metrics.", defaultValue = "false")
     protected boolean qualitySummary;
 
+    @CommandLine.Option(names = {"--chemvista"}, description = "Export a ChemVista file (always CSV and Top Hits regardless of other options).", defaultValue = "false")
+    protected boolean chemVista;
+
     //todo enable when implementing spectral match export, per compound candidate
 //    @Getter
 //    @CommandLine.Option(names = {"--all-spectra"}, description = {"Write project wide summary files with ALL reference spectrum hits. ", "(Use with care! Might create large files and consume large amounts of memory for large projects.)"}, defaultValue = "false", negatable = true)
