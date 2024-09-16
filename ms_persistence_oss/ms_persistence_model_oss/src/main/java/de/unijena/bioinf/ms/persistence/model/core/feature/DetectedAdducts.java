@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +39,7 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @EqualsAndHashCode
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE, getterVisibility = JsonAutoDetect.Visibility.ANY, setterVisibility = JsonAutoDetect.Visibility.ANY)
-public class DetectedAdducts {
+public class DetectedAdducts implements Cloneable {
 
     public static DetectedAdducts singleton(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source source, PrecursorIonType ionType) {
         DetectedAdducts det = new DetectedAdducts();
@@ -148,5 +149,14 @@ public class DetectedAdducts {
     private void setDetectedAdductsList(List<DetectedAdduct> detectedAdductsList) {
         this.detectedAdducts.clear();
         add(detectedAdductsList);
+    }
+
+    @SneakyThrows
+    @JsonIgnore
+    @Override
+    public DetectedAdducts clone() {
+        DetectedAdducts clone = (DetectedAdducts) super.clone();
+        detectedAdducts.forEach(clone::add);
+        return clone;
     }
 }

@@ -742,6 +742,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .externalFeatureId(featureImport.getExternalFeatureId())
                 .averageMass(featureImport.getIonMass());
 
+        if (featureImport.getDataQuality() != null)
+            builder.dataQuality(featureImport.getDataQuality());
+
         MSData.MSDataBuilder msDataBuilder = MSData.builder();
         builder.charge((byte) featureImport.getCharge());
 
@@ -814,13 +817,15 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .hasMsMs(features.isHasMsMs())
                 .computing(computeStateProvider.apply(this, fid))
                 .charge(features.getCharge());
-        if (features.getDetectedAdducts() != null)
-            builder.detectedAdducts(features.getDetectedAdducts().getAllAdducts().stream()
-                    .map(PrecursorIonType::toString)
+        if (features.getDetectedAdducts() != null) {
+            de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts adducts = features.getDetectedAdducts().clone();
+            adducts.removeBySource(DetectedAdducts.Source.SPECTRAL_LIBRARY_SEARCH);
+            adducts.removeBySource(DetectedAdducts.Source.MS1_PREPROCESSOR); //todo do not remove if detection runs during import.
+            builder.detectedAdducts(adducts.getAllAdducts().stream().map(PrecursorIonType::toString)
                     .collect(Collectors.toSet()));
-        else
+        } else {
             builder.detectedAdducts(Set.of());
-
+        }
         RetentionTime rt = features.getRetentionTime();
         if (rt != null) {
             if (rt.isInterval() && Double.isFinite(rt.getStartTime()) && Double.isFinite(rt.getEndTime())) {

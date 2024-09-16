@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import de.unijena.bioinf.ms.nightsky.sdk.model.BasicSpectrum;
+import de.unijena.bioinf.ms.nightsky.sdk.model.DataQuality;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -42,6 +43,7 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FeatureImport.JSON_PROPERTY_RT_START_SECONDS,
   FeatureImport.JSON_PROPERTY_RT_END_SECONDS,
   FeatureImport.JSON_PROPERTY_RT_APEX_SECONDS,
+  FeatureImport.JSON_PROPERTY_DATA_QUALITY,
   FeatureImport.JSON_PROPERTY_MERGED_MS1,
   FeatureImport.JSON_PROPERTY_MS1_SPECTRA,
   FeatureImport.JSON_PROPERTY_MS2_SPECTRA
@@ -71,6 +73,9 @@ public class FeatureImport {
 
   public static final String JSON_PROPERTY_RT_APEX_SECONDS = "rtApexSeconds";
   private Double rtApexSeconds;
+
+  public static final String JSON_PROPERTY_DATA_QUALITY = "dataQuality";
+  private DataQuality dataQuality;
 
   public static final String JSON_PROPERTY_MERGED_MS1 = "mergedMs1";
   private BasicSpectrum mergedMs1;
@@ -293,6 +298,31 @@ public class FeatureImport {
     this.rtApexSeconds = rtApexSeconds;
   }
 
+  public FeatureImport dataQuality(DataQuality dataQuality) {
+    
+    this.dataQuality = dataQuality;
+    return this;
+  }
+
+   /**
+   * Get dataQuality
+   * @return dataQuality
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_DATA_QUALITY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public DataQuality getDataQuality() {
+    return dataQuality;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_DATA_QUALITY)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setDataQuality(DataQuality dataQuality) {
+    this.dataQuality = dataQuality;
+  }
+
   public FeatureImport mergedMs1(BasicSpectrum mergedMs1) {
     
     this.mergedMs1 = mergedMs1;
@@ -401,6 +431,7 @@ public class FeatureImport {
         Objects.equals(this.rtStartSeconds, featureImport.rtStartSeconds) &&
         Objects.equals(this.rtEndSeconds, featureImport.rtEndSeconds) &&
         Objects.equals(this.rtApexSeconds, featureImport.rtApexSeconds) &&
+        Objects.equals(this.dataQuality, featureImport.dataQuality) &&
         Objects.equals(this.mergedMs1, featureImport.mergedMs1) &&
         Objects.equals(this.ms1Spectra, featureImport.ms1Spectra) &&
         Objects.equals(this.ms2Spectra, featureImport.ms2Spectra);
@@ -408,7 +439,7 @@ public class FeatureImport {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, externalFeatureId, ionMass, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, rtApexSeconds, mergedMs1, ms1Spectra, ms2Spectra);
+    return Objects.hash(name, externalFeatureId, ionMass, charge, detectedAdducts, rtStartSeconds, rtEndSeconds, rtApexSeconds, dataQuality, mergedMs1, ms1Spectra, ms2Spectra);
   }
 
   @Override
@@ -423,6 +454,7 @@ public class FeatureImport {
     sb.append("    rtStartSeconds: ").append(toIndentedString(rtStartSeconds)).append("\n");
     sb.append("    rtEndSeconds: ").append(toIndentedString(rtEndSeconds)).append("\n");
     sb.append("    rtApexSeconds: ").append(toIndentedString(rtApexSeconds)).append("\n");
+    sb.append("    dataQuality: ").append(toIndentedString(dataQuality)).append("\n");
     sb.append("    mergedMs1: ").append(toIndentedString(mergedMs1)).append("\n");
     sb.append("    ms1Spectra: ").append(toIndentedString(ms1Spectra)).append("\n");
     sb.append("    ms2Spectra: ").append(toIndentedString(ms2Spectra)).append("\n");
