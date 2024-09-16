@@ -262,4 +262,8 @@ public class CompoundList {
     public int getFullSize(){
         return sortedSource.size();
     }
+
+    public SortedList<InstanceBean> getSortedSource() {
+        return sortedSource;
+    }
 }
