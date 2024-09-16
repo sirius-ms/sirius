@@ -65,6 +65,7 @@ import lombok.Getter;
 import org.apache.commons.io.function.IOSupplier;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -80,6 +81,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
     private final IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier;
 
+    // todo ATTENTION: currently ignored, might be configurable in the future.
     private final Set<PrecursorIonType> ionTypes;
 
     private final TraceSegmentationStrategy mergedTraceSegmenter;
@@ -87,7 +89,12 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     private final boolean alignRuns;
 
     @Getter
-    private LongList importedCompounds = new LongArrayList();
+    @Nullable
+    private LongList importedFeatureIds = null;
+
+    @Getter
+    @Nullable
+    private LongList importedCompoundIds = null;
 
     private final boolean saveImportedCompounds;
 
@@ -195,6 +202,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             updateProgress(totalProgress, progress, "No features");
             return;
         }
+        importedFeatureIds = processing.getImportedFeatureIds();
 
         updateProgress(totalProgress, ++progress,"Detecting adducts");
         System.out.printf("\nMerged Run: %s\n\n", merged.getRun().getName());
@@ -258,6 +266,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         adductManager.add(((merged.getPolarity()<0) ? PeriodicTable.getInstance().getNegativeAdducts() : PeriodicTable.getInstance().getPositiveAdducts()).stream().filter(PrecursorIonType::isMultimere).collect(Collectors.toSet()));
         ProjectSpaceTraceProvider provider = new ProjectSpaceTraceProvider(ps);
         {
+            final LongList importedCids = new LongArrayList();
             AdductNetwork network = new AdductNetwork(provider,
                     store.findAllStr(AlignedFeatures.class)
                             .filter(f -> f.getApexIntensity() != null)
@@ -267,11 +276,12 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             network.buildNetworkFromMassDeltas(SiriusJobs.getGlobalJobManager());
             network.assign(SiriusJobs.getGlobalJobManager(), new OptimalAssignmentViaBeamSearch(), merged.getPolarity(), (compound) -> {
                 try {
-                    groupFeaturesToCompound(store, compound);
+                    groupFeaturesToCompound(store, compound, importedCids);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
             }, true);
+            importedCompoundIds = importedCids;
         }
 
         updateProgress(totalProgress, ++progress, "Assessing data quality");
@@ -327,7 +337,9 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
     @Override
     protected NoSQLProjectSpaceManager compute() throws Exception {
-        importedCompounds.clear();
+        importedFeatureIds = null;
+        importedCompoundIds = null;
+
         NoSQLProjectSpaceManager space = projectSupplier.get();
         SiriusProjectDatabaseImpl<? extends Database<?>> ps = space.getProject();
         Database<?> store = space.getProject().getStorage();
@@ -350,8 +362,11 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         return space;
     }
 
-    private static void groupFeaturesToCompound(Database<?> ps, Compound compound) throws IOException {
+    private static void groupFeaturesToCompound(Database<?> ps, Compound compound, final LongList importedCompoundIds) throws IOException {
         ps.insert(compound);
+        if (importedCompoundIds != null)
+            importedCompoundIds.add(compound.getCompoundId());
+
         for (CorrelatedIonPair pair : compound.getCorrelatedIonPairs().get()) {
             ps.insert(pair);
         }

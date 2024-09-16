@@ -89,13 +89,10 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
         importTask.run();
         return ImportResult.builder()
-                .affectedAlignedFeatureIds(importTask.getImportedInstancesStr()
-                        .map(Instance::getId)
-                        .collect(Collectors.toList()))
-                .affectedCompoundIds(importTask.getImportedInstancesStr()
-                        .map(Instance::getCompoundId)
-                        .filter(Optional::isPresent).flatMap(Optional::stream)
-                        .distinct().collect(Collectors.toList()))
+                .affectedAlignedFeatureIds(importTask.getImportedFeatureIds().longStream()
+                        .mapToObj(String::valueOf).collect(Collectors.toList()))
+                .affectedCompoundIds(importTask.getImportedCompoundIds().longStream()
+                        .mapToObj(String::valueOf).collect(Collectors.toList()))
                 .build();
     }
 
