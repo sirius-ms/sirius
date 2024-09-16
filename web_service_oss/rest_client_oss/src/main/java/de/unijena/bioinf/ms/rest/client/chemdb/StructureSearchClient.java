@@ -77,12 +77,14 @@ public class StructureSearchClient extends AbstractCsiClient {
      */
     public CdkFingerprintVersion getCDKFingerprintVersion(OkHttpClient client) throws IOException {
         if (!cacheFpVersion || fpVersion == null) {
-            fpVersion = new CdkFingerprintVersion(
-                    executeFromJson(client, () -> new Request.Builder()
-                            .url(buildVersionSpecificWebapiURI("/usedfingerprints").build())
-                            .get(), new TypeReference<>() {
-                    })
-            );
+            if (getServerUrl() != null) {
+                fpVersion = new CdkFingerprintVersion(
+                        executeFromJson(client, () -> new Request.Builder()
+                                .url(buildVersionSpecificWebapiURI("/usedfingerprints").build())
+                                .get(), new TypeReference<>() {
+                        })
+                );
+            }
         }
         return fpVersion;
     }

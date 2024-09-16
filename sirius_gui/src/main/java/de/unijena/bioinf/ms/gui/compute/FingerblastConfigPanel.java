@@ -85,7 +85,7 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
 
         checkBoxPanel.setPreferredSize(new Dimension(confidenceModeBox.getPreferredSize().width, checkBoxPanel.getPreferredSize().height));  // Prevent resizing on unchecking checkbox
 
-        add(new TextHeaderBoxPanel("General", additionalOptions));
+        add(new TextHeaderBoxPanel("Search strategy", additionalOptions));
         add(structureSearchStrategy);
 
         parameterBindings.put("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", () -> {

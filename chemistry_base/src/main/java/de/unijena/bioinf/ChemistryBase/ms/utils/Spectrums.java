@@ -4,7 +4,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -33,6 +33,7 @@ import org.apache.commons.lang3.Range;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -1683,11 +1684,14 @@ public class Spectrums {
         return new OrderedSpectrumDelegate<>(spec);
     }
 
+    public static final DecimalFormat THREE_DIGITS = new DecimalFormat("#.###");
+    public static final DecimalFormat FOUR_DIGITS = new DecimalFormat("#.####");
+
     public static void writePeaks(BufferedWriter writer, Spectrum spec) throws IOException {
         for (int k = 0; k < spec.size(); ++k) {
-            writer.write(String.valueOf(spec.getMzAt(k)));
+            writer.write(FOUR_DIGITS.format(spec.getMzAt(k)));
             writer.write(" ");
-            writer.write(String.valueOf(spec.getIntensityAt(k)));
+            writer.write(THREE_DIGITS.format(spec.getIntensityAt(k)));
             writer.newLine();
         }
     }
