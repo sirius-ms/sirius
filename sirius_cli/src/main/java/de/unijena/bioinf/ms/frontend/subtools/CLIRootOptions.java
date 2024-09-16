@@ -193,7 +193,7 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
                 InputFilesOptions input = getInput();
                 if (space != null) {
                     if (input != null) {
-                        submitSubJob(lcmsAlignOptions.makePreprocessingJob(input, space, defaultConfigOptions.config)).awaitResult();
+                        submitSubJob(lcmsAlignOptions.makePreprocessingJob(input, space)).awaitResult();
                         submitSubJob(new InstanceImporter(space, (exp) -> exp.getIonMass() < maxMz).makeImportJJob(input)).awaitResult();
                     }
                     if (space.size() < 1)
