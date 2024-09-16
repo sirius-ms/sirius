@@ -6254,6 +6254,17 @@
           }
         }
       },
+      "DataQuality": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "NOT_APPLICABLE",
+          "LOWEST",
+          "BAD",
+          "DECENT",
+          "GOOD"
+        ]
+      },
       "FeatureImport": {
         "required": [
           "charge",
@@ -6302,6 +6313,9 @@
             "type": "number",
             "format": "double",
             "nullable": true
+          },
+          "dataQuality": {
+            "$ref": "#/components/schemas/DataQuality"
           },
           "mergedMs1": {
             "$ref": "#/components/schemas/BasicSpectrum"
@@ -6779,17 +6793,6 @@
           }
         },
         "nullable": true
-      },
-      "DataQuality": {
-        "type": "string",
-        "nullable": true,
-        "enum": [
-          "NOT_APPLICABLE",
-          "LOWEST",
-          "BAD",
-          "DECENT",
-          "GOOD"
-        ]
       },
       "Deviation": {
         "type": "object",
