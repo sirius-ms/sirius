@@ -107,9 +107,13 @@ public class NoSQLInstance implements Instance {
         return String.valueOf(getLongId());
     }
 
+    public Optional<Long> getCompoundLongId() {
+        return Optional.ofNullable(getAlignedFeatures().getCompoundId());
+    }
+
     @Override
     public Optional<String> getCompoundId() {
-        return Optional.ofNullable(getAlignedFeatures().getCompoundId()).map(String::valueOf);
+        return getCompoundLongId().map(String::valueOf);
     }
 
     @Override
