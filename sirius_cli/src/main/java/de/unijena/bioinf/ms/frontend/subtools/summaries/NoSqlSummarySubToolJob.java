@@ -152,7 +152,10 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                             ? initSpectrumSummaryWriter(location, "spectral_matches_top-" + options.topK) : null;
 
                     DataQualitySummaryWriter qualityWriter = options.qualitySummary
-                            ? initQualitySummaryWriter(location, "feature_quality") : null
+                            ? initQualitySummaryWriter(location, "feature_quality") : null;
+
+                    ChemVistaSummaryWriter chemVistaWriter = options.chemVista
+                            ? initChemVistaWriter(location, "chemvista") : null
             ) {
                 //we load all data on demand from project db without manual caching or re-usage.
                 //if this turns out to be too slow we can cache e.g. the formula candidates.
@@ -228,6 +231,10 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                                     CanopusPrediction cp = project.getProject().findByFormulaIdStr(fc.getFormulaId(), CanopusPrediction.class).findFirst().orElse(null);
                                     if (cp != null)
                                         canopusStructure.writeCanopusPredictions(f, fc, cp);
+                                    nothingWritten = false;
+                                }
+                                if (chemVistaWriter != null && first) {
+                                    chemVistaWriter.writeStructureCandidate(f, fc, sc, ssr);
                                     nothingWritten = false;
                                 }
                                 if (formulaTopK != null && rank <= options.getTopK()) {
@@ -367,6 +374,7 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                 if (refSpectrumTopK != null) refSpectrumTopK.flush();
 
                 if (qualityWriter != null) qualityWriter.flush();
+                if (chemVistaWriter != null) chemVistaWriter.flush();
 
                 w.stop();
                 log.info("Summaries written in: {}", w);
@@ -411,6 +419,12 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
 
     DataQualitySummaryWriter initQualitySummaryWriter(Path location, String filename) throws IOException {
         DataQualitySummaryWriter writer = new DataQualitySummaryWriter(makeTableWriter(location, filename));
+        writer.writeHeader();
+        return writer;
+    }
+
+    ChemVistaSummaryWriter initChemVistaWriter(Path location, String filename) throws IOException {
+        ChemVistaSummaryWriter writer = new ChemVistaSummaryWriter(new CsvTableWriter(location, filename, options.quoteStrings));
         writer.writeHeader();
         return writer;
     }
