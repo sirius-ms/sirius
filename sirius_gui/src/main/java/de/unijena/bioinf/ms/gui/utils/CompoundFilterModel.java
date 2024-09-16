@@ -298,7 +298,7 @@ public class CompoundFilterModel implements SiriusPCS, ExperimentListChangeListe
     public void updateAdducts(EventList<InstanceBean> compoundList) {
         Set<PrecursorIonType> listAdducts = new HashSet<>();
         for (InstanceBean instanceBean : compoundList) {
-            listAdducts.addAll(instanceBean.getDetectedAdducts());
+            listAdducts.addAll(instanceBean.getDetectedAdductsIncludingUnknown());
         }
         Set<PrecursorIonType> newAdducts = new HashSet<>(listAdducts);
         newAdducts.removeAll(possibleAdducts);
