@@ -56,7 +56,7 @@ public class FragmentationTree {
 
                 .fragments(sourceTree.getFragments().stream().sorted(Comparator.comparing(Fragment::getVertexId)).map(f -> {
                     final FragmentNode fn = new FragmentNode();
-                    fn.setFragmentId(f.getPeakId());
+                    fn.setFragmentId(f.getVertexId());
                     fn.setMolecularFormula(f.getFormula().toString());
                     fn.setIonType(f.getIonization().toString());
 
