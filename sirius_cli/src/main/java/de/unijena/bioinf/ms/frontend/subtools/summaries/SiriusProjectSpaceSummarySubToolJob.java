@@ -122,45 +122,7 @@ public class SiriusProjectSpaceSummarySubToolJob extends PostprocessingJob<Boole
             SiriusJobs.getGlobalJobManager().submitJob(job).awaitResult();
             job.removePropertyChangeListener(listener);
 
-            if (options.isAnyPredictionOptionSet()) { // this includes options.predictionsOptions null check
-                boolean writeIntoProjectSpace = (options.location == null);
-                Path root = options.format == SummaryOptions.Format.ZIP
-                        ? FileUtils.asZipFSPath(options.location, false, true, ZipCompressionMethod.DEFLATED)
-                        : options.location;
-                try {
-                    LOG.info("Writing positive ion mode predictions table...");
-                    BasicJJob posJob;
-                    if (writeIntoProjectSpace) {
-                        posJob = project.getProjectSpaceImpl()
-                                .makeSummarizerJob(options.location, options.format == SummaryOptions.Format.ZIP, ids, new PredictionsSummarizer(listener, instances, 1, SummaryLocations.PREDICTIONS, options.predictionsOptions));
-                    } else {
-                        posJob = new ExportPredictionsOptions.ExportPredictionJJob(
-                                options.predictionsOptions, 1, instances,
-                                () -> Files.newBufferedWriter(root.resolve(SummaryLocations.PREDICTIONS)));
-                    }
-                    posJob.addJobProgressListener(listener);
-                    SiriusJobs.getGlobalJobManager().submitJob(posJob).awaitResult();
-                    posJob.removePropertyChangeListener(listener);
-
-                    LOG.info("Writing negative ion mode predictions table...");
-                    BasicJJob negJob;
-                    if (writeIntoProjectSpace) {
-                        negJob = project.getProjectSpaceImpl()
-                                .makeSummarizerJob(options.location, options.format == SummaryOptions.Format.ZIP, ids, new PredictionsSummarizer(listener, instances, -1, SummaryLocations.PREDICTIONS_NEG, options.predictionsOptions));
-                    } else {
-                        negJob = new ExportPredictionsOptions.ExportPredictionJJob(
-                                options.predictionsOptions, -1, instances,
-                                () -> Files.newBufferedWriter(root.resolve(SummaryLocations.PREDICTIONS_NEG)));
-                    }
-                    negJob.addJobProgressListener(listener);
-                    SiriusJobs.getGlobalJobManager().submitJob(negJob).awaitResult();
-                    negJob.removePropertyChangeListener(listener);
-                } finally {
-                    //close and write zip file
-                    if (!writeIntoProjectSpace && !root.getFileSystem().equals(FileSystems.getDefault()))
-                        root.getFileSystem().close();
-                }
-            }
+            //Note: fingerprint export now is no part of summary subtool anymore, since supported by API and not supported/implement by NoSQL project space
 
             w.stop();
             LOG.info("Project-Space summaries successfully written in: " + w);
