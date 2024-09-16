@@ -25,6 +25,7 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.annotations.Ms2ExperimentAnnotation;
 import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -35,12 +36,13 @@ import java.util.stream.Collectors;
  * Pos Examples: [M+H]+,[M]+,[M+K]+,[M+Na]+,[M+H-H2O]+,[M+Na2-H]+,[M+2K-H]+,[M+NH4]+,[M+H3O]+,[M+MeOH+H]+,[M+ACN+H]+,[M+2ACN+H]+,[M+IPA+H]+,[M+ACN+Na]+,[M+DMSO+H]+
  * Neg Examples: [M-H]-,[M]-,[M+K-2H]-,[M+Cl]-,[M-H2O-H]-,[M+Na-2H]-,M+FA-H]-,[M+Br]-,[M+HAc-H]-,[M+TFA-H]-,[M+ACN-H]-
  */
+@Getter
 public class AdductSettings implements Ms2ExperimentAnnotation {
 
     @NotNull protected final Set<PrecursorIonType> enforced;
     @NotNull protected final Set<PrecursorIonType> detectable;
     @NotNull protected final Set<PrecursorIonType> fallback;
-    @NotNull protected final boolean prioritizeInputFileAdducts;
+    protected final boolean prioritizeInputFileAdducts;
 
     /**
      * @param enforced   Enforced ion modes that are always considered.
@@ -67,25 +69,12 @@ public class AdductSettings implements Ms2ExperimentAnnotation {
         this.prioritizeInputFileAdducts = true;
     }
 
-    public AdductSettings(@NotNull Set<PrecursorIonType> enforced, @NotNull Set<PrecursorIonType> detectable, @NotNull Set<PrecursorIonType> fallback, @NotNull boolean prioritizeInputFileAdducts) {
+    public AdductSettings(@NotNull Set<PrecursorIonType> enforced, @NotNull Set<PrecursorIonType> detectable, @NotNull Set<PrecursorIonType> fallback, boolean prioritizeInputFileAdducts) {
         this.enforced = enforced;
         this.detectable = detectable;
         this.fallback = fallback;
         this.prioritizeInputFileAdducts = prioritizeInputFileAdducts;
     }
-
-    public Set<PrecursorIonType> getEnforced() {
-        return enforced;
-    }
-
-    public Set<PrecursorIonType> getDetectable() {
-        return detectable;
-    }
-
-    public Set<PrecursorIonType> getFallback() {
-        return fallback;
-    }
-
 
     public Set<PrecursorIonType> getEnforced(int polarity) {
         return ensureRightPolarity(enforced, polarity);
@@ -128,8 +117,4 @@ public class AdductSettings implements Ms2ExperimentAnnotation {
         return availableAdducts;
     }
 
-    @NotNull
-    public boolean isPrioritizeInputFileAdducts() {
-        return prioritizeInputFileAdducts;
-    }
 }

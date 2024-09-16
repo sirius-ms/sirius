@@ -60,7 +60,7 @@ public class CompoundList {
 
     final JButton openFilterPanelButton;
     final CompoundFilterModel compoundFilterModel;
-    final ObservableElementList<InstanceBean> obsevableScource;
+    final ObservableElementList<InstanceBean> observableScource;
     final SortedList<InstanceBean> sortedSource;
     @Getter
     final EventList<InstanceBean> compoundList;
@@ -88,8 +88,9 @@ public class CompoundList {
         qualityToggleSwitch = makeQualityToggleSwitch(compoundFilterModel);
         msMsToggleSwitch = makeMsMsToggleSwitch(compoundFilterModel);
 
-        obsevableScource = new ObservableElementList<>(gui.getProjectManager().INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
-        sortedSource = new SortedList<>(obsevableScource, Comparator.comparing(InstanceBean::getRTOrMissing));
+        observableScource = new ObservableElementList<>(gui.getProjectManager().INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
+        sortedSource = new SortedList<>(observableScource, Comparator.comparing(InstanceBean::getRTOrMissing));
+        compoundFilterModel.updateAdducts(sortedSource);
 
         //filters
         BasicEventList<MatcherEditor<InstanceBean>> listOfFilters = new BasicEventList<>();
@@ -134,6 +135,8 @@ public class CompoundList {
         // data change listener needs to operate on unfiltered list as well to notice add or removal on filtered elements
         sortedSource.addListEventListener(this::notifyListenerFullListDataChange);
         compoundList.addListEventListener(this::notifyListenerDataChange);
+
+        addChangeListener(compoundFilterModel);
 
         //init filters
         fireFilterChanged();
