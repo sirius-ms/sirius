@@ -742,6 +742,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .externalFeatureId(featureImport.getExternalFeatureId())
                 .averageMass(featureImport.getIonMass());
 
+        if (featureImport.getDataQuality() != null)
+            builder.dataQuality(featureImport.getDataQuality());
+
         MSData.MSDataBuilder msDataBuilder = MSData.builder();
         builder.charge((byte) featureImport.getCharge());
 
