@@ -148,11 +148,9 @@ public class NoSQLInstance implements Instance {
     }
 
     @Override
-    public PrecursorIonType getIonType() {
+    public int getCharge() {
         AlignedFeatures f = getAlignedFeatures();
-        List<PrecursorIonType> allAdducts = f.getDetectedAdducts().getAllAdducts();
-        if (allAdducts.size() == 1) return allAdducts.get(0);
-        else return PrecursorIonType.unknown(f.getCharge());
+        return f.getCharge();
     }
 
     @SneakyThrows

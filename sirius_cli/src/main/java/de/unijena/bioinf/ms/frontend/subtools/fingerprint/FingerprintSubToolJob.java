@@ -89,7 +89,7 @@ public class FingerprintSubToolJob extends InstanceJob {
         checkForInterruption();
 
         final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor) ApplicationCore.WEB_API.
-                getStructurePredictor(inst.getIonType().getCharge()), this::checkForInterruption);
+                getStructurePredictor(inst.getCharge()), this::checkForInterruption);
 
         checkForInterruption();
 
@@ -126,11 +126,6 @@ public class FingerprintSubToolJob extends InstanceJob {
         //annotate FingerIdResults to FormulaResult
         inst.saveFingerprintResult(inputData);
         updateProgress(97);
-    }
-
-    @Override
-    public boolean needsProperIonizationMode() {
-        return true;
     }
 
     private Set<MolecularFormula> extractEnforcedFormulasFromSpectralLibrarySearch(Instance inst) {
