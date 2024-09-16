@@ -36,7 +36,7 @@ import java.nio.file.Path;
 @CommandLine.Command(name = "summaries", aliases = {"write-summaries", "W"}, description = "@|bold <STANDALONE, POSTPROCESSING>|@ Write Summary files from a given project-space into the given project-space or a custom location. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class SummaryOptions implements PostprocessingTool<NoSqlSummarySubToolJob>, StandaloneTool<Workflow> {
 
-    public enum Format { TSV, ZIP, XLSX }
+    public enum Format { TSV, ZIP, CSV, XLSX }
 
     //specify negated  name since default is true ->  special picocli behavior
     //https://picocli.info/#_negatable_options
@@ -56,8 +56,11 @@ public class SummaryOptions implements PostprocessingTool<NoSqlSummarySubToolJob
     @CommandLine.Option(names = {"--top-k-summary"}, description = {"Write summary files with top k hits . ", "(Use with care! Using large 'k' might create large files and consume large amounts of memory for large projects.)"})
     protected int topK = -1;
 
-    @CommandLine.Option(names = {"--feature-quality-summary"}, description = "Write a summary file with feature quality metrics.", defaultValue = "false")
+    @CommandLine.Option(names = {"--feature-quality-summary"}, description = "Write a summary file with feature quality metrics. One line per feature regardless of other option.", defaultValue = "false")
     protected boolean qualitySummary;
+
+    @CommandLine.Option(names = {"--chemvista"}, description = "Export a summary file for importing structure annotations into ChemVista (always CSV and Top Hits regardless of other options).", defaultValue = "false")
+    protected boolean chemVista;
 
     //todo enable when implementing spectral match export, per compound candidate
 //    @Getter
@@ -74,7 +77,7 @@ public class SummaryOptions implements PostprocessingTool<NoSqlSummarySubToolJob
     @CommandLine.Option(names = {"--format"}, description = {"Output format for summaries. Valid values: ${COMPLETION-CANDIDATES}.", "ZIP produces zipped TSV files."}, defaultValue = "tsv")
     protected Format format;
 
-    @CommandLine.Option(names = {"--quote-strings"}, description = {"Enclose all strings in quotation marks (only for TSV)."})
+    @CommandLine.Option(names = {"--quote-strings"}, description = {"Enclose all strings in quotation marks (for TSV and CSV)."})
     protected boolean quoteStrings;
 
     @CommandLine.ArgGroup(exclusive = false, heading = "Include Predictions Table")
