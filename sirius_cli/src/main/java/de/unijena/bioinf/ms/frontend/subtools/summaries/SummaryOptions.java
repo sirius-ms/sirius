@@ -56,10 +56,10 @@ public class SummaryOptions implements PostprocessingTool<NoSqlSummarySubToolJob
     @CommandLine.Option(names = {"--top-k-summary"}, description = {"Write summary files with top k hits . ", "(Use with care! Using large 'k' might create large files and consume large amounts of memory for large projects.)"})
     protected int topK = -1;
 
-    @CommandLine.Option(names = {"--feature-quality-summary"}, description = "Write a summary file with feature quality metrics.", defaultValue = "false")
+    @CommandLine.Option(names = {"--feature-quality-summary"}, description = "Write a summary file with feature quality metrics. One line per feature regardless of other option.", defaultValue = "false")
     protected boolean qualitySummary;
 
-    @CommandLine.Option(names = {"--chemvista"}, description = "Export a ChemVista file (always CSV and Top Hits regardless of other options).", defaultValue = "false")
+    @CommandLine.Option(names = {"--chemvista"}, description = "Export a summary file for importing structure annotations into ChemVista (always CSV and Top Hits regardless of other options).", defaultValue = "false")
     protected boolean chemVista;
 
     //todo enable when implementing spectral match export, per compound candidate
