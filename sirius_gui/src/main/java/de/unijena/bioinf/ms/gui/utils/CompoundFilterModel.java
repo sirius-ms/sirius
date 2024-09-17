@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 /**
  * This model stores the filter criteria for a compound list
  */
-public class CompoundFilterModel implements SiriusPCS, ExperimentListChangeListener {
+public class CompoundFilterModel implements SiriusPCS {
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
 
 //    private static final Set<PrecursorIonType> DEFAULT_ADDUCTS = Collections.unmodifiableSet(PeriodicTable.getInstance().getAdductsAndUnKnowns()
@@ -367,17 +367,6 @@ public class CompoundFilterModel implements SiriusPCS, ExperimentListChangeListe
         setHasMsMs(false);
     }
 
-    @Override
-    public void listChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {}
-
-    @Override
-    public void fullListChanged(ListEvent<InstanceBean> event, DefaultEventSelectionModel<InstanceBean> selection, int filteredSize) {
-        updateAdducts(event.getSourceList());
-    }
-
-    @Override
-    public void listSelectionChanged(DefaultEventSelectionModel<InstanceBean> selection, int fullSize) {}
-
     public enum LipidFilter {
         KEEP_ALL_COMPOUNDS, ANY_LIPID_CLASS_DETECTED, NO_LIPID_CLASS_DETECTED
     }
@@ -388,7 +377,6 @@ public class CompoundFilterModel implements SiriusPCS, ExperimentListChangeListe
 
         public DbFilter(List<SearchableDatabase> dbs) {
             this(dbs, 5);
-
         }
 
         public DbFilter(List<SearchableDatabase> dbFilter, int numOfCandidates) {
