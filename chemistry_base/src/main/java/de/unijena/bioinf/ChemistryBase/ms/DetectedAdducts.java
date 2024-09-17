@@ -140,8 +140,12 @@ public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Sou
                 //Probably a very uncommon way to specify this
             }
         }
-        PossibleAdducts primaryAdductsOrFallback = getPrimaryAdducts().map(pa ->
-                        (allowFallbackAdducts(pa)) ? PossibleAdducts.union(pa, adductSettings.getFallback(charge)) : pa)
+        if (adductSettings.isIgnoreDetectedAdducts()) {
+            //use fallback plus enforced. Enforced adducts are added in processwithAdductSettingsAndClean
+            return processwithAdductSettingsAndClean(new PossibleAdducts(adductSettings.getEnforced(charge)), adductSettings, charge);
+        }
+        PossibleAdducts primaryAdductsOrFallback = getPrimaryAdducts()
+                .map(pa -> (allowFallbackAdducts(pa)) ? PossibleAdducts.union(pa, adductSettings.getFallback(charge)) : pa)
                 .orElse(new PossibleAdducts(adductSettings.getFallback(charge)));
 
         if (hasPrimarySourceThatForbidsAdditionalSources()) return processwithAdductSettingsAndClean(primaryAdductsOrFallback, adductSettings, charge);
@@ -165,34 +169,32 @@ public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Sou
     private static final PrecursorIonType M_H_PLUS = PrecursorIonType.getPrecursorIonType("[M+H]+");
 
     /**
-     * 1. remove unknown adducts
+     * 1. remove unknown and not supported adducts
      * 2. guarantees that never both, [M]+ and [M+H]+, are contained. This prevents issues with duplicate structure candidates in subsequent steps. [M+H]+ is favored.
      * @param possibleAdducts
      * @return
      */
     private PossibleAdducts cleanAdducts(PossibleAdducts possibleAdducts) {
-        Set<PrecursorIonType> adducts = possibleAdducts.getAdducts().stream().filter(a -> !a.isIonizationUnknown()).collect(Collectors.toCollection(HashSet::new));
+        Set<PrecursorIonType> adducts = possibleAdducts.getAdducts().stream().filter(a -> !a.isIonizationUnknown() && a.isSupportedForFragmentationTreeComputation()).collect(Collectors.toCollection(HashSet::new));
         if (adducts.contains(M_PLUS) && adducts.contains(M_H_PLUS)) adducts.remove(M_PLUS);
         return new PossibleAdducts(adducts);
     }
 
     /**
-     * interect with detectable adducts, add enforced and clean unknown adducts
+     * add enforced and clean unknown adducts
      * @param possibleAdducts
      * @param as
      * @param charge
      * @return
      */
     private PossibleAdducts processwithAdductSettingsAndClean(PossibleAdducts possibleAdducts, AdductSettings as, int charge) {
-        possibleAdducts = PossibleAdducts.intersection(possibleAdducts, as.getDetectable());
-
         if (!as.getEnforced(charge).isEmpty())
             possibleAdducts = PossibleAdducts.union(possibleAdducts, as.getEnforced(charge));
 
         possibleAdducts = cleanAdducts(possibleAdducts);
 
         if (possibleAdducts.isEmpty())
-            LoggerFactory.getLogger(this.getClass()).error("Final set of selected adducts is empty.");
+            LoggerFactory.getLogger(this.getClass()).debug("No supported adduct present."); //can be the case for multimeres and multiple charged.
 
         return possibleAdducts;
     }
