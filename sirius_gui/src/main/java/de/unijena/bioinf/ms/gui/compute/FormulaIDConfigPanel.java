@@ -179,7 +179,7 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
             parameterBindings.put("AdductSettings.enforced", () -> enforceAdducts.isSelected() ? getSelectedAdducts().toString() : PossibleAdducts.empty().toString());
             parameterBindings.put("AdductSettings.ignoreDetectedAdducts", () -> "false");
         } else {
-            //alway enforce adducts for single feature.
+            //always enforce adducts for single feature.
             parameterBindings.put("AdductSettings.enforced", () -> getSelectedAdducts().toString());
             parameterBindings.put("AdductSettings.detectable", () -> "");
             parameterBindings.put("AdductSettings.ignoreDetectedAdducts", () -> "true");
