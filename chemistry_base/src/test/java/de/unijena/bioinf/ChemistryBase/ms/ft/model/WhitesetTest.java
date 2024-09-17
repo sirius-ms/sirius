@@ -83,15 +83,15 @@ class WhitesetTest {
         adducts = new PossibleAdducts(ionType("[M+H-H2O]+"));
         filteredWhiteset = whiteset.filter(formulaConstraints, adducts.getAdducts(), WhitesetTest.class);
 
-        assertEquals(getFormulaSet("C9H12NO", "C6H14O4", "C6H8N5"), filteredWhiteset.getMeasuredFormulas());
-        assertEquals(getFormulaSet("C6H10O5", "C9H14NO2", "C12H34SO4", "C12H34F2O4", "C8H14N3O", "C4H16N4OS"), filteredWhiteset.getNeutralFormulas());
+        assertEquals(getFormulaSet("C9H12NO", "C6H10O5", "C6H14O4", "C6H8N5"), filteredWhiteset.getMeasuredFormulas());
+        assertEquals(getFormulaSet("C6H12O6", "C6H10O5", "C9H14NO2", "C12H34SO4", "C12H34F2O4", "C8H14N3O", "C4H16N4OS"), filteredWhiteset.getNeutralFormulas());
 
         //case2
         adducts = new PossibleAdducts(ionType("[M+H+H2O]+"));
         filteredWhiteset = whiteset.filter(formulaConstraints, adducts.getAdducts(), WhitesetTest.class);
 
-        assertEquals(getFormulaSet("C6H12O6", "C9H12NO", "C6H10O5", "C6H14O4"), filteredWhiteset.getMeasuredFormulas());
-        assertEquals(getFormulaSet("C6H10O5", "C9H14NO2", "C12H34SO4", "C12H34F2O4", "C8H14N3O", "C4H16N4OS"), filteredWhiteset.getNeutralFormulas());
+        assertEquals(getFormulaSet("C9H12NO", "C6H10O5", "C6H14O4", "C6H8N5"), filteredWhiteset.getMeasuredFormulas());
+        assertEquals(getFormulaSet("C9H14NO2", "C12H34SO4", "C12H34F2O4", "C8H14N3O", "C4H16N4OS"), filteredWhiteset.getNeutralFormulas());
     }
 
     @Test

@@ -293,7 +293,7 @@ public class Whiteset implements Ms2ExperimentAnnotation {
     public Whiteset filter(FormulaConstraints formulaConstraints, @NotNull Collection<PrecursorIonType> allowedIonTypes, Class provider) {
         if (warnIfFinalized()) return this;
         //todo ElementFilter: how do the different formulaConstraints isSatisfied() with and without ionization behave - hopefully identical?. Did we only introduce these because of the ionization-adduct issue - so measured vs neutral MF? Can we make this simpler again?
-        Set<MolecularFormula> newNeutralFormulas = filterNeutralFormulas(neutralFormulas, formulaConstraints);
+        Set<MolecularFormula> newNeutralFormulas = filterNeutralFormulas(neutralFormulas, formulaConstraints, allowedIonTypes);
         Set<MolecularFormula> newMeasuredFormulas = filterMeasuredFormulas(measuredFormulas, formulaConstraints, allowedIonTypes);
 
         List<Class> newProviders = new ArrayList<>(providers);
@@ -301,12 +301,13 @@ public class Whiteset implements Ms2ExperimentAnnotation {
         return new Whiteset(newNeutralFormulas, newMeasuredFormulas, enforcedneutralFormulas, stillRequiresDeNovo, stillRequiresBottomUp, ignoreMassDeviationToResolveIonType, isFinalized, newProviders);
     }
 
-    public static Set<MolecularFormula> filterNeutralFormulas(@NotNull Set<MolecularFormula> neutralFormulas, @NotNull FormulaConstraints formulaConstraints) {
-        return neutralFormulas.stream().filter(mf -> formulaConstraints.isSatisfied(mf)).collect(Collectors.toSet());
+    public static Set<MolecularFormula> filterNeutralFormulas(@NotNull Set<MolecularFormula> neutralFormulas, @NotNull FormulaConstraints formulaConstraints, @NotNull Collection<PrecursorIonType> allowedIonTypes) {
+        //applies adducts since element bounds in constraints are based on the precursor formula
+        return neutralFormulas.stream().filter(mf -> allowedIonTypes.stream().anyMatch(ionType -> formulaConstraints.isSatisfied(ionType.neutralMoleculeToMeasuredNeutralMolecule(mf), ionType.getIonization()))).collect(Collectors.toSet());
     }
 
     public static Set<MolecularFormula> filterMeasuredFormulas(@NotNull Set<MolecularFormula> measuredFormulas, @NotNull FormulaConstraints formulaConstraints, @NotNull Collection<PrecursorIonType> allowedIonTypes) {
-        return measuredFormulas.stream().filter(mf -> allowedIonTypes.stream().anyMatch(ionType -> formulaConstraints.isSatisfied(ionType.measuredNeutralMoleculeToNeutralMolecule(mf), ionType.getIonization()))).collect(Collectors.toSet());
+        return measuredFormulas.stream().filter(mf -> allowedIonTypes.stream().anyMatch(ionType -> formulaConstraints.isSatisfied(mf, ionType.getIonization()))).collect(Collectors.toSet());
     }
 
     protected Whiteset add(@NotNull Set<MolecularFormula> neutralFormulas, @NotNull Set<MolecularFormula> measuredFormulas, @NotNull Set<MolecularFormula> enforcedneutralFormulas, @NotNull List<Class> providers){
