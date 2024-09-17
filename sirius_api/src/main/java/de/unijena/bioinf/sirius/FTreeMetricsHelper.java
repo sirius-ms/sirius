@@ -174,7 +174,7 @@ public class FTreeMetricsHelper {
             return 0; // should never happen
         }
 
-        return (int)tree.getFragmentsWithoutRoot().stream().filter(x->peakAno.get(x).isMeasured() && (lossAno==null || lossAno.get(x.getIncomingEdge(), LossType::regular).isRegular())).count();
+        return (int)tree.getFragmentsWithoutRoot().stream().filter(x->peakAno.get(x).isMeasured() && (lossAno==null || lossAno.get(x.getIncomingEdge(), LossType::regular)!=LossType.insource())).count();
     }
 
 
