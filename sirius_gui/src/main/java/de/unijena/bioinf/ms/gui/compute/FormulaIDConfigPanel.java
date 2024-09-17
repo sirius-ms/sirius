@@ -177,10 +177,12 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         if (isBatchDialog()) {
             adductList.buttons.add(enforceAdducts);
             parameterBindings.put("AdductSettings.enforced", () -> enforceAdducts.isSelected() ? getSelectedAdducts().toString() : PossibleAdducts.empty().toString());
+            parameterBindings.put("AdductSettings.ignoreDetectedAdducts", () -> "false");
         } else {
-            //alway enforce adducts for single feature.
+            //always enforce adducts for single feature.
             parameterBindings.put("AdductSettings.enforced", () -> getSelectedAdducts().toString());
             parameterBindings.put("AdductSettings.detectable", () -> "");
+            parameterBindings.put("AdductSettings.ignoreDetectedAdducts", () -> "true");
         }
 
         formulaSearchStrategy = new FormulaSearchStrategy(gui, owner, ecs, hasMs2, isBatchDialog(), parameterBindings);
