@@ -22,6 +22,7 @@ package de.unijena.bioinf.sirius;
 
 import de.unijena.bioinf.ChemistryBase.algorithm.scoring.FormulaScore;
 import de.unijena.bioinf.ChemistryBase.math.Statistics;
+import de.unijena.bioinf.ChemistryBase.ms.AnnotatedPeak;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
 import de.unijena.bioinf.ChemistryBase.ms.ft.*;
 import de.unijena.bioinf.FragmentationTreeConstruction.computation.FragmentationPatternAnalysis;
@@ -32,6 +33,7 @@ import de.unijena.bioinf.sirius.scores.TreeScore;
 import gnu.trove.list.array.TDoubleArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -164,7 +166,15 @@ public class FTreeMetricsHelper {
      * @return
      */
     public static int getNumOfExplainedPeaks(@NotNull FTree tree) {
-        return tree.numberOfVertices()-1;
+        // only count fragments that belong to a peak
+        FragmentAnnotation<AnnotatedPeak> peakAno = tree.getFragmentAnnotationOrNull(AnnotatedPeak.class);
+        LossAnnotation<LossType> lossAno = tree.getLossAnnotationOrNull(LossType.class);
+        if (peakAno==null) {
+            LoggerFactory.getLogger(FTreeMetricsHelper.class).error("Fragmentation tree has no peak annotation.");
+            return 0; // should never happen
+        }
+
+        return (int)tree.getFragmentsWithoutRoot().stream().filter(x->peakAno.get(x).isMeasured() && (lossAno==null || lossAno.get(x.getIncomingEdge(), LossType::regular)!=LossType.insource())).count();
     }
 
 
