@@ -121,7 +121,6 @@ public class AdductSettings implements Ms2ExperimentAnnotation {
         return availableAdducts;
     }
 
-    @NotNull
     public boolean isPrioritizeInputFileAdducts() {
         return prioritizeInputFileAdducts;
     }
