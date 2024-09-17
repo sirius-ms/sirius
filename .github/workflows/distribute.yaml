@@ -201,7 +201,7 @@ jobs:
           file-digest: SHA256
 
       - name: Upload Distributions
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           retention-days: 1
           name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ runner.os }}-x86-64"
