@@ -64,8 +64,8 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
         final ProcessedInput pinput = new ProcessedInput(validated, experiment);
         ms1Merging(pinput);
         isotopePatternDetection(pinput);
-        elementDetection(pinput);
         adductDetection(pinput);
+        elementDetection(pinput);
         adjustValenceFilter(pinput);
         createWhitesetFromCandidateList(pinput);
 
@@ -98,6 +98,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
      * @param pinput
      */
     @Requires(Ms1IsotopePattern.class)
+    @Requires(PossibleAdducts.class)
     @Provides(FormulaConstraints.class)
     public void elementDetection(ProcessedInput pinput) {
         final FormulaSettings settings = pinput.getAnnotationOrDefault(FormulaSettings.class);
