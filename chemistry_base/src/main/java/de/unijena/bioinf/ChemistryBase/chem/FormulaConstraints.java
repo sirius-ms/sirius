@@ -458,8 +458,8 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
         return isViolatesBounds(formula);
     }
 
-    public boolean isSatisfied(MolecularFormula formula, Ionization ionization) {
-        return !isViolated(formula, ionization);
+    public boolean isSatisfied(MolecularFormula measuredNeutralformula, Ionization ionization) {
+        return !isViolated(measuredNeutralformula, ionization);
     }
 
     public boolean isSatisfied(ChemicalAlphabet formula) {
