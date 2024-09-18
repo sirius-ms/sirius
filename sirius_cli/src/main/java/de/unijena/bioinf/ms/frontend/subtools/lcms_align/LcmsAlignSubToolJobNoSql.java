@@ -243,7 +243,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, true);
+            });
             importedCompoundIds = importedCids;
         }
 

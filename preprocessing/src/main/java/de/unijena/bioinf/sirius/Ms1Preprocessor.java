@@ -38,10 +38,7 @@ import de.unijena.bioinf.sirius.merging.Ms1Merging;
 import de.unijena.bioinf.sirius.validation.Ms1Validator;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.function.Predicate.not;
@@ -140,7 +137,29 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
             if (ionModes != null)
                 detAdds.put(DetectedAdducts.Source.MS1_PREPROCESSOR, new PossibleAdducts(ionModes.getAdducts()));
         }
+
+        addBaseAdducts(detAdds, DetectedAdducts.Source.LCMS_ALIGN, DetectedAdducts.Source.MS1_PREPROCESSOR);
+
         pinput.setAnnotation(PossibleAdducts.class, exp.getPossibleAdductsOrFallback());
+    }
+
+    /**
+     * it seems that adduct annotation is never fully certain. Hence, if a "true" adduct was detected, e.g. [M-H2O+K]+, we always want to consider its 'base adduct', e.g. [M+K]+
+     * So we add these before selecting the possible adducts to the {@link DetectedAdducts}.
+     *
+     * Not persistent!
+     *
+     * currently we do it for all adducts. May be useful to do it only for the uncertain ones?
+     * @param detAdds
+     * @param sources
+     */
+    private void addBaseAdducts(DetectedAdducts detAdds, DetectedAdducts.Source... sources) {
+        for (DetectedAdducts.Source source : sources) {
+            if (!detAdds.containsKey(source)) continue;
+            Set<PrecursorIonType> adducts = new HashSet<>(detAdds.get(source).getAdducts());
+            detAdds.get(source).getAdducts().stream().map(PrecursorIonType::getIonization).distinct().map(PrecursorIonType::getPrecursorIonType).forEach(ionType -> adducts.add(ionType));
+            detAdds.put(source, new PossibleAdducts(adducts));
+        }
     }
 
     @Requires(FormulaConstraints.class)
