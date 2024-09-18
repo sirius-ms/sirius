@@ -719,12 +719,17 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .name(compoundImport.getName())
                 .adductFeatures(features);
 
-        List<RetentionTime> rts = features.stream().map(AlignedFeatures::getRetentionTime).filter(Objects::nonNull).toList();
-        double start = rts.stream().mapToDouble(RetentionTime::getStartTime).min().orElse(Double.NaN);
-        double end = rts.stream().mapToDouble(RetentionTime::getEndTime).min().orElse(Double.NaN);
+        if (features.size() == 1) {
+            RetentionTime rt = features.getFirst().getRetentionTime();
+            if (rt != null)
+                builder.rt(rt);
+        } else {
+            List<RetentionTime> rts = features.stream().map(AlignedFeatures::getRetentionTime).filter(Objects::nonNull).toList();
+            double start = rts.stream().mapToDouble(rt -> rt.isInterval() ? rt.getStartTime() : rt.getRetentionTimeInSeconds()).min().orElse(Double.NaN);
+            double end = rts.stream().mapToDouble(rt -> rt.isInterval() ? rt.getEndTime() : rt.getRetentionTimeInSeconds()).max().orElse(Double.NaN);
 
-        if (Double.isFinite(start) && Double.isFinite(end)) {
-            builder.rt(new RetentionTime(start, end));
+            if (Double.isFinite(start) && Double.isFinite(end))
+                builder.rt(new RetentionTime(start, end));
         }
 
         features.stream()
