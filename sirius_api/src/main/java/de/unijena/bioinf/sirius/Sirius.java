@@ -727,7 +727,7 @@ public class Sirius {
         private static boolean isValidNeutralFormula(MolecularFormula measuredMF, PrecursorIonType ionType, Whiteset whiteset, FormulaConstraints constraints,  boolean checkElementFilter) {
             if (!measuredMF.subtract(ionType.getAdduct()).isAllPositiveOrZero()) return false;
             if (!whiteset.containsMeasuredFormula(measuredMF, ionType)) return false;
-            if (checkElementFilter) return constraints.isSatisfied(ionType.measuredNeutralMoleculeToNeutralMolecule(measuredMF), ionType.getIonization());
+            if (checkElementFilter) return constraints.isSatisfied(measuredMF, ionType);
             for (FormulaFilter filter : constraints.getFilters()) {
                 if (!filter.isValid(measuredMF, ionType)){
                     return false;
