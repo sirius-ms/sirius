@@ -154,8 +154,8 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
         CompoundFilterModel.ElementFilter filter = filterModel.getElementFilter();
         @NotNull FormulaConstraints constraints = filter.constraints;
         return item.getFormulaAnnotationAsBean().map(fc ->
-                (filter.matchFormula && constraints.isSatisfied(fc.getMolecularFormulaObj(), fc.getAdductObj().getIonization()))
-                        || (filter.matchPrecursorFormula && constraints.isSatisfied(fc.getAdductObj().neutralMoleculeToMeasuredNeutralMolecule(fc.getMolecularFormulaObj()), fc.getAdductObj().getIonization()))
+                (filter.matchFormula && constraints.isSatisfied(fc.getMolecularFormulaObj()))  //check if compound satisfies element constraints
+                        || (filter.matchPrecursorFormula && constraints.isSatisfied(fc.getAdductObj().neutralMoleculeToMeasuredNeutralMolecule(fc.getMolecularFormulaObj()))) //check if precursor formula satisfies element constraints
         ).orElse(false);
     }
 }
