@@ -257,7 +257,7 @@ public class TestMain {
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                }, true);
+                });
 
                 System.out.println(String.valueOf(c[0]) + " features with adducts. " + c[1] + " of them have MS/MS.");
 

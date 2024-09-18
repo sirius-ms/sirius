@@ -198,7 +198,7 @@ public class AdductNetwork {
         } else return null;
     }
 
-    public void assign(JobManager manager, SubnetworkResolver resolver, int charge, Consumer<Compound> updateRoutine, boolean alwaysAddIonization) {
+    public void assign(JobManager manager, SubnetworkResolver resolver, int charge, Consumer<Compound> updateRoutine) {
         final ArrayList<BasicJJob<Object>> jobs = new ArrayList<>();
         for (List<AdductNode> subgraph : subgraphs) {
             jobs.add(manager.submitJob(new BasicJJob<Object>() {
@@ -210,18 +210,8 @@ public class AdductNetwork {
                     if (assignments!=null) {
 
                             for (int i = 0; i < assignments.length; ++i) {
-                                List<DetectedAdduct> pas = new ArrayList<>(assignments[i].toPossibleAdducts(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN));
+                                List<DetectedAdduct> pas = assignments[i].toPossibleAdducts(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN);
                                 if (!pas.isEmpty()) {
-                                    // add plain ionization as fallback whenever we have an adduct or insource
-                                    if (alwaysAddIonization) {
-                                        for (DetectedAdduct p : pas.toArray(DetectedAdduct[]::new)) {
-                                            if (!p.getAdduct().hasNeitherAdductNorInsource() && !p.getAdduct().isMultimere()) {
-                                                pas.add(DetectedAdduct.builder().adduct(p.getAdduct().withoutAdduct().withoutInsource()).score(p.getScore() / 100d).source(p.getSource()).build());
-                                            }
-                                        }
-                                    }
-
-
                                     AlignedFeatures feature = subgraph.get(i).getFeature();
                                     DetectedAdducts detectedAdducts = feature.getDetectedAdducts();
                                     if (detectedAdducts == null) {
