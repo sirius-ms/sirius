@@ -108,7 +108,6 @@ public class ValenceFilter implements FormulaFilter {
         if (!measuredNeutralFormula.subtract(ionType.getAdduct()).isAllPositiveOrZero()) return false;
 
         final MolecularFormula compoundMF = ionType.measuredNeutralMoleculeToNeutralMolecule(measuredNeutralFormula);
-        if (!compoundMF.isAllPositiveOrZero()) return false;
         return compoundMF.doubledRDBE() >= minValenceInt;
     }
 }
