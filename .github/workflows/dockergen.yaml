@@ -14,7 +14,7 @@ jobs:
         path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
         property: 'de.unijena.bioinf.siriusFrontend.version'
     - name: Download Artifact
-      uses: actions/download-artifact@v2
+      uses: actions/download-artifact@v4.1.7
       with:
         name: "sirius-${{ steps.sirius_version.outputs.value }}-Linux-x86-64"
         path: sirius-artifact

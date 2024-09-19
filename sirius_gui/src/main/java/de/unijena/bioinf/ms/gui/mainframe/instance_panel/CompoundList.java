@@ -136,8 +136,6 @@ public class CompoundList {
         sortedSource.addListEventListener(this::notifyListenerFullListDataChange);
         compoundList.addListEventListener(this::notifyListenerDataChange);
 
-        addChangeListener(compoundFilterModel);
-
         //init filters
         fireFilterChanged();
     }
@@ -231,6 +229,9 @@ public class CompoundList {
             event.reset();//this is hell important to reset the iterator
             l.fullListChanged(event, compountListSelectionModel, compoundList.size());
         }
+        event.reset();
+        compoundFilterModel.updateAdducts(event.getSourceList());
+        updateTogglesByActiveFilter();
     }
 
     private void notifyListenerDataChange(ListEvent<InstanceBean> event) {
