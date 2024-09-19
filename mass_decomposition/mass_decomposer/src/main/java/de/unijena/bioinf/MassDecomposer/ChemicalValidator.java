@@ -106,8 +106,8 @@ public class ChemicalValidator implements DecompositionValidator<Element>, Formu
 
     @Override
     public boolean isValid(MolecularFormula measuredNeutralFormula, PrecursorIonType ionType) {
-        MolecularFormula compoundMF = ionType.measuredNeutralMoleculeToNeutralMolecule(measuredNeutralFormula);
-        if (!compoundMF.isAllPositiveOrZero()) return false;
+        if (!measuredNeutralFormula.subtract(ionType.getAdduct()).isAllPositiveOrZero()) return false;
+        final MolecularFormula compoundMF = ionType.measuredNeutralMoleculeToNeutralMolecule(measuredNeutralFormula);
         return isValid(compoundMF);
     }
 }
