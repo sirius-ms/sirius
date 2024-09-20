@@ -37,5 +37,5 @@ public interface FormulaFilter {
     boolean isValid(MolecularFormula measuredNeutralFormula, PrecursorIonType ionType);
 
 
-    boolean isValid(MolecularFormula measuredNeutralFormula);
+    boolean isValid(MolecularFormula neutralCompoundFormula);
 }

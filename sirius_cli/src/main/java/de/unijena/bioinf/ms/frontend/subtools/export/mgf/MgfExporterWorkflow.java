@@ -42,7 +42,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -54,8 +53,7 @@ public class MgfExporterWorkflow implements Workflow {
     private final PreprocessingJob<?> ppj;
     private final Optional<Path> quantPath;
     private final boolean ignoreMs1Only;
-    private final AtomicBoolean useFeatureId;
-
+    private boolean useFeatureId;
 
     public MgfExporterWorkflow(PreprocessingJob<?> ppj, MgfExporterOptions options) {
         outputPath = options.output;
@@ -63,7 +61,7 @@ public class MgfExporterWorkflow implements Workflow {
         mgfWriter = new MgfWriter(options.writeMs1, options.mergeMs2, mergeMs2Deviation, true);
         this.ppj = ppj;
         this.quantPath = Optional.ofNullable(options.quantTable).map(File::toPath);
-        this.useFeatureId = new AtomicBoolean(options.featureId);
+        this.useFeatureId = options.featureId;
         this.ignoreMs1Only = options.ignoreMs1Only;
     }
 
@@ -71,36 +69,53 @@ public class MgfExporterWorkflow implements Workflow {
     @Override
     public void run() {
         try {
-            final Iterable<? extends Instance> ps = SiriusJobs.getGlobalJobManager().submitJob(ppj).awaitResult();
+            List<Instance> instances = new ArrayList<>();
+            SiriusJobs.getGlobalJobManager().submitJob(ppj).awaitResult().forEach(instances::add);
+            //check if provided feature id is gnps compatible
             {
-                final AtomicInteger size = new AtomicInteger(0);
                 final Set<String> ids = new HashSet<>();
 
-                ps.forEach(i -> {
-                    size.incrementAndGet();
-                    if (useFeatureId.get())
-                        i.getExternalFeatureId().ifPresentOrElse(ids::add, (() -> useFeatureId.set(false)));
-                });
+                for (Instance i : instances) {
+                    if (useFeatureId) {
+                        Optional<String> idOpt = i.getExternalFeatureId();
+                        if (idOpt.isPresent()) {
+                            if (!StringUtils.isNumeric(idOpt.get())) {
+                                useFeatureId = false;
+                                break;
+                            } else {
+                                ids.add(idOpt.get());
+                            }
+                            ids.add(i.getExternalFeatureId().get());
+                        } else {
+                            useFeatureId = false;
+                            break;
+                        }
 
-                useFeatureId.set(ids.size() >= size.get());
+                    }
+                }
 
-                LoggerFactory.getLogger(getClass()).info(useFeatureId.get()
+                if (useFeatureId)
+                    useFeatureId = (ids.size() == instances.size());
+
+                LoggerFactory.getLogger(getClass()).info(useFeatureId
                         ? "Using provided feature ids."
                         : "Using SIRIUS internal IDs as feature ids.");
 
+                if (useFeatureId)
+                    instances.sort(Comparator.comparing(i -> Integer.parseInt(i.getExternalFeatureId().get())));
             }
 
 
             try (final BufferedWriter writer = Files.newBufferedWriter(outputPath)) {
-                for (Instance inst : ps) {
+                int i = 1;
+                for (Instance inst : instances) {
                     try {
                         MutableMs2Experiment exp = inst.getExperiment().mutate();
                         if (ignoreMs1Only && (exp.getMs2Spectra() == null || exp.getMs2Spectra().isEmpty()))
                             continue; //we ignore features without ms/ms only in mgf, in quant table they are still useful (e.g. for QIIME)
                         //just to make sure that all the fields are compatible with gnps
-                        String fid = extractFid(inst);
-                        exp.setName(fid);
-                        mgfWriter.write(writer, exp, fid);
+                        exp.setName(extractFid(inst, i++));
+                        mgfWriter.write(writer, exp, inst.getId());
                     } catch (IOException e) {
                         throw e;
                     } catch (Exception e) {
@@ -112,7 +127,7 @@ public class MgfExporterWorkflow implements Workflow {
             }
             quantPath.ifPresent(path -> {
                 try {
-                    writeQuantifiactionTable(ps, path);
+                    writeQuantifiactionTable(instances, path);
                 } catch (IOException e) {
                     LoggerFactory.getLogger(MgfExporterWorkflow.class).error(e.getMessage(), e);
                 }
@@ -124,10 +139,10 @@ public class MgfExporterWorkflow implements Workflow {
         }
     }
 
-    private String extractFid(Instance i) {
-        return useFeatureId.get() && i.getExternalFeatureId().map(StringUtils::isNumeric).orElse(false)
+    private String extractFid(Instance i, int idx) {
+        return useFeatureId
                 ? i.getExternalFeatureId().get()
-                : i.getId();
+                : String.valueOf(idx);
     }
 
     private void writeQuantifiactionTable(Iterable<? extends Instance> ps, Path path) throws IOException {
@@ -135,11 +150,12 @@ public class MgfExporterWorkflow implements Workflow {
         final Set<String> sampleNames = new HashSet<>();
 
         try (BufferedWriter bw = FileUtils.getWriter(path.toFile())) {
+            AtomicInteger idx = new AtomicInteger(1);
             for (Instance i : ps) {
                 i.getQuantificationTable().ifPresent(quant -> {
                     for (int j = 0; j < quant.length(); ++j) sampleNames.add(quant.getName(j));
-
-                    compounds.put(extractFid(i), new QuantInfo(i.getIonMass(),
+                    final String fid = extractFid(i, idx.getAndIncrement());
+                    compounds.put(fid, new QuantInfo(i.getIonMass(),
                             i.getRT()
                                     .orElse(new RetentionTime(0d))
                                     .getRetentionTimeInSeconds() / 60d, //use min
