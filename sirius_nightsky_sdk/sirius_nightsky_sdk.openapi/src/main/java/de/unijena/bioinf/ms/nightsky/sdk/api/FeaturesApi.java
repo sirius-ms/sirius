@@ -2109,12 +2109,12 @@ public class FeaturesApi {
         return getMsDataRequestCreation(projectId, alignedFeatureId);
     }
     /**
-     * 
-     * 
+     * Returns a single quantification table row for the given feature.
+     * Returns a single quantification table row for the given feature. The quantification table contains the intensity of the feature within all  samples it is contained in.
      * <p><b>200</b> - OK
-     * @param projectId The projectId parameter
-     * @param alignedFeatureId The alignedFeatureId parameter
-     * @param type The type parameter
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature which intensities should be read out
+     * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
      * @return QuantificationTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -2155,12 +2155,12 @@ public class FeaturesApi {
     }
 
     /**
-     * 
-     * 
+     * Returns a single quantification table row for the given feature.
+     * Returns a single quantification table row for the given feature. The quantification table contains the intensity of the feature within all  samples it is contained in.
      * <p><b>200</b> - OK
-     * @param projectId The projectId parameter
-     * @param alignedFeatureId The alignedFeatureId parameter
-     * @param type The type parameter
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature which intensities should be read out
+     * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
      * @return QuantificationTable
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -2170,12 +2170,12 @@ public class FeaturesApi {
     }
 
     /**
-     * 
-     * 
+     * Returns a single quantification table row for the given feature.
+     * Returns a single quantification table row for the given feature. The quantification table contains the intensity of the feature within all  samples it is contained in.
      * <p><b>200</b> - OK
-     * @param projectId The projectId parameter
-     * @param alignedFeatureId The alignedFeatureId parameter
-     * @param type The type parameter
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature which intensities should be read out
+     * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
      * @return ResponseEntity&lt;QuantificationTable&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -2185,12 +2185,12 @@ public class FeaturesApi {
     }
 
     /**
-     * 
-     * 
+     * Returns a single quantification table row for the given feature.
+     * Returns a single quantification table row for the given feature. The quantification table contains the intensity of the feature within all  samples it is contained in.
      * <p><b>200</b> - OK
-     * @param projectId The projectId parameter
-     * @param alignedFeatureId The alignedFeatureId parameter
-     * @param type The type parameter
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature which intensities should be read out
+     * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -3324,23 +3324,24 @@ public class FeaturesApi {
         return getStructureCandidatesPagedRequestCreation(projectId, alignedFeatureId, page, size, sort, optFields);
     }
     /**
-     * 
-     * 
+     * Returns the traces of the given feature.
+     * Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.
      * <p><b>200</b> - OK
-     * @param projectId The projectId parameter
-     * @param alignedFeatureId The alignedFeatureId parameter
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature which intensities should be read out
+     * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
      * @return TraceSet
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getTraces1RequestCreation(String projectId, String alignedFeatureId) throws WebClientResponseException {
+    private ResponseSpec getTracesRequestCreation(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
         Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getTraces1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'projectId' when calling getTraces", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // verify the required parameter 'alignedFeatureId' is set
         if (alignedFeatureId == null) {
-            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getTraces1", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+            throw new WebClientResponseException("Missing the required parameter 'alignedFeatureId' when calling getTraces", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -3353,6 +3354,8 @@ public class FeaturesApi {
         final MultiValueMap<String, String> cookieParams = new LinkedMultiValueMap<String, String>();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeAll", includeAll));
+        
         final String[] localVarAccepts = { 
             "application/json"
         };
@@ -3367,43 +3370,46 @@ public class FeaturesApi {
     }
 
     /**
-     * 
-     * 
+     * Returns the traces of the given feature.
+     * Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.
      * <p><b>200</b> - OK
-     * @param projectId The projectId parameter
-     * @param alignedFeatureId The alignedFeatureId parameter
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature which intensities should be read out
+     * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
      * @return TraceSet
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public TraceSet getTraces1(String projectId, String alignedFeatureId) throws WebClientResponseException {
+    public TraceSet getTraces(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
         ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
-        return getTraces1RequestCreation(projectId, alignedFeatureId).bodyToMono(localVarReturnType).block();
+        return getTracesRequestCreation(projectId, alignedFeatureId, includeAll).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * 
-     * 
+     * Returns the traces of the given feature.
+     * Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.
      * <p><b>200</b> - OK
-     * @param projectId The projectId parameter
-     * @param alignedFeatureId The alignedFeatureId parameter
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature which intensities should be read out
+     * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
      * @return ResponseEntity&lt;TraceSet&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<TraceSet> getTraces1WithHttpInfo(String projectId, String alignedFeatureId) throws WebClientResponseException {
+    public ResponseEntity<TraceSet> getTracesWithHttpInfo(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
         ParameterizedTypeReference<TraceSet> localVarReturnType = new ParameterizedTypeReference<TraceSet>() {};
-        return getTraces1RequestCreation(projectId, alignedFeatureId).toEntity(localVarReturnType).block();
+        return getTracesRequestCreation(projectId, alignedFeatureId, includeAll).toEntity(localVarReturnType).block();
     }
 
     /**
-     * 
-     * 
+     * Returns the traces of the given feature.
+     * Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.
      * <p><b>200</b> - OK
-     * @param projectId The projectId parameter
-     * @param alignedFeatureId The alignedFeatureId parameter
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature which intensities should be read out
+     * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getTraces1WithResponseSpec(String projectId, String alignedFeatureId) throws WebClientResponseException {
-        return getTraces1RequestCreation(projectId, alignedFeatureId);
+    public ResponseSpec getTracesWithResponseSpec(String projectId, String alignedFeatureId, Boolean includeAll) throws WebClientResponseException {
+        return getTracesRequestCreation(projectId, alignedFeatureId, includeAll);
     }
 }

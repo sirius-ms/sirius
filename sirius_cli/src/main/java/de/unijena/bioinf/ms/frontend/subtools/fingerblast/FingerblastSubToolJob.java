@@ -91,7 +91,7 @@ public class FingerblastSubToolJob extends InstanceJob {
         checkForInterruption();
 
         final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor)
-                        ApplicationCore.WEB_API.getStructurePredictor(inst.getIonType().getCharge()),
+                        ApplicationCore.WEB_API.getStructurePredictor(inst.getCharge()),
                 this::checkForInterruption);
 
         updateProgress(15);
@@ -152,11 +152,6 @@ public class FingerblastSubToolJob extends InstanceJob {
         inst.saveStructureSearchResult(inputData);
         updateProgress(97);
 
-    }
-
-    @Override
-    public boolean needsProperIonizationMode() {
-        return true;
     }
 
     @Override

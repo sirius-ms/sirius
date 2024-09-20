@@ -3,9 +3,11 @@ package de.unijena.bioinf.ms.gui.compute;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -95,6 +97,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
     protected final boolean isMs2;
     protected final boolean hasMs1AndIsSingleMode;
     protected final boolean isBatchDialog;
+    protected final FormulaIDConfigPanel formulaIDConfigPanel;
 
     protected DBSelectionListPanel searchDBList;
 
@@ -108,13 +111,14 @@ public class FormulaSearchStrategy extends ConfigPanel {
      */
     private final JComboBox<Strategy> strategyBox;
 
-    public FormulaSearchStrategy(SiriusGui gui, Dialog owner, List<InstanceBean> ecs, boolean isMs2, boolean isBatchDialog, ParameterBinding parameterBindings) {
+    public FormulaSearchStrategy(SiriusGui gui, Dialog owner, List<InstanceBean> ecs, boolean isMs2, boolean isBatchDialog, ParameterBinding parameterBindings, FormulaIDConfigPanel formulaIDConfigPanel) {
         super(parameterBindings);
         this.owner = owner;
         this.gui = gui;
         this.ecs = ecs;
         this.isMs2 = isMs2;
         this.isBatchDialog = isBatchDialog;
+        this.formulaIDConfigPanel = formulaIDConfigPanel;
 
         //in single mode: does compound has MS1 data?
         this.hasMs1AndIsSingleMode = !isBatchDialog && !ecs.isEmpty() && (ecs.get(0).getMsData().getMergedMs1() != null || !ecs.get(0).getMsData().getMs1Spectra().isEmpty());
@@ -432,6 +436,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
             FormulaSettings formulaSettings = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
             formulaSettings = formulaSettings.autoDetect(autoDetectable.toArray(Element[]::new)).enforce(getEnforedElements(formulaSettings, autoDetectable));
             experiment.setAnnotation(FormulaSettings.class, formulaSettings);
+            Set<PrecursorIonType> adducts = formulaIDConfigPanel.getSelectedAdducts().getAdducts();
+            experiment.setAnnotation(AdductSettings.class, AdductSettings.newInstance(adducts, Collections.emptySet(), adducts, false, true));
             ProcessedInput pi = pp.preprocess(experiment);
 
             pi.getAnnotation(FormulaConstraints.class).

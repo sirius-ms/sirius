@@ -26,7 +26,7 @@ All URIs are relative to *http://localhost:8888*
 | [**getIsotopePatternAnnotation**](FeaturesApi.md#getIsotopePatternAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern | Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier. |
 | [**getLipidAnnotation**](FeaturesApi.md#getLipidAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation | Returns Lipid annotation (ElGordo) for the given formula result identifier. |
 | [**getMsData**](FeaturesApi.md#getMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/ms-data | Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; . |
-| [**getQuantification**](FeaturesApi.md#getQuantification) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quantification |  |
+| [**getQuantification**](FeaturesApi.md#getQuantification) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quantification | Returns a single quantification table row for the given feature. |
 | [**getSiriusFragTree**](FeaturesApi.md#getSiriusFragTree) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree | Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format. |
 | [**getSpectralLibraryMatch**](FeaturesApi.md#getSpectralLibraryMatch) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/{matchId} | List of spectral library matches for the given &#39;alignedFeatureId&#39;. |
 | [**getSpectralLibraryMatches**](FeaturesApi.md#getSpectralLibraryMatches) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches | List of spectral library matches for the given &#39;alignedFeatureId&#39;. |
@@ -38,7 +38,7 @@ All URIs are relative to *http://localhost:8888*
 | [**getStructureCandidatesByFormula**](FeaturesApi.md#getStructureCandidatesByFormula) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures | List of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information. |
 | [**getStructureCandidatesByFormulaPaged**](FeaturesApi.md#getStructureCandidatesByFormulaPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures/page | Page of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information. |
 | [**getStructureCandidatesPaged**](FeaturesApi.md#getStructureCandidatesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/db-structures/page | Page of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information. |
-| [**getTraces1**](FeaturesApi.md#getTraces1) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces |  |
+| [**getTraces**](FeaturesApi.md#getTraces) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces | Returns the traces of the given feature. |
 
 
 
@@ -1608,7 +1608,9 @@ No authorization required
 
 > QuantificationTable getQuantification(projectId, alignedFeatureId, type)
 
+Returns a single quantification table row for the given feature.
 
+Returns a single quantification table row for the given feature. The quantification table contains the intensity of the feature within all  samples it is contained in.
 
 ### Example
 
@@ -1626,9 +1628,9 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8888");
 
         FeaturesApi apiInstance = new FeaturesApi(defaultClient);
-        String projectId = "projectId_example"; // String | 
-        String alignedFeatureId = "alignedFeatureId_example"; // String | 
-        String type = "APEX_HEIGHT"; // String | 
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String alignedFeatureId = "alignedFeatureId_example"; // String | feature which intensities should be read out
+        String type = "APEX_HEIGHT"; // String | quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
         try {
             QuantificationTable result = apiInstance.getQuantification(projectId, alignedFeatureId, type);
             System.out.println(result);
@@ -1648,9 +1650,9 @@ public class Example {
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**|  | |
-| **alignedFeatureId** | **String**|  | |
-| **type** | **String**|  | [optional] [default to APEX_HEIGHT] [enum: APEX_HEIGHT] |
+| **projectId** | **String**| project-space to read from. | |
+| **alignedFeatureId** | **String**| feature which intensities should be read out | |
+| **type** | **String**| quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex. | [optional] [default to APEX_HEIGHT] [enum: APEX_HEIGHT] |
 
 ### Return type
 
@@ -2488,11 +2490,13 @@ No authorization required
 | **200** | StructureCandidate of this feature (aligned over runs) candidate with specified optional fields. |  -  |
 
 
-## getTraces1
+## getTraces
 
-> TraceSet getTraces1(projectId, alignedFeatureId)
+> TraceSet getTraces(projectId, alignedFeatureId, includeAll)
 
+Returns the traces of the given feature.
 
+Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention  time axis. All the returned traces are &#39;projected&#39;, which means they refer not to the original retention time axis,  but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.  However, this also means that all traces can be directly compared against each other, as they all lie in the same  retention time axis.  By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,  it also includes samples in which the same trace appears in.
 
 ### Example
 
@@ -2510,13 +2514,14 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8888");
 
         FeaturesApi apiInstance = new FeaturesApi(defaultClient);
-        String projectId = "projectId_example"; // String | 
-        String alignedFeatureId = "alignedFeatureId_example"; // String | 
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String alignedFeatureId = "alignedFeatureId_example"; // String | feature which intensities should be read out
+        Boolean includeAll = false; // Boolean | when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
         try {
-            TraceSet result = apiInstance.getTraces1(projectId, alignedFeatureId);
+            TraceSet result = apiInstance.getTraces(projectId, alignedFeatureId, includeAll);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling FeaturesApi#getTraces1");
+            System.err.println("Exception when calling FeaturesApi#getTraces");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -2531,8 +2536,9 @@ public class Example {
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**|  | |
-| **alignedFeatureId** | **String**|  | |
+| **projectId** | **String**| project-space to read from. | |
+| **alignedFeatureId** | **String**| feature which intensities should be read out | |
+| **includeAll** | **Boolean**| when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature. | [optional] [default to false] |
 
 ### Return type
 

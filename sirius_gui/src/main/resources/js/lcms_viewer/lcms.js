@@ -100,7 +100,7 @@ class LiquidChromatographyPlot {
         }
         
         if (this.order == "BY_INTENSITY") {
-            comparisonFunction = (u,v)=>v.relativeIntensity-u.relativeIntensity;
+            comparisonFunction = (u,v)=>v.relativeMainFeatureIntensity-u.relativeMainFeatureIntensity;
         }
         this.samples = d3.select("#lclegend-container");
         this.samples.selectAll("ul").remove();
@@ -110,7 +110,7 @@ class LiquidChromatographyPlot {
 
         this.items.append("span").classed("lccolor-box", true).style("background-color", (d)=>d.color);
         this.items.append("span").classed("lcsample-name", true).text((d)=>d.label);
-        this.items.append("span").classed("lcintensity-value", true).text((d)=>intensity(d.relativeIntensity));
+        this.items.append("span").classed("lcintensity-value", true).text((d)=>intensity(d.relativeMainFeatureIntensity));
         this.items.on("click", (e,d)=>d.mainFeature()===null ? null : this.zoomToFeature(d.mainFeature()));
 
         this.items.on("mouseover", (e,d)=>this.focusOn(d.index))
@@ -166,7 +166,6 @@ class LiquidChromatographyPlot {
         this.xScale = d3.scaleLinear()
             .domain(this.data.retentionTimeDomain())
             .range([0, this.plotWidth]);
-
         this.yScale = d3.scaleLinear()
             .domain(this.data.intensityDomain())
             .range([this.plotHeight, 0]);
@@ -184,18 +183,20 @@ class LiquidChromatographyPlot {
         if (this.data.empty) return;
 
         // feature area
-        this.featureArea = this.mainPlot.append("g")
-            .data(this.data.focusFeatures).append("rect")
-            .attr("class", "lcfeatureBox")
+        this.featureArea = this.mainPlot.append("g").selectAll()
+            .data(this.data.focusFeatures).join("rect")
+            .attr("id", (d)=>"area"+d.label)
+            .attr("class", (d)=>(d.getCSSClasses()))
             .attr("x", (d)=>this.xScale(d.fromRt))
             .attr("y", 0)
             .attr("width", (d)=>this.xScale(d.toRt)-this.xScale(d.fromRt))
             .attr("height", this.plotHeight);
-
         // Define line generator
         this.line = d3.line()
             .x(d => this.xScale(d.rt))
             .y(d => this.yScale(d.intensity));
+
+        this.noiseLevel = this.mainPlot.append("path").datum(this.data.noiseLevel).attr("class", "noiselevel").attr("d", this.line).attr("id","noise-curve").style("fill","none")
 
 
         this.traces=[];
@@ -317,7 +318,7 @@ class LiquidChromatographyPlot {
                 .attr('d', d => this.line.x(d => newXScale(d.rt)).y(d => newYScale(d.intensity))(d));
 
             // Update feature area
-            transition.select('.lcfeatureBox')
+            transition.selectAll('.lcfeatureBox')
                 .attr("x", (d) => newXScale(d.fromRt))
                 .attr("width", (d) => newXScale(d.toRt) - newXScale(d.fromRt));
         };
@@ -347,17 +348,25 @@ class AbstractLiquidChromatographyData {
 
     setSpecialTrace(trace) {
         this.specialTrace = trace;
+        let dom = this.retentionTimeDomain();
+        this.noiseLevel = trace.noiseLevel;
+        this.noiseLevel[0].rt = dom[0];
+        this.noiseLevel[1].rt = dom[1];
     }
 
     finishDefinition() {
         if (this.empty) return;
         let maxInt = 0.0;
+        let maxIntMain=0.0;
         for (var i=0; i < this.traces.length; ++i) {
             this.traces[i].intensity = this.traces[i].featureIntensity();
+            this.traces[i].mainFeatureIntensity = this.traces[i].getMainFeatureIntensity();
             maxInt = Math.max(maxInt, this.traces[i].intensity);
+            maxIntMain = Math.max(maxIntMain, this.traces[i].mainFeatureIntensity);
         }
         for (var i=0; i < this.traces.length; ++i) {
             this.traces[i].relativeIntensity = this.traces[i].intensity/maxInt;
+            this.traces[i].relativeMainFeatureIntensity = this.traces[i].mainFeatureIntensity/maxIntMain;
         }
     }
 
@@ -429,7 +438,9 @@ class LCAlignmentData extends AbstractLiquidChromatographyData {
         }
         this.finishDefinition();
         if (this.specialTrace) {
-            this.addFocusFeature(this.specialTrace.featureAnnotations[0]);
+            for (var l = 0; l < this.specialTrace.featureAnnotations.length; ++l) {
+                this.addFocusFeature(this.specialTrace.featureAnnotations[l]);
+            }
         }
     }
 }
@@ -448,7 +459,9 @@ class LCCompoundData extends AbstractLiquidChromatographyData {
         }
         this.finishDefinition();
         if (this.specialTrace) {
-            this.addFocusFeature(this.specialTrace.featureAnnotations[0]);
+            for (var l=0; l < this.specialTrace.featureAnnotations.lenth; ++l) {
+                this.addFocusFeature(this.specialTrace.featureAnnotations[l]);
+            }
         }
     }
 
@@ -479,15 +492,25 @@ class Trace {
                 this.data_.push(new DataPoint(this, rts[i], json.intensities[i], json.intensities[i]*json.normFactor));
             }
         }
+        this.noiseLevel = [
+            new DataPoint(this, rts[0], m ? this.json.noiseLevel/norm : this.json.noiseLevel, m ? this.json.noiseLevel : this.json.noiseLevel*json.normFactor ),
+            new DataPoint(this, rts[len-1], m ? this.json.noiseLevel/norm : this.json.noiseLevel, m ? this.json.noiseLevel : this.json.noiseLevel*json.normFactor )
+
+        ];
         this.ms2Annotations = [];
         this.featureAnnotations = [];
+        this.mainFeatureId = -1;
         if (json.annotations) {
             for (var i=0; i < json.annotations.length; ++i) {
                 let a = json.annotations[i];
                 if (a.type=="FEATURE") {
-                    this.featureAnnotations.push(new DataSelection(
+                    var d = new DataSelection(
                         a.index, a.from, a.to, rts[a.index], rts[a.from], rts[a.to], a.description
-                    ));
+                    );
+                    this.featureAnnotations.push(d);
+                    if (d.isMainFeature()) {
+                        this.mainFeatureId = this.featureAnnotations.length-1;
+                    }
                 } else if (a.type=="MS2") {
 
                 }
@@ -495,13 +518,18 @@ class Trace {
         }
     }
 
+    getMainFeatureIntensity() {
+        return this.featureIntensity(); // currently this is the same
+    }
+
     mainFeature() {
-        if (this.featureAnnotations.length>0) return this.featureAnnotations[0];
+        if (this.mainFeatureId>=0) return this.featureAnnotations[this.mainFeatureId];
         else return null;
     }
 
     featureIntensity() {
-        let feature = this.featureAnnotations[0];
+        if (this.mainFeatureId < 0) return 0.0;
+        let feature = this.mainFeature();
         return this.data_[feature.apex].intensity;
     }
 
@@ -534,6 +562,7 @@ class DataPoint {
         this.trace = trace;
     }
 }
+
 class DataSelection {
     constructor(apex, fromindex, toindex,  apexrt, fromrt, tort, label) {
         this.apex = apex;
@@ -542,7 +571,30 @@ class DataSelection {
         this.toIndex = toindex;
         this.fromRt = fromrt;
         this.toRt = tort;
-        this.label = label;
+        this.processLabel(label);
+    }
+    processLabel(label) {
+        var tokens=label.split(/\[|\]/);
+        this.label = tokens.slice(-1)[0];
+        this.qualifiers = tokens.slice(0,-1);
+    }
+    getCSSClasses() {
+        var kl = ["lcfeatureBox"];
+        if (this.isMainFeature()) {
+            kl.push("mainFeatureBox");
+        } else {
+            kl.push("secondaryFeatureBox");
+        }
+        if (this.isTerribleQuality()) {
+            kl.push("terribleQualityFeatureBox");
+        }
+        return kl.join(" ");
+    }
+    isTerribleQuality() {
+        return this.qualifiers.includes("LOWEST") || this.qualifiers.includes("NOT_APPLICABLE"); 
+    }
+    isMainFeature() {
+        return this.qualifiers.includes("MAIN");
     }
 }
 

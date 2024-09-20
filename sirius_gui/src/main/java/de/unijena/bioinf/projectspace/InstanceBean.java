@@ -239,6 +239,17 @@ public class InstanceBean implements SiriusPCS {
                 .collect(Collectors.toSet());
     }
 
+    public Set<PrecursorIonType> getDetectedAdductsIncludingUnknown() {
+        @NotNull AlignedFeature f = getSourceFeature();
+        if (f.getDetectedAdducts().isEmpty())
+            return Set.of(PrecursorIonType.unknown(f.getCharge()));
+
+        return f.getDetectedAdducts().stream()
+                .map(PrecursorIonType::parsePrecursorIonType)
+                .flatMap(Optional::stream)
+                .collect(Collectors.toSet());
+    }
+
     public Set<PrecursorIonType> getDetectedAdductsOrCharge() {
         Set<PrecursorIonType> detected = getDetectedAdducts();
         if (detected.isEmpty()) return Collections.singleton(PrecursorIonType.unknown(getSourceFeature().getCharge()));

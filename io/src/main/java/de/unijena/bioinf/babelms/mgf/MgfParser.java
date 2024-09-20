@@ -123,7 +123,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 buffer.addLast(s);
         }
 
-        private static final Pattern CHARGE_PATTERN = Pattern.compile("([+-]?)(\\d+)([+-]?)");
+        private static final Pattern CHARGE_PATTERN = Pattern.compile("([+-]?)(\\d*)([+-]?)"); //Group 1: optional +-, Group 2: 0,1 or multiple digits, Group 3: optional +-
         private static final Pattern NOT_AVAILABLE = Pattern.compile("\\s*N/A\\s*");
 
         private void handleKeyword(MgfSpec spec, String keyword, String value) throws IOException {
@@ -159,7 +159,7 @@ public class MgfParser extends SpectralParser implements Parser<Ms2Experiment> {
                 final Matcher m = CHARGE_PATTERN.matcher(value);
                 m.find();
 
-                int charge = Integer.parseInt(m.group(2));
+                int charge = !m.group(2).isEmpty() ? Integer.parseInt(m.group(2)) : 0; //If no digit is found, assign 0 charge
                 if (charge == 0) {
                     charge = 1;
                     LoggerFactory.getLogger(MgfParser.class).warn("'CHARGE' value of 0 found. Changing value to Single charged under consideration of the sign.");

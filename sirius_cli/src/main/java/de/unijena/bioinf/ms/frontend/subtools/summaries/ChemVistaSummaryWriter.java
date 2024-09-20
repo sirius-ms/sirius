@@ -20,19 +20,26 @@
 
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
-import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureMatch;
 import de.unijena.bioinf.ms.persistence.model.sirius.CsiStructureSearchResult;
 import de.unijena.bioinf.ms.persistence.model.sirius.FormulaCandidate;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
-class NoSqlStructureSummaryWriter extends SummaryTable {
+class ChemVistaSummaryWriter extends SummaryTable {
 
     final static List<String> HEADER = List.of(
+            "Name",
+            "Formula",
+            "Mass",
+            "RT",
+            "SMILES",
+            "InChI",
+            "InChI Key",
             "structurePerIdRank",
             "formulaRank",
             "ConfidenceScoreExact",
@@ -40,27 +47,15 @@ class NoSqlStructureSummaryWriter extends SummaryTable {
             "CSI:FingerIDScore",
             "ZodiacScore",
             "SiriusScore",
-            "molecularFormula",
             "adduct",
             "precursorFormula",
-            "InChIkey2D",
-            "InChI",
-            "name",
-            "smiles",
-            "xlogp",
-            "pubchemids",
-            "links",
-            "dbflags",
-            // metadata for mapping
             "ionMass",
-            "retentionTimeInSeconds",
-            "retentionTimeInMinutes",
             "formulaId",
             "alignedFeatureId",
-            "mappingFeatureId",
-            "overallFeatureQuality");
+            "mappingFeatureId"
+    );
 
-    NoSqlStructureSummaryWriter(SummaryTableWriter writer) {
+    ChemVistaSummaryWriter(SummaryTableWriter writer) {
         super(writer);
     }
 
@@ -71,46 +66,27 @@ class NoSqlStructureSummaryWriter extends SummaryTable {
     public void writeStructureCandidate(AlignedFeatures f, FormulaCandidate fc, CsiStructureMatch match, CsiStructureSearchResult searchResult) throws IOException {
         List<Object> row = new ArrayList<>();
 
+        row.add(match.getCandidate().getName());
+        row.add(fc.getMolecularFormula().toString());
+        row.add(fc.getMolecularFormula().getMass());
+        row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> rt.getMiddleTime() / 60d).orElse(null));
+        row.add(match.getCandidate().getSmiles());
+        row.add(match.getCandidate().getInchi().in2D);
+        row.add(match.getCandidateInChiKey());
         row.add(match.getStructureRank());
         row.add(fc.getFormulaRank());
-
         row.add(searchResult.getConfidenceExact());
         row.add(searchResult.getConfidenceApprox());
         row.add(match.getCsiScore());
         row.add(fc.getZodiacScore());
         row.add(fc.getSiriusScore());
-        row.add(fc.getMolecularFormula().toString());
         row.add(fc.getAdduct().toString());
         row.add(fc.getPrecursorFormulaWithCharge());
-
-        row.add(match.getCandidateInChiKey());
-        row.add(match.getCandidate().getInchi().in2D);
-        row.add(match.getCandidate().getName());
-        row.add(match.getCandidate().getSmiles());
-        row.add(match.getCandidate().getXlogp());
-
-        final Map<String, List<String>> dbMap = match.getCandidate().getLinkedDatabases();
-        row.add(dbMap.getOrDefault(DataSource.PUBCHEM.name(), List.of("")).stream().filter(Objects::nonNull).collect(Collectors.joining(";")));
-        row.add(links(dbMap));
-        row.add(String.valueOf(match.getCandidate().getBitset()));
         row.add(f.getAverageMass());
-        row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> Math.round(rt.getMiddleTime())).orElse(null));
-        row.add(Optional.ofNullable(f.getRetentionTime()).map(rt -> rt.getMiddleTime() / 60d).orElse(null));
-
         row.add(String.valueOf(fc.getFormulaId()));
         row.add(String.valueOf(f.getAlignedFeatureId()));
         row.add(getMappingIdOrFallback(f));
-        row.add(f.getDataQuality());
 
         writer.writeRow(row);
-    }
-
-    public static String links(Map<String, List<String>> databases) throws IOException {
-        return databases.entrySet().stream().map(e -> e.getKey() + joinDBLinks(e.getValue())).collect(Collectors.joining(";"));
-    }
-
-    private static String joinDBLinks(List<String> links) {
-        String joined = links.stream().filter(s -> s != null && !s.isBlank()).collect(Collectors.joining(" "));
-        return joined.isEmpty() ? "" : ":(" + joined + ")";
     }
 }

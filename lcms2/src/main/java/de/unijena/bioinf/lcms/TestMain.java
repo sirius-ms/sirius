@@ -1,6 +1,5 @@
 package de.unijena.bioinf.lcms;
 
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.jjobs.BasicJJob;
@@ -243,17 +242,6 @@ public class TestMain {
                 System.out.println("MS2 = " + hasms2);
 
                 AdductManager manager = new AdductManager(1);
-                manager.add(Set.of(PrecursorIonType.getPrecursorIonType("[M+H]+"), PrecursorIonType.getPrecursorIonType("[M+Na]+"),
-                        PrecursorIonType.getPrecursorIonType("[M+K]+"),  PrecursorIonType.getPrecursorIonType("[M+NH3+H]+"),
-                        PrecursorIonType.getPrecursorIonType("[M + FA + H]+"),
-                        PrecursorIonType.getPrecursorIonType("[M + ACN + H]+"),
-
-                        PrecursorIonType.getPrecursorIonType("[M - H2O + H]+"),
-
-                        PrecursorIonType.getPrecursorIonType("[2M + Na]+"),
-                        PrecursorIonType.getPrecursorIonType("[2M + H]+")
-                        )
-                );
 
                 ProjectSpaceTraceProvider prov = new ProjectSpaceTraceProvider(ps);
                 AdductNetwork network = new AdductNetwork(prov,  store.findAllStr(AlignedFeatures.class).toArray(AlignedFeatures[]::new), manager, rtTolerance/2);

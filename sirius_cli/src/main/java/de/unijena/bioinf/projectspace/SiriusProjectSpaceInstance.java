@@ -111,8 +111,8 @@ public class SiriusProjectSpaceInstance implements Instance {
     }
 
     @Override
-    public PrecursorIonType getIonType() {
-        return getCompoundContainerId().getIonType().orElse(PrecursorIonType.unknown(1));
+    public int getCharge() {
+        return getCompoundContainerId().getIonType().orElse(PrecursorIonType.unknown(1)).getCharge();
     }
 
     @Override

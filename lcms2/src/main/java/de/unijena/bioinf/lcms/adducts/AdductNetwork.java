@@ -210,7 +210,7 @@ public class AdductNetwork {
                     if (assignments!=null) {
 
                             for (int i = 0; i < assignments.length; ++i) {
-                                List<DetectedAdduct> pas = assignments[i].toPossibleAdducts(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN);
+                                List<DetectedAdduct> pas = new ArrayList<>(assignments[i].toPossibleAdducts(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN));
                                 if (!pas.isEmpty()) {
                                     AlignedFeatures feature = subgraph.get(i).getFeature();
                                     DetectedAdducts detectedAdducts = feature.getDetectedAdducts();

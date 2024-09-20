@@ -23,6 +23,7 @@ package de.unijena.bioinf.sirius.elementdetection;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
+import de.unijena.bioinf.ChemistryBase.ms.PossibleAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Ms1IsotopePattern;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
@@ -33,6 +34,7 @@ import de.unijena.bioinf.sirius.elementdetection.prediction.DNNRegressionPredict
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
+import java.util.Arrays;
 import java.util.Set;
 
 @Requires(Ms1IsotopePattern.class)
@@ -50,11 +52,36 @@ public class DeepNeuralNetworkElementDetector implements ElementDetection {
     public FormulaConstraints detect(ProcessedInput processedInput) {
         final FormulaSettings settings = processedInput.getAnnotationOrDefault(FormulaSettings.class);
         checkDetectableElements(settings);
+        final PossibleAdducts possibleAdducts = processedInput.getAnnotationOrDefault(PossibleAdducts.class);
         SimpleSpectrum ms1 = processedInput.getAnnotationOrThrow(Ms1IsotopePattern.class).getSpectrum();
         if (ms1.size()<=2) return settings.getEnforcedAlphabet().getExtendedConstraints(settings.getFallbackAlphabet());
-        final FormulaConstraints constraints = dnnRegressionPredictor.predictConstraints(ms1);
+        final FormulaConstraints constraints = adjustPredictedConstraintsWithAdducts(dnnRegressionPredictor.predictConstraints(ms1), possibleAdducts);
         //limit detection to detectable elements and add enforced alphabet
         return constraints.intersection(settings.getAutoDetectionElements().toArray(new Element[0])).getExtendedConstraints(settings.getEnforcedAlphabet());
+    }
+
+    /**
+     * THIS IS A SAFEGUARD IN CASE ELEMENT PREDICTION ALSO PREDICTS A LOWER BOUND.
+     * element prediction can only predict constraints for precursor formula. However, our element constraints are applied to the compound formula.
+     * if a possible adduct contains a detectable element, we want to extend the predicted range make sure that predicting an element the comes actually from the adduct and not the compound does not result in an incompatible range for the compound formula
+     * //todo element prediction will add unnecessary elements to the compound formula element constraints if the adduct indeed contains this element. we want to differentiate these predicted constraints from input constraints  at some point.
+     * @param predictionConstraints
+     * @param possibleAdducts
+     */
+    private FormulaConstraints adjustPredictedConstraintsWithAdducts(FormulaConstraints predictionConstraints, PossibleAdducts possibleAdducts) {
+        //if no lower bounds, return original constraints
+        if (Arrays.stream(predictionConstraints.getLowerbounds()).max().orElse(0)==0) return predictionConstraints;
+
+        FormulaConstraints adjusted = predictionConstraints.clone();
+        predictionConstraints.getChemicalAlphabet().getElements().stream().filter(e-> predictionConstraints.hasElement(e)) //select predicted elements
+                .forEach(e -> {
+                    int maxCountInAdducts = possibleAdducts.getAdducts().stream().mapToInt(adduct -> adduct.getAdduct().numberOf(e)).max().orElse(0);
+                    if (maxCountInAdducts > 0) {
+                        adjusted.setLowerbound(e, Math.max(predictionConstraints.getLowerbound(e) - maxCountInAdducts, 0));
+                    }
+                });
+
+        return adjusted;
     }
 
     private void checkDetectableElements(FormulaSettings settings){
