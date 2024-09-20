@@ -173,7 +173,7 @@ public class CLIRootOptions implements RootOptions<PreprocessingJob<? extends Pr
     public @NotNull PreprocessingJob<? extends ProjectSpaceManager> makeDefaultPreprocessingJob() {
         InputFilesOptions input = getInput();
         if (!input.msInput.msParserfiles.isEmpty() && !input.msInput.lcmsFiles.isEmpty())
-            throw new CommandLine.PicocliException("You cannot process LCMS runs (.mzml/.mzxml) and peak list data (.ms/.mgf/.mat/.msp/.mblib) at the same time! We recommend using separate projects for each of the input data types.");
+            throw new CommandLine.PicocliException("LC-MS runs (.mzml/.mzxml) and peak list data (.ms/.mgf/.mat/.msp/.mblib) cannot be processed at the same time! Please use separate projects for each of the input data types.");
 
         if (spaceManagerFactory instanceof SiriusProjectSpaceManagerFactory psmf)
             throw new CommandLine.PicocliException("File based Sirius projects a no longer supported! Please convert them to the new '.sirius' format.");
