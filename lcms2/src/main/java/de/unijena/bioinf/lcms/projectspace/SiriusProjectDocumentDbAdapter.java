@@ -36,9 +36,12 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 public class SiriusProjectDocumentDbAdapter implements SiriusDatabaseAdapter {
+    // this is just to create small mapping ids for GNPS
+    private static final AtomicInteger featureCounter = new AtomicInteger(1);
 
     public SiriusProjectDocumentDatabase<?> store;
 
@@ -116,6 +119,9 @@ public class SiriusProjectDocumentDbAdapter implements SiriusDatabaseAdapter {
         if (alignedFeatures.getCharge()==0) {
             throw new IllegalArgumentException("Charge cannot be zero!");
         }
+        if(alignedFeatures.getExternalFeatureId() == null)
+            alignedFeatures.setExternalFeatureId(String.valueOf(featureCounter.getAndIncrement()));
+
         store.importAlignedFeatures(List.of(alignedFeatures));
         return true;
     }

@@ -59,7 +59,7 @@ public interface Instance {
 
     double getIonMass();
 
-    PrecursorIonType getIonType();
+    int getCharge();
 
     ProjectSpaceManager getProjectSpaceManager();
 

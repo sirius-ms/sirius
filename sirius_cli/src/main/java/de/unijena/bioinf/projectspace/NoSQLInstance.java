@@ -107,9 +107,13 @@ public class NoSQLInstance implements Instance {
         return String.valueOf(getLongId());
     }
 
+    public Optional<Long> getCompoundLongId() {
+        return Optional.ofNullable(getAlignedFeatures().getCompoundId());
+    }
+
     @Override
     public Optional<String> getCompoundId() {
-        return Optional.ofNullable(getAlignedFeatures().getCompoundId()).map(String::valueOf);
+        return getCompoundLongId().map(String::valueOf);
     }
 
     @Override
@@ -148,11 +152,9 @@ public class NoSQLInstance implements Instance {
     }
 
     @Override
-    public PrecursorIonType getIonType() {
+    public int getCharge() {
         AlignedFeatures f = getAlignedFeatures();
-        List<PrecursorIonType> allAdducts = f.getDetectedAdducts().getAllAdducts();
-        if (allAdducts.size() == 1) return allAdducts.get(0);
-        else return PrecursorIonType.unknown(f.getCharge());
+        return f.getCharge();
     }
 
     @SneakyThrows
@@ -486,7 +488,10 @@ public class NoSQLInstance implements Instance {
             upsertComputedSubtools(cs -> cs.setFormulaSearch(false));
         });
 
-        //todo handle detected adducts.
+        de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts adducts = getAlignedFeatures().getDetectedAdducts();
+        adducts.removeBySource(DetectedAdducts.Source.SPECTRAL_LIBRARY_SEARCH);
+        adducts.removeBySource(DetectedAdducts.Source.MS1_PREPROCESSOR); //todo do not remove anymore if MS1 preprocessor is called during import...
+        saveDetectedAdducts(adducts);
     }
 
     @SneakyThrows

@@ -41,36 +41,42 @@ public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Sou
         /**
          * this source indicates adducts specified in the input file
          */
-        INPUT_FILE(true, false, true),
+        INPUT_FILE(true, false, true, false),
         /**
          * adducts found during SIRIUS LCMS preprocessing. May contain unknown adduct to indicate to add fallback adducts.
          */
-        LCMS_ALIGN(true, true, false),
+        LCMS_ALIGN(true, true, false, true),
         /**
          * adducts detected based on MS1 only are never very confident. Hence, we will always add the fallback adducts.
          */
-        MS1_PREPROCESSOR(true, true, false),
+        MS1_PREPROCESSOR(true, true, false, true),
 
         //special sources. These are only added additionally, but not used as primary source. Hence. if only these are available, we add the fallbacks.
 
         /**
          * adducts found by spectral library search. May be additionally added.
          */
-        SPECTRAL_LIBRARY_SEARCH(false, false, false),
+        SPECTRAL_LIBRARY_SEARCH(false, false, false, false),
         /**
          * this is never directly specified. It is only used to make sure the map can be parsed from string. Unknown sources are mapped to this enum value. May be additionally added.
          */
-        UNSPECIFIED_SOURCE(false, false, false);
+        UNSPECIFIED_SOURCE(false, false, false, false);
 
 
         private final boolean isPrimarySource;
         private final boolean canBeEmpty;
         private final boolean forbidAdditionalSources;
+        /*
+        the annotation source does not provide sufficient confidence in adducts.
+        Hence, the methode that provides the final PossibleAdducts for formula annotation 'getDetectedAdductsAndOrFallback' adds the plain ionization as 'base adduct'
+         */
+        private final boolean extendWithPlainIonization;
 
-        Source(boolean isPrimarySource, boolean canBeEmpty, boolean forbidAdditionalSources) {
+        Source(boolean isPrimarySource, boolean canBeEmpty, boolean forbidAdditionalSources, boolean extendWithPlainIonization) {
             this.isPrimarySource = isPrimarySource;
             this.canBeEmpty = canBeEmpty;
             this.forbidAdditionalSources = forbidAdditionalSources;
+            this.extendWithPlainIonization = extendWithPlainIonization;
         }
 
         public boolean isPrimaryDetectionSource() {
@@ -101,7 +107,7 @@ public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Sou
      * @return primary adducts, if available. If no adducts are available returns Optional.empty and not empty PossibleAdducts.
      */
     protected Optional<PossibleAdducts> getPrimaryAdducts() {
-        return getAdducts((Source[]) Arrays.stream(Source.values()).filter(Source::isPrimaryDetectionSource).toArray(l -> new Source[l])).flatMap(pa -> pa.isEmpty() ? Optional.empty() : Optional.of(pa));
+        return getAdducts(true, (Source[]) Arrays.stream(Source.values()).filter(Source::isPrimaryDetectionSource).toArray(l -> new Source[l])).flatMap(pa -> pa.isEmpty() ? Optional.empty() : Optional.of(pa));
     }
 
     /**
@@ -140,8 +146,12 @@ public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Sou
                 //Probably a very uncommon way to specify this
             }
         }
-        PossibleAdducts primaryAdductsOrFallback = getPrimaryAdducts().map(pa ->
-                        (allowFallbackAdducts(pa)) ? PossibleAdducts.union(pa, adductSettings.getFallback(charge)) : pa)
+        if (adductSettings.isIgnoreDetectedAdducts()) {
+            //use fallback plus enforced. Enforced adducts are added in processwithAdductSettingsAndClean
+            return processwithAdductSettingsAndClean(new PossibleAdducts(adductSettings.getEnforced(charge)), adductSettings, charge);
+        }
+        PossibleAdducts primaryAdductsOrFallback = getPrimaryAdducts()
+                .map(pa -> (allowFallbackAdducts(pa)) ? PossibleAdducts.union(pa, adductSettings.getFallback(charge)) : pa)
                 .orElse(new PossibleAdducts(adductSettings.getFallback(charge)));
 
         if (hasPrimarySourceThatForbidsAdditionalSources()) return processwithAdductSettingsAndClean(primaryAdductsOrFallback, adductSettings, charge);
@@ -165,49 +175,59 @@ public final class DetectedAdducts extends ConcurrentHashMap<DetectedAdducts.Sou
     private static final PrecursorIonType M_H_PLUS = PrecursorIonType.getPrecursorIonType("[M+H]+");
 
     /**
-     * 1. remove unknown adducts
+     * 1. remove unknown and not supported adducts
      * 2. guarantees that never both, [M]+ and [M+H]+, are contained. This prevents issues with duplicate structure candidates in subsequent steps. [M+H]+ is favored.
      * @param possibleAdducts
      * @return
      */
     private PossibleAdducts cleanAdducts(PossibleAdducts possibleAdducts) {
-        Set<PrecursorIonType> adducts = possibleAdducts.getAdducts().stream().filter(a -> !a.isIonizationUnknown()).collect(Collectors.toCollection(HashSet::new));
+        Set<PrecursorIonType> adducts = possibleAdducts.getAdducts().stream().filter(a -> !a.isIonizationUnknown() && a.isSupportedForFragmentationTreeComputation()).collect(Collectors.toCollection(HashSet::new));
         if (adducts.contains(M_PLUS) && adducts.contains(M_H_PLUS)) adducts.remove(M_PLUS);
         return new PossibleAdducts(adducts);
     }
 
     /**
-     * interect with detectable adducts, add enforced and clean unknown adducts
+     * add enforced and clean unknown adducts
      * @param possibleAdducts
      * @param as
      * @param charge
      * @return
      */
     private PossibleAdducts processwithAdductSettingsAndClean(PossibleAdducts possibleAdducts, AdductSettings as, int charge) {
-        possibleAdducts = PossibleAdducts.intersection(possibleAdducts, as.getDetectable());
-
         if (!as.getEnforced(charge).isEmpty())
             possibleAdducts = PossibleAdducts.union(possibleAdducts, as.getEnforced(charge));
 
         possibleAdducts = cleanAdducts(possibleAdducts);
 
         if (possibleAdducts.isEmpty())
-            LoggerFactory.getLogger(this.getClass()).error("Final set of selected adducts is empty.");
+            LoggerFactory.getLogger(this.getClass()).debug("No supported adduct present."); //can be the case for multimeres and multiple charged.
 
         return possibleAdducts;
     }
 
-    public Optional<PossibleAdducts> getAdducts(Source... keyPrio) {
+    private Optional<PossibleAdducts> getAdducts(boolean allowExtensionWithPlainIonization, Source... keyPrio) {
         for (Source key : keyPrio) {
             if (containsKey(key)) {
                 if (key.canBeEmpty || !get(key).isEmpty()) {
-                    return Optional.of(get(key));
+                    return Optional.of(allowExtensionWithPlainIonization ? extendWithPlainIonization(get(key), key): get(key));
                 } else {
                     warnIsEmpty(key);
                 }
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * if adduct annotation is not very certain this adds the 'base adducts', e.g. [M+K]+, given the 'true' adduct was detected, e.g. [M-H2O+K]+
+     *
+     * currently we do it for all adducts. May be useful to do it only for the uncertain ones?
+     */
+    private PossibleAdducts extendWithPlainIonization(PossibleAdducts possibleAdducts, Source source) {
+        if (!source.extendWithPlainIonization) return possibleAdducts;
+        Set<PrecursorIonType> adducts = new HashSet<>(possibleAdducts.getAdducts());
+        possibleAdducts.getAdducts().stream().map(PrecursorIonType::getIonization).distinct().map(PrecursorIonType::getPrecursorIonType).forEach(ionType -> adducts.add(ionType));
+        return new PossibleAdducts(adducts);
     }
 
     /**
