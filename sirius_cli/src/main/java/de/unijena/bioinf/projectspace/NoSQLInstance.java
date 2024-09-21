@@ -489,8 +489,8 @@ public class NoSQLInstance implements Instance {
         });
 
         de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts adducts = getAlignedFeatures().getDetectedAdducts();
-        adducts.removeBySource(DetectedAdducts.Source.SPECTRAL_LIBRARY_SEARCH);
-        adducts.removeBySource(DetectedAdducts.Source.MS1_PREPROCESSOR); //todo do not remove anymore if MS1 preprocessor is called during import...
+        adducts.removeAllWithSource(DetectedAdducts.Source.SPECTRAL_LIBRARY_SEARCH);
+        adducts.removeAllWithSource(DetectedAdducts.Source.MS1_PREPROCESSOR); //todo do not remove anymore if MS1 preprocessor is called during import...
         saveDetectedAdducts(adducts);
     }
 
