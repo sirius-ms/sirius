@@ -46,10 +46,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.frontend.subtools.custom_db.CustomDBOptions.writeDBProperties;
@@ -127,13 +124,17 @@ public class ChemDbServiceImpl implements ChemDbService {
     }
 
     @Override
-    public List<SearchableDatabase> findAll(boolean includeStats) {
-        return CustomDataSources.sourcesStream().map(s -> {
+    public List<SearchableDatabase> findAll(boolean includeStats, boolean includeWithErrors) {
+        ArrayList<SearchableDatabase> dbs = CustomDataSources.sourcesStream().map(s -> {
             if (s.isCustomSource() && includeStats)
                 return CustomDatabases.getCustomDatabaseByName(s.name(), version())
                         .map(SearchableDatabases::of).orElse(SearchableDatabases.of(s));
             return SearchableDatabases.of(s);
-        }).toList();
+        }).collect(Collectors.toCollection(ArrayList::new));
+        if (includeWithErrors) {
+            //todo add missing dbs
+        }
+        return dbs;
     }
 
     @Override
@@ -218,9 +219,7 @@ public class ChemDbServiceImpl implements ChemDbService {
     @Override
     public void remove(String databaseId, boolean delete) {
         try {
-            CustomDatabases.getCustomDatabaseByName(databaseId, version()).ifPresent(db -> {
-                CustomDatabases.remove(db, delete);
-            });
+            CustomDatabases.getCustomDatabaseByName(databaseId, version()).ifPresent(db -> CustomDatabases.remove(db, delete));
         } catch (Exception e) {
             log.error("Error when removing custom database: {}", databaseId, e);
             CustomDatabases.remove(databaseId);
