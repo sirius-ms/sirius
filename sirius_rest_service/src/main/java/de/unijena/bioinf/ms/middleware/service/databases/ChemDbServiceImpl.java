@@ -132,7 +132,11 @@ public class ChemDbServiceImpl implements ChemDbService {
             return SearchableDatabases.of(s);
         }).collect(Collectors.toCollection(ArrayList::new));
         if (includeWithErrors) {
-            //todo add missing dbs
+            for (Path location : CustomDataSources.getAllCustomDatabaseLocations()) {
+                if (!Files.exists(location)) {
+                    dbs.add(SearchableDatabases.ofMissing(location));
+                }
+            }
         }
         return dbs;
     }
