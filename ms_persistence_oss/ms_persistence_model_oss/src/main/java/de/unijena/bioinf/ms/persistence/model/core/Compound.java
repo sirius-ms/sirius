@@ -68,4 +68,14 @@ public class Compound {
     public Optional<List<CorrelatedIonPair>> getCorrelatedIonPairs() {
         return Optional.ofNullable(correlatedIonPairs);
     }
+
+
+    public static Compound singleton(AlignedFeatures alignedFeature) {
+        return Compound.builder()
+                .rt(alignedFeature.getRetentionTime())
+                .name(alignedFeature.getName())
+                .ms2Available(alignedFeature.isHasMsMs())
+                .adductFeatures(List.of(alignedFeature))
+                .build();
+    }
 }
