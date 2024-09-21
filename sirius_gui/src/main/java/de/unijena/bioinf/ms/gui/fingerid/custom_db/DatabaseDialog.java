@@ -225,7 +225,7 @@ public class DatabaseDialog extends JDialog {
 
     private void loadDatabaseList() {
         customDatabases = Jobs.runInBackgroundAndLoad(getOwner(), "Loading DBs...",
-                () -> gui.applySiriusClient((c, pid) -> c.databases().getCustomDatabases(true))
+                () -> gui.applySiriusClient((c, pid) -> c.databases().getCustomDatabases(true, true))
         ).getResult();
 
         customDatabases.sort(Comparator.comparing(SearchableDatabase::getDatabaseId));
