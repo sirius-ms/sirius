@@ -268,6 +268,13 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
                         System.out.println();
                         System.out.println();
                     });
+
+                    CustomDataSources.getAllCustomDatabaseLocations().stream().filter(Files::notExists).forEach(p -> {
+                        printMissingDB(p);
+                        System.out.println();
+                        System.out.println();
+                    });
+
                     return true;
                 } else {
                     CustomDatabases.getCustomDatabase(mode.showParas.db, version)
@@ -306,6 +313,12 @@ public class CustomDBOptions implements StandaloneTool<Workflow> {
             System.out.println("Used Fingerprints: [ '" + s.getUsedFingerprints().stream().map(Enum::name).collect(Collectors.joining("','")) + "' ]");
         }
         System.out.println("###############  END  ###############");
+    }
+
+    private void printMissingDB(Path p) {
+        System.out.println("#####  Error : Missing DB file  #####");
+        System.out.println("Name: " + p.getFileName().toString().split("\\.")[0]);
+        System.out.println("Location: " + p);
     }
 
     public static void writeDBProperties() {
