@@ -1835,6 +1835,15 @@
               "type": "boolean",
               "default": false
             }
+          },
+          {
+            "name": "includeWithErrors",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -5070,6 +5079,15 @@
         "parameters": [
           {
             "name": "includeStats",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "includeWithErrors",
             "in": "query",
             "required": false,
             "schema": {

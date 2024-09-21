@@ -211,10 +211,11 @@ public class SearchableDatabasesApi {
      * 
      * <p><b>200</b> - OK
      * @param includeStats The includeStats parameter
+     * @param includeWithErrors The includeWithErrors parameter
      * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getCustomDatabasesRequestCreation(Boolean includeStats) throws WebClientResponseException {
+    private ResponseSpec getCustomDatabasesRequestCreation(Boolean includeStats, Boolean includeWithErrors) throws WebClientResponseException {
         Object postBody = null;
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -225,6 +226,7 @@ public class SearchableDatabasesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeStats", includeStats));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeWithErrors", includeWithErrors));
         
         final String[] localVarAccepts = { 
             "application/json"
@@ -244,12 +246,13 @@ public class SearchableDatabasesApi {
      * 
      * <p><b>200</b> - OK
      * @param includeStats The includeStats parameter
+     * @param includeWithErrors The includeWithErrors parameter
      * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<SearchableDatabase> getCustomDatabases(Boolean includeStats) throws WebClientResponseException {
+    public List<SearchableDatabase> getCustomDatabases(Boolean includeStats, Boolean includeWithErrors) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
-        return getCustomDatabasesRequestCreation(includeStats).bodyToFlux(localVarReturnType).collectList().block();
+        return getCustomDatabasesRequestCreation(includeStats, includeWithErrors).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
@@ -257,12 +260,13 @@ public class SearchableDatabasesApi {
      * 
      * <p><b>200</b> - OK
      * @param includeStats The includeStats parameter
+     * @param includeWithErrors The includeWithErrors parameter
      * @return ResponseEntity&lt;List&lt;SearchableDatabase&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<SearchableDatabase>> getCustomDatabasesWithHttpInfo(Boolean includeStats) throws WebClientResponseException {
+    public ResponseEntity<List<SearchableDatabase>> getCustomDatabasesWithHttpInfo(Boolean includeStats, Boolean includeWithErrors) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
-        return getCustomDatabasesRequestCreation(includeStats).toEntityList(localVarReturnType).block();
+        return getCustomDatabasesRequestCreation(includeStats, includeWithErrors).toEntityList(localVarReturnType).block();
     }
 
     /**
@@ -270,11 +274,12 @@ public class SearchableDatabasesApi {
      * 
      * <p><b>200</b> - OK
      * @param includeStats The includeStats parameter
+     * @param includeWithErrors The includeWithErrors parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getCustomDatabasesWithResponseSpec(Boolean includeStats) throws WebClientResponseException {
-        return getCustomDatabasesRequestCreation(includeStats);
+    public ResponseSpec getCustomDatabasesWithResponseSpec(Boolean includeStats, Boolean includeWithErrors) throws WebClientResponseException {
+        return getCustomDatabasesRequestCreation(includeStats, includeWithErrors);
     }
     /**
      * 
@@ -361,10 +366,11 @@ public class SearchableDatabasesApi {
      * 
      * <p><b>200</b> - OK
      * @param includeStats The includeStats parameter
+     * @param includeWithErrors The includeWithErrors parameter
      * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec getDatabasesRequestCreation(Boolean includeStats) throws WebClientResponseException {
+    private ResponseSpec getDatabasesRequestCreation(Boolean includeStats, Boolean includeWithErrors) throws WebClientResponseException {
         Object postBody = null;
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -375,6 +381,7 @@ public class SearchableDatabasesApi {
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
 
         queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeStats", includeStats));
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "includeWithErrors", includeWithErrors));
         
         final String[] localVarAccepts = { 
             "application/json"
@@ -394,12 +401,13 @@ public class SearchableDatabasesApi {
      * 
      * <p><b>200</b> - OK
      * @param includeStats The includeStats parameter
+     * @param includeWithErrors The includeWithErrors parameter
      * @return List&lt;SearchableDatabase&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<SearchableDatabase> getDatabases(Boolean includeStats) throws WebClientResponseException {
+    public List<SearchableDatabase> getDatabases(Boolean includeStats, Boolean includeWithErrors) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
-        return getDatabasesRequestCreation(includeStats).bodyToFlux(localVarReturnType).collectList().block();
+        return getDatabasesRequestCreation(includeStats, includeWithErrors).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
@@ -407,12 +415,13 @@ public class SearchableDatabasesApi {
      * 
      * <p><b>200</b> - OK
      * @param includeStats The includeStats parameter
+     * @param includeWithErrors The includeWithErrors parameter
      * @return ResponseEntity&lt;List&lt;SearchableDatabase&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<SearchableDatabase>> getDatabasesWithHttpInfo(Boolean includeStats) throws WebClientResponseException {
+    public ResponseEntity<List<SearchableDatabase>> getDatabasesWithHttpInfo(Boolean includeStats, Boolean includeWithErrors) throws WebClientResponseException {
         ParameterizedTypeReference<SearchableDatabase> localVarReturnType = new ParameterizedTypeReference<SearchableDatabase>() {};
-        return getDatabasesRequestCreation(includeStats).toEntityList(localVarReturnType).block();
+        return getDatabasesRequestCreation(includeStats, includeWithErrors).toEntityList(localVarReturnType).block();
     }
 
     /**
@@ -420,11 +429,12 @@ public class SearchableDatabasesApi {
      * 
      * <p><b>200</b> - OK
      * @param includeStats The includeStats parameter
+     * @param includeWithErrors The includeWithErrors parameter
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec getDatabasesWithResponseSpec(Boolean includeStats) throws WebClientResponseException {
-        return getDatabasesRequestCreation(includeStats);
+    public ResponseSpec getDatabasesWithResponseSpec(Boolean includeStats, Boolean includeWithErrors) throws WebClientResponseException {
+        return getDatabasesRequestCreation(includeStats, includeWithErrors);
     }
     /**
      * 
