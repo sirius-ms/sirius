@@ -197,10 +197,10 @@ public class StorageUtils {
         de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts dA = new de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts();
 
         Map<de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source, List<PrecursorIonType>> adductsBySource =
-                adducts.asMap().values().stream().flatMap(Collection::stream).collect(Collectors.groupingBy(
-                        d -> d.getSource(), Collectors.mapping(it -> it.getAdduct(), Collectors.toList())));
+                adducts.getDetectedAdductsStr().collect(Collectors.groupingBy(
+                        DetectedAdduct::getSource, Collectors.mapping(DetectedAdduct::getAdduct, Collectors.toList())));
 
-        adductsBySource.forEach((s, v) -> dA.put(s, new PossibleAdducts(v.toArray(PrecursorIonType[]::new))));
+        adductsBySource.forEach((s, v) -> dA.put(s, new PossibleAdducts(v.stream().filter(Objects::nonNull).distinct().toArray(PrecursorIonType[]::new))));
         return dA;
     }
 }

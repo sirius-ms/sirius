@@ -28,7 +28,6 @@ import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
-import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.babelms.json.FTJsonWriter;
 import de.unijena.bioinf.chemdb.CompoundCandidate;
 import de.unijena.bioinf.chemdb.FingerprintCandidate;
@@ -73,7 +72,6 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import lombok.SneakyThrows;
-import lombok.val;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.similarity.LongestCommonSubsequence;
 import org.jetbrains.annotations.NotNull;
@@ -824,8 +822,8 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 .charge(features.getCharge());
         if (features.getDetectedAdducts() != null) {
             de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts adducts = features.getDetectedAdducts().clone();
-            adducts.removeBySource(DetectedAdducts.Source.SPECTRAL_LIBRARY_SEARCH);
-            adducts.removeBySource(DetectedAdducts.Source.MS1_PREPROCESSOR); //todo do not remove if detection runs during import.
+            adducts.removeAllWithSource(DetectedAdducts.Source.SPECTRAL_LIBRARY_SEARCH);
+            adducts.removeAllWithSource(DetectedAdducts.Source.MS1_PREPROCESSOR); //todo do not remove if detection runs during import.
             builder.detectedAdducts(adducts.getAllAdducts().stream().map(PrecursorIonType::toString)
                     .collect(Collectors.toSet()));
         } else {
