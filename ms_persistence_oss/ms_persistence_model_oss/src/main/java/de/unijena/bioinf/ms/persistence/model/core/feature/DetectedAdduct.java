@@ -36,6 +36,14 @@ import org.jetbrains.annotations.Nullable;
 @Jacksonized
 @EqualsAndHashCode
 public class DetectedAdduct implements Comparable<DetectedAdduct> {
+    public static de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct empty(@NotNull de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source source) {
+       return new DetectedAdduct(null, Double.NaN, source);
+    }
+
+    public static de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct unambiguous(@NotNull de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source source, @NotNull PrecursorIonType precursorIonType) {
+        return new DetectedAdduct(precursorIonType, 1d, source);
+    }
+
 
     @Nullable
     private final PrecursorIonType adduct;

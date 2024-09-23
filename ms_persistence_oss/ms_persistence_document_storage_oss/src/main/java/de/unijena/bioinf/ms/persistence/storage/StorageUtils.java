@@ -187,7 +187,7 @@ public class StorageUtils {
         List<DetectedAdduct> featureAdducts = new ArrayList<>();
         for (Map.Entry<de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source, PossibleAdducts> adductsEntry : adducts.entrySet()) {
             if (adductsEntry.getValue() == null || adductsEntry.getValue().isEmpty()){
-                featureAdducts.add(DetectedAdduct.builder().source(adductsEntry.getKey()).build());
+                featureAdducts.add(DetectedAdduct.empty(adductsEntry.getKey()));
             }else {
                 adductsEntry.getValue().forEach(precursorIonType ->
                         featureAdducts.add(DetectedAdduct.builder().adduct(precursorIonType).source(adductsEntry.getKey()).build()));

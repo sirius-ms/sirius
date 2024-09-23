@@ -45,13 +45,13 @@ public class DetectedAdducts implements Cloneable {
 
     public static DetectedAdducts singleton(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source source, PrecursorIonType ionType) {
         DetectedAdducts det = new DetectedAdducts();
-        det.addAll(new DetectedAdduct(ionType, 1d, source));
+        det.addAll(DetectedAdduct.unambiguous(source, ionType));
         return det;
     }
 
     public static DetectedAdducts emptySingleton(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source source) {
         DetectedAdducts det = new DetectedAdducts();
-        det.addAll(new DetectedAdduct(null, Double.NaN, source));
+        det.addAll(DetectedAdduct.empty(source));
         return det;
     }
 
