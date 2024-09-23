@@ -182,12 +182,19 @@ public class StorageUtils {
     public static DetectedAdducts fromMs2ExpAnnotation(@Nullable de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts adducts) {
         if (adducts == null)
             return null;
-        List<DetectedAdduct> featureAdducts = adducts.entrySet().stream().flatMap(e -> e.getValue().getAdducts().stream()
-                        .map(p -> DetectedAdduct.builder().adduct(p).source(e.getKey()).build()))
-                .toList();
 
+        //add empty
+        List<DetectedAdduct> featureAdducts = new ArrayList<>();
+        for (Map.Entry<de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source, PossibleAdducts> adductsEntry : adducts.entrySet()) {
+            if (adductsEntry.getValue() == null || adductsEntry.getValue().isEmpty()){
+                featureAdducts.add(DetectedAdduct.builder().source(adductsEntry.getKey()).build());
+            }else {
+                adductsEntry.getValue().forEach(precursorIonType ->
+                        featureAdducts.add(DetectedAdduct.builder().adduct(precursorIonType).source(adductsEntry.getKey()).build()));
+            }
+        }
         DetectedAdducts featureDetectedAdducts = new DetectedAdducts();
-        featureDetectedAdducts.add(featureAdducts);
+        featureDetectedAdducts.addAll(featureAdducts);
         return featureDetectedAdducts;
     }
 

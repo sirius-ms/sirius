@@ -242,7 +242,7 @@ public class AdductNetwork {
                 detectedAdducts = new DetectedAdducts();
                 feature.setDetectedAdducts(detectedAdducts);
             }
-            detectedAdducts.add(pas);
+            detectedAdducts.addAll(pas);
         }
     }
 
@@ -330,7 +330,7 @@ public class AdductNetwork {
         if (compound.size()==1) {
             // damned, have to look closer into that. But if a compound cannot be resolved properly, then
             // adduct detection is likely wrong
-            compound.get(0).features.getDetectedAdducts().add(
+            compound.get(0).features.getDetectedAdducts().addAll(
                     DetectedAdduct.builder()
                             .adduct(PrecursorIonType.unknown(compound.get(0).getFeature().getCharge()))
                             .score(0.5d).source(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN)
