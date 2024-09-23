@@ -364,7 +364,7 @@ public class NoSQLInstance implements Instance {
         for (Map.Entry<DetectedAdducts.Source, Iterable<PrecursorIonType>> e : adductsBySource.entrySet()) {
             //add placeholder adduct for empty source
             if (e.getValue() == null || !e.getValue().iterator().hasNext()){
-                DetectedAdduct adductToAdd = DetectedAdduct.builder().source(e.getKey()).build();
+                DetectedAdduct adductToAdd = DetectedAdduct.empty(e.getKey());
                 if (overrideExisting || !adducts.contains(adductToAdd))
                     adductsToAdd.add(adductToAdd);
             }else { //add adducts for non-empty source
