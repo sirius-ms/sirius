@@ -297,7 +297,7 @@ public class SiriusProjectDatabaseImplTest {
             AlignedFeatures feature = db.getStorage().findAllStr(AlignedFeatures.class).findFirst().orElseThrow();
             assertNull(feature.getDetectedAdducts());
 
-            DetectedAdducts adducts = new DetectedAdducts().add(
+            DetectedAdducts adducts = new DetectedAdducts().addAll(
                     DetectedAdduct.builder().adduct(PrecursorIonType.fromString("[M+H]+")).score(.6)
                             .source(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.MS1_PREPROCESSOR).build(),
                     DetectedAdduct.builder().adduct(PrecursorIonType.fromString("[M-H20+H]+")).score(.3)
