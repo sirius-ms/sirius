@@ -45,13 +45,13 @@ public class DetectedAdducts implements Cloneable {
 
     public static DetectedAdducts singleton(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source source, PrecursorIonType ionType) {
         DetectedAdducts det = new DetectedAdducts();
-        det.add(new DetectedAdduct(ionType, 1d, source));
+        det.addAll(new DetectedAdduct(ionType, 1d, source));
         return det;
     }
 
     public static DetectedAdducts emptySingleton(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source source) {
         DetectedAdducts det = new DetectedAdducts();
-        det.add(new DetectedAdduct(null, Double.NaN, source));
+        det.addAll(new DetectedAdduct(null, Double.NaN, source));
         return det;
     }
 
@@ -66,15 +66,15 @@ public class DetectedAdducts implements Cloneable {
     }
 
     public DetectedAdducts addEmptySource(@NotNull de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source source) {
-        add(new DetectedAdduct(null, Double.NaN, source));
+        addAll(new DetectedAdduct(null, Double.NaN, source));
         return this;
     }
 
-    public DetectedAdducts add(DetectedAdduct... detectedAdducts) {
-        return add(Arrays.asList(detectedAdducts));
+    public DetectedAdducts addAll(DetectedAdduct... detectedAdducts) {
+        return addAll(Arrays.asList(detectedAdducts));
     }
 
-    public DetectedAdducts add(Collection<DetectedAdduct> detectedAdducts) {
+    public DetectedAdducts addAll(Collection<DetectedAdduct> detectedAdducts) {
         this.detectedAdducts.addAll(detectedAdducts);
         return this;
     }
@@ -163,7 +163,7 @@ public class DetectedAdducts implements Cloneable {
     @JsonInclude //setter just for deserialization
     private void setDetectedAdductsList(List<DetectedAdduct> detectedAdductsList) {
         this.detectedAdducts.clear();
-        add(detectedAdductsList);
+        addAll(detectedAdductsList);
     }
 
     @SneakyThrows
@@ -171,7 +171,11 @@ public class DetectedAdducts implements Cloneable {
     @Override
     public DetectedAdducts clone() {
         DetectedAdducts clone = (DetectedAdducts) super.clone();
-        detectedAdducts.forEach(clone::add);
+        clone.addAll(detectedAdducts);
         return clone;
+    }
+
+    public boolean contains(DetectedAdduct adduct) {
+        return detectedAdducts.contains(adduct);
     }
 }
