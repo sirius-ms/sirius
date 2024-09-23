@@ -19,6 +19,7 @@
 
 package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.fingerid.ConfidenceScore;
 import de.unijena.bioinf.fingerid.ConfidenceScoreApproximate;
@@ -28,7 +29,6 @@ import de.unijena.bioinf.ms.gui.configs.Fonts;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeature;
 import de.unijena.bioinf.ms.nightsky.sdk.model.DataQuality;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
@@ -38,10 +38,38 @@ import java.awt.*;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
-import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CompoundCellRenderer extends JLabel implements ListCellRenderer<InstanceBean> {
+    public static final String TOOLTIP_TEMPLATE =
+            "<html>" +
+                    "<h3><span style=\"text-decoration: underline;\">%s</span></h3>"+
+                    "<table>" +
+                    "<tbody>" +
+                    "<tr>" +
+                    "<td><strong>Feature quality</strong></td>" +
+                    "<td>%s</td>" +
+                    "</tr>" +
+                    "<tr>" +
+                    "<td><strong>Detected adducts</strong></td>" +
+                    "<td>%s</td>" +
+                    "</tr>" +
+                    "<tr>" +
+                    "<td><strong>Precursor mass</strong></td>" +
+                    "<td>%s</td>" + // Placeholder for precursor mass
+                    "</tr>" +
+                    "<tr>" +
+                    "<td><strong>Retention time</strong></td>" +
+                    "<td>%s</td>" + // Placeholder for retention time
+                    "</tr>" +
+                    "<tr>" +
+                    "<td><strong>%s</strong></td>" +
+                    "<td>%s</td>" + // Placeholder for confidence score
+                    "</tr>" +
+                    "</tbody>" +
+                    "</table>" +
+                    "</html>";
 
     private final SiriusGui gui;
     private InstanceBean ec;
@@ -89,8 +117,16 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
             this.foreColor = this.activatedForeground;
         }
 
-        this.setToolTipText(ec.getGUIName());
-
+        // Use String.format to replace placeholders with actual values
+        this.setToolTipText(String.format(TOOLTIP_TEMPLATE,
+                ec.getGUIName(),
+                ec.getQuality() != null ? ec.getQuality().name() : "",
+                ec.getDetectedAdductsOrUnknown().stream().sorted().map(PrecursorIonType::toString).collect(Collectors.joining(", ")),
+                ec.getIonMass() > 0 ? numberFormat.format(ec.getIonMass()) + " Da" : "",
+                ec.getRT().map(RetentionTime::getRetentionTimeInSeconds).map(s -> s / 60).map(numberFormat::format).map(i -> i + " min").orElse(""),
+                gui.getProperties().isConfidenceViewMode(ConfidenceDisplayMode.APPROXIMATE) ? "Confidence Approximate" : "Confidence Exact",
+                ec.getConfidenceScore(gui.getProperties().getConfidenceDisplayMode()).map(confScore -> confScore < 0 || Double.isNaN(confScore) ? ConfidenceScore.NA() : BigDecimal.valueOf(confScore).setScale(3, RoundingMode.HALF_UP).toString()).orElse(""))
+        );
         return this;
     }
 
@@ -136,7 +172,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
 
         if (trigger) g2.setPaint(p);
 
-        String ionizationProp = "Ionization";
+        String ionizationProp = "Det. adducts";
         String focMassProp = "Precursor";
         String rtProp = "RT";
         String confProp = gui.getProperties().isConfidenceViewMode(ConfidenceDisplayMode.APPROXIMATE)
@@ -156,11 +192,11 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
                 propertyFm.stringWidth(confProp)
         ).max(Integer::compareTo).get() + 15;
 
-        String ionValue = ec.getIonType().toString();
+        String ionValue = ec.getDetectedAdductsOrUnknown().stream().sorted().map(PrecursorIonType::toString).collect(Collectors.joining(", "));
         double focD = ec.getIonMass();
-        String focMass = focD > 0 ? numberFormat.format(focD) + " Da" : "unknown";
+        String focMass = focD > 0 ? numberFormat.format(focD) + " Da" : "";
         String rtValue = ec.getRT().map(RetentionTime::getRetentionTimeInSeconds).map(s -> s / 60)
-                .map(numberFormat::format).map(i -> i + " min").orElse("N/A");
+                .map(numberFormat::format).map(i -> i + " min").orElse("");
 
         g2.setFont(valueFont);
         g2.drawString(ionValue, xPos, 32);

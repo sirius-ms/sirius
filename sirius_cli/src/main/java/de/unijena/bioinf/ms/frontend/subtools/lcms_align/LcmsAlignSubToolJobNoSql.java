@@ -230,20 +230,14 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         ProjectSpaceTraceProvider provider = new ProjectSpaceTraceProvider(ps);
         {
             final LongList importedCids = new LongArrayList();
-            AdductNetwork network = new AdductNetwork(provider,
-                    store.findAllStr(AlignedFeatures.class)
+            AlignedFeatures[] alignedFeatures = store.findAllStr(AlignedFeatures.class)
                             .filter(f -> f.getApexIntensity() != null)
                             .filter(AbstractFeature::isRTInterval)
-                            .toArray(AlignedFeatures[]::new),
-                    adductManager, allowedAdductRtDeviation);
+                    .toArray(AlignedFeatures[]::new);
+            AdductNetwork network = new AdductNetwork(provider,alignedFeatures, adductManager, allowedAdductRtDeviation);
             network.buildNetworkFromMassDeltas(SiriusJobs.getGlobalJobManager());
-            network.assign(SiriusJobs.getGlobalJobManager(), new OptimalAssignmentViaBeamSearch(), merged.getPolarity(), (compound) -> {
-                try {
-                    groupFeaturesToCompound(store, compound, importedCids);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            });
+            network.assign(SiriusJobs.getGlobalJobManager(), new OptimalAssignmentViaBeamSearch(), merged.getPolarity(),
+                    (compound) -> groupFeaturesToCompound(store, compound, importedCids));
             importedCompoundIds = importedCids;
         }
 
@@ -330,27 +324,29 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         if (importedCompoundIds != null)
             importedCompoundIds.add(compound.getCompoundId());
 
-        for (CorrelatedIonPair pair : compound.getCorrelatedIonPairs().get()) {
-            ps.insert(pair);
+        if (compound.getCorrelatedIonPairs().isPresent()){
+            for (CorrelatedIonPair pair : compound.getCorrelatedIonPairs().get()) {
+                ps.insert(pair);
+            }
         }
+
         List<AlignedFeatures> adducts = compound.getAdductFeatures().get();
         for (AlignedFeatures f : adducts) {
-            if (f.getCompoundId() == null || f.getCompoundId() != compound.getCompoundId()) {
+            if (f.getCompoundId() == null || f.getCompoundId() != compound.getCompoundId())
                 f.setCompoundId(compound.getCompoundId());
-                ps.upsert(f);
-            }
+            ps.upsert(f);
         }
         final SimpleMutableSpectrum ms1Spectra = new SimpleMutableSpectrum();
         List<MSData> msDataList = new ArrayList<>();
-        for (int f = 0; f < adducts.size(); ++f) {
-            List<MSData> ms = ps.findStr(Filter.where("alignedFeatureId").eq(adducts.get(f).getAlignedFeatureId()), MSData.class).toList();
+        for (AlignedFeatures adduct : adducts) {
+            List<MSData> ms = ps.findStr(Filter.where("alignedFeatureId").eq(adduct.getAlignedFeatureId()), MSData.class).toList();
             if (!ms.isEmpty()) {
                 MSData m = ms.get(0);
                 msDataList.add(m);
                 if (m.getIsotopePattern() != null) {
                     SimpleSpectrum b = m.getIsotopePattern();
                     for (int i = 0; i < b.size(); ++i) {
-                        ms1Spectra.addPeak(b.getMzAt(i), b.getIntensityAt(i) * adducts.get(f).getApexIntensity());
+                        ms1Spectra.addPeak(b.getMzAt(i), b.getIntensityAt(i) * adduct.getApexIntensity());
                     }
                 }
             }
