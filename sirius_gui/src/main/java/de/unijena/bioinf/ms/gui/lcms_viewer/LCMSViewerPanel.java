@@ -184,23 +184,13 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         }
 
         lcmsWebview.setInstance(spec, order, viewType, currentInstance.getFeatureId());
-        updateInfo();
     }
 
     public void setActiveIndex(int id) {
         if (id != activeIndex) {
             activeIndex = id;
             //lcmsWebview.setSampleIndex(activeIndex);
-            updateInfo();
             invalidate();
         }
-    }
-
-    private void updateInfo() {
-        //todo nightsky: fill with new LCMS data
-        //final Optional<CoelutingTraceSet> trace = activeIndex < currentInfo.length() ? currentInfo.getTracesFor(activeIndex) : Optional.empty();
-//        if (trace.isPresent())
-//            summaryPanel.set(trace.get(), currentInstance.getExperiment());
-//        else summaryPanel.reset();
     }
 }
