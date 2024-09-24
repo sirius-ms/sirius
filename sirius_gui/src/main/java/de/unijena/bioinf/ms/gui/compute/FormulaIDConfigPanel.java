@@ -166,8 +166,14 @@ FormulaIDConfigPanel extends SubToolConfigPanelAdvancedParams<SiriusOptions> {
         }
 
         //configure adduct panel
-        adductList = new JCheckboxListPanel<>(new JCheckBoxList<>(), isBatchDialog() ? "Fallback Adducts" : "Possible Adducts",
-                GuiUtils.formatToolTip("Set expected adduct for data with unknown adduct."));
+        if(isBatchDialog()){
+            adductList = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Fallback Adducts",
+                    GuiUtils.formatToolTip("Select fallback adducts to be used if no adducts could be detected. By default, all adducts detected in this project are selected."));
+        }else {
+            adductList = new JCheckboxListPanel<>(new JCheckBoxList<>(),"Possible Adducts",
+                    GuiUtils.formatToolTip("Select possible adducts to be used for formula identification. By default, the detected adducts of this feature are selected."));
+        }
+
         adductList.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>(PrecursorIonType.fromString("[M + Na]+"), false));
         center.add(adductList);
         parameterBindings.put("AdductSettings.fallback", () -> getSelectedAdducts().toString());
