@@ -44,23 +44,23 @@ import java.util.stream.Stream;
 public class CompoundCellRenderer extends JLabel implements ListCellRenderer<InstanceBean> {
     public static final String TOOLTIP_TEMPLATE =
             "<html>" +
-                    "<h3><span style=\"text-decoration: underline;white-space:nowrap\">%s</span></h3>"+
+                    "<h3><span style=\"text-decoration: underline;white-space:nowrap\">%s</span></h3>" +
                     "<table>" +
                     "<tbody>" +
                     "<tr>" +
-                    "<td><strong>Feature quality</strong></td>" +
+                    "<td><strong>Feature Quality</strong></td>" +
                     "<td>%s</td>" +
                     "</tr>" +
                     "<tr>" +
-                    "<td><strong>Detected adducts</strong></td>" +
+                    "<td><strong>Detected Adduct</strong></td>" +
                     "<td>%s</td>" +
                     "</tr>" +
                     "<tr>" +
-                    "<td><strong>Precursor mass</strong></td>" +
+                    "<td><strong>Precursor Mass</strong></td>" +
                     "<td>%s</td>" + // Placeholder for precursor mass
                     "</tr>" +
                     "<tr>" +
-                    "<td><strong>Retention time</strong></td>" +
+                    "<td><strong>Retention Time</strong></td>" +
                     "<td>%s</td>" + // Placeholder for retention time
                     "</tr>" +
                     "<tr>" +
@@ -121,7 +121,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
         this.setToolTipText(String.format(TOOLTIP_TEMPLATE,
                 ec.getGUIName(),
                 ec.getQuality() != null ? ec.getQuality().name() : "",
-                ec.getDetectedAdductsOrUnknown().stream().sorted().map(PrecursorIonType::toString).collect(Collectors.joining(", ")),
+                ec.getDetectedAdductsOrUnknown().stream().sorted().map(PrecursorIonType::toString).collect(Collectors.joining(" or ")),
                 ec.getIonMass() > 0 ? numberFormat.format(ec.getIonMass()) + " Da" : "",
                 ec.getRT().map(RetentionTime::getRetentionTimeInSeconds).map(s -> s / 60).map(numberFormat::format).map(i -> i + " min").orElse(""),
                 gui.getProperties().isConfidenceViewMode(ConfidenceDisplayMode.APPROXIMATE) ? "Confidence Approximate" : "Confidence Exact",
@@ -149,30 +149,29 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
         g2.setColor(this.foreColor);
 
         final int maxWidth = getWidth() - 2;
-        int compoundLength = compoundFm.stringWidth(ec.getGUIName()) + 4;
-
-        boolean trigger = compoundLength + 2 > maxWidth;
-
-        Paint p = g2.getPaint();
-
-        if (trigger) {
-            g2.setPaint(new GradientPaint(maxWidth - 18, 0, foreColor, maxWidth - 1, 0, backColor));
-        }
-
-        g2.drawLine(2, 17, Math.min(maxWidth - 3, 2 + compoundLength), 17);
+        Paint defaultPaint = g2.getPaint();
+        Paint gradientPaint = new GradientPaint(maxWidth - 18, 0, foreColor, maxWidth - 1, 0, backColor);
 
         g2.setFont(compoundFont);
         DataQuality q = ec.getSourceFeature().getQuality();
+        int compoundLength;
         if (q != null) {
+            compoundLength = compoundFm.stringWidth(ec.getGUIName()) + 13;
+            if (compoundLength + 2 > maxWidth)
+                g2.setPaint(gradientPaint);
             getQualityIcon(q).paintIcon(this, g2, 2, 4);
             g2.drawString(ec.getGUIName(), 13, 13);
         } else {
+            compoundLength = compoundFm.stringWidth(ec.getGUIName()) + 4;
+            if (compoundLength + 2 > maxWidth)
+                g2.setPaint(gradientPaint);
             g2.drawString(ec.getGUIName(), 4, 13);
         }
+        g2.drawLine(2, 17, Math.min(maxWidth - 3, 2 + compoundLength), 17);
 
-        if (trigger) g2.setPaint(p);
+        g2.setPaint(defaultPaint);
 
-        String ionizationProp = "Det. adducts";
+        String ionizationProp = "Det. Adduct";
         String focMassProp = "Precursor";
         String rtProp = "RT";
         String confProp = gui.getProperties().isConfidenceViewMode(ConfidenceDisplayMode.APPROXIMATE)
@@ -192,13 +191,23 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
                 propertyFm.stringWidth(confProp)
         ).max(Integer::compareTo).get() + 15;
 
-        String ionValue = ec.getDetectedAdductsOrUnknown().stream().sorted().map(PrecursorIonType::toString).collect(Collectors.joining(", "));
+
+
+        String ionValue = ec.getDetectedAdductsOrUnknown().stream().sorted().map(PrecursorIonType::toString).collect(Collectors.joining(" or "));
         double focD = ec.getIonMass();
         String focMass = focD > 0 ? numberFormat.format(focD) + " Da" : "";
         String rtValue = ec.getRT().map(RetentionTime::getRetentionTimeInSeconds).map(s -> s / 60)
                 .map(numberFormat::format).map(i -> i + " min").orElse("");
 
+        FontMetrics valueFm = g2.getFontMetrics(this.valueFont);
         g2.setFont(valueFont);
+
+        int maxFontWidth = Stream.of(ionizationProp, focMassProp, rtProp, confProp).mapToInt(valueFm::stringWidth)
+                .map(w -> w + xPos).max().getAsInt();
+
+        if (maxFontWidth + 2 > maxWidth)
+            g2.setPaint(gradientPaint);
+
         g2.drawString(ionValue, xPos, 32);
         g2.drawString(focMass, xPos, 48);
         g2.drawString(rtValue, xPos, 64);
@@ -209,6 +218,7 @@ public class CompoundCellRenderer extends JLabel implements ListCellRenderer<Ins
             g2.drawString(conf, xPos, 80);
         });
 
+        g2.setPaint(defaultPaint);
 
         g2.setFont(statusFont);
         GuiUtils.drawListStatusElement(ec.isComputing(), g2, this);
