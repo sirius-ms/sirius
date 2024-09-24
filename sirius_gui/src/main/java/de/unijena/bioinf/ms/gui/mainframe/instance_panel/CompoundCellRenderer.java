@@ -44,7 +44,7 @@ import java.util.stream.Stream;
 public class CompoundCellRenderer extends JLabel implements ListCellRenderer<InstanceBean> {
     public static final String TOOLTIP_TEMPLATE =
             "<html>" +
-                    "<h3><span style=\"text-decoration: underline;\">%s</span></h3>"+
+                    "<h3><span style=\"text-decoration: underline;white-space:nowrap\">%s</span></h3>"+
                     "<table>" +
                     "<tbody>" +
                     "<tr>" +
