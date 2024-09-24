@@ -517,9 +517,14 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
                 prefix = "[MAIN]";
             }
             String mainLabel;
-            if (f.getDetectedAdducts().getAllAdducts().size() == 1) {
-                mainLabel = prefix + f.getDetectedAdducts().getAllAdducts().get(0).toString();
-            } else mainLabel = prefix + "[M + ?]" + (f.getCharge() > 0 ? "+" : "-");
+            if (f.getDetectedAdducts() == null || f.getDetectedAdducts().getAllAdducts().isEmpty()) {
+                mainLabel = prefix + " " + PrecursorIonType.unknown(f.getCharge());
+            } else {
+                mainLabel = prefix + " " + f.getDetectedAdducts().getAllAdducts().stream().sorted()
+                        .map(PrecursorIonType::toString)
+                        .map(s -> s.replaceAll("\\s+",""))
+                        .collect(Collectors.joining(" | "));
+            }
 
             storage.fetchAllChildren(f, "alignedFeatureId", "isotopicFeatures", AlignedIsotopicFeatures.class);
             allFeatures.add(f);
