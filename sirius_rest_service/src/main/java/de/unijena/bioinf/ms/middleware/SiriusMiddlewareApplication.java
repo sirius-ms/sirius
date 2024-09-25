@@ -56,6 +56,7 @@ import org.springframework.boot.web.context.WebServerInitializedEvent;
 import org.springframework.boot.web.context.WebServerPortFileWriter;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import picocli.CommandLine;
 
@@ -66,6 +67,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Properties;
 
 import static org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO;
@@ -77,6 +79,7 @@ import static org.springframework.data.web.config.EnableSpringDataWebSupport.Pag
 public class SiriusMiddlewareApplication extends SiriusCLIApplication implements CommandLineRunner, DisposableBean {
     private static MiddlewareAppOptions<?> middlewareOpts;
     private static CLIRootOptions rootOptions;
+    private static ConfigurableApplicationContext applicationContext;
 
     private final ApplicationContext appContext;
 
@@ -120,7 +123,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
         //hacky shortcut to print help fast without loading spring!
         if (args.length == 0 || Arrays.stream(args).anyMatch(it ->
                 it.equalsIgnoreCase("-h") || it.equalsIgnoreCase("--help")
-                || it.equalsIgnoreCase("--h") || it.equalsIgnoreCase("-help")
+                        || it.equalsIgnoreCase("--h") || it.equalsIgnoreCase("-help")
         )) {
             try {
                 rootOptions = new CLIRootOptions(new DefaultParameterConfigLoader(), null);
@@ -213,7 +216,7 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
                 app.addListeners(new ApplicationPidFileWriter(Workspace.PID_FILE.toFile()));
                 app.addListeners(new WebServerPortFileWriter(Workspace.PORT_FILE.toFile()));
 
-                app.run(args);
+                applicationContext = app.run(args);
             } catch (Exception e) {
                 e.printStackTrace();
                 System.exit(1);// Zero because this is the help message case
@@ -221,6 +224,23 @@ public class SiriusMiddlewareApplication extends SiriusCLIApplication implements
         } else {
             SiriusCLIApplication.runMain(args, List.of());
         }
+    }
+
+    public synchronized static Optional<Integer> getPort() {
+        if (applicationContext == null)
+            return Optional.empty();
+        return Optional.ofNullable(applicationContext.getEnvironment().getProperty("local.server.port", Integer.class));
+    }
+
+    public synchronized static void startApp(String... args) {
+        if (applicationContext != null)
+            throw new IllegalStateException("Application is already running!");
+        main(args);
+    }
+
+    public synchronized static void shutdownApp() {
+        if (applicationContext != null)
+            applicationContext.close();
     }
 
 
