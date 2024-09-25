@@ -3,15 +3,16 @@ package de.unijena.bioinf.ms.nightsky.sdk.api;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabaseParameters;
 import org.junit.FixMethodOrder;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.runners.MethodSorters;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SearchableDatabasesApiTest {

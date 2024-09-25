@@ -1,11 +1,11 @@
 package de.unijena.bioinf.ms.nightsky.sdk.api;
 
-import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
 import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
+import de.unijena.bioinf.ms.nightsky.sdk.SiriusSDK;
 import de.unijena.bioinf.ms.nightsky.sdk.model.AccountCredentials;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectInfo;
-import io.hypersistence.tsid.TSID;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
@@ -17,7 +17,7 @@ import java.util.UUID;
 @Slf4j
 public class TestSetup {
 
-    private static final TestSetup INSTANCE = new TestSetup();
+    private static TestSetup INSTANCE ;
 
     private final Path projectSourceToOpen;
     private final Path projectSourceCompounds;
@@ -32,6 +32,7 @@ public class TestSetup {
     private final String SIRIUS_ACTIVE_SUB;
     private final NightSkyClient siriusClient;
 
+    @SneakyThrows
     private TestSetup() {
         projectSourceToOpen = getResourceFilePath("/data/test-project-to-open/test-project-open.sirius");
         projectSourceCompounds = getResourceFilePath("/data/test-project_compounds/test-project-compounds.sirius");
@@ -40,7 +41,7 @@ public class TestSetup {
         dbImportStructures = getResourceFilePath("/data/custom-db-sirius-demo-structures.tsv");
         dbImportSpectrum = getResourceFilePath("/data/SM801101.txt");
         dataDir = getResourceFilePath("/data/");
-        tempDir = Path.of(System.getProperty("java.io.tmpdir")).resolve("nightsky-test-" + TSID.fast());
+        tempDir = Path.of(System.getProperty("java.io.tmpdir")).resolve("nightsky-test-" + UUID.randomUUID());
 
         SIRIUS_USER_ENV = System.getenv("SIRIUS_USER");
         SIRIUS_PW_ENV = System.getenv("SIRIUS_PW");
@@ -53,14 +54,13 @@ public class TestSetup {
                 throw new RuntimeException("Failed to create temp directory", e);
             }
         }
-
-        SiriusMiddlewareApplication.startApp("rest","-s");
-        siriusClient = new NightSkyClient(SiriusMiddlewareApplication.getPort().orElseThrow());
-        loginIfNeeded();
+        // use content dir of current module to navigate relatively to the bootjar location. Since the working directory is not always the same.
+        Path bootJar = dataDir.getParent().getParent().getParent().getParent().getParent().getParent().resolve("sirius_rest_service/build/libs/sirius_rest_service-6.0.6-SNAPSHOT-boot.jar");
+        siriusClient = SiriusSDK.startAndConnectLocally(SiriusSDK.ShutdownMode.AUTO, true, bootJar);
     }
 
     public void destroy(){
-        SiriusMiddlewareApplication.shutdownApp();
+        siriusClient.close();
     }
 
     private Path getResourceFilePath(String resourcePath) {
@@ -71,8 +71,9 @@ public class TestSetup {
         }
     }
 
-
     public static TestSetup getInstance() {
+        if (INSTANCE == null)
+            INSTANCE = new TestSetup();
         return INSTANCE;
     }
 

@@ -7,11 +7,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeoutException;
 
 import static de.unijena.bioinf.ms.nightsky.sdk.SiriusSDKUtils.SIRIUS_PID_FILE;
 import static de.unijena.bioinf.ms.nightsky.sdk.SiriusSDKUtils.SIRIUS_PORT_FILE;
+import static de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient.*;
 import static java.lang.Thread.sleep;
 
 @Slf4j
@@ -99,16 +101,19 @@ public final class SiriusSDK extends NightSkyClient {
     }
 
 
-
-    public static SiriusSDK startAndConnectLocally() throws Exception {
+    public synchronized static SiriusSDK startAndConnectLocally() throws Exception {
         return startAndConnectLocally(true);
     }
 
-    public static SiriusSDK startAndConnectLocally(boolean redirectSiriusOutput) throws Exception {
+    public synchronized static SiriusSDK startAndConnectLocally(boolean redirectSiriusOutput) throws Exception {
         return startAndConnectLocally(ShutdownMode.AUTO, redirectSiriusOutput);
     }
 
-    public static SiriusSDK startAndConnectLocally(ShutdownMode shutDownMode, boolean redirectSiriusOutput) throws Exception {
+    public synchronized static SiriusSDK startAndConnectLocally(ShutdownMode shutDownMode, boolean redirectSiriusOutput) throws Exception {
+        return startAndConnectLocally(shutDownMode, redirectSiriusOutput, null);
+    }
+
+    public synchronized static SiriusSDK startAndConnectLocally(ShutdownMode shutDownMode, boolean redirectSiriusOutput, @Nullable Path executable) throws Exception {
 
         //try to find and connect to running SIRIUS
         {
@@ -131,7 +136,11 @@ public final class SiriusSDK extends NightSkyClient {
             if (Files.exists(SIRIUS_PORT_FILE)) {
                 try {
                     int port = Integer.parseInt(Files.readAllLines(SIRIUS_PORT_FILE).getFirst());
-                    ApiClient apiClient = new ApiClient();
+                    ApiClient apiClient = new ApiClient(buildWebClientBuilder(createDefaultObjectMapper(createDefaultDateFormat()))
+                            .codecs(codecs -> codecs
+                                    .defaultCodecs()
+                                    .maxInMemorySize(100 * 1024 * 1024))
+                            .build());
                     apiClient.setBasePath("http://localhost:" + port + "/");
 
                     if (SiriusSDKUtils.restHealthCheck(apiClient)) {
@@ -152,7 +161,7 @@ public final class SiriusSDK extends NightSkyClient {
         Process process = null;
         for (int tries = 1; tries < 4; tries++) {
             try {
-                process = SiriusSDKUtils.startSirius();
+                process = SiriusSDKUtils.startSirius(null, executable);
                 if (!Files.exists(SIRIUS_PORT_FILE)) {
                     log.info("Awaiting SIRIUS API to be ready...");
                     long start = System.currentTimeMillis();

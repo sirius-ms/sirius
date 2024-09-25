@@ -4,13 +4,15 @@ import de.unijena.bioinf.ms.nightsky.sdk.model.AccountCredentials;
 import de.unijena.bioinf.ms.nightsky.sdk.model.AccountInfo;
 import de.unijena.bioinf.ms.nightsky.sdk.model.Subscription;
 import org.junit.FixMethodOrder;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.runners.MethodSorters;
 
-import static org.junit.jupiter.api.Assertions.*;
 import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class LoginAndAccountApiTest {
@@ -92,11 +94,16 @@ public class LoginAndAccountApiTest {
             TestSetup.getInstance().loginIfNeeded();
 
             assertTrue(instance.isLoggedIn());
+            AccountInfo response = instance.getAccountInfo(true);
+            System.out.println("Subscription before: " + response.getActiveSubscriptionId());
 
             String sid = TestSetup.getInstance().getSIRIUS_ACTIVE_SUB();
+            System.out.println("Subscription to change to: " + sid);
             instance.selectSubscription(sid);
 
-            AccountInfo response = instance.getAccountInfo(true);
+            response = instance.getAccountInfo(true);
+            System.out.println("Subscription after: " + response.getActiveSubscriptionId());
+
             assertEquals(sid, response.getActiveSubscriptionId());
     }
 }

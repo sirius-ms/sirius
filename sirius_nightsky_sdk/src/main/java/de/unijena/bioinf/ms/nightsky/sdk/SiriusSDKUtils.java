@@ -1,14 +1,19 @@
 package de.unijena.bioinf.ms.nightsky.sdk;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ms.nightsky.sdk.api.ActuatorApi;
 import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.Nullable;
+import org.springframework.http.ResponseEntity;
 
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -22,13 +27,22 @@ public class SiriusSDKUtils {
     public static Process startSirius() throws Exception {
         return startSirius(null);
     }
-    public static Process startSirius(@Nullable String configDir) throws Exception {
-        String siriusExe = findSiriusExecutable();
-        String configPara = (configDir != null) ? "--workspace " + configDir : "";
-        ProcessBuilder processBuilder = new ProcessBuilder(siriusExe, configPara, "--noCite", "rest", "-s");
 
-//        processBuilder.redirectErrorStream(true); // Combine stdout and stderr
-//        processBuilder.redirectOutput(ProcessBuilder.Redirect.PIPE); // Redirect stdout
+    public static Process startSirius(@Nullable String configDir) throws Exception {
+        return startSirius(configDir, null);
+    }
+
+    public static Process startSirius(@Nullable String configDir, @Nullable Path executable) throws Exception {
+        List<String> command = new ArrayList<>();
+        command.add(executable != null ? executable.toAbsolutePath().toString() : findSiriusExecutable());
+        if (configDir != null) {
+            command.add("--workspace");
+            command.add(configDir);
+        }
+        command.add("--noCite");
+        command.add("rest");
+        command.add("-s");
+        ProcessBuilder processBuilder = new ProcessBuilder(command.toArray(String[]::new));
 
         Process process = processBuilder.start();
 
@@ -125,8 +139,12 @@ public class SiriusSDKUtils {
 
     public static boolean restHealthCheck(ActuatorApi api) {
         try {
-            api.health();
-            return true;
+            ResponseEntity<String> resp = api.healthWithHttpInfo();
+            if (!resp.getStatusCode().is2xxSuccessful())
+                return false;
+            // Calling the health API and checking response status
+            JsonNode response = new ObjectMapper().readTree(resp.getBody());
+            return "UP".equalsIgnoreCase(response.get("status").asText());
         } catch (Exception e) {
             log.error("Cannot connect to SIRIUS background service on '{}'. Cause: {}", api.getApiClient().getBasePath(), e.getMessage());
             return false;
