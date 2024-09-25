@@ -2,10 +2,11 @@ package de.unijena.bioinf.ms.nightsky.sdk.api;
 
 import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
 import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.model.AccountCredentials;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectInfo;
 import io.hypersistence.tsid.TSID;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,6 +14,7 @@ import java.nio.file.*;
 import java.util.UUID;
 
 @Getter
+@Slf4j
 public class TestSetup {
 
     private static final TestSetup INSTANCE = new TestSetup();
@@ -54,6 +56,7 @@ public class TestSetup {
 
         SiriusMiddlewareApplication.startApp("rest","-s");
         siriusClient = new NightSkyClient(SiriusMiddlewareApplication.getPort().orElseThrow());
+        loginIfNeeded();
     }
 
     public void destroy(){
@@ -146,6 +149,22 @@ public class TestSetup {
                     Files.copy(entry, targetPath, StandardCopyOption.REPLACE_EXISTING);
                 }
             }
+        }
+    }
+
+    public void loginIfNeeded(){
+        try {
+            if (!siriusClient.account().isLoggedIn()) {
+                siriusClient.account().login(
+                        true,
+                        new AccountCredentials()
+                                .username(TestSetup.getInstance().getSIRIUS_USER_ENV())
+                                .password(TestSetup.getInstance().getSIRIUS_PW_ENV()),
+                        true, null
+                );
+            }
+        } catch (Exception e) {
+            log.error("Error while logging in. Some tests might fail as subsequent error.", e);
         }
     }
 }

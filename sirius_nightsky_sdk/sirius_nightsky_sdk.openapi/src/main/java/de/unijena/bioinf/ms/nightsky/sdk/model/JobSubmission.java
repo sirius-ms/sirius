@@ -96,7 +96,7 @@ public class JobSubmission {
   private MsNovelist msNovelistParams;
 
   public static final String JSON_PROPERTY_CONFIG_MAP = "configMap";
-  private Map<String, String> configMap = new HashMap<>();
+  private Map<String, String> configMap;
 
   public JobSubmission() {
   }
@@ -486,7 +486,7 @@ public class JobSubmission {
   **/
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_CONFIG_MAP)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(content = JsonInclude.Include.ALWAYS, value = JsonInclude.Include.USE_DEFAULTS)
 
   public Map<String, String> getConfigMap() {
     return configMap;
@@ -494,7 +494,7 @@ public class JobSubmission {
 
 
   @JsonProperty(JSON_PROPERTY_CONFIG_MAP)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(content = JsonInclude.Include.ALWAYS, value = JsonInclude.Include.USE_DEFAULTS)
   public void setConfigMap(Map<String, String> configMap) {
     this.configMap = configMap;
   }

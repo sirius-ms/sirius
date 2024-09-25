@@ -119,6 +119,13 @@ public class NightSkyClient implements AutoCloseable {
         return job;
     }
 
+    public Job awaitJob(String pid, String jobId) throws InterruptedException {
+        return awaitJob(pid, jobId, null);
+    }
+    public Job awaitJob(String pid, String jobId, @Nullable Integer timeoutInSec) throws InterruptedException {
+        return awaitJob(pid, jobId, 2, timeoutInSec, true,true, null);
+    }
+
     public Job awaitJob(String pid, String jobId, int waitTimeInSec, Integer timeoutInSec,
                         boolean includeCommand, boolean includeAffectedIds, InterruptionCheck interruptionCheck) throws InterruptedException {
         //todo use sse if available
@@ -136,7 +143,7 @@ public class NightSkyClient implements AutoCloseable {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            jobUpdate = jobs.getJob(pid, jobUpdate.getId(), List.of(NONE));
+            jobUpdate = jobs.getJob(pid, jobUpdate.getId(), List.of(PROGRESS));
 
             if (interruptionCheck != null)
                 interruptionCheck.check();

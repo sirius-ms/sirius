@@ -2,12 +2,14 @@ package de.unijena.bioinf.ms.nightsky.sdk.api;
 
 import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeature;
 import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectInfo;
+import org.junit.FixMethodOrder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.runners.MethodSorters;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.io.File;
@@ -20,6 +22,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.*;
 
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class ProjectsApiTest {
 
     private ProjectsApi instance;
@@ -28,6 +31,7 @@ public class ProjectsApiTest {
 
     @BeforeEach
     public void setUp() {
+        TestSetup.getInstance().loginIfNeeded();
         instance = TestSetup.getInstance().getSiriusClient().projects();
         featureApiInstance = TestSetup.getInstance().getSiriusClient().features();
         try {

@@ -28,7 +28,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * Identifier created by the SIRIUS Nightsky API for a newly created Job.  Object can be enriched with Job status/progress information ({@link JobProgress JobProgress}) and/or Job command information.
+ * Identifier created by the SIRIUS Nightsky API for a newly created Job.  Object can be enriched with Job status/progress information ({@link JobProgress JobProgress}) and/or Job command information.  This is a return value of the API. So nullable values can also be NOT_REQUIRED to allow for easy removal.
  */
 @JsonPropertyOrder({
   Job.JSON_PROPERTY_ID,
@@ -49,10 +49,10 @@ public class Job {
   private JobProgress progress;
 
   public static final String JSON_PROPERTY_AFFECTED_COMPOUND_IDS = "affectedCompoundIds";
-  private List<String> affectedCompoundIds = new ArrayList<>();
+  private List<String> affectedCompoundIds;
 
   public static final String JSON_PROPERTY_AFFECTED_ALIGNED_FEATURE_IDS = "affectedAlignedFeatureIds";
-  private List<String> affectedAlignedFeatureIds = new ArrayList<>();
+  private List<String> affectedAlignedFeatureIds;
 
   public Job() {
   }
