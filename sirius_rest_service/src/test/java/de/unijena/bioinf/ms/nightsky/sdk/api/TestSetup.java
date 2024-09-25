@@ -1,0 +1,151 @@
+package de.unijena.bioinf.ms.nightsky.sdk.api;
+
+import de.unijena.bioinf.ms.middleware.SiriusMiddlewareApplication;
+import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
+import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectInfo;
+import io.hypersistence.tsid.TSID;
+import lombok.Getter;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.UUID;
+
+@Getter
+public class TestSetup {
+
+    private static final TestSetup INSTANCE = new TestSetup();
+
+    private final Path projectSourceToOpen;
+    private final Path projectSourceCompounds;
+    private final Path projectSourceResults;
+    private final Path searchableCustomDB;
+    private final Path dbImportStructures;
+    private final Path dbImportSpectrum;
+    private final Path tempDir;
+    private final Path dataDir;
+    private final String SIRIUS_USER_ENV;
+    private final String SIRIUS_PW_ENV;
+    private final String SIRIUS_ACTIVE_SUB;
+    private final NightSkyClient siriusClient;
+
+    private TestSetup() {
+        projectSourceToOpen = getResourceFilePath("/data/test-project-to-open/test-project-open.sirius");
+        projectSourceCompounds = getResourceFilePath("/data/test-project_compounds/test-project-compounds.sirius");
+        projectSourceResults = getResourceFilePath("/data/test-project-results/test-project-results.sirius");
+        searchableCustomDB = getResourceFilePath("/data/test-searchable-database/customDbID.siriusdb");
+        dbImportStructures = getResourceFilePath("/data/custom-db-sirius-demo-structures.tsv");
+        dbImportSpectrum = getResourceFilePath("/data/SM801101.txt");
+        dataDir = getResourceFilePath("/data/");
+        tempDir = Path.of(System.getProperty("java.io.tmpdir")).resolve("nightsky-test-" + TSID.fast());
+
+        SIRIUS_USER_ENV = System.getenv("SIRIUS_USER");
+        SIRIUS_PW_ENV = System.getenv("SIRIUS_PW");
+        SIRIUS_ACTIVE_SUB = System.getenv("SIRIUS_SUB");
+
+        if (!Files.exists(tempDir)) {
+            try {
+                Files.createDirectories(tempDir);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to create temp directory", e);
+            }
+        }
+
+        SiriusMiddlewareApplication.startApp("rest","-s");
+        siriusClient = new NightSkyClient(SiriusMiddlewareApplication.getPort().orElseThrow());
+    }
+
+    public void destroy(){
+        SiriusMiddlewareApplication.shutdownApp();
+    }
+
+    private Path getResourceFilePath(String resourcePath) {
+        try {
+            return Paths.get(getClass().getResource(resourcePath).toURI());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to load resource: " + resourcePath, e);
+        }
+    }
+
+
+    public static TestSetup getInstance() {
+        return INSTANCE;
+    }
+
+    public ProjectInfo createTestProject(String projectSuffix, Path sourceProject) throws IOException {
+        String uid = UUID.randomUUID().toString();
+        String name = "test-project-" + uid;
+
+        if (projectSuffix != null) {
+            name += "-" + projectSuffix + ".sirius";
+        }
+
+        Path path = tempDir.resolve(name);
+
+        if (sourceProject != null) {
+            copySiriusProject(sourceProject, path);
+            return siriusClient.projects().openProjectSpace(uid, path.toAbsolutePath().toString(), null);
+        } else {
+            return siriusClient.projects().createProjectSpace(uid, path.toAbsolutePath().toString(), null);
+        }
+    }
+
+    public void deleteTestProject(ProjectInfo projectSpace) {
+        try {
+            siriusClient.projects().closeProjectSpace(projectSpace.getProjectId());
+            Files.deleteIfExists(Paths.get(projectSpace.getLocation()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void deleteTestSearchableDatabase(String databaseId, String location) {
+        siriusClient.databases().removeDatabase(databaseId, true);
+    }
+
+    public void deleteDirectory(File dir) {
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    deleteDirectory(file);
+                } else {
+                    file.delete();
+                }
+            }
+        }
+        dir.delete();
+    }
+
+    public Path copyToTempDirectory(Path sourceDir, Path destinationDir, boolean recursive) throws IOException {
+        Path tempDirectory = tempDir.resolve(UUID.randomUUID().toString());
+        copyDirectory(sourceDir, tempDirectory, true);
+        return tempDirectory;
+    }
+
+    public void copySiriusProject(Path sourcePath, Path destinationPath) throws IOException {
+        Files.copy(sourcePath, destinationPath, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    public void copyDirectory(Path src, Path dest, boolean recursive) throws IOException {
+               if (!Files.exists(src)) {
+            throw new IOException("Source directory not found: " + src);
+        }
+
+        Files.createDirectories(dest);
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(src)) {
+            for (Path entry : stream) {
+                Path targetPath = dest.resolve(src.relativize(entry));
+                if (Files.isDirectory(entry)) {
+                    if (recursive) {
+                        copyDirectory(entry, targetPath, true);
+                    }
+                } else {
+                    Files.copy(entry, targetPath, StandardCopyOption.REPLACE_EXISTING);
+                }
+            }
+        }
+    }
+}
