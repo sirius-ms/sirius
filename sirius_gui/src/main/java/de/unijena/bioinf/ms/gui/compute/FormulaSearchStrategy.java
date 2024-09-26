@@ -100,6 +100,7 @@ public class FormulaSearchStrategy extends ConfigPanel {
     protected final FormulaIDConfigPanel formulaIDConfigPanel;
 
     protected DBSelectionListPanel searchDBList;
+    protected JComboBox<ElementAlphabetStrategy> defaultStrategyElementFilterSelector;
 
     /**
      * Map of strategy-specific UI components for showing/hiding when changing the strategy
@@ -349,21 +350,16 @@ public class FormulaSearchStrategy extends ConfigPanel {
     }
 
     private void addDefaultStrategyElementFilterSettings(TwoColumnPanel filterFields) {
-        JComboBox<ElementAlphabetStrategy> elementAlphabetStrategySelector = new JComboBox<>(); //todo NewWorflow: implement this feature in sirius-libs
+        defaultStrategyElementFilterSelector = new JComboBox<>(); //todo NewWorflow: implement this feature in sirius-libs
         List<ElementAlphabetStrategy> settingsElements = List.copyOf(EnumSet.allOf(ElementAlphabetStrategy.class));
-        settingsElements.forEach(elementAlphabetStrategySelector::addItem);
-        elementAlphabetStrategySelector.setSelectedItem(ElementAlphabetStrategy.DE_NOVO_ONLY);
-        addStrategyChangeListener(strategy -> {
-            if (strategy == Strategy.DEFAULT) {
-                parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToBottomUp", () -> Boolean.toString(elementAlphabetStrategySelector.getSelectedItem() == ElementAlphabetStrategy.BOTH)); //only set for correct strategy, since bottom up is part of multiple strategies
-            }
-        });
+        settingsElements.forEach(defaultStrategyElementFilterSelector::addItem);
+        defaultStrategyElementFilterSelector.setSelectedItem(ElementAlphabetStrategy.DE_NOVO_ONLY);
 
         JLabel label = new JLabel("Apply element filter to");
-        filterFields.add(label, elementAlphabetStrategySelector);
+        filterFields.add(label, defaultStrategyElementFilterSelector);
 
         strategyComponents.get(Strategy.DEFAULT).add(label);
-        strategyComponents.get(Strategy.DEFAULT).add(elementAlphabetStrategySelector);
+        strategyComponents.get(Strategy.DEFAULT).add(defaultStrategyElementFilterSelector);
     }
 
     private void addElementFilterEnabledCheckboxForStrategy(TwoColumnPanel filterFields, List<Component> filterComponents, Strategy s, int columnWidth, int sidePanelWidth) {
@@ -379,12 +375,14 @@ public class FormulaSearchStrategy extends ConfigPanel {
             }
         };
 
-        parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates", () -> Boolean.toString(useElementFilter.isSelected()));
-        addStrategyChangeListener(strategy -> {
-            if (strategy == Strategy.BOTTOM_UP) {
-                parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToBottomUp", () -> Boolean.toString(useElementFilter.isSelected())); //only set for correct strategy, since bottom up is part of multiple strategies
-            }
-        });
+        if (s == Strategy.DATABASE) {
+            parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates", () -> Boolean.toString(strategy == Strategy.DATABASE && useElementFilter.isSelected()));
+        }
+        if (s == Strategy.BOTTOM_UP) {
+            parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToBottomUp", () -> Boolean.toString(
+                    strategy == Strategy.BOTTOM_UP && useElementFilter.isSelected()
+                    || strategy == Strategy.DEFAULT && defaultStrategyElementFilterSelector.getSelectedItem() == ElementAlphabetStrategy.BOTH));
+        }
 
         JLabel label = new JLabel("Enable element filter");
 
