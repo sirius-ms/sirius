@@ -54,7 +54,7 @@ public final class SiriusGuiFactory {
         if (nightSkyClient == null) {
             synchronized (this) {
                 if (nightSkyClient == null)
-                    nightSkyClient = new NightSkyClient();
+                    nightSkyClient = new NightSkyClient(8080); //try 8080 as default
             }
         }
         nightSkyClient.enableEventListening(EnumSet.allOf(DataEventType.class));
