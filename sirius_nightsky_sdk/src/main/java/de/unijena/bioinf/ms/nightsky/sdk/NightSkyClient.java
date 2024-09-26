@@ -30,6 +30,9 @@ import de.unijena.bioinf.sse.DataEventType;
 import de.unijena.bioinf.sse.DataObjectEvent;
 import de.unijena.bioinf.sse.FluxToFlowBroadcast;
 import de.unijena.bioinf.sse.PropertyChangeSubscriber;
+import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
@@ -55,6 +58,7 @@ import static de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField.*;
 
 public class NightSkyClient implements AutoCloseable {
     private static final Logger LOG = LoggerFactory.getLogger(NightSkyClient.class);
+    @Getter
     protected final ApiClient apiClient;
     protected final String basePath;
 
@@ -81,20 +85,14 @@ public class NightSkyClient implements AutoCloseable {
     private Disposable sseConnection;
     private FluxToFlowBroadcast sseBroadcast;
 
-
-    public NightSkyClient() {
-        this(null);
-    }
-
-    public NightSkyClient(ExecutorService asyncCallsExecutor) {
-        this(8080, "http://localhost", asyncCallsExecutor);
-    }
-
     public NightSkyClient(int port) {
         this(port, "http://localhost", null);
     }
     public NightSkyClient(int port, String baseUrl, ExecutorService asyncExecutor) {
-        this.basePath = baseUrl + ":" + port;
+        this(baseUrl + ":" + port, asyncExecutor);
+    }
+    public NightSkyClient(@NotNull String basePath, @Nullable ExecutorService asyncExecutor) {
+        this.basePath = basePath;
         this.asyncExecutor = asyncExecutor;
         apiClient = new ApiClient(buildWebClientBuilder(createDefaultObjectMapper(createDefaultDateFormat()))
                 .codecs(codecs -> codecs
@@ -121,6 +119,13 @@ public class NightSkyClient implements AutoCloseable {
         return job;
     }
 
+    public Job awaitJob(String pid, String jobId) throws InterruptedException {
+        return awaitJob(pid, jobId, null);
+    }
+    public Job awaitJob(String pid, String jobId, @Nullable Integer timeoutInSec) throws InterruptedException {
+        return awaitJob(pid, jobId, 2, timeoutInSec, true,true, null);
+    }
+
     public Job awaitJob(String pid, String jobId, int waitTimeInSec, Integer timeoutInSec,
                         boolean includeCommand, boolean includeAffectedIds, InterruptionCheck interruptionCheck) throws InterruptedException {
         //todo use sse if available
@@ -138,7 +143,7 @@ public class NightSkyClient implements AutoCloseable {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            jobUpdate = jobs.getJob(pid, jobUpdate.getId(), List.of(NONE));
+            jobUpdate = jobs.getJob(pid, jobUpdate.getId(), List.of(PROGRESS));
 
             if (interruptionCheck != null)
                 interruptionCheck.check();
@@ -240,11 +245,6 @@ public class NightSkyClient implements AutoCloseable {
         sseBroadcast.unSubscribe(PropertyChangeSubscriber.wrap(listener));
     }
 
-
-    public ApiClient getApiClient() {
-        return apiClient;
-    }
-
     public CompoundsApi compounds() {
         return compounds;
     }
@@ -281,12 +281,8 @@ public class NightSkyClient implements AutoCloseable {
         return infos;
     }
 
-    public void shutDownSirius() {
-        new ActuatorApi(apiClient).shutdownWithResponseSpec().bodyToMono(String.class).blockOptional();
-    }
-
     @Override
-    public synchronized void close() throws Exception {
+    public synchronized void close() {
         if (sseConnection != null && !sseConnection.isDisposed())
             sseConnection.dispose();
         if (sseBroadcast != null)

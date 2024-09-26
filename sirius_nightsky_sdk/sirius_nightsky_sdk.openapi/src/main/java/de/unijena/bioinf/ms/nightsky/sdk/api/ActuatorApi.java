@@ -82,9 +82,8 @@ public class ActuatorApi {
      * @return Object
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Object health() throws WebClientResponseException {
-        ParameterizedTypeReference<Object> localVarReturnType = new ParameterizedTypeReference<Object>() {};
-        return healthRequestCreation().bodyToMono(localVarReturnType).block();
+    public String health() throws WebClientResponseException {
+        return healthRequestCreation().bodyToMono(String.class).block();
     }
 
     /**
@@ -94,9 +93,8 @@ public class ActuatorApi {
      * @return ResponseEntity&lt;Object&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Object> healthWithHttpInfo() throws WebClientResponseException {
-        ParameterizedTypeReference<Object> localVarReturnType = new ParameterizedTypeReference<Object>() {};
-        return healthRequestCreation().toEntity(localVarReturnType).block();
+    public ResponseEntity<String> healthWithHttpInfo() throws WebClientResponseException {
+        return healthRequestCreation().toEntity(String.class).block();
     }
 
     /**
@@ -146,9 +144,8 @@ public class ActuatorApi {
      * @return Object
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public Object shutdown() throws WebClientResponseException {
-        ParameterizedTypeReference<Object> localVarReturnType = new ParameterizedTypeReference<Object>() {};
-        return shutdownRequestCreation().bodyToMono(localVarReturnType).block();
+    public String shutdown() throws WebClientResponseException {
+        return shutdownRequestCreation().bodyToMono(String.class).block();
     }
 
     /**
@@ -158,9 +155,8 @@ public class ActuatorApi {
      * @return ResponseEntity&lt;Object&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Object> shutdownWithHttpInfo() throws WebClientResponseException {
-        ParameterizedTypeReference<Object> localVarReturnType = new ParameterizedTypeReference<Object>() {};
-        return shutdownRequestCreation().toEntity(localVarReturnType).block();
+    public ResponseEntity<String> shutdownWithHttpInfo() throws WebClientResponseException {
+        return shutdownRequestCreation().toEntity(String.class).block();
     }
 
     /**
