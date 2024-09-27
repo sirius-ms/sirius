@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ms.nightsky.sdk.api.ActuatorApi;
 import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.http.ResponseEntity;
 
@@ -105,7 +104,7 @@ public class SiriusSDKUtils {
 
     public static void redirectStdOutputToConsole(Process process) {
         try {
-            IOUtils.copy(process.getInputStream(), System.out);
+            process.getInputStream().transferTo(System.out);
         } catch (IOException e) {
            log.error("Error when reading process '{}' stdout. Future output might be lost.", process.pid(), e);
         }
@@ -113,7 +112,7 @@ public class SiriusSDKUtils {
 
     public static void redirectErrOutputToConsole(Process process) {
         try {
-            IOUtils.copy(process.getInputStream(), System.err);
+            process.getInputStream().transferTo(System.err);
         } catch (IOException e) {
             log.error("Error when reading process '{}' error stream. Future output might be lost.", process.pid(), e);
         }
