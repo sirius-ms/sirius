@@ -23,9 +23,9 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.BatchComputeDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.nightsky.sdk.model.BackgroundComputationsStateEvent;
-import de.unijena.bioinf.sse.DataEventType;
-import de.unijena.bioinf.sse.DataObjectEvent;
+import io.sirius.ms.sdk.model.BackgroundComputationsStateEvent;
+import io.sirius.ms.sse.DataEventType;
+import io.sirius.ms.sse.DataObjectEvent;
 import lombok.SneakyThrows;
 import org.slf4j.LoggerFactory;
 

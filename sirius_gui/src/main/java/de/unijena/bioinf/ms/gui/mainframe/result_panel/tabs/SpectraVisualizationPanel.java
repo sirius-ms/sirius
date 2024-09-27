@@ -48,7 +48,7 @@ import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.webView.WebViewIO;
-import de.unijena.bioinf.ms.nightsky.sdk.model.*;
+import io.sirius.ms.sdk.model.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
@@ -324,7 +324,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
         SpectraViewContainer.PeakMatch[] peakMatchesSpectrum = new SpectraViewContainer.PeakMatch[spectrum.getPeaks().size()];
         SpectraViewContainer.PeakMatch[] peakMatchesPattern = new SpectraViewContainer.PeakMatch[pattern.getPeaks().size()];
 
-        WrapperSpectrum<de.unijena.bioinf.ms.nightsky.sdk.model.SimplePeak> pat = WrapperSpectrum.
+        WrapperSpectrum<io.sirius.ms.sdk.model.SimplePeak> pat = WrapperSpectrum.
                 of(pattern.getPeaks(), p -> p.getMz(), p -> p.getIntensity());
 
         int i = 0;
