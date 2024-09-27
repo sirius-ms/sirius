@@ -19,7 +19,6 @@ Actuator web endpoint &#39;health&#39;
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -80,7 +79,6 @@ Actuator web endpoint &#39;shutdown&#39;
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;

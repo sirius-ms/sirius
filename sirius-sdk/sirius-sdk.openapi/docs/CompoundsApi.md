@@ -25,7 +25,6 @@ Import Compounds and its contained features. Compounds and Features must not exi
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -100,7 +99,6 @@ Delete compound (group of ion identities) with the given identifier (and the inc
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -168,7 +166,6 @@ Get compound (group of ion identities) with the given identifier from the specif
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -239,7 +236,6 @@ No authorization required
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -310,7 +306,6 @@ List of all available compounds (group of ion identities) in the given project-s
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -381,7 +376,6 @@ Page of available compounds (group of ion identities) in the given project-space
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;

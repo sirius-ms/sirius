@@ -28,7 +28,6 @@ Get information about the account currently logged in. Fails if not logged in.
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -95,7 +94,6 @@ Get SignUp URL (For signUp via web browser)
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -158,7 +156,6 @@ Get available subscriptions of the account currently logged in. Fails if not log
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -221,7 +218,6 @@ Check if a user is logged in.
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -284,7 +280,6 @@ Login into SIRIUS web services and activate default subscription if available.
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -357,7 +352,6 @@ Logout from SIRIUS web services.
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -419,7 +413,6 @@ Open User portal in browser. If user is logged in SIRIUS tries to transfer the l
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -481,7 +474,6 @@ Select a subscription as active subscription to be used for computations.
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -548,7 +540,6 @@ Open SignUp window in system browser and return signUp link.
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
