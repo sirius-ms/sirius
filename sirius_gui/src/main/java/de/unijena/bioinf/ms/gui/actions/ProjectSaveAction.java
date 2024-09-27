@@ -24,7 +24,7 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
-import de.unijena.bioinf.ms.nightsky.sdk.model.ProjectInfoOptField;
+import io.sirius.ms.sdk.model.ProjectInfoOptField;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;

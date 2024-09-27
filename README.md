@@ -68,7 +68,7 @@ may be required.
 
 ### [Sources on GitHub](https://github.com/sirius-ms)
 - [SIRIUS](https://github.com/sirius-ms/sirius)
-- [SIRIUS-API Java SDK](sirius_nightsky_sdk/sirius_nightsky_sdk.openapi/README.md)
+- [SIRIUS-API Java SDK](sirius-sdk/README.md)
 - [SIRIUS-API SDKs](https://github.com/sirius-ms/sirius-client-openAPI)
 
 ### [Changelog](https://v6.docs.sirius-ms.io/changelog/)

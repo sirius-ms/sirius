@@ -26,9 +26,9 @@ import de.unijena.bioinf.ms.gui.dialogs.QuestionDialog;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
-import de.unijena.bioinf.ms.nightsky.sdk.model.AccountInfo;
-import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
-import de.unijena.bioinf.ms.nightsky.sdk.model.Subscription;
+import io.sirius.ms.sdk.model.AccountInfo;
+import io.sirius.ms.sdk.model.ConnectionCheck;
+import io.sirius.ms.sdk.model.Subscription;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
