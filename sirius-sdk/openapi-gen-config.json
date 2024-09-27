@@ -1,0 +1,15 @@
+{
+	"openApiNullable": "false",
+	"booleanGetterPrefix": "is",
+	"hideGenerationTimestamp": true,
+	"invokerPackage": "io.sirius.ms.sdk.client",
+	"modelPackage": "io.sirius.ms.sdk.model",
+	"apiPackage": "io.sirius.ms.sdk.api",
+	"artifactId": "sirius-sdk.openapi",
+	"groupId:": "io.sirius-ms",
+	"library": "webclient",
+	"webclientBlockingOperations": true,
+	"useJakartaEe": true,
+	"serializationLibrary": "jackson",
+	"dateLibrary": "legacy"
+}

@@ -21,10 +21,10 @@
 package de.unijena.bioinf.ms.gui.net;
 
 
-import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
-import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionError;
-import de.unijena.bioinf.ms.nightsky.sdk.model.LicenseInfo;
-import de.unijena.bioinf.ms.nightsky.sdk.model.Term;
+import io.sirius.ms.sdk.model.ConnectionCheck;
+import io.sirius.ms.sdk.model.ConnectionError;
+import io.sirius.ms.sdk.model.LicenseInfo;
+import io.sirius.ms.sdk.model.Term;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

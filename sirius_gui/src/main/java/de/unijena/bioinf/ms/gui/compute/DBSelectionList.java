@@ -22,8 +22,8 @@ package de.unijena.bioinf.ms.gui.compute;
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
-import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
-import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
+import io.sirius.ms.sdk.SiriusClient;
+import io.sirius.ms.sdk.model.SearchableDatabase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,21 +43,21 @@ public class DBSelectionList extends JCheckBoxList<SearchableDatabase> {
             GuiUtils.assignParameterToolTip(this, descKey);
     }
 
-    public static DBSelectionList fromSearchableDatabases(NightSkyClient client){
+    public static DBSelectionList fromSearchableDatabases(SiriusClient client){
         return fromSearchableDatabases(true, client);
     }
-    public static DBSelectionList fromSearchableDatabases(boolean includeCustom, NightSkyClient client){
+    public static DBSelectionList fromSearchableDatabases(boolean includeCustom, SiriusClient client){
         return fromSearchableDatabases(null, includeCustom, client);
     }
-    public static DBSelectionList fromSearchableDatabases(@Nullable String descriptionKey, boolean includeCustom, NightSkyClient client){
+    public static DBSelectionList fromSearchableDatabases(@Nullable String descriptionKey, boolean includeCustom, SiriusClient client){
         return fromSearchableDatabases(descriptionKey, includeCustom, client, Collections.emptyList());
     }
 
-    public static DBSelectionList fromSearchableDatabases(NightSkyClient client, Collection<SearchableDatabase> exclude){
+    public static DBSelectionList fromSearchableDatabases(SiriusClient client, Collection<SearchableDatabase> exclude){
         return fromSearchableDatabases(null, true, client, exclude);
     }
 
-    public static DBSelectionList fromSearchableDatabases(@Nullable String descriptionKey, boolean includeCustom, NightSkyClient client, Collection<SearchableDatabase> exclude){
+    public static DBSelectionList fromSearchableDatabases(@Nullable String descriptionKey, boolean includeCustom, SiriusClient client, Collection<SearchableDatabase> exclude){
         List<SearchableDatabase> dbLsit = (includeCustom ? client.databases().getDatabases(false) : client.databases().getIncludedDatabases(false))
                 .stream()
                 .filter(SearchableDatabase::isSearchable)
@@ -75,7 +75,7 @@ public class DBSelectionList extends JCheckBoxList<SearchableDatabase> {
         return checked1.equals(checked2);
     }
 
-    public static Comparator<SearchableDatabase> getDatabaseComparator(NightSkyClient client) {
+    public static Comparator<SearchableDatabase> getDatabaseComparator(SiriusClient client) {
         SearchableDatabase pubchem = client.databases().getDatabase(DataSource.PUBCHEM.name(), false);
         return Comparator
                 .comparing(SearchableDatabase::isCustomDb, Comparator.reverseOrder())
