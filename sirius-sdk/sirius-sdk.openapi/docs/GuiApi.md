@@ -22,7 +22,6 @@ Close GUI instance of given project-space if available.
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -91,7 +90,6 @@ Get list of currently running gui windows, managed by this SIRIUS instance.  Not
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -154,7 +152,6 @@ Open GUI instance on specified project-space and bring the GUI window to foregro
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;

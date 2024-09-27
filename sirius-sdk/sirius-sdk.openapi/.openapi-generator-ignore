@@ -36,5 +36,5 @@ gradlew.bat
 pom.xml
 settings.gradle
 build.gradle
-src/test/java/de/unijena/bioinf/ms/nightsky/sdk/model/**
+src/test/java/io/sirius/ms/sdk/model/**
 
