@@ -56,7 +56,7 @@ Therefore, we highly recommend using the [**signed** installers](https://github.
 [Bright Giant](https://bright-giant.com) (also linked above).
 These installers ease the installation process by triggering no (or less) security issues of the respective OS.
 
-See the [documenntation](https://v6.docs.sirius-ms.io/install) for details.
+See the [documentation](https://v6.docs.sirius-ms.io/install) for details.
 
 
 ### [Creating a user account](https://v6.docs.sirius-ms.io/account-and-license/)
@@ -75,7 +75,7 @@ may be required.
 
 ### Contact
 - To get news, help or ask questions please join our [Gitter Community `#sirius-ms:gitter.im`](https://matrix.to/#/#sirius-ms:gitter.im).
-- For bug reports or feature request please use the issues on our [GitHub](https://github.com/sirius-ms/sirius). Or check the [documentation](https://v6.docs.sirius-ms.io/bugs/) for further information about this topic.
+- For bug reports or feature request please use the issues on our [GitHub](https://github.com/sirius-ms/sirius/issues). Or check the [documentation](https://v6.docs.sirius-ms.io/bugs/) for further information about this topic.
 
 ### Integration of CSI:FingerID, CANOPUS and MSNovelist
 
@@ -84,7 +84,7 @@ Results are retrieved from the web service and can be displayed in the SIRIUS gr
 also available for the SIRIUS command-line tool. Training structures for CSI:FingerID's predictors are available through the CSI:FingerID web API:
 <!--begin training-->
 
-- https://csi-fingerid.uni-jena.de/v3.0/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)
+- https://www.csi-fingerid.uni-jena.de/v3.0/api/fingerid/trainingstructures?predictor=1 (training structures for positive ion mode)
 - https://www.csi-fingerid.uni-jena.de/v3.0/api/fingerid/trainingstructures?predictor=2 (training structures for negative ion mode)
 
 <!--end training-->
