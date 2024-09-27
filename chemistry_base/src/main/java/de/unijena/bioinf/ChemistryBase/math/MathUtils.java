@@ -20,14 +20,21 @@ package de.unijena.bioinf.ChemistryBase.math;
  *
  * =========================================================================
  */
+
+import java.util.*;
+
 /**
  * Comprises various special mathematical functions.
  */
 public class MathUtils {
-    /** The smallest relative spacing for doubles. */
+    /**
+     * The smallest relative spacing for doubles.
+     */
     public final static double EPSILON_SMALL = 1.1102230246252e-16;
 
-    /** The largest relative spacing for doubles. */
+    /**
+     * The largest relative spacing for doubles.
+     */
     public final static double EPSILON_LARGE = 2.2204460492503e-16;
 
     /**
@@ -37,8 +44,8 @@ public class MathUtils {
     }
 
     /*
-      * Evaluate a Chebyschev series
-      */
+     * Evaluate a Chebyschev series
+     */
     static double csevl(double x, double coef[]) {
         double b0, b1, b2, twox;
         int i;
@@ -64,13 +71,12 @@ public class MathUtils {
             -.243019741507264604331702590579575e-11,
             -.956093675880008098427062083100000e-14,
             -.376353798194580580416291539706666e-16,
-            -.148166574646746578852176794666666e-18 };
+            -.148166574646746578852176794666666e-18};
 
     /**
      * Returns the cotangent of a double.
      *
-     * @param x
-     *            A double value.
+     * @param x A double value.
      * @return The cotangent of x. If x is NaN, the result is NaN.
      */
     static public double cot(double x) {
@@ -126,8 +132,7 @@ public class MathUtils {
     /**
      * Returns the common (base 10) logarithm of a double.
      *
-     * @param x
-     *            A double value.
+     * @param x A double value.
      * @return The common logarithm of x.
      */
     static public double log10(double x) {
@@ -136,26 +141,25 @@ public class MathUtils {
     }
 
     /*
-      * Returns the value of x with the sign of y.
-      */
+     * Returns the value of x with the sign of y.
+     */
     static private double sign(double x, double y) {
         double abs_x = ((x < 0) ? -x : x);
         return (y < 0.0) ? -abs_x : abs_x;
     }
 
     // Series on the interval [0,1]
-    private static final double SINH_COEF[] = { 0.1730421940471796,
+    private static final double SINH_COEF[] = {0.1730421940471796,
             0.08759422192276048, 0.00107947777456713, 0.00000637484926075,
             0.00000002202366404, 0.00000000004987940, 0.00000000000007973,
-            0.00000000000000009 };
+            0.00000000000000009};
 
     /**
      * Returns the hyperbolic sine of a double.
      *
-     * @param x
-     *            A double value.
+     * @param x A double value.
      * @return The arc hyperbolic sine of x. If x is NaN or less than one, the
-     *         result is NaN.
+     * result is NaN.
      */
     static public double sinh(double x) {
         double ans;
@@ -185,8 +189,7 @@ public class MathUtils {
     /**
      * Returns the hyperbolic cosine of a double.
      *
-     * @param x
-     *            A double value.
+     * @param x A double value.
      * @return The hyperbolic cosine of x. If x is NaN, the result is NaN.
      */
     static public double cosh(double x) {
@@ -207,19 +210,18 @@ public class MathUtils {
     }
 
     // Series on [0,1]
-    private static final double TANH_COEF[] = { -.25828756643634710,
+    private static final double TANH_COEF[] = {-.25828756643634710,
             -.11836106330053497, .009869442648006398, -.000835798662344582,
             .000070904321198943, -.000006016424318120, .000000510524190800,
             -.000000043320729077, .000000003675999055, -.000000000311928496,
             .000000000026468828, -.000000000002246023, .000000000000190587,
             -.000000000000016172, .000000000000001372, -.000000000000000116,
-            .000000000000000009 };
+            .000000000000000009};
 
     /**
      * Returns the hyperbolic tangent of a double.
      *
-     * @param x
-     *            A double value.
+     * @param x A double value.
      * @return The hyperbolic tangent of x.
      */
     static public double tanh(double x) {
@@ -265,13 +267,12 @@ public class MathUtils {
             -.87462509599624678045666593520162e-15,
             .13815248844526692155868802298129e-15,
             -.21916688282900363984955142264149e-16,
-            .34904658524827565638313923706880e-17 };
+            .34904658524827565638313923706880e-17};
 
     /**
      * Returns the inverse (arc) hyperbolic sine of a double.
      *
-     * @param x
-     *            A double value.
+     * @param x A double value.
      * @return The arc hyperbolic sine of x. If x is NaN, the result is NaN.
      */
     static public double asinh(double x) {
@@ -299,10 +300,9 @@ public class MathUtils {
     /**
      * Returns the inverse (arc) hyperbolic cosine of a double.
      *
-     * @param x
-     *            A double value.
+     * @param x A double value.
      * @return The arc hyperbolic cosine of x. If x is NaN or less than one, the
-     *         result is NaN.
+     * result is NaN.
      */
     static public double acosh(double x) {
         double ans;
@@ -335,15 +335,14 @@ public class MathUtils {
             .1508407105944793044874229067558e-14,
             .1002418816804109126136995722837e-15,
             .6698674738165069539715526882986e-17,
-            .4497954546494931083083327624533e-18 };
+            .4497954546494931083083327624533e-18};
 
     /**
      * Returns the inverse (arc) hyperbolic tangent of a double.
      *
-     * @param x
-     *            A double value.
+     * @param x A double value.
      * @return The arc hyperbolic tangent of x. If x is NaN or |x|{@literal >}1, the result
-     *         is NaN.
+     * is NaN.
      */
     static public double atanh(double x) {
         double y = Math.abs(x);
@@ -369,8 +368,7 @@ public class MathUtils {
     /**
      * Returns the factorial of an integer.
      *
-     * @param n
-     *            An integer value.
+     * @param n An integer value.
      * @return The factorial of n, n!. If x is negative, the result is NaN.
      */
     static public double fact(int n) {
@@ -415,15 +413,14 @@ public class MathUtils {
             .2034148542496373955201026051932e-16,
             -.3490054341717405849274012949108e-17,
             .5987993856485305567135051066026e-18,
-            -.1027378057872228074490069778431e-18 };
+            -.1027378057872228074490069778431e-18};
 
     /**
      * Returns the Gamma function of a double.
      *
-     * @param x
-     *            A double value.
+     * @param x A double value.
      * @return The Gamma function of x. If x is a negative integer, the result
-     *         is NaN.
+     * is NaN.
      */
     static public double gamma(double x) {
         double ans;
@@ -431,9 +428,9 @@ public class MathUtils {
 
         if (y <= 10.0) {
             /*
-                * Compute gamma(x) for |x|<=10. First reduce the interval and find
-                * gamma(1+y) for 0 <= y < 1.
-                */
+             * Compute gamma(x) for |x|<=10. First reduce the interval and find
+             * gamma(1+y) for 0 <= y < 1.
+             */
             int n = (int) x;
             if (x < 0.0)
                 n--;
@@ -488,10 +485,9 @@ public class MathUtils {
     /**
      * Returns the logarithm of the Gamma function of a double.
      *
-     * @param x
-     *            A double value.
+     * @param x A double value.
      * @return The natural logarithm of the Gamma function of x. If x is a
-     *         negative integer, the result is NaN.
+     * negative integer, the result is NaN.
      */
     static public double logGamma(double x) {
         double ans, sinpiy, y;
@@ -525,12 +521,12 @@ public class MathUtils {
             -.180912947557249419426330626672e-10,
             .622109804189260522712601554342e-13,
             -.339961500541772194430333059967e-15,
-            .268318199848269874895753884667e-17 };
+            .268318199848269874895753884667e-17};
 
     /*
-      * Returns the log gamma correction term for argument values greater than or
-      * equal to 10.0.
-      */
+     * Returns the log gamma correction term for argument values greater than or
+     * equal to 10.0.
+     */
     static double r9lgmc(double x) {
         double ans;
 
@@ -554,10 +550,8 @@ public class MathUtils {
     /**
      * Returns the logarithm of the Beta function.
      *
-     * @param a
-     *            A double value.
-     * @param b
-     *            A double value.
+     * @param a A double value.
+     * @param b A double value.
      * @return The natural logarithm of the Beta function.
      */
     static public double logBeta(double a, double b) {
@@ -613,11 +607,11 @@ public class MathUtils {
             .192502392030498511778785032449e-16,
             -.359550734652651500111897078443e-17,
             .672645425378768578921945742268e-18,
-            -.126026241687352192520824256376e-18 };
+            -.126026241687352192520824256376e-18};
 
     /*
-      * Correction term used by logBeta.
-      */
+     * Correction term used by logBeta.
+     */
     private static double dlnrel(double x) {
         double ans;
 
@@ -646,7 +640,7 @@ public class MathUtils {
             .179907251139614556119672454866e-13,
             -.371863548781869263823168282095e-15,
             .710359900371425297116899083947e-17,
-            -.126124551191552258324954248533e-18 };
+            -.126124551191552258324954248533e-18};
 
     // Series on [0.25,1.00]
     private static final double ERFC2_COEF[] = {
@@ -676,7 +670,7 @@ public class MathUtils {
             -.126972960236455533637241552778e-16,
             .310914550427619758383622741295e-17,
             -.766376292032038552400956671481e-18,
-            .190081925136274520253692973329e-18 };
+            .190081925136274520253692973329e-18};
 
     // Series on [0,0.25]
     private static final double ERFCC_COEF[] = {
@@ -708,13 +702,12 @@ public class MathUtils {
             -.489262140694577615436841552532e-17,
             .164761214141064673895301522827e-17,
             -.562681717632940809299928521323e-18,
-            .194744338223207851429197867821e-18 };
+            .194744338223207851429197867821e-18};
 
     /**
      * Returns the error function of a double.
      *
-     * @param x
-     *            A double value.
+     * @param x A double value.
      * @return The error function of x.
      */
     static public double erf(double x) {
@@ -739,8 +732,7 @@ public class MathUtils {
     /**
      * Returns the complementary error function of a double.
      *
-     * @param x
-     *            A double value.
+     * @param x A double value.
      * @return The complementary error function of x.
      */
     static public double erfc(double x) {
@@ -782,10 +774,9 @@ public class MathUtils {
      * Returns the probability density function of a double with mean 0 variance
      * 1.
      *
-     * @param x
-     *            A double value.
+     * @param x A double value.
      * @return Returns the probability density function of a double with mean 0
-     *         variance 1.
+     * variance 1.
      */
     static public double pdf(double x) {
         double ans;
@@ -797,12 +788,9 @@ public class MathUtils {
     /**
      * Returns the probability density function of a double.
      *
-     * @param x
-     *            A double value.
-     * @param mean
-     *            The mean of the gaussian distribution.
-     * @param variance
-     *            The variance of the gaussian distribution.
+     * @param x        A double value.
+     * @param mean     The mean of the gaussian distribution.
+     * @param variance The variance of the gaussian distribution.
      * @return Returns the probability density function of a double.
      */
     static public double pdf(double x, double mean, double variance) {
@@ -816,8 +804,7 @@ public class MathUtils {
     /**
      * Returns the cumulative distribution function of a double value.
      *
-     * @param x
-     *            A double value.
+     * @param x A double value.
      * @return Returns the cumulative distribution function of a double value.
      */
     static public double cdf(double x) {
@@ -829,12 +816,10 @@ public class MathUtils {
     /**
      * Returns the cumulative distribution function of a pair of double values.
      *
-     * @param x
-     *            A double value.
-     * @param y
-     *            A double value.
+     * @param x A double value.
+     * @param y A double value.
      * @return Returns the cumulative distribution function of a pair of double
-     *         values.
+     * values.
      */
     static public double cdf(double x, double y) {
         double ans;
@@ -858,14 +843,11 @@ public class MathUtils {
     /**
      * Returns the cumulative distribution function of a pair of double values.
      *
-     * @param x
-     *            A double value.
-     * @param mean
-     *            The mean of the gaussian distribution.
-     * @param variance
-     *            The variance of the gaussian distribution.
+     * @param x        A double value.
+     * @param mean     The mean of the gaussian distribution.
+     * @param variance The variance of the gaussian distribution.
      * @return Returns the cumulative distribution function of a pair of double
-     *         values.
+     * values.
      */
     static public double cdf(double x, double mean, double variance) {
         double a;
@@ -882,16 +864,12 @@ public class MathUtils {
     /**
      * Returns the cumulative distribution function of a pair of double values.
      *
-     * @param x
-     *            A double value.
-     * @param y
-     *            A double value.
-     * @param mean
-     *            The mean of the gaussian distribution.
-     * @param variance
-     *            The variance of the gaussian distribution.
+     * @param x        A double value.
+     * @param y        A double value.
+     * @param mean     The mean of the gaussian distribution.
+     * @param variance The variance of the gaussian distribution.
      * @return Returns the cumulative distribution function of a pair of double
-     *         values.
+     * values.
      */
     static public double cdf(double x, double y, double mean, double variance) {
         double ans;
@@ -920,18 +898,550 @@ public class MathUtils {
     /**
      * Rounds value.
      *
-     * @param value the number
+     * @param value         the number
      * @param decimalplaces number of decimal places
      * @return rounded value as string
      */
-    static public String round(double value, double decimalplaces){
+    static public String round(double value, double decimalplaces) {
 
         double mult = Math.pow(10.0, decimalplaces);
 
-        return String.valueOf(Math.round(value * mult)/mult);
+        return String.valueOf(Math.round(value * mult) / mult);
     }
 
     public static double getErrorForMass(double mass, double relError, double absError) {
         return Math.max(relError * 1e-6 * mass, absError * 1e-3);
     }
+
+
+
+    public static double median(double[] values) {
+        double[] tmp = Arrays.copyOf(values, values.length);
+        Arrays.sort(tmp);
+        double median = 0.0;
+        if (values.length % 2 == 1) {
+            median = tmp[(tmp.length + 1) / 2 - 1];
+        } else {
+            double lower = tmp[tmp.length / 2 - 1];
+            double upper = tmp[tmp.length / 2];
+            median = (lower + upper) / 2.0;
+        }
+
+        return median;
+    }
+
+    public static float median(float[] values) {
+        float[] tmp = Arrays.copyOf(values, values.length);
+        Arrays.sort(tmp);
+        float median = 0.0F;
+        if (values.length % 2 == 1) {
+            median = tmp[(tmp.length + 1) / 2 - 1];
+        } else {
+            float lower = tmp[tmp.length / 2 - 1];
+            float upper = tmp[tmp.length / 2];
+            median = (lower + upper) / 2.0F;
+        }
+
+        return median;
+    }
+
+    public static long median(long[] values) {
+        long[] tmp = Arrays.copyOf(values, values.length);
+        Arrays.sort(tmp);
+        long median = 0L;
+        if (values.length % 2 == 1) {
+            median = tmp[(tmp.length + 1) / 2 - 1];
+        } else {
+            long lower = tmp[tmp.length / 2 - 1];
+            long upper = tmp[tmp.length / 2];
+            median = (lower + upper) / 2L;
+        }
+
+        return median;
+    }
+
+    public static int median(int[] values) {
+        int[] tmp = Arrays.copyOf(values, values.length);
+        Arrays.sort(tmp);
+        int median;
+        if (values.length % 2 == 1) {
+            median = tmp[(tmp.length + 1) / 2 - 1];
+        } else {
+            int lower = tmp[tmp.length / 2 - 1];
+            int upper = tmp[tmp.length / 2];
+            median = (lower + upper) / 2;
+        }
+
+        return median;
+    }
+
+    public static short median(short[] values) {
+        short[] tmp = Arrays.copyOf(values, values.length);
+        Arrays.sort(tmp);
+        short median;
+        if (values.length % 2 == 1) {
+            median = tmp[(tmp.length + 1) / 2 - 1];
+        } else {
+            short lower = tmp[tmp.length / 2 - 1];
+            short upper = tmp[tmp.length / 2];
+            median = (short) ((lower + upper) / 2);
+        }
+
+        return median;
+    }
+
+    public static byte median(byte[] values) {
+        byte[] tmp = Arrays.copyOf(values, values.length);
+        Arrays.sort(tmp);
+        byte median;
+        if (values.length % 2 == 1) {
+            median = tmp[(tmp.length + 1) / 2 - 1];
+        } else {
+            byte lower = tmp[tmp.length / 2 - 1];
+            byte upper = tmp[tmp.length / 2];
+            median = (byte) ((lower + upper) / 2);
+        }
+
+        return median;
+    }
+
+    public static double mean(double[] values) {
+        double sum = 0.0;
+        double[] var7 = values;
+        int var6 = values.length;
+
+        for (int var5 = 0; var5 < var6; ++var5) {
+            double num = var7[var5];
+            sum += num;
+        }
+
+        return sum / (double) values.length;
+    }
+
+    public static float mean(float[] values) {
+        float sum = 0.0F;
+        float[] var5 = values;
+        int var4 = values.length;
+
+        for (int var3 = 0; var3 < var4; ++var3) {
+            float num = var5[var3];
+            sum += num;
+        }
+
+        return sum / (float) values.length;
+    }
+
+    public static long mean(long[] values) {
+        long sum = 0L;
+        long[] var7 = values;
+        int var6 = values.length;
+
+        for (int var5 = 0; var5 < var6; ++var5) {
+            long num = var7[var5];
+            sum += num;
+        }
+
+        return sum / (long) values.length;
+    }
+
+    public static int mean(int[] values) {
+        int sum = 0;
+        int[] var5 = values;
+        int var4 = values.length;
+
+        for (int var3 = 0; var3 < var4; ++var3) {
+            int num = var5[var3];
+            sum += num;
+        }
+
+        return sum / values.length;
+    }
+
+    public static short mean(short[] values) {
+        short sum = 0;
+        short[] var5 = values;
+        int var4 = values.length;
+
+        for (int var3 = 0; var3 < var4; ++var3) {
+            short num = var5[var3];
+            sum += num;
+        }
+
+        return (short) (sum / values.length);
+    }
+
+    public static byte mean(byte[] values) {
+        byte sum = 0;
+        byte[] var5 = values;
+        int var4 = values.length;
+
+        for (int var3 = 0; var3 < var4; ++var3) {
+            byte num = var5[var3];
+            sum += num;
+        }
+
+        return (byte) (sum / values.length);
+    }
+
+    public static double trimmedMean(double[] values, double alpha) {
+        double[] tmp = Arrays.copyOf(values, values.length);
+        Arrays.sort(tmp);
+        int trim = (int) Math.floor(alpha * (double) tmp.length);
+        double[] ntmp = Arrays.copyOfRange(tmp, trim, tmp.length - trim);
+        return mean(ntmp);
+    }
+
+    public static float trimmedMean(float[] values, double alpha) {
+        float[] tmp = Arrays.copyOf(values, values.length);
+        Arrays.sort(tmp);
+        int trim = (int) Math.floor(alpha * (double) tmp.length);
+        float[] ntmp = Arrays.copyOfRange(tmp, trim, tmp.length - trim);
+        return mean(ntmp);
+    }
+
+    public static long trimmedMean(long[] values, double alpha) {
+        long[] tmp = Arrays.copyOf(values, values.length);
+        Arrays.sort(tmp);
+        int trim = (int) Math.floor(alpha * (double) tmp.length);
+        long[] ntmp = Arrays.copyOfRange(tmp, trim, tmp.length - trim);
+        return mean(ntmp);
+    }
+
+    public static int trimmedMean(int[] values, double alpha) {
+        int[] tmp = Arrays.copyOf(values, values.length);
+        Arrays.sort(tmp);
+        int trim = (int) Math.floor(alpha * (double) tmp.length);
+        int[] ntmp = Arrays.copyOfRange(tmp, trim, tmp.length - trim);
+        return mean(ntmp);
+    }
+
+    public static short trimmedMean(short[] values, double alpha) {
+        short[] tmp = Arrays.copyOf(values, values.length);
+        Arrays.sort(tmp);
+        int trim = (int) Math.floor(alpha * (double) tmp.length);
+        short[] ntmp = Arrays.copyOfRange(tmp, trim, tmp.length - trim);
+        return mean(ntmp);
+    }
+
+    public static byte trimmedMean(byte[] values, double alpha) {
+        byte[] tmp = Arrays.copyOf(values, values.length);
+        Arrays.sort(tmp);
+        int trim = (int) Math.floor(alpha * (double) tmp.length);
+        byte[] ntmp = Arrays.copyOfRange(tmp, trim, tmp.length - trim);
+        return mean(ntmp);
+    }
+
+    public static double max(double[] values) {
+        double max = Double.NEGATIVE_INFINITY;
+        double[] var7 = values;
+        int var6 = values.length;
+
+        for (int var5 = 0; var5 < var6; ++var5) {
+            double num = var7[var5];
+            if (num > max) {
+                max = num;
+            }
+        }
+
+        return max;
+    }
+
+    public static float max(float[] values) {
+        float max = Float.NEGATIVE_INFINITY;
+        float[] var5 = values;
+        int var4 = values.length;
+
+        for (int var3 = 0; var3 < var4; ++var3) {
+            float num = var5[var3];
+            if (num > max) {
+                max = num;
+            }
+        }
+
+        return max;
+    }
+
+    public static long max(long[] values) {
+        long max = Long.MIN_VALUE;
+        long[] var7 = values;
+        int var6 = values.length;
+
+        for (int var5 = 0; var5 < var6; ++var5) {
+            long num = var7[var5];
+            if (num > max) {
+                max = num;
+            }
+        }
+
+        return max;
+    }
+
+    public static int max(int[] values) {
+        int max = Integer.MIN_VALUE;
+        int[] var5 = values;
+        int var4 = values.length;
+
+        for (int var3 = 0; var3 < var4; ++var3) {
+            int num = var5[var3];
+            if (num > max) {
+                max = num;
+            }
+        }
+
+        return max;
+    }
+
+    public static short max(short[] values) {
+        short max = Short.MIN_VALUE;
+        short[] var5 = values;
+        int var4 = values.length;
+
+        for (int var3 = 0; var3 < var4; ++var3) {
+            short num = var5[var3];
+            if (num > max) {
+                max = num;
+            }
+        }
+
+        return max;
+    }
+
+    public static byte max(byte[] values) {
+        byte max = -128;
+        byte[] var5 = values;
+        int var4 = values.length;
+
+        for (int var3 = 0; var3 < var4; ++var3) {
+            byte num = var5[var3];
+            if (num > max) {
+                max = num;
+            }
+        }
+
+        return max;
+    }
+
+    public static double min(double[] values) {
+        double min = Double.POSITIVE_INFINITY;
+        double[] var7 = values;
+        int var6 = values.length;
+
+        for (int var5 = 0; var5 < var6; ++var5) {
+            double num = var7[var5];
+            if (num < min) {
+                min = num;
+            }
+        }
+
+        return min;
+    }
+
+    public static float min(float[] values) {
+        float min = Float.POSITIVE_INFINITY;
+        float[] var5 = values;
+        int var4 = values.length;
+
+        for (int var3 = 0; var3 < var4; ++var3) {
+            float num = var5[var3];
+            if (num < min) {
+                min = num;
+            }
+        }
+
+        return min;
+    }
+
+    public static long min(long[] values) {
+        long min = Long.MAX_VALUE;
+        long[] var7 = values;
+        int var6 = values.length;
+
+        for (int var5 = 0; var5 < var6; ++var5) {
+            long num = var7[var5];
+            if (num < min) {
+                min = num;
+            }
+        }
+
+        return min;
+    }
+
+    public static int min(int[] values) {
+        int min = Integer.MAX_VALUE;
+        int[] var5 = values;
+        int var4 = values.length;
+
+        for (int var3 = 0; var3 < var4; ++var3) {
+            int num = var5[var3];
+            if (num < min) {
+                min = num;
+            }
+        }
+
+        return min;
+    }
+
+    public static short min(short[] values) {
+        short min = 32767;
+        short[] var5 = values;
+        int var4 = values.length;
+
+        for (int var3 = 0; var3 < var4; ++var3) {
+            short num = var5[var3];
+            if (num < min) {
+                min = num;
+            }
+        }
+
+        return min;
+    }
+
+    public static byte min(byte[] values) {
+        byte min = 127;
+        byte[] var5 = values;
+        int var4 = values.length;
+
+        for (int var3 = 0; var3 < var4; ++var3) {
+            byte num = var5[var3];
+            if (num < min) {
+                min = num;
+            }
+        }
+
+        return min;
+    }
+
+    public static double nearest(double[] haystack, double needle) {
+        double abs = Double.POSITIVE_INFINITY;
+        double nearest = Double.POSITIVE_INFINITY;
+        double[] var11 = haystack;
+        int var10 = haystack.length;
+
+        for (int var9 = 0; var9 < var10; ++var9) {
+            double num = var11[var9];
+            double a = Math.abs(needle - num);
+            if (a < abs) {
+                abs = a;
+            }
+        }
+
+        return nearest;
+    }
+
+    public static float nearest(float[] haystack, float needle) {
+        float abs = Float.POSITIVE_INFINITY;
+        float nearest = Float.POSITIVE_INFINITY;
+        float[] var7 = haystack;
+        int var6 = haystack.length;
+
+        for (int var5 = 0; var5 < var6; ++var5) {
+            float num = var7[var5];
+            float a = Math.abs(needle - num);
+            if (a < abs) {
+                abs = a;
+            }
+        }
+
+        return nearest;
+    }
+
+    public static long nearest(long[] haystack, long needle) {
+        long abs = Long.MAX_VALUE;
+        long nearest = Long.MAX_VALUE;
+        long[] var11 = haystack;
+        int var10 = haystack.length;
+
+        for (int var9 = 0; var9 < var10; ++var9) {
+            long num = var11[var9];
+            long a = Math.abs(needle - num);
+            if (a < abs) {
+                abs = a;
+            }
+        }
+
+        return nearest;
+    }
+
+    public static int nearest(int[] haystack, int needle) {
+        int abs = Integer.MAX_VALUE;
+        int nearest = Integer.MAX_VALUE;
+        int[] var7 = haystack;
+        int var6 = haystack.length;
+
+        for (int var5 = 0; var5 < var6; ++var5) {
+            int num = var7[var5];
+            int a = Math.abs(needle - num);
+            if (a < abs) {
+                abs = a;
+            }
+        }
+
+        return nearest;
+    }
+
+    public static short nearest(short[] haystack, short needle) {
+        short abs = 32767;
+        short nearest = 32767;
+        short[] var7 = haystack;
+        int var6 = haystack.length;
+
+        for (int var5 = 0; var5 < var6; ++var5) {
+            short num = var7[var5];
+            short a = (short) Math.abs(needle - num);
+            if (a < abs) {
+                abs = a;
+            }
+        }
+
+        return nearest;
+    }
+
+    public static byte nearest(byte[] haystack, byte needle) {
+        byte abs = 127;
+        byte nearest = 127;
+        byte[] var7 = haystack;
+        int var6 = haystack.length;
+
+        for (int var5 = 0; var5 < var6; ++var5) {
+            byte num = var7[var5];
+            byte a = (byte) Math.abs(needle - num);
+            if (a < abs) {
+                abs = a;
+            }
+        }
+
+        return nearest;
+    }
+
+    public static long binomial(int N, int K) {
+        long[][] b = new long[N + 1][K + 1];
+
+        int n;
+        for (n = 0; n <= N; ++n) {
+            b[n][0] = 1L;
+        }
+
+        for (n = 1; n <= N; ++n) {
+            for (int k = 1; k <= K; ++k) {
+                b[n][k] = b[n - 1][k - 1] + b[n - 1][k];
+            }
+        }
+
+        return b[N][K];
+    }
+
+    public static long factorial(int n) {
+        if (n < 0) {
+            throw new IllegalArgumentException(Integer.toString(n));
+        } else {
+            return n == 0 ? 1L : (long) n * factorial(n - 1);
+        }
+    }
+
+    public static long factorialStirling(int n) {
+        double _n = (double) n;
+        double result = Math.sqrt(6.283185307179586 * _n) * Math.pow(_n / Math.E, (double) n);
+        return (long) result;
+    }
+
 }

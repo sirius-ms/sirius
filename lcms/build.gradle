@@ -9,8 +9,6 @@ dependencies {
     api project(':chemistry_base')
     api project(':spectral_alignment')
     api project(':mass_decomposition:mass_decomposer')
-    //internal
-    api group: 'de.unijena.bioinf.ms', name: 'Recalibration', version: '1.0'
     // external
     implementation ('uk.ac.ebi.jmzml:jmzml:1.7.11') {
         exclude group: 'uk.ac.ebi.pride.architectural', module: 'pride-logging' //pom dependency that does not work
