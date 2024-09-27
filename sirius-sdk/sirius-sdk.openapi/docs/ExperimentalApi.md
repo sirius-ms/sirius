@@ -20,7 +20,6 @@ Get data quality information for feature (aligned over runs) with the given iden
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;

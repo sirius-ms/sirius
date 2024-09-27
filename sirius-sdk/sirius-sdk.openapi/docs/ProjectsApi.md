@@ -36,7 +36,6 @@ Close project-space and remove it from application. Project will NOT be deleted 
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -102,7 +101,6 @@ Move an existing (opened) project-space to another location.
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -175,7 +173,6 @@ Create and open a new project-space at given location and make it accessible via
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -244,7 +241,6 @@ Get CANOPUS prediction vector definition for ClassyFire classes
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -311,7 +307,6 @@ Get CANOPUS prediction vector definition for NPC classes
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -378,7 +373,6 @@ Get CSI:FingerID fingerprint (prediction vector) definition
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -447,7 +441,6 @@ Get project space info by its projectId.
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -516,7 +509,6 @@ List opened project spaces.
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -579,7 +571,6 @@ Import and Align full MS-Runs from various formats into the specified project  P
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -650,7 +641,6 @@ Import and Align full MS-Runs from various formats into the specified project as
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -723,7 +713,6 @@ Import and Align full MS-Runs from various formats into the specified project as
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -796,7 +785,6 @@ Import and Align full MS-Runs from various formats into the specified project  P
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -867,7 +855,6 @@ Import already preprocessed ms/ms data from various formats into the specified p
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -940,7 +927,6 @@ Import ms/ms data from the given format into the specified project-space as back
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -1015,7 +1001,6 @@ Import ms/ms data from the given format into the specified project-space as back
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -1090,7 +1075,6 @@ Import already preprocessed ms/ms data from various formats into the specified p
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
@@ -1163,7 +1147,6 @@ Open an existing project-space and make it accessible via the given projectId.
 
 ```java
 // Import classes:
-
 import io.sirius.ms.sdk.client.ApiClient;
 import io.sirius.ms.sdk.client.ApiException;
 import io.sirius.ms.sdk.client.Configuration;
