@@ -5,8 +5,8 @@ import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.ToggableSidePanel;
-import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeatureQuality;
-import de.unijena.bioinf.ms.nightsky.sdk.model.TraceSet;
+import io.sirius.ms.sdk.model.AlignedFeatureQuality;
+import io.sirius.ms.sdk.model.TraceSet;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
@@ -59,7 +59,10 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         this.add(lcmsWebview, BorderLayout.CENTER);
 
         summaryPanel = new LCMSCompoundSummaryPanel();
-        this.add(new ToggableSidePanel("quality report", summaryPanel), BorderLayout.EAST);
+        JScrollPane scrollpanel = new JScrollPane(summaryPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollpanel.setPreferredSize(new Dimension(400, 320));
+        scrollpanel.setMaximumSize(new Dimension(400, Integer.MAX_VALUE));
+        this.add(new ToggableSidePanel("quality report", scrollpanel), BorderLayout.EAST);
 
         {
             JLabel label = new JLabel("Show ");
@@ -162,9 +165,9 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
 
         TraceSet spec;
         if (viewType==ViewType.ALIGNMENT) {
-            spec = currentInstance.getClient().features().getTraces1WithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getFeatureId()).bodyToMono(TraceSet.class).onErrorComplete().block();
+            spec = currentInstance.getClient().features().getTracesWithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getFeatureId(), true).bodyToMono(TraceSet.class).onErrorComplete().block();
         } else {
-            spec = currentInstance.getSourceFeature().getCompoundId()==null ? null : currentInstance.getClient().compounds().getTracesWithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getSourceFeature().getCompoundId()).bodyToMono(TraceSet.class).onErrorComplete().block();
+            spec = currentInstance.getSourceFeature().getCompoundId()==null ? null : currentInstance.getClient().compounds().getCompoundTracesWithResponseSpec(currentInstance.getProjectManager().projectId, currentInstance.getSourceFeature().getCompoundId(), currentInstance.getFeatureId()).bodyToMono(TraceSet.class).onErrorComplete().block();
         }
 
         try {
@@ -181,23 +184,13 @@ public class LCMSViewerPanel extends JPanel implements ActiveElementChangedListe
         }
 
         lcmsWebview.setInstance(spec, order, viewType, currentInstance.getFeatureId());
-        updateInfo();
     }
 
     public void setActiveIndex(int id) {
         if (id != activeIndex) {
             activeIndex = id;
             //lcmsWebview.setSampleIndex(activeIndex);
-            updateInfo();
             invalidate();
         }
-    }
-
-    private void updateInfo() {
-        //todo nightsky: fill with new LCMS data
-        //final Optional<CoelutingTraceSet> trace = activeIndex < currentInfo.length() ? currentInfo.getTracesFor(activeIndex) : Optional.empty();
-//        if (trace.isPresent())
-//            summaryPanel.set(trace.get(), currentInstance.getExperiment());
-//        else summaryPanel.reset();
     }
 }

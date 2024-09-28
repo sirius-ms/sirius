@@ -31,7 +31,7 @@ import de.unijena.bioinf.ms.gui.dialogs.CompoundFilterOptionsDialog;
 import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.matchers.BackgroundJJobMatcheEditor;
 import de.unijena.bioinf.ms.gui.utils.toggleswitch.toggle.JToggleSwitch;
-import de.unijena.bioinf.ms.nightsky.sdk.model.DataQuality;
+import io.sirius.ms.sdk.model.DataQuality;
 import de.unijena.bioinf.projectspace.GuiProjectManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import lombok.Getter;
@@ -60,7 +60,7 @@ public class CompoundList {
 
     final JButton openFilterPanelButton;
     final CompoundFilterModel compoundFilterModel;
-    final ObservableElementList<InstanceBean> obsevableScource;
+    final ObservableElementList<InstanceBean> observableScource;
     final SortedList<InstanceBean> sortedSource;
     @Getter
     final EventList<InstanceBean> compoundList;
@@ -88,8 +88,9 @@ public class CompoundList {
         qualityToggleSwitch = makeQualityToggleSwitch(compoundFilterModel);
         msMsToggleSwitch = makeMsMsToggleSwitch(compoundFilterModel);
 
-        obsevableScource = new ObservableElementList<>(gui.getProjectManager().INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
-        sortedSource = new SortedList<>(obsevableScource, Comparator.comparing(InstanceBean::getRTOrMissing));
+        observableScource = new ObservableElementList<>(gui.getProjectManager().INSTANCE_LIST, GlazedLists.beanConnector(InstanceBean.class));
+        sortedSource = new SortedList<>(observableScource, Comparator.comparing(InstanceBean::getRTOrMissing));
+        compoundFilterModel.updateAdducts(sortedSource);
 
         //filters
         BasicEventList<MatcherEditor<InstanceBean>> listOfFilters = new BasicEventList<>();
@@ -228,6 +229,9 @@ public class CompoundList {
             event.reset();//this is hell important to reset the iterator
             l.fullListChanged(event, compountListSelectionModel, compoundList.size());
         }
+        event.reset();
+        compoundFilterModel.updateAdducts(event.getSourceList());
+        updateTogglesByActiveFilter();
     }
 
     private void notifyListenerDataChange(ListEvent<InstanceBean> event) {
@@ -258,5 +262,9 @@ public class CompoundList {
 
     public int getFullSize(){
         return sortedSource.size();
+    }
+
+    public SortedList<InstanceBean> getSortedSource() {
+        return sortedSource;
     }
 }
