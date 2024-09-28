@@ -79,23 +79,27 @@ public class ComputeAllAction extends AbstractGuiAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+
         if (isActive.get()) {
-            Jobs.runInBackgroundAndLoad(mainFrame, "Canceling Jobs...", () -> {
+            Jobs.runInBackgroundAndLoad(mainFrame, "Canceling Jobs (might take some time)...", () -> {
+                //update state before start cancelling in case some event got lost (WORKAROUND?)
+                if (!checkIfComputing())
+                    return;
                 gui.acceptSiriusClient((c, pid) -> c.jobs().deleteJobs(pid, true, true));
                 //todo workaround to await callback of cancellation to gui. should finde a better solution for that!
                 for (int i = 0; i < 40; i++) { //wait up to 20sec
                     boolean c = isActive.get();
-                    System.out.println("Computing check: " + i + "value: " + c);
                     if (!c)
-                        break;
+                        return; // deletion has happened.
                     try {
                         Thread.sleep(500);
                     } catch (InterruptedException ex) {
                         //ignored;
                     }
                 }
+                checkIfComputing(); //this is the timeout case, just in case we check again and adapt GUI.
+                // likely the jobs are still not canceled but the loading screen disappears.
             });
-
         } else {
             if (mainFrame.getCompounds().isEmpty()) {
                 LoggerFactory.getLogger(getClass()).warn("Not instances to compute! Closing Compute Dialog...");

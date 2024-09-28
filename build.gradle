@@ -149,9 +149,12 @@ allprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-       maven {
-            url "artifactregistry://europe-west4-maven.pkg.dev/bright-giant/maven-public"
+        //TODO DEPRECATED: This reaches EOL soon and will be replaced with 'sirius-ms-maven-public',
+        // but currently Gitlab CI/CD workers refuse to connect to it.
+        maven {
+            url "https://bio.informatik.uni-jena.de/repository/libs-oss"
         }
+
         maven {
             url "https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
         }
@@ -167,6 +170,11 @@ allprojects {
             url "http://gose.fiehnlab.ucdavis.edu:55000/content/groups/public"
             allowInsecureProtocol = true
         }
+        //this is for public sirius-ms dependencies
+        maven {
+            name "sirius-ms-maven-public"
+            url "artifactregistry://europe-west4-maven.pkg.dev/bright-giant/maven-public"
+        }
         //this is just needed to load non-public test data.
         repositories {
             maven {
@@ -180,7 +188,7 @@ allprojects {
                     authentication {
                         header(HttpHeaderAuthentication)
                     }
-                }else{
+                } else {
                     credentials(PasswordCredentials) {
                         username = project.findProperty("com.bright-giant.build.gitlab.username") as String
                         password = project.findProperty("com.bright-giant.build.gitlab.token") as String
