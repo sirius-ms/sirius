@@ -32,6 +32,7 @@ import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface Instance {
@@ -59,7 +60,7 @@ public interface Instance {
 
     double getIonMass();
 
-    PrecursorIonType getIonType();
+    int getCharge();
 
     ProjectSpaceManager getProjectSpaceManager();
 
@@ -103,8 +104,8 @@ public interface Instance {
 
     //region adduct detection
     boolean hasDetectedAdducts();
-    @Deprecated
-    void saveDetectedAdductsAnnotation(DetectedAdducts detectedAdducts);
+    void addAndSaveAdductsBySource(Map<DetectedAdducts.Source, Iterable<PrecursorIonType>> addcutsBySource);
+    boolean removeAndSaveAdductsBySource(DetectedAdducts.Source... sources);
     void saveDetectedAdducts(de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts detectedAdducts);
     @Deprecated
     DetectedAdducts getDetectedAdductsAnnotation();

@@ -306,7 +306,7 @@ public class Whiteset implements Ms2ExperimentAnnotation {
     }
 
     public static Set<MolecularFormula> filterMeasuredFormulas(@NotNull Set<MolecularFormula> measuredFormulas, @NotNull FormulaConstraints formulaConstraints, @NotNull Collection<PrecursorIonType> allowedIonTypes) {
-        return measuredFormulas.stream().filter(mf -> allowedIonTypes.stream().anyMatch(ionType -> formulaConstraints.isSatisfied(ionType.measuredNeutralMoleculeToNeutralMolecule(mf), ionType.getIonization()))).collect(Collectors.toSet());
+        return measuredFormulas.stream().filter(mf -> allowedIonTypes.stream().anyMatch(ionType -> formulaConstraints.isSatisfied(mf, ionType))).collect(Collectors.toSet());
     }
 
     protected Whiteset add(@NotNull Set<MolecularFormula> neutralFormulas, @NotNull Set<MolecularFormula> measuredFormulas, @NotNull Set<MolecularFormula> enforcedneutralFormulas, @NotNull List<Class> providers){

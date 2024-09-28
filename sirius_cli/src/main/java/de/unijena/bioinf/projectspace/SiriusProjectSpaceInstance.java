@@ -111,8 +111,8 @@ public class SiriusProjectSpaceInstance implements Instance {
     }
 
     @Override
-    public PrecursorIonType getIonType() {
-        return getCompoundContainerId().getIonType().orElse(PrecursorIonType.unknown(1));
+    public int getCharge() {
+        return getCompoundContainerId().getIonType().orElse(PrecursorIonType.unknown(1)).getCharge();
     }
 
     @Override
@@ -513,7 +513,17 @@ public class SiriusProjectSpaceInstance implements Instance {
     }
     //endregion
 
+
     @Override
+    public void addAndSaveAdductsBySource(Map<DetectedAdducts.Source, Iterable<PrecursorIonType>> addcutsBySource) {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public boolean removeAndSaveAdductsBySource(DetectedAdducts.Source... sources) {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
     public synchronized void saveDetectedAdductsAnnotation(DetectedAdducts detectedAdducts) {
         getCompoundContainerId().setDetectedAdducts(detectedAdducts);
         updateCompoundID();
@@ -669,8 +679,10 @@ public class SiriusProjectSpaceInstance implements Instance {
     @Override
     public synchronized void deleteSiriusResult() {
         deleteFormulaResults(); //this step creates the results, so we have to delete them before recompute
-        //todo detected Adducts should be moved to separate subtool
-        getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> it.remove(DetectedAdducts.Source.MS1_PREPROCESSOR.name()));
+        getExperiment().getAnnotation(DetectedAdducts.class).ifPresent(it -> {
+            it.remove(DetectedAdducts.Source.MS1_PREPROCESSOR);
+            it.remove(DetectedAdducts.Source.SPECTRAL_LIBRARY_SEARCH);
+        });
         saveDetectedAdductsAnnotation(getExperiment().getAnnotationOrNull(DetectedAdducts.class));
     }
 

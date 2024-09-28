@@ -114,12 +114,6 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
                 logInfo("Input contains no non empty MS/MS spectrum but MS/MS data is mandatory for this job. Skipping Instance!");
                 return true;
             }
-        if (needsProperIonizationMode()) {
-            if (!input.getIonType().isSupportedForFragmentationTreeComputation()) {
-                logInfo("The ion mode " + input.getIonType() + " is not supported for computation. Skip instance.");
-                return true;
-            }
-        }
         return false;
     }
 
@@ -156,7 +150,4 @@ public abstract class InstanceJob extends ToolChainJobImpl<Instance> implements 
     protected boolean needsMs2() {
         return true;
     }
-
-    public abstract boolean needsProperIonizationMode();
-
 }
