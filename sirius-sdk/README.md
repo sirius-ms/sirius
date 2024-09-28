@@ -139,9 +139,6 @@ Insert following snippet into your project's POM to add this package as dependen
       <releases>
         <enabled>true</enabled>
       </releases>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
     </repository>
   </repositories>
 
@@ -155,10 +152,12 @@ Insert following snippet into your project's POM to add this package as dependen
     </extensions>
   </build>
 
-  <dependency>
-      <groupId>io.sirius-ms</groupId>
-      <artifactId>sirius-sdk</artifactId>
-      <version>6.0.6</version>
-  </dependency>
+  <dependencies>
+    <dependency>
+        <groupId>io.sirius-ms</groupId>
+        <artifactId>sirius-sdk</artifactId>
+        <version>6.0.6</version>
+    </dependency>
+  <dependencies>
 </project>
 ```
