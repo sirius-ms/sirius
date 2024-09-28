@@ -20,7 +20,6 @@ package de.unijena.bioinf.ms.gui.dialogs;
  */
 
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.SiriusGui;
@@ -33,7 +32,7 @@ import de.unijena.bioinf.ms.gui.utils.*;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.CheckBoxListItem;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
-import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
+import io.sirius.ms.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.NotNull;
@@ -83,22 +82,46 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         setLayout(new BorderLayout());
         setResizable(false);
 
-        final JTabbedPane centerTab = new JTabbedPane();
-        add(centerTab, BorderLayout.CENTER);
+        TwoColumnPanel centerPanel = new TwoColumnPanel();
+        add(centerPanel, BorderLayout.CENTER);
 
-        final TwoColumnPanel generalParameters = new TwoColumnPanel();
-        centerTab.addTab("General", generalParameters);
-
+        //text search
         {
             searchFieldDialogCopy = new JTextField(searchField.getText());
-            final TwoColumnPanel fullTextPanel = new TwoColumnPanel();
-            fullTextPanel.addNamed("Fulltext search", searchFieldDialogCopy);
-            add(fullTextPanel, BorderLayout.NORTH);
+            centerPanel.addNamed("Fulltext search", searchFieldDialogCopy);
         }
-        //general filter
+
+        centerPanel.add(Box.createVerticalStrut(10));
+        final JTabbedPane centerTab = new JTabbedPane();
+        centerPanel.add(centerTab);
+
+        // filter modifiers
         {
-            generalParameters.add(Box.createVerticalStrut(5));
-            generalParameters.add(new JXTitledSeparator("Thresholds"));
+            centerPanel.add(new JXTitledSeparator("Filter modifiers"));
+
+            invertFilter = new JCheckBox("Invert Filter");
+            invertFilter.setSelected(compoundList.isFilterInverted());
+
+            deleteSelection = new JCheckBox("<html>Delete all <b>non-</b>matching compounds</html>");
+            deleteSelection.setSelected(false);
+
+            final Box group = Box.createHorizontalBox();
+            group.add(invertFilter);
+            group.add(Box.createHorizontalStrut(25));
+            group.add(deleteSelection);
+            group.add(Box.createHorizontalGlue());
+            centerPanel.add(group);
+
+//            centerPanel.addVerticalGlue();
+        }
+
+        //input data filters
+        {
+            final TwoColumnPanel inputParameters = new TwoColumnPanel();
+            centerTab.addTab("Input", inputParameters);
+
+            inputParameters.add(Box.createVerticalStrut(3));
+            inputParameters.add(new JXTitledSeparator("Thresholds"));
 
             {
                 TwoColumnPanel min = new TwoColumnPanel();
@@ -130,26 +153,34 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
                 max.addNamed("Max confidence", maxConfidenceSpinner);
                 ensureCompatibleBounds(minConfidenceSpinner, maxConfidenceSpinner);
 
-                generalParameters.add(box);
+                inputParameters.add(box);
             }
 
+            // Adduct filter
             {
-                generalParameters.add(Box.createVerticalStrut(5));
-                generalParameters.add(new JXTitledSeparator("Lipid Class Filter"));
+                inputParameters.add(Box.createVerticalStrut(5));
+                adductOptions = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Adducts", GuiUtils.formatToolTip("Select adducts to  filter by. Selecting all or none mean every adducts can pass"));
+                adductOptions.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>(PrecursorIonType.fromString("[M + H20 + Na]+"), false));
 
-                //lipid filter
-                lipidFilterBox = new JComboBox<>();
-                java.util.List.copyOf(EnumSet.allOf(CompoundFilterModel.LipidFilter.class)).forEach(lipidFilterBox::addItem);
-                generalParameters.addNamed("Lipid filter", lipidFilterBox);
-                lipidFilterBox.setSelectedItem(filterModel.getLipidFilter());
+                List<PrecursorIonType> ionizations = new ArrayList<>(filterModel.getPossibleAdducts());
+                Collections.sort(ionizations);
+
+                adductOptions.checkBoxList.replaceElements(ionizations);
+                adductOptions.checkBoxList.uncheckAll();
+                adductOptions.setEnabled(true);
+
+                adductOptions.checkBoxList.checkAll(filterModel.getSelectedAdducts());
+                inputParameters.add(adductOptions);
             }
+        }
 
+        {
             final TwoColumnPanel dataParameters = new TwoColumnPanel();
             centerTab.addTab("Data Quality", dataParameters);
 
             //MS data availability filter
             {
-                dataParameters.add(Box.createVerticalStrut(5));
+                dataParameters.add(Box.createVerticalStrut(6));
                 dataParameters.add(new JXTitledSeparator("MS Data Quality"));
                 hasMs1 = new JCheckBox("MS1");
                 hasMs1.setToolTipText("Feature must have a least one MS1 Spectrum");
@@ -181,7 +212,6 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             }
 
             dataParameters.addVerticalGlue();
-
         }
 
         final JPanel resultParameters = new JPanel();
@@ -191,7 +221,7 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
 
         // Element filter
         {
-            resultParameters.add(Box.createVerticalStrut(5));
+            resultParameters.add(Box.createVerticalStrut(9));
             resultParameters.add(new JXTitledSeparator("Elements"));
 
             JPanel elementSelector = new JPanel();
@@ -228,40 +258,31 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             resultParameters.add(group);
         }
 
-        // Adduct filter
         {
-            resultParameters.add(Box.createVerticalStrut(5));
-            adductOptions = new JCheckboxListPanel<>(new JCheckBoxList<>(), "Adducts", GuiUtils.formatToolTip("Select adducts to  filter by. Selecting all or none mean every adducts can pass"));
-            adductOptions.checkBoxList.setPrototypeCellValue(new CheckBoxListItem<>(PrecursorIonType.fromString("[M + H20 + Na]+"), false));
+            resultParameters.add(Box.createVerticalStrut(10));
+            resultParameters.add(new JXTitledSeparator("Lipid Class Filter"));
 
-            List<PrecursorIonType> ionizations = new ArrayList<>(PeriodicTable.getInstance().getAdductsAndUnKnowns());
-            Collections.sort(ionizations);
-
-            adductOptions.checkBoxList.replaceElements(ionizations);
-            adductOptions.checkBoxList.uncheckAll();
-            adductOptions.setEnabled(true);
-
-//            generalParameters.add(adductOptions);
-            adductOptions.checkBoxList.checkAll(filterModel.getAdducts());
+            //lipid filter
+            TwoColumnPanel lipidFilterPanel = new TwoColumnPanel();
+            lipidFilterBox = new JComboBox<>();
+            java.util.List.copyOf(EnumSet.allOf(CompoundFilterModel.LipidFilter.class)).forEach(lipidFilterBox::addItem);
+            lipidFilterPanel.addNamed("Lipid filter", lipidFilterBox);
+            lipidFilterBox.setSelectedItem(filterModel.getLipidFilter());
+            resultParameters.add(lipidFilterPanel);
+        }
 
 
-            // db filter
+        // db filter
+        {
+            resultParameters.add(Box.createVerticalStrut(10));
             searchDBList = new JCheckboxListPanel<>(DBSelectionList.fromSearchableDatabases(gui.getSiriusClient()), "Hit in structure DB");
-//            generalParameters.add(searchDBList);
             searchDBList.remove(searchDBList.buttons);
             searchDBList.checkBoxList.uncheckAll();
 
             candidateSpinner = makeSpinner(1, 1, 100, 1);
             searchDBList.addFooter(new TwoColumnPanel("Candidates to check", candidateSpinner));
 
-            // create adduct lists
-            Box box = Box.createHorizontalBox();
-            box.add(adductOptions);
-            box.add(Box.createHorizontalStrut(50));
-            box.add(searchDBList);
-            box.add(Box.createHorizontalStrut(10));
-
-            resultParameters.add(box);
+            resultParameters.add(searchDBList);
             resultParameters.add(Box.createVerticalBox());
 
             if (filterModel.isDbFilterEnabled()) { //null check
@@ -270,32 +291,12 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
             }
         }
 
-        // filter modifiers
-        {
-            generalParameters.add(Box.createVerticalStrut(5));
-            generalParameters.add(new JXTitledSeparator("Filter modifiers"));
 
-            invertFilter = new JCheckBox("Invert Filter");
-            invertFilter.setSelected(compoundList.isFilterInverted());
 
-            deleteSelection = new JCheckBox("<html>Delete all <b>non-</b>matching compounds</html>");
-            deleteSelection.setSelected(false);
 
-            final Box group = Box.createHorizontalBox();
-            group.add(invertFilter);
-            group.add(Box.createHorizontalStrut(25));
-            group.add(deleteSelection);
-            group.add(Box.createHorizontalGlue());
-            generalParameters.add(group);
-
-        }
-
-        generalParameters.addVerticalGlue();
 
         reset = new JButton("Reset");
         reset.addActionListener(this);
-        generalParameters.add(new JSeparator(SwingConstants.VERTICAL));
-
         discard = new JButton("Discard");
         discard.addActionListener(this);
         apply = new JButton("Apply");
@@ -423,14 +424,14 @@ public class CompoundFilterOptionsDialog extends JDialog implements ActionListen
         List<InstanceBean> toDelete = Jobs.runInBackgroundAndLoad(gui.getMainFrame(), "Filtering...", new TinyBackgroundJJob<List<InstanceBean>>() {
                     @Override
                     protected List<InstanceBean> compute() {
-                        final int max = compoundList.getCompoundList().size();
+                        final int max = compoundList.getSortedSource().size();
                         AtomicInteger progress = new AtomicInteger(0);
                         if (inverted) {
-                            return compoundList.getCompoundList().stream()
+                            return compoundList.getSortedSource().stream()
                                     .peek(i -> updateProgress(max, progress.getAndIncrement(), i.getGUIName()))
                                     .filter(matcher::matches).collect(Collectors.toList());
                         } else {
-                            return compoundList.getCompoundList().stream()
+                            return compoundList.getSortedSource().stream()
                                     .peek(i -> updateProgress(max, progress.getAndIncrement(), i.getGUIName()))
                                     .filter(i -> !matcher.matches(i)).collect(Collectors.toList());
                         }

@@ -414,23 +414,14 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
         return result;
     }
 
-    public boolean isViolated(MolecularFormula formula, Ionization ionization) {
-        for (FormulaFilter f : filters)
-            if (!f.isValid(formula, ionization)) return true;
-        /*
-        formula.visit(new FormulaVisitor<Object>() {
-            @Override
-            public Object visit(Element element, int amount) {
-                if (violation[0]) return null;
-                final int i = chemicalAlphabet.indexOf(element);
-                if (i < 0 || amount < lowerbounds[i] || amount > upperbounds[i]) {
-                    violation[0] = true;
-                }
-                return null;
-            }
-        });
-        */
-        return isViolatesBounds(formula);
+    /**
+     * checks compliance for a neutral precursor formula with given {@link PrecursorIonType}
+     * @param measuredNeutralFormula
+     * @param ionType
+     * @return
+     */
+    public boolean isViolated(MolecularFormula measuredNeutralFormula, PrecursorIonType ionType) {
+        return isViolated(ionType.measuredNeutralMoleculeToNeutralMolecule(measuredNeutralFormula));
     }
 
     private boolean isViolatesBounds(MolecularFormula formula) {
@@ -458,8 +449,14 @@ public class FormulaConstraints implements Ms2ExperimentAnnotation {
         return isViolatesBounds(formula);
     }
 
-    public boolean isSatisfied(MolecularFormula formula, Ionization ionization) {
-        return !isViolated(formula, ionization);
+    /**
+     * checks compliance for a neutral precursor formula with given {@link PrecursorIonType}
+     * @param measuredNeutralFormula
+     * @param ionType
+     * @return
+     */
+    public boolean isSatisfied(MolecularFormula measuredNeutralFormula, PrecursorIonType ionType) {
+        return !isViolated(measuredNeutralFormula, ionType);
     }
 
     public boolean isSatisfied(ChemicalAlphabet formula) {

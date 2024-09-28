@@ -23,8 +23,8 @@ package de.unijena.bioinf.ms.gui.fingerid;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.nightsky.sdk.model.ConfidenceMode;
-import de.unijena.bioinf.ms.nightsky.sdk.model.FeatureAnnotations;
+import io.sirius.ms.sdk.model.ConfidenceMode;
+import io.sirius.ms.sdk.model.FeatureAnnotations;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;

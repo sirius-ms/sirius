@@ -32,19 +32,14 @@ import de.unijena.bioinf.ms.frontend.subtools.InstanceJob;
 import de.unijena.bioinf.ms.frontend.utils.PicoUtils;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.sirius.IdentificationResult;
-import de.unijena.bioinf.sirius.Ms1Preprocessor;
-import de.unijena.bioinf.sirius.ProcessedInput;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.spectraldb.InjectSpectralLibraryMatchFormulas;
 import de.unijena.bioinf.spectraldb.SpectraMatchingJJob;
 import de.unijena.bioinf.spectraldb.SpectralSearchResult;
 import de.unijena.bioinf.spectraldb.SpectralSearchResults;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.LoggerFactory;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class SiriusSubToolJob extends InstanceJob {
     public SiriusSubToolJob(JobSubmitter jobSubmitter) {
@@ -54,11 +49,6 @@ public class SiriusSubToolJob extends InstanceJob {
     @Override
     protected boolean needsMs2() {
         return false;
-    }
-
-    @Override
-    public boolean needsProperIonizationMode() {
-        return true;
     }
 
     @Override
@@ -136,7 +126,12 @@ public class SiriusSubToolJob extends InstanceJob {
         checkForInterruption();
 
         //make possible adducts persistent without rewriting whole experiment
-        exp.getAnnotation(DetectedAdducts.class).ifPresent(inst::saveDetectedAdductsAnnotation);
+        exp.getAnnotation(DetectedAdducts.class).ifPresent(detectedAdducts -> {
+            Map<DetectedAdducts.Source, Iterable<PrecursorIonType>> subsetToAdd = new HashMap<>(detectedAdducts);
+            subsetToAdd.entrySet().removeIf(e -> e.getKey() != DetectedAdducts.Source.MS1_PREPROCESSOR && e.getKey() != DetectedAdducts.Source.SPECTRAL_LIBRARY_SEARCH);
+            if (!subsetToAdd.isEmpty())
+                inst.addAndSaveAdductsBySource(subsetToAdd);
+        });
         updateProgress(currentProgress().getProgress() + 2);
     }
 

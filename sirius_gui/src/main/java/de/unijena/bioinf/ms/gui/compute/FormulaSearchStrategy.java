@@ -3,9 +3,11 @@ package de.unijena.bioinf.ms.gui.compute;
 import de.unijena.bioinf.ChemistryBase.chem.ChemicalAlphabet;
 import de.unijena.bioinf.ChemistryBase.chem.Element;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.utils.UnknownElementException;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Experiment;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.ft.model.FormulaSettings;
 import de.unijena.bioinf.ChemistryBase.utils.DescriptiveOptions;
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
@@ -18,8 +20,8 @@ import de.unijena.bioinf.ms.gui.utils.RelativeLayout;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckboxListPanel;
-import de.unijena.bioinf.ms.nightsky.sdk.model.MsData;
-import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
+import io.sirius.ms.sdk.model.MsData;
+import io.sirius.ms.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bioinf.sirius.Ms1Preprocessor;
@@ -95,8 +97,10 @@ public class FormulaSearchStrategy extends ConfigPanel {
     protected final boolean isMs2;
     protected final boolean hasMs1AndIsSingleMode;
     protected final boolean isBatchDialog;
+    protected final FormulaIDConfigPanel formulaIDConfigPanel;
 
     protected DBSelectionListPanel searchDBList;
+    protected JComboBox<ElementAlphabetStrategy> defaultStrategyElementFilterSelector;
 
     /**
      * Map of strategy-specific UI components for showing/hiding when changing the strategy
@@ -108,13 +112,14 @@ public class FormulaSearchStrategy extends ConfigPanel {
      */
     private final JComboBox<Strategy> strategyBox;
 
-    public FormulaSearchStrategy(SiriusGui gui, Dialog owner, List<InstanceBean> ecs, boolean isMs2, boolean isBatchDialog, ParameterBinding parameterBindings) {
+    public FormulaSearchStrategy(SiriusGui gui, Dialog owner, List<InstanceBean> ecs, boolean isMs2, boolean isBatchDialog, ParameterBinding parameterBindings, FormulaIDConfigPanel formulaIDConfigPanel) {
         super(parameterBindings);
         this.owner = owner;
         this.gui = gui;
         this.ecs = ecs;
         this.isMs2 = isMs2;
         this.isBatchDialog = isBatchDialog;
+        this.formulaIDConfigPanel = formulaIDConfigPanel;
 
         //in single mode: does compound has MS1 data?
         this.hasMs1AndIsSingleMode = !isBatchDialog && !ecs.isEmpty() && (ecs.get(0).getMsData().getMergedMs1() != null || !ecs.get(0).getMsData().getMs1Spectra().isEmpty());
@@ -345,21 +350,16 @@ public class FormulaSearchStrategy extends ConfigPanel {
     }
 
     private void addDefaultStrategyElementFilterSettings(TwoColumnPanel filterFields) {
-        JComboBox<ElementAlphabetStrategy> elementAlphabetStrategySelector = new JComboBox<>(); //todo NewWorflow: implement this feature in sirius-libs
+        defaultStrategyElementFilterSelector = new JComboBox<>(); //todo NewWorflow: implement this feature in sirius-libs
         List<ElementAlphabetStrategy> settingsElements = List.copyOf(EnumSet.allOf(ElementAlphabetStrategy.class));
-        settingsElements.forEach(elementAlphabetStrategySelector::addItem);
-        elementAlphabetStrategySelector.setSelectedItem(ElementAlphabetStrategy.DE_NOVO_ONLY);
-        addStrategyChangeListener(strategy -> {
-            if (strategy == Strategy.DEFAULT) {
-                parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToBottomUp", () -> Boolean.toString(elementAlphabetStrategySelector.getSelectedItem() == ElementAlphabetStrategy.BOTH)); //only set for correct strategy, since bottom up is part of multiple strategies
-            }
-        });
+        settingsElements.forEach(defaultStrategyElementFilterSelector::addItem);
+        defaultStrategyElementFilterSelector.setSelectedItem(ElementAlphabetStrategy.DE_NOVO_ONLY);
 
         JLabel label = new JLabel("Apply element filter to");
-        filterFields.add(label, elementAlphabetStrategySelector);
+        filterFields.add(label, defaultStrategyElementFilterSelector);
 
         strategyComponents.get(Strategy.DEFAULT).add(label);
-        strategyComponents.get(Strategy.DEFAULT).add(elementAlphabetStrategySelector);
+        strategyComponents.get(Strategy.DEFAULT).add(defaultStrategyElementFilterSelector);
     }
 
     private void addElementFilterEnabledCheckboxForStrategy(TwoColumnPanel filterFields, List<Component> filterComponents, Strategy s, int columnWidth, int sidePanelWidth) {
@@ -375,12 +375,14 @@ public class FormulaSearchStrategy extends ConfigPanel {
             }
         };
 
-        parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates", () -> Boolean.toString(useElementFilter.isSelected()));
-        addStrategyChangeListener(strategy -> {
-            if (strategy == Strategy.BOTTOM_UP) {
-                parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToBottomUp", () -> Boolean.toString(useElementFilter.isSelected())); //only set for correct strategy, since bottom up is part of multiple strategies
-            }
-        });
+        if (s == Strategy.DATABASE) {
+            parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToDatabaseCandidates", () -> Boolean.toString(strategy == Strategy.DATABASE && useElementFilter.isSelected()));
+        }
+        if (s == Strategy.BOTTOM_UP) {
+            parameterBindings.put("FormulaSearchSettings.applyFormulaConstraintsToBottomUp", () -> Boolean.toString(
+                    strategy == Strategy.BOTTOM_UP && useElementFilter.isSelected()
+                    || strategy == Strategy.DEFAULT && defaultStrategyElementFilterSelector.getSelectedItem() == ElementAlphabetStrategy.BOTH));
+        }
 
         JLabel label = new JLabel("Enable element filter");
 
@@ -432,6 +434,8 @@ public class FormulaSearchStrategy extends ConfigPanel {
             FormulaSettings formulaSettings = PropertyManager.DEFAULTS.createInstanceWithDefaults(FormulaSettings.class);
             formulaSettings = formulaSettings.autoDetect(autoDetectable.toArray(Element[]::new)).enforce(getEnforedElements(formulaSettings, autoDetectable));
             experiment.setAnnotation(FormulaSettings.class, formulaSettings);
+            Set<PrecursorIonType> adducts = formulaIDConfigPanel.getSelectedAdducts().getAdducts();
+            experiment.setAnnotation(AdductSettings.class, AdductSettings.newInstance(adducts, Collections.emptySet(), adducts, false, true));
             ProcessedInput pi = pp.preprocess(experiment);
 
             pi.getAnnotation(FormulaConstraints.class).

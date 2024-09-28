@@ -40,7 +40,7 @@ public class CompoundListView extends JScrollPane {
     final JPopupMenu expPopMenu;
 
     public CompoundListView(SiriusGui gui, CompoundList sourceList) {
-        super(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        super(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         this.sourceList = sourceList;
         //todo move texfield and filter funktion here
         compoundListView = new JListDropImage<>(new DefaultEventListModel<>(sourceList.compoundList));

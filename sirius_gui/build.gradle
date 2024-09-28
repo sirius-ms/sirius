@@ -24,8 +24,8 @@ jar {
 dependencies {
     //project
     implementation(project(':sirius_cli'))
-    implementation project(':sirius_nightsky_sdk')
-    implementation project(':sirius_nightsky_sdk:sirius_nightsky_sdk.jjobs')
+    implementation project(':sirius-sdk')
+    implementation project(':sirius-sdk:sirius-sdk.jjobs')
     //internal
     api "de.unijena.bioinf:jjobs-swing:$jjobs_version"
     //external

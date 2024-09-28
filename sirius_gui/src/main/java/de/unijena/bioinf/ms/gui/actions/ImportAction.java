@@ -29,10 +29,10 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.StacktraceDialog;
 import de.unijena.bioinf.ms.gui.dialogs.input.ImportMSDataDialog;
 import de.unijena.bioinf.ms.gui.io.filefilter.MsBatchDataFormatFilter;
-import de.unijena.bioinf.ms.nightsky.sdk.jjobs.SseProgressJJob;
-import de.unijena.bioinf.ms.nightsky.sdk.model.Job;
-import de.unijena.bioinf.ms.nightsky.sdk.model.JobOptField;
-import de.unijena.bioinf.ms.nightsky.sdk.model.LcmsSubmissionParameters;
+import io.sirius.ms.sdk.jjobs.SseProgressJJob;
+import io.sirius.ms.sdk.model.Job;
+import io.sirius.ms.sdk.model.JobOptField;
+import io.sirius.ms.sdk.model.LcmsSubmissionParameters;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceImporter;
 import org.apache.commons.lang3.time.StopWatch;
@@ -132,7 +132,7 @@ public class ImportAction extends AbstractGuiAction {
                             input.msInput.lcmsFiles.keySet().stream().map(Path::toAbsolutePath).map(Path::toString).toList(),
                             List.of(JobOptField.PROGRESS)
                     );
-                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Importing LC/MS data...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
+                    return LoadingBackroundTask.runInBackground(gui.getMainFrame(), "Preprocessing LC/MS data...", null, new SseProgressJJob(gui.getSiriusClient(), pid, job));
                 });
 
                 task.awaitResult();
