@@ -54,6 +54,7 @@ import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.spectra.Spectrums;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
+import de.unijena.bioinf.ms.middleware.model.tags.TagFilter;
 import de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
@@ -255,32 +256,42 @@ public class SiriusProjectSpaceImpl implements Project<SiriusProjectSpaceManager
     }
 
     @Override
-    public List<Tag> addTagsToObject(Taggable taggable, String objectId, List<Tag> tags) {
+    public <T, O extends Enum<O>> Page<T> findObjectsByTag(Class<?> taggable, String categoryName, TagFilter filter, Pageable pageable, @NotNull EnumSet<O> optFields) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void deleteTagsFromObject(Taggable taggable, String objectId, List<String> categoryNames) {
+    public List<Tag> addTagsToObject(Class<?> taggable, String objectId, List<Tag> tags) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<TagCategory> findCategories(Taggable taggable) {
+    public void deleteTagsFromObject(Class<?> taggable, String objectId, List<String> categoryNames) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public TagCategory findCategoryByName(Taggable taggable, String categoryName) {
+    public List<TagCategory> findCategories() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<TagCategory> addCategories(Taggable taggable, List<TagCategory> categories) {
+    public List<TagCategory> findCategoriesByType(String categoryType) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public void deleteCategories(Taggable taggable, List<String> categoryNames) {
+    public TagCategory findCategoryByName(String categoryName) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<TagCategory> addCategories(List<TagCategory> categories) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void deleteCategories(List<String> categoryNames) {
         throw new UnsupportedOperationException();
     }
 

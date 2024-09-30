@@ -38,7 +38,7 @@ import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtil
 @RestController
 @RequestMapping(value = "/api/projects/{projectId}/runs")
 @Tag(name = "Runs", description = "This API allows accessing LC/MS runs.")
-public class RunController extends TagController {
+public class RunController extends TagController<Run, Run.OptField> {
 
     @Autowired
     public RunController(ProjectsProvider<?> projectsProvider) {
@@ -46,8 +46,8 @@ public class RunController extends TagController {
     }
 
     @Override
-    protected Project.Taggable getTaggable() {
-        return Project.Taggable.RUN;
+    protected Class<Run> getTaggable() {
+        return Run.class;
     }
 
     /**
@@ -59,7 +59,8 @@ public class RunController extends TagController {
      */
     @GetMapping(value = "/page", produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<Run> getRunsPaged(
-            @PathVariable String projectId, @ParameterObject Pageable pageable,
+            @PathVariable String projectId,
+            @ParameterObject Pageable pageable,
             @RequestParam(defaultValue = "") EnumSet<Run.OptField> optFields
     ) {
         return projectsProvider.getProjectOrThrow(projectId).findRuns(pageable, removeNone(optFields));
