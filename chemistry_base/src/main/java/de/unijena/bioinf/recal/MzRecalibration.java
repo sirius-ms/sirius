@@ -40,7 +40,7 @@ import java.util.PriorityQueue;
 
 /**
  * m/z recalibatrion.
- * <h3>Usage</h3>
+ * Usage
  * <ol>
  * <li>Extract subset of points with {@code maxLinePairStabbing} or
  * {@code maxIntervalStabbing}</li>
@@ -98,9 +98,7 @@ public class MzRecalibration {
 	 * @param observed     observed spectrum
 	 * @param reference    reference spectrum
 	 * @param epsilon      maps observed mz to interval length
-	 * @param threshold    for all points (x,y): |x-y| < threshold
-	 * @param <P>
-	 * @param <Q>
+	 * @param threshold    for all points (x,y): |x-y| &lt; threshold
 	 * @return [0]: x points (observed spectrum), [1]: y points (reference spectrum)
 	 */
 	public static <P extends Peak, Q extends Peak> double[][] maxIntervalStabbing(Spectrum<P> observed,
@@ -135,9 +133,7 @@ public class MzRecalibration {
 	 * @param observed     observed spectrum
 	 * @param reference    reference spectrum
 	 * @param epsilon      maps observed mz and intensity to interval length
-	 * @param threshold    for all points (x,y): |x-y| < threshold
-	 * @param <P>
-	 * @param <Q>
+	 * @param threshold    for all points (x,y): |x-y| &lt; threshold
 	 * @return [0]: x points (observed spectrum), [1]: y points (reference spectrum)
 	 */
 	public static <P extends Peak, Q extends Peak> double[][] maxIntervalStabbing(Spectrum<P> observed, Spectrum<Q> reference,
@@ -171,9 +167,7 @@ public class MzRecalibration {
 	 * @param observed     observed spectrum
 	 * @param reference    reference spectrum
 	 * @param epsilon      interval length for each observed mz
-	 * @param threshold    for all points (x,y): |x-y| < threshold
-	 * @param <P>
-	 * @param <Q>
+	 * @param threshold    for all points (x,y): |x-y| &lt; threshold
 	 * @return [0]: x points (observed spectrum), [1]: y points (reference spectrum)
 	 */
 	public static <P extends Peak, Q extends Peak> double[][] maxIntervalStabbing(Spectrum<P> observed, Spectrum<Q> reference, double[] epsilon,
@@ -258,9 +252,7 @@ public class MzRecalibration {
 	 * @param observed     observed spectrum
 	 * @param reference    reference spectrum
 	 * @param epsilon      line distance
-	 * @param threshold    for all points (x,y): |x-y| < threshold
-	 * @param <P>
-	 * @param <Q>
+	 * @param threshold    for all points (x,y): |x-y| &lt; threshold
 	 * @return [0]: x points (observed spectrum), [1]: y points (reference spectrum)
 	 */
 	public static <P extends Peak, Q extends Peak> double[][] maxLinePairStabbing(Spectrum<P> observed, Spectrum<Q> reference,
@@ -380,7 +372,7 @@ public class MzRecalibration {
 		
 	/**
 	 * Regression with Chebychev polynomial. See
-	 * {@url http://mathworld.wolfram.com/ChebyshevApproximationFormula.html}.
+	 * {@see <a href= http://mathworld.wolfram.com/ChebyshevApproximationFormula.html</a>}.
 	 * 
 	 * @param x
 	 * @param y
