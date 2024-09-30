@@ -33,6 +33,7 @@ import de.unijena.bioinf.ms.middleware.model.projects.ImportResult;
 import de.unijena.bioinf.ms.middleware.model.spectra.AnnotatedSpectrum;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
+import de.unijena.bioinf.ms.middleware.model.tags.TagFilter;
 import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import org.jetbrains.annotations.NotNull;
@@ -49,10 +50,6 @@ import java.util.stream.Collectors;
 import static de.unijena.bioinf.ms.middleware.service.annotations.AnnotationUtils.toEnumSet;
 
 public interface Project<PSM extends ProjectSpaceManager> {
-
-    enum Taggable {
-        RUN
-    }
 
     @NotNull
     String getProjectId();
@@ -155,17 +152,21 @@ public interface Project<PSM extends ProjectSpaceManager> {
         return findRunById(runId, toEnumSet(Run.OptField.class, optFields));
     }
 
-    List<Tag> addTagsToObject(Taggable taggable, String objectId, List<Tag> tags);
+    <T, O extends Enum<O>> Page<T> findObjectsByTag(Class<?> taggable, String categoryName, TagFilter filter, Pageable pageable, @NotNull EnumSet<O> optFields);
 
-    void deleteTagsFromObject(Taggable taggable, String objectId, List<String> categoryNames);
+    List<Tag> addTagsToObject(Class<?> taggable, String objectId, List<Tag> tags);
 
-    List<TagCategory> findCategories(Taggable taggable);
+    void deleteTagsFromObject(Class<?> taggable, String objectId, List<String> categoryNames);
 
-    TagCategory findCategoryByName(Taggable taggable, String categoryName);
+    List<TagCategory> findCategories();
 
-    List<TagCategory> addCategories(Taggable taggable, List<TagCategory> categories);
+    List<TagCategory> findCategoriesByType(String categoryType);
 
-    void deleteCategories(Taggable taggable, List<String> categoryNames);
+    TagCategory findCategoryByName(String categoryName);
+
+    List<TagCategory> addCategories(List<TagCategory> categories);
+
+    void deleteCategories(List<String> categoryNames);
 
     // tags: add/delete category, add tag to run
 

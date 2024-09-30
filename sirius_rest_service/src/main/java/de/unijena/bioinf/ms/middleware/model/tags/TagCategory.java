@@ -25,6 +25,9 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 @Getter
 @Setter
@@ -32,8 +35,12 @@ import org.jetbrains.annotations.NotNull;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TagCategory {
 
+    public enum ValueRange {
+        FIXED, VARIABLE
+    }
+
     public enum ValueType {
-        STRING, DOUBLE, INTEGER, BOOLEAN
+        NONE, BOOLEAN, INTEGER, DOUBLE, STRING
     }
 
     @NotNull
@@ -41,5 +48,66 @@ public class TagCategory {
 
     @NotNull
     protected ValueType valueType;
+
+    @NotNull
+    @Builder.Default
+    protected ValueRange valueRange = ValueRange.VARIABLE;
+
+    @Nullable
+    protected List<?> possibleValues;
+
+    @Nullable
+    protected String categoryType;
+
+    public static TagCategoryBuilder builder() {
+        return new TagCategoryBuilder() {
+            @Override
+            public TagCategory build() {
+                TagCategory category = super.build();
+                if (category.valueType == ValueType.NONE && category.possibleValues != null && !category.possibleValues.isEmpty()) {
+                    throw new IllegalArgumentException("No possible values allowed.");
+                }
+                if (category.valueRange == ValueRange.VARIABLE && category.possibleValues != null && !category.possibleValues.isEmpty()) {
+                    throw new IllegalArgumentException("No possible values allowed.");
+                }
+                if (category.valueRange == ValueRange.FIXED) {
+                    if (category.possibleValues == null || category.possibleValues.isEmpty()) {
+                        throw new IllegalArgumentException("No possible values provided.");
+                    }
+                    switch (category.valueType) {
+                        case BOOLEAN -> {
+                            for (Object o : category.possibleValues) {
+                                if (!(o instanceof Boolean)) {
+                                    throw new IllegalArgumentException(o + " is not a boolean.");
+                                }
+                            }
+                        }
+                        case INTEGER -> {
+                            for (Object o : category.possibleValues) {
+                                if (!(o instanceof Integer)) {
+                                    throw new IllegalArgumentException(o + " is not an integer.");
+                                }
+                            }
+                        }
+                        case DOUBLE -> {
+                            for (Object o : category.possibleValues) {
+                                if (!(o instanceof Double)) {
+                                    throw new IllegalArgumentException(o + " is not a double.");
+                                }
+                            }
+                        }
+                        case STRING -> {
+                            for (Object o : category.possibleValues) {
+                                if (!(o instanceof String)) {
+                                    throw new IllegalArgumentException(o + " is not a String.");
+                                }
+                            }
+                        }
+                    }
+                }
+                return category;
+            }
+        };
+    }
 
 }

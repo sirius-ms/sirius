@@ -18,10 +18,12 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.persistence.model.core;
+package de.unijena.bioinf.ms.persistence.model.core.tags;
 
 import jakarta.persistence.Id;
 import lombok.*;
+
+import java.util.List;
 
 @Builder
 @NoArgsConstructor
@@ -31,10 +33,14 @@ import lombok.*;
 @ToString
 public class TagCategory {
 
+    public enum ValueRange {
+        FIXED, VARIABLE
+    }
+
     @Getter
     @AllArgsConstructor
     public enum ValueType {
-        STRING(String.class), DOUBLE(Double.class), INT(Integer.class), BOOL(Boolean.class);
+        NONE(Void.class), BOOL(Boolean.class), INT(Integer.class), DOUBLE(Double.class), STRING(String.class);
         private final Class<?> valueClass;
     }
 
@@ -43,8 +49,16 @@ public class TagCategory {
 
     private String name;
 
-    private String taggedObjectClass;
+    private String description;
+
+    private String type;
 
     private ValueType valueType;
+
+    private ValueRange valueRange;
+
+    private List<?> possibleValues;
+
+    private String categoryType;
 
 }

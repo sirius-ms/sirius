@@ -25,6 +25,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @Getter
 @Setter
@@ -41,6 +42,7 @@ public class Tag {
     /**
      * Tag value
      */
+    @Nullable
     private Object value;
 
 }
