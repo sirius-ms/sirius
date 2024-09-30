@@ -22,6 +22,10 @@ dependencies {
     api project(":ms_persistence_oss:ms_persistence_model_oss")
 }
 
+allprojects {
+    version = siriusVersion
+}
+
 subprojects {
     dependencies {
         api project(":chemistry_base")
