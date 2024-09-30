@@ -158,6 +158,6 @@ Insert following snippet into your project's POM to add this package as dependen
         <artifactId>sirius-sdk</artifactId>
         <version>6.0.6</version>
     </dependency>
-  <dependencies>
+  </dependencies>
 </project>
 ```
