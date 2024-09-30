@@ -2,6 +2,11 @@ plugins {
     id 'application'
 }
 
+version = "0.9-SNAPSHOT"
+
+//exclude from publishing
+tasks.withType(PublishToMavenRepository).configureEach { it.enabled = false }
+
 dependencies {
     implementation project(':chemistry_base')
     implementation project(':combinatorial_fragmenter')
