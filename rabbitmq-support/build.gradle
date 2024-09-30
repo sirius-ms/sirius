@@ -1,3 +1,7 @@
+version = siriusVersion
+// PUBLISHING DISABLED
+tasks.withType(PublishToMavenRepository).configureEach { it.enabled = false }
+
 dependencies {
     api project(':fingerid_base_oss')
     api project(':chemistry_base')
