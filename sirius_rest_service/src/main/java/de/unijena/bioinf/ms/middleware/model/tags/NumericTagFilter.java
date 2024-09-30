@@ -21,28 +21,30 @@
 package de.unijena.bioinf.ms.middleware.model.tags;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import org.jetbrains.annotations.NotNull;
+import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.Nullable;
 
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Tag {
+public abstract class NumericTagFilter<T extends Number> extends TagFilter {
 
-    /**
-     * Name of the tag category
-     */
-    @NotNull
-    private String categoryName;
-
-    /**
-     * Tag value
-     */
     @Nullable
-    private Object value;
+    protected T equals;
+
+    @Nullable
+    protected T lessThan;
+
+    @Nullable
+    protected T lessThanEquals;
+
+    @Nullable
+    protected T greaterThan;
+
+    @Nullable
+    protected T greaterThanEquals;
 
 }

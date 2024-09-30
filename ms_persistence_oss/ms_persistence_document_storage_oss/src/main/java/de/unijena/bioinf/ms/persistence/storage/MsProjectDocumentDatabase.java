@@ -23,8 +23,8 @@ package de.unijena.bioinf.ms.persistence.storage;
 import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.ms.persistence.model.core.Compound;
 import de.unijena.bioinf.ms.persistence.model.core.QualityReport;
-import de.unijena.bioinf.ms.persistence.model.core.Tag;
-import de.unijena.bioinf.ms.persistence.model.core.TagCategory;
+import de.unijena.bioinf.ms.persistence.model.core.tags.Tag;
+import de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
@@ -58,9 +58,9 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
     static Metadata buildMetadata(@NotNull Metadata sourceMetadata) throws IOException {
         MetadataUtils.addFasUtilCollectionSupport(sourceMetadata);
         return sourceMetadata
-                .addRepository(Tag.class, Index.unique("taggedObjectId", "categoryId"))
+                .addRepository(Tag.class, Index.unique("taggedObjectId", "categoryId"), Index.nonUnique("taggedObjectClass", "categoryId", "value"))
 
-                .addRepository(TagCategory.class, Index.unique("taggedObjectClass", "name"))
+                .addRepository(TagCategory.class, Index.unique("name"), Index.nonUnique("categoryType"))
 
                 .addRepository(LCMSRun.class,
                         Index.nonUnique("name"))

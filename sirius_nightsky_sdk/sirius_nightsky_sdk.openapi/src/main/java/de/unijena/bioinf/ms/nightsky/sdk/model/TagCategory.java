@@ -20,6 +20,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -28,7 +31,10 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  */
 @JsonPropertyOrder({
   TagCategory.JSON_PROPERTY_NAME,
-  TagCategory.JSON_PROPERTY_VALUE_TYPE
+  TagCategory.JSON_PROPERTY_VALUE_TYPE,
+  TagCategory.JSON_PROPERTY_VALUE_RANGE,
+  TagCategory.JSON_PROPERTY_POSSIBLE_VALUES,
+  TagCategory.JSON_PROPERTY_CATEGORY_TYPE
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class TagCategory {
@@ -39,13 +45,15 @@ public class TagCategory {
    * Gets or Sets valueType
    */
   public enum ValueTypeEnum {
-    STRING("STRING"),
+    NONE("NONE"),
     
-    DOUBLE("DOUBLE"),
+    BOOLEAN("BOOLEAN"),
     
     INTEGER("INTEGER"),
     
-    BOOLEAN("BOOLEAN");
+    DOUBLE("DOUBLE"),
+    
+    STRING("STRING");
 
     private String value;
 
@@ -76,6 +84,50 @@ public class TagCategory {
 
   public static final String JSON_PROPERTY_VALUE_TYPE = "valueType";
   private ValueTypeEnum valueType;
+
+  /**
+   * Gets or Sets valueRange
+   */
+  public enum ValueRangeEnum {
+    FIXED("FIXED"),
+    
+    VARIABLE("VARIABLE");
+
+    private String value;
+
+    ValueRangeEnum(String value) {
+      this.value = value;
+    }
+
+    @JsonValue
+    public String getValue() {
+      return value;
+    }
+
+    @Override
+    public String toString() {
+      return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static ValueRangeEnum fromValue(String value) {
+      for (ValueRangeEnum b : ValueRangeEnum.values()) {
+        if (b.value.equals(value)) {
+          return b;
+        }
+      }
+      throw new IllegalArgumentException("Unexpected value '" + value + "'");
+    }
+  }
+
+  public static final String JSON_PROPERTY_VALUE_RANGE = "valueRange";
+  private ValueRangeEnum valueRange;
+
+  public static final String JSON_PROPERTY_POSSIBLE_VALUES = "possibleValues";
+  private List<Object> possibleValues = new ArrayList<>();
+
+  public static final String JSON_PROPERTY_CATEGORY_TYPE = "categoryType";
+  private String categoryType;
 
   public TagCategory() {
   }
@@ -130,6 +182,89 @@ public class TagCategory {
     this.valueType = valueType;
   }
 
+  public TagCategory valueRange(ValueRangeEnum valueRange) {
+    
+    this.valueRange = valueRange;
+    return this;
+  }
+
+   /**
+   * Get valueRange
+   * @return valueRange
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_VALUE_RANGE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public ValueRangeEnum getValueRange() {
+    return valueRange;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_VALUE_RANGE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setValueRange(ValueRangeEnum valueRange) {
+    this.valueRange = valueRange;
+  }
+
+  public TagCategory possibleValues(List<Object> possibleValues) {
+    
+    this.possibleValues = possibleValues;
+    return this;
+  }
+
+  public TagCategory addPossibleValuesItem(Object possibleValuesItem) {
+    if (this.possibleValues == null) {
+      this.possibleValues = new ArrayList<>();
+    }
+    this.possibleValues.add(possibleValuesItem);
+    return this;
+  }
+
+   /**
+   * Get possibleValues
+   * @return possibleValues
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_POSSIBLE_VALUES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public List<Object> getPossibleValues() {
+    return possibleValues;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_POSSIBLE_VALUES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setPossibleValues(List<Object> possibleValues) {
+    this.possibleValues = possibleValues;
+  }
+
+  public TagCategory categoryType(String categoryType) {
+    
+    this.categoryType = categoryType;
+    return this;
+  }
+
+   /**
+   * Get categoryType
+   * @return categoryType
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_CATEGORY_TYPE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getCategoryType() {
+    return categoryType;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_CATEGORY_TYPE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setCategoryType(String categoryType) {
+    this.categoryType = categoryType;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -140,12 +275,15 @@ public class TagCategory {
     }
     TagCategory tagCategory = (TagCategory) o;
     return Objects.equals(this.name, tagCategory.name) &&
-        Objects.equals(this.valueType, tagCategory.valueType);
+        Objects.equals(this.valueType, tagCategory.valueType) &&
+        Objects.equals(this.valueRange, tagCategory.valueRange) &&
+        Objects.equals(this.possibleValues, tagCategory.possibleValues) &&
+        Objects.equals(this.categoryType, tagCategory.categoryType);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, valueType);
+    return Objects.hash(name, valueType, valueRange, possibleValues, categoryType);
   }
 
   @Override
@@ -154,6 +292,9 @@ public class TagCategory {
     sb.append("class TagCategory {\n");
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    valueType: ").append(toIndentedString(valueType)).append("\n");
+    sb.append("    valueRange: ").append(toIndentedString(valueRange)).append("\n");
+    sb.append("    possibleValues: ").append(toIndentedString(possibleValues)).append("\n");
+    sb.append("    categoryType: ").append(toIndentedString(categoryType)).append("\n");
     sb.append("}");
     return sb.toString();
   }

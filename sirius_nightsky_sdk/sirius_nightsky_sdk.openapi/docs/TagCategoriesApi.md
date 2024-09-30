@@ -1,24 +1,24 @@
-# RunsApi
+# TagCategoriesApi
 
 All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**addTags**](RunsApi.md#addTags) | **POST** /api/projects/{projectId}/runs/tags/add/{objectId} | Add tags to a run in the project. |
-| [**deleteTags**](RunsApi.md#deleteTags) | **PUT** /api/projects/{projectId}/runs/tags/delete/{objectId} | Delete tags with the given IDs from the specified project-space. |
-| [**getRun**](RunsApi.md#getRun) | **GET** /api/projects/{projectId}/runs/{runId} | Get run with the given identifier from the specified project-space. |
-| [**getRunsPaged**](RunsApi.md#getRunsPaged) | **GET** /api/projects/{projectId}/runs/page | Get all available runs in the given project-space. |
-| [**objectsByTag**](RunsApi.md#objectsByTag) | **POST** /api/projects/{projectId}/runs/tags/tagged/{categoryName} |  |
+| [**addCategories**](TagCategoriesApi.md#addCategories) | **POST** /api/projects/{projectId}/categories/add | Add tag category to the project. |
+| [**deleteCategories**](TagCategoriesApi.md#deleteCategories) | **PUT** /api/projects/{projectId}/categories/delete | Delete tag categories with the given names from the specified project-space. |
+| [**getCategories**](TagCategoriesApi.md#getCategories) | **GET** /api/projects/{projectId}/categories | Get all tag categories in the given project-space. |
+| [**getCategoriesByType**](TagCategoriesApi.md#getCategoriesByType) | **GET** /api/projects/{projectId}/categories/type/{categoryType} | Get tag categories by type in the given project-space. |
+| [**getCategoryByName**](TagCategoriesApi.md#getCategoryByName) | **GET** /api/projects/{projectId}/categories/name/{categoryName} | Get tag category by name in the given project-space. |
 
 
 
-## addTags
+## addCategories
 
-> List&lt;Tag&gt; addTags(projectId, objectId, tag)
+> List&lt;TagCategory&gt; addCategories(projectId, tagCategory)
 
-Add tags to a run in the project.
+Add tag category to the project.
 
-Add tags to a run in the project. Tags with the same category name will be overwritten.
+Add tag category to the project. Category name must not exist in the project.
 
 ### Example
 
@@ -28,22 +28,21 @@ import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
 import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
 import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
 import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.RunsApi;
+import de.unijena.bioinf.ms.nightsky.sdk.api.TagCategoriesApi;
 
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
         defaultClient.setBasePath("http://localhost:8888");
 
-        RunsApi apiInstance = new RunsApi(defaultClient);
+        TagCategoriesApi apiInstance = new TagCategoriesApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to add to.
-        String objectId = "objectId_example"; // String | object to tag.
-        List<Tag> tag = Arrays.asList(); // List<Tag> | tags to add.
+        List<TagCategory> tagCategory = Arrays.asList(); // List<TagCategory> | the tag categories to be added
         try {
-            List<Tag> result = apiInstance.addTags(projectId, objectId, tag);
+            List<TagCategory> result = apiInstance.addCategories(projectId, tagCategory);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling RunsApi#addTags");
+            System.err.println("Exception when calling TagCategoriesApi#addCategories");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -59,12 +58,11 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to add to. | |
-| **objectId** | **String**| object to tag. | |
-| **tag** | [**List&lt;Tag&gt;**](Tag.md)| tags to add. | |
+| **tagCategory** | [**List&lt;TagCategory&gt;**](TagCategory.md)| the tag categories to be added | |
 
 ### Return type
 
-[**List&lt;Tag&gt;**](Tag.md)
+[**List&lt;TagCategory&gt;**](TagCategory.md)
 
 ### Authorization
 
@@ -79,16 +77,16 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | the tags that have been added |  -  |
+| **200** | the tag categories that have been added |  -  |
 
 
-## deleteTags
+## deleteCategories
 
-> deleteTags(projectId, objectId, requestBody)
+> deleteCategories(projectId, requestBody)
 
-Delete tags with the given IDs from the specified project-space.
+Delete tag categories with the given names from the specified project-space.
 
-Delete tags with the given IDs from the specified project-space.
+Delete tag categories with the given names from the specified project-space.
 
 ### Example
 
@@ -98,21 +96,20 @@ import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
 import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
 import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
 import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.RunsApi;
+import de.unijena.bioinf.ms.nightsky.sdk.api.TagCategoriesApi;
 
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
         defaultClient.setBasePath("http://localhost:8888");
 
-        RunsApi apiInstance = new RunsApi(defaultClient);
+        TagCategoriesApi apiInstance = new TagCategoriesApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to delete from.
-        String objectId = "objectId_example"; // String | object to delete tags from.
-        List<String> requestBody = Arrays.asList(); // List<String> | Category names of the tags to delete.
+        List<String> requestBody = Arrays.asList(); // List<String> | names of categories to delete.
         try {
-            apiInstance.deleteTags(projectId, objectId, requestBody);
+            apiInstance.deleteCategories(projectId, requestBody);
         } catch (ApiException e) {
-            System.err.println("Exception when calling RunsApi#deleteTags");
+            System.err.println("Exception when calling TagCategoriesApi#deleteCategories");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -128,8 +125,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to delete from. | |
-| **objectId** | **String**| object to delete tags from. | |
-| **requestBody** | [**List&lt;String&gt;**](String.md)| Category names of the tags to delete. | |
+| **requestBody** | [**List&lt;String&gt;**](String.md)| names of categories to delete. | |
 
 ### Return type
 
@@ -151,13 +147,13 @@ No authorization required
 | **200** | OK |  -  |
 
 
-## getRun
+## getCategories
 
-> Run getRun(projectId, runId, optFields)
+> List&lt;TagCategory&gt; getCategories(projectId)
 
-Get run with the given identifier from the specified project-space.
+Get all tag categories in the given project-space.
 
-Get run with the given identifier from the specified project-space.
+Get all tag categories in the given project-space.
 
 ### Example
 
@@ -167,22 +163,20 @@ import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
 import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
 import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
 import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.RunsApi;
+import de.unijena.bioinf.ms.nightsky.sdk.api.TagCategoriesApi;
 
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
         defaultClient.setBasePath("http://localhost:8888");
 
-        RunsApi apiInstance = new RunsApi(defaultClient);
+        TagCategoriesApi apiInstance = new TagCategoriesApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
-        String runId = "runId_example"; // String | identifier of run to access.
-        List<RunOptField> optFields = Arrays.asList(); // List<RunOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
-            Run result = apiInstance.getRun(projectId, runId, optFields);
+            List<TagCategory> result = apiInstance.getCategories(projectId);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling RunsApi#getRun");
+            System.err.println("Exception when calling TagCategoriesApi#getCategories");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -198,12 +192,10 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
-| **runId** | **String**| identifier of run to access. | |
-| **optFields** | [**List&lt;RunOptField&gt;**](RunOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 
 ### Return type
 
-[**Run**](Run.md)
+[**List&lt;TagCategory&gt;**](TagCategory.md)
 
 ### Authorization
 
@@ -218,16 +210,16 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | Run with tags (if specified). |  -  |
+| **200** | Tag categories. |  -  |
 
 
-## getRunsPaged
+## getCategoriesByType
 
-> PageRun getRunsPaged(projectId, page, size, sort, optFields)
+> List&lt;TagCategory&gt; getCategoriesByType(projectId, categoryType)
 
-Get all available runs in the given project-space.
+Get tag categories by type in the given project-space.
 
-Get all available runs in the given project-space.
+Get tag categories by type in the given project-space.
 
 ### Example
 
@@ -237,24 +229,21 @@ import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
 import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
 import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
 import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.RunsApi;
+import de.unijena.bioinf.ms.nightsky.sdk.api.TagCategoriesApi;
 
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
         defaultClient.setBasePath("http://localhost:8888");
 
-        RunsApi apiInstance = new RunsApi(defaultClient);
+        TagCategoriesApi apiInstance = new TagCategoriesApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to read from.
-        Integer page = 0; // Integer | Zero-based page index (0..N)
-        Integer size = 20; // Integer | The size of the page to be returned
-        List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-        List<RunOptField> optFields = Arrays.asList(); // List<RunOptField> | set of optional fields to be included. Use 'none' only to override defaults.
+        String categoryType = "categoryType_example"; // String | name of the category
         try {
-            PageRun result = apiInstance.getRunsPaged(projectId, page, size, sort, optFields);
+            List<TagCategory> result = apiInstance.getCategoriesByType(projectId, categoryType);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling RunsApi#getRunsPaged");
+            System.err.println("Exception when calling TagCategoriesApi#getCategoriesByType");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -270,14 +259,11 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to read from. | |
-| **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
-| **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
-| **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
-| **optFields** | [**List&lt;RunOptField&gt;**](RunOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
+| **categoryType** | **String**| name of the category | |
 
 ### Return type
 
-[**PageRun**](PageRun.md)
+[**List&lt;TagCategory&gt;**](TagCategory.md)
 
 ### Authorization
 
@@ -292,14 +278,16 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | Runs with tags (if specified). |  -  |
+| **200** | Tag categories. |  -  |
 
 
-## objectsByTag
+## getCategoryByName
 
-> PageRun objectsByTag(projectId, categoryName, objectsByTagRequest, page, size, sort, optFields)
+> TagCategory getCategoryByName(projectId, categoryName)
 
+Get tag category by name in the given project-space.
 
+Get tag category by name in the given project-space.
 
 ### Example
 
@@ -309,26 +297,21 @@ import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
 import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
 import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
 import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.RunsApi;
+import de.unijena.bioinf.ms.nightsky.sdk.api.TagCategoriesApi;
 
 public class Example {
     public static void main(String[] args) {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
         defaultClient.setBasePath("http://localhost:8888");
 
-        RunsApi apiInstance = new RunsApi(defaultClient);
-        String projectId = "projectId_example"; // String | 
-        String categoryName = "categoryName_example"; // String | 
-        ObjectsByTagRequest objectsByTagRequest = new ObjectsByTagRequest(); // ObjectsByTagRequest | 
-        Integer page = 0; // Integer | Zero-based page index (0..N)
-        Integer size = 20; // Integer | The size of the page to be returned
-        List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-        List<RunOptField> optFields = Arrays.asList(); // List<RunOptField> | 
+        TagCategoriesApi apiInstance = new TagCategoriesApi(defaultClient);
+        String projectId = "projectId_example"; // String | project-space to read from.
+        String categoryName = "categoryName_example"; // String | name of the category
         try {
-            PageRun result = apiInstance.objectsByTag(projectId, categoryName, objectsByTagRequest, page, size, sort, optFields);
+            TagCategory result = apiInstance.getCategoryByName(projectId, categoryName);
             System.out.println(result);
         } catch (ApiException e) {
-            System.err.println("Exception when calling RunsApi#objectsByTag");
+            System.err.println("Exception when calling TagCategoriesApi#getCategoryByName");
             System.err.println("Status code: " + e.getCode());
             System.err.println("Reason: " + e.getResponseBody());
             System.err.println("Response headers: " + e.getResponseHeaders());
@@ -343,17 +326,12 @@ public class Example {
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**|  | |
-| **categoryName** | **String**|  | |
-| **objectsByTagRequest** | [**ObjectsByTagRequest**](ObjectsByTagRequest.md)|  | |
-| **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
-| **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
-| **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
-| **optFields** | [**List&lt;RunOptField&gt;**](RunOptField.md)|  | [optional] |
+| **projectId** | **String**| project-space to read from. | |
+| **categoryName** | **String**| name of the category | |
 
 ### Return type
 
-[**PageRun**](PageRun.md)
+[**TagCategory**](TagCategory.md)
 
 ### Authorization
 
@@ -361,12 +339,12 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | OK |  -  |
+| **200** | Tag categories. |  -  |
 

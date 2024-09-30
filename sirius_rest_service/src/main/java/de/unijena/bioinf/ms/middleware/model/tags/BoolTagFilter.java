@@ -24,25 +24,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import lombok.experimental.SuperBuilder;
+
 
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Tag {
+public class BoolTagFilter extends TagFilter {
 
-    /**
-     * Name of the tag category
-     */
-    @NotNull
-    private String categoryName;
-
-    /**
-     * Tag value
-     */
-    @Nullable
-    private Object value;
+    @Builder.Default
+    protected boolean value = true;
 
 }

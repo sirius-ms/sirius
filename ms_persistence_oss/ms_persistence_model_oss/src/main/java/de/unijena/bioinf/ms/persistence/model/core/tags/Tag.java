@@ -18,31 +18,28 @@
  *  If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
-package de.unijena.bioinf.ms.middleware.model.tags;
+package de.unijena.bioinf.ms.persistence.model.core.tags;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import jakarta.persistence.Id;
+import lombok.*;
 
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
-@Builder
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@ToString
 public class Tag {
 
-    /**
-     * Name of the tag category
-     */
-    @NotNull
-    private String categoryName;
+    @Id
+    private long tagId;
 
-    /**
-     * Tag value
-     */
-    @Nullable
+    private String taggedObjectClass;
+
+    private long taggedObjectId;
+
+    private long categoryId;
+
     private Object value;
 
 }

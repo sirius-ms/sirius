@@ -21,28 +21,23 @@
 package de.unijena.bioinf.ms.middleware.model.tags;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Builder;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
 import lombok.Setter;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import lombok.experimental.SuperBuilder;
 
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class Tag {
-
-    /**
-     * Name of the tag category
-     */
-    @NotNull
-    private String categoryName;
-
-    /**
-     * Tag value
-     */
-    @Nullable
-    private Object value;
+@JsonTypeInfo(use=JsonTypeInfo.Id.CLASS, property="type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value= TaggedFilter.class, name = "tagged"),
+        @JsonSubTypes.Type(value= BoolTagFilter.class, name = "bool"),
+        @JsonSubTypes.Type(value= IntTagFilter.class, name = "int"),
+        @JsonSubTypes.Type(value= DoubleTagFilter.class, name = "double")
+})
+public abstract class TagFilter {
 
 }

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import de.unijena.bioinf.ms.nightsky.sdk.model.Tag;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -61,7 +62,7 @@ public class Run {
   private List<String> massAnalyzers;
 
   public static final String JSON_PROPERTY_TAGS = "tags";
-  private Map<String, Object> tags;
+  private Map<String, Tag> tags;
 
   public Run() {
   }
@@ -224,13 +225,13 @@ public class Run {
     this.massAnalyzers = massAnalyzers;
   }
 
-  public Run tags(Map<String, Object> tags) {
+  public Run tags(Map<String, Tag> tags) {
     
     this.tags = tags;
     return this;
   }
 
-  public Run putTagsItem(String key, Object tagsItem) {
+  public Run putTagsItem(String key, Tag tagsItem) {
     if (this.tags == null) {
       this.tags = new HashMap<>();
     }
@@ -244,16 +245,16 @@ public class Run {
   **/
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_TAGS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  @JsonInclude(content = JsonInclude.Include.ALWAYS, value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Map<String, Object> getTags() {
+  public Map<String, Tag> getTags() {
     return tags;
   }
 
 
   @JsonProperty(JSON_PROPERTY_TAGS)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setTags(Map<String, Object> tags) {
+  @JsonInclude(content = JsonInclude.Include.ALWAYS, value = JsonInclude.Include.USE_DEFAULTS)
+  public void setTags(Map<String, Tag> tags) {
     this.tags = tags;
   }
 

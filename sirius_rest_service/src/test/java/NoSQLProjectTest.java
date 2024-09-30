@@ -27,27 +27,29 @@ import de.unijena.bioinf.ms.middleware.model.features.FeatureImport;
 import de.unijena.bioinf.ms.middleware.model.features.MsData;
 import de.unijena.bioinf.ms.middleware.model.features.Run;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
+import de.unijena.bioinf.ms.middleware.model.tags.StringTagFilter;
 import de.unijena.bioinf.ms.middleware.model.tags.Tag;
 import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
+import de.unijena.bioinf.ms.middleware.model.tags.TaggedFilter;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
-import de.unijena.bioinf.ms.middleware.service.projects.Project;
 import de.unijena.bioinf.ms.persistence.model.core.run.*;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
 import de.unijena.bioinf.ms.persistence.storage.nitrite.NitriteSirirusProject;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.time.StopWatch;
 import org.junit.Assert;
 import org.junit.Test;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class NoSQLProjectTest {
 
@@ -214,28 +216,55 @@ public class NoSQLProjectTest {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
             NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
 
-            Map<String, TagCategory.ValueType> catIn = Map.of(
-                    "c0", TagCategory.ValueType.BOOLEAN,
-                    "c1", TagCategory.ValueType.INTEGER,
-                    "c2", TagCategory.ValueType.DOUBLE,
-                    "c3", TagCategory.ValueType.STRING
+            Map<String, TagCategory> catIn = Map.of(
+                    "c0", TagCategory.builder().name("c0").valueType(TagCategory.ValueType.NONE).categoryType("foo").build(),
+                    "c1", TagCategory.builder().name("c1").valueRange(TagCategory.ValueRange.FIXED).valueType(TagCategory.ValueType.BOOLEAN).possibleValues(List.of(true, false)).build(),
+                    "c2", TagCategory.builder().name("c2").valueRange(TagCategory.ValueRange.FIXED).valueType(TagCategory.ValueType.INTEGER).possibleValues(List.of(0, 1)).build(),
+                    "c3", TagCategory.builder().name("c3").valueRange(TagCategory.ValueRange.VARIABLE).valueType(TagCategory.ValueType.DOUBLE).build(),
+                    "c4", TagCategory.builder().name("c4").valueRange(TagCategory.ValueRange.VARIABLE).valueType(TagCategory.ValueType.STRING).build()
             );
 
-            Map<String, TagCategory.ValueType> cats0 = project.addCategories(Project.Taggable.RUN, catIn.keySet().stream().map(name -> TagCategory.builder().name(name).valueType(catIn.get(name)).build()).toList()).stream().collect(Collectors.toMap(TagCategory::getName, TagCategory::getValueType));
-            Map<String, TagCategory.ValueType> cats1 = project.findCategories(Project.Taggable.RUN).stream().collect(Collectors.toMap(TagCategory::getName, TagCategory::getValueType));
-            Map<String, TagCategory.ValueType> cats2 = catIn.keySet().stream().map(name -> project.findCategoryByName(Project.Taggable.RUN, name)).collect(Collectors.toMap(TagCategory::getName, TagCategory::getValueType));
+            Assert.assertThrows(IllegalArgumentException.class, () -> project.addCategories(
+                    List.of(TagCategory.builder().name("c1").valueRange(TagCategory.ValueRange.FIXED).valueType(TagCategory.ValueType.BOOLEAN).build())
+            ));
+            Assert.assertThrows(IllegalArgumentException.class, () -> project.addCategories(
+                    List.of(TagCategory.builder().name("c1").valueRange(TagCategory.ValueRange.FIXED).valueType(TagCategory.ValueType.BOOLEAN).possibleValues(List.of(0, 1)).build())
+            ));
 
-            Assert.assertThrows(ResponseStatusException.class, () -> project.findCategoryByName(Project.Taggable.RUN, "foo"));
+            Map<String, TagCategory> cats0 = project.addCategories(new ArrayList<>(catIn.values())).stream().collect(Collectors.toMap(TagCategory::getName, Function.identity()));
+            Map<String, TagCategory> cats1 = project.findCategories().stream().collect(Collectors.toMap(TagCategory::getName, Function.identity()));
+            Map<String, TagCategory> cats2 = catIn.keySet().stream().map(project::findCategoryByName).collect(Collectors.toMap(TagCategory::getName, Function.identity()));
+
+            List<TagCategory> cats3 = project.findCategoriesByType("foo");
+            Assert.assertEquals(1, cats3.size());
+            Assert.assertEquals("c0", cats3.getFirst().getName());
+
+            Assert.assertThrows(ResponseStatusException.class, () -> project.findCategoryByName("foo"));
 
             Assert.assertEquals(catIn.size(), cats0.size());
             Assert.assertEquals(catIn.size(), cats1.size());
             Assert.assertEquals(catIn.size(), cats2.size());
 
             for (String name : catIn.keySet()) {
-                Assert.assertEquals(catIn.get(name), cats0.get(name));
-                Assert.assertEquals(catIn.get(name), cats1.get(name));
-                Assert.assertEquals(catIn.get(name), cats2.get(name));
+                TagCategory c = catIn.get(name);
+                for (Map<String, TagCategory> comparison : List.of(cats0, cats1, cats2)) {
+                    TagCategory cc = comparison.get(name);
+                    Assert.assertEquals(c.getName(), cc.getName());
+                    Assert.assertEquals(c.getValueRange(), cc.getValueRange());
+                    Assert.assertEquals(c.getValueType(), cc.getValueType());
+                    Assert.assertEquals(c.getPossibleValues(), cc.getPossibleValues());
+                    if (c.getPossibleValues() != null && cc.getPossibleValues() != null) {
+                        Assert.assertArrayEquals(c.getPossibleValues().toArray(), cc.getPossibleValues().toArray());
+                    }
+                }
             }
+
+            Assert.assertNull(project.addCategories(
+                    List.of(TagCategory.builder().name("cfoo0").valueType(TagCategory.ValueType.NONE).build())
+            ).getFirst().getPossibleValues());
+            Assert.assertNull(project.addCategories(
+                    List.of(TagCategory.builder().name("cfoo1").valueType(TagCategory.ValueType.BOOLEAN).valueRange(TagCategory.ValueRange.VARIABLE).build())
+            ).getFirst().getPossibleValues());
 
         }
 
@@ -260,34 +289,34 @@ public class NoSQLProjectTest {
             ps.getStorage().insert(runIn);
             Run run = project.findRunById(Long.toString(runIn.getRunId()));
 
-            project.addCategories(Project.Taggable.RUN, List.of(TagCategory.builder().name("c1").valueType(TagCategory.ValueType.BOOLEAN).build()));
+            project.addCategories(List.of(TagCategory.builder().name("c1").valueType(TagCategory.ValueType.BOOLEAN).build()));
 
-            project.addTagsToObject(Project.Taggable.RUN, run.getRunId(), List.of(Tag.builder().categoryName("c1").value(true).build()));
+            project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().categoryName("c1").value(true).build()));
             Map<String, Tag> tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
             Assert.assertEquals(1, tags.size());
             Assert.assertEquals(true, tags.get("c1").getValue());
 
-            project.addTagsToObject(Project.Taggable.RUN, run.getRunId(), List.of(Tag.builder().categoryName("c1").value(false).build()));
+            project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().categoryName("c1").value(false).build()));
             tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
             Assert.assertEquals(1, tags.size());
             Assert.assertEquals(false, tags.get("c1").getValue());
 
-            Assert.assertThrows(ResponseStatusException.class, () -> project.addTagsToObject(Project.Taggable.RUN, run.getRunId(), List.of(Tag.builder().categoryName("c2").value(false).build())));
-            Assert.assertThrows(ResponseStatusException.class, () -> project.addTagsToObject(Project.Taggable.RUN, run.getRunId(), List.of(Tag.builder().categoryName("c1").value(2.0).build())));
+            Assert.assertThrows(ResponseStatusException.class, () -> project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().categoryName("c2").value(false).build())));
+            Assert.assertThrows(ResponseStatusException.class, () -> project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().categoryName("c1").value(2.0).build())));
 
-            project.addCategories(Project.Taggable.RUN, List.of(
+            project.addCategories(List.of(
                     TagCategory.builder().name("c2").valueType(TagCategory.ValueType.INTEGER).build(),
                     TagCategory.builder().name("c3").valueType(TagCategory.ValueType.DOUBLE).build(),
                     TagCategory.builder().name("c4").valueType(TagCategory.ValueType.STRING).build()
             ));
 
-            project.addTagsToObject(Project.Taggable.RUN, run.getRunId(), List.of(
+            project.addTagsToObject(Run.class, run.getRunId(), List.of(
                     Tag.builder().categoryName("c2").value(42).build(),
                     Tag.builder().categoryName("c3").value(42.0).build(),
                     Tag.builder().categoryName("c4").value("42").build()
             ));
 
-            project.addTagsToObject(Project.Taggable.RUN, run.getRunId(), List.of(Tag.builder().categoryName("c1").value(false).build()));
+            project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().categoryName("c1").value(false).build()));
             tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
             Assert.assertEquals(4, tags.size());
             Assert.assertEquals(false, tags.get("c1").getValue());
@@ -295,17 +324,77 @@ public class NoSQLProjectTest {
             Assert.assertEquals(42.0, tags.get("c3").getValue());
             Assert.assertEquals("42", tags.get("c4").getValue());
 
-            project.deleteTagsFromObject(Project.Taggable.RUN, run.getRunId(), List.of("c3", "c4"));
+            project.deleteTagsFromObject(Run.class, run.getRunId(), List.of("c3", "c4"));
             tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
             Assert.assertEquals(2, tags.size());
             Assert.assertEquals(false, tags.get("c1").getValue());
             Assert.assertEquals(42, tags.get("c2").getValue());
 
-            project.deleteCategories(Project.Taggable.RUN, List.of("c2", "c3"));
+            project.deleteCategories(List.of("c2", "c3"));
             tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
             Assert.assertEquals(1, tags.size());
             Assert.assertEquals(false, tags.get("c1").getValue());
 
+            Page<Run> page = project.findObjectsByTag(Run.class, "c1", TaggedFilter.builder().build(), Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+            Assert.assertEquals(1, page.getTotalElements());
+            tags = page.get().findFirst().orElseThrow().getTags();
+            Assert.assertEquals(1, tags.size());
+            Assert.assertEquals(false, tags.get("c1").getValue());
+
+        }
+
+    }
+
+    @Test
+    public void testMany() throws IOException {
+
+        Path location = FileUtils.createTmpProjectSpaceLocation(SiriusProjectDocumentDatabase.SIRIUS_PROJECT_SUFFIX);
+        try (NitriteSirirusProject ps = new NitriteSirirusProject(location)) {
+            NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
+            NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
+
+            List<LCMSRun> lcmsRuns = IntStream.range(0, 10000).mapToObj(i -> (LCMSRun) LCMSRun.builder()
+                    .name("run" + i)
+                    .chromatography(Chromatography.LC)
+                    .fragmentation(Fragmentation.byValue("CID").orElseThrow())
+                    .ionization(Ionization.byValue("ESI").orElseThrow())
+                    .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
+                    .build()).toList();
+
+            ps.getStorage().insertAll(lcmsRuns);
+
+            List<Run> runs = project.findRuns(Pageable.unpaged()).getContent();
+            List<Run> control = runs.subList(0, runs.size() / 3);
+            List<Run> blank = runs.subList(runs.size() / 3, 2 * runs.size() / 3);
+            List<Run> sample = runs.subList(2 * runs.size() / 3, runs.size());
+
+            project.addCategories(List.of(
+                    TagCategory.builder().categoryType("sampleCat").name("sample type").valueType(TagCategory.ValueType.STRING).valueRange(TagCategory.ValueRange.FIXED).possibleValues(List.of("control", "blank", "sample")).build()
+            ));
+
+            StopWatch watch = new StopWatch();
+            watch.start();
+
+            for (Run run : control) {
+                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().categoryName("sample type").value("control").build()));
+            }
+            for (Run run : blank) {
+                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().categoryName("sample type").value("blank").build()));
+            }
+            for (Run run : sample) {
+                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().categoryName("sample type").value("sample").build()));
+            }
+
+            watch.stop();
+            System.out.println("CREATE TAGS: " + watch);
+
+            watch = new StopWatch();
+            watch.start();
+
+            project.findObjectsByTag(Run.class, "sample type", StringTagFilter.builder().equals("sample").build(), Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+
+            watch.stop();
+            System.out.println("FIND OBJ BY TAGS: " + watch);
         }
 
     }
