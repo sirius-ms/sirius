@@ -18,7 +18,7 @@ public interface MassOfInterestConfidenceEstimatorStrategy {
             // confidence of 0 is used for alignment, but rejected if it does not align
             ACCEPT = 0,
             // confidence above 10 is used for alignment and kept, even if it does not align
-            KEEP_FOR_ALIGNMENT = 20,
+            KEEP_FOR_ALIGNMENT = 30,
             // confidence above 100 is used in initial alignment to build the backbone
             CONFIDENT = 100;
 
