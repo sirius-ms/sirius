@@ -402,7 +402,6 @@ public class LCMSProcessing {
 
                 if (trace.getSegments().length==1) moi.setSingleApex(true);
                 detectIsotopesForMoI(sample, trace, segment, moi);
-
                 moi.setConfidence(confidenceEstimatorStrategy.estimateConfidence(sample, trace, moi, null));
                 if (moi.getConfidence() >= 0) {
                     //System.out.println(moi + " intensity = " + moi.getIntensity() + ", isotopes = " + (moi.getIsotopes()==null ? 0 : moi.getIsotopes().isotopeIntensities.length) + ", confidence = "+ moi.getConfidence());

@@ -27,6 +27,7 @@ import de.unijena.bioinf.ChemistryBase.fp.*;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.chemdb.*;
 import de.unijena.bioinf.jjobs.*;
+import de.unijena.bioinf.jjobs.exceptions.Exceptions;
 import de.unijena.bioinf.utils.PrimsSpanningTree;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
@@ -244,6 +245,13 @@ public class BayesianScoringUtils {
         try {
             return SiriusJobs.getGlobalJobManager().submitJob(createScoringComputationJob(formula, chemdb, SiriusJobs.getCPUThreads())).takeResult();
         } catch (RuntimeException r) {
+            if (Exceptions.containsCause(r, InsufficientDataException.class)) {
+                throw new InsufficientDataException();
+            } else if (Exceptions.containsCause(r, ChemicalDatabaseException.class)) {
+                throw new ChemicalDatabaseException();
+            }
+            else throw r;
+            /*
             Throwable cause = r.getCause();
             if (cause instanceof InsufficientDataException) {
                 throw (InsufficientDataException) cause;
@@ -252,6 +260,7 @@ public class BayesianScoringUtils {
             } else {
                 throw r;
             }
+             */
         }
     }
 
