@@ -364,6 +364,13 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
 
     @Override
     public int compareTo(FormulaResultBean o) {
+
+        //Compare by ZODIAC score if both instances have it
+        if(!o.getZodiacScore().isEmpty() && !getZodiacScore().isEmpty()){
+            return Double.compare(o.getZodiacScore().orElse(Double.NaN),getZodiacScore().orElse(Double.NaN));
+        }
+
+        //Else return by SIRIUS score
         return Double.compare(
                 o.getSiriusScore().orElse(Double.NaN),
                 getSiriusScore().orElse(Double.NaN)
