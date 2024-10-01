@@ -32,13 +32,13 @@ public class CandidateListTableHeaderRenderer extends DefaultTableCellRenderer {
             null,
             null,
             null,
+            "CSI:FingerID score between the database structure's fingerprint and the predicted fingerprint from the input data",
+            "Tanimoto similarity between the database structure's fingerprint and the predicted fingerprint from the input data",
+            "Octanol/water partition coefficient",
             null,
-            "Tanimoto similarity between query and database fingerprint",
-            null,
-            "Octanol/water partition  coefficient",
-            null,
-            null,
-            null
+            "Lipid class predicted by El Gordo",
+            "If marked, this structure is present in a structure database",
+            "If marked, this structure was generated de novo by MSNovelist"
     };
 
     @Override
