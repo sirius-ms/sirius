@@ -26,9 +26,7 @@ import de.unijena.bioinf.ms.gui.utils.JListDropImage;
 import de.unijena.bioinf.projectspace.InstanceBean;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.*;
 
 /**
  * @author Markus Fleischauer (markus.fleischauer@gmail.com)
@@ -100,15 +98,33 @@ public class CompoundListView extends JScrollPane {
 
         setViewportView(compoundListView);
 
-        //decorate this guy
         KeyStroke enterKey = KeyStroke.getKeyStroke("ENTER");
         compoundListView.getInputMap().put(enterKey, SiriusActions.COMPUTE.name());
+
 
         KeyStroke delKey = KeyStroke.getKeyStroke("DELETE");
         compoundListView.getInputMap().put(delKey, SiriusActions.DELETE_EXP.name());
 
-        SiriusActions.DELETE_EXP.getInstance(gui, true);
-        SiriusActions.COMPUTE.getInstance(gui, true);
+
+        ActionMap actionMap = compoundListView.getActionMap();
+
+        // Define and register the compute action (for Enter key)
+        actionMap.put(SiriusActions.COMPUTE.name(), new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                SiriusActions.COMPUTE.getInstance(gui, true)
+                        .actionPerformed(new ActionEvent(compoundListView, ActionEvent.ACTION_PERFORMED, SiriusActions.COMPUTE.name()));
+            }
+        });
+
+        // Define and register the delete action (for Delete key)
+        actionMap.put(SiriusActions.DELETE_EXP.name(), new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                SiriusActions.DELETE_EXP.getInstance(gui, true)
+                        .actionPerformed(new ActionEvent(compoundListView, ActionEvent.ACTION_PERFORMED, SiriusActions.DELETE_EXP.name()));
+            }
+        });
     }
 
     public void ensureIndexIsVisible(int index) {
