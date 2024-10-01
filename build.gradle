@@ -13,7 +13,6 @@ buildscript {
         classpath 'commons-configuration:commons-configuration:1.10'
         classpath 'com.github.viswaramamoorthy:gradle-util-plugins:0.1.0-RELEASE'
         classpath 'org.yaml:snakeyaml:1.29'
-        classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:5.2.2'
     }
 }
 
@@ -149,27 +148,6 @@ allprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        //TODO DEPRECATED: This reaches EOL soon and will be replaced with 'sirius-ms-maven-public',
-        // but currently Gitlab CI/CD workers refuse to connect to it.
-        maven {
-            url "https://bio.informatik.uni-jena.de/repository/libs-oss"
-        }
-
-        maven {
-            url "https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
-        }
-        maven {
-            url "https://repo1.maven.org/maven2/" //glazed lists
-        }
-        maven {
-            url "http://eulergui.sourceforge.net/maven2/" //FTAlign stuff
-            allowInsecureProtocol = true
-        }
-        maven {
-            // only used for spectral hashs (Splash)
-            url "http://gose.fiehnlab.ucdavis.edu:55000/content/groups/public"
-            allowInsecureProtocol = true
-        }
         //this is for public sirius-ms dependencies
         maven {
             name "sirius-ms-maven-public"
@@ -200,6 +178,26 @@ allprojects {
                     }
                 }
             }
+        }
+        maven {
+            url "https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
+        }
+        maven {
+            url "https://repo1.maven.org/maven2/" //glazed lists
+        }
+        maven {
+            url "http://eulergui.sourceforge.net/maven2/" //FTAlign stuff
+            allowInsecureProtocol = true
+        }
+        maven {
+            // only used for spectral hashs (Splash)
+            url "http://gose.fiehnlab.ucdavis.edu:55000/content/groups/public"
+            allowInsecureProtocol = true
+        }
+        //TODO DEPRECATED: This reaches EOL soon and will be replaced with 'sirius-ms-maven-public',
+        // but currently Gitlab CI/CD workers refuse to connect to it.
+        maven {
+            url "https://bio.informatik.uni-jena.de/repository/libs-oss"
         }
     }
 
