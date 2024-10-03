@@ -4,6 +4,7 @@ import de.unijena.bioinf.lcms.utils.AlignmentBeamSearch;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
 

@@ -32,6 +32,8 @@ public abstract class LCMSStorage{
         return () -> new MVTraceStorage(filename.getAbsolutePath());
     }
 
+    public abstract void commit();
+
     public abstract TraceRectangleMap getRectangleMap(String prefix);
 
     /**
@@ -75,9 +77,13 @@ class MVTraceStorage extends LCMSStorage {
     public MVTraceStorage(String file) {
         MVStore.Builder builder = new MVStore.Builder();
         this.cacheSizeInMegabytes = getDefaultCacheSize();
-        this.storage = builder.fileName(file).cacheSize(cacheSizeInMegabytes).open();
+        this.storage = builder.fileName(file).autoCommitDisabled().cacheSize(cacheSizeInMegabytes).open();
         this.statisticsObj = storage.openMap("statistics", new MVMap.Builder<Integer,SampleStats>().valueType(new SampleStatsDataType()));
         this.alignmentStorage = new MvBasedAlignmentStorage(storage);
+    }
+
+    public void commit() {
+        storage.commit();
     }
 
     @Override

@@ -1,6 +1,7 @@
 package de.unijena.bioinf.lcms.trace;
 
 import de.unijena.bioinf.lcms.ScanPointMapping;
+import de.unijena.bioinf.lcms.msms.MsMsTraceReference;
 import org.dizitart.no2.mvstore.MVSpatialKey;
 import org.h2.mvstore.MVMap;
 import org.h2.mvstore.MVStore;
@@ -31,13 +32,13 @@ public abstract class TraceStorage implements Iterable<ContiguousTrace>  {
         MS2-Spectrum TO TRACE
      */
     public abstract ContiguousTrace getTraceForMs2(int ms2headerId);
-    public abstract void setTraceForMs2(int ms2headerid, int traceId);
-    public abstract int[] getMs2ForTrace(int traceId);
+    public abstract void assignTraceForMs2(MsMsTraceReference ref);
+    public abstract MsMsTraceReference[] getMs2ForTrace(int traceId);
 
     public static class MvTraceStorage extends TraceStorage {
         private MVMap<Integer, ContiguousTrace> traceMap;
         private MVMap<Integer, int[]> trace2ms2;
-        private MVMap<Integer, Integer> ms2headers2Traces;
+        private MVMap<Integer, MsMsTraceReference> ms2headers2Traces;
         private MVRTreeMap<Integer> spatialTraceMap;
         private ScanPointMapping mapping;
         private AtomicInteger uids;
@@ -59,24 +60,29 @@ public abstract class TraceStorage implements Iterable<ContiguousTrace>  {
         }
 
         @Override
-        public void setTraceForMs2(int ms2headerid, int traceId) {
-            ms2headers2Traces.put(ms2headerid, traceId);
+        public void assignTraceForMs2(MsMsTraceReference reference) {
+            ms2headers2Traces.put(reference.ms2Uid, reference);
             synchronized (this) {
+                final int traceId = reference.traceUid;
                 int[] ints = trace2ms2.get(traceId);
-                if (ints == null) trace2ms2.put(traceId, new int[]{ms2headerid});
+                if (ints == null) trace2ms2.put(traceId, new int[]{reference.ms2Uid});
                 else {
                     ints = Arrays.copyOf(ints, ints.length + 1);
-                    ints[ints.length - 1] = ms2headerid;
+                    ints[ints.length - 1] = reference.ms2Uid;
                     trace2ms2.put(traceId, ints);
                 }
             }
         }
 
         @Override
-        public int[] getMs2ForTrace(int traceId) {
+        public MsMsTraceReference[] getMs2ForTrace(int traceId) {
             int[] xs = trace2ms2.get(traceId);
-            if (xs==null) return new int[0];
-            else return xs;
+            if (xs==null) return new MsMsTraceReference[0];
+            MsMsTraceReference[] ys = new MsMsTraceReference[xs.length];
+            for (int i=0; i < xs.length; ++i) {
+                ys[i] = ms2headers2Traces.get(xs[i]);
+            }
+            return ys;
         }
 
 

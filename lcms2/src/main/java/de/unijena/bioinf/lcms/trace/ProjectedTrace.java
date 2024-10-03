@@ -1,6 +1,7 @@
 package de.unijena.bioinf.lcms.trace;
 
 import de.unijena.bioinf.lcms.ScanPointMapping;
+import de.unijena.bioinf.lcms.msms.MsMsTraceReference;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import it.unimi.dsi.fastutil.floats.FloatArrayList;
 
@@ -17,7 +18,7 @@ public class ProjectedTrace implements Serializable {
     private float[] rawMz, projectedMz;
     private float[] rawIntensities, projectedIntensities;
 
-    private int[] ms2Ids = new int[0];
+    private MsMsTraceReference[] ms2Ids = new MsMsTraceReference[0];
 
     public ProjectedTrace(int sampleId, int rawStartId, int rawEndId, int rawApex, int projectedStartId, int projectedEndId, int projectedApex, double averagedMz, float[] rawMz, float[] projectedMz, float[] rawIntensities, float[] projectedIntensities) {
         this.sampleId = sampleId;
@@ -121,11 +122,11 @@ public class ProjectedTrace implements Serializable {
         return projectedIntensities[k-projectedStartId];
     }
 
-    public int[] getMs2Ids() {
+    public MsMsTraceReference[] getMs2Refs() {
         return ms2Ids;
     }
 
-    public void setMs2Ids(int[] ms2Ids) {
+    public void setMs2Refs(MsMsTraceReference[] ms2Ids) {
         this.ms2Ids = ms2Ids;
     }
 

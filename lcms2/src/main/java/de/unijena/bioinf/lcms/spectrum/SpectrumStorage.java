@@ -28,7 +28,10 @@ public abstract class SpectrumStorage {
 
         private AtomicInteger ms2spectraIds;
 
+        MVStore store;
+
         public MvSpectrumStorage(MVStore storage) {
+            this.store = storage;
             this.spectraMap = storage.openMap("spectra",
                     new MVMap.Builder<Integer,SimpleSpectrum>().valueType(new SpectrumDatatype()));
             this.ms2headers = storage.openMap("ms2headers", new MVMap.Builder<Integer,Ms2SpectrumHeader>().valueType(new MsSpectrumHeaderDatatype()));
@@ -39,10 +42,13 @@ public abstract class SpectrumStorage {
         }
 
 
+        private AtomicInteger counter = new AtomicInteger();
+
         @Override
         public void addSpectrum(Ms1SpectrumHeader header, SimpleSpectrum spectrum) {
             spectraMap.put(header.getUid(), spectrum);
             ms1Headers.put(header.getUid(), header);
+            if (counter.incrementAndGet() % 1000 == 0) store.commit();
         }
 
         @Override
@@ -62,6 +68,9 @@ public abstract class SpectrumStorage {
 
             ms2SpectraMap.put(id, spectrum);
             ms2headers.put(id, ms2SpectrumHeader);
+
+            if (counter.incrementAndGet() % 1000 == 0) store.commit();
+
             return ms2SpectrumHeader;
         }
 
