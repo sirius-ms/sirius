@@ -154,8 +154,8 @@ public class TracePicker {
         Optional<ContiguousTrace> traceFromCache = cache.getTraceFromCache(spectrumId, mz);
         if (traceFromCache.isPresent()) return traceFromCache;
         Optional<ContiguousTrace> detected = pickTrace(spectrumId, mz);
-        return detected.map(x->{
-            x.setSegments(segmentationStrategy.detectSegments(storage.getStatistics(), x).toArray(TraceSegment[]::new));
+        return detected.map(x->{ // TODO: evtl. hier schon points of interests einfügen
+            x.setSegments(segmentationStrategy.detectSegments(storage.getStatistics(), x, new int[0]).toArray(TraceSegment[]::new));
             return cache.addTraceToCache(x);
         });
     }
