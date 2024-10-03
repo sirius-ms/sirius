@@ -149,11 +149,11 @@ public class InstanceBean implements SiriusPCS {
     }
 
     public void registerProjectSpaceListener() {
-        projectManager.pcs.addPropertyChangeListener("project.updateInstance." + getFeatureId(), listener);
+        projectManager.pcs.addPropertyChangeListener("project.updateInstance" + getFeatureId(), listener);
     }
 
     public void unregisterProjectSpaceListener() {
-        projectManager.pcs.removePropertyChangeListener("project.updateInstance." + getFeatureId(), listener);
+        projectManager.pcs.removePropertyChangeListener("project.updateInstance" + getFeatureId(), listener);
     }
 
     public void enableProjectSpaceListener() {

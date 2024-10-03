@@ -41,6 +41,8 @@ public abstract class Icons {
 
     public static final ImageIcon FILTER_LOADER = new ImageIcon(MainFrame.class.getResource("/icons/loaders/filterLoader.gif"));
     public static final ImageIcon FILTER_LOADER_60 = new ImageIcon(MainFrame.class.getResource("/icons/loaders/filterLoader_60.gif"));
+    public static final ImageIcon ATOM_LOADER_120 = new ImageIcon(MainFrame.class.getResource("/icons/loaders/AtomSpinner_120_2s.gif"));
+    public static final ImageIcon ATOM_LOADER_200 = new ImageIcon(MainFrame.class.getResource("/icons/loaders/AtomSpinner_200_2s.gif"));
     public static final ImageIcon FILTER_LOADER_120 = new ImageIcon(MainFrame.class.getResource("/icons/loaders/filterLoader_120.gif"));
     public static final ImageIcon FILTER_LOADER_160 = new ImageIcon(MainFrame.class.getResource("/icons/loaders/filterLoader_160.gif"));
 

@@ -61,7 +61,11 @@ public class CompoundList {
     final JButton openFilterPanelButton;
     final CompoundFilterModel compoundFilterModel;
     final ObservableElementList<InstanceBean> observableScource;
+    @Getter
     final SortedList<InstanceBean> sortedSource;
+    @Getter
+    final FilterList<InstanceBean> filterList;
+
     @Getter
     final EventList<InstanceBean> compoundList;
     final DefaultEventSelectionModel<InstanceBean> compountListSelectionModel;
@@ -108,8 +112,8 @@ public class CompoundList {
 
         compoundListMatchEditor = new MatcherEditorWithOptionalInvert<>(compositeMatcherEditor);
         backgroundFilterMatcher = new BackgroundJJobMatcheEditor<>(compoundListMatchEditor);
-        FilterList<InstanceBean> filterList = new FilterList<>(sortedSource, backgroundFilterMatcher);
-        compoundList = GlazedListsSwing.swingThreadProxyList(filterList);
+        filterList = new FilterList<>(sortedSource, backgroundFilterMatcher);
+               compoundList = GlazedListsSwing.swingThreadProxyList(filterList);
 
         //filter dialog
         openFilterPanelButton = new JButton("...");
@@ -262,9 +266,5 @@ public class CompoundList {
 
     public int getFullSize(){
         return sortedSource.size();
-    }
-
-    public SortedList<InstanceBean> getSortedSource() {
-        return sortedSource;
     }
 }
