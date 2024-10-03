@@ -5,6 +5,7 @@ import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.lcms.align.*;
+import de.unijena.bioinf.lcms.msms.MsMsTraceReference;
 import de.unijena.bioinf.lcms.statistics.SampleStats;
 import de.unijena.bioinf.lcms.trace.*;
 import de.unijena.bioinf.lcms.utils.Tracker;
@@ -184,13 +185,13 @@ public class MergeTracesWithoutGapFilling {
                 T.startId(), T.endId(), T.apex(), newStartId, newEndId, newApex, mz, mzP, intensities, intensityP
         );
 
-        addMs2ToProjectedTrace(sample, traces, projectedTrace);
+        addMs2ToProjectedTrace(sample, traces, projectedTrace, tracker, merged);
         merged.getStorage().getMergeStorage().addProjectedTrace(r.id, sample.getUid(), projectedTrace);
-        createIsotopeProjectedTraces(merged, sample, r, projectedTrace, moisForSample);
+        createIsotopeProjectedTraces(merged, sample, r, projectedTrace, moisForSample, tracker);
         tracker.mergedTrace(merged, sample, r, projectedTrace, moisForSample);
     }
 
-    private void createIsotopeProjectedTraces(ProcessedSample merged, ProcessedSample sample, Rect r, ProjectedTrace projectedTrace, MoI[] mois) {
+    private void createIsotopeProjectedTraces(ProcessedSample merged, ProcessedSample sample, Rect r, ProjectedTrace projectedTrace, MoI[] mois, Tracker tracker) {
         int isotopePeak = 1;
         while (true) {
             // if at least one MoI has an isotope peak with this nominal mass...
@@ -269,7 +270,7 @@ public class MergeTracesWithoutGapFilling {
                 );
 
                 // add ms2 data
-                addMs2ToProjectedTrace(sample, isotopeTraces.toArray(ContiguousTrace[]::new), projectedIsotopeTrace);
+                addMs2ToProjectedTrace(sample, isotopeTraces.toArray(ContiguousTrace[]::new), projectedIsotopeTrace, tracker, merged);
 
                 // update
                 merged.getStorage().getMergeStorage().addIsotopeProjectedTrace(r.id, isotopePeak, sample.getUid(), projectedIsotopeTrace);
@@ -279,12 +280,14 @@ public class MergeTracesWithoutGapFilling {
         }
     }
 
-    private void addMs2ToProjectedTrace(ProcessedSample sample, ContiguousTrace[] sourceTraces, ProjectedTrace projectedTrace) {
-        IntArrayList ids = new IntArrayList();
+    private void addMs2ToProjectedTrace(ProcessedSample sample, ContiguousTrace[] sourceTraces, ProjectedTrace projectedTrace, Tracker tracker, ProcessedSample merged) {
+        ArrayList<MsMsTraceReference> ids = new ArrayList<>();
         for (ContiguousTrace t : sourceTraces) {
-            ids.addElements(ids.size(), sample.getStorage().getTraceStorage().getMs2ForTrace(t.getUid()));
+            ids.addAll(Arrays.asList(sample.getStorage().getTraceStorage().getMs2ForTrace(t.getUid())));
         }
-        projectedTrace.setMs2Ids(ids.toIntArray());
+        MsMsTraceReference[] idsArray = ids.toArray(MsMsTraceReference[]::new);
+        tracker.assignMs2ToMergedTrace(sample, sourceTraces, merged, projectedTrace, idsArray);
+        projectedTrace.setMs2Refs(idsArray);
     }
 
 
