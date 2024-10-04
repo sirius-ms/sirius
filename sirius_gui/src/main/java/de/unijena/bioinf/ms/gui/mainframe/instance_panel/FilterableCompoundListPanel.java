@@ -21,32 +21,24 @@ package de.unijena.bioinf.ms.gui.mainframe.instance_panel;
 
 import ca.odell.glazedlists.event.ListEvent;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
-import de.unijena.bioinf.jjobs.ProgressJJob;
-import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.gui.configs.Colors;
-import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.gui.utils.Loadable;
+import de.unijena.bioinf.ms.gui.utils.loading.Loadable;
+import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import lombok.Getter;
-import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.reflect.InvocationTargetException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Markus Fleischauer
  */
 public class FilterableCompoundListPanel extends JPanel implements Loadable {
     final JLabel elementCounter = new JLabel("Empty");
+    final LoadablePanel center;
 
-    final CardLayout centerCards = new CardLayout();
-    final JPanel center = new JPanel(centerCards);
     @Getter
     final CompoundListView compoundListView;
-    final AtomicInteger loadingCounter = new AtomicInteger(0);
 
     private final ExperimentListChangeListener sizeListener = new ExperimentListChangeListener() {
         @Override
@@ -67,27 +59,9 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
         }
     };
 
-    public void setLoading(boolean loading, ProgressJJob<?> ignored) {
-        boolean l;
-        if (loading)
-            l = loadingCounter.incrementAndGet() > 0;
-        else
-            l = loadingCounter.decrementAndGet() > 0;
-
-        //should never happen.
-        if (loadingCounter.get() < 0)
-            loadingCounter.set(0);
-
-        try {
-            Jobs.runEDTAndWait(() -> centerCards.show(center, l ? "load" : "content"));
-        } catch (InvocationTargetException | InterruptedException e) {
-            LoggerFactory.getLogger("Setting loading state was interrupted unexpectedly");
-            try {
-                Jobs.runEDTAndWait(() -> centerCards.show(center, l ? "load" : "content"));
-            } catch (InvocationTargetException | InterruptedException e2) {
-                LoggerFactory.getLogger("Retry Setting loading state was interrupted unexpectedly. Giving up!");
-            }
-        }
+    @Override
+    public void setLoading(boolean loading) {
+        center.setLoading(loading);
     }
 
     private void decorateElementCounter(int selectedSize, int filteredSize, int fullSize) {
@@ -100,12 +74,9 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
 
     public FilterableCompoundListPanel(CompoundListView view) {
         super(new BorderLayout());
-        center.add("content", view);
-        JPanel lp = loadingPanel(false);
-        lp.setPreferredSize(view.getPreferredSize());
-        center.add("load", lp);
+        center = new LoadablePanel(view);
         view.sourceList.addChangeListener(sizeListener);
-        view.sourceList.backgroundFilterMatcher.setLoadable(this);
+        view.sourceList.backgroundFilterMatcher.setLoadable(center);
         compoundListView = view;
 
         Box includeBox = Box.createHorizontalBox();
@@ -153,26 +124,5 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
         j.add(elementCounter);
         add(j, BorderLayout.SOUTH);
         setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 0));
-    }
-
-    //todo make generic loader panel
-    private JPanel loadingPanel(boolean filter) {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(Colors.BACKGROUND);
-        panel.setOpaque(true);
-        JLabel iconLabel = null;
-        JLabel label = null;
-        if (filter) {
-            iconLabel = new JLabel(Icons.FILTER_LOADER_120, SwingUtilities.CENTER);
-            Icons.FILTER_LOADER_120.setImageObserver(iconLabel);
-            label = new JLabel("Filtering...");
-        } else {
-            iconLabel = new JLabel(Icons.ATOM_LOADER_200, SwingUtilities.CENTER);
-            Icons.ATOM_LOADER_200.setImageObserver(iconLabel);
-            label = new JLabel("Loading...");
-        }
-        panel.add(iconLabel, BorderLayout.CENTER);
-        panel.add(label, BorderLayout.SOUTH);
-        return panel;
     }
 }
