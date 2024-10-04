@@ -13,9 +13,9 @@ package de.unijena.bioinf.ms.gui.lcms_viewer;
 
 import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.nightsky.sdk.model.AlignedFeatureQuality;
-import de.unijena.bioinf.ms.nightsky.sdk.model.Category;
-import de.unijena.bioinf.ms.nightsky.sdk.model.Item;
+import io.sirius.ms.sdk.model.AlignedFeatureQuality;
+import io.sirius.ms.sdk.model.Category;
+import io.sirius.ms.sdk.model.Item;
 
 import javax.swing.*;
 import java.awt.*;

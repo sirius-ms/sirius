@@ -22,9 +22,9 @@ package de.unijena.bioinf.ms.gui.mainframe;
 
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
-import de.unijena.bioinf.ms.nightsky.sdk.model.Subscription;
-import de.unijena.bioinf.ms.nightsky.sdk.model.SubscriptionConsumables;
+import io.sirius.ms.sdk.model.ConnectionCheck;
+import io.sirius.ms.sdk.model.Subscription;
+import io.sirius.ms.sdk.model.SubscriptionConsumables;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;

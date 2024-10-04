@@ -21,7 +21,7 @@
 package de.unijena.bioinf.ms.gui.spectral_matching;
 
 import de.unijena.bioinf.ms.gui.table.SiriusTableFormat;
-import de.unijena.bioinf.ms.nightsky.sdk.model.BasicSpectrum;
+import io.sirius.ms.sdk.model.BasicSpectrum;
 
 import java.util.Optional;
 import java.util.function.Function;

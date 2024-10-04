@@ -20,7 +20,26 @@ public class SegmentMergedFeatures implements MergedFeatureExtractionStrategy {
     @Override
     public TraceSegment[] extractMergedSegments(TraceSegmentationStrategy traceSegmenter, ProcessedSample mergedSample, MergedTrace mergedTrace) {
         SampleStats stats = mergedSample.getStorage().getStatistics();
-        return traceSegmenter.detectSegments(stats, mergedTrace).toArray(TraceSegment[]::new);
+
+        // usually we use the noise level of the merged trace for feature detection. However, if there are MANY samples
+        // in the input, the merged trace might become very high-intensive after merging and features that only occur
+        // in very few or even single samples might be omitted, even if they have a very high intensity.
+        // Thus, we use the minimum of the merged intensity and a single sample noise level multiplied by a high factor
+        // to avoid that a lot of noisy peaks are picked
+        final double mergedNoiseLevel = stats.noiseLevel(mergedTrace.apex());
+        final double FACTOR = 5d;
+
+        double noiseLevel = mergedNoiseLevel;
+        for (int k=0; k < mergedTrace.getSamples().length; ++k) {
+            final double individualNoiseLevel = mergedTrace.getSamples()[k].getStorage().getStatistics().noiseLevel(mergedTrace.getTraces()[k].getRawApex()) * FACTOR;
+            // project individual noise level into merged trace
+            final double projectedIndividualNoiseLevel = mergedTrace.getSamples()[k].getNormalizer().normalize(individualNoiseLevel);
+            if (projectedIndividualNoiseLevel < mergedNoiseLevel) {
+                noiseLevel = projectedIndividualNoiseLevel;
+            }
+        }
+
+        return traceSegmenter.detectSegments(mergedTrace, noiseLevel).toArray(TraceSegment[]::new);
     }
 
     @Override

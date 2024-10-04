@@ -21,7 +21,7 @@ package de.unijena.bioinf.ms.gui.canopus.compound_classes;
 
 import ca.odell.glazedlists.gui.TableFormat;
 import de.unijena.bioinf.ChemistryBase.fp.ClassyfireProperty;
-import de.unijena.bioinf.ms.nightsky.sdk.model.CompoundClass;
+import io.sirius.ms.sdk.model.CompoundClass;
 
 import java.util.Optional;
 
