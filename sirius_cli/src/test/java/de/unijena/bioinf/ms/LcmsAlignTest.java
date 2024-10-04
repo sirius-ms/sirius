@@ -44,11 +44,13 @@ import org.apache.commons.lang3.Range;
 import org.dizitart.no2.mvstore.MVSpatialKey;
 import org.h2.mvstore.MVStore;
 import org.h2.mvstore.rtree.MVRTreeMap;
+import org.junit.FixMethodOrder;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.runners.MethodSorters;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -58,6 +60,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class LcmsAlignTest {
 
     private static class Feature {

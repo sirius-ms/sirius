@@ -24,7 +24,7 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.dialogs.ConnectionDialog;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
-import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
+import io.sirius.ms.sdk.model.ConnectionCheck;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
