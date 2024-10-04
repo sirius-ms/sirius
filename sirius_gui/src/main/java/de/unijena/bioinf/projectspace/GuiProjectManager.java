@@ -27,13 +27,13 @@ import de.unijena.bioinf.jjobs.PropertyChangeListenerEDT;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.gui.table.SiriusGlazedLists;
-import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
-import de.unijena.bioinf.ms.nightsky.sdk.model.*;
+import io.sirius.ms.sdk.SiriusClient;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusCfData;
 import de.unijena.bioinf.ms.rest.model.canopus.CanopusNpcData;
 import de.unijena.bioinf.ms.rest.model.fingerid.FingerIdData;
-import de.unijena.bioinf.sse.DataEventType;
-import de.unijena.bioinf.sse.DataObjectEvents;
+import io.sirius.ms.sdk.model.*;
+import io.sirius.ms.sse.DataEventType;
+import io.sirius.ms.sse.DataObjectEvents;
 import it.unimi.dsi.fastutil.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,15 +47,14 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.ms.nightsky.sdk.model.ProjectChangeEvent.EventTypeEnum.FEATURE_CREATED;
-import static de.unijena.bioinf.ms.nightsky.sdk.model.ProjectChangeEvent.EventTypeEnum.FEATURE_DELETED;
+import static io.sirius.ms.sdk.model.ProjectChangeEvent.EventTypeEnum.*;
 
 public class GuiProjectManager implements Closeable {
     private final ArrayList<InstanceBean> innerList;
     public final BasicEventList<InstanceBean> INSTANCE_LIST;
 
     public final String projectId;
-    private final NightSkyClient siriusClient;
+    private final SiriusClient siriusClient;
     private final GuiProperties properties;
     protected final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
@@ -70,7 +69,7 @@ public class GuiProjectManager implements Closeable {
     private final PropertyChangeListener computeListener;
     private final PropertyChangeListenerEDT confidenceModeListender;
 
-    public GuiProjectManager(@NotNull String projectId, @NotNull NightSkyClient siriusClient, @NotNull GuiProperties properties) {
+    public GuiProjectManager(@NotNull String projectId, @NotNull SiriusClient siriusClient, @NotNull GuiProperties properties) {
         this.properties = properties;
         this.projectId = projectId;
         this.siriusClient = siriusClient;
@@ -173,7 +172,7 @@ public class GuiProjectManager implements Closeable {
 
     }
 
-    public NightSkyClient getClient() {
+    public SiriusClient getClient() {
         return siriusClient;
     }
 

@@ -20,9 +20,10 @@ package de.unijena.bioinf.ms.gui.utils;/*
 
 import ca.odell.glazedlists.matchers.Matcher;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
+import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
-import de.unijena.bioinf.ms.nightsky.sdk.model.*;
+import io.sirius.ms.sdk.model.*;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 public class CompoundFilterMatcher implements Matcher<InstanceBean> {
     final CompoundFilterModel filterModel;
@@ -70,14 +72,17 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
             return false;
         }
 
-        if (filterModel.isHasMs1() && !item.getSourceFeature().isHasMs1())
+        if (filterModel.isHasMs1() && Boolean.FALSE.equals(item.getSourceFeature().isHasMs1()))
             return false;
 
-        if (filterModel.isHasMsMs() && !item.getSourceFeature().isHasMsMs())
+        if (filterModel.isHasMsMs() && Boolean.FALSE.equals(item.getSourceFeature().isHasMsMs()))
             return false;
 
-        if (filterModel.isAdductFilterActive() && !filterModel.getSelectedAdducts().contains(item.getIonType()))
-            return false;
+        if (filterModel.isAdductFilterActive()) {
+            Set<PrecursorIonType> itemAdducts = item.getDetectedAdductsOrUnknown();
+            if (filterModel.getSelectedAdducts().stream().noneMatch(itemAdducts::contains))
+                return false;
+        }
 
         if (item.getSourceFeature().getQuality() != null) //always allow to pass the filter if now quality data is available
             if (filterModel.getFeatureQualityFilter().isEnabled() && !filterModel.getFeatureQualityFilter().isQualitySelected(item.getSourceFeature().getQuality()))
@@ -146,7 +151,6 @@ public class CompoundFilterMatcher implements Matcher<InstanceBean> {
                 .map(StructureCandidateFormula::getDbLinks)
                 .filter(Objects::nonNull).flatMap(List::stream)
                 .map(DBLink::getName).distinct()
-                .filter(Objects::nonNull)
                 .anyMatch(filterDbs::contains);
     }
 

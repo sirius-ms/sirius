@@ -25,9 +25,9 @@ import de.unijena.bioinf.ms.gui.actions.SiriusActions;
 import de.unijena.bioinf.ms.gui.utils.BooleanJlabel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.webView.WebviewHTMLTextJPanel;
-import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
-import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionError;
-import de.unijena.bioinf.ms.nightsky.sdk.model.Subscription;
+import io.sirius.ms.sdk.model.ConnectionCheck;
+import io.sirius.ms.sdk.model.ConnectionError;
+import io.sirius.ms.sdk.model.Subscription;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jdesktop.swingx.JXTitledSeparator;
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +41,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.toLinks;
-import static de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionError.ErrorKlassEnum;
-import static de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionError.ErrorKlassEnum.*;
+import static io.sirius.ms.sdk.model.ConnectionError.ErrorKlassEnum;
+import static io.sirius.ms.sdk.model.ConnectionError.ErrorKlassEnum.*;
 
 public class ConnectionCheckPanel extends TwoColumnPanel {
     public static final String WORKER_WARNING_MESSAGE =

@@ -22,10 +22,10 @@ package de.unijena.bioinf.ms.gui.net;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.jjobs.TinyBackgroundJJob;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
-import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
-import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionCheck;
-import de.unijena.bioinf.ms.nightsky.sdk.model.LicenseInfo;
-import de.unijena.bioinf.ms.nightsky.sdk.model.ConnectionError;
+import io.sirius.ms.sdk.SiriusClient;
+import io.sirius.ms.sdk.model.ConnectionCheck;
+import io.sirius.ms.sdk.model.LicenseInfo;
+import io.sirius.ms.sdk.model.ConnectionError;
 import org.jdesktop.beans.AbstractBean;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +40,7 @@ import java.io.Closeable;
  */
 public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCloseable {
 
-    private final NightSkyClient siriusClient;
+    private final SiriusClient siriusClient;
     //todo nightsky: use sse for connection events
 
     @Override
@@ -54,11 +54,11 @@ public class ConnectionMonitor extends AbstractBean implements Closeable, AutoCl
     private volatile CheckJob checkJob = null;
     private ConnectionCheckMonitor backgroundMonitorJob = null;
 
-    public ConnectionMonitor(@NotNull NightSkyClient siriusClient) {
+    public ConnectionMonitor(@NotNull SiriusClient siriusClient) {
         this(siriusClient, true);
     }
 
-    public ConnectionMonitor(@NotNull NightSkyClient siriusClient, boolean withBackgroundMonitorThread) {
+    public ConnectionMonitor(@NotNull SiriusClient siriusClient, boolean withBackgroundMonitorThread) {
         super();
         this.siriusClient = siriusClient;
         checkResult = new ConnectionCheck();

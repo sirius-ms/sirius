@@ -34,7 +34,7 @@ import de.unijena.bioinf.ms.gui.dialogs.WarningDialog;
 import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
-import de.unijena.bioinf.ms.nightsky.sdk.model.*;
+import io.sirius.ms.sdk.model.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jdesktop.swingx.JXTitledSeparator;
@@ -420,7 +420,7 @@ public class BatchComputeDialog extends JDialog {
 
         configCommand.add("config");
         if (formulaIDConfigPanel != null && formulaIDConfigPanel.isToolSelected()) {
-            configCommand.add(SpectraSearchOptions.class.getAnnotation(CommandLine.Command.class).name());
+            toolCommands.add(SpectraSearchOptions.class.getAnnotation(CommandLine.Command.class).name());
             toolCommands.add(formulaIDConfigPanel.content.toolCommand());
             configCommand.addAll(formulaIDConfigPanel.asParameterList());
         }

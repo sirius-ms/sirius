@@ -31,6 +31,7 @@ import java.util.List;
 /**
  * Identifier created by the SIRIUS Nightsky API for a newly created Job.
  * Object can be enriched with Job status/progress information ({@link JobProgress}) and/or Job command information.
+ * This is a return value of the API. So nullable values can also be NOT_REQUIRED to allow for easy removal.
  */
 @Getter
 @Setter
@@ -47,12 +48,14 @@ public class Job {
      * Command string of the executed Task
      */
     @Nullable
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     String command;
 
     /**
      * Optional progress information of this job
      */
     @Nullable
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     JobProgress progress;
 
     /**
@@ -61,6 +64,7 @@ public class Job {
      * If this job is creating compounds (e.g. data import jobs) this value will be NULL until the jobs has finished
      */
     @Nullable
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     List<String> affectedCompoundIds;
 
     /**
@@ -68,5 +72,6 @@ public class Job {
      * If this job is creating features (e.g. data import jobs) this value will be NULL until the jobs has finished
      */
     @Nullable
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     List<String> affectedAlignedFeatureIds;
 }

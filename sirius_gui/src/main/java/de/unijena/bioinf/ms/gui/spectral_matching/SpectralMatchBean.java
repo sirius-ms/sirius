@@ -22,10 +22,10 @@ package de.unijena.bioinf.ms.gui.spectral_matching;
 
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.frontend.subtools.spectra_search.SpectraSearchSubtoolJob;
-import de.unijena.bioinf.ms.nightsky.sdk.model.BasicSpectrum;
-import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
-import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatch;
-import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatchOptField;
+import io.sirius.ms.sdk.model.BasicSpectrum;
+import io.sirius.ms.sdk.model.DBLink;
+import io.sirius.ms.sdk.model.SpectralLibraryMatch;
+import io.sirius.ms.sdk.model.SpectralLibraryMatchOptField;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;

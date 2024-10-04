@@ -26,8 +26,8 @@ import de.unijena.bioinf.ms.gui.mainframe.MainFrame;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.properties.GuiProperties;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
-import de.unijena.bioinf.ms.nightsky.sdk.model.Info;
+import io.sirius.ms.sdk.SiriusClient;
+import io.sirius.ms.sdk.model.Info;
 import de.unijena.bioinf.projectspace.GuiProjectManager;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -61,25 +61,25 @@ public class SiriusGui {
     @Getter
     private GuiProjectManager projectManager;
 
-    private NightSkyClient siriusClient;
+    private SiriusClient siriusClient;
 
-    public NightSkyClient getSiriusClient() {
+    public SiriusClient getSiriusClient() {
         if (siriusClient == null)
             throw new IllegalStateException("Gui instance that is using this Client has already been closed!");
         return siriusClient;
     }
 
-    public SiriusGui(@NotNull String projectId, @NotNull NightSkyClient nightSkyClient, @NotNull ConnectionMonitor connectionMonitor) {
+    public SiriusGui(@NotNull String projectId, @NotNull SiriusClient siriusClient, @NotNull ConnectionMonitor connectionMonitor) {
         this.connectionMonitor = connectionMonitor;
-        siriusClient = nightSkyClient;
+        this.siriusClient = siriusClient;
         properties = new GuiProperties();
-        projectManager = new GuiProjectManager(projectId, siriusClient, properties);
+        projectManager = new GuiProjectManager(projectId, this.siriusClient, properties);
         mainFrame = new MainFrame(this);
         mainFrame.decoradeMainFrame();
 
         if (FIRST_START.getAndSet(false)) {
             Jobs.runInBackground(() -> {
-                Info info = siriusClient.infos().getInfo(true, true);
+                Info info = this.siriusClient.infos().getInfo(true, true);
                 if (info != null && info.isUpdateAvailable() != null && info.isUpdateAvailable())
                     if (!UpdateDialog.isDontAskMe())
                         Jobs.runEDTLater(() -> new UpdateDialog(mainFrame, info));
@@ -98,11 +98,11 @@ public class SiriusGui {
         mainFrame.dispose();
     }
 
-    public void acceptSiriusClient(BiConsumer<NightSkyClient, String> doWithProject) {
+    public void acceptSiriusClient(BiConsumer<SiriusClient, String> doWithProject) {
         doWithProject.accept(getSiriusClient(), projectManager.getProjectId());
     }
 
-    public <R> R applySiriusClient(BiFunction<NightSkyClient, String, R> doWithProject) {
+    public <R> R applySiriusClient(BiFunction<SiriusClient, String, R> doWithProject) {
         return doWithProject.apply(getSiriusClient(), projectManager.getProjectId());
     }
 }

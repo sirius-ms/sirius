@@ -182,12 +182,19 @@ public class StorageUtils {
     public static DetectedAdducts fromMs2ExpAnnotation(@Nullable de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts adducts) {
         if (adducts == null)
             return null;
-        List<DetectedAdduct> featureAdducts = adducts.entrySet().stream().flatMap(e -> e.getValue().getAdducts().stream()
-                        .map(p -> DetectedAdduct.builder().adduct(p).source(e.getKey()).build()))
-                .toList();
 
+        //add empty
+        List<DetectedAdduct> featureAdducts = new ArrayList<>();
+        for (Map.Entry<de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source, PossibleAdducts> adductsEntry : adducts.entrySet()) {
+            if (adductsEntry.getValue() == null || adductsEntry.getValue().isEmpty()){
+                featureAdducts.add(DetectedAdduct.empty(adductsEntry.getKey()));
+            }else {
+                adductsEntry.getValue().forEach(precursorIonType ->
+                        featureAdducts.add(DetectedAdduct.builder().adduct(precursorIonType).source(adductsEntry.getKey()).build()));
+            }
+        }
         DetectedAdducts featureDetectedAdducts = new DetectedAdducts();
-        featureDetectedAdducts.add(featureAdducts);
+        featureDetectedAdducts.addAll(featureAdducts);
         return featureDetectedAdducts;
     }
 
@@ -197,10 +204,10 @@ public class StorageUtils {
         de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts dA = new de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts();
 
         Map<de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source, List<PrecursorIonType>> adductsBySource =
-                adducts.asMap().values().stream().flatMap(Collection::stream).collect(Collectors.groupingBy(
-                        d -> d.getSource(), Collectors.mapping(it -> it.getAdduct(), Collectors.toList())));
+                adducts.getDetectedAdductsStr().collect(Collectors.groupingBy(
+                        DetectedAdduct::getSource, Collectors.mapping(DetectedAdduct::getAdduct, Collectors.toList())));
 
-        adductsBySource.forEach((s, v) -> dA.put(s, new PossibleAdducts(v.toArray(PrecursorIonType[]::new))));
+        adductsBySource.forEach((s, v) -> dA.put(s, new PossibleAdducts(v.stream().filter(Objects::nonNull).distinct().toArray(PrecursorIonType[]::new))));
         return dA;
     }
 }

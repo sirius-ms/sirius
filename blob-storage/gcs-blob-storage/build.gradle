@@ -1,3 +1,6 @@
+// PUBLISHING DISABLED
+tasks.withType(PublishToMavenRepository).configureEach { it.enabled = false }
+
 dependencies{
     api project(':blob-storage')
     implementation 'com.google.cloud:google-cloud-storage:1.118.0' //todo upgrad to 2 or remove

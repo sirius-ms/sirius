@@ -26,7 +26,7 @@ It just holds different gradle configurations to build different packages/instal
 ### Build a Distribution locally
 Our build scripts create distributions for the OS they are executed on. So running it on linux will build a Linux version 
 of SIRIUS. Each sub directory of `sirius_dist` corresponds to a specific SIRIUS type. The most common verisions are 
-the GUI (`sirius_gui_single_os`) and the CLI (`sirius_cli_single_os`). The following tasks of teh `distribution` group 
+the GUI (`sirius_gui_single_os`) and the CLI (`sirius_cli_single_os`). The following tasks of the `distribution` group
 are available to create an application image. Running `gradle clean` on the specific sub dir might be necessary beforehand.
 Results will be available in `build/distributions/`
 

@@ -30,7 +30,7 @@ import de.unijena.bioinf.ms.gui.mainframe.result_panel.tabs.*;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaList;
 import de.unijena.bioinf.ms.gui.molecular_formular.FormulaListHeaderPanel;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
-import de.unijena.bioinf.ms.nightsky.sdk.model.CanopusPrediction;
+import io.sirius.ms.sdk.model.CanopusPrediction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

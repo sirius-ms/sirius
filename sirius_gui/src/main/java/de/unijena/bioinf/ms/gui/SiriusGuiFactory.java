@@ -22,8 +22,8 @@
 package de.unijena.bioinf.ms.gui;
 
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
-import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
-import de.unijena.bioinf.sse.DataEventType;
+import io.sirius.ms.sdk.SiriusClient;
+import io.sirius.ms.sse.DataEventType;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
@@ -33,37 +33,37 @@ import java.util.EnumSet;
  * This is usually a singleton instance class that holds all active gui instances and there shared infrastructure
  */
 public final class SiriusGuiFactory {
-    private volatile NightSkyClient nightSkyClient;
+    private volatile SiriusClient siriusClient;
     private volatile ConnectionMonitor connectionMonitor;
 
     public SiriusGuiFactory(int port) {
-        this(new NightSkyClient(port), null);
+        this(new SiriusClient(port), null);
     }
 
-    public SiriusGuiFactory(NightSkyClient nightSkyClient, ConnectionMonitor connectionMonitor) {
-        this.nightSkyClient = nightSkyClient;
+    public SiriusGuiFactory(SiriusClient siriusClient, ConnectionMonitor connectionMonitor) {
+        this.siriusClient = siriusClient;
         this.connectionMonitor = connectionMonitor;
     }
 
     public SiriusGui newGui(@NotNull String projectId) {
         init();
-        return new SiriusGui(projectId, nightSkyClient, connectionMonitor);
+        return new SiriusGui(projectId, siriusClient, connectionMonitor);
     }
 
     private void init() {
-        if (nightSkyClient == null) {
+        if (siriusClient == null) {
             synchronized (this) {
-                if (nightSkyClient == null)
-                    nightSkyClient = new NightSkyClient();
+                if (siriusClient == null)
+                    siriusClient = new SiriusClient(8080); //try 8080 as default
             }
         }
-        nightSkyClient.enableEventListening(EnumSet.allOf(DataEventType.class));
+        siriusClient.enableEventListening(EnumSet.allOf(DataEventType.class));
 
 
         if (connectionMonitor == null) {
             synchronized (this) {
                 if (connectionMonitor == null)
-                    connectionMonitor = new ConnectionMonitor(nightSkyClient);
+                    connectionMonitor = new ConnectionMonitor(siriusClient);
             }
         }
     }
@@ -72,8 +72,8 @@ public final class SiriusGuiFactory {
         try {
             if (connectionMonitor != null)
                 connectionMonitor.close();
-            if (nightSkyClient != null)
-                nightSkyClient.close();
+            if (siriusClient != null)
+                siriusClient.close();
         } catch (Exception e) {
             LoggerFactory.getLogger(getClass()).error("Error when closing NighSky client!", e);
         }
