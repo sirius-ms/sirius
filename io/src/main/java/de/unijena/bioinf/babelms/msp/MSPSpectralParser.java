@@ -135,13 +135,13 @@ public class MSPSpectralParser extends SpectralParser {
                 (msLevel != null && !("MS".equalsIgnoreCase(msLevel) || "MS1".equalsIgnoreCase(msLevel))))) { // we have MSn
             spectrum = new MutableMs2SpectrumWithAdditionalFields(
                     spectrum,
-                    MSP.parsePrecursorMZ(metaInfo).orElseThrow(() -> new IOException("Could neither parse '" + Arrays.toString(PRECURSOR_MZ) + "' nor '" + EXACT_MASS + "'!")),
+                    MSP.parsePrecursorMZ(metaInfo).orElseThrow(() -> new RuntimeException("Could neither parse '" + Arrays.toString(PRECURSOR_MZ) + "' nor '" + EXACT_MASS + "'!")),
                     MSP.parseCollisionEnergy(metaInfo).orElse(null),
                     msLevel == null ? 2 : Character.getNumericValue(msLevel.charAt(msLevel.indexOf("MS") + 2))
             );
 
             ((MutableMs2Spectrum) spectrum).setIonization(MSP.parsePrecursorIonType(metaInfo)
-                    .orElseThrow(() -> new IOException("Could neither parse '" +  Arrays.toString(PRECURSOR_ION_TYPE) + "' nor '" +  Arrays.toString(CHARGE) + "!"))
+                    .orElseThrow(() -> new RuntimeException("Could neither parse '" +  Arrays.toString(PRECURSOR_ION_TYPE) + "' nor '" +  Arrays.toString(CHARGE) + "!"))
                     .getIonization());
         }
 
