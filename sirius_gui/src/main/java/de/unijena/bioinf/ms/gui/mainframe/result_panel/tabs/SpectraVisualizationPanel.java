@@ -29,7 +29,6 @@ import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
 import de.unijena.bioinf.ChemistryBase.ms.utils.WrapperSpectrum;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.fragmenter.MolecularGraph;
-import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
@@ -47,11 +46,12 @@ import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchBean;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
+import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.ms.gui.webView.WebViewIO;
-import io.sirius.ms.sdk.model.*;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
+import io.sirius.ms.sdk.model.*;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntComparators;
@@ -81,6 +81,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -89,6 +91,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 
     protected final CardLayout centerCard = new CardLayout();
     protected final JPanel centerCardPanel = new JPanel(centerCard);
+    protected final LoadablePanel center;
     protected final JLabel errorLabel;
 
     @Override
@@ -193,7 +196,9 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
         this.centerCardPanel.add("error", error.left());
         showBrowser();
 
-        this.add(centerCardPanel, BorderLayout.CENTER);
+        center = new LoadablePanel(centerCardPanel);
+
+        this.add(center, BorderLayout.CENTER);
         this.setVisible(true);
     }
 
@@ -360,25 +365,11 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
     }
 
     private volatile JJob<Boolean> backgroundLoader = null;
+    private final Lock backgroundLoaderLock = new ReentrantLock();
 
 
     public void clear() {
-        synchronized (this) {
-            if (backgroundLoader != null && !backgroundLoader.isFinished()) {
-                backgroundLoader.cancel(true);
-                backgroundLoader.getResult();
-            }
-            backgroundLoader = Jobs.runInBackground(new BasicJJob<>(JJob.JobType.TINY_BACKGROUND) {
-                @Override
-                protected Boolean compute() throws Exception {
-                    checkForInterruption();
-                    clearData();
-                    Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
-                    browser.clear();
-                    return true;
-                }
-            });
-        }
+        resultsChanged(null, null, null, null, null);
     }
 
     public void resultsChanged(InstanceBean instance, @Nullable String formulaCandidateId, @Nullable String smiles) {
@@ -390,124 +381,148 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
     }
 
     private void resultsChanged(InstanceBean instance, @Nullable String formulaCandidateId, @Nullable String smiles, @Nullable SpectralMatchList matchList, @Nullable SpectralMatchBean matchBean) {
-        synchronized (this) {
-            if (backgroundLoader != null && !backgroundLoader.isFinished()) {
-                backgroundLoader.cancel(true);
-                backgroundLoader.getResult();
-            }
+        try {
+            backgroundLoaderLock.lock();
+            final JJob<Boolean> old = backgroundLoader;
             backgroundLoader = Jobs.runInBackground(new BasicMasterJJob<>(JJob.JobType.TINY_BACKGROUND) {
+
                 @Override
                 protected Boolean compute() throws Exception {
-                    showBrowser();
-                    checkForInterruption();
-                    //todo check if data is unchanged and prevent re-rendering
-                    if (instance != null) {
-                        final MsData msData = instance.getMsData();
-                        if (msData != null) {
-                            final IsotopePatternAnnotation isotopePatternAnnotation;
-                            final AnnotatedMsMsData annotatedMsMsData;
+                    boolean loading = false;
+                    try {
+                        //cancel running job if not finished to not waist resources for fetching data that is not longer needed.
+                        if (old != null && !old.isFinished()) {
+                            loading = center.setLoading(true);
+                            old.cancel(false);
+                            old.getResult(); //await cancellation so that nothing strange can happen.
+                        }
+
+                        if (instance == null && formulaCandidateId == null && smiles == null && matchList == null && matchBean == null){
                             checkForInterruption();
-                            if (formulaCandidateId != null) {
-                                isotopePatternAnnotation = instance.withIds((pid, fid) -> instance.getClient().features()
-                                        .getIsotopePatternAnnotationWithResponseSpec(pid, fid, formulaCandidateId)
-                                        .bodyToMono(IsotopePatternAnnotation.class).onErrorComplete().block());
-                                checkForInterruption();
-//
-
-                                String ftreeJson = instance.withIds((pid, fid) -> instance.getClient().features()
-                                        .getSiriusFragTreeWithResponseSpec(pid, fid, formulaCandidateId)
-                                        .bodyToMono(String.class).onErrorComplete().block());
-
-                                checkForInterruption();
-                                annotatedMsMsData = ftreeJson == null ? null :
-                                        submitSubJob(new SpectrumAnnotationJJob(new FTJsonReader().treeFromJsonString(ftreeJson, null), msData, smiles))
-                                                .awaitResult();
-                            } else {
-                                isotopePatternAnnotation = null;
-                                annotatedMsMsData = null;
-                            }
-                            if (matchList != null && matchBean != null) {
-                                selectedMatchBean = matchBean;
-                                similarities = new SpectralSimilarity[msData.getMs2Spectra().size()];
-                                queryIndices = new IntArrayList();
-                                for (SpectralMatchBean match : matchList.getMatchBeanGroup(matchBean.getMatch().getUuid())) {
-                                    similarities[match.getMatch().getQuerySpectrumIndex()] = new SpectralSimilarity(
-                                            match.getMatch().getSimilarity(),
-                                            match.getMatch().getSharedPeaks() != null ? match.getMatch().getSharedPeaks() : 0
-                                    );
-                                    queryIndices.add((int) match.getMatch().getQuerySpectrumIndex());
-                                }
-                                queryIndices.sort(IntComparators.NATURAL_COMPARATOR);
-                            }
-
-                            checkForInterruption();
-                            {
-                                final List<String> items = new ArrayList<>(5);
-
-                                Jobs.runEDTAndWait(() -> setToolbarEnabled(true));
-                                if (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null)
-                                    items.add(MS1_DISPLAY);
-                                if (isotopePatternAnnotation != null) {
-                                    if (isotopePatternAnnotation.getSimulatedPattern() != null)
-                                        items.add(MS1_MIRROR_DISPLAY);
-                                }
-                                if (!msData.getMs2Spectra().isEmpty())
-                                    items.add(MS2_DISPLAY);
-                                if (ms2MirrorEnabled && !msData.getMs2Spectra().isEmpty())
-                                    items.add(MS2_MIRROR_DISPLAY);
-
-                                checkForInterruption();
-
-                                Jobs.runEDTAndWait(() -> {
-                                    // update modeBox elements, don't listen to these events
-                                    modesBox.removeItemListener(SpectraVisualizationPanel.this);
-                                    try {
-                                        modesBox.removeAllItems();
-                                        if (!items.isEmpty()) {
-                                            items.stream().filter(possibleModes::contains).forEach(modesBox::addItem);
-                                            updateCEBox(msData);
-                                        }
-                                    } finally {
-                                        modesBox.addItemListener(SpectraVisualizationPanel.this);
-                                    }
-                                });
-                            }
-
-                            SpectraVisualizationPanel.this.msData = msData;
-                            SpectraVisualizationPanel.this.isotopePatternAnnotation = isotopePatternAnnotation;
-                            SpectraVisualizationPanel.this.annotatedMsMsData = annotatedMsMsData;
-
-                            checkForInterruption();
-
-                            // todo nightsky: why are these two jobs?
-                            Jobs.runEDTAndWait(() -> {
-                                boolean preferredPossible = false; // no `contains` for combobox
-                                for (int i = 0; i < modesBox.getItemCount(); i++)
-                                    preferredPossible |= preferredMode.equals(modesBox.getItemAt(i));
-                                // change to preferred mode if possible, else (potentially automatic) selection
-                                if (preferredPossible) {
-                                    modesBox.removeItemListener(SpectraVisualizationPanel.this);
-                                    modesBox.setSelectedItem(preferredMode);
-                                    ceBox.setVisible(modesBox.getSelectedItem() != null && ((String) modesBox.getSelectedItem()).startsWith(MS2_DISPLAY));
-                                    modesBox.addItemListener(SpectraVisualizationPanel.this);
-                                }
-                                updateCEBox(msData);
-                                drawSpectra();
-                                // highlight last selected peak, even when experiments were changed
-                                float peak_selection = getConnector().getCurrentSelection();
-                                if (peak_selection > -1)
-                                    browser.executeJS("SpectrumPlot.setSelection(main.spectrum, " + peak_selection + ")");
-
-                            });
-                        } else {
                             clearData();
                             Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
                             browser.clear();
+                            return true;
                         }
+
+                        showBrowser();
+                        checkForInterruption();
+                        //todo check if data is unchanged and prevent re-rendering
+                        if (instance != null) {
+                            if (!loading)
+                                loading = center.setLoading(true);
+                            final MsData msData = instance.getMsData();
+                            if (msData != null) {
+                                final IsotopePatternAnnotation isotopePatternAnnotation;
+                                final AnnotatedMsMsData annotatedMsMsData;
+                                checkForInterruption();
+                                if (formulaCandidateId != null) {
+                                    isotopePatternAnnotation = instance.withIds((pid, fid) -> instance.getClient().features()
+                                            .getIsotopePatternAnnotationWithResponseSpec(pid, fid, formulaCandidateId)
+                                            .bodyToMono(IsotopePatternAnnotation.class).onErrorComplete().block());
+                                    checkForInterruption();
+//
+
+                                    String ftreeJson = instance.withIds((pid, fid) -> instance.getClient().features()
+                                            .getSiriusFragTreeWithResponseSpec(pid, fid, formulaCandidateId)
+                                            .bodyToMono(String.class).onErrorComplete().block());
+
+                                    checkForInterruption();
+                                    annotatedMsMsData = ftreeJson == null ? null :
+                                            submitSubJob(new SpectrumAnnotationJJob(new FTJsonReader().treeFromJsonString(ftreeJson, null), msData, smiles))
+                                                    .awaitResult();
+                                } else {
+                                    isotopePatternAnnotation = null;
+                                    annotatedMsMsData = null;
+                                }
+                                if (matchList != null && matchBean != null) {
+                                    selectedMatchBean = matchBean;
+                                    similarities = new SpectralSimilarity[msData.getMs2Spectra().size()];
+                                    queryIndices = new IntArrayList();
+                                    for (SpectralMatchBean match : matchList.getMatchBeanGroup(matchBean.getMatch().getUuid())) {
+                                        similarities[match.getMatch().getQuerySpectrumIndex()] = new SpectralSimilarity(
+                                                match.getMatch().getSimilarity(),
+                                                match.getMatch().getSharedPeaks() != null ? match.getMatch().getSharedPeaks() : 0
+                                        );
+                                        queryIndices.add((int) match.getMatch().getQuerySpectrumIndex());
+                                    }
+                                    queryIndices.sort(IntComparators.NATURAL_COMPARATOR);
+                                }
+
+                                checkForInterruption();
+                                {
+                                    final List<String> items = new ArrayList<>(5);
+
+                                    Jobs.runEDTAndWait(() -> setToolbarEnabled(true));
+                                    if (!msData.getMs1Spectra().isEmpty() || msData.getMergedMs1() != null)
+                                        items.add(MS1_DISPLAY);
+                                    if (isotopePatternAnnotation != null) {
+                                        if (isotopePatternAnnotation.getSimulatedPattern() != null)
+                                            items.add(MS1_MIRROR_DISPLAY);
+                                    }
+                                    if (!msData.getMs2Spectra().isEmpty())
+                                        items.add(MS2_DISPLAY);
+                                    if (ms2MirrorEnabled && !msData.getMs2Spectra().isEmpty())
+                                        items.add(MS2_MIRROR_DISPLAY);
+
+                                    checkForInterruption();
+
+                                    Jobs.runEDTAndWait(() -> {
+                                        // update modeBox elements, don't listen to these events
+                                        modesBox.removeItemListener(SpectraVisualizationPanel.this);
+                                        try {
+                                            modesBox.removeAllItems();
+                                            if (!items.isEmpty()) {
+                                                items.stream().filter(possibleModes::contains).forEach(modesBox::addItem);
+                                                updateCEBox(msData);
+                                            }
+                                        } finally {
+                                            modesBox.addItemListener(SpectraVisualizationPanel.this);
+                                        }
+                                    });
+                                }
+
+                                SpectraVisualizationPanel.this.msData = msData;
+                                SpectraVisualizationPanel.this.isotopePatternAnnotation = isotopePatternAnnotation;
+                                SpectraVisualizationPanel.this.annotatedMsMsData = annotatedMsMsData;
+
+                                checkForInterruption();
+
+                                // todo nightsky: why are these two jobs?
+                                Jobs.runEDTAndWait(() -> {
+                                    boolean preferredPossible = false; // no `contains` for combobox
+                                    for (int i = 0; i < modesBox.getItemCount(); i++)
+                                        preferredPossible |= preferredMode.equals(modesBox.getItemAt(i));
+                                    // change to preferred mode if possible, else (potentially automatic) selection
+                                    if (preferredPossible) {
+                                        modesBox.removeItemListener(SpectraVisualizationPanel.this);
+                                        modesBox.setSelectedItem(preferredMode);
+                                        ceBox.setVisible(modesBox.getSelectedItem() != null && ((String) modesBox.getSelectedItem()).startsWith(MS2_DISPLAY));
+                                        modesBox.addItemListener(SpectraVisualizationPanel.this);
+                                    }
+                                    updateCEBox(msData);
+                                    drawSpectra();
+                                    // highlight last selected peak, even when experiments were changed
+                                    float peak_selection = getConnector().getCurrentSelection();
+                                    if (peak_selection > -1)
+                                        browser.executeJS("SpectrumPlot.setSelection(main.spectrum, " + peak_selection + ")");
+
+                                });
+                            } else {
+                                clearData();
+                                Jobs.runEDTAndWait(() -> setToolbarEnabled(false));
+                                browser.clear();
+                            }
+                        }
+                        return true;
+                    }finally {
+                        if (loading)
+                            center.setLoading(false);
                     }
-                    return true;
                 }
             });
+        }finally {
+            backgroundLoaderLock.unlock();
         }
     }
 

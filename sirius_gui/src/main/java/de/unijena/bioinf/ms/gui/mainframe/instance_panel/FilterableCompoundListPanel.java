@@ -60,8 +60,8 @@ public class FilterableCompoundListPanel extends JPanel implements Loadable {
     };
 
     @Override
-    public void setLoading(boolean loading) {
-        center.setLoading(loading);
+    public boolean setLoading(boolean loading) {
+        return center.setLoading(loading);
     }
 
     private void decorateElementCounter(int selectedSize, int filteredSize, int fullSize) {
