@@ -152,29 +152,30 @@ public class GuiProjectManager implements Closeable {
 
         if (debounceExec == null)
             debounceExec = DebouncedExecutionJJob.start((ExFunctions.Runnable) () -> {
-//                if (!events.isEmpty()) {
-                while (!events.isEmpty()) {
+                if (!events.isEmpty()) {
                     try {
                         siriusGui.getMainFrame().getFilterableCompoundListPanel().setLoading(true);
-                        List<ProjectChangeEvent> toProcess = new ArrayList<>();
+                        while (!events.isEmpty()) {
+                            List<ProjectChangeEvent> toProcess = new ArrayList<>();
 
-                        ProjectChangeEvent evt = events.take();
-                        do {
-                            toProcess.add(evt);
-                            //just to not keep too many events in queue
-                            if (toProcess.size() >= 1000)
-                                break;
-                        } while ((evt = events.poll()) != null);
-                        List<Pair<InstanceBean, Boolean>> pairs = processEvents(toProcess);
-                        pairs.stream().filter(p -> !p.value()).map(Pair::key)
-                                .forEach(InstanceBean::unregisterProjectSpaceListener);
+                            ProjectChangeEvent evt = events.take();
+                            do {
+                                toProcess.add(evt);
+                                //just to not keep too many events in queue
+                                if (toProcess.size() >= 1000)
+                                    break;
+                            } while ((evt = events.poll()) != null);
+                            List<Pair<InstanceBean, Boolean>> pairs = processEvents(toProcess);
+                            pairs.stream().filter(p -> !p.value()).map(Pair::key)
+                                    .forEach(InstanceBean::unregisterProjectSpaceListener);
 
-                        SiriusGlazedLists.multiAddRemove(siriusGui.getMainFrame().getCompoundList().getFilterList(), pairs);
+                            SiriusGlazedLists.multiAddRemove(INSTANCE_LIST, pairs);
+                            siriusGui.getMainFrame().getCompoundList().fireFilterChanged();
+                        }
                     } finally {
                         siriusGui.getMainFrame().getFilterableCompoundListPanel().setLoading(false);
                     }
                 }
-//                }
             });
         events.add(event);
     }

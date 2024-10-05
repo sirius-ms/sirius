@@ -50,33 +50,33 @@ public class SiriusGlazedLists {
         }
     }
 
-    public static <E> boolean multiAddRemove(@NotNull EventList<E> list, /*@NotNull ArrayList<E> innerList,*/ @NotNull List<Pair<E, Boolean>> elementsAddOrRemove) {
-        list.getReadWriteLock().writeLock().lock();
+    public static <E> boolean multiAddRemove(@NotNull EventList<E> baseList, @NotNull List<Pair<E, Boolean>> elementsAddOrRemove) {
         try {
-            Set<E> toAdd = new LinkedHashSet<>();
-            Set<E> toRemove = new LinkedHashSet<>();
+            baseList.getReadWriteLock().writeLock().lock();
+                Set<E> toAdd = new LinkedHashSet<>();
+                Set<E> toRemove = new LinkedHashSet<>();
 
-            elementsAddOrRemove.forEach(p -> {
-                if (p.value()){
-                    toAdd.add(p.key());
-                    toRemove.remove(p.key());
-                }else {
-                    toAdd.remove(p.key());
-                    toRemove.add(p.key());
-                }
-            });
+                elementsAddOrRemove.forEach(p -> {
+                    if (p.value()){
+                        toAdd.add(p.key());
+                        toRemove.remove(p.key());
+                    }else {
+                        toAdd.remove(p.key());
+                        toRemove.add(p.key());
+                    }
+                });
 
-            if (toAdd.isEmpty() && toRemove.isEmpty())
+                if (toAdd.isEmpty() && toRemove.isEmpty())
+                    return true;
+
+                if (!toAdd.isEmpty())
+                    baseList.addAll(toAdd);
+                if (!toRemove.isEmpty())
+                    baseList.removeAll(toRemove);
+
                 return true;
-
-            if (!toAdd.isEmpty())
-                list.addAll(toAdd);
-            if (!toRemove.isEmpty())
-                list.removeAll(toRemove);
-
-            return true;
         } finally {
-            list.getReadWriteLock().writeLock().unlock();
+            baseList.getReadWriteLock().writeLock().unlock();
         }
     }
 
@@ -121,5 +121,4 @@ public class SiriusGlazedLists {
             list.getReadWriteLock().writeLock().unlock();
         }
     }
-
 }
