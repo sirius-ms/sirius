@@ -22,5 +22,5 @@ package de.unijena.bioinf.ms.gui.utils.loading;
 
 @FunctionalInterface
 public interface Loadable {
-    void setLoading(boolean loading);
+    boolean setLoading(boolean loading);
 }

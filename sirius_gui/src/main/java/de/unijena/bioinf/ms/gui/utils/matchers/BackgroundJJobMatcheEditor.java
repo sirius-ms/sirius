@@ -87,7 +87,7 @@ public class BackgroundJJobMatcheEditor<E> extends AbstractMatcherEditorListener
      *                              //     * @see #MatcheEditorBackgroundJJob(MatcherEditor, JJob)
      */
     public BackgroundJJobMatcheEditor(MatcherEditor<E> source) {
-        this(source, Jobs.MANAGER(), (l) -> {});
+        this(source, Jobs.MANAGER(), (l) -> false);
     }
 
     /**

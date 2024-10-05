@@ -10,54 +10,52 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.InvocationTargetException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class LoadablePanel extends JPanel implements Loadable {
 
     protected final AtomicInteger loadingCounter = new AtomicInteger(0);
-    private final CardLayout centerCards = new CardLayout();
+    private final SiriusCardLayout centerCards = new SiriusCardLayout();
 
     public LoadablePanel(@NotNull JComponent content) {
         this(content, "Loading...");
     }
+
     public LoadablePanel(@NotNull JComponent content, @Nullable String loadingMessage) {
         this(content, Icons.ATOM_LOADER_200, loadingMessage);
     }
+
+    //todo maybe add some error state card?
     public LoadablePanel(@NotNull JComponent content, @NotNull ImageIcon filterAnimation, @Nullable String loadingMessage) {
         setLayout(centerCards);
         add("content", content);
         add("load", makeLoadingState(filterAnimation, loadingMessage));
     }
 
-    public void setLoading(boolean loading) {
-        boolean l;
-        if (loading)
-            l = loadingCounter.incrementAndGet() > 0;
-        else
-            l = loadingCounter.decrementAndGet() > 0;
-
-        //should never happen.
-        if (loadingCounter.get() < 0)
-            loadingCounter.set(0);
-
+    public boolean setLoading(boolean loading) {
+        AtomicBoolean result = new AtomicBoolean(false);
         try {
-            Jobs.runEDTAndWait(() -> centerCards.show(this, l ? "load" : "content"));
+            Jobs.runEDTAndWait(() -> {
+                result.set(loadingCounter.updateAndGet(current -> Math.max(0, loading ? current + 1 : current - 1)) > 0);
+                String cardName = result.get() ? "load" : "content";
+                if(!centerCards.isCardActive(cardName))
+                    centerCards.show(this, cardName);
+            });
         } catch (InvocationTargetException | InterruptedException e) {
-            LoggerFactory.getLogger("Setting loading state was interrupted unexpectedly");
-            try {
-                Jobs.runEDTAndWait(() -> centerCards.show(this, l ? "load" : "content"));
-            } catch (InvocationTargetException | InterruptedException e2) {
-                LoggerFactory.getLogger("Retry Setting loading state was interrupted unexpectedly. Giving up!");
-            }
+            LoggerFactory.getLogger("Retry Setting loading state was interrupted unexpectedly.");
         }
+        return result.get();
     }
 
     protected JPanel makeLoadingState() {
         return makeLoadingState("Loading...");
     }
+
     protected JPanel makeLoadingState(@Nullable String loadingMessage) {
         return makeLoadingState(Icons.ATOM_LOADER_200, loadingMessage);
     }
+
     protected JPanel makeLoadingState(@NotNull ImageIcon filterAnimation, @Nullable String loadingMessage) {
         JPanel panel = new JPanel(new BorderLayout());
         panel.setBackground(Colors.BACKGROUND);
