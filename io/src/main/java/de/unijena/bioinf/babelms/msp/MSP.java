@@ -24,6 +24,8 @@ import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.CollisionEnergy;
 import de.unijena.bioinf.ChemistryBase.utils.Utils;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,6 +124,7 @@ Num peaks: 11
 Also supports MS-Finder .mat extensions
  */
 
+@Slf4j
 public class MSP {
     //todo maybe add TXONOMY field from MS-Dial mat file.
 
@@ -174,23 +177,17 @@ public class MSP {
     }
 
     public static Optional<Double> parsePrecursorMZ(Map<String, String> metaInfo) {
-        String value = getWithSynonyms(metaInfo, PRECURSOR_MZ).orElse(null);
-        if (value != null && !value.isBlank()) {
-            String[] arr = value.split("/");
-            return Optional.of(Utils.parseDoubleWithUnknownDezSep(arr[arr.length - 1]));
-        }
-
-        value = metaInfo.get(SYN_PRECURSOR_MZ);
-        if (value != null && !value.isBlank()) {
-            String[] arr = value.split("/");
-            return Optional.of(Utils.parseDoubleWithUnknownDezSep(arr[arr.length - 1]));
-        }
-
-        value = metaInfo.get(EXACT_MASS);
-        if (value != null && !value.isBlank())
-            return Optional.of(Utils.parseDoubleWithUnknownDezSep(value));
-
-        return Optional.empty();
+        String[] precursorMZKeys = ArrayUtils.addAll(PRECURSOR_MZ, SYN_PRECURSOR_MZ, EXACT_MASS);
+        return getWithSynonyms(metaInfo, precursorMZKeys)
+                .map(s -> {
+                    String[] arr = s.split("/");
+                    try {
+                        return Utils.parseDoubleWithUnknownDezSep(arr[arr.length - 1]);
+                    } catch (Exception e) {
+                        log.warn("Invalid precursor M/Z: {}, skipping.", s);
+                        return null;
+                    }
+                });
     }
 
     public static Optional<CollisionEnergy> parseCollisionEnergy(Map<String, String> metaInfo) {
@@ -254,10 +251,7 @@ public class MSP {
 
     public static Optional<RetentionTime> parseRetentionTime(Map<String, String> metaInfo) {
         if (metaInfo.containsKey(RT)) {
-            double rt = Utils.parseDoubleWithUnknownDezSep(metaInfo.get(RT));
-            if (rt > 0) {
-                return Optional.of(new RetentionTime(rt * 60));
-            }
+            return RetentionTime.tryParse(metaInfo.get(RT));
         } else {
             String comments = getWithSynonyms(metaInfo, COMMENTS).orElse(null);
             if (comments != null) {
