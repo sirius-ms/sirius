@@ -118,7 +118,7 @@ public class SdfExperimentParser implements Parser<Ms2Experiment> {
     private void fillSmiles(ExperimentData data, IAtomContainer sdfData) {
         try {
             data.setSmiles(SmilesGenerator.unique().create(sdfData));
-        } catch (CDKException e) {
+        } catch (Exception e) {
             log.warn("Could not create smiles from sdf data", e);
         }
     }

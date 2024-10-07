@@ -117,9 +117,8 @@ public class MSPExperimentParser extends MSPSpectralParser implements Parser<Ms2
                         MSP.parsePrecursorMZ(fields).ifPresent(exp::setIonMass);
                         //optional
                         fields.getField(MSP.INCHI)
-                                .filter(s -> !"null".equalsIgnoreCase(s))
-                                .filter(s -> !s.isBlank())
-                                .map(inchi -> MSP.getWithSynonyms(finFields, MSP.INCHI_KEY).filter(s -> !s.isBlank()).map(key -> InChIs.newInChI(key, inchi)).
+                                .filter(InChIs::isInchi)
+                                .map(inchi -> MSP.getWithSynonyms(finFields, MSP.INCHI_KEY).filter(InChIs::isInchiKey).map(key -> InChIs.newInChI(key, inchi)).
                                         orElse(InChIs.newInChI(inchi))).ifPresent(exp::annotate);
                         fields.getField(MSP.SMILES)
                                 .filter(s -> !"null".equalsIgnoreCase(s))
