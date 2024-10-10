@@ -89,6 +89,14 @@ public class TrackFeatureToLog implements Tracker{
     }
 
     @Override
+    public void createRect(ProcessedSample sample, Rect r) {
+        if (tracked(r.avgMz, (r.maxRt-r.minRt)/2d)) {
+            logger.debug("create rect mz=%f..%f, rt=%f..%f in sample %s",
+                    r.minMz,r.maxMz,r.minRt,r.maxRt,sample.getRun().getName());
+        }
+    }
+
+    @Override
     public void emptyRect(ProcessedSample sample, Rect r) {
         if (tracked(r.avgMz, (r.maxRt-r.minRt)/2d)) {
             logger.debug("do not find any traces in rect mz=%f..%f, rt=%f..%f in sample %s",

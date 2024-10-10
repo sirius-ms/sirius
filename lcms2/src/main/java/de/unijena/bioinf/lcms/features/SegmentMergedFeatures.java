@@ -43,7 +43,7 @@ public class SegmentMergedFeatures implements MergedFeatureExtractionStrategy {
 
         final int[] pointsOfInterest = getPointsOfInterest(mergedTrace);
 
-        return traceSegmenter.detectSegments(mergedTrace, noiseLevel, pointsOfInterest).toArray(TraceSegment[]::new);
+        return traceSegmenter.detectSegments(mergedTrace, noiseLevel, stats.getExpectedPeakWidth().orElse(0d), pointsOfInterest).toArray(TraceSegment[]::new);
     }
 
     private static @NotNull int[] getPointsOfInterest(MergedTrace mergedTrace) {
@@ -72,7 +72,7 @@ public class SegmentMergedFeatures implements MergedFeatureExtractionStrategy {
         final int[] pointsOfInterest = Arrays.stream(trace.getMs2Refs()).mapToInt(x->sample.getScanPointInterpolator().roundIndex(x.rawScanIdx)).distinct().toArray();
 
         TraceSegment[] childSegments = new PersistentHomology(true).detectSegments(trace.projected(mergedSample.getMapping()),
-                projectedNoiseLevel/10d, pointsOfInterest).toArray(TraceSegment[]::new);
+                projectedNoiseLevel/10d, stats.getExpectedPeakWidth().orElse(0d), pointsOfInterest).toArray(TraceSegment[]::new);
         if (childSegments.length==0) {
             if (traceSegments.length>0) LoggerFactory.getLogger(SegmentMergedFeatures.class).warn("No segments found in child trace!");
             return childSegments;

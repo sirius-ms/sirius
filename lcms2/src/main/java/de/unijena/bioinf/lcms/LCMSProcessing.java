@@ -209,6 +209,7 @@ public class LCMSProcessing {
         FloatArrayList ms2NoiseLevels = new FloatArrayList();
         FloatArrayList ppmsWithinTraces = new FloatArrayList(), ppmsBetweenTraces = new FloatArrayList();
         FloatArrayList absWithinTraces = new FloatArrayList(), absBetweenTraces = new FloatArrayList();
+        DoubleArrayList averagePeakWidth = new DoubleArrayList();
         for (ProcessedSample sample : samples) {
             SampleStats s = sample.getStorage().getStatistics();
             ms2NoiseLevels.add(s.getMs2NoiseLevel());
@@ -216,13 +217,16 @@ public class LCMSProcessing {
             ppmsBetweenTraces.add((float)s.getMinimumMs1MassDeviationBetweenTraces().getPpm());
             absWithinTraces.add((float)s.getMs1MassDeviationWithinTraces().getAbsolute());
             absBetweenTraces.add((float)s.getMinimumMs1MassDeviationBetweenTraces().getAbsolute());
+            averagePeakWidth.add(sample.getTraceStats().getAveragePeakWidth());
         }
         SampleStats statistics = new SampleStats(
                 new float[0], (float)Statistics.robustAverage(ms2NoiseLevels.toFloatArray()),
                 new Deviation(Statistics.robustAverage(ppmsWithinTraces.toFloatArray()),Statistics.robustAverage(absWithinTraces.toFloatArray())),
-                new Deviation(Statistics.robustAverage(ppmsBetweenTraces.toFloatArray()),Statistics.robustAverage(absBetweenTraces.toFloatArray()))
+                new Deviation(Statistics.robustAverage(ppmsBetweenTraces.toFloatArray()),Statistics.robustAverage(absBetweenTraces.toFloatArray())),
+                Statistics.robustAverage(averagePeakWidth.toDoubleArray())
         );
         merged.getStorage().setStatistics(statistics);
+
     }
 
     public ProcessedSample merge(AlignmentBackbone backbone) {

@@ -40,8 +40,7 @@ public class MsMsQuerySpectrum {
         final double R = header.getPrecursorMz() + isolationWindow.getRightOffset();
         int target = Spectrums.mostIntensivePeakWithin(ms1Spectrum, header.getPrecursorMz(), new Deviation(10));
         if (target<0) {
-            LoggerFactory.getLogger(MsMsQuerySpectrum.class).warn("Do not find any precursor peak for MsMs spectrum at the expected position.");
-            target = Spectrums.mostIntensivePeakWithin(ms1Spectrum, L, R);
+            target = findPrecursorPeak(header, ms1Spectrum, L, R, header.getPrecursorMz(), originalSpectrum);
         }
         exactParentMass = ms1Spectrum.getMzAt(target);
         int left=target-1, right=target+1;
@@ -58,6 +57,50 @@ public class MsMsQuerySpectrum {
         }
         this.chimericPollution = chi;
         this.ms1Intensity = ms1Spectrum.getIntensityAt(target);
+    }
+
+    private int findPrecursorPeak(Ms2SpectrumHeader header, SimpleSpectrum ms1Spectrum, double c, double l, double r, SimpleSpectrum originalSpectrum) {
+        // we also check which precursor peaks might occur in the MSMS
+        SimpleSpectrum precursorsInMsMs=null;
+        double ms2norm = 0;
+        {
+            final int left = Spectrums.getFirstPeakGreaterOrEqualThan(originalSpectrum, l);
+            final int right = Spectrums.getFirstPeakGreaterOrEqualThan(originalSpectrum, r);
+            if (left>=0 && right >=0) precursorsInMsMs = Spectrums.subspectrum(originalSpectrum, left, right+1);
+            ms2norm = Spectrums.getMaximalIntensity(precursorsInMsMs);
+        }
+        SimpleSpectrum precursorsInMs=null;
+        double ms1norm = 0;
+        int ms1Offset=0;
+        {
+            final int left = Spectrums.getFirstPeakGreaterOrEqualThan(ms1Spectrum, l);
+            final int right = Spectrums.getFirstPeakGreaterOrEqualThan(ms1Spectrum, r);
+            if (left>=0 && right >=0) precursorsInMs = Spectrums.subspectrum(ms1Spectrum, left, right+1);
+            ms1norm = Spectrums.getMaximalIntensity(precursorsInMs);
+            ms1Offset = left;
+        }
+        // search for proper precursor mass
+        if (precursorsInMs==null) {
+            LoggerFactory.getLogger(MsMsQuerySpectrum.class).warn("No peak within isolation window of MSMS spectrum with scan ID " + header.getScanId());
+            return -1;
+        }
+        double bestScore=Double.NEGATIVE_INFINITY; int bestIndex=0;
+        final double width = r-l;
+        for (int k=0; k < precursorsInMs.size(); ++k) {
+            final double ms1Intensity = precursorsInMs.getIntensityAt(k)/ms1norm;
+            final double weightedByDistance = (0.7*(1.0-Math.abs(c-precursorsInMs.getMzAt(k))/width) + 0.3) * ms1Intensity;
+            double ms2Intensity = 0d;
+            if (precursorsInMsMs!=null) {
+                int ms2Idx = Spectrums.mostIntensivePeakWithin(precursorsInMsMs, precursorsInMs.getMzAt(k), new Deviation(10));
+                if (ms2Idx>=0) ms2Intensity = precursorsInMsMs.getIntensityAt(ms2Idx)/ms2norm;
+            }
+            final double score = weightedByDistance * (ms1Intensity + ms2Intensity/2d);
+            if (score > bestScore) {
+                bestIndex = k;
+                bestScore = score;
+            }
+        }
+        return ms1Offset+bestIndex;
     }
 
     private SimpleSpectrum filtered(SimpleSpectrum originalSpectrum) {
