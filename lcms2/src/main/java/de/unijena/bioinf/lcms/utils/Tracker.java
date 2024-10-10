@@ -50,6 +50,11 @@ public interface Tracker {
         }
 
         @Override
+        public void createRect(ProcessedSample sample, Rect r) {
+
+        }
+
+        @Override
         public void emptyRect(ProcessedSample sample, Rect r) {
 
         }
@@ -91,6 +96,8 @@ public interface Tracker {
     void unalignedMoI(ProcessedSample s, MoI moI);
 
     void moiDeleted(MoI moi);
+
+    void createRect(ProcessedSample sample, Rect r);
 
     void emptyRect(ProcessedSample sample, Rect r);
 
