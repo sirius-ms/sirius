@@ -307,6 +307,7 @@ public class LCMSProcessing {
                 });
         SampleStats st = merged.getStorage().getStatistics();
         fwhms.sort(null);
+        heightDividedByfwhms.sort(null);
         DoubleList ms2NoiseLevel = new DoubleArrayList();
         for (ProcessedSample sample : alignmentBackbone.getSamples()) {
             SampleStats statistics = sample.getStorage().getStatistics();
