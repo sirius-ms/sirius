@@ -30,7 +30,7 @@ public class MergeTracesWithoutGapFilling {
     public void merge(ProcessedSample merged, AlignmentBackbone alignment, Tracker tracker) {
         JobManager globalJobManager = SiriusJobs.getGlobalJobManager();
         AlignmentStorage alignmentStorage = merged.getStorage().getAlignmentStorage();
-        prepareRects(merged, alignment);
+        prepareRects(merged, alignment, tracker);
         MergeStorage mergeStorage = merged.getStorage().getMergeStorage();
 
         // TODO: that's not a good place for calculating that...
@@ -73,7 +73,7 @@ public class MergeTracesWithoutGapFilling {
     }
 
 
-    private void prepareRects(ProcessedSample merged, AlignmentBackbone alignment) {
+    private void prepareRects(ProcessedSample merged, AlignmentBackbone alignment, Tracker tracker) {
         final Int2ObjectOpenHashMap<RecalibrationFunction> mzRecalibration = new Int2ObjectOpenHashMap<>();
         final Int2ObjectOpenHashMap<RecalibrationFunction> rtRecalibration = new Int2ObjectOpenHashMap<>();
         for (int k=0; k < alignment.getSamples().length; ++k) {
@@ -96,11 +96,19 @@ public class MergeTracesWithoutGapFilling {
                 r.minRt = (float)Math.min(r.minRt, rt.value(a.getRect().minRt));
                 r.maxRt = (float)Math.max(r.maxRt, rt.value(a.getRect().maxRt));
             }
+
+            // account for rounding errors due to float 32 :/
+            r.minMz = Float.intBitsToFloat(Float.floatToIntBits(r.minMz)-1);
+            r.maxMz = Float.intBitsToFloat(Float.floatToIntBits(r.maxMz)+1);
+            r.minRt = Float.intBitsToFloat(Float.floatToIntBits(r.minRt)-1);
+            r.maxRt = Float.intBitsToFloat(Float.floatToIntBits(r.maxRt)+1);
+
             for (Rect other : rectangleMap.overlappingRectangle(r)) {
                 r.upgrade(other);
                 rectangleMap.removeRect(other);
             }
             rectangleMap.addRect(r);
+            tracker.createRect(merged, r);
         }
     }
 

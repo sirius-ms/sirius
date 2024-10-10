@@ -94,6 +94,14 @@ public class TrackFeatureToFile implements Tracker{
     }
 
     @Override
+    public void createRect(ProcessedSample sample, Rect r) {
+        if (tracked(r.avgMz, r.minRt, r.maxRt)) {
+            this.out.println(String.format(Locale.US,"create rect mz=%f..%f, rt=%f..%f",
+                    r.minMz,r.maxMz,r.minRt,r.maxRt));
+        }
+    }
+
+    @Override
     public void emptyRect(ProcessedSample sample, Rect r) {
         if (tracked(r.avgMz, r.minRt, r.maxRt)) {
             this.out.println(String.format(Locale.US,"do not find any traces in rect mz=%f..%f, rt=%f..%f in sample %s",

@@ -231,12 +231,52 @@ public class PersistentHomology implements TraceSegmentationStrategy {
         public int size() {
             return trace.length();
         }
+
+        public double stdInt() {
+
+            final int windowLen = Math.max(3, trace.length()/30);
+            final int stepSize = windowLen/3;
+            double varmean=0d;
+            int c=0;
+            for (int i=0; i < trace.length()-windowLen; i+=stepSize) {
+                double mean=0d, var=0d;
+                for (int j=i; j < i+windowLen; ++j) {
+                    mean += get(j);
+                }
+                mean /= windowLen;
+                for (int j=i; j < i+windowLen; ++j) {
+                    var += Math.pow(get(j)-mean,2);
+                }
+                var /= windowLen;
+                varmean += Math.sqrt(var);
+                ++c;
+            }
+            varmean /= c;
+            return varmean;
+        }
+
+        public double sizeOf(int a, int b) {
+            final double rtA = trace.retentionTime(a);
+            final double rtB = trace.retentionTime(b);
+            return Math.abs(rtA-rtB);
+        }
     }
 
-    private List<Segment> computePersistentHomology(Trace trace, Filter filter, double noiseLevel, int[] pointsOfInterestArray) {
-        if (trace.apexIntensity() < noiseCoefficient * noiseLevel) return Collections.emptyList();
+    private List<Segment> computePersistentHomology(Trace trace, Filter filter, double _noiseLevel, double expectedPeakWidth, int[] pointsOfInterestArray) {
+        if (trace.apexIntensity() < noiseCoefficient * _noiseLevel) return Collections.emptyList();
 
         final TraceIntensityArray seq = new TraceIntensityArray(trace, pointsOfInterestArray, filter);
+
+        // noise level has to be always larger than variance of data
+        if (trace.length()>=256) {
+            _noiseLevel = Math.max(seq.stdInt() * 3, _noiseLevel);
+        } else if (trace.length()>=32) {
+            _noiseLevel = Math.max(seq.stdInt() * 2, _noiseLevel);
+        } else {
+            _noiseLevel = Math.max(seq.stdInt(), _noiseLevel);
+        }
+        final double noiseLevel = _noiseLevel;
+
         List<Segment> peaks = new ArrayList<>();
         int[] idx2Peak = new int[seq.size()];
         Arrays.fill(idx2Peak, -1);
@@ -308,19 +348,27 @@ public class PersistentHomology implements TraceSegmentationStrategy {
             Segment last = merged.get(merged.size() - 1);
             // do not merge two consecutive peaks if:
             // 1. there is a gap between both peaks
+            final int gapLength = last.getRight() - current.getLeft();
             // 2. the valley intensity is low (either below the int threshold or mergeCoeff * max int)
-            if (last.getRight() < current.getLeft() ||
-                    seq.get(current.getLeft()) < noiseCoefficient * noiseLevel ||
-                    seq.get(current.getLeft()) < mergeCoefficient * seq.get(current.getBorn())
-            ) {
-                merged.add(current);
+            final double valleyIntensity = Math.min(seq.get(last.born), seq.get(current.getBorn())) - seq.get(current.getLeft());
+            final double relativeValleyIntensity = seq.get(current.getLeft()) / Math.min(seq.get(last.born), seq.get(current.getBorn()));
+            boolean properValley;
+            if (expectedPeakWidth>0) {
+                final double valleySize = ((seq.sizeOf(current.left, current.born)) / expectedPeakWidth);
+                properValley = ((mergeCoefficient - relativeValleyIntensity) + valleySize) > 0.33;
             } else {
+                properValley = relativeValleyIntensity < mergeCoefficient;
+            }
 
+
+            if (gapLength > 0 || (valleyIntensity > noiseLevel && properValley)) {
+                merged.add(current); // don't merge
+            } else {
                 // merge last with current
                 if (seq.get(last.born) >= seq.get(current.born)) {
                     last.setRight(current.getRight());
                 } else {
-                    merged.remove(merged.size()-1);
+                    merged.remove(merged.size() - 1);
                     current.setLeft(last.getLeft());
                     merged.add(current);
                 }
@@ -369,9 +417,9 @@ public class PersistentHomology implements TraceSegmentationStrategy {
     }
 
     @Override
-    public List<TraceSegment> detectSegments(Trace trace, double noiseLevel, int[] pointsOfInterest) {
+    public List<TraceSegment> detectSegments(Trace trace, double noiseLevel, double expectedPeakWidth, int[] pointsOfInterest) {
         final int offset=trace.startId();
-        return computePersistentHomology(trace, filter, noiseLevel, pointsOfInterest).stream().map(seg->
+        return computePersistentHomology(trace, filter, noiseLevel, expectedPeakWidth, pointsOfInterest).stream().map(seg->
                 TraceSegment.createSegmentFor(trace, seg.left+offset, seg.right+offset)
         ).toList();
     }
