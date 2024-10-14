@@ -22,7 +22,7 @@ public class AlignmentScorer {
         final double intensityDelta = Math.log((left.getIntensity()+0.05)/(right.getIntensity()+0.05));
 
 
-        return gaussianRbfLog(rtDiff, stats.expectedRetentionTimeDeviation) +
+        return 2*gaussianRbfLog(rtDiff, stats.expectedRetentionTimeDeviation) +
                 gaussianRbfLog(mzDiff, stats.expectedMassDeviationBetweenSamples.absoluteFor(Math.max(left.getMz(),right.getMz()))) +
                 gaussianRbfLog(intensityDelta, intensityAwareness);
 

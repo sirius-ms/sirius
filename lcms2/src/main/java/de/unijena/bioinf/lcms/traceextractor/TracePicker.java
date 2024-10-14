@@ -34,7 +34,7 @@ public class TracePicker {
 
     public TracePicker(ProcessedSample sample, TraceCachingStrategy cachingStrategy, TraceSegmentationStrategy segmentationStrategy) {
         this.storage = sample.getStorage();
-        setAllowedMassDeviation(new Deviation(10));
+        setAllowedMassDeviation(new Deviation(12));
         this.mapping = sample.getMapping();
         this.cache = cachingStrategy.getCacheFor(sample);
         this.segmentationStrategy = segmentationStrategy;
