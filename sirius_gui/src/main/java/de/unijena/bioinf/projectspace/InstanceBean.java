@@ -310,6 +310,10 @@ public class InstanceBean implements SiriusPCS {
         return Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getStructureAnnotation);
     }
 
+    public Optional<CompoundClasses> getCompoundClassesAnnotation() {
+        return Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getCompoundClassAnnotation);
+    }
+
     public Optional<Double> getConfidenceScore(ConfidenceDisplayMode viewMode) {
         return viewMode == ConfidenceDisplayMode.APPROXIMATE ?
                 Optional.ofNullable(getSourceFeature().getTopAnnotations()).map(FeatureAnnotations::getConfidenceApproxMatch) :
