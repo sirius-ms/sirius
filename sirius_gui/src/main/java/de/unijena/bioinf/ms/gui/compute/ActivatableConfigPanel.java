@@ -25,6 +25,7 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import io.sirius.ms.sdk.model.ConnectionCheck;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +46,7 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
     protected ToolbarToggleButton activationButton;
     protected final String toolName;
     protected final String[] toolDescription;
+    @Getter
     protected final C content;
     protected PropertyChangeListener listener;
     protected final SiriusGui gui;
@@ -128,10 +130,6 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
         return activationButton == null || activationButton.isSelected();
     }
 
-    public C getContent() {
-        return content;
-    }
-
     public List<String> asParameterList() {
         return content.asParameterList();
     }
@@ -155,5 +153,21 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
         void onChange(C content, boolean enabled);
     }
 
+    /**
+     * Add listeners that enable/disable tools based on dependencies
+     * @param upstreamResultAvailable function that checks if the existing results of the upstream tool can be used
+     */
+    public static void addToolDependency(ActivatableConfigPanel<?> upstreamTool, ActivatableConfigPanel<?> downstreamTool, Supplier<Boolean> upstreamResultAvailable) {
+        downstreamTool.addEnableChangeListener((c, enabled) -> {
+            if (enabled && !upstreamTool.isToolSelected() && !upstreamResultAvailable.get()) {
+                upstreamTool.activationButton.doClick(0);
+            }
+        });
+        upstreamTool.addEnableChangeListener((c, enabled) -> {
+            if (!enabled && downstreamTool.isToolSelected() && !upstreamResultAvailable.get()) {
+                downstreamTool.activationButton.doClick(0);
+            }
+        });
+    }
 }
 
