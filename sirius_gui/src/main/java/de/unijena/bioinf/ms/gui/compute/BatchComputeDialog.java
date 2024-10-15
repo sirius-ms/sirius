@@ -54,7 +54,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static de.unijena.bioinf.ms.gui.compute.ActivatableConfigPanel.addToolDependency;
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isWarningOnly;
 
@@ -141,24 +140,25 @@ public class BatchComputeDialog extends JDialog {
 
                     });
                     addConfigPanel("ZODIAC - Network-based improvement of SIRIUS molecular formula ranking", zodiacConfigs);
-                    addToolDependency(formulaIDConfigPanel, zodiacConfigs, () -> formulasAvailable);
+                    zodiacConfigs.addToolDependency(formulaIDConfigPanel, () -> formulasAvailable);
                 }
 
                 if (ms2) {
                     final boolean compoundClassesAvailable = compoundsToProcess.stream().allMatch(inst -> inst.getCompoundClassesAnnotation().isPresent());
 
                     addConfigPanel("Predict properties: CSI:FingerID - Fingerprint Prediction & CANOPUS - Compound Class Prediction", fingerprintAndCanopusConfigPanel);
-                    addToolDependency(formulaIDConfigPanel, fingerprintAndCanopusConfigPanel, () -> formulasAvailable);
+                    fingerprintAndCanopusConfigPanel.addToolDependency(formulaIDConfigPanel, () -> formulasAvailable);
 
                     JPanel searchRow = addConfigPanel("CSI:FingerID - Structure Database Search", csiSearchConfigs);
                     addConfigPanelToRow("MSNovelist - De Novo Structure Generation", msNovelistConfigs, searchRow);
-                    addToolDependency(fingerprintAndCanopusConfigPanel, csiSearchConfigs, () -> compoundClassesAvailable && !formulaIDConfigPanel.isToolSelected());
-                    addToolDependency(fingerprintAndCanopusConfigPanel, msNovelistConfigs, () -> compoundClassesAvailable && !formulaIDConfigPanel.isToolSelected());
+                    csiSearchConfigs.addToolDependency(fingerprintAndCanopusConfigPanel, () -> compoundClassesAvailable && !formulaIDConfigPanel.isToolSelected());
+                    msNovelistConfigs.addToolDependency(fingerprintAndCanopusConfigPanel, () -> compoundClassesAvailable && !formulaIDConfigPanel.isToolSelected());
 
                     // computing formulaId will discard fingerprints, so we need to enable it for structure search
                     formulaIDConfigPanel.addEnableChangeListener((c, enabled) -> {
                         if (enabled && !fingerprintAndCanopusConfigPanel.isToolSelected() && (csiSearchConfigs.isToolSelected() || msNovelistConfigs.isToolSelected())) {
                             fingerprintAndCanopusConfigPanel.activationButton.doClick(0);
+                            fingerprintAndCanopusConfigPanel.showAutoEnableInfoDialog(fingerprintAndCanopusConfigPanel.toolName + " is activated because a downstream tool needs its input, which would be deleted by running " + formulaIDConfigPanel.toolName + ".");
                         }
                     });
                 }
@@ -414,7 +414,7 @@ public class BatchComputeDialog extends JDialog {
                     if (finalComps != null && !finalComps.isEmpty())
                         jobSubmission.setAlignedFeatureIds(finalComps.stream()
                                 .map(InstanceBean::getFeatureId).toList());
-                    Job job = gui.applySiriusClient((c, pid) -> c.jobs().startJob(pid, jobSubmission, List.of(JobOptField.COMMAND)));
+                    gui.applySiriusClient((c, pid) -> c.jobs().startJob(pid, jobSubmission, List.of(JobOptField.COMMAND)));
                 } catch (Exception e) {
                     LoggerFactory.getLogger(getClass()).error("Error when starting Computation.", e);
                     new ExceptionDialog(mf(), "Error when starting Computation: " + e.getMessage());
