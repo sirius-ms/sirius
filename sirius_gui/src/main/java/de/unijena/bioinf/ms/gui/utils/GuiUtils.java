@@ -232,7 +232,7 @@ public class GuiUtils {
         if (lines == null || lines.isEmpty())
             return null;
         return "<html><p width=\"" + width + "\">"
-                + lines.stream().filter(Objects::nonNull).map(it -> it.replace("\n", "<br>")).collect(Collectors.joining(" "))
+                + lines.stream().filter(Objects::nonNull).map(it -> it.replace("\n", "<br>")).collect(Collectors.joining("<br>"))
                 + "</p></html>";
     }
 

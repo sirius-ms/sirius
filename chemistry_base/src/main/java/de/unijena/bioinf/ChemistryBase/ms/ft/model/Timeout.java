@@ -25,10 +25,10 @@ import de.unijena.bioinf.ms.properties.DefaultInstanceProvider;
 import de.unijena.bioinf.ms.properties.DefaultProperty;
 
 /**
- * This configurations define a timeout for the tree computation. As the underlying problem is NP-hard, it might take
- * forever to compute trees for very challenging (e.g. large mass) compounds. Setting an time constraint allow the program
- * to continue with other instances and just skip the challenging ones.
- * Note that, due to multithreading, this time constraints are not absolutely accurate.
+ * This configuration defines a timeout for the tree computation.
+ * As the underlying problem is NP-hard, it might take forever to compute trees for very challenging (e.g. large mass) compounds.
+ * Setting a time constraint allows the program to continue with other instances and just skip the challenging ones.
+ * Note that due to multithreading, this time constraints are not absolutely accurate.
  */
 public class Timeout implements Ms2ExperimentAnnotation {
 
