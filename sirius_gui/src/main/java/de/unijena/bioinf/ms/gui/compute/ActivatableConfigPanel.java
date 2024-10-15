@@ -20,10 +20,12 @@
 package de.unijena.bioinf.ms.gui.compute;
 
 import de.unijena.bioinf.ms.gui.SiriusGui;
+import de.unijena.bioinf.ms.gui.dialogs.InfoDialog;
 import de.unijena.bioinf.ms.gui.net.ConnectionMonitor;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import io.sirius.ms.sdk.model.ConnectionCheck;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +44,9 @@ import java.util.stream.Stream;
 import static de.unijena.bioinf.ms.gui.net.ConnectionChecks.isConnected;
 
 public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoColumnPanel {
+
+    public static final String DO_NOT_SHOW_TOOL_AUTOENABLE = "de.unijena.bioinf.sirius.computeDialog.autoEnable.dontAskAgain";
+
 
     protected ToolbarToggleButton activationButton;
     protected final String toolName;
@@ -154,20 +159,29 @@ public abstract class ActivatableConfigPanel<C extends ConfigPanel> extends TwoC
     }
 
     /**
-     * Add listeners that enable/disable tools based on dependencies
+     * Add listeners that enable the upstream tool if this gets enabled, and disable this if the upstream gets disabled
+     * @param upstreamTool the tool which produces the data required for this tool
      * @param upstreamResultAvailable function that checks if the existing results of the upstream tool can be used
      */
-    public static void addToolDependency(ActivatableConfigPanel<?> upstreamTool, ActivatableConfigPanel<?> downstreamTool, Supplier<Boolean> upstreamResultAvailable) {
-        downstreamTool.addEnableChangeListener((c, enabled) -> {
+    public void addToolDependency(ActivatableConfigPanel<?> upstreamTool, Supplier<Boolean> upstreamResultAvailable) {
+        this.addEnableChangeListener((c, enabled) -> {
             if (enabled && !upstreamTool.isToolSelected() && !upstreamResultAvailable.get()) {
                 upstreamTool.activationButton.doClick(0);
+                showAutoEnableInfoDialog(upstreamTool.toolName + " is activated because " + this.toolName + " needs its results.");
             }
         });
         upstreamTool.addEnableChangeListener((c, enabled) -> {
-            if (!enabled && downstreamTool.isToolSelected() && !upstreamResultAvailable.get()) {
-                downstreamTool.activationButton.doClick(0);
+            if (!enabled && this.isToolSelected() && !upstreamResultAvailable.get()) {
+                this.activationButton.doClick(0);
+                showAutoEnableInfoDialog(this.toolName + " is deactivated because it cannot run without the input from " + upstreamTool.toolName + ".");
             }
         });
+    }
+
+    public void showAutoEnableInfoDialog(String message) {
+        if (!PropertyManager.getBoolean(DO_NOT_SHOW_TOOL_AUTOENABLE, false)) {
+            new InfoDialog(gui.getMainFrame(), message, DO_NOT_SHOW_TOOL_AUTOENABLE);
+        }
     }
 }
 
