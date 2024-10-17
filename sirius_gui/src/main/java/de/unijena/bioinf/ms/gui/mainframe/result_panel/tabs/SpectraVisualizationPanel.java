@@ -44,11 +44,13 @@ import de.unijena.bioinf.ms.gui.ms_viewer.SpectraViewerConnector;
 import de.unijena.bioinf.ms.gui.ms_viewer.WebViewSpectraViewer;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchBean;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
+import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.ReturnValue;
 import de.unijena.bioinf.ms.gui.utils.loading.LoadablePanel;
 import de.unijena.bioinf.ms.gui.webView.WebViewIO;
 import de.unijena.bioinf.ms.properties.PropertyManager;
+import de.unijena.bioinf.projectspace.FormulaResultBean;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import de.unijena.bionf.spectral_alignment.SpectralSimilarity;
 import io.sirius.ms.sdk.model.*;
@@ -68,8 +70,6 @@ import org.slf4j.LoggerFactory;
 import javax.swing.*;
 import javax.swing.filechooser.FileFilter;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.BufferedWriter;
@@ -87,7 +87,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 
-public class SpectraVisualizationPanel extends JPanel implements ActionListener, ItemListener, PanelDescription {
+public class SpectraVisualizationPanel extends JPanel implements
+        ActiveElementChangedListener<FormulaResultBean, InstanceBean>,
+        ItemListener, PanelDescription {
 
     protected final CardLayout centerCard = new CardLayout();
     protected final JPanel centerCardPanel = new JPanel(centerCard);
@@ -124,7 +126,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
     JComboBox<String> modesBox;
     JComboBox<String> ceBox;
     String preferredMode;
-    JButton saveButton;
+    private final JButton saveButton;
     JFrame popupOwner;
 
     public WebViewSpectraViewer browser;
@@ -176,7 +178,7 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 
         toolBar.addSeparator(new Dimension(10, 10));
         saveButton = Buttons.getExportButton24("Export spectra");
-        saveButton.addActionListener(this);
+        saveButton.addActionListener(evt -> saveSpectra());
         saveButton.setToolTipText("Export the current view to various formats");
         toolBar.add(saveButton);
 
@@ -209,13 +211,6 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 
     public SpectraViewerConnector getConnector() {
         return browser.getConnector();
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == saveButton) {
-            saveSpectra();
-        }
     }
 
     private void showBrowser() {
@@ -370,6 +365,14 @@ public class SpectraVisualizationPanel extends JPanel implements ActionListener,
 
     public void clear() {
         resultsChanged(null, null, null, null, null);
+    }
+
+    @Override
+    public void resultsChanged(InstanceBean instance, FormulaResultBean selectedElement, List<FormulaResultBean> resultElements, ListSelectionModel selections) {
+        if (instance != null)
+            resultsChanged(instance, (selectedElement != null ? selectedElement.getFormulaId() : null), null);
+        else
+            clear();
     }
 
     public void resultsChanged(InstanceBean instance, @Nullable String formulaCandidateId, @Nullable String smiles) {
