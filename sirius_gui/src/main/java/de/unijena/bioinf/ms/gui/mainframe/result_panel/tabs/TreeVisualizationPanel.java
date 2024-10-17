@@ -42,14 +42,10 @@ import lombok.Getter;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
@@ -62,8 +58,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 //todo post-nightsky: switch to nightsky api data structures
 
-public class TreeVisualizationPanel extends JPanel
-        implements ActionListener, ChangeListener, ComponentListener,
+public class TreeVisualizationPanel extends JPanel implements
         ActiveElementChangedListener<FormulaResultBean, InstanceBean>,
         PanelDescription {
     public enum FileFormat {
@@ -83,14 +78,15 @@ public class TreeVisualizationPanel extends JPanel
     public TreeViewerBrowser browser;
     @Getter
     TreeViewerBridge jsBridge;
-    TreeViewerConnector jsConnector;
-    JToolBar toolBar;
-    public JComboBox<String> presetBox; // accessible from TreeViewerSettings
-    JSlider scaleSlider;
-    JButton saveTreeBtn;
-    JButton advancedSettingsBtn;
-    JButton resetBtn;
     TreeViewerSettings settings;
+
+    private final TreeViewerConnector jsConnector;
+    private final JToolBar toolBar;
+    public final JComboBox<String> presetBox; // accessible from TreeViewerSettings
+    private final JSlider scaleSlider;
+    private final JButton saveTreeBtn;
+    private final JButton advancedSettingsBtn;
+    private final JButton resetBtn;
     @Getter
     TreeConfig localConfig;
 
@@ -113,7 +109,7 @@ public class TreeVisualizationPanel extends JPanel
         toolBar.setFloatable(false);
         toolBar.setPreferredSize(new Dimension(toolBar.getPreferredSize().width,32));
         presetBox = new JComboBox<>((String[]) localConfig.get("presets"));
-        presetBox.addActionListener(this);
+        presetBox.addActionListener(evt -> applyPreset((String) presetBox.getSelectedItem()));
         presetBox.setSelectedItem(
             PropertyManager.getProperty(PropertyManager.PROPERTY_BASE
                                         + ".tree_viewer.preset"));
@@ -123,7 +119,7 @@ public class TreeVisualizationPanel extends JPanel
         toolBar.add(presetBox);
         toolBar.addSeparator(new Dimension(10, 10));
         saveTreeBtn = Buttons.getExportButton24("Export tree");
-        saveTreeBtn.addActionListener(this);
+        saveTreeBtn.addActionListener(evt -> saveTree());
         saveTreeBtn.setEnabled(false);
         saveTreeBtn.setToolTipText("Export current tree view (or zoomed-in region) to various formats");
         toolBar.add(saveTreeBtn);
@@ -132,7 +128,7 @@ public class TreeVisualizationPanel extends JPanel
                 TreeViewerBridge.TREE_SCALE_MIN,
                 TreeViewerBridge.TREE_SCALE_MAX,
                 TreeViewerBridge.TREE_SCALE_INIT);
-        scaleSlider.addChangeListener(this);
+        scaleSlider.addChangeListener(evt -> jsBridge.scaleTree(1 / (((float) scaleSlider.getValue()) / 100)));
         scaleSlider.setToolTipText("Increase/Decrease the space between nodes");
         JLabel scaleSliderLabel = new JLabel("Scale");
         scaleSliderLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 5));
@@ -143,14 +139,14 @@ public class TreeVisualizationPanel extends JPanel
         toolBar.addSeparator(new Dimension(10, 10));
         advancedSettingsBtn = new JButton("Customize");
         advancedSettingsBtn.setEnabled(true);
-        advancedSettingsBtn.addActionListener(this);
+        advancedSettingsBtn.addActionListener(evt -> Jobs.runEDTLater(settings::toggleShow));
         advancedSettingsBtn.setToolTipText("Customize various settings for "
                 + "the visualization");
         settings = null;
         toolBar.add(advancedSettingsBtn);
         toolBar.addSeparator(new Dimension(10, 10));
         resetBtn = new JButton("Reset");
-        resetBtn.addActionListener(this);
+        resetBtn.addActionListener(evt -> Jobs.runJFXLater(this::resetTreeView));
         resetBtn.setToolTipText("Revert any changed made to the visualization "
                 + "and the tree itself");
         toolBar.add(resetBtn);
@@ -185,7 +181,31 @@ public class TreeVisualizationPanel extends JPanel
             }};
             browser.load(bridges);
             setToolbarEnabled(false);
-            this.addComponentListener(this);
+            this.addComponentListener(new ComponentAdapter() {
+                @Override
+                public void componentResized(ComponentEvent componentEvent) {
+                    int height = ((JFXPanel) TreeVisualizationPanel.this.browser).getHeight();
+                    int width = ((JFXPanel) TreeVisualizationPanel.this.browser).getWidth();
+                    browser.executeJS("window.outerHeight = " + height);
+                    browser.executeJS("window.outerWidth = " + width);
+                    if (ftreeJson != null) {
+                        browser.executeJS("update()");
+                        //this enusre the correct order without blocking
+                        Jobs.runJFXLater(() -> {
+                            final AtomicInteger tScale = new AtomicInteger();
+                            final AtomicInteger tScaleMin = new AtomicInteger();
+                            tScaleMin.set(Float.floatToIntBits(jsBridge.getTreeScaleMin()));
+                            tScale.set(Float.floatToIntBits(jsBridge.getTreeScale()));
+                            Jobs.runEDTLater(() -> {
+                                // adapt scale slider to tree scales
+                                scaleSlider.setMaximum((int) (1 / Float.intBitsToFloat(tScaleMin.get()) * 100));
+                                scaleSlider.setValue((int) (1 / Float.intBitsToFloat(tScale.get()) * 100));
+                                scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
+                            });
+                        });
+                    }
+                }
+            });
             applyPreset((String) presetBox.getSelectedItem());
         } finally {
             center.setLoading(false);
@@ -338,25 +358,6 @@ public class TreeVisualizationPanel extends JPanel
     public void resetTreeView() {
         jsBridge.resetTree();
         jsBridge.resetZoom();
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == presetBox) {
-            applyPreset((String) presetBox.getSelectedItem());
-        } else if (e.getSource() == advancedSettingsBtn) {
-            Jobs.runEDTLater(settings::toggleShow); //swing code
-        } else if (e.getSource() == resetBtn) {
-            Jobs.runJFXLater(this::resetTreeView); //browser code
-        } else if (e.getSource() == saveTreeBtn) {
-            saveTree(); //todo which thread do we need here? Swing EDT but with loader for the IO conversion!
-        }
-    }
-
-    @Override
-    public void stateChanged(ChangeEvent e) {
-        if (e.getSource() == scaleSlider)
-            jsBridge.scaleTree(1 / (((float) scaleSlider.getValue()) / 100));
     }
 
     public void saveTree() {
@@ -522,46 +523,6 @@ public class TreeVisualizationPanel extends JPanel
                 }
             });
         }
-    }
-
-    @Override
-    public void componentResized(ComponentEvent componentEvent) {
-        int height = ((JFXPanel) this.browser).getHeight();
-        int width = ((JFXPanel) this.browser).getWidth();
-        browser.executeJS("window.outerHeight = " + height);
-        browser.executeJS("window.outerWidth = " + width);
-        if (ftreeJson != null) {
-            browser.executeJS("update()");
-            //this enusre the correct order without blocking
-            Jobs.runJFXLater(() -> {
-                final AtomicInteger tScale = new AtomicInteger();
-                final AtomicInteger tScaleMin = new AtomicInteger();
-                tScaleMin.set(Float.floatToIntBits(jsBridge.getTreeScaleMin()));
-                tScale.set(Float.floatToIntBits(jsBridge.getTreeScale()));
-                Jobs.runEDTLater(() -> {
-                    // adapt scale slider to tree scales
-                    scaleSlider.setMaximum((int) (1 / Float.intBitsToFloat(tScaleMin.get()) * 100));
-                    scaleSlider.setValue((int) (1 / Float.intBitsToFloat(tScale.get()) * 100));
-                    scaleSlider.setMinimum(TreeViewerBridge.TREE_SCALE_MIN);
-                });
-            });
-        }
-    }
-
-
-    @Override
-    public void componentMoved(ComponentEvent componentEvent) {
-
-    }
-
-    @Override
-    public void componentShown(ComponentEvent componentEvent) {
-
-    }
-
-    @Override
-    public void componentHidden(ComponentEvent componentEvent) {
-
     }
 
     public TreeViewerConnector getConnector(){
