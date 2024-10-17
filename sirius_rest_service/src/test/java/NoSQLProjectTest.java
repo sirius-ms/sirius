@@ -278,16 +278,25 @@ public class NoSQLProjectTest {
             NoSQLProjectSpaceManager psm = new NoSQLProjectSpaceManager(ps);
             NoSQLProjectImpl project = new NoSQLProjectImpl("test", psm, (a, b) -> false);
 
-            LCMSRun runIn = LCMSRun.builder()
-                    .name("run1")
-                    .chromatography(Chromatography.LC)
-                    .fragmentation(Fragmentation.byValue("CID").orElseThrow())
-                    .ionization(Ionization.byValue("ESI").orElseThrow())
-                    .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
-                    .build();
+            List<LCMSRun> runs = List.of(
+                    LCMSRun.builder()
+                        .name("run1")
+                        .chromatography(Chromatography.LC)
+                        .fragmentation(Fragmentation.byValue("CID").orElseThrow())
+                        .ionization(Ionization.byValue("ESI").orElseThrow())
+                        .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
+                        .build(),
+                    LCMSRun.builder()
+                            .name("run2")
+                            .chromatography(Chromatography.LC)
+                            .fragmentation(Fragmentation.byValue("CID").orElseThrow())
+                            .ionization(Ionization.byValue("ESI").orElseThrow())
+                            .massAnalyzers(List.of(MassAnalyzer.byValue("FTICR").orElseThrow()))
+                            .build()
+                    );
 
-            ps.getStorage().insert(runIn);
-            Run run = project.findRunById(Long.toString(runIn.getRunId()));
+            ps.getStorage().insertAll(runs);
+            Run run = project.findRunById(Long.toString(runs.getFirst().getRunId()));
 
             project.addCategories(List.of(TagCategory.builder().name("c1").valueType(TagCategory.ValueType.BOOLEAN).build()));
 
@@ -337,10 +346,14 @@ public class NoSQLProjectTest {
 
             Page<Run> page = project.findObjectsByTag(Run.class, "c1", TaggedFilter.builder().build(), Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
             Assert.assertEquals(1, page.getTotalElements());
+            Assert.assertEquals(run.getRunId(), page.getContent().getFirst().getRunId());
             tags = page.get().findFirst().orElseThrow().getTags();
             Assert.assertEquals(1, tags.size());
             Assert.assertEquals(false, tags.get("c1").getValue());
 
+            page = project.findObjectsByTag(Run.class, "c1", TaggedFilter.builder().tagged(false).build(), Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+            Assert.assertEquals(1, page.getTotalElements());
+            Assert.assertEquals(Long.toString(runs.get(1).getRunId()), page.getContent().getFirst().getRunId());
         }
 
     }
