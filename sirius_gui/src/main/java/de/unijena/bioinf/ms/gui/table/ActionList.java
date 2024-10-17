@@ -25,6 +25,7 @@ import ca.odell.glazedlists.ObservableElementList;
 import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -52,7 +53,9 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
 
     private final Queue<ActiveElementChangedListener<E, D>> listeners = new ConcurrentLinkedQueue<>();
 
+    @Getter
     protected ObservableElementList<E> elementList;
+    @Getter
     protected DefaultEventSelectionModel<E> elementListSelectionModel;
     private final ArrayList<E> elementData = new ArrayList<>();
     private final BasicEventList<E> basicElementList = new BasicEventList<>(elementData);
@@ -137,14 +140,6 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
         return elementListSelectionModel.isSelectionEmpty() ? null : elementList.get(elementListSelectionModel.getMinSelectionIndex());
     }
 
-    public ObservableElementList<E> getElementList() {
-        return elementList;
-    }
-
-    public DefaultEventSelectionModel<E> getElementListSelectionModel() {
-        return elementListSelectionModel;
-    }
-
     public void addActiveResultChangedListener(ActiveElementChangedListener<E, D> listener) {
         listeners.add(listener);
     }
@@ -193,9 +188,5 @@ public abstract class ActionList<E extends SiriusPCS, D> implements ActiveElemen
         } finally {
             dataLock.writeLock().unlock();
         }
-    }
-
-    public boolean hasData() {
-        return data != null;
     }
 }

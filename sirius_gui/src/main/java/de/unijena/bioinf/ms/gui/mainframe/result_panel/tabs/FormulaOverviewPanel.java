@@ -43,23 +43,15 @@ public class FormulaOverviewPanel extends JPanel implements PanelDescription {
     public FormulaOverviewPanel(FormulaList suriusResultElements) {
         super(new BorderLayout());
 
-
         final FormulaListDetailView north = new FormulaListDetailView(suriusResultElements);
-
 
         TreeVisualizationPanel overviewTVP = new TreeVisualizationPanel();
         suriusResultElements.addActiveResultChangedListener(overviewTVP);
         SpectraVisualizationPanel overviewSVP = new SpectraVisualizationPanel();
-        suriusResultElements.addActiveResultChangedListener((experiment, sre, resultElements, selections) -> {
-                if (experiment != null)
-                    overviewSVP.resultsChanged(experiment, (sre != null ? sre.getFormulaId() : null), null);
-                else
-                    overviewSVP.clear();
-        });
+        suriusResultElements.addActiveResultChangedListener(overviewSVP);
 
         // Class to synchronize selected peak/node
-        VisualizationPanelSynchronizer synchronizer = new VisualizationPanelSynchronizer(
-                overviewTVP, overviewSVP);
+        VisualizationPanelSynchronizer.synchronize(overviewTVP, overviewSVP);
 
         JSplitPane east = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, overviewSVP, overviewTVP);
         east.setDividerLocation(.5d);
