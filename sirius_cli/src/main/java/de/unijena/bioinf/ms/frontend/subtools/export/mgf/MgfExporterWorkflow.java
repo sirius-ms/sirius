@@ -169,9 +169,9 @@ public class MgfExporterWorkflow implements Workflow {
 
             // now write data
             ArrayList<String> compoundNames = new ArrayList<>(compounds.keySet());
-            compoundNames.sort(Utils.ALPHANUMERIC_COMPARATOR);
+            compoundNames.sort(Utils.ALPHANUMERIC_COMPARATOR_NULL_LAST);
             ArrayList<String> sampleNameList = new ArrayList<>(sampleNames);
-            sampleNameList.sort(Utils.ALPHANUMERIC_COMPARATOR);
+            sampleNameList.sort(Utils.ALPHANUMERIC_COMPARATOR_NULL_LAST);
             bw.write("row ID,row m/z,row retention time");
             CsvTranslators.CsvEscaper escaper = new CsvTranslators.CsvEscaper();
             for (String sample : sampleNameList) {
