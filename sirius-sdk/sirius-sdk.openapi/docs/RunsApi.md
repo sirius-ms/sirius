@@ -4,17 +4,17 @@ All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**addTags**](RunsApi.md#addTags) | **POST** /api/projects/{projectId}/runs/tags/add/{objectId} | Add tags to an object in the project. |
-| [**deleteTags**](RunsApi.md#deleteTags) | **PUT** /api/projects/{projectId}/runs/tags/delete/{objectId} | Delete tags with the given IDs from the specified project-space. |
+| [**addTags**](RunsApi.md#addTags) | **PUT** /api/projects/{projectId}/runs/tags/{objectId} | Add tags to an object in the project. |
+| [**deleteTags**](RunsApi.md#deleteTags) | **DELETE** /api/projects/{projectId}/runs/tags/{objectId}/{categoryName} | Delete tag with the given category from the object with the specified ID in the specified project-space. |
 | [**getRun**](RunsApi.md#getRun) | **GET** /api/projects/{projectId}/runs/{runId} | Get run with the given identifier from the specified project-space. |
 | [**getRunsPaged**](RunsApi.md#getRunsPaged) | **GET** /api/projects/{projectId}/runs/page | Get all available runs in the given project-space. |
-| [**objectsByTag**](RunsApi.md#objectsByTag) | **POST** /api/projects/{projectId}/runs/tags/tagged/{categoryName} | Get objects by tag. |
+| [**objectsByTag**](RunsApi.md#objectsByTag) | **POST** /api/projects/{projectId}/runs/tagged/{categoryName} | Get objects by tag. |
 
 
 
 ## addTags
 
-> List&lt;Tag&gt; addTags(projectId, objectId, tag)
+> List&lt;Object&gt; addTags(projectId, objectId, requestBody)
 
 Add tags to an object in the project.
 
@@ -38,9 +38,9 @@ public class Example {
         RunsApi apiInstance = new RunsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to add to.
         String objectId = "objectId_example"; // String | object to tag.
-        List<Tag> tag = Arrays.asList(); // List<Tag> | tags to add.
+        List<Object> requestBody = null; // List<Object> | tags to add.
         try {
-            List<Tag> result = apiInstance.addTags(projectId, objectId, tag);
+            List<Object> result = apiInstance.addTags(projectId, objectId, requestBody);
             System.out.println(result);
         } catch (ApiException e) {
             System.err.println("Exception when calling RunsApi#addTags");
@@ -60,11 +60,11 @@ public class Example {
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to add to. | |
 | **objectId** | **String**| object to tag. | |
-| **tag** | [**List&lt;Tag&gt;**](Tag.md)| tags to add. | |
+| **requestBody** | [**List&lt;Object&gt;**](Object.md)| tags to add. | |
 
 ### Return type
 
-[**List&lt;Tag&gt;**](Tag.md)
+**List&lt;Object&gt;**
 
 ### Authorization
 
@@ -84,11 +84,11 @@ No authorization required
 
 ## deleteTags
 
-> deleteTags(projectId, objectId, requestBody)
+> deleteTags(projectId, objectId, categoryName)
 
-Delete tags with the given IDs from the specified project-space.
+Delete tag with the given category from the object with the specified ID in the specified project-space.
 
-Delete tags with the given IDs from the specified project-space.
+Delete tag with the given category from the object with the specified ID in the specified project-space.
 
 ### Example
 
@@ -107,10 +107,10 @@ public class Example {
 
         RunsApi apiInstance = new RunsApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to delete from.
-        String objectId = "objectId_example"; // String | object to delete tags from.
-        List<String> requestBody = Arrays.asList(); // List<String> | Category names of the tags to delete.
+        String objectId = "objectId_example"; // String | object to delete tag from.
+        String categoryName = "categoryName_example"; // String | category name of the tag to delete.
         try {
-            apiInstance.deleteTags(projectId, objectId, requestBody);
+            apiInstance.deleteTags(projectId, objectId, categoryName);
         } catch (ApiException e) {
             System.err.println("Exception when calling RunsApi#deleteTags");
             System.err.println("Status code: " + e.getCode());
@@ -128,8 +128,8 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to delete from. | |
-| **objectId** | **String**| object to delete tags from. | |
-| **requestBody** | [**List&lt;String&gt;**](String.md)| Category names of the tags to delete. | |
+| **objectId** | **String**| object to delete tag from. | |
+| **categoryName** | **String**| category name of the tag to delete. | |
 
 ### Return type
 
@@ -141,7 +141,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: Not defined
 
 

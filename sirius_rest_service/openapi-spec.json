@@ -241,19 +241,19 @@
         }
       }
     },
-    "/api/projects/{projectId}/runs/tags/delete/{objectId}": {
+    "/api/projects/{projectId}/runs/tags/{objectId}": {
       "put": {
         "tags": [
           "Runs"
         ],
-        "summary": "Delete tags with the given IDs from the specified project-space.",
-        "description": "Delete tags with the given IDs from the specified project-space.",
-        "operationId": "deleteTags",
+        "summary": "Add tags to an object in the project.",
+        "description": "Add tags to an object in the project. Tags with the same category name will be overwritten.",
+        "operationId": "addTags",
         "parameters": [
           {
             "name": "projectId",
             "in": "path",
-            "description": "project-space to delete from.",
+            "description": "project-space to add to.",
             "required": true,
             "schema": {
               "type": "string"
@@ -262,7 +262,7 @@
           {
             "name": "objectId",
             "in": "path",
-            "description": "object to delete tags from.",
+            "description": "object to tag.",
             "required": true,
             "schema": {
               "type": "string"
@@ -270,13 +270,13 @@
           }
         ],
         "requestBody": {
-          "description": "Category names of the tags to delete.",
+          "description": "tags to add.",
           "content": {
             "application/json": {
               "schema": {
                 "type": "array",
                 "items": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/Tag"
                 }
               }
             }
@@ -285,7 +285,17 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "the tags that have been added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Tag"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -354,19 +364,53 @@
         "deprecated": true
       }
     },
-    "/api/projects/{projectId}/categories/delete": {
-      "put": {
+    "/api/projects/{projectId}/categories": {
+      "get": {
         "tags": [
           "Tag categories"
         ],
-        "summary": "Delete tag categories with the given names from the specified project-space.",
-        "description": "Delete tag categories with the given names from the specified project-space.",
-        "operationId": "deleteCategories",
+        "summary": "Get all tag categories in the given project-space.",
+        "description": "Get all tag categories in the given project-space.",
+        "operationId": "getCategories",
         "parameters": [
           {
             "name": "projectId",
             "in": "path",
-            "description": "project-space to delete from.",
+            "description": "project-space to read from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tag categories.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TagCategory"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Tag categories"
+        ],
+        "summary": "Add tag categories to the project.",
+        "description": "Add tag categories to the project. Category names must not exist in the project.",
+        "operationId": "addCategories",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to add to.",
             "required": true,
             "schema": {
               "type": "string"
@@ -374,13 +418,13 @@
           }
         ],
         "requestBody": {
-          "description": "names of categories to delete.",
+          "description": "the tag categories to be added",
           "content": {
             "application/json": {
               "schema": {
                 "type": "array",
                 "items": {
-                  "type": "string"
+                  "$ref": "#/components/schemas/TagCategory"
                 }
               }
             }
@@ -389,7 +433,17 @@
         },
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "the tag categories that have been added",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TagCategory"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -609,7 +663,7 @@
         }
       }
     },
-    "/api/projects/{projectId}/runs/tags/tagged/{categoryName}": {
+    "/api/projects/{projectId}/runs/tagged/{categoryName}": {
       "post": {
         "tags": [
           "Runs"
@@ -718,65 +772,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PageRun"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/projects/{projectId}/runs/tags/add/{objectId}": {
-      "post": {
-        "tags": [
-          "Runs"
-        ],
-        "summary": "Add tags to an object in the project.",
-        "description": "Add tags to an object in the project. Tags with the same category name will be overwritten.",
-        "operationId": "addTags",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to add to.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "objectId",
-            "in": "path",
-            "description": "object to tag.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "tags to add.",
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/Tag"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "the tags that have been added",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Tag"
-                  }
                 }
               }
             }
@@ -1847,56 +1842,6 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/Compound"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/projects/{projectId}/categories/add": {
-      "post": {
-        "tags": [
-          "Tag categories"
-        ],
-        "summary": "Add tag category to the project.",
-        "description": "Add tag category to the project. Category name must not exist in the project.",
-        "operationId": "addCategories",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to add to.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "the tag categories to be added",
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/TagCategory"
-                }
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "the tag categories that have been added",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TagCategory"
                   }
                 }
               }
@@ -3209,14 +3154,14 @@
         }
       }
     },
-    "/api/projects/{projectId}/categories": {
+    "/api/projects/{projectId}/categories/{categoryName}": {
       "get": {
         "tags": [
           "Tag categories"
         ],
-        "summary": "Get all tag categories in the given project-space.",
-        "description": "Get all tag categories in the given project-space.",
-        "operationId": "getCategories",
+        "summary": "Get tag category by name in the given project-space.",
+        "description": "Get tag category by name in the given project-space.",
+        "operationId": "getCategoryByName",
         "parameters": [
           {
             "name": "projectId",
@@ -3226,21 +3171,60 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "categoryName",
+            "in": "path",
+            "description": "name of the category",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Tag categories.",
+            "description": "Tag category.",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/TagCategory"
-                  }
+                  "$ref": "#/components/schemas/TagCategory"
                 }
               }
             }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Tag categories"
+        ],
+        "summary": "Delete tag categories with the given names from the specified project-space.",
+        "description": "Delete tag categories with the given names from the specified project-space.",
+        "operationId": "deleteCategories",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to delete from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryName",
+            "in": "path",
+            "description": "name of category to delete.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -3283,48 +3267,6 @@
                   "items": {
                     "$ref": "#/components/schemas/TagCategory"
                   }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/projects/{projectId}/categories/name/{categoryName}": {
-      "get": {
-        "tags": [
-          "Tag categories"
-        ],
-        "summary": "Get tag category by name in the given project-space.",
-        "description": "Get tag category by name in the given project-space.",
-        "operationId": "getCategoryByName",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "description": "project-space to read from.",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "categoryName",
-            "in": "path",
-            "description": "name of the category",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Tag categories.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TagCategory"
                 }
               }
             }
@@ -5865,6 +5807,50 @@
           }
         }
       }
+    },
+    "/api/projects/{projectId}/runs/tags/{objectId}/{categoryName}": {
+      "delete": {
+        "tags": [
+          "Runs"
+        ],
+        "summary": "Delete tag with the given category from the object with the specified ID in the specified project-space.",
+        "description": "Delete tag with the given category from the object with the specified ID in the specified project-space.",
+        "operationId": "deleteTags",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "description": "project-space to delete from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "objectId",
+            "in": "path",
+            "description": "object to delete tag from.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "categoryName",
+            "in": "path",
+            "description": "category name of the tag to delete.",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5983,6 +5969,43 @@
             "description": "Size in Bytes this project consumes on disk If NULL, Information has not been requested (See OptField \u0027sizeInformation\u0027).",
             "format": "int64",
             "nullable": true
+          }
+        }
+      },
+      "Tag": {
+        "type": "object"
+      },
+      "TagCategory": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "valueType": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "BOOLEAN",
+              "INTEGER",
+              "DOUBLE",
+              "STRING"
+            ]
+          },
+          "valueRange": {
+            "type": "string",
+            "enum": [
+              "FIXED",
+              "VARIABLE"
+            ]
+          },
+          "possibleValues": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "categoryType": {
+            "type": "string"
           }
         }
       },
@@ -6544,15 +6567,6 @@
             }
           }
         ]
-      },
-      "Tag": {
-        "type": "object",
-        "properties": {
-          "categoryName": {
-            "type": "string"
-          }
-        },
-        "nullable": true
       },
       "Canopus": {
         "type": "object",
@@ -8471,40 +8485,6 @@
           }
         },
         "nullable": true
-      },
-      "TagCategory": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string"
-          },
-          "valueType": {
-            "type": "string",
-            "enum": [
-              "NONE",
-              "BOOLEAN",
-              "INTEGER",
-              "DOUBLE",
-              "STRING"
-            ]
-          },
-          "valueRange": {
-            "type": "string",
-            "enum": [
-              "FIXED",
-              "VARIABLE"
-            ]
-          },
-          "possibleValues": {
-            "type": "array",
-            "items": {
-              "type": "object"
-            }
-          },
-          "categoryType": {
-            "type": "string"
-          }
-        }
       },
       "AccountCredentials": {
         "type": "object",

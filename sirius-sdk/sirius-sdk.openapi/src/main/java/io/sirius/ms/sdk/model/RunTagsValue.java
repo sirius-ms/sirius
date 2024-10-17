@@ -24,7 +24,6 @@ import io.sirius.ms.sdk.model.BoolTag;
 import io.sirius.ms.sdk.model.DoubleTag;
 import io.sirius.ms.sdk.model.IntTag;
 import io.sirius.ms.sdk.model.StringTag;
-import io.sirius.ms.sdk.model.Tag;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 

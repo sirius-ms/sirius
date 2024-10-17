@@ -203,11 +203,11 @@ Class | Method | HTTP request | Description
 *ProjectsApi* | [**importPreprocessedDataAsJobLocally**](docs/ProjectsApi.md#importPreprocessedDataAsJobLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files-job | Import ms/ms data from the given format into the specified project-space as background job
 *ProjectsApi* | [**importPreprocessedDataLocally**](docs/ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
 *ProjectsApi* | [**openProjectSpace**](docs/ProjectsApi.md#openProjectSpace) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId.
-*RunsApi* | [**addTags**](docs/RunsApi.md#addTags) | **POST** /api/projects/{projectId}/runs/tags/add/{objectId} | Add tags to an object in the project.
-*RunsApi* | [**deleteTags**](docs/RunsApi.md#deleteTags) | **PUT** /api/projects/{projectId}/runs/tags/delete/{objectId} | Delete tags with the given IDs from the specified project-space.
+*RunsApi* | [**addTags**](docs/RunsApi.md#addTags) | **PUT** /api/projects/{projectId}/runs/tags/{objectId} | Add tags to an object in the project.
+*RunsApi* | [**deleteTags**](docs/RunsApi.md#deleteTags) | **DELETE** /api/projects/{projectId}/runs/tags/{objectId}/{categoryName} | Delete tag with the given category from the object with the specified ID in the specified project-space.
 *RunsApi* | [**getRun**](docs/RunsApi.md#getRun) | **GET** /api/projects/{projectId}/runs/{runId} | Get run with the given identifier from the specified project-space.
 *RunsApi* | [**getRunsPaged**](docs/RunsApi.md#getRunsPaged) | **GET** /api/projects/{projectId}/runs/page | Get all available runs in the given project-space.
-*RunsApi* | [**objectsByTag**](docs/RunsApi.md#objectsByTag) | **POST** /api/projects/{projectId}/runs/tags/tagged/{categoryName} | Get objects by tag.
+*RunsApi* | [**objectsByTag**](docs/RunsApi.md#objectsByTag) | **POST** /api/projects/{projectId}/runs/tagged/{categoryName} | Get objects by tag.
 *SearchableDatabasesApi* | [**addDatabases**](docs/SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases | 
 *SearchableDatabasesApi* | [**createDatabase**](docs/SearchableDatabasesApi.md#createDatabase) | **POST** /api/databases/{databaseId} | 
 *SearchableDatabasesApi* | [**getCustomDatabases**](docs/SearchableDatabasesApi.md#getCustomDatabases) | **GET** /api/databases/custom | 
@@ -218,11 +218,11 @@ Class | Method | HTTP request | Description
 *SearchableDatabasesApi* | [**importIntoDatabaseAsJob**](docs/SearchableDatabasesApi.md#importIntoDatabaseAsJob) | **POST** /api/databases/{databaseId}/import/from-files-job | Start import of structure and spectra files into the specified database.
 *SearchableDatabasesApi* | [**removeDatabase**](docs/SearchableDatabasesApi.md#removeDatabase) | **DELETE** /api/databases/{databaseId} | 
 *SearchableDatabasesApi* | [**updateDatabase**](docs/SearchableDatabasesApi.md#updateDatabase) | **PUT** /api/databases/{databaseId} | 
-*TagCategoriesApi* | [**addCategories**](docs/TagCategoriesApi.md#addCategories) | **POST** /api/projects/{projectId}/categories/add | Add tag category to the project.
-*TagCategoriesApi* | [**deleteCategories**](docs/TagCategoriesApi.md#deleteCategories) | **PUT** /api/projects/{projectId}/categories/delete | Delete tag categories with the given names from the specified project-space.
+*TagCategoriesApi* | [**addCategories**](docs/TagCategoriesApi.md#addCategories) | **PUT** /api/projects/{projectId}/categories | Add tag categories to the project.
+*TagCategoriesApi* | [**deleteCategories**](docs/TagCategoriesApi.md#deleteCategories) | **DELETE** /api/projects/{projectId}/categories/{categoryName} | Delete tag categories with the given names from the specified project-space.
 *TagCategoriesApi* | [**getCategories**](docs/TagCategoriesApi.md#getCategories) | **GET** /api/projects/{projectId}/categories | Get all tag categories in the given project-space.
 *TagCategoriesApi* | [**getCategoriesByType**](docs/TagCategoriesApi.md#getCategoriesByType) | **GET** /api/projects/{projectId}/categories/type/{categoryType} | Get tag categories by type in the given project-space.
-*TagCategoriesApi* | [**getCategoryByName**](docs/TagCategoriesApi.md#getCategoryByName) | **GET** /api/projects/{projectId}/categories/name/{categoryName} | Get tag category by name in the given project-space.
+*TagCategoriesApi* | [**getCategoryByName**](docs/TagCategoriesApi.md#getCategoryByName) | **GET** /api/projects/{projectId}/categories/{categoryName} | Get tag category by name in the given project-space.
 
 
 ## Documentation for Models
@@ -329,7 +329,6 @@ Class | Method | HTTP request | Description
  - [StructureDbSearch](docs/StructureDbSearch.md)
  - [Subscription](docs/Subscription.md)
  - [SubscriptionConsumables](docs/SubscriptionConsumables.md)
- - [Tag](docs/Tag.md)
  - [TagCategory](docs/TagCategory.md)
  - [TaggedFilter](docs/TaggedFilter.md)
  - [Term](docs/Term.md)

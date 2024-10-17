@@ -70,21 +70,21 @@ public class CategoryController {
      *
      * @param projectId    project-space to read from.
      * @param categoryName name of the category
-     * @return Tag categories.
+     * @return Tag category.
      */
-    @GetMapping(value = "/name/{categoryName}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/{categoryName}", produces = MediaType.APPLICATION_JSON_VALUE)
     public TagCategory getCategoryByName(@PathVariable String projectId, @PathVariable String categoryName) {
         return projectsProvider.getProjectOrThrow(projectId).findCategoryByName(categoryName);
     }
 
     /**
-     * Add tag category to the project. Category name must not exist in the project.
+     * Add tag categories to the project. Category names must not exist in the project.
      *
      * @param projectId  project-space to add to.
      * @param categories the tag categories to be added
      * @return the tag categories that have been added
      */
-    @PostMapping(value = "/add", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public List<TagCategory> addCategories(@PathVariable String projectId, @Valid @RequestBody List<TagCategory> categories) {
         return projectsProvider.getProjectOrThrow(projectId).addCategories(categories);
     }
@@ -93,11 +93,11 @@ public class CategoryController {
      * Delete tag categories with the given names from the specified project-space.
      *
      * @param projectId     project-space to delete from.
-     * @param categoryNames names of categories to delete.
+     * @param categoryName  name of category to delete.
      */
-    @PutMapping(value = "/delete")
-    public void deleteCategories(@PathVariable String projectId, @RequestBody List<String> categoryNames) {
-        projectsProvider.getProjectOrThrow(projectId).deleteCategories(categoryNames);
+    @DeleteMapping(value = "/{categoryName}")
+    public void deleteCategories(@PathVariable String projectId, @PathVariable String categoryName) {
+        projectsProvider.getProjectOrThrow(projectId).deleteCategories(List.of(categoryName));
     }
 
 }
