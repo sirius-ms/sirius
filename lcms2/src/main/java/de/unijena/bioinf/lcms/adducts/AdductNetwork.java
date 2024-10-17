@@ -1,6 +1,5 @@
 package de.unijena.bioinf.lcms.adducts;
 
-import org.apache.commons.lang3.Range;
 import de.unijena.bioinf.ChemistryBase.algorithm.BinarySearch;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
@@ -10,6 +9,7 @@ import de.unijena.bioinf.ChemistryBase.ms.Peak;
 import de.unijena.bioinf.ChemistryBase.ms.utils.MassMap;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
+import de.unijena.bioinf.ChemistryBase.utils.IOFunctions;
 import de.unijena.bioinf.jjobs.BasicJJob;
 import de.unijena.bioinf.jjobs.JJob;
 import de.unijena.bioinf.jjobs.JobManager;
@@ -23,10 +23,10 @@ import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import org.apache.commons.lang3.Range;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class AdductNetwork {
 
@@ -175,8 +175,9 @@ public class AdductNetwork {
                     if (adducts>0) {
                         numberOfIonsWeCouldAnnotate+=nodes.size();
                     }
+                } else {
+                    singletons.add(nodes.get(0));
                 }
-                else singletons.add(nodes.get(0));
             }
         }
         System.out.println("Number of potentially annotatable adducts: " + numberOfIonsWeCouldAnnotate);
@@ -198,130 +199,63 @@ public class AdductNetwork {
         } else return null;
     }
 
-    public void assign(JobManager manager, SubnetworkResolver resolver, int charge, Consumer<Compound> updateRoutine) {
+    public void assign(JobManager manager, SubnetworkResolver resolver, int charge, IOFunctions.IOConsumer<Compound> updateRoutine) {
         final ArrayList<BasicJJob<Object>> jobs = new ArrayList<>();
         for (List<AdductNode> subgraph : subgraphs) {
             jobs.add(manager.submitJob(new BasicJJob<Object>() {
                 @Override
-                protected Object compute() throws Exception {
+                protected Void compute() throws Exception {
                     AdductNode[] nodes = subgraph.toArray(AdductNode[]::new);
                     AdductAssignment[] assignments = resolver.resolve(nodes, charge);
                     HashMap<AdductNode, AdductAssignment> assignmentMap = new HashMap<>();
-                    if (assignments!=null) {
 
-                            for (int i = 0; i < assignments.length; ++i) {
-                                List<DetectedAdduct> pas = assignments[i].toPossibleAdducts(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN);
-                                if (!pas.isEmpty()) {
-                                    AlignedFeatures feature = subgraph.get(i).getFeature();
-                                    DetectedAdducts detectedAdducts = feature.getDetectedAdducts();
-                                    if (detectedAdducts == null) {
-                                        detectedAdducts = new DetectedAdducts();
-                                        feature.setDetectedAdducts(detectedAdducts);
-                                    }
-                                    detectedAdducts.add(pas.toArray(DetectedAdduct[]::new));
-                                }
-                                assignmentMap.put(nodes[i], assignments[i]);
-                            }
-                            final HashSet<AdductNode> visited = new HashSet<>();
-                            boolean before = false;
-                            for (int i = 0; i < assignments.length; ++i) {
-                                if (!visited.contains(nodes[i])) {
-                                    Compound c = extractCompound(assignmentMap, visited, nodes[i], 0.5);
-                                    updateRoutine.accept(c);
-                                }
-                            }
-                        }
-                    return "";
+                    for (int i = 0; i < nodes.length; i++)
+                        if (assignments != null)
+                            assignmentMap.put(nodes[i], assignments[i]);
+
+                    final HashSet<AdductNode> visited = new HashSet<>();
+                    for (AdductNode node : nodes)
+                        if (!visited.contains(node))
+                            updateRoutine.accept(extractCompound(assignmentMap, visited, node, 0.5));
+                    return null;
                 }
             }));
         }
         jobs.add(manager.submitJob(new BasicJJob<Object>() {
             @Override
-            protected Object compute() throws Exception {
+            protected Void compute() throws Exception {
                 for (AdductNode node : singletons) {
                     updateRoutine.accept(singletonCompound(node));
                 }
-                return "";
+                return null;
             }
         }));
         jobs.forEach(JJob::takeResult);
     }
 
-
-
-    public void assignWithDebugOutput(JobManager manager, SubnetworkResolver resolver, int charge, Consumer<Compound> updateRoutine) {
-        final ArrayList<BasicJJob<Object>> jobs = new ArrayList<>();
-        for (List<AdductNode> subgraph : subgraphs) {
-            jobs.add(manager.submitJob(new BasicJJob<Object>() {
-                @Override
-                protected Object compute() throws Exception {
-                    AdductNode[] nodes = subgraph.toArray(AdductNode[]::new);
-                    AdductAssignment[] assignments = resolver.resolve(nodes, charge);
-                    HashMap<AdductNode, AdductAssignment> assignmentMap = new HashMap<>();
-                    if (assignments!=null) {
-
-                        synchronized (AdductNetwork.class) {
-
-                            System.out.println("~~~~~~~~    " + Arrays.stream(nodes).mapToDouble(AdductNode::getRetentionTime).average().orElse(0d) +  " min + (" + nodes.length + " nodes)   ~~~~~~~~~");
-
-                            for (int i = 0; i < assignments.length; ++i) {
-                                List<DetectedAdduct> pas = assignments[i].toPossibleAdducts(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN);
-                                if (!pas.isEmpty()) {
-                                    AlignedFeatures feature = subgraph.get(i).getFeature();
-                                    DetectedAdducts detectedAdducts = feature.getDetectedAdducts();
-                                    if (detectedAdducts == null) {
-                                        detectedAdducts = new DetectedAdducts();
-                                        feature.setDetectedAdducts(detectedAdducts);
-                                    }
-                                    detectedAdducts.add(pas.toArray(DetectedAdduct[]::new));
-                                }
-                                assignmentMap.put(nodes[i], assignments[i]);
-                            }
-                            final HashSet<AdductNode> visited = new HashSet<>();
-                            boolean before = false;
-                            for (int i = 0; i < assignments.length; ++i) {
-                                if (!visited.contains(nodes[i])) {
-                                    Compound c = extractCompound(assignmentMap, visited, nodes[i], 0.5);
-                                    if (before ) {
-                                        System.out.println("\n");
-                                    }
-                                    for (AlignedFeatures features : c.getAdductFeatures().get()) {
-                                        System.out.println("Assign " +
-                                                String.format(Locale.US, "%.4f @ %.2f", features.getApexMass(), (features.getRetentionTime().getRetentionTimeInSeconds() / 60d))
-                                                + " minutes  with " + features.getDetectedAdducts().asMap().values().stream().flatMap(Collection::stream).map(x -> x.getAdduct() + " (" + x.getScore() + ")").collect(Collectors.joining(", ")) + (!provider.getMs2SpectraOf(features).isEmpty() ? "\thas MS/MS" : ""));
-
-                                    }
-                                    before = true;
-
-                                    updateRoutine.accept(c);
-                                }
-
-                            }
-
-
-
-
-
-                            System.out.println("~~~~~~~~~~~~~~~~~~~~");
-
-                        }
-                    }
-                    return "";
-                }
-            }));
+    private void addAssignmentsToFeature(@NotNull AdductNode adductNode, @NotNull AdductAssignment assignment){
+        final AlignedFeatures feature = adductNode.features;
+        final List<DetectedAdduct> pas = new ArrayList<>(assignment.toPossibleAdducts(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN));
+        if (!pas.isEmpty()) {
+            DetectedAdducts detectedAdducts = feature.getDetectedAdducts();
+            if (detectedAdducts == null) {
+                detectedAdducts = new DetectedAdducts();
+                feature.setDetectedAdducts(detectedAdducts);
+            }
+            detectedAdducts.addAll(pas);
         }
-        jobs.forEach(JJob::takeResult);
     }
 
     private Compound extractCompound(Map<AdductNode, AdductAssignment> assignments, Set<AdductNode> visited, AdductNode seed, double probabilityThreshold) {
-        if (assignments.get(seed).likelyUnknown() || assignments.get(seed).probabilityOfMostLikelyAdduct() < probabilityThreshold) {
-            return new Compound(0, seed.features.getRetentionTime(), null, null, seed.hasMsMs, Collections.singletonList(seed.features), Collections.emptyList());
-        }
+        if (!assignments.containsKey(seed) || assignments.get(seed).likelyUnknown() || assignments.get(seed).probabilityOfMostLikelyAdduct() < probabilityThreshold)
+            return singletonCompound(seed);
+
         ArrayList<AdductNode> compound = new ArrayList<>();
         ArrayList<CorrelatedIonPair> pairs = new ArrayList<>();
         HashSet<AdductNode> exclusion = new HashSet<>();
         compound.add(seed);
         visited.add(seed);
+        addAssignmentsToFeature(seed, assignments.get(seed));
         DoubleArrayList mzs = new DoubleArrayList();
         double mzint = 0d;
         int done = 0;
@@ -359,6 +293,7 @@ public class AdductNetwork {
                     if (!D.isCompatible(lt,rt))
                         continue;
                     visited.add(v);
+                    addAssignmentsToFeature(v, assignments.get(v));
                     exclusion.remove(v);
                     compound.add(v);
                     pairs.add(new CorrelatedIonPair(
@@ -395,7 +330,11 @@ public class AdductNetwork {
         if (compound.size()==1) {
             // damned, have to look closer into that. But if a compound cannot be resolved properly, then
             // adduct detection is likely wrong
-            compound.get(0).features.getDetectedAdducts().add(DetectedAdduct.builder().adduct(PrecursorIonType.unknown(compound.get(0).getFeature().getCharge())).score(0.5d).source(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN).build());
+            compound.get(0).features.getDetectedAdducts().addAll(
+                    DetectedAdduct.builder()
+                            .adduct(PrecursorIonType.unknown(compound.get(0).getFeature().getCharge()))
+                            .score(0.5d).source(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN)
+                            .build());
         }
         return new Compound(
                 0,
@@ -409,18 +348,13 @@ public class AdductNetwork {
 
     public Compound singletonCompound(AdductNode n) {
         AlignedFeatures f = n.features;
-        if (f.getDetectedAdducts()==null) {
-            f.setDetectedAdducts(DetectedAdducts.singleton(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN, PrecursorIonType.unknown(f.getCharge())));
+        if (f.getDetectedAdducts() == null) {
+            f.setDetectedAdducts(DetectedAdducts.emptySingleton(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN));
+        } else {
+            f.getDetectedAdducts().addEmptySource(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN);
         }
-        return new Compound(
-                0,
-                f.getRetentionTime(),
-                null,
-                f.getName(),
-                n.hasMsMs,
-                new ArrayList<>(List.of(f)),
-                new ArrayList<>()
-        );
+
+        return Compound.singleton(f);
     }
 
     private String pp(SimpleSpectrum spec) {
@@ -590,8 +524,6 @@ public class AdductNetwork {
             return pvalue;
         }
 
-
-
         public void add(AdductEdge edge) {
             ++count;
             if (Double.isFinite(edge.ratioScore)) {
@@ -614,7 +546,9 @@ public class AdductNetwork {
         private int ratio2bin(double score) {
             return (int)Math.max(0,Math.round((score+0)/5));
         }
+
         private static double[] corbins = new double[]{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.75, 0.8, 0.85, 0.9, 0.92, 0.94, 0.96, 0.97, 0.98, 0.99, 0.995};
+
         private int cor2bin(double score) {
             int index = Arrays.binarySearch(corbins, score);
             if (index >= 0) return index;

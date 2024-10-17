@@ -99,17 +99,39 @@ g.highlight_atom path { fill: #4169E1; }
 /*
     LCMS-Viewer
 */
-rect.lcfeatureBox {
+rect.secondaryFeatureBox {
         fill:gray;
-        fill-opacity: 0.04;
+        fill-opacity: 0.01;
         stroke:gray;
         stroke-width: 1px;
 }
-rect.lcfeatureBox:hover {
+rect.secondaryFeatureBox:hover {
         fill:gray;
         fill-opacity: 0.08;
         stroke:gray;
         stroke-width: 1px;
+}
+
+rect.mainFeatureBox {
+        fill:steelblue;
+        fill-opacity: 0.03;
+        stroke:steelblue;
+        stroke-width: 3px;
+}
+rect.mainFeatureBox:hover {
+        fill:steelblue;
+        fill-opacity: 0.08;
+        stroke:steelblue;
+        stroke-width: 3px;
+}
+rect.terribleQualityFeatureBox {
+    stroke-dasharray: 3;
+}
+.noiselevel {
+    stroke-width: 1px;
+    stroke:black;
+    stroke-dasharray: 3;
+
 }
 .lccurve {
         stroke-width: 1px;

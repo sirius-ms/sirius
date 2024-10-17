@@ -42,7 +42,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 @Slf4j
@@ -95,18 +94,18 @@ public class ComputeServiceImpl implements ComputeService {
     }
 
     @Nullable
-    private List<Instance> extractCompoundIds(@NotNull AbstractSubmission jobSubmission,
-                                              @NotNull Project<?> project) {
-        List<Instance> compounds = null;
+    private List<Instance> extractAffectedInstances(@NotNull AbstractSubmission jobSubmission,
+                                                    @NotNull Project<?> project) {
+        List<Instance> instances = null;
 
         if (jobSubmission.getCompoundIds() == null || jobSubmission.getCompoundIds().isEmpty()) {
             if (jobSubmission.getAlignedFeatureIds() != null && !jobSubmission.getAlignedFeatureIds().isEmpty()) {
-                compounds = new ArrayList<>();
+                instances = new ArrayList<>();
                 for (String cid : jobSubmission.getAlignedFeatureIds())
-                    compounds.add(loadInstance(project, cid));
+                    instances.add(loadInstance(project, cid));
             }
         } else {
-            compounds = new ArrayList<>();
+            instances = new ArrayList<>();
             Set<String> cids = new HashSet<>(jobSubmission.getCompoundIds());
             Set<String> fids = jobSubmission.getAlignedFeatureIds() != null
                     ? new HashSet<>(jobSubmission.getAlignedFeatureIds())
@@ -114,10 +113,10 @@ public class ComputeServiceImpl implements ComputeService {
 
             StreamSupport.stream(project.getProjectSpaceManager().spliterator(), false).filter(
                     instance -> instance.getCompoundId().map(cids::contains).orElse(false) || fids.contains(instance.getId())
-            ).forEach(compounds::add);
+            ).forEach(instances::add);
         }
 
-        return compounds;
+        return instances;
     }
 
     protected Job extractJobId(BackgroundRuns.BackgroundRunJob runJob, @NotNull EnumSet<Job.OptField> optFields) {
@@ -128,8 +127,8 @@ public class ComputeServiceImpl implements ComputeService {
         if (optFields.contains(Job.OptField.progress))
             id.setProgress(extractProgress(runJob));
         if (optFields.contains(Job.OptField.affectedIds)) {
-            id.setAffectedAlignedFeatureIds(extractEffectedAlignedFeatures(runJob));
-            id.setAffectedCompoundIds(extractCompoundIds(runJob));
+            id.setAffectedAlignedFeatureIds(extractAffectedAlignedFeaturesIds(runJob));
+            id.setAffectedCompoundIds(extractAffectedCompoundIds(runJob));
         }
 
         return id;
@@ -141,16 +140,12 @@ public class ComputeServiceImpl implements ComputeService {
         );
     }
 
-    private List<String> extractEffectedAlignedFeatures(BackgroundRuns.BackgroundRunJob runJob) {
-        return runJob.getInstancesStr().map(Instance::getId).collect(Collectors.toList());
+    private List<String> extractAffectedAlignedFeaturesIds(BackgroundRuns.BackgroundRunJob runJob) {
+        return runJob.getAffectedFeatureIds();
     }
 
-    private List<String> extractCompoundIds(BackgroundRuns.BackgroundRunJob runJob) {
-        return runJob.getInstancesStr()
-                .map(Instance::getCompoundId)
-                .filter(Optional::isPresent)
-                .flatMap(Optional::stream)
-                .distinct().collect(Collectors.toList());
+    private List<String> extractAffectedCompoundIds(BackgroundRuns.BackgroundRunJob runJob) {
+        return runJob.getAffectedCompoundIds();
     }
 
     private JobProgress extractProgress(BackgroundRuns.BackgroundRunJob runJob) {
@@ -175,7 +170,8 @@ public class ComputeServiceImpl implements ComputeService {
     @Override
     public Job createAndSubmitJob(@NotNull Project<?> psmI, JobSubmission jobSubmission,
                                   @NotNull EnumSet<Job.OptField> optFields) {
-        Iterable<Instance> instances = extractCompoundIds(jobSubmission, psmI);
+        //todo maybe we should delay this to background because it might be the reason for gui freeze during job submission.
+        Iterable<Instance> instances = extractAffectedInstances(jobSubmission, psmI);
         if (instances == null)
             instances = psmI.getProjectSpaceManager();
 
@@ -234,7 +230,7 @@ public class ComputeServiceImpl implements ComputeService {
     public Job createAndSubmitCommandJob(@NotNull Project<?> project, CommandSubmission commandSubmission,
                                          @NotNull EnumSet<Job.OptField> optFields) {
         BackgroundRuns br = backgroundRuns(project);
-        Iterable<Instance> instances = extractCompoundIds(commandSubmission, project);
+        Iterable<Instance> instances = extractAffectedInstances(commandSubmission, project);
         if (instances == null)
             instances = project.getProjectSpaceManager();
         try {

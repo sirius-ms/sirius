@@ -17,6 +17,7 @@ import it.unimi.dsi.fastutil.objects.Object2DoubleOpenHashMap;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
@@ -47,7 +48,8 @@ public class BottomUpSearch extends SiriusPlugin {
 
     private static List<Decomposition> generateDecompositions(ProcessedInput input, boolean addToWhiteset) {
         if (addToWhiteset && input.getAnnotationOrThrow(Whiteset.class).isFinalized()) return null;
-        final ValenceFilter filter = new ValenceFilter();
+        final PossibleAdducts possibleAdducts = input.getAnnotationOrThrow(PossibleAdducts.class);
+        final ValenceFilter filter = new ValenceFilter(ValenceFilter.MIN_VALENCE_DEFAULT, possibleAdducts.getAdducts());
 
         final Object2DoubleOpenHashMap<Decomposition> weighting = new Object2DoubleOpenHashMap<>();
         final Deviation dev = input.getAnnotation(MS2MassDeviation.class).map(x->x.allowedMassDeviation).orElse(new Deviation(5));
@@ -84,12 +86,11 @@ public class BottomUpSearch extends SiriusPlugin {
 
             FormulaSearchSettings formulaSearchSettings = input.getAnnotation(FormulaSearchSettings.class, FormulaSearchSettings::bottomUpOnly);
             final FormulaConstraints formulaConstraints = input.getAnnotationOrThrow(FormulaConstraints.class);
-            PossibleAdducts possibleAdducts = input.getAnnotationOrThrow(PossibleAdducts.class);
             if (formulaSearchSettings.applyFormulaConstraintsToBottomUp) {
                 formulas = Whiteset.filterMeasuredFormulas(formulas, formulaConstraints, possibleAdducts.getAdducts().stream().filter(x->x.isSupportedForFragmentationTreeComputation()).collect(Collectors.toSet()));
             } else {
                 //filter need to be applied because later we cannot differientiate formulas with and without applied filter anyways but need this to select adducts.
-                FormulaConstraints formulaConstraintsWithAllElements = new FormulaConstraints(formulaConstraints.getChemicalAlphabet().extend(formulas.stream().flatMap(mf -> mf.elements().stream()).filter(Objects::isNull).distinct().toArray(Element[]::new)), formulaConstraints.getFilters());
+                FormulaConstraints formulaConstraintsWithAllElements = new FormulaConstraints(formulaConstraints.getChemicalAlphabet().extend(formulas.stream().flatMap(mf -> mf.elements().stream()).filter(Predicate.not(Objects::isNull)).distinct().toArray(Element[]::new)), formulaConstraints.getFilters());
                 formulas = Whiteset.filterMeasuredFormulas(formulas, formulaConstraintsWithAllElements, possibleAdducts.getAdducts().stream().filter(x->x.isSupportedForFragmentationTreeComputation()).collect(Collectors.toSet()));
             }
 

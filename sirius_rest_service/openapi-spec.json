@@ -3035,7 +3035,7 @@
         "tags": [
           "Compounds"
         ],
-        "operationId": "getTraces",
+        "operationId": "getCompoundTraces",
         "parameters": [
           {
             "name": "projectId",
@@ -3051,6 +3051,15 @@
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "featureId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": ""
             }
           }
         ],
@@ -3416,11 +3425,14 @@
         "tags": [
           "Features"
         ],
-        "operationId": "getTraces_1",
+        "summary": "Returns the traces of the given feature.",
+        "description": "Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention\n time axis. All the returned traces are \u0027projected\u0027, which means they refer not to the original retention time axis,\n but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.\n However, this also means that all traces can be directly compared against each other, as they all lie in the same\n retention time axis.\n By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,\n it also includes samples in which the same trace appears in.",
+        "operationId": "getTraces",
         "parameters": [
           {
             "name": "projectId",
             "in": "path",
+            "description": "project-space to read from.",
             "required": true,
             "schema": {
               "type": "string"
@@ -3429,9 +3441,20 @@
           {
             "name": "alignedFeatureId",
             "in": "path",
+            "description": "feature which intensities should be read out",
             "required": true,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "includeAll",
+            "in": "query",
+            "description": "when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -3793,11 +3816,14 @@
         "tags": [
           "Features"
         ],
+        "summary": "Returns a single quantification table row for the given feature.",
+        "description": "Returns a single quantification table row for the given feature. The quantification table contains the intensity of the feature within all\n samples it is contained in.",
         "operationId": "getQuantification",
         "parameters": [
           {
             "name": "projectId",
             "in": "path",
+            "description": "project-space to read from.",
             "required": true,
             "schema": {
               "type": "string"
@@ -3806,6 +3832,7 @@
           {
             "name": "alignedFeatureId",
             "in": "path",
+            "description": "feature which intensities should be read out",
             "required": true,
             "schema": {
               "type": "string"
@@ -3814,6 +3841,7 @@
           {
             "name": "type",
             "in": "query",
+            "description": "quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.",
             "required": false,
             "schema": {
               "type": "string",
@@ -6653,9 +6681,11 @@
           "configMap": {
             "type": "object",
             "additionalProperties": {
-              "type": "string"
+              "type": "string",
+              "nullable": true
             },
-            "description": "As an alternative to the object based parameters, this map allows to store key value pairs\n of ALL SIRIUS parameters. All possible parameters can be retrieved from SIRIUS via the respective endpoint."
+            "description": "As an alternative to the object based parameters, this map allows to store key value pairs\n of ALL SIRIUS parameters. All possible parameters can be retrieved from SIRIUS via the respective endpoint.",
+            "nullable": true
           }
         },
         "description": "Object to submit a job to be executed by SIRIUS"
@@ -6984,7 +7014,8 @@
           },
           "command": {
             "type": "string",
-            "description": "Command string of the executed Task"
+            "description": "Command string of the executed Task",
+            "nullable": true
           },
           "progress": {
             "$ref": "#/components/schemas/JobProgress"
@@ -6992,19 +7023,23 @@
           "affectedCompoundIds": {
             "type": "array",
             "description": "List of compoundIds that are affected by this job.\n This lis will also contain compoundIds where not all features of the compound are affected by the job.\n If this job is creating compounds (e.g. data import jobs) this value will be NULL until the jobs has finished",
+            "nullable": true,
             "items": {
-              "type": "string"
+              "type": "string",
+              "nullable": true
             }
           },
           "affectedAlignedFeatureIds": {
             "type": "array",
             "description": "List of alignedFeatureIds that are affected by this job.\n If this job is creating features (e.g. data import jobs) this value will be NULL until the jobs has finished",
+            "nullable": true,
             "items": {
-              "type": "string"
+              "type": "string",
+              "nullable": true
             }
           }
         },
-        "description": "Identifier created by the SIRIUS Nightsky API for a newly created Job.\n Object can be enriched with Job status/progress information ({@link JobProgress JobProgress}) and/or Job command information."
+        "description": "Identifier created by the SIRIUS Nightsky API for a newly created Job.\n Object can be enriched with Job status/progress information ({@link JobProgress JobProgress}) and/or Job command information.\n This is a return value of the API. So nullable values can also be NOT_REQUIRED to allow for easy removal."
       },
       "JobProgress": {
         "type": "object",
@@ -7051,7 +7086,8 @@
             "nullable": true
           }
         },
-        "description": "Progress information of a computation job that has already been submitted to SIRIUS.\n if  currentProgress \u003d\u003d maxProgress job is finished and should change to state done soon.\n if a job is DONE all results can be accessed via the Project-Spaces api."
+        "description": "Progress information of a computation job that has already been submitted to SIRIUS.\n if  currentProgress \u003d\u003d maxProgress job is finished and should change to state done soon.\n if a job is DONE all results can be accessed via the Project-Spaces api.",
+        "nullable": true
       },
       "CommandSubmission": {
         "required": [
@@ -7188,6 +7224,17 @@
           }
         }
       },
+      "DataQuality": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "NOT_APPLICABLE",
+          "LOWEST",
+          "BAD",
+          "DECENT",
+          "GOOD"
+        ]
+      },
       "FeatureImport": {
         "required": [
           "charge",
@@ -7231,6 +7278,14 @@
             "type": "number",
             "format": "double",
             "nullable": true
+          },
+          "rtApexSeconds": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "dataQuality": {
+            "$ref": "#/components/schemas/DataQuality"
           },
           "mergedMs1": {
             "$ref": "#/components/schemas/BasicSpectrum"
@@ -7735,17 +7790,6 @@
           }
         },
         "nullable": true
-      },
-      "DataQuality": {
-        "type": "string",
-        "nullable": true,
-        "enum": [
-          "NOT_APPLICABLE",
-          "LOWEST",
-          "BAD",
-          "DECENT",
-          "GOOD"
-        ]
       },
       "Deviation": {
         "type": "object",

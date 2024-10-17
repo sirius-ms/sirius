@@ -20,6 +20,8 @@
 
 package de.unijena.bioinf.ftalign.view;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.ChemistryBase.ms.ft.Fragment;
@@ -30,8 +32,6 @@ import de.unijena.bioinf.treealign.AbstractBacktrace;
 import de.unijena.bioinf.treealign.sparse.DPSparseTreeAlign;
 import gnu.trove.map.hash.TObjectIntHashMap;
 import gnu.trove.procedure.TObjectIntProcedure;
-import org.json.JSONException;
-import org.json.JSONWriter;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -225,35 +225,30 @@ public class MakeStatistics {
         }
 
         public void writeToFile() {
-            try {
+            try (JsonGenerator g = new JsonFactory().createGenerator(Files.newBufferedWriter(new File("statistics.json").toPath(), Charset.forName("UTF-8")))){
+                g.writeStartObject();
 
-                final BufferedWriter bw = Files.newBufferedWriter(new File("statistics.json").toPath(), Charset.forName("UTF-8"));
-                final JSONWriter w = new JSONWriter(bw);
+                g.writeObjectFieldStart("deletedLosses");
 
-                w.object();
-
-                w.key("deletedLosses");
-
-                w.object();
                 deletedLosses.counter.forEachEntry(new TObjectIntProcedure<MolecularFormula>() {
                     @Override
                     public boolean execute(MolecularFormula a, int b) {
                         try {
-                            w.key(a.toString());
-                            w.value(b);
-                        } catch (JSONException e) {
+                            g.writeNumberField(a.toString(), b);
+                        } catch (IOException e) {
                             e.printStackTrace();
                         }
                         return true;
                     }
                 });
-                w.endObject();
+                g.writeEndObject();
 
-                w.key("matchedFragments");
-                w.object();
+
+                g.writeObjectFieldStart("matchedFragments");
+
                 for (Map.Entry<MolecularFormula, ArrayList<MolecularFormula>> entry : matchedFragments.map.entrySet()) {
-                    w.key(entry.getKey().toString());
-                    w.object();
+                    g.writeObjectFieldStart(entry.getKey().toString());
+
                     final Counter c = new Counter();
                     for (MolecularFormula f : entry.getValue()) {
                         c.count(f);
@@ -262,23 +257,22 @@ public class MakeStatistics {
                         @Override
                         public boolean execute(MolecularFormula a, int b) {
                             try {
-                                w.key(a.toString());
-                                w.value(b);
-                            } catch (JSONException e) {
+                                g.writeNumberField(a.toString(), b);
+                            } catch (IOException e) {
                                 e.printStackTrace();
                             }
                             return true;
                         }
                     });
-                    w.endObject();
+                    g.writeEndObject();
                 }
-                w.endObject();
+                g.writeEndObject();
 
-                w.key("matchedLosses");
-                w.object();
+
+
+                g.writeObjectFieldStart("matchedLosses");
                 for (Map.Entry<MolecularFormula, ArrayList<MolecularFormula>> entry : matchedLosses.map.entrySet()) {
-                    w.key(entry.getKey().toString());
-                    w.object();
+                    g.writeObjectFieldStart(entry.getKey().toString());
                     final Counter c = new Counter();
                     for (MolecularFormula f : entry.getValue()) {
                         c.count(f);
@@ -287,24 +281,19 @@ public class MakeStatistics {
                         @Override
                         public boolean execute(MolecularFormula a, int b) {
                             try {
-                                w.key(a.toString());
-                                w.value(b);
-                            } catch (JSONException e) {
+                                g.writeNumberField(a.toString(), b);
+                            } catch (IOException e) {
                                 e.printStackTrace();
                             }
                             return true;
                         }
                     });
-                    w.endObject();
+                    g.writeEndObject();
                 }
-                w.endObject();
+                g.writeEndObject();
+                g.writeEndObject();
 
-                w.endObject();
-
-                bw.close();
             } catch (IOException e) {
-                e.printStackTrace();
-            } catch (JSONException e) {
                 e.printStackTrace();
             }
         }

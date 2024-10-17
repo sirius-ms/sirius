@@ -44,6 +44,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static java.util.function.Predicate.not;
+
 /**
  * Performs element detection, adduct detection, isotope pattern merging. But NOT MS/MS spectrum merging
  */
@@ -62,8 +64,8 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
         final ProcessedInput pinput = new ProcessedInput(validated, experiment);
         ms1Merging(pinput);
         isotopePatternDetection(pinput);
-        elementDetection(pinput);
         adductDetection(pinput);
+        elementDetection(pinput);
         adjustValenceFilter(pinput);
         createWhitesetFromCandidateList(pinput);
 
@@ -96,6 +98,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
      * @param pinput
      */
     @Requires(Ms1IsotopePattern.class)
+    @Requires(PossibleAdducts.class)
     @Provides(FormulaConstraints.class)
     public void elementDetection(ProcessedInput pinput) {
         final FormulaSettings settings = pinput.getAnnotationOrDefault(FormulaSettings.class);
@@ -132,7 +135,7 @@ public class Ms1Preprocessor implements SiriusPreprocessor {
             final int charge = exp.getPrecursorIonType().getCharge();
 
             final AdductSettings settings = pinput.getAnnotationOrDefault(AdductSettings.class);
-            final PossibleAdducts ionModes = ms1IonAdductDetection.detect(pinput, settings.getDetectable(charge));
+            final PossibleAdducts ionModes = ms1IonAdductDetection.detect(pinput, settings.getDetectable(charge).stream().filter(not(PrecursorIonType::isMultimere)).collect(Collectors.toSet()));
 
             if (ionModes != null)
                 detAdds.put(DetectedAdducts.Source.MS1_PREPROCESSOR, new PossibleAdducts(ionModes.getAdducts()));

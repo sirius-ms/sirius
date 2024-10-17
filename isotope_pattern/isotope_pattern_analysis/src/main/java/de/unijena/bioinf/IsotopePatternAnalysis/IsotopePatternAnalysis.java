@@ -222,7 +222,7 @@ public class IsotopePatternAnalysis implements Parameterized {
                 //todo ElementFilter: same task performed multiple times for each ionMode. Remove or move
                 PrecursorIonType precursorIonType = input.getExperimentInformation().getPrecursorIonType();
                 if (!precursorIonType.hasNeitherAdductNorInsource()) {
-                    formulas=formulas.stream().filter(f->precursorIonType.measuredNeutralMoleculeToNeutralMolecule(f).isAllPositiveOrZero()).collect(Collectors.toSet()); //todo ElementFilter: this should be resolved earlier ... maybe the valence/formulaconstraints filter could be used. but on the other hand, this should also be tested earlier...
+                    formulas=formulas.stream().filter(f->f.subtract(precursorIonType.getAdduct()).isAllPositiveOrZero()).collect(Collectors.toSet()); //todo ElementFilter: this should be resolved earlier ... maybe the valence/formulaconstraints filter could be used. but on the other hand, this should also be tested earlier...
                 }
 
                 for (IsotopePattern pat : scoreFormulas(spec, formulas.stream().toList(), input.getExperimentInformation(), PrecursorIonType.getPrecursorIonType(ionMode))) {

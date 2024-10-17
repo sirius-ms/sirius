@@ -21,6 +21,7 @@
 package de.unijena.bioinf.ms.frontend.subtools.summaries;
 
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
 import de.unijena.bioinf.ChemistryBase.ms.MutableMs2Spectrum;
 import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
@@ -50,10 +51,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -100,6 +98,10 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
             else {
                 throw new IllegalArgumentException("This summary job only supports the SIRIUS NoSQL projectSpace!");
             }
+        }
+
+        if (instances instanceof List<? extends Instance> il) {
+            il.sort(Comparator.comparing(i -> i.getRT().orElse(RetentionTime.NA())));
         }
 
         try {
@@ -150,7 +152,10 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                             ? initSpectrumSummaryWriter(location, "spectral_matches_top-" + options.topK) : null;
 
                     DataQualitySummaryWriter qualityWriter = options.qualitySummary
-                            ? initQualitySummaryWriter(location, "feature_quality") : null
+                            ? initQualitySummaryWriter(location, "feature_quality") : null;
+
+                    ChemVistaSummaryWriter chemVistaWriter = options.chemVista
+                            ? initChemVistaWriter(location, "chemvista_summary") : null
             ) {
                 //we load all data on demand from project db without manual caching or re-usage.
                 //if this turns out to be too slow we can cache e.g. the formula candidates.
@@ -226,6 +231,10 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                                     CanopusPrediction cp = project.getProject().findByFormulaIdStr(fc.getFormulaId(), CanopusPrediction.class).findFirst().orElse(null);
                                     if (cp != null)
                                         canopusStructure.writeCanopusPredictions(f, fc, cp);
+                                    nothingWritten = false;
+                                }
+                                if (chemVistaWriter != null && first) {
+                                    chemVistaWriter.writeStructureCandidate(f, fc, sc, ssr);
                                     nothingWritten = false;
                                 }
                                 if (formulaTopK != null && rank <= options.getTopK()) {
@@ -365,6 +374,7 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
                 if (refSpectrumTopK != null) refSpectrumTopK.flush();
 
                 if (qualityWriter != null) qualityWriter.flush();
+                if (chemVistaWriter != null) chemVistaWriter.flush();
 
                 w.stop();
                 log.info("Summaries written in: {}", w);
@@ -413,10 +423,17 @@ public class NoSqlSummarySubToolJob extends PostprocessingJob<Boolean> implement
         return writer;
     }
 
+    ChemVistaSummaryWriter initChemVistaWriter(Path location, String filename) throws IOException {
+        ChemVistaSummaryWriter writer = new ChemVistaSummaryWriter(new CsvTableWriter(location, filename, options.quoteStrings));
+        writer.writeHeader();
+        return writer;
+    }
+
     private SummaryTableWriter makeTableWriter(Path location, String filename) throws IOException {
         return switch (options.format) {
             case TSV -> new TsvTableWriter(location, filename, options.quoteStrings);
             case ZIP -> new ZipTableWriter(location, filename, options.quoteStrings);
+            case CSV -> new CsvTableWriter(location, filename, options.quoteStrings);
             case XLSX -> new XlsxTableWriter(location, filename);
         };
     }

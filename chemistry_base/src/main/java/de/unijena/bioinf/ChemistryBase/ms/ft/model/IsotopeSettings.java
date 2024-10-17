@@ -29,16 +29,13 @@ import de.unijena.bioinf.ms.properties.DefaultProperty;
 public class IsotopeSettings implements Ms2ExperimentAnnotation {
 
     /**
-     * When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match
-     * the theoretical one, even if their MS/MS pattern has high score.
+     * When filtering is enabled, molecular formulas are excluded if their theoretical isotope pattern does not match the theoretical one, even if their MS/MS pattern has high score.
      */
     @DefaultProperty
     protected final boolean filter;
 
     /**
-     * multiplier for the isotope score. Set to 0 to disable isotope scoring. Otherwise, the score from isotope
-     * pattern analysis is multiplied with this coefficient. Set to a value larger than one if your isotope
-     * pattern data is of much better quality than your MS/MS data.
+     * multiplier for the isotope score. Set to 0 to disable isotope scoring. Otherwise, the score from isotope pattern analysis is multiplied with this coefficient. Set to a value larger than one if your isotope pattern data is of much better quality than your MS/MS data.
      */
     @DefaultProperty
     protected final double multiplier;

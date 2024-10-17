@@ -44,11 +44,6 @@ public class AddConfigsJob extends InstanceJob {
     }
 
     @Override
-    public boolean needsProperIonizationMode() {
-        return false;
-    }
-
-    @Override
     public boolean isAlreadyComputed(@NotNull Instance inst) {
         return false;
     }

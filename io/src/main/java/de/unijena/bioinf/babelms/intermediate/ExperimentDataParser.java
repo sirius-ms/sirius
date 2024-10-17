@@ -48,7 +48,7 @@ public class ExperimentDataParser {
     protected void addSpectrum() {
         SimpleSpectrum spectrum = data.getSpectrum();
         if (spectrum == null) {
-            log.warn("Spectrum is missing in record " + data.getId() + ".");
+            log.warn("Spectrum is missing in record {}.", data.getId());
             return;
         }
 
@@ -58,20 +58,29 @@ public class ExperimentDataParser {
             experiment.getMs1Spectra().add(data.getSpectrum());
         } else if ("MS2".equalsIgnoreCase(spectrumLevel) || "MSMS".equalsIgnoreCase(spectrumLevel) || "2".equals(spectrumLevel)) {
             double precursorMz = getPrecursorMz().orElseGet(() -> {
-                log.warn("Precursor m/z is not set for MS2 record " + data.getId() + ", setting to 0.");
+                log.warn("Precursor m/z is not set for MS2 record {}, setting to 0.", data.getId());
                 return 0d;
             });
             MutableMs2Spectrum ms2Spectrum = new MutableMs2Spectrum(data.getSpectrum(), precursorMz, getCollisionEnergy().orElse(null), 2);
-            getIonization().ifPresent(ms2Spectrum::setIonization);
+            try {
+                getIonization().ifPresent(ms2Spectrum::setIonization);
+            } catch (Exception e) {
+                log.warn("Error parsing ionization for record {}, skipping spectrum.", data.getId(), e);
+                return;
+            }
             experiment.getMs2Spectra().add(ms2Spectrum);
         } else {
-            throw new RuntimeException("Unsupported ms level " + spectrumLevel + " in record " + data.getId() + ". Expecting MS1 or MS2.");
+            log.warn("Unsupported ms level {} in record {}. Expecting MS1 or MS2. Skipping the spectrum.", spectrumLevel, data.getId());
         }
     }
 
     protected void addAnnotations() {
         getPrecursorMz().ifPresent(experiment::setIonMass);
-        getPrecursorIonType().ifPresent(experiment::setPrecursorIonType);
+        try {
+            getPrecursorIonType().ifPresent(experiment::setPrecursorIonType);
+        } catch (Exception e) {
+            log.warn("Error parsing precursor ion type for record {}, leaving it empty.", data.getId(), e);
+        }
 
         getCompoundName().ifPresent(experiment::setName);
         getInstrumentation().ifPresent(instrumentation -> experiment.setAnnotation(MsInstrumentation.class, instrumentation));

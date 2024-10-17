@@ -201,7 +201,7 @@ jobs:
           file-digest: SHA256
 
       - name: Upload Distributions
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           retention-days: 1
           name: "sirius-${{ steps.sirius_version.outputs.value }}-${{ runner.os }}-x86-64"
@@ -235,7 +235,7 @@ jobs:
         with:
           path: './sirius_cli/src/main/resources/sirius_frontend.build.properties'
           property: 'de.unijena.bioinf.siriusFrontend.version'
-      - uses: actions/download-artifact@v2
+      - uses: actions/download-artifact@v4.1.7
         with:
           path: sirius_dist/build/tmp/artifacts/
       - name: Display downloaded artifact files
@@ -248,16 +248,18 @@ jobs:
             ### Prebuilt SIRIUS releases for all supported platforms. 
             
             Package names are made up as follows: `<App Name>-<Version>-<Operating System>-<Flavor>.<PackageType>`. Package types are either generic `.zip` archives or operating system specific installers (e.g. `.pkg` or `.msi`). The flavors describe builds with different features:
-            * no _Flavor_ suffix represents for the standard SIRIUS package that contains the Graphical User Interface (GUI) and the Command Line Tool (CLI)
-            * `headless` represents a command line only version that does not contain GUI relevant packages. It is smaller and does not need any GUI libraries installed on the users system (good for servers).
-            * `service` like standard but additionally contains the experimental _service mode_ of SIRIUS which allows to start SIRIUS as a background service that can be queried form scripting languages or as part of workflows. See the [online documentation](https://v6.docs.sirius-ms.io/quick-start/#background-service---generic-sirius-api) for details.
+            * no _Flavor_ suffix represents for the standard SIRIUS package that contains the Graphical User Interface (GUI), the background service and the Command Line Tool (CLI)
+            * [currently not available] `headless` represents a command line only version that does not contain GUI relevant packages. It is smaller and does not need any GUI libraries installed on the users system (good for servers). 
             
+            See the [online documentation](https://v6.docs.sirius-ms.io/quick-start/) for details.
+          
             Changelog can be found [here](https://v6.docs.sirius-ms.io/changelog/).
           name: "SIRIUS v${{ steps.sirius_version.outputs.value }}"
           tag: "v${{ steps.sirius_version.outputs.value }}"
           prerelease: ${{ endsWith(steps.sirius_version.outputs.value, '-SNAPSHOT') }}
           allowUpdates: ${{ endsWith(steps.sirius_version.outputs.value, '-SNAPSHOT') }}
-          draft: ${{ env.GITHUB_REF_SLUG == 'stable' && 'false' || 'true' }}
+          #draft: ${{ env.GITHUB_REF_SLUG == 'stable' && 'false' || 'true' }}
+          draft: 'true'
           token: ${{ secrets.GITHUB_TOKEN }}
 
   trigger-client-api-build:
@@ -265,4 +267,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Actions on sirius-client-openAPI
-        run: curl -X POST -H "Authorization:Bearer ${{ secrets.CLIENT_API_REPO_TOKEN }}" -H "Accept:application/vnd.github.v3+json" ${{ secrets.CLIENT_API_REPO_URL }} -d '{"ref":"master"}'
+        run: curl -X POST -H "Authorization:Bearer ${{ secrets.CLIENT_API_REPO_TOKEN }}" -H "Accept:application/vnd.github.v3+json" ${{ vars.CLIENT_API_REPO_URL }} -d '{"ref":"master"}'

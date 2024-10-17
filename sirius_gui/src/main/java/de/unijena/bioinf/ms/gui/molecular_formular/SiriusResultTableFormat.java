@@ -20,8 +20,8 @@
 package de.unijena.bioinf.ms.gui.molecular_formular;
 
 import de.unijena.bioinf.ms.gui.table.SiriusTableFormat;
-import de.unijena.bioinf.ms.nightsky.sdk.model.Deviation;
-import de.unijena.bioinf.ms.nightsky.sdk.model.LipidAnnotation;
+import io.sirius.ms.sdk.model.Deviation;
+import io.sirius.ms.sdk.model.LipidAnnotation;
 import de.unijena.bioinf.projectspace.FormulaResultBean;
 
 import java.util.function.Function;
@@ -58,7 +58,7 @@ public class SiriusResultTableFormat extends SiriusTableFormat<FormulaResultBean
             "Explained Peaks",
             "Total Explained Intensity",
             "Median Mass Error (ppm)",
-            "Median Absolute Mass Error (ppm)",
+            "Median Absolute Mass Error (mDa)",
             "Lipid Class",
             "Best",
     };

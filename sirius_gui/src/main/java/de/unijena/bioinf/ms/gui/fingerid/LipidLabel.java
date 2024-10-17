@@ -24,7 +24,7 @@ import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Colors;
 import de.unijena.bioinf.ms.gui.table.ActiveElementChangedListener;
 import de.unijena.bioinf.ms.gui.utils.GuiUtils;
-import de.unijena.bioinf.ms.nightsky.sdk.model.LipidAnnotation;
+import io.sirius.ms.sdk.model.LipidAnnotation;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;

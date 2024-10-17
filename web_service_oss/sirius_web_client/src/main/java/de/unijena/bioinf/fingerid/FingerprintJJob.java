@@ -125,12 +125,12 @@ public class FingerprintJJob extends BasicJJob<List<FingerIdResult>> {
         super.cancel(mayInterruptIfRunning);
         if (predictionJobs != null)
             predictionJobs.keySet().forEach(j -> j.cancel(mayInterruptIfRunning));
-        predictionJobs = null;
     }
 
     @Override
     protected void cleanup() {
         super.cleanup();
+        predictionJobs = null;
     }
 
 

@@ -26,11 +26,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Stores a detected adducts with score and source information.
@@ -38,115 +41,141 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 @EqualsAndHashCode
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.NONE, getterVisibility = JsonAutoDetect.Visibility.ANY, setterVisibility = JsonAutoDetect.Visibility.ANY)
-public class DetectedAdducts {
+public class DetectedAdducts implements Cloneable {
 
     public static DetectedAdducts singleton(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source source, PrecursorIonType ionType) {
         DetectedAdducts det = new DetectedAdducts();
-        det.add(new DetectedAdduct(ionType, 1d, source));
+        det.addAll(DetectedAdduct.unambiguous(source, ionType));
+        return det;
+    }
+
+    public static DetectedAdducts emptySingleton(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source source) {
+        DetectedAdducts det = new DetectedAdducts();
+        det.addAll(DetectedAdduct.empty(source));
         return det;
     }
 
     @NotNull
-    private final Map<PrecursorIonType, Set<DetectedAdduct>> detectedAdducts = new HashMap<>();
+    private final Set<DetectedAdduct> detectedAdducts = new HashSet<>();
 
-    public Map<PrecursorIonType, Set<DetectedAdduct>> asMap() {
-        return detectedAdducts;
+    @Override
+    public String toString() {
+        return "[ " +
+                detectedAdducts.stream().map(DetectedAdduct::toString).collect(Collectors.joining(", ")) +
+                " ]";
     }
 
-    public DetectedAdducts add(PrecursorIonType key, DetectedAdduct... adducts) {
-        return add(key, Arrays.asList(adducts));
-    }
-
-    public DetectedAdducts add(PrecursorIonType key, Collection<DetectedAdduct> adducts) {
-        detectedAdducts.computeIfAbsent(key, k -> new HashSet<>()).addAll(adducts);
+    public DetectedAdducts addEmptySource(@NotNull de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source source) {
+        addAll(new DetectedAdduct(null, Double.NaN, source));
         return this;
     }
 
-    public DetectedAdducts add(DetectedAdduct... detectedAdducts) {
-        return add(Arrays.asList(detectedAdducts));
+    public DetectedAdducts addAll(DetectedAdduct... detectedAdducts) {
+        return addAll(Arrays.asList(detectedAdducts));
     }
 
-    public DetectedAdducts add(Collection<DetectedAdduct> detectedAdducts) {
-        detectedAdducts.stream().collect(Collectors.groupingBy(DetectedAdduct::getAdduct, Collectors.toList()))
-                .forEach((k, v) -> this.detectedAdducts.computeIfAbsent(k, key -> new HashSet<>()).addAll(v));
+    public DetectedAdducts addAll(Collection<DetectedAdduct> detectedAdducts) {
+        this.detectedAdducts.addAll(detectedAdducts);
         return this;
     }
 
+    /**
+     * @return Return raw adduct list including empty detections.
+     */
     @NotNull
     @JsonIgnore
     public List<PrecursorIonType> getAllAdducts() {
-        return detectedAdducts.keySet().stream().toList();
+        return detectedAdducts.stream().map(DetectedAdduct::getAdduct)
+                .filter(Objects::nonNull)
+                .filter(Predicate.not(PrecursorIonType::isIonizationUnknown))
+                .distinct().toList();
     }
 
     @NotNull
     @JsonIgnore
-    public Optional<PrecursorIonType> getBestAdduct() {
-        return getBestDetectedAdduct().map(DetectedAdduct::getAdduct);
+    public List<de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source> getAllSources() {
+        return detectedAdducts.stream().map(DetectedAdduct::getSource).distinct().toList();
     }
 
-    @JsonIgnore
-    public Optional<DetectedAdduct> getBestDetectedAdduct() {
-        return detectedAdducts.values().stream().flatMap(Collection::stream).max(Comparator.naturalOrder());
+    public Set<DetectedAdduct> removeAllWithAdduct(@Nullable PrecursorIonType adduct) {
+        Iterator<DetectedAdduct> iterator = detectedAdducts.iterator();
+        Set<DetectedAdduct> deletedAdducts = new HashSet<>();
+        while (iterator.hasNext()) {
+            DetectedAdduct next =  iterator.next();
+            if (Objects.equals(adduct, next.getAdduct())){
+                iterator.remove();
+                deletedAdducts.add(next);
+            }
+        }
+        return deletedAdducts;
     }
 
-    @Nullable
-    @JsonIgnore
-    Set<DetectedAdduct> getDetections(String key) {
-        return getDetections(PrecursorIonType.fromString(key));
-    }
-
-    @Nullable
-    @JsonIgnore
-    Set<DetectedAdduct> getDetections(PrecursorIonType key) {
-        return detectedAdducts.get(key);
-    }
-
-    public Set<DetectedAdduct> remove(@NotNull PrecursorIonType key) {
-        return detectedAdducts.remove(key);
-    }
-
-    public List<PrecursorIonType> removeBySource(@NotNull de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source source) {
+    public List<PrecursorIonType> removeAllWithSource(@NotNull de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source source) {
         List<PrecursorIonType> modified = new ArrayList<>();
 
-        detectedAdducts.forEach((adduct, list) -> {
-            if (list.removeIf(detection -> detection.getSource() == source))
-                modified.add(adduct);
-        });
-
-        modified.stream().filter(adduct -> detectedAdducts.get(adduct).isEmpty()).forEach(detectedAdducts::remove);
-
+        Iterator<DetectedAdduct> iterator = detectedAdducts.iterator();
+        while (iterator.hasNext()) {
+            DetectedAdduct next =  iterator.next();
+            if (source.equals(next.getSource())){
+                iterator.remove();
+                if (next.getAdduct() != null)
+                    modified.add(next.getAdduct());
+            }
+        }
         return modified;
     }
 
-    public boolean remove(@NotNull PrecursorIonType key, @NotNull de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source source) {
-        Set<DetectedAdduct> set = detectedAdducts.get(key);
-        if (set != null)
-            if (set.removeIf(adduct -> adduct.getSource() == source)) {
-                if (set.isEmpty())
-                    detectedAdducts.remove(key);
-                return true;
-            }
-        return false;
+    public boolean remove(@Nullable PrecursorIonType adduct, @NotNull de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source source) {
+       return detectedAdducts.removeIf(it -> Objects.equals(source, it.getSource()) && Objects.equals(adduct, it.getAdduct()));
     }
 
+    /**
+     * @return true if there is at least one real detected adduct. [M+?]+ and [M+?]- do not count as detected adduct.
+     */
     @JsonIgnore
-    public boolean hasAdduct() {
-        return !detectedAdducts.isEmpty();
+    public boolean hasDetectedAdduct() {
+        return !getAllAdducts().isEmpty();
     }
 
     @JsonIgnore
     public boolean hasSingleAdduct(){
-        return detectedAdducts.size() == 1;
+        return getAllAdducts().size() == 1;
+    }
+
+    @JsonIgnore
+    public boolean isAdductUnknown(){
+        return !hasDetectedAdduct();
+    }
+
+    /**
+     * @return Raw detected adduct list
+     */
+    @JsonIgnore
+    public Stream<DetectedAdduct> getDetectedAdductsStr() {
+        return this.detectedAdducts.stream();
     }
 
     @JsonInclude //getter just for serialization
     private List<DetectedAdduct> getDetectedAdductsList() {
-        return this.detectedAdducts.values().stream().flatMap(Collection::stream).toList();
+        return getDetectedAdductsStr().toList();
     }
 
     @JsonInclude //setter just for deserialization
     private void setDetectedAdductsList(List<DetectedAdduct> detectedAdductsList) {
         this.detectedAdducts.clear();
-        add(detectedAdductsList);
+        addAll(detectedAdductsList);
+    }
+
+    @SneakyThrows
+    @JsonIgnore
+    @Override
+    public DetectedAdducts clone() {
+        DetectedAdducts clone = (DetectedAdducts) super.clone();
+        clone.addAll(detectedAdducts);
+        return clone;
+    }
+
+    public boolean contains(DetectedAdduct adduct) {
+        return detectedAdducts.contains(adduct);
     }
 }

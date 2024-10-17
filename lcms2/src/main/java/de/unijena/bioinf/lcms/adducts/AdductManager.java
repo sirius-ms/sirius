@@ -3,8 +3,9 @@ package de.unijena.bioinf.lcms.adducts;
 import de.unijena.bioinf.ChemistryBase.chem.MolecularFormula;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.ms.Deviation;
+import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.utils.MassMap;
-import it.unimi.dsi.fastutil.ints.IntHash;
+import de.unijena.bioinf.ms.properties.PropertyManager;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 
 import java.util.*;
@@ -28,6 +29,8 @@ public class AdductManager {
         this.decoys = initDecoys(polarity);
         this.losses = new HashSet<>();
         this.multimereIonTypes = new ArrayList<>();
+        final AdductSettings settings = PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class);
+        add(settings.getDetectable(polarity));
     }
 
     private IntOpenHashSet initDecoys(int polarity) {
@@ -39,7 +42,7 @@ public class AdductManager {
         return set;
     }
 
-    public void add(Set<PrecursorIonType> ionTypes) {
+    private void add(Set<PrecursorIonType> ionTypes) {
         // split adducts into Adducts, Insource and Multimere
         Set<PrecursorIonType> adducts = new HashSet<>(), insource = new HashSet<>(), multimeres = new HashSet<>();
         for (PrecursorIonType ionType : ionTypes) {
@@ -106,19 +109,6 @@ public class AdductManager {
     public static void main(String[] args) {
         {
         AdductManager adductManager = new AdductManager(1);
-
-            adductManager.add(Set.of(PrecursorIonType.getPrecursorIonType("[M+H]+"), PrecursorIonType.getPrecursorIonType("[M+Na]+"),
-                            PrecursorIonType.getPrecursorIonType("[M+K]+"),  PrecursorIonType.getPrecursorIonType("[M+NH3+H]+"),
-                            PrecursorIonType.getPrecursorIonType("[M + FA + H]+"),
-                            PrecursorIonType.getPrecursorIonType("[M + ACN + H]+"),
-
-                            PrecursorIonType.getPrecursorIonType("[M - H2O + H]+"),
-
-                            PrecursorIonType.getPrecursorIonType("[2M + Na]+"),
-                            PrecursorIonType.getPrecursorIonType("[2M + H]+"),
-                            PrecursorIonType.getPrecursorIonType("[2M + K]+")
-                    )
-            );
             for (double d : DecoysPositive ) {
                 List<KnownMassDelta> xs = adductManager.retrieveMassDeltas(d, new Deviation(10, 0.05));
                 if (xs.size()>0) {
@@ -128,21 +118,6 @@ public class AdductManager {
         }
         {
             AdductManager adductManager = new AdductManager(-1);
-            adductManager.add(Set.of(PrecursorIonType.getPrecursorIonType("[M-H]-"), PrecursorIonType.getPrecursorIonType("[M+Cl]-"),
-                            PrecursorIonType.getPrecursorIonType("[M+Br]-"),
-                            PrecursorIonType.getPrecursorIonType("[2M + H]-"),
-                            PrecursorIonType.getPrecursorIonType("[2M + Br]-"),
-                            PrecursorIonType.getPrecursorIonType("[2M + Cl]-"),
-                            PrecursorIonType.fromString("[M+Na-2H]-"),
-                            PrecursorIonType.fromString("[M + CH2O2 - H]-"),
-                            PrecursorIonType.fromString("[M + C2H4O2 - H]-"),
-                            PrecursorIonType.fromString("[M + H2O - H]-"),
-                            PrecursorIonType.fromString("[M - H3N - H]-"),
-                            PrecursorIonType.fromString("[M - CO2 - H]-"),
-                            PrecursorIonType.fromString("[M - CH2O3 - H]-"),
-                            PrecursorIonType.fromString("[M - CH3 - H]-")
-                    )
-            );
             for (double d : DecoysNegative ) {
                 List<KnownMassDelta> xs = adductManager.retrieveMassDeltas(d, new Deviation(10, 0.05));
                 if (xs.size()>0) {

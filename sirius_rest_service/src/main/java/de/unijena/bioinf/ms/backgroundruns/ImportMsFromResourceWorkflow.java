@@ -21,7 +21,6 @@
 package de.unijena.bioinf.ms.backgroundruns;
 
 import de.unijena.bioinf.ChemistryBase.jobs.SiriusJobs;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.utils.FileUtils;
 import de.unijena.bioinf.babelms.inputresource.InputResource;
 import de.unijena.bioinf.babelms.inputresource.PathInputResource;
@@ -32,21 +31,18 @@ import de.unijena.bioinf.jjobs.ProgressSupport;
 import de.unijena.bioinf.ms.frontend.subtools.lcms_align.LcmsAlignSubToolJobNoSql;
 import de.unijena.bioinf.ms.frontend.workflow.Workflow;
 import de.unijena.bioinf.ms.middleware.model.compute.AbstractImportSubmission;
-import de.unijena.bioinf.ms.properties.PropertyManager;
-import de.unijena.bioinf.projectspace.Instance;
 import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
-import java.util.stream.Stream;
 
 @Slf4j
 public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
@@ -54,13 +50,16 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
 
     private final AbstractImportSubmission submission;
 
-    private final LongList importedCompounds = new LongArrayList();
+
+    @Getter
+    @NotNull
+    private LongList importedFeatureIds = LongList.of();
+
+    @Getter
+    @NotNull
+    private LongList importedCompoundIds = LongList.of();
 
     private final boolean saveImportedCompounds;
-
-    public Stream<Instance> getImportedInstancesStr() {
-        return importedCompounds.longStream().mapToObj(psm::findInstance).filter(Optional::isPresent).map(Optional::get);
-    }
 
     private final NoSQLProjectSpaceManager psm;
 
@@ -100,13 +99,13 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
 
     @Override
     public void run() {
+        importedFeatureIds = LongList.of();
+        importedCompoundIds = LongList.of();
         final List<PathInputResource> inputResources = submission.asPathInputResource();
         if (inputResources != null && !inputResources.isEmpty()) {
             try {
-                importedCompounds.clear();
-                List<Path> inputFiles = inputResources.stream().map(PathInputResource::getResource).toList();
                 LcmsAlignSubToolJobNoSql importerJJob = new LcmsAlignSubToolJobNoSql(
-                        inputFiles,
+                        inputResources.stream().map(PathInputResource::getResource).toList(),
                         () -> psm,
                         submission.isAlignLCMSRuns(),
                         submission.getFilter(),
@@ -115,12 +114,14 @@ public class ImportMsFromResourceWorkflow implements Workflow, ProgressSupport {
                         submission.getNoise(),
                         submission.getPersistence(),
                         submission.getMerge(),
-                        PropertyManager.DEFAULTS.createInstanceWithDefaults(AdductSettings.class).getDetectable(),
                         saveImportedCompounds
                 );
                 importerJJob.addJobProgressListener(progressSupport);
                 SiriusJobs.getGlobalJobManager().submitJob(importerJJob).awaitResult();
-                importedCompounds.addAll(importerJJob.getImportedCompounds());
+                if (importerJJob.getImportedFeatureIds() != null)
+                    importedFeatureIds = importerJJob.getImportedFeatureIds();
+                if (importerJJob.getImportedCompoundIds() != null)
+                    importedCompoundIds = importerJJob.getImportedCompoundIds();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             } finally {

@@ -25,21 +25,34 @@ import de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 import lombok.extern.jackson.Jacksonized;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+@ToString
 @Getter
 @Builder
 @Jacksonized
 @EqualsAndHashCode
 public class DetectedAdduct implements Comparable<DetectedAdduct> {
+    public static de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct empty(@NotNull de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source source) {
+       return new DetectedAdduct(null, Double.NaN, source);
+    }
 
+    public static de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct unambiguous(@NotNull de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source source, @NotNull PrecursorIonType precursorIonType) {
+        return new DetectedAdduct(precursorIonType, 1d, source);
+    }
+
+
+    @Nullable
     private final PrecursorIonType adduct;
 
     @EqualsAndHashCode.Exclude
-    private Double score;
+    private double score = Double.NaN;
 
-    private DetectedAdducts.Source source;
+    @NotNull
+    private DetectedAdducts.Source source = DetectedAdducts.Source.UNSPECIFIED_SOURCE;
 
     @Override
     public int compareTo(@NotNull DetectedAdduct o) {

@@ -81,7 +81,7 @@ public class AlignedFeatures extends AbstractAlignedFeatures {
 
     @JsonIgnore
     public boolean hasDetectedAdducts(){
-        return detectedAdducts != null && detectedAdducts.hasAdduct();
+        return detectedAdducts != null && detectedAdducts.hasDetectedAdduct();
     }
 
     @JsonIgnore

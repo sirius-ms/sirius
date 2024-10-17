@@ -30,7 +30,7 @@ public class DBPairedScorer implements FragmentScorer<MolecularFormula>, Paramet
             final List<MolecularFormula> formulas = new ArrayList<>();
             FormulaConstraints ALL = FormulaConstraints.fromString("HCNOSBrBFClSiIAsSeCuFeMgNaCa");
             //final MolecularFormulaSet set = new MolecularFormulaSet(constraints.getChemicalAlphabet());
-            Ionization hplus = PrecursorIonType.getPrecursorIonType("[M + H]+").getIonization();
+            PrecursorIonType hplus = PrecursorIonType.getPrecursorIonType("[M + H]+");
             for (String line : FileUtils.readLines(new File("/home/kaidu/temp/bioformulas.csv"))) {
                 MolecularFormula f = MolecularFormula.parse(line);
                 if (ALL.isSatisfied(f, hplus))

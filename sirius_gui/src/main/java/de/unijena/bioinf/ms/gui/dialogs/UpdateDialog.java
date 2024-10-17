@@ -21,7 +21,7 @@ package de.unijena.bioinf.ms.gui.dialogs;
 
 import de.unijena.bioinf.ms.frontend.core.ApplicationCore;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.nightsky.sdk.model.Info;
+import io.sirius.ms.sdk.model.Info;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.slf4j.LoggerFactory;
 

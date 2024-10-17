@@ -26,7 +26,7 @@ import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.fingerid.StructureList;
 import de.unijena.bioinf.ms.gui.mainframe.result_panel.PanelDescription;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
-import de.unijena.bioinf.ms.nightsky.sdk.model.StructureCandidateFormula;
+import io.sirius.ms.sdk.model.StructureCandidateFormula;
 
 import javax.swing.*;
 import java.awt.*;

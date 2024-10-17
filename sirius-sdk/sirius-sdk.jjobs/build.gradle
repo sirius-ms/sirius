@@ -1,0 +1,6 @@
+apply plugin: 'java-library'
+
+dependencies{
+    api project(":sirius-sdk")
+    api "de.unijena.bioinf:jjobs-core:$jjobs_version"
+}

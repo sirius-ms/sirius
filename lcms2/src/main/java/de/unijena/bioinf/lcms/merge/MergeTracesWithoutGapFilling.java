@@ -7,6 +7,7 @@ import de.unijena.bioinf.jjobs.JobManager;
 import de.unijena.bioinf.lcms.align.*;
 import de.unijena.bioinf.lcms.statistics.SampleStats;
 import de.unijena.bioinf.lcms.trace.*;
+import de.unijena.bioinf.lcms.utils.Tracker;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -25,7 +26,7 @@ import java.util.List;
  */
 public class MergeTracesWithoutGapFilling {
 
-    public void merge(ProcessedSample merged, AlignmentBackbone alignment) {
+    public void merge(ProcessedSample merged, AlignmentBackbone alignment, Tracker tracker) {
         JobManager globalJobManager = SiriusJobs.getGlobalJobManager();
         AlignmentStorage alignmentStorage = merged.getStorage().getAlignmentStorage();
         prepareRects(merged, alignment);
@@ -50,7 +51,7 @@ public class MergeTracesWithoutGapFilling {
                 jobs.add(globalJobManager.submitJob(new BasicJJob<Object>() {
                     @Override
                     protected Object compute() throws Exception {
-                        mergeAllMoIsForSampleWithinRect(r, merged, sample);
+                        mergeAllMoIsForSampleWithinRect(r, merged, sample, tracker);
                         return true;
                     }
                 }));
@@ -106,13 +107,16 @@ public class MergeTracesWithoutGapFilling {
     ////////////////////////////////////////////////////////////////
 
 
-    private void mergeAllMoIsForSampleWithinRect(Rect r, ProcessedSample merged, ProcessedSample sample) {
+    private void mergeAllMoIsForSampleWithinRect(Rect r, ProcessedSample merged, ProcessedSample sample, Tracker tracker) {
         // get all mois in this rectangle
         MoI[] mois = merged.getStorage().getAlignmentStorage().getMoIWithin(r.minMz, r.maxMz).stream().filter(x -> r.contains(x.getMz(), x.getRetentionTime())).toArray(MoI[]::new);
         MoI[] moisForSample = Arrays.stream(mois).flatMap(a->((AlignedMoI) a).forSampleIdx(sample.getUid()).stream()).toArray(MoI[]::new);
         // we want to merge them into the MergedTrace corresponding to this rectangle
         IntOpenHashSet traceIds = new IntOpenHashSet(Arrays.stream(moisForSample).mapToInt(MoI::getTraceId).toArray());
-        if (traceIds.isEmpty()) return; // nothing to merge for this sample
+        if (traceIds.isEmpty()) {
+            tracker.emptyRect(sample, r);
+            return; // nothing to merge for this sample
+        }
         // get all traces in the sample that can be merged into the mergedTrace
         ContiguousTrace[] traces = traceIds.intStream().mapToObj(x -> sample.getStorage().getTraceStorage().getContigousTrace(x)).toArray(ContiguousTrace[]::new);
 
@@ -183,7 +187,7 @@ public class MergeTracesWithoutGapFilling {
         addMs2ToProjectedTrace(sample, traces, projectedTrace);
         merged.getStorage().getMergeStorage().addProjectedTrace(r.id, sample.getUid(), projectedTrace);
         createIsotopeProjectedTraces(merged, sample, r, projectedTrace, moisForSample);
-
+        tracker.mergedTrace(merged, sample, r, projectedTrace, moisForSample);
     }
 
     private void createIsotopeProjectedTraces(ProcessedSample merged, ProcessedSample sample, Rect r, ProjectedTrace projectedTrace, MoI[] mois) {

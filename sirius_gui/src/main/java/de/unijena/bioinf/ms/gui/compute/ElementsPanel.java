@@ -43,8 +43,6 @@ public class ElementsPanel extends TextHeaderBoxPanel implements ActionListener 
 
     private static final int maxNumberOfOneElements = 20;
     private static final String[] additionalElementSymbols = new String[]{"C", "H", "N", "O", "P", "S", "B", "Br", "Cl", "F", "I", "Se"};
-    private static final int[] additionalElementStartCounts = new int[]{maxNumberOfOneElements, maxNumberOfOneElements, maxNumberOfOneElements, maxNumberOfOneElements,
-            maxNumberOfOneElements, maxNumberOfOneElements, 0, 0, 0, 0, 0, 0};
 
     public final boolean individualAutoDetect;
     private JButton elementButton;
@@ -92,12 +90,10 @@ public class ElementsPanel extends TextHeaderBoxPanel implements ActionListener 
                     });
         }
 
-        for (int i = 0; i < additionalElementSymbols.length; i++) {
-            String symbol = additionalElementSymbols[i];
-            int count = additionalElementStartCounts[i];
+        for (String symbol : additionalElementSymbols) {
             if (!element2Slider.containsKey(symbol)) {
                 Element element = PeriodicTable.getInstance().getByName(symbol);
-                ElementSlider elementSlider = new ElementSlider(element, 0, count);
+                ElementSlider elementSlider = new ElementSlider(element, 0, 0);
                 addElementSlider(elementSlider);
             }
         }

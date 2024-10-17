@@ -3,7 +3,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman, Fleming Kretschmer and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -20,8 +20,10 @@
 
 package de.unijena.bioinf.ms.persistence.storage;
 
+import de.unijena.bioinf.ChemistryBase.chem.InChI;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
+import de.unijena.bioinf.ChemistryBase.chem.Smiles;
 import de.unijena.bioinf.ChemistryBase.ms.*;
 import de.unijena.bioinf.ChemistryBase.ms.utils.SimpleSpectrum;
 import de.unijena.bioinf.ChemistryBase.ms.utils.Spectrums;
@@ -35,13 +37,14 @@ import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MergedMSnSpectrum;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
+import de.unijena.bioinf.sirius.ProcessedPeak;
 import de.unijena.bioinf.sirius.Sirius;
 import de.unijena.bioinf.sirius.SiriusCachedFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.net.URI;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -75,9 +78,9 @@ public class StorageUtils {
 
         feature.getDataSource().ifPresent(s -> {
             if (s.getFormat() == DataSource.Format.JENA_MS)
-                exp.setSource(new MsFileSource(URI.create(s.getSource())));
+                exp.setSource(new MsFileSource(Path.of(s.getSource()).toUri()));
             else
-                exp.setSource(new SpectrumFileSource(URI.create(s.getSource())));
+                exp.setSource(new SpectrumFileSource(Path.of(s.getSource()).toUri()));
         });
         exp.setAnnotation(RetentionTime.class, feature.getRetentionTime());
         exp.setAnnotation(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.class, toMs2ExpAnnotation(feature.getDetectedAdducts()));
@@ -105,7 +108,22 @@ public class StorageUtils {
                 .mergedMs1Spectrum(mergedMs1);
 
         if (exp.getMs2Spectra() != null && !exp.getMs2Spectra().isEmpty()) {
-            builder.mergedMSnSpectrum(Spectrums.from(sirius.getMs2Preprocessor().preprocess(exp).getMergedPeaks()));
+            List<ProcessedPeak> tmpSpec = null;
+            try {
+                tmpSpec = sirius.getMs2Preprocessor().preprocess(exp).getMergedPeaks();
+            } catch (Exception e) {
+                // when we get data from third party tools it sometimes happens that adduct/mass/formula are
+                // contradictory usually due to a false formula annotation. instead of throwing the data away we try
+                // to import it without formula an unknown adduct.
+                log.warn("Error preprocessing feature at rt={}, mz={}, name={}. Retry without formula and with unknown adduct. Cause: {}",
+                        exp.getAnnotation(RetentionTime.class).map(Objects::toString).orElse("N/A"), Math.round(exp.getIonMass()), exp.getName(), e.getMessage());
+                ((MutableMs2Experiment) exp).setPrecursorIonType(PrecursorIonType.unknown(exp.getPrecursorIonType().getCharge()));
+                ((MutableMs2Experiment) exp).setMolecularFormula(null);
+                exp.removeAnnotation(InChI.class);
+                exp.removeAnnotation(Smiles.class);
+                tmpSpec = sirius.getMs2Preprocessor().preprocess(exp).getMergedPeaks();
+            }
+            builder.mergedMSnSpectrum(Spectrums.from(tmpSpec));
             builder.msnSpectra(exp.getMs2Spectra().stream().map(StorageUtils::msnSpectrumFrom).toList());
         }
 
@@ -130,7 +148,6 @@ public class StorageUtils {
         }
 
         Feature feature = Feature.builder()
-                .dataSource(DataSource.fromPath(exp.getSourceString()))
                 .retentionTime(exp.getAnnotation(RetentionTime.class).orElse(null))
                 .averageMass(exp.getMs2Spectra().stream().mapToDouble(Ms2Spectrum::getPrecursorMz).average().orElse(Double.NaN))
                 .charge((byte) charge)
@@ -141,6 +158,7 @@ public class StorageUtils {
                 .build();
 
         AlignedFeatures alignedFeature = AlignedFeatures.singleton(feature, msData);
+        alignedFeature.setDataSource(DataSource.fromPath(exp.getSourceString()));
         alignedFeature.setName(exp.getName());
         alignedFeature.setExternalFeatureId(exp.getFeatureId());
         alignedFeature.setMolecularFormula(exp.getMolecularFormula());
@@ -164,12 +182,19 @@ public class StorageUtils {
     public static DetectedAdducts fromMs2ExpAnnotation(@Nullable de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts adducts) {
         if (adducts == null)
             return null;
-        List<DetectedAdduct> featureAdducts = adducts.entrySet().stream().flatMap(e -> e.getValue().getAdducts().stream()
-                        .map(p -> DetectedAdduct.builder().adduct(p).source(e.getKey()).build()))
-                .toList();
 
+        //add empty
+        List<DetectedAdduct> featureAdducts = new ArrayList<>();
+        for (Map.Entry<de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source, PossibleAdducts> adductsEntry : adducts.entrySet()) {
+            if (adductsEntry.getValue() == null || adductsEntry.getValue().isEmpty()){
+                featureAdducts.add(DetectedAdduct.empty(adductsEntry.getKey()));
+            }else {
+                adductsEntry.getValue().forEach(precursorIonType ->
+                        featureAdducts.add(DetectedAdduct.builder().adduct(precursorIonType).source(adductsEntry.getKey()).build()));
+            }
+        }
         DetectedAdducts featureDetectedAdducts = new DetectedAdducts();
-        featureDetectedAdducts.add(featureAdducts);
+        featureDetectedAdducts.addAll(featureAdducts);
         return featureDetectedAdducts;
     }
 
@@ -179,10 +204,10 @@ public class StorageUtils {
         de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts dA = new de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts();
 
         Map<de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source, List<PrecursorIonType>> adductsBySource =
-                adducts.asMap().values().stream().flatMap(Collection::stream).collect(Collectors.groupingBy(
-                        d -> d.getSource(), Collectors.mapping(it -> it.getAdduct(), Collectors.toList())));
+                adducts.getDetectedAdductsStr().collect(Collectors.groupingBy(
+                        DetectedAdduct::getSource, Collectors.mapping(DetectedAdduct::getAdduct, Collectors.toList())));
 
-        adductsBySource.forEach((s, v) -> dA.put(s, new PossibleAdducts(v.toArray(PrecursorIonType[]::new))));
+        adductsBySource.forEach((s, v) -> dA.put(s, new PossibleAdducts(v.stream().filter(Objects::nonNull).distinct().toArray(PrecursorIonType[]::new))));
         return dA;
     }
 }

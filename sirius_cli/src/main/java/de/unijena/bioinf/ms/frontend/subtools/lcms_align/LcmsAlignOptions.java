@@ -20,14 +20,16 @@
 package de.unijena.bioinf.ms.frontend.subtools.lcms_align;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
-import de.unijena.bioinf.ChemistryBase.ms.ft.model.AdductSettings;
 import de.unijena.bioinf.ChemistryBase.ms.lcms.workflows.LCMSWorkflow;
-import de.unijena.bioinf.ms.frontend.subtools.*;
+import de.unijena.bioinf.ms.frontend.subtools.PreprocessingJob;
+import de.unijena.bioinf.ms.frontend.subtools.PreprocessingTool;
+import de.unijena.bioinf.ms.frontend.subtools.Provide;
+import de.unijena.bioinf.ms.frontend.subtools.RootOptions;
 import de.unijena.bioinf.ms.properties.ParameterConfig;
-import de.unijena.bioinf.projectspace.NoSQLProjectSpaceManager;
+import de.unijena.bioinf.projectspace.NitriteProjectSpaceManagerFactory;
 import de.unijena.bioinf.projectspace.ProjectSpaceManager;
 import de.unijena.bioinf.projectspace.ProjectSpaceManagerFactory;
+import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -36,32 +38,19 @@ import picocli.CommandLine;
 import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
-import java.util.Set;
 
 @CommandLine.Command(name = "lcms-align", aliases = {"A"}, description = "@|bold <PREPROCESSING>|@ Align and merge compounds of multiple LCMS Runs. Use this tool if you want to import from mzML/mzXml. %n %n", versionProvider = Provide.Versions.class, mixinStandardHelpOptions = true, showDefaultValues = true)
 public class LcmsAlignOptions implements PreprocessingTool<PreprocessingJob<? extends ProjectSpaceManager>> {
 
     @Override
-    public PreprocessingJob<? extends ProjectSpaceManager> makePreprocessingJob(@NotNull RootOptions<?> rootOptions, @NotNull ProjectSpaceManagerFactory<?> projectFactory, @Nullable ParameterConfig config) {
-        if (!(rootOptions instanceof CLIRootOptions)) {
-            throw new IllegalArgumentException("Unsupported root options!");
-        }
-        return ((CLIRootOptions) rootOptions).makeDefaultPreprocessingJob(this);
+    public PreprocessingJob<ProjectSpaceManager> makePreprocessingJob(@NotNull RootOptions<?> rootOptions, @NotNull ProjectSpaceManagerFactory<?> projectFactory, @Nullable ParameterConfig config) {
+       if (projectFactory instanceof NitriteProjectSpaceManagerFactory psmf)
+            return new LcmsAlignSubToolJobNoSql(rootOptions.getInput(), () -> psmf.createOrOpen(rootOptions.getOutput().getOutputProjectLocation()), this);
+        throw new IllegalArgumentException("Unknown Project space type.");
     }
 
-    public PreprocessingJob<ProjectSpaceManager> makePreprocessingJob(@Nullable InputFilesOptions input, @NotNull ProjectSpaceManager psm, @Nullable ParameterConfig config) {
-        if (!(psm instanceof NoSQLProjectSpaceManager)) {
-            throw new IllegalArgumentException("Unsupported project space.");
-        }
-        Set<PrecursorIonType> detectable = config.createInstanceWithDefaults(AdductSettings.class).getDetectable();
-        return new LcmsAlignSubToolJobNoSql(input, () -> (NoSQLProjectSpaceManager) psm, this, detectable);
-    }
-
+    @Getter
     protected Optional<LCMSWorkflow> workflow = Optional.empty();
-
-    public Optional<LCMSWorkflow> getWorkflow() {
-        return workflow;
-    }
 
     @CommandLine.Option(names={"--no-align"}, description = "Do not align and combine all LC/MS runs to one merged LC/MS run.")
     public boolean noAlign;

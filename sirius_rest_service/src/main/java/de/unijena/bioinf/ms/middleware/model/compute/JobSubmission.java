@@ -129,6 +129,7 @@ public class JobSubmission extends AbstractSubmission {
      * of ALL SIRIUS parameters. All possible parameters can be retrieved from SIRIUS via the respective endpoint.
      */
     @Nullable
+    @Schema(nullable = true)
     Map<String, String> configMap;
 
     public static JobSubmission createDefaultInstance(boolean includeConfigMap) {

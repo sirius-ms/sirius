@@ -9,10 +9,10 @@ buildscript {
         mavenCentral()
     }
     dependencies {
+        classpath "gradle.plugin.com.google.cloud.artifactregistry:artifactregistry-gradle-plugin:2.2.2"
         classpath 'commons-configuration:commons-configuration:1.10'
         classpath 'com.github.viswaramamoorthy:gradle-util-plugins:0.1.0-RELEASE'
         classpath 'org.yaml:snakeyaml:1.29'
-        classpath 'org.jfrog.buildinfo:build-info-extractor-gradle:5.2.2'
     }
 }
 
@@ -135,6 +135,7 @@ allprojects {
     apply plugin: 'java'
     apply plugin: 'java-library'
     apply plugin: 'maven-publish'
+    apply plugin: "com.google.cloud.artifactregistry.gradle-plugin"
 
     targetCompatibility = 21
 
@@ -142,13 +143,41 @@ allprojects {
     compileTestJava.options.encoding = "UTF-8"
     javadoc.options.encoding = 'UTF-8'
 
-    group = 'de.unijena.bioinf.ms'
+    group = 'io.sirius-ms'
 
     repositories {
         mavenLocal()
         mavenCentral()
-        maven {//public libs only so anybody can build the frontend without login
-            url "https://bio.informatik.uni-jena.de/repository/libs-oss"
+        //this is for public sirius-ms dependencies
+        maven {
+            name "sirius-ms-maven-public"
+            url "artifactregistry://europe-west4-maven.pkg.dev/bright-giant/maven-public"
+        }
+        //this is just needed to load non-public test data.
+        repositories {
+            maven {
+                url "https://gitlab.com/api/v4/groups/bright-giant/-/packages/maven"
+                name "GitLab"
+                if (System.getenv("CI_JOB_TOKEN") != null) {
+                    credentials(HttpHeaderCredentials) {
+                        name = "Job-Token"
+                        value = System.getenv("CI_JOB_TOKEN")
+                    }
+                    authentication {
+                        header(HttpHeaderAuthentication)
+                    }
+                } else {
+                    credentials(PasswordCredentials) {
+                        username = project.findProperty("com.bright-giant.build.gitlab.username") as String
+                        password = project.findProperty("com.bright-giant.build.gitlab.token") as String
+                        // the variable resides in $GRADLE_USER_HOME/gradle.properties
+                        // https://docs.gradle.org/current/userguide/directory_layout.html#dir:gradle_user_home
+                    }
+                    authentication {
+                        basic(BasicAuthentication)
+                    }
+                }
+            }
         }
         maven {
             url "https://www.ebi.ac.uk/Tools/maven/repos/content/groups/ebi-repo/"
@@ -165,36 +194,19 @@ allprojects {
             url "http://gose.fiehnlab.ucdavis.edu:55000/content/groups/public"
             allowInsecureProtocol = true
         }
-        repositories {
-            maven {
-                url "https://gitlab.com/api/v4/groups/bright-giant/-/packages/maven"
-                name "GitLab"
-                if (System.getenv("CI_JOB_TOKEN") != null) {
-                    credentials(HttpHeaderCredentials) {
-                        name = "Job-Token"
-                        value = System.getenv("CI_JOB_TOKEN")
-                    }
-                    authentication {
-                        header(HttpHeaderAuthentication)
-                    }
-                }else{
-                    credentials(PasswordCredentials) {
-                        username = project.findProperty("com.bright-giant.build.gitlab.username") as String
-                        password = project.findProperty("com.bright-giant.build.gitlab.token") as String
-                        // the variable resides in $GRADLE_USER_HOME/gradle.properties
-                        // https://docs.gradle.org/current/userguide/directory_layout.html#dir:gradle_user_home
-                    }
-                    authentication {
-                        basic(BasicAuthentication)
-                    }
-                }
-            }
+        //TODO DEPRECATED: This reaches EOL soon and will be replaced with 'sirius-ms-maven-public',
+        // but currently Gitlab CI/CD workers refuse to connect to it.
+        maven {
+            url "https://bio.informatik.uni-jena.de/repository/libs-oss"
         }
     }
 
     dependencies {
         compileOnly "org.projectlombok:lombok:$lombok_version"
         annotationProcessor "org.projectlombok:lombok:$lombok_version"
+        // Annotations
+        api "org.jetbrains:annotations:$jetbrains_version"
+        api "io.swagger.core.v3:swagger-annotations:$swagger_version"
 
         api "it.unimi.dsi:fastutil:$fastutil_version"
 
@@ -210,10 +222,6 @@ allprojects {
 
         api "de.unijena.bioinf:jjobs-core:$jjobs_version"
         api "org.slf4j:slf4j-api:$slf4j_version"
-
-        // Annotations
-        api "org.jetbrains:annotations:$jetbrains_version"
-        api "io.swagger.core.v3:swagger-annotations:$swagger_version"
 
         //NOTE: cannot be provided as transitive dependency
         implementation "jakarta.persistence:jakarta.persistence-api:$jakarta_version"
@@ -287,30 +295,10 @@ subprojects {
                     }
                 }
             }
-
             repositories {
                 maven {
-                    url = project.findProperty("io.sirius-ms.build.artifactory.url") as String
-                    name "GitLab"
-                    if (System.getenv("CI_JOB_TOKEN") != null) {
-                        credentials(HttpHeaderCredentials) {
-                            name = "Job-Token"
-                            value = System.getenv("CI_JOB_TOKEN")
-                        }
-                        authentication {
-                            header(HttpHeaderAuthentication)
-                        }
-                    }else{
-                        credentials(PasswordCredentials) {
-                            username = project.findProperty("io.sirius-ms.build.artifactory.username") as String
-                            password = project.findProperty("io.sirius-ms.build.artifactory.token") as String
-                            // the variable resides in $GRADLE_USER_HOME/gradle.properties
-                            // https://docs.gradle.org/current/userguide/directory_layout.html#dir:gradle_user_home
-                        }
-                        authentication {
-                            basic(BasicAuthentication)
-                        }
-                    }
+                    name = "BG-maven-public"
+                    url "artifactregistry://europe-west4-maven.pkg.dev/bright-giant/maven-public"
                 }
             }
         }

@@ -53,9 +53,8 @@ public final class RetentionTime implements Ms2ExperimentAnnotation, Comparable<
     }
 
     /**
-     *
-     * @param start end start of window
-     * @param end end of window
+     * @param start   end start of window
+     * @param end     end of window
      * @param maximum maximum intensity (apex) time
      */
     @JsonCreator
@@ -68,9 +67,9 @@ public final class RetentionTime implements Ms2ExperimentAnnotation, Comparable<
              * - so I allow for this edge case (which happens super rarely anyways): retention time ranges might have zero length.
              */
             if (start > end)
-                throw new IllegalArgumentException("No proper interval given: [" + start + ", " + end + "]" );
+                throw new IllegalArgumentException("No proper interval given: [" + start + ", " + end + "]");
             if (maximum < start || maximum > end) {
-                throw new IllegalArgumentException("Given retention time middle is not in range: " + maximum + " is not in [" + start + ", " + end + "]" );
+                throw new IllegalArgumentException("Given retention time middle is not in range: " + maximum + " is not in [" + start + ", " + end + "]");
             }
         }
         this.start = start;
@@ -86,7 +85,7 @@ public final class RetentionTime implements Ms2ExperimentAnnotation, Comparable<
         if (isInterval() && other.isInterval())
             return new RetentionTime(Math.min(start, other.start), Math.max(end, other.end));
         else
-            return new RetentionTime(Math.min(start, other.start), Math.max(end, other.end), (middle+other.middle)/2);
+            return new RetentionTime(Math.min(start, other.start), Math.max(end, other.end), (middle + other.middle) / 2);
     }
 
     public boolean isInterval() {
@@ -135,10 +134,12 @@ public final class RetentionTime implements Ms2ExperimentAnnotation, Comparable<
         return new RetentionTime(Double.parseDouble(two[0].strip()), Double.parseDouble(two[1].strip()), Double.parseDouble(one[0].strip()));
     }
 
-    public record ParsedParameters(@Nullable Double from, @Nullable Double to, @Nullable String unit) {}
+    public record ParsedParameters(@Nullable Double from, @Nullable Double to, @Nullable String unit) {
+    }
 
     /**
      * Parses a string with retention time
+     *
      * @param s string in format "from[-to][unit]", such as "2.5 min" or "120s" or "1-2 sec" or "0.5". Expected units - s, sec, min
      * @return ParsedParameters map with relevant substrings parsed ("sec" unit will be substituted with "s"). Can contain nulls if parameters could not be extracted
      */
@@ -192,6 +193,7 @@ public final class RetentionTime implements Ms2ExperimentAnnotation, Comparable<
 
     /**
      * Tries to parse retention time with optional range and unit from the passed string
+     *
      * @return Optional with retention time if parsing succeeded, or empty otherwise
      */
     public static Optional<RetentionTime> tryParse(String s) {
@@ -208,7 +210,31 @@ public final class RetentionTime implements Ms2ExperimentAnnotation, Comparable<
     }
 
     public static RetentionTime NA() {
-        return  MISSING_RT_VALUE;
+        return MISSING_RT_VALUE;
+    }
+
+    public static RetentionTime of(@Nullable Double start, @Nullable Double end, @Nullable Double apex) {
+        if (nonNullOrNaN(start) && nonNullOrNaN(end) && nonNullOrNaN(apex))
+            return new RetentionTime(start, end, apex);
+        if (nonNullOrNaN(apex))
+            return new RetentionTime(apex);
+
+
+        if (nonNullOrNaN(start)) {
+            if (nonNullOrNaN(end))
+                return new RetentionTime(start, end);
+            else
+                return new RetentionTime(start);
+        }
+
+        if (nonNullOrNaN(end))
+            return new RetentionTime(end);
+
+        return null;
+    }
+
+    private static boolean nonNullOrNaN(@Nullable Double d) {
+        return d != null && !d.isNaN();
     }
 
 }

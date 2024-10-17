@@ -26,8 +26,8 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.FTree;
 import de.unijena.bioinf.babelms.json.FTJsonReader;
 import de.unijena.bioinf.ms.annotations.DataAnnotation;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
-import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
-import de.unijena.bioinf.ms.nightsky.sdk.model.*;
+import io.sirius.ms.sdk.SiriusClient;
+import io.sirius.ms.sdk.model.*;
 import it.unimi.dsi.fastutil.Pair;
 import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import org.apache.commons.lang3.function.TriFunction;
@@ -120,7 +120,7 @@ public class FormulaResultBean implements SiriusPCS, Comparable<FormulaResultBea
         registerProjectSpaceListeners();
     }
 
-    public NightSkyClient getClient() {
+    public SiriusClient getClient() {
         return getParentInstance().getClient();
     }
 

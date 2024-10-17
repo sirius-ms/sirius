@@ -40,7 +40,7 @@ public class ValenceFilter implements FormulaFilter {
 
     private final PossibleAdducts possibleAdducts;
 
-    private static final double MIN_VALENCE_DEFAULT  = -0.5d;
+    public static final double MIN_VALENCE_DEFAULT  = -0.5d;
 
     public ValenceFilter() {
         this(MIN_VALENCE_DEFAULT);
@@ -83,8 +83,8 @@ public class ValenceFilter implements FormulaFilter {
 
 
     @Override
-    public boolean isValid(MolecularFormula measuredNeutralFormula) {
-        return measuredNeutralFormula.doubledRDBE()>=MIN_VALENCE_DEFAULT; //todo ElementFilter: this seems wrong
+    public boolean isValid(MolecularFormula neutralCompoundFormula) {
+        return neutralCompoundFormula.doubledRDBE()>=MIN_VALENCE_DEFAULT; //todo ElementFilter: this seems wrong
     }
 
     @Override
@@ -105,8 +105,9 @@ public class ValenceFilter implements FormulaFilter {
     @Override
     public boolean isValid(MolecularFormula measuredNeutralFormula, PrecursorIonType ionType) {
         if (!ionType.isSupportedForFragmentationTreeComputation()) return false;
-        MolecularFormula compoundMF = ionType.measuredNeutralMoleculeToNeutralMolecule(measuredNeutralFormula);
-        if (!compoundMF.isAllPositiveOrZero()) return false;
+        if (!measuredNeutralFormula.subtract(ionType.getAdduct()).isAllPositiveOrZero()) return false;
+
+        final MolecularFormula compoundMF = ionType.measuredNeutralMoleculeToNeutralMolecule(measuredNeutralFormula);
         return compoundMF.doubledRDBE() >= minValenceInt;
     }
 }

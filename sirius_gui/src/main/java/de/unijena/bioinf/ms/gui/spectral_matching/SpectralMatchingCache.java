@@ -20,9 +20,9 @@
 
 package de.unijena.bioinf.ms.gui.spectral_matching;
 
-import de.unijena.bioinf.ms.nightsky.sdk.model.PageSpectralLibraryMatch;
-import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatch;
-import de.unijena.bioinf.ms.nightsky.sdk.model.SpectralLibraryMatchSummary;
+import io.sirius.ms.sdk.model.PageSpectralLibraryMatch;
+import io.sirius.ms.sdk.model.SpectralLibraryMatch;
+import io.sirius.ms.sdk.model.SpectralLibraryMatchSummary;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.jetbrains.annotations.Nullable;

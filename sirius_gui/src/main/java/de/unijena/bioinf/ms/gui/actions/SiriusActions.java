@@ -56,7 +56,6 @@ public enum SiriusActions {
 
     IMPORT_EXP_BATCH(ImportAction.class),
     DELETE_EXP(DeleteExperimentAction.class),
-    CHANGE_ADDCUCT_EXP(ChangeAdductAction.class),
     SUMMARIZE_EXP(SummarizeSelectedAction.class),
 
     NEW_WS(ProjectCreateAction.class),

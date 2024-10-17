@@ -27,6 +27,7 @@ import de.unijena.bioinf.ms.middleware.model.compute.InstrumentProfile;
 import de.unijena.bioinf.ms.middleware.model.features.AlignedFeature;
 import de.unijena.bioinf.ms.middleware.model.features.TraceSet;
 import de.unijena.bioinf.ms.middleware.service.projects.ProjectsProvider;
+import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -128,8 +129,8 @@ public class CompoundController {
     }
 
     @GetMapping(value = "/{compoundId}/traces", produces = MediaType.APPLICATION_JSON_VALUE)
-    public TraceSet getTraces(@PathVariable String projectId, @PathVariable String compoundId) {
-        Optional<TraceSet> traceSet = projectsProvider.getProjectOrThrow(projectId).getTraceSetForCompound(compoundId);
+    public TraceSet getCompoundTraces(@PathVariable String projectId, @PathVariable String compoundId, @RequestParam(required = false, defaultValue = "") String featureId) {
+        Optional<TraceSet> traceSet = projectsProvider.getProjectOrThrow(projectId).getTraceSetForCompound(compoundId, featureId.isBlank() ? Optional.empty() : Optional.of(featureId));
         if (traceSet.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No trace information available for project id = " + projectId + " and compound id = " + compoundId );
         else return traceSet.get();
     }

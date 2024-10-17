@@ -738,6 +738,14 @@ public class AlignedFeatureController {
         LCMS Stuff
      */
 
+    /**
+     * Returns a single quantification table row for the given feature. The quantification table contains the intensity of the feature within all
+     * samples it is contained in.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature which intensities should be read out
+     * @param type quantification type. Currently, only APEX_HEIGHT is supported, which is the intensity of the feature at its apex.
+     * @return
+     */
     @GetMapping(value = "/{alignedFeatureId}/quantification", produces = MediaType.APPLICATION_JSON_VALUE)
     public QuantificationTable getQuantification(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "APEX_HEIGHT") QuantificationTable.QuantificationType type) {
         Optional<QuantificationTable> quantificationForAlignedFeature = projectsProvider.getProjectOrThrow(projectId).getQuantificationForAlignedFeature(alignedFeatureId, type);
@@ -745,9 +753,22 @@ public class AlignedFeatureController {
         else return quantificationForAlignedFeature.get();
     }
 
+    /**
+     * Returns the traces of the given feature. A trace consists of m/z and intensity values over the retention
+     * time axis. All the returned traces are 'projected', which means they refer not to the original retention time axis,
+     * but to a recalibrated axis. This means the data points in the trace are not exactly the same as in the raw data.
+     * However, this also means that all traces can be directly compared against each other, as they all lie in the same
+     * retention time axis.
+     * By default, this method only returns traces of samples the aligned feature appears in. When includeAll is set,
+     * it also includes samples in which the same trace appears in.
+     * @param projectId project-space to read from.
+     * @param alignedFeatureId feature which intensities should be read out
+     * @param includeAll when true, return all samples that belong to the same merged trace. when false, only return samples which contain the aligned feature.
+     * @return
+     */
     @GetMapping(value = "/{alignedFeatureId}/traces", produces = MediaType.APPLICATION_JSON_VALUE)
-    public TraceSet getTraces(@PathVariable String projectId, @PathVariable String alignedFeatureId) {
-        Optional<TraceSet> traceSet = projectsProvider.getProjectOrThrow(projectId).getTraceSetForAlignedFeature(alignedFeatureId);
+    public TraceSet getTraces(@PathVariable String projectId, @PathVariable String alignedFeatureId, @RequestParam(defaultValue = "false") boolean includeAll ) {
+        Optional<TraceSet> traceSet = projectsProvider.getProjectOrThrow(projectId).getTraceSetForAlignedFeature(alignedFeatureId, includeAll);
         if (traceSet.isEmpty()) throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No trace information available for " + idString(projectId, alignedFeatureId) );
         else return traceSet.get();
     }

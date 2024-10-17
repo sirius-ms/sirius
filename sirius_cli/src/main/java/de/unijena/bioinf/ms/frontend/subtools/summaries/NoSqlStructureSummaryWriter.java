@@ -99,7 +99,7 @@ class NoSqlStructureSummaryWriter extends SummaryTable {
 
         row.add(String.valueOf(fc.getFormulaId()));
         row.add(String.valueOf(f.getAlignedFeatureId()));
-        row.add(Objects.requireNonNullElse(f.getExternalFeatureId(), String.valueOf(f.getAlignedFeatureId())));
+        row.add(getMappingIdOrFallback(f));
         row.add(f.getDataQuality());
 
         writer.writeRow(row);

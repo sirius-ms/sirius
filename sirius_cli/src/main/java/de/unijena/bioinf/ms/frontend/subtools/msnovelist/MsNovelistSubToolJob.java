@@ -118,7 +118,7 @@ public class MsNovelistSubToolJob extends InstanceJob {
         //needed to create bayes net scoring... better solution possible
         //todo msnovelist does just need a scorer so no need for the predictor if the scring function is initialized manually in MSNovelist job
         final @NotNull CSIPredictor csi = NetUtils.tryAndWait(() -> (CSIPredictor)
-                        ApplicationCore.WEB_API.getStructurePredictor(inst.getIonType().getCharge()),
+                        ApplicationCore.WEB_API.getStructurePredictor(inst.getCharge()),
                 this::checkForInterruption);
 
         updateProgress(45);
@@ -196,11 +196,6 @@ public class MsNovelistSubToolJob extends InstanceJob {
     protected void cleanup() {
         super.cleanup();
         msnJobs = null;
-    }
-
-    @Override
-    public boolean needsProperIonizationMode() {
-        return true;
     }
 
     private WebJJob<MsNovelistJobInput, ?, MsNovelistJobOutput, ?> buildAndSubmitRemote(@NotNull final FCandidate<?> ir, int specHash) {

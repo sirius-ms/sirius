@@ -19,4 +19,6 @@
  */
 allprojects {
     version = '1.1.0'
+    // PUBLISHING DISABLED
+    tasks.withType(PublishToMavenRepository).configureEach { it.enabled = false }
 }

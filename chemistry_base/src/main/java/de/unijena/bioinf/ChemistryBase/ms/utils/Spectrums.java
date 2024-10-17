@@ -4,7 +4,7 @@
  *  This file is part of the SIRIUS library for analyzing MS and MS/MS data
  *
  *  Copyright (C) 2013-2020 Kai Dührkop, Markus Fleischauer, Marcus Ludwig, Martin A. Hoffman and Sebastian Böcker,
- *  Chair of Bioinformatics, Friedrich-Schilller University.
+ *  Chair of Bioinformatics, Friedrich-Schiller University.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -33,6 +33,7 @@ import org.apache.commons.lang3.Range;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -729,7 +730,7 @@ public class Spectrums {
             if (ionTypes[k].isIntrinsicalCharged()) {
                 intrinsic = k;
                 intrinsicType = ionTypes[k];
-            } else if (ionTypes[k].isPlainProtonationOrDeprotonation()) {
+            } else if (ionTypes[k].isPlainProtonationOrDeprotonation() && !ionTypes[k].isMultimere()) {
                 protonated = k;
                 protonation = ionTypes[k];
             }
@@ -742,17 +743,19 @@ public class Spectrums {
 
         HashMap<PrecursorIonType, Set<PrecursorIonType>> adductDiffs = new HashMap<>();
         for (int i = 0; i < numberOfIons; i++) {
-            final PrecursorIonType removedIT = ionTypes[i];
+            final PrecursorIonType possiblePrecursorAdduct = ionTypes[i];
             for (int j = 0; j < numberOfIons; j++) {
-                final PrecursorIonType addedIT = ionTypes[j];
+                final PrecursorIonType possibleRelatedAdduct = ionTypes[j];
                 if (i == j) continue;
-                if (removedIT.equals(lighterType) && addedIT.equals(heavierType))
+                if (possiblePrecursorAdduct.equals(lighterType) && possibleRelatedAdduct.equals(heavierType))
                     continue; //probably just +1 isotope peak
-                double diffAdductMass = addedIT.getModificationMass() - (removedIT.getModificationMass());
-                int idx = Spectrums.binarySearch(spectrum, ionMass + diffAdductMass, deviation);
+                double possibleRelatedAdductMass = possibleRelatedAdduct.neutralMassToPrecursorMass(possiblePrecursorAdduct.precursorMassToNeutralMass(ionMass));
+                if (Math.abs(possibleRelatedAdductMass - ionMass) < 1e-3)
+                    continue;
+                int idx = Spectrums.binarySearch(spectrum, possibleRelatedAdductMass, deviation);
                 if (idx < 0) continue; // no corresponding mass found;
-                Set<PrecursorIonType> addedList = adductDiffs.computeIfAbsent(removedIT, k -> new HashSet<>());
-                addedList.add(addedIT);
+                Set<PrecursorIonType> addedList = adductDiffs.computeIfAbsent(possiblePrecursorAdduct, k -> new HashSet<>());
+                addedList.add(possibleRelatedAdduct);
             }
         }
 
@@ -1681,11 +1684,14 @@ public class Spectrums {
         return new OrderedSpectrumDelegate<>(spec);
     }
 
+    public static final DecimalFormat THREE_DIGITS = new DecimalFormat("#.###");
+    public static final DecimalFormat FOUR_DIGITS = new DecimalFormat("#.####");
+
     public static void writePeaks(BufferedWriter writer, Spectrum spec) throws IOException {
         for (int k = 0; k < spec.size(); ++k) {
-            writer.write(String.valueOf(spec.getMzAt(k)));
+            writer.write(FOUR_DIGITS.format(spec.getMzAt(k)));
             writer.write(" ");
-            writer.write(String.valueOf(spec.getIntensityAt(k)));
+            writer.write(THREE_DIGITS.format(spec.getIntensityAt(k)));
             writer.newLine();
         }
     }

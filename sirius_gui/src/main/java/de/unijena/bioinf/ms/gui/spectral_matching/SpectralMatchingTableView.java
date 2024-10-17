@@ -31,8 +31,8 @@ import de.unijena.bioinf.ms.gui.configs.Icons;
 import de.unijena.bioinf.ms.gui.table.*;
 import de.unijena.bioinf.ms.gui.utils.NameFilterRangeSlider;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
-import de.unijena.bioinf.ms.nightsky.sdk.model.BasicSpectrum;
-import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
+import io.sirius.ms.sdk.model.BasicSpectrum;
+import io.sirius.ms.sdk.model.DBLink;
 import de.unijena.bioinf.projectspace.InstanceBean;
 import org.slf4j.LoggerFactory;
 

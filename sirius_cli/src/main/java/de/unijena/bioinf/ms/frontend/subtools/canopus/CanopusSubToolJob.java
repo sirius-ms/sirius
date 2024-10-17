@@ -92,11 +92,6 @@ public class CanopusSubToolJob extends InstanceJob {
         updateProgress(97);
     }
 
-    @Override
-    public boolean needsProperIonizationMode() {
-        return true;
-    }
-
     private WebJJob<CanopusJobInput, ?, CanopusResult, ?> buildAndSubmitRemote(@NotNull final FCandidate<?> ir, int specHash)  {
         try {
             return ApplicationCore.WEB_API.submitCanopusJob(

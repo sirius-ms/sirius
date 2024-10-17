@@ -3,7 +3,7 @@ package de.unijena.bioinf.ms.gui.lcms_viewer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unijena.bioinf.ms.frontend.core.SiriusProperties;
 import de.unijena.bioinf.ms.gui.utils.FxTaskList;
-import de.unijena.bioinf.ms.nightsky.sdk.model.TraceSet;
+import io.sirius.ms.sdk.model.TraceSet;
 import javafx.concurrent.Worker;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Scene;

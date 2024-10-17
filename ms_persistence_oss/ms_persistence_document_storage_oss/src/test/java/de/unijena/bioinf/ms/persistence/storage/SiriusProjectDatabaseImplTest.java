@@ -297,7 +297,7 @@ public class SiriusProjectDatabaseImplTest {
             AlignedFeatures feature = db.getStorage().findAllStr(AlignedFeatures.class).findFirst().orElseThrow();
             assertNull(feature.getDetectedAdducts());
 
-            DetectedAdducts adducts = new DetectedAdducts().add(
+            DetectedAdducts adducts = new DetectedAdducts().addAll(
                     DetectedAdduct.builder().adduct(PrecursorIonType.fromString("[M+H]+")).score(.6)
                             .source(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.MS1_PREPROCESSOR).build(),
                     DetectedAdduct.builder().adduct(PrecursorIonType.fromString("[M-H20+H]+")).score(.3)
@@ -315,11 +315,11 @@ public class SiriusProjectDatabaseImplTest {
             }
 
             {//modify adducts on feature
-                feature.getDetectedAdducts().remove(PrecursorIonType.fromString("[M-H20+H]+"));
+                feature.getDetectedAdducts().removeAllWithAdduct(PrecursorIonType.fromString("[M-H20+H]+"));
                 assertEquals(1, db.getStorage().upsert(feature), "Remove adduct from Feature");
                 assertEquals(feature.getDetectedAdducts(), db.getStorage().getByPrimaryKey(feature.getAlignedFeatureId(), feature.getClass()).map(AlignedFeatures::getDetectedAdducts).orElse(null));
 
-                feature.getDetectedAdducts().removeBySource(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN);
+                feature.getDetectedAdducts().removeAllWithSource(de.unijena.bioinf.ChemistryBase.ms.DetectedAdducts.Source.LCMS_ALIGN);
                 assertEquals(1, db.getStorage().upsert(feature), "Remove adduct by source from Feature");
                 assertEquals(feature.getDetectedAdducts(), db.getStorage().getByPrimaryKey(feature.getAlignedFeatureId(), feature.getClass()).map(AlignedFeatures::getDetectedAdducts).orElse(null));
             }

@@ -65,7 +65,7 @@ public class DatabaseLabel implements Comparable<DatabaseLabel> {
     }
 
     public String getToolTipOrNull() {
-        return CustomDataSources.getSourceFromNameOpt(name())
+        return CustomDataSources.getSourceFromNameOpt(sourceName)
                 .filter(CustomDataSources.Source::noCustomSource)
                 .map(s -> ((CustomDataSources.EnumSource) s).source())
                 .map(ds -> ds.publication).map(pub -> {
@@ -78,7 +78,7 @@ public class DatabaseLabel implements Comparable<DatabaseLabel> {
     }
 
     public boolean hasLinks() {
-        return CustomDataSources.getSourceFromNameOpt(name()).map(s ->
-                !(values == null || values.length == 0 || s.URI() == null)).orElse(false);
+        return CustomDataSources.getSourceFromNameOpt(sourceName).map(s ->
+                values != null && values.length > 0 && s.URI() != null).orElse(false);
     }
 }

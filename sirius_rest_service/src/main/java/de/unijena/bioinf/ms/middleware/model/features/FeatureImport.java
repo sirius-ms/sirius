@@ -20,6 +20,7 @@
 
 package de.unijena.bioinf.ms.middleware.model.features;
 
+import de.unijena.bioinf.ChemistryBase.utils.DataQuality;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -61,6 +62,14 @@ public class FeatureImport {
     protected Double rtStartSeconds;
     @Schema(nullable = true)
     protected Double rtEndSeconds;
+    @Schema(nullable = true)
+    protected Double rtApexSeconds;
+
+    /**
+     * A optional feature quality flag that can be used to filter features to be shown in the gui or to be considered for further analysis.
+     */
+    @Schema(nullable = true, requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+    DataQuality dataQuality;
 
 
     /**

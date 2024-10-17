@@ -54,7 +54,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 /**
  * Manage and execute command line (toolchain) runs in the background as if you would have started it via the CLI.
@@ -75,6 +74,7 @@ public final class BackgroundRuns {
     private final ReadWriteUpdateLock computeStateLock = new ReentrantReadWriteUpdateLock();
     private final Map<Integer, BackgroundRunJob> finishedRuns = new HashMap<>();
     private final Map<Integer, BackgroundRunJob> runningRuns = new HashMap<>();
+    //todo remove old project space support an add type to long!
     private final Set<String> computingInstances = new HashSet<>();
     //compute state lock end
 
@@ -282,11 +282,11 @@ public final class BackgroundRuns {
     private BackgroundRunJob submitRunAndLockInstances(final BackgroundRunJob runToSubmit) {
         return withWriteLock(() -> {
             log.info("Locking Instances for Computation...");
-            Iterable<? extends Instance> instances = null;
+            List<String> fids = null;
             try {
-                instances = runToSubmit.getInstances();
-                if (instances != null)
-                    instances.forEach(i -> computingInstances.add(i.getId()));
+                fids = runToSubmit.getAffectedFeatureIds();
+                if (fids != null)
+                    computingInstances.addAll(fids);
                 log.info("...All instances locked!");
                 if (SiriusJobs.getGlobalJobManager() instanceof SwingJobManager) //todo hacky. get rid of this swing job dependency by solving job progress via api
                     Jobs.submit(runToSubmit, runToSubmit::getName, psm::getName, runToSubmit::getDescription);
@@ -295,8 +295,8 @@ public final class BackgroundRuns {
                 return runToSubmit;
             } catch (Exception e) {
                 // just in case something goes wrong during submission, then  we do not want to have locked instances
-                if (instances != null)
-                    instances.forEach(i -> computingInstances.add(i.getId()));
+                if (fids != null)
+                    computingInstances.addAll(fids);
                 throw e;
             }
         });
@@ -319,6 +319,24 @@ public final class BackgroundRuns {
         @Nullable
         private Iterable<? extends Instance> instances;
 
+        @Nullable
+        private List<String> affectedFeatureIds = null;
+
+        @Nullable
+        private List<String> affectedCompoundIds = null;
+
+        public List<String> getAffectedFeatureIds() {
+            if (affectedFeatureIds == null)
+                return List.of();
+            return affectedFeatureIds;
+        }
+
+        public List<String> getAffectedCompoundIds() {
+            if (affectedCompoundIds == null)
+                return List.of();
+            return affectedCompoundIds;
+        }
+
         private BackgroundRunJob(@NotNull Workflow computation, @Nullable Iterable<? extends Instance> instances, int runId, String command, @Nullable String description, String prefix) {
             super(JobType.SCHEDULER);
             this.runId = runId;
@@ -327,6 +345,7 @@ public final class BackgroundRuns {
             this.instances = instances;
             this.description = description;
             this.prefix = (prefix == null || prefix.isBlank()) ? "BackgroundJob" : prefix;
+            extractIds(instances);
         }
 
 
@@ -383,11 +402,16 @@ public final class BackgroundRuns {
                     logInfo("All Instances unlocked!");
                 } else if (computation instanceof ToolChainWorkflow) {
                     logInfo("Collecting imported compounds...");
-                    instances = ((ToolChainWorkflow) computation).getPreprocessingJob().result();
+                    extractIds(((ToolChainWorkflow) computation).getPreprocessingJob().result());
                     logInfo("Imported compounds collected...");
                 } else if (computation instanceof ImportPeaksFomResourceWorkflow) {
                     logInfo("Collecting imported compounds...");
-                    instances = ((ImportPeaksFomResourceWorkflow) computation).getImportedInstances();
+                    extractIds(((ImportPeaksFomResourceWorkflow) computation).getImportedInstances());
+                    logInfo("Imported compounds collected...");
+                } else if (computation instanceof ImportMsFromResourceWorkflow) {
+                    logInfo("Collecting imported compounds...");
+                    affectedFeatureIds = ((ImportMsFromResourceWorkflow) computation).getImportedFeatureIds().longStream().mapToObj(String::valueOf).toList();
+                    affectedCompoundIds = ((ImportMsFromResourceWorkflow) computation).getImportedCompoundIds().longStream().mapToObj(String::valueOf).toList();
                     logInfo("Imported compounds collected...");
                 }
                 logInfo("Freeing up memory...");
@@ -401,6 +425,21 @@ public final class BackgroundRuns {
 
         }
 
+        private void extractIds(@Nullable final Iterable<? extends Instance> instances) {
+            if (instances == null)
+                return;
+
+            LinkedHashSet<String> cids = new LinkedHashSet<>();
+            List<String> fids = new ArrayList<>();
+            instances.forEach(i -> {
+                fids.add(i.getId());
+                i.getCompoundId().ifPresent(cids::add);
+            });
+
+            affectedFeatureIds = fids;
+            affectedCompoundIds = new ArrayList<>(cids);
+        }
+
         @Override
         public void cancel(boolean mayInterruptIfRunning) {
             if (mayInterruptIfRunning)
@@ -408,16 +447,6 @@ public final class BackgroundRuns {
             super.cancel(false);
             if (computation != null)
                 computation.cancel();
-        }
-
-        public @Nullable Iterable<? extends Instance> getInstances() {
-            return instances;
-        }
-
-        public @NotNull Stream<? extends Instance> getInstancesStr() {
-            if (instances == null)
-                return Stream.empty();
-            return StreamSupport.stream(instances.spliterator(), false);
         }
     }
 

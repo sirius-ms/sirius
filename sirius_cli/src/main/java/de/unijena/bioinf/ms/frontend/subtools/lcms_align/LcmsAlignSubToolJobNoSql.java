@@ -65,6 +65,7 @@ import lombok.Getter;
 import org.apache.commons.io.function.IOSupplier;
 import org.apache.commons.lang3.time.StopWatch;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -80,14 +81,17 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
     private final IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier;
 
-    private final Set<PrecursorIonType> ionTypes;
-
     private final TraceSegmentationStrategy mergedTraceSegmenter;
 
     private final boolean alignRuns;
 
     @Getter
-    private LongList importedCompounds = new LongArrayList();
+    @Nullable
+    private LongList importedFeatureIds = null;
+
+    @Getter
+    @Nullable
+    private LongList importedCompoundIds = null;
 
     private final boolean saveImportedCompounds;
 
@@ -96,15 +100,14 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
     private long totalProgress;
 
 
-    public LcmsAlignSubToolJobNoSql(InputFilesOptions input, @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier, LcmsAlignOptions options, Set<PrecursorIonType> ionTypes) {
-        this(input.msInput.lcmsFiles.keySet().stream().sorted().collect(Collectors.toList()), projectSupplier, options, ionTypes);
+    public LcmsAlignSubToolJobNoSql(InputFilesOptions input, @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier, LcmsAlignOptions options) {
+        this(input.msInput.lcmsFiles.keySet().stream().sorted().collect(Collectors.toList()), projectSupplier, options);
     }
 
-    public LcmsAlignSubToolJobNoSql(@NotNull List<Path> inputFiles, @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier, LcmsAlignOptions options, Set<PrecursorIonType> ionTypes) {
+    public LcmsAlignSubToolJobNoSql(@NotNull List<Path> inputFiles, @NotNull IOSupplier<? extends NoSQLProjectSpaceManager> projectSupplier, LcmsAlignOptions options) {
         super();
         this.inputFiles = inputFiles;
         this.projectSupplier = projectSupplier;
-        this.ionTypes = ionTypes;
         this.alignRuns = !options.noAlign;
         this.mergedTraceSegmenter = new PersistentHomology(switch (options.smoothing) {
             case AUTO -> inputFiles.size() < 3 ? new GaussFilter(0.5) : new NoFilter();
@@ -126,13 +129,11 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             double noise,
             double persistence,
             double merge,
-            Set<PrecursorIonType> ionTypes,
             boolean saveImportedCompounds
     ) {
         super();
         this.inputFiles = inputFiles;
         this.projectSupplier = projectSupplier;
-        this.ionTypes = ionTypes;
         this.alignRuns = alignRuns;
         this.mergedTraceSegmenter = new PersistentHomology(switch (filter) {
             case AUTO -> inputFiles.size() < 3 ? new GaussFilter(0.5) : new NoFilter();
@@ -195,6 +196,7 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
             updateProgress(totalProgress, progress, "No features");
             return;
         }
+        importedFeatureIds = processing.getImportedFeatureIds();
 
         updateProgress(totalProgress, ++progress,"Detecting adducts");
         System.out.printf("\nMerged Run: %s\n\n", merged.getRun().getName());
@@ -222,56 +224,21 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         LoggerFactory.getLogger(LcmsAlignSubToolJobNoSql.class).info("Use " + allowedAdductRtDeviation + " s as allowed deviation between adducts" );
 
         AdductManager adductManager = new AdductManager(merged.getPolarity());
-        if (merged.getPolarity()>0){
-            adductManager.add(Set.of(PrecursorIonType.getPrecursorIonType("[M+H]+"), PrecursorIonType.getPrecursorIonType("[M+Na]+"),
-                            PrecursorIonType.getPrecursorIonType("[M+K]+"),  PrecursorIonType.getPrecursorIonType("[M+NH3+H]+"),
-                            PrecursorIonType.getPrecursorIonType("[M + FA + H]+"),
-                            PrecursorIonType.getPrecursorIonType("[M + ACN + H]+"),
-
-                            PrecursorIonType.getPrecursorIonType("[M - H2O + H]+"),
-
-                            PrecursorIonType.getPrecursorIonType("[2M + Na]+"),
-                            PrecursorIonType.getPrecursorIonType("[2M + H]+"),
-                            PrecursorIonType.getPrecursorIonType("[2M + K]+")
-                    )
-            );
-        } else {
-            adductManager.add(Set.of(PrecursorIonType.getPrecursorIonType("[M-H]-"), PrecursorIonType.getPrecursorIonType("[M+Cl]-"),
-                            PrecursorIonType.getPrecursorIonType("[M+Br]-"),
-                            PrecursorIonType.getPrecursorIonType("[2M + H]-"),
-                            PrecursorIonType.getPrecursorIonType("[2M + Br]-"),
-                            PrecursorIonType.getPrecursorIonType("[2M + Cl]-"),
-                            PrecursorIonType.fromString("[M+Na-2H]-"),
-                            PrecursorIonType.fromString("[M + CH2O2 - H]-"),
-                            PrecursorIonType.fromString("[M + C2H4O2 - H]-"),
-                            PrecursorIonType.fromString("[M + H2O - H]-"),
-                            PrecursorIonType.fromString("[M - H3N - H]-"),
-                            PrecursorIonType.fromString("[M - CO2 - H]-"),
-                            PrecursorIonType.fromString("[M - CH2O3 - H]-"),
-                            PrecursorIonType.fromString("[M - CH3 - H]-")
-                    )
-            );
-        }
 
         // -_- na toll, die Liste ist nicht identisch mit den Configs. Macht irgendwie auch Sinn. Ich will aber ungern
         // Multimere in die AductSettings reinpacken, das zu debuggen wird die Hoelle. Machen wir ein andern Mal.
-        adductManager.add(((merged.getPolarity()<0) ? PeriodicTable.getInstance().getNegativeAdducts() : PeriodicTable.getInstance().getPositiveAdducts()).stream().filter(PrecursorIonType::isMultimere).collect(Collectors.toSet()));
         ProjectSpaceTraceProvider provider = new ProjectSpaceTraceProvider(ps);
         {
-            AdductNetwork network = new AdductNetwork(provider,
-                    store.findAllStr(AlignedFeatures.class)
+            final LongList importedCids = new LongArrayList();
+            AlignedFeatures[] alignedFeatures = store.findAllStr(AlignedFeatures.class)
                             .filter(f -> f.getApexIntensity() != null)
                             .filter(AbstractFeature::isRTInterval)
-                            .toArray(AlignedFeatures[]::new),
-                    adductManager, allowedAdductRtDeviation);
+                    .toArray(AlignedFeatures[]::new);
+            AdductNetwork network = new AdductNetwork(provider,alignedFeatures, adductManager, allowedAdductRtDeviation);
             network.buildNetworkFromMassDeltas(SiriusJobs.getGlobalJobManager());
-            network.assign(SiriusJobs.getGlobalJobManager(), new OptimalAssignmentViaBeamSearch(), merged.getPolarity(), (compound) -> {
-                try {
-                    groupFeaturesToCompound(store, compound);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            });
+            network.assign(SiriusJobs.getGlobalJobManager(), new OptimalAssignmentViaBeamSearch(), merged.getPolarity(),
+                    (compound) -> groupFeaturesToCompound(store, compound, importedCids));
+            importedCompoundIds = importedCids;
         }
 
         updateProgress(totalProgress, ++progress, "Assessing data quality");
@@ -327,7 +294,9 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
 
     @Override
     protected NoSQLProjectSpaceManager compute() throws Exception {
-        importedCompounds.clear();
+        importedFeatureIds = null;
+        importedCompoundIds = null;
+
         NoSQLProjectSpaceManager space = projectSupplier.get();
         SiriusProjectDatabaseImpl<? extends Database<?>> ps = space.getProject();
         Database<?> store = space.getProject().getStorage();
@@ -350,29 +319,34 @@ public class LcmsAlignSubToolJobNoSql extends PreprocessingJob<ProjectSpaceManag
         return space;
     }
 
-    private static void groupFeaturesToCompound(Database<?> ps, Compound compound) throws IOException {
+    private static void groupFeaturesToCompound(Database<?> ps, Compound compound, final LongList importedCompoundIds) throws IOException {
         ps.insert(compound);
-        for (CorrelatedIonPair pair : compound.getCorrelatedIonPairs().get()) {
-            ps.insert(pair);
+        if (importedCompoundIds != null)
+            importedCompoundIds.add(compound.getCompoundId());
+
+        if (compound.getCorrelatedIonPairs().isPresent()){
+            for (CorrelatedIonPair pair : compound.getCorrelatedIonPairs().get()) {
+                ps.insert(pair);
+            }
         }
+
         List<AlignedFeatures> adducts = compound.getAdductFeatures().get();
         for (AlignedFeatures f : adducts) {
-            if (f.getCompoundId() == null || f.getCompoundId() != compound.getCompoundId()) {
+            if (f.getCompoundId() == null || f.getCompoundId() != compound.getCompoundId())
                 f.setCompoundId(compound.getCompoundId());
-                ps.upsert(f);
-            }
+            ps.upsert(f);
         }
         final SimpleMutableSpectrum ms1Spectra = new SimpleMutableSpectrum();
         List<MSData> msDataList = new ArrayList<>();
-        for (int f = 0; f < adducts.size(); ++f) {
-            List<MSData> ms = ps.findStr(Filter.where("alignedFeatureId").eq(adducts.get(f).getAlignedFeatureId()), MSData.class).toList();
+        for (AlignedFeatures adduct : adducts) {
+            List<MSData> ms = ps.findStr(Filter.where("alignedFeatureId").eq(adduct.getAlignedFeatureId()), MSData.class).toList();
             if (!ms.isEmpty()) {
                 MSData m = ms.get(0);
                 msDataList.add(m);
                 if (m.getIsotopePattern() != null) {
                     SimpleSpectrum b = m.getIsotopePattern();
                     for (int i = 0; i < b.size(); ++i) {
-                        ms1Spectra.addPeak(b.getMzAt(i), b.getIntensityAt(i) * adducts.get(f).getApexIntensity());
+                        ms1Spectra.addPeak(b.getMzAt(i), b.getIntensityAt(i) * adduct.getApexIntensity());
                     }
                 }
             }

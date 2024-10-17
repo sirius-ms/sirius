@@ -21,7 +21,7 @@ package de.unijena.bioinf.ms.gui.fingerid;
 
 import de.unijena.bioinf.chemdb.DataSource;
 import de.unijena.bioinf.ms.gui.table.SiriusTableFormat;
-import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
+import io.sirius.ms.sdk.model.DBLink;
 
 import java.util.function.Function;
 import java.util.stream.Collectors;

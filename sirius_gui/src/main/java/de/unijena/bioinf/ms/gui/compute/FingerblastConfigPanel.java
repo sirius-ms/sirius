@@ -27,7 +27,7 @@ import de.unijena.bioinf.ms.gui.utils.GuiUtils;
 import de.unijena.bioinf.ms.gui.utils.TextHeaderBoxPanel;
 import de.unijena.bioinf.ms.gui.utils.TwoColumnPanel;
 import de.unijena.bioinf.ms.gui.utils.jCheckboxList.JCheckBoxList;
-import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
+import io.sirius.ms.sdk.model.SearchableDatabase;
 import de.unijena.bioinf.ms.properties.PropertyManager;
 import org.jetbrains.annotations.Nullable;
 
@@ -85,7 +85,7 @@ public class FingerblastConfigPanel extends SubToolConfigPanel<FingerblastOption
 
         checkBoxPanel.setPreferredSize(new Dimension(confidenceModeBox.getPreferredSize().width, checkBoxPanel.getPreferredSize().height));  // Prevent resizing on unchecking checkbox
 
-        add(new TextHeaderBoxPanel("General", additionalOptions));
+        add(new TextHeaderBoxPanel("Search strategy", additionalOptions));
         add(structureSearchStrategy);
 
         parameterBindings.put("ExpansiveSearchConfidenceMode.confidenceScoreSimilarityMode", () -> {

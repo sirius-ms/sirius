@@ -30,7 +30,7 @@ import de.unijena.bioinf.ChemistryBase.ms.ft.Ms2IsotopePattern;
 import de.unijena.bioinf.ChemistryBase.ms.utils.WrapperSpectrum;
 import de.unijena.bioinf.fragmenter.*;
 import de.unijena.bioinf.jjobs.BasicMasterJJob;
-import de.unijena.bioinf.ms.nightsky.sdk.model.*;
+import io.sirius.ms.sdk.model.*;
 import lombok.SneakyThrows;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

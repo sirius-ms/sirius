@@ -43,7 +43,7 @@ import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchList;
 import de.unijena.bioinf.ms.gui.table.ActionList;
 import de.unijena.bioinf.ms.gui.utils.PlaceholderTextField;
 import de.unijena.bioinf.ms.gui.utils.ToolbarToggleButton;
-import de.unijena.bioinf.ms.nightsky.sdk.model.DBLink;
+import io.sirius.ms.sdk.model.DBLink;
 import de.unijena.bioinf.rest.ProxyManager;
 import okhttp3.Request;
 import okhttp3.Response;
