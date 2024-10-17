@@ -24,11 +24,11 @@ Add tag category to the project. Category name must not exist in the project.
 
 ```java
 // Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.TagCategoriesApi;
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.TagCategoriesApi;
 
 public class Example {
     public static void main(String[] args) {
@@ -92,11 +92,11 @@ Delete tag categories with the given names from the specified project-space.
 
 ```java
 // Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.TagCategoriesApi;
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.TagCategoriesApi;
 
 public class Example {
     public static void main(String[] args) {
@@ -159,11 +159,11 @@ Get all tag categories in the given project-space.
 
 ```java
 // Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.TagCategoriesApi;
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.TagCategoriesApi;
 
 public class Example {
     public static void main(String[] args) {
@@ -225,11 +225,11 @@ Get tag categories by type in the given project-space.
 
 ```java
 // Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.TagCategoriesApi;
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.TagCategoriesApi;
 
 public class Example {
     public static void main(String[] args) {
@@ -293,11 +293,11 @@ Get tag category by name in the given project-space.
 
 ```java
 // Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.TagCategoriesApi;
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.TagCategoriesApi;
 
 public class Example {
     public static void main(String[] args) {

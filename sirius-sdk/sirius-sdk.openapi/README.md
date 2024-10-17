@@ -1,4 +1,4 @@
-# sirius_nightsky_sdk
+# sirius-sdk.openapi
 
 SIRIUS Nightsky API
 
@@ -40,9 +40,9 @@ Add this dependency to your project's POM:
 
 ```xml
 <dependency>
-  <groupId>de.unijena.bioinf.ms</groupId>
-  <artifactId>sirius_nightsky_sdk</artifactId>
-  <version>6.0.6-SNAPSHOT</version>
+  <groupId>io.sirius-ms</groupId>
+  <artifactId>sirius-sdk.openapi</artifactId>
+  <version>6.1.0-SNAPSHOT</version>
   <scope>compile</scope>
 </dependency>
 ```
@@ -53,12 +53,12 @@ Add this dependency to your project's build file:
 
 ```groovy
   repositories {
-    mavenCentral()     // Needed if the 'sirius_nightsky_sdk' jar has been published to maven central.
-    mavenLocal()       // Needed if the 'sirius_nightsky_sdk' jar has been published to the local maven repo.
+    mavenCentral()     // Needed if the 'sirius-sdk.openapi' jar has been published to maven central.
+    mavenLocal()       // Needed if the 'sirius-sdk.openapi' jar has been published to the local maven repo.
   }
 
   dependencies {
-     implementation "de.unijena.bioinf.ms:sirius_nightsky_sdk:6.0.6-SNAPSHOT"
+     implementation "io.sirius-ms:sirius-sdk.openapi:6.1.0-SNAPSHOT"
   }
 ```
 
@@ -72,7 +72,7 @@ mvn clean package
 
 Then manually install the following JARs:
 
-- `target/sirius_nightsky_sdk-6.0.6-SNAPSHOT.jar`
+- `target/sirius-sdk.openapi-6.1.0-SNAPSHOT.jar`
 - `target/lib/*.jar`
 
 ## Getting Started
@@ -81,10 +81,10 @@ Please follow the [installation](#installation) instruction and execute the foll
 
 ```java
 
-import de.unijena.bioinf.ms.nightsky.sdk.client.*;
-import de.unijena.bioinf.ms.nightsky.sdk.client.auth.*;
-import de.unijena.bioinf.ms.nightsky.sdk.model.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.ActuatorApi;
+import io.sirius.ms.sdk.client.*;
+import io.sirius.ms.sdk.client.auth.*;
+import io.sirius.ms.sdk.model.*;
+import io.sirius.ms.sdk.api.ActuatorApi;
 
 public class ActuatorApiExample {
 
@@ -119,9 +119,9 @@ Class | Method | HTTP request | Description
 *CompoundsApi* | [**addCompounds**](docs/CompoundsApi.md#addCompounds) | **POST** /api/projects/{projectId}/compounds | Import Compounds and its contained features.
 *CompoundsApi* | [**deleteCompound**](docs/CompoundsApi.md#deleteCompound) | **DELETE** /api/projects/{projectId}/compounds/{compoundId} | Delete compound (group of ion identities) with the given identifier (and the included features) from the  specified project-space.
 *CompoundsApi* | [**getCompound**](docs/CompoundsApi.md#getCompound) | **GET** /api/projects/{projectId}/compounds/{compoundId} | Get compound (group of ion identities) with the given identifier from the specified project-space.
+*CompoundsApi* | [**getCompoundTraces**](docs/CompoundsApi.md#getCompoundTraces) | **GET** /api/projects/{projectId}/compounds/{compoundId}/traces | 
 *CompoundsApi* | [**getCompounds**](docs/CompoundsApi.md#getCompounds) | **GET** /api/projects/{projectId}/compounds | List of all available compounds (group of ion identities) in the given project-space.
 *CompoundsApi* | [**getCompoundsPaged**](docs/CompoundsApi.md#getCompoundsPaged) | **GET** /api/projects/{projectId}/compounds/page | Page of available compounds (group of ion identities) in the given project-space.
-*CompoundsApi* | [**getTraces**](docs/CompoundsApi.md#getTraces) | **GET** /api/projects/{projectId}/compounds/{compoundId}/traces | 
 *ExperimentalApi* | [**getAlignedFeaturesQuality**](docs/ExperimentalApi.md#getAlignedFeaturesQuality) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quality-report | Get data quality information for feature (aligned over runs) with the given identifier from the specified project-space.
 *FeaturesApi* | [**addAlignedFeatures**](docs/FeaturesApi.md#addAlignedFeatures) | **POST** /api/projects/{projectId}/aligned-features | Import (aligned) features into the project.
 *FeaturesApi* | [**deleteAlignedFeature**](docs/FeaturesApi.md#deleteAlignedFeature) | **DELETE** /api/projects/{projectId}/aligned-features/{alignedFeatureId} | Delete feature (aligned over runs) with the given identifier from the specified project-space.
@@ -145,7 +145,7 @@ Class | Method | HTTP request | Description
 *FeaturesApi* | [**getIsotopePatternAnnotation**](docs/FeaturesApi.md#getIsotopePatternAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/isotope-pattern | Returns Isotope pattern information (simulated isotope pattern, measured isotope pattern, isotope pattern highlighting)  for the given formula result identifier.
 *FeaturesApi* | [**getLipidAnnotation**](docs/FeaturesApi.md#getLipidAnnotation) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/lipid-annotation | Returns Lipid annotation (ElGordo) for the given formula result identifier.
 *FeaturesApi* | [**getMsData**](docs/FeaturesApi.md#getMsData) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/ms-data | Mass Spec data (input data) for the given &#39;alignedFeatureId&#39; .
-*FeaturesApi* | [**getQuantification**](docs/FeaturesApi.md#getQuantification) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quantification | 
+*FeaturesApi* | [**getQuantification**](docs/FeaturesApi.md#getQuantification) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/quantification | Returns a single quantification table row for the given feature.
 *FeaturesApi* | [**getSiriusFragTree**](docs/FeaturesApi.md#getSiriusFragTree) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/sirius-fragtree | Returns fragmentation tree (SIRIUS) for the given formula result identifier in SIRIUS&#39; internal format.
 *FeaturesApi* | [**getSpectralLibraryMatch**](docs/FeaturesApi.md#getSpectralLibraryMatch) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches/{matchId} | List of spectral library matches for the given &#39;alignedFeatureId&#39;.
 *FeaturesApi* | [**getSpectralLibraryMatches**](docs/FeaturesApi.md#getSpectralLibraryMatches) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/spectral-library-matches | List of spectral library matches for the given &#39;alignedFeatureId&#39;.
@@ -157,7 +157,7 @@ Class | Method | HTTP request | Description
 *FeaturesApi* | [**getStructureCandidatesByFormula**](docs/FeaturesApi.md#getStructureCandidatesByFormula) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures | List of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.
 *FeaturesApi* | [**getStructureCandidatesByFormulaPaged**](docs/FeaturesApi.md#getStructureCandidatesByFormulaPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/formulas/{formulaId}/db-structures/page | Page of CSI:FingerID structure database search candidates for the given &#39;formulaId&#39; with minimal information.
 *FeaturesApi* | [**getStructureCandidatesPaged**](docs/FeaturesApi.md#getStructureCandidatesPaged) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/db-structures/page | Page of structure database search candidates ranked by CSI:FingerID score for the given &#39;alignedFeatureId&#39; with minimal information.
-*FeaturesApi* | [**getTraces1**](docs/FeaturesApi.md#getTraces1) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces | 
+*FeaturesApi* | [**getTraces**](docs/FeaturesApi.md#getTraces) | **GET** /api/projects/{projectId}/aligned-features/{alignedFeatureId}/traces | Returns the traces of the given feature.
 *GuiApi* | [**closeGui**](docs/GuiApi.md#closeGui) | **DELETE** /api/projects/{projectId}/gui | Close GUI instance of given project-space if available.
 *GuiApi* | [**getGuis**](docs/GuiApi.md#getGuis) | **GET** /api/guis | Get list of currently running gui windows, managed by this SIRIUS instance.
 *GuiApi* | [**openGui**](docs/GuiApi.md#openGui) | **POST** /api/projects/{projectId}/gui | Open GUI instance on specified project-space and bring the GUI window to foreground.
