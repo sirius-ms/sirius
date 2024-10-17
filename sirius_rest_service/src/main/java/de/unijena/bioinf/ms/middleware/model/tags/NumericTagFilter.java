@@ -22,6 +22,7 @@ package de.unijena.bioinf.ms.middleware.model.tags;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 @Getter
 @Setter
 @SuperBuilder
+@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public abstract class NumericTagFilter<T extends Number> extends TagFilter {
 

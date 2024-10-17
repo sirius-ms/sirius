@@ -23,6 +23,7 @@ package de.unijena.bioinf.ms.middleware.model.tags;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
@@ -30,6 +31,7 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @Setter
 @SuperBuilder
+@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class BoolTagFilter extends TagFilter {
 

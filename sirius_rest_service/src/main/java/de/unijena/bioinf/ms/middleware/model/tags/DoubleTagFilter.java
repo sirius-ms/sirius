@@ -22,12 +22,14 @@ package de.unijena.bioinf.ms.middleware.model.tags;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 @Getter
 @Setter
 @SuperBuilder
+@NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class DoubleTagFilter extends NumericTagFilter<Double> {
 
