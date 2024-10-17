@@ -1,8 +1,8 @@
-package de.unijena.bioinf.ms.nightsky.sdk.api;
+package io.sirius.ms.sdk.api;
 
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiClient;
 
-import de.unijena.bioinf.ms.nightsky.sdk.model.TagCategory;
+import io.sirius.ms.sdk.model.TagCategory;
 
 import java.util.HashMap;
 import java.util.List;

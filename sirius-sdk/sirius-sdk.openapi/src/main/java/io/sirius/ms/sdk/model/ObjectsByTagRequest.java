@@ -11,7 +11,7 @@
  */
 
 
-package de.unijena.bioinf.ms.nightsky.sdk.model;
+package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
@@ -20,11 +20,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import de.unijena.bioinf.ms.nightsky.sdk.model.BoolTagFilter;
-import de.unijena.bioinf.ms.nightsky.sdk.model.DoubleTagFilter;
-import de.unijena.bioinf.ms.nightsky.sdk.model.IntTagFilter;
-import de.unijena.bioinf.ms.nightsky.sdk.model.StringTagFilter;
-import de.unijena.bioinf.ms.nightsky.sdk.model.TaggedFilter;
+import io.sirius.ms.sdk.model.BoolTagFilter;
+import io.sirius.ms.sdk.model.DoubleTagFilter;
+import io.sirius.ms.sdk.model.IntTagFilter;
+import io.sirius.ms.sdk.model.StringTagFilter;
+import io.sirius.ms.sdk.model.TaggedFilter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
