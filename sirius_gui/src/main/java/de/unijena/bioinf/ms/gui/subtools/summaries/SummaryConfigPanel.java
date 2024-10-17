@@ -43,6 +43,7 @@ public class SummaryConfigPanel extends SubToolConfigPanel<SummaryOptions> {
         paras.addNamed("Hits", hitsComboBox);
 
         paras.addNamed("", makeGenericOptionCheckBox("Feature quality summary", "feature-quality-summary"));
+        paras.addNamed("", makeGenericOptionCheckBox("ChemVista summary", "chemvista"));
 
         parameterBindings.put(Hits.TOP.optionName, () -> String.valueOf(Hits.TOP.equals(hitsComboBox.getSelectedItem())));
         parameterBindings.put(Hits.ADDUCT.optionName, () -> "~" + Hits.ADDUCT.equals(hitsComboBox.getSelectedItem()));

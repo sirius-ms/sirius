@@ -38,6 +38,7 @@ import de.unijena.bioinf.fingerid.MsNovelistFingerblastResult;
 import de.unijena.bioinf.fingerid.StructureSearchResult;
 import de.unijena.bioinf.fingerid.blast.FingerblastResult;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
+import de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdduct;
 import de.unijena.bioinf.ms.persistence.model.core.feature.Feature;
 import de.unijena.bioinf.ms.persistence.model.core.run.LCMSRun;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
@@ -107,9 +108,13 @@ public class NoSQLInstance implements Instance {
         return String.valueOf(getLongId());
     }
 
+    public Optional<Long> getCompoundLongId() {
+        return Optional.ofNullable(getAlignedFeatures().getCompoundId());
+    }
+
     @Override
     public Optional<String> getCompoundId() {
-        return Optional.ofNullable(getAlignedFeatures().getCompoundId()).map(String::valueOf);
+        return getCompoundLongId().map(String::valueOf);
     }
 
     @Override
@@ -148,11 +153,9 @@ public class NoSQLInstance implements Instance {
     }
 
     @Override
-    public PrecursorIonType getIonType() {
+    public int getCharge() {
         AlignedFeatures f = getAlignedFeatures();
-        List<PrecursorIonType> allAdducts = f.getDetectedAdducts().getAllAdducts();
-        if (allAdducts.size() == 1) return allAdducts.get(0);
-        else return PrecursorIonType.unknown(f.getCharge());
+        return f.getCharge();
     }
 
     @SneakyThrows
@@ -350,9 +353,43 @@ public class NoSQLInstance implements Instance {
     }
 
     @Override
-    public void saveDetectedAdductsAnnotation(DetectedAdducts detectedAdducts) {
-        de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts adducts = StorageUtils.fromMs2ExpAnnotation(detectedAdducts);
+    public void addAndSaveAdductsBySource(Map<DetectedAdducts.Source, Iterable<PrecursorIonType>> adductsBySource) {
+        addAndSaveAdductsBySource(adductsBySource, false);
+    }
+
+    public void addAndSaveAdductsBySource(Map<DetectedAdducts.Source, Iterable<PrecursorIonType>> adductsBySource, boolean overrideExisting) {
+        de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts adducts = getAlignedFeatures().getDetectedAdducts();
+
+        List<DetectedAdduct> adductsToAdd = new ArrayList<>();
+        for (Map.Entry<DetectedAdducts.Source, Iterable<PrecursorIonType>> e : adductsBySource.entrySet()) {
+            //add placeholder adduct for empty source
+            if (e.getValue() == null || !e.getValue().iterator().hasNext()){
+                DetectedAdduct adductToAdd = DetectedAdduct.empty(e.getKey());
+                if (overrideExisting || !adducts.contains(adductToAdd))
+                    adductsToAdd.add(adductToAdd);
+            }else { //add adducts for non-empty source
+                for (PrecursorIonType pi : e.getValue()) {
+                    DetectedAdduct adductToAdd = DetectedAdduct.builder().adduct(pi).source(e.getKey()).build();
+                    if (overrideExisting || !adducts.contains(adductToAdd))
+                        adductsToAdd.add(adductToAdd);
+                }
+            }
+        }
+
+        if (!adductsToAdd.isEmpty()) {
+            adducts.addAll(adductsToAdd);
+            saveDetectedAdducts(adducts);
+        }
+    }
+
+    @Override
+    public boolean removeAndSaveAdductsBySource(DetectedAdducts.Source... sources) {
+        de.unijena.bioinf.ms.persistence.model.core.feature.DetectedAdducts adducts = getAlignedFeatures().getDetectedAdducts();
+        List<PrecursorIonType> removePrecursorIonTypes = new LinkedList<>();
+        for (DetectedAdducts.Source source : sources)
+            removePrecursorIonTypes.addAll(adducts.removeAllWithSource(source));
         saveDetectedAdducts(adducts);
+        return !removePrecursorIonTypes.isEmpty();
     }
 
     @SneakyThrows
@@ -486,7 +523,8 @@ public class NoSQLInstance implements Instance {
             upsertComputedSubtools(cs -> cs.setFormulaSearch(false));
         });
 
-        //todo handle detected adducts.
+        removeAndSaveAdductsBySource(DetectedAdducts.Source.SPECTRAL_LIBRARY_SEARCH,
+                DetectedAdducts.Source.MS1_PREPROCESSOR); //todo do not remove anymore if MS1 preprocessor is called during import...
     }
 
     @SneakyThrows
@@ -784,7 +822,7 @@ public class NoSQLInstance implements Instance {
         public int add(String name, double abundance) {
             sampleNames.add(name);
             abundances.add(abundance);
-            namesToIndex.put(name, namesToIndex.size() - 1);
+            namesToIndex.put(name, namesToIndex.size());
             return namesToIndex.getInt(name);
         }
 

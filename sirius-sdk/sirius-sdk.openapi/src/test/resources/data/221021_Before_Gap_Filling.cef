@@ -1,0 +1,739 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<CEF version="1.0.0.0">
+  <CompoundList instrumentConfiguration="">
+    <Compound algo="FindByMolecularFeature">
+      <Location m="310.07363" rt="1.229" y="348920" v="1499484" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="1.229" rts="1.186" rte="1.434" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="1.186" max="1.434" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="1.229" x="311.08100" y="348920.50" v="960402" z="1" sat="true" s="M+H" />
+          <p rt="1.229" x="312.08321" y="46637.71" v="129228" z="1" s="M+H+1" />
+          <p rt="1.230" x="313.07897" y="18260.84" v="49862" z="1" s="M+H+2" />
+          <p rt="1.229" x="333.06254" y="107512.86" v="301207" z="1" s="M+Na" />
+          <p rt="1.229" x="334.06519" y="15028.79" v="42640" z="1" s="M+Na+1" />
+          <p rt="1.230" x="335.06104" y="6046.55" v="16146" z="1" s="M+Na+2" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="278.08371" rt="0.797" y="378541" v="1458261" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="0.797" rts="0.756" rte="1.037" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="0.756" max="1.037" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="0.797" x="279.09099" y="378541.28" v="1117825" z="1" sat="true" s="M+H" />
+          <p rt="0.797" x="280.09370" y="52876.05" v="155917" z="1" s="M+H+1" />
+          <p rt="0.798" x="281.08946" y="17848.03" v="53756" z="1" s="M+H+2" />
+          <p rt="0.796" x="301.07287" y="36848.93" v="109238" z="1" s="M+Na" />
+          <p rt="0.796" x="302.07637" y="5807.80" v="16434" z="1" s="M+Na+1" />
+          <p rt="0.797" x="303.07186" y="1901.57" v="5091" z="1" s="M+Na+2" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="270.02461" rt="0.331" y="67805" v="293609" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="0.331" rts="0.309" rte="0.541" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="0.309" max="0.541" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="0.331" x="271.03190" y="67805.70" v="162927" z="1" s="M+H" />
+          <p rt="0.330" x="272.03322" y="8161.77" v="18870" z="1" s="M+H+1" />
+          <p rt="0.330" x="293.01381" y="42654.45" v="100351" z="1" s="M+Na" />
+          <p rt="0.329" x="294.01536" y="5008.44" v="11462" z="1" s="M+Na+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="260.10256" rt="1.878" y="17319" v="179991" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="1.878" rts="1.715" rte="2.029" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="1.715" max="2.029" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="1.878" x="261.10983" y="17319.90" v="155168" z="1" s="M+H" />
+          <p rt="1.874" x="262.11325" y="2865.85" v="22730" z="1" s="M+H+1" />
+          <p rt="1.879" x="263.11816" y="813.75" v="2094" z="1" s="M+H+2" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="284.01334" rt="0.520" y="31914" v="167933" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="0.520" rts="0.491" rte="0.640" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="0.491" max="0.640" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="0.520" x="285.02072" y="31914.90" v="91618" z="1" s="M+H" />
+          <p rt="0.522" x="286.02388" y="4332.03" v="12645" z="1" s="M+H+1" />
+          <p rt="0.520" x="287.01775" y="11196.91" v="32420" z="1" s="M+H+2" />
+          <p rt="0.521" x="288.02094" y="1706.45" v="4357" z="1" s="M+H+3" />
+          <p rt="0.519" x="289.01482" y="793.89" v="2027" z="1" s="M+H+4" />
+          <p rt="0.520" x="307.00198" y="6406.27" v="17216" z="1" s="M+Na" />
+          <p rt="0.517" x="308.00620" y="735.39" v="1645" z="1" s="M+Na+1" />
+          <p rt="0.519" x="309.00011" y="2191.16" v="6007" z="1" s="M+Na+2" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="442.22125" rt="1.759" y="15297" v="109385" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="1.759" rts="1.682" rte="1.946" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="1.682" max="1.946" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="1.759" x="443.22852" y="15297.28" v="84394" z="1" s="M+H" />
+          <p rt="1.758" x="444.23068" y="4752.38" v="24992" z="1" s="M+H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="220.05172" rt="0.571" y="16095" v="74339" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="0.571" rts="0.508" rte="0.673" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="0.508" max="0.673" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="0.570" x="221.05899" y="16095.09" v="47309" z="1" s="M+H" />
+          <p rt="0.574" x="222.06142" y="2239.10" v="6920" z="1" s="M+H+1" />
+          <p rt="0.571" x="223.05580" y="5344.58" v="17758" z="1" s="M+H+2" />
+          <p rt="0.579" x="224.05662" y="695.85" v="2353" z="1" s="M+H+3" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="400.20053" rt="1.747" y="9927" v="60273" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="1.747" rts="1.682" rte="1.863" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="1.682" max="1.863" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="1.747" x="401.20781" y="9927.54" v="46999" z="1" s="M+H" />
+          <p rt="1.748" x="402.21267" y="2668.54" v="13275" z="1" s="M+H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="194.11492" rt="0.299" y="16001" v="56278" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="85.7" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="0.299" rts="0.243" rte="0.376" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="0.243" max="0.376" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="0.300" x="195.12223" y="16001.27" v="49656" z="1" s="M+H" />
+          <p rt="0.299" x="212.14851" y="2266.13" v="6622" z="1" s="M+NH4" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="265.16630" rt="1.499" y="4926" v="52206" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="99.2" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="1.499" rts="1.367" rte="1.599" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="1.367" max="1.599" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="1.498" x="266.17357" y="4926.73" v="44876" z="1" s="M+H" />
+          <p rt="1.502" x="267.17707" y="1139.12" v="7330" z="1" s="M+H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="417.22644" rt="1.673" y="7469" v="44620" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="1.673" rts="1.599" rte="1.764" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="1.599" max="1.764" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="1.672" x="418.23371" y="7469.65" v="35781" z="1" s="M+H" />
+          <p rt="1.676" x="419.23750" y="2055.55" v="8840" z="1" s="M+H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="113.08428" rt="0.481" y="13859" v="40751" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="0.481" rts="0.442" rte="0.541" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="0.442" max="0.541" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="0.481" x="114.09156" y="13859.84" v="37324" z="1" s="M+H" />
+          <p rt="0.474" x="115.09076" y="1161.48" v="3427" z="1" s="M+H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="272.02111" rt="0.330" y="5711" v="25156" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="0.330" rts="0.309" rte="0.409" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="0.309" max="0.409" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="0.332" x="273.02879" y="5711.38" v="14819" z="1" s="M+H" />
+          <p rt="0.328" x="274.03213" y="806.99" v="1872" z="1" s="M+H+1" />
+          <p rt="0.328" x="295.00963" y="3892.48" v="8465" z="1" s="M+Na" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="423.16607" rt="1.806" y="4417" v="23037" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="1.806" rts="1.764" rte="1.930" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="1.764" max="1.930" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="1.807" x="424.17335" y="4417.17" v="18510" z="1" s="M+H" />
+          <p rt="1.801" x="425.17924" y="1304.08" v="4527" z="1" s="M+H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="314.06183" rt="0.330" y="7181" v="21130" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="0.330" rts="0.309" rte="0.409" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="0.309" max="0.409" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="0.331" x="315.06911" y="7181.67" v="18406" z="1" s="M+H" />
+          <p rt="0.327" x="316.07036" y="1155.51" v="2724" z="1" s="M+H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="458.15508" rt="1.452" y="2961" v="17744" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="1.452" rts="1.384" rte="1.549" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="1.384" max="1.549" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="1.453" x="459.16236" y="2961.88" v="14924" z="1" s="M+H" />
+          <p rt="1.446" x="460.16352" y="746.76" v="2821" z="1" s="M+H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="484.24453" rt="1.646" y="2034" v="14509" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="71.8" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="1.646" rts="1.599" rte="1.781" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="1.599" max="1.781" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="1.647" x="485.25181" y="2034.63" v="10905" z="1" s="M+H" />
+          <p rt="1.644" x="486.25246" y="883.83" v="3605" z="1" s="M+H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="460.23300" rt="1.689" y="1818" v="14120" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="1.689" rts="1.648" rte="1.781" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="1.648" max="1.781" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="1.688" x="461.24028" y="1818.74" v="9877" z="1" s="M+H" />
+          <p rt="1.691" x="462.25289" y="713.26" v="4243" z="1" s="M+H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="413.01931" rt="1.230" y="2709" v="14118" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="1.230" rts="1.202" rte="1.285" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="1.202" max="1.285" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="1.229" x="414.02658" y="2709.43" v="8295" z="1" s="M+H" />
+          <p rt="1.234" x="415.03269" y="705.60" v="1771" z="1" s="M+H+1" />
+          <p rt="1.228" x="416.02544" y="1482.97" v="4053" z="1" s="M+H+2" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="418.21190" rt="1.803" y="2323" v="10706" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="100.0" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="1.803" rts="1.764" rte="1.863" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="1.764" max="1.863" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="1.803" x="419.21917" y="2323.90" v="8873" z="1" s="M+H" />
+          <p rt="1.800" x="420.22935" y="578.61" v="1833" z="1" s="M+H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="313.07220" rt="1.228" y="2412" v="9177" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="98.1" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="1.228" rts="1.219" rte="1.301" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="1.219" max="1.301" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="1.229" x="314.07969" y="2412.55" v="7034" z="1" s="M+H" />
+          <p rt="1.223" x="336.06070" y="1088.79" v="2144" z="1" s="M+Na" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="1064.66177" rt="1.659" y="1100" v="6620" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="83.3" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="1.659" rts="1.632" rte="1.731" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="1.632" max="1.731" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="1.662" x="533.33816" y="1100.71" v="3728" z="2" s="M+2H" />
+          <p rt="1.655" x="533.83879" y="668.79" v="2893" z="2" s="M+2H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+    <Compound algo="FindByMolecularFeature">
+      <Location m="976.61195" rt="1.592" y="1339" v="6195" dt="0" ccs="0" />
+      <CompoundScores>
+        <CpdScore algo="mfe" score="79.1" />
+        <CpdScore algo="fbf" score="0.00" />
+      </CompoundScores>
+      <Results>
+        <Molecule>
+          <Database>
+            <Accession db="CAS ID" id="" />
+            <Accession db="METLIN ID" id="" />
+          </Database>
+        </Molecule>
+      </Results>
+      <Chromatogram type="ECC" cpdAlgo="FindByMolecularFeature">
+        <ChromPeaks>
+          <p rt="1.592" rts="1.533" rte="1.615" rtw="0" />
+        </ChromPeaks>
+      </Chromatogram>
+      <Spectrum type="MFE" satLimit="3476736" cpdAlgo="FindByMolecularFeature">
+        <MSDetails scanType="Scan" is="Esi" p="+" fv="125.0V" />
+        <RTRanges>
+          <RTRange min="1.533" max="1.615" />
+        </RTRanges>
+        <Device type="QuadrupoleTimeOfFlight" num="1" />
+        <MSPeaks>
+          <p rt="1.594" x="489.31325" y="1339.40" v="4404" z="2" s="M+2H" />
+          <p rt="1.589" x="489.81732" y="540.45" v="1792" z="2" s="M+2H+1" />
+        </MSPeaks>
+      </Spectrum>
+    </Compound>
+  </CompoundList>
+</CEF>
