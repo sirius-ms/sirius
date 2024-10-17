@@ -822,7 +822,7 @@ public class NoSQLInstance implements Instance {
         public int add(String name, double abundance) {
             sampleNames.add(name);
             abundances.add(abundance);
-            namesToIndex.put(name, namesToIndex.size() - 1);
+            namesToIndex.put(name, namesToIndex.size());
             return namesToIndex.getInt(name);
         }
 
