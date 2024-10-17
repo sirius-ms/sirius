@@ -44,10 +44,20 @@ public abstract class TagController<T, O extends Enum<O>> {
 
     protected abstract Class<T> getTaggable();
 
+    /**
+     * Get objects by tag.
+     *
+     * @param projectId    project space to get objects from.
+     * @param categoryName category of the tag.
+     * @param filter       tag filter.
+     * @param pageable     pageable.
+     * @param optFields    set of optional fields to be included. Use 'none' only to override defaults.
+     * @return
+     */
     @PostMapping(value = "/tags/tagged/{categoryName}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<T> objectsByTag(@PathVariable String projectId,
                                 @PathVariable String categoryName,
-                                @Nullable @RequestBody TagFilter filter,
+                                @RequestBody TagFilter filter,
                                 @ParameterObject Pageable pageable,
                                 @RequestParam(defaultValue = "") EnumSet<O> optFields
     ) {
@@ -55,7 +65,7 @@ public abstract class TagController<T, O extends Enum<O>> {
     }
 
     /**
-     * Add tags to a run in the project. Tags with the same category name will be overwritten.
+     * Add tags to an object in the project. Tags with the same category name will be overwritten.
      *
      * @param projectId  project-space to add to.
      * @param objectId   object to tag.
