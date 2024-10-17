@@ -32,8 +32,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class Utils {
-
-    public static final Comparator<String> ALPHANUMERIC_COMPARATOR = new AlphanumComparator();
+    public static final Comparator<String> ALPHANUMERIC_COMPARATOR_NULL_LAST = Comparator.nullsLast(new AlphanumComparator());
+    public static final Comparator<Double> DOUBLE_DESC_NULL_LAST = Comparator.nullsLast(Comparator.reverseOrder());
+    public static final Comparator<Double> DOUBLE_ASC_NULL_LAST = Comparator.nullsLast(Comparator.naturalOrder());
 
     public static int[] shortsToInts(short[] shorts){
         int[] ints = new int[shorts.length];
