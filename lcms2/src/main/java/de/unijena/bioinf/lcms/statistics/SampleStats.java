@@ -8,6 +8,8 @@ import de.unijena.bioinf.ChemistryBase.utils.SimpleSerializers;
 import de.unijena.bioinf.ms.persistence.model.core.run.SampleStatistics;
 import lombok.*;
 
+import java.util.Optional;
+
 @Getter
 @Builder
 @NoArgsConstructor
@@ -42,5 +44,15 @@ public class SampleStats {
 
     public float ms2NoiseLevel() {
         return ms2NoiseLevel;
+    }
+
+    private double expectedPeakWidth = -1;
+
+    public Optional<Double> getExpectedPeakWidth() {
+        return expectedPeakWidth<0 ? Optional.empty() : Optional.of(expectedPeakWidth);
+    }
+
+    public void setExpectedPeakWidth(double expectedPeakWidth) {
+        this.expectedPeakWidth = expectedPeakWidth;
     }
 }

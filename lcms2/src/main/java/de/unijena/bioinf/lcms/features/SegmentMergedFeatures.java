@@ -1,6 +1,8 @@
 package de.unijena.bioinf.lcms.features;
 
+import de.unijena.bioinf.lcms.ScanPointMapping;
 import de.unijena.bioinf.lcms.merge.MergedTrace;
+import de.unijena.bioinf.lcms.merge.ScanPointInterpolator;
 import de.unijena.bioinf.lcms.statistics.SampleStats;
 import de.unijena.bioinf.lcms.trace.ProcessedSample;
 import de.unijena.bioinf.lcms.trace.ProjectedTrace;
@@ -9,7 +11,9 @@ import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.utils.AlignmentBeamSearch;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import lombok.AllArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
@@ -27,21 +31,30 @@ public class SegmentMergedFeatures implements MergedFeatureExtractionStrategy {
         // Thus, we use the minimum of the merged intensity and a single sample noise level multiplied by a high factor
         // to avoid that a lot of noisy peaks are picked
         final double mergedNoiseLevel = stats.noiseLevel(mergedTrace.apex());
-        final double FACTOR = 5d;
+        final double FACTOR = 10d;
 
         double noiseLevel = mergedNoiseLevel;
         for (int k=0; k < mergedTrace.getSamples().length; ++k) {
             final double individualNoiseLevel = mergedTrace.getSamples()[k].getStorage().getStatistics().noiseLevel(mergedTrace.getTraces()[k].getRawApex()) * FACTOR;
             // project individual noise level into merged trace
             final double projectedIndividualNoiseLevel = mergedTrace.getSamples()[k].getNormalizer().normalize(individualNoiseLevel);
-            if (projectedIndividualNoiseLevel < mergedNoiseLevel) {
-                noiseLevel = projectedIndividualNoiseLevel;
-            }
+            noiseLevel = Math.min(noiseLevel, projectedIndividualNoiseLevel);
         }
 
-        return traceSegmenter.detectSegments(mergedTrace, noiseLevel).toArray(TraceSegment[]::new);
+        final int[] pointsOfInterest = getPointsOfInterest(mergedTrace);
+
+        return traceSegmenter.detectSegments(mergedTrace, noiseLevel, stats.getExpectedPeakWidth().orElse(0d), pointsOfInterest).toArray(TraceSegment[]::new);
     }
 
+    private static @NotNull int[] getPointsOfInterest(MergedTrace mergedTrace) {
+        final IntOpenHashSet pointsOfInterest = new IntOpenHashSet();
+        for (int i = 0; i < mergedTrace.getTraces().length; ++i)  {
+            ProjectedTrace t = mergedTrace.getTraces()[i];
+            ScanPointInterpolator interpolator = mergedTrace.getSamples()[i].getScanPointInterpolator();
+            Arrays.stream(t.getMs2Refs()).mapToInt(x->interpolator.roundIndex(x.rawScanIdx)).forEach(pointsOfInterest::add);
+        }
+        return pointsOfInterest.toIntArray();
+    }
     @Override
     public TraceSegment[][] extractProjectedSegments(ProcessedSample mergedSample, MergedTrace mergedTrace, TraceSegment[] mergedTraceSegments) {
         TraceSegment[][] rawSegments = new TraceSegment[mergedTrace.getTraces().length][];
@@ -56,7 +69,10 @@ public class SegmentMergedFeatures implements MergedFeatureExtractionStrategy {
         // we have to remap the raw noise level to the projected noise level....
         final double rawNoiseLevel = stats.noiseLevel(trace.getRawApex());
         final double projectedNoiseLevel = trace.projectedIntensity(trace.getProjectedApex()) * rawNoiseLevel / trace.rawIntensity(trace.getRawApex());
-        TraceSegment[] childSegments = new PersistentHomology(true).detectSegments(trace.projected(mergedSample.getMapping()), projectedNoiseLevel/10d).toArray(TraceSegment[]::new);
+        final int[] pointsOfInterest = Arrays.stream(trace.getMs2Refs()).mapToInt(x->sample.getScanPointInterpolator().roundIndex(x.rawScanIdx)).distinct().toArray();
+
+        TraceSegment[] childSegments = new PersistentHomology(true).detectSegments(trace.projected(mergedSample.getMapping()),
+                projectedNoiseLevel/10d, stats.getExpectedPeakWidth().orElse(0d), pointsOfInterest).toArray(TraceSegment[]::new);
         if (childSegments.length==0) {
             if (traceSegments.length>0) LoggerFactory.getLogger(SegmentMergedFeatures.class).warn("No segments found in child trace!");
             return childSegments;

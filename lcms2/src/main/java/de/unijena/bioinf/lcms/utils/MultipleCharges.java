@@ -97,21 +97,14 @@ public class MultipleCharges {
         double suspicousIntensities = 0d;
         int suspiciousPeaks = 0;
         double maxInt = Spectrums.getMaximalIntensity(spec);
-        // 1. count how many peaks are behind the precursor
-        double threshold = precursorMass + 6;
-        for (int k=spec.size()-1; k >= 0; --k) {
-            if (spec.getMzAt(k) > threshold) {
-                suspicousIntensities += spec.getIntensityAt(k)/maxInt;
-                if (spec.getIntensityAt(k)/maxInt >= 0.01) ++suspiciousPeaks;
-            } else break;
-        }
         double intsum = 0d;
-        // 2. count how many peaks are multiple charged
+        // 2. count how many peaks are multiple charged or behind the precursor
         double highQualityPeaks = 0;
+        final double minimalIntensityToConsider = 0.025;
         for (int k=0; k < spec.size(); ++k) {
             final double normed = spec.getIntensityAt(k)/maxInt;
-            if (normed>=0.01) intsum += normed;
-            if (normed>=0.01 && checkForMultipleCharges(spec.getMzAt(k))==Decision.LIKELY) {
+            if (normed>=minimalIntensityToConsider) intsum += normed;
+            if (normed>=minimalIntensityToConsider && (spec.getMzAt(k) > (precursorMass+10) || checkForMultipleCharges(spec.getMzAt(k))==Decision.LIKELY)) {
                 ++suspiciousPeaks;
                 suspicousIntensities += normed;
                 // also check for monotonic increasing isotope pattern
@@ -129,10 +122,10 @@ public class MultipleCharges {
                     suspiciousPeaks += fs.length;
                 }
             }
-            if (normed >= 0.05) ++highQualityPeaks;
+            if (normed >= 0.1) ++highQualityPeaks;
         }
-        if (suspiciousPeaks>=5 && suspicousIntensities/intsum>=0.2) return Decision.LIKELY;
-        if (highQualityPeaks >= 5 && suspiciousPeaks==0 && suspicousIntensities<0.01) return Decision.UNLIKELY;
+        if (suspiciousPeaks>=5 && suspicousIntensities/intsum>=0.25) return Decision.LIKELY;
+        if (highQualityPeaks >= 5 && suspiciousPeaks==1 && suspicousIntensities<0.01) return Decision.UNLIKELY;
         return Decision.UNKNOWN;
     }
 
