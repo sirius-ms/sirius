@@ -27,16 +27,12 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
  * Tag
  */
 @JsonPropertyOrder({
-  Tag.JSON_PROPERTY_CATEGORY_NAME,
-  Tag.JSON_PROPERTY_VALUE
+  Tag.JSON_PROPERTY_CATEGORY_NAME
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class Tag {
   public static final String JSON_PROPERTY_CATEGORY_NAME = "categoryName";
   private String categoryName;
-
-  public static final String JSON_PROPERTY_VALUE = "value";
-  private Object value;
 
   public Tag() {
   }
@@ -48,7 +44,7 @@ public class Tag {
   }
 
    /**
-   * Name of the tag category
+   * Get categoryName
    * @return categoryName
   **/
   @jakarta.annotation.Nullable
@@ -66,31 +62,6 @@ public class Tag {
     this.categoryName = categoryName;
   }
 
-  public Tag value(Object value) {
-    
-    this.value = value;
-    return this;
-  }
-
-   /**
-   * Tag value
-   * @return value
-  **/
-  @jakarta.annotation.Nullable
-  @JsonProperty(JSON_PROPERTY_VALUE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-
-  public Object getValue() {
-    return value;
-  }
-
-
-  @JsonProperty(JSON_PROPERTY_VALUE)
-  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setValue(Object value) {
-    this.value = value;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -100,13 +71,12 @@ public class Tag {
       return false;
     }
     Tag tag = (Tag) o;
-    return Objects.equals(this.categoryName, tag.categoryName) &&
-        Objects.equals(this.value, tag.value);
+    return Objects.equals(this.categoryName, tag.categoryName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(categoryName, value);
+    return Objects.hash(categoryName);
   }
 
   @Override
@@ -114,7 +84,6 @@ public class Tag {
     StringBuilder sb = new StringBuilder();
     sb.append("class Tag {\n");
     sb.append("    categoryName: ").append(toIndentedString(categoryName)).append("\n");
-    sb.append("    value: ").append(toIndentedString(value)).append("\n");
     sb.append("}");
     return sb.toString();
   }

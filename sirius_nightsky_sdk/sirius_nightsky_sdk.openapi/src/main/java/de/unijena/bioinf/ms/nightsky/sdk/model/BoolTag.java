@@ -24,27 +24,56 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * TaggedFilter
+ * BoolTag
  */
 @JsonPropertyOrder({
-  TaggedFilter.JSON_PROPERTY_VALUE
+  BoolTag.JSON_PROPERTY_CATEGORY_NAME,
+  BoolTag.JSON_PROPERTY_VALUE
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class TaggedFilter {
+public class BoolTag {
+  public static final String JSON_PROPERTY_CATEGORY_NAME = "categoryName";
+  private String categoryName;
+
   public static final String JSON_PROPERTY_VALUE = "value";
   private Boolean value;
 
-  public TaggedFilter() {
+  public BoolTag() {
   }
 
-  public TaggedFilter value(Boolean value) {
+  public BoolTag categoryName(String categoryName) {
+    
+    this.categoryName = categoryName;
+    return this;
+  }
+
+   /**
+   * Name of the tag category
+   * @return categoryName
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_CATEGORY_NAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getCategoryName() {
+    return categoryName;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_CATEGORY_NAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setCategoryName(String categoryName) {
+    this.categoryName = categoryName;
+  }
+
+  public BoolTag value(Boolean value) {
     
     this.value = value;
     return this;
   }
 
    /**
-   * Get value
+   * Tag value
    * @return value
   **/
   @jakarta.annotation.Nullable
@@ -70,19 +99,21 @@ public class TaggedFilter {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    TaggedFilter taggedFilter = (TaggedFilter) o;
-    return Objects.equals(this.value, taggedFilter.value);
+    BoolTag boolTag = (BoolTag) o;
+    return Objects.equals(this.categoryName, boolTag.categoryName) &&
+        Objects.equals(this.value, boolTag.value);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(value);
+    return Objects.hash(categoryName, value);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class TaggedFilter {\n");
+    sb.append("class BoolTag {\n");
+    sb.append("    categoryName: ").append(toIndentedString(categoryName)).append("\n");
     sb.append("    value: ").append(toIndentedString(value)).append("\n");
     sb.append("}");
     return sb.toString();

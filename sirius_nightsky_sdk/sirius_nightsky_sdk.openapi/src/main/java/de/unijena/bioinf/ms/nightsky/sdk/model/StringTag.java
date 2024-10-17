@@ -24,41 +24,70 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * TaggedFilter
+ * StringTag
  */
 @JsonPropertyOrder({
-  TaggedFilter.JSON_PROPERTY_VALUE
+  StringTag.JSON_PROPERTY_CATEGORY_NAME,
+  StringTag.JSON_PROPERTY_VALUE
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class TaggedFilter {
-  public static final String JSON_PROPERTY_VALUE = "value";
-  private Boolean value;
+public class StringTag {
+  public static final String JSON_PROPERTY_CATEGORY_NAME = "categoryName";
+  private String categoryName;
 
-  public TaggedFilter() {
+  public static final String JSON_PROPERTY_VALUE = "value";
+  private String value;
+
+  public StringTag() {
   }
 
-  public TaggedFilter value(Boolean value) {
+  public StringTag categoryName(String categoryName) {
+    
+    this.categoryName = categoryName;
+    return this;
+  }
+
+   /**
+   * Name of the tag category
+   * @return categoryName
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_CATEGORY_NAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getCategoryName() {
+    return categoryName;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_CATEGORY_NAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setCategoryName(String categoryName) {
+    this.categoryName = categoryName;
+  }
+
+  public StringTag value(String value) {
     
     this.value = value;
     return this;
   }
 
    /**
-   * Get value
+   * Tag value
    * @return value
   **/
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_VALUE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean isValue() {
+  public String getValue() {
     return value;
   }
 
 
   @JsonProperty(JSON_PROPERTY_VALUE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setValue(Boolean value) {
+  public void setValue(String value) {
     this.value = value;
   }
 
@@ -70,19 +99,21 @@ public class TaggedFilter {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    TaggedFilter taggedFilter = (TaggedFilter) o;
-    return Objects.equals(this.value, taggedFilter.value);
+    StringTag stringTag = (StringTag) o;
+    return Objects.equals(this.categoryName, stringTag.categoryName) &&
+        Objects.equals(this.value, stringTag.value);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(value);
+    return Objects.hash(categoryName, value);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class TaggedFilter {\n");
+    sb.append("class StringTag {\n");
+    sb.append("    categoryName: ").append(toIndentedString(categoryName)).append("\n");
     sb.append("    value: ").append(toIndentedString(value)).append("\n");
     sb.append("}");
     return sb.toString();

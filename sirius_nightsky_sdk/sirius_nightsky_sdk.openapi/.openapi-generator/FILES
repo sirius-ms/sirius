@@ -13,6 +13,7 @@ docs/Axes.md
 docs/BackgroundComputationsStateEvent.md
 docs/BasicSpectrum.md
 docs/BinaryFingerprint.md
+docs/BoolTag.md
 docs/BoolTagFilter.md
 docs/Canopus.md
 docs/CanopusPrediction.md
@@ -35,6 +36,7 @@ docs/ConsensusCriterionDeNovo.md
 docs/DBLink.md
 docs/DataQuality.md
 docs/Deviation.md
+docs/DoubleTag.md
 docs/DoubleTagFilter.md
 docs/ExperimentalApi.md
 docs/Feature.md
@@ -52,6 +54,7 @@ docs/ImportResult.md
 docs/Info.md
 docs/InfoApi.md
 docs/InstrumentProfile.md
+docs/IntTag.md
 docs/IntTagFilter.md
 docs/IsotopePatternAnnotation.md
 docs/Item.md
@@ -86,6 +89,7 @@ docs/ProjectsApi.md
 docs/QuantificationTable.md
 docs/Run.md
 docs/RunOptField.md
+docs/RunTagsValue.md
 docs/RunsApi.md
 docs/SearchableDatabase.md
 docs/SearchableDatabaseParameters.md
@@ -99,6 +103,8 @@ docs/SpectralLibraryMatchSummary.md
 docs/SpectralLibrarySearch.md
 docs/SpectralMatchingType.md
 docs/SpectrumAnnotation.md
+docs/StringTag.md
+docs/StringTagFilter.md
 docs/StructureCandidate.md
 docs/StructureCandidateFormula.md
 docs/StructureCandidateOptField.md
@@ -109,7 +115,6 @@ docs/SubscriptionConsumables.md
 docs/Tag.md
 docs/TagCategoriesApi.md
 docs/TagCategory.md
-docs/TagFilter.md
 docs/TaggedFilter.md
 docs/Term.md
 docs/Timeout.md
@@ -153,6 +158,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Axes.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/BackgroundComputationsStateEvent.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/BasicSpectrum.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/BinaryFingerprint.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/BoolTag.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/BoolTagFilter.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Canopus.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/CanopusPrediction.java
@@ -174,6 +180,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ConsensusCriterionDeNovo.j
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/DBLink.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/DataQuality.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Deviation.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/DoubleTag.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/DoubleTagFilter.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Feature.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/FeatureAnnotations.java
@@ -187,6 +194,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/GuiInfo.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ImportResult.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Info.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/InstrumentProfile.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/IntTag.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/IntTagFilter.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/IsotopePatternAnnotation.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Item.java
@@ -218,6 +226,7 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/ProjectInfoOptField.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/QuantificationTable.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Run.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/RunOptField.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/RunTagsValue.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SearchableDatabase.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SearchableDatabaseParameters.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SimplePeak.java
@@ -229,6 +238,8 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SpectralLibraryMatchSummar
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SpectralLibrarySearch.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SpectralMatchingType.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SpectrumAnnotation.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/StringTag.java
+src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/StringTagFilter.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/StructureCandidate.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/StructureCandidateFormula.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/StructureCandidateOptField.java
@@ -238,7 +249,6 @@ src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Subscription.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/SubscriptionConsumables.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Tag.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/TagCategory.java
-src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/TagFilter.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/TaggedFilter.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Term.java
 src/main/java/de/unijena/bioinf/ms/nightsky/sdk/model/Timeout.java

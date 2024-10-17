@@ -7,7 +7,7 @@
 
 | Name | Type | Description | Notes |
 |------------ | ------------- | ------------- | -------------|
-|**tagged** | **Boolean** |  |  [optional] |
+|**value** | **Boolean** |  |  [optional] |
 
 
 

@@ -51,8 +51,8 @@ public class RunsApi {
     }
 
     /**
-     * Add tags to a run in the project.
-     * Add tags to a run in the project. Tags with the same category name will be overwritten.
+     * Add tags to an object in the project.
+     * Add tags to an object in the project. Tags with the same category name will be overwritten.
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
      * @param objectId object to tag.
@@ -101,8 +101,8 @@ public class RunsApi {
     }
 
     /**
-     * Add tags to a run in the project.
-     * Add tags to a run in the project. Tags with the same category name will be overwritten.
+     * Add tags to an object in the project.
+     * Add tags to an object in the project. Tags with the same category name will be overwritten.
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
      * @param objectId object to tag.
@@ -116,8 +116,8 @@ public class RunsApi {
     }
 
     /**
-     * Add tags to a run in the project.
-     * Add tags to a run in the project. Tags with the same category name will be overwritten.
+     * Add tags to an object in the project.
+     * Add tags to an object in the project. Tags with the same category name will be overwritten.
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
      * @param objectId object to tag.
@@ -131,8 +131,8 @@ public class RunsApi {
     }
 
     /**
-     * Add tags to a run in the project.
-     * Add tags to a run in the project. Tags with the same category name will be overwritten.
+     * Add tags to an object in the project.
+     * Add tags to an object in the project. Tags with the same category name will be overwritten.
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
      * @param objectId object to tag.
@@ -416,16 +416,16 @@ public class RunsApi {
         return getRunsPagedRequestCreation(projectId, page, size, sort, optFields);
     }
     /**
-     * 
-     * 
+     * Get objects by tag.
+     * Get objects by tag.
      * <p><b>200</b> - OK
-     * @param projectId The projectId parameter
-     * @param categoryName The categoryName parameter
-     * @param objectsByTagRequest The objectsByTagRequest parameter
+     * @param projectId project space to get objects from.
+     * @param categoryName category of the tag.
+     * @param objectsByTagRequest tag filter.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param optFields The optFields parameter
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return PageRun
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -475,16 +475,16 @@ public class RunsApi {
     }
 
     /**
-     * 
-     * 
+     * Get objects by tag.
+     * Get objects by tag.
      * <p><b>200</b> - OK
-     * @param projectId The projectId parameter
-     * @param categoryName The categoryName parameter
-     * @param objectsByTagRequest The objectsByTagRequest parameter
+     * @param projectId project space to get objects from.
+     * @param categoryName category of the tag.
+     * @param objectsByTagRequest tag filter.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param optFields The optFields parameter
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return PageRun
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -494,16 +494,16 @@ public class RunsApi {
     }
 
     /**
-     * 
-     * 
+     * Get objects by tag.
+     * Get objects by tag.
      * <p><b>200</b> - OK
-     * @param projectId The projectId parameter
-     * @param categoryName The categoryName parameter
-     * @param objectsByTagRequest The objectsByTagRequest parameter
+     * @param projectId project space to get objects from.
+     * @param categoryName category of the tag.
+     * @param objectsByTagRequest tag filter.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param optFields The optFields parameter
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseEntity&lt;PageRun&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
@@ -513,16 +513,16 @@ public class RunsApi {
     }
 
     /**
-     * 
-     * 
+     * Get objects by tag.
+     * Get objects by tag.
      * <p><b>200</b> - OK
-     * @param projectId The projectId parameter
-     * @param categoryName The categoryName parameter
-     * @param objectsByTagRequest The objectsByTagRequest parameter
+     * @param projectId project space to get objects from.
+     * @param categoryName category of the tag.
+     * @param objectsByTagRequest tag filter.
      * @param page Zero-based page index (0..N)
      * @param size The size of the page to be returned
      * @param sort Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-     * @param optFields The optFields parameter
+     * @param optFields set of optional fields to be included. Use &#39;none&#39; only to override defaults.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */

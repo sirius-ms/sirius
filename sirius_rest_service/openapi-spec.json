@@ -614,11 +614,14 @@
         "tags": [
           "Runs"
         ],
+        "summary": "Get objects by tag.",
+        "description": "Get objects by tag.",
         "operationId": "objectsByTag",
         "parameters": [
           {
             "name": "projectId",
             "in": "path",
+            "description": "project space to get objects from.",
             "required": true,
             "schema": {
               "type": "string"
@@ -627,6 +630,7 @@
           {
             "name": "categoryName",
             "in": "path",
+            "description": "category of the tag.",
             "required": true,
             "schema": {
               "type": "string"
@@ -669,6 +673,7 @@
           {
             "name": "optFields",
             "in": "query",
+            "description": "set of optional fields to be included. Use \u0027none\u0027 only to override defaults.",
             "required": false,
             "schema": {
               "type": "array",
@@ -680,6 +685,7 @@
           }
         ],
         "requestBody": {
+          "description": "tag filter.",
           "content": {
             "application/json": {
               "schema": {
@@ -692,6 +698,9 @@
                   },
                   {
                     "$ref": "#/components/schemas/IntTagFilter"
+                  },
+                  {
+                    "$ref": "#/components/schemas/StringTagFilter"
                   },
                   {
                     "$ref": "#/components/schemas/TaggedFilter"
@@ -721,8 +730,8 @@
         "tags": [
           "Runs"
         ],
-        "summary": "Add tags to a run in the project.",
-        "description": "Add tags to a run in the project. Tags with the same category name will be overwritten.",
+        "summary": "Add tags to an object in the project.",
+        "description": "Add tags to an object in the project. Tags with the same category name will be overwritten.",
         "operationId": "addTags",
         "parameters": [
           {
@@ -6227,19 +6236,33 @@
           }
         ]
       },
-      "TagFilter": {
-        "required": [
-          "type"
-        ],
+      "StringTagFilter": {
         "type": "object",
-        "properties": {
-          "type": {
-            "type": "string"
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/TagFilter"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "equals": {
+                "type": "string"
+              },
+              "notEquals": {
+                "type": "string"
+              },
+              "contains": {
+                "type": "string"
+              },
+              "regexMatch": {
+                "type": "string"
+              }
+            }
           }
-        },
-        "discriminator": {
-          "propertyName": "type"
-        }
+        ]
+      },
+      "TagFilter": {
+        "type": "object"
       },
       "TaggedFilter": {
         "type": "object",
@@ -6250,7 +6273,7 @@
           {
             "type": "object",
             "properties": {
-              "tagged": {
+              "value": {
                 "type": "boolean"
               }
             }
@@ -6265,6 +6288,71 @@
           "tags"
         ]
       },
+      "BoolTag": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Tag"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "categoryName": {
+                "type": "string",
+                "description": "Name of the tag category"
+              },
+              "value": {
+                "type": "boolean",
+                "description": "Tag value"
+              }
+            }
+          }
+        ]
+      },
+      "DoubleTag": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Tag"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "categoryName": {
+                "type": "string",
+                "description": "Name of the tag category"
+              },
+              "value": {
+                "type": "number",
+                "description": "Tag value",
+                "format": "double"
+              }
+            }
+          }
+        ]
+      },
+      "IntTag": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Tag"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "categoryName": {
+                "type": "string",
+                "description": "Name of the tag category"
+              },
+              "value": {
+                "type": "integer",
+                "description": "Tag value",
+                "format": "int32"
+              }
+            }
+          }
+        ]
+      },
       "PageRun": {
         "type": "object",
         "properties": {
@@ -6276,10 +6364,10 @@
             "type": "integer",
             "format": "int64"
           },
-          "first": {
+          "last": {
             "type": "boolean"
           },
-          "last": {
+          "first": {
             "type": "boolean"
           },
           "size": {
@@ -6371,7 +6459,23 @@
           "tags": {
             "type": "object",
             "additionalProperties": {
-              "$ref": "#/components/schemas/Tag"
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/Tag"
+                },
+                {
+                  "$ref": "#/components/schemas/BoolTag"
+                },
+                {
+                  "$ref": "#/components/schemas/DoubleTag"
+                },
+                {
+                  "$ref": "#/components/schemas/IntTag"
+                },
+                {
+                  "$ref": "#/components/schemas/StringTag"
+                }
+              ]
             },
             "description": "Key: tag category, value: tag",
             "nullable": true
@@ -6392,16 +6496,32 @@
           }
         }
       },
+      "StringTag": {
+        "type": "object",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Tag"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "categoryName": {
+                "type": "string",
+                "description": "Name of the tag category"
+              },
+              "value": {
+                "type": "string",
+                "description": "Tag value"
+              }
+            }
+          }
+        ]
+      },
       "Tag": {
         "type": "object",
         "properties": {
           "categoryName": {
-            "type": "string",
-            "description": "Name of the tag category"
-          },
-          "value": {
-            "type": "object",
-            "description": "Tag value"
+            "type": "string"
           }
         },
         "nullable": true

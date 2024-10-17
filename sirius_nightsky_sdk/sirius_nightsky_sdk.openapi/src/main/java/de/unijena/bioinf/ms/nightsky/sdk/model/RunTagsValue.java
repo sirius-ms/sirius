@@ -20,45 +20,80 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
+import de.unijena.bioinf.ms.nightsky.sdk.model.BoolTag;
+import de.unijena.bioinf.ms.nightsky.sdk.model.DoubleTag;
+import de.unijena.bioinf.ms.nightsky.sdk.model.IntTag;
+import de.unijena.bioinf.ms.nightsky.sdk.model.StringTag;
+import de.unijena.bioinf.ms.nightsky.sdk.model.Tag;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
 /**
- * TaggedFilter
+ * RunTagsValue
  */
 @JsonPropertyOrder({
-  TaggedFilter.JSON_PROPERTY_VALUE
+  RunTagsValue.JSON_PROPERTY_CATEGORY_NAME,
+  RunTagsValue.JSON_PROPERTY_VALUE
 })
+@JsonTypeName("Run_tags_value")
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
-public class TaggedFilter {
-  public static final String JSON_PROPERTY_VALUE = "value";
-  private Boolean value;
+public class RunTagsValue {
+  public static final String JSON_PROPERTY_CATEGORY_NAME = "categoryName";
+  private String categoryName;
 
-  public TaggedFilter() {
+  public static final String JSON_PROPERTY_VALUE = "value";
+  private String value;
+
+  public RunTagsValue() {
   }
 
-  public TaggedFilter value(Boolean value) {
+  public RunTagsValue categoryName(String categoryName) {
+    
+    this.categoryName = categoryName;
+    return this;
+  }
+
+   /**
+   * Name of the tag category
+   * @return categoryName
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_CATEGORY_NAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getCategoryName() {
+    return categoryName;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_CATEGORY_NAME)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setCategoryName(String categoryName) {
+    this.categoryName = categoryName;
+  }
+
+  public RunTagsValue value(String value) {
     
     this.value = value;
     return this;
   }
 
    /**
-   * Get value
+   * Tag value
    * @return value
   **/
   @jakarta.annotation.Nullable
   @JsonProperty(JSON_PROPERTY_VALUE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-  public Boolean isValue() {
+  public String getValue() {
     return value;
   }
 
 
   @JsonProperty(JSON_PROPERTY_VALUE)
   @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-  public void setValue(Boolean value) {
+  public void setValue(String value) {
     this.value = value;
   }
 
@@ -70,19 +105,21 @@ public class TaggedFilter {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    TaggedFilter taggedFilter = (TaggedFilter) o;
-    return Objects.equals(this.value, taggedFilter.value);
+    RunTagsValue runTagsValue = (RunTagsValue) o;
+    return Objects.equals(this.categoryName, runTagsValue.categoryName) &&
+        Objects.equals(this.value, runTagsValue.value);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(value);
+    return Objects.hash(categoryName, value);
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class TaggedFilter {\n");
+    sb.append("class RunTagsValue {\n");
+    sb.append("    categoryName: ").append(toIndentedString(categoryName)).append("\n");
     sb.append("    value: ").append(toIndentedString(value)).append("\n");
     sb.append("}");
     return sb.toString();

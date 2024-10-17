@@ -203,11 +203,11 @@ Class | Method | HTTP request | Description
 *ProjectsApi* | [**importPreprocessedDataAsJobLocally**](docs/ProjectsApi.md#importPreprocessedDataAsJobLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files-job | Import ms/ms data from the given format into the specified project-space as background job
 *ProjectsApi* | [**importPreprocessedDataLocally**](docs/ProjectsApi.md#importPreprocessedDataLocally) | **POST** /api/projects/{projectId}/import/preprocessed-local-data-files | Import already preprocessed ms/ms data from various formats into the specified project  Possible formats (ms, mgf, cef, msp)  
 *ProjectsApi* | [**openProjectSpace**](docs/ProjectsApi.md#openProjectSpace) | **PUT** /api/projects/{projectId} | Open an existing project-space and make it accessible via the given projectId.
-*RunsApi* | [**addTags**](docs/RunsApi.md#addTags) | **POST** /api/projects/{projectId}/runs/tags/add/{objectId} | Add tags to a run in the project.
+*RunsApi* | [**addTags**](docs/RunsApi.md#addTags) | **POST** /api/projects/{projectId}/runs/tags/add/{objectId} | Add tags to an object in the project.
 *RunsApi* | [**deleteTags**](docs/RunsApi.md#deleteTags) | **PUT** /api/projects/{projectId}/runs/tags/delete/{objectId} | Delete tags with the given IDs from the specified project-space.
 *RunsApi* | [**getRun**](docs/RunsApi.md#getRun) | **GET** /api/projects/{projectId}/runs/{runId} | Get run with the given identifier from the specified project-space.
 *RunsApi* | [**getRunsPaged**](docs/RunsApi.md#getRunsPaged) | **GET** /api/projects/{projectId}/runs/page | Get all available runs in the given project-space.
-*RunsApi* | [**objectsByTag**](docs/RunsApi.md#objectsByTag) | **POST** /api/projects/{projectId}/runs/tags/tagged/{categoryName} | 
+*RunsApi* | [**objectsByTag**](docs/RunsApi.md#objectsByTag) | **POST** /api/projects/{projectId}/runs/tags/tagged/{categoryName} | Get objects by tag.
 *SearchableDatabasesApi* | [**addDatabases**](docs/SearchableDatabasesApi.md#addDatabases) | **POST** /api/databases | 
 *SearchableDatabasesApi* | [**createDatabase**](docs/SearchableDatabasesApi.md#createDatabase) | **POST** /api/databases/{databaseId} | 
 *SearchableDatabasesApi* | [**getCustomDatabases**](docs/SearchableDatabasesApi.md#getCustomDatabases) | **GET** /api/databases/custom | 
@@ -240,6 +240,7 @@ Class | Method | HTTP request | Description
  - [BackgroundComputationsStateEvent](docs/BackgroundComputationsStateEvent.md)
  - [BasicSpectrum](docs/BasicSpectrum.md)
  - [BinaryFingerprint](docs/BinaryFingerprint.md)
+ - [BoolTag](docs/BoolTag.md)
  - [BoolTagFilter](docs/BoolTagFilter.md)
  - [Canopus](docs/Canopus.md)
  - [CanopusPrediction](docs/CanopusPrediction.md)
@@ -261,6 +262,7 @@ Class | Method | HTTP request | Description
  - [DBLink](docs/DBLink.md)
  - [DataQuality](docs/DataQuality.md)
  - [Deviation](docs/Deviation.md)
+ - [DoubleTag](docs/DoubleTag.md)
  - [DoubleTagFilter](docs/DoubleTagFilter.md)
  - [Feature](docs/Feature.md)
  - [FeatureAnnotations](docs/FeatureAnnotations.md)
@@ -274,6 +276,7 @@ Class | Method | HTTP request | Description
  - [ImportResult](docs/ImportResult.md)
  - [Info](docs/Info.md)
  - [InstrumentProfile](docs/InstrumentProfile.md)
+ - [IntTag](docs/IntTag.md)
  - [IntTagFilter](docs/IntTagFilter.md)
  - [IsotopePatternAnnotation](docs/IsotopePatternAnnotation.md)
  - [Item](docs/Item.md)
@@ -305,6 +308,7 @@ Class | Method | HTTP request | Description
  - [QuantificationTable](docs/QuantificationTable.md)
  - [Run](docs/Run.md)
  - [RunOptField](docs/RunOptField.md)
+ - [RunTagsValue](docs/RunTagsValue.md)
  - [SearchableDatabase](docs/SearchableDatabase.md)
  - [SearchableDatabaseParameters](docs/SearchableDatabaseParameters.md)
  - [SimplePeak](docs/SimplePeak.md)
@@ -316,6 +320,8 @@ Class | Method | HTTP request | Description
  - [SpectralLibrarySearch](docs/SpectralLibrarySearch.md)
  - [SpectralMatchingType](docs/SpectralMatchingType.md)
  - [SpectrumAnnotation](docs/SpectrumAnnotation.md)
+ - [StringTag](docs/StringTag.md)
+ - [StringTagFilter](docs/StringTagFilter.md)
  - [StructureCandidate](docs/StructureCandidate.md)
  - [StructureCandidateFormula](docs/StructureCandidateFormula.md)
  - [StructureCandidateOptField](docs/StructureCandidateOptField.md)
@@ -325,7 +331,6 @@ Class | Method | HTTP request | Description
  - [SubscriptionConsumables](docs/SubscriptionConsumables.md)
  - [Tag](docs/Tag.md)
  - [TagCategory](docs/TagCategory.md)
- - [TagFilter](docs/TagFilter.md)
  - [TaggedFilter](docs/TaggedFilter.md)
  - [Term](docs/Term.md)
  - [Timeout](docs/Timeout.md)

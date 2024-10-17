@@ -4,11 +4,11 @@ All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**addTags**](RunsApi.md#addTags) | **POST** /api/projects/{projectId}/runs/tags/add/{objectId} | Add tags to a run in the project. |
+| [**addTags**](RunsApi.md#addTags) | **POST** /api/projects/{projectId}/runs/tags/add/{objectId} | Add tags to an object in the project. |
 | [**deleteTags**](RunsApi.md#deleteTags) | **PUT** /api/projects/{projectId}/runs/tags/delete/{objectId} | Delete tags with the given IDs from the specified project-space. |
 | [**getRun**](RunsApi.md#getRun) | **GET** /api/projects/{projectId}/runs/{runId} | Get run with the given identifier from the specified project-space. |
 | [**getRunsPaged**](RunsApi.md#getRunsPaged) | **GET** /api/projects/{projectId}/runs/page | Get all available runs in the given project-space. |
-| [**objectsByTag**](RunsApi.md#objectsByTag) | **POST** /api/projects/{projectId}/runs/tags/tagged/{categoryName} |  |
+| [**objectsByTag**](RunsApi.md#objectsByTag) | **POST** /api/projects/{projectId}/runs/tags/tagged/{categoryName} | Get objects by tag. |
 
 
 
@@ -16,9 +16,9 @@ All URIs are relative to *http://localhost:8888*
 
 > List&lt;Tag&gt; addTags(projectId, objectId, tag)
 
-Add tags to a run in the project.
+Add tags to an object in the project.
 
-Add tags to a run in the project. Tags with the same category name will be overwritten.
+Add tags to an object in the project. Tags with the same category name will be overwritten.
 
 ### Example
 
@@ -299,7 +299,9 @@ No authorization required
 
 > PageRun objectsByTag(projectId, categoryName, objectsByTagRequest, page, size, sort, optFields)
 
+Get objects by tag.
 
+Get objects by tag.
 
 ### Example
 
@@ -317,13 +319,13 @@ public class Example {
         defaultClient.setBasePath("http://localhost:8888");
 
         RunsApi apiInstance = new RunsApi(defaultClient);
-        String projectId = "projectId_example"; // String | 
-        String categoryName = "categoryName_example"; // String | 
-        ObjectsByTagRequest objectsByTagRequest = new ObjectsByTagRequest(); // ObjectsByTagRequest | 
+        String projectId = "projectId_example"; // String | project space to get objects from.
+        String categoryName = "categoryName_example"; // String | category of the tag.
+        ObjectsByTagRequest objectsByTagRequest = new ObjectsByTagRequest(); // ObjectsByTagRequest | tag filter.
         Integer page = 0; // Integer | Zero-based page index (0..N)
         Integer size = 20; // Integer | The size of the page to be returned
         List<String> sort = Arrays.asList(); // List<String> | Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported.
-        List<RunOptField> optFields = Arrays.asList(); // List<RunOptField> | 
+        List<RunOptField> optFields = Arrays.asList(); // List<RunOptField> | set of optional fields to be included. Use 'none' only to override defaults.
         try {
             PageRun result = apiInstance.objectsByTag(projectId, categoryName, objectsByTagRequest, page, size, sort, optFields);
             System.out.println(result);
@@ -343,13 +345,13 @@ public class Example {
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **projectId** | **String**|  | |
-| **categoryName** | **String**|  | |
-| **objectsByTagRequest** | [**ObjectsByTagRequest**](ObjectsByTagRequest.md)|  | |
+| **projectId** | **String**| project space to get objects from. | |
+| **categoryName** | **String**| category of the tag. | |
+| **objectsByTagRequest** | [**ObjectsByTagRequest**](ObjectsByTagRequest.md)| tag filter. | |
 | **page** | **Integer**| Zero-based page index (0..N) | [optional] [default to 0] |
 | **size** | **Integer**| The size of the page to be returned | [optional] [default to 20] |
 | **sort** | [**List&lt;String&gt;**](String.md)| Sorting criteria in the format: property,(asc|desc). Default sort order is ascending. Multiple sort criteria are supported. | [optional] |
-| **optFields** | [**List&lt;RunOptField&gt;**](RunOptField.md)|  | [optional] |
+| **optFields** | [**List&lt;RunOptField&gt;**](RunOptField.md)| set of optional fields to be included. Use &#39;none&#39; only to override defaults. | [optional] |
 
 ### Return type
 
