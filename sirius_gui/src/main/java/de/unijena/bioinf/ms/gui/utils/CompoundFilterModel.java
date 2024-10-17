@@ -18,14 +18,19 @@ package de.unijena.bioinf.ms.gui.utils;/*
  *  You should have received a copy of the GNU General Public License along with SIRIUS. If not, see <https://www.gnu.org/licenses/lgpl-3.0.txt>
  */
 
+import ca.odell.glazedlists.EventList;
+import ca.odell.glazedlists.event.ListEvent;
+import ca.odell.glazedlists.swing.DefaultEventSelectionModel;
 import de.unijena.bioinf.ChemistryBase.chem.FormulaConstraints;
-import de.unijena.bioinf.ChemistryBase.chem.PeriodicTable;
 import de.unijena.bioinf.ChemistryBase.chem.PrecursorIonType;
 import de.unijena.bioinf.ms.frontend.core.SiriusPCS;
-import de.unijena.bioinf.ms.nightsky.sdk.model.DataQuality;
-import de.unijena.bioinf.ms.nightsky.sdk.model.SearchableDatabase;
+import de.unijena.bioinf.ms.gui.mainframe.instance_panel.ExperimentListChangeListener;
+import io.sirius.ms.sdk.model.DataQuality;
+import io.sirius.ms.sdk.model.SearchableDatabase;
+import de.unijena.bioinf.projectspace.InstanceBean;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.Synchronized;
 import org.apache.commons.text.CaseUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,8 +44,8 @@ import java.util.stream.Collectors;
 public class CompoundFilterModel implements SiriusPCS {
     private final MutableHiddenChangeSupport pcs = new MutableHiddenChangeSupport(this, true);
 
-    private static final Set<PrecursorIonType> DEFAULT_ADDUCTS = Collections.unmodifiableSet(PeriodicTable.getInstance().getAdductsAndUnKnowns()
-            .stream().filter(p -> !p.isMultipleCharged()).filter(p -> !p.isMultimere()).collect(Collectors.toSet()));
+//    private static final Set<PrecursorIonType> DEFAULT_ADDUCTS = Collections.unmodifiableSet(PeriodicTable.getInstance().getAdductsAndUnKnowns()
+//            .stream().filter(p -> !p.isMultipleCharged()).filter(p -> !p.isMultimere()).collect(Collectors.toSet()));
 
     /*
     currently selected values
@@ -81,8 +86,10 @@ public class CompoundFilterModel implements SiriusPCS {
     @Getter
     private boolean hasMsMs = true;
 
+    private Set<PrecursorIonType> possibleAdducts = new HashSet<>();
     @Setter
-    private Set<PrecursorIonType> adducts = DEFAULT_ADDUCTS;
+    private Set<PrecursorIonType> adducts = new HashSet<>();
+
     @Getter
     private LipidFilter lipidFilter = LipidFilter.KEEP_ALL_COMPOUNDS;
 
@@ -144,7 +151,6 @@ public class CompoundFilterModel implements SiriusPCS {
         this.maxRt = maxRt;
         this.minConfidence = minConfidence;
         this.maxConfidence = maxConfidence;
-
     }
 
     public void fireUpdateCompleted() {
@@ -288,33 +294,53 @@ public class CompoundFilterModel implements SiriusPCS {
         return currentMinConfidence != minConfidence;
     }
 
+    @Synchronized
+    public void updateAdducts(EventList<InstanceBean> compoundList) {
+        Set<PrecursorIonType> listAdducts = new HashSet<>();
+        for (InstanceBean instanceBean : compoundList) {
+            listAdducts.addAll(instanceBean.getDetectedAdductsIncludingUnknown());
+        }
+        Set<PrecursorIonType> newAdducts = new HashSet<>(listAdducts);
+        newAdducts.removeAll(possibleAdducts);
+        possibleAdducts.retainAll(listAdducts);
+        adducts.retainAll(listAdducts);
+        possibleAdducts.addAll(newAdducts);
+        adducts.addAll(newAdducts.stream().filter(p -> !p.isMultimere() && !p.isMultipleCharged()).collect(Collectors.toSet()));
+    }
 
-    public Set<PrecursorIonType> getAdducts() {
+    @Synchronized
+    public Set<PrecursorIonType> getPossibleAdducts() {
+        return Collections.unmodifiableSet(possibleAdducts);
+    }
+
+    @Synchronized
+    public Set<PrecursorIonType> getSelectedAdducts() {
         return Collections.unmodifiableSet(adducts);
     }
 
+    @Synchronized
     public boolean isAdductFilterActive() {
         return adducts != null && !adducts.isEmpty();
     }
 
+    @Synchronized
     public boolean isMultiAdductsAllowed() {
         return !isAdductFilterActive() || adducts.stream().anyMatch(p -> p.isMultipleCharged() || p.isMultimere());
     }
 
+    @Synchronized
     public void removeMultiAdducts() {
         adducts = adducts.stream().filter(p -> !p.isMultipleCharged()).filter(p -> !p.isMultimere()).collect(Collectors.toSet());
         if (adducts.isEmpty())
-            adducts = DEFAULT_ADDUCTS;
+            adducts = possibleAdducts.stream().filter(p -> !p.isMultimere() && !p.isMultipleCharged()).collect(Collectors.toSet());
     }
 
+    @Synchronized
     public void addMultiAdducts() {
         if (!isAdductFilterActive())
             return;
 
-        adducts = new HashSet<>(adducts);
-        PeriodicTable.getInstance().getAdductsAndUnKnowns().stream()
-                .filter(p -> p.isMultimere() || p.isMultipleCharged())
-                .forEach(a -> adducts.add(a));
+        possibleAdducts.stream().filter(p -> p.isMultimere() || p.isMultipleCharged()).forEach(adducts::add);
     }
 
 
@@ -351,7 +377,6 @@ public class CompoundFilterModel implements SiriusPCS {
 
         public DbFilter(List<SearchableDatabase> dbs) {
             this(dbs, 5);
-
         }
 
         public DbFilter(List<SearchableDatabase> dbFilter, int numOfCandidates) {

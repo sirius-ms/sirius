@@ -90,7 +90,8 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
                 .addRepository(AlignedFeatures.class,
                         Index.nonUnique("compoundId"),
                         Index.nonUnique("averageMass"),
-                        Index.nonUnique("retentionTime.middle")
+                        Index.nonUnique("retentionTime.middle"),
+                        Index.nonUnique("traceRef.traceId")
                 )
 
                 .addRepository(AlignedIsotopicFeatures.class,
@@ -138,7 +139,7 @@ public interface MsProjectDocumentDatabase<Storage extends Database<?>> {
     }
 
     default Stream<AlignedFeatures> getAllAlignedFeatures() throws IOException {
-        return getStorage().findAllStr(AlignedFeatures.class);
+        return getStorage().findAllStr(AlignedFeatures.class, "retentionTime.middle", Database.SortOrder.ASCENDING);
     }
 
     @SneakyThrows

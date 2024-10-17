@@ -31,6 +31,9 @@ import de.unijena.bioinf.lcms.trace.segmentation.PersistentHomology;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.traceextractor.*;
+import de.unijena.bioinf.lcms.utils.TrackFeatureToFile;
+import de.unijena.bioinf.lcms.utils.TrackFeatureToLog;
+import de.unijena.bioinf.lcms.utils.Tracker;
 import de.unijena.bioinf.ms.persistence.model.core.feature.AlignedFeatures;
 import de.unijena.bioinf.ms.persistence.model.core.run.Chromatography;
 import de.unijena.bioinf.ms.persistence.model.core.run.MergedLCMSRun;
@@ -43,9 +46,11 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.Range;
 import org.apache.commons.text.similarity.LongestCommonSubsequence;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
@@ -116,6 +121,9 @@ public class LCMSProcessing {
 
     @Getter
     private LongList importedFeatureIds = new LongArrayList();
+
+    @Getter @Setter
+    private Tracker tracker = new Tracker.NOOP();
 
     public LCMSProcessing(SiriusDatabaseAdapter siriusDatabaseAdapter, boolean saveFeatureIds) {
         this.siriusDatabaseAdapter = siriusDatabaseAdapter;
@@ -188,7 +196,7 @@ public class LCMSProcessing {
         makeMergeStatistics(merged, alignmentBackbone.getSamples());
         samples.add(merged);
         sampleByIdx.put(merged.getUid(), merged);
-        alignmentBackbone = alignmentStrategy.align(merged, alignmentBackbone, Arrays.asList(alignmentBackbone.getSamples()), alignmentAlgorithm, alignmentScorerFull);
+        alignmentBackbone = alignmentStrategy.align(merged, alignmentBackbone, Arrays.asList(alignmentBackbone.getSamples()), alignmentAlgorithm, alignmentScorerFull, tracker);
         for (ProcessedSample sample : alignmentBackbone.getSamples()) {
             sample.setScanPointInterpolator(new ScanPointInterpolator(merged.getMapping(), sample.getMapping(), sample.getRtRecalibration()));
             updateRetentionTimeAxis(sample);
@@ -219,7 +227,7 @@ public class LCMSProcessing {
 
     public ProcessedSample merge(AlignmentBackbone backbone) {
         ProcessedSample merged = this.samples.get(samples.size()-1);
-        mergeStrategy.merge(merged, backbone);
+        mergeStrategy.merge(merged, backbone, tracker);
         return merged;
     }
 
@@ -252,7 +260,9 @@ public class LCMSProcessing {
                 protected long[] compute() throws Exception {
                     MergedTrace mergedTrace = collectMergedTrace(merged, r.id);
                     if (mergedTrace!=null && isSuitableForImport(mergedTrace)) {
-                        return Arrays.stream(importer.importMergedTrace(mergedTraceSegmentationStrategy, siriusDatabaseAdapter, obj,merged, mergedTrace)).mapToLong(AlignedFeatures::getAlignedFeatureId).toArray();
+                        return Arrays.stream(importer.importMergedTrace(mergedTraceSegmentationStrategy, siriusDatabaseAdapter, obj,merged, mergedTrace, tracker)).mapToLong(AlignedFeatures::getAlignedFeatureId).toArray();
+                    } else {
+                        tracker.rejectedForFeatureExtraction(r, mergedTrace);
                     }
                     return new long[0];
                 }
@@ -358,6 +368,7 @@ public class LCMSProcessing {
         tracePicker.setAllowedMassDeviation(sample.getStorage().getStatistics().getMs1MassDeviationWithinTraces());
         traceDetectionStrategy.findPeaksForExtraction(sample, (sample1, spectrumIdx, peakIdx, spectrum) -> {
             Optional<ContiguousTrace> peak = tracePicker.detectMostIntensivePeak(spectrumIdx, spectrum.getMzAt(peakIdx));
+            peak.ifPresent(p->tracker.tracePicked(p.averagedMz(), sample.getMapping().getRetentionTimeAt(p.apex()), sample, p));
         });
     }
 
@@ -391,11 +402,13 @@ public class LCMSProcessing {
 
                 if (trace.getSegments().length==1) moi.setSingleApex(true);
                 detectIsotopesForMoI(sample, trace, segment, moi);
-
                 moi.setConfidence(confidenceEstimatorStrategy.estimateConfidence(sample, trace, moi, null));
                 if (moi.getConfidence() >= 0) {
                     //System.out.println(moi + " intensity = " + moi.getIntensity() + ", isotopes = " + (moi.getIsotopes()==null ? 0 : moi.getIsotopes().isotopeIntensities.length) + ", confidence = "+ moi.getConfidence());
                     alignmentStorage.addMoI(moi);
+                    tracker.moiAccepted(moi.getMz(), moi.getRetentionTime(), sample, trace, moi);
+                } else {
+                    tracker.moiRejected(moi.getMz(), moi.getRetentionTime(), sample, trace, moi);
                 }
             }
         }

@@ -173,7 +173,7 @@ public abstract class TraceStorage implements Iterable<ContiguousTrace>  {
                     if (contiguousTrace.apex() == trace.apex()) {
                         return contiguousTrace.withMapping(mapping);
                     } else {
-                        LoggerFactory.getLogger(LCMSStorage.class).warn("Overlapping traces found!");
+                        LoggerFactory.getLogger(LCMSStorage.class).debug("Overlapping traces found!");
                     }
                 }
                 if (uids.compareAndSet(currentIndex, currentIndex + 1)) {

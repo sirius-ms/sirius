@@ -19,16 +19,18 @@
 
 package de.unijena.bioinf.projectspace;
 
+import de.unijena.bioinf.ChemistryBase.chem.RetentionTime;
 import de.unijena.bioinf.ChemistryBase.ms.Ms2Experiment;
-import de.unijena.bioinf.ChemistryBase.ms.Quantification;
-import de.unijena.bioinf.ChemistryBase.ms.lcms.LCMSPeakInformation;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
-import java.util.Optional;
+import java.util.Objects;
 
 class InstanceImportIteratorMS2Exp implements Iterator<Instance> {
 
+    private static final Logger log = LoggerFactory.getLogger(InstanceImportIteratorMS2Exp.class);
     private final ProjectSpaceManager spaceManager;
     private final Iterator<Ms2Experiment> ms2ExperimentIterator;
 
@@ -46,10 +48,17 @@ class InstanceImportIteratorMS2Exp implements Iterator<Instance> {
         if (next != null)
             return true;
 
-        if (ms2ExperimentIterator.hasNext()) {
+        while (ms2ExperimentIterator.hasNext()) {
             final Ms2Experiment input = ms2ExperimentIterator.next();
-            @NotNull Instance inst = spaceManager.importInstanceWithUniqueId(input); //this writers
-            next = inst;
+            try {
+                @NotNull Instance inst = spaceManager.importInstanceWithUniqueId(input); //this writers
+                next = inst;
+            } catch (Exception e) {
+                log.warn("Error importing instance rt ={}, mz={}, name={}. Message: {}",
+                        input.getAnnotation(RetentionTime.class).map(Objects::toString).orElse("N/A"),
+                        Math.round(input.getIonMass()), input.getName(), e.getMessage());
+                continue;
+            }
             return true;
         }
         return false;

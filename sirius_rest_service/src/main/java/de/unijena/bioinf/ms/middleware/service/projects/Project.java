@@ -59,8 +59,8 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
     Optional<QuantificationTable> getQuantificationForAlignedFeature(String alignedFeatureId, QuantificationTable.QuantificationType type);
 
-    Optional<TraceSet> getTraceSetForAlignedFeature(String alignedFeatureId);
-    Optional<TraceSet> getTraceSetForCompound(String compoundId);
+    Optional<TraceSet> getTraceSetForAlignedFeature(String alignedFeatureId, boolean includeAll);
+    Optional<TraceSet> getTraceSetForCompound(String compoundId, Optional<String> featureId);
 
     Page<Compound> findCompounds(Pageable pageable, @NotNull EnumSet<Compound.OptField> optFields,
                                  @NotNull EnumSet<AlignedFeature.OptField> optFeatureFields);
@@ -92,13 +92,10 @@ public interface Project<PSM extends ProjectSpaceManager> {
 
         importTask.run();
         return ImportResult.builder()
-                .affectedAlignedFeatureIds(importTask.getImportedInstancesStr()
-                        .map(Instance::getId)
-                        .collect(Collectors.toList()))
-                .affectedCompoundIds(importTask.getImportedInstancesStr()
-                        .map(Instance::getCompoundId)
-                        .filter(Optional::isPresent).flatMap(Optional::stream)
-                        .distinct().collect(Collectors.toList()))
+                .affectedAlignedFeatureIds(importTask.getImportedFeatureIds().longStream()
+                        .mapToObj(String::valueOf).collect(Collectors.toList()))
+                .affectedCompoundIds(importTask.getImportedCompoundIds().longStream()
+                        .mapToObj(String::valueOf).collect(Collectors.toList()))
                 .build();
     }
 

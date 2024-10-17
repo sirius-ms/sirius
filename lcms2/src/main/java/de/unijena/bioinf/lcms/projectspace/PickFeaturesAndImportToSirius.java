@@ -20,6 +20,7 @@ import de.unijena.bioinf.lcms.trace.Trace;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegment;
 import de.unijena.bioinf.lcms.trace.segmentation.TraceSegmentationStrategy;
 import de.unijena.bioinf.lcms.utils.MultipleCharges;
+import de.unijena.bioinf.lcms.utils.Tracker;
 import de.unijena.bioinf.ms.persistence.model.core.feature.*;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.IsotopePattern;
 import de.unijena.bioinf.ms.persistence.model.core.spectrum.MSData;
@@ -32,12 +33,12 @@ import it.unimi.dsi.fastutil.ints.Int2LongOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickFeaturesAndImportToSirius.DbMapper>  {
 
@@ -79,7 +80,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
     }
 
     @Override
-    public AlignedFeatures[] importMergedTrace(TraceSegmentationStrategy traceSegmenter, SiriusDatabaseAdapter adapter, DbMapper dbMapper, ProcessedSample mergedSample, MergedTrace mergedTrace) throws IOException {
+    public AlignedFeatures[] importMergedTrace(TraceSegmentationStrategy traceSegmenter, SiriusDatabaseAdapter adapter, DbMapper dbMapper, ProcessedSample mergedSample, MergedTrace mergedTrace, Tracker tracker) throws IOException {
         // import each individual trace
         MergeTraceId tid = importMergedTraceWithoutIsotopes(adapter, dbMapper, mergedTrace);
         // now import isotopes
@@ -91,6 +92,9 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         AlignedFeatures[] features = extractCompounds(traceSegmenter, adapter, dbMapper, mergedSample, mergedTrace, tid, isotopes);
         if (features.length == 0) {
             removeMergedTrace(adapter, tid, isotopes);
+            tracker.noFeatureFound(mergedTrace);
+        } else {
+            tracker.importFeatures(mergedTrace, features);
         }
         return features;
     }
@@ -103,6 +107,40 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
         // if there is no compound found in the trace...
         if (traceSegments.length==0) return new AlignedFeatures[0];
 
+        FeaturesAndSegment res = findFeaturesForTraces(mergedSample, mergedTrace, dbId, dbIsotopeIds, traceSegments);
+
+        // doublecheck assignment
+        if (true){
+            Optional<TraceSegment[]> mergedSegments = checkForMergeOfNeighbouringFeatures(mergedSample, res.features, traceSegments);
+            if (mergedSegments.isPresent() && mergedSegments.get().length>0) {
+                res = findFeaturesForTraces(mergedSample, mergedTrace, dbId, dbIsotopeIds, mergedSegments.get());
+            }
+        }
+
+        // assign ms data
+        assignMs2(dbMapper, mergedSample, mergedTrace, res.traceSegments, res.rawSegments, res.features);
+        // assign ms1 data
+        extractMs1(dbMapper, mergedSample, mergedTrace, res.traceSegments, res.rawSegments, res.features, dbIsotopeIds);
+        // reassign charge
+        reassignCharge(res.features);
+
+        // store feature
+        for (int i = 0; i < res.features.length; i++) {
+            if (res.features[i]==null) continue;
+            try {
+                if (!adapter.importAlignedFeature(res.features[i])) res.features[i] = null;
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return Arrays.stream(res.features).filter(Objects::nonNull).toArray(AlignedFeatures[]::new);
+    }
+
+    record FeaturesAndSegment (AlignedFeatures[] features, TraceSegment[] traceSegments, TraceSegment[][] rawSegments) {
+
+    }
+
+    private @NotNull FeaturesAndSegment findFeaturesForTraces(ProcessedSample mergedSample, MergedTrace mergedTrace, MergeTraceId dbId, MergeTraceId[] dbIsotopeIds, TraceSegment[] traceSegments) {
         TraceSegment[][] rawSegments;
         if (mergedTrace.getSamples().length == 1) {
             // do not project if samples.size == 1! -> just copy the trace segments
@@ -129,7 +167,7 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
 
         // generatate monoisotopic features for each segment
         AlignedFeatures[] features = new AlignedFeatures[traceSegments.length];
-        for (int fid=0; fid < traceSegments.length; ++fid) {
+        for (int fid = 0; fid < traceSegments.length; ++fid) {
             if (traceSegments[fid]==null) continue;
             features[fid] = new AlignedFeatures();
             features[fid].setDetectedAdducts(new DetectedAdducts());
@@ -160,23 +198,56 @@ public class PickFeaturesAndImportToSirius implements ProjectSpaceImporter<PickF
                 features[fid].getFeatures().get().add(sub);
             }
         }
-        // assign ms data
-        assignMs2(dbMapper, mergedSample, mergedTrace, traceSegments, rawSegments, features);
-        // assign ms1 data
-        extractMs1(dbMapper, mergedSample, mergedTrace, traceSegments, rawSegments, features, dbIsotopeIds);
-        // reassign charge
-        reassignCharge(features);
-        // store feature
-        for (int i = 0; i < features.length; i++) {
-            if (features[i]==null) continue;
-            try {
-                if (!adapter.importAlignedFeature(features[i])) features[i] = null;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+        return new FeaturesAndSegment(features, traceSegments, rawSegments);
+    }
+
+    private Optional<TraceSegment[]> checkForMergeOfNeighbouringFeatures(ProcessedSample sample, AlignedFeatures[] allFeatures, TraceSegment[] traceSegments) {
+        TraceSegment[] newSegments = traceSegments.clone();
+        final AlignedFeatures[] features = Arrays.stream(allFeatures).filter(x->x!=null).sorted(Comparator.comparingInt(x->x.getTraceRef().absoluteApexId())).toArray(AlignedFeatures[]::new);
+        final double allowedDeviation = sample.getStorage().getAlignmentStorage().getStatistics().getExpectedRetentionTimeDeviation()*2;
+        final ScanPointMapping mapping = sample.getMapping();
+        final Int2IntOpenHashMap feature2tracesegment = new Int2IntOpenHashMap();
+        for (int k=0; k < allFeatures.length; ++k) {
+            if (allFeatures[k]!=null) {
+                feature2tracesegment.put(allFeatures[k].getTraceRef().absoluteApexId(), k);
             }
         }
-        features = Arrays.stream(features).filter(Objects::nonNull).toArray(AlignedFeatures[]::new);
-        return features;
+        for (int k=0; k < features.length-1; ++k) {
+            final AlignedFeatures A = features[k];
+            if (A==null)
+                continue;
+            final AlignedFeatures B = features[k+1];
+            // check if both features are very close together
+            final double rtDifference = Math.abs(mapping.getRetentionTimeAt(A.getTraceRef().absoluteApexId())-mapping.getRetentionTimeAt(B.getTraceRef().absoluteApexId()));
+            if (k < features.length-2) {
+                final AlignedFeatures C = features[k+2];
+                // check if both features are very close together
+                final double rtDifference2 = Math.abs(mapping.getRetentionTimeAt(C.getTraceRef().absoluteApexId())-mapping.getRetentionTimeAt(B.getTraceRef().absoluteApexId()));
+                if (rtDifference2 < rtDifference)
+                    continue;
+            }
+
+            if (rtDifference < allowedDeviation) {
+                // check if all aligned features are completely separated
+                Set<Long> left = new HashSet<>(A.getFeatures().orElse(Collections.emptyList()).stream().map(AbstractFeature::getRunId).collect(Collectors.toList()));
+                Set<Long> right = B.getFeatures().orElse(Collections.emptyList()).stream().map(AbstractFeature::getRunId).collect(Collectors.toSet());
+                left.retainAll(right);
+                if (left.isEmpty()) {
+                    // merge features
+                    int ia = feature2tracesegment.get(A.getTraceRef().absoluteApexId());
+                    int ib = feature2tracesegment.get(B.getTraceRef().absoluteApexId());
+                    TraceSegment segmentA = traceSegments[ia];
+                    TraceSegment segmentB = traceSegments[ib];
+                    int apex = A.getApexIntensity()>B.getApexIntensity() ? segmentA.apex : segmentB.apex;
+                    newSegments[ia] = new TraceSegment(apex, Math.min(segmentA.leftEdge, segmentB.leftEdge), Math.max(segmentA.rightEdge, segmentB.rightEdge));
+                    newSegments[ib] = null;
+                    features[k+1]=null; // do not double merge
+                }
+            }
+        }
+        final TraceSegment[] allSegments = Arrays.stream(newSegments).filter(x->x!=null).toArray(TraceSegment[]::new);
+        if (allSegments.length < Arrays.stream(traceSegments).filter(x->x!=null).count()) return Optional.of(allSegments);
+        else return Optional.empty();
     }
 
     private void reassignCharge(AlignedFeatures[] features) {

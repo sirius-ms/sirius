@@ -23,9 +23,9 @@ import de.unijena.bioinf.ms.gui.SiriusGui;
 import de.unijena.bioinf.ms.gui.compute.BatchComputeDialog;
 import de.unijena.bioinf.ms.gui.compute.jjobs.Jobs;
 import de.unijena.bioinf.ms.gui.configs.Icons;
-import de.unijena.bioinf.ms.nightsky.sdk.model.BackgroundComputationsStateEvent;
-import de.unijena.bioinf.sse.DataEventType;
-import de.unijena.bioinf.sse.DataObjectEvent;
+import io.sirius.ms.sdk.model.BackgroundComputationsStateEvent;
+import io.sirius.ms.sse.DataEventType;
+import io.sirius.ms.sse.DataObjectEvent;
 import lombok.SneakyThrows;
 import org.slf4j.LoggerFactory;
 
@@ -79,23 +79,27 @@ public class ComputeAllAction extends AbstractGuiAction {
 
     @Override
     public void actionPerformed(ActionEvent e) {
+
         if (isActive.get()) {
-            Jobs.runInBackgroundAndLoad(mainFrame, "Canceling Jobs...", () -> {
+            Jobs.runInBackgroundAndLoad(mainFrame, "Canceling Jobs (might take some time)...", () -> {
+                //update state before start cancelling in case some event got lost (WORKAROUND?)
+                if (!checkIfComputing())
+                    return;
                 gui.acceptSiriusClient((c, pid) -> c.jobs().deleteJobs(pid, true, true));
                 //todo workaround to await callback of cancellation to gui. should finde a better solution for that!
                 for (int i = 0; i < 40; i++) { //wait up to 20sec
                     boolean c = isActive.get();
-                    System.out.println("Computing check: " + i + "value: " + c);
                     if (!c)
-                        break;
+                        return; // deletion has happened.
                     try {
                         Thread.sleep(500);
                     } catch (InterruptedException ex) {
                         //ignored;
                     }
                 }
+                checkIfComputing(); //this is the timeout case, just in case we check again and adapt GUI.
+                // likely the jobs are still not canceled but the loading screen disappears.
             });
-
         } else {
             if (mainFrame.getCompounds().isEmpty()) {
                 LoggerFactory.getLogger(getClass()).warn("Not instances to compute! Closing Compute Dialog...");

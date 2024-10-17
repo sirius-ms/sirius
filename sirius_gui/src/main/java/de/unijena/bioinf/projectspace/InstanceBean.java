@@ -35,8 +35,8 @@ import de.unijena.bioinf.ms.gui.fingerid.FingerprintCandidateBean;
 import de.unijena.bioinf.ms.gui.properties.ConfidenceDisplayMode;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchBean;
 import de.unijena.bioinf.ms.gui.spectral_matching.SpectralMatchingCache;
-import de.unijena.bioinf.ms.nightsky.sdk.NightSkyClient;
-import de.unijena.bioinf.ms.nightsky.sdk.model.*;
+import io.sirius.ms.sdk.SiriusClient;
+import io.sirius.ms.sdk.model.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
@@ -164,7 +164,7 @@ public class InstanceBean implements SiriusPCS {
         pcsEnabled.set(false);
     }
 
-    public NightSkyClient getClient() {
+    public SiriusClient getClient() {
         return getProjectManager().getClient();
     }
 
@@ -236,6 +236,29 @@ public class InstanceBean implements SiriusPCS {
                 .map(PrecursorIonType::parsePrecursorIonType)
                 .flatMap(Optional::stream)
                 .filter(it -> !it.isIonizationUnknown()) //Detected adducts may contain unknown adduct by convention to indicate that they are not very confident
+                .collect(Collectors.toSet());
+    }
+
+    public Set<PrecursorIonType> getDetectedAdductsOrUnknown() {
+        @NotNull AlignedFeature f = getSourceFeature();
+        Set<PrecursorIonType> add = f.getDetectedAdducts().stream()
+                .map(PrecursorIonType::parsePrecursorIonType)
+                .flatMap(Optional::stream)
+                .filter(it -> !it.isIonizationUnknown()) //Detected adducts may contain unknown adduct by convention to indicate that they are not very confident
+                .collect(Collectors.toSet());
+        if (add.isEmpty())
+            return Set.of(PrecursorIonType.unknown(f.getCharge()));
+        return add;
+    }
+
+    public Set<PrecursorIonType> getDetectedAdductsIncludingUnknown() {
+        @NotNull AlignedFeature f = getSourceFeature();
+        if (f.getDetectedAdducts().isEmpty())
+            return Set.of(PrecursorIonType.unknown(f.getCharge()));
+
+        return f.getDetectedAdducts().stream()
+                .map(PrecursorIonType::parsePrecursorIonType)
+                .flatMap(Optional::stream)
                 .collect(Collectors.toSet());
     }
 
