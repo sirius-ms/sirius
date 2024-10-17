@@ -21,16 +21,25 @@
 package de.unijena.bioinf.ms.middleware.model.tags;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @Getter
 @Setter
-@Builder
+@SuperBuilder
 @NoArgsConstructor
-@AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonTypeInfo(include = JsonTypeInfo.As.WRAPPER_OBJECT, use = JsonTypeInfo.Id.NAME)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value= Tag.BoolTag.class, name = "bool"),
+        @JsonSubTypes.Type(value= Tag.IntTag.class, name = "int"),
+        @JsonSubTypes.Type(value= Tag.DoubleTag.class, name = "double"),
+        @JsonSubTypes.Type(value = Tag.StringTag.class, name = "string")
+})
 public class Tag {
 
     /**
@@ -39,10 +48,55 @@ public class Tag {
     @NotNull
     private String categoryName;
 
-    /**
-     * Tag value
-     */
-    @Nullable
-    private Object value;
+    @Getter
+    @Setter
+    @SuperBuilder
+    @NoArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public abstract static class ValueTag<T> extends Tag {
+
+        /**
+         * Tag value
+         */
+        @Nullable
+        private T value;
+
+    }
+
+    @Getter
+    @Setter
+    @SuperBuilder
+    @NoArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class BoolTag extends ValueTag<Boolean> {
+
+    }
+
+    @Getter
+    @Setter
+    @SuperBuilder
+    @NoArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class IntTag extends ValueTag<Integer> {
+
+    }
+
+    @Getter
+    @Setter
+    @SuperBuilder
+    @NoArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class DoubleTag extends ValueTag<Double> {
+
+    }
+
+    @Getter
+    @Setter
+    @SuperBuilder
+    @NoArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class StringTag extends ValueTag<String> {
+
+    }
 
 }

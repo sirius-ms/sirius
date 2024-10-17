@@ -724,19 +724,26 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         if (!tag.getValue().getClass().equals(category.getValueType().getValueClass())) {
             throw new IllegalStateException("Unexpected value: " + tag.getValue().getClass());
         }
-        return Tag.builder()
-                .categoryName(category.getName())
-                .value(tag.getValue())
-                .build();
+        return switch (category.getValueType()) {
+            case NONE -> Tag.builder().categoryName(category.getName()).build();
+            case BOOL -> Tag.BoolTag.builder().categoryName(category.getName()).value((Boolean) tag.getValue()).build();
+            case INT -> Tag.IntTag.builder().categoryName(category.getName()).value((Integer) tag.getValue()).build();
+            case DOUBLE -> Tag.DoubleTag.builder().categoryName(category.getName()).value((Double) tag.getValue()).build();
+            case STRING -> Tag.StringTag.builder().categoryName(category.getName()).value((String) tag.getValue()).build();
+        };
     }
 
     private de.unijena.bioinf.ms.persistence.model.core.tags.Tag convertToProjectTag(Tag tag, long taggedObjectId, long categoryId, String taggedObjectClass) {
-        return de.unijena.bioinf.ms.persistence.model.core.tags.Tag.builder()
+        de.unijena.bioinf.ms.persistence.model.core.tags.Tag.TagBuilder builder = de.unijena.bioinf.ms.persistence.model.core.tags.Tag.builder()
                 .taggedObjectId(taggedObjectId)
                 .categoryId(categoryId)
-                .taggedObjectClass(taggedObjectClass)
-                .value(tag.getValue())
-                .build();
+                .taggedObjectClass(taggedObjectClass);
+
+        if (tag instanceof Tag.ValueTag<?>) {
+            builder.value(((Tag.ValueTag<?>) tag).getValue());
+        }
+
+        return builder.build();
     }
 
     private Optional<TagCategory> convertToApiCategory(de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory category) {
@@ -1175,10 +1182,10 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         }
         de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory category = categories.get(categoryName);
 
-        if ((filter instanceof BoolTagFilter && category.getValueType() != de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.ValueType.BOOL) ||
-                (filter instanceof IntTagFilter && category.getValueType() != de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.ValueType.INT) ||
-                (filter instanceof DoubleTagFilter && category.getValueType() != de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.ValueType.DOUBLE) ||
-                (filter instanceof StringTagFilter && category.getValueType() != de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.ValueType.STRING)
+        if ((filter instanceof TagFilter.BoolTagFilter && category.getValueType() != de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.ValueType.BOOL) ||
+                (filter instanceof TagFilter.IntTagFilter && category.getValueType() != de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.ValueType.INT) ||
+                (filter instanceof TagFilter.DoubleTagFilter && category.getValueType() != de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.ValueType.DOUBLE) ||
+                (filter instanceof TagFilter.StringTagFilter && category.getValueType() != de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.ValueType.STRING)
         ) {
             throw new ResponseStatusException(BAD_REQUEST, "Filter not applicable to category " + category.getName() + " in project " + projectId + ".");
         }
@@ -1187,25 +1194,25 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         tagFilters.add(Filter.where("taggedObjectClass").eq(taggedObjectClass.toString()));
         tagFilters.add(Filter.where("categoryId").eq(category.getCategoryId()));
 
-        if (filter instanceof BoolTagFilter boolF) {
+        if (filter instanceof TagFilter.BoolTagFilter boolF) {
             tagFilters.add(Filter.where("value").eq(boolF.isValue()));
-        } else if (filter instanceof NumericTagFilter<?> numF) {
+        } else if (filter instanceof TagFilter.ComparableTagFilter<? extends Comparable<?>> numF) {
             if (numF.getEquals() != null) {
                 tagFilters.add(Filter.where("value").eq(numF.getEquals()));
             }
             if (numF.getGreaterThan() != null) {
-                tagFilters.add(Filter.where("value").eq(numF.getGreaterThan()));
+                tagFilters.add(Filter.where("value").gt(numF.getGreaterThan()));
             }
             if (numF.getGreaterThanEquals() != null) {
-                tagFilters.add(Filter.where("value").eq(numF.getGreaterThanEquals()));
+                tagFilters.add(Filter.where("value").gte(numF.getGreaterThanEquals()));
             }
             if (numF.getLessThan() != null) {
-                tagFilters.add(Filter.where("value").eq(numF.getGreaterThan()));
+                tagFilters.add(Filter.where("value").lt(numF.getLessThan()));
             }
             if (numF.getLessThanEquals() != null) {
-                tagFilters.add(Filter.where("value").eq(numF.getGreaterThanEquals()));
+                tagFilters.add(Filter.where("value").lte(numF.getLessThanEquals()));
             }
-        } else if (filter instanceof StringTagFilter stringF) {
+        } else if (filter instanceof TagFilter.StringTagFilter stringF) {
             if (stringF.getEquals() != null) {
                 tagFilters.add(Filter.where("value").eq(stringF.getEquals()));
             }
@@ -1227,7 +1234,7 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             return Page.empty();
 
         Filter objectFilter;
-        if (filter instanceof TaggedFilter && !((TaggedFilter) filter).isTagged()) {
+        if (filter instanceof TagFilter.TaggedFilter && !((TagFilter.TaggedFilter) filter).isValue()) {
             objectFilter = Filter.where("runId").notIn(objectIds);
         } else {
             objectFilter = Filter.where("runId").in(objectIds);
@@ -1263,17 +1270,28 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
             throw new ResponseStatusException(NOT_FOUND, "There is no category '" + unkownCategory.get().getCategoryName() + "' in project " + projectId + ".");
         }
 
-        Optional<Tag> mismatchingValueType = tags.stream().filter(tag -> categories.get(tag.getCategoryName()).getValueType().getValueClass() != tag.getValue().getClass()).findFirst();
+        Optional<Tag> mismatchingValueType = tags.stream().filter(tag -> {
+            de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory category = categories.get(tag.getCategoryName());
+            return switch (category.getValueType()) {
+                case STRING -> !(tag instanceof Tag.StringTag);
+                case BOOL -> !(tag instanceof Tag.BoolTag);
+                case INT -> !(tag instanceof Tag.IntTag);
+                case DOUBLE -> !(tag instanceof Tag.DoubleTag);
+                default -> tag instanceof Tag.ValueTag<?>;
+            };
+        }).findFirst();
         if (mismatchingValueType.isPresent()) {
-            throw new ResponseStatusException(BAD_REQUEST, "Wrong value type '" + mismatchingValueType.get().getValue().getClass() + " for tag " + mismatchingValueType.get().getCategoryName() + ".");
+            throw new ResponseStatusException(BAD_REQUEST, "Wrong tag type '" + mismatchingValueType.get().getClass() + " for category " + mismatchingValueType.get().getCategoryName() + ".");
         }
 
         Optional<Tag> mismatchingValueRange = tags.stream().filter(tag -> {
             de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory category = categories.get(tag.getCategoryName());
-            return category.getValueRange() == de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.ValueRange.FIXED && !category.getPossibleValues().contains(tag.getValue());
+            return  category.getValueType() != de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.ValueType.NONE &&
+                    category.getValueRange() == de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.ValueRange.FIXED &&
+                    !category.getPossibleValues().contains(((Tag.ValueTag<?>) tag).getValue());
         }).findFirst();
         if (mismatchingValueRange.isPresent()) {
-            throw new ResponseStatusException(BAD_REQUEST, "Wrong value '" + mismatchingValueRange.get().getValue() + " for tag " + mismatchingValueRange.get().getCategoryName() + ".");
+            throw new ResponseStatusException(BAD_REQUEST, "Forbidden value '" + ((Tag.ValueTag<?>) mismatchingValueRange.get()).getValue() + " for category " + mismatchingValueRange.get().getCategoryName() + ".");
         }
 
         Map<String, de.unijena.bioinf.ms.persistence.model.core.tags.Tag> existingTags = storage().findStr(Filter.where("taggedObjectId").eq(objId), de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class)
@@ -1284,8 +1302,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
         for (Tag tag : tags) {
             if (existingTags.containsKey(tag.getCategoryName())) {
                 de.unijena.bioinf.ms.persistence.model.core.tags.Tag old = existingTags.get(tag.getCategoryName());
-                if (!Objects.equals(old.getValue(), tag.getValue())) {
-                    old.setValue(tag.getValue());
+                de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory category = categories.get(tag.getCategoryName());
+                if (category.getValueType() != de.unijena.bioinf.ms.persistence.model.core.tags.TagCategory.ValueType.NONE && !Objects.equals(old.getValue(), ((Tag.ValueTag<?>) tag).getValue())) {
+                    old.setValue(((Tag.ValueTag<?>) tag).getValue());
                     upsertTags.add(old);
                 }
             } else {

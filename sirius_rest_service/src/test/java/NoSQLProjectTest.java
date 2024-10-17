@@ -27,10 +27,7 @@ import de.unijena.bioinf.ms.middleware.model.features.FeatureImport;
 import de.unijena.bioinf.ms.middleware.model.features.MsData;
 import de.unijena.bioinf.ms.middleware.model.features.Run;
 import de.unijena.bioinf.ms.middleware.model.spectra.BasicSpectrum;
-import de.unijena.bioinf.ms.middleware.model.tags.StringTagFilter;
-import de.unijena.bioinf.ms.middleware.model.tags.Tag;
-import de.unijena.bioinf.ms.middleware.model.tags.TagCategory;
-import de.unijena.bioinf.ms.middleware.model.tags.TaggedFilter;
+import de.unijena.bioinf.ms.middleware.model.tags.*;
 import de.unijena.bioinf.ms.middleware.service.projects.NoSQLProjectImpl;
 import de.unijena.bioinf.ms.persistence.model.core.run.*;
 import de.unijena.bioinf.ms.persistence.storage.SiriusProjectDocumentDatabase;
@@ -300,18 +297,20 @@ public class NoSQLProjectTest {
 
             project.addCategories(List.of(TagCategory.builder().name("c1").valueType(TagCategory.ValueType.BOOLEAN).build()));
 
-            project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().categoryName("c1").value(true).build()));
+            project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.BoolTag.builder().categoryName("c1").value(true).build()));
             Map<String, Tag> tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
             Assert.assertEquals(1, tags.size());
-            Assert.assertEquals(true, tags.get("c1").getValue());
+            Assert.assertTrue(tags.get("c1") instanceof Tag.BoolTag);
+            Assert.assertEquals(true, ((Tag.BoolTag) tags.get("c1")).getValue());
 
-            project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().categoryName("c1").value(false).build()));
+            project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.BoolTag.builder().categoryName("c1").value(false).build()));
             tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
             Assert.assertEquals(1, tags.size());
-            Assert.assertEquals(false, tags.get("c1").getValue());
+            Assert.assertTrue(tags.get("c1") instanceof Tag.BoolTag);
+            Assert.assertEquals(false, ((Tag.BoolTag) tags.get("c1")).getValue());
 
-            Assert.assertThrows(ResponseStatusException.class, () -> project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().categoryName("c2").value(false).build())));
-            Assert.assertThrows(ResponseStatusException.class, () -> project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().categoryName("c1").value(2.0).build())));
+            Assert.assertThrows(ResponseStatusException.class, () -> project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.BoolTag.builder().categoryName("c2").value(false).build())));
+            Assert.assertThrows(ResponseStatusException.class, () -> project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.DoubleTag.builder().categoryName("c1").value(2.0).build())));
 
             project.addCategories(List.of(
                     TagCategory.builder().name("c2").valueType(TagCategory.ValueType.INTEGER).build(),
@@ -320,38 +319,46 @@ public class NoSQLProjectTest {
             ));
 
             project.addTagsToObject(Run.class, run.getRunId(), List.of(
-                    Tag.builder().categoryName("c2").value(42).build(),
-                    Tag.builder().categoryName("c3").value(42.0).build(),
-                    Tag.builder().categoryName("c4").value("42").build()
+                    Tag.BoolTag.builder().categoryName("c1").value(false).build(),
+                    Tag.IntTag.builder().categoryName("c2").value(42).build(),
+                    Tag.DoubleTag.builder().categoryName("c3").value(42.0).build(),
+                    Tag.StringTag.builder().categoryName("c4").value("42").build()
             ));
 
-            project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().categoryName("c1").value(false).build()));
             tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
             Assert.assertEquals(4, tags.size());
-            Assert.assertEquals(false, tags.get("c1").getValue());
-            Assert.assertEquals(42, tags.get("c2").getValue());
-            Assert.assertEquals(42.0, tags.get("c3").getValue());
-            Assert.assertEquals("42", tags.get("c4").getValue());
+            Assert.assertTrue(tags.get("c1") instanceof Tag.BoolTag);
+            Assert.assertTrue(tags.get("c2") instanceof Tag.IntTag);
+            Assert.assertTrue(tags.get("c3") instanceof Tag.DoubleTag);
+            Assert.assertTrue(tags.get("c4") instanceof Tag.StringTag);
+            Assert.assertEquals(false, ((Tag.BoolTag) tags.get("c1")).getValue());
+            Assert.assertEquals(Integer.valueOf(42), ((Tag.IntTag) tags.get("c2")).getValue());
+            Assert.assertEquals(Double.valueOf(42.0), ((Tag.DoubleTag) tags.get("c3")).getValue());
+            Assert.assertEquals("42", ((Tag.StringTag) tags.get("c4")).getValue());
 
             project.deleteTagsFromObject(Run.class, run.getRunId(), List.of("c3", "c4"));
             tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
             Assert.assertEquals(2, tags.size());
-            Assert.assertEquals(false, tags.get("c1").getValue());
-            Assert.assertEquals(42, tags.get("c2").getValue());
+            Assert.assertTrue(tags.get("c1") instanceof Tag.BoolTag);
+            Assert.assertTrue(tags.get("c2") instanceof Tag.IntTag);
+            Assert.assertEquals(false, ((Tag.BoolTag) tags.get("c1")).getValue());
+            Assert.assertEquals(Integer.valueOf(42), ((Tag.IntTag) tags.get("c2")).getValue());
 
             project.deleteCategories(List.of("c2", "c3"));
             tags = project.findRunById(run.getRunId(), EnumSet.of(Run.OptField.tags)).getTags();
             Assert.assertEquals(1, tags.size());
-            Assert.assertEquals(false, tags.get("c1").getValue());
+            Assert.assertTrue(tags.get("c1") instanceof Tag.BoolTag);
+            Assert.assertEquals(false, ((Tag.BoolTag) tags.get("c1")).getValue());
 
-            Page<Run> page = project.findObjectsByTag(Run.class, "c1", TaggedFilter.builder().build(), Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+            Page<Run> page = project.findObjectsByTag(Run.class, "c1", TagFilter.TaggedFilter.builder().build(), Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
             Assert.assertEquals(1, page.getTotalElements());
             Assert.assertEquals(run.getRunId(), page.getContent().getFirst().getRunId());
             tags = page.get().findFirst().orElseThrow().getTags();
             Assert.assertEquals(1, tags.size());
-            Assert.assertEquals(false, tags.get("c1").getValue());
+            Assert.assertTrue(tags.get("c1") instanceof Tag.BoolTag);
+            Assert.assertEquals(false, ((Tag.BoolTag) tags.get("c1")).getValue());
 
-            page = project.findObjectsByTag(Run.class, "c1", TaggedFilter.builder().tagged(false).build(), Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+            page = project.findObjectsByTag(Run.class, "c1", TagFilter.TaggedFilter.builder().value(false).build(), Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
             Assert.assertEquals(1, page.getTotalElements());
             Assert.assertEquals(Long.toString(runs.get(1).getRunId()), page.getContent().getFirst().getRunId());
         }
@@ -389,13 +396,13 @@ public class NoSQLProjectTest {
             watch.start();
 
             for (Run run : control) {
-                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().categoryName("sample type").value("control").build()));
+                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.StringTag.builder().categoryName("sample type").value("control").build()));
             }
             for (Run run : blank) {
-                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().categoryName("sample type").value("blank").build()));
+                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.StringTag.builder().categoryName("sample type").value("blank").build()));
             }
             for (Run run : sample) {
-                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.builder().categoryName("sample type").value("sample").build()));
+                project.addTagsToObject(Run.class, run.getRunId(), List.of(Tag.StringTag.builder().categoryName("sample type").value("sample").build()));
             }
 
             watch.stop();
@@ -404,7 +411,7 @@ public class NoSQLProjectTest {
             watch = new StopWatch();
             watch.start();
 
-            project.findObjectsByTag(Run.class, "sample type", StringTagFilter.builder().equals("sample").build(), Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
+            project.findObjectsByTag(Run.class, "sample type", TagFilter.StringTagFilter.builder().equals("sample").build(), Pageable.unpaged(), EnumSet.of(Run.OptField.tags));
 
             watch.stop();
             System.out.println("FIND OBJ BY TAGS: " + watch);
