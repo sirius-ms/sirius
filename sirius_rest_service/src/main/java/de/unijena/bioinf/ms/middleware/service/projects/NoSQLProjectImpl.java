@@ -86,7 +86,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
@@ -1223,6 +1222,9 @@ public class NoSQLProjectImpl implements Project<NoSQLProjectSpaceManager> {
 
         Long[] objectIds = storage().findStr(Filter.and(tagFilters.toArray(Filter[]::new)), de.unijena.bioinf.ms.persistence.model.core.tags.Tag.class)
                 .map(de.unijena.bioinf.ms.persistence.model.core.tags.Tag::getTaggedObjectId).toArray(Long[]::new);
+
+        if (objectIds.length == 0)
+            return Page.empty();
 
         Filter objectFilter;
         if (filter instanceof TaggedFilter && !((TaggedFilter) filter).isTagged()) {
