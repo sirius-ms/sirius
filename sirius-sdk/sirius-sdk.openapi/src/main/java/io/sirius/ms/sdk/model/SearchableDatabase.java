@@ -15,8 +15,6 @@ package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
-import java.util.Optional;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -411,12 +409,25 @@ public class SearchableDatabase {
     return Objects.hash(displayName, location, matchRtOfReferenceSpectra, databaseId, customDb, searchable, dbDate, dbVersion, updateNeeded, numberOfStructures, numberOfFormulas, numberOfReferenceSpectra);
   }
 
-  //todo find a way to preserve this change during generation or find a solution downstream in the sirius gui
   @Override
   public String toString() {
-    return Optional.ofNullable(getDisplayName()).orElse(getDatabaseId());
+    StringBuilder sb = new StringBuilder();
+    sb.append("class SearchableDatabase {\n");
+    sb.append("    displayName: ").append(toIndentedString(displayName)).append("\n");
+    sb.append("    location: ").append(toIndentedString(location)).append("\n");
+    sb.append("    matchRtOfReferenceSpectra: ").append(toIndentedString(matchRtOfReferenceSpectra)).append("\n");
+    sb.append("    databaseId: ").append(toIndentedString(databaseId)).append("\n");
+    sb.append("    customDb: ").append(toIndentedString(customDb)).append("\n");
+    sb.append("    searchable: ").append(toIndentedString(searchable)).append("\n");
+    sb.append("    dbDate: ").append(toIndentedString(dbDate)).append("\n");
+    sb.append("    dbVersion: ").append(toIndentedString(dbVersion)).append("\n");
+    sb.append("    updateNeeded: ").append(toIndentedString(updateNeeded)).append("\n");
+    sb.append("    numberOfStructures: ").append(toIndentedString(numberOfStructures)).append("\n");
+    sb.append("    numberOfFormulas: ").append(toIndentedString(numberOfFormulas)).append("\n");
+    sb.append("    numberOfReferenceSpectra: ").append(toIndentedString(numberOfReferenceSpectra)).append("\n");
+    sb.append("}");
+    return sb.toString();
   }
-
 
   /**
    * Convert the given object to string with each line indented by 4 spaces

@@ -24,11 +24,11 @@ Add tags to an object in the project. Tags with the same category name will be o
 
 ```java
 // Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.RunsApi;
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.RunsApi;
 
 public class Example {
     public static void main(String[] args) {
@@ -94,11 +94,11 @@ Delete tags with the given IDs from the specified project-space.
 
 ```java
 // Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.RunsApi;
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.RunsApi;
 
 public class Example {
     public static void main(String[] args) {
@@ -163,11 +163,11 @@ Get run with the given identifier from the specified project-space.
 
 ```java
 // Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.RunsApi;
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.RunsApi;
 
 public class Example {
     public static void main(String[] args) {
@@ -233,11 +233,11 @@ Get all available runs in the given project-space.
 
 ```java
 // Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.RunsApi;
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.RunsApi;
 
 public class Example {
     public static void main(String[] args) {
@@ -307,11 +307,11 @@ Get objects by tag.
 
 ```java
 // Import classes:
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiException;
-import de.unijena.bioinf.ms.nightsky.sdk.client.Configuration;
-import de.unijena.bioinf.ms.nightsky.sdk.client.models.*;
-import de.unijena.bioinf.ms.nightsky.sdk.api.RunsApi;
+import io.sirius.ms.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiException;
+import io.sirius.ms.sdk.client.Configuration;
+import io.sirius.ms.sdk.client.models.*;
+import io.sirius.ms.sdk.api.RunsApi;
 
 public class Example {
     public static void main(String[] args) {

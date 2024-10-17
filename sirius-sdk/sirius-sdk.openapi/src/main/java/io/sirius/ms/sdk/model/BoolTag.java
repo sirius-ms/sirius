@@ -11,7 +11,7 @@
  */
 
 
-package de.unijena.bioinf.ms.nightsky.sdk.model;
+package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;

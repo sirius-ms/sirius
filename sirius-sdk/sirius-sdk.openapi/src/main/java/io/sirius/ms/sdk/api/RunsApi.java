@@ -1,12 +1,12 @@
-package de.unijena.bioinf.ms.nightsky.sdk.api;
+package io.sirius.ms.sdk.api;
 
-import de.unijena.bioinf.ms.nightsky.sdk.client.ApiClient;
+import io.sirius.ms.sdk.client.ApiClient;
 
-import de.unijena.bioinf.ms.nightsky.sdk.model.ObjectsByTagRequest;
-import de.unijena.bioinf.ms.nightsky.sdk.model.PageRun;
-import de.unijena.bioinf.ms.nightsky.sdk.model.Run;
-import de.unijena.bioinf.ms.nightsky.sdk.model.RunOptField;
-import de.unijena.bioinf.ms.nightsky.sdk.model.Tag;
+import io.sirius.ms.sdk.model.ObjectsByTagRequest;
+import io.sirius.ms.sdk.model.PageRun;
+import io.sirius.ms.sdk.model.Run;
+import io.sirius.ms.sdk.model.RunOptField;
+import io.sirius.ms.sdk.model.Tag;
 
 import java.util.HashMap;
 import java.util.List;

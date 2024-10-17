@@ -11,7 +11,7 @@
  */
 
 
-package de.unijena.bioinf.ms.nightsky.sdk.model;
+package io.sirius.ms.sdk.model;
 
 import java.util.Objects;
 import java.util.Arrays;
@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
-import de.unijena.bioinf.ms.nightsky.sdk.model.RunTagsValue;
+import io.sirius.ms.sdk.model.RunTagsValue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
