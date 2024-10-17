@@ -47,8 +47,8 @@ public class TagCategoriesApi {
     }
 
     /**
-     * Add tag category to the project.
-     * Add tag category to the project. Category name must not exist in the project.
+     * Add tag categories to the project.
+     * Add tag categories to the project. Category names must not exist in the project.
      * <p><b>200</b> - the tag categories that have been added
      * @param projectId project-space to add to.
      * @param tagCategory the tag categories to be added
@@ -87,12 +87,12 @@ public class TagCategoriesApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<TagCategory> localVarReturnType = new ParameterizedTypeReference<TagCategory>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/categories/add", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/categories", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * Add tag category to the project.
-     * Add tag category to the project. Category name must not exist in the project.
+     * Add tag categories to the project.
+     * Add tag categories to the project. Category names must not exist in the project.
      * <p><b>200</b> - the tag categories that have been added
      * @param projectId project-space to add to.
      * @param tagCategory the tag categories to be added
@@ -105,8 +105,8 @@ public class TagCategoriesApi {
     }
 
     /**
-     * Add tag category to the project.
-     * Add tag category to the project. Category name must not exist in the project.
+     * Add tag categories to the project.
+     * Add tag categories to the project. Category names must not exist in the project.
      * <p><b>200</b> - the tag categories that have been added
      * @param projectId project-space to add to.
      * @param tagCategory the tag categories to be added
@@ -119,8 +119,8 @@ public class TagCategoriesApi {
     }
 
     /**
-     * Add tag category to the project.
-     * Add tag category to the project. Category name must not exist in the project.
+     * Add tag categories to the project.
+     * Add tag categories to the project. Category names must not exist in the project.
      * <p><b>200</b> - the tag categories that have been added
      * @param projectId project-space to add to.
      * @param tagCategory the tag categories to be added
@@ -135,23 +135,24 @@ public class TagCategoriesApi {
      * Delete tag categories with the given names from the specified project-space.
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param requestBody names of categories to delete.
+     * @param categoryName name of category to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec deleteCategoriesRequestCreation(String projectId, List<String> requestBody) throws WebClientResponseException {
-        Object postBody = requestBody;
+    private ResponseSpec deleteCategoriesRequestCreation(String projectId, String categoryName) throws WebClientResponseException {
+        Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
             throw new WebClientResponseException("Missing the required parameter 'projectId' when calling deleteCategories", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
-        // verify the required parameter 'requestBody' is set
-        if (requestBody == null) {
-            throw new WebClientResponseException("Missing the required parameter 'requestBody' when calling deleteCategories", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        // verify the required parameter 'categoryName' is set
+        if (categoryName == null) {
+            throw new WebClientResponseException("Missing the required parameter 'categoryName' when calling deleteCategories", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
 
         pathParams.put("projectId", projectId);
+        pathParams.put("categoryName", categoryName);
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
         final HttpHeaders headerParams = new HttpHeaders();
@@ -160,15 +161,13 @@ public class TagCategoriesApi {
 
         final String[] localVarAccepts = { };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { 
-            "application/json"
-        };
+        final String[] localVarContentTypes = { };
         final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
 
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/categories/delete", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/categories/{categoryName}", HttpMethod.DELETE, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
@@ -176,12 +175,12 @@ public class TagCategoriesApi {
      * Delete tag categories with the given names from the specified project-space.
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param requestBody names of categories to delete.
+     * @param categoryName name of category to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void deleteCategories(String projectId, List<String> requestBody) throws WebClientResponseException {
+    public void deleteCategories(String projectId, String categoryName) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        deleteCategoriesRequestCreation(projectId, requestBody).bodyToMono(localVarReturnType).block();
+        deleteCategoriesRequestCreation(projectId, categoryName).bodyToMono(localVarReturnType).block();
     }
 
     /**
@@ -189,12 +188,12 @@ public class TagCategoriesApi {
      * Delete tag categories with the given names from the specified project-space.
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param requestBody names of categories to delete.
+     * @param categoryName name of category to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> deleteCategoriesWithHttpInfo(String projectId, List<String> requestBody) throws WebClientResponseException {
+    public ResponseEntity<Void> deleteCategoriesWithHttpInfo(String projectId, String categoryName) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        return deleteCategoriesRequestCreation(projectId, requestBody).toEntity(localVarReturnType).block();
+        return deleteCategoriesRequestCreation(projectId, categoryName).toEntity(localVarReturnType).block();
     }
 
     /**
@@ -202,12 +201,12 @@ public class TagCategoriesApi {
      * Delete tag categories with the given names from the specified project-space.
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param requestBody names of categories to delete.
+     * @param categoryName name of category to delete.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec deleteCategoriesWithResponseSpec(String projectId, List<String> requestBody) throws WebClientResponseException {
-        return deleteCategoriesRequestCreation(projectId, requestBody);
+    public ResponseSpec deleteCategoriesWithResponseSpec(String projectId, String categoryName) throws WebClientResponseException {
+        return deleteCategoriesRequestCreation(projectId, categoryName);
     }
     /**
      * Get all tag categories in the given project-space.
@@ -369,7 +368,7 @@ public class TagCategoriesApi {
     /**
      * Get tag category by name in the given project-space.
      * Get tag category by name in the given project-space.
-     * <p><b>200</b> - Tag categories.
+     * <p><b>200</b> - Tag category.
      * @param projectId project-space to read from.
      * @param categoryName name of the category
      * @return TagCategory
@@ -406,13 +405,13 @@ public class TagCategoriesApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<TagCategory> localVarReturnType = new ParameterizedTypeReference<TagCategory>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/categories/name/{categoryName}", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/categories/{categoryName}", HttpMethod.GET, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
      * Get tag category by name in the given project-space.
      * Get tag category by name in the given project-space.
-     * <p><b>200</b> - Tag categories.
+     * <p><b>200</b> - Tag category.
      * @param projectId project-space to read from.
      * @param categoryName name of the category
      * @return TagCategory
@@ -426,7 +425,7 @@ public class TagCategoriesApi {
     /**
      * Get tag category by name in the given project-space.
      * Get tag category by name in the given project-space.
-     * <p><b>200</b> - Tag categories.
+     * <p><b>200</b> - Tag category.
      * @param projectId project-space to read from.
      * @param categoryName name of the category
      * @return ResponseEntity&lt;TagCategory&gt;
@@ -440,7 +439,7 @@ public class TagCategoriesApi {
     /**
      * Get tag category by name in the given project-space.
      * Get tag category by name in the given project-space.
-     * <p><b>200</b> - Tag categories.
+     * <p><b>200</b> - Tag category.
      * @param projectId project-space to read from.
      * @param categoryName name of the category
      * @return ResponseSpec

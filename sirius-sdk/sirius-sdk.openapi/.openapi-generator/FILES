@@ -112,7 +112,6 @@ docs/StructureCandidateScored.md
 docs/StructureDbSearch.md
 docs/Subscription.md
 docs/SubscriptionConsumables.md
-docs/Tag.md
 docs/TagCategoriesApi.md
 docs/TagCategory.md
 docs/TaggedFilter.md
@@ -247,7 +246,6 @@ src/main/java/io/sirius/ms/sdk/model/StructureCandidateScored.java
 src/main/java/io/sirius/ms/sdk/model/StructureDbSearch.java
 src/main/java/io/sirius/ms/sdk/model/Subscription.java
 src/main/java/io/sirius/ms/sdk/model/SubscriptionConsumables.java
-src/main/java/io/sirius/ms/sdk/model/Tag.java
 src/main/java/io/sirius/ms/sdk/model/TagCategory.java
 src/main/java/io/sirius/ms/sdk/model/TaggedFilter.java
 src/main/java/io/sirius/ms/sdk/model/Term.java

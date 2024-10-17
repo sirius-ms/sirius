@@ -6,7 +6,6 @@ import io.sirius.ms.sdk.model.ObjectsByTagRequest;
 import io.sirius.ms.sdk.model.PageRun;
 import io.sirius.ms.sdk.model.Run;
 import io.sirius.ms.sdk.model.RunOptField;
-import io.sirius.ms.sdk.model.Tag;
 
 import java.util.HashMap;
 import java.util.List;
@@ -56,12 +55,12 @@ public class RunsApi {
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
      * @param objectId object to tag.
-     * @param tag tags to add.
-     * @return List&lt;Tag&gt;
+     * @param requestBody tags to add.
+     * @return List&lt;Object&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec addTagsRequestCreation(String projectId, String objectId, List<Tag> tag) throws WebClientResponseException {
-        Object postBody = tag;
+    private ResponseSpec addTagsRequestCreation(String projectId, String objectId, List<Object> requestBody) throws WebClientResponseException {
+        Object postBody = requestBody;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
             throw new WebClientResponseException("Missing the required parameter 'projectId' when calling addTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
@@ -70,9 +69,9 @@ public class RunsApi {
         if (objectId == null) {
             throw new WebClientResponseException("Missing the required parameter 'objectId' when calling addTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
-        // verify the required parameter 'tag' is set
-        if (tag == null) {
-            throw new WebClientResponseException("Missing the required parameter 'tag' when calling addTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        // verify the required parameter 'requestBody' is set
+        if (requestBody == null) {
+            throw new WebClientResponseException("Missing the required parameter 'requestBody' when calling addTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
@@ -96,8 +95,8 @@ public class RunsApi {
 
         String[] localVarAuthNames = new String[] {  };
 
-        ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/runs/tags/add/{objectId}", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        ParameterizedTypeReference<Object> localVarReturnType = new ParameterizedTypeReference<Object>() {};
+        return apiClient.invokeAPI("/api/projects/{projectId}/runs/tags/{objectId}", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
@@ -106,13 +105,13 @@ public class RunsApi {
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
      * @param objectId object to tag.
-     * @param tag tags to add.
-     * @return List&lt;Tag&gt;
+     * @param requestBody tags to add.
+     * @return List&lt;Object&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public List<Tag> addTags(String projectId, String objectId, List<Tag> tag) throws WebClientResponseException {
-        ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
-        return addTagsRequestCreation(projectId, objectId, tag).bodyToFlux(localVarReturnType).collectList().block();
+    public List<Object> addTags(String projectId, String objectId, List<Object> requestBody) throws WebClientResponseException {
+        ParameterizedTypeReference<Object> localVarReturnType = new ParameterizedTypeReference<Object>() {};
+        return addTagsRequestCreation(projectId, objectId, requestBody).bodyToFlux(localVarReturnType).collectList().block();
     }
 
     /**
@@ -121,13 +120,13 @@ public class RunsApi {
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
      * @param objectId object to tag.
-     * @param tag tags to add.
-     * @return ResponseEntity&lt;List&lt;Tag&gt;&gt;
+     * @param requestBody tags to add.
+     * @return ResponseEntity&lt;List&lt;Object&gt;&gt;
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<List<Tag>> addTagsWithHttpInfo(String projectId, String objectId, List<Tag> tag) throws WebClientResponseException {
-        ParameterizedTypeReference<Tag> localVarReturnType = new ParameterizedTypeReference<Tag>() {};
-        return addTagsRequestCreation(projectId, objectId, tag).toEntityList(localVarReturnType).block();
+    public ResponseEntity<List<Object>> addTagsWithHttpInfo(String projectId, String objectId, List<Object> requestBody) throws WebClientResponseException {
+        ParameterizedTypeReference<Object> localVarReturnType = new ParameterizedTypeReference<Object>() {};
+        return addTagsRequestCreation(projectId, objectId, requestBody).toEntityList(localVarReturnType).block();
     }
 
     /**
@@ -136,24 +135,24 @@ public class RunsApi {
      * <p><b>200</b> - the tags that have been added
      * @param projectId project-space to add to.
      * @param objectId object to tag.
-     * @param tag tags to add.
+     * @param requestBody tags to add.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec addTagsWithResponseSpec(String projectId, String objectId, List<Tag> tag) throws WebClientResponseException {
-        return addTagsRequestCreation(projectId, objectId, tag);
+    public ResponseSpec addTagsWithResponseSpec(String projectId, String objectId, List<Object> requestBody) throws WebClientResponseException {
+        return addTagsRequestCreation(projectId, objectId, requestBody);
     }
     /**
-     * Delete tags with the given IDs from the specified project-space.
-     * Delete tags with the given IDs from the specified project-space.
+     * Delete tag with the given category from the object with the specified ID in the specified project-space.
+     * Delete tag with the given category from the object with the specified ID in the specified project-space.
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param objectId object to delete tags from.
-     * @param requestBody Category names of the tags to delete.
+     * @param objectId object to delete tag from.
+     * @param categoryName category name of the tag to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    private ResponseSpec deleteTagsRequestCreation(String projectId, String objectId, List<String> requestBody) throws WebClientResponseException {
-        Object postBody = requestBody;
+    private ResponseSpec deleteTagsRequestCreation(String projectId, String objectId, String categoryName) throws WebClientResponseException {
+        Object postBody = null;
         // verify the required parameter 'projectId' is set
         if (projectId == null) {
             throw new WebClientResponseException("Missing the required parameter 'projectId' when calling deleteTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
@@ -162,15 +161,16 @@ public class RunsApi {
         if (objectId == null) {
             throw new WebClientResponseException("Missing the required parameter 'objectId' when calling deleteTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
-        // verify the required parameter 'requestBody' is set
-        if (requestBody == null) {
-            throw new WebClientResponseException("Missing the required parameter 'requestBody' when calling deleteTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
+        // verify the required parameter 'categoryName' is set
+        if (categoryName == null) {
+            throw new WebClientResponseException("Missing the required parameter 'categoryName' when calling deleteTags", HttpStatus.BAD_REQUEST.value(), HttpStatus.BAD_REQUEST.getReasonPhrase(), null, null, null);
         }
         // create path and map variables
         final Map<String, Object> pathParams = new HashMap<String, Object>();
 
         pathParams.put("projectId", projectId);
         pathParams.put("objectId", objectId);
+        pathParams.put("categoryName", categoryName);
 
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
         final HttpHeaders headerParams = new HttpHeaders();
@@ -179,57 +179,55 @@ public class RunsApi {
 
         final String[] localVarAccepts = { };
         final List<MediaType> localVarAccept = apiClient.selectHeaderAccept(localVarAccepts);
-        final String[] localVarContentTypes = { 
-            "application/json"
-        };
+        final String[] localVarContentTypes = { };
         final MediaType localVarContentType = apiClient.selectHeaderContentType(localVarContentTypes);
 
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/runs/tags/delete/{objectId}", HttpMethod.PUT, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/runs/tags/{objectId}/{categoryName}", HttpMethod.DELETE, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**
-     * Delete tags with the given IDs from the specified project-space.
-     * Delete tags with the given IDs from the specified project-space.
+     * Delete tag with the given category from the object with the specified ID in the specified project-space.
+     * Delete tag with the given category from the object with the specified ID in the specified project-space.
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param objectId object to delete tags from.
-     * @param requestBody Category names of the tags to delete.
+     * @param objectId object to delete tag from.
+     * @param categoryName category name of the tag to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public void deleteTags(String projectId, String objectId, List<String> requestBody) throws WebClientResponseException {
+    public void deleteTags(String projectId, String objectId, String categoryName) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        deleteTagsRequestCreation(projectId, objectId, requestBody).bodyToMono(localVarReturnType).block();
+        deleteTagsRequestCreation(projectId, objectId, categoryName).bodyToMono(localVarReturnType).block();
     }
 
     /**
-     * Delete tags with the given IDs from the specified project-space.
-     * Delete tags with the given IDs from the specified project-space.
+     * Delete tag with the given category from the object with the specified ID in the specified project-space.
+     * Delete tag with the given category from the object with the specified ID in the specified project-space.
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param objectId object to delete tags from.
-     * @param requestBody Category names of the tags to delete.
+     * @param objectId object to delete tag from.
+     * @param categoryName category name of the tag to delete.
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> deleteTagsWithHttpInfo(String projectId, String objectId, List<String> requestBody) throws WebClientResponseException {
+    public ResponseEntity<Void> deleteTagsWithHttpInfo(String projectId, String objectId, String categoryName) throws WebClientResponseException {
         ParameterizedTypeReference<Void> localVarReturnType = new ParameterizedTypeReference<Void>() {};
-        return deleteTagsRequestCreation(projectId, objectId, requestBody).toEntity(localVarReturnType).block();
+        return deleteTagsRequestCreation(projectId, objectId, categoryName).toEntity(localVarReturnType).block();
     }
 
     /**
-     * Delete tags with the given IDs from the specified project-space.
-     * Delete tags with the given IDs from the specified project-space.
+     * Delete tag with the given category from the object with the specified ID in the specified project-space.
+     * Delete tag with the given category from the object with the specified ID in the specified project-space.
      * <p><b>200</b> - OK
      * @param projectId project-space to delete from.
-     * @param objectId object to delete tags from.
-     * @param requestBody Category names of the tags to delete.
+     * @param objectId object to delete tag from.
+     * @param categoryName category name of the tag to delete.
      * @return ResponseSpec
      * @throws WebClientResponseException if an error occurs while attempting to invoke the API
      */
-    public ResponseSpec deleteTagsWithResponseSpec(String projectId, String objectId, List<String> requestBody) throws WebClientResponseException {
-        return deleteTagsRequestCreation(projectId, objectId, requestBody);
+    public ResponseSpec deleteTagsWithResponseSpec(String projectId, String objectId, String categoryName) throws WebClientResponseException {
+        return deleteTagsRequestCreation(projectId, objectId, categoryName);
     }
     /**
      * Get run with the given identifier from the specified project-space.
@@ -471,7 +469,7 @@ public class RunsApi {
         String[] localVarAuthNames = new String[] {  };
 
         ParameterizedTypeReference<PageRun> localVarReturnType = new ParameterizedTypeReference<PageRun>() {};
-        return apiClient.invokeAPI("/api/projects/{projectId}/runs/tags/tagged/{categoryName}", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
+        return apiClient.invokeAPI("/api/projects/{projectId}/runs/tagged/{categoryName}", HttpMethod.POST, pathParams, queryParams, postBody, headerParams, cookieParams, formParams, localVarAccept, localVarContentType, localVarAuthNames, localVarReturnType);
     }
 
     /**

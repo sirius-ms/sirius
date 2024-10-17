@@ -4,11 +4,11 @@ All URIs are relative to *http://localhost:8888*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**addCategories**](TagCategoriesApi.md#addCategories) | **POST** /api/projects/{projectId}/categories/add | Add tag category to the project. |
-| [**deleteCategories**](TagCategoriesApi.md#deleteCategories) | **PUT** /api/projects/{projectId}/categories/delete | Delete tag categories with the given names from the specified project-space. |
+| [**addCategories**](TagCategoriesApi.md#addCategories) | **PUT** /api/projects/{projectId}/categories | Add tag categories to the project. |
+| [**deleteCategories**](TagCategoriesApi.md#deleteCategories) | **DELETE** /api/projects/{projectId}/categories/{categoryName} | Delete tag categories with the given names from the specified project-space. |
 | [**getCategories**](TagCategoriesApi.md#getCategories) | **GET** /api/projects/{projectId}/categories | Get all tag categories in the given project-space. |
 | [**getCategoriesByType**](TagCategoriesApi.md#getCategoriesByType) | **GET** /api/projects/{projectId}/categories/type/{categoryType} | Get tag categories by type in the given project-space. |
-| [**getCategoryByName**](TagCategoriesApi.md#getCategoryByName) | **GET** /api/projects/{projectId}/categories/name/{categoryName} | Get tag category by name in the given project-space. |
+| [**getCategoryByName**](TagCategoriesApi.md#getCategoryByName) | **GET** /api/projects/{projectId}/categories/{categoryName} | Get tag category by name in the given project-space. |
 
 
 
@@ -16,9 +16,9 @@ All URIs are relative to *http://localhost:8888*
 
 > List&lt;TagCategory&gt; addCategories(projectId, tagCategory)
 
-Add tag category to the project.
+Add tag categories to the project.
 
-Add tag category to the project. Category name must not exist in the project.
+Add tag categories to the project. Category names must not exist in the project.
 
 ### Example
 
@@ -82,7 +82,7 @@ No authorization required
 
 ## deleteCategories
 
-> deleteCategories(projectId, requestBody)
+> deleteCategories(projectId, categoryName)
 
 Delete tag categories with the given names from the specified project-space.
 
@@ -105,9 +105,9 @@ public class Example {
 
         TagCategoriesApi apiInstance = new TagCategoriesApi(defaultClient);
         String projectId = "projectId_example"; // String | project-space to delete from.
-        List<String> requestBody = Arrays.asList(); // List<String> | names of categories to delete.
+        String categoryName = "categoryName_example"; // String | name of category to delete.
         try {
-            apiInstance.deleteCategories(projectId, requestBody);
+            apiInstance.deleteCategories(projectId, categoryName);
         } catch (ApiException e) {
             System.err.println("Exception when calling TagCategoriesApi#deleteCategories");
             System.err.println("Status code: " + e.getCode());
@@ -125,7 +125,7 @@ public class Example {
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **projectId** | **String**| project-space to delete from. | |
-| **requestBody** | [**List&lt;String&gt;**](String.md)| names of categories to delete. | |
+| **categoryName** | **String**| name of category to delete. | |
 
 ### Return type
 
@@ -137,7 +137,7 @@ No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: Not defined
 
 
@@ -346,5 +346,5 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | Tag categories. |  -  |
+| **200** | Tag category. |  -  |
 

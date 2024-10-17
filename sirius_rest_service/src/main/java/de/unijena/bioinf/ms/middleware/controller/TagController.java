@@ -54,7 +54,7 @@ public abstract class TagController<T, O extends Enum<O>> {
      * @param optFields    set of optional fields to be included. Use 'none' only to override defaults.
      * @return
      */
-    @PostMapping(value = "/tags/tagged/{categoryName}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/tagged/{categoryName}", produces = MediaType.APPLICATION_JSON_VALUE)
     public Page<T> objectsByTag(@PathVariable String projectId,
                                 @PathVariable String categoryName,
                                 @RequestBody TagFilter filter,
@@ -72,21 +72,21 @@ public abstract class TagController<T, O extends Enum<O>> {
      * @param tags       tags to add.
      * @return the tags that have been added
      */
-    @PostMapping(value = "/tags/add/{objectId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PutMapping(value = "/tags/{objectId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Tag> addTags(@PathVariable String projectId, @PathVariable String objectId, @Valid @RequestBody List<Tag> tags) {
         return projectsProvider.getProjectOrThrow(projectId).addTagsToObject(getTaggable(), objectId, tags);
     }
 
     /**
-     * Delete tags with the given IDs from the specified project-space.
+     * Delete tag with the given category from the object with the specified ID in the specified project-space.
      *
      * @param projectId     project-space to delete from.
-     * @param objectId      object to delete tags from.
-     * @param categoryNames Category names of the tags to delete.
+     * @param objectId      object to delete tag from.
+     * @param categoryName  category name of the tag to delete.
      */
-    @PutMapping(value = "/tags/delete/{objectId}")
-    public void deleteTags(@PathVariable String projectId, @PathVariable String objectId, @RequestBody List<String> categoryNames) {
-        projectsProvider.getProjectOrThrow(projectId).deleteTagsFromObject(getTaggable(), objectId, categoryNames);
+    @DeleteMapping(value = "/tags/{objectId}/{categoryName}")
+    public void deleteTags(@PathVariable String projectId, @PathVariable String objectId, @PathVariable String categoryName) {
+        projectsProvider.getProjectOrThrow(projectId).deleteTagsFromObject(getTaggable(), objectId, List.of(categoryName));
     }
 
 }
