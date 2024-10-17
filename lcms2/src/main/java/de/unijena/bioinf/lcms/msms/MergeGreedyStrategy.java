@@ -99,7 +99,7 @@ public class MergeGreedyStrategy implements Ms2MergeStrategy{
         for (int k=0; k < mergedTrace.getTraces().length; ++k) {
             ProcessedSample sample = mergedTrace.getSamples()[k];
             ProjectedTrace projTrace = mergedTrace.getTraces()[k];
-            int[] ms2ids = projTrace.getMs2Ids();
+            int[] ms2ids = Arrays.stream(projTrace.getMs2Refs()).mapToInt(x->x.ms2Uid).toArray();
             // obtain MsMs spectra
             SpectrumStorage msStorage = sample.getStorage().getSpectrumStorage();
             Ms2SpectrumHeader[] headers = Arrays.stream(ms2ids).mapToObj(msStorage::ms2SpectrumHeader).toArray(Ms2SpectrumHeader[]::new);
@@ -115,7 +115,7 @@ public class MergeGreedyStrategy implements Ms2MergeStrategy{
                 LoggerFactory.getLogger(MergeGreedyStrategy.class).warn("MsMs outside of any feature segment!");
                 continue;
             }
-            double THRESHOLD = Arrays.stream(childsegs).mapToDouble(x->x==null ? 0 : mapping.getRetentionTimeAt(x.rightEdge)-mapping.getRetentionTimeAt(x.leftEdge)).max().orElse(0d);
+            double THRESHOLD = Double.POSITIVE_INFINITY;//Arrays.stream(childsegs).mapToDouble(x->x==null ? 0 : mapping.getRetentionTimeAt(x.rightEdge)-mapping.getRetentionTimeAt(x.leftEdge)).max().orElse(0d);
 
             // we assign each header to its closest segment
             // note that a header might lie outside a segment but still inside the trace. I would allow this
