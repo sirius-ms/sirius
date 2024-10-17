@@ -5,6 +5,6 @@ import de.unijena.bioinf.lcms.trace.Trace;
 
 public interface ApexDetection {
 
-    public int[] detectMaxima(SampleStats stats, Trace trace);
+    public int[] detectMaxima(SampleStats stats, Trace trace, int[] pointsOfInterest);
 
 }
