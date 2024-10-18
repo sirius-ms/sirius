@@ -24,6 +24,9 @@ import io.sirius.ms.sdk.model.CompoundClasses;
 import io.sirius.ms.sdk.model.ConfidenceMode;
 import io.sirius.ms.sdk.model.FormulaCandidate;
 import io.sirius.ms.sdk.model.StructureCandidateScored;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonTypeName;
 
@@ -36,7 +39,9 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   FeatureAnnotations.JSON_PROPERTY_COMPOUND_CLASS_ANNOTATION,
   FeatureAnnotations.JSON_PROPERTY_CONFIDENCE_EXACT_MATCH,
   FeatureAnnotations.JSON_PROPERTY_CONFIDENCE_APPROX_MATCH,
-  FeatureAnnotations.JSON_PROPERTY_EXPANSIVE_SEARCH_STATE
+  FeatureAnnotations.JSON_PROPERTY_EXPANSIVE_SEARCH_STATE,
+  FeatureAnnotations.JSON_PROPERTY_SPECIFIED_DATABASES,
+  FeatureAnnotations.JSON_PROPERTY_EXPANDED_DATABASES
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class FeatureAnnotations {
@@ -57,6 +62,12 @@ public class FeatureAnnotations {
 
   public static final String JSON_PROPERTY_EXPANSIVE_SEARCH_STATE = "expansiveSearchState";
   private ConfidenceMode expansiveSearchState;
+
+  public static final String JSON_PROPERTY_SPECIFIED_DATABASES = "specifiedDatabases";
+  private List<String> specifiedDatabases;
+
+  public static final String JSON_PROPERTY_EXPANDED_DATABASES = "expandedDatabases";
+  private List<String> expandedDatabases;
 
   public FeatureAnnotations() {
   }
@@ -211,6 +222,72 @@ public class FeatureAnnotations {
     this.expansiveSearchState = expansiveSearchState;
   }
 
+  public FeatureAnnotations specifiedDatabases(List<String> specifiedDatabases) {
+    
+    this.specifiedDatabases = specifiedDatabases;
+    return this;
+  }
+
+  public FeatureAnnotations addSpecifiedDatabasesItem(String specifiedDatabasesItem) {
+    if (this.specifiedDatabases == null) {
+      this.specifiedDatabases = new ArrayList<>();
+    }
+    this.specifiedDatabases.add(specifiedDatabasesItem);
+    return this;
+  }
+
+   /**
+   * Get specifiedDatabases
+   * @return specifiedDatabases
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_SPECIFIED_DATABASES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public List<String> getSpecifiedDatabases() {
+    return specifiedDatabases;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_SPECIFIED_DATABASES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setSpecifiedDatabases(List<String> specifiedDatabases) {
+    this.specifiedDatabases = specifiedDatabases;
+  }
+
+  public FeatureAnnotations expandedDatabases(List<String> expandedDatabases) {
+    
+    this.expandedDatabases = expandedDatabases;
+    return this;
+  }
+
+  public FeatureAnnotations addExpandedDatabasesItem(String expandedDatabasesItem) {
+    if (this.expandedDatabases == null) {
+      this.expandedDatabases = new ArrayList<>();
+    }
+    this.expandedDatabases.add(expandedDatabasesItem);
+    return this;
+  }
+
+   /**
+   * Get expandedDatabases
+   * @return expandedDatabases
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_EXPANDED_DATABASES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public List<String> getExpandedDatabases() {
+    return expandedDatabases;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_EXPANDED_DATABASES)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setExpandedDatabases(List<String> expandedDatabases) {
+    this.expandedDatabases = expandedDatabases;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -225,12 +302,14 @@ public class FeatureAnnotations {
         Objects.equals(this.compoundClassAnnotation, featureAnnotations.compoundClassAnnotation) &&
         Objects.equals(this.confidenceExactMatch, featureAnnotations.confidenceExactMatch) &&
         Objects.equals(this.confidenceApproxMatch, featureAnnotations.confidenceApproxMatch) &&
-        Objects.equals(this.expansiveSearchState, featureAnnotations.expansiveSearchState);
+        Objects.equals(this.expansiveSearchState, featureAnnotations.expansiveSearchState) &&
+        Objects.equals(this.specifiedDatabases, featureAnnotations.specifiedDatabases) &&
+        Objects.equals(this.expandedDatabases, featureAnnotations.expandedDatabases);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(formulaAnnotation, structureAnnotation, compoundClassAnnotation, confidenceExactMatch, confidenceApproxMatch, expansiveSearchState);
+    return Objects.hash(formulaAnnotation, structureAnnotation, compoundClassAnnotation, confidenceExactMatch, confidenceApproxMatch, expansiveSearchState, specifiedDatabases, expandedDatabases);
   }
 
   @Override
@@ -243,6 +322,8 @@ public class FeatureAnnotations {
     sb.append("    confidenceExactMatch: ").append(toIndentedString(confidenceExactMatch)).append("\n");
     sb.append("    confidenceApproxMatch: ").append(toIndentedString(confidenceApproxMatch)).append("\n");
     sb.append("    expansiveSearchState: ").append(toIndentedString(expansiveSearchState)).append("\n");
+    sb.append("    specifiedDatabases: ").append(toIndentedString(specifiedDatabases)).append("\n");
+    sb.append("    expandedDatabases: ").append(toIndentedString(expandedDatabases)).append("\n");
     sb.append("}");
     return sb.toString();
   }
