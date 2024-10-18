@@ -40,7 +40,8 @@ import com.fasterxml.jackson.annotation.JsonTypeName;
   SearchableDatabase.JSON_PROPERTY_UPDATE_NEEDED,
   SearchableDatabase.JSON_PROPERTY_NUMBER_OF_STRUCTURES,
   SearchableDatabase.JSON_PROPERTY_NUMBER_OF_FORMULAS,
-  SearchableDatabase.JSON_PROPERTY_NUMBER_OF_REFERENCE_SPECTRA
+  SearchableDatabase.JSON_PROPERTY_NUMBER_OF_REFERENCE_SPECTRA,
+  SearchableDatabase.JSON_PROPERTY_ERROR_MESSAGE
 })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.6.0")
 public class SearchableDatabase {
@@ -79,6 +80,9 @@ public class SearchableDatabase {
 
   public static final String JSON_PROPERTY_NUMBER_OF_REFERENCE_SPECTRA = "numberOfReferenceSpectra";
   private Long numberOfReferenceSpectra;
+
+  public static final String JSON_PROPERTY_ERROR_MESSAGE = "errorMessage";
+  private String errorMessage;
 
   public SearchableDatabase() {
   }
@@ -383,6 +387,31 @@ public class SearchableDatabase {
     this.numberOfReferenceSpectra = numberOfReferenceSpectra;
   }
 
+  public SearchableDatabase errorMessage(String errorMessage) {
+    
+    this.errorMessage = errorMessage;
+    return this;
+  }
+
+   /**
+   * Error message if the database could not be loaded
+   * @return errorMessage
+  **/
+  @jakarta.annotation.Nullable
+  @JsonProperty(JSON_PROPERTY_ERROR_MESSAGE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+
+  public String getErrorMessage() {
+    return errorMessage;
+  }
+
+
+  @JsonProperty(JSON_PROPERTY_ERROR_MESSAGE)
+  @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+  public void setErrorMessage(String errorMessage) {
+    this.errorMessage = errorMessage;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -403,12 +432,13 @@ public class SearchableDatabase {
         Objects.equals(this.updateNeeded, searchableDatabase.updateNeeded) &&
         Objects.equals(this.numberOfStructures, searchableDatabase.numberOfStructures) &&
         Objects.equals(this.numberOfFormulas, searchableDatabase.numberOfFormulas) &&
-        Objects.equals(this.numberOfReferenceSpectra, searchableDatabase.numberOfReferenceSpectra);
+        Objects.equals(this.numberOfReferenceSpectra, searchableDatabase.numberOfReferenceSpectra) &&
+        Objects.equals(this.errorMessage, searchableDatabase.errorMessage);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(displayName, location, matchRtOfReferenceSpectra, databaseId, customDb, searchable, dbDate, dbVersion, updateNeeded, numberOfStructures, numberOfFormulas, numberOfReferenceSpectra);
+    return Objects.hash(displayName, location, matchRtOfReferenceSpectra, databaseId, customDb, searchable, dbDate, dbVersion, updateNeeded, numberOfStructures, numberOfFormulas, numberOfReferenceSpectra, errorMessage);
   }
 
   //todo find a way to preserve this change during generation or find a solution downstream in the sirius gui
