@@ -58,6 +58,28 @@ public class CustomDataSources {
         return getDatabaseDirectory().resolve(CUSTOM_DB_DIR);
     }
 
+    /**
+     * @return all locations of custom databases according to properties. May contain non-existent paths.
+     */
+    public static List<Path> getAllCustomDatabaseLocations() {
+        List<Path> locations = new ArrayList<>();
+
+        final Path customDBDir = getCustomDatabaseDirectory();
+        String customDBs = PropertyManager.getProperty(PROP_KEY);
+
+        if (customDBs != null && !customDBs.isBlank()) {
+            for (String location : customDBs.split("\\s*,\\s*")) {
+                if (!location.contains("/")) {
+                    locations.add(customDBDir.resolve(location).toAbsolutePath());
+                } else {
+                    locations.add(Path.of(location));
+                }
+            }
+        }
+
+        return locations;
+    }
+
     @NotNull
     public static Path getWebDatabaseCacheDirectory() {
         return getDatabaseDirectory().resolve(WEB_CACHE_DIR);

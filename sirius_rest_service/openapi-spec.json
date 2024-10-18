@@ -1835,6 +1835,15 @@
               "type": "boolean",
               "default": false
             }
+          },
+          {
+            "name": "includeWithErrors",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -5076,6 +5085,15 @@
               "type": "boolean",
               "default": false
             }
+          },
+          {
+            "name": "includeWithErrors",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
           }
         ],
         "responses": {
@@ -5495,6 +5513,11 @@
             "type": "integer",
             "description": "Number of reference spectra available in this database",
             "format": "int64",
+            "nullable": true
+          },
+          "errorMessage": {
+            "type": "string",
+            "description": "Error message if the database could not be loaded",
             "nullable": true
           }
         }
