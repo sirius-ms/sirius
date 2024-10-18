@@ -42,7 +42,7 @@ public interface ChemDbService {
 
     Page<SearchableDatabase> findAll(Pageable pageable, boolean includeStats);
 
-    List<SearchableDatabase> findAll(boolean includeStats);
+    List<SearchableDatabase> findAll(boolean includeStats, boolean includeWithErrors);
 
     SearchableDatabase create(@NotNull String databaseId, @Nullable SearchableDatabaseParameters dbParameters);
 
